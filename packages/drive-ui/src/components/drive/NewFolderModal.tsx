@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { filegatorCreateFolder } from "@/lib/filegatorApi";
+import { driveCreateFolder } from "@/lib/driveApi";
 
 function validateNewFolderName(name: string): string | undefined {
   const t = name.trim();
@@ -43,7 +43,7 @@ export function NewFolderModal({
     setBusy(true);
     setErr(undefined);
     try {
-      await filegatorCreateFolder(cwd, name);
+      await driveCreateFolder(cwd, name);
       onSuccess();
     } catch (e) {
       setErr((e as Error).message || "Could not create folder.");

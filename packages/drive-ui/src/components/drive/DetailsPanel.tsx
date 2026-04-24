@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { FileIcon } from "./FileIcon";
 import type { DriveFile } from "@/lib/files";
 import { formatRelative } from "@/lib/files";
-import { filegatorDownloadUrl } from "@/lib/filegatorApi";
+import { driveDownloadUrl } from "@/lib/driveApi";
 import { officeEditorHref } from "@/lib/officeLink";
 import { cn } from "@/lib/utils";
 
@@ -52,7 +52,7 @@ export function DetailsPanel({
         >
           {isImage && !imgFailed ? (
             <img
-              src={filegatorDownloadUrl(file.path)}
+              src={driveDownloadUrl(file.path)}
               alt=""
               loading="lazy"
               decoding="async"
@@ -99,7 +99,7 @@ export function DetailsPanel({
             className="flex flex-col items-center gap-1.5 py-3 rounded-lg border border-border hover:bg-accent transition-colors disabled:opacity-40 disabled:pointer-events-none"
             onClick={() => {
               if (file.kind === "folder") return;
-              window.open(filegatorDownloadUrl(file.path), "_blank", "noopener,noreferrer");
+              window.open(driveDownloadUrl(file.path), "_blank", "noopener,noreferrer");
             }}
           >
             <Download className="h-4 w-4" />
