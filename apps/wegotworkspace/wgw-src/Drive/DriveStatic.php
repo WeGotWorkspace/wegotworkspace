@@ -2,19 +2,21 @@
 
 declare(strict_types=1);
 
-namespace App\Filegator;
+namespace App\Drive;
 
 use App\Installer\WebBase;
 use App\Paths;
 
-/**
- * Serves the Drive UI static assets at {@code /drive/…} (see {@code packages/drive-ui/}).
- */
-final class FilegatorStatic
+final class DriveStatic
 {
     public static function distRoot(): string
     {
         return Paths::driveDist();
+    }
+
+    public static function distReady(): bool
+    {
+        return is_file(self::distRoot().'/index.html');
     }
 
     public static function tryServe(string $webBase, string $path): bool
@@ -24,9 +26,6 @@ final class FilegatorStatic
             return false;
         }
 
-        // FileGator is mounted on the same URL as the SPA ({@code /drive/?r=/…}). Navigation and {@code window.open()}
-        // send {@code Accept: text/html…}, which would otherwise match the fallback below and return {@code index.html}
-        // instead of the download API (broken downloads / “open image in new tab”).
         if (isset($_GET['r']) && is_string($_GET['r']) && $_GET['r'] !== '') {
             return false;
         }
@@ -35,17 +34,8 @@ final class FilegatorStatic
         $rel = $path === $prefix || $path === $prefix.'/' ? '' : substr($path, strlen($prefix) + 1);
         $rel = str_replace('\\', '/', (string) $rel);
         $rel = rawurldecode($rel);
-        if ($rel !== '' && str_contains($rel, "\0")) {
-            http_response_code(404);
-            header('Content-Type: text/plain; charset=utf-8');
-            echo 'Not found';
-
-            return true;
-        }
-        if (str_contains($rel, '..')) {
-            http_response_code(404);
-            header('Content-Type: text/plain; charset=utf-8');
-            echo 'Not found';
+        if ($rel !== '' && (str_contains($rel, "\0") || str_contains($rel, '..'))) {
+            self::respond404();
 
             return true;
         }
@@ -53,9 +43,7 @@ final class FilegatorStatic
         $fs = self::mapUrlToFilesystem($root, $rel);
         if ($fs === null) {
             if ($rel !== '' && preg_match('#^(css|js|img|fonts|assets)/#', $rel) === 1) {
-                http_response_code(404);
-                header('Content-Type: text/plain; charset=utf-8');
-                echo 'Not found';
+                self::respond404();
 
                 return true;
             }
@@ -71,21 +59,17 @@ final class FilegatorStatic
         $realRoot = realpath($root);
         $realFile = is_readable($fs) ? realpath($fs) : false;
         if ($realRoot === false || $realFile === false || !str_starts_with($realFile, $realRoot)) {
-            http_response_code(404);
-            header('Content-Type: text/plain; charset=utf-8');
-            echo 'Not found';
+            self::respond404();
 
             return true;
         }
 
         $ext = strtolower(pathinfo($realFile, PATHINFO_EXTENSION));
         $mime = match ($ext) {
-            'js' => 'application/javascript; charset=utf-8',
-            'mjs' => 'application/javascript; charset=utf-8',
+            'js', 'mjs' => 'application/javascript; charset=utf-8',
             'css' => 'text/css; charset=utf-8',
-            'html' => 'text/html; charset=utf-8',
-            'htm' => 'text/html; charset=utf-8',
-            'json' => 'application/json; charset=utf-8',
+            'html', 'htm' => 'text/html; charset=utf-8',
+            'json', 'map' => 'application/json; charset=utf-8',
             'svg' => 'image/svg+xml',
             'png' => 'image/png',
             'jpg', 'jpeg' => 'image/jpeg',
@@ -98,7 +82,6 @@ final class FilegatorStatic
             'otf' => 'font/otf',
             'txt' => 'text/plain; charset=utf-8',
             'xml' => 'application/xml; charset=utf-8',
-            'map' => 'application/json; charset=utf-8',
             default => 'application/octet-stream',
         };
         header('Content-Type: '.$mime);
@@ -134,11 +117,11 @@ final class FilegatorStatic
         return true;
     }
 
-    public static function distReady(): bool
+    private static function respond404(): void
     {
-        $root = self::distRoot();
-
-        return is_file($root.'/index.html');
+        http_response_code(404);
+        header('Content-Type: text/plain; charset=utf-8');
+        echo 'Not found';
     }
 
     private static function mapUrlToFilesystem(string $root, string $rel): ?string
@@ -147,12 +130,8 @@ final class FilegatorStatic
         if ($rel === '') {
             return null;
         }
-
         $direct = $root.'/'.$rel;
-        if (is_file($direct)) {
-            return $direct;
-        }
 
-        return null;
+        return is_file($direct) ? $direct : null;
     }
 }

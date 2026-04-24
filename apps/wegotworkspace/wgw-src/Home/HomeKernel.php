@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Home;
 
 use App\Config;
-use App\Filegator\FilegatorStatic;
+use App\Drive\DriveStatic;
 use App\Installer\WebBase;
 use App\Mail\MailStatic;
 use App\Paths;
@@ -59,7 +59,7 @@ final class HomeKernel
         $signedInUser = SabreUiAuthGate::ensureAuthenticated($pdo, $realm, $webBase, $path);
 
         $filesOn = (bool) ($cfg[SettingsKeys::FILES_ENABLED] ?? true);
-        $driveOk = $filesOn && FilegatorStatic::distReady();
+        $driveOk = $filesOn && DriveStatic::distReady();
         $mailOk = $filesOn && MailStatic::distReady();
         $voiceOk = $filesOn && VoiceStatic::distReady();
         $officeRoot = Paths::officeUiBuild();
