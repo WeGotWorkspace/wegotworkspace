@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { DriveFile } from "@/lib/files";
-import { filegatorDeleteItems } from "@/lib/filegatorApi";
+import { driveDeleteItems } from "@/lib/driveApi";
 
 export function DeleteItemModal({
   file,
@@ -32,7 +32,7 @@ export function DeleteItemModal({
     setBusy(true);
     setErr(undefined);
     try {
-      await filegatorDeleteItems([{ path: file.path, type: isFolder ? "dir" : "file" }]);
+      await driveDeleteItems([{ path: file.path, type: isFolder ? "dir" : "file" }]);
       onSuccess(file);
     } catch (e) {
       setErr((e as Error).message || "Delete failed.");

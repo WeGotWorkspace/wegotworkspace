@@ -2,7 +2,7 @@ import { type ChangeEvent, type DragEvent, useCallback, useEffect, useId, useRef
 import { AlertCircle, CheckCircle2, Loader2, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatBytes } from "@/lib/files";
-import { filegatorUploadFiles, type FilegatorUploadProgress } from "@/lib/filegatorApi";
+import { driveUploadFiles, type DriveUploadProgress } from "@/lib/driveApi";
 import { cn } from "@/lib/utils";
 
 type Phase = "idle" | "uploading" | "success" | "error";
@@ -74,9 +74,9 @@ export function DriveUploadModal({
       const totalBytes = files.reduce((s, f) => s + f.size, 0) || 1;
 
       try {
-        await filegatorUploadFiles(cwd, files, {
+        await driveUploadFiles(cwd, files, {
           signal: ac.signal,
-          onProgress: (p: FilegatorUploadProgress) => {
+          onProgress: (p: DriveUploadProgress) => {
             setCurrentName(p.fileName);
             const inFile = p.fileProgress;
             const prevBytes = files.slice(0, p.fileIndex).reduce((s, f) => s + f.size, 0);

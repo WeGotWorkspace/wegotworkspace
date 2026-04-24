@@ -4,7 +4,7 @@ import { FileIcon } from "./FileIcon";
 import { FileItemMenu } from "./FileItemMenu";
 import type { DriveFile } from "@/lib/files";
 import { formatRelative } from "@/lib/files";
-import { filegatorDownloadUrl } from "@/lib/filegatorApi";
+import { driveDownloadUrl } from "@/lib/driveApi";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -56,7 +56,7 @@ export function FileCard({ file, selected, onClick, onOpenInOffice, onRenameRequ
       >
         {isImage && !imgFailed ? (
           <img
-            src={filegatorDownloadUrl(file.path)}
+            src={driveDownloadUrl(file.path)}
             alt=""
             loading="lazy"
             decoding="async"

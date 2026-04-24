@@ -154,11 +154,11 @@ final class Paths
     }
 
     /**
-     * Writable FileGator state: logs, tmp, sessions, {@code users.json}, CSRF secret.
+     * Writable Drive state: logs, tmp, sessions, {@code users.json}, CSRF secret.
      */
-    public static function filegatorData(): string
+    public static function driveData(): string
     {
-        return self::data().'/filegator';
+        return self::data().'/drive';
     }
 
     public static function lockFile(): string

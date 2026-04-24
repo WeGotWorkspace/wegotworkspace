@@ -16,11 +16,11 @@ final class MailSecret
      */
     public static function ensureSecretFile(): void
     {
-        $primary = Paths::filegatorData().'/ui_auth_gate.secret';
+        $primary = Paths::driveData().'/ui_auth_gate.secret';
         if (is_readable($primary) && (int) @filesize($primary) >= 32) {
             return;
         }
-        $legacy = Paths::filegatorData().'/drive_gate.secret';
+        $legacy = Paths::driveData().'/drive_gate.secret';
         if (is_readable($legacy) && (int) @filesize($legacy) >= 32) {
             @copy($legacy, $primary);
             if (is_readable($primary) && (int) @filesize($primary) >= 32) {
@@ -36,14 +36,14 @@ final class MailSecret
 
     public static function readBinary(): ?string
     {
-        $primary = Paths::filegatorData().'/ui_auth_gate.secret';
+        $primary = Paths::driveData().'/ui_auth_gate.secret';
         if (is_readable($primary)) {
             $s = file_get_contents($primary);
             if ($s !== false && strlen($s) >= 32) {
                 return $s;
             }
         }
-        $legacy = Paths::filegatorData().'/drive_gate.secret';
+        $legacy = Paths::driveData().'/drive_gate.secret';
         if (is_readable($legacy)) {
             $s = file_get_contents($legacy);
             if ($s !== false && strlen($s) >= 32) {
