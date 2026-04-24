@@ -13,7 +13,7 @@ const outputRoot = resolve(repoRoot, "dist/releases");
 const stagingRoot = resolve(outputRoot, "wgw-release");
 
 const version = resolveVersion();
-const packageName = `wegotworkspace-${version}.zip`;
+const packageName = `wegotworkspace-deploy-${version}.zip`;
 const packagePath = resolve(outputRoot, packageName);
 const manifestPath = resolve(outputRoot, "manifest.json");
 const signaturePath = resolve(outputRoot, "manifest.sig");

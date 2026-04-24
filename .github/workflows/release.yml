@@ -22,7 +22,7 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 9.15.4
 
       - uses: actions/setup-node@v4
         with:
@@ -45,6 +45,8 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
+          fail_on_unmatched_files: false
+          generate_release_notes: true
           files: |
             dist/releases/*.zip
             dist/releases/manifest.json
