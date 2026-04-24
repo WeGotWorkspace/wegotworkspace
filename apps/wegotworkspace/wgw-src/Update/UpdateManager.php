@@ -16,10 +16,7 @@ final class UpdateManager
     {
         $state = UpdateStateStore::read();
         $latest = isset($state['latest']) && is_array($state['latest']) ? $state['latest'] : null;
-        $hasPackage = $latest !== null
-            && isset($latest['package_url'])
-            && is_string($latest['package_url'])
-            && trim($latest['package_url']) !== '';
+        $hasRequiredMetadata = self::hasRequiredReleaseMetadata($latest);
         $driver = (string) $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
         $checks = EnvChecker::checkAll($driver === 'mysql' ? 'mysql' : 'sqlite');
         $compatible = EnvChecker::allPassed($checks);
@@ -28,7 +25,7 @@ final class UpdateManager
             'installedVersion' => AppVersion::current(),
             'schemaVersion' => SchemaMigrationRunner::currentVersion($pdo),
             'latest' => $latest,
-            'updateAvailable' => $hasPackage && self::isUpdateAvailable(AppVersion::current(), $latest),
+            'updateAvailable' => $hasRequiredMetadata && self::isUpdateAvailable(AppVersion::current(), $latest),
             'compatible' => $compatible,
             'checks' => $checks,
             'inProgress' => is_file(UpdateStateStore::lockPath()),
@@ -51,13 +48,12 @@ final class UpdateManager
             if ($feedUrl === '') {
                 throw new \InvalidArgumentException('WGW_UPDATE_FEED_URL is not configured.');
             }
+            self::assertHttpsUrl($feedUrl, 'Update feed URL');
             $latest = ReleaseFeedClient::fetchLatest($feedUrl);
-            $hasVersion = $latest !== null && isset($latest['version']) && is_string($latest['version']) && trim($latest['version']) !== '';
-            $hasPackage = $latest !== null && isset($latest['package_url']) && is_string($latest['package_url']) && trim($latest['package_url']) !== '';
-            if (!$hasVersion || !$hasPackage) {
+            if (!is_array($latest)) {
                 throw new \InvalidArgumentException('No valid release metadata found. Point WGW_UPDATE_FEED_URL to manifest.json or GitHub releases/latest API URL.');
             }
-            $state['latest'] = $latest;
+            $state['latest'] = self::normalizeRequiredReleaseMetadata($latest);
             $state['last_check_error'] = null;
         } catch (\Throwable $e) {
             $state['last_check_error'] = $e->getMessage();
@@ -87,13 +83,15 @@ final class UpdateManager
         }
 
         $beforeVersion = AppVersion::current();
-        $targetVersion = trim((string) ($input['version'] ?? ''));
-        $packageUrl = trim((string) ($input['package_url'] ?? ''));
-        $checksum = trim((string) ($input['checksum_sha256'] ?? ''));
-        $checksumSignature = trim((string) ($input['checksum_signature'] ?? ''));
-        if ($targetVersion === '' || $packageUrl === '') {
-            throw new \InvalidArgumentException('Missing target version/package URL.');
+        $release = self::latestFromState();
+        $requestedVersion = trim((string) ($input['version'] ?? ''));
+        if ($requestedVersion !== '' && !hash_equals($release['version'], $requestedVersion)) {
+            throw new \InvalidArgumentException('Checked release does not match the requested version. Check for updates again.');
         }
+        $targetVersion = $release['version'];
+        $packageUrl = $release['package_url'];
+        $checksum = $release['checksum_sha256'];
+        $checksumSignature = $release['checksum_signature'];
 
         $backupDir = UpdateStateStore::backupDir().'/backup-'.date('YmdHis');
         $replacePaths = [
@@ -120,12 +118,8 @@ final class UpdateManager
             UpdateStateStore::cleanupTemporaryData();
             @mkdir(dirname(UpdateStateStore::packagePath()), 0775, true);
             self::downloadPackage($packageUrl, UpdateStateStore::packagePath());
-            if ($checksum !== '') {
-                self::verifyChecksum(UpdateStateStore::packagePath(), $checksum);
-                if ($checksumSignature !== '') {
-                    self::verifyChecksumSignature($checksum, $checksumSignature);
-                }
-            }
+            self::verifyChecksum(UpdateStateStore::packagePath(), $checksum);
+            self::verifyChecksumSignature($checksum, $checksumSignature);
 
             self::writeStatus('extracting', $beforeVersion, $targetVersion);
             self::extractPackage(UpdateStateStore::packagePath(), UpdateStateStore::stagingDir());
@@ -233,6 +227,20 @@ final class UpdateManager
         if ($ok !== 1) {
             throw new \RuntimeException('Release signature verification failed.');
         }
+    }
+
+    /**
+     * @return array{version: string, package_url: string, checksum_sha256: string, checksum_signature: string}
+     */
+    private static function latestFromState(): array
+    {
+        $state = UpdateStateStore::read();
+        $latest = isset($state['latest']) && is_array($state['latest']) ? $state['latest'] : null;
+        if ($latest === null) {
+            throw new \RuntimeException('No checked update metadata found. Run Check now first.');
+        }
+
+        return self::normalizeRequiredReleaseMetadata($latest);
     }
 
     private static function extractPackage(string $zipPath, string $targetDir): void
@@ -387,6 +395,68 @@ final class UpdateManager
         }
 
         return $trimmed;
+    }
+
+    /**
+     * @param array<string, mixed>|null $latest
+     */
+    private static function hasRequiredReleaseMetadata(?array $latest): bool
+    {
+        if ($latest === null) {
+            return false;
+        }
+        try {
+            self::normalizeRequiredReleaseMetadata($latest);
+
+            return true;
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $latest
+     *
+     * @return array{version: string, package_url: string, checksum_sha256: string, checksum_signature: string}
+     */
+    private static function normalizeRequiredReleaseMetadata(array $latest): array
+    {
+        $version = self::requiredNonEmptyString($latest, 'version');
+        $packageUrl = self::requiredNonEmptyString($latest, 'package_url');
+        $checksum = self::requiredNonEmptyString($latest, 'checksum_sha256');
+        $checksumSignature = self::requiredNonEmptyString($latest, 'checksum_signature');
+        self::assertHttpsUrl($packageUrl, 'Release package URL');
+
+        return [
+            'version' => $version,
+            'package_url' => $packageUrl,
+            'checksum_sha256' => $checksum,
+            'checksum_signature' => $checksumSignature,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private static function requiredNonEmptyString(array $data, string $field): string
+    {
+        $value = isset($data[$field]) && is_string($data[$field]) ? trim($data[$field]) : '';
+        if ($value === '') {
+            throw new \InvalidArgumentException('Release metadata is missing required field: '.$field.'.');
+        }
+
+        return $value;
+    }
+
+    private static function assertHttpsUrl(string $url, string $label): void
+    {
+        $parts = parse_url(trim($url));
+        $scheme = is_array($parts) && isset($parts['scheme']) && is_string($parts['scheme'])
+            ? strtolower($parts['scheme'])
+            : '';
+        if ($scheme !== 'https') {
+            throw new \InvalidArgumentException($label.' must use HTTPS.');
+        }
     }
 
     private static function writeStatus(string $phase, string $fromVersion, string $toVersion): void
