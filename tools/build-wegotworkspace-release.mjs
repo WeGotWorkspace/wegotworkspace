@@ -19,6 +19,8 @@ const manifestPath = resolve(outputRoot, "manifest.json");
 const signaturePath = resolve(outputRoot, "manifest.sig");
 
 const releaseEntries = [
+  ".htaccess",
+  "example.htaccess",
   "index.php",
   "composer.json",
   "composer.lock",
