@@ -548,11 +548,23 @@ final class AdminUiKernel
     private static function updateFeedUrl(): string
     {
         $env = getenv('WGW_UPDATE_FEED_URL');
-        if (!is_string($env)) {
-            return '';
+        if (is_string($env) && trim($env) !== '') {
+            return trim($env);
         }
 
-        return trim($env);
+        try {
+            $cfg = Config::loadFileOnly();
+            if (isset($cfg['update_feed_url']) && is_string($cfg['update_feed_url'])) {
+                $value = trim($cfg['update_feed_url']);
+                if ($value !== '') {
+                    return $value;
+                }
+            }
+        } catch (\Throwable) {
+            // Fallback below.
+        }
+
+        return '';
     }
 
     /**
