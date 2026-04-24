@@ -75,11 +75,11 @@ spl_autoload_register(static function (string $class) use ($runtimeRoot, $appRoo
 use App\Admin\AdminUiKernel;
 use App\Auth\UiLoginKernel;
 use App\Config;
+use App\Drive\DriveKernel;
 use App\Installer\InstallerKernel;
 use App\Installer\WebBase;
 use App\Paths;
 use App\Server\SabreApp;
-use App\Filegator\FilegatorKernel;
 use App\Home\HomeKernel;
 use App\Mail\MailKernel;
 use App\Office\OfficeEntry;
@@ -203,7 +203,7 @@ if (MailKernel::tryRespond($webBase, $path)) {
     exit;
 }
 
-if (FilegatorKernel::tryRespond($webBase, $path)) {
+if (DriveKernel::tryRespond($webBase, $path)) {
     exit;
 }
 
