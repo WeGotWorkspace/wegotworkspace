@@ -205,7 +205,8 @@ final class AdminUiKernel
 
             return true;
         } catch (\Throwable $e) {
-            self::json(500, ['error' => 'Admin API error: '.$e->getMessage()]);
+            error_log('Admin API error: '.$e->getMessage());
+            self::json(500, ['error' => 'Internal server error.']);
 
             return true;
         }

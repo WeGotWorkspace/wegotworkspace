@@ -105,15 +105,25 @@ final class UiLoginKernel
         self::assertTrustedFormOrigin();
 
         $user = isset($_POST['username']) && is_string($_POST['username']) ? trim($_POST['username']) : '';
+        $userNorm = strtolower($user);
         $pass = isset($_POST['password']) && is_string($_POST['password']) ? $_POST['password'] : '';
         $return = isset($_POST['return']) && is_string($_POST['return']) ? $_POST['return'] : '';
+        $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
 
-        if ($user === '' || $pass === '' || !AuthService::validateWithPdo($pdo, strtolower($user), $pass, $realm)) {
+        if (!LoginThrottle::allowAndRecord($ip, $userNorm)) {
+            http_response_code(429);
+            self::respondLoginGet($realm, $webBase, false, self::sanitizeReturnPath($webBase, $return), 'throttled');
+
+            return;
+        }
+
+        if ($userNorm === '' || $pass === '' || !AuthService::validateWithPdo($pdo, $userNorm, $pass, $realm)) {
             self::respondLoginGet($realm, $webBase, false, self::sanitizeReturnPath($webBase, $return), 'invalid');
 
             return;
         }
 
+        LoginThrottle::clearUserIp($ip, $userNorm);
         SabreUiAuthGate::establishSession($user, $realm, $webBase);
         $target = self::sanitizeReturnPath($webBase, $return);
         self::redirectToPath($target);
@@ -137,9 +147,11 @@ final class UiLoginKernel
         $return = $returnOverride ?? self::returnFromQuery();
         $return = self::sanitizeReturnPath($webBase, $return);
         $e = static fn (string $s): string => htmlspecialchars($s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-        $err = $error === 'invalid'
-            ? '<p class="err" role="alert">That username or password does not match this server.</p>'
-            : '';
+        $err = match ($error) {
+            'invalid' => '<p class="err" role="alert">That username or password does not match this server.</p>',
+            'throttled' => '<p class="err" role="alert">Too many sign-in attempts. Wait a few minutes and try again.</p>',
+            default => '',
+        };
 
         header('Content-Type: text/html; charset=utf-8');
         header('Cache-Control: no-store, no-cache, must-revalidate');
