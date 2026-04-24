@@ -6,7 +6,6 @@ namespace App\Voice;
 
 use App\Config;
 use App\Installer\WebBase;
-use App\Paths;
 use App\SabreUiAuthGate;
 use App\Settings\SettingsKeys;
 
@@ -62,8 +61,6 @@ final class VoiceKernel
             return true;
         }
 
-        self::ensureRuntime();
-
         $pdoCfg = Config::pdoCredentials($cfg);
         $pdo = new \PDO(
             $pdoCfg['dsn'],
@@ -74,7 +71,7 @@ final class VoiceKernel
         $realm = (string) ($cfg[SettingsKeys::AUTH_REALM] ?? 'SabreDAV');
 
         if (self::isSignalingPath($webBase, $path)) {
-            VoiceSignaling::respond(Paths::data().'/voice-signaling/rooms.sqlite', $pdo, $realm);
+            VoiceSignaling::respond($pdo, $realm);
 
             return true;
         }
@@ -141,14 +138,6 @@ final class VoiceKernel
             ? '?'.$_SERVER['QUERY_STRING']
             : '';
         header('Location: '.$scheme.'://'.$host.WebBase::url($webBase, $path).$qs, true, 302);
-    }
-
-    private static function ensureRuntime(): void
-    {
-        $dir = Paths::data().'/voice-signaling';
-        if (!is_dir($dir)) {
-            @mkdir($dir, 0775, true);
-        }
     }
 
     private static function respondDistMissing(string $webBase): void

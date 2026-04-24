@@ -6,14 +6,14 @@ namespace App\Voice;
 
 /**
  * Minimal JSON signaling for Aura Voice (ported from bright-face-connect {@code public/aura-signaling/rooms.php}).
- * SQLite state lives under {@see Paths::data()} {@code /voice-signaling/rooms.sqlite}.
+ * Signaling state lives in the installer-configured primary application database.
  */
 final class VoiceSignaling
 {
     private const T_PEERS = 'voice_peers';
     private const T_MESSAGES = 'voice_messages';
 
-    public static function respond(string $dbPath, \PDO $pdo, string $realm): void
+    public static function respond(\PDO $pdo, string $realm): void
     {
         header('Content-Type: application/json');
         header('Access-Control-Allow-Origin: *');
@@ -36,7 +36,8 @@ final class VoiceSignaling
         /** @var array<string, mixed> $body */
         $body = json_decode(file_get_contents('php://input') ?: '{}', true) ?: [];
 
-        $db = self::connectRuntimeDb($dbPath, $pdo);
+        self::pruneOldRows($pdo);
+        $db = $pdo;
 
         switch ($action) {
             case 'join': {
@@ -53,12 +54,7 @@ final class VoiceSignaling
                     }
                 }
 
-                $stmt = $db->prepare(
-                    'INSERT INTO '.self::T_PEERS.'(room, peer_id, name, seen_at)
-                     VALUES(:r, :p, :n, :t)
-                     ON CONFLICT(room, peer_id) DO UPDATE SET name=:n, seen_at=:t'
-                );
-                $stmt->execute([':r' => $room, ':p' => $peerId, ':n' => $name, ':t' => time()]);
+                self::upsertPeer($db, $room, $peerId, $name, time());
 
                 $cnt = $db->prepare('SELECT COUNT(*) FROM '.self::T_PEERS.' WHERE room = :r');
                 $cnt->execute([':r' => $room]);
@@ -205,82 +201,26 @@ final class VoiceSignaling
         exit;
     }
 
-    private static function connectRuntimeDb(string $dbPath, \PDO $primaryPdo): \PDO
+    private static function upsertPeer(\PDO $db, string $room, string $peerId, string $name, int $now): void
     {
-        try {
-            $db = self::openSignalingDb($dbPath);
-            self::ensureSchema($db);
-            self::pruneOldRows($db);
+        $driver = (string) $db->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'mysql') {
+            $stmt = $db->prepare(
+                'INSERT INTO '.self::T_PEERS.' (room, peer_id, name, seen_at)
+                 VALUES (:r, :p, :n, :t)
+                 ON DUPLICATE KEY UPDATE name = VALUES(name), seen_at = VALUES(seen_at)'
+            );
+            $stmt->execute([':r' => $room, ':p' => $peerId, ':n' => $name, ':t' => $now]);
 
-            return $db;
-        } catch (\Throwable $e) {
-            error_log('Voice signaling: dedicated DB unavailable, falling back to primary DB: '.$e->getMessage());
+            return;
         }
 
-        try {
-            self::ensureSchema($primaryPdo);
-            self::pruneOldRows($primaryPdo);
-
-            return $primaryPdo;
-        } catch (\Throwable $e) {
-            error_log('Voice signaling: primary DB fallback failed: '.$e->getMessage());
-            self::bad('signaling_schema_unavailable', 503);
-        }
-    }
-
-    private static function openSignalingDb(string $dbPath): \PDO
-    {
-        $dir = dirname($dbPath);
-        if (!is_dir($dir) && !@mkdir($dir, 0775, true) && !is_dir($dir)) {
-            throw new \RuntimeException('failed to create storage directory: '.$dir);
-        }
-
-        if (!is_writable($dir)) {
-            throw new \RuntimeException('storage directory is not writable: '.$dir);
-        }
-
-        try {
-            $db = new \PDO('sqlite:'.$dbPath);
-            $db->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-            $db->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
-            $db->exec('PRAGMA busy_timeout=5000');
-            try {
-                $db->exec('PRAGMA journal_mode=WAL');
-            } catch (\PDOException $e) {
-                // Some hosts/storage backends reject WAL; continue with default journal mode.
-                error_log('Voice signaling: WAL unavailable, using default journal mode: '.$e->getMessage());
-            }
-
-            return $db;
-        } catch (\PDOException $e) {
-            throw new \RuntimeException('failed to open sqlite DB: '.$e->getMessage(), 0, $e);
-        }
-    }
-
-    private static function ensureSchema(\PDO $db): void
-    {
-        try {
-            $db->exec('CREATE TABLE IF NOT EXISTS '.self::T_PEERS." (
-                    room    TEXT NOT NULL,
-                    peer_id TEXT NOT NULL,
-                    name    TEXT NOT NULL DEFAULT '',
-                    seen_at INTEGER NOT NULL,
-                    PRIMARY KEY(room, peer_id)
-                )");
-            $db->exec('CREATE TABLE IF NOT EXISTS '.self::T_MESSAGES." (
-                    id        INTEGER PRIMARY KEY AUTOINCREMENT,
-                    room      TEXT NOT NULL,
-                    from_peer TEXT NOT NULL,
-                    to_peer   TEXT NOT NULL,
-                    type      TEXT NOT NULL,
-                    payload   TEXT NOT NULL,
-                    created_at INTEGER NOT NULL
-                )");
-            $db->exec('CREATE INDEX IF NOT EXISTS idx_voice_msg_target ON '.self::T_MESSAGES.'(room, to_peer, id)');
-            $db->exec('CREATE INDEX IF NOT EXISTS idx_voice_peers_room ON '.self::T_PEERS.'(room)');
-        } catch (\PDOException $e) {
-            throw new \RuntimeException('failed to initialize schema: '.$e->getMessage(), 0, $e);
-        }
+        $stmt = $db->prepare(
+            'INSERT INTO '.self::T_PEERS.' (room, peer_id, name, seen_at)
+             VALUES (:r, :p, :n, :t)
+             ON CONFLICT(room, peer_id) DO UPDATE SET name = excluded.name, seen_at = excluded.seen_at'
+        );
+        $stmt->execute([':r' => $room, ':p' => $peerId, ':n' => $name, ':t' => $now]);
     }
 
     private static function pruneOldRows(\PDO $db): void
