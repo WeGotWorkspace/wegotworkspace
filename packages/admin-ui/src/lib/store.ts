@@ -207,9 +207,15 @@ export const store = {
     store.set({ updates });
   },
   applyUpdate: async () => {
-    const latest = state.updates.latest;
+    let latest = state.updates.latest;
     if (!latest?.version || !latest.package_url) {
-      throw new Error("No update package available");
+      await store.checkUpdates();
+      latest = state.updates.latest;
+    }
+    if (!latest?.version || !latest.package_url) {
+      throw new Error(
+        state.updates.lastCheckError || "No update package available. Run Check now and verify feed metadata.",
+      );
     }
     await api<{ ok: boolean; message?: string }>("updates/apply", latest);
     await store.reload();

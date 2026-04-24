@@ -16,6 +16,10 @@ final class UpdateManager
     {
         $state = UpdateStateStore::read();
         $latest = isset($state['latest']) && is_array($state['latest']) ? $state['latest'] : null;
+        $hasPackage = $latest !== null
+            && isset($latest['package_url'])
+            && is_string($latest['package_url'])
+            && trim($latest['package_url']) !== '';
         $driver = (string) $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
         $checks = EnvChecker::checkAll($driver === 'mysql' ? 'mysql' : 'sqlite');
         $compatible = EnvChecker::allPassed($checks);
@@ -24,7 +28,7 @@ final class UpdateManager
             'installedVersion' => AppVersion::current(),
             'schemaVersion' => SchemaMigrationRunner::currentVersion($pdo),
             'latest' => $latest,
-            'updateAvailable' => self::isUpdateAvailable(AppVersion::current(), $latest),
+            'updateAvailable' => $hasPackage && self::isUpdateAvailable(AppVersion::current(), $latest),
             'compatible' => $compatible,
             'checks' => $checks,
             'inProgress' => is_file(UpdateStateStore::lockPath()),
@@ -48,13 +52,16 @@ final class UpdateManager
                 throw new \InvalidArgumentException('WGW_UPDATE_FEED_URL is not configured.');
             }
             $latest = ReleaseFeedClient::fetchLatest($feedUrl);
-            if ($latest === null || !isset($latest['version']) || !is_string($latest['version']) || trim($latest['version']) === '') {
+            $hasVersion = $latest !== null && isset($latest['version']) && is_string($latest['version']) && trim($latest['version']) !== '';
+            $hasPackage = $latest !== null && isset($latest['package_url']) && is_string($latest['package_url']) && trim($latest['package_url']) !== '';
+            if (!$hasVersion || !$hasPackage) {
                 throw new \InvalidArgumentException('No valid release metadata found. Point WGW_UPDATE_FEED_URL to manifest.json or GitHub releases/latest API URL.');
             }
             $state['latest'] = $latest;
             $state['last_check_error'] = null;
         } catch (\Throwable $e) {
             $state['last_check_error'] = $e->getMessage();
+            unset($state['latest']);
             UpdateStateStore::write($state);
             throw $e;
         }
