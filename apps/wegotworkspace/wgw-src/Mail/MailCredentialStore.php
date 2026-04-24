@@ -4,35 +4,20 @@ declare(strict_types=1);
 
 namespace App\Mail;
 
-use App\Paths;
-
 /**
  * Per-Sabre-user IMAP login (username + password) in SQL table {@code mail_user_credentials}.
  *
- * Existing file-based credentials under {@code wgw-content/mail/} are read as fallback and
- * migrated into SQL on first access.
  * Hosts and ports are site-wide in admin settings ({@see \App\Settings\SettingsKeys}).
  */
 final class MailCredentialStore
 {
     private const TABLE = 'mail_user_credentials';
-    private const VERSION_LEGACY = 1;
-    private const VERSION = 2;
-
-    public static function accountPath(string $username): string
-    {
-        $safe = preg_replace('/[^a-z0-9._-]+/i', '_', strtolower(trim($username))) ?? 'user';
-
-        return Paths::data().'/mail/'.$safe.'.json';
-    }
 
     /**
      * @return array{imapUsername: string, imapPassword: string}|null
      */
     public static function loadAccount(\PDO $pdo, string $username): ?array
     {
-        self::ensureTable($pdo);
-
         $stmt = $pdo->prepare('SELECT imap_username, password_enc FROM '.self::TABLE.' WHERE username = ?');
         $stmt->execute([strtolower(trim($username))]);
         $row = $stmt->fetch(\PDO::FETCH_ASSOC);
@@ -48,34 +33,7 @@ final class MailCredentialStore
             ];
         }
 
-        $legacy = self::loadLegacyFileAccount($username);
-        if ($legacy === null) {
-            return null;
-        }
-
-        self::persistAccount($pdo, $username, $legacy['imapUsername'], $legacy['imapPassword']);
-        @unlink(self::accountPath($username));
-
-        return $legacy;
-    }
-
-    /**
-     * @param array<string, mixed> $j
-     *
-     * @return array{imapUsername: string, imapPassword: string}|null
-     */
-    private static function migrateLegacyV1(array $j, string $sabreUsername, string $secret): ?array
-    {
-        $imap = $j['imap'] ?? null;
-        if (!is_array($imap)) {
-            return null;
-        }
-        $user = trim((string) ($imap['username'] ?? ''));
-
-        return [
-            'imapUsername' => $user,
-            'imapPassword' => self::decryptField($imap['passwordEnc'] ?? null, $sabreUsername, $secret),
-        ];
+        return null;
     }
 
     /**
@@ -113,76 +71,8 @@ final class MailCredentialStore
      */
     public static function save(\PDO $pdo, string $username, array $input): void
     {
-        self::ensureTable($pdo);
         $merged = self::mergeAccount($pdo, $username, $input);
         self::persistAccount($pdo, $username, $merged['imapUsername'], $merged['imapPassword']);
-    }
-
-    private static function ensureTable(\PDO $pdo): void
-    {
-        $driver = $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
-        if ($driver === 'mysql') {
-            $pdo->exec(
-                "CREATE TABLE IF NOT EXISTS mail_user_credentials (
-                    username VARCHAR(191) NOT NULL PRIMARY KEY,
-                    imap_username VARCHAR(255) NOT NULL DEFAULT '',
-                    password_enc TEXT NOT NULL,
-                    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
-            );
-
-            return;
-        }
-        $pdo->exec(
-            "CREATE TABLE IF NOT EXISTS mail_user_credentials (
-                username TEXT NOT NULL PRIMARY KEY,
-                imap_username TEXT NOT NULL DEFAULT '',
-                password_enc TEXT NOT NULL DEFAULT '',
-                updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
-            )"
-        );
-    }
-
-    /**
-     * @return array{imapUsername: string, imapPassword: string}|null
-     */
-    private static function loadLegacyFileAccount(string $username): ?array
-    {
-        $path = self::accountPath($username);
-        if (!is_readable($path)) {
-            return null;
-        }
-        $raw = file_get_contents($path);
-        if ($raw === false || $raw === '') {
-            return null;
-        }
-        try {
-            /** @var mixed $j */
-            $j = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
-        } catch (\JsonException) {
-            return null;
-        }
-        if (!is_array($j)) {
-            return null;
-        }
-        $secret = MailSecret::readBinary();
-        if ($secret === null) {
-            return null;
-        }
-        $v = (int) ($j['v'] ?? 0);
-        if ($v === self::VERSION) {
-            $user = is_string($j['imapUsername'] ?? null) ? trim($j['imapUsername']) : '';
-
-            return [
-                'imapUsername' => $user,
-                'imapPassword' => self::decryptField($j['passwordEnc'] ?? null, $username, $secret),
-            ];
-        }
-        if ($v === self::VERSION_LEGACY) {
-            return self::migrateLegacyV1($j, $username, $secret);
-        }
-
-        return null;
     }
 
     private static function persistAccount(\PDO $pdo, string $username, string $imapUsername, string $imapPassword): void
