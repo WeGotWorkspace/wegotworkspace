@@ -48,7 +48,7 @@ function UpdatesPage() {
             </Button>
           }
         />
-        <div className="mb-3 text-xs text-muted-foreground mb-4">
+        <div className="mb-3 text-xs text-muted-foreground">
           Last checked: {updates.lastCheckedAt ?? "Never"}
         </div>
 
