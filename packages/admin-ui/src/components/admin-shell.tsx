@@ -111,7 +111,7 @@ export function PageHeader({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-end justify-between gap-6 mb-8">
+    <div className="flex items-end justify-between gap-6 mb-2">
       <div>
         <div className="text-[10px] uppercase tracking-[0.22em] text-primary font-mono mb-2">
           {eyebrow}
