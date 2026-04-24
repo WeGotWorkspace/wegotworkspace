@@ -42,9 +42,9 @@ final class InstallerStatic
 
         $fs = self::mapUrlToFilesystem($root, $rel);
         if ($fs === null) {
-            $accept = (string) ($_SERVER['HTTP_ACCEPT'] ?? '');
             $index = $root.'/index.html';
-            if (is_file($index) && str_contains($accept, 'text/html') && !str_starts_with($rel, 'assets/')) {
+            // SPA fallback: serve index for /install and nested client routes when an asset is not found.
+            if (is_file($index) && !str_starts_with($rel, 'assets/')) {
                 $fs = $index;
             } else {
                 return false;
