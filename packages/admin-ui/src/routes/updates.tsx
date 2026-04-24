@@ -48,6 +48,38 @@ function UpdatesPage() {
             </Button>
           }
         />
+        <div className="mb-3 text-xs text-muted-foreground mb-4">
+          Last checked: {updates.lastCheckedAt ?? "Never"}
+        </div>
+
+        <Section title="Apply update" description="Runs staged download, integrity checks, file swap, and DB migrations.">
+          <div className="space-y-3">
+            <Button
+              disabled={!updates.updateAvailable || !updates.compatible || updates.inProgress || applying}
+              onClick={async () => {
+                setApplying(true);
+                try {
+                  await store.applyUpdate();
+                  toast.success("Update completed");
+                } catch (error) {
+                  toast.error((error as Error).message || "Update failed");
+                } finally {
+                  setApplying(false);
+                }
+              }}
+            >
+              {updates.inProgress || applying ? "Applying..." : "Update now"}
+            </Button>
+            {updates.lastResult && (
+              <div className="rounded-md border px-3 py-2 text-xs">
+                <div>
+                  Last run: <strong>{updates.lastResult.ok ? "Success" : "Failed"}</strong>
+                </div>
+                <div className="text-muted-foreground">{updates.lastResult.message}</div>
+              </div>
+            )}
+          </div>
+        </Section>
 
         <Section title="Release status" description="Installed version and latest available release.">
           <div className="grid gap-3 text-sm">
@@ -98,38 +130,6 @@ function UpdatesPage() {
                 <Badge variant={check.ok ? "secondary" : "destructive"}>{check.ok ? "OK" : "Fail"}</Badge>
               </div>
             ))}
-          </div>
-        </Section>
-
-        <Section title="Apply update" description="Runs staged download, integrity checks, file swap, and DB migrations.">
-          <div className="space-y-3">
-            <div className="text-xs text-muted-foreground">
-              Last checked: {updates.lastCheckedAt ?? "Never"}
-            </div>
-            <Button
-              disabled={!updates.updateAvailable || !updates.compatible || updates.inProgress || applying}
-              onClick={async () => {
-                setApplying(true);
-                try {
-                  await store.applyUpdate();
-                  toast.success("Update completed");
-                } catch (error) {
-                  toast.error((error as Error).message || "Update failed");
-                } finally {
-                  setApplying(false);
-                }
-              }}
-            >
-              {updates.inProgress || applying ? "Applying..." : "Update now"}
-            </Button>
-            {updates.lastResult && (
-              <div className="rounded-md border px-3 py-2 text-xs">
-                <div>
-                  Last run: <strong>{updates.lastResult.ok ? "Success" : "Failed"}</strong>
-                </div>
-                <div className="text-muted-foreground">{updates.lastResult.message}</div>
-              </div>
-            )}
           </div>
         </Section>
 
