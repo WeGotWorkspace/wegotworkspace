@@ -29,9 +29,10 @@ From the repository root:
 
 ```bash
 pnpm install
-pnpm build
 pnpm dev
 ```
+
+`pnpm dev` runs the required build dependencies automatically. Use `pnpm build` when you want a standalone production build (for CI/release verification).
 
 Open `http://127.0.0.1:8080/install/`.
 
@@ -40,7 +41,7 @@ Open `http://127.0.0.1:8080/install/`.
 Release ZIP files are built with:
 
 ```bash
-pnpm release:wegotworkspace
+pnpm release
 ```
 
 The deploy artifact includes `INSTALL.md` so people downloading a release get the install steps directly in the package.
