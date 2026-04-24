@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: ctype, dom, iconv, imap, json, mbstring, pdo, pdo_sqlite, simplexml, zip
+          coverage: none
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install JS workspace
+        run: pnpm install --frozen-lockfile
+
+      - name: Build (Composer + UI via Turborepo)
+        run: pnpm run build

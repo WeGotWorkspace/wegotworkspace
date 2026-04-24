@@ -1,0 +1,18 @@
+{
+  "name": "@wgw/workspace",
+  "private": true,
+  "license": "AGPL-3.0-or-later",
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "dev": "sh -c 'if [ -f .env ]; then set -a; . ./.env; set +a; fi; turbo run dev watch --concurrency=20'",
+    "dev:php": "sh -c 'if [ -f .env ]; then set -a; . ./.env; set +a; fi; turbo run dev:php --filter=@wgw/dev-server'",
+    "dev:ui:watch": "sh -c 'if [ -f .env ]; then set -a; . ./.env; set +a; fi; turbo run watch --filter=@wgw/admin-ui --filter=@wgw/drive-ui --filter=@wgw/voice-ui --filter=@wgw/mail-ui --filter=@wgw/user-settings-ui --filter=@wgw/install-ui'",
+    "build": "sh -c 'if [ -f .env ]; then set -a; . ./.env; set +a; fi; turbo run build'",
+    "setup:macos": "sh -c 'if [ -f .env ]; then set -a; . ./.env; set +a; fi; pnpm --filter @wgw/wegotworkspace setup:macos'",
+    "preview:macos": "sh -c 'if [ -f .env ]; then set -a; . ./.env; set +a; fi; pnpm --filter @wgw/wegotworkspace preview:macos'",
+    "release:wegotworkspace": "node tools/build-wegotworkspace-release.mjs"
+  },
+  "devDependencies": {
+    "turbo": "^2.4.4"
+  }
+}
