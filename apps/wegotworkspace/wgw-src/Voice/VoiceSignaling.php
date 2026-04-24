@@ -16,9 +16,6 @@ final class VoiceSignaling
     public static function respond(\PDO $pdo, string $realm): void
     {
         header('Content-Type: application/json');
-        header('Access-Control-Allow-Origin: *');
-        header('Access-Control-Allow-Methods: POST, OPTIONS');
-        header('Access-Control-Allow-Headers: Content-Type');
         header('Cache-Control: no-store');
 
         if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -36,25 +33,17 @@ final class VoiceSignaling
         /** @var array<string, mixed> $body */
         $body = json_decode(file_get_contents('php://input') ?: '{}', true) ?: [];
 
+        self::ensureOwnerColumn($pdo);
         self::pruneOldRows($pdo);
         $db = $pdo;
 
         switch ($action) {
             case 'join': {
+                $username = self::requireAuthenticatedUser($pdo, $realm);
                 $room = self::cleanRoom($body['room'] ?? null);
                 $peerId = self::cleanPeer($body['peerId'] ?? null);
                 $name = mb_substr((string) ($body['name'] ?? ''), 0, 64);
-
-                $countBefore = $db->prepare('SELECT COUNT(*) FROM '.self::T_PEERS.' WHERE room = :r');
-                $countBefore->execute([':r' => $room]);
-                $n = (int) $countBefore->fetchColumn();
-                if ($n === 0) {
-                    if (VoiceSabreAuth::tryAuthenticatedUser($pdo, $realm) === null) {
-                        VoiceSabreAuth::respondJsonUnauthorized($realm);
-                    }
-                }
-
-                self::upsertPeer($db, $room, $peerId, $name, time());
+                self::upsertPeer($db, $room, $peerId, $name, $username, time());
 
                 $cnt = $db->prepare('SELECT COUNT(*) FROM '.self::T_PEERS.' WHERE room = :r');
                 $cnt->execute([':r' => $room]);
@@ -72,8 +61,10 @@ final class VoiceSignaling
             }
 
             case 'poll': {
+                $username = self::requireAuthenticatedUser($pdo, $realm);
                 $room = self::cleanRoom($body['room'] ?? null);
                 $peerId = self::cleanPeer($body['peerId'] ?? null);
+                self::assertPeerOwnedByUser($db, $room, $peerId, $username);
 
                 $db->prepare('UPDATE '.self::T_PEERS.' SET seen_at=:t WHERE room=:r AND peer_id=:p')
                     ->execute([':t' => time(), ':r' => $room, ':p' => $peerId]);
@@ -108,9 +99,11 @@ final class VoiceSignaling
             }
 
             case 'send': {
+                $username = self::requireAuthenticatedUser($pdo, $realm);
                 $room = self::cleanRoom($body['room'] ?? null);
                 $from = self::cleanPeer($body['from'] ?? null);
                 $to = self::cleanPeer($body['to'] ?? null);
+                self::assertPeerOwnedByUser($db, $room, $from, $username);
                 $type = (string) ($body['type'] ?? '');
                 if (!in_array($type, ['offer', 'answer', 'ice', 'bye'], true)) {
                     self::bad('bad_type');
@@ -133,8 +126,10 @@ final class VoiceSignaling
             }
 
             case 'leave': {
+                $username = self::requireAuthenticatedUser($pdo, $realm);
                 $room = self::cleanRoom($body['room'] ?? null);
                 $peerId = self::cleanPeer($body['peerId'] ?? null);
+                self::assertPeerOwnedByUser($db, $room, $peerId, $username);
                 $db->prepare('DELETE FROM '.self::T_PEERS.' WHERE room=:r AND peer_id=:p')
                     ->execute([':r' => $room, ':p' => $peerId]);
                 echo json_encode(['ok' => true]);
@@ -142,8 +137,10 @@ final class VoiceSignaling
             }
 
             case 'chat': {
+                $username = self::requireAuthenticatedUser($pdo, $realm);
                 $room = self::cleanRoom($body['room'] ?? null);
                 $from = self::cleanPeer($body['from'] ?? null);
+                self::assertPeerOwnedByUser($db, $room, $from, $username);
                 $text = trim((string) ($body['text'] ?? ''));
                 $text = mb_substr($text, 0, 2000);
                 if ($text === '') {
@@ -201,26 +198,26 @@ final class VoiceSignaling
         exit;
     }
 
-    private static function upsertPeer(\PDO $db, string $room, string $peerId, string $name, int $now): void
+    private static function upsertPeer(\PDO $db, string $room, string $peerId, string $name, string $username, int $now): void
     {
         $driver = (string) $db->getAttribute(\PDO::ATTR_DRIVER_NAME);
         if ($driver === 'mysql') {
             $stmt = $db->prepare(
-                'INSERT INTO '.self::T_PEERS.' (room, peer_id, name, seen_at)
-                 VALUES (:r, :p, :n, :t)
-                 ON DUPLICATE KEY UPDATE name = VALUES(name), seen_at = VALUES(seen_at)'
+                'INSERT INTO '.self::T_PEERS.' (room, peer_id, name, owner_user, seen_at)
+                 VALUES (:r, :p, :n, :u, :t)
+                 ON DUPLICATE KEY UPDATE name = VALUES(name), owner_user = VALUES(owner_user), seen_at = VALUES(seen_at)'
             );
-            $stmt->execute([':r' => $room, ':p' => $peerId, ':n' => $name, ':t' => $now]);
+            $stmt->execute([':r' => $room, ':p' => $peerId, ':n' => $name, ':u' => $username, ':t' => $now]);
 
             return;
         }
 
         $stmt = $db->prepare(
-            'INSERT INTO '.self::T_PEERS.' (room, peer_id, name, seen_at)
-             VALUES (:r, :p, :n, :t)
-             ON CONFLICT(room, peer_id) DO UPDATE SET name = excluded.name, seen_at = excluded.seen_at'
+            'INSERT INTO '.self::T_PEERS.' (room, peer_id, name, owner_user, seen_at)
+             VALUES (:r, :p, :n, :u, :t)
+             ON CONFLICT(room, peer_id) DO UPDATE SET name = excluded.name, owner_user = excluded.owner_user, seen_at = excluded.seen_at'
         );
-        $stmt->execute([':r' => $room, ':p' => $peerId, ':n' => $name, ':t' => $now]);
+        $stmt->execute([':r' => $room, ':p' => $peerId, ':n' => $name, ':u' => $username, ':t' => $now]);
     }
 
     private static function pruneOldRows(\PDO $db): void
@@ -231,6 +228,55 @@ final class VoiceSignaling
             $db->prepare('DELETE FROM '.self::T_MESSAGES.' WHERE created_at < :c')->execute([':c' => $cutoff]);
         } catch (\PDOException $e) {
             throw new \RuntimeException('failed to prune rows: '.$e->getMessage(), 0, $e);
+        }
+    }
+
+    private static function ensureOwnerColumn(\PDO $db): void
+    {
+        try {
+            $db->query('SELECT owner_user FROM '.self::T_PEERS.' LIMIT 1');
+
+            return;
+        } catch (\PDOException) {
+            // Apply lightweight runtime backfill for older installs that have not run schema migrations yet.
+        }
+
+        $driver = (string) $db->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        try {
+            if ($driver === 'mysql') {
+                $db->exec(
+                    'ALTER TABLE '.self::T_PEERS."
+                     ADD COLUMN owner_user VARCHAR(190) NOT NULL DEFAULT '' AFTER name"
+                );
+            } else {
+                $db->exec('ALTER TABLE '.self::T_PEERS." ADD COLUMN owner_user TEXT NOT NULL DEFAULT ''");
+            }
+        } catch (\PDOException $e) {
+            $msg = strtolower($e->getMessage());
+            $duplicate = str_contains($msg, 'duplicate column') || str_contains($msg, 'already exists');
+            if (!$duplicate) {
+                throw $e;
+            }
+        }
+    }
+
+    private static function requireAuthenticatedUser(\PDO $pdo, string $realm): string
+    {
+        $username = VoiceSabreAuth::tryAuthenticatedUser($pdo, $realm);
+        if ($username === null || $username === '') {
+            VoiceSabreAuth::respondJsonUnauthorized($realm);
+        }
+
+        return $username;
+    }
+
+    private static function assertPeerOwnedByUser(\PDO $db, string $room, string $peerId, string $username): void
+    {
+        $stmt = $db->prepare('SELECT owner_user FROM '.self::T_PEERS.' WHERE room = :r AND peer_id = :p');
+        $stmt->execute([':r' => $room, ':p' => $peerId]);
+        $owner = $stmt->fetchColumn();
+        if (!is_string($owner) || $owner === '' || !hash_equals($owner, $username)) {
+            self::bad('forbidden', 403);
         }
     }
 
