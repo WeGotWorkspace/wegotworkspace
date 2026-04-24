@@ -1,0 +1,128 @@
+#!/usr/bin/env node
+
+import { createHash, createSign } from "node:crypto";
+import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, relative, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { execFileSync } from "node:child_process";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const repoRoot = resolve(__dirname, "..");
+const appRoot = resolve(repoRoot, "apps/wegotworkspace");
+const outputRoot = resolve(repoRoot, "dist/releases");
+const stagingRoot = resolve(outputRoot, "wgw-release");
+
+const version = resolveVersion();
+const packageName = `wegotworkspace-${version}.zip`;
+const packagePath = resolve(outputRoot, packageName);
+const manifestPath = resolve(outputRoot, "manifest.json");
+const signaturePath = resolve(outputRoot, "manifest.sig");
+
+const releaseEntries = [
+  "index.php",
+  "composer.json",
+  "composer.lock",
+  "VERSION",
+  "wgw-config.sample.php",
+  "vendor",
+  "wgw-src",
+  "wgw-modules/admin/dist",
+  "wgw-modules/drive/dist",
+  "wgw-modules/docs/build",
+  "wgw-modules/install/dist",
+  "wgw-modules/mail/dist",
+  "wgw-modules/settings/dist",
+  "wgw-modules/voice/dist",
+];
+
+ensureDir(outputRoot);
+rmSafe(stagingRoot);
+ensureDir(stagingRoot);
+
+for (const entry of releaseEntries) {
+  const source = resolve(appRoot, entry);
+  if (!existsSync(source)) {
+    throw new Error(`Missing release input: ${relative(repoRoot, source)}`);
+  }
+  const target = resolve(stagingRoot, entry);
+  ensureDir(dirname(target));
+  cpSync(source, target, { recursive: true });
+}
+
+zipDirectory(stagingRoot, packagePath);
+const checksum = sha256File(packagePath);
+let checksumSignature = "";
+const privateKey = process.env.WGW_RELEASE_SIGNING_PRIVATE_KEY?.trim() ?? "";
+if (privateKey !== "") {
+  const checksumSigner = createSign("RSA-SHA256");
+  checksumSigner.update(checksum);
+  checksumSigner.end();
+  checksumSignature = checksumSigner.sign(privateKey).toString("base64");
+}
+
+const manifest = {
+  name: "wegotworkspace",
+  version,
+  package_name: packageName,
+  package_url: "",
+  checksum_sha256: checksum,
+  checksum_signature: checksumSignature,
+  min_php: "8.1.0",
+  min_schema: 1,
+  released_at: new Date().toISOString(),
+  notes_url: "",
+};
+const manifestContent = `${JSON.stringify(manifest, null, 2)}\n`;
+writeFileSync(manifestPath, manifestContent, "utf8");
+
+if (privateKey !== "") {
+  const signer = createSign("RSA-SHA256");
+  signer.update(manifestContent);
+  signer.end();
+  const signature = signer.sign(privateKey).toString("base64");
+  writeFileSync(signaturePath, `${signature}\n`, "utf8");
+}
+
+rmSafe(stagingRoot);
+console.log(`Release assets written to ${relative(repoRoot, outputRoot)}`);
+
+function resolveVersion() {
+  const fromEnv = process.env.WGW_RELEASE_VERSION?.trim();
+  if (fromEnv) {
+    return fromEnv;
+  }
+  const versionFile = resolve(appRoot, "VERSION");
+  if (!existsSync(versionFile)) {
+    throw new Error("apps/wegotworkspace/VERSION is missing");
+  }
+  const fromFile = readFileSync(versionFile, "utf8").trim();
+  if (!fromFile) {
+    throw new Error("apps/wegotworkspace/VERSION is empty");
+  }
+  return fromFile;
+}
+
+function ensureDir(path) {
+  mkdirSync(path, { recursive: true });
+}
+
+function rmSafe(path) {
+  try {
+    execFileSync("rm", ["-rf", path], { stdio: "ignore" });
+  } catch {
+    // no-op
+  }
+}
+
+function zipDirectory(sourceDir, outputZip) {
+  const cwd = sourceDir;
+  execFileSync("zip", ["-rq", outputZip, "."], { cwd, stdio: "inherit" });
+}
+
+function sha256File(path) {
+  const hash = createHash("sha256");
+  const data = readFileSync(path);
+  hash.update(data);
+  return hash.digest("hex");
+}
+

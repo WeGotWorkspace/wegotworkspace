@@ -1,0 +1,10 @@
+{
+  "name": "@wgw/docs",
+  "private": true,
+  "scripts": {
+    "build": "bash scripts/sync-and-build.sh"
+  },
+  "dependencies": {
+    "@wgw/php-deps": "workspace:*"
+  }
+}

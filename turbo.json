@@ -1,0 +1,46 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalEnv": [
+    "SABRE_BUILD_DIR",
+    "SABRE_PUBLIC_DIR_NAME",
+    "SABRE_PRIVATE_DIR_NAME",
+    "SABRE_DATA_DIR_NAME",
+    "SABRE_DATA_DIR"
+  ],
+  "globalDependencies": ["apps/wegotworkspace/composer.json", "apps/wegotworkspace/composer.lock"],
+  "tasks": {
+    "preview:macos": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true
+    },
+    "build": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "outputs": [
+        "../../apps/wegotworkspace/vendor/**",
+        "../../apps/wegotworkspace/wgw-modules/docs/build/**",
+        "../../apps/wegotworkspace/wgw-modules/admin/dist/**",
+        "../../apps/wegotworkspace/wgw-modules/settings/dist/**",
+        "../../apps/wegotworkspace/wgw-modules/drive/dist/**",
+        "../../apps/wegotworkspace/wgw-modules/voice/dist/**",
+        "../../apps/wegotworkspace/wgw-modules/mail/dist/**",
+        "../../apps/wegotworkspace/wgw-modules/install/dist/**"
+      ]
+    },
+    "dev": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true
+    },
+    "dev:php": {
+      "cache": false,
+      "persistent": true
+    },
+    "watch": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true
+    }
+  }
+}

@@ -1,0 +1,46 @@
+--- a/backend/Controllers/FileController.php
++++ b/backend/Controllers/FileController.php
+@@ -10,6 +10,7 @@
+ 
+ namespace Filegator\Controllers;
+ 
++use App\Filegator\FilegatorPathGuard;
+ use Filegator\Config\Config;
+ use Filegator\Kernel\Request;
+ use Filegator\Kernel\Response;
+@@ -49,17 +50,33 @@
+     public function changeDirectory(Request $request, Response $response)
+     {
+         $path = $request->input('to', $this->separator);
++        $path = FilegatorPathGuard::sanitize($this->separator, (string) $path, $this->auth->user() ?: $this->auth->getGuest());
+ 
+         $this->session->set(self::SESSION_CWD, $path);
+ 
+-        return $response->json($this->storage->getDirectoryCollection($path));
++        try {
++            return $response->json($this->storage->getDirectoryCollection($path));
++        } catch (\Throwable $e) {
++            $path = $this->separator;
++            $this->session->set(self::SESSION_CWD, $path);
++
++            return $response->json($this->storage->getDirectoryCollection($path));
++        }
+     }
+ 
+     public function getDirectory(Request $request, Response $response)
+     {
+         $path = $request->input('dir', $this->session->get(self::SESSION_CWD, $this->separator));
++        $path = FilegatorPathGuard::sanitize($this->separator, (string) $path, $this->auth->user() ?: $this->auth->getGuest());
+ 
+-        $content = $this->storage->getDirectoryCollection($path);
++        try {
++            $content = $this->storage->getDirectoryCollection($path);
++        } catch (\Throwable $e) {
++            // Stored CWD can become stale after auth/storage switches; recover to root.
++            $path = $this->separator;
++            $this->session->set(self::SESSION_CWD, $path);
++            $content = $this->storage->getDirectoryCollection($path);
++        }
+ 
+         return $response->json($content);
+     }
