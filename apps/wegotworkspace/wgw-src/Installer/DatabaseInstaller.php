@@ -74,9 +74,13 @@ final class DatabaseInstaller
                 Seeder::seed($pdo, $username, $password, $displayName, $email, $enableCalendars, $enableContacts);
                 self::seedAppSettings($pdo, $initialSettings);
                 SchemaMigrationRunner::migrate($pdo);
-                $pdo->commit();
+                if ($pdo->inTransaction()) {
+                    $pdo->commit();
+                }
             } catch (\Throwable $e) {
-                $pdo->rollBack();
+                if ($pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
                 throw $e;
             }
 
@@ -89,9 +93,13 @@ final class DatabaseInstaller
             Seeder::seed($pdo, $username, $password, $displayName, $email, $enableCalendars, $enableContacts);
             self::seedAppSettings($pdo, $initialSettings);
             SchemaMigrationRunner::migrate($pdo);
-            $pdo->commit();
+            if ($pdo->inTransaction()) {
+                $pdo->commit();
+            }
         } catch (\Throwable $e) {
-            $pdo->rollBack();
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             throw $e;
         }
     }
