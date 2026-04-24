@@ -84,12 +84,21 @@ use App\Home\HomeKernel;
 use App\Mail\MailKernel;
 use App\Office\OfficeEntry;
 use App\Office\OfficeStatic;
+use App\Security\TrustedHostGate;
 use App\Voice\VoiceKernel;
 use App\UserSettings\UserSettingsUiKernel;
 use App\Update\UpdateManager;
 
 $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
     || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+
+if (!TrustedHostGate::isAllowed($_SERVER, getenv('WGW_TRUSTED_HOSTS'))) {
+    http_response_code(400);
+    header('Content-Type: text/plain; charset=utf-8');
+    echo "Bad Request\n";
+    exit;
+}
+
 header_remove('X-Powered-By');
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: SAMEORIGIN');
