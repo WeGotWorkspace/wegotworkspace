@@ -13,9 +13,6 @@
         "ext-pdo": "*",
         "ext-simplexml": "*",
         "ext-zip": "*",
-        "cweagans/composer-patches": "^1.7",
-        "filegator/filegator": "^7.14",
-        "league/flysystem-webdav": "^1.0",
         "phpmailer/phpmailer": "^6.9",
         "psr/log": "^1.1 || ^2.0 || ^3.0",
         "sabre/dav": "^4.7"
@@ -29,9 +26,6 @@
         "sort-packages": true,
         "optimize-autoloader": true,
         "vendor-dir": "vendor",
-        "allow-plugins": {
-            "cweagans/composer-patches": true
-        },
         "audit": {
             "block-insecure": false
         }
@@ -41,22 +35,5 @@
         "ext-openssl": "Used to encrypt per-user mail passwords on disk",
         "ext-pdo_sqlite": "Default database backend for the installer",
         "ext-pdo_mysql": "Optional MySQL / MariaDB support"
-    },
-    "extra": {
-        "patches": {
-            "monolog/monolog": {
-                "PHP 8.4: avoid deprecated E_STRICT constant in ErrorHandler": "patches/monolog-1-php84-estrict.patch"
-            },
-            "filegator/filegator": {
-                "PHP 8.4: JsonSerializable::jsonSerialize() return type on User": "patches/filegator-user-jsonserialize-php84.patch",
-                "PHP 8.4: JsonSerializable::jsonSerialize() return type on DirectoryCollection": "patches/filegator-directorycollection-jsonserialize-php84.patch",
-                "PHP 8.4: JsonSerializable::jsonSerialize() return type on Collection trait": "patches/filegator-collection-jsonserialize-php84.patch",
-                "chmod/permissions: support Local adapter subclasses": "patches/filegator-flysystem-local-instanceof.patch",
-                "Drive: sanitize cwd paths for Sabre ACL parity": "patches/filegator-path-guard-sabre-acl.patch"
-            },
-            "php-di/php-di": {
-                "PHP 8.4: explicit nullable helper signatures in functions.php": "patches/php-di-nullable-classname-php84.patch"
-            }
-        }
     }
 }
