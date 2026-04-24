@@ -48,8 +48,12 @@ final class InstallerKernel
 
         $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
         if ($method === 'GET' || $method === 'HEAD') {
-            if (InstallerStatic::distReady() && InstallerStatic::tryServe($webBase, $path)) {
+            $distReady = InstallerStatic::distReady();
+            if ($distReady && InstallerStatic::tryServe($webBase, $path)) {
                 return;
+            }
+            if ($distReady) {
+                self::errorPage(404, 'Not found');
             }
             self::respondDistMissing();
         }
@@ -707,7 +711,19 @@ final class InstallerKernel
     {
         http_response_code(503);
         header('Content-Type: text/plain; charset=utf-8');
+        $expected = InstallerStatic::distRoot().'/index.html';
         echo "Install UI build is missing. Run `pnpm --filter @wgw/install-ui build` from the repo root.\n";
+        echo "Expected index file: ".$expected."\n";
+        echo "Expected file readable by this PHP process: ".(is_readable($expected) ? 'yes' : 'no')."\n";
+        echo "Runtime root: ".Paths::root()."\n";
+        echo "Private dir: ".Paths::privateDir()."\n";
+        echo "App root: ".Paths::appRoot()."\n";
+        echo "cwd: ".getcwd()."\n";
+        echo "PHP SAPI: ".PHP_SAPI."\n";
+        echo "open_basedir: ".((string) ini_get('open_basedir'))."\n";
+        echo "SABRE_BUILD_DIR: ".((string) getenv('SABRE_BUILD_DIR'))."\n";
+        echo "SABRE_PRIVATE_DIR_NAME: ".((string) getenv('SABRE_PRIVATE_DIR_NAME'))."\n";
+        echo "Hint: if SABRE_BUILD_DIR or SABRE_PRIVATE_DIR_NAME is set in your web server, build with those same env values.\n";
         exit;
     }
 
