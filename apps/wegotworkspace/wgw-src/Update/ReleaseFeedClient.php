@@ -25,7 +25,7 @@ final class ReleaseFeedClient
         }
 
         if (isset($decoded['version']) && is_string($decoded['version'])) {
-            return $decoded;
+            return self::normalizeManifestMetadata($decoded, $feedUrl);
         }
 
         // Support GitHub Releases API payloads: /repos/{owner}/{repo}/releases/latest
@@ -68,7 +68,7 @@ final class ReleaseFeedClient
                 $manifest['notes_url'] = $decoded['html_url'];
             }
 
-            return $manifest;
+            return self::normalizeManifestMetadata($manifest, $manifestAssetUrl);
         }
 
         return null;
@@ -90,5 +90,38 @@ final class ReleaseFeedClient
         }
 
         return $raw;
+    }
+
+    /**
+     * @param array<string, mixed> $manifest
+     *
+     * @return array<string, mixed>
+     */
+    private static function normalizeManifestMetadata(array $manifest, string $manifestUrl): array
+    {
+        $version = isset($manifest['version']) && is_string($manifest['version']) ? trim($manifest['version']) : '';
+        if ($version === '') {
+            return $manifest;
+        }
+        $versionNoV = str_starts_with($version, 'v') ? substr($version, 1) : $version;
+
+        $packageUrl = isset($manifest['package_url']) && is_string($manifest['package_url'])
+            ? trim($manifest['package_url'])
+            : '';
+        if ($packageUrl === '' && str_ends_with($manifestUrl, '/manifest.json')) {
+            $base = substr($manifestUrl, 0, -strlen('/manifest.json'));
+            $manifest['package_url'] = $base.'/wegotworkspace-deploy-'.$versionNoV.'.zip';
+        }
+
+        $notesUrl = isset($manifest['notes_url']) && is_string($manifest['notes_url'])
+            ? trim($manifest['notes_url'])
+            : '';
+        if ($notesUrl === '' && preg_match('#^https://github\.com/([^/]+)/([^/]+)/releases/(?:download/[^/]+|latest/download)/manifest\.json$#', $manifestUrl, $m) === 1) {
+            $owner = $m[1];
+            $repo = $m[2];
+            $manifest['notes_url'] = 'https://github.com/'.$owner.'/'.$repo.'/releases/tag/v'.$versionNoV;
+        }
+
+        return $manifest;
     }
 }
