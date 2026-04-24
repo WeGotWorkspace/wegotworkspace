@@ -17,9 +17,30 @@ final class ReleaseFeedClient
         }
         $raw = self::fetchJsonText($feedUrl);
         if ($raw === null) {
+            $apiFallback = self::githubApiUrlFromFeedUrl($feedUrl);
+            if ($apiFallback !== null) {
+                $raw = self::fetchJsonText($apiFallback);
+                if ($raw !== null) {
+                    $feedUrl = $apiFallback;
+                }
+            }
+        }
+        if ($raw === null) {
             return null;
         }
         $decoded = json_decode($raw, true);
+        if (!is_array($decoded)) {
+            $apiFallback = self::githubApiUrlFromFeedUrl($feedUrl);
+            if ($apiFallback !== null && $apiFallback !== $feedUrl) {
+                $raw = self::fetchJsonText($apiFallback);
+                if ($raw !== null) {
+                    $decoded = json_decode($raw, true);
+                    if (is_array($decoded)) {
+                        $feedUrl = $apiFallback;
+                    }
+                }
+            }
+        }
         if (!is_array($decoded)) {
             return null;
         }
@@ -123,5 +144,34 @@ final class ReleaseFeedClient
         }
 
         return $manifest;
+    }
+
+    private static function githubApiUrlFromFeedUrl(string $url): ?string
+    {
+        $parts = parse_url($url);
+        if (!is_array($parts)) {
+            return null;
+        }
+        $host = strtolower((string) ($parts['host'] ?? ''));
+        if ($host !== 'github.com' && $host !== 'www.github.com') {
+            return null;
+        }
+        $path = trim((string) ($parts['path'] ?? ''), '/');
+        if ($path === '') {
+            return null;
+        }
+        $segments = array_values(array_filter(explode('/', $path), static fn (string $v): bool => $v !== ''));
+        if (count($segments) < 4) {
+            return null;
+        }
+        [$owner, $repo, $section, $sub] = array_slice($segments, 0, 4);
+        if ($section !== 'releases') {
+            return null;
+        }
+        if ($sub !== 'latest' && $sub !== 'download') {
+            return null;
+        }
+
+        return 'https://api.github.com/repos/'.$owner.'/'.$repo.'/releases/latest';
     }
 }
