@@ -29,6 +29,7 @@ final class UpdateManager
             'checks' => $checks,
             'inProgress' => is_file(UpdateStateStore::lockPath()),
             'lastCheckedAt' => is_string($state['last_checked_at'] ?? null) ? $state['last_checked_at'] : null,
+            'lastCheckError' => is_string($state['last_check_error'] ?? null) ? $state['last_check_error'] : null,
             'lastResult' => is_array($state['last_result'] ?? null) ? $state['last_result'] : null,
         ];
     }
@@ -39,11 +40,23 @@ final class UpdateManager
     public static function check(\PDO $pdo, string $feedUrl): array
     {
         self::ensureRateLimit('check', 10);
-        $latest = ReleaseFeedClient::fetchLatest($feedUrl);
         $state = UpdateStateStore::read();
         $state['last_checked_at'] = date('c');
-        if ($latest !== null) {
+        try {
+            $feedUrl = trim($feedUrl);
+            if ($feedUrl === '') {
+                throw new \InvalidArgumentException('WGW_UPDATE_FEED_URL is not configured.');
+            }
+            $latest = ReleaseFeedClient::fetchLatest($feedUrl);
+            if ($latest === null || !isset($latest['version']) || !is_string($latest['version']) || trim($latest['version']) === '') {
+                throw new \InvalidArgumentException('No valid release metadata found. Point WGW_UPDATE_FEED_URL to manifest.json or GitHub releases/latest API URL.');
+            }
             $state['latest'] = $latest;
+            $state['last_check_error'] = null;
+        } catch (\Throwable $e) {
+            $state['last_check_error'] = $e->getMessage();
+            UpdateStateStore::write($state);
+            throw $e;
         }
         UpdateStateStore::write($state);
 

@@ -48,6 +48,10 @@ final class LocalConfigFile
         if ($dataDir !== null) {
             $cfg['data_dir'] = $dataDir;
         }
+        $updateFeedUrl = self::definedString('WGW_UPDATE_FEED_URL');
+        if ($updateFeedUrl !== null) {
+            $cfg['update_feed_url'] = $updateFeedUrl;
+        }
 
         $pdo = [];
         $sqliteFile = self::definedString('WGW_DB_SQLITE_FILE');
