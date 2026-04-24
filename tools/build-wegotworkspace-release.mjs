@@ -50,6 +50,7 @@ for (const entry of releaseEntries) {
   ensureDir(dirname(target));
   cpSync(source, target, { recursive: true });
 }
+writeFileSync(resolve(stagingRoot, "VERSION"), `${version}\n`, "utf8");
 
 zipDirectory(stagingRoot, packagePath);
 const checksum = sha256File(packagePath);
@@ -91,7 +92,7 @@ console.log(`Release assets written to ${relative(repoRoot, outputRoot)}`);
 function resolveVersion() {
   const fromEnv = process.env.WGW_RELEASE_VERSION?.trim();
   if (fromEnv) {
-    return fromEnv;
+    return normalizeVersion(fromEnv);
   }
   const versionFile = resolve(appRoot, "VERSION");
   if (!existsSync(versionFile)) {
@@ -101,7 +102,15 @@ function resolveVersion() {
   if (!fromFile) {
     throw new Error("apps/wegotworkspace/VERSION is empty");
   }
-  return fromFile;
+  return normalizeVersion(fromFile);
+}
+
+function normalizeVersion(version) {
+  const trimmed = version.trim();
+  if (trimmed.startsWith("v")) {
+    return trimmed.slice(1);
+  }
+  return trimmed;
 }
 
 function ensureDir(path) {
