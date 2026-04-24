@@ -43,6 +43,9 @@ PHP;
         $php .= "// Supports relative (./wgw-content, ../shared/wgw-content) and absolute paths.\n";
         $php .= "// SABRE_DATA_DIR still overrides this value when set.\n";
         $php .= "defined('WGW_DATA_DIR') || define('WGW_DATA_DIR', ".var_export($dataDir, true).");\n\n";
+        $php .= "// Release feed used by /admin/updates \"Check now\".\n";
+        $php .= "// Can point to manifest.json directly or GitHub releases/latest API URL.\n";
+        $php .= "defined('WGW_UPDATE_FEED_URL') || define('WGW_UPDATE_FEED_URL', 'https://github.com/woutervroege/wegotworkspace/releases/latest/download/manifest.json');\n\n";
 
         if (isset($pdo['sqlite_file']) && is_string($pdo['sqlite_file']) && trim($pdo['sqlite_file']) !== '') {
             $sqliteFile = trim($pdo['sqlite_file']);

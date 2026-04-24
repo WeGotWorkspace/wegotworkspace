@@ -59,6 +59,7 @@ export type Settings = {
     checks: { ok: boolean; label: string; detail: string }[];
     inProgress: boolean;
     lastCheckedAt: string | null;
+    lastCheckError: string | null;
     lastResult: { ok: boolean; version: string; message: string; finishedAt: string | null } | null;
   };
   currentUser: string;
@@ -95,6 +96,7 @@ const DEFAULT_STATE: Settings = {
     checks: [],
     inProgress: false,
     lastCheckedAt: null,
+    lastCheckError: null,
     lastResult: null,
   },
   currentUser: "",

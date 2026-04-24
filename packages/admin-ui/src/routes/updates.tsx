@@ -69,6 +69,11 @@ function UpdatesPage() {
                 {updates.compatible ? "Ready" : "Action required"}
               </Badge>
             </div>
+            {updates.lastCheckError && (
+              <div className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+                Last check error: {updates.lastCheckError}
+              </div>
+            )}
             {updates.latest?.notes_url && (
               <a
                 href={String(updates.latest.notes_url)}
