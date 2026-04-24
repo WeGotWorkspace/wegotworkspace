@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { filegatorPost } from "@/lib/filegatorApi";
+import { drivePost } from "@/lib/driveApi";
 import type { DriveFile } from "@/lib/files";
 
 function validateItemName(name: string, previous: string): string | undefined {
@@ -52,7 +52,7 @@ export function RenameItemModal({
     setBusy(true);
     setErr(undefined);
     try {
-      await filegatorPost("/renameitem", { destination: cwd, from: file.name, to });
+      await drivePost("/renameitem", { destination: cwd, from: file.name, to });
       onSuccess();
     } catch (e) {
       setErr((e as Error).message || "Rename failed.");

@@ -21,22 +21,22 @@ import {
   kindFromName,
 } from "@/lib/files";
 import {
-  type FilegatorDirEntry,
-  type FilegatorDirResponse,
-  type FilegatorUserResponse,
-  filegatorDownloadUrl,
-  filegatorGet,
-  filegatorPost,
-  filegatorSearchFilenames,
-  filegatorSyncSessionCwd,
-} from "@/lib/filegatorApi";
+  type DriveDirEntry,
+  type DriveDirResponse,
+  type DriveUserResponse,
+  driveDownloadUrl,
+  driveGet,
+  drivePost,
+  driveSearchFilenames,
+  driveSyncSessionCwd,
+} from "@/lib/driveApi";
 import { purgeDriveRecentAfterDelete, recordDriveRecent } from "@/lib/driveRecent";
 import { purgeDriveStarredAfterDelete, toggleDriveStarred } from "@/lib/driveStarred";
 import { useDriveLocalLists } from "@/lib/useDriveLocalLists";
 import { canOpenInOfficePath, officeEditorHref } from "@/lib/officeLink";
 import { cn } from "@/lib/utils";
 
-function toDriveFile(entry: FilegatorDirEntry, ownerName: string, ownerAv: string): DriveFile | null {
+function toDriveFile(entry: DriveDirEntry, ownerName: string, ownerAv: string): DriveFile | null {
   if (entry.type === "back") return null;
   const isDir = entry.type === "dir";
   const iso = new Date((entry.time || 0) * 1000).toISOString();
@@ -206,7 +206,7 @@ export function Drive() {
 
   const { data: userData } = useQuery({
     queryKey: ["drive-user"],
-    queryFn: async () => filegatorGet<FilegatorUserResponse>("/getuser"),
+    queryFn: async () => driveGet<DriveUserResponse>("/getuser"),
   });
 
   useEffect(() => {
@@ -222,7 +222,7 @@ export function Drive() {
 
   useEffect(() => {
     if (section !== "my") return;
-    void filegatorSyncSessionCwd(cwd).catch(() => {
+    void driveSyncSessionCwd(cwd).catch(() => {
       /* session sync is best-effort; listing still sends explicit dir */
     });
   }, [cwd, section]);
@@ -254,7 +254,7 @@ export function Drive() {
   const { data: listing, isPending, isError, error, refetch } = useQuery({
     queryKey: ["drive-dir", cwd, section],
     enabled: section === "my",
-    queryFn: async () => filegatorPost<FilegatorDirResponse>("/getdir", { dir: cwd }),
+    queryFn: async () => drivePost<DriveDirResponse>("/getdir", { dir: cwd }),
   });
 
   const debouncedDriveSearch = useDebouncedValue(query, 320);
@@ -266,7 +266,7 @@ export function Drive() {
     queryKey: ["drive-search", debouncedTrimmed],
     enabled: driveSearchActive && debouncedTrimmed.length >= 2,
     staleTime: 30_000,
-    queryFn: async () => filegatorSearchFilenames(debouncedTrimmed, { limit: 50 }),
+    queryFn: async () => driveSearchFilenames(debouncedTrimmed, { limit: 50 }),
   });
 
   const driveSearchAwaitingDebounce =
@@ -348,7 +348,7 @@ export function Drive() {
   const openFilePreview = useCallback((f: DriveFile) => {
     if (f.kind === "image") {
       recordDriveRecent({ path: f.path, name: f.name, kind: f.kind });
-      window.open(filegatorDownloadUrl(f.path), "_blank", "noopener,noreferrer");
+      window.open(driveDownloadUrl(f.path), "_blank", "noopener,noreferrer");
       return;
     }
     openInOffice(f);
@@ -429,7 +429,7 @@ export function Drive() {
       }
       if (f.kind === "image") {
         recordDriveRecent({ path: f.path, name: f.name, kind: f.kind });
-        window.open(filegatorDownloadUrl(f.path), "_blank", "noopener,noreferrer");
+        window.open(driveDownloadUrl(f.path), "_blank", "noopener,noreferrer");
         return;
       }
       setSection("my");

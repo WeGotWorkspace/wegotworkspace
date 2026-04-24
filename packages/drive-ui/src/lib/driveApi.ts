@@ -1,5 +1,5 @@
 /**
- * Browser client for the FileGator JSON API served at {@code /drive/?r=…} (same origin, HTTP Basic + CSRF cookie).
+ * Browser client for the Drive JSON API served at {@code /drive/?r=…} (same origin, HTTP Basic + CSRF cookie).
  */
 
 function normalizeBaseUrl(path: string): string {
@@ -34,8 +34,8 @@ function resolveBaseUrl(): string {
 
 const base = resolveBaseUrl();
 
-/** Base64 path segment expected by FileGator {@code GET /download}. */
-export function filegatorDownloadUrl(filePath: string): string {
+/** Base64 path segment expected by Drive {@code GET /download}. */
+export function driveDownloadUrl(filePath: string): string {
   const bytes = new TextEncoder().encode(filePath);
   let binary = "";
   for (let i = 0; i < bytes.length; i++) {
@@ -127,7 +127,7 @@ export function resetCsrf(): void {
   csrfToken = null;
 }
 
-export async function filegatorPost<T = unknown>(route: string, body: Record<string, unknown> = {}): Promise<T> {
+export async function drivePost<T = unknown>(route: string, body: Record<string, unknown> = {}): Promise<T> {
   const token = await getCsrf();
   const r = await fetch(`${base}?r=${encodeURIComponent(route)}`, {
     method: "POST",
@@ -149,7 +149,7 @@ export async function filegatorPost<T = unknown>(route: string, body: Record<str
   return (await r.json()) as T;
 }
 
-export async function filegatorGet<T = unknown>(route: string): Promise<T> {
+export async function driveGet<T = unknown>(route: string): Promise<T> {
   const r = await fetch(`${base}?r=${encodeURIComponent(route)}`, {
     method: "GET",
     credentials: "include",
@@ -181,7 +181,7 @@ function parseDriveApiMessage(raw: string): string {
   return t;
 }
 
-export interface FilegatorDirEntry {
+export interface DriveDirEntry {
   type: string;
   path: string;
   name: string;
@@ -190,54 +190,54 @@ export interface FilegatorDirEntry {
   permissions: number;
 }
 
-export interface FilegatorDirResponse {
+export interface DriveDirResponse {
   data: {
     location: string;
-    files: FilegatorDirEntry[];
+    files: DriveDirEntry[];
   };
 }
 
 /** Recursive filename search (server applies the same storage ACL as directory listing). */
-export async function filegatorSearchFilenames(
+export async function driveSearchFilenames(
   q: string,
   opts?: { limit?: number },
-): Promise<FilegatorDirResponse> {
+): Promise<DriveDirResponse> {
   const trimmed = q.trim();
-  return filegatorPost<FilegatorDirResponse>("/searchfiles", {
+  return drivePost<DriveDirResponse>("/searchfiles", {
     q: trimmed,
     ...(opts?.limit != null ? { limit: opts.limit } : {}),
   });
 }
 
-export interface FilegatorUser {
+export interface DriveUser {
   username?: string;
   name?: string;
   role?: string;
 }
 
-export interface FilegatorUserResponse {
-  data: FilegatorUser;
+export interface DriveUserResponse {
+  data: DriveUser;
 }
 
-/** Align FileGator session cwd with the Drive UI (required before {@link filegatorCreateFolder} / upload). */
-export async function filegatorSyncSessionCwd(to: string): Promise<void> {
-  await filegatorPost("/changedir", { to });
+/** Align Drive session cwd with the Drive UI (required before {@link driveCreateFolder} / upload). */
+export async function driveSyncSessionCwd(to: string): Promise<void> {
+  await drivePost("/changedir", { to });
 }
 
-/** Create a directory under {@code cwd} using the same Flysystem/WebDAV storage as listing. */
-export async function filegatorCreateFolder(cwd: string, name: string): Promise<void> {
-  await filegatorSyncSessionCwd(cwd);
-  await filegatorPost("/createnew", { type: "dir", name: name.trim() });
+/** Create a directory under {@code cwd} using the same storage as listing. */
+export async function driveCreateFolder(cwd: string, name: string): Promise<void> {
+  await driveSyncSessionCwd(cwd);
+  await drivePost("/createnew", { type: "dir", name: name.trim() });
 }
 
-export type FilegatorDeleteItem = { path: string; type: "dir" | "file" };
+export type DriveDeleteItem = { path: string; type: "dir" | "file" };
 
-/** Permanently removes files and/or directories (FileGator {@code /deleteitems}). */
-export async function filegatorDeleteItems(items: FilegatorDeleteItem[]): Promise<void> {
+/** Permanently removes files and/or directories ({@code /deleteitems}). */
+export async function driveDeleteItems(items: DriveDeleteItem[]): Promise<void> {
   if (items.length === 0) {
     return;
   }
-  await filegatorPost("/deleteitems", { items });
+  await drivePost("/deleteitems", { items });
 }
 
 /**
@@ -276,7 +276,7 @@ function appendResumableFields(
   form.append("resumableTotalChunks", String(params.totalChunks));
 }
 
-export type FilegatorUploadProgress = {
+export type DriveUploadProgress = {
   fileIndex: number;
   fileCount: number;
   fileName: string;
@@ -285,21 +285,21 @@ export type FilegatorUploadProgress = {
 };
 
 /**
- * Resumable-style multipart upload to {@code cwd} (FileGator {@code /upload}), same storage as WebDAV.
+ * Resumable-style multipart upload to {@code cwd} ({@code /upload}), same storage as WebDAV.
  */
-export async function filegatorUploadFiles(
+export async function driveUploadFiles(
   cwd: string,
   files: File[],
   opts?: {
     signal?: AbortSignal;
-    onProgress?: (p: FilegatorUploadProgress) => void;
+    onProgress?: (p: DriveUploadProgress) => void;
   },
 ): Promise<void> {
   if (files.length === 0) {
     return;
   }
 
-  await filegatorSyncSessionCwd(cwd);
+  await driveSyncSessionCwd(cwd);
   resetCsrf();
   let token = await refreshCsrf();
 

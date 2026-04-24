@@ -241,12 +241,12 @@ final class SabreUiAuthGate
 
     private static function secretPathPrimary(): string
     {
-        return Paths::filegatorData().'/ui_auth_gate.secret';
+        return Paths::driveData().'/ui_auth_gate.secret';
     }
 
     private static function secretPathLegacy(): string
     {
-        return Paths::filegatorData().'/drive_gate.secret';
+        return Paths::driveData().'/drive_gate.secret';
     }
 
     private static function ensureSecretFile(): void
