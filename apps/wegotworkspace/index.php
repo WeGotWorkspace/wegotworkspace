@@ -88,6 +88,16 @@ use App\Voice\VoiceKernel;
 use App\UserSettings\UserSettingsUiKernel;
 use App\Update\UpdateManager;
 
+$https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+header_remove('X-Powered-By');
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: SAMEORIGIN');
+header('Referrer-Policy: strict-origin-when-cross-origin');
+if ($https) {
+    header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+}
+
 $webBase = WebBase::detect();
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $installPrefix = WebBase::url($webBase, '/install');
@@ -169,14 +179,10 @@ if ($path === $legacyTalk || $path === $legacyTalk.'/' || str_starts_with($path,
         $suffix = '/';
     }
     $targetPath = WebBase::url($webBase, '/voice'.$suffix);
-    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-        || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
-    $scheme = $https ? 'https' : 'http';
-    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
     $qs = isset($_SERVER['QUERY_STRING']) && is_string($_SERVER['QUERY_STRING']) && $_SERVER['QUERY_STRING'] !== ''
         ? '?'.$_SERVER['QUERY_STRING']
         : '';
-    header('Location: '.$scheme.'://'.$host.$targetPath.$qs, true, 308);
+    header('Location: '.$targetPath.$qs, true, 308);
     exit;
 }
 
@@ -214,11 +220,7 @@ if (preg_match('#/\\.well-known/(caldav|carddav)/?$#', $path, $wk)) {
         $basePath = '/'.$basePath;
     }
     $basePath = rtrim($basePath, '/').'/';
-    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-        || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
-    $scheme = $https ? 'https' : 'http';
-    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-    header('Location: '.$scheme.'://'.$host.$basePath, true, 307);
+    header('Location: '.$basePath, true, 307);
     exit;
 }
 

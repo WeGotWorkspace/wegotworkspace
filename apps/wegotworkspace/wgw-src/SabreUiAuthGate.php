@@ -138,12 +138,8 @@ final class SabreUiAuthGate
             ? '?'.$_SERVER['QUERY_STRING']
             : '';
         $return = $path.$qs;
-        $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-            || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
-        $scheme = $https ? 'https' : 'http';
-        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
         $login = WebBase::url($webBase, '/login/');
-        $url = $scheme.'://'.$host.$login.'?return='.rawurlencode($return);
+        $url = $login.'?return='.rawurlencode($return);
         header('Location: '.$url, true, 302);
         exit;
     }

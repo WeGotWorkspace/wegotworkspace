@@ -387,20 +387,22 @@ p.err {
 
     private static function assertTrustedFormOrigin(): void
     {
-        $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-            || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
-        $scheme = $https ? 'https' : 'http';
-        $host = $_SERVER['HTTP_HOST'] ?? '';
-        $expected = $scheme.'://'.$host;
+        $expected = self::requestOrigin();
+        if ($expected === null) {
+            http_response_code(403);
+            header('Content-Type: text/plain; charset=utf-8');
+            echo 'Forbidden';
+            exit;
+        }
         $origin = (string) ($_SERVER['HTTP_ORIGIN'] ?? '');
-        if ($origin !== '' && !str_starts_with($origin, $expected)) {
+        if ($origin !== '' && !hash_equals($expected, self::normalizeOrigin($origin) ?? '')) {
             http_response_code(403);
             header('Content-Type: text/plain; charset=utf-8');
             echo 'Forbidden';
             exit;
         }
         $ref = (string) ($_SERVER['HTTP_REFERER'] ?? '');
-        if ($origin === '' && $ref !== '' && !str_starts_with($ref, $expected)) {
+        if ($origin === '' && $ref !== '' && !hash_equals($expected, self::normalizeOrigin($ref) ?? '')) {
             http_response_code(403);
             header('Content-Type: text/plain; charset=utf-8');
             echo 'Forbidden';
@@ -410,21 +412,69 @@ p.err {
 
     private static function redirectTo(string $webBase, string $path): void
     {
-        $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-            || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
-        $scheme = $https ? 'https' : 'http';
-        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        header('Location: '.$scheme.'://'.$host.WebBase::url($webBase, $path), true, 302);
+        header('Location: '.WebBase::url($webBase, $path), true, 302);
         exit;
     }
 
     private static function redirectToPath(string $path): void
     {
+        header('Location: '.$path, true, 302);
+        exit;
+    }
+
+    private static function requestOrigin(): ?string
+    {
         $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
             || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
         $scheme = $https ? 'https' : 'http';
-        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        header('Location: '.$scheme.'://'.$host.$path, true, 302);
-        exit;
+        $host = self::sanitizeHost((string) ($_SERVER['HTTP_HOST'] ?? ''));
+        if ($host === null) {
+            return null;
+        }
+
+        return $scheme.'://'.$host;
     }
+
+    private static function normalizeOrigin(string $url): ?string
+    {
+        $parts = parse_url(trim($url));
+        if (!is_array($parts)) {
+            return null;
+        }
+        $scheme = isset($parts['scheme']) && is_string($parts['scheme']) ? strtolower($parts['scheme']) : '';
+        if ($scheme !== 'http' && $scheme !== 'https') {
+            return null;
+        }
+        $host = isset($parts['host']) && is_string($parts['host']) ? strtolower($parts['host']) : '';
+        if ($host === '' || !preg_match('/^[a-z0-9.-]+$/', $host)) {
+            return null;
+        }
+        $port = isset($parts['port']) ? (int) $parts['port'] : null;
+        if ($port !== null && ($port < 1 || $port > 65535)) {
+            return null;
+        }
+
+        return $port !== null ? $scheme.'://'.$host.':'.$port : $scheme.'://'.$host;
+    }
+
+    private static function sanitizeHost(string $host): ?string
+    {
+        $host = strtolower(trim($host));
+        if ($host === '') {
+            return null;
+        }
+        if (!preg_match('/^[a-z0-9.-]+(?::[0-9]{1,5})?$/', $host)) {
+            return null;
+        }
+        if (str_contains($host, ':')) {
+            [$name, $port] = explode(':', $host, 2);
+            $portInt = (int) $port;
+            if ($name === '' || $portInt < 1 || $portInt > 65535) {
+                return null;
+            }
+        }
+
+        return $host;
+    }
+
 }
