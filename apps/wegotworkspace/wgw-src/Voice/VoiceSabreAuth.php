@@ -42,18 +42,11 @@ final class VoiceSabreAuth
     }
 
     /**
-     * Sends {@code 401} JSON plus {@code WWW-Authenticate} so clients can detect “create requires login”.
+     * Sends a JSON {@code 401} without a Basic challenge so guest join pages do not
+     * trigger browser-native username/password popups.
      */
     public static function respondJsonUnauthorized(string $realm): never
     {
-        $response = new Response();
-        $basic = new Basic($realm, Sapi::getRequest(), $response);
-        $basic->requireLogin();
-        foreach ($response->getHeaders() as $name => $values) {
-            foreach ($values as $v) {
-                header($name.': '.$v, false);
-            }
-        }
         http_response_code(401);
         header('Content-Type: application/json');
         echo json_encode([
