@@ -9,7 +9,7 @@
 
 1. Update `apps/wegotworkspace/VERSION`.
 2. Build workspace (`pnpm run build`).
-3. Build release assets (`pnpm release:wegotworkspace`).
+3. Build release assets (`pnpm release`).
 4. Publish `dist/releases/wegotworkspace-<version>.zip`, `manifest.json`, and `manifest.sig`.
 5. Ensure `manifest.json` includes `package_url`, `checksum_sha256`, `checksum_signature`, `min_php`, and `min_schema`.
 

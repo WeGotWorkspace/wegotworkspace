@@ -10,7 +10,8 @@
     "build": "sh -c 'if [ -f .env ]; then set -a; . ./.env; set +a; fi; turbo run build'",
     "setup:macos": "sh -c 'if [ -f .env ]; then set -a; . ./.env; set +a; fi; pnpm --filter @wgw/wegotworkspace setup:macos'",
     "preview:macos": "sh -c 'if [ -f .env ]; then set -a; . ./.env; set +a; fi; pnpm --filter @wgw/wegotworkspace preview:macos'",
-    "release:wegotworkspace": "node tools/build-wegotworkspace-release.mjs"
+    "release": "node tools/build-wegotworkspace-release.mjs",
+    "release:wegotworkspace": "pnpm release"
   },
   "devDependencies": {
     "turbo": "^2.4.4"
