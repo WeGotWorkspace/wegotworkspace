@@ -560,8 +560,8 @@ final class InstallerKernel
                 ],
             );
         } catch (\Throwable $e) {
-            error_log('[wegotworkspace] '.$e->getMessage());
-            $s['_flash'] = 'Installation failed. Check server logs; if you use MySQL, use an empty database.';
+            error_log('[wegotworkspace] install failed: '.$e::class.': '.$e->getMessage()."\n".$e->getTraceAsString());
+            $s['_flash'] = 'Installation failed: '.$e->getMessage();
             self::saveState($s);
             self::redirect($webBase);
 

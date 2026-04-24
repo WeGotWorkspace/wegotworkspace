@@ -58,14 +58,14 @@ final class LocalConfigFile
         if ($sqliteFile !== null) {
             $pdo['sqlite_file'] = $sqliteFile;
         } else {
-            if ($dataDir !== null) {
-                $pdo['sqlite_file'] = rtrim($dataDir, '/').'/db.sqlite';
-            }
             $dsn = self::definedString('WGW_DB_DSN');
             if ($dsn !== null) {
                 $pdo['dsn'] = $dsn;
                 $pdo['user'] = self::definedNullableString('WGW_DB_USER');
                 $pdo['password'] = self::definedNullableString('WGW_DB_PASSWORD');
+            } elseif ($dataDir !== null) {
+                // Default to SQLite only when no explicit DSN is configured.
+                $pdo['sqlite_file'] = rtrim($dataDir, '/').'/db.sqlite';
             }
         }
 
