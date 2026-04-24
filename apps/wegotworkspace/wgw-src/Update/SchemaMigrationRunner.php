@@ -6,7 +6,7 @@ namespace App\Update;
 
 final class SchemaMigrationRunner
 {
-    public const CURRENT_SCHEMA_VERSION = 2;
+    public const CURRENT_SCHEMA_VERSION = 3;
 
     public static function migrate(\PDO $pdo): int
     {
@@ -61,6 +61,11 @@ final class SchemaMigrationRunner
 
         if ($current < 2) {
             self::migrateV2CreateVoiceTables($pdo);
+            $current = 2;
+        }
+
+        if ($current < 3) {
+            self::migrateV3AddVoicePeerOwner($pdo);
         }
     }
 
@@ -149,5 +154,29 @@ final class SchemaMigrationRunner
 
         $stmt = $pdo->prepare('INSERT INTO app_migrations (version, name, applied_at) VALUES (?, ?, ?)');
         $stmt->execute([2, 'create_voice_signaling_tables', date('c')]);
+    }
+
+    private static function migrateV3AddVoicePeerOwner(\PDO $pdo): void
+    {
+        $driver = (string) $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        try {
+            if ($driver === 'mysql') {
+                $pdo->exec(
+                    'ALTER TABLE voice_peers
+                     ADD COLUMN owner_user VARCHAR(190) NOT NULL DEFAULT \'\' AFTER name'
+                );
+            } else {
+                $pdo->exec('ALTER TABLE voice_peers ADD COLUMN owner_user TEXT NOT NULL DEFAULT \'\'');
+            }
+        } catch (\PDOException $e) {
+            $msg = strtolower($e->getMessage());
+            $duplicate = str_contains($msg, 'duplicate column') || str_contains($msg, 'already exists');
+            if (!$duplicate) {
+                throw $e;
+            }
+        }
+
+        $stmt = $pdo->prepare('INSERT INTO app_migrations (version, name, applied_at) VALUES (?, ?, ?)');
+        $stmt->execute([3, 'add_voice_peer_owner', date('c')]);
     }
 }
