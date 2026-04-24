@@ -6,7 +6,7 @@ namespace App\Update;
 
 final class SchemaMigrationRunner
 {
-    public const CURRENT_SCHEMA_VERSION = 1;
+    public const CURRENT_SCHEMA_VERSION = 2;
 
     public static function migrate(\PDO $pdo): int
     {
@@ -54,10 +54,18 @@ final class SchemaMigrationRunner
     private static function applyBuiltInMigrations(\PDO $pdo): void
     {
         $current = self::currentVersion($pdo);
-        if ($current >= 1) {
-            return;
+        if ($current < 1) {
+            self::migrateV1CreateUpdateHistory($pdo);
+            $current = 1;
         }
 
+        if ($current < 2) {
+            self::migrateV2CreateVoiceTables($pdo);
+        }
+    }
+
+    private static function migrateV1CreateUpdateHistory(\PDO $pdo): void
+    {
         $driver = (string) $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
         if ($driver === 'mysql') {
             $pdo->exec(
@@ -85,5 +93,61 @@ final class SchemaMigrationRunner
 
         $stmt = $pdo->prepare('INSERT INTO app_migrations (version, name, applied_at) VALUES (?, ?, ?)');
         $stmt->execute([1, 'create_app_update_history', date('c')]);
+    }
+
+    private static function migrateV2CreateVoiceTables(\PDO $pdo): void
+    {
+        $driver = (string) $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'mysql') {
+            $pdo->exec(
+                'CREATE TABLE IF NOT EXISTS voice_peers (
+                    room VARCHAR(64) NOT NULL,
+                    peer_id VARCHAR(64) NOT NULL,
+                    name VARCHAR(64) NOT NULL DEFAULT \'\',
+                    seen_at BIGINT NOT NULL,
+                    PRIMARY KEY(room, peer_id),
+                    KEY idx_voice_peers_room (room)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+            );
+            $pdo->exec(
+                'CREATE TABLE IF NOT EXISTS voice_messages (
+                    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                    room VARCHAR(64) NOT NULL,
+                    from_peer VARCHAR(64) NOT NULL,
+                    to_peer VARCHAR(64) NOT NULL,
+                    type VARCHAR(16) NOT NULL,
+                    payload MEDIUMTEXT NOT NULL,
+                    created_at BIGINT NOT NULL,
+                    PRIMARY KEY(id),
+                    KEY idx_voice_msg_target (room, to_peer, id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+            );
+        } else {
+            $pdo->exec(
+                'CREATE TABLE IF NOT EXISTS voice_peers (
+                    room TEXT NOT NULL,
+                    peer_id TEXT NOT NULL,
+                    name TEXT NOT NULL DEFAULT \'\',
+                    seen_at INTEGER NOT NULL,
+                    PRIMARY KEY(room, peer_id)
+                )'
+            );
+            $pdo->exec(
+                'CREATE TABLE IF NOT EXISTS voice_messages (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    room TEXT NOT NULL,
+                    from_peer TEXT NOT NULL,
+                    to_peer TEXT NOT NULL,
+                    type TEXT NOT NULL,
+                    payload TEXT NOT NULL,
+                    created_at INTEGER NOT NULL
+                )'
+            );
+            $pdo->exec('CREATE INDEX IF NOT EXISTS idx_voice_msg_target ON voice_messages(room, to_peer, id)');
+            $pdo->exec('CREATE INDEX IF NOT EXISTS idx_voice_peers_room ON voice_peers(room)');
+        }
+
+        $stmt = $pdo->prepare('INSERT INTO app_migrations (version, name, applied_at) VALUES (?, ?, ?)');
+        $stmt->execute([2, 'create_voice_signaling_tables', date('c')]);
     }
 }
