@@ -50,11 +50,14 @@ for (const entry of releaseEntries) {
   ensureDir(dirname(target));
   cpSync(source, target, { recursive: true });
 }
-const installGuideSource = resolve(repoRoot, "INSTALL.md");
-if (!existsSync(installGuideSource)) {
-  throw new Error("Missing release input: INSTALL.md");
+const rootDocs = ["INSTALL.md", "README.md", "LICENSE"];
+for (const file of rootDocs) {
+  const source = resolve(repoRoot, file);
+  if (!existsSync(source)) {
+    throw new Error(`Missing release input: ${file}`);
+  }
+  cpSync(source, resolve(stagingRoot, file));
 }
-cpSync(installGuideSource, resolve(stagingRoot, "INSTALL.md"));
 writeFileSync(resolve(stagingRoot, "VERSION"), `${version}\n`, "utf8");
 
 zipDirectory(stagingRoot, packagePath);
