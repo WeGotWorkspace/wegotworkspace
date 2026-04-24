@@ -1,0 +1,14 @@
+{
+  "name": "@wgw/wegotworkspace",
+  "private": true,
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "setup:macos": "bash scripts/macos/install-homebrew-apache-ssl.sh",
+    "preview:macos": "bash scripts/macos/setup-homebrew-apache-ssl.sh",
+    "enable-php-imap": "bash scripts/macos/enable-php-imap.sh",
+    "test:update-smoke": "bash scripts/update-smoke-test.sh"
+  },
+  "devDependencies": {
+    "turbo": "^2.4.4"
+  }
+}

@@ -1,0 +1,131 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Webmail — editorial / "ink on paper" aesthetic.
+ * Warm off-white surfaces, near-black ink, single saffron accent.
+ * Serif display + neutral sans body.
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-rail: var(--rail);
+  --color-rail-foreground: var(--rail-foreground);
+  --color-ink: var(--ink);
+  --color-paper: var(--paper);
+  --color-saffron: var(--saffron);
+  --font-display: "Fraunces", "Georgia", serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+:root {
+  --radius: 0.5rem;
+
+  /* paper / ink palette */
+  --paper: oklch(0.975 0.012 85);
+  --ink: oklch(0.18 0.015 60);
+  --saffron: oklch(0.72 0.17 55);
+
+  --background: oklch(0.975 0.012 85);
+  --foreground: oklch(0.18 0.015 60);
+  --card: oklch(0.99 0.008 85);
+  --card-foreground: oklch(0.18 0.015 60);
+  --popover: oklch(0.99 0.008 85);
+  --popover-foreground: oklch(0.18 0.015 60);
+
+  --primary: oklch(0.18 0.015 60);
+  --primary-foreground: oklch(0.975 0.012 85);
+
+  --secondary: oklch(0.93 0.012 85);
+  --secondary-foreground: oklch(0.22 0.015 60);
+
+  --muted: oklch(0.93 0.012 85);
+  --muted-foreground: oklch(0.48 0.015 65);
+
+  --accent: oklch(0.72 0.17 55);
+  --accent-foreground: oklch(0.18 0.015 60);
+
+  --destructive: oklch(0.55 0.2 28);
+  --destructive-foreground: oklch(0.98 0.005 80);
+
+  --border: oklch(0.88 0.014 80);
+  --input: oklch(0.92 0.012 80);
+  --ring: oklch(0.72 0.17 55);
+
+  /* dark left rail (always dark, even in light mode) */
+  --rail: oklch(0.2 0.018 60);
+  --rail-foreground: oklch(0.92 0.012 80);
+}
+
+.dark {
+  --paper: oklch(0.16 0.012 60);
+  --ink: oklch(0.95 0.008 80);
+  --background: oklch(0.16 0.012 60);
+  --foreground: oklch(0.95 0.008 80);
+  --card: oklch(0.2 0.014 60);
+  --card-foreground: oklch(0.95 0.008 80);
+  --popover: oklch(0.2 0.014 60);
+  --popover-foreground: oklch(0.95 0.008 80);
+  --primary: oklch(0.95 0.008 80);
+  --primary-foreground: oklch(0.18 0.015 60);
+  --secondary: oklch(0.24 0.014 60);
+  --secondary-foreground: oklch(0.95 0.008 80);
+  --muted: oklch(0.24 0.014 60);
+  --muted-foreground: oklch(0.65 0.012 70);
+  --accent: oklch(0.72 0.17 55);
+  --accent-foreground: oklch(0.18 0.015 60);
+  --destructive: oklch(0.65 0.22 28);
+  --destructive-foreground: oklch(0.98 0.005 80);
+  --border: oklch(0.28 0.014 60);
+  --input: oklch(0.26 0.014 60);
+  --ring: oklch(0.72 0.17 55);
+  --rail: oklch(0.12 0.012 60);
+  --rail-foreground: oklch(0.92 0.012 80);
+}
+
+@layer base {
+  @import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+
+  * {
+    border-color: var(--color-border);
+  }
+
+  html, body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  ::selection {
+    background-color: var(--color-saffron);
+    color: var(--color-ink);
+  }
+}
