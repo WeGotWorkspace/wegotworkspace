@@ -417,9 +417,35 @@ export function Installer() {
                       voice_turn_username: data.voice.turnUser,
                       voice_turn_credential: data.voice.turnPassword,
                     });
-                    if (response.redirect) {
-                      setAdminUrl(response.redirect);
-                      setHomeUrl(response.redirect.replace(/\/admin\/?$/, "/"));
+                    const flashFromState =
+                      response.state?.flash && response.state.flash.trim() !== ""
+                        ? response.state.flash
+                        : null;
+                    if (flashFromState) {
+                      throw new Error(flashFromState);
+                    }
+
+                    const redirectTarget =
+                      typeof response.redirect === "string" &&
+                      response.redirect.trim() !== ""
+                        ? response.redirect
+                        : null;
+
+                    const installCompleted =
+                      response.state?.step === "done" ||
+                      response.state?.step === "installed" ||
+                      (redirectTarget !== null &&
+                        /\/admin\/?$/.test(redirectTarget));
+
+                    if (!installCompleted) {
+                      throw new Error(
+                        "Install did not finalize. Verify DB settings and write permissions, then try again.",
+                      );
+                    }
+
+                    if (redirectTarget) {
+                      setAdminUrl(redirectTarget);
+                      setHomeUrl(redirectTarget.replace(/\/admin\/?$/, "/"));
                     }
                     setStep("success");
                   } catch (error) {

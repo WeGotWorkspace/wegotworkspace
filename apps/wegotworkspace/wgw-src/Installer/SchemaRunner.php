@@ -39,7 +39,8 @@ final class SchemaRunner
             throw new \RuntimeException('Cannot read schema: '.$file);
         }
         if (str_contains($file, 'principals')) {
-            $sql = preg_replace('/^\s*INSERT\s+INTO\s+principals\b.*$/mi', '', $sql) ?? $sql;
+            // Drop legacy seed INSERT blocks entirely (multi-line VALUES), keeping only schema DDL.
+            $sql = preg_replace('/^\s*INSERT\s+INTO\s+principals\b[\s\S]*?;\s*/mi', '', $sql) ?? $sql;
         }
 
         return $sql;
