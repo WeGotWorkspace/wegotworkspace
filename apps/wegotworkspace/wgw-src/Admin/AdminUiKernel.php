@@ -92,14 +92,10 @@ final class AdminUiKernel
 
     private static function redirectTo(string $webBase, string $path): void
     {
-        $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-            || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
-        $scheme = $https ? 'https' : 'http';
-        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
         $qs = isset($_SERVER['QUERY_STRING']) && is_string($_SERVER['QUERY_STRING']) && $_SERVER['QUERY_STRING'] !== ''
             ? '?'.$_SERVER['QUERY_STRING']
             : '';
-        header('Location: '.$scheme.'://'.$host.WebBase::url($webBase, $path).$qs, true, 302);
+        header('Location: '.WebBase::url($webBase, $path).$qs, true, 302);
     }
 
     private static function respondDistMissing(string $webBase): void
