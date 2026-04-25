@@ -14,7 +14,8 @@ use App\Settings\SettingsKeys;
  * and PHP signaling at {@code /voice/aura-signaling/rooms.php}.
  *
  * The main UI at {@code /voice/} requires the same Sabre account as Drive ({@code /login/}, UI cookie, or HTTP Basic).
- * The guest join page remains public at {@code /voice/join/}, but signaling actions are authenticated server-side.
+ * The guest join page remains public at {@code /voice/join/}. Signaling accepts either a Sabre login
+ * or an anonymous per-peer guest session key issued by the join action.
  * Static assets under {@code /voice/assets/} are public so that guest page can load.
  */
 final class VoiceKernel
@@ -94,7 +95,7 @@ final class VoiceKernel
             return true;
         }
 
-        // Public: guest join entry (same SPA; signaling API enforces authentication).
+        // Public: guest join entry (same SPA; signaling API accepts anonymous guest sessions).
         if (VoiceEntry::isGuestJoinPath($webBase, $path)) {
             $guestUser = VoiceSabreAuth::tryAuthenticatedUser($pdo, $realm);
             if (VoiceEntry::tryServeInjectedIndex($webBase, $path, $guestUser, true)) {
