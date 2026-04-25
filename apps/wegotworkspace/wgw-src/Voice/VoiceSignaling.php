@@ -39,11 +39,17 @@ final class VoiceSignaling
 
         switch ($action) {
             case 'join': {
-                $username = self::requireAuthenticatedUser($pdo, $realm);
+                $username = VoiceSabreAuth::tryAuthenticatedUser($pdo, $realm);
                 $room = self::cleanRoom($body['room'] ?? null);
                 $peerId = self::cleanPeer($body['peerId'] ?? null);
                 $name = mb_substr((string) ($body['name'] ?? ''), 0, 64);
-                self::upsertPeer($db, $room, $peerId, $name, $username, time());
+                $guestSessionKey = null;
+                $ownerMarker = self::ownerMarkerForAuthenticatedUser($username);
+                if ($ownerMarker === null) {
+                    $guestSessionKey = self::newGuestSessionKey();
+                    $ownerMarker = self::ownerMarkerForGuestSession($guestSessionKey);
+                }
+                self::upsertPeer($db, $room, $peerId, $name, $ownerMarker, time());
 
                 $cnt = $db->prepare('SELECT COUNT(*) FROM '.self::T_PEERS.' WHERE room = :r');
                 $cnt->execute([':r' => $room]);
@@ -56,15 +62,18 @@ final class VoiceSignaling
 
                 $peers = $db->prepare('SELECT peer_id AS id, name FROM '.self::T_PEERS.' WHERE room=:r AND peer_id != :p');
                 $peers->execute([':r' => $room, ':p' => $peerId]);
-                echo json_encode(['peers' => $peers->fetchAll(\PDO::FETCH_ASSOC)]);
+                echo json_encode([
+                    'peers' => $peers->fetchAll(\PDO::FETCH_ASSOC),
+                    'sessionKey' => $guestSessionKey,
+                ]);
                 break;
             }
 
             case 'poll': {
-                $username = self::requireAuthenticatedUser($pdo, $realm);
+                $ownerMarker = self::requireActorMarker($pdo, $realm, $body);
                 $room = self::cleanRoom($body['room'] ?? null);
                 $peerId = self::cleanPeer($body['peerId'] ?? null);
-                self::assertPeerOwnedByUser($db, $room, $peerId, $username);
+                self::assertPeerOwnedByActor($db, $room, $peerId, $ownerMarker);
 
                 $db->prepare('UPDATE '.self::T_PEERS.' SET seen_at=:t WHERE room=:r AND peer_id=:p')
                     ->execute([':t' => time(), ':r' => $room, ':p' => $peerId]);
@@ -99,11 +108,11 @@ final class VoiceSignaling
             }
 
             case 'send': {
-                $username = self::requireAuthenticatedUser($pdo, $realm);
+                $ownerMarker = self::requireActorMarker($pdo, $realm, $body);
                 $room = self::cleanRoom($body['room'] ?? null);
                 $from = self::cleanPeer($body['from'] ?? null);
                 $to = self::cleanPeer($body['to'] ?? null);
-                self::assertPeerOwnedByUser($db, $room, $from, $username);
+                self::assertPeerOwnedByActor($db, $room, $from, $ownerMarker);
                 $type = (string) ($body['type'] ?? '');
                 if (!in_array($type, ['offer', 'answer', 'ice', 'bye'], true)) {
                     self::bad('bad_type');
@@ -126,10 +135,10 @@ final class VoiceSignaling
             }
 
             case 'leave': {
-                $username = self::requireAuthenticatedUser($pdo, $realm);
+                $ownerMarker = self::requireActorMarker($pdo, $realm, $body);
                 $room = self::cleanRoom($body['room'] ?? null);
                 $peerId = self::cleanPeer($body['peerId'] ?? null);
-                self::assertPeerOwnedByUser($db, $room, $peerId, $username);
+                self::assertPeerOwnedByActor($db, $room, $peerId, $ownerMarker);
                 $db->prepare('DELETE FROM '.self::T_PEERS.' WHERE room=:r AND peer_id=:p')
                     ->execute([':r' => $room, ':p' => $peerId]);
                 echo json_encode(['ok' => true]);
@@ -137,10 +146,10 @@ final class VoiceSignaling
             }
 
             case 'chat': {
-                $username = self::requireAuthenticatedUser($pdo, $realm);
+                $ownerMarker = self::requireActorMarker($pdo, $realm, $body);
                 $room = self::cleanRoom($body['room'] ?? null);
                 $from = self::cleanPeer($body['from'] ?? null);
-                self::assertPeerOwnedByUser($db, $room, $from, $username);
+                self::assertPeerOwnedByActor($db, $room, $from, $ownerMarker);
                 $text = trim((string) ($body['text'] ?? ''));
                 $text = mb_substr($text, 0, 2000);
                 if ($text === '') {
@@ -198,7 +207,7 @@ final class VoiceSignaling
         exit;
     }
 
-    private static function upsertPeer(\PDO $db, string $room, string $peerId, string $name, string $username, int $now): void
+    private static function upsertPeer(\PDO $db, string $room, string $peerId, string $name, string $ownerMarker, int $now): void
     {
         $driver = (string) $db->getAttribute(\PDO::ATTR_DRIVER_NAME);
         if ($driver === 'mysql') {
@@ -207,7 +216,7 @@ final class VoiceSignaling
                  VALUES (:r, :p, :n, :u, :t)
                  ON DUPLICATE KEY UPDATE name = VALUES(name), owner_user = VALUES(owner_user), seen_at = VALUES(seen_at)'
             );
-            $stmt->execute([':r' => $room, ':p' => $peerId, ':n' => $name, ':u' => $username, ':t' => $now]);
+            $stmt->execute([':r' => $room, ':p' => $peerId, ':n' => $name, ':u' => $ownerMarker, ':t' => $now]);
 
             return;
         }
@@ -217,7 +226,7 @@ final class VoiceSignaling
              VALUES (:r, :p, :n, :u, :t)
              ON CONFLICT(room, peer_id) DO UPDATE SET name = excluded.name, owner_user = excluded.owner_user, seen_at = excluded.seen_at'
         );
-        $stmt->execute([':r' => $room, ':p' => $peerId, ':n' => $name, ':u' => $username, ':t' => $now]);
+        $stmt->execute([':r' => $room, ':p' => $peerId, ':n' => $name, ':u' => $ownerMarker, ':t' => $now]);
     }
 
     private static function pruneOldRows(\PDO $db): void
@@ -260,24 +269,79 @@ final class VoiceSignaling
         }
     }
 
-    private static function requireAuthenticatedUser(\PDO $pdo, string $realm): string
+    /**
+     * @param array<string, mixed> $body
+     */
+    private static function requireActorMarker(\PDO $pdo, string $realm, array $body): string
     {
         $username = VoiceSabreAuth::tryAuthenticatedUser($pdo, $realm);
-        if ($username === null || $username === '') {
-            VoiceSabreAuth::respondJsonUnauthorized($realm);
+        $forUser = self::ownerMarkerForAuthenticatedUser($username);
+        if ($forUser !== null) {
+            return $forUser;
         }
 
-        return $username;
+        $sessionKey = self::readGuestSessionKey($body);
+        if ($sessionKey !== null) {
+            return self::ownerMarkerForGuestSession($sessionKey);
+        }
+
+        VoiceSabreAuth::respondJsonUnauthorized($realm);
     }
 
-    private static function assertPeerOwnedByUser(\PDO $db, string $room, string $peerId, string $username): void
+    private static function assertPeerOwnedByActor(\PDO $db, string $room, string $peerId, string $ownerMarker): void
     {
         $stmt = $db->prepare('SELECT owner_user FROM '.self::T_PEERS.' WHERE room = :r AND peer_id = :p');
         $stmt->execute([':r' => $room, ':p' => $peerId]);
         $owner = $stmt->fetchColumn();
-        if (!is_string($owner) || $owner === '' || !hash_equals($owner, $username)) {
+        if (!is_string($owner) || $owner === '' || !hash_equals($owner, $ownerMarker)) {
             self::bad('forbidden', 403);
         }
+    }
+
+    /**
+     * @return non-empty-string|null
+     */
+    private static function ownerMarkerForAuthenticatedUser(?string $username): ?string
+    {
+        if ($username === null || $username === '') {
+            return null;
+        }
+
+        return 'u:'.$username;
+    }
+
+    /**
+     * @return non-empty-string
+     */
+    private static function ownerMarkerForGuestSession(string $sessionKey): string
+    {
+        return 'g:'.$sessionKey;
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     *
+     * @return non-empty-string|null
+     */
+    private static function readGuestSessionKey(array $body): ?string
+    {
+        $raw = $body['sessionKey'] ?? null;
+        if (!is_string($raw)) {
+            return null;
+        }
+        if (!preg_match('/^[a-f0-9]{32}$/', $raw)) {
+            return null;
+        }
+
+        return $raw;
+    }
+
+    /**
+     * @return non-empty-string
+     */
+    private static function newGuestSessionKey(): string
+    {
+        return bin2hex(random_bytes(16));
     }
 
     private static function cleanRoom(mixed $room): string

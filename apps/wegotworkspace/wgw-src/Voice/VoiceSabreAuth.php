@@ -51,7 +51,7 @@ final class VoiceSabreAuth
         header('Content-Type: application/json');
         echo json_encode([
             'error' => 'auth_required',
-            'message' => 'Sign in with your Sabre account to start a new call.',
+            'message' => 'Sign in or re-open the guest join link to start a signaling session.',
         ]);
         exit;
     }
