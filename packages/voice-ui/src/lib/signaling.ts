@@ -21,6 +21,11 @@ export interface PollResult {
   messages: SignalMessage[];
 }
 
+interface JoinResult {
+  peers: PeerInfo[];
+  sessionKey?: string | null;
+}
+
 async function call<T>(url: string, action: string, body: unknown): Promise<T> {
   const res = await fetch(`${url}?action=${action}`, {
     method: "POST",
@@ -73,6 +78,7 @@ export class SignalingClient {
   private stopped = false;
   private onPoll: (r: PollResult) => void;
   private onError: (err: Error) => void;
+  private sessionKey: string | null = null;
 
   constructor(opts: {
     url: string;
@@ -91,13 +97,14 @@ export class SignalingClient {
   }
 
   async join(): Promise<{ peers: PeerInfo[] }> {
-    const res = await call<{ peers: PeerInfo[] }>(this.url, "join", {
+    const res = await call<JoinResult>(this.url, "join", {
       room: this.room,
       peerId: this.peerId,
       name: this.name,
     });
+    this.sessionKey = typeof res.sessionKey === "string" && res.sessionKey.trim() ? res.sessionKey : null;
     this.startPolling();
-    return res;
+    return { peers: res.peers };
   }
 
   private startPolling() {
@@ -107,6 +114,7 @@ export class SignalingClient {
         const res = await call<PollResult>(this.url, "poll", {
           room: this.room,
           peerId: this.peerId,
+          sessionKey: this.sessionKey,
         });
         await Promise.resolve(this.onPoll(res));
       } catch (e) {
@@ -125,6 +133,7 @@ export class SignalingClient {
       to,
       type,
       payload,
+      sessionKey: this.sessionKey,
     });
   }
 
@@ -134,6 +143,7 @@ export class SignalingClient {
       room: this.room,
       from: this.peerId,
       text,
+      sessionKey: this.sessionKey,
     });
   }
 
@@ -141,7 +151,11 @@ export class SignalingClient {
     this.stopped = true;
     if (this.timer) window.clearTimeout(this.timer);
     try {
-      await call(this.url, "leave", { room: this.room, peerId: this.peerId });
+      await call(this.url, "leave", {
+        room: this.room,
+        peerId: this.peerId,
+        sessionKey: this.sessionKey,
+      });
     } catch {
       /* ignore — we're leaving anyway */
     }
@@ -153,6 +167,7 @@ export class SignalingClient {
     postDuringUnload(this.url, "leave", {
       room: this.room,
       peerId: this.peerId,
+      sessionKey: this.sessionKey,
     });
   }
 }
