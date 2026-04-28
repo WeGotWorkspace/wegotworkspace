@@ -1,9 +1,17 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronRight, ChevronUp, LayoutGrid, List, Loader2, Search } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, LayoutGrid, List, Loader2, Menu, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { DeleteItemModal } from "./DeleteItemModal";
 import { FileIcon } from "./FileIcon";
 import { DetailsPanel } from "./DetailsPanel";
@@ -203,6 +211,11 @@ export function Drive() {
   const logoutUrl = readLogoutUrl();
   const [listSort, setListSort] = useState<{ column: ListSortColumn; dir: "asc" | "desc" } | null>(null);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    setMobileSidebarOpen(false);
+  }, [section]);
 
   const { data: userData } = useQuery({
     queryKey: ["drive-user"],
@@ -335,6 +348,7 @@ export function Drive() {
     const next = f.path.endsWith("/") ? f.path : `${f.path}/`;
     setCwd(next);
     setSelected(null);
+    setMobileSidebarOpen(false);
   }, []);
 
   const openInOffice = useCallback((f: DriveFile) => {
@@ -439,6 +453,9 @@ export function Drive() {
   );
 
   const crumbs = useMemo(() => breadcrumbParts(cwd), [cwd]);
+  const mobileParentCrumb =
+    section === "my" && crumbs.length > 1 ? crumbs[crumbs.length - 2] : null;
+  const driveHeading = section === "my" ? (crumbs[crumbs.length - 1]?.label ?? "Drive") : null;
 
   const selectedMerged = useMemo((): DriveFile | null => {
     if (!selected) return null;
@@ -450,19 +467,59 @@ export function Drive() {
 
   return (
     <div className="h-screen w-full flex bg-background overflow-hidden">
-      <DriveSidebar
-        active={section}
-        onSelect={(id) => setSection(id as DriveSection)}
-        cwd={cwd}
-        myDrive={section === "my"}
-        logoutUrl={logoutUrl}
-        onRefreshListing={() => void queryClient.invalidateQueries({ queryKey: ["drive-dir"] })}
-        onOpenUpload={() => setUploadModalOpen(true)}
-      />
+      <div className="hidden md:block">
+        <DriveSidebar
+          active={section}
+          onSelect={(id) => setSection(id as DriveSection)}
+          cwd={cwd}
+          myDrive={section === "my"}
+          logoutUrl={logoutUrl}
+          onRefreshListing={() => void queryClient.invalidateQueries({ queryKey: ["drive-dir"] })}
+          onOpenUpload={() => setUploadModalOpen(true)}
+        />
+      </div>
+      <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
+        <SheetContent
+          side="left"
+          id="drive-mobile-nav"
+          className="w-64 max-w-[85vw] border-r border-border bg-sidebar p-0 md:hidden"
+        >
+          <SheetHeader className="sr-only">
+            <SheetTitle>Drive navigation</SheetTitle>
+          </SheetHeader>
+          <DriveSidebar
+            active={section}
+            onSelect={(id) => {
+              setSection(id as DriveSection);
+              setMobileSidebarOpen(false);
+            }}
+            cwd={cwd}
+            myDrive={section === "my"}
+            logoutUrl={logoutUrl}
+            onRefreshListing={() => void queryClient.invalidateQueries({ queryKey: ["drive-dir"] })}
+            onOpenUpload={() => {
+              setUploadModalOpen(true);
+              setMobileSidebarOpen(false);
+            }}
+          />
+        </SheetContent>
+      </Sheet>
 
       <main className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 border-b border-border flex items-center gap-4 px-6 shrink-0">
-          <div className="flex items-center gap-1 text-sm min-w-0 flex-wrap">
+        <header className="h-16 border-b border-border flex items-center gap-3 md:gap-4 px-4 md:px-6 shrink-0">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setMobileSidebarOpen(true)}
+            aria-label="Open drive navigation"
+            aria-expanded={mobileSidebarOpen}
+            aria-controls="drive-mobile-nav"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          <div className="hidden md:flex items-center gap-1 text-sm min-w-0 flex-wrap">
             {section === "my" ? (
               crumbs.map((c, i) => (
                 <span key={c.path} className="flex items-center gap-1 min-w-0">
@@ -512,7 +569,7 @@ export function Drive() {
                     setQuery("");
                   }
                 }}
-                placeholder={section === "my" ? "Search filenames across My Drive…" : "Search…"}
+                placeholder={section === "my" ? "Search files..." : "Search…"}
                 className="pl-10 h-10 bg-muted/50 border-transparent focus-visible:bg-surface focus-visible:border-border rounded-xl shadow-[var(--shadow-soft)]"
                 aria-autocomplete={section === "my" ? "list" : undefined}
                 aria-controls={section === "my" ? "drive-search-results" : undefined}
@@ -575,12 +632,24 @@ export function Drive() {
           </div>
         </header>
 
-        <div className="px-8 pt-8 pb-4">
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">WebDAV files</p>
-              <h1 className="mt-2 text-4xl font-display italic leading-none">
-                {section === "my" ? "My Drive" : section === "recent" ? "Recent" : "Starred"}
+        <div className="px-6 pt-5 pb-3 md:px-8 md:pt-8 md:pb-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between md:gap-4">
+            <div className="w-full min-w-0">
+              {mobileParentCrumb && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCwd(mobileParentCrumb.path === "/" ? "/" : mobileParentCrumb.path);
+                    setSelected(null);
+                  }}
+                  className="mb-2 inline-flex min-h-9 items-center gap-2 rounded-md px-2 text-sm font-medium text-muted-foreground hover:text-foreground md:hidden"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  {mobileParentCrumb.label}
+                </button>
+              )}
+              <h1 className="w-full text-4xl font-display italic leading-none">
+                {section === "my" ? driveHeading : section === "recent" ? "Recent" : "Starred"}
               </h1>
               <p className="mt-2 text-sm text-muted-foreground">
                 {section === "my" ? (
@@ -593,23 +662,64 @@ export function Drive() {
               </p>
             </div>
             {(section === "my" || section === "recent" || section === "starred") && (
-              <div className="flex items-center gap-2">
-                <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
-                  <TabsList className="bg-muted/60">
-                    <TabsTrigger value="all">All</TabsTrigger>
-                    <TabsTrigger value="folder">Folders</TabsTrigger>
-                    <TabsTrigger value="doc">Docs</TabsTrigger>
-                    <TabsTrigger value="sheet">Sheets</TabsTrigger>
-                    <TabsTrigger value="slide">Slides</TabsTrigger>
-                    <TabsTrigger value="image">Media</TabsTrigger>
-                  </TabsList>
-                </Tabs>
+              <div className="flex w-full items-center gap-2 sm:w-auto">
+                <div className="flex-1 md:hidden">
+                  <Select value={filter} onValueChange={(v) => setFilter(v as DriveKindFilter)}>
+                    <SelectTrigger className="h-9 min-w-[11rem] bg-muted/60 border-border/70">
+                      <SelectValue placeholder="Filter type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="folder">Folders</SelectItem>
+                      <SelectItem value="doc">Docs</SelectItem>
+                      <SelectItem value="sheet">Sheets</SelectItem>
+                      <SelectItem value="slide">Slides</SelectItem>
+                      <SelectItem value="image">Media</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="md:hidden flex items-center rounded-lg border border-border bg-surface p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setView("grid")}
+                    className={cn(
+                      "h-7 w-7 rounded-md flex items-center justify-center transition-colors",
+                      view === "grid" ? "bg-accent" : "text-muted-foreground hover:text-foreground",
+                    )}
+                    aria-label="Grid view"
+                  >
+                    <LayoutGrid className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setView("list")}
+                    className={cn(
+                      "h-7 w-7 rounded-md flex items-center justify-center transition-colors",
+                      view === "list" ? "bg-accent" : "text-muted-foreground hover:text-foreground",
+                    )}
+                    aria-label="List view"
+                  >
+                    <List className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <div className="hidden md:block">
+                  <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
+                    <TabsList className="bg-muted/60">
+                      <TabsTrigger value="all">All</TabsTrigger>
+                      <TabsTrigger value="folder">Folders</TabsTrigger>
+                      <TabsTrigger value="doc">Docs</TabsTrigger>
+                      <TabsTrigger value="sheet">Sheets</TabsTrigger>
+                      <TabsTrigger value="slide">Slides</TabsTrigger>
+                      <TabsTrigger value="image">Media</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </div>
               </div>
             )}
           </div>
 
           {(section === "my" || section === "recent" || section === "starred") && (
-            <div className="mt-6 flex items-center justify-end border-b border-border pb-3">
+            <div className="mt-6 hidden md:flex items-center justify-end border-b border-border pb-3">
               <div className="flex items-center rounded-lg border border-border bg-surface p-0.5">
                 <button
                   type="button"
@@ -636,7 +746,7 @@ export function Drive() {
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto px-8 pb-8">
+        <div className="flex-1 overflow-y-auto px-6 pb-5 md:px-8 md:pb-8">
           {section === "my" && isPending && (
             <div className="py-24 text-center text-muted-foreground text-sm">Loading…</div>
           )}
@@ -655,7 +765,7 @@ export function Drive() {
               {folders.length > 0 && (
                 <section>
                   <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Folders</h2>
-                  <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3">
+                  <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-2.5 md:gap-3">
                     {folders.map((f) => (
                       <div
                         key={f.id}
@@ -669,7 +779,7 @@ export function Drive() {
                           }
                         }}
                         className={cn(
-                          "group relative flex items-center gap-3 p-4 rounded-xl border bg-surface text-left transition-all cursor-default",
+                          "group relative flex items-center gap-3 p-3 md:p-4 rounded-xl border bg-surface text-left transition-all cursor-default",
                           "hover:-translate-y-0.5 hover:shadow-[var(--shadow-soft)] hover:border-foreground/20",
                           selected?.id === f.id ? "ring-2 ring-ring border-ring" : "border-border",
                         )}
@@ -706,7 +816,7 @@ export function Drive() {
               {others.length > 0 && (
                 <section className="mt-8">
                   <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Files</h2>
-                  <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4">
+                  <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3 md:gap-4">
                     {others.map((f) => (
                       <FileCard
                         key={f.id}
@@ -729,14 +839,14 @@ export function Drive() {
 
           {canShowFiles && view === "list" && (
             <div className="rounded-xl border border-border bg-surface overflow-hidden">
-              <div className="grid grid-cols-[minmax(0,1fr)_160px_120px_100px_40px] gap-4 px-5 py-2.5 border-b border-border bg-muted/40 items-center">
+              <div className="grid grid-cols-[minmax(0,1fr)_40px] md:grid-cols-[minmax(0,1fr)_160px_120px_100px_40px] gap-2.5 md:gap-4 px-3 md:px-5 py-2.5 border-b border-border bg-muted/40 items-center">
                 <ListSortHeaderButton column="name" label="Name" sort={listSort} onSort={toggleListSort} className="text-left" />
-                <ListSortHeaderButton column="owner" label="Owner" sort={listSort} onSort={toggleListSort} className="text-left" />
-                <ListSortHeaderButton column="modified" label="Modified" sort={listSort} onSort={toggleListSort} className="text-left" />
-                <ListSortHeaderButton column="size" label="Size" sort={listSort} onSort={toggleListSort} className="text-right justify-end" />
+                <ListSortHeaderButton column="owner" label="Owner" sort={listSort} onSort={toggleListSort} className="hidden md:inline-flex text-left" />
+                <ListSortHeaderButton column="modified" label="Modified" sort={listSort} onSort={toggleListSort} className="hidden md:inline-flex text-left" />
+                <ListSortHeaderButton column="size" label="Size" sort={listSort} onSort={toggleListSort} className="hidden md:inline-flex text-right justify-end" />
                 <span className="block min-h-4 w-7 shrink-0" aria-hidden />
               </div>
-              <div className="p-1.5">
+              <div className="p-1 md:p-1.5">
                 {sortedDisplayFiles.map((f) => (
                   <FileRow
                     key={f.id}
