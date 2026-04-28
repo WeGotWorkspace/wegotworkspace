@@ -94,7 +94,7 @@ export function VoiceChatSidebar({ inCall, messages, onSend }: Props) {
     <aside
       className={cn(
         "w-[min(100vw,300px)] sm:w-[300px] shrink-0 border-l border-border",
-        "flex flex-col bg-card/50 backdrop-blur-sm min-h-0 self-stretch",
+        "flex h-full flex-col bg-card/50 backdrop-blur-sm min-h-0 self-stretch",
       )}
     >
       <div className="p-4 border-b border-border/80 flex items-center gap-2 shrink-0">

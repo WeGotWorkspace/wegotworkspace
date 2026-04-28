@@ -216,7 +216,7 @@ export function CallApp({ initialAutoJoinRoom = null }: { initialAutoJoinRoom?: 
             onCamChange={mesh.setSelectedCamId}
           />
         </main>
-        <div className="hidden xl:block">
+        <div className="hidden xl:flex min-h-0 self-stretch">
           <VoiceChatSidebar
             inCall={inCall}
             messages={mesh.chatMessages}
