@@ -20,15 +20,37 @@ fi
 OUT_DEST="$RUNTIME_ROOT/$PRIVATE_DIR_NAME/docs/build"
 
 OFFICE_BASE_PATH="${OFFICE_BASE_PATH:-/office}"
+OFFICE_UI_REPO="${OFFICE_UI_REPO:-https://github.com/baotlake/office-website.git}"
+OFFICE_UI_REF="${OFFICE_UI_REF:-main}"
 ONLYOFFICE_WEB_APPS_REF="${ONLYOFFICE_WEB_APPS_REF:-master}"
 ONLYOFFICE_BUNDLE_VERSION="${ONLYOFFICE_BUNDLE_VERSION:-v9.3.0.24-1}"
 ONLYOFFICE_BUNDLE_DIR="$UPSTREAM_UI/public/$ONLYOFFICE_BUNDLE_VERSION"
 ONLYOFFICE_WEB_APPS_DIR="$ONLYOFFICE_BUNDLE_DIR/web-apps"
 ONLYOFFICE_ARTIFACT_BASE_URL="${ONLYOFFICE_ARTIFACT_BASE_URL:-https://office-editor.ziziyi.com/$ONLYOFFICE_BUNDLE_VERSION}"
 
+if [[ -d "$UPSTREAM_UI/.git" ]]; then
+  echo "Refreshing office shell checkout ($OFFICE_UI_REF) …"
+  git -C "$UPSTREAM_UI" fetch --depth 1 origin "$OFFICE_UI_REF"
+  git -C "$UPSTREAM_UI" checkout -q FETCH_HEAD
+elif [[ -d "$UPSTREAM_UI" ]]; then
+  if [[ -f "$UPSTREAM_UI/package.json" ]]; then
+    echo "Using existing office shell checkout at tools/office-website …"
+  else
+    echo "Removing incomplete office shell checkout …"
+    rm -rf "$UPSTREAM_UI"
+    echo "Cloning office shell ($OFFICE_UI_REF) into tools/office-website …"
+    mkdir -p "$(dirname "$UPSTREAM_UI")"
+    git clone --depth 1 --branch "$OFFICE_UI_REF" "$OFFICE_UI_REPO" "$UPSTREAM_UI"
+  fi
+else
+  echo "Cloning office shell ($OFFICE_UI_REF) into tools/office-website …"
+  mkdir -p "$(dirname "$UPSTREAM_UI")"
+  git clone --depth 1 --branch "$OFFICE_UI_REF" "$OFFICE_UI_REPO" "$UPSTREAM_UI"
+fi
+
 if [[ ! -f "$UPSTREAM_UI/package.json" ]]; then
-  echo "Missing editor shell source at tools/office-website."
-  echo "Please provide a compatible Next.js office shell tree at that path, then re-run."
+  echo "Missing editor shell source at tools/office-website (no package.json after checkout)."
+  echo "Set OFFICE_UI_REPO / OFFICE_UI_REF to a compatible Next.js shell and re-run."
   exit 1
 fi
 
