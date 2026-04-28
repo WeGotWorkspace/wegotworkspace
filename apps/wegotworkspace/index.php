@@ -93,6 +93,8 @@ use App\Update\UpdateManager;
 
 $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
     || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+$webBase = WebBase::detect();
+$path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 
 if (!TrustedHostGate::isAllowed($_SERVER, getenv('WGW_TRUSTED_HOSTS'))) {
     http_response_code(400);
@@ -105,13 +107,26 @@ header_remove('X-Powered-By');
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: SAMEORIGIN');
 header('Referrer-Policy: strict-origin-when-cross-origin');
-header("Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https: wss:");
+$officePrefix = WebBase::url($webBase, '/office');
+$isOfficeRequest = $path === $officePrefix || str_starts_with($path, $officePrefix.'/');
+$scriptSrc = "'self' 'unsafe-inline'";
+$styleSrc = "'self' 'unsafe-inline' https://fonts.googleapis.com";
+$fontSrc = "'self' data: https://fonts.gstatic.com";
+$connectSrc = "'self' https: wss:";
+if ($isOfficeRequest) {
+    // ONLYOFFICE web-apps uses dynamic template evaluation and blob workers in editor runtime.
+    $scriptSrc .= " 'unsafe-eval' blob:";
+    $connectSrc .= " blob:";
+}
+header(
+    "Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; "
+    ."frame-ancestors 'self'; script-src ".$scriptSrc."; style-src ".$styleSrc."; font-src ".$fontSrc."; "
+    ."img-src 'self' data: blob: https:; connect-src ".$connectSrc."; worker-src 'self' blob:"
+);
 if ($https) {
     header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
 }
 
-$webBase = WebBase::detect();
-$path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $installPrefix = WebBase::url($webBase, '/install');
 $adminApiUpdatesPrefix = WebBase::url($webBase, '/admin/api/updates');
 
@@ -180,6 +195,10 @@ if ($path === $legacyDocs || str_starts_with($path, $legacyDocs.'/')) {
 }
 
 if (OfficeEntry::tryRespondInjectedHtml($webBase, $path)) {
+    exit;
+}
+
+if (OfficeStatic::tryServeLegacyAlias($path)) {
     exit;
 }
 

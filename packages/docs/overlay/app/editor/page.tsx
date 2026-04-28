@@ -143,6 +143,43 @@ export default function Page() {
           },
         });
 
+        // Upstream can emit "editor updated/version changed" warnings that trigger forced reload loops
+        // in this embedded runtime where app/web-app asset versions may drift during rebuilds.
+        const patchVersionReloadWarnings = () => {
+          const w = win as typeof window & {
+            Common?: {
+              UI?: { warning?: (opts: unknown) => unknown };
+              Gateway?: { updateVersion?: () => unknown };
+            };
+          };
+          const common = w.Common;
+          if (!common?.UI?.warning) return false;
+          const originalWarning = common.UI.warning.bind(common.UI);
+          common.UI.warning = (opts: unknown) => {
+            const msg = String((opts as { msg?: unknown } | null)?.msg ?? "");
+            if (
+              msg.includes("editor version has been updated") ||
+              msg.includes("file version has been changed")
+            ) {
+              return undefined;
+            }
+            return originalWarning(opts);
+          };
+          if (typeof common.Gateway?.updateVersion === "function") {
+            common.Gateway.updateVersion = () => undefined;
+          }
+          return true;
+        };
+        if (!patchVersionReloadWarnings()) {
+          let retries = 0;
+          const t = window.setInterval(() => {
+            retries += 1;
+            if (patchVersionReloadWarnings() || retries > 20) {
+              window.clearInterval(t);
+            }
+          }, 200);
+        }
+
         const script = idoc.createElement("script");
         script.src = apiUrl;
         idoc.body.appendChild(script);
@@ -170,6 +207,7 @@ export default function Page() {
           },
           documentType: documentType,
           editorConfig: {
+            mode: "edit",
             lang: language,
             coEditing: {
               mode: "fast",
