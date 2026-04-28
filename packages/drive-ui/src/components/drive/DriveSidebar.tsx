@@ -140,11 +140,6 @@ export function DriveSidebar({
           <LogOut className="h-3.5 w-3.5" />
           Sign out
         </a>
-        UI from{" "}
-        <a className="underline hover:text-foreground" href="https://github.com/woutervroege/drive-studio">
-          drive-studio
-        </a>
-        . Files are the same tree as WebDAV <code className="text-[10px]">/files/</code>.
       </div>
 
       {newFolderOpen && myDrive && (
