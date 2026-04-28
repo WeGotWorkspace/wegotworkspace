@@ -9,6 +9,7 @@ export type StoredNote = {
   tags: string[];
   starred?: boolean;
   updatedAt: Date;
+  archived?: boolean;
 };
 
 type DavEntry = {
@@ -121,43 +122,87 @@ function notebookRel(username: string, notebook: string): string {
   return `users/${username}/.notes/${notebook}`;
 }
 
+function archiveRootRel(username: string): string {
+  return `users/${username}/.notes/.archive`;
+}
+
+function archiveNotebookRel(username: string, notebook: string): string {
+  return `${archiveRootRel(username)}/${notebook}`;
+}
+
 function noteRel(username: string, notebook: string, noteId: string): string {
   return `${notebookRel(username, notebook)}/${noteId}.md`;
+}
+
+function archiveNoteRel(username: string, notebook: string, noteId: string): string {
+  return `${archiveNotebookRel(username, notebook)}/${noteId}.md`;
 }
 
 function uniqueStrings(values: string[]): string[] {
   return [...new Set(values)];
 }
 
+async function loadNotebookNotes(
+  baseUri: string,
+  username: string,
+  notebook: string,
+  archived: boolean,
+): Promise<StoredNote[]> {
+  const notebookPath = relToPath(
+    baseUri,
+    archived ? archiveNotebookRel(username, notebook) : notebookRel(username, notebook),
+  );
+  const entries = await davPropfind(notebookPath, "1");
+  const files = entries.filter((entry) => !entry.isCollection && entry.name.toLowerCase().endsWith(".md"));
+  const notes: StoredNote[] = [];
+  for (const file of files) {
+    const resourcePath = relToPath(
+      baseUri,
+      archived
+        ? archiveNoteRel(username, notebook, noteIdFromFileName(file.name))
+        : noteRel(username, notebook, noteIdFromFileName(file.name)),
+    );
+    const res = await davRequest(resourcePath, { method: "GET" });
+    if (!res.ok) continue;
+    const markdown = await res.text();
+    const parsed = parseMarkdownNote(markdown, file.name.replace(/\.md$/i, ""));
+    notes.push({
+      id: noteIdFromFileName(file.name),
+      notebook,
+      title: parsed.frontmatter.title,
+      body: parsed.body,
+      tags: parsed.frontmatter.tags,
+      starred: parsed.frontmatter.starred,
+      updatedAt: file.lastModified ?? new Date(),
+      archived,
+    });
+  }
+
+  return notes;
+}
+
 export async function loadNotes(baseUri: string, username: string): Promise<StoredNote[]> {
   const notesRootRel = `users/${username}/.notes`;
   const notesRootPath = relToPath(baseUri, notesRootRel);
   await ensureCollection(notesRootPath);
+  const archiveRootPath = relToPath(baseUri, archiveRootRel(username));
+  await ensureCollection(archiveRootPath);
 
   const notebookEntries = await davPropfind(notesRootPath, "1");
-  const notebookDirs = notebookEntries.filter((entry) => entry.isCollection).map((entry) => entry.name);
+  const notebookDirs = notebookEntries
+    .filter((entry) => entry.isCollection && entry.name !== ".archive")
+    .map((entry) => entry.name);
+
+  const archiveEntries = await davPropfind(archiveRootPath, "1");
+  const archiveNotebookDirs = archiveEntries.filter((entry) => entry.isCollection).map((entry) => entry.name);
 
   const notes: StoredNote[] = [];
   for (const notebook of notebookDirs) {
-    const notebookPath = relToPath(baseUri, notebookRel(username, notebook));
-    const entries = await davPropfind(notebookPath, "1");
-    const files = entries.filter((entry) => !entry.isCollection && entry.name.toLowerCase().endsWith(".md"));
-    for (const file of files) {
-      const resourcePath = relToPath(baseUri, noteRel(username, notebook, noteIdFromFileName(file.name)));
-      const res = await davRequest(resourcePath, { method: "GET" });
-      if (!res.ok) continue;
-      const markdown = await res.text();
-      const parsed = parseMarkdownNote(markdown, file.name.replace(/\.md$/i, ""));
-      notes.push({
-        id: noteIdFromFileName(file.name),
-        notebook,
-        title: parsed.frontmatter.title,
-        body: parsed.body,
-        tags: parsed.frontmatter.tags,
-        starred: parsed.frontmatter.starred,
-        updatedAt: file.lastModified ?? new Date(),
-      });
-    }
+    notes.push(...(await loadNotebookNotes(baseUri, username, notebook, false)));
+  }
+
+  for (const notebook of archiveNotebookDirs) {
+    notes.push(...(await loadNotebookNotes(baseUri, username, notebook, true)));
   }
 
   return notes;
@@ -198,14 +243,25 @@ export async function syncNotes(
   baseUri: string,
   username: string,
   notes: StoredNote[],
+  archivedIds: Set<string>,
 ): Promise<void> {
   const notesRoot = relToPath(baseUri, `users/${username}/.notes`);
   await ensureCollection(notesRoot);
+  const archiveRoot = relToPath(baseUri, archiveRootRel(username));
+  await ensureCollection(archiveRoot);
 
-  const notebooks = uniqueStrings(notes.map((note) => note.notebook).filter(Boolean));
+  const activeNotebooks = uniqueStrings(
+    notes.filter((note) => !archivedIds.has(note.id)).map((note) => note.notebook).filter(Boolean),
+  );
+  const archivedNotebooks = uniqueStrings(
+    notes.filter((note) => archivedIds.has(note.id)).map((note) => note.notebook).filter(Boolean),
+  );
 
-  for (const notebook of notebooks) {
+  for (const notebook of activeNotebooks) {
     await ensureCollection(relToPath(baseUri, notebookRel(username, notebook)));
+  }
+  for (const notebook of archivedNotebooks) {
+    await ensureCollection(relToPath(baseUri, archiveNotebookRel(username, notebook)));
   }
 
   for (const note of notes) {
@@ -215,15 +271,23 @@ export async function syncNotes(
       starred: note.starred,
     };
     const markdown = serializeMarkdownNote(frontmatter, note.body);
-    await putMarkdown(baseUri, noteRel(username, note.notebook, note.id), markdown);
+    const rel = archivedIds.has(note.id)
+      ? archiveNoteRel(username, note.notebook, note.id)
+      : noteRel(username, note.notebook, note.id);
+    await putMarkdown(baseUri, rel, markdown);
   }
 
   const existing = await loadNotes(baseUri, username);
-  const expected = new Set(notes.map((note) => `${note.notebook}/${note.id}.md`));
+  const expected = new Set(
+    notes.map((note) => `${archivedIds.has(note.id) ? "archive:" : "active:"}${note.notebook}/${note.id}.md`),
+  );
   for (const note of existing) {
-    const key = `${note.notebook}/${note.id}.md`;
+    const key = `${note.archived ? "archive:" : "active:"}${note.notebook}/${note.id}.md`;
     if (!expected.has(key)) {
-      await deleteResource(baseUri, noteRel(username, note.notebook, note.id));
+      const rel = note.archived
+        ? archiveNoteRel(username, note.notebook, note.id)
+        : noteRel(username, note.notebook, note.id);
+      await deleteResource(baseUri, rel);
     }
   }
 }
