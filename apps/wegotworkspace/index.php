@@ -82,6 +82,7 @@ use App\Paths;
 use App\Server\SabreApp;
 use App\Home\HomeKernel;
 use App\Mail\MailKernel;
+use App\Notes\NotesKernel;
 use App\Office\OfficeEntry;
 use App\Office\OfficeStatic;
 use App\Security\TrustedHostGate;
@@ -201,6 +202,10 @@ if (VoiceKernel::tryRespond($webBase, $path)) {
 }
 
 if (MailKernel::tryRespond($webBase, $path)) {
+    exit;
+}
+
+if (NotesKernel::tryRespond($webBase, $path)) {
     exit;
 }
 
