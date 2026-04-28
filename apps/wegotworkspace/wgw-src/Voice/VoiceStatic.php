@@ -6,6 +6,7 @@ namespace App\Voice;
 
 use App\Installer\WebBase;
 use App\Paths;
+use App\Pwa\PwaSupport;
 
 /**
  * Serves the Aura Voice static export at {@code /voice/…} (see {@code packages/voice-ui/}).
@@ -96,10 +97,24 @@ final class VoiceStatic
         header('Content-Type: '.$mime);
         if ($ext === 'html' || $ext === 'htm') {
             header('Cache-Control: no-store, no-cache, must-revalidate');
+            $html = (string) file_get_contents($realFile);
+            if (basename($realFile) === 'index.html') {
+                $inject = PwaSupport::headMetaTags($webBase, 'voice');
+                if (preg_match('#<head[^>]*>#i', $html, $m, PREG_OFFSET_CAPTURE)) {
+                    $tag = $m[0][0];
+                    $pos = $m[0][1] + strlen($tag);
+                    $html = substr($html, 0, $pos)."\n".$inject.substr($html, $pos);
+                } elseif (str_contains($html, '</head>')) {
+                    $html = str_replace('</head>', $inject."\n</head>", $html);
+                } else {
+                    $html = $inject."\n".$html;
+                }
+            }
+            echo $html;
         } else {
             header('Cache-Control: public, max-age=86400');
+            readfile($realFile);
         }
-        readfile($realFile);
 
         return true;
     }

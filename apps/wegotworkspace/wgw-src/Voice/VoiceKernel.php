@@ -6,6 +6,7 @@ namespace App\Voice;
 
 use App\Config;
 use App\Installer\WebBase;
+use App\Pwa\PwaSupport;
 use App\SabreUiAuthGate;
 use App\Settings\SettingsKeys;
 
@@ -142,6 +143,7 @@ final class VoiceKernel
         http_response_code(503);
         header('Content-Type: text/html; charset=utf-8');
         echo '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Voice</title>';
+        echo PwaSupport::headMetaTags($webBase, 'voice');
         echo '<style>body{font-family:system-ui,sans-serif;max-width:40rem;margin:2rem auto;padding:0 1rem;line-height:1.5}code{font-size:.9em;background:#f4f4f5;padding:.15rem .4rem;border-radius:4px}</style></head><body>';
         echo '<h1>Aura Voice</h1>';
         echo '<p>The Voice UI build is missing. From the project root, run <code>pnpm --filter @wgw/voice-ui build</code> or <code>pnpm build</code>.</p>';

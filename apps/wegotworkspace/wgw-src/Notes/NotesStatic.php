@@ -6,6 +6,7 @@ namespace App\Notes;
 
 use App\Installer\WebBase;
 use App\Paths;
+use App\Pwa\PwaSupport;
 
 final class NotesStatic
 {
@@ -51,9 +52,10 @@ final class NotesStatic
 
                 return true;
             }
-            $accept = (string) ($_SERVER['HTTP_ACCEPT'] ?? '');
             $index = $root.'/index.html';
-            if (is_file($index) && str_contains($accept, 'text/html') && !str_starts_with($rel, 'assets/')) {
+            if (is_file($index) && $rel === '') {
+                $fs = $index;
+            } elseif (is_file($index) && !str_starts_with($rel, 'assets/')) {
                 $fs = $index;
             } else {
                 return false;
@@ -108,7 +110,8 @@ final class NotesStatic
                     JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES
                 );
                 $inject = '<base href="'.htmlspecialchars(WebBase::url($webBase, '/notes/'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8').'">'
-                    ."\n".'<script>window.__SABRE_NOTES_CONFIG__='.$json.';</script>';
+                    ."\n".'<script>window.__SABRE_NOTES_CONFIG__='.$json.';</script>'
+                    ."\n".PwaSupport::headMetaTags($webBase, 'notes');
                 if (preg_match('#<head[^>]*>#i', $html, $m, PREG_OFFSET_CAPTURE)) {
                     $tag = $m[0][0];
                     $pos = $m[0][1] + strlen($tag);

@@ -6,6 +6,7 @@ namespace App\Admin;
 
 use App\Installer\WebBase;
 use App\Paths;
+use App\Pwa\PwaSupport;
 
 /**
  * Serves the Admin UI static export at {@code /admin/…} (see {@code packages/admin-ui/}).
@@ -103,7 +104,8 @@ final class AdminUiStatic
                 $scheme = $https ? 'https' : 'http';
                 $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
                 $baseHref = $scheme.'://'.$host.WebBase::url($webBase, '/admin/');
-                $inject = '<base href="'.htmlspecialchars($baseHref, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8').'">';
+                $inject = '<base href="'.htmlspecialchars($baseHref, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8').'">'."\n"
+                    .PwaSupport::headMetaTags($webBase, 'admin');
                 if (preg_match('#<head[^>]*>#i', $html, $m, PREG_OFFSET_CAPTURE)) {
                     $tag = $m[0][0];
                     $pos = $m[0][1] + strlen($tag);
