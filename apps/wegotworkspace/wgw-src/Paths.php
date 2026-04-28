@@ -138,6 +138,14 @@ final class Paths
     }
 
     /**
+     * Home UI build from {@code packages/home-ui/}, served at install root.
+     */
+    public static function homeDist(): string
+    {
+        return self::privateDir().'/home/dist';
+    }
+
+    /**
      * Admin UI build from {@code packages/admin-ui/}, served at {@code /admin/} when present.
      */
     public static function adminDist(): string
