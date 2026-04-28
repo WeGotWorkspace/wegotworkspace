@@ -131,6 +131,7 @@ final class VoiceEntry
         $payload['turnUrl'] = (string) ($siteCfg[SettingsKeys::VOICE_TURN_URL] ?? '');
         $payload['turnUsername'] = (string) ($siteCfg[SettingsKeys::VOICE_TURN_USERNAME] ?? '');
         $payload['turnCredential'] = (string) ($siteCfg[SettingsKeys::VOICE_TURN_CREDENTIAL] ?? '');
+        $payload['forceRelay'] = (bool) ($siteCfg[SettingsKeys::VOICE_FORCE_RELAY] ?? false);
 
         $json = json_encode(
             $payload,

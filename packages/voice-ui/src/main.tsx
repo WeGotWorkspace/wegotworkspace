@@ -22,6 +22,7 @@ declare global {
       turnUrl?: string;
       turnUsername?: string;
       turnCredential?: string;
+      forceRelay?: boolean;
     };
   }
 }
@@ -37,6 +38,7 @@ function applySabreVoiceDefaults(): void {
     turnUrl: "",
     turnUsername: "",
     turnCredential: "",
+    forceRelay: false,
   };
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
@@ -65,6 +67,13 @@ function applySabreVoiceDefaults(): void {
       const v = String(cfg.turnCredential ?? "");
       if (cur.turnCredential !== v) {
         cur.turnCredential = v;
+        dirty = true;
+      }
+    }
+    if ("forceRelay" in cfg) {
+      const v = !!cfg.forceRelay;
+      if (cur.forceRelay !== v) {
+        cur.forceRelay = v;
         dirty = true;
       }
     }

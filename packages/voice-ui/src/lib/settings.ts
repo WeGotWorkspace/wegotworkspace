@@ -13,6 +13,7 @@ export interface AuraSettings {
   turnUrl: string;
   turnUsername: string;
   turnCredential: string;
+  forceRelay: boolean;
 }
 
 const DEFAULTS: AuraSettings = {
@@ -21,6 +22,7 @@ const DEFAULTS: AuraSettings = {
   turnUrl: "",
   turnUsername: "",
   turnCredential: "",
+  forceRelay: false,
 };
 
 function read(): AuraSettings {

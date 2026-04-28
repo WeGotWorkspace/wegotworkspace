@@ -31,6 +31,9 @@ final class SettingsKeys
 
     public const VOICE_TURN_CREDENTIAL = 'voice_turn_credential';
 
+    /** When enabled, clients use TURN relay-only mode from the start. */
+    public const VOICE_FORCE_RELAY = 'voice_force_relay';
+
     /** IMAP/SMTP endpoints for Webmail (site-wide). Per-user credentials live in SQL ({@code mail_user_credentials}). */
     public const MAIL_IMAP_HOST = 'mail_imap_host';
 
@@ -62,6 +65,7 @@ final class SettingsKeys
             self::VOICE_TURN_URL,
             self::VOICE_TURN_USERNAME,
             self::VOICE_TURN_CREDENTIAL,
+            self::VOICE_FORCE_RELAY,
             self::MAIL_IMAP_HOST,
             self::MAIL_IMAP_PORT,
             self::MAIL_IMAP_SECURITY,

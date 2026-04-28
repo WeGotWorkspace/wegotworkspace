@@ -9,7 +9,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { buildRtcConfig, randomId } from "@/lib/webrtc";
+import { buildRtcConfig, randomId, type IceMode } from "@/lib/webrtc";
 import { SignalingClient, type PeerInfo, type SignalMessage } from "@/lib/signaling";
 import { loadSettings } from "@/lib/settings";
 
@@ -78,6 +78,8 @@ interface PeerEntry {
   pc: RTCPeerConnection;
   name: string;
   stream: MediaStream;
+  mode: IceMode;
+  relayFallbackTried: boolean;
   /** Candidates received before {@code remoteDescription} is set (parallel polls / ordering). */
   pendingIce: RTCIceCandidateInit[];
 }
@@ -305,12 +307,20 @@ export function useMesh() {
   );
 
   const createPeerConnection = useCallback(
-    (peerId: string, name: string): PeerEntry => {
+    (peerId: string, name: string, mode: IceMode = "direct"): PeerEntry => {
       const settings = loadSettings();
-      const pc = new RTCPeerConnection(buildRtcConfig(settings));
+      const rtcConfig = buildRtcConfig(settings, mode);
+      const pc = new RTCPeerConnection(rtcConfig);
       const remoteStream = new MediaStream();
 
-      const entry: PeerEntry = { pc, name, stream: remoteStream, pendingIce: [] };
+      const entry: PeerEntry = {
+        pc,
+        name,
+        stream: remoteStream,
+        mode,
+        relayFallbackTried: false,
+        pendingIce: [],
+      };
       peersRef.current.set(peerId, entry);
 
       // Push our local tracks onto the new connection.
@@ -335,6 +345,34 @@ export function useMesh() {
       pc.onconnectionstatechange = () => {
         refreshPeers();
         if (pc.connectionState === "failed") {
+          const latest = peersRef.current.get(peerId);
+          const canFallback = !!latest && latest.mode !== "relay" && !latest.relayFallbackTried;
+          if (canFallback) {
+            latest.relayFallbackTried = true;
+            latest.mode = "relay";
+            try {
+              const relayConfig = buildRtcConfig(settings, "relay");
+              latest.pc.setConfiguration(relayConfig);
+              latest.pc.restartIce();
+              const selfId = selfIdRef.current;
+              if (selfId && selfId > peerId && signalingRef.current) {
+                void (async () => {
+                  try {
+                    const offer = await latest.pc.createOffer({ iceRestart: true });
+                    await latest.pc.setLocalDescription(offer);
+                    await signalingRef.current?.send(peerId, "offer", {
+                      sdp: latest.pc.localDescription,
+                    });
+                  } catch {
+                    /* ignore fallback re-offer failure */
+                  }
+                })();
+              }
+            } catch {
+              /* ignore fallback config errors */
+            }
+            return;
+          }
           setState((s) => ({ ...s, error: `Connection to ${name} failed (NAT/firewall)` }));
         }
       };
@@ -360,7 +398,9 @@ export function useMesh() {
   const initiateCallTo = useCallback(
     async (peerId: string, name: string) => {
       if (peersRef.current.has(peerId)) return;
-      const { pc } = createPeerConnection(peerId, name);
+      const settings = loadSettings();
+      const mode: IceMode = settings.forceRelay ? "relay" : "direct";
+      const { pc } = createPeerConnection(peerId, name, mode);
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       await signalingRef.current?.send(peerId, "offer", { sdp: pc.localDescription });
@@ -375,7 +415,11 @@ export function useMesh() {
       let entry = peersRef.current.get(from);
 
       if (type === "offer") {
-        if (!entry) entry = createPeerConnection(from, peerName);
+        if (!entry) {
+          const settings = loadSettings();
+          const mode: IceMode = settings.forceRelay ? "relay" : "direct";
+          entry = createPeerConnection(from, peerName, mode);
+        }
         const { sdp } = payload as { sdp: RTCSessionDescriptionInit };
         await entry.pc.setRemoteDescription(sdp);
         await flushPendingIce(entry);
