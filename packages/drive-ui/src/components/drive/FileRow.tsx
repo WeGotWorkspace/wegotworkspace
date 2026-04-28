@@ -38,7 +38,7 @@ export function FileRow({
         onOpenInOffice?.();
       }}
       className={cn(
-        "group grid grid-cols-[minmax(0,1fr)_160px_120px_100px_40px] items-center gap-4 px-3.5 py-2.5 text-left rounded-lg w-full cursor-default",
+        "group grid grid-cols-[minmax(0,1fr)_40px] md:grid-cols-[minmax(0,1fr)_160px_120px_100px_40px] items-center gap-2.5 md:gap-4 px-2.5 md:px-3.5 py-2 md:py-2.5 text-left rounded-lg w-full cursor-default",
         "transition-colors",
         selected ? "bg-accent" : "hover:bg-muted/60",
       )}
@@ -53,15 +53,15 @@ export function FileRow({
         </div>
       </div>
 
-      <div className="flex items-center gap-2 min-w-0">
+      <div className="hidden md:flex items-center gap-2 min-w-0">
         <div className="h-6 w-6 rounded-full bg-gradient-to-br from-primary to-primary/60 text-primary-foreground flex items-center justify-center text-[10px] font-semibold shrink-0">
           {file.owner.avatar}
         </div>
         <span className="text-sm text-muted-foreground truncate">{file.owner.name}</span>
       </div>
 
-      <span className="text-sm text-muted-foreground">{formatRelative(file.modified)}</span>
-      <span className="text-sm text-muted-foreground tabular-nums">{file.size ?? "—"}</span>
+      <span className="hidden md:inline text-sm text-muted-foreground">{formatRelative(file.modified)}</span>
+      <span className="hidden md:inline text-sm text-muted-foreground tabular-nums">{file.size ?? "—"}</span>
 
       <div className="flex justify-end" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
         <FileItemMenu
