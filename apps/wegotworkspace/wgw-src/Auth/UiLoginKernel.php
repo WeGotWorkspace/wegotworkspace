@@ -7,6 +7,7 @@ namespace App\Auth;
 use App\Admin\AuthService;
 use App\Config;
 use App\Installer\WebBase;
+use App\Pwa\PwaSupport;
 use App\SabreUiAuthGate;
 use App\Settings\SettingsKeys;
 
@@ -168,6 +169,7 @@ final class UiLoginKernel
         echo '<meta name="color-scheme" content="light">';
         echo '<meta name="description" content="Sign in to '.$e($app).', the cloud workspace built for modern teams.">';
         echo '<title>'.$e($title).'</title>';
+        echo PwaSupport::headMetaTags($webBase, 'home');
         echo '<link rel="preconnect" href="https://fonts.googleapis.com">';
         echo '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>';
         echo '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">';

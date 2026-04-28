@@ -6,6 +6,7 @@ namespace App\Drive;
 
 use App\Installer\WebBase;
 use App\Paths;
+use App\Pwa\PwaSupport;
 
 final class DriveStatic
 {
@@ -98,6 +99,7 @@ final class DriveStatic
                     JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES
                 );
                 $inject = '<script>window.__SABRE_DRIVE_CONFIG__='.$json.';</script>';
+                $inject .= "\n".PwaSupport::headMetaTags($webBase, 'drive');
                 if (preg_match('#<head[^>]*>#i', $html, $m, PREG_OFFSET_CAPTURE)) {
                     $tag = $m[0][0];
                     $pos = $m[0][1] + strlen($tag);
