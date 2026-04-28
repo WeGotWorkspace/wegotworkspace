@@ -6,7 +6,7 @@ import { RoomPanel } from "./RoomPanel";
 import { MediaDeviceSettings } from "./MediaDeviceSettings";
 import { SidebarDisplayName } from "./SidebarDisplayName";
 import { VoiceChatSidebar } from "./VoiceChatSidebar";
-import { ShieldCheck, Globe2, LogOut, Menu, MessageSquare } from "lucide-react";
+import { LogOut, Menu, MessageSquare } from "lucide-react";
 import { buildGuestJoinPath } from "@/lib/sabreJoinUrl";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -117,7 +117,7 @@ export function CallApp({ initialAutoJoinRoom = null }: { initialAutoJoinRoom?: 
         onCamChange={mesh.setSelectedCamId}
       />
 
-      <div className="px-7 pb-6 flex-1 overflow-y-auto min-h-0">
+      <div className="px-7 pb-6">
         <RoomPanel
           status={mesh.status}
           roomCode={mesh.roomCode}
@@ -133,15 +133,7 @@ export function CallApp({ initialAutoJoinRoom = null }: { initialAutoJoinRoom?: 
         )}
       </div>
 
-      <div className="p-7 border-t border-border space-y-3">
-        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-          <ShieldCheck className="size-3.5 text-primary" />
-          End-to-end encrypted (DTLS-SRTP)
-        </div>
-        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-          <Globe2 className="size-3.5 text-primary" />
-          European STUN · optional TURN
-        </div>
+      <div className="p-7 border-t border-border">
         <a
           href={logoutUrl}
           className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-border px-3 py-2 text-xs text-foreground/85 transition-colors hover:bg-accent hover:text-foreground"
@@ -156,7 +148,7 @@ export function CallApp({ initialAutoJoinRoom = null }: { initialAutoJoinRoom?: 
   return (
     <div className="min-h-dvh bg-background text-foreground flex">
       {/* Sidebar */}
-      <aside className="hidden lg:flex w-[340px] shrink-0 border-r border-border flex-col bg-sidebar/60 backdrop-blur-sm">
+      <aside className="hidden lg:flex w-[340px] shrink-0 border-r border-border flex-col bg-sidebar/60 backdrop-blur-sm overflow-y-auto">
         {sidebarContent}
       </aside>
       <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
@@ -168,7 +160,7 @@ export function CallApp({ initialAutoJoinRoom = null }: { initialAutoJoinRoom?: 
           <SheetHeader className="sr-only">
             <SheetTitle>Voice sidebar</SheetTitle>
           </SheetHeader>
-          <div className="h-full min-h-0 flex flex-col">{sidebarContent}</div>
+          <div className="h-full min-h-0 flex flex-col overflow-y-auto">{sidebarContent}</div>
         </SheetContent>
       </Sheet>
 
