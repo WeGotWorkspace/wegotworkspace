@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Mail;
 
+use ZBateson\MailMimeParser\MailMimeParser;
+
 /**
  * Thin IMAP wrapper (requires PHP {@code ext-imap}).
  */
@@ -494,33 +496,58 @@ final class MailImapClient
         if ($msgno <= 0) {
             return ['plain' => '', 'html' => ''];
         }
-        $st = imap_fetchstructure($conn, $msgno);
-        if ($st === false) {
+        $parsed = self::fetchMessageContentWithMimeParser($conn, $msgno);
+        if ($parsed === null) {
             return ['plain' => '', 'html' => ''];
         }
-        $r = self::extractBodiesFromStructure($conn, $msgno, $st, '');
-        if ($r['plain'] === '' && $r['html'] === '') {
-            $raw = imap_body($conn, $msgno, \FT_PEEK);
-            if (!is_string($raw)) {
-                return ['plain' => '', 'html' => ''];
+
+        return $parsed;
+    }
+
+    /**
+     * Parse full RFC822 source with a dedicated MIME parser (industry-standard charset and transfer handling).
+     *
+     * @return array{plain: string, html: string}|null
+     */
+    private static function fetchMessageContentWithMimeParser(\IMAP\Connection $conn, int $msgno): ?array
+    {
+        if (!class_exists(MailMimeParser::class)) {
+            return null;
+        }
+        $raw = self::fetchRawMessageSource($conn, $msgno);
+        if ($raw === null) {
+            return null;
+        }
+        try {
+            $parser = new MailMimeParser();
+            $message = $parser->parse($raw, false);
+            $plain = trim((string) ($message->getTextContent() ?? ''));
+            $html = trim((string) ($message->getHtmlContent() ?? ''));
+            if ($plain === '' && $html !== '') {
+                $plain = trim(html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
             }
-            $decoded = self::decodeTransfer($raw, (int) ($st->encoding ?? 0));
-            $type = (int) ($st->type ?? 0);
-            $sub = isset($st->subtype) ? strtolower((string) $st->subtype) : '';
-            if ($type === 0 && $sub === 'html') {
-                return [
-                    'plain' => trim(html_entity_decode(strip_tags($decoded), ENT_QUOTES | ENT_HTML5, 'UTF-8')),
-                    'html' => $decoded,
-                ];
+            if ($plain === '' && $html === '') {
+                return null;
             }
 
-            return ['plain' => $decoded, 'html' => ''];
+            return ['plain' => $plain, 'html' => $html];
+        } catch (\Throwable) {
+            return null;
         }
-        if ($r['plain'] === '' && $r['html'] !== '') {
-            $r['plain'] = trim(html_entity_decode(strip_tags($r['html']), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+    }
+
+    /**
+     * Build the raw message source (headers + body) for MIME parsing.
+     */
+    private static function fetchRawMessageSource(\IMAP\Connection $conn, int $msgno): ?string
+    {
+        $header = @imap_fetchheader($conn, $msgno);
+        $body = @imap_body($conn, $msgno, \FT_PEEK);
+        if (!is_string($header) || $header === '' || !is_string($body)) {
+            return null;
         }
 
-        return $r;
+        return rtrim($header, "\r\n")."\r\n\r\n".$body;
     }
 
     /**
