@@ -1,7 +1,10 @@
+import { useEffect, useState } from "react";
 import { Link, Outlet, useLocation } from "@tanstack/react-router";
-import { Users, Mail, Phone, FolderCog, Cloud, Download } from "lucide-react";
+import { Users, Mail, Phone, FolderCog, Cloud, Download, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSettings } from "@/lib/store";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 type NavItem = { to: string; label: string; icon: typeof Users; end?: boolean };
 const nav: NavItem[] = [
@@ -15,75 +18,111 @@ const nav: NavItem[] = [
 export function AdminShell({ children }: { children?: React.ReactNode }) {
   const loc = useLocation();
   const { currentUser, logoutUrl, updates } = useSettings();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [loc.pathname]);
+
+  const sidebarBody = (
+    <>
+      <div className="px-5 py-5 flex items-center gap-2.5 border-b border-sidebar-border">
+        <div className="h-8 w-8 rounded-md bg-sidebar-primary flex items-center justify-center">
+          <Cloud className="h-4 w-4 text-sidebar-primary-foreground" />
+        </div>
+        <div className="leading-tight">
+          <div className="font-display font-semibold text-sidebar-primary-foreground tracking-tight">
+            Admin Console
+          </div>
+          <div className="text-[11px] text-sidebar-foreground/60 mt-0.5">WeGotWorkspace</div>
+        </div>
+      </div>
+      <nav className="flex-1 p-3 space-y-0.5">
+        <div className="px-2 py-2 text-[10px] uppercase tracking-[0.2em] text-sidebar-foreground/40">
+          Settings
+        </div>
+        {nav.map((item) => {
+          const active = item.end ? loc.pathname === item.to : loc.pathname.startsWith(item.to);
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.to}
+              to={item.to as "/"}
+              onClick={() => setMobileNavOpen(false)}
+              className={cn(
+                "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
+                active
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                  : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              <span>{item.label}</span>
+              <span className="ml-auto flex items-center gap-1.5">
+                {item.to === "/updates" && updates.updateAvailable && (
+                  <span className="inline-flex h-2 w-2 rounded-full bg-primary" />
+                )}
+                {active && <span className="h-1.5 w-1.5 rounded-full bg-sidebar-primary" />}
+              </span>
+            </Link>
+          );
+        })}
+      </nav>
+      <div className="p-4 border-t border-sidebar-border">
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-full bg-sidebar-primary/20 border border-sidebar-primary/40 flex items-center justify-center text-sidebar-primary-foreground text-sm font-medium">
+            A
+          </div>
+          <div className="text-xs leading-tight">
+            <div className="font-medium text-sidebar-primary-foreground">
+              {currentUser !== "" ? currentUser : "Loading..."}
+            </div>
+            <div className="text-sidebar-foreground/50">signed in administrator</div>
+          </div>
+        </div>
+        <a
+          href={logoutUrl}
+          className="mt-3 inline-flex w-full items-center justify-center rounded-md border border-sidebar-border px-2.5 py-1.5 text-xs text-sidebar-foreground/85 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+        >
+          Sign out
+        </a>
+      </div>
+    </>
+  );
+
   return (
     <div className="min-h-screen bg-background">
-      <aside className="fixed inset-y-0 left-0 z-20 w-64 bg-sidebar text-sidebar-foreground flex flex-col border-r border-sidebar-border">
-        <div className="px-5 py-5 flex items-center gap-2.5 border-b border-sidebar-border">
-          <div className="h-8 w-8 rounded-md bg-sidebar-primary flex items-center justify-center">
-            <Cloud className="h-4 w-4 text-sidebar-primary-foreground" />
-          </div>
-          <div className="leading-tight">
-            <div className="font-display font-semibold text-sidebar-primary-foreground tracking-tight">
-              Admin Console
-            </div>
-            <div className="text-[11px] text-sidebar-foreground/60 mt-0.5">
-              WeGotWorkspace
-            </div>
-          </div>
-        </div>
-        <nav className="flex-1 p-3 space-y-0.5">
-          <div className="px-2 py-2 text-[10px] uppercase tracking-[0.2em] text-sidebar-foreground/40">
-            Settings
-          </div>
-          {nav.map((item) => {
-            const active = item.end ? loc.pathname === item.to : loc.pathname.startsWith(item.to);
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.to}
-                to={item.to as "/"}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
-                  active
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                <span>{item.label}</span>
-                <span className="ml-auto flex items-center gap-1.5">
-                  {item.to === "/updates" && updates.updateAvailable && (
-                    <span className="inline-flex h-2 w-2 rounded-full bg-primary" />
-                  )}
-                  {active && <span className="h-1.5 w-1.5 rounded-full bg-sidebar-primary" />}
-                </span>
-              </Link>
-            );
-          })}
-        </nav>
-        <div className="p-4 border-t border-sidebar-border">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-full bg-sidebar-primary/20 border border-sidebar-primary/40 flex items-center justify-center text-sidebar-primary-foreground text-sm font-medium">
-              A
-            </div>
-            <div className="text-xs leading-tight">
-              <div className="font-medium text-sidebar-primary-foreground">
-                {currentUser !== "" ? currentUser : "Loading..."}
-              </div>
-              <div className="text-sidebar-foreground/50">signed in administrator</div>
-            </div>
-          </div>
-          <a
-            href={logoutUrl}
-            className="mt-3 inline-flex w-full items-center justify-center rounded-md border border-sidebar-border px-2.5 py-1.5 text-xs text-sidebar-foreground/85 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-          >
-            Sign out
-          </a>
-        </div>
+      <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 bg-sidebar text-sidebar-foreground border-r border-sidebar-border md:flex md:flex-col">
+        {sidebarBody}
       </aside>
 
-      <div className="ml-64 min-h-screen flex flex-col min-w-0">
-        <header className="h-14 border-b border-border bg-surface/80 backdrop-blur flex items-center px-6 gap-4">
+      <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+        <SheetContent
+          id="admin-mobile-nav"
+          side="left"
+          className="w-64 max-w-[85vw] bg-sidebar text-sidebar-foreground border-sidebar-border p-0 md:hidden"
+        >
+          <SheetHeader className="sr-only">
+            <SheetTitle>Navigation menu</SheetTitle>
+          </SheetHeader>
+          <div className="h-full flex flex-col">{sidebarBody}</div>
+        </SheetContent>
+      </Sheet>
+
+      <div className="md:ml-64 min-h-screen flex flex-col min-w-0">
+        <header className="h-14 border-b border-border bg-surface/80 backdrop-blur flex items-center px-4 md:px-6 gap-3 md:gap-4">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setMobileNavOpen(true)}
+            aria-label="Open navigation menu"
+            aria-expanded={mobileNavOpen}
+            aria-controls="admin-mobile-nav"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
           <div className="text-xs font-mono text-muted-foreground">
             <span className="text-muted-foreground/50">/admin</span>
             <span className="mx-1.5">›</span>
