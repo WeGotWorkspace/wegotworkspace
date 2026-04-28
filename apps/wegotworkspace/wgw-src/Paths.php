@@ -130,6 +130,14 @@ final class Paths
     }
 
     /**
+     * Notes UI build from {@code packages/notes-ui/}, served at {@code /notes/} when present.
+     */
+    public static function notesDist(): string
+    {
+        return self::privateDir().'/notes/dist';
+    }
+
+    /**
      * Admin UI build from {@code packages/admin-ui/}, served at {@code /admin/} when present.
      */
     public static function adminDist(): string
