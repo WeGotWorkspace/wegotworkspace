@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, Paperclip, Search, Star, User, FolderInput, Trash2 } from "lucide-react";
+import { Loader2, Paperclip, Search, Star, User, FolderInput, Trash2, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,7 @@ export function MessageList({
   /** When true, search and unread-only are server-side (IMAP); list is not filtered locally for those. */
   serverSideSearch = false,
   mailboxToolbar,
+  onOpenRail,
 }: {
   folder: Folder | undefined;
   messages: Message[];
@@ -83,6 +84,8 @@ export function MessageList({
     onDeleteMailbox: () => Promise<boolean>;
     onMailboxMoved?: (newFolderId: string) => void;
   };
+  /** Small screens: open the folder rail overlay. */
+  onOpenRail?: () => void;
 }) {
   const [moveOpen, setMoveOpen] = useState(false);
   const [moveTarget, setMoveTarget] = useState<string>("");
@@ -149,12 +152,26 @@ export function MessageList({
   }, [hasMore, onLoadMore, loadingMessages, loadingMore]);
 
   return (
-    <div className="flex h-full w-full max-w-md flex-col border-r border-border bg-card">
+    <div className="flex h-full w-full md:max-w-md flex-col border-r border-border bg-card">
       <div className="border-b border-border px-5 pt-6 pb-4">
         <div className="flex items-start justify-between gap-3">
-          <h1 className="min-w-0 flex-1 truncate font-display text-3xl font-semibold tracking-tight">
-            {folder?.name ?? "Inbox"}
-          </h1>
+          <div className="min-w-0 flex flex-1 items-center gap-2">
+            {onOpenRail && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="md:hidden h-8 w-8 shrink-0"
+                onClick={onOpenRail}
+                aria-label="Open folders navigation"
+              >
+                <Menu className="h-4 w-4" />
+              </Button>
+            )}
+            <h1 className="min-w-0 flex-1 truncate font-display text-3xl font-semibold tracking-tight">
+              {folder?.name ?? "Inbox"}
+            </h1>
+          </div>
           {mailboxToolbar && folder && !folder.virtual ? (
             <div className="flex shrink-0 items-center gap-0.5 pt-0.5">
               <Button
