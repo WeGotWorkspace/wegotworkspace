@@ -39,6 +39,7 @@ function CtrlBtn({
       onClick={onClick}
       disabled={disabled}
       title={label}
+      aria-label={label}
       className={cn(
         "group flex flex-col items-center justify-center size-14 rounded-3xl transition-all",
         "border border-transparent disabled:opacity-40 disabled:cursor-not-allowed",
@@ -48,7 +49,9 @@ function CtrlBtn({
       )}
     >
       {children}
-      <span className="text-[9px] font-bold tracking-wider mt-0.5 uppercase">{label}</span>
+      <span className="hidden sm:block text-[9px] font-bold tracking-wider mt-0.5 uppercase">
+        {label}
+      </span>
     </button>
   );
 }
@@ -77,13 +80,16 @@ export function ControlsDock({
             <button
               type="button"
               title="Microphone & camera"
+              aria-label="Microphone and camera devices"
               className={cn(
                 "group flex flex-col items-center justify-center size-14 rounded-3xl transition-all",
                 "border border-border/50 bg-muted text-foreground hover:bg-muted/80",
               )}
             >
               <Settings2 className="size-4" />
-              <span className="text-[9px] font-bold tracking-wider mt-0.5 uppercase">Devices</span>
+              <span className="hidden sm:block text-[9px] font-bold tracking-wider mt-0.5 uppercase">
+                Devices
+              </span>
             </button>
           </PopoverTrigger>
           <PopoverContent
@@ -121,8 +127,9 @@ export function ControlsDock({
         <button
           onClick={onToggleScreen}
           disabled={!inCall}
+          aria-label={screenOn ? "Stop sharing screen" : "Share screen"}
           className={cn(
-            "flex items-center gap-2 px-5 h-14 rounded-3xl text-xs font-bold tracking-wide transition-all border",
+            "flex items-center gap-0 sm:gap-2 px-4 sm:px-5 h-14 rounded-3xl text-xs font-bold tracking-wide transition-all border",
             "disabled:opacity-40 disabled:cursor-not-allowed",
             screenOn
               ? "bg-primary text-primary-foreground border-primary shadow-sm"
@@ -130,16 +137,17 @@ export function ControlsDock({
           )}
         >
           <MonitorUp className="size-4" />
-          {screenOn ? "SHARING" : "SHARE"}
+          <span className="hidden sm:inline">{screenOn ? "SHARING" : "SHARE"}</span>
         </button>
         <div className="w-px h-8 bg-border mx-1" />
         <button
           onClick={onHangup}
           disabled={!inCall}
-          className="flex items-center gap-2 px-5 h-14 rounded-3xl bg-destructive text-destructive-foreground text-xs font-bold tracking-wide hover:brightness-105 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+          aria-label="End call"
+          className="flex items-center gap-0 sm:gap-2 px-4 sm:px-5 h-14 rounded-3xl bg-destructive text-destructive-foreground text-xs font-bold tracking-wide hover:brightness-105 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <PhoneOff className="size-4" />
-          END
+          <span className="hidden sm:inline">END</span>
         </button>
       </div>
     </div>
