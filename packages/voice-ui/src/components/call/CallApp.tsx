@@ -6,7 +6,7 @@ import { RoomPanel } from "./RoomPanel";
 import { MediaDeviceSettings } from "./MediaDeviceSettings";
 import { SidebarDisplayName } from "./SidebarDisplayName";
 import { VoiceChatSidebar } from "./VoiceChatSidebar";
-import { ShieldCheck, Globe2, LogOut, Menu } from "lucide-react";
+import { ShieldCheck, Globe2, LogOut, Menu, MessageSquare } from "lucide-react";
 import { buildGuestJoinPath } from "@/lib/sabreJoinUrl";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -34,6 +34,7 @@ let sabreVoiceUrlAutoJoinStarted = false;
 export function CallApp({ initialAutoJoinRoom = null }: { initialAutoJoinRoom?: string | null }) {
   const mesh = useMesh();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [mobileChatOpen, setMobileChatOpen] = useState(false);
   const meshRef = useRef(mesh);
   meshRef.current = mesh;
   const urlStateRef = useRef<{ originalPath: string; replaced: boolean } | null>(null);
@@ -155,14 +156,14 @@ export function CallApp({ initialAutoJoinRoom = null }: { initialAutoJoinRoom?: 
   return (
     <div className="min-h-dvh bg-background text-foreground flex">
       {/* Sidebar */}
-      <aside className="hidden md:flex w-[340px] shrink-0 border-r border-border flex-col bg-sidebar/60 backdrop-blur-sm">
+      <aside className="hidden lg:flex w-[340px] shrink-0 border-r border-border flex-col bg-sidebar/60 backdrop-blur-sm">
         {sidebarContent}
       </aside>
       <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
         <SheetContent
           side="left"
           id="voice-mobile-nav"
-          className="w-[340px] max-w-[90vw] border-r border-border bg-sidebar/95 p-0 backdrop-blur-sm md:hidden"
+          className="w-[340px] max-w-[90vw] border-r border-border bg-sidebar/95 p-0 backdrop-blur-sm lg:hidden"
         >
           <SheetHeader className="sr-only">
             <SheetTitle>Voice sidebar</SheetTitle>
@@ -178,13 +179,25 @@ export function CallApp({ initialAutoJoinRoom = null }: { initialAutoJoinRoom?: 
             type="button"
             variant="outline"
             size="icon"
-            className="md:hidden absolute left-4 top-4 z-20 h-10 w-10 bg-background/85 backdrop-blur-sm"
+            className="lg:hidden absolute left-4 top-4 z-20 h-10 w-10 bg-background/85 backdrop-blur-sm"
             onClick={() => setMobileSidebarOpen(true)}
             aria-label="Open voice sidebar"
             aria-expanded={mobileSidebarOpen}
             aria-controls="voice-mobile-nav"
           >
             <Menu className="h-5 w-5" />
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="xl:hidden absolute right-4 top-4 z-20 h-10 w-10 bg-background/85 backdrop-blur-sm"
+            onClick={() => setMobileChatOpen(true)}
+            aria-label="Open room chat"
+            aria-expanded={mobileChatOpen}
+            aria-controls="voice-mobile-chat"
+          >
+            <MessageSquare className="h-5 w-5" />
           </Button>
           <VideoStage
             status={mesh.status}
@@ -211,11 +224,31 @@ export function CallApp({ initialAutoJoinRoom = null }: { initialAutoJoinRoom?: 
             onCamChange={mesh.setSelectedCamId}
           />
         </main>
-        <VoiceChatSidebar
-          inCall={inCall}
-          messages={mesh.chatMessages}
-          onSend={mesh.sendChatMessage}
-        />
+        <div className="hidden xl:block">
+          <VoiceChatSidebar
+            inCall={inCall}
+            messages={mesh.chatMessages}
+            onSend={mesh.sendChatMessage}
+          />
+        </div>
+        <Sheet open={mobileChatOpen} onOpenChange={setMobileChatOpen}>
+          <SheetContent
+            side="right"
+            id="voice-mobile-chat"
+            className="w-[300px] max-w-[90vw] border-l border-border bg-card/95 p-0 backdrop-blur-sm xl:hidden"
+          >
+            <SheetHeader className="sr-only">
+              <SheetTitle>Room chat</SheetTitle>
+            </SheetHeader>
+            <div className="h-full min-h-0">
+              <VoiceChatSidebar
+                inCall={inCall}
+                messages={mesh.chatMessages}
+                onSend={mesh.sendChatMessage}
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
     </div>
   );
