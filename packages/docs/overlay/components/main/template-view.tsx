@@ -23,23 +23,31 @@ interface Template {
   category: string;
 }
 
-export function TemplateView() {
+type TemplateViewProps = {
+  initialTemplates?: Template[];
+};
+
+export function TemplateView({ initialTemplates }: TemplateViewProps = {}) {
   const t = useExtracted();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeType, setActiveType] = useState("All");
   const [activeCategory, setActiveCategory] = useState("All");
-  const [templates, setTemplates] = useState<Template[]>([]);
+  const [templates, setTemplates] = useState<Template[]>(initialTemplates ?? []);
   const [loadingTemplate, setLoadingTemplate] = useState<string | null>(null);
 
   const router = useRouter();
   const server = useAppStore((state) => state.server);
 
   useEffect(() => {
+    if (initialTemplates?.length) {
+      return;
+    }
+
     fetch(publicUrl("/files/templates.json"))
       .then((res) => res.json())
       .then((data) => setTemplates(data))
       .catch((err) => console.error("Failed to load templates:", err));
-  }, []);
+  }, [initialTemplates]);
 
   const handleTemplateClick = async (tpl: Template) => {
     if (loadingTemplate) return;
