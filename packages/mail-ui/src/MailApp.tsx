@@ -9,6 +9,8 @@ import { replyComposeRecipients } from "@/lib/reply-recipients";
 import { useMail, type Attachment } from "@/lib/use-mail";
 import { messagesVisibleInFolderList, neighborMessageIdAfterRemove } from "@/lib/mail-message-list";
 import { Toaster } from "@/components/ui/sonner";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 function readLogoutUrl(): string {
   if (typeof window === "undefined") return "/logout/";
@@ -38,6 +40,9 @@ export function MailApp() {
   const mail = useMail(selectedFolder, 0, query, inboxUnreadOnly);
   const [composerOpen, setComposerOpen] = useState(false);
   const [draftSeed, setDraftSeed] = useState<DraftSeed | undefined>();
+  const [mobileRailOpen, setMobileRailOpen] = useState(false);
+  const [mobileView, setMobileView] = useState<"list" | "reader">("list");
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (mail.mode === "needs_setup" && !mail.accountConfigured) {
@@ -90,6 +95,7 @@ export function MailApp() {
     setSelectedMessageId(null);
     setQuery("");
     setInboxUnreadOnly(false);
+    setMobileRailOpen(false);
   };
 
   useEffect(() => {
@@ -98,8 +104,14 @@ export function MailApp() {
     if (!m) setSelectedMessageId(null);
   }, [inboxUnreadOnly, selectedMessageId, mail.messages]);
 
+  useEffect(() => {
+    if (!isMobile) return;
+    if (!selectedMessageId) setMobileView("list");
+  }, [isMobile, selectedMessageId]);
+
   const handleSelectMessage = (id: string) => {
     setSelectedMessageId(id);
+    if (isMobile) setMobileView("reader");
     void mail.markRead(id, true);
     if (mail.mode === "imap") {
       void mail.fetchFullMessageBody(id);
@@ -142,6 +154,27 @@ export function MailApp() {
     openCompose(draftSeedFromMessage(selectedMessage));
   };
 
+  const mailboxToolbar =
+    mail.mode === "imap" && folder && !folder.virtual
+      ? {
+          folders: mail.folders,
+          canDeleteMailbox: !folder.system,
+          onMoveMailbox: (parentId: string | null) => mail.moveFolder(folder.id, parentId),
+          onDeleteMailbox: async () => {
+            if (folder.system) return false;
+            const ok = await mail.deleteFolder(folder.id);
+            if (ok) {
+              setSelectedFolder(mail.inboxFolderId ?? "inbox");
+              setSelectedMessageId(null);
+            }
+            return ok;
+          },
+          onMailboxMoved: (newId: string) => {
+            setSelectedFolder(newId);
+          },
+        }
+      : undefined;
+
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
       <Toaster />
@@ -157,132 +190,253 @@ export function MailApp() {
               {mail.imapError}
             </div>
           )}
-          <MailRail
-            selected={selectedFolder}
-            onSelect={handleSelectFolder}
-            onCompose={() => openCompose()}
-            logoutUrl={logoutUrl}
-            composeDisabled={mail.mode !== "imap"}
-            folders={mail.folders}
-            messages={mail.messages}
-            createFolder={mail.createFolder}
-            renameFolder={mail.renameFolder}
-            deleteFolder={mail.deleteFolder}
-          />
-          <MessageList
-            folder={folder}
-            messages={folderMessages}
-            selectedId={selectedMessageId}
-            onSelect={handleSelectMessage}
-            onToggleStar={(id) => void mail.toggleStar(id)}
-            query={query}
-            onQueryChange={setQuery}
-            serverSideSearch={mail.mode === "imap"}
-            loadingMessages={mail.mode === "imap" && mail.folderMessagesLoading}
-            hasMore={mail.mode === "imap" && mail.messagesHasMore}
-            loadingMore={mail.mode === "imap" && mail.messagesLoadingMore}
-            onLoadMore={mail.mode === "imap" ? () => void mail.loadMoreMessages() : undefined}
-            unreadOnly={folder?.system === "inbox" ? inboxUnreadOnly : false}
-            onUnreadOnlyChange={folder?.system === "inbox" ? setInboxUnreadOnly : undefined}
-            mailboxToolbar={
-              mail.mode === "imap" && folder && !folder.virtual
-                ? {
-                    folders: mail.folders,
-                    canDeleteMailbox: !folder.system,
-                    onMoveMailbox: (parentId) => mail.moveFolder(folder.id, parentId),
-                    onDeleteMailbox: async () => {
-                      if (folder.system) return false;
-                      const ok = await mail.deleteFolder(folder.id);
-                      if (ok) {
-                        setSelectedFolder(mail.inboxFolderId ?? "inbox");
-                        setSelectedMessageId(null);
+          <div className="hidden md:block">
+            <MailRail
+              selected={selectedFolder}
+              onSelect={handleSelectFolder}
+              onCompose={() => openCompose()}
+              logoutUrl={logoutUrl}
+              composeDisabled={mail.mode !== "imap"}
+              folders={mail.folders}
+              messages={mail.messages}
+              createFolder={mail.createFolder}
+              renameFolder={mail.renameFolder}
+              deleteFolder={mail.deleteFolder}
+            />
+          </div>
+          <Sheet open={mobileRailOpen} onOpenChange={setMobileRailOpen}>
+            <SheetContent
+              id="mail-mobile-rail"
+              side="left"
+              className="w-72 max-w-[85vw] border-border bg-rail p-0 text-rail-foreground md:hidden"
+            >
+              <SheetHeader className="sr-only">
+                <SheetTitle>Mail folders navigation</SheetTitle>
+              </SheetHeader>
+              <MailRail
+                selected={selectedFolder}
+                onSelect={handleSelectFolder}
+                onCompose={() => openCompose()}
+                logoutUrl={logoutUrl}
+                composeDisabled={mail.mode !== "imap"}
+                folders={mail.folders}
+                messages={mail.messages}
+                createFolder={mail.createFolder}
+                renameFolder={mail.renameFolder}
+                deleteFolder={mail.deleteFolder}
+              />
+            </SheetContent>
+          </Sheet>
+          {!isMobile ? (
+            <>
+              <MessageList
+                folder={folder}
+                messages={folderMessages}
+                selectedId={selectedMessageId}
+                onSelect={handleSelectMessage}
+                onToggleStar={(id) => void mail.toggleStar(id)}
+                query={query}
+                onQueryChange={setQuery}
+                serverSideSearch={mail.mode === "imap"}
+                loadingMessages={mail.mode === "imap" && mail.folderMessagesLoading}
+                hasMore={mail.mode === "imap" && mail.messagesHasMore}
+                loadingMore={mail.mode === "imap" && mail.messagesLoadingMore}
+                onLoadMore={mail.mode === "imap" ? () => void mail.loadMoreMessages() : undefined}
+                unreadOnly={folder?.system === "inbox" ? inboxUnreadOnly : false}
+                onUnreadOnlyChange={folder?.system === "inbox" ? setInboxUnreadOnly : undefined}
+                onOpenRail={() => setMobileRailOpen(true)}
+                mailboxToolbar={mailboxToolbar}
+              />
+              <MessageReader
+                message={selectedMessage}
+                folders={mail.folders}
+                currentFolderSystem={folder?.system ?? null}
+                onMarkUnread={() => selectedMessage && void mail.markRead(selectedMessage.id, false)}
+                onReply={() => reply(false)}
+                onReplyAll={() => reply(true)}
+                onForward={forward}
+                onEditDraft={mail.mode === "imap" ? editDraft : undefined}
+                onDelete={async () => {
+                  if (!selectedMessage) return;
+                  const removedId = selectedMessage.id;
+                  if (mail.mode !== "imap") {
+                    void mail.deleteMessage(removedId);
+                    return;
+                  }
+                  const nextId = neighborMessageIdAfterRemove(
+                    visibleListMessages.map((m) => m.id),
+                    removedId,
+                  );
+                  try {
+                    await mail.deleteMessage(removedId);
+                    if (nextId) handleSelectMessage(nextId);
+                    else setSelectedMessageId(null);
+                  } catch {
+                    /* keep selection */
+                  }
+                }}
+                onArchive={async () => {
+                  if (!selectedMessage) return;
+                  const removedId = selectedMessage.id;
+                  if (mail.mode !== "imap") {
+                    void mail.moveMessage(removedId, "archive");
+                    return;
+                  }
+                  const nextId = neighborMessageIdAfterRemove(
+                    visibleListMessages.map((m) => m.id),
+                    removedId,
+                  );
+                  try {
+                    await mail.moveMessage(removedId, "archive");
+                    if (nextId) handleSelectMessage(nextId);
+                    else setSelectedMessageId(null);
+                  } catch {
+                    /* keep selection */
+                  }
+                }}
+                onMoveTo={async (folderId) => {
+                  if (!selectedMessage) return;
+                  const removedId = selectedMessage.id;
+                  if (mail.mode !== "imap") {
+                    void mail.moveMessage(removedId, folderId);
+                    return;
+                  }
+                  const nextId = neighborMessageIdAfterRemove(
+                    visibleListMessages.map((m) => m.id),
+                    removedId,
+                  );
+                  try {
+                    await mail.moveMessage(removedId, folderId);
+                    if (nextId) handleSelectMessage(nextId);
+                    else setSelectedMessageId(null);
+                  } catch {
+                    /* keep selection */
+                  }
+                }}
+                onToggleStar={() => selectedMessage && void mail.toggleStar(selectedMessage.id)}
+                imagePrivacyGate={mail.mode === "imap"}
+                onResolveInlineImages={
+                  selectedMessageId
+                    ? async () => {
+                        await mail.fetchFullMessageBody(selectedMessageId, { inlineImages: true });
                       }
-                      return ok;
-                    },
-                    onMailboxMoved: (newId) => {
-                      setSelectedFolder(newId);
-                    },
+                    : undefined
+                }
+                attachmentDownloadHref={attachmentDownloadHref}
+              />
+            </>
+          ) : (
+            <div className="relative h-full min-h-0 flex-1 overflow-hidden">
+              <div
+                className={`absolute inset-0 transition-transform duration-300 ease-out ${
+                  mobileView === "list" ? "translate-x-0" : "-translate-x-full"
+                } ${mobileView === "list" ? "pointer-events-auto" : "pointer-events-none"}`}
+              >
+                <MessageList
+                  folder={folder}
+                  messages={folderMessages}
+                  selectedId={selectedMessageId}
+                  onSelect={handleSelectMessage}
+                  onToggleStar={(id) => void mail.toggleStar(id)}
+                  query={query}
+                  onQueryChange={setQuery}
+                  serverSideSearch={mail.mode === "imap"}
+                  loadingMessages={mail.mode === "imap" && mail.folderMessagesLoading}
+                  hasMore={mail.mode === "imap" && mail.messagesHasMore}
+                  loadingMore={mail.mode === "imap" && mail.messagesLoadingMore}
+                  onLoadMore={mail.mode === "imap" ? () => void mail.loadMoreMessages() : undefined}
+                  unreadOnly={folder?.system === "inbox" ? inboxUnreadOnly : false}
+                  onUnreadOnlyChange={folder?.system === "inbox" ? setInboxUnreadOnly : undefined}
+                  onOpenRail={() => setMobileRailOpen(true)}
+                  mailboxToolbar={mailboxToolbar}
+                />
+              </div>
+              <div
+                className={`absolute inset-0 transition-transform duration-300 ease-out ${
+                  mobileView === "reader" ? "translate-x-0" : "translate-x-full"
+                } ${mobileView === "reader" ? "pointer-events-auto" : "pointer-events-none"}`}
+              >
+                <MessageReader
+                  message={selectedMessage}
+                  folders={mail.folders}
+                  currentFolderSystem={folder?.system ?? null}
+                  onBackToList={() => setMobileView("list")}
+                  onMarkUnread={() => selectedMessage && void mail.markRead(selectedMessage.id, false)}
+                  onReply={() => reply(false)}
+                  onReplyAll={() => reply(true)}
+                  onForward={forward}
+                  onEditDraft={mail.mode === "imap" ? editDraft : undefined}
+                  onDelete={async () => {
+                    if (!selectedMessage) return;
+                    const removedId = selectedMessage.id;
+                    if (mail.mode !== "imap") {
+                      void mail.deleteMessage(removedId);
+                      return;
+                    }
+                    const nextId = neighborMessageIdAfterRemove(
+                      visibleListMessages.map((m) => m.id),
+                      removedId,
+                    );
+                    try {
+                      await mail.deleteMessage(removedId);
+                      if (nextId) handleSelectMessage(nextId);
+                      else setSelectedMessageId(null);
+                    } catch {
+                      /* keep selection */
+                    }
+                  }}
+                  onArchive={async () => {
+                    if (!selectedMessage) return;
+                    const removedId = selectedMessage.id;
+                    if (mail.mode !== "imap") {
+                      void mail.moveMessage(removedId, "archive");
+                      return;
+                    }
+                    const nextId = neighborMessageIdAfterRemove(
+                      visibleListMessages.map((m) => m.id),
+                      removedId,
+                    );
+                    try {
+                      await mail.moveMessage(removedId, "archive");
+                      if (nextId) handleSelectMessage(nextId);
+                      else setSelectedMessageId(null);
+                    } catch {
+                      /* keep selection */
+                    }
+                  }}
+                  onMoveTo={async (folderId) => {
+                    if (!selectedMessage) return;
+                    const removedId = selectedMessage.id;
+                    if (mail.mode !== "imap") {
+                      void mail.moveMessage(removedId, folderId);
+                      return;
+                    }
+                    const nextId = neighborMessageIdAfterRemove(
+                      visibleListMessages.map((m) => m.id),
+                      removedId,
+                    );
+                    try {
+                      await mail.moveMessage(removedId, folderId);
+                      if (nextId) handleSelectMessage(nextId);
+                      else setSelectedMessageId(null);
+                    } catch {
+                      /* keep selection */
+                    }
+                  }}
+                  onToggleStar={() => selectedMessage && void mail.toggleStar(selectedMessage.id)}
+                  imagePrivacyGate={mail.mode === "imap"}
+                  onResolveInlineImages={
+                    selectedMessageId
+                      ? async () => {
+                          await mail.fetchFullMessageBody(selectedMessageId, { inlineImages: true });
+                        }
+                      : undefined
                   }
-                : undefined
-            }
-          />
-          <MessageReader
-            message={selectedMessage}
-            folders={mail.folders}
-            currentFolderSystem={folder?.system ?? null}
-            onMarkUnread={() => selectedMessage && void mail.markRead(selectedMessage.id, false)}
-            onReply={() => reply(false)}
-            onReplyAll={() => reply(true)}
-            onForward={forward}
-            onEditDraft={mail.mode === "imap" ? editDraft : undefined}
-            onDelete={async () => {
-              if (!selectedMessage) return;
-              const removedId = selectedMessage.id;
-              if (mail.mode !== "imap") {
-                void mail.deleteMessage(removedId);
-                return;
-              }
-              const nextId = neighborMessageIdAfterRemove(
-                visibleListMessages.map((m) => m.id),
-                removedId,
-              );
-              try {
-                await mail.deleteMessage(removedId);
-                if (nextId) handleSelectMessage(nextId);
-                else setSelectedMessageId(null);
-              } catch {
-                /* keep selection */
-              }
-            }}
-            onArchive={async () => {
-              if (!selectedMessage) return;
-              const removedId = selectedMessage.id;
-              if (mail.mode !== "imap") {
-                void mail.moveMessage(removedId, "archive");
-                return;
-              }
-              const nextId = neighborMessageIdAfterRemove(
-                visibleListMessages.map((m) => m.id),
-                removedId,
-              );
-              try {
-                await mail.moveMessage(removedId, "archive");
-                if (nextId) handleSelectMessage(nextId);
-                else setSelectedMessageId(null);
-              } catch {
-                /* keep selection */
-              }
-            }}
-            onMoveTo={async (folderId) => {
-              if (!selectedMessage) return;
-              const removedId = selectedMessage.id;
-              if (mail.mode !== "imap") {
-                void mail.moveMessage(removedId, folderId);
-                return;
-              }
-              const nextId = neighborMessageIdAfterRemove(
-                visibleListMessages.map((m) => m.id),
-                removedId,
-              );
-              try {
-                await mail.moveMessage(removedId, folderId);
-                if (nextId) handleSelectMessage(nextId);
-                else setSelectedMessageId(null);
-              } catch {
-                /* keep selection */
-              }
-            }}
-            onToggleStar={() => selectedMessage && void mail.toggleStar(selectedMessage.id)}
-            imagePrivacyGate={mail.mode === "imap"}
-            onResolveInlineImages={
-              selectedMessageId
-                ? async () => {
-                    await mail.fetchFullMessageBody(selectedMessageId, { inlineImages: true });
-                  }
-                : undefined
-            }
-            attachmentDownloadHref={attachmentDownloadHref}
-          />
+                  attachmentDownloadHref={attachmentDownloadHref}
+                />
+              </div>
+            </div>
+          )}
           <Composer
             open={composerOpen}
             onOpenChange={setComposerOpen}

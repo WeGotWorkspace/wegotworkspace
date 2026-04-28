@@ -12,6 +12,7 @@ import {
   ImageOff,
   FolderInput,
   PencilLine,
+  ChevronLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -117,6 +118,7 @@ export function MessageReader({
   onArchive,
   onMoveTo,
   onToggleStar,
+  onBackToList,
   imagePrivacyGate = false,
   onResolveInlineImages,
   attachmentDownloadHref,
@@ -134,6 +136,8 @@ export function MessageReader({
   onArchive: () => void;
   onMoveTo: (folderId: string) => void;
   onToggleStar: () => void;
+  /** Small screens: return to the message list view. */
+  onBackToList?: () => void;
   /** When true (IMAP), remote images are blocked and CID parts load only after the user opts in. */
   imagePrivacyGate?: boolean;
   /** Refetch message body with inline MIME images resolved (`inline_images=1`). */
@@ -265,7 +269,18 @@ export function MessageReader({
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-y-auto bg-background">
-      <div className="sticky top-0 z-10 flex shrink-0 items-center gap-1 border-b border-border bg-background px-6 py-3">
+      <div className="sticky top-0 z-10 flex shrink-0 items-center gap-1 border-b border-border bg-background px-3 py-3 sm:px-6">
+        {onBackToList && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={onBackToList}
+            aria-label="Back to message list"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+        )}
         {onEditDraft && messageIsDraft ? (
           <Button variant="default" size="sm" onClick={onEditDraft} className="bg-saffron text-ink hover:bg-saffron/90">
             <PencilLine className="mr-1.5 h-3.5 w-3.5" />
@@ -273,21 +288,27 @@ export function MessageReader({
           </Button>
         ) : (
           <>
-            <Button variant="ghost" size="sm" onClick={onReply}>
-              <Reply className="mr-1.5 h-3.5 w-3.5" />
-              Reply
+            <Button variant="ghost" size="sm" onClick={onReply} className="px-2 sm:px-3" aria-label="Reply">
+              <Reply className="h-3.5 w-3.5 sm:mr-1.5" />
+              <span className="hidden sm:inline">Reply</span>
             </Button>
-            <Button variant="ghost" size="sm" onClick={onReplyAll}>
-              <ReplyAll className="mr-1.5 h-3.5 w-3.5" />
-              Reply all
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onReplyAll}
+              className="px-2 sm:px-3"
+              aria-label="Reply all"
+            >
+              <ReplyAll className="h-3.5 w-3.5 sm:mr-1.5" />
+              <span className="hidden sm:inline">Reply all</span>
             </Button>
-            <Button variant="ghost" size="sm" onClick={onForward}>
-              <Forward className="mr-1.5 h-3.5 w-3.5" />
-              Forward
+            <Button variant="ghost" size="sm" onClick={onForward} className="px-2 sm:px-3" aria-label="Forward">
+              <Forward className="h-3.5 w-3.5 sm:mr-1.5" />
+              <span className="hidden sm:inline">Forward</span>
             </Button>
           </>
         )}
-        <div className="mx-2 h-5 w-px bg-border" />
+        <div className="mx-1 h-5 w-px bg-border sm:mx-2" />
         <TooltipProvider delayDuration={150}>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -322,15 +343,17 @@ export function MessageReader({
             <TooltipContent>{message.starred ? "Unstar" : "Star"}</TooltipContent>
           </Tooltip>
         </TooltipProvider>
-        <div className="mx-2 h-5 w-px bg-border" />
+        <div className="mx-1 h-5 w-px bg-border sm:mx-2" />
         <Button
           variant="ghost"
           size="sm"
           onClick={() => setMoveOpen(true)}
           disabled={moveCandidates.length === 0}
+          className="px-2 sm:px-3"
+          aria-label="Move to mailbox"
         >
-          <FolderInput className="mr-1.5 h-3.5 w-3.5" />
-          Move to…
+          <FolderInput className="h-3.5 w-3.5 sm:mr-1.5" />
+          <span className="hidden sm:inline">Move to…</span>
         </Button>
         <div className="flex-1" />
       </div>
@@ -376,7 +399,7 @@ export function MessageReader({
       </Dialog>
 
       <div>
-        <div className="mx-auto max-w-3xl px-10 py-10">
+        <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8 md:px-10 md:py-10">
           <h1 className="font-display text-4xl font-semibold leading-tight tracking-tight text-foreground">
             {message.subject}
           </h1>
