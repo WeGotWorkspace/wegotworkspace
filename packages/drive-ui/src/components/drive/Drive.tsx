@@ -837,7 +837,7 @@ export function Drive() {
             </>
           )}
 
-          {canShowFiles && view === "list" && (
+          {canShowFiles && view === "list" && sortedDisplayFiles.length > 0 && (
             <div className="rounded-xl border border-border bg-surface overflow-hidden">
               <div className="grid grid-cols-[minmax(0,1fr)_40px] md:grid-cols-[minmax(0,1fr)_160px_120px_100px_40px] gap-2.5 md:gap-4 px-3 md:px-5 py-2.5 border-b border-border bg-muted/40 items-center">
                 <ListSortHeaderButton column="name" label="Name" sort={listSort} onSort={toggleListSort} className="text-left" />
