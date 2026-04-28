@@ -22,11 +22,22 @@ import {
 import { publicUrl } from "@/lib/public-url";
 import { parseOfficeFileParam, readSabreOfficeConfig } from "@/lib/sabre-office-dav";
 
-export function OpenView() {
+type Template = {
+  name: string;
+  filename: string;
+  preview: string;
+  type: string;
+};
+
+type OpenViewProps = {
+  recommendedTemplates?: Template[];
+};
+
+export function OpenView({ recommendedTemplates }: OpenViewProps = {}) {
   const t = useExtracted();
   const [recentFiles, setRecentFiles] = useState<RecentFileRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [templates, setTemplates] = useState<any[]>([]);
+  const [templates, setTemplates] = useState<Template[]>(recommendedTemplates ?? []);
   const [loadingTemplate, setLoadingTemplate] = useState<string | null>(null);
 
   const router = useRouter();
@@ -35,7 +46,9 @@ export function OpenView() {
 
   useEffect(() => {
     loadRecentFiles();
-    loadTemplates();
+    if (!recommendedTemplates?.length) {
+      loadTemplates();
+    }
   }, []);
 
   /** Deep-link from file manager: `/office/?file=users/…/doc.docx` → editor (load + save via WebDAV). */
@@ -66,7 +79,7 @@ export function OpenView() {
   const loadTemplates = async () => {
     try {
       const res = await fetch(publicUrl("/files/templates.json"));
-      const data = await res.json();
+      const data: Template[] = await res.json();
       setTemplates(data.slice(0, 5));
     } catch (err) {
       console.error("Failed to load templates:", err);
@@ -87,7 +100,7 @@ export function OpenView() {
     }
   };
 
-  const handleTemplateClick = async (tpl: any) => {
+  const handleTemplateClick = async (tpl: Template) => {
     if (loadingTemplate) return;
     setLoadingTemplate(tpl.name);
     try {
