@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Radio } from "lucide-react";
 
@@ -15,6 +16,31 @@ function VoicePage() {
   const { voice } = settings;
   const set = (patch: Partial<typeof voice>) =>
     store.set((s) => ({ voice: { ...s.voice, ...patch } }));
+  const saveVoiceSettings = async (
+    nextVoice: typeof voice,
+    successMessage = "Voice configuration saved",
+  ) => {
+    await store.saveSettings({
+      mail: settings.mail,
+      voice: nextVoice,
+      apps: settings.apps,
+      webdav: settings.webdav,
+    });
+    toast.success(successMessage);
+  };
+  const onForceRelayChange = (checked: boolean) => {
+    const previous = voice.forceRelay;
+    const nextVoice = { ...voice, forceRelay: checked };
+    set({ forceRelay: checked });
+    void (async () => {
+      try {
+        await saveVoiceSettings(nextVoice, "Relay mode updated");
+      } catch (e) {
+        set({ forceRelay: previous });
+        toast.error(e instanceof Error ? e.message : "Could not update relay mode");
+      }
+    })();
+  };
   return (
     <AdminShell>
       <div className="px-10 py-10 max-w-6xl">
@@ -26,13 +52,7 @@ function VoicePage() {
             <Button
               onClick={async () => {
                 try {
-                  await store.saveSettings({
-                    mail: settings.mail,
-                    voice,
-                    apps: settings.apps,
-                    webdav: settings.webdav,
-                  });
-                  toast.success("Voice configuration saved");
+                  await saveVoiceSettings(voice);
                 } catch (e) {
                   toast.error(e instanceof Error ? e.message : "Could not save voice settings");
                 }
@@ -45,14 +65,14 @@ function VoicePage() {
 
         <Section
           title="Signaling"
-          description="Override URL for the WebSocket signaling endpoint that brokers calls."
+          description="Advanced: override the signaling endpoint. Leave empty to use the built-in service."
         >
-          <Field label="Signaling URL override">
+          <Field label="Signaling endpoint override (advanced)">
             <Input
               value={voice.signalingUrl}
               onChange={(e) => set({ signalingUrl: e.target.value })}
               className="font-mono"
-              placeholder="wss://signal.example.com/ws"
+              placeholder="/voice/aura-signaling/rooms.php"
             />
           </Field>
           <div className="mt-3 inline-flex items-center gap-2 text-[11px] font-mono text-muted-foreground">
@@ -109,6 +129,23 @@ function VoicePage() {
                 placeholder="••••••••"
               />
             </Field>
+          </div>
+          <div className="mt-4 rounded-md border border-border/60 p-3">
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <div className="text-xs font-medium">Force TURN relay for all calls</div>
+                <div className="mt-1 text-[11px] text-muted-foreground leading-relaxed">
+                  <strong>Off</strong> (recommended): try a direct connection first, and only use
+                  TURN if needed. <strong>On</strong>: always use TURN, which works in more networks
+                  but can increase relay traffic and cost.
+                </div>
+              </div>
+              <Switch
+                checked={voice.forceRelay}
+                onCheckedChange={onForceRelayChange}
+                aria-label="Force TURN relay"
+              />
+            </div>
           </div>
         </Section>
       </div>

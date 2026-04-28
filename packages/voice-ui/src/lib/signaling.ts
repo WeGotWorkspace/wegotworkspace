@@ -102,7 +102,8 @@ export class SignalingClient {
       peerId: this.peerId,
       name: this.name,
     });
-    this.sessionKey = typeof res.sessionKey === "string" && res.sessionKey.trim() ? res.sessionKey : null;
+    this.sessionKey =
+      typeof res.sessionKey === "string" && res.sessionKey.trim() ? res.sessionKey : null;
     this.startPolling();
     return { peers: res.peers };
   }

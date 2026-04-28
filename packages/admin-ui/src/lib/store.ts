@@ -32,6 +32,7 @@ export type Settings = {
     turnUrls: string;
     turnUsername: string;
     turnPassword: string;
+    forceRelay: boolean;
   };
   apps: {
     calendars: boolean;
@@ -84,6 +85,7 @@ const DEFAULT_STATE: Settings = {
     turnUrls: "",
     turnUsername: "",
     turnPassword: "",
+    forceRelay: false,
   },
   apps: { calendars: true, contacts: true },
   webdav: { sabreUi: true, timezone: "UTC", baseUri: "/", authRealm: "SabreDAV" },
@@ -214,7 +216,8 @@ export const store = {
     }
     if (!latest?.version || !latest.package_url) {
       throw new Error(
-        state.updates.lastCheckError || "No update package available. Run Check now and verify feed metadata.",
+        state.updates.lastCheckError ||
+          "No update package available. Run Check now and verify feed metadata.",
       );
     }
     await api<{ ok: boolean; message?: string }>("updates/apply", latest);
