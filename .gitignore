@@ -21,8 +21,10 @@ node_modules/
 /data/sessions/*
 /tools/office-website/
 /tools/onlyoffice-web-apps/
+/tools/onlyoffice-artifacts/
 /tools/bright-face-connect/
 /dist/
 /build/
 wgw-content/
 .DS_Store
+.playwright-mcp/
