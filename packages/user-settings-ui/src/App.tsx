@@ -148,6 +148,7 @@ export function App() {
   const [state, setState] = useState<SettingsState | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState<PageKey>(() => currentPageFromLocation());
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
   const [mailSaving, setMailSaving] = useState(false);
 
@@ -195,6 +196,21 @@ export function App() {
     }
     setPage(nextPage);
   };
+
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [page]);
+
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMobileNavOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [mobileNavOpen]);
 
   const groupsLabel = useMemo(() => {
     if (!state || state.groups.length === 0) {
@@ -270,74 +286,118 @@ export function App() {
   }
 
   const meta = PAGE_META[page];
+  const sidebarContent = (
+    <>
+      <div className="px-5 py-5 flex items-center gap-2.5 border-b border-sidebar-border">
+        <div className="h-8 w-8 rounded-md bg-sidebar-primary flex items-center justify-center text-sidebar-primary-foreground text-xs font-semibold">
+          U
+        </div>
+        <div className="leading-tight">
+          <div className="font-display font-semibold text-sidebar-primary-foreground tracking-tight">
+            Settings
+          </div>
+          <div className="text-[11px] text-sidebar-foreground/60 mt-0.5">WeGotWorkspace</div>
+        </div>
+      </div>
+
+      <nav className="flex-1 p-3 space-y-0.5">
+        <div className="px-2 py-2 text-[10px] uppercase tracking-[0.2em] text-sidebar-foreground/40">
+          Settings
+        </div>
+        {NAV_ITEMS.map((item) => {
+          const active = page === item.key;
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => navigateTo(item.key)}
+              className={[
+                "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
+                active
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                  : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
+              ].join(" ")}
+            >
+              <Icon className="h-4 w-4 shrink-0" />
+              <span>{item.label}</span>
+              {active && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-sidebar-primary" />}
+            </button>
+          );
+        })}
+      </nav>
+
+      <div className="p-4 border-t border-sidebar-border">
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-full bg-sidebar-primary/20 border border-sidebar-primary/40 flex items-center justify-center text-sidebar-primary-foreground text-sm font-medium">
+            {state.user.username.slice(0, 1).toUpperCase()}
+          </div>
+          <div className="text-xs leading-tight">
+            <div className="font-medium text-sidebar-primary-foreground">{state.user.displayName}</div>
+            <div className="text-sidebar-foreground/50">@{state.user.username}</div>
+          </div>
+        </div>
+        <a
+          href={state.logoutUrl}
+          className="mt-3 inline-flex w-full items-center justify-center rounded-md border border-sidebar-border px-2.5 py-1.5 text-xs text-sidebar-foreground/85 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+        >
+          Sign out
+        </a>
+      </div>
+    </>
+  );
 
   return (
     <div className="min-h-screen bg-background">
-      <aside className="fixed inset-y-0 left-0 z-20 w-64 bg-sidebar text-sidebar-foreground flex flex-col border-r border-sidebar-border">
-        <div className="px-5 py-5 flex items-center gap-2.5 border-b border-sidebar-border">
-          <div className="h-8 w-8 rounded-md bg-sidebar-primary flex items-center justify-center text-sidebar-primary-foreground text-xs font-semibold">
-            U
-          </div>
-          <div className="leading-tight">
-            <div className="font-display font-semibold text-sidebar-primary-foreground tracking-tight">
-              Settings
-            </div>
-            <div className="text-[11px] text-sidebar-foreground/60 mt-0.5">
-              WeGotWorkspace
-            </div>
-          </div>
-        </div>
-
-        <nav className="flex-1 p-3 space-y-0.5">
-          <div className="px-2 py-2 text-[10px] uppercase tracking-[0.2em] text-sidebar-foreground/40">
-            Settings
-          </div>
-          {NAV_ITEMS.map((item) => {
-            const active = page === item.key;
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() => navigateTo(item.key)}
-                className={[
-                  "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
-                  active
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
-                ].join(" ")}
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                <span>{item.label}</span>
-                {active && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-sidebar-primary" />}
-              </button>
-            );
-          })}
-        </nav>
-
-        <div className="p-4 border-t border-sidebar-border">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-full bg-sidebar-primary/20 border border-sidebar-primary/40 flex items-center justify-center text-sidebar-primary-foreground text-sm font-medium">
-              {state.user.username.slice(0, 1).toUpperCase()}
-            </div>
-            <div className="text-xs leading-tight">
-              <div className="font-medium text-sidebar-primary-foreground">
-                {state.user.displayName}
-              </div>
-              <div className="text-sidebar-foreground/50">@{state.user.username}</div>
-            </div>
-          </div>
-          <a
-            href={state.logoutUrl}
-            className="mt-3 inline-flex w-full items-center justify-center rounded-md border border-sidebar-border px-2.5 py-1.5 text-xs text-sidebar-foreground/85 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-          >
-            Sign out
-          </a>
-        </div>
+      <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 bg-sidebar text-sidebar-foreground border-r border-sidebar-border md:flex md:flex-col">
+        {sidebarContent}
       </aside>
 
-      <div className="ml-64 min-h-screen flex flex-col min-w-0">
-        <header className="h-14 border-b border-border bg-surface/80 backdrop-blur flex items-center px-6 gap-4">
+      {mobileNavOpen && (
+        <div className="fixed inset-0 z-40 md:hidden">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/60"
+            onClick={() => setMobileNavOpen(false)}
+            aria-label="Close navigation menu"
+          />
+          <aside
+            id="settings-mobile-nav"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Settings navigation"
+            className="absolute inset-y-0 left-0 z-10 w-64 bg-sidebar text-sidebar-foreground border-r border-sidebar-border flex flex-col"
+          >
+            {sidebarContent}
+          </aside>
+        </div>
+      )}
+
+      <div className="md:ml-64 min-h-screen flex flex-col min-w-0">
+        <header className="h-14 border-b border-border bg-surface/80 backdrop-blur flex items-center px-4 md:px-6 gap-3 md:gap-4">
+          <button
+            type="button"
+            className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            onClick={() => setMobileNavOpen(true)}
+            aria-label="Open navigation menu"
+            aria-expanded={mobileNavOpen}
+            aria-controls="settings-mobile-nav"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-5 w-5"
+              aria-hidden="true"
+            >
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
           <div className="text-xs font-mono text-muted-foreground">
             <span className="text-muted-foreground/50">/settings</span>
             <span className="mx-1.5">›</span>
