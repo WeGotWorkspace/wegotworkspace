@@ -478,8 +478,11 @@ export class EditorServer {
         }
         if (!output) {
           console.error("Conversion failed");
-          return { status: "error" };
+          return { status: "error", dataUrl: "data:," };
         }
+
+        // Keep a same-session URL for ONLYOFFICE's post-save GET probe.
+        const dataUrl = getUrl(new Uint8Array(output));
 
         const cfg = readSabreOfficeConfig();
         if (cfg) {
@@ -499,7 +502,7 @@ export class EditorServer {
             if (!this.webdavResourcePath) {
               this.webdavResourcePath = putPathname;
             }
-            return { status: "ok" };
+            return { status: "ok", dataUrl };
           } catch (e) {
             console.error("WebDAV save failed", e);
           }
@@ -513,7 +516,7 @@ export class EditorServer {
         a.click();
         URL.revokeObjectURL(url);
 
-        return { status: "ok" };
+        return { status: "ok", dataUrl };
       };
 
       let result = {
@@ -547,7 +550,7 @@ export class EditorServer {
           data: {
             type: "save",
             status: result.status,
-            data: "data:,",
+            data: (result as { dataUrl?: string }).dataUrl || "data:,",
             filetype: "pptx",
           },
         });
