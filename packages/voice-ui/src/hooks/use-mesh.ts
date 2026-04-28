@@ -354,20 +354,19 @@ export function useMesh() {
               const relayConfig = buildRtcConfig(settings, "relay");
               latest.pc.setConfiguration(relayConfig);
               latest.pc.restartIce();
-              const selfId = selfIdRef.current;
-              if (selfId && selfId > peerId && signalingRef.current) {
-                void (async () => {
-                  try {
-                    const offer = await latest.pc.createOffer({ iceRestart: true });
-                    await latest.pc.setLocalDescription(offer);
-                    await signalingRef.current?.send(peerId, "offer", {
-                      sdp: latest.pc.localDescription,
-                    });
-                  } catch {
-                    /* ignore fallback re-offer failure */
-                  }
-                })();
-              }
+              // Always drive an ICE-restart offer on fallback. If both peers do this at once,
+              // offer-collision handling in handleSignal() resolves it via rollback.
+              void (async () => {
+                try {
+                  const offer = await latest.pc.createOffer({ iceRestart: true });
+                  await latest.pc.setLocalDescription(offer);
+                  await signalingRef.current?.send(peerId, "offer", {
+                    sdp: latest.pc.localDescription,
+                  });
+                } catch {
+                  /* ignore fallback re-offer failure */
+                }
+              })();
             } catch {
               /* ignore fallback config errors */
             }
@@ -421,6 +420,13 @@ export function useMesh() {
           entry = createPeerConnection(from, peerName, mode);
         }
         const { sdp } = payload as { sdp: RTCSessionDescriptionInit };
+        if (entry.pc.signalingState !== "stable") {
+          try {
+            await entry.pc.setLocalDescription({ type: "rollback" });
+          } catch {
+            /* ignore rollback failure */
+          }
+        }
         await entry.pc.setRemoteDescription(sdp);
         await flushPendingIce(entry);
         const answer = await entry.pc.createAnswer();
