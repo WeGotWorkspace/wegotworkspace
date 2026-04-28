@@ -5,6 +5,7 @@ import type { AuraSettings } from "./settings";
  * and uses the hardcoded test profile below. Keep this disabled for normal usage.
  */
 export const HARDCODED_DEV_TURN_ENABLED = false;
+export type IceMode = "direct" | "relay";
 
 /** Optional local test profile (disabled by default). Do not commit real credentials. */
 const HARDCODED_DEV_TURN_ICE: RTCIceServer = {
@@ -53,43 +54,64 @@ function parseTurnUrlList(raw: string): string[] {
     .filter((v) => v !== "");
 }
 
-export function buildIceServers(s: AuraSettings): RTCIceServer[] {
+function splitIceUrls(raw: string): { stunUrls: string[]; turnUrls: string[] } {
+  const stunUrls: string[] = [];
+  const turnUrls: string[] = [];
+  for (const url of parseTurnUrlList(raw)) {
+    if (/^stuns?:/i.test(url)) stunUrls.push(url);
+    else turnUrls.push(url);
+  }
+  return { stunUrls, turnUrls };
+}
+
+function buildTurnServer(turnUrlsRaw: string[], s: AuraSettings): RTCIceServer | null {
+  if (turnUrlsRaw.length === 0) return null;
+  const urls: string[] = [];
+  for (const url of turnUrlsRaw) {
+    const v = turnIceUrls(url);
+    if (Array.isArray(v)) urls.push(...v);
+    else urls.push(v);
+  }
+  const deduped = [...new Set(urls)];
+  if (deduped.length === 0) return null;
+  const username = s.turnUsername.trim() || undefined;
+  const credential = s.turnCredential.trim() || undefined;
+  return { urls: deduped, username, credential };
+}
+
+function shouldForceRelay(s: AuraSettings, mode: IceMode): boolean {
+  if (HARDCODED_DEV_TURN_ENABLED) return true;
+  if (mode === "relay") return true;
+  return !!s.forceRelay;
+}
+
+export function buildIceServers(s: AuraSettings, mode: IceMode = "direct"): RTCIceServer[] {
   if (HARDCODED_DEV_TURN_ENABLED) {
     return [HARDCODED_DEV_TURN_ICE];
   }
 
-  const turn = { turnUrl: s.turnUrl, turnUsername: s.turnUsername, turnCredential: s.turnCredential };
-  const extraUrls = parseTurnUrlList(turn.turnUrl);
-  const hasExtra = extraUrls.length > 0;
-  // Firefox: "five or more STUN/TURN servers slows down discovery" — 4 default STUN + 1 admin hits 5.
-  const stun = hasExtra ? EU_STUN_SERVERS.slice(0, 3) : EU_STUN_SERVERS;
-  const list: RTCIceServer[] = [...stun];
-  if (hasExtra) {
-    const username = turn.turnUsername.trim() || undefined;
-    const credential = turn.turnCredential.trim() || undefined;
-    const urls: string[] = [];
-    for (const url of extraUrls) {
-      const v = turnIceUrls(url);
-      if (Array.isArray(v)) urls.push(...v);
-      else urls.push(v);
-    }
-    const deduped = [...new Set(urls)];
-    const entry: RTCIceServer = {
-      urls: deduped,
-      username,
-      credential,
-    };
-    list.push(entry);
+  const { stunUrls, turnUrls } = splitIceUrls(s.turnUrl);
+  const turnServer = buildTurnServer(turnUrls, s);
+
+  if (mode === "relay") {
+    if (turnServer) return [turnServer];
+    return EU_STUN_SERVERS.slice(0, 2);
   }
-  return list;
+
+  if (stunUrls.length > 0) {
+    return [{ urls: [...new Set(stunUrls)] }];
+  }
+  return EU_STUN_SERVERS;
 }
 
-export function buildRtcConfig(s: AuraSettings): RTCConfiguration {
+export function buildRtcConfig(s: AuraSettings, mode: IceMode = "direct"): RTCConfiguration {
+  const relay = shouldForceRelay(s, mode);
+  const effectiveMode: IceMode = relay ? "relay" : "direct";
   return {
-    iceServers: buildIceServers(s),
-    iceTransportPolicy: HARDCODED_DEV_TURN_ENABLED ? "relay" : "all",
+    iceServers: buildIceServers(s, effectiveMode),
+    iceTransportPolicy: relay ? "relay" : "all",
     // Pooling creates extra TURN allocations; keep this 0 while debugging 508 allocate errors.
-    iceCandidatePoolSize: HARDCODED_DEV_TURN_ENABLED ? 0 : 4,
+    iceCandidatePoolSize: relay ? 0 : 4,
   };
 }
 
