@@ -190,7 +190,7 @@ export function MailApp() {
               {mail.imapError}
             </div>
           )}
-          <div className="hidden md:block">
+          <div className="hidden lg:block">
             <MailRail
               selected={selectedFolder}
               onSelect={handleSelectFolder}
@@ -208,7 +208,7 @@ export function MailApp() {
             <SheetContent
               id="mail-mobile-rail"
               side="left"
-              className="w-72 max-w-[85vw] border-border bg-rail p-0 text-rail-foreground md:hidden"
+              className="w-72 max-w-[85vw] border-border bg-rail p-0 text-rail-foreground lg:hidden"
             >
               <SheetHeader className="sr-only">
                 <SheetTitle>Mail folders navigation</SheetTitle>

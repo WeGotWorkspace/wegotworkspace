@@ -289,8 +289,8 @@ export function MessageReader({
         ) : (
           <>
             <Button variant="ghost" size="sm" onClick={onReply} className="px-2 sm:px-3" aria-label="Reply">
-              <Reply className="h-3.5 w-3.5 sm:mr-1.5" />
-              <span className="hidden sm:inline">Reply</span>
+              <Reply className="h-3.5 w-3.5 xl:mr-1.5" />
+              <span className="hidden xl:inline">Reply</span>
             </Button>
             <Button
               variant="ghost"
@@ -299,12 +299,12 @@ export function MessageReader({
               className="px-2 sm:px-3"
               aria-label="Reply all"
             >
-              <ReplyAll className="h-3.5 w-3.5 sm:mr-1.5" />
-              <span className="hidden sm:inline">Reply all</span>
+              <ReplyAll className="h-3.5 w-3.5 xl:mr-1.5" />
+              <span className="hidden xl:inline">Reply all</span>
             </Button>
             <Button variant="ghost" size="sm" onClick={onForward} className="px-2 sm:px-3" aria-label="Forward">
-              <Forward className="h-3.5 w-3.5 sm:mr-1.5" />
-              <span className="hidden sm:inline">Forward</span>
+              <Forward className="h-3.5 w-3.5 xl:mr-1.5" />
+              <span className="hidden xl:inline">Forward</span>
             </Button>
           </>
         )}
@@ -352,8 +352,8 @@ export function MessageReader({
           className="px-2 sm:px-3"
           aria-label="Move to mailbox"
         >
-          <FolderInput className="h-3.5 w-3.5 sm:mr-1.5" />
-          <span className="hidden sm:inline">Move to…</span>
+          <FolderInput className="h-3.5 w-3.5 xl:mr-1.5" />
+          <span className="hidden xl:inline">Move to…</span>
         </Button>
         <div className="flex-1" />
       </div>

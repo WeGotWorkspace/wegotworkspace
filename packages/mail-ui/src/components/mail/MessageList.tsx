@@ -152,7 +152,7 @@ export function MessageList({
   }, [hasMore, onLoadMore, loadingMessages, loadingMore]);
 
   return (
-    <div className="flex h-full w-full md:max-w-md flex-col border-r border-border bg-card">
+    <div className="flex h-full w-full md:max-w-sm xl:max-w-md flex-col border-r border-border bg-card">
       <div className="border-b border-border px-5 pt-6 pb-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex flex-1 items-center gap-2">
@@ -161,7 +161,7 @@ export function MessageList({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="md:hidden h-8 w-8 shrink-0"
+                className="lg:hidden h-8 w-8 shrink-0"
                 onClick={onOpenRail}
                 aria-label="Open folders navigation"
               >
