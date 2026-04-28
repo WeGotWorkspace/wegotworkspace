@@ -305,6 +305,9 @@ final class DriveKernel
                 if (!DriveAcl::isPathAllowed($virt, $username, $groups, false)) {
                     continue;
                 }
+                if (self::isHiddenNotesPath($virt)) {
+                    continue;
+                }
                 $name = $info->getFilename();
                 if ($query !== null && !str_contains(mb_strtolower($name), $query)) {
                     continue;
@@ -352,6 +355,9 @@ final class DriveKernel
             if (!DriveAcl::isPathAllowed($virt, $username, $groups, false)) {
                 continue;
             }
+            if (self::isHiddenNotesPath($virt)) {
+                continue;
+            }
             $abs = self::absolutePath($filesRoot, $virt);
             $isDir = is_dir($abs);
             $out[] = self::serializeEntry(
@@ -389,6 +395,13 @@ final class DriveKernel
             'time' => max(0, $time),
             'permissions' => 0,
         ];
+    }
+
+    private static function isHiddenNotesPath(string $virtualPath): bool
+    {
+        $normalized = DriveAcl::normalizeVirtualPath($virtualPath);
+
+        return preg_match('#/(?:users|groups)/[^/]+/\.notes(?:/|$)#', $normalized) === 1;
     }
 
     private static function handleDownload(string $filesRoot, string $username, array $groups): void

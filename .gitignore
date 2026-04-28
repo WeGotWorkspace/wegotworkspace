@@ -13,6 +13,7 @@ node_modules/
 /apps/wegotworkspace/wgw-modules/admin/dist/
 /apps/wegotworkspace/wgw-modules/settings/dist/
 /apps/wegotworkspace/wgw-modules/install/dist/
+/apps/wegotworkspace/wgw-modules/notes/dist/
 /apps/wegotworkspace/build/
 /apps/wegotworkspace/dist/
 /data/*

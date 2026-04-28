@@ -25,6 +25,7 @@
         "../../apps/wegotworkspace/wgw-modules/drive/dist/**",
         "../../apps/wegotworkspace/wgw-modules/voice/dist/**",
         "../../apps/wegotworkspace/wgw-modules/mail/dist/**",
+        "../../apps/wegotworkspace/wgw-modules/notes/dist/**",
         "../../apps/wegotworkspace/wgw-modules/install/dist/**"
       ]
     },

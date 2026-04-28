@@ -5,6 +5,7 @@
     "@wgw/admin-ui": "workspace:*",
     "@wgw/drive-ui": "workspace:*",
     "@wgw/mail-ui": "workspace:*",
+    "@wgw/notes-ui": "workspace:*",
     "@wgw/php-deps": "workspace:*",
     "@wgw/user-settings-ui": "workspace:*",
     "@wgw/voice-ui": "workspace:*"
