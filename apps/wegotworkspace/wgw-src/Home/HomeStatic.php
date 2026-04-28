@@ -39,6 +39,7 @@ final class HomeStatic
      *   title:string,
      *   realm:string,
      *   username:string,
+     *   isAdmin:bool,
      *   apps: array{
      *     admin:string,
      *     settings:string,

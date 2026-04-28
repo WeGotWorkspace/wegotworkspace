@@ -44,6 +44,7 @@ function readConfig() {
     title: "WeGotWorkspace",
     realm: "SabreDAV",
     username: "",
+    isAdmin: false,
     apps: {
       admin: "/admin/",
       settings: "/settings/",
@@ -74,6 +75,7 @@ function readConfig() {
     title: incoming.title ?? fallback.title,
     realm: incoming.realm ?? fallback.realm,
     username: incoming.username ?? fallback.username,
+    isAdmin: incoming.isAdmin ?? fallback.isAdmin,
     apps: {
       ...fallback.apps,
       ...(incoming.apps ?? {}),
@@ -90,15 +92,6 @@ export function HomeApp() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const config = readConfig();
   const apps: AppTile[] = [
-    {
-      name: "Admin",
-      description: "Manage your workspace",
-      href: config.apps.admin,
-      icon: Cloud,
-      iconBg: "oklch(0.65 0.22 264)",
-      iconFg: "oklch(0.99 0 0)",
-      enabled: true,
-    },
     {
       name: "User settings",
       description: "Account and preferences",
@@ -172,6 +165,17 @@ export function HomeApp() {
       enabled: Boolean(config.availability.office),
     },
   ];
+  if (config.isAdmin) {
+    apps.unshift({
+      name: "Admin",
+      description: "Manage your workspace",
+      href: config.apps.admin,
+      icon: Cloud,
+      iconBg: "oklch(0.65 0.22 264)",
+      iconFg: "oklch(0.99 0 0)",
+      enabled: true,
+    });
+  }
 
   return (
     <div className="layout">
@@ -194,9 +198,11 @@ export function HomeApp() {
           <a className="sidebar-link" href={config.apps.settings}>
             My settings
           </a>
-          <a className="sidebar-link" href={config.apps.admin}>
-            Admin
-          </a>
+          {config.isAdmin ? (
+            <a className="sidebar-link" href={config.apps.admin}>
+              Admin
+            </a>
+          ) : null}
         </nav>
 
         <div className="sidebar-footer">
@@ -240,9 +246,11 @@ export function HomeApp() {
               <a className="sidebar-link" href={config.apps.settings}>
                 My settings
               </a>
-              <a className="sidebar-link" href={config.apps.admin}>
-                Admin
-              </a>
+              {config.isAdmin ? (
+                <a className="sidebar-link" href={config.apps.admin}>
+                  Admin
+                </a>
+              ) : null}
             </nav>
 
             <div className="sidebar-footer">
