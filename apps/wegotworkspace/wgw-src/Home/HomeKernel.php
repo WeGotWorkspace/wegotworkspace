@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Home;
 
+use App\Admin\AdminPolicy;
 use App\Config;
 use App\Installer\WebBase;
 use App\Paths;
@@ -51,6 +52,7 @@ final class HomeKernel
         );
         $realm = (string) ($cfg[SettingsKeys::AUTH_REALM] ?? 'SabreDAV');
         $signedInUser = SabreUiAuthGate::ensureAuthenticated($pdo, $realm, $webBase, $path);
+        $isAdmin = AdminPolicy::isAdmin($pdo, $signedInUser);
 
         $filesOn = (bool) ($cfg[SettingsKeys::FILES_ENABLED] ?? true);
         $driveOk = $filesOn && is_file(Paths::driveDist().'/index.html');
@@ -89,6 +91,7 @@ final class HomeKernel
                 'title' => 'WeGotWorkspace',
                 'realm' => $realm,
                 'username' => $signedInUser,
+                'isAdmin' => $isAdmin,
                 'apps' => [
                     'admin' => $admin,
                     'settings' => $settings,

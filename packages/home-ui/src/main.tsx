@@ -9,6 +9,7 @@ declare global {
       title?: string;
       realm?: string;
       username?: string;
+      isAdmin?: boolean;
       apps?: {
         admin?: string;
         settings?: string;
