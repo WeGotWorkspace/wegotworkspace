@@ -100,7 +100,8 @@ function EmailHtmlFrame({ html }: { html: string }) {
       srcDoc={srcDoc}
       onLoad={syncHeight}
       className="mt-8 w-full rounded-md border border-border bg-card shadow-sm"
-      sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+      sandbox="allow-same-origin allow-popups"
+      referrerPolicy="no-referrer"
     />
   );
 }

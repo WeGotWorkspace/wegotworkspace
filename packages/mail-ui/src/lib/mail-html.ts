@@ -50,7 +50,7 @@ export function stripRemoteImageUrls(html: string): string {
 
 /** Wrap remote HTML so links open in a new tab and layout is readable inside an iframe. */
 export function wrapEmailHtmlDocument(bodyHtml: string): string {
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><base target="_blank" rel="noopener noreferrer"><style>
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src * data: blob:; style-src 'unsafe-inline'; font-src data: https:; media-src data: blob: https: http:;"><base target="_blank" rel="noopener noreferrer"><style>
     body { margin: 0; padding: 12px 4px; font-family: ui-sans-serif, system-ui, sans-serif; font-size: 15px; line-height: 1.6; color: #1a1a1a; word-wrap: break-word; }
     img { max-width: 100% !important; height: auto !important; }
     table { max-width: 100%; }
