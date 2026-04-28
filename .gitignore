@@ -19,6 +19,9 @@ node_modules/
 /data/sessions/*
 /tools/office-website/
 /tools/bright-face-connect/
+/dist/*
+!/dist/releases/
+!/dist/releases/**
 /build/
 wgw-content/
 .DS_Store
