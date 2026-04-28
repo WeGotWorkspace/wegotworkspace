@@ -6,6 +6,7 @@ namespace App\Mail;
 
 use App\Installer\WebBase;
 use App\Paths;
+use App\Pwa\PwaSupport;
 
 /**
  * Serves the Mail (Inkmail) UI static assets at {@code /mail/…} (see {@code packages/mail-ui/}).
@@ -110,7 +111,8 @@ final class MailStatic
                     JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES
                 );
                 $inject = '<base href="'.htmlspecialchars($baseHref, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8').'">'
-                    ."\n".'<script>window.__SABRE_MAIL_CONFIG__='.$json.';</script>';
+                    ."\n".'<script>window.__SABRE_MAIL_CONFIG__='.$json.';</script>'
+                    ."\n".PwaSupport::headMetaTags($webBase, 'mail');
                 if (preg_match('#<head[^>]*>#i', $html, $m, PREG_OFFSET_CAPTURE)) {
                     $tag = $m[0][0];
                     $pos = $m[0][1] + strlen($tag);

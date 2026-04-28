@@ -10,6 +10,7 @@ use App\Admin\UserProvisioner;
 use App\Config;
 use App\Installer\WebBase;
 use App\Mail\MailCredentialStore;
+use App\Pwa\PwaSupport;
 use App\SabreUiAuthGate;
 use App\Settings\SettingsDefaults;
 use App\Settings\SettingsKeys;
@@ -134,6 +135,7 @@ final class UserSettingsUiKernel
         http_response_code(503);
         header('Content-Type: text/html; charset=utf-8');
         echo '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>User Settings</title>';
+        echo PwaSupport::headMetaTags($webBase, 'settings');
         echo '<style>body{font-family:system-ui,sans-serif;max-width:40rem;margin:2rem auto;padding:0 1rem;line-height:1.5}code{font-size:.9em;background:#f4f4f5;padding:.15rem .4rem;border-radius:4px}</style></head><body>';
         echo '<h1>User Settings</h1>';
         echo '<p>The User Settings UI build is missing. From the project root, run <code>pnpm --filter @wgw/user-settings-ui build</code> or <code>pnpm build</code>.</p>';

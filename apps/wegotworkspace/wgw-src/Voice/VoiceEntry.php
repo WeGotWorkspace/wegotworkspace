@@ -6,6 +6,7 @@ namespace App\Voice;
 
 use App\Config;
 use App\Installer\WebBase;
+use App\Pwa\PwaSupport;
 use App\Settings\SettingsKeys;
 
 /**
@@ -140,7 +141,8 @@ final class VoiceEntry
 
         $baseHref = htmlspecialchars($voiceBaseHref, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $inject = '<base href="'.$baseHref.'">'
-            ."\n".'<script>window.__SABRE_VOICE_CONFIG__='.$json.';</script>';
+            ."\n".'<script>window.__SABRE_VOICE_CONFIG__='.$json.';</script>'
+            ."\n".PwaSupport::headMetaTags($webBase, 'voice');
 
         if (preg_match('#<head[^>]*>#i', $html, $m, PREG_OFFSET_CAPTURE)) {
             $tag = $m[0][0];

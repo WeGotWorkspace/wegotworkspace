@@ -85,6 +85,7 @@ use App\Mail\MailKernel;
 use App\Notes\NotesKernel;
 use App\Office\OfficeEntry;
 use App\Office\OfficeStatic;
+use App\Pwa\PwaSupport;
 use App\Security\TrustedHostGate;
 use App\Voice\VoiceKernel;
 use App\UserSettings\UserSettingsUiKernel;
@@ -113,6 +114,10 @@ $webBase = WebBase::detect();
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $installPrefix = WebBase::url($webBase, '/install');
 $adminApiUpdatesPrefix = WebBase::url($webBase, '/admin/api/updates');
+
+if (PwaSupport::tryRespond($webBase, $path)) {
+    exit;
+}
 
 $installed = is_file(Paths::lockFile());
 

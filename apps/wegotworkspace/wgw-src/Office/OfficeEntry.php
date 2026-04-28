@@ -7,6 +7,7 @@ namespace App\Office;
 use App\Config;
 use App\Installer\WebBase;
 use App\Paths;
+use App\Pwa\PwaSupport;
 use App\SabreUiAuthGate;
 use App\Settings\SettingsKeys;
 
@@ -91,7 +92,9 @@ final class OfficeEntry
         if ($distFile === null || !is_readable($distFile)) {
             http_response_code(503);
             header('Content-Type: text/html; charset=utf-8');
-            echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Office unavailable</title></head><body>';
+            echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Office unavailable</title>'
+                .PwaSupport::headMetaTags($webBase, 'office')
+                .'</head><body>';
             echo '<h1>Office UI is not built</h1>';
             echo '<p>Run <code>pnpm --filter @wgw/docs build</code> or <code>bash packages/docs/scripts/sync-and-build.sh</code> (output: <code>apps/wegotworkspace/wgw-modules/docs/build/</code>), then reload.</p>';
             echo '</body></html>';
@@ -113,7 +116,8 @@ final class OfficeEntry
             JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES
         );
 
-        $inject = '<script>window.__SABRE_OFFICE_CONFIG__='.$json.';</script>';
+        $inject = '<script>window.__SABRE_OFFICE_CONFIG__='.$json.';</script>'."\n"
+            .PwaSupport::headMetaTags($webBase, 'office');
 
         if (preg_match('#<head[^>]*>#i', $html, $m, PREG_OFFSET_CAPTURE)) {
             $tag = $m[0][0];
