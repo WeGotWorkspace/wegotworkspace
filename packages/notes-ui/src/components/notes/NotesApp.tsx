@@ -123,6 +123,7 @@ export function NotesApp() {
         if (cancelled) return;
         setNotes(loaded);
         setNotebooks(notebookListFromNotes(loaded));
+        setArchivedIds(new Set(loaded.filter((note) => note.archived).map((note) => note.id)));
         if (loaded.length > 0) {
           setActiveId(loaded[0].id);
         }
@@ -151,7 +152,7 @@ export function NotesApp() {
     syncTimeoutRef.current = window.setTimeout(() => {
       const config = configRef.current;
       if (!config) return;
-      void syncNotes(config.baseUri, config.username, notes)
+      void syncNotes(config.baseUri, config.username, notes, archivedIds)
         .then(() => setSyncError(""))
         .catch((error) =>
           setSyncError(error instanceof Error ? error.message : "Could not sync notes to WebDAV."),
