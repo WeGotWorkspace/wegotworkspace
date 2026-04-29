@@ -198,10 +198,6 @@ if (OfficeEntry::tryRespondInjectedHtml($webBase, $path)) {
     exit;
 }
 
-if (OfficeStatic::tryServeLegacyAlias($path)) {
-    exit;
-}
-
 if (OfficeStatic::tryServe($webBase, $path)) {
     exit;
 }
