@@ -60,7 +60,9 @@ pnpm --filter @wgw/onlyoffice-web build
 
 ## Release artifacts
 
-Release ZIP files are built with:
+Release ZIP files are built in CI from signed tag pushes (`v*`) via `.github/workflows/release.yml`.
+
+Local build command:
 
 ```bash
 pnpm release
