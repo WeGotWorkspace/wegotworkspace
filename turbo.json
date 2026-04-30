@@ -19,7 +19,7 @@
       "cache": false,
       "outputs": [
         "../../apps/wegotworkspace/vendor/**",
-        "../../apps/wegotworkspace/wgw-modules/docs/build/**",
+        "../../apps/wegotworkspace/wgw-modules/office/build/**",
         "../../apps/wegotworkspace/wgw-modules/admin/dist/**",
         "../../apps/wegotworkspace/wgw-modules/settings/dist/**",
         "../../apps/wegotworkspace/wgw-modules/drive/dist/**",

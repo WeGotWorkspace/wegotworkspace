@@ -38,7 +38,7 @@ function parseStored(raw: string | null): DriveRecentEntry[] {
   }
 }
 
-/** Newest-first list of recently opened paths (folders + office files, etc.). */
+/** Newest-first list of recently opened paths. */
 export function getDriveRecent(): DriveRecentEntry[] {
   if (typeof localStorage === "undefined") return [];
   try {

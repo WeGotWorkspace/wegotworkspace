@@ -11,7 +11,7 @@ use Sabre\HTTP\ResponseInterface;
 
 /**
  * Same as {@see PDOBasicAuth}, but also accepts the signed {@code sabre_ui_auth} cookie issued after
- * Drive / Office HTML login ({@see SabreUiAuthGate}) so browser {@code fetch()} to WebDAV works without
+ * browser sign-in ({@see SabreUiAuthGate}) so browser {@code fetch()} to WebDAV works without
  * resending HTTP Basic on every request.
  */
 final class SabrePdoBasicAndCookieAuth extends PDOBasicAuth
