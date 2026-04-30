@@ -323,6 +323,164 @@
         }
       }
     },
+    "/admin/updates/log": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Read update process log lines",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Update log lines"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Clear update process log",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Log cleared"
+          }
+        }
+      }
+    },
+    "/admin/updates/backups/{name}": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Download an update backup archive",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Backup ZIP stream"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Delete an update backup archive",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated backup state"
+          }
+        }
+      }
+    },
+    "/admin/groups/{group}/members/{username}": {
+      "put": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Add user to admin group",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Membership added"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Remove user from admin group",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Membership removed"
+          }
+        }
+      }
+    },
     "/settings/status": {
       "get": {
         "tags": [
@@ -377,6 +535,214 @@
         }
       }
     },
+    "/mail/folders": {
+      "get": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "List mail folders",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mail folder tree"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "Create mail folder",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Folder created"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "Move mail folder",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Folder moved"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "Delete mail folder",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Folder deleted"
+          }
+        }
+      }
+    },
+    "/mail/messages": {
+      "get": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "List messages in a folder",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message list"
+          }
+        }
+      }
+    },
+    "/mail/messages/attachments": {
+      "get": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "List attachment metadata for messages",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attachment metadata"
+          }
+        }
+      }
+    },
+    "/mail/message": {
+      "get": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "Get a single message",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message payload"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "Patch read/starred flags on a message",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message updated"
+          }
+        }
+      }
+    },
+    "/mail/message/attachment": {
+      "get": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "Download a message attachment",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attachment stream"
+          }
+        }
+      }
+    },
+    "/mail/move": {
+      "post": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "Move a message to another folder",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message moved"
+          }
+        }
+      }
+    },
+    "/mail/send": {
+      "post": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "Send an email",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message sent"
+          }
+        }
+      }
+    },
+    "/mail/draft": {
+      "post": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "Save a message draft",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Draft saved"
+          }
+        }
+      }
+    },
     "/drive/user": {
       "get": {
         "tags": [
@@ -391,6 +757,166 @@
         "responses": {
           "200": {
             "description": "Drive user payload"
+          }
+        }
+      }
+    },
+    "/drive/getdir": {
+      "post": {
+        "tags": [
+          "Drive"
+        ],
+        "summary": "Read directory listing",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Directory listing"
+          }
+        }
+      }
+    },
+    "/drive/searchfiles": {
+      "post": {
+        "tags": [
+          "Drive"
+        ],
+        "summary": "Search files and directories",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results"
+          }
+        }
+      }
+    },
+    "/drive/changedir": {
+      "post": {
+        "tags": [
+          "Drive"
+        ],
+        "summary": "Change current drive directory",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current directory updated"
+          }
+        }
+      }
+    },
+    "/drive/createnew": {
+      "post": {
+        "tags": [
+          "Drive"
+        ],
+        "summary": "Create a new drive directory",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item created"
+          }
+        }
+      }
+    },
+    "/drive/renameitem": {
+      "post": {
+        "tags": [
+          "Drive"
+        ],
+        "summary": "Rename a drive item",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item renamed"
+          }
+        }
+      }
+    },
+    "/drive/deleteitems": {
+      "post": {
+        "tags": [
+          "Drive"
+        ],
+        "summary": "Delete one or more drive items",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Items deleted"
+          }
+        }
+      }
+    },
+    "/drive/download": {
+      "get": {
+        "tags": [
+          "Drive"
+        ],
+        "summary": "Download a drive file",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File stream"
+          }
+        }
+      }
+    },
+    "/drive/upload": {
+      "get": {
+        "tags": [
+          "Drive"
+        ],
+        "summary": "Drive upload readiness probe",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Upload is available"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Drive"
+        ],
+        "summary": "Upload file chunk(s) to drive",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Upload accepted"
           }
         }
       }
@@ -505,6 +1031,19 @@
         "responses": {
           "200": {
             "description": "Installer state"
+          }
+        }
+      }
+    },
+    "/installer/action": {
+      "post": {
+        "tags": [
+          "Installer"
+        ],
+        "summary": "Perform installer step action",
+        "responses": {
+          "200": {
+            "description": "Installer action result"
           }
         }
       }
