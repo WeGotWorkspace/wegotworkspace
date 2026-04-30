@@ -1,0 +1,41 @@
+.hljs {
+	background: white;
+}
+html, body {
+	min-height: 100% !important;
+	height: 100%;
+	overflow-y:hidden;
+	overflow-x: hidden;
+	/* display: flex; */
+	/* flex-flow: column; */
+	width: 100%;
+	margin: 0;				
+}
+.noselect {
+	-khtml-user-select: none;
+	user-select: none;
+	-moz-user-select: none;
+	-webkit-user-select: none;
+	width: 100%;
+}
+.codefield { 
+	border-width: 3px;
+	border-style: solid;
+	border-color: rgba(68,68,68,0.266666666666);	
+}
+.settings {
+	display: inline-flex;
+}
+.item-settings {
+	display: flex;
+	flex-flow: column;	
+	margin-top: 10px;
+	margin-left: 10px;
+}
+.div_message {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
