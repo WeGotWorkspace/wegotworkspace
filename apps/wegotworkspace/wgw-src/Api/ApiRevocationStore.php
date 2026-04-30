@@ -4,84 +4,42 @@ declare(strict_types=1);
 
 namespace App\Api;
 
-use App\Paths;
-
 final class ApiRevocationStore
 {
-    /**
-     * @return array<string, int>
-     */
-    private static function load(string $path): array
+    public static function revoke(\PDO $pdo, string $jti, int $exp): void
     {
-        if (!is_readable($path)) {
-            return [];
-        }
-        $raw = file_get_contents($path);
-        if (!is_string($raw) || trim($raw) === '') {
-            return [];
-        }
-        $decoded = json_decode($raw, true);
-        if (!is_array($decoded)) {
-            return [];
-        }
-        $out = [];
-        foreach ($decoded as $jti => $exp) {
-            if (!is_string($jti) || !is_numeric($exp)) {
-                continue;
-            }
-            $out[$jti] = (int) $exp;
-        }
+        self::cleanupExpired($pdo);
+        $driver = (string) $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'mysql') {
+            $stmt = $pdo->prepare(
+                'INSERT INTO api_revoked_tokens (jti, expires_at, created_at)
+                 VALUES (?, ?, ?)
+                 ON DUPLICATE KEY UPDATE expires_at = VALUES(expires_at)'
+            );
+            $stmt->execute([$jti, $exp, time()]);
 
-        return $out;
+            return;
+        }
+        $stmt = $pdo->prepare(
+            'INSERT INTO api_revoked_tokens (jti, expires_at, created_at)
+             VALUES (?, ?, ?)
+             ON CONFLICT(jti) DO UPDATE SET expires_at = excluded.expires_at'
+        );
+        $stmt->execute([$jti, $exp, time()]);
     }
 
-    /**
-     * @param array<string, int> $items
-     */
-    private static function save(string $path, array $items): void
+    public static function isRevoked(\PDO $pdo, string $jti): bool
     {
-        $dir = dirname($path);
-        if (!is_dir($dir)) {
-            @mkdir($dir, 0700, true);
-        }
-        file_put_contents($path, (string) json_encode($items, JSON_UNESCAPED_SLASHES), LOCK_EX);
+        self::cleanupExpired($pdo);
+        $stmt = $pdo->prepare('SELECT 1 FROM api_revoked_tokens WHERE jti = ? LIMIT 1');
+        $stmt->execute([$jti]);
+
+        return (bool) $stmt->fetchColumn();
     }
 
-    private static function path(): string
+    private static function cleanupExpired(\PDO $pdo): void
     {
-        return Paths::data().'/api/revoked-jtis.json';
-    }
-
-    public static function revoke(string $jti, int $exp): void
-    {
-        $path = self::path();
-        $items = self::load($path);
-        $now = time();
-        foreach ($items as $k => $e) {
-            if ($e <= $now) {
-                unset($items[$k]);
-            }
-        }
-        $items[$jti] = $exp;
-        self::save($path, $items);
-    }
-
-    public static function isRevoked(string $jti): bool
-    {
-        $path = self::path();
-        $items = self::load($path);
-        $now = time();
-        $changed = false;
-        foreach ($items as $k => $e) {
-            if ($e <= $now) {
-                unset($items[$k]);
-                $changed = true;
-            }
-        }
-        if ($changed) {
-            self::save($path, $items);
-        }
-
-        return isset($items[$jti]);
+        $stmt = $pdo->prepare('DELETE FROM api_revoked_tokens WHERE expires_at <= ?');
+        $stmt->execute([time()]);
     }
 }
