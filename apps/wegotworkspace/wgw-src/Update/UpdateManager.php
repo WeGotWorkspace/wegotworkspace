@@ -20,6 +20,8 @@ final class UpdateManager
         $driver = (string) $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
         $checks = EnvChecker::checkAll($driver === 'mysql' ? 'mysql' : 'sqlite');
         $compatible = EnvChecker::allPassed($checks);
+        $inProgress = is_file(UpdateStateStore::lockPath());
+        $phase = $inProgress && is_string($state['phase'] ?? null) ? $state['phase'] : null;
 
         return [
             'installedVersion' => AppVersion::current(),
@@ -27,8 +29,15 @@ final class UpdateManager
             'latest' => $latest,
             'updateAvailable' => $hasRequiredMetadata && self::isUpdateAvailable(AppVersion::current(), $latest),
             'compatible' => $compatible,
+            'backups' => self::listBackups(),
             'checks' => $checks,
-            'inProgress' => is_file(UpdateStateStore::lockPath()),
+            'inProgress' => $inProgress,
+            'phase' => $phase,
+            'current' => $inProgress && is_array($state['current'] ?? null) ? $state['current'] : null,
+            'download' => $inProgress && is_array($state['download'] ?? null) ? $state['download'] : null,
+            'phaseProgress' => $inProgress && is_array($state['phase_progress'] ?? null) ? $state['phase_progress'] : null,
+            'cancelRequested' => $inProgress && (bool) ($state['cancel_requested'] ?? false),
+            'cancelAllowed' => $phase !== null && self::isCancellablePhase($phase),
             'lastCheckedAt' => is_string($state['last_checked_at'] ?? null) ? $state['last_checked_at'] : null,
             'lastCheckError' => is_string($state['last_check_error'] ?? null) ? $state['last_check_error'] : null,
             'lastResult' => is_array($state['last_result'] ?? null) ? $state['last_result'] : null,
@@ -93,7 +102,9 @@ final class UpdateManager
         $checksum = $release['checksum_sha256'];
         $checksumSignature = $release['checksum_signature'];
 
-        $backupDir = UpdateStateStore::backupDir().'/backup-'.date('YmdHis');
+        $backupBaseName = self::buildBackupBaseName($beforeVersion, $targetVersion);
+        $backupDir = UpdateStateStore::backupDir().'/'.$backupBaseName;
+        $backupArchivePath = UpdateStateStore::backupDir().'/'.$backupBaseName.'.zip';
         $replacePaths = [
             'index.php',
             'composer.json',
@@ -114,20 +125,22 @@ final class UpdateManager
 
         try {
             UpdateStateStore::appendLog('Update started: '.$beforeVersion.' -> '.$targetVersion);
+            UpdateStateStore::clearCancelRequest();
             self::writeStatus('downloading', $beforeVersion, $targetVersion);
             UpdateStateStore::cleanupTemporaryData();
             @mkdir(dirname(UpdateStateStore::packagePath()), 0775, true);
-            self::downloadPackage($packageUrl, UpdateStateStore::packagePath());
+            self::downloadPackage($packageUrl, UpdateStateStore::packagePath(), $beforeVersion, $targetVersion);
             self::verifyChecksum(UpdateStateStore::packagePath(), $checksum);
             self::verifyChecksumSignature($checksum, $checksumSignature);
 
             self::writeStatus('extracting', $beforeVersion, $targetVersion);
-            self::extractPackage(UpdateStateStore::packagePath(), UpdateStateStore::stagingDir());
+            self::extractPackage(UpdateStateStore::packagePath(), UpdateStateStore::stagingDir(), $beforeVersion, $targetVersion);
             $releaseRoot = self::resolveReleaseRoot(UpdateStateStore::stagingDir());
 
             self::writeStatus('backing_up', $beforeVersion, $targetVersion);
             @mkdir($backupDir, 0775, true);
-            self::backupPaths(Paths::appRoot(), $backupDir, $replacePaths);
+            self::backupPaths(Paths::appRoot(), $backupDir, $replacePaths, $beforeVersion, $targetVersion);
+            self::throwIfCancelRequested();
 
             self::writeMaintenanceMode(true);
             self::writeStatus('applying_files', $beforeVersion, $targetVersion);
@@ -142,17 +155,37 @@ final class UpdateManager
             UpdateStateStore::appendLog('Update finished successfully.');
         } catch (\Throwable $e) {
             UpdateStateStore::appendLog('Update failed: '.$e->getMessage());
-            self::restorePaths($backupDir, Paths::appRoot(), $replacePaths);
-            @file_put_contents(Paths::appRoot().'/VERSION', $beforeVersion."\n", LOCK_EX);
-            SchemaMigrationRunner::migrate($pdo);
-            self::recordHistory($pdo, $beforeVersion, $targetVersion, 'failed', $e->getMessage());
+            $didStartFileSwap = self::didStartApplyingFiles();
+            if ($didStartFileSwap) {
+                self::restorePaths($backupDir, Paths::appRoot(), $replacePaths);
+                @file_put_contents(Paths::appRoot().'/VERSION', $beforeVersion."\n", LOCK_EX);
+                SchemaMigrationRunner::migrate($pdo);
+            }
+            self::recordHistory(
+                $pdo,
+                $beforeVersion,
+                $targetVersion,
+                $e->getMessage() === 'Update cancelled by user.' ? 'cancelled' : 'failed',
+                $e->getMessage()
+            );
             $result['message'] = $e->getMessage();
+            if ($e->getMessage() === 'Update cancelled by user.') {
+                return $result;
+            }
             throw $e;
         } finally {
             self::writeMaintenanceMode(false);
+            if (is_dir($backupDir)) {
+                try {
+                    self::finalizeBackupArchive($backupDir, $backupArchivePath, $beforeVersion, $targetVersion);
+                } catch (\Throwable $archiveError) {
+                    UpdateStateStore::appendLog('Backup archive creation failed: '.$archiveError->getMessage());
+                }
+            }
             $result['finishedAt'] = date('c');
             $state = UpdateStateStore::read();
             $state['last_result'] = $result;
+            unset($state['phase'], $state['current'], $state['download'], $state['phase_progress'], $state['cancel_requested']);
             UpdateStateStore::write($state);
             @unlink(UpdateStateStore::lockPath());
             flock($lock, LOCK_UN);
@@ -163,9 +196,54 @@ final class UpdateManager
         return $result;
     }
 
+    /**
+     * @param array<string, mixed> $input
+     *
+     * @return array<string, mixed>
+     */
+    public static function deleteBackup(\PDO $pdo, array $input): array
+    {
+        $name = isset($input['name']) && is_string($input['name']) ? trim($input['name']) : '';
+        if ($name === '' || !preg_match('/^[A-Za-z0-9._-]+$/', $name)) {
+            throw new \InvalidArgumentException('Invalid backup file name.');
+        }
+        $path = UpdateStateStore::backupDir().'/'.$name;
+        if (!file_exists($path)) {
+            throw new \InvalidArgumentException('Backup not found.');
+        }
+        if (is_dir($path)) {
+            self::rmRecursive($path);
+        } elseif (!@unlink($path)) {
+            throw new \RuntimeException('Could not delete backup.');
+        }
+
+        return self::getState($pdo);
+    }
+
     public static function inMaintenanceMode(): bool
     {
         return is_file(UpdateStateStore::maintenancePath());
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function cancel(\PDO $pdo): array
+    {
+        $state = UpdateStateStore::read();
+        if (!is_file(UpdateStateStore::lockPath())) {
+            throw new \InvalidArgumentException('No update is currently running.');
+        }
+        $phase = is_string($state['phase'] ?? null) ? $state['phase'] : '';
+        if (!self::isCancellablePhase($phase)) {
+            throw new \InvalidArgumentException('Cancellation is no longer available for this update stage.');
+        }
+        UpdateStateStore::requestCancel();
+        $state['cancel_requested'] = true;
+        UpdateStateStore::write($state);
+        UpdateStateStore::appendLog('Cancellation requested by admin user.');
+
+        return self::getState($pdo);
     }
 
     private static function writeMaintenanceMode(bool $enabled): void
@@ -179,7 +257,7 @@ final class UpdateManager
         @unlink(UpdateStateStore::maintenancePath());
     }
 
-    private static function downloadPackage(string $url, string $target): void
+    private static function downloadPackage(string $url, string $target, string $fromVersion, string $toVersion): void
     {
         $ctx = stream_context_create([
             'http' => [
@@ -189,13 +267,62 @@ final class UpdateManager
                 'header' => "User-Agent: WeGotWorkspace-Updater/1.0\r\n",
             ],
         ]);
-        $data = @file_get_contents($url, false, $ctx);
-        if (!is_string($data) || $data === '') {
+        $input = @fopen($url, 'rb', false, $ctx);
+        if (!is_resource($input)) {
             throw new \RuntimeException('Could not download release package.');
         }
-        if (file_put_contents($target, $data, LOCK_EX) === false) {
+        $tmpTarget = $target.'.part';
+        $output = @fopen($tmpTarget, 'wb');
+        if (!is_resource($output)) {
+            fclose($input);
             throw new \RuntimeException('Could not write downloaded package.');
         }
+        $meta = stream_get_meta_data($input);
+        $totalBytes = self::parseContentLength($meta['wrapper_data'] ?? null);
+        $downloadedBytes = 0;
+        $lastProgressWriteAt = 0.0;
+        self::writeDownloadProgress($fromVersion, $toVersion, $downloadedBytes, $totalBytes);
+
+        try {
+            while (!feof($input)) {
+                self::throwIfCancelRequested();
+                $chunk = fread($input, 1024 * 1024);
+                if ($chunk === false) {
+                    throw new \RuntimeException('Could not download release package.');
+                }
+                if ($chunk === '') {
+                    continue;
+                }
+                $written = fwrite($output, $chunk);
+                if ($written === false) {
+                    throw new \RuntimeException('Could not write downloaded package.');
+                }
+                $downloadedBytes += $written;
+                $now = microtime(true);
+                if (($now - $lastProgressWriteAt) >= 0.2 || ($totalBytes !== null && $downloadedBytes >= $totalBytes)) {
+                    self::writeDownloadProgress($fromVersion, $toVersion, $downloadedBytes, $totalBytes);
+                    $lastProgressWriteAt = $now;
+                }
+            }
+        } finally {
+            fclose($input);
+            fclose($output);
+        }
+
+        if ($downloadedBytes <= 0) {
+            @unlink($tmpTarget);
+            throw new \RuntimeException('Could not download release package.');
+        }
+        if ($totalBytes !== null && $downloadedBytes < $totalBytes) {
+            @unlink($tmpTarget);
+            throw new \RuntimeException('Downloaded package is incomplete.');
+        }
+        self::throwIfCancelRequested();
+        if (!@rename($tmpTarget, $target)) {
+            @unlink($tmpTarget);
+            throw new \RuntimeException('Could not write downloaded package.');
+        }
+        self::writeDownloadProgress($fromVersion, $toVersion, $downloadedBytes, $downloadedBytes);
     }
 
     private static function verifyChecksum(string $path, string $expected): void
@@ -243,7 +370,7 @@ final class UpdateManager
         return self::normalizeRequiredReleaseMetadata($latest);
     }
 
-    private static function extractPackage(string $zipPath, string $targetDir): void
+    private static function extractPackage(string $zipPath, string $targetDir, string $fromVersion, string $toVersion): void
     {
         self::rmRecursive($targetDir);
         @mkdir($targetDir, 0775, true);
@@ -251,9 +378,25 @@ final class UpdateManager
         if ($zip->open($zipPath) !== true) {
             throw new \RuntimeException('Could not open release ZIP.');
         }
-        if (!$zip->extractTo($targetDir)) {
+        $total = $zip->numFiles;
+        if ($total <= 0) {
             $zip->close();
-            throw new \RuntimeException('Could not extract release ZIP.');
+            throw new \RuntimeException('Release ZIP is empty.');
+        }
+        self::writePhaseProgress('extracting', $fromVersion, $toVersion, 0, $total);
+        $done = 0;
+        for ($i = 0; $i < $total; $i++) {
+            self::throwIfCancelRequested();
+            $name = $zip->getNameIndex($i);
+            if (!is_string($name) || $name === '') {
+                continue;
+            }
+            if (!$zip->extractTo($targetDir, [$name])) {
+                $zip->close();
+                throw new \RuntimeException('Could not extract release ZIP.');
+            }
+            $done++;
+            self::writePhaseProgress('extracting', $fromVersion, $toVersion, $done, $total);
         }
         $zip->close();
     }
@@ -278,15 +421,24 @@ final class UpdateManager
     /**
      * @param list<string> $paths
      */
-    private static function backupPaths(string $sourceRoot, string $backupRoot, array $paths): void
-    {
+    private static function backupPaths(
+        string $sourceRoot,
+        string $backupRoot,
+        array $paths,
+        string $fromVersion,
+        string $toVersion
+    ): void {
+        $total = count($paths);
+        $done = 0;
         foreach ($paths as $relative) {
+            self::throwIfCancelRequested();
             $src = $sourceRoot.'/'.$relative;
-            if (!file_exists($src)) {
-                continue;
+            if (file_exists($src)) {
+                $dest = $backupRoot.'/'.$relative;
+                self::copyRecursive($src, $dest, true);
             }
-            $dest = $backupRoot.'/'.$relative;
-            self::copyRecursive($src, $dest);
+            $done++;
+            self::writePhaseProgress('backing_up', $fromVersion, $toVersion, $done, $total);
         }
     }
 
@@ -325,8 +477,11 @@ final class UpdateManager
         }
     }
 
-    private static function copyRecursive(string $source, string $dest): void
+    private static function copyRecursive(string $source, string $dest, bool $allowCancellation = false): void
     {
+        if ($allowCancellation) {
+            self::throwIfCancelRequested();
+        }
         if (is_dir($source)) {
             @mkdir($dest, 0775, true);
             $items = scandir($source);
@@ -337,7 +492,7 @@ final class UpdateManager
                 if ($item === '.' || $item === '..') {
                     continue;
                 }
-                self::copyRecursive($source.'/'.$item, $dest.'/'.$item);
+                self::copyRecursive($source.'/'.$item, $dest.'/'.$item, $allowCancellation);
             }
 
             return;
@@ -462,13 +617,120 @@ final class UpdateManager
     private static function writeStatus(string $phase, string $fromVersion, string $toVersion): void
     {
         $state = UpdateStateStore::read();
+        $previousPhase = is_string($state['phase'] ?? null) ? $state['phase'] : null;
         $state['phase'] = $phase;
         $state['current'] = [
             'from' => $fromVersion,
             'to' => $toVersion,
             'at' => date('c'),
         ];
+        if ($phase !== 'downloading') {
+            unset($state['download']);
+        }
+        unset($state['phase_progress']);
+        $state['cancel_requested'] = UpdateStateStore::isCancelRequested();
         UpdateStateStore::write($state);
+        if ($previousPhase !== $phase) {
+            UpdateStateStore::appendLog('Stage: '.self::phaseLabel($phase).'.');
+        }
+    }
+
+    private static function writeDownloadProgress(
+        string $fromVersion,
+        string $toVersion,
+        int $downloadedBytes,
+        ?int $totalBytes
+    ): void {
+        $state = UpdateStateStore::read();
+        $state['phase'] = 'downloading';
+        $state['current'] = [
+            'from' => $fromVersion,
+            'to' => $toVersion,
+            'at' => date('c'),
+        ];
+        $state['download'] = [
+            'downloadedBytes' => max(0, $downloadedBytes),
+            'totalBytes' => $totalBytes,
+            'percent' => $totalBytes !== null && $totalBytes > 0
+                ? min(100, max(0, (int) floor(($downloadedBytes / $totalBytes) * 100)))
+                : null,
+            'updatedAt' => date('c'),
+        ];
+        $state['cancel_requested'] = UpdateStateStore::isCancelRequested();
+        unset($state['phase_progress']);
+        UpdateStateStore::write($state);
+    }
+
+    private static function writePhaseProgress(
+        string $phase,
+        string $fromVersion,
+        string $toVersion,
+        int $completed,
+        int $total
+    ): void {
+        $safeTotal = max(1, $total);
+        $safeCompleted = max(0, min($completed, $safeTotal));
+        $state = UpdateStateStore::read();
+        $state['phase'] = $phase;
+        $state['current'] = [
+            'from' => $fromVersion,
+            'to' => $toVersion,
+            'at' => date('c'),
+        ];
+        $state['phase_progress'] = [
+            'completed' => $safeCompleted,
+            'total' => $safeTotal,
+            'percent' => min(100, max(0, (int) floor(($safeCompleted / $safeTotal) * 100))),
+            'updatedAt' => date('c'),
+        ];
+        $state['cancel_requested'] = UpdateStateStore::isCancelRequested();
+        unset($state['download']);
+        UpdateStateStore::write($state);
+    }
+
+    private static function isCancellablePhase(string $phase): bool
+    {
+        return in_array($phase, ['downloading', 'extracting', 'backing_up'], true);
+    }
+
+    private static function throwIfCancelRequested(): void
+    {
+        if (!UpdateStateStore::isCancelRequested()) {
+            return;
+        }
+        throw new \RuntimeException('Update cancelled by user.');
+    }
+
+    private static function didStartApplyingFiles(): bool
+    {
+        $state = UpdateStateStore::read();
+        $phase = is_string($state['phase'] ?? null) ? $state['phase'] : '';
+
+        return $phase === 'applying_files' || $phase === 'running_migrations';
+    }
+
+    /**
+     * @param mixed $headers
+     */
+    private static function parseContentLength(mixed $headers): ?int
+    {
+        if (!is_array($headers)) {
+            return null;
+        }
+        foreach ($headers as $header) {
+            if (!is_string($header)) {
+                continue;
+            }
+            if (preg_match('/^Content-Length:\s*(\d+)/i', $header, $m) !== 1) {
+                continue;
+            }
+            $value = (int) $m[1];
+            if ($value > 0) {
+                return $value;
+            }
+        }
+
+        return null;
     }
 
     private static function ensureRateLimit(string $action, int $seconds): void
@@ -478,10 +740,203 @@ final class UpdateManager
         $now = time();
         $last = isset($state[$key]) ? strtotime((string) $state[$key]) : false;
         if (is_int($last) && $last > 0 && ($now - $last) < $seconds) {
-            throw new \RuntimeException('Please wait before running another update '.$action.'.');
+            throw new \InvalidArgumentException('Please wait before running another update '.$action.'.');
         }
         $state[$key] = date('c');
         UpdateStateStore::write($state);
+    }
+
+    private static function phaseLabel(string $phase): string
+    {
+        return match ($phase) {
+            'downloading' => 'Downloading package',
+            'extracting' => 'Extracting archive',
+            'backing_up' => 'Creating backup',
+            'applying_files' => 'Replacing files',
+            'running_migrations' => 'Running migrations',
+            default => $phase,
+        };
+    }
+
+    /**
+     * @return list<array{
+     *   name: string,
+     *   sizeBytes: int,
+     *   modifiedAt: string|null,
+     *   fromVersion: string|null,
+     *   toVersion: string|null,
+     *   format: string,
+     *   downloadable: bool
+     * }>
+     */
+    private static function listBackups(): array
+    {
+        $dir = UpdateStateStore::backupDir();
+        if (!is_dir($dir)) {
+            return [];
+        }
+        $items = scandir($dir);
+        if (!is_array($items)) {
+            return [];
+        }
+        $rows = [];
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..' || str_starts_with($item, '.')) {
+                continue;
+            }
+            $path = $dir.'/'.$item;
+            $isZip = is_file($path) && str_ends_with($item, '.zip');
+            $isLegacyDir = is_dir($path) && str_starts_with($item, 'backup-');
+            if (!$isZip && !$isLegacyDir) {
+                continue;
+            }
+            $meta = $isZip ? self::readBackupMetadata($path) : self::readMetadataFromName($item);
+            $mtime = @filemtime($path);
+            $rows[] = [
+                'name' => $item,
+                'sizeBytes' => $isZip
+                    ? max(0, (int) (@filesize($path) ?: 0))
+                    : self::directorySizeBytes($path),
+                'modifiedAt' => is_int($mtime) ? date('c', $mtime) : null,
+                'fromVersion' => isset($meta['from_version']) && is_string($meta['from_version']) ? $meta['from_version'] : null,
+                'toVersion' => isset($meta['to_version']) && is_string($meta['to_version']) ? $meta['to_version'] : null,
+                'format' => $isZip ? 'zip' : 'legacy_dir',
+                'downloadable' => $isZip,
+            ];
+        }
+        usort(
+            $rows,
+            static fn (array $a, array $b): int => strcmp((string) ($b['modifiedAt'] ?? ''), (string) ($a['modifiedAt'] ?? ''))
+        );
+
+        return $rows;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private static function readMetadataFromName(string $name): array
+    {
+        if (preg_match('/-from-([A-Za-z0-9._-]+)-to-([A-Za-z0-9._-]+)(?:\.zip)?$/', $name, $m) !== 1) {
+            return [];
+        }
+
+        return [
+            'from_version' => $m[1],
+            'to_version' => $m[2],
+        ];
+    }
+
+    private static function directorySizeBytes(string $path): int
+    {
+        if (!is_dir($path)) {
+            return 0;
+        }
+        $size = 0;
+        $items = scandir($path);
+        if (!is_array($items)) {
+            return 0;
+        }
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..') {
+                continue;
+            }
+            $full = $path.'/'.$item;
+            if (is_dir($full)) {
+                $size += self::directorySizeBytes($full);
+                continue;
+            }
+            $size += max(0, (int) (@filesize($full) ?: 0));
+        }
+
+        return $size;
+    }
+
+    private static function buildBackupBaseName(string $fromVersion, string $toVersion): string
+    {
+        $from = preg_replace('/[^A-Za-z0-9.]+/', '_', trim($fromVersion)) ?: 'unknown';
+        $to = preg_replace('/[^A-Za-z0-9.]+/', '_', trim($toVersion)) ?: 'unknown';
+
+        return 'backup-'.date('YmdHis').'-from-'.$from.'-to-'.$to;
+    }
+
+    private static function finalizeBackupArchive(
+        string $backupDir,
+        string $archivePath,
+        string $fromVersion,
+        string $toVersion
+    ): void {
+        @mkdir(dirname($archivePath), 0775, true);
+        self::createZipFromDirectory(
+            $backupDir,
+            $archivePath,
+            [
+                'from_version' => $fromVersion,
+                'to_version' => $toVersion,
+                'created_at' => date('c'),
+            ]
+        );
+        self::rmRecursive($backupDir);
+    }
+
+    /**
+     * @param array<string, mixed> $metadata
+     */
+    private static function createZipFromDirectory(string $sourceDir, string $archivePath, array $metadata): void
+    {
+        $zip = new \ZipArchive();
+        if ($zip->open($archivePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            throw new \RuntimeException('Could not create backup ZIP archive.');
+        }
+        self::addPathToZip($zip, $sourceDir, '');
+        $zip->addFromString(
+            '.backup-meta.json',
+            (string) json_encode($metadata, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)."\n"
+        );
+        $zip->close();
+    }
+
+    private static function addPathToZip(\ZipArchive $zip, string $sourcePath, string $relativePath): void
+    {
+        if (is_dir($sourcePath)) {
+            $items = scandir($sourcePath);
+            if (!is_array($items)) {
+                return;
+            }
+            foreach ($items as $item) {
+                if ($item === '.' || $item === '..') {
+                    continue;
+                }
+                $childSource = $sourcePath.'/'.$item;
+                $childRelative = $relativePath === '' ? $item : $relativePath.'/'.$item;
+                self::addPathToZip($zip, $childSource, $childRelative);
+            }
+
+            return;
+        }
+        if (!is_file($sourcePath)) {
+            return;
+        }
+        $zip->addFile($sourcePath, $relativePath);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function readBackupMetadata(string $archivePath): array
+    {
+        $zip = new \ZipArchive();
+        if ($zip->open($archivePath) !== true) {
+            return [];
+        }
+        $raw = $zip->getFromName('.backup-meta.json');
+        $zip->close();
+        if (!is_string($raw) || trim($raw) === '') {
+            return [];
+        }
+        $decoded = json_decode($raw, true);
+
+        return is_array($decoded) ? $decoded : [];
     }
 
     private static function recordHistory(
