@@ -204,6 +204,11 @@ final class AdminUiKernel
 
                 return true;
             }
+            if ($method === 'POST' && $rel === 'updates/cancel') {
+                self::json(200, UpdateManager::cancel($pdo));
+
+                return true;
+            }
         } catch (\InvalidArgumentException $e) {
             self::json(400, ['error' => $e->getMessage()]);
 
