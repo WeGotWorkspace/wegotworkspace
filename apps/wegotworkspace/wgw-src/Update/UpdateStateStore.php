@@ -63,6 +63,27 @@ final class UpdateStateStore
         return self::baseDir().'/update.lock';
     }
 
+    public static function cancelPath(): string
+    {
+        return self::baseDir().'/cancel.requested';
+    }
+
+    public static function requestCancel(): void
+    {
+        self::ensureDirs();
+        file_put_contents(self::cancelPath(), date('c')."\n", LOCK_EX);
+    }
+
+    public static function clearCancelRequest(): void
+    {
+        @unlink(self::cancelPath());
+    }
+
+    public static function isCancelRequested(): bool
+    {
+        return is_file(self::cancelPath());
+    }
+
     public static function maintenancePath(): string
     {
         return self::baseDir().'/.maintenance';
@@ -92,6 +113,7 @@ final class UpdateStateStore
     {
         self::rmRecursive(self::tmpDir());
         @unlink(self::packagePath());
+        self::clearCancelRequest();
     }
 
     private static function tmpDir(): string

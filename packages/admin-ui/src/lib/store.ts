@@ -59,6 +59,16 @@ export type Settings = {
     compatible: boolean;
     checks: { ok: boolean; label: string; detail: string }[];
     inProgress: boolean;
+    phase: string | null;
+    current: { from: string; to: string; at: string } | null;
+    download: {
+      downloadedBytes: number;
+      totalBytes: number | null;
+      percent: number | null;
+      updatedAt: string;
+    } | null;
+    cancelRequested: boolean;
+    cancelAllowed: boolean;
     lastCheckedAt: string | null;
     lastCheckError: string | null;
     lastResult: { ok: boolean; version: string; message: string; finishedAt: string | null } | null;
@@ -97,6 +107,11 @@ const DEFAULT_STATE: Settings = {
     compatible: true,
     checks: [],
     inProgress: false,
+    phase: null,
+    current: null,
+    download: null,
+    cancelRequested: false,
+    cancelAllowed: false,
     lastCheckedAt: null,
     lastCheckError: null,
     lastResult: null,
@@ -220,8 +235,13 @@ export const store = {
           "No update package available. Run Check now and verify feed metadata.",
       );
     }
-    await api<{ ok: boolean; message?: string }>("updates/apply", latest);
+    const result = await api<{ ok: boolean; message?: string }>("updates/apply", latest);
     await store.reload();
+    return result;
+  },
+  cancelUpdate: async () => {
+    const updates = await api<Settings["updates"]>("updates/cancel", {});
+    store.set({ updates });
   },
   reloadUpdateState: async () => {
     const updates = await api<Settings["updates"]>("updates/state");

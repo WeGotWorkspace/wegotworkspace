@@ -4,6 +4,7 @@ import { AdminShell, PageHeader, Section } from "@/components/admin-shell";
 import { useSettings, store } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/updates")({ component: UpdatesPage });
@@ -13,13 +14,59 @@ function UpdatesPage() {
   const updates = settings.updates;
   const [checking, setChecking] = useState(false);
   const [applying, setApplying] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const [logLines, setLogLines] = useState<string[]>([]);
 
   useEffect(() => {
     void store.reloadUpdateState();
   }, []);
 
+  useEffect(() => {
+    if (!updates.inProgress && !applying) {
+      return;
+    }
+    const id = window.setInterval(() => {
+      void store.reloadUpdateState();
+    }, 700);
+
+    return () => {
+      window.clearInterval(id);
+    };
+  }, [updates.inProgress, applying]);
+
   const latestVersion = updates.latest?.version || "Unknown";
+  const downloadPercent = updates.download?.percent;
+  const downloadTotal = updates.download?.totalBytes;
+  const downloadDone = updates.download?.downloadedBytes ?? 0;
+  const phaseLabel =
+    updates.phase === "downloading"
+      ? "Downloading package"
+      : updates.phase === "extracting"
+        ? "Extracting archive"
+        : updates.phase === "backing_up"
+          ? "Creating backup"
+          : updates.phase === "applying_files"
+            ? "Replacing files"
+            : updates.phase === "running_migrations"
+              ? "Running migrations"
+              : updates.phase
+                ? updates.phase
+                : "Idle";
+
+  const formatBytes = (bytes: number) => {
+    if (!Number.isFinite(bytes) || bytes <= 0) {
+      return "0 B";
+    }
+    const units = ["B", "KB", "MB", "GB"];
+    let value = bytes;
+    let idx = 0;
+    while (value >= 1024 && idx < units.length - 1) {
+      value /= 1024;
+      idx += 1;
+    }
+    const precision = value >= 100 || idx === 0 ? 0 : 1;
+    return `${value.toFixed(precision)} ${units[idx]}`;
+  };
 
   return (
     <AdminShell>
@@ -52,15 +99,24 @@ function UpdatesPage() {
           Last checked: {updates.lastCheckedAt ?? "Never"}
         </div>
 
-        <Section title="Apply update" description="Runs staged download, integrity checks, file swap, and DB migrations.">
+        <Section
+          title="Apply update"
+          description="Runs staged download, integrity checks, file swap, and DB migrations."
+        >
           <div className="space-y-3">
             <Button
-              disabled={!updates.updateAvailable || !updates.compatible || updates.inProgress || applying}
+              disabled={
+                !updates.updateAvailable || !updates.compatible || updates.inProgress || applying
+              }
               onClick={async () => {
                 setApplying(true);
                 try {
-                  await store.applyUpdate();
-                  toast.success("Update completed");
+                  const result = await store.applyUpdate();
+                  if (result.ok) {
+                    toast.success("Update completed");
+                  } else {
+                    toast.info(result.message || "Update stopped");
+                  }
                 } catch (error) {
                   toast.error((error as Error).message || "Update failed");
                 } finally {
@@ -70,6 +126,57 @@ function UpdatesPage() {
             >
               {updates.inProgress || applying ? "Applying..." : "Update now"}
             </Button>
+            {(updates.inProgress || applying) && (
+              <div className="rounded-md border px-3 py-2 text-xs space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-muted-foreground">Current step</span>
+                  <Badge variant="secondary">{phaseLabel}</Badge>
+                </div>
+                {updates.phase === "downloading" && (
+                  <div className="space-y-2">
+                    <Progress
+                      value={typeof downloadPercent === "number" ? downloadPercent : undefined}
+                    />
+                    <div className="flex items-center justify-between text-muted-foreground">
+                      <span>
+                        {formatBytes(downloadDone)}
+                        {downloadTotal ? ` / ${formatBytes(downloadTotal)}` : ""}
+                      </span>
+                      <span>
+                        {typeof downloadPercent === "number"
+                          ? `${downloadPercent}%`
+                          : "Streaming..."}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                <div className="flex items-center justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!updates.cancelAllowed || updates.cancelRequested || cancelling}
+                    onClick={async () => {
+                      setCancelling(true);
+                      try {
+                        await store.cancelUpdate();
+                        toast.success("Cancellation requested");
+                      } catch (error) {
+                        toast.error((error as Error).message || "Could not cancel update");
+                      } finally {
+                        setCancelling(false);
+                      }
+                    }}
+                  >
+                    {updates.cancelRequested || cancelling ? "Cancelling..." : "Cancel update"}
+                  </Button>
+                </div>
+                {updates.phase !== "downloading" && (
+                  <div className="text-muted-foreground">
+                    Cancellation is only possible while the package is downloading.
+                  </div>
+                )}
+              </div>
+            )}
             {updates.lastResult && (
               <div className="rounded-md border px-3 py-2 text-xs">
                 <div>
@@ -81,7 +188,10 @@ function UpdatesPage() {
           </div>
         </Section>
 
-        <Section title="Release status" description="Installed version and latest available release.">
+        <Section
+          title="Release status"
+          description="Installed version and latest available release."
+        >
           <div className="grid gap-3 text-sm">
             <div className="flex items-center justify-between border rounded-md px-3 py-2">
               <span>Installed version</span>
@@ -89,7 +199,9 @@ function UpdatesPage() {
             </div>
             <div className="flex items-center justify-between border rounded-md px-3 py-2">
               <span>Latest version</span>
-              <Badge variant={updates.updateAvailable ? "default" : "secondary"}>{latestVersion}</Badge>
+              <Badge variant={updates.updateAvailable ? "default" : "secondary"}>
+                {latestVersion}
+              </Badge>
             </div>
             <div className="flex items-center justify-between border rounded-md px-3 py-2">
               <span>Schema version</span>
@@ -119,15 +231,23 @@ function UpdatesPage() {
           </div>
         </Section>
 
-        <Section title="Server checks" description="Environment checks that must pass before update.">
+        <Section
+          title="Server checks"
+          description="Environment checks that must pass before update."
+        >
           <div className="space-y-2">
             {updates.checks.map((check) => (
-              <div key={check.label} className="flex items-start justify-between gap-4 border rounded-md px-3 py-2">
+              <div
+                key={check.label}
+                className="flex items-start justify-between gap-4 border rounded-md px-3 py-2"
+              >
                 <div>
                   <div className="text-sm font-medium">{check.label}</div>
                   <div className="text-xs text-muted-foreground">{check.detail}</div>
                 </div>
-                <Badge variant={check.ok ? "secondary" : "destructive"}>{check.ok ? "OK" : "Fail"}</Badge>
+                <Badge variant={check.ok ? "secondary" : "destructive"}>
+                  {check.ok ? "OK" : "Fail"}
+                </Badge>
               </div>
             ))}
           </div>
