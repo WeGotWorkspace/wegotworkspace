@@ -24,6 +24,7 @@ export OFFICE_BASE_PATH
 export NEXT_PUBLIC_APP_ROOT="${OFFICE_BASE_PATH}/${OFFICE_VERSION}"
 export NEXT_PUBLIC_OFFICE_BASE_PATH="${OFFICE_BASE_PATH}"
 pnpm run build:upstream
+node utils/build-slim.mjs
 
 rm -rf "$OUT_DEST"
 mkdir -p "$OUT_DEST"
