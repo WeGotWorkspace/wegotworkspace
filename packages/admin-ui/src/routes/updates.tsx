@@ -23,6 +23,7 @@ import {
   CheckCircle2,
   CircleCheck,
   Download,
+  HelpCircle,
   Loader2,
   Trash2,
   TriangleAlert,
@@ -91,14 +92,21 @@ function UpdatesPage() {
 
   const latestVersion = updates.latest?.version || "Unknown";
   const backups = updates.backups ?? [];
-  const phaseOrder = ["downloading", "extracting", "backing_up", "applying_files"] as const;
+  const phaseOrder = [
+    "downloading",
+    "extracting",
+    "backing_up",
+    "applying_files",
+    "running_migrations",
+  ] as const;
   const visiblePhase = updates.phase ?? displayPhase;
-  const activePhase = visiblePhase === "running_migrations" ? "applying_files" : visiblePhase;
+  const activePhase = visiblePhase;
   const currentStepIndex = Math.max(
     0,
     phaseOrder.indexOf(activePhase as (typeof phaseOrder)[number]),
   );
   const currentStep = Math.max(1, currentStepIndex + 1);
+  const totalSteps = phaseOrder.length;
   const downloadPercent = updates.download?.percent;
   const downloadTotal = updates.download?.totalBytes;
   const downloadDone = updates.download?.downloadedBytes ?? 0;
@@ -255,7 +263,7 @@ function UpdatesPage() {
               <div className="rounded-md border px-3 py-3 text-xs space-y-3">
                 <div className="flex items-center justify-between gap-3">
                   <div className="font-medium">
-                    Step {currentStep}/4: {phaseLabel}
+                    Step {currentStep}/{totalSteps}: {phaseLabel}
                   </div>
                   <Badge variant="secondary">
                     {updates.current?.to ? `v${updates.current.to}` : "Update"}
@@ -401,7 +409,10 @@ function UpdatesPage() {
           )}
         </Section>
 
-        <Section title="Backups" description="Archived update backups stored as ZIP files.">
+        <Section
+          title="Database backups"
+          description="Archived database-only backups stored as ZIP files."
+        >
           {!updatesLoaded ? (
             <div className="rounded-md border px-3 py-4 text-xs text-muted-foreground flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -469,7 +480,7 @@ function UpdatesPage() {
                                     </a>
                                   </Button>
                                 </TooltipTrigger>
-                                <TooltipContent>Download backup</TooltipContent>
+                                <TooltipContent>Download database backup</TooltipContent>
                               </Tooltip>
                             )}
                           <AlertDialog>
@@ -485,11 +496,11 @@ function UpdatesPage() {
                                   </Button>
                                 </AlertDialogTrigger>
                               </TooltipTrigger>
-                              <TooltipContent>Delete backup</TooltipContent>
+                              <TooltipContent>Delete database backup</TooltipContent>
                             </Tooltip>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>Delete backup file?</AlertDialogTitle>
+                                <AlertDialogTitle>Delete database backup?</AlertDialogTitle>
                                 <AlertDialogDescription>
                                   This will permanently remove {backup.name}.
                                 </AlertDialogDescription>
@@ -547,16 +558,29 @@ function UpdatesPage() {
                     <td className="px-4 py-3 font-medium">{check.label}</td>
                     <td className="px-4 py-3 text-muted-foreground">{check.detail}</td>
                     <td className="px-4 py-3 text-right">
+                      {(() => {
+                        const status = check.status ?? (check.ok ? "ok" : "fail");
+                        const statusClass =
+                          status === "ok"
+                            ? "text-emerald-700"
+                            : status === "unknown"
+                              ? "text-muted-foreground"
+                              : "text-destructive";
+                        return (
                       <span
-                        className={`inline-flex items-center justify-end gap-1 text-xs font-medium ${check.ok ? "text-emerald-700" : "text-destructive"}`}
+                            className={`inline-flex items-center justify-end gap-1 text-xs font-medium ${statusClass}`}
                       >
-                        {check.ok ? (
-                          <CheckCircle2 className="h-4 w-4" />
-                        ) : (
-                          <XCircle className="h-4 w-4" />
-                        )}
-                        {check.ok ? "OK" : "Fail"}
+                            {status === "ok" ? (
+                              <CheckCircle2 className="h-4 w-4" />
+                            ) : status === "unknown" ? (
+                              <HelpCircle className="h-4 w-4" />
+                            ) : (
+                              <XCircle className="h-4 w-4" />
+                            )}
+                            {status === "ok" ? "OK" : status === "unknown" ? "Unknown" : "Fail"}
                       </span>
+                        );
+                      })()}
                     </td>
                   </tr>
                 ))}
