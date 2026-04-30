@@ -377,9 +377,7 @@ final class ApiDomainHandlers
             if ($user === null) {
                 return true;
             }
-            $stmt = $pdo->prepare('SELECT displayname FROM principals WHERE uri = ? LIMIT 1');
-            $stmt->execute(['principals/'.$user['username']]);
-            $display = (string) ($stmt->fetchColumn() ?: $user['username']);
+            $display = self::principalDisplayName($pdo, $user['username']);
             ApiResponse::json(200, [
                 'data' => [
                     'username' => $user['username'],
@@ -401,6 +399,129 @@ final class ApiDomainHandlers
                 return true;
             }
             DriveKernel::respondApiFromToken($webBase, $pdo, $user['username'], '/'.substr($rel, 6));
+
+            return true;
+        }
+
+        if ($method === 'GET' && $rel === 'notes/state') {
+            $user = self::requireRole($principal, 'user');
+            if ($user === null) {
+                return true;
+            }
+            $cfg = SettingsDefaults::normalize(SettingsRepository::fetchAll($pdo));
+            ApiResponse::json(200, [
+                'baseUri' => (string) ($cfg[SettingsKeys::BASE_URI] ?? '/'),
+                'username' => $user['username'],
+                'displayName' => self::principalDisplayName($pdo, $user['username']),
+                'logoutUrl' => WebBase::url($webBase, '/logout/'),
+                'notesPath' => WebBase::url($webBase, '/notes/'),
+                'filesEnabled' => (bool) ($cfg[SettingsKeys::FILES_ENABLED] ?? true),
+                'distReady' => is_file(Paths::notesDist().'/index.html'),
+            ]);
+
+            return true;
+        }
+
+        if ($method === 'GET' && $rel === 'notes/items') {
+            $user = self::requireRole($principal, 'user');
+            if ($user === null) {
+                return true;
+            }
+            $params = [];
+            if (isset($_GET['archived'])) {
+                $params['archived'] = $_GET['archived'];
+            }
+            if (isset($_GET['notebook'])) {
+                $params['notebook'] = $_GET['notebook'];
+            }
+            if (isset($_GET['q'])) {
+                $params['q'] = $_GET['q'];
+            }
+            ApiResponse::json(200, self::notesList($user['username'], $params));
+
+            return true;
+        }
+
+        if ($method === 'GET' && $rel === 'notes/notebooks') {
+            $user = self::requireRole($principal, 'user');
+            if ($user === null) {
+                return true;
+            }
+            ApiResponse::json(200, self::notesNotebooks($user['username']));
+
+            return true;
+        }
+
+        if ($method === 'POST' && $rel === 'notes/notebooks') {
+            $user = self::requireRole($principal, 'user');
+            if ($user === null) {
+                return true;
+            }
+            ApiResponse::json(201, self::notesNotebookCreate($user['username'], ApiRequest::jsonBody()));
+
+            return true;
+        }
+
+        if ($method === 'POST' && $rel === 'notes/items') {
+            $user = self::requireRole($principal, 'user');
+            if ($user === null) {
+                return true;
+            }
+            $body = ApiRequest::jsonBody();
+            ApiResponse::json(201, self::notesUpsert($user['username'], null, $body));
+
+            return true;
+        }
+
+        if (preg_match('#^notes/items/([A-Za-z0-9._-]{1,120})$#', $rel, $m)) {
+            $user = self::requireRole($principal, 'user');
+            if ($user === null) {
+                return true;
+            }
+            $noteId = (string) ($m[1] ?? '');
+            if ($method === 'PUT') {
+                ApiResponse::json(200, self::notesUpsert($user['username'], $noteId, ApiRequest::jsonBody()));
+
+                return true;
+            }
+            if ($method === 'DELETE') {
+                ApiResponse::json(200, self::notesDelete($user['username'], $noteId, ApiRequest::jsonBody()));
+
+                return true;
+            }
+        }
+
+        if (preg_match('#^notes/notebooks/([^/]+)$#', $rel, $m)) {
+            $user = self::requireRole($principal, 'user');
+            if ($user === null) {
+                return true;
+            }
+            $name = rawurldecode((string) ($m[1] ?? ''));
+            if ($method === 'PATCH') {
+                ApiResponse::json(200, self::notesNotebookRename($user['username'], $name, ApiRequest::jsonBody()));
+
+                return true;
+            }
+            if ($method === 'DELETE') {
+                ApiResponse::json(200, self::notesNotebookDelete($user['username'], $name, ApiRequest::jsonBody()));
+
+                return true;
+            }
+        }
+
+        if (preg_match('#^notes/items/([A-Za-z0-9._-]{1,120})/(archive|restore)$#', $rel, $m)) {
+            $user = self::requireRole($principal, 'user');
+            if ($user === null) {
+                return true;
+            }
+            if ($method !== 'POST') {
+                ApiResponse::error(405, 'Method not allowed.', 'method_not_allowed');
+
+                return true;
+            }
+            $noteId = (string) ($m[1] ?? '');
+            $action = (string) ($m[2] ?? '');
+            ApiResponse::json(200, self::notesMoveArchiveState($user['username'], $noteId, $action === 'archive'));
 
             return true;
         }
@@ -622,5 +743,570 @@ final class ApiDomainHandlers
             $members = array_values(array_filter($members, static fn (string $m): bool => $m !== $principal));
             GroupManager::setMembers($pdo, $groupUri, $members);
         }
+    }
+
+    private static function principalDisplayName(\PDO $pdo, string $username): string
+    {
+        $stmt = $pdo->prepare('SELECT displayname FROM principals WHERE uri = ? LIMIT 1');
+        $stmt->execute(['principals/'.$username]);
+        $display = trim((string) ($stmt->fetchColumn() ?: ''));
+
+        return $display !== '' ? $display : $username;
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     *
+     * @return array{items: list<array<string,mixed>>}
+     */
+    private static function notesList(string $username, array $params): array
+    {
+        $all = self::readAllNotes($username);
+        $archived = self::toBool($params['archived'] ?? null);
+        $notebookFilter = isset($params['notebook']) && is_string($params['notebook']) ? trim($params['notebook']) : '';
+        $q = isset($params['q']) && is_string($params['q']) ? strtolower(trim($params['q'])) : '';
+        $items = [];
+        foreach ($all as $note) {
+            if ($archived !== null && $note['archived'] !== $archived) {
+                continue;
+            }
+            if ($notebookFilter !== '' && $note['notebook'] !== $notebookFilter) {
+                continue;
+            }
+            if (
+                $q !== ''
+                && !str_contains(strtolower((string) $note['title']), $q)
+                && !str_contains(strtolower((string) $note['body']), $q)
+                && !str_contains(strtolower(implode(',', $note['tags'])), $q)
+            ) {
+                continue;
+            }
+            $items[] = $note;
+        }
+        usort(
+            $items,
+            static fn (array $a, array $b): int => strcmp((string) ($b['updatedAt'] ?? ''), (string) ($a['updatedAt'] ?? ''))
+        );
+
+        return ['items' => array_values($items)];
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     *
+     * @return array<string, mixed>
+     */
+    private static function notesUpsert(string $username, ?string $pathId, array $body): array
+    {
+        $id = $pathId !== null ? self::sanitizeNoteId($pathId) : self::sanitizeNoteId((string) ($body['id'] ?? ('n'.(string) time())));
+        $notebook = self::sanitizeNotebook((string) ($body['notebook'] ?? 'General'));
+        $archived = self::toBool($body['archived'] ?? false) ?? false;
+        $title = trim((string) ($body['title'] ?? 'Untitled'));
+        $tags = self::normalizeTags($body['tags'] ?? []);
+        $bodyText = (string) ($body['body'] ?? '');
+        $starred = self::toBool($body['starred'] ?? null);
+        $targetPath = self::notePath($username, $notebook, $id, $archived);
+        @mkdir(dirname($targetPath), 0775, true);
+        $markdown = self::serializeNoteMarkdown($title !== '' ? $title : 'Untitled', $tags, $starred, $bodyText);
+        if (file_put_contents($targetPath, $markdown, LOCK_EX) === false) {
+            throw new \RuntimeException('Could not save note.');
+        }
+
+        return [
+            'ok' => true,
+            'item' => self::readSingleNoteFromPath($targetPath, $username, $notebook, $id, $archived),
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     *
+     * @return array<string, mixed>
+     */
+    private static function notesDelete(string $username, string $id, array $body): array
+    {
+        $noteId = self::sanitizeNoteId($id);
+        $notebook = isset($body['notebook']) && is_string($body['notebook']) ? self::sanitizeNotebook($body['notebook']) : null;
+        $archived = self::toBool($body['archived'] ?? null);
+        $location = self::findNotePath($username, $noteId, $notebook, $archived);
+        if ($location === null) {
+            throw new \InvalidArgumentException('Note not found.');
+        }
+        if (!@unlink($location['path'])) {
+            throw new \RuntimeException('Could not delete note.');
+        }
+
+        return ['ok' => true];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function notesMoveArchiveState(string $username, string $id, bool $toArchived): array
+    {
+        $noteId = self::sanitizeNoteId($id);
+        $from = self::findNotePath($username, $noteId, null, !$toArchived);
+        if ($from === null) {
+            throw new \InvalidArgumentException('Note not found.');
+        }
+        $to = self::notePath($username, $from['notebook'], $noteId, $toArchived);
+        @mkdir(dirname($to), 0775, true);
+        if (!@rename($from['path'], $to)) {
+            if (copy($from['path'], $to)) {
+                @unlink($from['path']);
+            } else {
+                throw new \RuntimeException('Could not move note.');
+            }
+        }
+
+        return [
+            'ok' => true,
+            'item' => self::readSingleNoteFromPath($to, $username, $from['notebook'], $noteId, $toArchived),
+        ];
+    }
+
+    /**
+     * @return array{items:list<array{name:string,activeCount:int,archivedCount:int}>}
+     */
+    private static function notesNotebooks(string $username): array
+    {
+        $all = self::readAllNotes($username);
+        $byName = [];
+        foreach ($all as $item) {
+            $name = (string) ($item['notebook'] ?? '');
+            if ($name === '') {
+                continue;
+            }
+            if (!isset($byName[$name])) {
+                $byName[$name] = ['name' => $name, 'activeCount' => 0, 'archivedCount' => 0];
+            }
+            if (($item['archived'] ?? false) === true) {
+                $byName[$name]['archivedCount']++;
+            } else {
+                $byName[$name]['activeCount']++;
+            }
+        }
+        ksort($byName);
+
+        return ['items' => array_values($byName)];
+    }
+
+    /**
+     * @param array<string,mixed> $body
+     *
+     * @return array<string,mixed>
+     */
+    private static function notesNotebookCreate(string $username, array $body): array
+    {
+        $name = self::sanitizeNotebook((string) ($body['name'] ?? ''));
+        $activePath = self::notebookPath($username, $name, false);
+        if (is_dir($activePath)) {
+            throw new \InvalidArgumentException('Notebook already exists.');
+        }
+        if (!@mkdir($activePath, 0775, true) && !is_dir($activePath)) {
+            throw new \RuntimeException('Could not create notebook.');
+        }
+
+        return ['ok' => true, 'name' => $name];
+    }
+
+    /**
+     * @param array<string,mixed> $body
+     *
+     * @return array<string,mixed>
+     */
+    private static function notesNotebookRename(string $username, string $name, array $body): array
+    {
+        $from = self::sanitizeNotebook($name);
+        $to = self::sanitizeNotebook((string) ($body['name'] ?? ''));
+        if ($from === $to) {
+            return ['ok' => true, 'from' => $from, 'to' => $to];
+        }
+        foreach ([false, true] as $archived) {
+            $source = self::notebookPath($username, $from, $archived);
+            $target = self::notebookPath($username, $to, $archived);
+            if (!is_dir($source)) {
+                continue;
+            }
+            if (is_dir($target)) {
+                throw new \InvalidArgumentException('Destination notebook already exists.');
+            }
+            @mkdir(dirname($target), 0775, true);
+            if (!@rename($source, $target)) {
+                throw new \RuntimeException('Could not rename notebook.');
+            }
+        }
+
+        return ['ok' => true, 'from' => $from, 'to' => $to];
+    }
+
+    /**
+     * @param array<string,mixed> $body
+     *
+     * @return array<string,mixed>
+     */
+    private static function notesNotebookDelete(string $username, string $name, array $body): array
+    {
+        $notebook = self::sanitizeNotebook($name);
+        $mode = isset($body['mode']) && is_string($body['mode']) ? strtolower(trim($body['mode'])) : 'archive';
+        if (!in_array($mode, ['archive', 'move', 'purge'], true)) {
+            throw new \InvalidArgumentException('Invalid notebook delete mode.');
+        }
+        if ($mode === 'move') {
+            $target = self::sanitizeNotebook((string) ($body['target'] ?? ''));
+            if ($target === $notebook) {
+                throw new \InvalidArgumentException('Target notebook must be different.');
+            }
+            foreach ([false, true] as $archived) {
+                $sourceDir = self::notebookPath($username, $notebook, $archived);
+                if (!is_dir($sourceDir)) {
+                    continue;
+                }
+                $targetDir = self::notebookPath($username, $target, $archived);
+                @mkdir($targetDir, 0775, true);
+                self::moveMarkdownFiles($sourceDir, $targetDir);
+                self::removeDirIfEmpty($sourceDir);
+            }
+
+            return ['ok' => true, 'mode' => 'move', 'target' => $target];
+        }
+        if ($mode === 'archive') {
+            $sourceDir = self::notebookPath($username, $notebook, false);
+            if (is_dir($sourceDir)) {
+                $archiveDir = self::notebookPath($username, $notebook, true);
+                @mkdir($archiveDir, 0775, true);
+                self::moveMarkdownFiles($sourceDir, $archiveDir);
+                self::removeDirIfEmpty($sourceDir);
+            }
+
+            return ['ok' => true, 'mode' => 'archive'];
+        }
+
+        foreach ([false, true] as $archived) {
+            self::removeNotebookCompletely(self::notebookPath($username, $notebook, $archived));
+        }
+
+        return ['ok' => true, 'mode' => 'purge'];
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private static function readAllNotes(string $username): array
+    {
+        $out = [];
+        foreach ([false, true] as $archived) {
+            $root = self::notesBasePath($username, $archived);
+            if (!is_dir($root)) {
+                continue;
+            }
+            $notebooks = scandir($root);
+            if (!is_array($notebooks)) {
+                continue;
+            }
+            foreach ($notebooks as $notebook) {
+                if ($notebook === '.' || $notebook === '..') {
+                    continue;
+                }
+                if (!$archived && $notebook === '.archive') {
+                    continue;
+                }
+                $nbPath = $root.'/'.$notebook;
+                if (!is_dir($nbPath)) {
+                    continue;
+                }
+                $files = scandir($nbPath);
+                if (!is_array($files)) {
+                    continue;
+                }
+                foreach ($files as $file) {
+                    if (!str_ends_with(strtolower($file), '.md')) {
+                        continue;
+                    }
+                    $id = substr($file, 0, -3);
+                    if (!is_string($id) || $id === '') {
+                        continue;
+                    }
+                    $note = self::readSingleNoteFromPath($nbPath.'/'.$file, $username, $notebook, $id, $archived);
+                    $out[] = $note;
+                }
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return array{path:string, notebook:string, archived:bool}|null
+     */
+    private static function findNotePath(string $username, string $id, ?string $notebook, ?bool $archived): ?array
+    {
+        $candidates = [];
+        $archivedOptions = $archived === null ? [false, true] : [$archived];
+        foreach ($archivedOptions as $isArchived) {
+            if ($notebook !== null) {
+                $candidates[] = [
+                    'path' => self::notePath($username, $notebook, $id, $isArchived),
+                    'notebook' => $notebook,
+                    'archived' => $isArchived,
+                ];
+                continue;
+            }
+            $root = self::notesBasePath($username, $isArchived);
+            if (!is_dir($root)) {
+                continue;
+            }
+            $entries = scandir($root);
+            if (!is_array($entries)) {
+                continue;
+            }
+            foreach ($entries as $entry) {
+                if ($entry === '.' || $entry === '..') {
+                    continue;
+                }
+                if (!$isArchived && $entry === '.archive') {
+                    continue;
+                }
+                if (!is_dir($root.'/'.$entry)) {
+                    continue;
+                }
+                $candidates[] = [
+                    'path' => self::notePath($username, $entry, $id, $isArchived),
+                    'notebook' => $entry,
+                    'archived' => $isArchived,
+                ];
+            }
+        }
+        foreach ($candidates as $candidate) {
+            if (is_file($candidate['path'])) {
+                return $candidate;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function readSingleNoteFromPath(string $path, string $username, string $notebook, string $id, bool $archived): array
+    {
+        $raw = is_readable($path) ? (string) file_get_contents($path) : '';
+        [$title, $tags, $starred, $body] = self::parseNoteMarkdown($raw, $id);
+        $mtime = is_file($path) ? (int) filemtime($path) : time();
+
+        return [
+            'id' => $id,
+            'username' => $username,
+            'notebook' => $notebook,
+            'title' => $title,
+            'body' => $body,
+            'tags' => $tags,
+            'starred' => $starred,
+            'archived' => $archived,
+            'updatedAt' => date('c', $mtime),
+        ];
+    }
+
+    private static function notePath(string $username, string $notebook, string $id, bool $archived): string
+    {
+        return self::notesBasePath($username, $archived).'/'.$notebook.'/'.$id.'.md';
+    }
+
+    private static function notebookPath(string $username, string $notebook, bool $archived): string
+    {
+        return self::notesBasePath($username, $archived).'/'.$notebook;
+    }
+
+    private static function notesBasePath(string $username, bool $archived): string
+    {
+        $base = rtrim(Paths::data(), '/').'/files/users/'.$username.'/.notes';
+
+        return $archived ? $base.'/.archive' : $base;
+    }
+
+    private static function sanitizeNoteId(string $id): string
+    {
+        $trimmed = trim($id);
+        if ($trimmed === '' || preg_match('/^[A-Za-z0-9._-]{1,120}$/', $trimmed) !== 1) {
+            throw new \InvalidArgumentException('Invalid note id.');
+        }
+
+        return $trimmed;
+    }
+
+    private static function sanitizeNotebook(string $notebook): string
+    {
+        $trimmed = trim($notebook);
+        if ($trimmed === '' || str_contains($trimmed, '/') || str_contains($trimmed, '\\') || str_contains($trimmed, "\0") || str_contains($trimmed, '..')) {
+            throw new \InvalidArgumentException('Invalid notebook name.');
+        }
+
+        return $trimmed;
+    }
+
+    /**
+     * @param mixed $value
+     *
+     * @return list<string>
+     */
+    private static function normalizeTags(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+        $out = [];
+        foreach ($value as $tag) {
+            if (!is_string($tag)) {
+                continue;
+            }
+            $normalized = strtolower(trim(str_replace(["\r", "\n"], ' ', $tag)));
+            if ($normalized === '') {
+                continue;
+            }
+            $out[$normalized] = true;
+        }
+
+        return array_keys($out);
+    }
+
+    /**
+     * @return array{0:string,1:list<string>,2:bool|null,3:string}
+     */
+    private static function parseNoteMarkdown(string $markdown, string $fallbackTitle): array
+    {
+        $normalized = str_replace(["\r\n", "\r"], "\n", $markdown);
+        $token = "\n----\n";
+        $idx = strpos($normalized, $token);
+        $headerText = $idx !== false ? substr($normalized, 0, $idx) : '';
+        $body = $idx !== false ? substr($normalized, $idx + strlen($token)) : $normalized;
+        $title = $fallbackTitle;
+        $tags = [];
+        $starred = null;
+        foreach (array_filter(array_map('trim', explode("\n", $headerText))) as $line) {
+            $sep = strpos($line, ':');
+            if ($sep === false || $sep <= 0) {
+                continue;
+            }
+            $key = strtolower(trim(substr($line, 0, $sep)));
+            $value = trim(substr($line, $sep + 1));
+            if ($key === 'title') {
+                $title = $value !== '' ? $value : $fallbackTitle;
+                continue;
+            }
+            if ($key === 'tags') {
+                $tags = self::normalizeTags(explode(',', $value));
+                continue;
+            }
+            if ($key === 'starred') {
+                $starred = self::toBool($value);
+            }
+        }
+
+        return [$title, $tags, $starred, $body];
+    }
+
+    private static function serializeNoteMarkdown(string $title, array $tags, ?bool $starred, string $body): string
+    {
+        $lines = [
+            'title: '.trim(str_replace("\n", ' ', $title)),
+            'tags: '.implode(', ', $tags),
+        ];
+        if ($starred !== null) {
+            $lines[] = 'starred: '.($starred ? 'true' : 'false');
+        }
+        $normalizedBody = str_replace(["\r\n", "\r"], "\n", $body);
+
+        return implode("\n", $lines)."\n----\n".$normalizedBody;
+    }
+
+    /**
+     * @param mixed $value
+     */
+    private static function toBool(mixed $value): ?bool
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+        if (is_string($value)) {
+            $lower = strtolower(trim($value));
+            if (in_array($lower, ['1', 'true', 'yes', 'on'], true)) {
+                return true;
+            }
+            if (in_array($lower, ['0', 'false', 'no', 'off'], true)) {
+                return false;
+            }
+        }
+        if (is_int($value)) {
+            return $value === 1 ? true : ($value === 0 ? false : null);
+        }
+
+        return null;
+    }
+
+    private static function moveMarkdownFiles(string $sourceDir, string $targetDir): void
+    {
+        $entries = scandir($sourceDir);
+        if (!is_array($entries)) {
+            throw new \RuntimeException('Could not read notebook directory.');
+        }
+        foreach ($entries as $entry) {
+            if ($entry === '.' || $entry === '..') {
+                continue;
+            }
+            $from = $sourceDir.'/'.$entry;
+            if (!is_file($from) || !str_ends_with(strtolower($entry), '.md')) {
+                continue;
+            }
+            $to = $targetDir.'/'.$entry;
+            if (is_file($to)) {
+                throw new \InvalidArgumentException('Target notebook already contains note '.$entry.'.');
+            }
+            if (!@rename($from, $to)) {
+                if (copy($from, $to)) {
+                    @unlink($from);
+                } else {
+                    throw new \RuntimeException('Could not move notebook notes.');
+                }
+            }
+        }
+    }
+
+    private static function removeDirIfEmpty(string $dir): void
+    {
+        if (!is_dir($dir)) {
+            return;
+        }
+        $entries = scandir($dir);
+        if (!is_array($entries)) {
+            return;
+        }
+        foreach ($entries as $entry) {
+            if ($entry !== '.' && $entry !== '..') {
+                return;
+            }
+        }
+        @rmdir($dir);
+    }
+
+    private static function removeNotebookCompletely(string $dir): void
+    {
+        if (!is_dir($dir)) {
+            return;
+        }
+        $entries = scandir($dir);
+        if (!is_array($entries)) {
+            throw new \RuntimeException('Could not read notebook directory.');
+        }
+        foreach ($entries as $entry) {
+            if ($entry === '.' || $entry === '..') {
+                continue;
+            }
+            $path = $dir.'/'.$entry;
+            if (is_file($path) && str_ends_with(strtolower($entry), '.md')) {
+                @unlink($path);
+            }
+        }
+        self::removeDirIfEmpty($dir);
     }
 }
