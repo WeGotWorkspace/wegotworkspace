@@ -258,6 +258,10 @@ export const store = {
     const log = await api<{ lines: string[] }>("updates/log");
     return log.lines;
   },
+  clearUpdateLog: async () => {
+    const result = await api<{ ok: boolean; lines: string[] }>("updates/log/clear", {});
+    return result.lines;
+  },
 };
 
 export function useSettings(): Settings {

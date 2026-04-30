@@ -209,6 +209,12 @@ final class AdminUiKernel
 
                 return true;
             }
+            if ($method === 'POST' && $rel === 'updates/log/clear') {
+                UpdateStateStore::clearLog();
+                self::json(200, ['ok' => true, 'lines' => []]);
+
+                return true;
+            }
         } catch (\InvalidArgumentException $e) {
             self::json(400, ['error' => $e->getMessage()]);
 
