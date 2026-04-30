@@ -1,0 +1,159 @@
+{
+	"name": "Photo Editor",
+	"nameLocale": {
+		"ru": "Фоторедактор",
+		"fr": "Photo Editor",
+		"es": "Editor de Fotos",
+		"pt-BR": "Editor de foto",
+		"de": "Foto-Editor",
+		"si": "ඡායාරූප සංස්කරකය",
+		"it": "Editor di foto",
+		"sq-AL": "Editori i fotove",
+		"sr-Cyrl-RS": "Уређивач Фотографија",
+		"sr-Latn-RS": "Uređivač Fotografija",
+		"zh-ZH": "图片编辑器"
+	},
+	"guid": "asc.{07FD8DFA-DFE0-4089-AL24-0730933CC80A}",
+	"version": "1.0.2",
+	"baseUrl": "",
+
+	"variations": [
+		{
+			"description": "Edit images, screenshots, and photos right in your documents: crop, resize, apply effects.",
+			"descriptionLocale": {
+				"ru": "Обрабатывайте картинки, скриншоты и фотографии прямо в документе: обрезайте, изменяйте размер, применяйте различные эффекты.",
+				"fr": "Modifiez des images, des captures d’écran et des photos directement dans vos documents : coupez, ajustez, appliquez des effets.",
+				"es": "Edite imágenes, capturas de pantalla y fotos directamente en sus documentos: recorte, cambie el tamaño y aplique efectos.",
+				"pt-BR": "Edite imagens, capturas de tela e fotos diretamente em seus documentos: corte, redimensione e aplique efeitos.",
+				"de": "Bearbeiten Sie Bilder, Screenshots und Fotos direkt in Dokumenten: Zuschneiden, Größe ändern, Effekte anwenden.",
+				"si": "ඔබගේ ලේඛනවල අඩංගු රූප, තිරසේයා සහ ඡායාරූප සංස්කරණය කරන්න. කප්පාදුව, යළි ප්‍රමාණනය, ආචරණ යෙදීම ආදිය ඇතුළත්ය.",
+				"it": "Modifica immagini, screenshot e foto direttamente nei tuoi documenti: ritaglia, ridimensiona, applica effetti.",
+				"sq-AL": "Editoni imazhe, foto ekrani dhe foto direkt.në dokumentet tuaja: prisni, rregulloni madhësinë, aplikoni efekte",
+				"sr-Cyrl-RS": "Уредите слике, снимке екрана и фотографије директно у документима: исеците, промените величину, примените ефекте.",
+				"sr-Latn-RS": "Uredite slike, snimke ekrana i fotografije direktno u dokumentima: isecite, promenite veličinu, primenite efekte.",
+				"zh-ZH": "直接在文档中编辑图像、截图和照片：裁剪、调整大小、应用效果。"
+			},
+			"url": "index.html",
+
+			"icons": [ "resources/light/icon.png", "resources/light/icon@2x.png" ],
+			"icons2": [
+				{
+					"style" : "light",
+					
+					"100%": {
+						"normal": "resources/light/icon.png"
+					},
+					"125%": {
+						"normal": "resources/light/icon@1.25x.png"
+					},
+					"150%": {
+						"normal": "resources/light/icon@1.5x.png"
+					},
+					"175%": {
+						"normal": "resources/light/icon@1.75x.png"
+					},
+					"200%": {
+						"normal": "resources/light/icon@2x.png"
+					}
+				},
+				{
+					"style" : "dark",
+					
+					"100%": {
+						"normal": "resources/dark/icon.png"
+					},
+					"125%": {
+						"normal": "resources/dark/icon@1.25x.png"
+					},
+					"150%": {
+						"normal": "resources/dark/icon@1.5x.png"
+					},
+					"175%": {
+						"normal": "resources/dark/icon@1.75x.png"
+					},
+					"200%": {
+						"normal": "resources/dark/icon@2x.png"
+					}
+				}
+			],
+			"isViewer": false,
+			"EditorsSupport": [ "word", "cell", "slide" ],
+
+			"isVisual": true,
+			"isModal": true,
+			"isInsideMode": false,
+		 
+			"initDataType": "html",
+			"initData": "",
+
+			"buttons": [
+				{
+					"text": "Ok",
+					"primary": true
+				},
+				{
+					"text": "Cancel",
+					"primary": false,
+					"isViewer": false,
+					"textLocale": {
+						"ru": "Отмена",
+						"fr": "Annuler",
+						"es": "Cancelar",
+						"de": "Abbrechen",
+						"si": "අවලංගු",
+						"it": "Annulla",
+						"sq-AL": "Anuloni",
+						"sr-Cyrl-RS": "Откажи",
+						"sr-Latn-RS": "Otkaži",
+						"zh-ZH": "取消"
+					}
+				}
+			],
+
+			"size": [ 10000, 10000 ],
+			"store": {
+				"background": {
+					"light" : "linear-gradient(180deg, #FF8E3D 0%, #FF6F3D 100%)",
+					"dark" : "linear-gradient(180deg, #FF8E3D 0%, #FF6F3D 100%)"
+				},
+				"screenshots" : [
+					"resources/store/screenshots/screen_1.png",
+					"resources/store/screenshots/screen_2.png"
+				],
+				"icons" : {
+					"light" : "resources/store/icons",
+					"dark"  : "resources/store/icons"
+				},
+				"categories": ["specAbilities", "work", "recommended"]
+			}
+		},
+		{
+			"description": "About",
+			"descriptionLocale": {
+				"ru": "Справка",
+				"fr": "À propos",
+				"es": "Sobre programa",
+				"de": "Über",
+				"si": "පිළිබඳව",
+				"it": "Informazioni su",
+				"sq-AL": "Rreth",
+				"sr-Cyrl-RS": "У вези",
+				"sr-Latn-RS": "U vezi"
+			},
+			"url": "index_about.html",
+
+			"icons": [ "resources/img/icon.png", "resources/img/icon@2x.png", "resources/img/icon2.png", "resources/img/icon2@2x.png" ],
+			"isViewer": false,
+			"EditorsSupport": [ "word", "cell", "slide" ],
+
+			"isVisual": true,
+			"isModal": true,
+			"isInsideMode": false,
+
+			"initDataType": "none",
+			"initData": "",
+
+			"size": [ 392, 147 ]
+		}
+	]
+}

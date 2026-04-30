@@ -1,0 +1,175 @@
+{
+	"name": "OCR",
+	"nameLocale": {
+		"ru": "Распознавание текста",
+		"fr": "Reconnaissance optique de caractères",
+		"es": "Reconocimiento óptico de caracteres",
+		"de": "OCR",
+		"pt-BR": "OCR",
+		"si": "OCR",
+		"it": "OCR",
+		"sq-AL": "OCR",
+		"sr-Cyrl-RS": "OCR",
+		"sr-Latn-RS": "OCR",
+		"zh-ZH": "OCR 文字识别"
+	},
+	"guid": "asc.{440EBF13-9B19-4BD8-8621-05200E58140B}",
+	"version": "2.1.0",
+
+	"variations": [
+		{
+			"description": "Recognize text from pictures and screenshots and insert it into your documents.",
+			"descriptionLocale": {
+				"ru": "Распознавайте текст с фотографий и скриншотов и вставляйте его в документы.",
+				"fr": "Reconnaissez le texte des images et des captures d'écran et insérez-le dans vos documents.",
+				"es": "Reconozca el texto de imágenes y capturas de pantalla e insértelo en sus documentos.",
+				"de": "Erkennen Sie Text auf Bildern und Screenshots und fügen Sie ihn in Ihre Dokumente ein.",
+				"pt-BR": "Reconheça texto de imagens e capturas de tela e insira-o em seus documentos.",
+				"si": "ඡායාරූප සහ තිරසේයාවල අඩංගු පෙළ හඳුනාගෙන ඒවා ඔබගේ ලේඛන වලට ඇතුළු කරන්න.",
+				"it": "Riconosci il testo da immagini e screenshot e inseriscilo nei tuoi documenti.",
+				"sq-AL": "Njihni tekstin në foto dhe skrinshotet dhe futeni në dokumentet tuaja.",
+				"sr-Cyrl-RS": "Препознајте текст са слика и снимака екрана и убаците га у ваше документе.",
+				"sr-Latn-RS": "Prepoznajte tekst sa slika i snimaka ekrana i ubacite ga u vaše dokumente.",
+				"zh-ZH": "识别图片和截图中的文本，并将其插入到文档中。"
+			},
+			"url": "index.html",
+
+			"icons": [ "resources/light/icon.png", "resources/light/icon@2x.png" ],
+			"icons2": [
+				{
+					"style" : "light",
+					
+					"100%": {
+						"normal": "resources/light/icon.png"
+					},
+					"125%": {
+						"normal": "resources/light/icon@1.25x.png"
+					},
+					"150%": {
+						"normal": "resources/light/icon@1.5x.png"
+					},
+					"175%": {
+						"normal": "resources/light/icon@1.75x.png"
+					},
+					"200%": {
+						"normal": "resources/light/icon@2x.png"
+					}
+				},
+				{
+					"style" : "dark",
+					
+					"100%": {
+						"normal": "resources/dark/icon.png"
+					},
+					"125%": {
+						"normal": "resources/dark/icon@1.25x.png"
+					},
+					"150%": {
+						"normal": "resources/dark/icon@1.5x.png"
+					},
+					"175%": {
+						"normal": "resources/dark/icon@1.75x.png"
+					},
+					"200%": {
+						"normal": "resources/dark/icon@2x.png"
+					}
+				}
+			],
+
+			"isViewer": false,
+			"EditorsSupport": [ "word" ],
+			"isVisual": true,
+			"isModal": true,
+			"isInsideMode": false,
+			"initDataType": "none",
+			"isUpdateOleOnResize": false,
+
+			"buttons": [
+				{
+					"text": "Insert Text",
+					"primary": true,
+					"textLocale": {
+						"ru": "Вставить текст",
+						"fr": "Insérer le texte",
+						"es": "Insertar texto",
+						"de": "Text einfügen",
+						"si": "පෙළ ඇතුළු කරන්න",
+						"it": "Inserisci testo",
+						"sq-AL": "Futni tekstin",
+						"sr-Cyrl-RS": "Убаци текст",
+						"sr-Latn-RS": "Ubaci tekst",
+						"zh-ZH": "插入文字"
+					}
+				},
+				{
+					"text": "Cancel",
+					"primary": false,
+					"textLocale": {
+						"ru": "Отмена",
+						"fr": "Annuler",
+						"es": "Cancelar",
+						"de": "Abbrechen",
+						"si": "අවලංගු",
+						"it": "Annulla",
+						"sq-AL": "Anulo",
+						"sr-Cyrl-RS": "Откажи",
+						"sr-Latn-RS": "Otkaži",
+						"zh-ZH": "取消"
+					}
+				}
+			],
+
+			"size": [ 592, 100 ],
+			"store": {
+				"background": {
+					"light" : "#444444",
+					"dark" : "#444444"
+				},
+				"screenshots" : [
+					"resources/store/screenshots/screen_1.png",
+					"resources/store/screenshots/screen_2.png",
+					"resources/store/screenshots/screen_3.png"
+				],
+				"icons" : {
+					"light" : "resources/store/icons",
+					"dark"  : "resources/store/icons"
+				},
+				"categories": ["specAbilities", "work"]
+			}
+		},
+		{
+			"description": "About",
+			"descriptionLocale": {
+				"ru": "Справка",
+				"fr": "À propos",
+				"es": "Sobre programa",
+				"de": "Über",
+				"si": "පිළිබඳව",
+				"it": "Informazioni su",
+				"sq-AL": "Rreth",
+				"sr-Cyrl-RS": "У вези",
+				"sr-Latn-RS": "U vezi",
+				"zh-ZH": "关于"
+			},
+
+			"url": "index_about.html",
+			"icons": [ "resources/img/icon.png", "resources/img/icon@2x.png", "resources/img/icon2.png", "resources/img/icon2@2x.png" ],
+			"isViewer": false,
+			"EditorsSupport": [ "word" ],
+			"isVisual": true,
+			"isModal": true,
+			"isInsideMode": false,
+			"initDataType": "none",
+			"isUpdateOleOnResize": false,
+
+			"buttons": [
+				{
+					"text": "Ok",
+					"primary": true
+				}
+			],
+
+			"size": [ 392, 147 ]
+		}
+	]
+}

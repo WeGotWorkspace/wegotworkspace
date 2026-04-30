@@ -1,0 +1,379 @@
+/*
+ * (c) Copyright Ascensio System SIA 2010
+ *
+ * This program is a free software product. You can redistribute it and/or
+ * modify it under the terms of the GNU Affero General Public License (AGPL)
+ * version 3 as published by the Free Software Foundation. In accordance with
+ * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
+ * that Ascensio System SIA expressly excludes the warranty of non-infringement
+ * of any third-party rights.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
+ * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ *
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
+ * street, Riga, Latvia, EU, LV-1050.
+ *
+ * The  interactive user interfaces in modified source and object code versions
+ * of the Program must display Appropriate Legal Notices, as required under
+ * Section 5 of the GNU AGPL version 3.
+ *
+ * Pursuant to Section 7(b) of the License you must retain the original Product
+ * logo when distributing the program. Pursuant to Section 7(e) we decline to
+ * grant you any rights under trademark law for use of our trademarks.
+ *
+ * All the Product's GUI elements, including illustrations and icon sets, as
+ * well as technical writing content are licensed under the terms of the
+ * Creative Commons Attribution-ShareAlike 4.0 International. See the License
+ * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ *
+ */
+(function(window, undefined){
+
+    window.oncontextmenu = function(e)
+	{
+		if (e.preventDefault)
+			e.preventDefault();
+		if (e.stopPropagation)
+			e.stopPropagation();
+		return false;
+    };
+    
+    function escapeHtml(string) {
+        var res = string;
+        res = res.replace(/[\', \", \\,]/g, function (sSymbol) {
+            return '\\' + sSymbol;
+        });
+        return res;
+    }
+
+    var arrParsedData = [];
+
+    window.Asc.plugin.init = function(){
+        this.resizeWindow(592, 100, 592, 100, 592, 100);
+        var nStartFilesCount = 0, arrImages;
+        $( window ).resize(function(){
+            updateScroll();
+        });
+
+        function updateScroll(){
+            Ps.update();
+        }
+        var container = document.getElementById('scrollable-image-text-div');        
+		Ps = new PerfectScrollbar("#" + container.id, {});
+        $('#load-file-button-id').click(
+          					
+			function (e) {
+				
+				if (window["AscDesktopEditor"])
+				{
+					window["AscDesktopEditor"]["OpenFilenameDialog"]("images", true, function(files) {
+                        arrImages = [];
+                        
+                        if (!Array.isArray(files)) // string detect
+                            files = [files];
+
+						if (files.length == 0)
+							return;
+						
+						window.Asc.plugin.resizeWindow(800, 571, 800, 571);
+						
+						var oImagesContainer = document.getElementById('image-container-div');
+						while (oImagesContainer.firstChild) {
+							oImagesContainer.removeChild(oImagesContainer.firstChild);
+						}
+						var oTextContainer = document.getElementById('text-container-div');
+						while (oTextContainer.firstChild) {
+							oTextContainer.removeChild(oTextContainer.firstChild);
+						}
+						
+						for (var i = 0; i < files.length; i++) 
+						{
+							var oImgElement = document.createElement('img');
+							oImgElement.src = window["AscDesktopEditor"]["GetImageBase64"](files[i], false);
+							oImgElement.style.width = '100%';
+							oImgElement.style.marginBottom = "10px";
+							arrImages.push(oImgElement);
+							oImagesContainer.appendChild(oImgElement);
+						}
+						
+						document.getElementById('lang-select').removeAttribute('disabled');
+						document.getElementById('recognize-button').removeAttribute('disabled');
+						nStartFilesCount = files.length;
+						$('#status-label').text('');
+						$('#scrollable-image-text-div').css('display', 'inline-block');
+						updateScroll();
+					});
+					
+					return;							
+				}
+			
+                $('#images-input').click();
+            }
+        );				
+
+        $('#images-input').change(function(e) {
+            var arrFiles = e.target.files;
+			//check for images in file list
+			var arrFiles2 = [];
+			for(var i = 0; i < arrFiles.length; ++i){
+				if(arrFiles[i] && arrFiles[i].type && arrFiles[i].type.indexOf('image') === 0){
+					arrFiles2.push(arrFiles[i]);
+				}
+				else{
+					alert(arrFiles[i].name + "\nOCR plugin cannot read this file.");
+				}
+			}
+			arrFiles = arrFiles2;
+            if(arrFiles.length > 0){
+                window.Asc.plugin.resizeWindow(800, 571, 800, 571);
+
+                var oImagesContainer = document.getElementById('image-container-div');
+                while (oImagesContainer.firstChild) {
+                    oImagesContainer.removeChild(oImagesContainer.firstChild);
+                }
+                var oTextContainer = document.getElementById('text-container-div');
+                while (oTextContainer.firstChild) {
+                    oTextContainer.removeChild(oTextContainer.firstChild);
+                }
+                arrParsedData.length = 0;
+                var oFileReader = new FileReader();
+                var nIndex = 0;
+                arrImages = [];                
+                $('#status-label').text('Loading images');
+                oFileReader.onloadend = function() {
+                    var oImgElement = document.createElement('img');
+                    oImgElement.src = oFileReader.result;
+                    oImgElement.style.width = '100%';
+                    arrImages.push(oImgElement);
+                    oImagesContainer.appendChild(oImgElement);
+                    ++nIndex;
+                    if(nIndex < arrFiles.length){
+                        oFileReader.readAsDataURL(arrFiles[nIndex]);
+                        $(oImgElement).css("margin-bottom", "10px");
+                    }
+                    else{
+                        document.getElementById('lang-select').removeAttribute('disabled');
+                        document.getElementById('recognize-button').removeAttribute('disabled');
+                        nStartFilesCount = arrImages.length;
+                        $('#status-label').text('');
+                        $('#scrollable-image-text-div').css('display', 'inline-block');
+
+                    }
+                    updateScroll();
+                };
+                oFileReader.readAsDataURL(arrFiles[nIndex]);
+            }
+        });
+        $('#recognize-button').click(
+            function () {
+
+                var arrImagesCopy = [].concat(arrImages);
+                for (var i = 0; i < arrImagesCopy.length; i++)
+                {
+                    if (arrImagesCopy[i] && (0 == arrImagesCopy[i].naturalWidth) && (0 == arrImagesCopy[i].naturalHeight))
+                    {
+                        arrImagesCopy.splice(i, 1);
+                        i--;
+                    }
+                }
+                if (0 == arrImagesCopy.length)
+                    return;
+
+                var oTextContainer = document.getElementById('text-container-div');
+                while (oTextContainer.firstChild) {
+                    oTextContainer.removeChild(oTextContainer.firstChild);
+					updateScroll();
+                }
+                arrParsedData.length = 0;
+                document.getElementById('recognize-button').setAttribute('disabled', '');
+                document.getElementById('lang-select').setAttribute('disabled', '');
+                document.getElementById('load-file-button-id').setAttribute('disabled', '');
+				
+				const fTesseractCall = async function () {
+					const langSelect = document.getElementById('lang-select');
+					const sLang = langSelect.options[langSelect.selectedIndex].value;
+
+					const statusLabel = document.getElementById('status-label');
+					const showProgress = function (progress) {
+						if (progress && progress.status === "recognizing text") {
+							const percent = (100 * (progress.progress + nStartFilesCount - arrImagesCopy.length - 1) / nStartFilesCount) >> 0;
+							statusLabel.textContent = 'Recognizing: ' + percent + '%';
+						}
+					};
+					const worker = await Tesseract.createWorker(sLang, Tesseract.OEM.DEFAULT, { logger: showProgress });
+
+					const image = arrImagesCopy.splice(0, 1)[0];
+					const recognitionParams = { tessedit_pageseg_mode: Tesseract.PSM.AUTO };
+					const outputFormatParams = { blocks: true };
+					const result = await worker.recognize(image, recognitionParams, outputFormatParams);
+					await worker.terminate();
+
+					const generatedHTML = generateHTMLByData(result.data);
+					const textContainer = document.getElementById('text-container-div');
+					textContainer.insertAdjacentHTML('beforeend', generatedHTML);
+					arrParsedData.push(result);
+
+					updateScroll();
+					if (arrImagesCopy.length > 0) {
+						await fTesseractCall();
+					} else {
+						statusLabel.textContent = '';
+						document.getElementById('recognize-button').removeAttribute('disabled');
+						document.getElementById('lang-select').removeAttribute('disabled');
+						document.getElementById('load-file-button-id').removeAttribute('disabled', '');
+					}
+				};
+
+                $('#status-label').text('Recognizing: 0%');
+                fTesseractCall();
+            }
+        );
+    
+		function generateHTMLByData(oData) {
+			let sResult = "<div>";
+			function commitSpan(sLastSpanText, oLastWord) {
+				if(sLastSpanText.length > 0 && oLastWord) {
+					let sStyle = "";
+					if(oLastWord.font_name && oLastWord.font_name.length > 0) {
+						sStyle += ("font-family:" + oLastWord.font_name + ";");
+					}
+					//if(oLastWord.font_size) {
+					//}
+					
+					sStyle += ("font-size:" + 11 + "pt;");
+					if(oLastWord.is_bold) {
+						sStyle += ("font-weight:bold;");
+					}
+					if(oLastWord.is_italic) {
+						sStyle += ("font-style:italic;");
+					}
+					if(oLastWord.is_smallcaps) {
+						sStyle += ("font-variant:small-caps;");
+					}
+					if(oLastWord.is_underlined) {
+						sStyle += ("text-decoration:underline;");
+					}
+					sResult += "<span lang=\"" + oLastWord.language +"\" style=\"" + sStyle + "\">" + sLastSpanText + "</span>";
+				}
+			}
+			
+			let aBlocks = oData.blocks;
+			for(let nBlock = 0; nBlock < aBlocks.length; ++nBlock) {
+				let oBlock = aBlocks[nBlock]; 
+				let aDataPar = oBlock.paragraphs;
+				for(let nPar = 0; nPar < aDataPar.length; ++nPar) {
+					let oDataPar = aDataPar[nPar];
+					let aLines = oDataPar.lines;
+					let nPixIndent = 0;
+					
+					let oFirstLine, oFirstWord;
+					oFirstLine = aLines[0];
+					if(oFirstLine) {
+						oFirstWord = oFirstLine.words[0];
+						if(oFirstWord) {
+							nPixIndent = oFirstWord.bbox.x0 - oBlock.bbox.x0;
+						}
+					}
+					if(Math.abs(nPixIndent) > 5) {
+						let nIndent = (nPixIndent / 72) * 25.4 + 0.5 >> 0;
+						sResult += "<p style=\"text-indent:" + nIndent + "mm;\">";
+					}
+					else {
+						sResult += "<p>";
+					}
+					
+					let oLastWord = null;
+					let sLastSpanText = "";
+					for(let nLine = 0; nLine < aLines.length; ++nLine) {
+						let oLine = aLines[nLine];
+						let aWords = oLine.words;
+						for(let nWrd = 0; nWrd < aWords.length; ++nWrd) {
+							let oWord = aWords[nWrd];
+							if(!oLastWord || 
+								oWord.font_name !== oLastWord.font_name ||
+								//Math.abs(oWord.font_size - oLastWord.font_size) > 4 ||
+								oWord.is_bold !== oLastWord.is_bold ||
+								oWord.is_italic !== oLastWord.is_italic ||
+								oWord.is_smallcaps !== oLastWord.is_smallcaps ||
+								oWord.is_underlined !== oLastWord.is_underlined ||
+								oWord.language !== oLastWord.language) {
+								commitSpan(sLastSpanText, oLastWord);
+								sLastSpanText = "";
+							}
+							if(sLastSpanText.length > 0) {
+								sLastSpanText += " ";
+							}
+							if(nLine > 0 && nWrd === 0) {
+								//sLastSpanText += "<br/>";
+							}
+							sLastSpanText += oWord.text;
+							oLastWord = oWord;
+						}
+					}
+					
+					commitSpan(sLastSpanText, oLastWord);
+					sResult += "</p>";
+				}
+			}
+			sResult += "</div>";
+			return sResult;
+		}
+	};
+
+    window.Asc.plugin.onThemeChanged = function(theme)
+    {
+        window.Asc.plugin.onThemeChangedBase(theme);
+
+        var rule = ".select2-container--default.select2-container--open .select2-selection__arrow b { border-color : " + window.Asc.plugin.theme["text-normal"] + " !important; }";
+        var styleTheme = document.createElement('style');
+        styleTheme.type = 'text/css';
+        styleTheme.innerHTML = rule;
+        document.getElementsByTagName('head')[0].appendChild(styleTheme);
+    };
+
+    window.Asc.plugin.button = function(id){
+        if (id == 0){
+            this.executeMethod("PasteHtml", [document.getElementById('text-container-div').innerHTML]);
+            this.executeCommand("close", "");
+        }
+        else{
+            this.executeCommand("close", "");
+        }
+    };
+
+	function initSelect() {
+		$('#lang-select').select2({
+            minimumResultsForSearch: Infinity,
+			sorter: function(data){ return data.sort(function(a, b){ return a.text.localeCompare(b.text)})}
+        });
+	};
+
+	window.Asc.plugin.onTranslate = function(){
+		var elem = document.getElementById("label1");
+		if (elem){
+			elem.innerHTML = window.Asc.plugin.tr("Tesseract.js lets recognize text in pictures (png, jpg)");
+		}
+		elem = document.getElementById("load-file-button-id");
+		if (elem){
+			elem.innerHTML = window.Asc.plugin.tr("Load File");
+		}	
+		elem = document.getElementById("label2");
+		if (elem){
+			elem.innerHTML = window.Asc.plugin.tr("Choose language");
+		}
+		elem = document.getElementById("recognize-button");
+		if (elem){
+			elem.innerHTML = window.Asc.plugin.tr("Recognize");
+		}
+		var arrOptions = document.getElementsByTagName('option');
+		if(arrOptions.length){
+			for (let i = 0; i < arrOptions.length; i++){
+				arrOptions[i].text = window.Asc.plugin.tr(arrOptions[i].text)
+			}
+		}
+		initSelect();
+	};
+	
+	})(window, undefined);
