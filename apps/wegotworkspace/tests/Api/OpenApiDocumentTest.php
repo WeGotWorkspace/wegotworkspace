@@ -36,5 +36,31 @@ final class OpenApiDocumentTest extends TestCase
         self::assertArrayHasKey('/notes/notebooks', $doc['paths'] ?? []);
         self::assertArrayHasKey('/notes/notebooks/{name}', $doc['paths'] ?? []);
         self::assertArrayHasKey('/dav/capabilities', $doc['paths'] ?? []);
+
+        self::assertSame(
+            '#/components/schemas/AdminStateResponse',
+            $doc['paths']['/admin/state']['get']['responses']['200']['content']['application/json']['schema']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/NoteUpsertRequest',
+            $doc['paths']['/notes/items']['post']['requestBody']['content']['application/json']['schema']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/MailFolderCreateRequest',
+            $doc['paths']['/mail/folders']['post']['requestBody']['content']['application/json']['schema']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/DriveGetDirRequest',
+            $doc['paths']['/drive/getdir']['post']['requestBody']['content']['application/json']['schema']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/VoiceSignalRequest',
+            $doc['paths']['/voice/join']['post']['requestBody']['content']['application/json']['schema']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/BinaryPayload',
+            $doc['paths']['/drive/download']['get']['responses']['200']['content']['application/octet-stream']['schema']['$ref'] ?? null
+        );
+        self::assertIsArray($doc['components']['schemas']['GenericObject']['properties'] ?? null);
     }
 }
