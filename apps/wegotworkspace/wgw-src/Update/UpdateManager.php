@@ -29,6 +29,11 @@ final class UpdateManager
             'compatible' => $compatible,
             'checks' => $checks,
             'inProgress' => is_file(UpdateStateStore::lockPath()),
+            'phase' => is_string($state['phase'] ?? null) ? $state['phase'] : null,
+            'current' => is_array($state['current'] ?? null) ? $state['current'] : null,
+            'download' => is_array($state['download'] ?? null) ? $state['download'] : null,
+            'cancelRequested' => (bool) ($state['cancel_requested'] ?? false),
+            'cancelAllowed' => is_file(UpdateStateStore::lockPath()) && (($state['phase'] ?? null) === 'downloading'),
             'lastCheckedAt' => is_string($state['last_checked_at'] ?? null) ? $state['last_checked_at'] : null,
             'lastCheckError' => is_string($state['last_check_error'] ?? null) ? $state['last_check_error'] : null,
             'lastResult' => is_array($state['last_result'] ?? null) ? $state['last_result'] : null,
@@ -114,10 +119,11 @@ final class UpdateManager
 
         try {
             UpdateStateStore::appendLog('Update started: '.$beforeVersion.' -> '.$targetVersion);
+            UpdateStateStore::clearCancelRequest();
             self::writeStatus('downloading', $beforeVersion, $targetVersion);
             UpdateStateStore::cleanupTemporaryData();
             @mkdir(dirname(UpdateStateStore::packagePath()), 0775, true);
-            self::downloadPackage($packageUrl, UpdateStateStore::packagePath());
+            self::downloadPackage($packageUrl, UpdateStateStore::packagePath(), $beforeVersion, $targetVersion);
             self::verifyChecksum(UpdateStateStore::packagePath(), $checksum);
             self::verifyChecksumSignature($checksum, $checksumSignature);
 
@@ -142,17 +148,30 @@ final class UpdateManager
             UpdateStateStore::appendLog('Update finished successfully.');
         } catch (\Throwable $e) {
             UpdateStateStore::appendLog('Update failed: '.$e->getMessage());
-            self::restorePaths($backupDir, Paths::appRoot(), $replacePaths);
-            @file_put_contents(Paths::appRoot().'/VERSION', $beforeVersion."\n", LOCK_EX);
-            SchemaMigrationRunner::migrate($pdo);
-            self::recordHistory($pdo, $beforeVersion, $targetVersion, 'failed', $e->getMessage());
+            $didStartFileSwap = self::didStartApplyingFiles();
+            if ($didStartFileSwap) {
+                self::restorePaths($backupDir, Paths::appRoot(), $replacePaths);
+                @file_put_contents(Paths::appRoot().'/VERSION', $beforeVersion."\n", LOCK_EX);
+                SchemaMigrationRunner::migrate($pdo);
+            }
+            self::recordHistory(
+                $pdo,
+                $beforeVersion,
+                $targetVersion,
+                $e->getMessage() === 'Update cancelled by user.' ? 'cancelled' : 'failed',
+                $e->getMessage()
+            );
             $result['message'] = $e->getMessage();
+            if ($e->getMessage() === 'Update cancelled by user.') {
+                return $result;
+            }
             throw $e;
         } finally {
             self::writeMaintenanceMode(false);
             $result['finishedAt'] = date('c');
             $state = UpdateStateStore::read();
             $state['last_result'] = $result;
+            unset($state['phase'], $state['current'], $state['download'], $state['cancel_requested']);
             UpdateStateStore::write($state);
             @unlink(UpdateStateStore::lockPath());
             flock($lock, LOCK_UN);
@@ -168,6 +187,26 @@ final class UpdateManager
         return is_file(UpdateStateStore::maintenancePath());
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public static function cancel(\PDO $pdo): array
+    {
+        $state = UpdateStateStore::read();
+        if (!is_file(UpdateStateStore::lockPath())) {
+            throw new \InvalidArgumentException('No update is currently running.');
+        }
+        if (($state['phase'] ?? null) !== 'downloading') {
+            throw new \InvalidArgumentException('Cancellation is only available while the package is downloading.');
+        }
+        UpdateStateStore::requestCancel();
+        $state['cancel_requested'] = true;
+        UpdateStateStore::write($state);
+        UpdateStateStore::appendLog('Cancellation requested by admin user.');
+
+        return self::getState($pdo);
+    }
+
     private static function writeMaintenanceMode(bool $enabled): void
     {
         if ($enabled) {
@@ -179,7 +218,7 @@ final class UpdateManager
         @unlink(UpdateStateStore::maintenancePath());
     }
 
-    private static function downloadPackage(string $url, string $target): void
+    private static function downloadPackage(string $url, string $target, string $fromVersion, string $toVersion): void
     {
         $ctx = stream_context_create([
             'http' => [
@@ -189,13 +228,62 @@ final class UpdateManager
                 'header' => "User-Agent: WeGotWorkspace-Updater/1.0\r\n",
             ],
         ]);
-        $data = @file_get_contents($url, false, $ctx);
-        if (!is_string($data) || $data === '') {
+        $input = @fopen($url, 'rb', false, $ctx);
+        if (!is_resource($input)) {
             throw new \RuntimeException('Could not download release package.');
         }
-        if (file_put_contents($target, $data, LOCK_EX) === false) {
+        $tmpTarget = $target.'.part';
+        $output = @fopen($tmpTarget, 'wb');
+        if (!is_resource($output)) {
+            fclose($input);
             throw new \RuntimeException('Could not write downloaded package.');
         }
+        $meta = stream_get_meta_data($input);
+        $totalBytes = self::parseContentLength($meta['wrapper_data'] ?? null);
+        $downloadedBytes = 0;
+        $lastProgressWriteAt = 0.0;
+        self::writeDownloadProgress($fromVersion, $toVersion, $downloadedBytes, $totalBytes);
+
+        try {
+            while (!feof($input)) {
+                self::throwIfCancelRequested();
+                $chunk = fread($input, 1024 * 1024);
+                if ($chunk === false) {
+                    throw new \RuntimeException('Could not download release package.');
+                }
+                if ($chunk === '') {
+                    continue;
+                }
+                $written = fwrite($output, $chunk);
+                if ($written === false) {
+                    throw new \RuntimeException('Could not write downloaded package.');
+                }
+                $downloadedBytes += $written;
+                $now = microtime(true);
+                if (($now - $lastProgressWriteAt) >= 0.2 || ($totalBytes !== null && $downloadedBytes >= $totalBytes)) {
+                    self::writeDownloadProgress($fromVersion, $toVersion, $downloadedBytes, $totalBytes);
+                    $lastProgressWriteAt = $now;
+                }
+            }
+        } finally {
+            fclose($input);
+            fclose($output);
+        }
+
+        if ($downloadedBytes <= 0) {
+            @unlink($tmpTarget);
+            throw new \RuntimeException('Could not download release package.');
+        }
+        if ($totalBytes !== null && $downloadedBytes < $totalBytes) {
+            @unlink($tmpTarget);
+            throw new \RuntimeException('Downloaded package is incomplete.');
+        }
+        self::throwIfCancelRequested();
+        if (!@rename($tmpTarget, $target)) {
+            @unlink($tmpTarget);
+            throw new \RuntimeException('Could not write downloaded package.');
+        }
+        self::writeDownloadProgress($fromVersion, $toVersion, $downloadedBytes, $downloadedBytes);
     }
 
     private static function verifyChecksum(string $path, string $expected): void
@@ -468,6 +556,74 @@ final class UpdateManager
             'to' => $toVersion,
             'at' => date('c'),
         ];
+        if ($phase !== 'downloading') {
+            unset($state['download'], $state['cancel_requested']);
+        }
+        UpdateStateStore::write($state);
+    }
+
+    private static function didStartApplyingFiles(): bool
+    {
+        $state = UpdateStateStore::read();
+
+        return ($state['phase'] ?? null) === 'applying_files'
+            || ($state['phase'] ?? null) === 'running_migrations';
+    }
+
+    /**
+     * @param mixed $headers
+     */
+    private static function parseContentLength(mixed $headers): ?int
+    {
+        if (!is_array($headers)) {
+            return null;
+        }
+        foreach ($headers as $header) {
+            if (!is_string($header)) {
+                continue;
+            }
+            if (preg_match('/^Content-Length:\s*(\d+)/i', $header, $m) !== 1) {
+                continue;
+            }
+            $value = (int) $m[1];
+            if ($value > 0) {
+                return $value;
+            }
+        }
+
+        return null;
+    }
+
+    private static function throwIfCancelRequested(): void
+    {
+        if (!UpdateStateStore::isCancelRequested()) {
+            return;
+        }
+        throw new \RuntimeException('Update cancelled by user.');
+    }
+
+    private static function writeDownloadProgress(
+        string $fromVersion,
+        string $toVersion,
+        int $downloadedBytes,
+        ?int $totalBytes
+    ): void {
+        $state = UpdateStateStore::read();
+        $state['phase'] = 'downloading';
+        $state['current'] = [
+            'from' => $fromVersion,
+            'to' => $toVersion,
+            'at' => date('c'),
+        ];
+        $state['download'] = [
+            'downloadedBytes' => max(0, $downloadedBytes),
+            'totalBytes' => $totalBytes,
+            'percent' => $totalBytes !== null && $totalBytes > 0
+                ? min(100, max(0, (int) floor(($downloadedBytes / $totalBytes) * 100)))
+                : null,
+            'updatedAt' => date('c'),
+        ];
+        $state['cancel_requested'] = UpdateStateStore::isCancelRequested();
         UpdateStateStore::write($state);
     }
 
