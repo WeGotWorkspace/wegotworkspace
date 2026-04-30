@@ -73,6 +73,7 @@ spl_autoload_register(static function (string $class) use ($runtimeRoot, $appRoo
 }, true, true);
 
 use App\Admin\AdminUiKernel;
+use App\Api\ApiKernel;
 use App\Auth\UiLoginKernel;
 use App\Config;
 use App\Drive\DriveKernel;
@@ -113,10 +114,17 @@ $scriptSrc = "'self' 'unsafe-inline'";
 $styleSrc = "'self' 'unsafe-inline' https://fonts.googleapis.com";
 $fontSrc = "'self' data: https://fonts.gstatic.com";
 $connectSrc = "'self' https: wss:";
+$apiDocsPrefix = WebBase::url($webBase, '/api/docs');
+$isApiDocsRequest = $path === $apiDocsPrefix || $path === $apiDocsPrefix.'/' || str_starts_with($path, $apiDocsPrefix.'/');
 if ($isOfficeRequest) {
     // ONLYOFFICE web-apps uses dynamic template evaluation and blob workers in editor runtime.
     $scriptSrc .= " 'unsafe-eval' blob:";
     $connectSrc .= " blob:";
+}
+if ($isApiDocsRequest) {
+    // Swagger UI assets are loaded from CDN for docs rendering.
+    $scriptSrc .= " https://unpkg.com";
+    $styleSrc .= " https://unpkg.com";
 }
 header(
     "Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; "
@@ -179,6 +187,10 @@ if ($path === $settingsPrefix || str_starts_with($path, $settingsPrefix.'/')) {
 }
 
 if (UiLoginKernel::tryRespond($webBase, $path)) {
+    exit;
+}
+
+if (ApiKernel::tryRespond($webBase, $path)) {
     exit;
 }
 

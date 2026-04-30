@@ -1,0 +1,462 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "WeGotWorkspace API",
+    "version": "1.0.0",
+    "description": "Parallel OpenAPI-first REST API for all app domains."
+  },
+  "servers": [
+    {
+      "url": "__SERVER_URL__"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
+        }
+      },
+      "AuthTokenResponse": {
+        "type": "object",
+        "required": [
+          "access_token",
+          "token_type",
+          "expires_in",
+          "role",
+          "username"
+        ],
+        "properties": {
+          "access_token": {
+            "type": "string"
+          },
+          "token_type": {
+            "type": "string"
+          },
+          "expires_in": {
+            "type": "integer"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "guest",
+              "user",
+              "admin"
+            ]
+          },
+          "username": {
+            "type": "string"
+          }
+        }
+      },
+      "Principal": {
+        "type": "object",
+        "required": [
+          "username",
+          "role"
+        ],
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "guest",
+              "user",
+              "admin"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Health check",
+        "responses": {
+          "200": {
+            "description": "Service health"
+          }
+        }
+      }
+    },
+    "/capabilities": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Platform capabilities and domains",
+        "responses": {
+          "200": {
+            "description": "Capabilities response"
+          }
+        }
+      }
+    },
+    "/.well-known/jwks.json": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Public JWKS for JWT verification",
+        "responses": {
+          "200": {
+            "description": "JWK set"
+          }
+        }
+      }
+    },
+    "/auth/token": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Issue RS256 bearer token from username/password",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "username",
+                  "password"
+                ],
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token issued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "503": {
+            "description": "JWT not configured"
+          }
+        }
+      }
+    },
+    "/me": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Current authenticated principal",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current principal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Principal"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/status": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Admin API scaffold status",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Admin status"
+          }
+        }
+      }
+    },
+    "/admin/state": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Admin aggregate state",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Admin state"
+          }
+        }
+      }
+    },
+    "/settings/status": {
+      "get": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Settings API scaffold status",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Settings status"
+          }
+        }
+      }
+    },
+    "/settings/state": {
+      "get": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "User settings aggregate state",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Settings state"
+          }
+        }
+      }
+    },
+    "/mail/status": {
+      "get": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "Mail runtime status",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mail status"
+          }
+        }
+      }
+    },
+    "/drive/user": {
+      "get": {
+        "tags": [
+          "Drive"
+        ],
+        "summary": "Drive user context",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Drive user payload"
+          }
+        }
+      }
+    },
+    "/notes/capabilities": {
+      "get": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Notes capabilities",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notes capabilities"
+          }
+        }
+      }
+    },
+    "/office/capabilities": {
+      "get": {
+        "tags": [
+          "Office"
+        ],
+        "summary": "Office capabilities",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Office capabilities"
+          }
+        }
+      }
+    },
+    "/voice/join": {
+      "post": {
+        "tags": [
+          "Voice"
+        ],
+        "summary": "Join voice room (guest or authenticated)",
+        "responses": {
+          "200": {
+            "description": "Join response"
+          }
+        }
+      }
+    },
+    "/voice/poll": {
+      "post": {
+        "tags": [
+          "Voice"
+        ],
+        "summary": "Poll voice messages",
+        "responses": {
+          "200": {
+            "description": "Poll response"
+          }
+        }
+      }
+    },
+    "/voice/send": {
+      "post": {
+        "tags": [
+          "Voice"
+        ],
+        "summary": "Send voice signaling message",
+        "responses": {
+          "200": {
+            "description": "Send response"
+          }
+        }
+      }
+    },
+    "/voice/leave": {
+      "post": {
+        "tags": [
+          "Voice"
+        ],
+        "summary": "Leave voice room",
+        "responses": {
+          "200": {
+            "description": "Leave response"
+          }
+        }
+      }
+    },
+    "/voice/chat": {
+      "post": {
+        "tags": [
+          "Voice"
+        ],
+        "summary": "Voice room chat message",
+        "responses": {
+          "200": {
+            "description": "Chat response"
+          }
+        }
+      }
+    },
+    "/installer/state": {
+      "get": {
+        "tags": [
+          "Installer"
+        ],
+        "summary": "Installer/installation state",
+        "responses": {
+          "200": {
+            "description": "Installer state"
+          }
+        }
+      }
+    },
+    "/home/state": {
+      "get": {
+        "tags": [
+          "Home"
+        ],
+        "summary": "Home app state",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Home state"
+          }
+        }
+      }
+    },
+    "/dav/capabilities": {
+      "get": {
+        "tags": [
+          "Dav"
+        ],
+        "summary": "DAV capabilities",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "DAV capabilities"
+          }
+        }
+      }
+    }
+  }
+}

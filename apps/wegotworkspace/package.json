@@ -6,6 +6,7 @@
     "setup:macos": "bash scripts/macos/install-homebrew-apache-ssl.sh",
     "preview:macos": "bash scripts/macos/setup-homebrew-apache-ssl.sh",
     "enable-php-imap": "bash scripts/macos/enable-php-imap.sh",
+    "generate:api-jwt-keys": "bash scripts/generate-api-jwt-keys.sh",
     "test:update-smoke": "bash scripts/update-smoke-test.sh"
   },
   "devDependencies": {
