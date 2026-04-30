@@ -16,6 +16,7 @@ function UpdatesPage() {
   const [checking, setChecking] = useState(false);
   const [applying, setApplying] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [displayPhase, setDisplayPhase] = useState<string | null>(null);
   const [logLines, setLogLines] = useState<string[]>([]);
   const [inlineResult, setInlineResult] = useState<{
     kind: "success" | "error";
@@ -40,9 +41,20 @@ function UpdatesPage() {
     };
   }, [updates.inProgress, applying]);
 
+  useEffect(() => {
+    if (updates.phase) {
+      setDisplayPhase(updates.phase);
+      return;
+    }
+    if (!updates.inProgress && !applying) {
+      setDisplayPhase(null);
+    }
+  }, [updates.phase, updates.inProgress, applying]);
+
   const latestVersion = updates.latest?.version || "Unknown";
   const phaseOrder = ["downloading", "extracting", "backing_up", "applying_files"] as const;
-  const activePhase = updates.phase === "running_migrations" ? "applying_files" : updates.phase;
+  const visiblePhase = updates.phase ?? displayPhase;
+  const activePhase = visiblePhase === "running_migrations" ? "applying_files" : visiblePhase;
   const currentStepIndex = Math.max(
     0,
     phaseOrder.indexOf(activePhase as (typeof phaseOrder)[number]),
@@ -52,23 +64,25 @@ function UpdatesPage() {
   const downloadTotal = updates.download?.totalBytes;
   const downloadDone = updates.download?.downloadedBytes ?? 0;
   const phaseLabel =
-    updates.phase === "downloading"
+    visiblePhase === "downloading"
       ? "Downloading package"
-      : updates.phase === "extracting"
+      : visiblePhase === "extracting"
         ? "Extracting archive"
-        : updates.phase === "backing_up"
+        : visiblePhase === "backing_up"
           ? "Creating backup"
-          : updates.phase === "applying_files"
+          : visiblePhase === "applying_files"
             ? "Replacing files"
-            : updates.phase === "running_migrations"
+            : visiblePhase === "running_migrations"
               ? "Running migrations"
-              : updates.phase
-                ? updates.phase
-                : "Idle";
+              : visiblePhase
+                ? visiblePhase
+                : updates.inProgress || applying
+                  ? "Starting update"
+                  : "Idle";
   const phasePercent =
-    updates.phase === "downloading"
+    visiblePhase === "downloading"
       ? (updates.download?.percent ?? null)
-      : updates.phase === "extracting" || updates.phase === "backing_up"
+      : visiblePhase === "extracting" || visiblePhase === "backing_up"
         ? (updates.phaseProgress?.percent ?? null)
         : null;
 
@@ -183,7 +197,7 @@ function UpdatesPage() {
                   <div className="space-y-2">
                     <Progress value={phasePercent} />
                     <div className="flex items-center justify-between text-muted-foreground">
-                      {updates.phase === "downloading" ? (
+                      {visiblePhase === "downloading" ? (
                         <span>
                           {formatBytes(downloadDone)}
                           {downloadTotal ? ` / ${formatBytes(downloadTotal)}` : ""}
@@ -191,7 +205,7 @@ function UpdatesPage() {
                       ) : (
                         <span>
                           {updates.phaseProgress?.completed ?? 0} /{" "}
-                          {updates.phaseProgress?.total ?? 0}
+                          {updates.phaseProgress?.total ?? 0} files
                         </span>
                       )}
                       <span>{phasePercent}%</span>
@@ -244,7 +258,7 @@ function UpdatesPage() {
                 <AlertDescription>{inlineResult.message}</AlertDescription>
               </Alert>
             )}
-            {updates.lastResult && (
+            {updates.lastResult && !(updates.inProgress || applying) && (
               <div className="rounded-md border px-3 py-2 text-xs">
                 <div>
                   Last run: <strong>{updates.lastResult.ok ? "Success" : "Failed"}</strong>
