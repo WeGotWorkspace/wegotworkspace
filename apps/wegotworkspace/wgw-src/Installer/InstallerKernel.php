@@ -132,6 +132,26 @@ final class InstallerKernel
     }
 
     /**
+     * @param array<string, mixed> $payload
+     *
+     * @return array<string, mixed>
+     */
+    public static function applyApiActionFromApi(string $webBase, string $action, array $payload): array
+    {
+        self::bootstrapSession();
+        if (is_file(Paths::lockFile())) {
+            return [
+                'ok' => false,
+                'error' => 'This instance is already installed.',
+                'redirect' => WebBase::url($webBase, '/admin/updates'),
+                'state' => self::apiState($webBase, true),
+            ];
+        }
+
+        return self::applyApiAction($webBase, $action, $payload);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private static function apiState(string $webBase, bool $installed = false): array
