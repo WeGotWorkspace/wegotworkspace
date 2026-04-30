@@ -9,6 +9,8 @@ use App\Admin\AdminPolicy;
 use App\Admin\GroupManager;
 use App\Admin\UserProvisioner;
 use App\Drive\DriveAcl;
+use App\Drive\DriveKernel;
+use App\Installer\InstallerKernel;
 use App\Installer\WebBase;
 use App\Mail\MailApi;
 use App\Mail\MailCredentialStore;
@@ -17,6 +19,7 @@ use App\Settings\SettingsDefaults;
 use App\Settings\SettingsKeys;
 use App\Settings\SettingsRepository;
 use App\Update\UpdateManager;
+use App\Update\UpdateStateStore;
 use App\Voice\VoiceSignaling;
 
 final class ApiDomainHandlers
@@ -31,6 +34,15 @@ final class ApiDomainHandlers
                 'installed' => is_file(Paths::lockFile()),
                 'maintenance' => UpdateManager::inMaintenanceMode(),
             ]);
+
+            return true;
+        }
+
+        if ($method === 'POST' && $rel === 'installer/action') {
+            $body = ApiRequest::jsonBody();
+            $action = isset($body['action']) && is_string($body['action']) ? $body['action'] : '';
+            $payload = is_array($body['payload'] ?? null) ? $body['payload'] : [];
+            ApiResponse::json(200, InstallerKernel::applyApiActionFromApi($webBase, $action, $payload));
 
             return true;
         }
@@ -210,6 +222,66 @@ final class ApiDomainHandlers
             return true;
         }
 
+        if ($method === 'GET' && $rel === 'admin/updates/log') {
+            $admin = self::requireRole($principal, 'admin');
+            if ($admin === null) {
+                return true;
+            }
+            ApiResponse::json(200, ['lines' => UpdateStateStore::readLog()]);
+
+            return true;
+        }
+
+        if ($method === 'DELETE' && $rel === 'admin/updates/log') {
+            $admin = self::requireRole($principal, 'admin');
+            if ($admin === null) {
+                return true;
+            }
+            UpdateStateStore::clearLog();
+            ApiResponse::json(200, ['ok' => true, 'lines' => []]);
+
+            return true;
+        }
+
+        if (preg_match('#^admin/updates/backups/([A-Za-z0-9._-]+)$#', $rel, $m)) {
+            $admin = self::requireRole($principal, 'admin');
+            if ($admin === null) {
+                return true;
+            }
+            $backupName = self::ensureBackupName((string) ($m[1] ?? ''));
+            if ($method === 'GET') {
+                self::downloadBackup($backupName);
+
+                return true;
+            }
+            if ($method === 'DELETE') {
+                ApiResponse::json(200, UpdateManager::deleteBackup($pdo, ['name' => $backupName]));
+
+                return true;
+            }
+        }
+
+        if (preg_match('#^admin/groups/([a-z0-9_-]{2,63})/members/([a-z0-9_-]{2,63})$#', $rel, $m)) {
+            $admin = self::requireRole($principal, 'admin');
+            if ($admin === null) {
+                return true;
+            }
+            $groupUri = AdminConstants::GROUP_PREFIX.(string) ($m[1] ?? '');
+            $username = (string) ($m[2] ?? '');
+            if ($method === 'PUT') {
+                self::setMembership($pdo, $groupUri, $username, true, $admin['username']);
+                ApiResponse::json(200, ['ok' => true]);
+
+                return true;
+            }
+            if ($method === 'DELETE') {
+                self::setMembership($pdo, $groupUri, $username, false, $admin['username']);
+                ApiResponse::json(200, ['ok' => true]);
+
+                return true;
+            }
+        }
+
         if ($method === 'GET' && $rel === 'settings/state') {
             $user = self::requireRole($principal, 'user');
             if ($user === null) {
@@ -287,6 +359,19 @@ final class ApiDomainHandlers
             return true;
         }
 
+        if (
+            str_starts_with($rel, 'mail/')
+            && preg_match('#^(status|config|folders|messages|messages/attachments|message|message/attachment|move|send|draft)$#', substr($rel, 5)) === 1
+        ) {
+            $user = self::requireRole($principal, 'user');
+            if ($user === null) {
+                return true;
+            }
+            self::delegateMail($webBase, $pdo, $user['username'], substr($rel, 5));
+
+            return true;
+        }
+
         if ($method === 'GET' && $rel === 'drive/user') {
             $user = self::requireRole($principal, 'user');
             if ($user === null) {
@@ -303,6 +388,19 @@ final class ApiDomainHandlers
                     'roots' => DriveAcl::listRootDirectories($user['username'], DriveAcl::allowedGroupSlugs($pdo, $user['username'])),
                 ],
             ]);
+
+            return true;
+        }
+
+        if (
+            str_starts_with($rel, 'drive/')
+            && preg_match('#^(getdir|searchfiles|changedir|createnew|renameitem|deleteitems|download|upload)$#', substr($rel, 6)) === 1
+        ) {
+            $user = self::requireRole($principal, 'user');
+            if ($user === null) {
+                return true;
+            }
+            DriveKernel::respondApiFromToken($webBase, $pdo, $user['username'], '/'.substr($rel, 6));
 
             return true;
         }
@@ -474,5 +572,55 @@ final class ApiDomainHandlers
     {
         $path = rtrim(WebBase::url($webBase, '/mail/api'), '/').'/'.$tail;
         MailApi::respond($webBase, $path, $username, $pdo);
+    }
+
+    private static function ensureBackupName(string $name): string
+    {
+        $trimmed = trim($name);
+        if ($trimmed === '' || preg_match('/^[A-Za-z0-9._-]+$/', $trimmed) !== 1) {
+            throw new \InvalidArgumentException('Invalid backup file name.');
+        }
+
+        return $trimmed;
+    }
+
+    private static function downloadBackup(string $name): void
+    {
+        $base = realpath(UpdateStateStore::backupDir());
+        $path = UpdateStateStore::backupDir().'/'.$name;
+        $real = (is_file($path) || is_dir($path)) ? realpath($path) : false;
+        if ($base === false || $real === false || !str_starts_with($real, $base)) {
+            throw new \InvalidArgumentException('Backup not found.');
+        }
+        if (is_dir($real)) {
+            throw new \InvalidArgumentException('Legacy backup folders are not directly downloadable. Use ZIP backups.');
+        }
+        if (!is_readable($real)) {
+            throw new \RuntimeException('Backup file is not readable.');
+        }
+        header('Content-Type: application/zip');
+        header('Content-Length: '.(string) filesize($real));
+        header('Content-Disposition: attachment; filename="'.basename($real).'"');
+        readfile($real);
+    }
+
+    private static function setMembership(\PDO $pdo, string $groupUri, string $username, bool $enabled, string $actingAdmin): void
+    {
+        if ($groupUri === AdminConstants::ADMIN_GROUP_URI && $username === $actingAdmin && !$enabled) {
+            throw new \InvalidArgumentException('You cannot remove your own administrator access.');
+        }
+        $principal = 'principals/'.$username;
+        $members = GroupManager::getMembers($pdo, $groupUri);
+        $isMember = in_array($principal, $members, true);
+        if ($enabled && !$isMember) {
+            $members[] = $principal;
+            GroupManager::setMembers($pdo, $groupUri, $members);
+
+            return;
+        }
+        if (!$enabled && $isMember) {
+            $members = array_values(array_filter($members, static fn (string $m): bool => $m !== $principal));
+            GroupManager::setMembers($pdo, $groupUri, $members);
+        }
     }
 }
