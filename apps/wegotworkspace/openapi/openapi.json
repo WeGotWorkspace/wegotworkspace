@@ -37,6 +37,7 @@
         "type": "object",
         "required": [
           "access_token",
+          "refresh_token",
           "token_type",
           "expires_in",
           "role",
@@ -44,6 +45,9 @@
         ],
         "properties": {
           "access_token": {
+            "type": "string"
+          },
+          "refresh_token": {
             "type": "string"
           },
           "token_type": {
@@ -169,8 +173,91 @@
           "400": {
             "description": "Invalid request"
           },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "429": {
+            "description": "Too many login attempts"
+          },
           "503": {
             "description": "JWT not configured"
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Refresh access token using refresh token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "refresh_token"
+                ],
+                "properties": {
+                  "refresh_token": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Refreshed token pair",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/auth/revoke": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Revoke current access token and/or refresh token",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "refresh_token": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Revocation result"
           }
         }
       }
