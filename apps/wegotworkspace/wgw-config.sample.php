@@ -25,6 +25,9 @@ defined('WGW_API_JWT_AUDIENCE') || define('WGW_API_JWT_AUDIENCE', 'wegotworkspac
 defined('WGW_API_JWT_KID') || define('WGW_API_JWT_KID', 'wgw-rs256-v1');
 defined('WGW_API_JWT_PRIVATE_KEY_PATH') || define('WGW_API_JWT_PRIVATE_KEY_PATH', './wgw-content/keys/api-jwt-private.pem');
 defined('WGW_API_JWT_PUBLIC_KEY_PATH') || define('WGW_API_JWT_PUBLIC_KEY_PATH', './wgw-content/keys/api-jwt-public.pem');
+// Optional rotation key for verification during key rollover.
+// defined('WGW_API_JWT_PREVIOUS_KID', 'wgw-rs256-v0');
+// defined('WGW_API_JWT_PREVIOUS_PUBLIC_KEY_PATH', './wgw-content/keys/api-jwt-public-old.pem');
 
 // SQLite (recommended): optional path relative to runtime root or absolute path.
 // If omitted, runtime uses WGW_DATA_DIR + '/db.sqlite'.
