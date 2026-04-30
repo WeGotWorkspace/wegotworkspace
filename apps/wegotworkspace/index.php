@@ -121,11 +121,6 @@ if ($isOfficeRequest) {
     $scriptSrc .= " 'unsafe-eval' blob:";
     $connectSrc .= " blob:";
 }
-if ($isApiDocsRequest) {
-    // Swagger UI assets are loaded from CDN for docs rendering.
-    $scriptSrc .= " https://unpkg.com";
-    $styleSrc .= " https://unpkg.com";
-}
 header(
     "Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; "
     ."frame-ancestors 'self'; script-src ".$scriptSrc."; style-src ".$styleSrc."; font-src ".$fontSrc."; "
