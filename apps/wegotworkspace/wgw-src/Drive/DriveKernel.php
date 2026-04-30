@@ -69,7 +69,13 @@ final class DriveKernel
         return true;
     }
 
-    private static function respondApi(string $webBase, \PDO $pdo, string $username): void
+    public static function respondApiFromToken(string $webBase, \PDO $pdo, string $username, string $route): void
+    {
+        $_GET['r'] = $route;
+        self::respondApi($webBase, $pdo, $username, false);
+    }
+
+    private static function respondApi(string $webBase, \PDO $pdo, string $username, bool $enforceCsrf = true): void
     {
         self::startSession($webBase);
         $csrf = self::csrfToken();
@@ -121,7 +127,9 @@ final class DriveKernel
                 return;
             }
 
-            self::requireCsrf($csrf);
+            if ($enforceCsrf) {
+                self::requireCsrf($csrf);
+            }
             if ($route === '/getdir') {
                 $body = self::readJsonBody();
                 $dir = DriveAcl::normalizeVirtualPath((string) ($body['dir'] ?? '/'));
