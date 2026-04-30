@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PREFIX="packages/openoffice-web"
-REPO_URL="${1:-https://github.com/woutervroege/openoffice-web.git}"
+PREFIX="packages/onlyoffice-web"
+REPO_URL="${1:-https://github.com/woutervroege/onlyoffice-web.git}"
 BRANCH="${2:-main}"
 MODE="${3:---squash}"
 
@@ -46,4 +46,4 @@ else
 fi
 
 echo "Done. Rebuild to refresh runtime artifacts:"
-echo "  pnpm --filter @wgw/openoffice-web build"
+echo "  pnpm --filter @wgw/onlyoffice-web build"

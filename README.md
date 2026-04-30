@@ -36,26 +36,26 @@ pnpm dev
 
 Open `http://127.0.0.1:8080/install/`.
 
-## Updating OpenOffice Web
+## Updating ONLYOFFICE Web
 
-`packages/openoffice-web` is tracked as a git-subtree style vendored dependency.
+`packages/onlyoffice-web` is tracked as a git-subtree style vendored dependency.
 
 Update it from the upstream repo with:
 
 ```bash
-pnpm run update:openoffice-web
+pnpm run update:onlyoffice-web
 ```
 
 Optional args:
 
 ```bash
-bash tools/update-openoffice-web-subtree.sh <repo-url> <branch> [--squash|--no-squash]
+bash tools/update-onlyoffice-web-subtree.sh <repo-url> <branch> [--squash|--no-squash]
 ```
 
 After updating, rebuild the package so runtime assets are synced into `apps/wegotworkspace/wgw-modules/office/build/`:
 
 ```bash
-pnpm --filter @wgw/openoffice-web build
+pnpm --filter @wgw/onlyoffice-web build
 ```
 
 ## Release artifacts
