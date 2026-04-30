@@ -12,7 +12,7 @@ use App\SabreUiAuthGate;
 use App\Settings\SettingsKeys;
 
 /**
- * Browser sign-in for Drive, Mail, Voice, Office HTML, and the home launcher: form POST + {@see SabreUiAuthGate}
+ * Browser sign-in for Drive, Mail, Voice, Notes, and the home launcher: form POST + {@see SabreUiAuthGate}
  * session cookie. SabreDAV / CalDAV / CardDAV keep using HTTP Basic (and the UI cookie where the backend allows it).
  */
 final class UiLoginKernel

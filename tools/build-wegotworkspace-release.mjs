@@ -30,7 +30,7 @@ const releaseEntries = [
   "wgw-src",
   "wgw-modules/admin/dist",
   "wgw-modules/drive/dist",
-  "wgw-modules/docs/build",
+  "wgw-modules/office/build",
   "wgw-modules/install/dist",
   "wgw-modules/mail/dist",
   "wgw-modules/notes/dist",

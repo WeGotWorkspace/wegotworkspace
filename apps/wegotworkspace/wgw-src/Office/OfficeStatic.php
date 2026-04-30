@@ -86,7 +86,7 @@ final class OfficeStatic
             default => 'application/octet-stream',
         };
         header('Content-Type: '.$mime);
-        // Next static export may ship x2t.wasm as Brotli-compressed bytes (see tools/office-website next.config
+        // Next static export may ship x2t.wasm as Brotli-compressed bytes (see packages/openoffice-web/next.config
         // headers for /x2t/x2t.wasm). Browsers only decompress when Content-Encoding: br is set; otherwise
         // WebAssembly.instantiate sees wrong magic (expects \0asm).
         if ($ext === 'wasm' && self::wasmOnDiskIsBrotliCompressed($realFile)) {
@@ -166,7 +166,7 @@ final class OfficeStatic
 
     /**
      * True when {@code .wasm} on disk is not raw WebAssembly (first four bytes must be {@code \\0asm}).
-     * The ZIZIYI / Next export stores Brotli-compressed wasm under the {@code .wasm} name.
+     * The OpenOffice Web export stores Brotli-compressed wasm under the {@code .wasm} name.
      */
     private static function wasmOnDiskIsBrotliCompressed(string $path): bool
     {

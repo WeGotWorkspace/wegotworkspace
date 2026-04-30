@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Office;
+namespace App\Auth;
 
 use App\Admin\AuthService;
 use Sabre\HTTP\Auth\Basic;
@@ -10,9 +10,9 @@ use Sabre\HTTP\Response;
 use Sabre\HTTP\Sapi;
 
 /**
- * HTTP Basic for the web office HTML shell: same realm and user store as SabreDAV, any valid account (not admin-only).
+ * Shared HTTP Basic auth helper for DAV-backed browser and API endpoints.
  */
-final class OfficeDavAuth
+final class DavBasicAuth
 {
     /**
      * If the request carries {@code Authorization: Basic}, validates it and returns the username, or sends 401 and
