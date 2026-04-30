@@ -7,7 +7,7 @@ It includes:
 - CalDAV calendars
 - CardDAV contacts
 - A web installer (`/install/`)
-- Optional web apps (`/admin/`, `/drive/`, `/voice/`, `/mail/`, `/office/`)
+- Optional web apps (`/admin/`, `/drive/`, `/voice/`, `/mail/`, `/notes/`, `/office/`, `/settings/`)
 
 ## Install (production)
 
@@ -35,6 +35,28 @@ pnpm dev
 `pnpm dev` runs the required build dependencies automatically. Use `pnpm build` when you want a standalone production build (for CI/release verification).
 
 Open `http://127.0.0.1:8080/install/`.
+
+## Updating OpenOffice Web
+
+`packages/openoffice-web` is tracked as a git-subtree style vendored dependency.
+
+Update it from the upstream repo with:
+
+```bash
+pnpm run update:openoffice-web
+```
+
+Optional args:
+
+```bash
+bash tools/update-openoffice-web-subtree.sh <repo-url> <branch> [--squash|--no-squash]
+```
+
+After updating, rebuild the package so runtime assets are synced into `apps/wegotworkspace/wgw-modules/office/build/`:
+
+```bash
+pnpm --filter @wgw/openoffice-web build
+```
 
 ## Release artifacts
 

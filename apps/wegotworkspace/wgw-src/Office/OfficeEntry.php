@@ -11,8 +11,8 @@ use App\SabreUiAuthGate;
 use App\Settings\SettingsKeys;
 
 /**
- * Serves ZIZIYI Office (https://github.com/baotlake/office-website) at {@code /office/} when WebDAV files are enabled.
- * Injects {@code window.__SABRE_OFFICE_CONFIG__} into HTML shells (AGPL-3.0 upstream).
+ * Serves OpenOffice Web (https://github.com/woutervroege/openoffice-web) at {@code /office/} when WebDAV files are enabled.
+ * Injects {@code window.__SABRE_OFFICE_CONFIG__} into HTML shells for local integration metadata.
  */
 final class OfficeEntry
 {
@@ -47,7 +47,12 @@ final class OfficeEntry
             return $root.'/index.html';
         }
         if ($path === $editor || $path === $editor.'/' || $path === $editor.'.html') {
-            return $root.'/editor.html';
+            $flat = $root.'/editor.html';
+            if (is_readable($flat)) {
+                return $flat;
+            }
+
+            return $root.'/editor/index.html';
         }
 
         return null;
@@ -93,7 +98,7 @@ final class OfficeEntry
             header('Content-Type: text/html; charset=utf-8');
             echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Office unavailable</title></head><body>';
             echo '<h1>Office UI is not built</h1>';
-            echo '<p>Run <code>pnpm --filter @wgw/docs build</code> or <code>bash packages/docs/scripts/sync-and-build.sh</code> (output: <code>apps/wegotworkspace/wgw-modules/docs/build/</code>), then reload.</p>';
+            echo '<p>Run <code>pnpm --filter @wgw/openoffice-web build</code> (output: <code>apps/wegotworkspace/wgw-modules/office/build/</code>), then reload.</p>';
             echo '</body></html>';
 
             return true;

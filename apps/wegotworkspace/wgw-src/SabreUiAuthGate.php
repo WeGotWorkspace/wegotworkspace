@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace App;
 
 use App\Installer\WebBase;
-use App\Office\OfficeDavAuth;
 use App\Paths;
+use App\Auth\DavBasicAuth;
 
 /**
- * After a successful browser sign-in ({@code /login/} form) or HTTP Basic for Drive / Office HTML shells, issues a
+ * After a successful browser sign-in ({@code /login/} form) or HTTP Basic for browser HTML shells, issues a
  * signed HttpOnly cookie scoped to the web install root ({@code /} or {@code /app}) so the browser is not forced to
  * resend Basic on every reload or XHR (many UAs handle Basic poorly for {@code fetch()}). Same realm/user store as
- * {@see \App\Office\OfficeDavAuth}. Top-level HTML navigations without a session are redirected to {@code /login/}
+ * {@see \App\Auth\DavBasicAuth}. Top-level HTML navigations without a session are redirected to {@code /login/}
  * instead of triggering the browser’s native Basic dialog; APIs and DAV clients still use Basic as needed.
  */
 final class SabreUiAuthGate
@@ -27,7 +27,7 @@ final class SabreUiAuthGate
     private const TTL_SEC = 2592000; // 30 days
 
     /**
-     * Cookie {@code Path} covering {@code /drive}, {@code /office}, etc. under this install.
+     * Cookie {@code Path} covering browser apps under this install.
      */
     public static function cookiePathForWebBase(string $webBase): string
     {
@@ -47,7 +47,7 @@ final class SabreUiAuthGate
             return $u;
         }
 
-        $u = OfficeDavAuth::consumeBasicIfPresent($pdo, $realm);
+        $u = DavBasicAuth::consumeBasicIfPresent($pdo, $realm);
         if ($u !== null) {
             self::issueCookie($u, $realm, self::cookiePathForWebBase($webBase));
 
@@ -59,7 +59,7 @@ final class SabreUiAuthGate
             self::redirectToLoginForm($webBase, $path);
         }
 
-        $u = OfficeDavAuth::requireDavUser($pdo, $realm);
+        $u = DavBasicAuth::requireDavUser($pdo, $realm);
         self::issueCookie($u, $realm, self::cookiePathForWebBase($webBase));
 
         return $u;
