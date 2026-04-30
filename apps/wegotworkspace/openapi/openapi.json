@@ -939,6 +939,256 @@
         }
       }
     },
+    "/notes/state": {
+      "get": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Notes runtime boot state for authenticated user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notes state"
+          }
+        }
+      }
+    },
+    "/notes/items": {
+      "get": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "List notes with optional archive/notebook/search filters",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notes list"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Create a new note",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created note"
+          }
+        }
+      }
+    },
+    "/notes/items/{id}": {
+      "put": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Save/update a note",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated note"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Delete a note",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted note"
+          }
+        }
+      }
+    },
+    "/notes/items/{id}/archive": {
+      "post": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Archive a note",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Archived note"
+          }
+        }
+      }
+    },
+    "/notes/items/{id}/restore": {
+      "post": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Restore an archived note",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Restored note"
+          }
+        }
+      }
+    },
+    "/notes/notebooks": {
+      "get": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "List notebooks with active/archive counts",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notebook list"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Create notebook",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Notebook created"
+          }
+        }
+      }
+    },
+    "/notes/notebooks/{name}": {
+      "patch": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Rename notebook",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notebook renamed"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Delete notebook (archive, move, or purge)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notebook deleted"
+          }
+        }
+      }
+    },
     "/office/capabilities": {
       "get": {
         "tags": [
