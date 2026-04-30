@@ -97,6 +97,27 @@ final class ReleaseFeedClient
 
     private static function fetchJsonText(string $url): ?string
     {
+        if (function_exists('curl_init')) {
+            $ch = curl_init($url);
+            if ($ch !== false) {
+                curl_setopt_array($ch, [
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_FOLLOWLOCATION => true,
+                    CURLOPT_CONNECTTIMEOUT => 10,
+                    CURLOPT_TIMEOUT => 20,
+                    CURLOPT_HTTPHEADER => [
+                        'Accept: application/json',
+                        'User-Agent: WeGotWorkspace-Updater/1.0',
+                    ],
+                ]);
+                $raw = curl_exec($ch);
+                $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+                if (is_string($raw) && $raw !== '' && $status >= 200 && $status < 400) {
+                    return $raw;
+                }
+            }
+        }
+
         $ctx = stream_context_create([
             'http' => [
                 'method' => 'GET',
