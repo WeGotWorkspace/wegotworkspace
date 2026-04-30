@@ -17,7 +17,17 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { CircleCheck, Loader2, TriangleAlert } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { toast } from "sonner";
+import {
+  CheckCircle2,
+  CircleCheck,
+  Download,
+  Loader2,
+  Trash2,
+  TriangleAlert,
+  XCircle,
+} from "lucide-react";
 
 export const Route = createFileRoute("/updates")({ component: UpdatesPage });
 
@@ -27,6 +37,7 @@ function UpdatesPage() {
   const [checking, setChecking] = useState(false);
   const [applying, setApplying] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [updatesLoaded, setUpdatesLoaded] = useState(false);
   const [clearingLog, setClearingLog] = useState(false);
   const [deletingBackup, setDeletingBackup] = useState<string | null>(null);
   const [displayPhase, setDisplayPhase] = useState<string | null>(null);
@@ -38,8 +49,21 @@ function UpdatesPage() {
   } | null>(null);
 
   useEffect(() => {
-    void store.reloadUpdateState();
-    void store.readUpdateLog().then((lines) => setLogLines([...lines].reverse()));
+    let cancelled = false;
+    const load = async () => {
+      await store.reloadUpdateState();
+      const lines = await store.readUpdateLog();
+      if (cancelled) {
+        return;
+      }
+      setLogLines([...lines].reverse());
+      setUpdatesLoaded(true);
+    };
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -132,6 +156,16 @@ function UpdatesPage() {
     const precision = value >= 100 || idx === 0 ? 0 : 1;
     return `${value.toFixed(precision)} ${units[idx]}`;
   };
+  const formatDateTime = (value: string | null | undefined) => {
+    if (!value) {
+      return null;
+    }
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      return value;
+    }
+    return parsed.toLocaleString();
+  };
 
   return (
     <AdminShell>
@@ -149,12 +183,14 @@ function UpdatesPage() {
                 try {
                   await store.checkUpdates();
                   setInlineResult(null);
+                  toast.success("Update check completed");
                 } catch (error) {
                   setInlineResult({
                     kind: "error",
                     title: "Could not check updates",
                     message: (error as Error).message || "Unknown error while checking updates.",
                   });
+                  toast.error((error as Error).message || "Could not check for updates");
                 } finally {
                   setChecking(false);
                 }
@@ -165,7 +201,7 @@ function UpdatesPage() {
           }
         />
         <div className="mb-3 text-xs text-muted-foreground">
-          Last checked: {updates.lastCheckedAt ?? "Never"}
+          Last checked: {formatDateTime(updates.lastCheckedAt) ?? "Never"}
         </div>
 
         <Section
@@ -308,147 +344,224 @@ function UpdatesPage() {
           title="Release status"
           description="Installed version and latest available release."
         >
-          <div className="grid gap-3 text-sm">
-            <div className="flex items-center justify-between border rounded-md px-3 py-2">
-              <span>Installed version</span>
-              <Badge variant="secondary">{updates.installedVersion}</Badge>
-            </div>
-            <div className="flex items-center justify-between border rounded-md px-3 py-2">
-              <span>Latest version</span>
-              <Badge variant={updates.updateAvailable ? "default" : "secondary"}>
-                {latestVersion}
-              </Badge>
-            </div>
-            <div className="flex items-center justify-between border rounded-md px-3 py-2">
-              <span>Schema version</span>
-              <Badge variant="secondary">{updates.schemaVersion}</Badge>
-            </div>
-            <div className="flex items-center justify-between border rounded-md px-3 py-2">
-              <span>Compatibility</span>
-              <Badge variant={updates.compatible ? "secondary" : "destructive"}>
-                {updates.compatible ? "Ready" : "Action required"}
-              </Badge>
-            </div>
-            {updates.lastCheckError && (
-              <div className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs text-destructive">
-                Last check error: {updates.lastCheckError}
-              </div>
-            )}
-            {updates.latest?.notes_url && (
-              <a
-                href={String(updates.latest.notes_url)}
-                target="_blank"
-                rel="noreferrer"
-                className="text-xs text-primary hover:underline"
-              >
-                Read release notes
-              </a>
-            )}
+          <div className="border border-border rounded-md overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                <tr>
+                  <th className="text-left font-medium px-4 py-2.5">Property</th>
+                  <th className="text-left font-medium px-4 py-2.5">Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-t border-border">
+                  <td className="px-4 py-3">Installed version</td>
+                  <td className="px-4 py-3">
+                    <Badge variant="secondary">{updates.installedVersion}</Badge>
+                  </td>
+                </tr>
+                <tr className="border-t border-border">
+                  <td className="px-4 py-3">Latest version</td>
+                  <td className="px-4 py-3">
+                    <Badge variant={updates.updateAvailable ? "default" : "secondary"}>
+                      {latestVersion}
+                    </Badge>
+                  </td>
+                </tr>
+                <tr className="border-t border-border">
+                  <td className="px-4 py-3">Schema version</td>
+                  <td className="px-4 py-3">
+                    <Badge variant="secondary">{updates.schemaVersion}</Badge>
+                  </td>
+                </tr>
+                <tr className="border-t border-border">
+                  <td className="px-4 py-3">Compatibility</td>
+                  <td className="px-4 py-3">
+                    <Badge variant={updates.compatible ? "secondary" : "destructive"}>
+                      {updates.compatible ? "Ready" : "Action required"}
+                    </Badge>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
+          {updates.lastCheckError && (
+            <div className="mt-3 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+              Last check error: {updates.lastCheckError}
+            </div>
+          )}
+          {updates.latest?.notes_url && (
+            <a
+              href={String(updates.latest.notes_url)}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 inline-block text-xs text-primary hover:underline"
+            >
+              Read release notes
+            </a>
+          )}
         </Section>
 
         <Section title="Backups" description="Archived update backups stored as ZIP files.">
-          <div className="space-y-2">
-            {backups.length === 0 ? (
-              <div className="rounded-md border px-3 py-2 text-xs text-muted-foreground">
-                No backups available yet.
-              </div>
-            ) : (
-              backups.map((backup) => (
-                <div
-                  key={backup.name}
-                  className="flex items-start justify-between gap-4 rounded-md border px-3 py-2"
-                >
-                  <div className="min-w-0">
-                    <div className="text-sm font-medium break-all">{backup.name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {formatBytes(backup.sizeBytes)}
-                      {backup.modifiedAt
-                        ? ` · ${new Date(backup.modifiedAt).toLocaleString()}`
-                        : ""}
-                      {backup.fromVersion && backup.toVersion
-                        ? ` · ${backup.fromVersion} -> ${backup.toVersion}`
-                        : ""}
-                      {backup.downloadable === false ? " · Legacy folder" : ""}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {backup.downloadable === false ? (
-                      <Button variant="outline" size="sm" disabled>
-                        Download
-                      </Button>
-                    ) : (
-                      <Button asChild variant="outline" size="sm">
-                        <a
-                          href={`/admin/api/updates/backups/download?name=${encodeURIComponent(
-                            backup.name,
-                          )}`}
-                        >
-                          Download
-                        </a>
-                      </Button>
-                    )}
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={deletingBackup === backup.name}
-                        >
-                          Delete
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete backup file?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will permanently remove {backup.name}.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            onClick={async () => {
-                              setDeletingBackup(backup.name);
-                              try {
-                                await store.deleteBackup(backup.name);
-                              } finally {
-                                setDeletingBackup(null);
-                              }
-                            }}
-                          >
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+          {!updatesLoaded ? (
+            <div className="rounded-md border px-3 py-4 text-xs text-muted-foreground flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Loading backups...
+            </div>
+          ) : backups.length === 0 ? (
+            <div className="rounded-md border px-3 py-2 text-xs text-muted-foreground">
+              No backups available yet.
+            </div>
+          ) : (
+            <div className="border border-border rounded-md overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                  <tr>
+                    <th className="text-left font-medium px-4 py-2.5">Filename</th>
+                    <th className="text-left font-medium px-4 py-2.5">Created</th>
+                    <th className="text-left font-medium px-4 py-2.5">Version</th>
+                    <th className="text-right font-medium px-4 py-2.5">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {backups.map((backup) => (
+                    <tr key={backup.name} className="border-t border-border">
+                      <td className="px-4 py-3">
+                        <div className="font-medium break-all">{backup.name}</div>
+                        <div className="text-xs text-muted-foreground">{formatBytes(backup.sizeBytes)}</div>
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {backup.modifiedAt
+                          ? new Date(backup.modifiedAt).toLocaleString()
+                          : "Unknown"}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {backup.fromVersion && backup.toVersion
+                          ? `${backup.fromVersion} -> ${backup.toVersion}`
+                          : backup.downloadable === false
+                            ? "Legacy folder"
+                            : "Unknown"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <TooltipProvider delayDuration={150}>
+                          <div className="flex items-center justify-end gap-2">
+                            {backup.downloadable === false ? (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button variant="outline" size="icon" disabled>
+                                    <Download className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Download unavailable for legacy folders</TooltipContent>
+                              </Tooltip>
+                            ) : (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button asChild variant="outline" size="icon">
+                                    <a
+                                      href={`/admin/api/updates/backups/download?name=${encodeURIComponent(
+                                        backup.name,
+                                      )}`}
+                                      onClick={() => {
+                                        toast.success(`Download started for ${backup.name}`);
+                                      }}
+                                    >
+                                      <Download className="h-4 w-4" />
+                                    </a>
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Download backup</TooltipContent>
+                              </Tooltip>
+                            )}
+                          <AlertDialog>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    disabled={deletingBackup === backup.name}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                              </TooltipTrigger>
+                              <TooltipContent>Delete backup</TooltipContent>
+                            </Tooltip>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete backup file?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will permanently remove {backup.name}.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  onClick={async () => {
+                                    setDeletingBackup(backup.name);
+                                    try {
+                                      await store.deleteBackup(backup.name);
+                                      toast.success(`Deleted backup ${backup.name}`);
+                                    } catch (error) {
+                                      toast.error(
+                                        (error as Error).message || `Could not delete ${backup.name}`,
+                                      );
+                                    } finally {
+                                      setDeletingBackup(null);
+                                    }
+                                  }}
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                          </div>
+                        </TooltipProvider>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </Section>
 
         <Section
           title="Server checks"
           description="Environment checks that must pass before update."
         >
-          <div className="space-y-2">
-            {updates.checks.map((check) => (
-              <div
-                key={check.label}
-                className="flex items-start justify-between gap-4 border rounded-md px-3 py-2"
-              >
-                <div>
-                  <div className="text-sm font-medium">{check.label}</div>
-                  <div className="text-xs text-muted-foreground">{check.detail}</div>
-                </div>
-                <Badge variant={check.ok ? "secondary" : "destructive"}>
-                  {check.ok ? "OK" : "Fail"}
-                </Badge>
-              </div>
-            ))}
+          <div className="border border-border rounded-md overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                <tr>
+                  <th className="text-left font-medium px-4 py-2.5">Check</th>
+                  <th className="text-left font-medium px-4 py-2.5">Detail</th>
+                  <th className="text-right font-medium px-4 py-2.5">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {updates.checks.map((check) => (
+                  <tr key={check.label} className="border-t border-border">
+                    <td className="px-4 py-3 font-medium">{check.label}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{check.detail}</td>
+                    <td className="px-4 py-3 text-right">
+                      <span
+                        className={`inline-flex items-center justify-end gap-1 text-xs font-medium ${check.ok ? "text-emerald-700" : "text-destructive"}`}
+                      >
+                        {check.ok ? (
+                          <CheckCircle2 className="h-4 w-4" />
+                        ) : (
+                          <XCircle className="h-4 w-4" />
+                        )}
+                        {check.ok ? "OK" : "Fail"}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </Section>
 
@@ -461,8 +574,13 @@ function UpdatesPage() {
                 variant="outline"
                 size="sm"
                 onClick={async () => {
-                  const lines = await store.readUpdateLog();
-                  setLogLines([...lines].reverse());
+                  try {
+                    const lines = await store.readUpdateLog();
+                    setLogLines([...lines].reverse());
+                    toast.success("Update log refreshed");
+                  } catch (error) {
+                    toast.error((error as Error).message || "Could not refresh update log");
+                  }
                 }}
               >
                 Refresh log
@@ -493,6 +611,9 @@ function UpdatesPage() {
                         try {
                           const lines = await store.clearUpdateLog();
                           setLogLines([...lines].reverse());
+                          toast.success("Update log cleared");
+                        } catch (error) {
+                          toast.error((error as Error).message || "Could not clear update log");
                         } finally {
                           setClearingLog(false);
                         }
