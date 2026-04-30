@@ -85,6 +85,23 @@ function UpdatesPage() {
       : visiblePhase === "extracting" || visiblePhase === "backing_up"
         ? (updates.phaseProgress?.percent ?? null)
         : null;
+  const displayedResult =
+    inlineResult ??
+    (updates.lastResult && !(updates.inProgress || applying)
+      ? {
+          kind: updates.lastResult.ok ? ("success" as const) : ("error" as const),
+          title: "Last update",
+          message: updates.lastResult.ok
+            ? `Successfully updated to ${updates.lastResult.version}.`
+            : updates.lastResult.message || "The last update attempt failed.",
+          finishedAt: updates.lastResult.finishedAt,
+          historical: true as const,
+        }
+      : null);
+  const resultTimestamp =
+    displayedResult && "finishedAt" in displayedResult && displayedResult.finishedAt
+      ? new Date(displayedResult.finishedAt).toLocaleString()
+      : null;
 
   const formatBytes = (bytes: number) => {
     if (!Number.isFinite(bytes) || bytes <= 0) {
@@ -242,29 +259,32 @@ function UpdatesPage() {
                 </div>
               </div>
             )}
-            {inlineResult && (
+            {displayedResult && (
               <Alert
-                variant={inlineResult.kind === "error" ? "destructive" : "default"}
+                variant={displayedResult.kind === "error" ? "destructive" : "default"}
                 className={
-                  inlineResult.kind === "success" ? "border-emerald-300 bg-emerald-50" : ""
+                  displayedResult.kind === "success" ? "border-emerald-300 bg-emerald-50" : ""
                 }
               >
-                {inlineResult.kind === "success" ? (
+                {displayedResult.kind === "success" ? (
                   <CircleCheck className="h-4 w-4 text-emerald-700" />
                 ) : (
                   <TriangleAlert className="h-4 w-4" />
                 )}
-                <AlertTitle>{inlineResult.title}</AlertTitle>
-                <AlertDescription>{inlineResult.message}</AlertDescription>
+                <AlertTitle>{displayedResult.title}</AlertTitle>
+                <AlertDescription>
+                  {displayedResult.message}
+                  {resultTimestamp ? (
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      {"historical" in displayedResult
+                        ? displayedResult.kind === "success"
+                          ? `Completed: ${resultTimestamp}`
+                          : `Failed at: ${resultTimestamp}`
+                        : `Applied at: ${resultTimestamp}`}
+                    </div>
+                  ) : null}
+                </AlertDescription>
               </Alert>
-            )}
-            {updates.lastResult && !(updates.inProgress || applying) && (
-              <div className="rounded-md border px-3 py-2 text-xs">
-                <div>
-                  Last run: <strong>{updates.lastResult.ok ? "Success" : "Failed"}</strong>
-                </div>
-                <div className="text-muted-foreground">{updates.lastResult.message}</div>
-              </div>
             )}
           </div>
         </Section>
