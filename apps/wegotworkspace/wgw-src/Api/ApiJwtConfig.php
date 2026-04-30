@@ -241,6 +241,9 @@ final class ApiJwtConfig
             $path = trim((string) constant($constPath));
         }
         if ($path === '') {
+            if ($defaultRelativePath === '') {
+                return null;
+            }
             $path = $defaultRelativePath;
         }
 

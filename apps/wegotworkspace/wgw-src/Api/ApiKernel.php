@@ -131,12 +131,13 @@ final class ApiKernel
         }
         if ($method === 'POST' && $rel === 'auth/refresh') {
             try {
+                [$pdo] = self::dbAndRealm();
                 $body = ApiRequest::jsonBody();
                 $refreshToken = (string) ($body['refresh_token'] ?? '');
                 if ($refreshToken === '') {
                     throw new \InvalidArgumentException('refresh_token is required.');
                 }
-                ApiResponse::json(200, ApiAuth::refresh($refreshToken));
+                ApiResponse::json(200, ApiAuth::refresh($pdo, $refreshToken));
             } catch (\InvalidArgumentException $e) {
                 ApiResponse::error(400, $e->getMessage(), 'bad_request');
             } catch (\UnexpectedValueException $e) {
@@ -151,16 +152,17 @@ final class ApiKernel
         }
         if ($method === 'POST' && $rel === 'auth/revoke') {
             try {
+                [$pdo] = self::dbAndRealm();
                 $body = ApiRequest::jsonBody();
-                $principal = ApiAuth::authenticateBearer();
+                $principal = ApiAuth::authenticateBearer($pdo);
                 if ($principal !== null) {
                     $bearer = self::bearerTokenFromHeader();
                     if ($bearer !== null) {
-                        ApiAuth::revokeCurrentAccessToken($bearer, $principal);
+                        ApiAuth::revokeCurrentAccessToken($pdo, $bearer, $principal);
                     }
                 }
                 if (isset($body['refresh_token']) && is_string($body['refresh_token']) && $body['refresh_token'] !== '') {
-                    ApiAuth::revokeRefreshToken($body['refresh_token']);
+                    ApiAuth::revokeRefreshToken($pdo, $body['refresh_token']);
                 }
                 ApiResponse::json(200, ['ok' => true]);
             } catch (\InvalidArgumentException $e) {
@@ -172,7 +174,14 @@ final class ApiKernel
             return true;
         }
 
-        $principal = ApiAuth::authenticateBearer();
+        try {
+            [$pdo, $realm] = self::dbAndRealm();
+        } catch (\Throwable) {
+            ApiResponse::error(503, 'Could not load API configuration.', 'config_error');
+
+            return true;
+        }
+        $principal = ApiAuth::authenticateBearer($pdo);
         if ($method === 'GET' && $rel === 'me') {
             if ($principal === null) {
                 ApiResponse::error(401, 'Missing or invalid bearer token.', 'unauthorized');
@@ -214,13 +223,6 @@ final class ApiKernel
             return true;
         }
 
-        try {
-            [$pdo, $realm] = self::dbAndRealm();
-        } catch (\Throwable) {
-            ApiResponse::error(503, 'Could not load API configuration.', 'config_error');
-
-            return true;
-        }
         try {
             if (ApiDomainHandlers::dispatch($webBase, $method, $rel, $principal, $pdo, $realm)) {
                 return true;

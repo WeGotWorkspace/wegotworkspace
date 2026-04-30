@@ -6,7 +6,7 @@ namespace App\Update;
 
 final class SchemaMigrationRunner
 {
-    public const CURRENT_SCHEMA_VERSION = 3;
+    public const CURRENT_SCHEMA_VERSION = 4;
 
     public static function migrate(\PDO $pdo): int
     {
@@ -66,6 +66,11 @@ final class SchemaMigrationRunner
 
         if ($current < 3) {
             self::migrateV3AddVoicePeerOwner($pdo);
+            $current = 3;
+        }
+
+        if ($current < 4) {
+            self::migrateV4CreateApiTokenTables($pdo);
         }
     }
 
@@ -178,5 +183,54 @@ final class SchemaMigrationRunner
 
         $stmt = $pdo->prepare('INSERT INTO app_migrations (version, name, applied_at) VALUES (?, ?, ?)');
         $stmt->execute([3, 'add_voice_peer_owner', date('c')]);
+    }
+
+    private static function migrateV4CreateApiTokenTables(\PDO $pdo): void
+    {
+        $driver = (string) $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'mysql') {
+            $pdo->exec(
+                'CREATE TABLE IF NOT EXISTS api_refresh_tokens (
+                    token_hash VARCHAR(128) NOT NULL PRIMARY KEY,
+                    username VARCHAR(190) NOT NULL,
+                    role VARCHAR(16) NOT NULL,
+                    expires_at BIGINT NOT NULL,
+                    revoked TINYINT(1) NOT NULL DEFAULT 0,
+                    created_at BIGINT NOT NULL,
+                    KEY idx_api_refresh_expires (expires_at)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+            );
+            $pdo->exec(
+                'CREATE TABLE IF NOT EXISTS api_revoked_tokens (
+                    jti VARCHAR(128) NOT NULL PRIMARY KEY,
+                    expires_at BIGINT NOT NULL,
+                    created_at BIGINT NOT NULL,
+                    KEY idx_api_revoked_expires (expires_at)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+            );
+        } else {
+            $pdo->exec(
+                'CREATE TABLE IF NOT EXISTS api_refresh_tokens (
+                    token_hash TEXT PRIMARY KEY,
+                    username TEXT NOT NULL,
+                    role TEXT NOT NULL,
+                    expires_at INTEGER NOT NULL,
+                    revoked INTEGER NOT NULL DEFAULT 0,
+                    created_at INTEGER NOT NULL
+                )'
+            );
+            $pdo->exec(
+                'CREATE TABLE IF NOT EXISTS api_revoked_tokens (
+                    jti TEXT PRIMARY KEY,
+                    expires_at INTEGER NOT NULL,
+                    created_at INTEGER NOT NULL
+                )'
+            );
+            $pdo->exec('CREATE INDEX IF NOT EXISTS idx_api_refresh_expires ON api_refresh_tokens(expires_at)');
+            $pdo->exec('CREATE INDEX IF NOT EXISTS idx_api_revoked_expires ON api_revoked_tokens(expires_at)');
+        }
+
+        $stmt = $pdo->prepare('INSERT INTO app_migrations (version, name, applied_at) VALUES (?, ?, ?)');
+        $stmt->execute([4, 'create_api_token_tables', date('c')]);
     }
 }
