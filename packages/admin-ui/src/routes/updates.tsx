@@ -5,7 +5,8 @@ import { useSettings, store } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { toast } from "sonner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { CircleCheck, Loader2, TriangleAlert } from "lucide-react";
 
 export const Route = createFileRoute("/updates")({ component: UpdatesPage });
 
@@ -16,6 +17,11 @@ function UpdatesPage() {
   const [applying, setApplying] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [logLines, setLogLines] = useState<string[]>([]);
+  const [inlineResult, setInlineResult] = useState<{
+    kind: "success" | "error";
+    title: string;
+    message: string;
+  } | null>(null);
 
   useEffect(() => {
     void store.reloadUpdateState();
@@ -35,6 +41,13 @@ function UpdatesPage() {
   }, [updates.inProgress, applying]);
 
   const latestVersion = updates.latest?.version || "Unknown";
+  const phaseOrder = ["downloading", "extracting", "backing_up", "applying_files"] as const;
+  const activePhase = updates.phase === "running_migrations" ? "applying_files" : updates.phase;
+  const currentStepIndex = Math.max(
+    0,
+    phaseOrder.indexOf(activePhase as (typeof phaseOrder)[number]),
+  );
+  const currentStep = Math.max(1, currentStepIndex + 1);
   const downloadPercent = updates.download?.percent;
   const downloadTotal = updates.download?.totalBytes;
   const downloadDone = updates.download?.downloadedBytes ?? 0;
@@ -52,6 +65,12 @@ function UpdatesPage() {
               : updates.phase
                 ? updates.phase
                 : "Idle";
+  const phasePercent =
+    updates.phase === "downloading"
+      ? (updates.download?.percent ?? null)
+      : updates.phase === "extracting" || updates.phase === "backing_up"
+        ? (updates.phaseProgress?.percent ?? null)
+        : null;
 
   const formatBytes = (bytes: number) => {
     if (!Number.isFinite(bytes) || bytes <= 0) {
@@ -83,9 +102,13 @@ function UpdatesPage() {
                 setChecking(true);
                 try {
                   await store.checkUpdates();
-                  toast.success("Checked for updates");
+                  setInlineResult(null);
                 } catch (error) {
-                  toast.error((error as Error).message || "Could not check updates");
+                  setInlineResult({
+                    kind: "error",
+                    title: "Could not check updates",
+                    message: (error as Error).message || "Unknown error while checking updates.",
+                  });
                 } finally {
                   setChecking(false);
                 }
@@ -110,43 +133,68 @@ function UpdatesPage() {
               }
               onClick={async () => {
                 setApplying(true);
+                setInlineResult(null);
                 try {
                   const result = await store.applyUpdate();
                   if (result.ok) {
-                    toast.success("Update completed");
+                    setInlineResult({
+                      kind: "success",
+                      title: "Update completed",
+                      message: result.message || "The update was applied successfully.",
+                    });
                   } else {
-                    toast.info(result.message || "Update stopped");
+                    setInlineResult({
+                      kind: "error",
+                      title: "Update stopped",
+                      message: result.message || "The update stopped before completion.",
+                    });
                   }
                 } catch (error) {
-                  toast.error((error as Error).message || "Update failed");
+                  setInlineResult({
+                    kind: "error",
+                    title: "Update failed",
+                    message: (error as Error).message || "An unknown updater error occurred.",
+                  });
                 } finally {
                   setApplying(false);
                 }
               }}
             >
-              {updates.inProgress || applying ? "Applying..." : "Update now"}
+              {updates.inProgress || applying ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating
+                </>
+              ) : (
+                "Update now"
+              )}
             </Button>
             {(updates.inProgress || applying) && (
-              <div className="rounded-md border px-3 py-2 text-xs space-y-2">
+              <div className="rounded-md border px-3 py-3 text-xs space-y-3">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-muted-foreground">Current step</span>
-                  <Badge variant="secondary">{phaseLabel}</Badge>
+                  <div className="font-medium">
+                    Step {currentStep}/4: {phaseLabel}
+                  </div>
+                  <Badge variant="secondary">
+                    {updates.current?.to ? `v${updates.current.to}` : "Update"}
+                  </Badge>
                 </div>
-                {updates.phase === "downloading" && (
+                {typeof phasePercent === "number" && (
                   <div className="space-y-2">
-                    <Progress
-                      value={typeof downloadPercent === "number" ? downloadPercent : undefined}
-                    />
+                    <Progress value={phasePercent} />
                     <div className="flex items-center justify-between text-muted-foreground">
-                      <span>
-                        {formatBytes(downloadDone)}
-                        {downloadTotal ? ` / ${formatBytes(downloadTotal)}` : ""}
-                      </span>
-                      <span>
-                        {typeof downloadPercent === "number"
-                          ? `${downloadPercent}%`
-                          : "Streaming..."}
-                      </span>
+                      {updates.phase === "downloading" ? (
+                        <span>
+                          {formatBytes(downloadDone)}
+                          {downloadTotal ? ` / ${formatBytes(downloadTotal)}` : ""}
+                        </span>
+                      ) : (
+                        <span>
+                          {updates.phaseProgress?.completed ?? 0} /{" "}
+                          {updates.phaseProgress?.total ?? 0}
+                        </span>
+                      )}
+                      <span>{phasePercent}%</span>
                     </div>
                   </div>
                 )}
@@ -159,9 +207,17 @@ function UpdatesPage() {
                       setCancelling(true);
                       try {
                         await store.cancelUpdate();
-                        toast.success("Cancellation requested");
+                        setInlineResult({
+                          kind: "success",
+                          title: "Cancellation requested",
+                          message: "The updater will stop at the next safe checkpoint.",
+                        });
                       } catch (error) {
-                        toast.error((error as Error).message || "Could not cancel update");
+                        setInlineResult({
+                          kind: "error",
+                          title: "Could not cancel update",
+                          message: (error as Error).message || "Cancellation request failed.",
+                        });
                       } finally {
                         setCancelling(false);
                       }
@@ -170,12 +226,23 @@ function UpdatesPage() {
                     {updates.cancelRequested || cancelling ? "Cancelling..." : "Cancel update"}
                   </Button>
                 </div>
-                {updates.phase !== "downloading" && (
-                  <div className="text-muted-foreground">
-                    Cancellation is only possible while the package is downloading.
-                  </div>
-                )}
               </div>
+            )}
+            {inlineResult && (
+              <Alert
+                variant={inlineResult.kind === "error" ? "destructive" : "default"}
+                className={
+                  inlineResult.kind === "success" ? "border-emerald-300 bg-emerald-50" : ""
+                }
+              >
+                {inlineResult.kind === "success" ? (
+                  <CircleCheck className="h-4 w-4 text-emerald-700" />
+                ) : (
+                  <TriangleAlert className="h-4 w-4" />
+                )}
+                <AlertTitle>{inlineResult.title}</AlertTitle>
+                <AlertDescription>{inlineResult.message}</AlertDescription>
+              </Alert>
             )}
             {updates.lastResult && (
               <div className="rounded-md border px-3 py-2 text-xs">

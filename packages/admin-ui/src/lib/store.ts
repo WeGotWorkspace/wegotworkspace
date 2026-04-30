@@ -67,6 +67,12 @@ export type Settings = {
       percent: number | null;
       updatedAt: string;
     } | null;
+    phaseProgress: {
+      completed: number;
+      total: number;
+      percent: number;
+      updatedAt: string;
+    } | null;
     cancelRequested: boolean;
     cancelAllowed: boolean;
     lastCheckedAt: string | null;
@@ -110,6 +116,7 @@ const DEFAULT_STATE: Settings = {
     phase: null,
     current: null,
     download: null,
+    phaseProgress: null,
     cancelRequested: false,
     cancelAllowed: false,
     lastCheckedAt: null,
