@@ -11,7 +11,7 @@ use App\SabreUiAuthGate;
 use App\Settings\SettingsKeys;
 
 /**
- * Serves OpenOffice Web (https://github.com/woutervroege/openoffice-web) at {@code /office/} when WebDAV files are enabled.
+ * Serves ONLYOFFICE Web (https://github.com/woutervroege/onlyoffice-web) at {@code /office/} when WebDAV files are enabled.
  * Injects {@code window.__SABRE_OFFICE_CONFIG__} into HTML shells for local integration metadata.
  */
 final class OfficeEntry
@@ -98,7 +98,7 @@ final class OfficeEntry
             header('Content-Type: text/html; charset=utf-8');
             echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Office unavailable</title></head><body>';
             echo '<h1>Office UI is not built</h1>';
-            echo '<p>Run <code>pnpm --filter @wgw/openoffice-web build</code> (output: <code>apps/wegotworkspace/wgw-modules/office/build/</code>), then reload.</p>';
+            echo '<p>Run <code>pnpm --filter @wgw/onlyoffice-web build</code> (output: <code>apps/wegotworkspace/wgw-modules/office/build/</code>), then reload.</p>';
             echo '</body></html>';
 
             return true;
