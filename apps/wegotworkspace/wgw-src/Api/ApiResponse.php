@@ -20,9 +20,22 @@ final class ApiResponse
     public static function error(int $status, string $message, ?string $code = null): void
     {
         $payload = ['error' => $message];
+        if ($status >= 500) {
+            $debug = trim((string) getenv('WGW_API_DEBUG_ERRORS'));
+            if ($debug !== '1') {
+                $payload['error'] = 'Internal server error.';
+            }
+            $payload['request_id'] = self::requestId();
+            header('X-Request-Id: '.$payload['request_id']);
+        }
         if ($code !== null && $code !== '') {
             $payload['code'] = $code;
         }
         self::json($status, $payload);
+    }
+
+    private static function requestId(): string
+    {
+        return bin2hex(random_bytes(8));
     }
 }
