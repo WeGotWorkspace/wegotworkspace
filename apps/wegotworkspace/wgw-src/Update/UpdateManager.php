@@ -20,6 +20,7 @@ final class UpdateManager
         $driver = (string) $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
         $checks = EnvChecker::checkAll($driver === 'mysql' ? 'mysql' : 'sqlite');
         $compatible = EnvChecker::allPassed($checks);
+        $checks[] = self::capacityCheck(Paths::appRoot());
         $inProgress = is_file(UpdateStateStore::lockPath());
         $phase = $inProgress && is_string($state['phase'] ?? null) ? $state['phase'] : null;
 
@@ -141,6 +142,7 @@ final class UpdateManager
             @mkdir($backupDir, 0775, true);
             self::backupPaths(Paths::appRoot(), $backupDir, $replacePaths, $beforeVersion, $targetVersion);
             self::throwIfCancelRequested();
+            self::assertApplyCapacity($releaseRoot, Paths::appRoot(), $replacePaths);
 
             self::writeMaintenanceMode(true);
             self::writeStatus('applying_files', $beforeVersion, $targetVersion);
@@ -483,7 +485,12 @@ final class UpdateManager
             self::throwIfCancelRequested();
         }
         if (is_dir($source)) {
-            @mkdir($dest, 0775, true);
+            if (!is_dir($dest) && !@mkdir($dest, 0775, true)) {
+                $reason = self::lastFilesystemError();
+                throw new \RuntimeException(
+                    'Could not create destination directory: '.$dest.($reason !== '' ? ' ('.$reason.')' : '')
+                );
+            }
             $items = scandir($source);
             if (!is_array($items)) {
                 throw new \RuntimeException('Could not read directory: '.$source);
@@ -497,10 +504,205 @@ final class UpdateManager
 
             return;
         }
-        @mkdir(dirname($dest), 0775, true);
-        if (!copy($source, $dest)) {
-            throw new \RuntimeException('Could not copy file: '.$source);
+        $destDir = dirname($dest);
+        if (!is_dir($destDir) && !@mkdir($destDir, 0775, true)) {
+            $reason = self::lastFilesystemError();
+            throw new \RuntimeException(
+                'Could not create destination directory: '.$destDir.($reason !== '' ? ' ('.$reason.')' : '')
+            );
         }
+        if (!is_writable($destDir)) {
+            throw new \RuntimeException('Destination directory is not writable: '.$destDir);
+        }
+        if (!@copy($source, $dest)) {
+            $reason = self::lastFilesystemError();
+            throw new \RuntimeException(
+                'Could not copy file: '.$source.' -> '.$dest.($reason !== '' ? ' ('.$reason.')' : '')
+            );
+        }
+    }
+
+    /**
+     * @param list<string> $paths
+     */
+    private static function assertApplyCapacity(string $sourceRoot, string $targetRoot, array $paths): void
+    {
+        $existing = self::collectPathStats($targetRoot, $paths);
+        $incoming = self::collectPathStats($sourceRoot, $paths);
+
+        $byteGrowth = max(0, $incoming['bytes'] - $existing['bytes']);
+        $inodeGrowth = max(0, $incoming['inodes'] - $existing['inodes']);
+        $byteSafetyBuffer = 128 * 1024 * 1024; // Keep headroom for filesystem metadata and runtime overhead.
+        $inodeSafetyBuffer = 2048;
+        $requiredBytes = $byteGrowth + $byteSafetyBuffer;
+        $requiredInodes = $inodeGrowth + $inodeSafetyBuffer;
+
+        $freeBytes = @disk_free_space($targetRoot);
+        if (is_int($freeBytes) || is_float($freeBytes)) {
+            $freeBytesInt = max(0, (int) $freeBytes);
+            if ($freeBytesInt < $requiredBytes) {
+                throw new \RuntimeException(
+                    'Insufficient free disk space to apply update. '.
+                    'Need at least '.self::formatByteCount($requiredBytes).' free (including safety margin), '.
+                    'but only '.self::formatByteCount($freeBytesInt).' is available. '.
+                    'Free space by deleting old backups or temporary files under wgw-content/updates and retry.'
+                );
+            }
+        }
+
+        if (function_exists('statvfs')) {
+            $vfs = @statvfs($targetRoot);
+            $freeInodesRaw = is_array($vfs) && isset($vfs['f_favail']) ? $vfs['f_favail'] : null;
+            $freeInodes = is_int($freeInodesRaw) || is_float($freeInodesRaw) ? max(0, (int) $freeInodesRaw) : null;
+            if (is_int($freeInodes) && $freeInodes < $requiredInodes) {
+                throw new \RuntimeException(
+                    'Insufficient free inodes to apply update. '.
+                    'Need at least '.number_format($requiredInodes).' free inodes (including safety margin), '.
+                    'but only '.number_format($freeInodes).' is available. '.
+                    'Free inode usage (many small files) and retry.'
+                );
+            }
+        }
+    }
+
+    /**
+     * @param list<string> $paths
+     *
+     * @return array{bytes: int, inodes: int}
+     */
+    private static function collectPathStats(string $root, array $paths): array
+    {
+        $bytes = 0;
+        $inodes = 0;
+        foreach ($paths as $relative) {
+            $full = $root.'/'.$relative;
+            if (!file_exists($full) && !is_link($full)) {
+                continue;
+            }
+            $stats = self::pathStats($full);
+            $bytes += $stats['bytes'];
+            $inodes += $stats['inodes'];
+        }
+
+        return ['bytes' => max(0, $bytes), 'inodes' => max(0, $inodes)];
+    }
+
+    /**
+     * @return array{bytes: int, inodes: int}
+     */
+    private static function pathStats(string $path): array
+    {
+        if (is_link($path)) {
+            $size = @filesize($path);
+
+            return [
+                'bytes' => max(0, (int) ($size === false ? 0 : $size)),
+                'inodes' => 1,
+            ];
+        }
+        if (is_file($path)) {
+            $size = @filesize($path);
+
+            return [
+                'bytes' => max(0, (int) ($size === false ? 0 : $size)),
+                'inodes' => 1,
+            ];
+        }
+        if (!is_dir($path)) {
+            return ['bytes' => 0, 'inodes' => 0];
+        }
+        $items = scandir($path);
+        if (!is_array($items)) {
+            return ['bytes' => 0, 'inodes' => 1];
+        }
+        $bytes = 0;
+        $inodes = 1; // Count the directory itself.
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..') {
+                continue;
+            }
+            $child = $path.'/'.$item;
+            $childStats = self::pathStats($child);
+            $bytes += $childStats['bytes'];
+            $inodes += $childStats['inodes'];
+        }
+
+        return ['bytes' => max(0, $bytes), 'inodes' => max(0, $inodes)];
+    }
+
+    private static function formatByteCount(int $bytes): string
+    {
+        if ($bytes <= 0) {
+            return '0 B';
+        }
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        $value = (float) $bytes;
+        $idx = 0;
+        while ($value >= 1024 && $idx < count($units) - 1) {
+            $value /= 1024;
+            $idx++;
+        }
+        $precision = $value >= 100 || $idx === 0 ? 0 : 1;
+
+        return number_format($value, $precision).' '.$units[$idx];
+    }
+
+    /**
+     * @return array{ok: bool, label: string, detail: string}
+     */
+    private static function capacityCheck(string $path): array
+    {
+        $freeBytesRaw = @disk_free_space($path);
+        $freeBytes = is_int($freeBytesRaw) || is_float($freeBytesRaw)
+            ? max(0, (int) $freeBytesRaw)
+            : null;
+
+        $freeInodes = null;
+        if (function_exists('statvfs')) {
+            $vfs = @statvfs($path);
+            $freeInodesRaw = is_array($vfs) && isset($vfs['f_favail']) ? $vfs['f_favail'] : null;
+            if (is_int($freeInodesRaw) || is_float($freeInodesRaw)) {
+                $freeInodes = max(0, (int) $freeInodesRaw);
+            }
+        }
+
+        $parts = [];
+        $ok = true;
+        if (is_int($freeBytes)) {
+            $parts[] = 'Free disk: '.self::formatByteCount($freeBytes);
+            if ($freeBytes < 512 * 1024 * 1024) {
+                $ok = false;
+                $parts[] = 'Low free disk';
+            }
+        } else {
+            $parts[] = 'Free disk: unknown';
+        }
+
+        if (is_int($freeInodes)) {
+            $parts[] = 'Free inodes: '.number_format($freeInodes);
+            if ($freeInodes < 10000) {
+                $ok = false;
+                $parts[] = 'Low free inodes';
+            }
+        } else {
+            $parts[] = 'Free inodes: unknown';
+        }
+
+        return [
+            'ok' => $ok,
+            'label' => 'Capacity',
+            'detail' => implode(' · ', $parts),
+        ];
+    }
+
+    private static function lastFilesystemError(): string
+    {
+        $last = error_get_last();
+        $message = is_array($last) && isset($last['message']) && is_string($last['message'])
+            ? trim($last['message'])
+            : '';
+
+        return $message;
     }
 
     private static function rmRecursive(string $path): void
