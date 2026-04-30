@@ -722,14 +722,22 @@ final class UpdateManager
         $requiredBytes = $byteGrowth + $byteSafetyBuffer;
         $requiredInodes = $inodeGrowth + $inodeSafetyBuffer;
 
-        $freeBytes = @disk_free_space($targetRoot);
-        if (is_int($freeBytes) || is_float($freeBytes)) {
-            $freeBytesInt = max(0, (int) $freeBytes);
-            if ($freeBytesInt < $requiredBytes) {
+        $filesystemFreeBytes = self::readFilesystemFreeBytes($targetRoot);
+        $quotaFreeBytes = self::detectQuotaFreeBytes();
+        $effectiveFreeBytes = self::minKnownInt($filesystemFreeBytes, $quotaFreeBytes);
+        if (is_int($effectiveFreeBytes)) {
+            if ($effectiveFreeBytes < $requiredBytes) {
+                $sources = [];
+                if (is_int($filesystemFreeBytes)) {
+                    $sources[] = 'filesystem: '.self::formatByteCount($filesystemFreeBytes);
+                }
+                if (is_int($quotaFreeBytes)) {
+                    $sources[] = 'quota: '.self::formatByteCount($quotaFreeBytes);
+                }
                 throw new \RuntimeException(
                     'Insufficient free disk space to apply update. '.
                     'Need at least '.self::formatByteCount($requiredBytes).' free (including safety margin), '.
-                    'but only '.self::formatByteCount($freeBytesInt).' is available. '.
+                    'but only '.self::formatByteCount($effectiveFreeBytes).' is available'.(count($sources) > 0 ? ' ('.implode(', ', $sources).')' : '').'. '.
                     'Free space by deleting old backups or temporary files under wgw-content/updates and retry.'
                 );
             }
@@ -837,10 +845,8 @@ final class UpdateManager
      */
     private static function capacityChecks(string $path): array
     {
-        $freeBytesRaw = @disk_free_space($path);
-        $freeBytes = is_int($freeBytesRaw) || is_float($freeBytesRaw)
-            ? max(0, (int) $freeBytesRaw)
-            : null;
+        $freeBytes = self::readFilesystemFreeBytes($path);
+        $quotaFreeBytes = self::detectQuotaFreeBytes();
 
         $freeInodes = null;
         if (function_exists('statvfs')) {
@@ -871,12 +877,111 @@ final class UpdateManager
                 'status' => $diskKnown ? ($diskOk ? 'ok' : 'fail') : 'unknown',
             ],
             [
+                'ok' => !is_int($quotaFreeBytes) || $quotaFreeBytes >= 512 * 1024 * 1024,
+                'label' => 'Hosting quota free space',
+                'detail' => is_int($quotaFreeBytes)
+                    ? self::formatByteCount($quotaFreeBytes).($quotaFreeBytes >= 512 * 1024 * 1024 ? '' : ' (low quota free space)')
+                    : 'Unknown (quota command unavailable on this host)',
+                'status' => is_int($quotaFreeBytes)
+                    ? ($quotaFreeBytes >= 512 * 1024 * 1024 ? 'ok' : 'fail')
+                    : 'unknown',
+            ],
+            [
                 'ok' => $inodeOk,
                 'label' => 'Free inodes',
                 'detail' => $inodeDetail,
                 'status' => $inodeKnown ? ($inodeOk ? 'ok' : 'fail') : 'unknown',
             ],
         ];
+    }
+
+    private static function readFilesystemFreeBytes(string $path): ?int
+    {
+        $freeBytesRaw = @disk_free_space($path);
+        if (!is_int($freeBytesRaw) && !is_float($freeBytesRaw)) {
+            return null;
+        }
+
+        return max(0, (int) $freeBytesRaw);
+    }
+
+    private static function minKnownInt(?int $a, ?int $b): ?int
+    {
+        if (is_int($a) && is_int($b)) {
+            return min($a, $b);
+        }
+        if (is_int($a)) {
+            return $a;
+        }
+        if (is_int($b)) {
+            return $b;
+        }
+
+        return null;
+    }
+
+    private static function detectQuotaFreeBytes(): ?int
+    {
+        if (!function_exists('shell_exec')) {
+            return null;
+        }
+        $output = @shell_exec('quota -s 2>/dev/null');
+        if (!is_string($output) || trim($output) === '') {
+            return null;
+        }
+        $lines = preg_split('/\R/', $output) ?: [];
+        foreach ($lines as $line) {
+            $trimmed = trim((string) $line);
+            if ($trimmed === '' || $trimmed[0] !== '/') {
+                continue;
+            }
+            $parts = preg_split('/\s+/', $trimmed) ?: [];
+            if (count($parts) < 4) {
+                continue;
+            }
+            $used = self::parseQuotaSizeToken($parts[1]);
+            $quota = self::parseQuotaSizeToken($parts[2]);
+            $limit = self::parseQuotaSizeToken($parts[3]);
+            if (!is_int($used)) {
+                continue;
+            }
+            $cap = max((int) ($limit ?? 0), (int) ($quota ?? 0));
+            if ($cap <= 0) {
+                continue;
+            }
+
+            return max(0, $cap - $used);
+        }
+
+        return null;
+    }
+
+    private static function parseQuotaSizeToken(string $token): ?int
+    {
+        $clean = rtrim(trim($token), '*');
+        if ($clean === '' || $clean === '-' || strcasecmp($clean, 'none') === 0) {
+            return null;
+        }
+        if (preg_match('/^([0-9]+(?:\.[0-9]+)?)([KMGTP]?)(?:i?B)?$/i', $clean, $m) !== 1) {
+            if (preg_match('/^[0-9]+$/', $clean) === 1) {
+                return (int) $clean * 1024;
+            }
+
+            return null;
+        }
+        $value = (float) $m[1];
+        $unit = strtoupper($m[2] ?? '');
+        $power = match ($unit) {
+            'K' => 1,
+            'M' => 2,
+            'G' => 3,
+            'T' => 4,
+            'P' => 5,
+            default => 0,
+        };
+        $bytes = (int) round($value * (1024 ** $power));
+
+        return max(0, $bytes);
     }
 
     private static function lastFilesystemError(): string
