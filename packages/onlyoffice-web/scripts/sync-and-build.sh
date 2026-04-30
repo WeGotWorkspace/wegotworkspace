@@ -19,7 +19,7 @@ OUT_DEST="$RUNTIME_ROOT/$PRIVATE_DIR_NAME/office/build"
 OFFICE_BASE_PATH="${OFFICE_BASE_PATH:-/office}"
 OFFICE_VERSION="${OFFICE_VERSION:-v9.3.0.24-1}"
 
-cd "$REPO_ROOT/packages/openoffice-web"
+cd "$REPO_ROOT/packages/onlyoffice-web"
 export OFFICE_BASE_PATH
 export NEXT_PUBLIC_APP_ROOT="${OFFICE_BASE_PATH}/${OFFICE_VERSION}"
 export NEXT_PUBLIC_OFFICE_BASE_PATH="${OFFICE_BASE_PATH}"
@@ -29,4 +29,4 @@ rm -rf "$OUT_DEST"
 mkdir -p "$OUT_DEST"
 cp -R out/* "$OUT_DEST/"
 
-echo "Done. OpenOffice static export is in ${OUT_DEST}/ (URL prefix: ${OFFICE_BASE_PATH})."
+echo "Done. ONLYOFFICE static export is in ${OUT_DEST}/ (URL prefix: ${OFFICE_BASE_PATH})."

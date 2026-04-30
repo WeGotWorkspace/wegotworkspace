@@ -98,7 +98,7 @@ final class Paths
     }
 
     /**
-     * Next.js static export for OpenOffice Web ({@code packages/openoffice-web}), served at {@code /office/}.
+     * Next.js static export for ONLYOFFICE Web ({@code packages/onlyoffice-web}), served at {@code /office/}.
      */
     public static function officeUiBuild(): string
     {
