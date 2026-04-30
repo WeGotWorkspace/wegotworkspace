@@ -61,7 +61,7 @@ final class ApiToken
      *   kid: string
      * } $cfg
      *
-     * @return array{sub: string, role: 'guest'|'user'|'admin', iat: int, exp: int, iss: string, aud: string}|null
+     * @return array{sub: string, role: 'guest'|'user'|'admin', iat: int, exp: int, iss: string, aud: string, jti: string}|null
      */
     public static function validate(string $token, array $cfg): ?array
     {
@@ -91,6 +91,7 @@ final class ApiToken
         $iatClaim = $parsed->claims()->get('iat', null);
         $expClaim = $parsed->claims()->get('exp', null);
         $iss = (string) $parsed->claims()->get('iss', '');
+        $jti = (string) $parsed->claims()->get('jti', '');
         $audClaim = $parsed->claims()->get('aud', []);
         $aud = '';
         if (is_string($audClaim)) {
@@ -102,7 +103,7 @@ final class ApiToken
         $iat = $iatClaim instanceof \DateTimeImmutable ? $iatClaim->getTimestamp() : 0;
         $exp = $expClaim instanceof \DateTimeImmutable ? $expClaim->getTimestamp() : 0;
 
-        if ($sub === '' || !in_array($role, ['guest', 'user', 'admin'], true) || $iat <= 0 || $exp <= 0) {
+        if ($sub === '' || !in_array($role, ['guest', 'user', 'admin'], true) || $iat <= 0 || $exp <= 0 || $jti === '') {
             return null;
         }
         if ($iss !== $cfg['issuer']) {
@@ -119,6 +120,7 @@ final class ApiToken
             'exp' => $exp,
             'iss' => $iss,
             'aud' => $aud,
+            'jti' => $jti,
         ];
     }
 

@@ -52,6 +52,127 @@ final class ApiJwtConfig
     }
 
     /**
+     * @return list<array{
+     *   privateKey: string,
+     *   publicKey: string,
+     *   issuer: string,
+     *   audience: string,
+     *   kid: string
+     * }>
+     */
+    public static function verificationConfigs(): array
+    {
+        $active = self::load();
+        if ($active === null) {
+            return [];
+        }
+        $items = [$active];
+
+        $prevKid = self::value('WGW_API_JWT_PREVIOUS_KID', 'WGW_API_JWT_PREVIOUS_KID', '');
+        if ($prevKid === '') {
+            return $items;
+        }
+        $prevPublic = self::keyValue(
+            'WGW_API_JWT_PREVIOUS_PUBLIC_KEY',
+            'WGW_API_JWT_PREVIOUS_PUBLIC_KEY',
+            'WGW_API_JWT_PREVIOUS_PUBLIC_KEY_PATH',
+            'WGW_API_JWT_PREVIOUS_PUBLIC_KEY_PATH',
+            ''
+        );
+        if ($prevPublic === null) {
+            return $items;
+        }
+        $items[] = [
+            // Not used for verification path; kept for uniform shape.
+            'privateKey' => $prevPublic,
+            'publicKey' => $prevPublic,
+            'issuer' => $active['issuer'],
+            'audience' => $active['audience'],
+            'kid' => $prevKid,
+        ];
+
+        return $items;
+    }
+
+    /**
+     * @return array{
+     *   privateKey: string,
+     *   publicKey: string,
+     *   issuer: string,
+     *   audience: string,
+     *   kid: string
+     * }|null
+     */
+    public static function verificationConfigForKid(string $kid): ?array
+    {
+        foreach (self::verificationConfigs() as $cfg) {
+            if ($cfg['kid'] === $kid) {
+                return $cfg;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public static function jwks(): array
+    {
+        $out = [];
+        foreach (self::verificationConfigs() as $cfg) {
+            $jwk = self::jwk($cfg);
+            if ($jwk !== null) {
+                $out[] = $jwk;
+            }
+        }
+
+        return $out;
+    }
+
+    public static function issuer(): string
+    {
+        return self::value('WGW_API_JWT_ISSUER', 'WGW_API_JWT_ISSUER', 'wegotworkspace-api');
+    }
+
+    public static function audience(): string
+    {
+        return self::value('WGW_API_JWT_AUDIENCE', 'WGW_API_JWT_AUDIENCE', 'wegotworkspace-clients');
+    }
+
+    /**
+     * @return non-empty-string|null
+     */
+    public static function readKid(string $token): ?string
+    {
+        $parts = explode('.', $token);
+        if (count($parts) !== 3) {
+            return null;
+        }
+        $head = self::decodeJwtPart((string) $parts[0]);
+        if (!is_array($head)) {
+            return null;
+        }
+        $kid = isset($head['kid']) && is_string($head['kid']) ? trim($head['kid']) : '';
+
+        return $kid !== '' ? $kid : null;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private static function decodeJwtPart(string $part): ?array
+    {
+        $raw = self::b64UrlDecode($part);
+        if ($raw === null) {
+            return null;
+        }
+        $decoded = json_decode($raw, true);
+
+        return is_array($decoded) ? $decoded : null;
+    }
+
+    /**
      * @param array{publicKey: string, kid: string} $cfg
      *
      * @return array<string, mixed>|null
@@ -144,5 +265,16 @@ final class ApiJwtConfig
     private static function b64Url(string $raw): string
     {
         return rtrim(strtr(base64_encode($raw), '+/', '-_'), '=');
+    }
+
+    private static function b64UrlDecode(string $value): ?string
+    {
+        $padding = strlen($value) % 4;
+        if ($padding > 0) {
+            $value .= str_repeat('=', 4 - $padding);
+        }
+        $decoded = base64_decode(strtr($value, '-_', '+/'), true);
+
+        return is_string($decoded) ? $decoded : null;
     }
 }
