@@ -14,13 +14,14 @@ final class UpdateManager
      */
     public static function getState(\PDO $pdo): array
     {
+        self::recoverStaleLockState();
         $state = UpdateStateStore::read();
         $latest = isset($state['latest']) && is_array($state['latest']) ? $state['latest'] : null;
         $hasRequiredMetadata = self::hasRequiredReleaseMetadata($latest);
         $driver = (string) $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
         $checks = EnvChecker::checkAll($driver === 'mysql' ? 'mysql' : 'sqlite');
         $compatible = EnvChecker::allPassed($checks);
-        $checks[] = self::capacityCheck(Paths::appRoot());
+        $checks = array_merge($checks, self::capacityChecks(Paths::appRoot()));
         $inProgress = is_file(UpdateStateStore::lockPath());
         $phase = $inProgress && is_string($state['phase'] ?? null) ? $state['phase'] : null;
 
@@ -43,6 +44,43 @@ final class UpdateManager
             'lastCheckError' => is_string($state['last_check_error'] ?? null) ? $state['last_check_error'] : null,
             'lastResult' => is_array($state['last_result'] ?? null) ? $state['last_result'] : null,
         ];
+    }
+
+    private static function recoverStaleLockState(): void
+    {
+        $lockPath = UpdateStateStore::lockPath();
+        if (!is_file($lockPath)) {
+            return;
+        }
+        $lock = @fopen($lockPath, 'c+');
+        if (!is_resource($lock)) {
+            return;
+        }
+        $acquired = @flock($lock, LOCK_EX | LOCK_NB);
+        if ($acquired !== true) {
+            fclose($lock);
+
+            return;
+        }
+
+        flock($lock, LOCK_UN);
+        fclose($lock);
+        @unlink($lockPath);
+        @unlink(UpdateStateStore::maintenancePath());
+        UpdateStateStore::clearCancelRequest();
+
+        $state = UpdateStateStore::read();
+        if (
+            isset($state['phase'])
+            || isset($state['current'])
+            || isset($state['download'])
+            || isset($state['phase_progress'])
+            || isset($state['cancel_requested'])
+        ) {
+            unset($state['phase'], $state['current'], $state['download'], $state['phase_progress'], $state['cancel_requested']);
+            UpdateStateStore::write($state);
+        }
+        UpdateStateStore::appendLog('Recovered stale update lock state.');
     }
 
     /**
@@ -140,7 +178,7 @@ final class UpdateManager
 
             self::writeStatus('backing_up', $beforeVersion, $targetVersion);
             @mkdir($backupDir, 0775, true);
-            self::backupPaths(Paths::appRoot(), $backupDir, $replacePaths, $beforeVersion, $targetVersion);
+            self::backupDatabase($pdo, $backupDir, $beforeVersion, $targetVersion);
             self::throwIfCancelRequested();
             self::assertApplyCapacity($releaseRoot, Paths::appRoot(), $replacePaths);
 
@@ -159,9 +197,9 @@ final class UpdateManager
             UpdateStateStore::appendLog('Update failed: '.$e->getMessage());
             $didStartFileSwap = self::didStartApplyingFiles();
             if ($didStartFileSwap) {
-                self::restorePaths($backupDir, Paths::appRoot(), $replacePaths);
-                @file_put_contents(Paths::appRoot().'/VERSION', $beforeVersion."\n", LOCK_EX);
-                SchemaMigrationRunner::migrate($pdo);
+                UpdateStateStore::appendLog(
+                    'Automatic file rollback skipped: updater is configured for database-only backups.'
+                );
             }
             self::recordHistory(
                 $pdo,
@@ -444,6 +482,153 @@ final class UpdateManager
         }
     }
 
+    private static function backupDatabase(
+        \PDO $pdo,
+        string $backupRoot,
+        string $fromVersion,
+        string $toVersion
+    ): void {
+        self::writePhaseProgress('backing_up', $fromVersion, $toVersion, 0, 1);
+        $driver = (string) $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'sqlite') {
+            $sqlitePath = self::resolveSqlitePathFromPdo($pdo);
+            if ($sqlitePath === null || !is_file($sqlitePath)) {
+                throw new \RuntimeException('Could not locate SQLite database file for backup.');
+            }
+            $dest = $backupRoot.'/database.sqlite';
+            if (!@copy($sqlitePath, $dest)) {
+                $reason = self::lastFilesystemError();
+                throw new \RuntimeException(
+                    'Could not create SQLite backup: '.$sqlitePath.' -> '.$dest.($reason !== '' ? ' ('.$reason.')' : '')
+                );
+            }
+            self::writePhaseProgress('backing_up', $fromVersion, $toVersion, 1, 1);
+
+            return;
+        }
+        if ($driver === 'mysql') {
+            $dest = $backupRoot.'/database.sql';
+            self::exportMysqlDatabase($pdo, $dest);
+            self::writePhaseProgress('backing_up', $fromVersion, $toVersion, 1, 1);
+
+            return;
+        }
+        throw new \RuntimeException('Database backup is not supported for PDO driver: '.$driver);
+    }
+
+    private static function resolveSqlitePathFromPdo(\PDO $pdo): ?string
+    {
+        $stmt = $pdo->query('PRAGMA database_list');
+        if (!$stmt instanceof \PDOStatement) {
+            return null;
+        }
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        foreach ($rows as $row) {
+            $name = isset($row['name']) && is_string($row['name']) ? $row['name'] : '';
+            $file = isset($row['file']) && is_string($row['file']) ? trim($row['file']) : '';
+            if ($name === 'main' && $file !== '') {
+                return $file;
+            }
+        }
+
+        return null;
+    }
+
+    private static function exportMysqlDatabase(\PDO $pdo, string $destPath): void
+    {
+        $dbNameStmt = $pdo->query('SELECT DATABASE()');
+        $dbName = $dbNameStmt instanceof \PDOStatement ? (string) ($dbNameStmt->fetchColumn() ?: '') : '';
+        if ($dbName === '') {
+            throw new \RuntimeException('Could not determine current MySQL database name for backup.');
+        }
+        $out = @fopen($destPath, 'wb');
+        if (!is_resource($out)) {
+            $reason = self::lastFilesystemError();
+            throw new \RuntimeException(
+                'Could not create MySQL backup file: '.$destPath.($reason !== '' ? ' ('.$reason.')' : '')
+            );
+        }
+        try {
+            fwrite($out, "-- WeGotWorkspace MySQL backup\n");
+            fwrite($out, '-- Generated at '.date('c')."\n");
+            fwrite($out, '-- Database: '.$dbName."\n\n");
+            fwrite($out, "SET FOREIGN_KEY_CHECKS=0;\n\n");
+
+            $tablesStmt = $pdo->query('SHOW FULL TABLES WHERE Table_type = "BASE TABLE"');
+            if (!$tablesStmt instanceof \PDOStatement) {
+                throw new \RuntimeException('Could not enumerate MySQL tables for backup.');
+            }
+            $tables = $tablesStmt->fetchAll(\PDO::FETCH_NUM);
+            foreach ($tables as $tableRow) {
+                $table = isset($tableRow[0]) ? (string) $tableRow[0] : '';
+                if ($table === '') {
+                    continue;
+                }
+                $tableIdent = self::quoteMysqlIdentifier($table);
+                $createStmt = $pdo->query('SHOW CREATE TABLE '.$tableIdent);
+                if (!$createStmt instanceof \PDOStatement) {
+                    throw new \RuntimeException('Could not read CREATE TABLE for '.$table);
+                }
+                $createRow = $createStmt->fetch(\PDO::FETCH_NUM);
+                $createSql = isset($createRow[1]) && is_string($createRow[1]) ? $createRow[1] : '';
+                if ($createSql === '') {
+                    throw new \RuntimeException('Could not parse CREATE TABLE statement for '.$table);
+                }
+                fwrite($out, '-- Table: '.$table."\n");
+                fwrite($out, 'DROP TABLE IF EXISTS '.$tableIdent.";\n");
+                fwrite($out, $createSql.";\n\n");
+
+                $rowsStmt = $pdo->query('SELECT * FROM '.$tableIdent);
+                if (!$rowsStmt instanceof \PDOStatement) {
+                    throw new \RuntimeException('Could not read rows from '.$table.' for backup.');
+                }
+                while (($row = $rowsStmt->fetch(\PDO::FETCH_ASSOC)) !== false) {
+                    $columns = array_map(
+                        static fn (string $column): string => self::quoteMysqlIdentifier($column),
+                        array_keys($row)
+                    );
+                    $values = array_map(
+                        static fn ($value): string => self::sqlLiteral($pdo, $value),
+                        array_values($row)
+                    );
+                    fwrite(
+                        $out,
+                        'INSERT INTO '.$tableIdent.' ('.implode(', ', $columns).') VALUES ('.implode(', ', $values).");\n"
+                    );
+                }
+                fwrite($out, "\n");
+            }
+
+            fwrite($out, "SET FOREIGN_KEY_CHECKS=1;\n");
+        } finally {
+            fclose($out);
+        }
+    }
+
+    private static function quoteMysqlIdentifier(string $value): string
+    {
+        return '`'.str_replace('`', '``', $value).'`';
+    }
+
+    private static function sqlLiteral(\PDO $pdo, mixed $value): string
+    {
+        if ($value === null) {
+            return 'NULL';
+        }
+        if (is_bool($value)) {
+            return $value ? '1' : '0';
+        }
+        if (is_int($value) || is_float($value)) {
+            return (string) $value;
+        }
+        if (is_resource($value)) {
+            $value = stream_get_contents($value);
+        }
+        $quoted = $pdo->quote((string) $value);
+
+        return is_string($quoted) ? $quoted : "''";
+    }
+
     /**
      * @param list<string> $paths
      */
@@ -648,9 +833,9 @@ final class UpdateManager
     }
 
     /**
-     * @return array{ok: bool, label: string, detail: string}
+     * @return list<array{ok: bool, label: string, detail: string, status?: string}>
      */
-    private static function capacityCheck(string $path): array
+    private static function capacityChecks(string $path): array
     {
         $freeBytesRaw = @disk_free_space($path);
         $freeBytes = is_int($freeBytesRaw) || is_float($freeBytesRaw)
@@ -666,32 +851,31 @@ final class UpdateManager
             }
         }
 
-        $parts = [];
-        $ok = true;
-        if (is_int($freeBytes)) {
-            $parts[] = 'Free disk: '.self::formatByteCount($freeBytes);
-            if ($freeBytes < 512 * 1024 * 1024) {
-                $ok = false;
-                $parts[] = 'Low free disk';
-            }
-        } else {
-            $parts[] = 'Free disk: unknown';
-        }
+        $diskKnown = is_int($freeBytes);
+        $diskOk = !$diskKnown || $freeBytes >= 512 * 1024 * 1024;
+        $diskDetail = is_int($freeBytes)
+            ? (self::formatByteCount($freeBytes).($diskOk ? '' : ' (low free disk)'))
+            : 'Unknown (not detectable on this host)';
 
-        if (is_int($freeInodes)) {
-            $parts[] = 'Free inodes: '.number_format($freeInodes);
-            if ($freeInodes < 10000) {
-                $ok = false;
-                $parts[] = 'Low free inodes';
-            }
-        } else {
-            $parts[] = 'Free inodes: unknown';
-        }
+        $inodeKnown = is_int($freeInodes);
+        $inodeOk = !$inodeKnown || $freeInodes >= 10000;
+        $inodeDetail = is_int($freeInodes)
+            ? (number_format($freeInodes).($inodeOk ? '' : ' (low free inodes)'))
+            : 'Unknown (not detectable on this host)';
 
         return [
-            'ok' => $ok,
-            'label' => 'Capacity',
-            'detail' => implode(' · ', $parts),
+            [
+                'ok' => $diskOk,
+                'label' => 'Free disk space',
+                'detail' => $diskDetail,
+                'status' => $diskKnown ? ($diskOk ? 'ok' : 'fail') : 'unknown',
+            ],
+            [
+                'ok' => $inodeOk,
+                'label' => 'Free inodes',
+                'detail' => $inodeDetail,
+                'status' => $inodeKnown ? ($inodeOk ? 'ok' : 'fail') : 'unknown',
+            ],
         ];
     }
 
