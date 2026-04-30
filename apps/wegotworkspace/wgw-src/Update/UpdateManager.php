@@ -29,6 +29,7 @@ final class UpdateManager
             'latest' => $latest,
             'updateAvailable' => $hasRequiredMetadata && self::isUpdateAvailable(AppVersion::current(), $latest),
             'compatible' => $compatible,
+            'backups' => self::listBackups(),
             'checks' => $checks,
             'inProgress' => $inProgress,
             'phase' => $phase,
@@ -101,7 +102,9 @@ final class UpdateManager
         $checksum = $release['checksum_sha256'];
         $checksumSignature = $release['checksum_signature'];
 
-        $backupDir = UpdateStateStore::backupDir().'/backup-'.date('YmdHis');
+        $backupBaseName = self::buildBackupBaseName($beforeVersion, $targetVersion);
+        $backupDir = UpdateStateStore::backupDir().'/'.$backupBaseName;
+        $backupArchivePath = UpdateStateStore::backupDir().'/'.$backupBaseName.'.zip';
         $replacePaths = [
             'index.php',
             'composer.json',
@@ -172,6 +175,13 @@ final class UpdateManager
             throw $e;
         } finally {
             self::writeMaintenanceMode(false);
+            if (is_dir($backupDir)) {
+                try {
+                    self::finalizeBackupArchive($backupDir, $backupArchivePath, $beforeVersion, $targetVersion);
+                } catch (\Throwable $archiveError) {
+                    UpdateStateStore::appendLog('Backup archive creation failed: '.$archiveError->getMessage());
+                }
+            }
             $result['finishedAt'] = date('c');
             $state = UpdateStateStore::read();
             $state['last_result'] = $result;
@@ -184,6 +194,30 @@ final class UpdateManager
         }
 
         return $result;
+    }
+
+    /**
+     * @param array<string, mixed> $input
+     *
+     * @return array<string, mixed>
+     */
+    public static function deleteBackup(\PDO $pdo, array $input): array
+    {
+        $name = isset($input['name']) && is_string($input['name']) ? trim($input['name']) : '';
+        if ($name === '' || !preg_match('/^[A-Za-z0-9._-]+$/', $name)) {
+            throw new \InvalidArgumentException('Invalid backup file name.');
+        }
+        $path = UpdateStateStore::backupDir().'/'.$name;
+        if (!file_exists($path)) {
+            throw new \InvalidArgumentException('Backup not found.');
+        }
+        if (is_dir($path)) {
+            self::rmRecursive($path);
+        } elseif (!@unlink($path)) {
+            throw new \RuntimeException('Could not delete backup.');
+        }
+
+        return self::getState($pdo);
     }
 
     public static function inMaintenanceMode(): bool
@@ -722,6 +756,187 @@ final class UpdateManager
             'running_migrations' => 'Running migrations',
             default => $phase,
         };
+    }
+
+    /**
+     * @return list<array{
+     *   name: string,
+     *   sizeBytes: int,
+     *   modifiedAt: string|null,
+     *   fromVersion: string|null,
+     *   toVersion: string|null,
+     *   format: string,
+     *   downloadable: bool
+     * }>
+     */
+    private static function listBackups(): array
+    {
+        $dir = UpdateStateStore::backupDir();
+        if (!is_dir($dir)) {
+            return [];
+        }
+        $items = scandir($dir);
+        if (!is_array($items)) {
+            return [];
+        }
+        $rows = [];
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..' || str_starts_with($item, '.')) {
+                continue;
+            }
+            $path = $dir.'/'.$item;
+            $isZip = is_file($path) && str_ends_with($item, '.zip');
+            $isLegacyDir = is_dir($path) && str_starts_with($item, 'backup-');
+            if (!$isZip && !$isLegacyDir) {
+                continue;
+            }
+            $meta = $isZip ? self::readBackupMetadata($path) : self::readMetadataFromName($item);
+            $mtime = @filemtime($path);
+            $rows[] = [
+                'name' => $item,
+                'sizeBytes' => $isZip
+                    ? max(0, (int) (@filesize($path) ?: 0))
+                    : self::directorySizeBytes($path),
+                'modifiedAt' => is_int($mtime) ? date('c', $mtime) : null,
+                'fromVersion' => isset($meta['from_version']) && is_string($meta['from_version']) ? $meta['from_version'] : null,
+                'toVersion' => isset($meta['to_version']) && is_string($meta['to_version']) ? $meta['to_version'] : null,
+                'format' => $isZip ? 'zip' : 'legacy_dir',
+                'downloadable' => $isZip,
+            ];
+        }
+        usort(
+            $rows,
+            static fn (array $a, array $b): int => strcmp((string) ($b['modifiedAt'] ?? ''), (string) ($a['modifiedAt'] ?? ''))
+        );
+
+        return $rows;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private static function readMetadataFromName(string $name): array
+    {
+        if (preg_match('/-from-([A-Za-z0-9._-]+)-to-([A-Za-z0-9._-]+)(?:\.zip)?$/', $name, $m) !== 1) {
+            return [];
+        }
+
+        return [
+            'from_version' => $m[1],
+            'to_version' => $m[2],
+        ];
+    }
+
+    private static function directorySizeBytes(string $path): int
+    {
+        if (!is_dir($path)) {
+            return 0;
+        }
+        $size = 0;
+        $items = scandir($path);
+        if (!is_array($items)) {
+            return 0;
+        }
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..') {
+                continue;
+            }
+            $full = $path.'/'.$item;
+            if (is_dir($full)) {
+                $size += self::directorySizeBytes($full);
+                continue;
+            }
+            $size += max(0, (int) (@filesize($full) ?: 0));
+        }
+
+        return $size;
+    }
+
+    private static function buildBackupBaseName(string $fromVersion, string $toVersion): string
+    {
+        $from = preg_replace('/[^A-Za-z0-9.]+/', '_', trim($fromVersion)) ?: 'unknown';
+        $to = preg_replace('/[^A-Za-z0-9.]+/', '_', trim($toVersion)) ?: 'unknown';
+
+        return 'backup-'.date('YmdHis').'-from-'.$from.'-to-'.$to;
+    }
+
+    private static function finalizeBackupArchive(
+        string $backupDir,
+        string $archivePath,
+        string $fromVersion,
+        string $toVersion
+    ): void {
+        @mkdir(dirname($archivePath), 0775, true);
+        self::createZipFromDirectory(
+            $backupDir,
+            $archivePath,
+            [
+                'from_version' => $fromVersion,
+                'to_version' => $toVersion,
+                'created_at' => date('c'),
+            ]
+        );
+        self::rmRecursive($backupDir);
+    }
+
+    /**
+     * @param array<string, mixed> $metadata
+     */
+    private static function createZipFromDirectory(string $sourceDir, string $archivePath, array $metadata): void
+    {
+        $zip = new \ZipArchive();
+        if ($zip->open($archivePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            throw new \RuntimeException('Could not create backup ZIP archive.');
+        }
+        self::addPathToZip($zip, $sourceDir, '');
+        $zip->addFromString(
+            '.backup-meta.json',
+            (string) json_encode($metadata, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)."\n"
+        );
+        $zip->close();
+    }
+
+    private static function addPathToZip(\ZipArchive $zip, string $sourcePath, string $relativePath): void
+    {
+        if (is_dir($sourcePath)) {
+            $items = scandir($sourcePath);
+            if (!is_array($items)) {
+                return;
+            }
+            foreach ($items as $item) {
+                if ($item === '.' || $item === '..') {
+                    continue;
+                }
+                $childSource = $sourcePath.'/'.$item;
+                $childRelative = $relativePath === '' ? $item : $relativePath.'/'.$item;
+                self::addPathToZip($zip, $childSource, $childRelative);
+            }
+
+            return;
+        }
+        if (!is_file($sourcePath)) {
+            return;
+        }
+        $zip->addFile($sourcePath, $relativePath);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function readBackupMetadata(string $archivePath): array
+    {
+        $zip = new \ZipArchive();
+        if ($zip->open($archivePath) !== true) {
+            return [];
+        }
+        $raw = $zip->getFromName('.backup-meta.json');
+        $zip->close();
+        if (!is_string($raw) || trim($raw) === '') {
+            return [];
+        }
+        $decoded = json_decode($raw, true);
+
+        return is_array($decoded) ? $decoded : [];
     }
 
     private static function recordHistory(

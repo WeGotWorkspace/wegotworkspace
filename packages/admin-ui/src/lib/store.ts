@@ -57,6 +57,15 @@ export type Settings = {
     } | null;
     updateAvailable: boolean;
     compatible: boolean;
+    backups: {
+      name: string;
+      sizeBytes: number;
+      modifiedAt: string | null;
+      fromVersion: string | null;
+      toVersion: string | null;
+      format?: "zip" | "legacy_dir";
+      downloadable?: boolean;
+    }[];
     checks: { ok: boolean; label: string; detail: string }[];
     inProgress: boolean;
     phase: string | null;
@@ -111,6 +120,7 @@ const DEFAULT_STATE: Settings = {
     latest: null,
     updateAvailable: false,
     compatible: true,
+    backups: [],
     checks: [],
     inProgress: false,
     phase: null,
@@ -261,6 +271,10 @@ export const store = {
   clearUpdateLog: async () => {
     const result = await api<{ ok: boolean; lines: string[] }>("updates/log/clear", {});
     return result.lines;
+  },
+  deleteBackup: async (name: string) => {
+    const updates = await api<Settings["updates"]>("updates/backups/delete", { name });
+    store.set({ updates });
   },
 };
 
