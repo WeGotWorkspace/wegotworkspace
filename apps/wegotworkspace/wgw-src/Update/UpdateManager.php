@@ -634,7 +634,7 @@ final class UpdateManager
         $now = time();
         $last = isset($state[$key]) ? strtotime((string) $state[$key]) : false;
         if (is_int($last) && $last > 0 && ($now - $last) < $seconds) {
-            throw new \RuntimeException('Please wait before running another update '.$action.'.');
+            throw new \InvalidArgumentException('Please wait before running another update '.$action.'.');
         }
         $state[$key] = date('c');
         UpdateStateStore::write($state);
