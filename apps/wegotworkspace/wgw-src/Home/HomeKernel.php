@@ -61,7 +61,8 @@ final class HomeKernel
         $voiceOk = $filesOn && is_file(Paths::voiceDist().'/index.html');
         $notesOk = $filesOn && is_file(Paths::notesDist().'/index.html');
         $officeRoot = Paths::officeUiBuild();
-        $officeOk = $filesOn && is_readable($officeRoot.'/index.html') && is_readable($officeRoot.'/editor.html');
+        $officeEditorReady = is_readable($officeRoot.'/editor.html') || is_readable($officeRoot.'/editor/index.html');
+        $officeOk = $filesOn && is_readable($officeRoot.'/index.html') && $officeEditorReady;
 
         if ($method === 'HEAD') {
             return true;

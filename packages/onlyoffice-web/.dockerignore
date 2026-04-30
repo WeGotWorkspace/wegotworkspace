@@ -1,0 +1,35 @@
+# Exclude dev/build artifacts — these are rebuilt inside Docker
+node_modules
+.next
+out
+
+# Git & editor
+.git
+.gitignore
+.gitattributes
+.vscode
+
+# Deployment configs not needed inside the image
+.vercel
+.edgeone
+.wrangler
+vercel.json
+wrangler.json
+wrangler.jsonc
+edgeone.json
+
+# Docs & examples
+README.md
+README.zh-CN.md
+docs
+examples
+
+# Large OnlyOffice static assets — they come from the documentserver stage,
+# so including them in the build context just wastes time and bandwidth.
+public/v9.3*
+
+# Misc
+.DS_Store
+*.pem
+*.local
+.pnpm-debug.log*

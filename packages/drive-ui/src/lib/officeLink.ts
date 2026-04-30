@@ -1,14 +1,6 @@
-/**
- * Builds links to the Sabre office shell ({@code /office/editor?file=…}) using the same rules as
- * {@code parseOfficeFileParam} in {@code packages/docs/overlay/lib/sabre-office-dav.ts}.
- */
-
 const OFFICE_EXT = new Set(["docx", "xlsx", "pptx", "pdf"]);
 
-/**
- * @returns Path relative to WebDAV {@code files/} (no leading slash), or null if not openable in OnlyOffice.
- */
-export function relUnderFilesFromDrivePath(path: string): string | null {
+function normalizeOpenableDrivePath(path: string): { cleanPath: string } | null {
   let s = path.trim().replace(/^\/+/, "").replace(/\/+/g, "/");
   if (s === "") {
     return null;
@@ -22,36 +14,37 @@ export function relUnderFilesFromDrivePath(path: string): string | null {
   if (parts.length < 3) {
     return null;
   }
-  const zone = parts[0].toLowerCase();
+  const zone = parts[0]?.toLowerCase();
   if (zone !== "users" && zone !== "groups") {
     return null;
   }
-  const last = parts[parts.length - 1] ?? "";
-  const ext = last.includes(".") ? (last.split(".").pop() ?? "").toLowerCase() : "";
+  const fileName = parts[parts.length - 1] ?? "";
+  const ext = fileName.includes(".") ? (fileName.split(".").pop() ?? "").toLowerCase() : "";
   if (!OFFICE_EXT.has(ext)) {
     return null;
   }
-  return s;
+  return { cleanPath: s };
 }
 
 /**
  * @returns e.g. {@code /office/editor?file=users%2Fwouter%2FHello.docx} or null.
- * The office editor also accepts {@code ?page=} with the same path (see office overlay).
  */
 export function officeEditorHref(driveFilePath: string): string | null {
-  const rel = relUnderFilesFromDrivePath(driveFilePath);
-  if (!rel) {
+  const info = normalizeOpenableDrivePath(driveFilePath);
+  if (!info) {
     return null;
   }
-  const q = new URLSearchParams({ file: rel });
+
+  const q = new URLSearchParams({ file: info.cleanPath });
+
   return `/office/editor?${q.toString()}`;
 }
 
 export function canOpenInOfficePath(path: string): boolean {
-  return relUnderFilesFromDrivePath(path) !== null;
+  return normalizeOpenableDrivePath(path) !== null;
 }
 
-/** Blank document in the office shell (see {@code server.openNew} / {@code ?new=} on the editor page). */
-export function officeNewEditorHref(ext: "docx" | "xlsx" | "pptx"): string {
+/** Blank document in the office shell (see {@code ?new=} on the editor page). */
+export function officeNewEditorHref(ext: "docx" | "xlsx" | "pptx" | "pdf"): string {
   return `/office/editor?new=${encodeURIComponent(ext)}`;
 }

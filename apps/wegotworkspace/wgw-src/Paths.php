@@ -98,11 +98,11 @@ final class Paths
     }
 
     /**
-     * Next.js static export for ZIZIYI Office (packages/docs), served at {@code /office/}.
+     * Next.js static export for ONLYOFFICE Web ({@code packages/onlyoffice-web}), served at {@code /office/}.
      */
     public static function officeUiBuild(): string
     {
-        return self::privateDir().'/docs/build';
+        return self::privateDir().'/office/build';
     }
 
     /**
