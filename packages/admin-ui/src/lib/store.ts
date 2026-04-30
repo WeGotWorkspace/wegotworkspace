@@ -66,7 +66,7 @@ export type Settings = {
       format?: "zip" | "legacy_dir";
       downloadable?: boolean;
     }[];
-    checks: { ok: boolean; label: string; detail: string }[];
+    checks: { ok: boolean; label: string; detail: string; status?: "ok" | "fail" | "unknown" }[];
     inProgress: boolean;
     phase: string | null;
     current: { from: string; to: string; at: string } | null;
