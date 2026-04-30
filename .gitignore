@@ -7,6 +7,7 @@ node_modules/
 /apps/wegotworkspace/wgw-content/*
 /apps/wegotworkspace/wgw-content/sessions/*
 /apps/wegotworkspace/wgw-modules/docs/build/
+/apps/wegotworkspace/wgw-modules/office/build/
 /apps/wegotworkspace/wgw-modules/drive/dist/
 /apps/wegotworkspace/wgw-modules/voice/dist/
 /apps/wegotworkspace/wgw-modules/mail/dist/
