@@ -137,6 +137,7 @@ function rmSafe(path) {
 
 function zipDirectory(sourceDir, outputZip) {
   const cwd = sourceDir;
+  rmSafe(outputZip);
   execFileSync("zip", ["-rq", outputZip, "."], { cwd, stdio: "inherit" });
 }
 
