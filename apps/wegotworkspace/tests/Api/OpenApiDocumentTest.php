@@ -18,6 +18,7 @@ final class OpenApiDocumentTest extends TestCase
         self::assertArrayHasKey('/auth/refresh', $doc['paths'] ?? []);
         self::assertArrayHasKey('/auth/revoke', $doc['paths'] ?? []);
         self::assertArrayHasKey('/installer/state', $doc['paths'] ?? []);
+        self::assertArrayHasKey('/installer/bootstrap', $doc['paths'] ?? []);
         self::assertArrayHasKey('/installer/action', $doc['paths'] ?? []);
         self::assertArrayHasKey('/admin/updates/log', $doc['paths'] ?? []);
         self::assertArrayHasKey('/admin/updates/backups/{name}', $doc['paths'] ?? []);

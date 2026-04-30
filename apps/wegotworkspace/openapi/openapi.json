@@ -287,24 +287,6 @@
         }
       }
     },
-    "/admin/status": {
-      "get": {
-        "tags": [
-          "Admin"
-        ],
-        "summary": "Admin API scaffold status",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Admin status"
-          }
-        }
-      }
-    },
     "/admin/state": {
       "get": {
         "tags": [
@@ -477,24 +459,6 @@
         "responses": {
           "200": {
             "description": "Membership removed"
-          }
-        }
-      }
-    },
-    "/settings/status": {
-      "get": {
-        "tags": [
-          "Settings"
-        ],
-        "summary": "Settings API scaffold status",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Settings status"
           }
         }
       }
@@ -1277,10 +1241,23 @@
         "tags": [
           "Installer"
         ],
-        "summary": "Installer/installation state",
+        "summary": "Installer summary and current state snapshot",
         "responses": {
           "200": {
             "description": "Installer state"
+          }
+        }
+      }
+    },
+    "/installer/bootstrap": {
+      "get": {
+        "tags": [
+          "Installer"
+        ],
+        "summary": "Installer bootstrap payload (csrf + full state)",
+        "responses": {
+          "200": {
+            "description": "Installer bootstrap payload"
           }
         }
       }
