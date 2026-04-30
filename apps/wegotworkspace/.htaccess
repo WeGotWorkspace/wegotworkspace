@@ -5,7 +5,7 @@ Options -Indexes -MultiViews
     CGIPassAuth On
 </IfModule>
 
-# WebAssembly (e.g. office tooling). Ensures correct Content-Type when the host's mime.types omits .wasm.
+# WebAssembly assets: ensure correct Content-Type when host mime.types omits .wasm.
 <IfModule mod_mime.c>
     AddType application/wasm .wasm
 </IfModule>
@@ -18,19 +18,6 @@ Options -Indexes -MultiViews
     RewriteRule ^(?:wgw-modules|wgw-private|wgw-content)(?:/|$) - [F,L,NC]
     RewriteRule ^(?:wgw-src|src|resources|vendor|scripts|patches|config|public)(?:/|$) - [F,L,NC]
     RewriteRule ^(?:composer\.(?:json|lock)|package\.json|wgw-config(?:\.sample)?\.php|\.env)$ - [F,L,NC]
-
-    # Office landing -> Drive (same path prefix when installed in a subdirectory).
-    RewriteCond %{REQUEST_URI} ^(.*)/office/index\.html$ [OR]
-    RewriteCond %{REQUEST_URI} ^(.*)/office/?$
-    RewriteRule ^ %1/drive/ [R=301,L,QSA]
-
-    # Office (ZIZIYI): HTML shells through PHP for __SABRE_OFFICE_CONFIG__ injection.
-    RewriteCond %{REQUEST_URI} /office/?$ [OR]
-    RewriteCond %{REQUEST_URI} /office/index\.html$
-    RewriteRule ^ index.php [L]
-    RewriteCond %{REQUEST_URI} /office/editor/?$ [OR]
-    RewriteCond %{REQUEST_URI} /office/editor\.html$
-    RewriteRule ^ index.php [L]
 
     # Copy Authorization into the env var Sabre's stack reads.
     RewriteCond %{HTTP:Authorization} .+
