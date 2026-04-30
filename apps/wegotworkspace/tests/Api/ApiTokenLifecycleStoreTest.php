@@ -10,73 +10,61 @@ use PHPUnit\Framework\TestCase;
 
 final class ApiTokenLifecycleStoreTest extends TestCase
 {
-    private string $oldDataDir = '';
-    private string $tmpDataDir = '';
-
-    protected function setUp(): void
+    private function pdo(): \PDO
     {
-        $old = getenv('SABRE_DATA_DIR');
-        $this->oldDataDir = is_string($old) ? $old : '';
-        $this->tmpDataDir = sys_get_temp_dir().'/wgw-api-test-'.bin2hex(random_bytes(4));
-        putenv('SABRE_DATA_DIR='.$this->tmpDataDir);
-    }
+        $pdo = new \PDO('sqlite::memory:');
+        $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        $pdo->exec(
+            'CREATE TABLE api_refresh_tokens (
+                token_hash TEXT PRIMARY KEY,
+                username TEXT NOT NULL,
+                role TEXT NOT NULL,
+                expires_at INTEGER NOT NULL,
+                revoked INTEGER NOT NULL DEFAULT 0,
+                created_at INTEGER NOT NULL
+            )'
+        );
+        $pdo->exec(
+            'CREATE TABLE api_revoked_tokens (
+                jti TEXT PRIMARY KEY,
+                expires_at INTEGER NOT NULL,
+                created_at INTEGER NOT NULL
+            )'
+        );
 
-    protected function tearDown(): void
-    {
-        putenv('SABRE_DATA_DIR='.$this->oldDataDir);
-        $this->deleteDir($this->tmpDataDir);
+        return $pdo;
     }
 
     public function testRefreshTokenIssueAndConsume(): void
     {
-        $refresh = ApiRefreshStore::issue('alice', 'user');
+        $pdo = $this->pdo();
+        $refresh = ApiRefreshStore::issue($pdo, 'alice', 'user');
         self::assertNotSame('', $refresh);
 
-        $principal = ApiRefreshStore::consume($refresh);
+        $principal = ApiRefreshStore::consume($pdo, $refresh);
         self::assertIsArray($principal);
         self::assertSame('alice', $principal['username']);
         self::assertSame('user', $principal['role']);
 
-        $second = ApiRefreshStore::consume($refresh);
+        $second = ApiRefreshStore::consume($pdo, $refresh);
         self::assertNull($second);
     }
 
     public function testRefreshTokenRevoke(): void
     {
-        $refresh = ApiRefreshStore::issue('alice', 'user');
-        ApiRefreshStore::revoke($refresh);
-        $principal = ApiRefreshStore::consume($refresh);
+        $pdo = $this->pdo();
+        $refresh = ApiRefreshStore::issue($pdo, 'alice', 'user');
+        ApiRefreshStore::revoke($pdo, $refresh);
+        $principal = ApiRefreshStore::consume($pdo, $refresh);
         self::assertNull($principal);
     }
 
     public function testRevocationStoreRejectsRevokedJti(): void
     {
+        $pdo = $this->pdo();
         $jti = 'jti-123';
-        ApiRevocationStore::revoke($jti, time() + 3600);
-        self::assertTrue(ApiRevocationStore::isRevoked($jti));
-        self::assertFalse(ApiRevocationStore::isRevoked('other'));
-    }
-
-    private function deleteDir(string $dir): void
-    {
-        if ($dir === '' || !is_dir($dir)) {
-            return;
-        }
-        $items = scandir($dir);
-        if (!is_array($items)) {
-            return;
-        }
-        foreach ($items as $item) {
-            if ($item === '.' || $item === '..') {
-                continue;
-            }
-            $path = $dir.'/'.$item;
-            if (is_dir($path)) {
-                $this->deleteDir($path);
-            } else {
-                @unlink($path);
-            }
-        }
-        @rmdir($dir);
+        ApiRevocationStore::revoke($pdo, $jti, time() + 3600);
+        self::assertTrue(ApiRevocationStore::isRevoked($pdo, $jti));
+        self::assertFalse(ApiRevocationStore::isRevoked($pdo, 'other'));
     }
 }

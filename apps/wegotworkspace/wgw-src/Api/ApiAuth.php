@@ -6,14 +6,13 @@ namespace App\Api;
 
 use App\Admin\AdminPolicy;
 use App\Admin\AuthService;
-use App\Auth\LoginThrottle;
 
 final class ApiAuth
 {
     /**
      * @return array{username: string, role: 'guest'|'user'|'admin'}|null
      */
-    public static function authenticateBearer(): ?array
+    public static function authenticateBearer(\PDO $pdo): ?array
     {
         $header = (string) ($_SERVER['HTTP_AUTHORIZATION'] ?? '');
         if (!preg_match('/^Bearer\\s+(.+)$/i', $header, $m)) {
@@ -35,7 +34,7 @@ final class ApiAuth
         if ($claims === null) {
             return null;
         }
-        if (ApiRevocationStore::isRevoked($claims['jti'])) {
+        if (ApiRevocationStore::isRevoked($pdo, $claims['jti'])) {
             return null;
         }
 
@@ -54,7 +53,7 @@ final class ApiAuth
         if ($username === '' || $password === '') {
             throw new \InvalidArgumentException('Username and password are required.');
         }
-        if (!LoginThrottle::allowAndRecord($ip, $username)) {
+        if (!ApiRateLimiter::allowLoginAttempt($username, $ip)) {
             throw new \UnexpectedValueException('Too many login attempts. Please try again later.');
         }
 
@@ -65,7 +64,7 @@ final class ApiAuth
         if (!AuthService::validateWithPdo($pdo, $username, $password, $realm)) {
             throw new \UnexpectedValueException('Invalid credentials.');
         }
-        LoginThrottle::clearUserIp($ip, $username);
+        ApiRateLimiter::resetUserIp($username, $ip);
         $role = AdminPolicy::isAdmin($pdo, $username) ? 'admin' : 'user';
         $ttl = 3600;
         $token = ApiToken::issue([
@@ -73,7 +72,7 @@ final class ApiAuth
             'role' => $role,
             'exp' => time() + $ttl,
         ], $jwtCfg);
-        $refresh = ApiRefreshStore::issue($username, $role);
+        $refresh = ApiRefreshStore::issue($pdo, $username, $role);
 
         return [
             'access_token' => $token,
@@ -88,7 +87,7 @@ final class ApiAuth
     /**
      * @param array{username: string, role: 'guest'|'user'|'admin'} $principal
      */
-    public static function revokeCurrentAccessToken(string $token, array $principal): void
+    public static function revokeCurrentAccessToken(\PDO $pdo, string $token, array $principal): void
     {
         $kid = ApiJwtConfig::readKid($token);
         if ($kid === null) {
@@ -105,15 +104,15 @@ final class ApiAuth
         if ($claims['sub'] !== $principal['username']) {
             return;
         }
-        ApiRevocationStore::revoke($claims['jti'], $claims['exp']);
+        ApiRevocationStore::revoke($pdo, $claims['jti'], $claims['exp']);
     }
 
     /**
      * @return array{access_token: string, refresh_token: string, token_type: string, expires_in: int, role: 'guest'|'user'|'admin', username: string}
      */
-    public static function refresh(string $refreshToken): array
+    public static function refresh(\PDO $pdo, string $refreshToken): array
     {
-        $principal = ApiRefreshStore::consume($refreshToken);
+        $principal = ApiRefreshStore::consume($pdo, $refreshToken);
         if ($principal === null) {
             throw new \UnexpectedValueException('Invalid refresh token.');
         }
@@ -127,7 +126,7 @@ final class ApiAuth
             'role' => $principal['role'],
             'exp' => time() + $ttl,
         ], $jwtCfg);
-        $newRefresh = ApiRefreshStore::issue($principal['username'], $principal['role']);
+        $newRefresh = ApiRefreshStore::issue($pdo, $principal['username'], $principal['role']);
 
         return [
             'access_token' => $access,
@@ -139,8 +138,8 @@ final class ApiAuth
         ];
     }
 
-    public static function revokeRefreshToken(string $refreshToken): void
+    public static function revokeRefreshToken(\PDO $pdo, string $refreshToken): void
     {
-        ApiRefreshStore::revoke($refreshToken);
+        ApiRefreshStore::revoke($pdo, $refreshToken);
     }
 }
