@@ -196,33 +196,6 @@ final class ApiKernel
             return true;
         }
 
-        if ($method === 'GET' && preg_match('#^([a-z0-9_-]+)/status$#', $rel, $m)) {
-            $domain = (string) ($m[1] ?? '');
-            $requiredRole = self::requiredRoleForDomain($domain);
-            if ($requiredRole === null) {
-                ApiResponse::error(404, 'Unknown domain.', 'not_found');
-
-                return true;
-            }
-            if (!self::roleAllows($principal['role'] ?? 'guest', $requiredRole)) {
-                if ($requiredRole !== 'guest' && $principal === null) {
-                    ApiResponse::error(401, 'Missing or invalid bearer token.', 'unauthorized');
-                } else {
-                    ApiResponse::error(403, 'Insufficient role.', 'forbidden');
-                }
-
-                return true;
-            }
-            ApiResponse::json(200, [
-                'domain' => $domain,
-                'requiredRole' => $requiredRole,
-                'status' => 'planned',
-                'message' => 'Domain route scaffold is active in API v1.',
-            ]);
-
-            return true;
-        }
-
         try {
             if (ApiDomainHandlers::dispatch($webBase, $method, $rel, $principal, $pdo, $realm)) {
                 return true;
@@ -273,13 +246,6 @@ final class ApiKernel
         }
 
         return $caps;
-    }
-
-    private static function requiredRoleForDomain(string $domain): ?string
-    {
-        $map = self::domainMap();
-
-        return $map[$domain] ?? null;
     }
 
     /**

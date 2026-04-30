@@ -30,10 +30,18 @@ final class ApiDomainHandlers
     public static function dispatch(string $webBase, string $method, string $rel, ?array $principal, \PDO $pdo, string $realm): bool
     {
         if ($method === 'GET' && $rel === 'installer/state') {
+            $bootstrap = InstallerKernel::bootstrapPayloadFromApi($webBase);
             ApiResponse::json(200, [
                 'installed' => is_file(Paths::lockFile()),
                 'maintenance' => UpdateManager::inMaintenanceMode(),
+                'state' => $bootstrap['state'],
             ]);
+
+            return true;
+        }
+
+        if ($method === 'GET' && $rel === 'installer/bootstrap') {
+            ApiResponse::json(200, InstallerKernel::bootstrapPayloadFromApi($webBase));
 
             return true;
         }

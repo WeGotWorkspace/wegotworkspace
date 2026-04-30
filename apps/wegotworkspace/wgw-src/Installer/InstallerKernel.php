@@ -14,6 +14,9 @@ final class InstallerKernel
 
     public static function bootstrapSession(): void
     {
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            return;
+        }
         $dir = Paths::data().'/sessions';
         if (!is_dir($dir)) {
             @mkdir($dir, 0700, true);
@@ -21,9 +24,7 @@ final class InstallerKernel
         if (is_writable($dir)) {
             session_save_path($dir);
         }
-        if (session_status() !== PHP_SESSION_ACTIVE) {
-            session_start();
-        }
+        session_start();
     }
 
     public static function respond(): void
@@ -149,6 +150,20 @@ final class InstallerKernel
         }
 
         return self::applyApiAction($webBase, $action, $payload);
+    }
+
+    /**
+     * @return array{csrf:string,state:array<string,mixed>}
+     */
+    public static function bootstrapPayloadFromApi(string $webBase): array
+    {
+        self::bootstrapSession();
+        $installed = is_file(Paths::lockFile());
+
+        return [
+            'csrf' => Csrf::token(),
+            'state' => self::apiState($webBase, $installed),
+        ];
     }
 
     /**
