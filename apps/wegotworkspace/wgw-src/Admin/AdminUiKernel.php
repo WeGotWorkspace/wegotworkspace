@@ -141,6 +141,11 @@ final class AdminUiKernel
 
                 return true;
             }
+            if ($method === 'GET' && $rel === 'updates/backups/download') {
+                self::handleDownloadBackup();
+
+                return true;
+            }
 
             $body = $method === 'POST' ? self::readJsonBody() : [];
             if ($method === 'POST') {
@@ -212,6 +217,11 @@ final class AdminUiKernel
             if ($method === 'POST' && $rel === 'updates/log/clear') {
                 UpdateStateStore::clearLog();
                 self::json(200, ['ok' => true, 'lines' => []]);
+
+                return true;
+            }
+            if ($method === 'POST' && $rel === 'updates/backups/delete') {
+                self::json(200, UpdateManager::deleteBackup($pdo, $body));
 
                 return true;
             }
@@ -579,6 +589,27 @@ final class AdminUiKernel
         }
 
         return '';
+    }
+
+    private static function handleDownloadBackup(): void
+    {
+        $name = isset($_GET['name']) && is_string($_GET['name']) ? trim($_GET['name']) : '';
+        if ($name === '' || preg_match('/^[A-Za-z0-9._-]+$/', $name) !== 1) {
+            throw new \InvalidArgumentException('Invalid backup file name.');
+        }
+        $base = realpath(UpdateStateStore::backupDir());
+        $path = UpdateStateStore::backupDir().'/'.$name;
+        $real = (is_file($path) || is_dir($path)) ? realpath($path) : false;
+        if ($base === false || $real === false || !str_starts_with($real, $base)) {
+            throw new \InvalidArgumentException('Backup not found.');
+        }
+        if (is_dir($real)) {
+            throw new \InvalidArgumentException('Legacy backup folders are not directly downloadable. Use ZIP backups.');
+        }
+        header('Content-Type: application/zip');
+        header('Content-Length: '.(string) filesize($real));
+        header('Content-Disposition: attachment; filename="'.basename($real).'"');
+        readfile($real);
     }
 
     /**

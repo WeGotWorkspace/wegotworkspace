@@ -28,6 +28,7 @@ function UpdatesPage() {
   const [applying, setApplying] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [clearingLog, setClearingLog] = useState(false);
+  const [deletingBackup, setDeletingBackup] = useState<string | null>(null);
   const [displayPhase, setDisplayPhase] = useState<string | null>(null);
   const [logLines, setLogLines] = useState<string[]>([]);
   const [inlineResult, setInlineResult] = useState<{
@@ -65,6 +66,7 @@ function UpdatesPage() {
   }, [updates.phase, updates.inProgress, applying]);
 
   const latestVersion = updates.latest?.version || "Unknown";
+  const backups = updates.backups ?? [];
   const phaseOrder = ["downloading", "extracting", "backing_up", "applying_files"] as const;
   const visiblePhase = updates.phase ?? displayPhase;
   const activePhase = visiblePhase === "running_migrations" ? "applying_files" : visiblePhase;
@@ -341,6 +343,89 @@ function UpdatesPage() {
               >
                 Read release notes
               </a>
+            )}
+          </div>
+        </Section>
+
+        <Section title="Backups" description="Archived update backups stored as ZIP files.">
+          <div className="space-y-2">
+            {backups.length === 0 ? (
+              <div className="rounded-md border px-3 py-2 text-xs text-muted-foreground">
+                No backups available yet.
+              </div>
+            ) : (
+              backups.map((backup) => (
+                <div
+                  key={backup.name}
+                  className="flex items-start justify-between gap-4 rounded-md border px-3 py-2"
+                >
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium break-all">{backup.name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {formatBytes(backup.sizeBytes)}
+                      {backup.modifiedAt
+                        ? ` · ${new Date(backup.modifiedAt).toLocaleString()}`
+                        : ""}
+                      {backup.fromVersion && backup.toVersion
+                        ? ` · ${backup.fromVersion} -> ${backup.toVersion}`
+                        : ""}
+                      {backup.downloadable === false ? " · Legacy folder" : ""}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {backup.downloadable === false ? (
+                      <Button variant="outline" size="sm" disabled>
+                        Download
+                      </Button>
+                    ) : (
+                      <Button asChild variant="outline" size="sm">
+                        <a
+                          href={`/admin/api/updates/backups/download?name=${encodeURIComponent(
+                            backup.name,
+                          )}`}
+                        >
+                          Download
+                        </a>
+                      </Button>
+                    )}
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={deletingBackup === backup.name}
+                        >
+                          Delete
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete backup file?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently remove {backup.name}.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={async () => {
+                              setDeletingBackup(backup.name);
+                              try {
+                                await store.deleteBackup(backup.name);
+                              } finally {
+                                setDeletingBackup(null);
+                              }
+                            }}
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
+              ))
             )}
           </div>
         </Section>
