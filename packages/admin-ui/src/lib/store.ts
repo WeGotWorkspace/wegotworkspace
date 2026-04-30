@@ -57,8 +57,33 @@ export type Settings = {
     } | null;
     updateAvailable: boolean;
     compatible: boolean;
+    backups: {
+      name: string;
+      sizeBytes: number;
+      modifiedAt: string | null;
+      fromVersion: string | null;
+      toVersion: string | null;
+      format?: "zip" | "legacy_dir";
+      downloadable?: boolean;
+    }[];
     checks: { ok: boolean; label: string; detail: string }[];
     inProgress: boolean;
+    phase: string | null;
+    current: { from: string; to: string; at: string } | null;
+    download: {
+      downloadedBytes: number;
+      totalBytes: number | null;
+      percent: number | null;
+      updatedAt: string;
+    } | null;
+    phaseProgress: {
+      completed: number;
+      total: number;
+      percent: number;
+      updatedAt: string;
+    } | null;
+    cancelRequested: boolean;
+    cancelAllowed: boolean;
     lastCheckedAt: string | null;
     lastCheckError: string | null;
     lastResult: { ok: boolean; version: string; message: string; finishedAt: string | null } | null;
@@ -95,8 +120,15 @@ const DEFAULT_STATE: Settings = {
     latest: null,
     updateAvailable: false,
     compatible: true,
+    backups: [],
     checks: [],
     inProgress: false,
+    phase: null,
+    current: null,
+    download: null,
+    phaseProgress: null,
+    cancelRequested: false,
+    cancelAllowed: false,
     lastCheckedAt: null,
     lastCheckError: null,
     lastResult: null,
@@ -220,8 +252,13 @@ export const store = {
           "No update package available. Run Check now and verify feed metadata.",
       );
     }
-    await api<{ ok: boolean; message?: string }>("updates/apply", latest);
+    const result = await api<{ ok: boolean; message?: string }>("updates/apply", latest);
     await store.reload();
+    return result;
+  },
+  cancelUpdate: async () => {
+    const updates = await api<Settings["updates"]>("updates/cancel", {});
+    store.set({ updates });
   },
   reloadUpdateState: async () => {
     const updates = await api<Settings["updates"]>("updates/state");
@@ -230,6 +267,14 @@ export const store = {
   readUpdateLog: async () => {
     const log = await api<{ lines: string[] }>("updates/log");
     return log.lines;
+  },
+  clearUpdateLog: async () => {
+    const result = await api<{ ok: boolean; lines: string[] }>("updates/log/clear", {});
+    return result.lines;
+  },
+  deleteBackup: async (name: string) => {
+    const updates = await api<Settings["updates"]>("updates/backups/delete", { name });
+    store.set({ updates });
   },
 };
 
