@@ -6,6 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { CircleCheck, Loader2, TriangleAlert } from "lucide-react";
 
 export const Route = createFileRoute("/updates")({ component: UpdatesPage });
@@ -16,6 +27,7 @@ function UpdatesPage() {
   const [checking, setChecking] = useState(false);
   const [applying, setApplying] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [clearingLog, setClearingLog] = useState(false);
   const [displayPhase, setDisplayPhase] = useState<string | null>(null);
   const [logLines, setLogLines] = useState<string[]>([]);
   const [inlineResult, setInlineResult] = useState<{
@@ -26,6 +38,7 @@ function UpdatesPage() {
 
   useEffect(() => {
     void store.reloadUpdateState();
+    void store.readUpdateLog().then((lines) => setLogLines([...lines].reverse()));
   }, []);
 
   useEffect(() => {
@@ -358,16 +371,54 @@ function UpdatesPage() {
           title="Update log"
           description="Most recent updater events and diagnostics."
           aside={
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={async () => {
-                const lines = await store.readUpdateLog();
-                setLogLines(lines);
-              }}
-            >
-              Refresh log
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  const lines = await store.readUpdateLog();
+                  setLogLines([...lines].reverse());
+                }}
+              >
+                Refresh log
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={clearingLog || logLines.length === 0}
+                  >
+                    Empty log
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Empty update log?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This removes all log entries from disk. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      onClick={async () => {
+                        setClearingLog(true);
+                        try {
+                          const lines = await store.clearUpdateLog();
+                          setLogLines([...lines].reverse());
+                        } finally {
+                          setClearingLog(false);
+                        }
+                      }}
+                    >
+                      Empty log
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           }
         >
           <pre className="max-h-64 overflow-auto rounded-md bg-muted p-3 text-xs">

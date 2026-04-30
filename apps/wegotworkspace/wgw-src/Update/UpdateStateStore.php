@@ -58,6 +58,12 @@ final class UpdateStateStore
         file_put_contents(self::logPath(), '['.date('c').'] '.$message."\n", FILE_APPEND | LOCK_EX);
     }
 
+    public static function clearLog(): void
+    {
+        self::ensureDirs();
+        file_put_contents(self::logPath(), '', LOCK_EX);
+    }
+
     public static function lockPath(): string
     {
         return self::baseDir().'/update.lock';

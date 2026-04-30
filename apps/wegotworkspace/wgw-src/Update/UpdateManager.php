@@ -583,6 +583,7 @@ final class UpdateManager
     private static function writeStatus(string $phase, string $fromVersion, string $toVersion): void
     {
         $state = UpdateStateStore::read();
+        $previousPhase = is_string($state['phase'] ?? null) ? $state['phase'] : null;
         $state['phase'] = $phase;
         $state['current'] = [
             'from' => $fromVersion,
@@ -595,6 +596,9 @@ final class UpdateManager
         unset($state['phase_progress']);
         $state['cancel_requested'] = UpdateStateStore::isCancelRequested();
         UpdateStateStore::write($state);
+        if ($previousPhase !== $phase) {
+            UpdateStateStore::appendLog('Stage: '.self::phaseLabel($phase).'.');
+        }
     }
 
     private static function writeDownloadProgress(
@@ -706,6 +710,18 @@ final class UpdateManager
         }
         $state[$key] = date('c');
         UpdateStateStore::write($state);
+    }
+
+    private static function phaseLabel(string $phase): string
+    {
+        return match ($phase) {
+            'downloading' => 'Downloading package',
+            'extracting' => 'Extracting archive',
+            'backing_up' => 'Creating backup',
+            'applying_files' => 'Replacing files',
+            'running_migrations' => 'Running migrations',
+            default => $phase,
+        };
     }
 
     private static function recordHistory(
