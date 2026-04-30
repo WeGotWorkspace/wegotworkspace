@@ -30,6 +30,22 @@ final class ApiDomainHandlersTest extends TestCase
         self::assertIsArray($json);
         self::assertArrayHasKey('installed', $json);
         self::assertArrayHasKey('maintenance', $json);
+        self::assertArrayHasKey('state', $json);
+    }
+
+    public function testInstallerBootstrapWorksForGuest(): void
+    {
+        $pdo = $this->inMemoryPdo();
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        ob_start();
+        $handled = ApiDomainHandlers::dispatch('', 'GET', 'installer/bootstrap', null, $pdo, 'SabreDAV');
+        $raw = (string) ob_get_clean();
+        $json = json_decode($raw, true);
+
+        self::assertTrue($handled);
+        self::assertIsArray($json);
+        self::assertArrayHasKey('csrf', $json);
+        self::assertArrayHasKey('state', $json);
     }
 
     public function testProtectedDomainRequiresToken(): void
