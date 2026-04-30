@@ -25,6 +25,31 @@ final class ApiKernel
 
             return true;
         }
+        if ($path === $docsPrefix.'/swagger-ui.css') {
+            self::respondSwaggerAsset('swagger-ui.css', 'text/css; charset=utf-8');
+
+            return true;
+        }
+        if ($path === $docsPrefix.'/swagger-ui-bundle.js') {
+            self::respondSwaggerAsset('swagger-ui-bundle.js', 'application/javascript; charset=utf-8');
+
+            return true;
+        }
+        if ($path === $docsPrefix.'/swagger-ui-standalone-preset.js') {
+            self::respondSwaggerAsset('swagger-ui-standalone-preset.js', 'application/javascript; charset=utf-8');
+
+            return true;
+        }
+        if ($path === $docsPrefix.'/favicon-32x32.png') {
+            self::respondSwaggerAsset('favicon-32x32.png', 'image/png');
+
+            return true;
+        }
+        if ($path === $docsPrefix.'/favicon-16x16.png') {
+            self::respondSwaggerAsset('favicon-16x16.png', 'image/png');
+
+            return true;
+        }
 
         if ($path === $openApiJsonPath) {
             ApiResponse::json(200, OpenApiDocument::build($webBase));
@@ -33,19 +58,13 @@ final class ApiKernel
         }
         $jwksPath = WebBase::url($webBase, '/api/v1/.well-known/jwks.json');
         if ($path === $jwksPath) {
-            $jwtCfg = ApiJwtConfig::load();
-            if ($jwtCfg === null) {
+            $jwks = ApiJwtConfig::jwks();
+            if ($jwks === []) {
                 ApiResponse::error(503, 'JWT key configuration is missing.');
 
                 return true;
             }
-            $jwk = ApiJwtConfig::jwk($jwtCfg);
-            if ($jwk === null) {
-                ApiResponse::error(503, 'JWT public key is invalid for JWKS export.');
-
-                return true;
-            }
-            ApiResponse::json(200, ['keys' => [$jwk]]);
+            ApiResponse::json(200, ['keys' => $jwks]);
 
             return true;
         }
@@ -75,6 +94,8 @@ final class ApiKernel
                 'auth' => [
                     'type' => 'bearer-jwt-rs256',
                     'tokenEndpoint' => WebBase::url($webBase, '/api/v1/auth/token'),
+                    'refreshEndpoint' => WebBase::url($webBase, '/api/v1/auth/refresh'),
+                    'revokeEndpoint' => WebBase::url($webBase, '/api/v1/auth/revoke'),
                     'jwksEndpoint' => WebBase::url($webBase, '/api/v1/.well-known/jwks.json'),
                 ],
                 'domains' => self::domainCapabilities(),
@@ -89,7 +110,33 @@ final class ApiKernel
                 $body = ApiRequest::jsonBody();
                 $username = (string) ($body['username'] ?? '');
                 $password = (string) ($body['password'] ?? '');
-                ApiResponse::json(200, ApiAuth::issueTokenFromCredentials($pdo, $realm, $username, $password));
+                $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+                ApiResponse::json(200, ApiAuth::issueTokenFromCredentials($pdo, $realm, $username, $password, $ip));
+            } catch (\InvalidArgumentException $e) {
+                ApiResponse::error(400, $e->getMessage(), 'bad_request');
+            } catch (\UnexpectedValueException $e) {
+                $msg = $e->getMessage();
+                if (str_contains(strtolower($msg), 'too many login attempts')) {
+                    ApiResponse::error(429, $msg, 'throttled');
+                } else {
+                    ApiResponse::error(401, $msg, 'unauthorized');
+                }
+            } catch (\RuntimeException $e) {
+                ApiResponse::error(503, $e->getMessage(), 'config_error');
+            } catch (\Throwable) {
+                ApiResponse::error(500, 'Could not issue token.', 'server_error');
+            }
+
+            return true;
+        }
+        if ($method === 'POST' && $rel === 'auth/refresh') {
+            try {
+                $body = ApiRequest::jsonBody();
+                $refreshToken = (string) ($body['refresh_token'] ?? '');
+                if ($refreshToken === '') {
+                    throw new \InvalidArgumentException('refresh_token is required.');
+                }
+                ApiResponse::json(200, ApiAuth::refresh($refreshToken));
             } catch (\InvalidArgumentException $e) {
                 ApiResponse::error(400, $e->getMessage(), 'bad_request');
             } catch (\UnexpectedValueException $e) {
@@ -97,7 +144,29 @@ final class ApiKernel
             } catch (\RuntimeException $e) {
                 ApiResponse::error(503, $e->getMessage(), 'config_error');
             } catch (\Throwable) {
-                ApiResponse::error(500, 'Could not issue token.', 'server_error');
+                ApiResponse::error(500, 'Could not refresh token.', 'server_error');
+            }
+
+            return true;
+        }
+        if ($method === 'POST' && $rel === 'auth/revoke') {
+            try {
+                $body = ApiRequest::jsonBody();
+                $principal = ApiAuth::authenticateBearer();
+                if ($principal !== null) {
+                    $bearer = self::bearerTokenFromHeader();
+                    if ($bearer !== null) {
+                        ApiAuth::revokeCurrentAccessToken($bearer, $principal);
+                    }
+                }
+                if (isset($body['refresh_token']) && is_string($body['refresh_token']) && $body['refresh_token'] !== '') {
+                    ApiAuth::revokeRefreshToken($body['refresh_token']);
+                }
+                ApiResponse::json(200, ['ok' => true]);
+            } catch (\InvalidArgumentException $e) {
+                ApiResponse::error(400, $e->getMessage(), 'bad_request');
+            } catch (\Throwable) {
+                ApiResponse::error(500, 'Could not revoke token.', 'server_error');
             }
 
             return true;
@@ -160,8 +229,8 @@ final class ApiKernel
             ApiResponse::error(400, $e->getMessage(), 'bad_request');
 
             return true;
-        } catch (\Throwable $e) {
-            ApiResponse::error(500, 'API domain handler error: '.$e->getMessage(), 'server_error');
+        } catch (\Throwable) {
+            ApiResponse::error(500, 'API domain handler error.', 'server_error');
 
             return true;
         }
@@ -179,10 +248,11 @@ final class ApiKernel
         header('Content-Type: text/html; charset=utf-8');
         echo '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">';
         echo '<title>WeGotWorkspace API Docs</title>';
-        echo '<link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">';
+        echo '<link rel="icon" type="image/png" href="'.htmlspecialchars(WebBase::url($webBase, '/api/docs/favicon-32x32.png'), ENT_QUOTES, 'UTF-8').'">';
+        echo '<link rel="stylesheet" href="'.htmlspecialchars(WebBase::url($webBase, '/api/docs/swagger-ui.css'), ENT_QUOTES, 'UTF-8').'">';
         echo '</head><body><div id="swagger-ui"></div>';
-        echo '<script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>';
-        echo '<script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>';
+        echo '<script src="'.htmlspecialchars(WebBase::url($webBase, '/api/docs/swagger-ui-bundle.js'), ENT_QUOTES, 'UTF-8').'"></script>';
+        echo '<script src="'.htmlspecialchars(WebBase::url($webBase, '/api/docs/swagger-ui-standalone-preset.js'), ENT_QUOTES, 'UTF-8').'"></script>';
         echo '<script>window.ui=SwaggerUIBundle({url:"'.htmlspecialchars($specUrl, ENT_QUOTES, 'UTF-8').'",dom_id:"#swagger-ui",presets:[SwaggerUIBundle.presets.apis,SwaggerUIStandalonePreset],layout:"BaseLayout"});</script>';
         echo '</body></html>';
     }
@@ -257,5 +327,39 @@ final class ApiKernel
     private static function redirectTo(string $location): void
     {
         header('Location: '.$location, true, 302);
+    }
+
+    private static function respondSwaggerAsset(string $file, string $contentType): void
+    {
+        $path = dirname(__DIR__, 2).'/vendor/swagger-api/swagger-ui/dist/'.$file;
+        if (!is_readable($path)) {
+            ApiResponse::error(503, 'Swagger UI asset is missing.', 'docs_unavailable');
+
+            return;
+        }
+        $bytes = file_get_contents($path);
+        if (!is_string($bytes)) {
+            ApiResponse::error(503, 'Swagger UI asset could not be read.', 'docs_unavailable');
+
+            return;
+        }
+        http_response_code(200);
+        header('Content-Type: '.$contentType);
+        header('Cache-Control: public, max-age=300');
+        echo $bytes;
+    }
+
+    /**
+     * @return non-empty-string|null
+     */
+    private static function bearerTokenFromHeader(): ?string
+    {
+        $header = (string) ($_SERVER['HTTP_AUTHORIZATION'] ?? '');
+        if (!preg_match('/^Bearer\\s+(.+)$/i', $header, $m)) {
+            return null;
+        }
+        $token = trim((string) ($m[1] ?? ''));
+
+        return $token !== '' ? $token : null;
     }
 }
