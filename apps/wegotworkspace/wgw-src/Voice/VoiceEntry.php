@@ -173,6 +173,6 @@ final class VoiceEntry
             }
         }
 
-        return $scheme.'://'.$host.WebBase::url($webBase, '/voice/aura-signaling/rooms.php');
+        return $scheme.'://'.$host.WebBase::url($webBase, '/api/v1/voice');
     }
 }
