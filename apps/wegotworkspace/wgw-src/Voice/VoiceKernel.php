@@ -11,8 +11,7 @@ use App\SabreUiAuthGate;
 use App\Settings\SettingsKeys;
 
 /**
- * Serves Aura Voice (https://github.com/woutervroege/bright-face-connect) at {@code /voice/} with bundled WebRTC UI
- * and PHP signaling at {@code /voice/aura-signaling/rooms.php}.
+ * Serves Aura Voice (https://github.com/woutervroege/bright-face-connect) at {@code /voice/} with bundled WebRTC UI.
  *
  * The main UI at {@code /voice/} requires the same Sabre account as Drive ({@code /login/}, UI cookie, or HTTP Basic).
  * The guest join page remains public at {@code /voice/join/}. Signaling accepts either a Sabre login
@@ -26,11 +25,6 @@ final class VoiceKernel
         $prefix = WebBase::url($webBase, '/voice');
 
         return $path === $prefix || $path === $prefix.'/' || str_starts_with($path, $prefix.'/');
-    }
-
-    public static function isSignalingPath(string $webBase, string $path): bool
-    {
-        return $path === WebBase::url($webBase, '/voice/aura-signaling/rooms.php');
     }
 
     public static function tryRespond(string $webBase, string $path): bool
@@ -71,12 +65,6 @@ final class VoiceKernel
             [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]
         );
         $realm = (string) ($cfg[SettingsKeys::AUTH_REALM] ?? 'SabreDAV');
-
-        if (self::isSignalingPath($webBase, $path)) {
-            VoiceSignaling::respond($pdo, $realm);
-
-            return true;
-        }
 
         if (!VoiceStatic::distReady()) {
             self::respondDistMissing($webBase);

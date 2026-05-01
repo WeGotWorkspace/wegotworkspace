@@ -66,9 +66,6 @@ final class VoiceEntry
         if ($path !== $home && !str_starts_with($path, $home.'/')) {
             return false;
         }
-        if (str_contains($path, '/aura-signaling/')) {
-            return false;
-        }
         if (preg_match('#/assets/#', $path) === 1) {
             return false;
         }
@@ -84,10 +81,6 @@ final class VoiceEntry
         if (!self::isGuestJoinPath($webBase, $path)) {
             return false;
         }
-        if (str_contains($path, '/aura-signaling/')) {
-            return false;
-        }
-
         return self::acceptIncludesHtml();
     }
 

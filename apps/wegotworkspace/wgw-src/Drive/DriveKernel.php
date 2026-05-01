@@ -56,12 +56,6 @@ final class DriveKernel
             return true;
         }
 
-        if (isset($_GET['r']) && is_string($_GET['r']) && $_GET['r'] !== '') {
-            self::jsonError(410, 'Legacy Drive API is gone. Use /api/v1/drive/* endpoints.');
-
-            return true;
-        }
-
         http_response_code(404);
         header('Content-Type: text/plain; charset=utf-8');
         echo 'Not found';

@@ -1,7 +1,6 @@
 /**
  * Tiny client for Voice signaling.
- * Supports both modern REST-style endpoints (/api/v1/voice/{action})
- * and the legacy query-style endpoint (.../rooms.php?action={action}).
+ * Uses REST-style endpoints (/api/v1/voice/{action}).
  * Polls every 1.2s for new messages while the call is active.
  */
 
@@ -32,10 +31,6 @@ function actionEndpoint(url: string, action: string): string {
   const base = url.trim();
   if (!base) {
     return `/api/v1/voice/${encodeURIComponent(action)}`;
-  }
-  if (base.includes("?action=") || /\/rooms\.php(?:\?|$)/.test(base)) {
-    const sep = base.includes("?") ? "&" : "?";
-    return `${base}${sep}action=${encodeURIComponent(action)}`;
   }
 
   return `${base.replace(/\/+$/, "")}/${encodeURIComponent(action)}`;
