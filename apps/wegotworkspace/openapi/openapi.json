@@ -1324,7 +1324,7 @@
         "tags": [
           "Installer"
         ],
-        "summary": "Installer bootstrap payload (csrf + full state)",
+        "summary": "Installer bootstrap payload (full state)",
         "responses": {
           "200": {
             "description": "Installer bootstrap payload"

@@ -114,7 +114,7 @@ final class InstallerKernel
     }
 
     /**
-     * @return array{csrf:string,state:array<string,mixed>}
+     * @return array{state:array<string,mixed>}
      */
     public static function bootstrapPayloadFromApi(string $webBase): array
     {
@@ -122,7 +122,6 @@ final class InstallerKernel
         $installed = is_file(Paths::lockFile());
 
         return [
-            'csrf' => Csrf::token(),
             'state' => self::apiState($webBase, $installed),
         ];
     }
@@ -199,7 +198,6 @@ final class InstallerKernel
     private static function applyApiAction(string $webBase, string $action, array $body): array
     {
         $_POST = [];
-        $_POST['_csrf'] = Csrf::token();
 
         if ($action === 'welcome_next') {
             $_POST['installer_action'] = 'next';
@@ -219,7 +217,6 @@ final class InstallerKernel
 
             return [
                 'ok' => true,
-                'csrf' => Csrf::token(),
                 'state' => self::apiState($webBase),
             ];
         } elseif ($action === 'requirements_next') {
@@ -243,7 +240,6 @@ final class InstallerKernel
             } catch (\Throwable) {
                 return [
                     'ok' => false,
-                    'csrf' => Csrf::token(),
                     'error' => 'Could not connect to the database. Check your settings.',
                     'state' => self::apiState($webBase),
                 ];
@@ -257,7 +253,6 @@ final class InstallerKernel
 
             return [
                 'ok' => true,
-                'csrf' => Csrf::token(),
                 'state' => self::apiState($webBase),
             ];
         } elseif ($action === 'database_next') {
@@ -313,7 +308,7 @@ final class InstallerKernel
             $s['step'] = 'account';
             self::saveState($s);
         } else {
-            return ['ok' => false, 'csrf' => Csrf::token(), 'error' => 'Unsupported action'];
+            return ['ok' => false, 'error' => 'Unsupported action'];
         }
 
         self::$apiMode = true;
@@ -322,7 +317,6 @@ final class InstallerKernel
 
             return [
                 'ok' => true,
-                'csrf' => Csrf::token(),
                 'state' => self::apiState($webBase),
             ];
         } catch (\RuntimeException $e) {
@@ -331,7 +325,6 @@ final class InstallerKernel
 
                 return [
                     'ok' => true,
-                    'csrf' => Csrf::token(),
                     'redirect' => $target,
                     'state' => self::apiState($webBase),
                 ];
@@ -341,7 +334,6 @@ final class InstallerKernel
 
                 return [
                     'ok' => false,
-                    'csrf' => Csrf::token(),
                     'error' => $msg,
                     'state' => self::apiState($webBase),
                 ];
@@ -354,10 +346,6 @@ final class InstallerKernel
 
     private static function handlePost(string $webBase): void
     {
-        if (!Csrf::validate($_POST['_csrf'] ?? null)) {
-            self::errorPage(400, 'Invalid security token. Refresh the page and try again.');
-        }
-
         $s = self::state();
         $action = (string) ($_POST['installer_action'] ?? '');
 
@@ -578,7 +566,6 @@ final class InstallerKernel
             'enable_contacts' => $enableContacts,
         ];
         $_SESSION['_install_done'] = true;
-        $_SESSION['_csrf'] = bin2hex(random_bytes(32));
 
         $adminUrl = WebBase::url($webBase, '/admin/');
         if (self::$apiMode) {
