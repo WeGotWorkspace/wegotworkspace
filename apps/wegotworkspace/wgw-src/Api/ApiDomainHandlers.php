@@ -60,14 +60,7 @@ final class ApiDomainHandlers
             if ($admin === null) {
                 return true;
             }
-            $cfg = SettingsDefaults::normalize(SettingsRepository::fetchAll($pdo));
-            ApiResponse::json(200, [
-                'me' => $admin,
-                'users' => UserProvisioner::listUsers($pdo),
-                'groups' => GroupManager::listCollections($pdo, AdminConstants::GROUP_PREFIX),
-                'settings' => $cfg,
-                'updates' => UpdateManager::getState($pdo),
-            ]);
+            ApiResponse::json(200, self::adminState($webBase, $pdo, $admin['username']));
 
             return true;
         }
@@ -84,6 +77,12 @@ final class ApiDomainHandlers
                 (string) ($body['password'] ?? ''),
                 trim((string) ($body['displayName'] ?? '')),
                 isset($body['email']) && is_string($body['email']) && trim($body['email']) !== '' ? trim((string) $body['email']) : null
+            );
+            self::setUserGroups(
+                $pdo,
+                strtolower(trim((string) ($body['username'] ?? ''))),
+                self::toStringList($body['groups'] ?? []),
+                $admin['username']
             );
             ApiResponse::json(201, ['ok' => true]);
 
@@ -109,6 +108,9 @@ final class ApiDomainHandlers
                 if (isset($body['password']) && is_string($body['password']) && $body['password'] !== '') {
                     UserProvisioner::updatePassword($pdo, $username, $body['password']);
                 }
+                if (array_key_exists('groups', $body)) {
+                    self::setUserGroups($pdo, $username, self::toStringList($body['groups'] ?? []), $admin['username']);
+                }
                 ApiResponse::json(200, ['ok' => true]);
 
                 return true;
@@ -127,7 +129,11 @@ final class ApiDomainHandlers
                 return true;
             }
             $body = ApiRequest::jsonBody();
-            $slug = self::slug((string) ($body['slug'] ?? ''));
+            $slugInput = (string) ($body['slug'] ?? '');
+            if ($slugInput === '' && isset($body['name']) && is_string($body['name'])) {
+                $slugInput = (string) $body['name'];
+            }
+            $slug = self::slug($slugInput);
             GroupManager::createPrincipal($pdo, AdminConstants::GROUP_PREFIX.$slug, trim((string) ($body['displayName'] ?? '')));
             ApiResponse::json(201, ['ok' => true]);
 
@@ -149,16 +155,23 @@ final class ApiDomainHandlers
             }
             if ($method === 'PATCH') {
                 $body = ApiRequest::jsonBody();
-                $members = [];
-                if (is_array($body['members'] ?? null)) {
-                    foreach ($body['members'] as $u) {
-                        if (!is_string($u) || !preg_match('/^[a-z0-9][a-z0-9_-]{1,62}$/', $u)) {
-                            continue;
-                        }
-                        $members[] = 'principals/'.$u;
-                    }
+                if (array_key_exists('displayName', $body)) {
+                    $displayName = trim((string) ($body['displayName'] ?? ''));
+                    $stmt = $pdo->prepare('UPDATE principals SET displayname = ? WHERE uri = ?');
+                    $stmt->execute([$displayName !== '' ? $displayName : null, $uri]);
                 }
-                GroupManager::setMembers($pdo, $uri, $members);
+                if (array_key_exists('members', $body)) {
+                    $members = [];
+                    if (is_array($body['members'] ?? null)) {
+                        foreach ($body['members'] as $u) {
+                            if (!is_string($u) || !preg_match('/^[a-z0-9][a-z0-9_-]{1,62}$/', $u)) {
+                                continue;
+                            }
+                            $members[] = 'principals/'.$u;
+                        }
+                    }
+                    GroupManager::setMembers($pdo, $uri, $members);
+                }
                 ApiResponse::json(200, ['ok' => true]);
 
                 return true;
@@ -771,6 +784,157 @@ final class ApiDomainHandlers
         $display = trim((string) ($stmt->fetchColumn() ?: ''));
 
         return $display !== '' ? $display : $username;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function adminState(string $webBase, \PDO $pdo, string $adminUser): array
+    {
+        $usersRaw = UserProvisioner::listUsers($pdo);
+        $groupsRaw = GroupManager::listCollections($pdo, AdminConstants::GROUP_PREFIX);
+        $groupMembers = [];
+        foreach ($groupsRaw as $g) {
+            $groupMembers[(string) $g['uri']] = GroupManager::getMembers($pdo, (string) $g['uri']);
+        }
+
+        $users = [];
+        foreach ($usersRaw as $u) {
+            $principal = 'principals/'.(string) $u['username'];
+            $memberOf = [];
+            foreach ($groupMembers as $groupUri => $members) {
+                if (in_array($principal, $members, true)) {
+                    $memberOf[] = $groupUri;
+                }
+            }
+            $users[] = [
+                'id' => (string) $u['username'],
+                'username' => (string) $u['username'],
+                'email' => (string) ($u['email'] ?? ''),
+                'displayName' => (string) ($u['displayname'] ?? $u['username']),
+                'groups' => $memberOf,
+                'createdAt' => '',
+            ];
+        }
+
+        $groups = [];
+        foreach ($groupsRaw as $g) {
+            $uri = (string) $g['uri'];
+            $groups[] = [
+                'id' => $uri,
+                'name' => basename($uri),
+                'displayName' => (string) $g['title'],
+            ];
+        }
+
+        $cfg = SettingsDefaults::normalize(SettingsRepository::fetchAll($pdo));
+        $voiceUrls = (string) ($cfg[SettingsKeys::VOICE_TURN_URL] ?? '');
+        $stun = [];
+        $turn = [];
+        foreach (preg_split('/[\r\n,]+/', $voiceUrls) ?: [] as $piece) {
+            $u = trim((string) $piece);
+            if ($u === '') {
+                continue;
+            }
+            if (preg_match('#^stuns?:#i', $u) === 1) {
+                $stun[] = $u;
+                continue;
+            }
+            $turn[] = $u;
+        }
+
+        return [
+            'users' => $users,
+            'groups' => $groups,
+            'mail' => [
+                'imapHost' => (string) ($cfg[SettingsKeys::MAIL_IMAP_HOST] ?? ''),
+                'imapPort' => (int) ($cfg[SettingsKeys::MAIL_IMAP_PORT] ?? 993),
+                'imapSecurity' => (string) ($cfg[SettingsKeys::MAIL_IMAP_SECURITY] ?? 'ssl'),
+                'smtpHost' => (string) ($cfg[SettingsKeys::MAIL_SMTP_HOST] ?? ''),
+                'smtpPort' => (int) ($cfg[SettingsKeys::MAIL_SMTP_PORT] ?? 465),
+                'smtpSecurity' => (string) ($cfg[SettingsKeys::MAIL_SMTP_SECURITY] ?? 'ssl'),
+            ],
+            'voice' => [
+                'signalingUrl' => (string) ($cfg[SettingsKeys::VOICE_SIGNALING_URL] ?? ''),
+                'stunUrls' => implode("\n", $stun),
+                'turnUrls' => implode("\n", $turn),
+                'turnUsername' => (string) ($cfg[SettingsKeys::VOICE_TURN_USERNAME] ?? ''),
+                'turnPassword' => (string) ($cfg[SettingsKeys::VOICE_TURN_CREDENTIAL] ?? ''),
+                'forceRelay' => (bool) ($cfg[SettingsKeys::VOICE_FORCE_RELAY] ?? false),
+            ],
+            'apps' => [
+                'calendars' => (bool) ($cfg[SettingsKeys::CALENDAR_ENABLED] ?? true),
+                'contacts' => (bool) ($cfg[SettingsKeys::CONTACTS_ENABLED] ?? true),
+            ],
+            'webdav' => [
+                'sabreUi' => (bool) ($cfg[SettingsKeys::BROWSER_PLUGIN] ?? true),
+                'timezone' => (string) ($cfg[SettingsKeys::TIMEZONE] ?? 'UTC'),
+                'baseUri' => (string) ($cfg[SettingsKeys::BASE_URI] ?? '/'),
+                'authRealm' => (string) ($cfg[SettingsKeys::AUTH_REALM] ?? 'SabreDAV'),
+            ],
+            'updates' => UpdateManager::getState($pdo),
+            'currentUser' => $adminUser,
+            'logoutUrl' => WebBase::url($webBase, '/logout/'),
+            'csrf' => '',
+        ];
+    }
+
+    /**
+     * @param mixed $value
+     *
+     * @return list<string>
+     */
+    private static function toStringList(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+        $out = [];
+        foreach ($value as $v) {
+            if (!is_string($v)) {
+                continue;
+            }
+            $trim = trim($v);
+            if ($trim !== '') {
+                $out[] = $trim;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param list<string> $groupUris
+     */
+    private static function setUserGroups(\PDO $pdo, string $username, array $groupUris, ?string $adminUser = null): void
+    {
+        $wanted = array_values(array_filter($groupUris, static fn (string $g): bool => str_starts_with($g, AdminConstants::GROUP_PREFIX)));
+        $principal = 'principals/'.$username;
+        $groups = GroupManager::listCollections($pdo, AdminConstants::GROUP_PREFIX);
+        foreach ($groups as $group) {
+            $groupUri = (string) $group['uri'];
+            $members = GroupManager::getMembers($pdo, $groupUri);
+            $isWanted = in_array($groupUri, $wanted, true);
+            $isMember = in_array($principal, $members, true);
+            if (
+                $groupUri === AdminConstants::ADMIN_GROUP_URI
+                && $adminUser !== null
+                && $username === $adminUser
+                && !$isWanted
+                && $isMember
+            ) {
+                throw new \InvalidArgumentException('You cannot remove your own administrator access.');
+            }
+            if ($isWanted && !$isMember) {
+                $members[] = $principal;
+                GroupManager::setMembers($pdo, $groupUri, $members);
+                continue;
+            }
+            if (!$isWanted && $isMember) {
+                $members = array_values(array_filter($members, static fn (string $m): bool => $m !== $principal));
+                GroupManager::setMembers($pdo, $groupUri, $members);
+            }
+        }
     }
 
     /**
