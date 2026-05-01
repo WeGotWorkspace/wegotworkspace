@@ -355,7 +355,7 @@ final class ApiDomainHandlers
             if ($user === null) {
                 return true;
             }
-            self::delegateMail($webBase, $pdo, $user['username'], 'status');
+            self::delegateMail($pdo, $user['username'], 'status');
 
             return true;
         }
@@ -365,7 +365,7 @@ final class ApiDomainHandlers
             if ($user === null) {
                 return true;
             }
-            self::delegateMail($webBase, $pdo, $user['username'], 'config');
+            self::delegateMail($pdo, $user['username'], 'config');
 
             return true;
         }
@@ -375,7 +375,7 @@ final class ApiDomainHandlers
             if ($user === null) {
                 return true;
             }
-            self::delegateMail($webBase, $pdo, $user['username'], 'config');
+            self::delegateMail($pdo, $user['username'], 'config');
 
             return true;
         }
@@ -388,7 +388,7 @@ final class ApiDomainHandlers
             if ($user === null) {
                 return true;
             }
-            self::delegateMail($webBase, $pdo, $user['username'], substr($rel, 5));
+            self::delegateMail($pdo, $user['username'], substr($rel, 5));
 
             return true;
         }
@@ -721,10 +721,10 @@ final class ApiDomainHandlers
         ];
     }
 
-    private static function delegateMail(string $webBase, \PDO $pdo, string $username, string $tail): void
+    private static function delegateMail(\PDO $pdo, string $username, string $tail): void
     {
-        $path = rtrim(WebBase::url($webBase, '/mail/api'), '/').'/'.$tail;
-        MailApi::respond($webBase, $path, $username, $pdo);
+        $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+        MailApi::respondOperation($method, trim($tail, '/'), $username, $pdo);
     }
 
     private static function ensureBackupName(string $name): string

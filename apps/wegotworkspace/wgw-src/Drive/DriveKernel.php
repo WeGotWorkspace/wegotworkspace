@@ -57,7 +57,7 @@ final class DriveKernel
         }
 
         if (isset($_GET['r']) && is_string($_GET['r']) && $_GET['r'] !== '') {
-            self::respondApi($webBase, $pdo, $username);
+            self::jsonError(410, 'Legacy Drive API is gone. Use /api/v1/drive/* endpoints.');
 
             return true;
         }
@@ -71,11 +71,16 @@ final class DriveKernel
 
     public static function respondApiFromToken(string $webBase, \PDO $pdo, string $username, string $route): void
     {
-        $_GET['r'] = $route;
-        self::respondApi($webBase, $pdo, $username, false);
+        self::respondApi($webBase, $pdo, $username, false, $route);
     }
 
-    private static function respondApi(string $webBase, \PDO $pdo, string $username, bool $enforceCsrf = true): void
+    private static function respondApi(
+        string $webBase,
+        \PDO $pdo,
+        string $username,
+        bool $enforceCsrf = true,
+        ?string $forcedRoute = null
+    ): void
     {
         self::startSession($webBase);
         $csrf = null;
@@ -84,7 +89,7 @@ final class DriveKernel
             header('X-CSRF-Token: '.$csrf);
         }
 
-        $route = isset($_GET['r']) && is_string($_GET['r']) ? trim($_GET['r']) : '';
+        $route = $forcedRoute !== null ? trim($forcedRoute) : (isset($_GET['r']) && is_string($_GET['r']) ? trim($_GET['r']) : '');
         $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
         if ($route === '') {
             self::jsonError(404, 'Not found');
