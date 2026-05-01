@@ -122,7 +122,7 @@ export function MessageReader({
   onBackToList,
   imagePrivacyGate = false,
   onResolveInlineImages,
-  attachmentDownloadHref,
+  onDownloadAttachment,
 }: {
   message: Message | undefined;
   folders: Folder[];
@@ -143,8 +143,8 @@ export function MessageReader({
   imagePrivacyGate?: boolean;
   /** Refetch message body with inline MIME images resolved (`inline_images=1`). */
   onResolveInlineImages?: () => Promise<void>;
-  /** When set, attachment rows link to this URL so the browser can download the part. */
-  attachmentDownloadHref?: (attachment: Attachment) => string | undefined;
+  /** Download attachment by part id via authenticated API. */
+  onDownloadAttachment?: (attachment: Attachment) => Promise<void>;
 }) {
   const proseClass =
     "prose prose-sm mt-8 max-w-none whitespace-pre-wrap font-sans text-[15px] leading-relaxed text-foreground/90";
@@ -482,7 +482,6 @@ export function MessageReader({
               </div>
               <div className="flex flex-wrap gap-2">
                 {message.attachments.map((a) => {
-                  const href = attachmentDownloadHref?.(a);
                   const pillClass =
                     "flex min-w-0 max-w-full items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground";
                   const label = (
@@ -492,15 +491,15 @@ export function MessageReader({
                       <span className="shrink-0 text-xs text-muted-foreground">{(a.size / 1024).toFixed(0)} KB</span>
                     </>
                   );
-                  return href ? (
-                    <a
+                  return onDownloadAttachment && a.part ? (
+                    <button
+                      type="button"
                       key={a.id}
-                      href={href}
-                      download={a.name || "attachment"}
+                      onClick={() => void onDownloadAttachment(a)}
                       className={`${pillClass} transition-colors hover:bg-muted/60`}
                     >
                       {label}
-                    </a>
+                    </button>
                   ) : (
                     <div key={a.id} className={pillClass}>
                       {label}

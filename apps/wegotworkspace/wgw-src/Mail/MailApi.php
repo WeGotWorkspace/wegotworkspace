@@ -76,8 +76,8 @@ final class MailApi
 
     private static function handleConfigPut(\PDO $pdo, string $username): void
     {
-        $raw = file_get_contents('php://input');
-        if ($raw === false || $raw === '') {
+        $raw = self::readRequestRawBody();
+        if ($raw === null || $raw === '') {
             self::json(400, ['error' => 'empty_body']);
 
             return;
@@ -561,8 +561,7 @@ final class MailApi
         if ($cred === null) {
             return;
         }
-        $raw = file_get_contents('php://input');
-        $j = self::readJson($raw);
+        $j = self::readRequestJsonBody();
         $name = trim((string) ($j['name'] ?? ''));
         if ($name === '') {
             self::json(400, ['error' => 'name_required']);
@@ -605,8 +604,7 @@ final class MailApi
         if ($cred === null) {
             return;
         }
-        $raw = file_get_contents('php://input');
-        $j = self::readJson($raw);
+        $j = self::readRequestJsonBody();
         $folderEnc = isset($j['folder']) && is_string($j['folder']) ? $j['folder'] : '';
         $fromMb = self::folderIdDecode($folderEnc);
         if ($fromMb === '' || strtoupper($fromMb) === 'INBOX' || $fromMb === '__starred__') {
@@ -1124,8 +1122,7 @@ final class MailApi
         if ($cred === null) {
             return;
         }
-        $raw = file_get_contents('php://input');
-        $j = self::readJson($raw);
+        $j = self::readRequestJsonBody();
         $folderEnc = isset($j['folder']) && is_string($j['folder']) ? $j['folder'] : '';
         $uid = isset($j['uid']) && is_numeric($j['uid']) ? (int) $j['uid'] : 0;
         $mb = self::folderIdDecode($folderEnc);
@@ -1177,7 +1174,7 @@ final class MailApi
         if ($cred === null) {
             return;
         }
-        $j = self::readJson(file_get_contents('php://input'));
+        $j = self::readRequestJsonBody();
         $fromEnc = isset($j['fromFolder']) && is_string($j['fromFolder']) ? $j['fromFolder'] : '';
         $toEnc = isset($j['toFolder']) && is_string($j['toFolder']) ? $j['toFolder'] : '';
         $uid = isset($j['uid']) && is_numeric($j['uid']) ? (int) $j['uid'] : 0;
@@ -1327,7 +1324,7 @@ final class MailApi
 
             return;
         }
-        $j = self::readJson(file_get_contents('php://input'));
+        $j = self::readRequestJsonBody();
         $to = trim((string) ($j['to'] ?? ''));
         $subject = trim((string) ($j['subject'] ?? ''));
         $body = (string) ($j['body'] ?? '');
@@ -1403,7 +1400,7 @@ final class MailApi
         if ($cred === null) {
             return;
         }
-        $j = self::readJson(file_get_contents('php://input'));
+        $j = self::readRequestJsonBody();
         $to = trim((string) ($j['to'] ?? ''));
         $subject = trim((string) ($j['subject'] ?? ''));
         $body = (string) ($j['body'] ?? '');
@@ -1504,6 +1501,31 @@ final class MailApi
         } catch (\JsonException) {
             return [];
         }
+    }
+
+    private static function readRequestJsonBody(): array
+    {
+        $raw = self::readRequestRawBody();
+        if ($raw === null) {
+            return [];
+        }
+
+        return self::readJson($raw);
+    }
+
+    private static function readRequestRawBody(): ?string
+    {
+        $testRaw = $GLOBALS['__WGW_TEST_JSON_BODY'] ?? null;
+        if (is_string($testRaw)) {
+            return $testRaw;
+        }
+
+        $raw = file_get_contents('php://input');
+        if (!is_string($raw)) {
+            return null;
+        }
+
+        return $raw;
     }
 
     private static function sendBinaryAttachment(string $mime, string $filename, string $bytes): void
