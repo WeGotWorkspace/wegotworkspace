@@ -1,27 +1,117 @@
-/**
- * Production: relative {@code api/…} so it resolves under PHP-injected {@code <base href="…/mail/">}.
- * Dev (Vite): {@code import.meta.env.BASE_URL} is {@code /mail/} so we call {@code /mail/api/…} from the host root.
- */
-function apiUrl(path: string): string {
-  const tail = path.startsWith("/") ? path.slice(1) : path;
-  const raw = import.meta.env.BASE_URL || "/mail/";
-  if (raw === "./" || raw.startsWith(".")) {
-    return `api/${tail}`;
+function apiV1BaseUrl(): string {
+  if (typeof window === "undefined") {
+    return "/api/v1";
   }
-  const base = raw.replace(/\/?$/, "/");
+  const path = window.location.pathname;
+  const marker = "/mail/";
+  const idx = path.indexOf(marker);
+  const basePrefix = idx >= 0 ? path.slice(0, idx) : "";
+  return `${basePrefix}/api/v1`;
+}
 
-  return `${base}api/${tail}`;
+const API_BASE = apiV1BaseUrl().replace(/\/+$/, "");
+const AUTH_SESSION_URL = `${API_BASE}/auth/session`;
+const AUTH_REFRESH_URL = `${API_BASE}/auth/refresh`;
+
+type TokenPair = {
+  access_token: string;
+  refresh_token: string;
+};
+
+let accessToken: string | null = null;
+let refreshToken: string | null = null;
+
+function parseErrorMessage(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return "Request failed";
+  }
+  try {
+    const json = JSON.parse(trimmed) as { message?: unknown; error?: unknown };
+    if (typeof json.message === "string" && json.message.trim() !== "") return json.message;
+    if (typeof json.error === "string" && json.error.trim() !== "") return json.error;
+  } catch {
+    // Not JSON.
+  }
+  return trimmed;
+}
+
+async function mintTokenFromSession(): Promise<void> {
+  const response = await fetch(AUTH_SESSION_URL, {
+    method: "POST",
+    credentials: "include",
+    headers: { Accept: "application/json" },
+  });
+  const raw = await response.text();
+  if (!response.ok) {
+    throw new Error(parseErrorMessage(raw));
+  }
+  const payload = JSON.parse(raw) as TokenPair;
+  accessToken = payload.access_token ?? null;
+  refreshToken = payload.refresh_token ?? null;
+  if (!accessToken || !refreshToken) {
+    throw new Error("Could not initialize Mail API session.");
+  }
+}
+
+async function refreshAccessToken(): Promise<boolean> {
+  if (!refreshToken) return false;
+  const response = await fetch(AUTH_REFRESH_URL, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  });
+  const raw = await response.text();
+  if (!response.ok) return false;
+  const payload = JSON.parse(raw) as TokenPair;
+  accessToken = payload.access_token ?? null;
+  refreshToken = payload.refresh_token ?? null;
+  return !!accessToken && !!refreshToken;
+}
+
+async function ensureAccessToken(): Promise<string> {
+  if (!accessToken) {
+    await mintTokenFromSession();
+  }
+  if (!accessToken) {
+    throw new Error("Missing Mail API access token.");
+  }
+  return accessToken;
+}
+
+async function withAuth(input: RequestInfo | URL, init?: RequestInit, allowRetry = true): Promise<Response> {
+  const token = await ensureAccessToken();
+  const response = await fetch(input, {
+    ...init,
+    credentials: "include",
+    headers: {
+      ...(init?.headers ?? {}),
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    },
+  });
+  if (response.status !== 401 || !allowRetry) return response;
+  const refreshed = await refreshAccessToken();
+  if (!refreshed) {
+    accessToken = null;
+    refreshToken = null;
+    await mintTokenFromSession();
+  }
+  return withAuth(input, init, false);
 }
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
-  const r = await fetch(apiUrl(path), {
-    credentials: "include",
-    headers: {
-      Accept: "application/json",
-      ...(init?.body ? { "Content-Type": "application/json" } : {}),
-      ...init?.headers,
-    },
+  const tail = path.startsWith("/") ? path : `/${path}`;
+  const r = await withAuth(`${API_BASE}/mail${tail}`, {
     ...init,
+    headers: {
+      ...(init?.body ? { "Content-Type": "application/json" } : {}),
+      ...(init?.headers ?? {}),
+    },
   });
   const text = await r.text();
   let data: unknown = null;
@@ -48,7 +138,7 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
   }
   if (parseFailed) {
     throw new Error(
-      "Mail API returned non-JSON (often the Vite dev server HTML). Run PHP on 127.0.0.1:8080 (pnpm dev) so /mail/api can be proxied, or open mail via the PHP server.",
+      "Mail API returned non-JSON.",
     );
   }
   if (data === null) {
@@ -251,15 +341,27 @@ export function splitMessageId(id: string): { folderEnc: string; uid: number } |
   return { folderEnc, uid };
 }
 
-/** Same-origin URL for GET {@code message/attachment} (session cookie auth). */
-export function mailAttachmentDownloadUrl(folderEnc: string, uid: number, part: string): string {
+export async function mailDownloadAttachment(
+  folderEnc: string,
+  uid: number,
+  part: string,
+  filename = "attachment",
+): Promise<void> {
   const q = new URLSearchParams({ folder: folderEnc, uid: String(uid), part });
-  const tail = `message/attachment?${q.toString()}`;
-  const raw = import.meta.env.BASE_URL || "/mail/";
-  if (raw === "./" || raw.startsWith(".")) {
-    return `api/${tail}`;
+  const response = await withAuth(`${API_BASE}/mail/message/attachment?${q.toString()}`, {
+    method: "GET",
+    headers: {},
+  });
+  if (!response.ok) {
+    throw new Error(parseErrorMessage(await response.text()));
   }
-  const base = raw.replace(/\/?$/, "/");
-
-  return `${base}api/${tail}`;
+  const blob = await response.blob();
+  const href = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = href;
+  a.download = filename || "attachment";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(href);
 }
