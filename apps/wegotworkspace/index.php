@@ -132,6 +132,7 @@ if ($https) {
 
 $installPrefix = WebBase::url($webBase, '/install');
 $adminApiUpdatesPrefix = WebBase::url($webBase, '/admin/api/updates');
+$apiV1AdminUpdatesPrefix = WebBase::url($webBase, '/api/v1/admin/updates');
 
 if (PwaSupport::tryRespond($webBase, $path)) {
     exit;
@@ -140,7 +141,11 @@ if (PwaSupport::tryRespond($webBase, $path)) {
 $installed = is_file(Paths::lockFile());
 
 if ($installed && UpdateManager::inMaintenanceMode()) {
-    $allowUpdateApi = $path === $adminApiUpdatesPrefix || str_starts_with($path, $adminApiUpdatesPrefix.'/');
+    $allowUpdateApi =
+        $path === $adminApiUpdatesPrefix
+        || str_starts_with($path, $adminApiUpdatesPrefix.'/')
+        || $path === $apiV1AdminUpdatesPrefix
+        || str_starts_with($path, $apiV1AdminUpdatesPrefix.'/');
     if (!$allowUpdateApi) {
         http_response_code(503);
         header('Content-Type: text/html; charset=utf-8');

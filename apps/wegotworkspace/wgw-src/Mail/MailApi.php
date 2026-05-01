@@ -24,10 +24,15 @@ final class MailApi
     {
         $prefix = rtrim(WebBase::url($webBase, '/mail/api'), '/');
         $rel = $path === $prefix ? '' : substr($path, strlen($prefix) + 1);
-        $rel = trim((string) $rel, '/');
-        $parts = $rel === '' ? [] : explode('/', $rel);
-        $head = $parts[0] ?? '';
         $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+
+        self::respondOperation($method, trim((string) $rel, '/'), $username, $pdo);
+    }
+
+    public static function respondOperation(string $method, string $operation, string $username, \PDO $pdo): void
+    {
+        $parts = $operation === '' ? [] : explode('/', trim($operation, '/'));
+        $head = $parts[0] ?? '';
 
         try {
             match (true) {
