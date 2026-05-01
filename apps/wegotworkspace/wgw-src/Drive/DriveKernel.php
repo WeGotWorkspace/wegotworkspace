@@ -71,25 +71,18 @@ final class DriveKernel
 
     public static function respondApiFromToken(string $webBase, \PDO $pdo, string $username, string $route): void
     {
-        self::respondApi($webBase, $pdo, $username, false, $route);
+        self::respondApi($webBase, $pdo, $username, $route);
     }
 
     private static function respondApi(
         string $webBase,
         \PDO $pdo,
         string $username,
-        bool $enforceCsrf = true,
-        ?string $forcedRoute = null
+        string $route
     ): void
     {
         self::startSession($webBase);
-        $csrf = null;
-        if ($enforceCsrf) {
-            $csrf = self::csrfToken();
-            header('X-CSRF-Token: '.$csrf);
-        }
-
-        $route = $forcedRoute !== null ? trim($forcedRoute) : (isset($_GET['r']) && is_string($_GET['r']) ? trim($_GET['r']) : '');
+        $route = trim($route);
         $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
         if ($route === '') {
             self::jsonError(404, 'Not found');
@@ -105,18 +98,6 @@ final class DriveKernel
 
         try {
             if ($method === 'GET' && $route === '/getuser') {
-                if ($csrf !== null) {
-                    // Legacy /drive/?r=/getuser callers still expect csrf.
-                    $payload = ['data' => [
-                        'username' => $username,
-                        'name' => self::displayName($pdo, $username),
-                        'role' => AdminPolicy::isAdmin($pdo, $username) ? 'admin' : 'user',
-                        'csrf' => $csrf,
-                    ]];
-                    self::json(200, $payload);
-
-                    return;
-                }
                 self::json(200, [
                     'data' => [
                         'username' => $username,
@@ -146,9 +127,6 @@ final class DriveKernel
                 return;
             }
 
-            if ($enforceCsrf) {
-                self::requireCsrf((string) $csrf);
-            }
             if ($route === '/getdir') {
                 $body = self::readJsonBody();
                 $dir = DriveAcl::normalizeVirtualPath((string) ($body['dir'] ?? '/'));
@@ -553,26 +531,6 @@ final class DriveKernel
             'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
         ]);
         session_start();
-    }
-
-    private static function csrfToken(): string
-    {
-        if (!isset($_SESSION['drive_csrf']) || !is_string($_SESSION['drive_csrf']) || $_SESSION['drive_csrf'] === '') {
-            $_SESSION['drive_csrf'] = bin2hex(random_bytes(24));
-        }
-
-        return $_SESSION['drive_csrf'];
-    }
-
-    private static function requireCsrf(string $expected): void
-    {
-        $provided = isset($_SERVER['HTTP_X_CSRF_TOKEN']) && is_string($_SERVER['HTTP_X_CSRF_TOKEN'])
-            ? trim($_SERVER['HTTP_X_CSRF_TOKEN'])
-            : '';
-        if ($provided === '' || !hash_equals($expected, $provided)) {
-            self::jsonError(403, 'Invalid security token.');
-            exit;
-        }
     }
 
     private static function json(int $status, array $payload): void

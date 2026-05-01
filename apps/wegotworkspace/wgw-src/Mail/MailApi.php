@@ -20,15 +20,6 @@ final class MailApi
         return $path === $p || str_starts_with($path, $p.'/');
     }
 
-    public static function respond(string $webBase, string $path, string $username, \PDO $pdo): void
-    {
-        $prefix = rtrim(WebBase::url($webBase, '/mail/api'), '/');
-        $rel = $path === $prefix ? '' : substr($path, strlen($prefix) + 1);
-        $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
-
-        self::respondOperation($method, trim((string) $rel, '/'), $username, $pdo);
-    }
-
     public static function respondOperation(string $method, string $operation, string $username, \PDO $pdo): void
     {
         $parts = $operation === '' ? [] : explode('/', trim($operation, '/'));
