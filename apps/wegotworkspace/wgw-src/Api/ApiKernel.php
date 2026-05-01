@@ -6,6 +6,7 @@ namespace App\Api;
 
 use App\Config;
 use App\Installer\WebBase;
+use App\SabreUiAuthGate;
 
 final class ApiKernel
 {
@@ -125,6 +126,26 @@ final class ApiKernel
                 ApiResponse::error(503, $e->getMessage(), 'config_error');
             } catch (\Throwable) {
                 ApiResponse::error(500, 'Could not issue token.', 'server_error');
+            }
+
+            return true;
+        }
+        if ($method === 'POST' && $rel === 'auth/session') {
+            try {
+                [$pdo, $realm] = self::dbAndRealm();
+                $username = SabreUiAuthGate::validatedUsername($realm);
+                if ($username === null || $username === '') {
+                    ApiResponse::error(401, 'Missing or invalid browser session.', 'unauthorized');
+
+                    return true;
+                }
+                ApiResponse::json(200, ApiAuth::issueTokenForPrincipal($pdo, $username));
+            } catch (\InvalidArgumentException $e) {
+                ApiResponse::error(400, $e->getMessage(), 'bad_request');
+            } catch (\RuntimeException $e) {
+                ApiResponse::error(503, $e->getMessage(), 'config_error');
+            } catch (\Throwable) {
+                ApiResponse::error(500, 'Could not issue session token.', 'server_error');
             }
 
             return true;
