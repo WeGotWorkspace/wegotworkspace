@@ -875,7 +875,6 @@ final class ApiDomainHandlers
             'updates' => UpdateManager::getState($pdo),
             'currentUser' => $adminUser,
             'logoutUrl' => WebBase::url($webBase, '/logout/'),
-            'csrf' => '',
         ];
     }
 

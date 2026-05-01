@@ -78,8 +78,11 @@ final class DriveKernel
     private static function respondApi(string $webBase, \PDO $pdo, string $username, bool $enforceCsrf = true): void
     {
         self::startSession($webBase);
-        $csrf = self::csrfToken();
-        header('X-CSRF-Token: '.$csrf);
+        $csrf = null;
+        if ($enforceCsrf) {
+            $csrf = self::csrfToken();
+            header('X-CSRF-Token: '.$csrf);
+        }
 
         $route = isset($_GET['r']) && is_string($_GET['r']) ? trim($_GET['r']) : '';
         $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
@@ -97,12 +100,23 @@ final class DriveKernel
 
         try {
             if ($method === 'GET' && $route === '/getuser') {
+                if ($csrf !== null) {
+                    // Legacy /drive/?r=/getuser callers still expect csrf.
+                    $payload = ['data' => [
+                        'username' => $username,
+                        'name' => self::displayName($pdo, $username),
+                        'role' => AdminPolicy::isAdmin($pdo, $username) ? 'admin' : 'user',
+                        'csrf' => $csrf,
+                    ]];
+                    self::json(200, $payload);
+
+                    return;
+                }
                 self::json(200, [
                     'data' => [
                         'username' => $username,
                         'name' => self::displayName($pdo, $username),
                         'role' => AdminPolicy::isAdmin($pdo, $username) ? 'admin' : 'user',
-                        'csrf' => $csrf,
                     ],
                 ]);
 
@@ -128,7 +142,7 @@ final class DriveKernel
             }
 
             if ($enforceCsrf) {
-                self::requireCsrf($csrf);
+                self::requireCsrf((string) $csrf);
             }
             if ($route === '/getdir') {
                 $body = self::readJsonBody();
