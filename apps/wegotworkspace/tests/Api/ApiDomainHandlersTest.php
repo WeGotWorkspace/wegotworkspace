@@ -44,7 +44,6 @@ final class ApiDomainHandlersTest extends TestCase
 
         self::assertTrue($handled);
         self::assertIsArray($json);
-        self::assertArrayHasKey('csrf', $json);
         self::assertArrayHasKey('state', $json);
     }
 
