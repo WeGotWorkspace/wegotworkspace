@@ -117,14 +117,82 @@ final class MailApiBehaviorTest extends TestCase
         self::assertSame(true, $second['config']['account']['imapHasPassword'] ?? null);
     }
 
+    public function testMailRoutesValidateBadInputBeforeImapRuntime(): void
+    {
+        [, $foldersCreate] = $this->dispatchJson('POST', 'mail/folders', []);
+        self::assertIsArray($foldersCreate);
+        self::assertSame('name_required', $foldersCreate['error'] ?? null);
+
+        [, $foldersMove] = $this->dispatchJson('PATCH', 'mail/folders', ['folder' => '']);
+        self::assertIsArray($foldersMove);
+        self::assertSame('cannot_move', $foldersMove['error'] ?? null);
+
+        [, $foldersDelete] = $this->dispatchJson('DELETE', 'mail/folders', null, ['folder' => '']);
+        self::assertIsArray($foldersDelete);
+        self::assertSame('cannot_delete', $foldersDelete['error'] ?? null);
+
+        [, $messages] = $this->dispatchJson('GET', 'mail/messages', null, []);
+        self::assertIsArray($messages);
+        self::assertSame('mailbox_required', $messages['error'] ?? null);
+
+        [, $attachments] = $this->dispatchJson('GET', 'mail/messages/attachments', null, []);
+        self::assertIsArray($attachments);
+        self::assertSame('mailbox_required', $attachments['error'] ?? null);
+
+        [, $messageGet] = $this->dispatchJson('GET', 'mail/message', null, ['folder' => '', 'uid' => '0']);
+        self::assertIsArray($messageGet);
+        self::assertSame('bad_params', $messageGet['error'] ?? null);
+
+        [, $messageAttachment] = $this->dispatchJson('GET', 'mail/message/attachment', null, ['folder' => '', 'uid' => '1', 'part' => 'bad']);
+        self::assertIsArray($messageAttachment);
+        self::assertSame('bad_params', $messageAttachment['error'] ?? null);
+
+        [, $messagePatch] = $this->dispatchJson('PATCH', 'mail/message', []);
+        self::assertIsArray($messagePatch);
+        self::assertSame('bad_params', $messagePatch['error'] ?? null);
+
+        [, $move] = $this->dispatchJson('POST', 'mail/move', []);
+        self::assertIsArray($move);
+        self::assertSame('bad_params', $move['error'] ?? null);
+    }
+
+    public function testMailSendAndDraftConfigurationGuards(): void
+    {
+        [, $sendWithoutConfig] = $this->dispatchJson('POST', 'mail/send', ['to' => 'bob@example.test', 'subject' => 'Hi', 'body' => 'Test']);
+        self::assertIsArray($sendWithoutConfig);
+        self::assertSame('smtp_not_configured', $sendWithoutConfig['error'] ?? null);
+
+        [, $draftWithoutConfig] = $this->dispatchJson('POST', 'mail/draft', ['subject' => 'Draft', 'body' => 'Content']);
+        self::assertIsArray($draftWithoutConfig);
+        $expectedDraftError = extension_loaded('imap') ? 'not_configured' : 'imap_extension_required';
+        self::assertSame($expectedDraftError, $draftWithoutConfig['error'] ?? null);
+
+        [$configuredHandled, $configured] = $this->dispatchJson('PUT', 'mail/config', [
+            'imap' => [
+                'username' => 'alice@example.test',
+                'password' => 'mail-secret-123',
+            ],
+        ]);
+        self::assertTrue($configuredHandled);
+        self::assertIsArray($configured);
+        self::assertSame(true, $configured['ok'] ?? null);
+
+        [, $sendToRequired] = $this->dispatchJson('POST', 'mail/send', ['to' => '', 'subject' => 'Hi', 'body' => 'Test']);
+        self::assertIsArray($sendToRequired);
+        self::assertSame('to_required', $sendToRequired['error'] ?? null);
+    }
+
     /**
      * @param array<string, mixed>|null $body
      *
+     * @param array<string, string>|null $query
+     *
      * @return array{0: bool, 1: array<string, mixed>|null}
      */
-    private function dispatchJson(string $method, string $route, ?array $body = null): array
+    private function dispatchJson(string $method, string $route, ?array $body = null, ?array $query = null): array
     {
         $_SERVER['REQUEST_METHOD'] = $method;
+        $_GET = $query ?? [];
         if ($body !== null) {
             $GLOBALS['__WGW_TEST_JSON_BODY'] = (string) json_encode($body, JSON_UNESCAPED_SLASHES);
         } else {
