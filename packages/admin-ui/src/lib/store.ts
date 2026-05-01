@@ -90,7 +90,6 @@ export type Settings = {
   };
   currentUser: string;
   logoutUrl: string;
-  csrf: string;
 };
 
 const DEFAULT_STATE: Settings = {
@@ -135,7 +134,6 @@ const DEFAULT_STATE: Settings = {
   },
   currentUser: "",
   logoutUrl: "/logout/",
-  csrf: "",
 };
 
 let state: Settings = DEFAULT_STATE;
@@ -144,28 +142,132 @@ let bootstrapped = false;
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 
-async function api<T>(path: string, body?: unknown): Promise<T> {
-  const payloadBody =
-    body === undefined
-      ? undefined
-      : JSON.stringify(
-          typeof body === "object" && body !== null && !Array.isArray(body)
-            ? { ...(body as Record<string, unknown>), csrf: state.csrf }
-            : { value: body, csrf: state.csrf },
-        );
-  const res = await fetch(`/admin/api/${path}`, {
-    method: body === undefined ? "GET" : "POST",
-    credentials: "include",
-    headers: body === undefined ? undefined : { "Content-Type": "application/json" },
-    body: payloadBody,
-  });
-  const payload = (await res.json()) as T | { error?: string };
-  if (!res.ok) {
-    const msg =
-      "error" in payload && typeof payload.error === "string" ? payload.error : "Request failed";
-    throw new Error(msg);
+function apiV1BaseUrl(): string {
+  const path = window.location.pathname;
+  const marker = "/admin/";
+  const idx = path.indexOf(marker);
+  const basePrefix = idx >= 0 ? path.slice(0, idx) : "";
+  return `${basePrefix}/api/v1`;
+}
+
+const API_BASE = apiV1BaseUrl().replace(/\/+$/, "");
+const AUTH_SESSION_URL = `${API_BASE}/auth/session`;
+const AUTH_REFRESH_URL = `${API_BASE}/auth/refresh`;
+
+type TokenPair = {
+  access_token: string;
+  refresh_token: string;
+};
+
+let accessToken: string | null = null;
+let refreshToken: string | null = null;
+
+function parseErrorMessage(raw: string): string {
+  const t = raw.trim();
+  if (!t) {
+    return "Request failed";
   }
-  return payload as T;
+  try {
+    const json = JSON.parse(t) as { error?: unknown; message?: unknown };
+    if (typeof json.error === "string" && json.error.trim() !== "") {
+      return json.error;
+    }
+    if (typeof json.message === "string" && json.message.trim() !== "") {
+      return json.message;
+    }
+  } catch {
+    /* not JSON */
+  }
+  return t;
+}
+
+async function mintTokenFromSession(): Promise<void> {
+  const res = await fetch(AUTH_SESSION_URL, {
+    method: "POST",
+    credentials: "include",
+    headers: { Accept: "application/json" },
+  });
+  const raw = await res.text();
+  if (!res.ok) {
+    throw new Error(parseErrorMessage(raw));
+  }
+  const payload = JSON.parse(raw) as TokenPair;
+  accessToken = payload.access_token ?? null;
+  refreshToken = payload.refresh_token ?? null;
+  if (!accessToken || !refreshToken) {
+    throw new Error("Could not initialize admin API session.");
+  }
+}
+
+async function refreshAccessToken(): Promise<boolean> {
+  if (!refreshToken) {
+    return false;
+  }
+  const res = await fetch(AUTH_REFRESH_URL, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  });
+  const raw = await res.text();
+  if (!res.ok) {
+    return false;
+  }
+  const payload = JSON.parse(raw) as TokenPair;
+  accessToken = payload.access_token ?? null;
+  refreshToken = payload.refresh_token ?? null;
+  return !!accessToken && !!refreshToken;
+}
+
+async function ensureAccessToken(): Promise<string> {
+  if (!accessToken) {
+    await mintTokenFromSession();
+  }
+  if (!accessToken) {
+    throw new Error("Missing API access token.");
+  }
+  return accessToken;
+}
+
+async function withAuth(input: RequestInfo | URL, init?: RequestInit, allowRetry = true): Promise<Response> {
+  const token = await ensureAccessToken();
+  const res = await fetch(input, {
+    ...init,
+    credentials: "include",
+    headers: {
+      ...(init?.headers ?? {}),
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    },
+  });
+  if (res.status !== 401 || !allowRetry) {
+    return res;
+  }
+  const refreshed = await refreshAccessToken();
+  if (!refreshed) {
+    accessToken = null;
+    refreshToken = null;
+    await mintTokenFromSession();
+  }
+  return withAuth(input, init, false);
+}
+
+async function api<T>(url: string, opts?: { method?: string; body?: unknown }): Promise<T> {
+  const method = (opts?.method ?? (opts?.body === undefined ? "GET" : "POST")).toUpperCase();
+  const hasBody = opts?.body !== undefined;
+  const res = await withAuth(url, {
+    method,
+    headers: hasBody ? { "Content-Type": "application/json" } : undefined,
+    body: hasBody ? JSON.stringify(opts?.body) : undefined,
+  });
+  const raw = await res.text();
+  if (!res.ok) {
+    throw new Error(parseErrorMessage(raw));
+  }
+  return JSON.parse(raw) as T;
 }
 
 export const store = {
@@ -184,7 +286,7 @@ export const store = {
     await store.reload();
   },
   reload: async () => {
-    state = await api<Settings>("state");
+    state = await api<Settings>(`${API_BASE}/admin/state`);
     emit();
   },
   set: (patch: Partial<Settings> | ((s: Settings) => Partial<Settings>)) => {
@@ -193,12 +295,15 @@ export const store = {
     emit();
   },
   addUser: async (u: Omit<User, "id" | "createdAt"> & { password?: string }) => {
-    await api<Settings>("users/create", {
-      username: u.username,
-      email: u.email,
-      displayName: u.displayName,
-      password: u.password ?? "",
-      groups: u.groups ?? [],
+    await api<{ ok: boolean }>(`${API_BASE}/admin/users`, {
+      method: "POST",
+      body: {
+        username: u.username,
+        email: u.email,
+        displayName: u.displayName,
+        password: u.password ?? "",
+        groups: u.groups ?? [],
+      },
     });
     await store.reload();
   },
@@ -209,35 +314,116 @@ export const store = {
     password?: string;
     groups: string[];
   }) => {
-    await api<Settings>("users/update", u);
+    await api<{ ok: boolean }>(`${API_BASE}/admin/users/${encodeURIComponent(u.username)}`, {
+      method: "PATCH",
+      body: {
+        displayName: u.displayName,
+        email: u.email,
+        password: u.password ?? "",
+        groups: u.groups ?? [],
+      },
+    });
     await store.reload();
   },
   removeUser: async (username: string) => {
-    await api<Settings>("users/delete", { username });
+    await api<{ ok: boolean }>(`${API_BASE}/admin/users/${encodeURIComponent(username)}`, {
+      method: "DELETE",
+    });
     await store.reload();
   },
   addGroup: async (g: Omit<Group, "id">) => {
-    await api<Settings>("groups/create", g);
+    await api<{ ok: boolean }>(`${API_BASE}/admin/groups`, {
+      method: "POST",
+      body: {
+        slug: g.name,
+        displayName: g.displayName,
+      },
+    });
     await store.reload();
   },
   updateGroup: async (groupId: string, displayName: string) => {
-    await api<Settings>("groups/update", { groupId, displayName });
+    const slug = groupId.replace(/^principals\/groups\//, "");
+    await api<{ ok: boolean }>(`${API_BASE}/admin/groups/${encodeURIComponent(slug)}`, {
+      method: "PATCH",
+      body: { displayName },
+    });
     await store.reload();
   },
   removeGroup: async (groupId: string) => {
-    await api<Settings>("groups/delete", { groupId });
+    const slug = groupId.replace(/^principals\/groups\//, "");
+    await api<{ ok: boolean }>(`${API_BASE}/admin/groups/${encodeURIComponent(slug)}`, {
+      method: "DELETE",
+    });
     await store.reload();
   },
   toggleMembership: async (username: string, groupId: string, enabled: boolean) => {
-    await api<Settings>("membership/set", { username, groupId, enabled });
+    const slug = groupId.replace(/^principals\/groups\//, "");
+    if (enabled) {
+      await api<{ ok: boolean }>(
+        `${API_BASE}/admin/groups/${encodeURIComponent(slug)}/members/${encodeURIComponent(username)}`,
+        { method: "PUT", body: {} },
+      );
+    } else {
+      const token = await ensureAccessToken();
+      const res = await fetch(
+        `${API_BASE}/admin/groups/${encodeURIComponent(slug)}/members/${encodeURIComponent(username)}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        },
+      );
+      if (!res.ok) {
+        throw new Error(parseErrorMessage(await res.text()));
+      }
+    }
     await store.reload();
   },
   saveSettings: async (payload: Pick<Settings, "mail" | "voice" | "apps" | "webdav">) => {
-    await api<Settings>("settings/save", payload);
+    const voiceTurnUrls = [
+      ...String(payload.voice.stunUrls ?? "")
+        .split(/[\r\n,]+/)
+        .map((v) => v.trim())
+        .filter(Boolean),
+      ...String(payload.voice.turnUrls ?? "")
+        .split(/[\r\n,]+/)
+        .map((v) => v.trim())
+        .filter(Boolean),
+    ];
+    await api<{ ok: boolean }>(`${API_BASE}/admin/settings`, {
+      method: "PUT",
+      body: {
+        values: {
+        mail_imap_host: payload.mail.imapHost,
+        mail_imap_port: payload.mail.imapPort,
+        mail_imap_security: payload.mail.imapSecurity,
+        mail_smtp_host: payload.mail.smtpHost,
+        mail_smtp_port: payload.mail.smtpPort,
+        mail_smtp_security: payload.mail.smtpSecurity,
+        voice_signaling_url: payload.voice.signalingUrl,
+        voice_turn_url: voiceTurnUrls.join(", "),
+        voice_turn_username: payload.voice.turnUsername,
+        voice_turn_credential: payload.voice.turnPassword,
+        voice_force_relay: payload.voice.forceRelay,
+        browser_plugin: payload.webdav.sabreUi,
+        timezone: payload.webdav.timezone,
+        base_uri: payload.webdav.baseUri,
+        auth_realm: payload.webdav.authRealm,
+        calendar_enabled: payload.apps.calendars,
+          contacts_enabled: payload.apps.contacts,
+        },
+      },
+    });
     await store.reload();
   },
   checkUpdates: async () => {
-    const updates = await api<Settings["updates"]>("updates/check", {});
+    const updates = await api<Settings["updates"]>(`${API_BASE}/admin/updates/check`, {
+      method: "POST",
+      body: {},
+    });
     store.set({ updates });
   },
   applyUpdate: async () => {
@@ -252,29 +438,81 @@ export const store = {
           "No update package available. Run Check now and verify feed metadata.",
       );
     }
-    const result = await api<{ ok: boolean; message?: string }>("updates/apply", latest);
+    const result = await api<{ ok: boolean; message?: string }>(`${API_BASE}/admin/updates/apply`, {
+      method: "POST",
+      body: latest,
+    });
     await store.reload();
     return result;
   },
   cancelUpdate: async () => {
-    const updates = await api<Settings["updates"]>("updates/cancel", {});
+    const updates = await api<Settings["updates"]>(`${API_BASE}/admin/updates/cancel`, {
+      method: "POST",
+      body: {},
+    });
     store.set({ updates });
   },
   reloadUpdateState: async () => {
-    const updates = await api<Settings["updates"]>("updates/state");
+    const updates = await api<Settings["updates"]>(`${API_BASE}/admin/updates/state`);
     store.set({ updates });
   },
   readUpdateLog: async () => {
-    const log = await api<{ lines: string[] }>("updates/log");
+    const log = await api<{ lines: string[] }>(`${API_BASE}/admin/updates/log`);
     return log.lines;
   },
   clearUpdateLog: async () => {
-    const result = await api<{ ok: boolean; lines: string[] }>("updates/log/clear", {});
-    return result.lines;
+    const token = await ensureAccessToken();
+    const res = await fetch(`${API_BASE}/admin/updates/log`, {
+      method: "DELETE",
+      credentials: "include",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+    });
+    if (!res.ok) {
+      throw new Error(parseErrorMessage(await res.text()));
+    }
+    return [];
   },
   deleteBackup: async (name: string) => {
-    const updates = await api<Settings["updates"]>("updates/backups/delete", { name });
+    const token = await ensureAccessToken();
+    const res = await fetch(`${API_BASE}/admin/updates/backups/${encodeURIComponent(name)}`, {
+      method: "DELETE",
+      credentials: "include",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+    });
+    const raw = await res.text();
+    if (!res.ok) {
+      throw new Error(parseErrorMessage(raw));
+    }
+    const updates = JSON.parse(raw) as Settings["updates"];
     store.set({ updates });
+  },
+  downloadBackup: async (name: string) => {
+    const token = await ensureAccessToken();
+    const res = await fetch(`${API_BASE}/admin/updates/backups/${encodeURIComponent(name)}`, {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!res.ok) {
+      throw new Error(parseErrorMessage(await res.text()));
+    }
+    const blob = await res.blob();
+    const href = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = href;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(href);
   },
 };
 
