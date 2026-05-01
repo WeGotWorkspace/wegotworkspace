@@ -1171,6 +1171,40 @@
         }
       }
     },
+    "/office/documents": {
+      "post": {
+        "tags": [
+          "Office"
+        ],
+        "summary": "Create Office document (.docx/.xlsx/.pptx)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Created Office document"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Office"
+        ],
+        "summary": "Update Office document content (.docx/.xlsx/.pptx)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated Office document"
+          }
+        }
+      }
+    },
     "/voice/join": {
       "post": {
         "tags": [
