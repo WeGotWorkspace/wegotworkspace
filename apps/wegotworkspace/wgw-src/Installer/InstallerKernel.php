@@ -34,7 +34,9 @@ final class InstallerKernel
         $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
         $installed = is_file(Paths::lockFile());
 
-        if (self::isApiPath($webBase, $path)) {
+        $legacyApiPrefix = WebBase::url($webBase, '/install/api');
+        $isLegacyApiPath = $path === $legacyApiPrefix || str_starts_with($path, $legacyApiPrefix.'/');
+        if ($isLegacyApiPath) {
             header('Content-Type: application/json; charset=utf-8');
             header('Cache-Control: no-store, no-cache, must-revalidate');
             http_response_code(410);
@@ -89,57 +91,6 @@ final class InstallerKernel
     private static function saveState(array $s): void
     {
         $_SESSION[self::SESSION_KEY] = $s;
-    }
-
-    private static function isApiPath(string $webBase, string $path): bool
-    {
-        $prefix = WebBase::url($webBase, '/install/api');
-
-        return $path === $prefix || str_starts_with($path, $prefix.'/');
-    }
-
-    private static function respondApi(string $webBase, string $path, bool $installed): void
-    {
-        header('Content-Type: application/json; charset=utf-8');
-        header('Cache-Control: no-store, no-cache, must-revalidate');
-
-        $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
-        $bootstrapPath = WebBase::url($webBase, '/install/api/bootstrap');
-        $actionPath = WebBase::url($webBase, '/install/api/action');
-
-        if ($method === 'GET' && $path === $bootstrapPath) {
-            echo json_encode(
-                [
-                    'csrf' => Csrf::token(),
-                    'state' => self::apiState($webBase, $installed),
-                ],
-                JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES
-            );
-
-            return;
-        }
-
-        if ($method === 'POST' && $path === $actionPath) {
-            if ($installed) {
-                echo json_encode(
-                    [
-                        'ok' => false,
-                        'error' => 'This instance is already installed.',
-                        'redirect' => WebBase::url($webBase, '/admin/updates'),
-                        'state' => self::apiState($webBase, true),
-                    ],
-                    JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES
-                );
-
-                return;
-            }
-            self::apiPostAction($webBase);
-
-            return;
-        }
-
-        http_response_code(404);
-        echo json_encode(['ok' => false, 'error' => 'Not found'], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
     }
 
     /**
@@ -238,30 +189,6 @@ final class InstallerKernel
         echo '<p><a href="'.$updatesUrl.'">Open admin updates</a></p>';
         echo '</body></html>';
         exit;
-    }
-
-    private static function apiPostAction(string $webBase): void
-    {
-        $raw = file_get_contents('php://input');
-        $payload = json_decode((string) $raw, true);
-        if (!is_array($payload)) {
-            http_response_code(400);
-            echo json_encode(['ok' => false, 'error' => 'Invalid JSON body'], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
-
-            return;
-        }
-
-        if (!Csrf::validate(isset($payload['csrf']) && is_string($payload['csrf']) ? $payload['csrf'] : null)) {
-            http_response_code(400);
-            echo json_encode(['ok' => false, 'error' => 'Invalid security token. Refresh and try again.'], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
-
-            return;
-        }
-
-        $action = isset($payload['action']) && is_string($payload['action']) ? $payload['action'] : '';
-        $body = isset($payload['payload']) && is_array($payload['payload']) ? $payload['payload'] : [];
-        $result = self::applyApiAction($webBase, $action, $body);
-        echo json_encode($result, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
     }
 
     /**
