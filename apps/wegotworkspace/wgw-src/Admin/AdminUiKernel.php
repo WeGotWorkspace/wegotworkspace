@@ -72,7 +72,13 @@ final class AdminUiKernel
             return true;
         }
 
-        if (self::tryRespondApi($webBase, $path, $pdo, $adminUser)) {
+        $legacyApiPrefix = WebBase::url($webBase, '/admin/api');
+        if ($path === $legacyApiPrefix || str_starts_with($path, $legacyApiPrefix.'/')) {
+            self::json(410, [
+                'error' => 'Legacy admin API endpoints have been removed. Use /api/v1/admin/*.',
+                'code' => 'gone',
+            ]);
+
             return true;
         }
 
