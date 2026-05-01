@@ -481,6 +481,42 @@
         }
       }
     },
+    "/settings/profile": {
+      "put": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Update profile details for current user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated settings state"
+          }
+        }
+      }
+    },
+    "/settings/mail": {
+      "put": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Update personal mail credentials for current user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated settings state"
+          }
+        }
+      }
+    },
     "/mail/status": {
       "get": {
         "tags": [
