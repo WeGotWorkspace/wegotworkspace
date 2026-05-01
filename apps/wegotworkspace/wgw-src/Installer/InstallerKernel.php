@@ -34,24 +34,6 @@ final class InstallerKernel
         $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
         $installed = is_file(Paths::lockFile());
 
-        $legacyApiPrefix = WebBase::url($webBase, '/install/api');
-        $isLegacyApiPath = $path === $legacyApiPrefix || str_starts_with($path, $legacyApiPrefix.'/');
-        if ($isLegacyApiPath) {
-            header('Content-Type: application/json; charset=utf-8');
-            header('Cache-Control: no-store, no-cache, must-revalidate');
-            http_response_code(410);
-            echo json_encode(
-                [
-                    'ok' => false,
-                    'error' => 'Legacy installer API is gone. Use /api/v1/installer/* endpoints.',
-                    'code' => 'gone',
-                ],
-                JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES
-            );
-
-            return;
-        }
-
         if ($installed) {
             if (InstallerStatic::distReady() && InstallerStatic::tryServe($webBase, $path)) {
                 return;

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Voice;
 
 /**
- * Minimal JSON signaling for Aura Voice (ported from bright-face-connect {@code public/aura-signaling/rooms.php}).
+ * Minimal JSON signaling for Aura Voice.
  * Signaling state lives in the installer-configured primary application database.
  */
 final class VoiceSignaling
