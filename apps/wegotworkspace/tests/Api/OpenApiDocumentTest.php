@@ -26,6 +26,8 @@ final class OpenApiDocumentTest extends TestCase
         self::assertArrayHasKey('/mail/folders', $doc['paths'] ?? []);
         self::assertArrayHasKey('/mail/messages', $doc['paths'] ?? []);
         self::assertArrayHasKey('/mail/message', $doc['paths'] ?? []);
+        self::assertArrayHasKey('/settings/profile', $doc['paths'] ?? []);
+        self::assertArrayHasKey('/settings/mail', $doc['paths'] ?? []);
         self::assertArrayHasKey('/drive/getdir', $doc['paths'] ?? []);
         self::assertArrayHasKey('/drive/upload', $doc['paths'] ?? []);
         self::assertArrayHasKey('/notes/state', $doc['paths'] ?? []);
@@ -57,6 +59,14 @@ final class OpenApiDocumentTest extends TestCase
         self::assertSame(
             '#/components/schemas/MailSendRequest',
             $doc['paths']['/mail/send']['post']['requestBody']['content']['application/json']['schema']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/SettingsProfileRequest',
+            $doc['paths']['/settings/profile']['put']['requestBody']['content']['application/json']['schema']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/SettingsMailRequest',
+            $doc['paths']['/settings/mail']['put']['requestBody']['content']['application/json']['schema']['$ref'] ?? null
         );
         self::assertSame(
             '#/components/schemas/NoteUpsertRequest',
