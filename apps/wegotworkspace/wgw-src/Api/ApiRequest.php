@@ -16,7 +16,12 @@ final class ApiRequest
      */
     public static function jsonBody(): array
     {
-        $raw = (string) file_get_contents('php://input');
+        $raw = '';
+        if (isset($GLOBALS['__WGW_TEST_JSON_BODY']) && is_string($GLOBALS['__WGW_TEST_JSON_BODY'])) {
+            $raw = $GLOBALS['__WGW_TEST_JSON_BODY'];
+        } else {
+            $raw = (string) file_get_contents('php://input');
+        }
         if ($raw === '') {
             return [];
         }

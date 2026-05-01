@@ -8,7 +8,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { officeNewEditorHref } from "@/lib/officeLink";
+import { driveCreateFile } from "@/lib/driveApi";
+import { officeEditorHref } from "@/lib/officeLink";
 import { cn } from "@/lib/utils";
 import { NewFolderModal } from "./NewFolderModal";
 
@@ -17,6 +18,25 @@ const nav = [
   { id: "recent", label: "Recent", Icon: Clock },
   { id: "starred", label: "Starred", Icon: Star },
 ];
+
+type OfficeCreateType = "docx" | "xlsx" | "pptx";
+
+function joinDrivePath(cwd: string, name: string): string {
+  const base = cwd.trim() === "" ? "/" : cwd;
+  const normalizedBase = base.endsWith("/") ? base.slice(0, -1) : base;
+  const cleanName = name.trim().replace(/^\/+/, "");
+  if (normalizedBase === "" || normalizedBase === "/") {
+    return `/${cleanName}`;
+  }
+
+  return `${normalizedBase}/${cleanName}`;
+}
+
+function officeLabel(ext: OfficeCreateType): string {
+  if (ext === "docx") return "Document";
+  if (ext === "xlsx") return "Spreadsheet";
+  return "Presentation";
+}
 
 export function DriveSidebar({
   active,
@@ -36,8 +56,49 @@ export function DriveSidebar({
   onOpenUpload: () => void;
 }) {
   const [newFolderOpen, setNewFolderOpen] = useState(false);
+  const [officeCreateBusy, setOfficeCreateBusy] = useState<OfficeCreateType | null>(null);
+  const [officeCreateError, setOfficeCreateError] = useState<string | undefined>(undefined);
 
   const actionsDisabled = !myDrive;
+
+  async function createOfficeFile(ext: OfficeCreateType): Promise<void> {
+    if (actionsDisabled || officeCreateBusy !== null) {
+      return;
+    }
+    setOfficeCreateError(undefined);
+    setOfficeCreateBusy(ext);
+    const stem = `New ${officeLabel(ext)}`;
+    try {
+      let createdName: string | null = null;
+      for (let i = 0; i < 20; i++) {
+        const suffix = i === 0 ? "" : ` (${i + 1})`;
+        const candidate = `${stem}${suffix}.${ext}`;
+        try {
+          await driveCreateFile(cwd, candidate);
+          createdName = candidate;
+          break;
+        } catch (e) {
+          const msg = (e as Error).message || "";
+          if (!msg.toLowerCase().includes("already exists")) {
+            throw e;
+          }
+        }
+      }
+      if (!createdName) {
+        throw new Error("Could not allocate a free file name.");
+      }
+      onRefreshListing();
+      const href = officeEditorHref(joinDrivePath(cwd, createdName));
+      if (!href) {
+        throw new Error("Could not open Office editor for this file.");
+      }
+      window.open(href, "_blank", "noopener,noreferrer");
+    } catch (e) {
+      setOfficeCreateError((e as Error).message || `Could not create .${ext} file.`);
+    } finally {
+      setOfficeCreateBusy(null);
+    }
+  }
 
   return (
     <aside className="w-64 shrink-0 border-r border-border bg-sidebar flex flex-col h-full">
@@ -66,35 +127,26 @@ export function DriveSidebar({
               <FolderPlus className="h-4 w-4 mr-2" /> New folder
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <a
-                href={officeNewEditorHref("docx")}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex cursor-pointer items-center"
-              >
-                <FileText className="h-4 w-4 mr-2 text-doc" /> Blank document
-              </a>
+            <DropdownMenuItem
+              disabled={actionsDisabled || officeCreateBusy !== null}
+              onSelect={() => void createOfficeFile("docx")}
+            >
+              <FileText className="h-4 w-4 mr-2 text-doc" />
+              {officeCreateBusy === "docx" ? "Creating document..." : "Blank document"}
             </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <a
-                href={officeNewEditorHref("xlsx")}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex cursor-pointer items-center"
-              >
-                <Sheet className="h-4 w-4 mr-2 text-sheet" /> Blank spreadsheet
-              </a>
+            <DropdownMenuItem
+              disabled={actionsDisabled || officeCreateBusy !== null}
+              onSelect={() => void createOfficeFile("xlsx")}
+            >
+              <Sheet className="h-4 w-4 mr-2 text-sheet" />
+              {officeCreateBusy === "xlsx" ? "Creating spreadsheet..." : "Blank spreadsheet"}
             </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <a
-                href={officeNewEditorHref("pptx")}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex cursor-pointer items-center"
-              >
-                <Presentation className="h-4 w-4 mr-2 text-slide" /> Blank presentation
-              </a>
+            <DropdownMenuItem
+              disabled={actionsDisabled || officeCreateBusy !== null}
+              onSelect={() => void createOfficeFile("pptx")}
+            >
+              <Presentation className="h-4 w-4 mr-2 text-slide" />
+              {officeCreateBusy === "pptx" ? "Creating presentation..." : "Blank presentation"}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
@@ -133,6 +185,7 @@ export function DriveSidebar({
       </nav>
 
       <div className="px-5 py-5 border-t border-border text-[11px] text-muted-foreground leading-relaxed">
+        {officeCreateError ? <div className="mb-3 text-destructive">{officeCreateError}</div> : null}
         <a
           href={logoutUrl}
           className="mb-3 inline-flex w-full items-center justify-center gap-2 rounded-md border border-border px-3 py-2 text-xs text-foreground/85 transition-colors hover:bg-accent hover:text-foreground"

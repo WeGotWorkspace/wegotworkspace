@@ -35,6 +35,7 @@ final class OpenApiDocumentTest extends TestCase
         self::assertArrayHasKey('/notes/items/{id}/restore', $doc['paths'] ?? []);
         self::assertArrayHasKey('/notes/notebooks', $doc['paths'] ?? []);
         self::assertArrayHasKey('/notes/notebooks/{name}', $doc['paths'] ?? []);
+        self::assertArrayHasKey('/office/documents', $doc['paths'] ?? []);
         self::assertArrayHasKey('/dav/capabilities', $doc['paths'] ?? []);
 
         self::assertSame(
@@ -72,6 +73,18 @@ final class OpenApiDocumentTest extends TestCase
         self::assertSame(
             '#/components/schemas/VoiceSignalRequest',
             $doc['paths']['/voice/join']['post']['requestBody']['content']['application/json']['schema']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/OfficeDocumentCreateRequest',
+            $doc['paths']['/office/documents']['post']['requestBody']['content']['application/json']['schema']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/OfficeDocumentUpdateRequest',
+            $doc['paths']['/office/documents']['put']['requestBody']['content']['application/json']['schema']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/OfficeDocumentMutationResponse',
+            $doc['paths']['/office/documents']['post']['responses']['200']['content']['application/json']['schema']['$ref'] ?? null
         );
         self::assertIsArray(
             $doc['components']['schemas']['MailFolderCreateRequest']['example'] ?? null
