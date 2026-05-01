@@ -20,34 +20,12 @@ function fallbackApiBaseUrlFromLocation(): string {
   return `${basePrefix}/api/v1/drive`;
 }
 
-function fallbackDownloadBaseUrlFromLocation(): string {
-  const path = window.location.pathname;
-  if (path.endsWith("/drive")) {
-    return `${path}/`;
-  }
-  const marker = "/drive/";
-  const idx = path.indexOf(marker);
-  if (idx >= 0) {
-    return path.slice(0, idx + marker.length);
-  }
-  return import.meta.env.BASE_URL;
-}
-
 function resolveApiBaseUrl(): string {
   const configured = window.__SABRE_DRIVE_CONFIG__?.apiBaseUrl;
   if (typeof configured === "string" && configured.trim() !== "") {
     return normalizeBaseUrl(configured);
   }
   return normalizeBaseUrl(fallbackApiBaseUrlFromLocation());
-}
-
-function resolveDownloadBaseUrl(): string {
-  const configured = window.__SABRE_DRIVE_CONFIG__?.downloadBaseUrl;
-  if (typeof configured === "string" && configured.trim() !== "") {
-    return normalizeBaseUrl(configured);
-  }
-
-  return normalizeBaseUrl(fallbackDownloadBaseUrlFromLocation());
 }
 
 function resolveAuthSessionUrl(): string {
@@ -74,7 +52,6 @@ function routeUrl(route: string): string {
 }
 
 const apiBase = resolveApiBaseUrl();
-const downloadBase = resolveDownloadBaseUrl();
 const authSessionUrl = resolveAuthSessionUrl();
 const authRefreshUrl = resolveAuthRefreshUrl();
 
@@ -86,15 +63,18 @@ type AuthTokenResponse = {
 let accessToken: string | null = null;
 let refreshToken: string | null = null;
 
-/** Base64 path segment expected by Drive {@code GET /download}. */
-export function driveDownloadUrl(filePath: string): string {
+/** Base64 path query expected by Drive {@code GET /download}. */
+function driveDownloadPathParam(filePath: string): string {
   const bytes = new TextEncoder().encode(filePath);
   let binary = "";
   for (let i = 0; i < bytes.length; i++) {
     binary += String.fromCharCode(bytes[i]!);
   }
-  const pathParam = btoa(binary);
-  return `${downloadBase}?r=${encodeURIComponent("/download")}&path=${encodeURIComponent(pathParam)}`;
+  return btoa(binary);
+}
+
+function driveDownloadApiUrl(filePath: string): string {
+  return `${routeUrl("/download")}?path=${encodeURIComponent(driveDownloadPathParam(filePath))}`;
 }
 
 function parseJsonOrNull(raw: string): unknown {
@@ -173,14 +153,15 @@ async function withAuth(
   allowRetry = true,
 ): Promise<Response> {
   const token = await ensureAccessToken();
+  const headers = new Headers(init?.headers ?? {});
+  headers.set("Authorization", `Bearer ${token}`);
+  if (!headers.has("Accept")) {
+    headers.set("Accept", "application/json");
+  }
   const response = await fetch(input, {
     ...init,
     credentials: "include",
-    headers: {
-      ...(init?.headers ?? {}),
-      Authorization: `Bearer ${token}`,
-      Accept: "application/json",
-    },
+    headers,
   });
   if (response.status !== 401 || !allowRetry) {
     return response;
@@ -231,6 +212,53 @@ export async function driveGet<T = unknown>(route: string): Promise<T> {
     throw new Error(parseDriveApiMessage(t) || `Request failed (${r.status})`);
   }
   return (await r.json()) as T;
+}
+
+export async function driveDownloadBlob(filePath: string): Promise<Blob> {
+  const r = await withAuth(driveDownloadApiUrl(filePath), {
+    method: "GET",
+    headers: {
+      Accept: "*/*",
+    },
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(parseDriveApiMessage(t) || `Download failed (${r.status})`);
+  }
+  return r.blob();
+}
+
+export async function driveOpenInNewTab(filePath: string): Promise<void> {
+  const opened = window.open("", "_blank");
+  try {
+    const blob = await driveDownloadBlob(filePath);
+    const objectUrl = URL.createObjectURL(blob);
+    if (opened && !opened.closed) {
+      opened.opener = null;
+      opened.location.href = objectUrl;
+    } else {
+      window.open(objectUrl, "_blank", "noopener,noreferrer");
+    }
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+  } catch (error) {
+    if (opened && !opened.closed) {
+      opened.close();
+    }
+    throw error;
+  }
+}
+
+export async function driveDownloadFile(filePath: string, filename?: string): Promise<void> {
+  const blob = await driveDownloadBlob(filePath);
+  const objectUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = objectUrl;
+  link.download = filename && filename.trim() ? filename.trim() : "download";
+  link.rel = "noopener";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 5_000);
 }
 
 function parseDriveApiMessage(raw: string): string {

@@ -32,8 +32,8 @@ import {
   type DriveDirEntry,
   type DriveDirResponse,
   type DriveUserResponse,
-  driveDownloadUrl,
   driveGet,
+  driveOpenInNewTab,
   drivePost,
   driveSearchFilenames,
 } from "@/lib/driveApi";
@@ -354,7 +354,7 @@ export function Drive() {
   const openFilePreview = useCallback((f: DriveFile) => {
     if (f.kind === "image") {
       recordDriveRecent({ path: f.path, name: f.name, kind: f.kind });
-      window.open(driveDownloadUrl(f.path), "_blank", "noopener,noreferrer");
+      void driveOpenInNewTab(f.path);
       return;
     }
     openInOffice(f);
@@ -435,7 +435,7 @@ export function Drive() {
       }
       if (f.kind === "image") {
         recordDriveRecent({ path: f.path, name: f.name, kind: f.kind });
-        window.open(driveDownloadUrl(f.path), "_blank", "noopener,noreferrer");
+        void driveOpenInNewTab(f.path);
         return;
       }
       setSection("my");

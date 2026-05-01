@@ -93,7 +93,6 @@ final class DriveStatic
                 $payload = [
                     'logoutUrl' => WebBase::url($webBase, '/logout/'),
                     'apiBaseUrl' => WebBase::url($webBase, '/api/v1/drive'),
-                    'downloadBaseUrl' => WebBase::url($webBase, '/drive/'),
                     'authSessionUrl' => WebBase::url($webBase, '/api/v1/auth/session'),
                     'authRefreshUrl' => WebBase::url($webBase, '/api/v1/auth/refresh'),
                 ];
