@@ -161,18 +161,25 @@ final class DriveKernel
                 $body = self::readJsonBody();
                 $name = self::validateItemName((string) ($body['name'] ?? ''));
                 $type = (string) ($body['type'] ?? '');
-                if ($type !== 'dir') {
-                    throw new \InvalidArgumentException('Only directory creation is supported.');
+                if ($type !== 'dir' && $type !== 'file') {
+                    throw new \InvalidArgumentException('Invalid item type. Use "dir" or "file".');
                 }
                 $cwd = self::currentCwd($username, $groups);
                 $newPath = DriveAcl::normalizeVirtualPath($cwd.'/'.$name);
                 self::assertAllowed($newPath, $username, $groups, true);
                 $abs = self::absolutePath($filesRoot, $newPath);
-                if (is_dir($abs)) {
-                    throw new \InvalidArgumentException('Folder already exists.');
+                if (file_exists($abs)) {
+                    throw new \InvalidArgumentException('Item already exists.');
                 }
-                if (!@mkdir($abs, 0775, true)) {
-                    throw new \RuntimeException('Could not create folder.');
+                if ($type === 'dir') {
+                    if (!@mkdir($abs, 0775, true)) {
+                        throw new \RuntimeException('Could not create folder.');
+                    }
+                } else {
+                    @mkdir(dirname($abs), 0775, true);
+                    if (@file_put_contents($abs, '') === false) {
+                        throw new \RuntimeException('Could not create file.');
+                    }
                 }
                 self::json(200, ['data' => 'Created']);
 
@@ -495,7 +502,12 @@ final class DriveKernel
 
     private static function readJsonBody(): array
     {
-        $raw = (string) file_get_contents('php://input');
+        $raw = '';
+        if (isset($GLOBALS['__WGW_TEST_JSON_BODY']) && is_string($GLOBALS['__WGW_TEST_JSON_BODY'])) {
+            $raw = $GLOBALS['__WGW_TEST_JSON_BODY'];
+        } else {
+            $raw = (string) file_get_contents('php://input');
+        }
         if ($raw === '') {
             return [];
         }
