@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { FileIcon } from "./FileIcon";
 import type { DriveFile } from "@/lib/files";
 import { formatRelative } from "@/lib/files";
-import { driveDownloadUrl } from "@/lib/driveApi";
+import { driveDownloadBlob, driveDownloadFile, driveOpenInNewTab } from "@/lib/driveApi";
 import { officeEditorHref } from "@/lib/officeLink";
 import { cn } from "@/lib/utils";
 
@@ -26,12 +26,36 @@ export function DetailsPanel({
 }) {
   const isImage = file.kind === "image";
   const [imgFailed, setImgFailed] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const officeHref = officeEditorHref(file.path);
   const canOpen = isImage || Boolean(officeHref);
 
   useEffect(() => {
     setImgFailed(false);
+    setPreviewUrl(null);
   }, [file.id]);
+
+  useEffect(() => {
+    if (!isImage || imgFailed) {
+      return;
+    }
+    let cancelled = false;
+    let urlToRevoke: string | null = null;
+    void driveDownloadBlob(file.path)
+      .then((blob) => {
+        if (cancelled) return;
+        const objectUrl = URL.createObjectURL(blob);
+        urlToRevoke = objectUrl;
+        setPreviewUrl(objectUrl);
+      })
+      .catch(() => {
+        if (!cancelled) setImgFailed(true);
+      });
+    return () => {
+      cancelled = true;
+      if (urlToRevoke) URL.revokeObjectURL(urlToRevoke);
+    };
+  }, [file.path, isImage, imgFailed]);
 
   return (
     <aside className="w-[340px] shrink-0 border-l border-border bg-sidebar flex flex-col h-full">
@@ -50,9 +74,9 @@ export function DetailsPanel({
           )}
           style={!isImage || imgFailed ? { background: "var(--gradient-subtle)" } : undefined}
         >
-          {isImage && !imgFailed ? (
+          {isImage && !imgFailed && previewUrl ? (
             <img
-              src={driveDownloadUrl(file.path)}
+              src={previewUrl}
               alt=""
               loading="lazy"
               decoding="async"
@@ -85,7 +109,9 @@ export function DetailsPanel({
             className="flex flex-col items-center gap-1.5 py-3 rounded-lg border border-border hover:bg-accent transition-colors disabled:opacity-40 disabled:pointer-events-none"
             onClick={() => {
               if (!canOpen) return;
-              if (onOpenInOffice) onOpenInOffice();
+              if (isImage) {
+                void driveOpenInNewTab(file.path);
+              } else if (onOpenInOffice) onOpenInOffice();
               else if (officeHref) window.open(officeHref, "_blank", "noopener,noreferrer");
             }}
           >
@@ -99,7 +125,7 @@ export function DetailsPanel({
             className="flex flex-col items-center gap-1.5 py-3 rounded-lg border border-border hover:bg-accent transition-colors disabled:opacity-40 disabled:pointer-events-none"
             onClick={() => {
               if (file.kind === "folder") return;
-              window.open(driveDownloadUrl(file.path), "_blank", "noopener,noreferrer");
+              void driveDownloadFile(file.path, file.name);
             }}
           >
             <Download className="h-4 w-4" />
