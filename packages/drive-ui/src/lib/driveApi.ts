@@ -298,6 +298,11 @@ export async function driveCreateFolder(cwd: string, name: string): Promise<void
   await drivePost("/createnew", { cwd, type: "dir", name: name.trim() });
 }
 
+/** Create an empty file under {@code cwd} using the same storage as listing. */
+export async function driveCreateFile(cwd: string, name: string): Promise<void> {
+  await drivePost("/createnew", { cwd, type: "file", name: name.trim() });
+}
+
 export type DriveDeleteItem = { path: string; type: "dir" | "file" };
 
 /** Permanently removes files and/or directories ({@code /deleteitems}). */

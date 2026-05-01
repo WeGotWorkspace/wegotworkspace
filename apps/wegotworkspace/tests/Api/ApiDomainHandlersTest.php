@@ -108,6 +108,8 @@ final class ApiDomainHandlersTest extends TestCase
         yield 'notes archive' => ['POST', 'notes/items/n123/archive'];
         yield 'notes notebooks list' => ['GET', 'notes/notebooks'];
         yield 'notes notebook rename' => ['PATCH', 'notes/notebooks/General'];
+        yield 'office document create' => ['POST', 'office/documents'];
+        yield 'office document update' => ['PUT', 'office/documents'];
         yield 'admin log' => ['GET', 'admin/updates/log'];
         yield 'admin backup delete' => ['DELETE', 'admin/updates/backups/snapshot.zip'];
         yield 'admin membership add' => ['PUT', 'admin/groups/administrators/members/admin'];

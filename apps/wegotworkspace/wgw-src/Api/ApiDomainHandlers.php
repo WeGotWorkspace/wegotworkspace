@@ -565,6 +565,17 @@ final class ApiDomainHandlers
             return true;
         }
 
+        if ($rel === 'office/documents' && in_array($method, ['POST', 'PUT'], true)) {
+            $user = self::requireRole($principal, 'user');
+            if ($user === null) {
+                return true;
+            }
+            $body = ApiRequest::jsonBody();
+            ApiResponse::json(200, self::officeUpsertDocument($pdo, $user['username'], $body, $method === 'POST'));
+
+            return true;
+        }
+
         if ($method === 'GET' && $rel === 'home/state') {
             $user = self::requireRole($principal, 'user');
             if ($user === null) {
@@ -760,6 +771,64 @@ final class ApiDomainHandlers
         $display = trim((string) ($stmt->fetchColumn() ?: ''));
 
         return $display !== '' ? $display : $username;
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     *
+     * @return array{ok: bool, path: string, bytes: int}
+     */
+    private static function officeUpsertDocument(\PDO $pdo, string $username, array $body, bool $create): array
+    {
+        $pathRaw = isset($body['path']) && is_string($body['path']) ? trim($body['path']) : '';
+        if ($pathRaw === '') {
+            throw new \InvalidArgumentException('path is required.');
+        }
+        $path = DriveAcl::normalizeVirtualPath($pathRaw);
+        if (!preg_match('#^/(?:users|groups)/[^/]+/.+#', $path)) {
+            throw new \InvalidArgumentException('path must target users/* or groups/* storage.');
+        }
+        $ext = strtolower((string) pathinfo($path, \PATHINFO_EXTENSION));
+        if (!in_array($ext, ['docx', 'xlsx', 'pptx'], true)) {
+            throw new \InvalidArgumentException('Only .docx, .xlsx, and .pptx are supported.');
+        }
+
+        $groups = DriveAcl::allowedGroupSlugs($pdo, $username);
+        if (!DriveAcl::isPathAllowed($path, $username, $groups, true)) {
+            throw new \InvalidArgumentException('Access denied for this path.');
+        }
+
+        $filesRoot = rtrim(Paths::data(), '/').'/files';
+        $abs = rtrim($filesRoot, '/').'/'.ltrim($path, '/');
+        @mkdir(dirname($abs), 0775, true);
+
+        $contentBase64 = isset($body['content_base64']) && is_string($body['content_base64']) ? trim($body['content_base64']) : '';
+        if ($create && file_exists($abs)) {
+            throw new \InvalidArgumentException('Document already exists.');
+        }
+        if (!$create && !is_file($abs)) {
+            throw new \InvalidArgumentException('Document not found.');
+        }
+        if (!$create && $contentBase64 === '') {
+            throw new \InvalidArgumentException('content_base64 is required when updating.');
+        }
+        if ($contentBase64 === '') {
+            $bytes = '';
+        } else {
+            $bytes = base64_decode($contentBase64, true);
+            if (!is_string($bytes)) {
+                throw new \InvalidArgumentException('content_base64 is invalid.');
+            }
+        }
+        if (@file_put_contents($abs, $bytes) === false) {
+            throw new \RuntimeException('Could not save document.');
+        }
+
+        return [
+            'ok' => true,
+            'path' => $path,
+            'bytes' => strlen($bytes),
+        ];
     }
 
     /**
