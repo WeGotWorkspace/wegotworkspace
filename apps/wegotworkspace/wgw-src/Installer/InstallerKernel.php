@@ -35,7 +35,17 @@ final class InstallerKernel
         $installed = is_file(Paths::lockFile());
 
         if (self::isApiPath($webBase, $path)) {
-            self::respondApi($webBase, $path, $installed);
+            header('Content-Type: application/json; charset=utf-8');
+            header('Cache-Control: no-store, no-cache, must-revalidate');
+            http_response_code(410);
+            echo json_encode(
+                [
+                    'ok' => false,
+                    'error' => 'Legacy installer API is gone. Use /api/v1/installer/* endpoints.',
+                    'code' => 'gone',
+                ],
+                JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES
+            );
 
             return;
         }
@@ -60,7 +70,7 @@ final class InstallerKernel
         }
 
         if ($method === 'POST') {
-            self::errorPage(405, 'Installer UI no longer accepts form posts. Use /install/api instead.');
+            self::errorPage(405, 'Installer UI no longer accepts form posts. Use /api/v1/installer/action.');
         }
 
         self::errorPage(405, 'Method not allowed.');
