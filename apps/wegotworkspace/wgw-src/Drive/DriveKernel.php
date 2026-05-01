@@ -164,7 +164,8 @@ final class DriveKernel
                 if ($type !== 'dir' && $type !== 'file') {
                     throw new \InvalidArgumentException('Invalid item type. Use "dir" or "file".');
                 }
-                $cwd = self::currentCwd($username, $groups);
+                $requestedCwd = isset($body['cwd']) && is_string($body['cwd']) ? $body['cwd'] : null;
+                $cwd = self::resolveCwd($requestedCwd, $username, $groups);
                 $newPath = DriveAcl::normalizeVirtualPath($cwd.'/'.$name);
                 self::assertAllowed($newPath, $username, $groups, true);
                 $abs = self::absolutePath($filesRoot, $newPath);
@@ -457,7 +458,8 @@ final class DriveKernel
         $identifier = preg_replace('/[^0-9A-Za-z_]/', '_', (string) ($_POST['resumableIdentifier'] ?? ''));
         $chunkNumber = max(1, (int) ($_POST['resumableChunkNumber'] ?? 1));
         $totalChunks = max(1, (int) ($_POST['resumableTotalChunks'] ?? 1));
-        $cwd = self::currentCwd($username, $groups);
+        $requestedCwd = isset($_POST['cwd']) && is_string($_POST['cwd']) ? $_POST['cwd'] : null;
+        $cwd = self::resolveCwd($requestedCwd, $username, $groups);
         $targetVirtual = DriveAcl::normalizeVirtualPath($cwd.'/'.$filename);
         self::assertAllowed($targetVirtual, $username, $groups, true);
         $targetAbs = self::absolutePath($filesRoot, $targetVirtual);
@@ -640,6 +642,20 @@ final class DriveKernel
         }
 
         return $cwd;
+    }
+
+    private static function resolveCwd(?string $requested, string $username, array $groups): string
+    {
+        if ($requested !== null && trim($requested) !== '') {
+            $requestedPath = DriveAcl::normalizeVirtualPath($requested);
+            if (!DriveAcl::isPathAllowed($requestedPath, $username, $groups, false)) {
+                throw new \InvalidArgumentException('Access denied for this path.');
+            }
+
+            return $requestedPath;
+        }
+
+        return self::currentCwd($username, $groups);
     }
 
     private static function displayName(\PDO $pdo, string $username): string

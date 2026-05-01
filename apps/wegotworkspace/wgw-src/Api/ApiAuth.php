@@ -85,6 +85,38 @@ final class ApiAuth
     }
 
     /**
+     * @return array{access_token: string, refresh_token: string, token_type: string, expires_in: int, role: 'user'|'admin', username: string}
+     */
+    public static function issueTokenForPrincipal(\PDO $pdo, string $username): array
+    {
+        $username = strtolower(trim($username));
+        if ($username === '') {
+            throw new \InvalidArgumentException('Username is required.');
+        }
+        $jwtCfg = ApiJwtConfig::load();
+        if ($jwtCfg === null) {
+            throw new \RuntimeException('JWT key configuration missing. Configure WGW_API_JWT_PRIVATE_KEY(_PATH) and WGW_API_JWT_PUBLIC_KEY(_PATH).');
+        }
+        $role = AdminPolicy::isAdmin($pdo, $username) ? 'admin' : 'user';
+        $ttl = 3600;
+        $token = ApiToken::issue([
+            'sub' => $username,
+            'role' => $role,
+            'exp' => time() + $ttl,
+        ], $jwtCfg);
+        $refresh = ApiRefreshStore::issue($pdo, $username, $role);
+
+        return [
+            'access_token' => $token,
+            'refresh_token' => $refresh,
+            'token_type' => 'Bearer',
+            'expires_in' => $ttl,
+            'role' => $role,
+            'username' => $username,
+        ];
+    }
+
+    /**
      * @param array{username: string, role: 'guest'|'user'|'admin'} $principal
      */
     public static function revokeCurrentAccessToken(\PDO $pdo, string $token, array $principal): void
