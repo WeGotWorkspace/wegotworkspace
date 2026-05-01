@@ -170,7 +170,7 @@ final class Paths
     }
 
     /**
-     * Writable Drive state: logs, tmp, sessions, {@code users.json}, CSRF secret.
+     * Writable Drive state: logs, tmp, sessions, {@code users.json}.
      */
     public static function driveData(): string
     {

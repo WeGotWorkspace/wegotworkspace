@@ -128,13 +128,11 @@ export const defaultData: InstallerData = {
 };
 
 export type BootstrapResponse = {
-  csrf: string;
   state: BackendInstallerState;
 };
 
 export type ActionResponse = {
   ok: boolean;
-  csrf?: string;
   error?: string;
   flash?: string | null;
   redirect?: string;
