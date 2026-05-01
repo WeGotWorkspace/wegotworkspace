@@ -68,16 +68,6 @@ final class AdminUiKernel
             return true;
         }
 
-        $legacyApiPrefix = WebBase::url($webBase, '/admin/api');
-        if ($path === $legacyApiPrefix || str_starts_with($path, $legacyApiPrefix.'/')) {
-            self::json(410, [
-                'error' => 'Legacy admin API endpoints have been removed. Use /api/v1/admin/*.',
-                'code' => 'gone',
-            ]);
-
-            return true;
-        }
-
         if (!AdminUiStatic::distReady()) {
             self::respondDistMissing($webBase);
 
@@ -117,13 +107,4 @@ final class AdminUiKernel
         echo '</body></html>';
     }
 
-    /**
-     * @param array<string, mixed> $payload
-     */
-    private static function json(int $status, array $payload): void
-    {
-        http_response_code($status);
-        header('Content-Type: application/json; charset=utf-8');
-        echo (string) json_encode($payload, JSON_UNESCAPED_SLASHES);
-    }
 }

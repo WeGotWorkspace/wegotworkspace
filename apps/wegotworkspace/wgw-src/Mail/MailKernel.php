@@ -63,17 +63,6 @@ final class MailKernel
         );
         $realm = (string) ($cfg[SettingsKeys::AUTH_REALM] ?? 'SabreDAV');
 
-        if (MailApi::matchesPath($webBase, $path)) {
-            http_response_code(410);
-            header('Content-Type: application/json; charset=utf-8');
-            echo (string) json_encode([
-                'error' => 'Legacy Mail API is gone. Use /api/v1/mail/* endpoints.',
-                'code' => 'gone',
-            ], JSON_UNESCAPED_SLASHES);
-
-            return true;
-        }
-
         if (!MailStatic::distReady()) {
             self::respondDistMissing($webBase);
 

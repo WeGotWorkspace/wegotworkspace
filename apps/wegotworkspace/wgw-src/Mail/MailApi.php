@@ -5,21 +5,13 @@ declare(strict_types=1);
 namespace App\Mail;
 
 use App\Config;
-use App\Installer\WebBase;
 use PHPMailer\PHPMailer\PHPMailer;
 
 /**
- * JSON API for Mail under {@code /mail/api/…} (same auth as the Mail SPA).
+ * JSON API handlers for mail operations exposed under {@code /api/v1/mail/*}.
  */
 final class MailApi
 {
-    public static function matchesPath(string $webBase, string $path): bool
-    {
-        $p = rtrim(WebBase::url($webBase, '/mail/api'), '/');
-
-        return $path === $p || str_starts_with($path, $p.'/');
-    }
-
     public static function respondOperation(string $method, string $operation, string $username, \PDO $pdo): void
     {
         $parts = $operation === '' ? [] : explode('/', trim($operation, '/'));
