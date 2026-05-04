@@ -151,7 +151,7 @@ final class UpdateManager
             'VERSION',
             'wgw-config.sample.php',
             'vendor',
-            'wgw-src',
+            'packages/api',
             'wgw-modules',
         ];
 
@@ -185,6 +185,7 @@ final class UpdateManager
             self::writeMaintenanceMode(true);
             self::writeStatus('applying_files', $beforeVersion, $targetVersion);
             self::applyPaths($releaseRoot, Paths::appRoot(), $replacePaths);
+            self::removeLegacySourceTrees(Paths::appRoot());
             file_put_contents(Paths::appRoot().'/VERSION', $targetVersion."\n", LOCK_EX);
 
             self::writeStatus('running_migrations', $beforeVersion, $targetVersion);
@@ -704,6 +705,17 @@ final class UpdateManager
             throw new \RuntimeException(
                 'Could not copy file: '.$source.' -> '.$dest.($reason !== '' ? ' ('.$reason.')' : '')
             );
+        }
+    }
+
+    private static function removeLegacySourceTrees(string $appRoot): void
+    {
+        foreach (['wgw-src', 'src', 'resources'] as $relative) {
+            $path = $appRoot.'/'.$relative;
+            if (!file_exists($path)) {
+                continue;
+            }
+            self::rmRecursive($path);
         }
     }
 

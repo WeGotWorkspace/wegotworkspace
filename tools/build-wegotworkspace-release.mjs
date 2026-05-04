@@ -18,7 +18,7 @@ const packagePath = resolve(outputRoot, packageName);
 const manifestPath = resolve(outputRoot, "manifest.json");
 const signaturePath = resolve(outputRoot, "manifest.sig");
 
-const releaseEntries = [
+const appReleaseEntries = [
   ".htaccess",
   "example.htaccess",
   "index.php",
@@ -27,7 +27,6 @@ const releaseEntries = [
   "VERSION",
   "wgw-config.sample.php",
   "vendor",
-  "wgw-src",
   "wgw-modules/admin/dist",
   "wgw-modules/drive/dist",
   "wgw-modules/office/build",
@@ -38,13 +37,23 @@ const releaseEntries = [
   "wgw-modules/settings/dist",
   "wgw-modules/voice/dist",
 ];
+const repoReleaseEntries = ["packages/api"];
 
 ensureDir(outputRoot);
 rmSafe(stagingRoot);
 ensureDir(stagingRoot);
 
-for (const entry of releaseEntries) {
+for (const entry of appReleaseEntries) {
   const source = resolve(appRoot, entry);
+  if (!existsSync(source)) {
+    throw new Error(`Missing release input: ${relative(repoRoot, source)}`);
+  }
+  const target = resolve(stagingRoot, entry);
+  ensureDir(dirname(target));
+  cpSync(source, target, { recursive: true });
+}
+for (const entry of repoReleaseEntries) {
+  const source = resolve(repoRoot, entry);
   if (!existsSync(source)) {
     throw new Error(`Missing release input: ${relative(repoRoot, source)}`);
   }
