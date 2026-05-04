@@ -34,9 +34,23 @@ import {
 import { cn } from "@/lib/utils";
 import { Menu, ArrowLeft } from "lucide-react";
 import { NewNotebookDialog } from "./NewNotebookDialog";
-import { DeleteNotebookDialog, type DeleteNotebookAction } from "./DeleteNotebookDialog";
+import { DeleteNotebookDialog } from "./DeleteNotebookDialog";
 import { readNotesConfig } from "@/lib/notes-config";
-import { loadNotes, notebookListFromNotes, syncNotes, type StoredNote } from "@/lib/notes-storage";
+import {
+  archiveNote,
+  createNote,
+  createNotebook,
+  type DeleteNotebookAction,
+  deleteNotebook,
+  loadNotes,
+  loadNotesCapabilities,
+  loadNotesState,
+  notebookListFromNotes,
+  restoreNote,
+  renameNotebook,
+  syncNotes,
+  type StoredNote,
+} from "@/lib/notes-storage";
 
 type FilterState = { type: "all" | "starred" | "notebook" | "tag" | "archive"; value?: string };
 
@@ -119,7 +133,20 @@ export function NotesApp() {
 
     void (async () => {
       try {
-        const loaded: StoredNote[] = await loadNotes(config.baseUri, config.username);
+        const [state, capabilities] = await Promise.all([loadNotesState(), loadNotesCapabilities()]);
+        if (cancelled) return;
+        if (!capabilities.enabled) {
+          throw new Error("Notes are disabled for this instance.");
+        }
+        configRef.current = {
+          ...configRef.current,
+          baseUri: state.baseUri,
+          username: state.username,
+          displayName: state.displayName,
+          logoutUrl: state.logoutUrl,
+          notesPath: state.notesPath,
+        };
+        const loaded: StoredNote[] = await loadNotes(state.baseUri, state.username);
         if (cancelled) return;
         setNotes(loaded);
         setNotebooks(notebookListFromNotes(loaded));
@@ -152,10 +179,10 @@ export function NotesApp() {
     syncTimeoutRef.current = window.setTimeout(() => {
       const config = configRef.current;
       if (!config) return;
-      void syncNotes(config.baseUri, config.username, notes, archivedIds)
+      void syncNotes(config.baseUri, config.username, notes, archivedIds, notebooks)
         .then(() => setSyncError(""))
         .catch((error) =>
-          setSyncError(error instanceof Error ? error.message : "Could not sync notes to WebDAV."),
+          setSyncError(error instanceof Error ? error.message : "Could not sync notes to the API."),
         );
     }, SYNC_DEBOUNCE_MS);
 
@@ -164,7 +191,7 @@ export function NotesApp() {
         window.clearTimeout(syncTimeoutRef.current);
       }
     };
-  }, [notes, archivedIds, ready, hydrated]);
+  }, [notes, archivedIds, notebooks, ready, hydrated]);
 
   const filtered = useMemo(() => {
     // Archive is its own world; everything else excludes archived notes.
@@ -219,10 +246,23 @@ export function NotesApp() {
       tags: [],
       updatedAt: new Date(),
     };
-    setNotes((p) => [n, ...p]);
-    setNotebooks((prev) => (prev.includes(notebook) ? prev : [...prev, notebook].sort()));
-    setActiveId(n.id);
-    setMobileView("detail");
+    void createNote({
+      id: n.id,
+      notebook: n.notebook,
+      title: n.title,
+      body: n.body,
+      tags: n.tags,
+      starred: n.starred,
+      archived: false,
+    })
+      .then((created) => {
+        setSyncError("");
+        setNotes((p) => [created as Note, ...p]);
+        setNotebooks((prev) => (prev.includes(notebook) ? prev : [...prev, notebook].sort()));
+        setActiveId(created.id);
+        setMobileView("detail");
+      })
+      .catch((error) => setSyncError(error instanceof Error ? error.message : "Could not create note."));
   }
 
   function archiveActive() {
@@ -236,22 +276,62 @@ export function NotesApp() {
         return next;
       });
     } else {
-      // Move to archive
-      setArchivedIds((prev) => {
-        const next = new Set(prev);
-        next.add(active.id);
-        return next;
-      });
+      // Move to archive via API endpoint
+      void archiveNote(active.id)
+        .then((item) => {
+          setSyncError("");
+          setNotes((prev) =>
+            prev.map((n) =>
+              n.id === item.id
+                ? {
+                    ...n,
+                    notebook: item.notebook,
+                    title: item.title,
+                    body: item.body,
+                    tags: item.tags,
+                    starred: item.starred,
+                    updatedAt: item.updatedAt,
+                  }
+                : n,
+            ),
+          );
+          setArchivedIds((prev) => {
+            const next = new Set(prev);
+            next.add(item.id);
+            return next;
+          });
+        })
+        .catch((error) => setSyncError(error instanceof Error ? error.message : "Could not archive note."));
     }
   }
 
   function restoreActive() {
     if (!active) return;
-    setArchivedIds((prev) => {
-      const next = new Set(prev);
-      next.delete(active.id);
-      return next;
-    });
+    void restoreNote(active.id)
+      .then((item) => {
+        setSyncError("");
+        setNotes((prev) =>
+          prev.map((n) =>
+            n.id === item.id
+              ? {
+                  ...n,
+                  notebook: item.notebook,
+                  title: item.title,
+                  body: item.body,
+                  tags: item.tags,
+                  starred: item.starred,
+                  updatedAt: item.updatedAt,
+                }
+              : n,
+          ),
+        );
+        setArchivedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(item.id);
+          return next;
+        });
+      })
+      .catch((error) => setSyncError(error instanceof Error ? error.message : "Could not restore note."));
   }
 
   function addTag(raw: string) {
@@ -694,11 +774,18 @@ export function NotesApp() {
         onOpenChange={setNotebookDialogOpen}
         existing={notebooks}
         onCreate={(name) => {
-          setNotebooks((nb) => (nb.includes(name) ? nb : [...nb, name].sort()));
-          if (assignNewNotebookToActive && active) {
-            updateActive({ notebook: name });
-          }
-          setFilter({ type: "notebook", value: name });
+          void createNotebook(name)
+            .then(() => {
+              setSyncError("");
+              setNotebooks((nb) => (nb.includes(name) ? nb : [...nb, name].sort()));
+              if (assignNewNotebookToActive && active) {
+                updateActive({ notebook: name });
+              }
+              setFilter({ type: "notebook", value: name });
+            })
+            .catch((error) =>
+              setSyncError(error instanceof Error ? error.message : "Could not create notebook."),
+            );
         }}
       />
 
@@ -712,12 +799,19 @@ export function NotesApp() {
         onRename={(name) => {
           if (!renameTarget) return;
           const old = renameTarget;
-          setNotebooks((nb) => nb.map((x) => (x === old ? name : x)).sort());
-          setNotes((p) => p.map((n) => (n.notebook === old ? { ...n, notebook: name } : n)));
-          if (filter.type === "notebook" && filter.value === old) {
-            setFilter({ type: "notebook", value: name });
-          }
-          setRenameTarget(null);
+          void renameNotebook(old, name)
+            .then(() => {
+              setSyncError("");
+              setNotebooks((nb) => nb.map((x) => (x === old ? name : x)).sort());
+              setNotes((p) => p.map((n) => (n.notebook === old ? { ...n, notebook: name } : n)));
+              if (filter.type === "notebook" && filter.value === old) {
+                setFilter({ type: "notebook", value: name });
+              }
+              setRenameTarget(null);
+            })
+            .catch((error) =>
+              setSyncError(error instanceof Error ? error.message : "Could not rename notebook."),
+            );
         }}
       />
 
@@ -734,34 +828,41 @@ export function NotesApp() {
         onConfirm={(action: DeleteNotebookAction) => {
           if (!deleteTarget) return;
           const old = deleteTarget;
-          setNotes((p) =>
-            p.map((n) => {
-              if (n.notebook !== old) return n;
-              if (action.kind === "archive") return n;
-              return {
-                ...n,
-                notebook: action.target === "__unassigned__" ? "Unassigned" : action.target,
-              };
-            }),
-          );
-          if (action.kind === "archive") {
-            setArchivedIds((prev) => {
-              const next = new Set(prev);
-              for (const note of notes) {
-                if (note.notebook === old) next.add(note.id);
+          void deleteNotebook(old, action)
+            .then(() => {
+              setSyncError("");
+              setNotes((p) =>
+                p.map((n) => {
+                  if (n.notebook !== old) return n;
+                  if (action.kind === "archive" || action.kind === "purge") return n;
+                  return {
+                    ...n,
+                    notebook: action.target === "__unassigned__" ? "Unassigned" : action.target,
+                  };
+                }),
+              );
+              if (action.kind === "archive" || action.kind === "purge") {
+                setArchivedIds((prev) => {
+                  const next = new Set(prev);
+                  for (const note of notes) {
+                    if (note.notebook === old) next.add(note.id);
+                  }
+                  return next;
+                });
               }
-              return next;
-            });
-          }
-          setNotebooks((nb) => nb.filter((x) => x !== old));
-          if (filter.type === "notebook" && filter.value === old) {
-            if (action.kind === "archive") {
-              setFilter({ type: "all" });
-            } else {
-              setFilter({ type: "notebook", value: action.target });
-            }
-          }
-          setDeleteTarget(null);
+              setNotebooks((nb) => nb.filter((x) => x !== old));
+              if (filter.type === "notebook" && filter.value === old) {
+                if (action.kind === "archive" || action.kind === "purge") {
+                  setFilter({ type: "all" });
+                } else {
+                  setFilter({ type: "notebook", value: action.target });
+                }
+              }
+              setDeleteTarget(null);
+            })
+            .catch((error) =>
+              setSyncError(error instanceof Error ? error.message : "Could not delete notebook."),
+            );
         }}
       />
     </div>

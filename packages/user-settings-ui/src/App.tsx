@@ -128,20 +128,133 @@ function adminRootPath(): string {
   return settingsRootPath().replace(/\/settings$/, "/admin");
 }
 
-async function api<T>(path: string, body?: unknown): Promise<T> {
-  const res = await fetch(`/settings/api/${path}`, {
-    method: body === undefined ? "GET" : "POST",
+function apiV1BaseUrl(): string {
+  const path = window.location.pathname;
+  const marker = "/settings/";
+  const idx = path.indexOf(marker);
+  const basePrefix = idx >= 0 ? path.slice(0, idx) : "";
+  return `${basePrefix}/api/v1`;
+}
+
+const API_BASE = apiV1BaseUrl().replace(/\/+$/, "");
+const AUTH_SESSION_URL = `${API_BASE}/auth/session`;
+const AUTH_REFRESH_URL = `${API_BASE}/auth/refresh`;
+
+type TokenPair = {
+  access_token: string;
+  refresh_token: string;
+};
+
+let accessToken: string | null = null;
+let refreshToken: string | null = null;
+
+function parseErrorMessage(raw: string): string {
+  const t = raw.trim();
+  if (!t) {
+    return "Request failed";
+  }
+  try {
+    const json = JSON.parse(t) as { error?: unknown; message?: unknown };
+    if (typeof json.error === "string" && json.error.trim() !== "") {
+      return json.error;
+    }
+    if (typeof json.message === "string" && json.message.trim() !== "") {
+      return json.message;
+    }
+  } catch {
+    /* not JSON */
+  }
+  return t;
+}
+
+async function mintTokenFromSession(): Promise<void> {
+  const res = await fetch(AUTH_SESSION_URL, {
+    method: "POST",
     credentials: "include",
+    headers: {
+      Accept: "application/json",
+    },
+  });
+  const raw = await res.text();
+  if (!res.ok) {
+    throw new Error(parseErrorMessage(raw));
+  }
+  const payload = JSON.parse(raw) as TokenPair;
+  accessToken = payload.access_token ?? null;
+  refreshToken = payload.refresh_token ?? null;
+  if (!accessToken || !refreshToken) {
+    throw new Error("Could not initialize API session.");
+  }
+}
+
+async function refreshAccessToken(): Promise<boolean> {
+  if (!refreshToken) {
+    return false;
+  }
+  const res = await fetch(AUTH_REFRESH_URL, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  });
+  const raw = await res.text();
+  if (!res.ok) {
+    return false;
+  }
+  const payload = JSON.parse(raw) as TokenPair;
+  accessToken = payload.access_token ?? null;
+  refreshToken = payload.refresh_token ?? null;
+  return !!accessToken && !!refreshToken;
+}
+
+async function ensureAccessToken(): Promise<string> {
+  if (!accessToken) {
+    await mintTokenFromSession();
+  }
+  if (!accessToken) {
+    throw new Error("Missing API access token.");
+  }
+  return accessToken;
+}
+
+async function withAuth(input: RequestInfo | URL, init?: RequestInit, allowRetry = true): Promise<Response> {
+  const token = await ensureAccessToken();
+  const res = await fetch(input, {
+    ...init,
+    credentials: "include",
+    headers: {
+      ...(init?.headers ?? {}),
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    },
+  });
+  if (res.status !== 401 || !allowRetry) {
+    return res;
+  }
+  const refreshed = await refreshAccessToken();
+  if (!refreshed) {
+    accessToken = null;
+    refreshToken = null;
+    await mintTokenFromSession();
+  }
+  return withAuth(input, init, false);
+}
+
+async function api<T>(path: string, body?: unknown): Promise<T> {
+  const endpoint = `${API_BASE}/settings/${path}`;
+  const res = await withAuth(endpoint, {
+    method: body === undefined ? "GET" : "PUT",
     headers: body === undefined ? undefined : { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
-  const payload = (await res.json()) as T | { error?: string };
+  const raw = await res.text();
   if (!res.ok) {
-    const message =
-      "error" in payload && typeof payload.error === "string" ? payload.error : "Request failed";
-    throw new Error(message);
+    throw new Error(parseErrorMessage(raw));
   }
-  return payload as T;
+  return JSON.parse(raw) as T;
 }
 
 export function App() {
@@ -227,7 +340,7 @@ export function App() {
     }
     setProfileSaving(true);
     try {
-      const next = await api<SettingsState>("profile/save", {
+      const next = await api<SettingsState>("profile", {
         displayName,
         email,
         password: newPassword,
@@ -249,7 +362,7 @@ export function App() {
     }
     setMailSaving(true);
     try {
-      const next = await api<SettingsState>("mail/save", {
+      const next = await api<SettingsState>("mail", {
         imapUsername,
         imapPassword,
       });

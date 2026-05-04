@@ -139,7 +139,7 @@ export function useMail(
           setImapError(
             detail
               ? `${detail} Could not read mail status from the server.`
-              : "Could not read mail status from the server (check sign-in and that /mail/api/status responds).",
+              : "Could not read mail status from the server.",
           );
         }
       }

@@ -1,5 +1,6 @@
 /**
- * Tiny client for the rooms.php signaling endpoint.
+ * Tiny client for Voice signaling.
+ * Uses REST-style endpoints (/api/v1/voice/{action}).
  * Polls every 1.2s for new messages while the call is active.
  */
 
@@ -26,8 +27,17 @@ interface JoinResult {
   sessionKey?: string | null;
 }
 
+function actionEndpoint(url: string, action: string): string {
+  const base = url.trim();
+  if (!base) {
+    return `/api/v1/voice/${encodeURIComponent(action)}`;
+  }
+
+  return `${base.replace(/\/+$/, "")}/${encodeURIComponent(action)}`;
+}
+
 async function call<T>(url: string, action: string, body: unknown): Promise<T> {
-  const res = await fetch(`${url}?action=${action}`, {
+  const res = await fetch(actionEndpoint(url, action), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -51,7 +61,7 @@ async function call<T>(url: string, action: string, body: unknown): Promise<T> {
 }
 
 function postDuringUnload(url: string, action: string, body: unknown): void {
-  const endpoint = `${url}?action=${action}`;
+  const endpoint = actionEndpoint(url, action);
   const payload = JSON.stringify(body);
   if (typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
     const blob = new Blob([payload], { type: "application/json" });

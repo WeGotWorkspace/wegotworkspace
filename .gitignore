@@ -3,6 +3,7 @@ node_modules/
 .env
 
 /apps/wegotworkspace/vendor/
+/apps/wegotworkspace/.phpunit.cache/
 /apps/wegotworkspace/wgw-config.php
 /apps/wegotworkspace/wgw-content/*
 /apps/wegotworkspace/wgw-content/sessions/*

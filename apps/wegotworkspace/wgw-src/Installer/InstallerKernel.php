@@ -14,6 +14,9 @@ final class InstallerKernel
 
     public static function bootstrapSession(): void
     {
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            return;
+        }
         $dir = Paths::data().'/sessions';
         if (!is_dir($dir)) {
             @mkdir($dir, 0700, true);
@@ -21,9 +24,7 @@ final class InstallerKernel
         if (is_writable($dir)) {
             session_save_path($dir);
         }
-        if (session_status() !== PHP_SESSION_ACTIVE) {
-            session_start();
-        }
+        session_start();
     }
 
     public static function respond(): void
@@ -32,12 +33,6 @@ final class InstallerKernel
         $webBase = WebBase::detect();
         $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
         $installed = is_file(Paths::lockFile());
-
-        if (self::isApiPath($webBase, $path)) {
-            self::respondApi($webBase, $path, $installed);
-
-            return;
-        }
 
         if ($installed) {
             if (InstallerStatic::distReady() && InstallerStatic::tryServe($webBase, $path)) {
@@ -59,7 +54,7 @@ final class InstallerKernel
         }
 
         if ($method === 'POST') {
-            self::errorPage(405, 'Installer UI no longer accepts form posts. Use /install/api instead.');
+            self::errorPage(405, 'Installer UI no longer accepts form posts. Use /api/v1/installer/action.');
         }
 
         self::errorPage(405, 'Method not allowed.');
@@ -80,55 +75,37 @@ final class InstallerKernel
         $_SESSION[self::SESSION_KEY] = $s;
     }
 
-    private static function isApiPath(string $webBase, string $path): bool
+    /**
+     * @param array<string, mixed> $payload
+     *
+     * @return array<string, mixed>
+     */
+    public static function applyApiActionFromApi(string $webBase, string $action, array $payload): array
     {
-        $prefix = WebBase::url($webBase, '/install/api');
+        self::bootstrapSession();
+        if (is_file(Paths::lockFile())) {
+            return [
+                'ok' => false,
+                'error' => 'This instance is already installed.',
+                'redirect' => WebBase::url($webBase, '/admin/updates'),
+                'state' => self::apiState($webBase, true),
+            ];
+        }
 
-        return $path === $prefix || str_starts_with($path, $prefix.'/');
+        return self::applyApiAction($webBase, $action, $payload);
     }
 
-    private static function respondApi(string $webBase, string $path, bool $installed): void
+    /**
+     * @return array{state:array<string,mixed>}
+     */
+    public static function bootstrapPayloadFromApi(string $webBase): array
     {
-        header('Content-Type: application/json; charset=utf-8');
-        header('Cache-Control: no-store, no-cache, must-revalidate');
+        self::bootstrapSession();
+        $installed = is_file(Paths::lockFile());
 
-        $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
-        $bootstrapPath = WebBase::url($webBase, '/install/api/bootstrap');
-        $actionPath = WebBase::url($webBase, '/install/api/action');
-
-        if ($method === 'GET' && $path === $bootstrapPath) {
-            echo json_encode(
-                [
-                    'csrf' => Csrf::token(),
-                    'state' => self::apiState($webBase, $installed),
-                ],
-                JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES
-            );
-
-            return;
-        }
-
-        if ($method === 'POST' && $path === $actionPath) {
-            if ($installed) {
-                echo json_encode(
-                    [
-                        'ok' => false,
-                        'error' => 'This instance is already installed.',
-                        'redirect' => WebBase::url($webBase, '/admin/updates'),
-                        'state' => self::apiState($webBase, true),
-                    ],
-                    JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES
-                );
-
-                return;
-            }
-            self::apiPostAction($webBase);
-
-            return;
-        }
-
-        http_response_code(404);
-        echo json_encode(['ok' => false, 'error' => 'Not found'], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
+        return [
+            'state' => self::apiState($webBase, $installed),
+        ];
     }
 
     /**
@@ -195,30 +172,6 @@ final class InstallerKernel
         exit;
     }
 
-    private static function apiPostAction(string $webBase): void
-    {
-        $raw = file_get_contents('php://input');
-        $payload = json_decode((string) $raw, true);
-        if (!is_array($payload)) {
-            http_response_code(400);
-            echo json_encode(['ok' => false, 'error' => 'Invalid JSON body'], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
-
-            return;
-        }
-
-        if (!Csrf::validate(isset($payload['csrf']) && is_string($payload['csrf']) ? $payload['csrf'] : null)) {
-            http_response_code(400);
-            echo json_encode(['ok' => false, 'error' => 'Invalid security token. Refresh and try again.'], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
-
-            return;
-        }
-
-        $action = isset($payload['action']) && is_string($payload['action']) ? $payload['action'] : '';
-        $body = isset($payload['payload']) && is_array($payload['payload']) ? $payload['payload'] : [];
-        $result = self::applyApiAction($webBase, $action, $body);
-        echo json_encode($result, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
-    }
-
     /**
      * @param array<string, mixed> $body
      *
@@ -227,7 +180,6 @@ final class InstallerKernel
     private static function applyApiAction(string $webBase, string $action, array $body): array
     {
         $_POST = [];
-        $_POST['_csrf'] = Csrf::token();
 
         if ($action === 'welcome_next') {
             $_POST['installer_action'] = 'next';
@@ -247,7 +199,6 @@ final class InstallerKernel
 
             return [
                 'ok' => true,
-                'csrf' => Csrf::token(),
                 'state' => self::apiState($webBase),
             ];
         } elseif ($action === 'requirements_next') {
@@ -271,7 +222,6 @@ final class InstallerKernel
             } catch (\Throwable) {
                 return [
                     'ok' => false,
-                    'csrf' => Csrf::token(),
                     'error' => 'Could not connect to the database. Check your settings.',
                     'state' => self::apiState($webBase),
                 ];
@@ -285,7 +235,6 @@ final class InstallerKernel
 
             return [
                 'ok' => true,
-                'csrf' => Csrf::token(),
                 'state' => self::apiState($webBase),
             ];
         } elseif ($action === 'database_next') {
@@ -341,7 +290,7 @@ final class InstallerKernel
             $s['step'] = 'account';
             self::saveState($s);
         } else {
-            return ['ok' => false, 'csrf' => Csrf::token(), 'error' => 'Unsupported action'];
+            return ['ok' => false, 'error' => 'Unsupported action'];
         }
 
         self::$apiMode = true;
@@ -350,7 +299,6 @@ final class InstallerKernel
 
             return [
                 'ok' => true,
-                'csrf' => Csrf::token(),
                 'state' => self::apiState($webBase),
             ];
         } catch (\RuntimeException $e) {
@@ -359,7 +307,6 @@ final class InstallerKernel
 
                 return [
                     'ok' => true,
-                    'csrf' => Csrf::token(),
                     'redirect' => $target,
                     'state' => self::apiState($webBase),
                 ];
@@ -369,7 +316,6 @@ final class InstallerKernel
 
                 return [
                     'ok' => false,
-                    'csrf' => Csrf::token(),
                     'error' => $msg,
                     'state' => self::apiState($webBase),
                 ];
@@ -382,10 +328,6 @@ final class InstallerKernel
 
     private static function handlePost(string $webBase): void
     {
-        if (!Csrf::validate($_POST['_csrf'] ?? null)) {
-            self::errorPage(400, 'Invalid security token. Refresh the page and try again.');
-        }
-
         $s = self::state();
         $action = (string) ($_POST['installer_action'] ?? '');
 
@@ -606,7 +548,6 @@ final class InstallerKernel
             'enable_contacts' => $enableContacts,
         ];
         $_SESSION['_install_done'] = true;
-        $_SESSION['_csrf'] = bin2hex(random_bytes(32));
 
         $adminUrl = WebBase::url($webBase, '/admin/');
         if (self::$apiMode) {

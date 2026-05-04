@@ -63,13 +63,6 @@ final class MailKernel
         );
         $realm = (string) ($cfg[SettingsKeys::AUTH_REALM] ?? 'SabreDAV');
 
-        if (MailApi::matchesPath($webBase, $path)) {
-            $username = SabreUiAuthGate::ensureAuthenticated($pdo, $realm, $webBase, $path);
-            MailApi::respond($webBase, $path, $username, $pdo);
-
-            return true;
-        }
-
         if (!MailStatic::distReady()) {
             self::respondDistMissing($webBase);
 
