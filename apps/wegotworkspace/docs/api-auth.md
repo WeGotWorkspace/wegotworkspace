@@ -27,7 +27,8 @@ By default, the API reads those paths automatically. You can override with env/c
 ## 2) Request a token
 
 ```bash
-curl -k -X POST "https://wegotworkspace.local:8443/api/v1/auth/token" \
+BASE_URL="${BASE_URL:-https://${VHOST_DOMAIN:-localhost}:8443}"
+curl -k -X POST "${BASE_URL}/api/v1/auth/token" \
   -H "accept: application/json" \
   -H "Content-Type: application/json" \
   --data-binary @- <<'JSON'
@@ -51,7 +52,8 @@ Expected success fields:
 
 ```bash
 TOKEN="PASTE_ACCESS_TOKEN"
-curl -k "https://wegotworkspace.local:8443/api/v1/me" \
+BASE_URL="${BASE_URL:-https://${VHOST_DOMAIN:-localhost}:8443}"
+curl -k "${BASE_URL}/api/v1/me" \
   -H "Authorization: Bearer ${TOKEN}" \
   -H "accept: application/json"
 ```
@@ -61,7 +63,8 @@ curl -k "https://wegotworkspace.local:8443/api/v1/me" \
 Refresh:
 
 ```bash
-curl -k -X POST "https://wegotworkspace.local:8443/api/v1/auth/refresh" \
+BASE_URL="${BASE_URL:-https://${VHOST_DOMAIN:-localhost}:8443}"
+curl -k -X POST "${BASE_URL}/api/v1/auth/refresh" \
   -H "Content-Type: application/json" \
   --data '{"refresh_token":"PASTE_REFRESH_TOKEN"}'
 ```
@@ -69,7 +72,8 @@ curl -k -X POST "https://wegotworkspace.local:8443/api/v1/auth/refresh" \
 Revoke current access token and optionally a refresh token:
 
 ```bash
-curl -k -X POST "https://wegotworkspace.local:8443/api/v1/auth/revoke" \
+BASE_URL="${BASE_URL:-https://${VHOST_DOMAIN:-localhost}:8443}"
+curl -k -X POST "${BASE_URL}/api/v1/auth/revoke" \
   -H "Authorization: Bearer ${TOKEN}" \
   -H "Content-Type: application/json" \
   --data '{"refresh_token":"PASTE_REFRESH_TOKEN"}'
