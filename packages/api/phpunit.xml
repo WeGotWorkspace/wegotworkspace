@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit bootstrap="../../apps/wegotworkspace/vendor/autoload.php" colors="true" cacheDirectory="../../apps/wegotworkspace/.phpunit.cache">
+  <testsuites>
+    <testsuite name="api">
+      <directory>tests</directory>
+    </testsuite>
+  </testsuites>
+</phpunit>

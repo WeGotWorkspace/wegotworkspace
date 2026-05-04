@@ -3,12 +3,12 @@
   "private": true,
   "packageManager": "pnpm@9.15.4",
   "scripts": {
-    "setup:macos": "bash ../../packages/api/scripts/macos/install-homebrew-apache-ssl.sh",
-    "preview:macos": "bash ../../packages/api/scripts/macos/setup-homebrew-apache-ssl.sh",
-    "enable-php-imap": "bash ../../packages/api/scripts/macos/enable-php-imap.sh",
-    "generate:api-jwt-keys": "bash ../../packages/api/scripts/generate-api-jwt-keys.sh",
+    "setup:macos": "pnpm --dir ../../packages/api run setup:macos",
+    "preview:macos": "pnpm --dir ../../packages/api run preview:macos",
+    "enable-php-imap": "pnpm --dir ../../packages/api run enable-php-imap",
+    "generate:api-jwt-keys": "pnpm --dir ../../packages/api run generate:api-jwt-keys",
     "test": "composer test",
-    "test:update-smoke": "bash ../../packages/api/scripts/update-smoke-test.sh"
+    "test:update-smoke": "pnpm --dir ../../packages/api run test:update-smoke"
   },
   "devDependencies": {
     "turbo": "^2.4.4"
