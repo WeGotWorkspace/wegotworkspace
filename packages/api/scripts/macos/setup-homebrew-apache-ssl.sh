@@ -28,8 +28,11 @@ warn()   { echo -e "${YELLOW}⚠${NC}  $1"; }
 error()  { echo -e "${RED}✘${NC}  $1"; exit 1; }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-APP_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-WORKSPACE_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+WORKSPACE_ROOT="$(git -C "${SCRIPT_DIR}" rev-parse --show-toplevel 2>/dev/null || true)"
+if [ -z "$WORKSPACE_ROOT" ]; then
+  WORKSPACE_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+fi
+APP_ROOT="$WORKSPACE_ROOT/apps/wegotworkspace"
 
 echo ""
 echo -e "${BOLD}==============================================================${NC}"

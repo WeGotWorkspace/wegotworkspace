@@ -12,7 +12,7 @@ final class OpenApiDocument
     {
         $base = $webBase === '' ? '' : $webBase;
         $serverUrl = $base.'/api/v1';
-        $path = Paths::appRoot().'/openapi/openapi.json';
+        $path = dirname(Paths::packageSrc()).'/openapi/openapi.json';
         if (!is_readable($path)) {
             throw new \RuntimeException('OpenAPI spec file is missing.');
         }
