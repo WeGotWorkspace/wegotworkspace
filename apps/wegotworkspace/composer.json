@@ -28,6 +28,6 @@
         }
     },
     "scripts": {
-        "test": "phpunit -c phpunit.xml"
+        "test": "phpunit -c ../../packages/api/phpunit.xml"
     }
 }
