@@ -13,10 +13,17 @@
         "ext-pdo": "*",
         "ext-simplexml": "*",
         "ext-zip": "*",
+        "lcobucci/jwt": "^5.5",
         "phpmailer/phpmailer": "^6.9",
         "psr/log": "^1.1 || ^2.0 || ^3.0",
         "sabre/dav": "^4.7",
+        "swagger-api/swagger-ui": "^5.32",
+        "symfony/cache": "^8.0",
+        "symfony/rate-limiter": "^8.0",
         "zbateson/mail-mime-parser": "^4.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5"
     },
     "autoload": {
         "psr-4": {
@@ -36,5 +43,8 @@
         "ext-openssl": "Used to encrypt per-user mail passwords on disk",
         "ext-pdo_sqlite": "Default database backend for the installer",
         "ext-pdo_mysql": "Optional MySQL / MariaDB support"
+    },
+    "scripts": {
+        "test": "phpunit -c phpunit.xml"
     }
 }

@@ -8,20 +8,21 @@ namespace App\Security;
  * Validates Host headers against an allowlist.
  *
  * Configure explicit hosts with WGW_TRUSTED_HOSTS (comma/space separated, optional ports).
+ * For local/dev fallback, VHOST_DOMAIN (if set) is also accepted.
  */
 final class TrustedHostGate
 {
     /**
      * @param array<string, mixed> $server
      */
-    public static function isAllowed(array $server, mixed $trustedHostsEnv): bool
+    public static function isAllowed(array $server, mixed $trustedHostsEnv, mixed $vhostDomainEnv = null): bool
     {
         $requestHost = self::normalizeHostHeader((string) ($server['HTTP_HOST'] ?? ''));
         if ($requestHost === null) {
             return false;
         }
 
-        $allowed = self::buildAllowedHosts($trustedHostsEnv);
+        $allowed = self::buildAllowedHosts($trustedHostsEnv, $vhostDomainEnv);
         if ($allowed === []) {
             return false;
         }
@@ -47,7 +48,7 @@ final class TrustedHostGate
     /**
      * @return list<string>
      */
-    private static function buildAllowedHosts(mixed $trustedHostsEnv): array
+    private static function buildAllowedHosts(mixed $trustedHostsEnv, mixed $vhostDomainEnv): array
     {
         $raw = is_string($trustedHostsEnv) ? trim($trustedHostsEnv) : '';
         $allowed = [];
@@ -64,8 +65,15 @@ final class TrustedHostGate
         }
 
         // Safe fallback for local/dev installs. Production should set WGW_TRUSTED_HOSTS explicitly.
-        foreach (['localhost', '127.0.0.1', '[::1]', 'wegotworkspace.local'] as $localHost) {
+        foreach (['localhost', '127.0.0.1', '[::1]'] as $localHost) {
             $allowed[] = $localHost;
+        }
+        $vhost = is_string($vhostDomainEnv) ? trim($vhostDomainEnv) : '';
+        if ($vhost !== '') {
+            $normalized = self::normalizeHostHeader($vhost);
+            if ($normalized !== null) {
+                $allowed[] = $normalized;
+            }
         }
 
         return array_values(array_unique($allowed));

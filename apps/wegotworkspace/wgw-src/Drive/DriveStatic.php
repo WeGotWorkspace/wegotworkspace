@@ -92,7 +92,9 @@ final class DriveStatic
             if (basename($realFile) === 'index.html') {
                 $payload = [
                     'logoutUrl' => WebBase::url($webBase, '/logout/'),
-                    'apiBaseUrl' => WebBase::url($webBase, '/drive/'),
+                    'apiBaseUrl' => WebBase::url($webBase, '/api/v1/drive'),
+                    'authSessionUrl' => WebBase::url($webBase, '/api/v1/auth/session'),
+                    'authRefreshUrl' => WebBase::url($webBase, '/api/v1/auth/refresh'),
                 ];
                 $json = json_encode(
                     $payload,

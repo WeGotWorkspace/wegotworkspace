@@ -65,11 +65,24 @@ async function jsonFetch<T>(url: string, init?: RequestInit): Promise<T> {
   return (await response.json()) as T;
 }
 
+function apiV1InstallerBaseUrl(): string {
+  if (typeof window === "undefined") {
+    return "/api/v1/installer";
+  }
+  const path = window.location.pathname;
+  const marker = "/install/";
+  const idx = path.indexOf(marker);
+  const basePrefix = idx >= 0 ? path.slice(0, idx) : "";
+
+  return `${basePrefix}/api/v1/installer`;
+}
+
+const INSTALLER_API_BASE = apiV1InstallerBaseUrl().replace(/\/+$/, "");
+
 export function Installer() {
   const [step, setStep] = useState<StepId>("welcome");
   const [data, setData] = useState<InstallerData>(defaultData);
   const [backend, setBackend] = useState<BackendInstallerState | null>(null);
-  const [csrf, setCsrf] = useState("");
   const [loading, setLoading] = useState(true);
   const [runningChecks, setRunningChecks] = useState(false);
   const [dbTestStatus, setDbTestStatus] = useState<
@@ -92,9 +105,10 @@ export function Installer() {
   useEffect(() => {
     void (async () => {
       try {
-        const boot = await jsonFetch<BootstrapResponse>("./api/bootstrap");
+        const boot = await jsonFetch<BootstrapResponse>(
+          `${INSTALLER_API_BASE}/bootstrap`,
+        );
         setBackend(boot.state);
-        setCsrf(boot.csrf);
         setStep(backendToStep(boot.state.step));
         setData((current) => fromBackendState(boot.state, current));
       } catch (error) {
@@ -119,11 +133,12 @@ export function Installer() {
       setDbTestStatus("testing");
       setDbTestMessage("");
       try {
-        const response = await jsonFetch<ActionResponse>("./api/action", {
+        const response = await jsonFetch<ActionResponse>(
+          `${INSTALLER_API_BASE}/action`,
+          {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            csrf,
             action: "database_test",
             payload: {
               db_driver: data.database.type,
@@ -135,12 +150,10 @@ export function Installer() {
               mysql_password: data.database.mysql.password,
             },
           }),
-        });
+        },
+        );
 
         if (cancelled) return;
-        if (response.csrf) {
-          setCsrf(response.csrf);
-        }
         if (!response.ok) {
           setDbTestStatus("fail");
           setDbTestMessage(response.error || "Connection failed");
@@ -178,7 +191,6 @@ export function Installer() {
   }, [
     step,
     loading,
-    csrf,
     data.database.type,
     data.database.sqlitePath,
     data.database.mysql.host,
@@ -192,14 +204,14 @@ export function Installer() {
     action: string,
     payload: Record<string, unknown> = {},
   ) {
-    const response = await jsonFetch<ActionResponse>("./api/action", {
+    const response = await jsonFetch<ActionResponse>(
+      `${INSTALLER_API_BASE}/action`,
+      {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ csrf, action, payload }),
-    });
-    if (response.csrf) {
-      setCsrf(response.csrf);
-    }
+      body: JSON.stringify({ action, payload }),
+    },
+    );
     if (!response.ok) {
       throw new Error(response.error || "Action failed");
     }

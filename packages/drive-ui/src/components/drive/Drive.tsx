@@ -32,11 +32,10 @@ import {
   type DriveDirEntry,
   type DriveDirResponse,
   type DriveUserResponse,
-  driveDownloadUrl,
   driveGet,
+  driveOpenInNewTab,
   drivePost,
   driveSearchFilenames,
-  driveSyncSessionCwd,
 } from "@/lib/driveApi";
 import { purgeDriveRecentAfterDelete, recordDriveRecent } from "@/lib/driveRecent";
 import { purgeDriveStarredAfterDelete, toggleDriveStarred } from "@/lib/driveStarred";
@@ -219,7 +218,7 @@ export function Drive() {
 
   const { data: userData } = useQuery({
     queryKey: ["drive-user"],
-    queryFn: async () => driveGet<DriveUserResponse>("/getuser"),
+    queryFn: async () => driveGet<DriveUserResponse>("/user"),
   });
 
   useEffect(() => {
@@ -232,13 +231,6 @@ export function Drive() {
       window.history.replaceState(null, "", next + window.location.hash);
     }
   }, [cwd]);
-
-  useEffect(() => {
-    if (section !== "my") return;
-    void driveSyncSessionCwd(cwd).catch(() => {
-      /* session sync is best-effort; listing still sends explicit dir */
-    });
-  }, [cwd, section]);
 
   const ownerName = userData?.data?.name || userData?.data?.username || "You";
   const ownerAv = (ownerName
@@ -362,7 +354,7 @@ export function Drive() {
   const openFilePreview = useCallback((f: DriveFile) => {
     if (f.kind === "image") {
       recordDriveRecent({ path: f.path, name: f.name, kind: f.kind });
-      window.open(driveDownloadUrl(f.path), "_blank", "noopener,noreferrer");
+      void driveOpenInNewTab(f.path);
       return;
     }
     openInOffice(f);
@@ -443,7 +435,7 @@ export function Drive() {
       }
       if (f.kind === "image") {
         recordDriveRecent({ path: f.path, name: f.name, kind: f.kind });
-        window.open(driveDownloadUrl(f.path), "_blank", "noopener,noreferrer");
+        void driveOpenInNewTab(f.path);
         return;
       }
       setSection("my");

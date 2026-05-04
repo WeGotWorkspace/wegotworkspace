@@ -467,17 +467,22 @@ function UpdatesPage() {
                             ) : (
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Button asChild variant="outline" size="icon">
-                                    <a
-                                      href={`/admin/api/updates/backups/download?name=${encodeURIComponent(
-                                        backup.name,
-                                      )}`}
-                                      onClick={() => {
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={async () => {
+                                      try {
+                                        await store.downloadBackup(backup.name);
                                         toast.success(`Download started for ${backup.name}`);
-                                      }}
-                                    >
-                                      <Download className="h-4 w-4" />
-                                    </a>
+                                      } catch (error) {
+                                        toast.error(
+                                          (error as Error).message ||
+                                            `Could not download ${backup.name}`,
+                                        );
+                                      }
+                                    }}
+                                  >
+                                    <Download className="h-4 w-4" />
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>Download database backup</TooltipContent>

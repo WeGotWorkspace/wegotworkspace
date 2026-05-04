@@ -1,0 +1,1385 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "WeGotWorkspace API",
+    "version": "1.0.0",
+    "description": "Parallel OpenAPI-first REST API for all app domains."
+  },
+  "servers": [
+    {
+      "url": "__SERVER_URL__"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
+        }
+      },
+      "AuthTokenResponse": {
+        "type": "object",
+        "required": [
+          "access_token",
+          "refresh_token",
+          "token_type",
+          "expires_in",
+          "role",
+          "username"
+        ],
+        "properties": {
+          "access_token": {
+            "type": "string"
+          },
+          "refresh_token": {
+            "type": "string"
+          },
+          "token_type": {
+            "type": "string"
+          },
+          "expires_in": {
+            "type": "integer"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "guest",
+              "user",
+              "admin"
+            ]
+          },
+          "username": {
+            "type": "string"
+          }
+        }
+      },
+      "Principal": {
+        "type": "object",
+        "required": [
+          "username",
+          "role"
+        ],
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "guest",
+              "user",
+              "admin"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Health check",
+        "responses": {
+          "200": {
+            "description": "Service health"
+          }
+        }
+      }
+    },
+    "/capabilities": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Platform capabilities and domains",
+        "responses": {
+          "200": {
+            "description": "Capabilities response"
+          }
+        }
+      }
+    },
+    "/.well-known/jwks.json": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Public JWKS for JWT verification",
+        "responses": {
+          "200": {
+            "description": "JWK set"
+          }
+        }
+      }
+    },
+    "/auth/token": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Issue RS256 bearer token from username/password",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "username",
+                  "password"
+                ],
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token issued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "429": {
+            "description": "Too many login attempts"
+          },
+          "503": {
+            "description": "JWT not configured"
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Refresh access token using refresh token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "refresh_token"
+                ],
+                "properties": {
+                  "refresh_token": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Refreshed token pair",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/auth/revoke": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Revoke current access token and/or refresh token",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "refresh_token": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Revocation result"
+          }
+        }
+      }
+    },
+    "/me": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Current authenticated principal",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current principal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Principal"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/state": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Admin aggregate state",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Admin state"
+          }
+        }
+      }
+    },
+    "/admin/updates/log": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Read update process log lines",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Update log lines"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Clear update process log",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Log cleared"
+          }
+        }
+      }
+    },
+    "/admin/updates/backups/{name}": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Download an update backup archive",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Backup ZIP stream"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Delete an update backup archive",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated backup state"
+          }
+        }
+      }
+    },
+    "/admin/groups/{group}/members/{username}": {
+      "put": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Add user to admin group",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Membership added"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Remove user from admin group",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Membership removed"
+          }
+        }
+      }
+    },
+    "/settings/state": {
+      "get": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "User settings aggregate state",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Settings state"
+          }
+        }
+      }
+    },
+    "/settings/profile": {
+      "put": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Update profile details for current user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated settings state"
+          }
+        }
+      }
+    },
+    "/settings/mail": {
+      "put": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Update personal mail credentials for current user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated settings state"
+          }
+        }
+      }
+    },
+    "/mail/status": {
+      "get": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "Mail runtime status",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mail status"
+          }
+        }
+      }
+    },
+    "/mail/folders": {
+      "get": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "List mail folders",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mail folder tree"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "Create mail folder",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Folder created"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "Move mail folder",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Folder moved"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "Delete mail folder",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Folder deleted"
+          }
+        }
+      }
+    },
+    "/mail/messages": {
+      "get": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "List messages in a folder",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message list"
+          }
+        }
+      }
+    },
+    "/mail/messages/attachments": {
+      "get": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "List attachment metadata for messages",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attachment metadata"
+          }
+        }
+      }
+    },
+    "/mail/message": {
+      "get": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "Get a single message",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message payload"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "Patch read/starred flags on a message",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message updated"
+          }
+        }
+      }
+    },
+    "/mail/message/attachment": {
+      "get": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "Download a message attachment",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attachment stream"
+          }
+        }
+      }
+    },
+    "/mail/move": {
+      "post": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "Move a message to another folder",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message moved"
+          }
+        }
+      }
+    },
+    "/mail/send": {
+      "post": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "Send an email",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message sent"
+          }
+        }
+      }
+    },
+    "/mail/draft": {
+      "post": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "Save a message draft",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Draft saved"
+          }
+        }
+      }
+    },
+    "/drive/user": {
+      "get": {
+        "tags": [
+          "Drive"
+        ],
+        "summary": "Drive user context",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Drive user payload"
+          }
+        }
+      }
+    },
+    "/drive/getdir": {
+      "post": {
+        "tags": [
+          "Drive"
+        ],
+        "summary": "Read directory listing",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Directory listing"
+          }
+        }
+      }
+    },
+    "/drive/searchfiles": {
+      "post": {
+        "tags": [
+          "Drive"
+        ],
+        "summary": "Search files and directories",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results"
+          }
+        }
+      }
+    },
+    "/drive/changedir": {
+      "post": {
+        "tags": [
+          "Drive"
+        ],
+        "summary": "Change current drive directory",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current directory updated"
+          }
+        }
+      }
+    },
+    "/drive/createnew": {
+      "post": {
+        "tags": [
+          "Drive"
+        ],
+        "summary": "Create a new drive directory",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item created"
+          }
+        }
+      }
+    },
+    "/drive/renameitem": {
+      "post": {
+        "tags": [
+          "Drive"
+        ],
+        "summary": "Rename a drive item",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item renamed"
+          }
+        }
+      }
+    },
+    "/drive/deleteitems": {
+      "post": {
+        "tags": [
+          "Drive"
+        ],
+        "summary": "Delete one or more drive items",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Items deleted"
+          }
+        }
+      }
+    },
+    "/drive/download": {
+      "get": {
+        "tags": [
+          "Drive"
+        ],
+        "summary": "Download a drive file",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File stream"
+          }
+        }
+      }
+    },
+    "/drive/upload": {
+      "get": {
+        "tags": [
+          "Drive"
+        ],
+        "summary": "Drive upload readiness probe",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Upload is available"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Drive"
+        ],
+        "summary": "Upload file chunk(s) to drive",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Upload accepted"
+          }
+        }
+      }
+    },
+    "/notes/capabilities": {
+      "get": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Notes capabilities",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notes capabilities"
+          }
+        }
+      }
+    },
+    "/notes/state": {
+      "get": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Notes runtime boot state for authenticated user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notes state"
+          }
+        }
+      }
+    },
+    "/notes/items": {
+      "get": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "List notes with optional archive/notebook/search filters",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notes list"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Create a new note",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created note"
+          }
+        }
+      }
+    },
+    "/notes/items/{id}": {
+      "put": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Save/update a note",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated note"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Delete a note",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted note"
+          }
+        }
+      }
+    },
+    "/notes/items/{id}/archive": {
+      "post": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Archive a note",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Archived note"
+          }
+        }
+      }
+    },
+    "/notes/items/{id}/restore": {
+      "post": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Restore an archived note",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Restored note"
+          }
+        }
+      }
+    },
+    "/notes/notebooks": {
+      "get": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "List notebooks with active/archive counts",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notebook list"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Create notebook",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Notebook created"
+          }
+        }
+      }
+    },
+    "/notes/notebooks/{name}": {
+      "patch": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Rename notebook",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notebook renamed"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Delete notebook (archive, move, or purge)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notebook deleted"
+          }
+        }
+      }
+    },
+    "/office/capabilities": {
+      "get": {
+        "tags": [
+          "Office"
+        ],
+        "summary": "Office capabilities",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Office capabilities"
+          }
+        }
+      }
+    },
+    "/office/documents": {
+      "post": {
+        "tags": [
+          "Office"
+        ],
+        "summary": "Create Office document (.docx/.xlsx/.pptx)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Created Office document"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Office"
+        ],
+        "summary": "Update Office document content (.docx/.xlsx/.pptx)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated Office document"
+          }
+        }
+      }
+    },
+    "/voice/join": {
+      "post": {
+        "tags": [
+          "Voice"
+        ],
+        "summary": "Join voice room (guest or authenticated)",
+        "responses": {
+          "200": {
+            "description": "Join response"
+          }
+        }
+      }
+    },
+    "/voice/poll": {
+      "post": {
+        "tags": [
+          "Voice"
+        ],
+        "summary": "Poll voice messages",
+        "responses": {
+          "200": {
+            "description": "Poll response"
+          }
+        }
+      }
+    },
+    "/voice/send": {
+      "post": {
+        "tags": [
+          "Voice"
+        ],
+        "summary": "Send voice signaling message",
+        "responses": {
+          "200": {
+            "description": "Send response"
+          }
+        }
+      }
+    },
+    "/voice/leave": {
+      "post": {
+        "tags": [
+          "Voice"
+        ],
+        "summary": "Leave voice room",
+        "responses": {
+          "200": {
+            "description": "Leave response"
+          }
+        }
+      }
+    },
+    "/voice/chat": {
+      "post": {
+        "tags": [
+          "Voice"
+        ],
+        "summary": "Voice room chat message",
+        "responses": {
+          "200": {
+            "description": "Chat response"
+          }
+        }
+      }
+    },
+    "/installer/state": {
+      "get": {
+        "tags": [
+          "Installer"
+        ],
+        "summary": "Installer summary and current state snapshot",
+        "responses": {
+          "200": {
+            "description": "Installer state"
+          }
+        }
+      }
+    },
+    "/installer/bootstrap": {
+      "get": {
+        "tags": [
+          "Installer"
+        ],
+        "summary": "Installer bootstrap payload (full state)",
+        "responses": {
+          "200": {
+            "description": "Installer bootstrap payload"
+          }
+        }
+      }
+    },
+    "/installer/action": {
+      "post": {
+        "tags": [
+          "Installer"
+        ],
+        "summary": "Perform installer step action",
+        "responses": {
+          "200": {
+            "description": "Installer action result"
+          }
+        }
+      }
+    },
+    "/home/state": {
+      "get": {
+        "tags": [
+          "Home"
+        ],
+        "summary": "Home app state",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Home state"
+          }
+        }
+      }
+    },
+    "/dav/capabilities": {
+      "get": {
+        "tags": [
+          "Dav"
+        ],
+        "summary": "DAV capabilities",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "DAV capabilities"
+          }
+        }
+      }
+    }
+  }
+}

@@ -73,6 +73,7 @@ spl_autoload_register(static function (string $class) use ($runtimeRoot, $appRoo
 }, true, true);
 
 use App\Admin\AdminUiKernel;
+use App\Api\ApiKernel;
 use App\Auth\UiLoginKernel;
 use App\Config;
 use App\Drive\DriveKernel;
@@ -96,7 +97,7 @@ $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
 $webBase = WebBase::detect();
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 
-if (!TrustedHostGate::isAllowed($_SERVER, getenv('WGW_TRUSTED_HOSTS'))) {
+if (!TrustedHostGate::isAllowed($_SERVER, getenv('WGW_TRUSTED_HOSTS'), getenv('VHOST_DOMAIN'))) {
     http_response_code(400);
     header('Content-Type: text/plain; charset=utf-8');
     echo "Bad Request\n";
@@ -113,6 +114,8 @@ $scriptSrc = "'self' 'unsafe-inline'";
 $styleSrc = "'self' 'unsafe-inline' https://fonts.googleapis.com";
 $fontSrc = "'self' data: https://fonts.gstatic.com";
 $connectSrc = "'self' https: wss:";
+$apiDocsPrefix = WebBase::url($webBase, '/api/docs');
+$isApiDocsRequest = $path === $apiDocsPrefix || $path === $apiDocsPrefix.'/' || str_starts_with($path, $apiDocsPrefix.'/');
 if ($isOfficeRequest) {
     // ONLYOFFICE web-apps uses dynamic template evaluation and blob workers in editor runtime.
     $scriptSrc .= " 'unsafe-eval' blob:";
@@ -128,7 +131,7 @@ if ($https) {
 }
 
 $installPrefix = WebBase::url($webBase, '/install');
-$adminApiUpdatesPrefix = WebBase::url($webBase, '/admin/api/updates');
+$apiV1AdminUpdatesPrefix = WebBase::url($webBase, '/api/v1/admin/updates');
 
 if (PwaSupport::tryRespond($webBase, $path)) {
     exit;
@@ -137,7 +140,9 @@ if (PwaSupport::tryRespond($webBase, $path)) {
 $installed = is_file(Paths::lockFile());
 
 if ($installed && UpdateManager::inMaintenanceMode()) {
-    $allowUpdateApi = $path === $adminApiUpdatesPrefix || str_starts_with($path, $adminApiUpdatesPrefix.'/');
+    $allowUpdateApi =
+        $path === $apiV1AdminUpdatesPrefix
+        || str_starts_with($path, $apiV1AdminUpdatesPrefix.'/');
     if (!$allowUpdateApi) {
         http_response_code(503);
         header('Content-Type: text/html; charset=utf-8');
@@ -179,6 +184,10 @@ if ($path === $settingsPrefix || str_starts_with($path, $settingsPrefix.'/')) {
 }
 
 if (UiLoginKernel::tryRespond($webBase, $path)) {
+    exit;
+}
+
+if (ApiKernel::tryRespond($webBase, $path)) {
     exit;
 }
 

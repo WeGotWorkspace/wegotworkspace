@@ -22,7 +22,7 @@ export default defineConfig(({ command }) => ({
     ? {
         server: {
           proxy: {
-            "/install/api": {
+            "/api/v1": {
               target: phpOrigin,
               changeOrigin: true,
             },

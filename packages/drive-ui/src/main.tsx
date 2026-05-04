@@ -9,6 +9,8 @@ declare global {
     __SABRE_DRIVE_CONFIG__?: {
       logoutUrl?: string;
       apiBaseUrl?: string;
+      authSessionUrl?: string;
+      authRefreshUrl?: string;
     };
   }
 }

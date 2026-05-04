@@ -72,7 +72,7 @@ function VoicePage() {
               value={voice.signalingUrl}
               onChange={(e) => set({ signalingUrl: e.target.value })}
               className="font-mono"
-              placeholder="/voice/aura-signaling/rooms.php"
+              placeholder="/api/v1/voice"
             />
           </Field>
           <div className="mt-3 inline-flex items-center gap-2 text-[11px] font-mono text-muted-foreground">
