@@ -149,16 +149,16 @@ fi
 # -----------------------------------------------------------------------------
 log "Checking Homebrew runtime prerequisites..."
 if ! command -v brew >/dev/null 2>&1; then
-  error "Homebrew not found. Run: pnpm --filter @wgw/wegotworkspace setup:macos"
+  error "Homebrew not found. Run: pnpm --filter @wgw/api setup:macos"
 fi
 if [ ! -f "$HOMEBREW_PREFIX/etc/httpd/httpd.conf" ]; then
-  error "Homebrew httpd config missing. Run: pnpm --filter @wgw/wegotworkspace setup:macos"
+  error "Homebrew httpd config missing. Run: pnpm --filter @wgw/api setup:macos"
 fi
 if ! command -v mkcert >/dev/null 2>&1; then
-  error "mkcert not found. Run: pnpm --filter @wgw/wegotworkspace setup:macos"
+  error "mkcert not found. Run: pnpm --filter @wgw/api setup:macos"
 fi
 if ! command -v php >/dev/null 2>&1; then
-  error "PHP not found. Run: pnpm --filter @wgw/wegotworkspace setup:macos"
+  error "PHP not found. Run: pnpm --filter @wgw/api setup:macos"
 fi
 success "Prerequisites detected"
 

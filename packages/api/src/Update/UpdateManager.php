@@ -146,11 +146,8 @@ final class UpdateManager
         $backupArchivePath = UpdateStateStore::backupDir().'/'.$backupBaseName.'.zip';
         $replacePaths = [
             'index.php',
-            'composer.json',
-            'composer.lock',
             'VERSION',
             'wgw-config.sample.php',
-            'vendor',
             'packages/api',
             'wgw-modules',
         ];
@@ -710,7 +707,7 @@ final class UpdateManager
 
     private static function removeLegacySourceTrees(string $appRoot): void
     {
-        foreach (['wgw-src', 'src', 'resources'] as $relative) {
+        foreach (['wgw-src', 'src', 'resources', 'composer.json', 'composer.lock', 'vendor'] as $relative) {
             $path = $appRoot.'/'.$relative;
             if (!file_exists($path)) {
                 continue;

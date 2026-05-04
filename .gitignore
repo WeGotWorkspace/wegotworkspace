@@ -4,6 +4,8 @@ node_modules/
 
 /apps/wegotworkspace/vendor/
 /apps/wegotworkspace/.phpunit.cache/
+/packages/api/vendor/
+/packages/api/.phpunit.cache/
 /apps/wegotworkspace/wgw-config.php
 /apps/wegotworkspace/wgw-content/*
 /apps/wegotworkspace/wgw-content/sessions/*

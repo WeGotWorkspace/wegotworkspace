@@ -8,6 +8,6 @@
     "enable-php-imap": "bash scripts/macos/enable-php-imap.sh",
     "generate:api-jwt-keys": "bash scripts/generate-api-jwt-keys.sh",
     "test:update-smoke": "bash scripts/update-smoke-test.sh",
-    "test": "../../apps/wegotworkspace/vendor/bin/phpunit -c phpunit.xml"
+    "test": "vendor/bin/phpunit -c phpunit.xml"
   }
 }

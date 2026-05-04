@@ -27,8 +27,11 @@ jobs:
       - name: Install JS workspace
         run: pnpm install --frozen-lockfile
 
+      - name: Install backend Composer dependencies
+        run: composer --working-dir packages/api install --no-interaction --prefer-dist
+
       - name: Run backend API tests
-        run: composer --working-dir apps/wegotworkspace test
+        run: composer --working-dir packages/api test
 
       - name: Build (Composer + UI via Turborepo)
         run: pnpm run build
