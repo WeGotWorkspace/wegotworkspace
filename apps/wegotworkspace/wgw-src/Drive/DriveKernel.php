@@ -56,12 +56,6 @@ final class DriveKernel
             return true;
         }
 
-        if (isset($_GET['r']) && is_string($_GET['r']) && $_GET['r'] !== '') {
-            self::respondApi($webBase, $pdo, $username);
-
-            return true;
-        }
-
         http_response_code(404);
         header('Content-Type: text/plain; charset=utf-8');
         echo 'Not found';
@@ -69,13 +63,20 @@ final class DriveKernel
         return true;
     }
 
-    private static function respondApi(string $webBase, \PDO $pdo, string $username): void
+    public static function respondApiFromToken(string $webBase, \PDO $pdo, string $username, string $route): void
+    {
+        self::respondApi($webBase, $pdo, $username, $route);
+    }
+
+    private static function respondApi(
+        string $webBase,
+        \PDO $pdo,
+        string $username,
+        string $route
+    ): void
     {
         self::startSession($webBase);
-        $csrf = self::csrfToken();
-        header('X-CSRF-Token: '.$csrf);
-
-        $route = isset($_GET['r']) && is_string($_GET['r']) ? trim($_GET['r']) : '';
+        $route = trim($route);
         $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
         if ($route === '') {
             self::jsonError(404, 'Not found');
@@ -96,7 +97,6 @@ final class DriveKernel
                         'username' => $username,
                         'name' => self::displayName($pdo, $username),
                         'role' => AdminPolicy::isAdmin($pdo, $username) ? 'admin' : 'user',
-                        'csrf' => $csrf,
                     ],
                 ]);
 
@@ -121,7 +121,6 @@ final class DriveKernel
                 return;
             }
 
-            self::requireCsrf($csrf);
             if ($route === '/getdir') {
                 $body = self::readJsonBody();
                 $dir = DriveAcl::normalizeVirtualPath((string) ($body['dir'] ?? '/'));
@@ -153,18 +152,26 @@ final class DriveKernel
                 $body = self::readJsonBody();
                 $name = self::validateItemName((string) ($body['name'] ?? ''));
                 $type = (string) ($body['type'] ?? '');
-                if ($type !== 'dir') {
-                    throw new \InvalidArgumentException('Only directory creation is supported.');
+                if ($type !== 'dir' && $type !== 'file') {
+                    throw new \InvalidArgumentException('Invalid item type. Use "dir" or "file".');
                 }
-                $cwd = self::currentCwd($username, $groups);
+                $requestedCwd = isset($body['cwd']) && is_string($body['cwd']) ? $body['cwd'] : null;
+                $cwd = self::resolveCwd($requestedCwd, $username, $groups);
                 $newPath = DriveAcl::normalizeVirtualPath($cwd.'/'.$name);
                 self::assertAllowed($newPath, $username, $groups, true);
                 $abs = self::absolutePath($filesRoot, $newPath);
-                if (is_dir($abs)) {
-                    throw new \InvalidArgumentException('Folder already exists.');
+                if (file_exists($abs)) {
+                    throw new \InvalidArgumentException('Item already exists.');
                 }
-                if (!@mkdir($abs, 0775, true)) {
-                    throw new \RuntimeException('Could not create folder.');
+                if ($type === 'dir') {
+                    if (!@mkdir($abs, 0775, true)) {
+                        throw new \RuntimeException('Could not create folder.');
+                    }
+                } else {
+                    @mkdir(dirname($abs), 0775, true);
+                    if (@file_put_contents($abs, '') === false) {
+                        throw new \RuntimeException('Could not create file.');
+                    }
                 }
                 self::json(200, ['data' => 'Created']);
 
@@ -442,7 +449,8 @@ final class DriveKernel
         $identifier = preg_replace('/[^0-9A-Za-z_]/', '_', (string) ($_POST['resumableIdentifier'] ?? ''));
         $chunkNumber = max(1, (int) ($_POST['resumableChunkNumber'] ?? 1));
         $totalChunks = max(1, (int) ($_POST['resumableTotalChunks'] ?? 1));
-        $cwd = self::currentCwd($username, $groups);
+        $requestedCwd = isset($_POST['cwd']) && is_string($_POST['cwd']) ? $_POST['cwd'] : null;
+        $cwd = self::resolveCwd($requestedCwd, $username, $groups);
         $targetVirtual = DriveAcl::normalizeVirtualPath($cwd.'/'.$filename);
         self::assertAllowed($targetVirtual, $username, $groups, true);
         $targetAbs = self::absolutePath($filesRoot, $targetVirtual);
@@ -487,7 +495,12 @@ final class DriveKernel
 
     private static function readJsonBody(): array
     {
-        $raw = (string) file_get_contents('php://input');
+        $raw = '';
+        if (isset($GLOBALS['__WGW_TEST_JSON_BODY']) && is_string($GLOBALS['__WGW_TEST_JSON_BODY'])) {
+            $raw = $GLOBALS['__WGW_TEST_JSON_BODY'];
+        } else {
+            $raw = (string) file_get_contents('php://input');
+        }
         if ($raw === '') {
             return [];
         }
@@ -512,26 +525,6 @@ final class DriveKernel
             'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
         ]);
         session_start();
-    }
-
-    private static function csrfToken(): string
-    {
-        if (!isset($_SESSION['drive_csrf']) || !is_string($_SESSION['drive_csrf']) || $_SESSION['drive_csrf'] === '') {
-            $_SESSION['drive_csrf'] = bin2hex(random_bytes(24));
-        }
-
-        return $_SESSION['drive_csrf'];
-    }
-
-    private static function requireCsrf(string $expected): void
-    {
-        $provided = isset($_SERVER['HTTP_X_CSRF_TOKEN']) && is_string($_SERVER['HTTP_X_CSRF_TOKEN'])
-            ? trim($_SERVER['HTTP_X_CSRF_TOKEN'])
-            : '';
-        if ($provided === '' || !hash_equals($expected, $provided)) {
-            self::jsonError(403, 'Invalid security token.');
-            exit;
-        }
     }
 
     private static function json(int $status, array $payload): void
@@ -620,6 +613,20 @@ final class DriveKernel
         }
 
         return $cwd;
+    }
+
+    private static function resolveCwd(?string $requested, string $username, array $groups): string
+    {
+        if ($requested !== null && trim($requested) !== '') {
+            $requestedPath = DriveAcl::normalizeVirtualPath($requested);
+            if (!DriveAcl::isPathAllowed($requestedPath, $username, $groups, false)) {
+                throw new \InvalidArgumentException('Access denied for this path.');
+            }
+
+            return $requestedPath;
+        }
+
+        return self::currentCwd($username, $groups);
     }
 
     private static function displayName(\PDO $pdo, string $username): string

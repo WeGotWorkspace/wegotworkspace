@@ -1,5 +1,6 @@
 /**
- * Browser client for the Drive JSON API served at {@code /drive/?r=…} (same origin, HTTP Basic + CSRF cookie).
+ * Browser client for the token-based Drive API ({@code /api/v1/drive/*}).
+ * Uses the browser session cookie to mint/refresh Bearer tokens via auth endpoints.
  */
 
 function normalizeBaseUrl(path: string): string {
@@ -11,47 +12,69 @@ function normalizeBaseUrl(path: string): string {
   return withLeading.endsWith("/") ? withLeading : `${withLeading}/`;
 }
 
-function fallbackBaseUrlFromLocation(): string {
+function fallbackApiBaseUrlFromLocation(): string {
   const path = window.location.pathname;
-  if (path.endsWith("/drive")) {
-    return `${path}/`;
-  }
   const marker = "/drive/";
   const idx = path.indexOf(marker);
-  if (idx >= 0) {
-    return path.slice(0, idx + marker.length);
-  }
-  return import.meta.env.BASE_URL;
+  const basePrefix = idx >= 0 ? path.slice(0, idx) : "";
+  return `${basePrefix}/api/v1/drive`;
 }
 
-function resolveBaseUrl(): string {
+function resolveApiBaseUrl(): string {
   const configured = window.__SABRE_DRIVE_CONFIG__?.apiBaseUrl;
   if (typeof configured === "string" && configured.trim() !== "") {
     return normalizeBaseUrl(configured);
   }
-  return normalizeBaseUrl(fallbackBaseUrlFromLocation());
+  return normalizeBaseUrl(fallbackApiBaseUrlFromLocation());
 }
 
-const base = resolveBaseUrl();
+function resolveAuthSessionUrl(): string {
+  const configured = window.__SABRE_DRIVE_CONFIG__?.authSessionUrl;
+  if (typeof configured === "string" && configured.trim() !== "") {
+    return configured.trim();
+  }
 
-/** Base64 path segment expected by Drive {@code GET /download}. */
-export function driveDownloadUrl(filePath: string): string {
+  return `${resolveApiBaseUrl().replace(/\/drive\/?$/, "")}/auth/session`;
+}
+
+function resolveAuthRefreshUrl(): string {
+  const configured = window.__SABRE_DRIVE_CONFIG__?.authRefreshUrl;
+  if (typeof configured === "string" && configured.trim() !== "") {
+    return configured.trim();
+  }
+
+  return `${resolveApiBaseUrl().replace(/\/drive\/?$/, "")}/auth/refresh`;
+}
+
+function routeUrl(route: string): string {
+  const normalizedRoute = route.replace(/^\/+/, "");
+  return `${apiBase}${normalizedRoute}`;
+}
+
+const apiBase = resolveApiBaseUrl();
+const authSessionUrl = resolveAuthSessionUrl();
+const authRefreshUrl = resolveAuthRefreshUrl();
+
+type AuthTokenResponse = {
+  access_token: string;
+  refresh_token: string;
+};
+
+let accessToken: string | null = null;
+let refreshToken: string | null = null;
+
+/** Base64 path query expected by Drive {@code GET /download}. */
+function driveDownloadPathParam(filePath: string): string {
   const bytes = new TextEncoder().encode(filePath);
   let binary = "";
   for (let i = 0; i < bytes.length; i++) {
     binary += String.fromCharCode(bytes[i]!);
   }
-  const pathParam = btoa(binary);
-  return `${base}?r=${encodeURIComponent("/download")}&path=${encodeURIComponent(pathParam)}`;
+  return btoa(binary);
 }
 
-let csrfToken: string | null = null;
-
-function absorbCsrfFromResponse(r: Response): void {
-  const t = r.headers.get("X-CSRF-Token");
-  if (t) {
-    csrfToken = t;
-  }
+function driveDownloadApiUrl(filePath: string): string {
+  return `${routeUrl("/download")}?path=${encodeURIComponent(driveDownloadPathParam(filePath))}`;
 }
 
 function parseJsonOrNull(raw: string): unknown {
@@ -66,82 +89,113 @@ function parseJsonOrNull(raw: string): unknown {
   }
 }
 
-function readCsrfToken(payload: unknown): string | null {
-  if (payload == null || typeof payload !== "object") {
-    return null;
-  }
-
-  const obj = payload as Record<string, unknown>;
-  const direct = [obj.csrf, obj.csrfToken, obj.csrf_token];
-  for (const candidate of direct) {
-    if (typeof candidate === "string" && candidate.trim() !== "") {
-      return candidate;
-    }
-  }
-
-  const data = obj.data;
-  if (data != null && typeof data === "object") {
-    const nested = data as Record<string, unknown>;
-    const nestedCandidates = [nested.csrf, nested.csrfToken, nested.csrf_token];
-    for (const candidate of nestedCandidates) {
-      if (typeof candidate === "string" && candidate.trim() !== "") {
-        return candidate;
-      }
-    }
-  }
-
-  return null;
-}
-
-/** Fetches a fresh CSRF token (also updates the in-memory token used by POSTs). */
-export async function refreshCsrf(): Promise<string> {
-  const r = await fetch(`${base}?r=${encodeURIComponent("/getuser")}`, {
-    method: "GET",
+async function mintTokenFromSession(): Promise<void> {
+  const r = await fetch(authSessionUrl, {
+    method: "POST",
     credentials: "include",
+    headers: {
+      Accept: "application/json",
+    },
   });
-  absorbCsrfFromResponse(r);
   const raw = await r.text();
   if (!r.ok) {
-    throw new Error(parseDriveApiMessage(raw) || `Request failed (${r.status})`);
+    throw new Error(parseDriveApiMessage(raw) || `Could not start API session (${r.status})`);
   }
-  if (!csrfToken) {
-    const fromBody = readCsrfToken(parseJsonOrNull(raw));
-    if (fromBody) {
-      csrfToken = fromBody;
-    }
+  const payload = parseJsonOrNull(raw) as AuthTokenResponse | null;
+  if (!payload?.access_token || !payload?.refresh_token) {
+    throw new Error("API auth did not return an access token.");
   }
-  if (!csrfToken) {
-    throw new Error("Drive API did not return a CSRF token. Reload the page.");
-  }
-  return csrfToken;
+  accessToken = payload.access_token;
+  refreshToken = payload.refresh_token;
 }
 
-async function getCsrf(): Promise<string> {
-  if (csrfToken) {
-    return csrfToken;
+async function refreshAccessToken(): Promise<boolean> {
+  if (!refreshToken) {
+    return false;
   }
-  return refreshCsrf();
-}
-
-export function resetCsrf(): void {
-  csrfToken = null;
-}
-
-export async function drivePost<T = unknown>(route: string, body: Record<string, unknown> = {}): Promise<T> {
-  const token = await getCsrf();
-  const r = await fetch(`${base}?r=${encodeURIComponent(route)}`, {
+  const r = await fetch(authRefreshUrl, {
     method: "POST",
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      "X-CSRF-Token": token,
+      Accept: "application/json",
+    },
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  });
+  const raw = await r.text();
+  if (!r.ok) {
+    return false;
+  }
+  const payload = parseJsonOrNull(raw) as AuthTokenResponse | null;
+  if (!payload?.access_token || !payload?.refresh_token) {
+    return false;
+  }
+  accessToken = payload.access_token;
+  refreshToken = payload.refresh_token;
+
+  return true;
+}
+
+async function ensureAccessToken(): Promise<string> {
+  if (!accessToken) {
+    await mintTokenFromSession();
+  }
+  if (!accessToken) {
+    throw new Error("Missing API access token.");
+  }
+
+  return accessToken;
+}
+
+async function withAuth(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+  allowRetry = true,
+): Promise<Response> {
+  const token = await ensureAccessToken();
+  const headers = new Headers(init?.headers ?? {});
+  headers.set("Authorization", `Bearer ${token}`);
+  if (!headers.has("Accept")) {
+    headers.set("Accept", "application/json");
+  }
+  const response = await fetch(input, {
+    ...init,
+    credentials: "include",
+    headers,
+  });
+  if (response.status !== 401 || !allowRetry) {
+    return response;
+  }
+
+  const refreshed = await refreshAccessToken();
+  if (refreshed) {
+    return withAuth(input, init, false);
+  }
+
+  accessToken = null;
+  const reminted = await (async () => {
+    try {
+      await mintTokenFromSession();
+      return true;
+    } catch {
+      return false;
+    }
+  })();
+  if (!reminted) {
+    return response;
+  }
+
+  return withAuth(input, init, false);
+}
+
+export async function drivePost<T = unknown>(route: string, body: Record<string, unknown> = {}): Promise<T> {
+  const r = await withAuth(routeUrl(route), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(body),
   });
-  absorbCsrfFromResponse(r);
-  if (r.status === 401 || r.status === 403) {
-    resetCsrf();
-  }
   if (!r.ok) {
     const t = await r.text();
     throw new Error(parseDriveApiMessage(t) || `Request failed (${r.status})`);
@@ -150,16 +204,61 @@ export async function drivePost<T = unknown>(route: string, body: Record<string,
 }
 
 export async function driveGet<T = unknown>(route: string): Promise<T> {
-  const r = await fetch(`${base}?r=${encodeURIComponent(route)}`, {
+  const r = await withAuth(routeUrl(route), {
     method: "GET",
-    credentials: "include",
   });
-  absorbCsrfFromResponse(r);
   if (!r.ok) {
     const t = await r.text();
     throw new Error(parseDriveApiMessage(t) || `Request failed (${r.status})`);
   }
   return (await r.json()) as T;
+}
+
+export async function driveDownloadBlob(filePath: string): Promise<Blob> {
+  const r = await withAuth(driveDownloadApiUrl(filePath), {
+    method: "GET",
+    headers: {
+      Accept: "*/*",
+    },
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(parseDriveApiMessage(t) || `Download failed (${r.status})`);
+  }
+  return r.blob();
+}
+
+export async function driveOpenInNewTab(filePath: string): Promise<void> {
+  const opened = window.open("", "_blank");
+  try {
+    const blob = await driveDownloadBlob(filePath);
+    const objectUrl = URL.createObjectURL(blob);
+    if (opened && !opened.closed) {
+      opened.opener = null;
+      opened.location.href = objectUrl;
+    } else {
+      window.open(objectUrl, "_blank", "noopener,noreferrer");
+    }
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+  } catch (error) {
+    if (opened && !opened.closed) {
+      opened.close();
+    }
+    throw error;
+  }
+}
+
+export async function driveDownloadFile(filePath: string, filename?: string): Promise<void> {
+  const blob = await driveDownloadBlob(filePath);
+  const objectUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = objectUrl;
+  link.download = filename && filename.trim() ? filename.trim() : "download";
+  link.rel = "noopener";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 5_000);
 }
 
 function parseDriveApiMessage(raw: string): string {
@@ -168,7 +267,10 @@ function parseDriveApiMessage(raw: string): string {
     return "";
   }
   try {
-    const j = JSON.parse(t) as { data?: unknown };
+    const j = JSON.parse(t) as { data?: unknown; error?: unknown };
+    if (typeof j.error === "string") {
+      return j.error;
+    }
     if (typeof j.data === "string") {
       return j.data;
     }
@@ -219,15 +321,14 @@ export interface DriveUserResponse {
   data: DriveUser;
 }
 
-/** Align Drive session cwd with the Drive UI (required before {@link driveCreateFolder} / upload). */
-export async function driveSyncSessionCwd(to: string): Promise<void> {
-  await drivePost("/changedir", { to });
-}
-
 /** Create a directory under {@code cwd} using the same storage as listing. */
 export async function driveCreateFolder(cwd: string, name: string): Promise<void> {
-  await driveSyncSessionCwd(cwd);
-  await drivePost("/createnew", { type: "dir", name: name.trim() });
+  await drivePost("/createnew", { cwd, type: "dir", name: name.trim() });
+}
+
+/** Create an empty file under {@code cwd} using the same storage as listing. */
+export async function driveCreateFile(cwd: string, name: string): Promise<void> {
+  await drivePost("/createnew", { cwd, type: "file", name: name.trim() });
 }
 
 export type DriveDeleteItem = { path: string; type: "dir" | "file" };
@@ -299,10 +400,6 @@ export async function driveUploadFiles(
     return;
   }
 
-  await driveSyncSessionCwd(cwd);
-  resetCsrf();
-  let token = await refreshCsrf();
-
   for (let fi = 0; fi < files.length; fi++) {
     const file = files[fi];
     const totalChunks = Math.max(1, Math.ceil(file.size / UPLOAD_CHUNK_BYTES));
@@ -319,13 +416,11 @@ export async function driveUploadFiles(
         resumableIdentifier: identifier,
         resumableChunkNumber: String(chunkNumber),
       });
-      const check = await fetch(`${base}?r=${encodeURIComponent("/upload")}&${pre.toString()}`, {
-        method: "GET",
-        credentials: "include",
-        signal: opts?.signal,
-      });
-      absorbCsrfFromResponse(check);
-      token = csrfToken ?? token;
+      const check = await withAuth(`${routeUrl("/upload")}?${pre.toString()}`, { method: "GET", signal: opts?.signal });
+      if (!check.ok) {
+        const checkRaw = await check.text();
+        throw new Error(parseDriveApiMessage(checkRaw) || `Upload check failed (${check.status})`);
+      }
 
       const start = (chunkNumber - 1) * UPLOAD_CHUNK_BYTES;
       const end = Math.min(start + UPLOAD_CHUNK_BYTES, file.size);
@@ -343,6 +438,7 @@ export async function driveUploadFiles(
         relativePath: cwd,
         mime,
       });
+      form.append("cwd", cwd);
 
       const bodyChunk =
         totalChunks === 1
@@ -353,24 +449,28 @@ export async function driveUploadFiles(
             });
       form.append("file", bodyChunk);
 
-      const r = await fetch(`${base}?r=${encodeURIComponent("/upload")}`, {
+      const token = await ensureAccessToken();
+      const r = await fetch(routeUrl("/upload"), {
         method: "POST",
         credentials: "include",
         headers: {
-          "X-CSRF-Token": token,
+          Authorization: `Bearer ${token}`,
         },
         body: form,
         signal: opts?.signal,
       });
-      absorbCsrfFromResponse(r);
-
-      if (r.status === 401 || r.status === 403) {
-        resetCsrf();
-      }
 
       const rawText = await r.text();
       const message = parseDriveApiMessage(rawText) || rawText;
 
+      if (r.status === 401) {
+        accessToken = null;
+        if (!(await refreshAccessToken())) {
+          throw new Error(message || "Upload authorization failed.");
+        }
+        chunkNumber -= 1;
+        continue;
+      }
       if (!r.ok) {
         throw new Error(message || `Upload failed (${r.status})`);
       }

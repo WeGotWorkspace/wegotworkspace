@@ -67,18 +67,16 @@ export function SettingsDialog({ open, onOpenChange }: Props) {
           <div className="space-y-2">
             <Label htmlFor="sig">
               Signaling URL
-              <span className="ml-1.5 text-muted-foreground font-normal">(rooms.php)</span>
             </Label>
             <Input
               id="sig"
-              placeholder="https://your-host/aura-signaling/rooms.php"
+              placeholder="https://your-host/api/v1/voice"
               value={draft.signalingUrl}
               onChange={(e) => update("signalingUrl", e.target.value)}
               className="rounded-xl font-mono text-xs"
             />
             <p className="text-[11px] text-muted-foreground">
-              Drop <code className="font-mono">rooms.php</code> on your LAMP server. See{" "}
-              <code className="font-mono">/aura-signaling/README.md</code>.
+              Leave empty to use this site&apos;s built-in signaling service.
             </p>
           </div>
 

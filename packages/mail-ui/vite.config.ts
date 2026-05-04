@@ -15,13 +15,13 @@ const outDir = path.resolve(runtimeRoot, privateDirName, "mail/dist");
 const phpOrigin = process.env.VITE_MAIL_PHP_ORIGIN ?? "http://127.0.0.1:8080";
 
 export default defineConfig(({ command }) => ({
-  // Build: relative assets + PHP <base href>; Dev: absolute /mail/ so fetches go to /mail/api/… on this origin.
+  // Build: relative assets + PHP <base href>; Dev: absolute /mail/ and proxy API v1 to PHP origin.
   base: command === "build" ? "./" : "/mail/",
   ...(command !== "build"
     ? {
         server: {
           proxy: {
-            "/mail/api": {
+            "/api/v1": {
               target: phpOrigin,
               changeOrigin: true,
             },

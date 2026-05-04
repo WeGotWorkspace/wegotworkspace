@@ -22,7 +22,7 @@ final class SettingsKeys
 
     public const MAIL_ENABLED = 'mail_enabled';
 
-    /** Optional absolute URL to Aura Voice signaling (rooms.php). Empty = use built-in Sabre path. */
+    /** Optional absolute URL to Aura Voice signaling base endpoint. Empty = use built-in /api/v1/voice path. */
     public const VOICE_SIGNALING_URL = 'voice_signaling_url';
 
     public const VOICE_TURN_URL = 'voice_turn_url';

@@ -4,7 +4,7 @@ import { FileIcon } from "./FileIcon";
 import { FileItemMenu } from "./FileItemMenu";
 import type { DriveFile } from "@/lib/files";
 import { formatRelative } from "@/lib/files";
-import { driveDownloadUrl } from "@/lib/driveApi";
+import { driveDownloadBlob } from "@/lib/driveApi";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -21,10 +21,34 @@ interface Props {
 export function FileCard({ file, selected, onClick, onOpenInOffice, onRenameRequest, onDeleteRequest, onToggleStar }: Props) {
   const isImage = file.kind === "image";
   const [imgFailed, setImgFailed] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
     setImgFailed(false);
+    setPreviewUrl(null);
   }, [file.id]);
+
+  useEffect(() => {
+    if (!isImage || imgFailed) {
+      return;
+    }
+    let cancelled = false;
+    let urlToRevoke: string | null = null;
+    void driveDownloadBlob(file.path)
+      .then((blob) => {
+        if (cancelled) return;
+        const objectUrl = URL.createObjectURL(blob);
+        urlToRevoke = objectUrl;
+        setPreviewUrl(objectUrl);
+      })
+      .catch(() => {
+        if (!cancelled) setImgFailed(true);
+      });
+    return () => {
+      cancelled = true;
+      if (urlToRevoke) URL.revokeObjectURL(urlToRevoke);
+    };
+  }, [file.path, isImage, imgFailed]);
 
   return (
     <div
@@ -54,9 +78,9 @@ export function FileCard({ file, selected, onClick, onOpenInOffice, onRenameRequ
           !isImage || imgFailed ? "bg-gradient-to-br from-muted/40 to-muted" : "bg-muted/15",
         )}
       >
-        {isImage && !imgFailed ? (
+        {isImage && !imgFailed && previewUrl ? (
           <img
-            src={driveDownloadUrl(file.path)}
+            src={previewUrl}
             alt=""
             loading="lazy"
             decoding="async"

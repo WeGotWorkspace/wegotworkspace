@@ -18,10 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-export type DeleteNotebookAction =
-  | { kind: "move"; target: string } // target notebook name, "__unassigned__" allowed
-  | { kind: "archive" };
+import type { DeleteNotebookAction } from "@/lib/notes-storage";
 
 type Props = {
   open: boolean;
@@ -40,7 +37,7 @@ export function DeleteNotebookDialog({
   otherNotebooks,
   onConfirm,
 }: Props) {
-  const [mode, setMode] = useState<"move" | "archive">("move");
+  const [mode, setMode] = useState<"move" | "archive" | "purge">("move");
   const [target, setTarget] = useState<string>("__unassigned__");
 
   useEffect(() => {
@@ -53,6 +50,8 @@ export function DeleteNotebookDialog({
   function submit() {
     if (mode === "archive") {
       onConfirm({ kind: "archive" });
+    } else if (mode === "purge") {
+      onConfirm({ kind: "purge" });
     } else {
       onConfirm({ kind: "move", target });
     }
@@ -94,7 +93,7 @@ export function DeleteNotebookDialog({
         <div className="px-6 pb-2 space-y-3">
           <RadioGroup
             value={mode}
-            onValueChange={(v) => setMode(v as "move" | "archive")}
+            onValueChange={(v) => setMode(v as "move" | "archive" | "purge")}
             className="space-y-2"
           >
             <label
@@ -142,6 +141,19 @@ export function DeleteNotebookDialog({
                 <div className="text-sm font-medium">Archive all notes in this notebook</div>
                 <div className="text-xs text-muted-foreground">
                   Notes move to the Archive — recoverable, but out of the way.
+                </div>
+              </div>
+            </label>
+
+            <label
+              htmlFor="opt-purge"
+              className="flex items-start gap-3 rounded-lg border border-border/60 p-3 cursor-pointer hover:bg-muted/40 transition-colors has-[[data-state=checked]]:border-destructive/40 has-[[data-state=checked]]:bg-destructive/10"
+            >
+              <RadioGroupItem id="opt-purge" value="purge" className="mt-1" />
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium text-destructive">Delete all notes permanently</div>
+                <div className="text-xs text-muted-foreground">
+                  This cannot be undone. Notes are fully removed, not archived.
                 </div>
               </div>
             </label>

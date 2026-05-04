@@ -5,29 +5,17 @@ declare(strict_types=1);
 namespace App\Mail;
 
 use App\Config;
-use App\Installer\WebBase;
 use PHPMailer\PHPMailer\PHPMailer;
 
 /**
- * JSON API for Mail under {@code /mail/api/…} (same auth as the Mail SPA).
+ * JSON API handlers for mail operations exposed under {@code /api/v1/mail/*}.
  */
 final class MailApi
 {
-    public static function matchesPath(string $webBase, string $path): bool
+    public static function respondOperation(string $method, string $operation, string $username, \PDO $pdo): void
     {
-        $p = rtrim(WebBase::url($webBase, '/mail/api'), '/');
-
-        return $path === $p || str_starts_with($path, $p.'/');
-    }
-
-    public static function respond(string $webBase, string $path, string $username, \PDO $pdo): void
-    {
-        $prefix = rtrim(WebBase::url($webBase, '/mail/api'), '/');
-        $rel = $path === $prefix ? '' : substr($path, strlen($prefix) + 1);
-        $rel = trim((string) $rel, '/');
-        $parts = $rel === '' ? [] : explode('/', $rel);
+        $parts = $operation === '' ? [] : explode('/', trim($operation, '/'));
         $head = $parts[0] ?? '';
-        $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
         try {
             match (true) {
@@ -76,8 +64,8 @@ final class MailApi
 
     private static function handleConfigPut(\PDO $pdo, string $username): void
     {
-        $raw = file_get_contents('php://input');
-        if ($raw === false || $raw === '') {
+        $raw = self::readRequestRawBody();
+        if ($raw === null || $raw === '') {
             self::json(400, ['error' => 'empty_body']);
 
             return;
@@ -557,16 +545,15 @@ final class MailApi
 
     private static function handleFolderCreate(\PDO $pdo, string $username): void
     {
-        $cred = self::requireImap($pdo, $username);
-        if ($cred === null) {
-            return;
-        }
-        $raw = file_get_contents('php://input');
-        $j = self::readJson($raw);
+        $j = self::readRequestJsonBody();
         $name = trim((string) ($j['name'] ?? ''));
         if ($name === '') {
             self::json(400, ['error' => 'name_required']);
 
+            return;
+        }
+        $cred = self::requireImap($pdo, $username);
+        if ($cred === null) {
             return;
         }
         $parentEnc = isset($j['parentMailbox']) && is_string($j['parentMailbox']) ? $j['parentMailbox'] : '';
@@ -601,17 +588,16 @@ final class MailApi
 
     private static function handleFolderMove(\PDO $pdo, string $username): void
     {
-        $cred = self::requireImap($pdo, $username);
-        if ($cred === null) {
-            return;
-        }
-        $raw = file_get_contents('php://input');
-        $j = self::readJson($raw);
+        $j = self::readRequestJsonBody();
         $folderEnc = isset($j['folder']) && is_string($j['folder']) ? $j['folder'] : '';
         $fromMb = self::folderIdDecode($folderEnc);
         if ($fromMb === '' || strtoupper($fromMb) === 'INBOX' || $fromMb === '__starred__') {
             self::json(400, ['error' => 'cannot_move']);
 
+            return;
+        }
+        $cred = self::requireImap($pdo, $username);
+        if ($cred === null) {
             return;
         }
         $parentEnc = isset($j['parentMailbox']) && is_string($j['parentMailbox']) ? $j['parentMailbox'] : '';
@@ -678,15 +664,15 @@ final class MailApi
 
     private static function handleFolderDelete(\PDO $pdo, string $username): void
     {
-        $cred = self::requireImap($pdo, $username);
-        if ($cred === null) {
-            return;
-        }
         $enc = isset($_GET['folder']) && is_string($_GET['folder']) ? $_GET['folder'] : '';
         $mb = self::folderIdDecode($enc);
         if ($mb === '' || strtoupper($mb) === 'INBOX' || $mb === '__starred__') {
             self::json(400, ['error' => 'cannot_delete']);
 
+            return;
+        }
+        $cred = self::requireImap($pdo, $username);
+        if ($cred === null) {
             return;
         }
         $err = null;
@@ -719,15 +705,15 @@ final class MailApi
 
     private static function handleMessages(\PDO $pdo, string $username): void
     {
-        $cred = self::requireImap($pdo, $username);
-        if ($cred === null) {
-            return;
-        }
         $folderEnc = isset($_GET['folder']) && is_string($_GET['folder']) ? $_GET['folder'] : '';
         $folder = self::folderIdDecode($folderEnc);
         if ($folder === '') {
             self::json(400, ['error' => 'mailbox_required']);
 
+            return;
+        }
+        $cred = self::requireImap($pdo, $username);
+        if ($cred === null) {
             return;
         }
         $limit = isset($_GET['limit']) ? (int) $_GET['limit'] : 40;
@@ -812,15 +798,15 @@ final class MailApi
      */
     private static function handleMessageAttachments(\PDO $pdo, string $username): void
     {
-        $cred = self::requireImap($pdo, $username);
-        if ($cred === null) {
-            return;
-        }
         $folderEnc = isset($_GET['folder']) && is_string($_GET['folder']) ? $_GET['folder'] : '';
         $folder = self::folderIdDecode($folderEnc);
         if ($folder === '') {
             self::json(400, ['error' => 'mailbox_required']);
 
+            return;
+        }
+        $cred = self::requireImap($pdo, $username);
+        if ($cred === null) {
             return;
         }
         $uidsRaw = isset($_GET['uids']) && is_string($_GET['uids']) ? $_GET['uids'] : '';
@@ -973,10 +959,6 @@ final class MailApi
 
     private static function handleMessageGet(\PDO $pdo, string $username): void
     {
-        $cred = self::requireImap($pdo, $username);
-        if ($cred === null) {
-            return;
-        }
         $folderEnc = isset($_GET['folder']) && is_string($_GET['folder']) ? $_GET['folder'] : '';
         $uid = isset($_GET['uid']) && is_numeric($_GET['uid']) ? (int) $_GET['uid'] : 0;
         $inlineImages = false;
@@ -988,6 +970,10 @@ final class MailApi
         if ($mb === '' || $uid <= 0) {
             self::json(400, ['error' => 'bad_params']);
 
+            return;
+        }
+        $cred = self::requireImap($pdo, $username);
+        if ($cred === null) {
             return;
         }
         $err = null;
@@ -1054,10 +1040,6 @@ final class MailApi
 
     private static function handleMessageAttachmentDownload(\PDO $pdo, string $username): void
     {
-        $cred = self::requireImap($pdo, $username);
-        if ($cred === null) {
-            return;
-        }
         $folderEnc = isset($_GET['folder']) && is_string($_GET['folder']) ? $_GET['folder'] : '';
         $uid = isset($_GET['uid']) && is_numeric($_GET['uid']) ? (int) $_GET['uid'] : 0;
         $part = isset($_GET['part']) && is_string($_GET['part']) ? trim($_GET['part']) : '';
@@ -1065,6 +1047,10 @@ final class MailApi
         if ($mb === '' || $uid <= 0 || $part === '' || preg_match('/^[1-9][0-9]*(\.[1-9][0-9]*)*$/', $part) !== 1) {
             self::json(400, ['error' => 'bad_params']);
 
+            return;
+        }
+        $cred = self::requireImap($pdo, $username);
+        if ($cred === null) {
             return;
         }
         $err = null;
@@ -1120,18 +1106,17 @@ final class MailApi
 
     private static function handleMessagePatch(\PDO $pdo, string $username): void
     {
-        $cred = self::requireImap($pdo, $username);
-        if ($cred === null) {
-            return;
-        }
-        $raw = file_get_contents('php://input');
-        $j = self::readJson($raw);
+        $j = self::readRequestJsonBody();
         $folderEnc = isset($j['folder']) && is_string($j['folder']) ? $j['folder'] : '';
         $uid = isset($j['uid']) && is_numeric($j['uid']) ? (int) $j['uid'] : 0;
         $mb = self::folderIdDecode($folderEnc);
         if ($mb === '' || $uid <= 0) {
             self::json(400, ['error' => 'bad_params']);
 
+            return;
+        }
+        $cred = self::requireImap($pdo, $username);
+        if ($cred === null) {
             return;
         }
         $err = null;
@@ -1173,11 +1158,7 @@ final class MailApi
 
     private static function handleMove(\PDO $pdo, string $username): void
     {
-        $cred = self::requireImap($pdo, $username);
-        if ($cred === null) {
-            return;
-        }
-        $j = self::readJson(file_get_contents('php://input'));
+        $j = self::readRequestJsonBody();
         $fromEnc = isset($j['fromFolder']) && is_string($j['fromFolder']) ? $j['fromFolder'] : '';
         $toEnc = isset($j['toFolder']) && is_string($j['toFolder']) ? $j['toFolder'] : '';
         $uid = isset($j['uid']) && is_numeric($j['uid']) ? (int) $j['uid'] : 0;
@@ -1193,6 +1174,10 @@ final class MailApi
         if ($from === '' || ($to === '' && $toSys === null) || $uid <= 0 || $to === '__starred__') {
             self::json(400, ['error' => 'bad_params']);
 
+            return;
+        }
+        $cred = self::requireImap($pdo, $username);
+        if ($cred === null) {
             return;
         }
         $err = null;
@@ -1327,7 +1312,7 @@ final class MailApi
 
             return;
         }
-        $j = self::readJson(file_get_contents('php://input'));
+        $j = self::readRequestJsonBody();
         $to = trim((string) ($j['to'] ?? ''));
         $subject = trim((string) ($j['subject'] ?? ''));
         $body = (string) ($j['body'] ?? '');
@@ -1403,7 +1388,7 @@ final class MailApi
         if ($cred === null) {
             return;
         }
-        $j = self::readJson(file_get_contents('php://input'));
+        $j = self::readRequestJsonBody();
         $to = trim((string) ($j['to'] ?? ''));
         $subject = trim((string) ($j['subject'] ?? ''));
         $body = (string) ($j['body'] ?? '');
@@ -1504,6 +1489,31 @@ final class MailApi
         } catch (\JsonException) {
             return [];
         }
+    }
+
+    private static function readRequestJsonBody(): array
+    {
+        $raw = self::readRequestRawBody();
+        if ($raw === null) {
+            return [];
+        }
+
+        return self::readJson($raw);
+    }
+
+    private static function readRequestRawBody(): ?string
+    {
+        $testRaw = $GLOBALS['__WGW_TEST_JSON_BODY'] ?? null;
+        if (is_string($testRaw)) {
+            return $testRaw;
+        }
+
+        $raw = file_get_contents('php://input');
+        if (!is_string($raw)) {
+            return null;
+        }
+
+        return $raw;
     }
 
     private static function sendBinaryAttachment(string $mime, string $filename, string $bytes): void

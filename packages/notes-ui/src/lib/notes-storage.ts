@@ -1,6 +1,3 @@
-import type { NoteFrontmatter } from "./notes-frontmatter";
-import { parseMarkdownNote, serializeMarkdownNote } from "./notes-frontmatter";
-
 export type StoredNote = {
   id: string;
   notebook: string;
@@ -12,282 +9,389 @@ export type StoredNote = {
   archived?: boolean;
 };
 
-type DavEntry = {
-  href: string;
-  name: string;
-  isCollection: boolean;
-  lastModified?: Date;
+type ApiNote = {
+  id: string;
+  notebook: string;
+  title: string;
+  body: string;
+  tags?: string[];
+  starred?: boolean;
+  updatedAt?: string;
+  archived?: boolean;
 };
 
-function davRootPath(baseUri: string): string {
-  const trimmed = baseUri.trim();
-  const prefixed = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
-  return prefixed.endsWith("/") ? prefixed : `${prefixed}/`;
+type TokenPair = {
+  access_token: string;
+  refresh_token: string;
+};
+
+export type DeleteNotebookAction =
+  | { kind: "move"; target: string }
+  | { kind: "archive" }
+  | { kind: "purge" };
+
+export type NotesState = {
+  baseUri: string;
+  username: string;
+  displayName: string;
+  logoutUrl: string;
+  notesPath: string;
+  filesEnabled: boolean;
+  distReady: boolean;
+};
+
+export type NotesCapabilities = {
+  enabled: boolean;
+  distReady: boolean;
+  baseUri: string;
+};
+
+let accessToken: string | null = null;
+let refreshToken: string | null = null;
+
+function apiV1BaseUrl(): string {
+  const path = window.location.pathname;
+  const marker = "/notes/";
+  const idx = path.indexOf(marker);
+  const basePrefix = idx >= 0 ? path.slice(0, idx) : "";
+  return `${basePrefix}/api/v1`;
 }
 
-function normalizeRel(relUnderFiles: string): string {
-  return relUnderFiles.replace(/^\/+/, "").replace(/\/+/g, "/");
-}
+const API_BASE = apiV1BaseUrl().replace(/\/+$/, "");
+const AUTH_SESSION_URL = `${API_BASE}/auth/session`;
+const AUTH_REFRESH_URL = `${API_BASE}/auth/refresh`;
 
-function relToPath(baseUri: string, relUnderFiles: string): string {
-  const rel = normalizeRel(relUnderFiles)
-    .split("/")
-    .filter(Boolean)
-    .map((segment) => encodeURIComponent(segment))
-    .join("/");
-  return new URL(`${davRootPath(baseUri)}files/${rel}`, window.location.origin).pathname;
-}
-
-async function readErrorBody(res: Response): Promise<string> {
+function parseErrorMessage(raw: string): string {
+  const text = raw.trim();
+  if (!text) {
+    return "Request failed";
+  }
   try {
-    const text = await res.text();
-    return text.slice(0, 500);
+    const json = JSON.parse(text) as { error?: unknown; message?: unknown };
+    if (typeof json.error === "string" && json.error.trim() !== "") {
+      return json.error;
+    }
+    if (typeof json.message === "string" && json.message.trim() !== "") {
+      return json.message;
+    }
   } catch {
-    return "";
+    // Not JSON.
+  }
+  return text;
+}
+
+async function mintTokenFromSession(): Promise<void> {
+  const response = await fetch(AUTH_SESSION_URL, {
+    method: "POST",
+    credentials: "include",
+    headers: { Accept: "application/json" },
+  });
+  const raw = await response.text();
+  if (!response.ok) {
+    throw new Error(parseErrorMessage(raw));
+  }
+  const payload = JSON.parse(raw) as TokenPair;
+  accessToken = payload.access_token ?? null;
+  refreshToken = payload.refresh_token ?? null;
+  if (!accessToken || !refreshToken) {
+    throw new Error("Could not initialize Notes API session.");
   }
 }
 
-async function davRequest(path: string, init: RequestInit): Promise<Response> {
-  return fetch(path, {
+async function refreshAccessToken(): Promise<boolean> {
+  if (!refreshToken) {
+    return false;
+  }
+  const response = await fetch(AUTH_REFRESH_URL, {
+    method: "POST",
     credentials: "include",
-    ...init,
-  });
-}
-
-function parseDavEntries(xmlText: string): DavEntry[] {
-  const doc = new DOMParser().parseFromString(xmlText, "application/xml");
-  const responses = Array.from(doc.getElementsByTagNameNS("*", "response"));
-  return responses
-    .map((response) => {
-      const hrefNode = response.getElementsByTagNameNS("*", "href")[0];
-      const href = hrefNode?.textContent?.trim() ?? "";
-      if (!href) return null;
-      const decodedHref = decodeURIComponent(new URL(href, window.location.origin).pathname);
-      const segments = decodedHref.split("/").filter(Boolean);
-      const name = segments[segments.length - 1] ?? "";
-      const hasCollection = response.getElementsByTagNameNS("*", "collection").length > 0;
-      const lastModNode = response.getElementsByTagNameNS("*", "getlastmodified")[0];
-      const lastModRaw = lastModNode?.textContent?.trim() ?? "";
-      const lastModified = lastModRaw ? new Date(lastModRaw) : undefined;
-      return {
-        href: decodedHref,
-        name,
-        isCollection: hasCollection,
-        lastModified: lastModified && !Number.isNaN(lastModified.getTime()) ? lastModified : undefined,
-      } satisfies DavEntry;
-    })
-    .filter((entry): entry is DavEntry => entry !== null);
-}
-
-async function davPropfind(path: string, depth: "0" | "1"): Promise<DavEntry[]> {
-  const res = await davRequest(path, {
-    method: "PROPFIND",
     headers: {
-      Depth: depth,
-      "Content-Type": "application/xml; charset=utf-8",
+      "Content-Type": "application/json",
+      Accept: "application/json",
     },
-    body: `<?xml version="1.0"?>
-<d:propfind xmlns:d="DAV:">
-  <d:prop>
-    <d:resourcetype/>
-    <d:getlastmodified/>
-  </d:prop>
-</d:propfind>`,
+    body: JSON.stringify({ refresh_token: refreshToken }),
   });
-  if (res.status === 404) {
+  const raw = await response.text();
+  if (!response.ok) {
+    return false;
+  }
+  const payload = JSON.parse(raw) as TokenPair;
+  accessToken = payload.access_token ?? null;
+  refreshToken = payload.refresh_token ?? null;
+  return !!accessToken && !!refreshToken;
+}
+
+async function ensureAccessToken(): Promise<string> {
+  if (!accessToken) {
+    await mintTokenFromSession();
+  }
+  if (!accessToken) {
+    throw new Error("Missing Notes API access token.");
+  }
+  return accessToken;
+}
+
+async function withAuth(input: RequestInfo | URL, init?: RequestInit, allowRetry = true): Promise<Response> {
+  const token = await ensureAccessToken();
+  const response = await fetch(input, {
+    ...init,
+    credentials: "include",
+    headers: {
+      ...(init?.headers ?? {}),
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    },
+  });
+  if (response.status !== 401 || !allowRetry) {
+    return response;
+  }
+  const refreshed = await refreshAccessToken();
+  if (!refreshed) {
+    accessToken = null;
+    refreshToken = null;
+    await mintTokenFromSession();
+  }
+  return withAuth(input, init, false);
+}
+
+async function api<T>(path: string, opts?: { method?: string; body?: unknown }): Promise<T> {
+  const method = (opts?.method ?? (opts?.body === undefined ? "GET" : "POST")).toUpperCase();
+  const hasBody = opts?.body !== undefined;
+  const response = await withAuth(`${API_BASE}/notes${path}`, {
+    method,
+    headers: hasBody ? { "Content-Type": "application/json" } : undefined,
+    body: hasBody ? JSON.stringify(opts?.body) : undefined,
+  });
+  const raw = await response.text();
+  if (!response.ok) {
+    throw new Error(parseErrorMessage(raw));
+  }
+  return JSON.parse(raw) as T;
+}
+
+function normalizeTags(tags: unknown): string[] {
+  if (!Array.isArray(tags)) {
     return [];
   }
-  if (!res.ok && res.status !== 207) {
-    throw new Error(`WebDAV PROPFIND ${res.status}: ${await readErrorBody(res)}`);
+  return [...new Set(tags.filter((tag): tag is string => typeof tag === "string").map((tag) => tag.trim()))]
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b));
+}
+
+function normalizeNotebook(notebook: string): string {
+  const clean = notebook.trim();
+  return clean !== "" ? clean : "General";
+}
+
+function toStoredNote(note: ApiNote): StoredNote {
+  const updatedAt = typeof note.updatedAt === "string" ? new Date(note.updatedAt) : new Date();
+  return {
+    id: note.id,
+    notebook: normalizeNotebook(note.notebook),
+    title: typeof note.title === "string" && note.title.trim() !== "" ? note.title : "Untitled",
+    body: typeof note.body === "string" ? note.body : "",
+    tags: normalizeTags(note.tags),
+    starred: !!note.starred,
+    archived: !!note.archived,
+    updatedAt: Number.isNaN(updatedAt.getTime()) ? new Date() : updatedAt,
+  };
+}
+
+function noteChanged(local: StoredNote, remote: ApiNote | undefined, archived: boolean): boolean {
+  if (!remote) {
+    return true;
   }
-  return parseDavEntries(await res.text());
-}
-
-async function ensureCollection(path: string): Promise<void> {
-  const res = await davRequest(path.endsWith("/") ? path : `${path}/`, {
-    method: "MKCOL",
-  });
-  if (res.ok || res.status === 201 || res.status === 204 || res.status === 405 || res.status === 409) {
-    return;
+  if (normalizeNotebook(remote.notebook) !== normalizeNotebook(local.notebook)) {
+    return true;
   }
-  throw new Error(`WebDAV MKCOL ${res.status}: ${await readErrorBody(res)}`);
-}
-
-function noteIdFromFileName(name: string): string {
-  const withoutExt = name.toLowerCase().endsWith(".md") ? name.slice(0, -3) : name;
-  return decodeURIComponent(withoutExt);
-}
-
-function notebookRel(username: string, notebook: string): string {
-  return `users/${username}/.notes/${notebook}`;
-}
-
-function archiveRootRel(username: string): string {
-  return `users/${username}/.notes/.archive`;
-}
-
-function archiveNotebookRel(username: string, notebook: string): string {
-  return `${archiveRootRel(username)}/${notebook}`;
-}
-
-function noteRel(username: string, notebook: string, noteId: string): string {
-  return `${notebookRel(username, notebook)}/${noteId}.md`;
-}
-
-function archiveNoteRel(username: string, notebook: string, noteId: string): string {
-  return `${archiveNotebookRel(username, notebook)}/${noteId}.md`;
-}
-
-function uniqueStrings(values: string[]): string[] {
-  return [...new Set(values)];
-}
-
-async function loadNotebookNotes(
-  baseUri: string,
-  username: string,
-  notebook: string,
-  archived: boolean,
-): Promise<StoredNote[]> {
-  const notebookPath = relToPath(
-    baseUri,
-    archived ? archiveNotebookRel(username, notebook) : notebookRel(username, notebook),
-  );
-  const entries = await davPropfind(notebookPath, "1");
-  const files = entries.filter((entry) => !entry.isCollection && entry.name.toLowerCase().endsWith(".md"));
-  const notes: StoredNote[] = [];
-  for (const file of files) {
-    const resourcePath = relToPath(
-      baseUri,
-      archived
-        ? archiveNoteRel(username, notebook, noteIdFromFileName(file.name))
-        : noteRel(username, notebook, noteIdFromFileName(file.name)),
-    );
-    const res = await davRequest(resourcePath, { method: "GET" });
-    if (!res.ok) continue;
-    const markdown = await res.text();
-    const parsed = parseMarkdownNote(markdown, file.name.replace(/\.md$/i, ""));
-    notes.push({
-      id: noteIdFromFileName(file.name),
-      notebook,
-      title: parsed.frontmatter.title,
-      body: parsed.body,
-      tags: parsed.frontmatter.tags,
-      starred: parsed.frontmatter.starred,
-      updatedAt: file.lastModified ?? new Date(),
-      archived,
-    });
+  if ((remote.title ?? "") !== (local.title ?? "")) {
+    return true;
   }
-
-  return notes;
-}
-
-export async function loadNotes(baseUri: string, username: string): Promise<StoredNote[]> {
-  const notesRootRel = `users/${username}/.notes`;
-  const notesRootPath = relToPath(baseUri, notesRootRel);
-  await ensureCollection(notesRootPath);
-  const archiveRootPath = relToPath(baseUri, archiveRootRel(username));
-  await ensureCollection(archiveRootPath);
-
-  const notebookEntries = await davPropfind(notesRootPath, "1");
-  const notebookDirs = notebookEntries
-    .filter((entry) => entry.isCollection && entry.name !== ".archive")
-    .map((entry) => entry.name);
-
-  const archiveEntries = await davPropfind(archiveRootPath, "1");
-  const archiveNotebookDirs = archiveEntries.filter((entry) => entry.isCollection).map((entry) => entry.name);
-
-  const notes: StoredNote[] = [];
-  for (const notebook of notebookDirs) {
-    notes.push(...(await loadNotebookNotes(baseUri, username, notebook, false)));
+  if ((remote.body ?? "") !== (local.body ?? "")) {
+    return true;
   }
-
-  for (const notebook of archiveNotebookDirs) {
-    notes.push(...(await loadNotebookNotes(baseUri, username, notebook, true)));
+  if (!!remote.starred !== !!local.starred) {
+    return true;
   }
-
-  return notes;
+  if (!!remote.archived !== archived) {
+    return true;
+  }
+  const remoteTags = normalizeTags(remote.tags);
+  const localTags = normalizeTags(local.tags);
+  if (remoteTags.length !== localTags.length) {
+    return true;
+  }
+  return remoteTags.some((tag, idx) => tag !== localTags[idx]);
 }
 
 export function notebookListFromNotes(notes: StoredNote[]): string[] {
-  return uniqueStrings(
+  return [...new Set(
     notes
       .map((note) => note.notebook.trim())
       .filter((notebook) => notebook.length > 0)
       .sort((a, b) => a.localeCompare(b)),
-  );
-}
-
-async function putMarkdown(baseUri: string, relUnderFiles: string, markdown: string): Promise<void> {
-  const path = relToPath(baseUri, relUnderFiles);
-  const res = await davRequest(path, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "text/markdown; charset=utf-8",
-    },
-    body: markdown,
-  });
-  if (!res.ok && res.status !== 201 && res.status !== 204) {
-    throw new Error(`WebDAV PUT ${res.status}: ${await readErrorBody(res)}`);
-  }
-}
-
-async function deleteResource(baseUri: string, relUnderFiles: string): Promise<void> {
-  const res = await davRequest(relToPath(baseUri, relUnderFiles), { method: "DELETE" });
-  if (res.ok || res.status === 204 || res.status === 404) {
-    return;
-  }
-  throw new Error(`WebDAV DELETE ${res.status}: ${await readErrorBody(res)}`);
+  )];
 }
 
 export async function syncNotes(
-  baseUri: string,
-  username: string,
+  _baseUri: string,
+  _username: string,
   notes: StoredNote[],
   archivedIds: Set<string>,
+  notebooks: string[] = [],
 ): Promise<void> {
-  const notesRoot = relToPath(baseUri, `users/${username}/.notes`);
-  await ensureCollection(notesRoot);
-  const archiveRoot = relToPath(baseUri, archiveRootRel(username));
-  await ensureCollection(archiveRoot);
-
-  const activeNotebooks = uniqueStrings(
-    notes.filter((note) => !archivedIds.has(note.id)).map((note) => note.notebook).filter(Boolean),
-  );
-  const archivedNotebooks = uniqueStrings(
-    notes.filter((note) => archivedIds.has(note.id)).map((note) => note.notebook).filter(Boolean),
-  );
-
-  for (const notebook of activeNotebooks) {
-    await ensureCollection(relToPath(baseUri, notebookRel(username, notebook)));
-  }
-  for (const notebook of archivedNotebooks) {
-    await ensureCollection(relToPath(baseUri, archiveNotebookRel(username, notebook)));
-  }
+  const remote = await api<{ items: ApiNote[] }>("/items");
+  const remoteById = new Map(remote.items.map((note) => [note.id, note]));
+  const expectedIds = new Set(notes.map((note) => note.id));
 
   for (const note of notes) {
-    const frontmatter: NoteFrontmatter = {
-      title: note.title || "Untitled",
-      tags: note.tags,
-      starred: note.starred,
-    };
-    const markdown = serializeMarkdownNote(frontmatter, note.body);
-    const rel = archivedIds.has(note.id)
-      ? archiveNoteRel(username, note.notebook, note.id)
-      : noteRel(username, note.notebook, note.id);
-    await putMarkdown(baseUri, rel, markdown);
+    const archived = archivedIds.has(note.id);
+    const remoteNote = remoteById.get(note.id);
+    if (!noteChanged(note, remoteNote, archived)) {
+      continue;
+    }
+    await api<{ ok: boolean; item: ApiNote }>(`/items/${encodeURIComponent(note.id)}`, {
+      method: "PUT",
+      body: {
+        notebook: normalizeNotebook(note.notebook),
+        title: note.title || "Untitled",
+        body: note.body ?? "",
+        tags: normalizeTags(note.tags),
+        starred: !!note.starred,
+        archived,
+      },
+    });
   }
 
-  const existing = await loadNotes(baseUri, username);
-  const expected = new Set(
-    notes.map((note) => `${archivedIds.has(note.id) ? "archive:" : "active:"}${note.notebook}/${note.id}.md`),
-  );
-  for (const note of existing) {
-    const key = `${note.archived ? "archive:" : "active:"}${note.notebook}/${note.id}.md`;
-    if (!expected.has(key)) {
-      const rel = note.archived
-        ? archiveNoteRel(username, note.notebook, note.id)
-        : noteRel(username, note.notebook, note.id);
-      await deleteResource(baseUri, rel);
+  for (const remoteNote of remote.items) {
+    if (expectedIds.has(remoteNote.id)) {
+      continue;
     }
+    await api<{ ok: boolean }>(`/items/${encodeURIComponent(remoteNote.id)}`, {
+      method: "DELETE",
+      body: {
+        notebook: normalizeNotebook(remoteNote.notebook),
+        archived: !!remoteNote.archived,
+      },
+    });
   }
+
+  const remoteNotebooks = await api<{ items: { name: string; activeCount: number; archivedCount: number }[] }>(
+    "/notebooks",
+  );
+  const desiredNotebooks = new Set(
+    [...notebooks, ...notes.map((note) => normalizeNotebook(note.notebook))]
+      .map((name) => name.trim())
+      .filter(Boolean),
+  );
+
+  for (const name of desiredNotebooks) {
+    if (remoteNotebooks.items.some((item) => item.name === name)) {
+      continue;
+    }
+    await api<{ ok: boolean; name: string }>("/notebooks", {
+      method: "POST",
+      body: { name },
+    });
+  }
+}
+
+export async function loadNotes(_baseUri: string, _username: string): Promise<StoredNote[]> {
+  const payload = await api<{ items: ApiNote[] }>("/items");
+  return payload.items.map(toStoredNote);
+}
+
+export async function loadNotesState(): Promise<NotesState> {
+  return api<NotesState>("/state");
+}
+
+export async function loadNotesCapabilities(): Promise<NotesCapabilities> {
+  return api<NotesCapabilities>("/capabilities");
+}
+
+export async function createNote(note: {
+  id: string;
+  notebook: string;
+  title: string;
+  body: string;
+  tags: string[];
+  starred?: boolean;
+  archived?: boolean;
+}): Promise<StoredNote> {
+  const payload = await api<{ ok: boolean; item: ApiNote }>("/items", {
+    method: "POST",
+    body: {
+      id: note.id,
+      notebook: normalizeNotebook(note.notebook),
+      title: note.title || "Untitled",
+      body: note.body ?? "",
+      tags: normalizeTags(note.tags),
+      starred: !!note.starred,
+      archived: !!note.archived,
+    },
+  });
+  return toStoredNote(payload.item);
+}
+
+export async function archiveNote(id: string): Promise<StoredNote> {
+  const payload = await api<{ ok: boolean; item: ApiNote }>(`/items/${encodeURIComponent(id)}/archive`, {
+    method: "POST",
+    body: {},
+  });
+  return toStoredNote(payload.item);
+}
+
+export async function restoreNote(id: string): Promise<StoredNote> {
+  const payload = await api<{ ok: boolean; item: ApiNote }>(`/items/${encodeURIComponent(id)}/restore`, {
+    method: "POST",
+    body: {},
+  });
+  return toStoredNote(payload.item);
+}
+
+export async function createNotebook(name: string): Promise<void> {
+  const normalized = normalizeNotebook(name);
+  await api<{ ok: boolean; name: string }>("/notebooks", {
+    method: "POST",
+    body: { name: normalized },
+  });
+}
+
+export async function renameNotebook(from: string, to: string): Promise<void> {
+  const source = normalizeNotebook(from);
+  const target = normalizeNotebook(to);
+  if (source === target) {
+    return;
+  }
+  await api<{ ok: boolean; from: string; to: string }>(`/notebooks/${encodeURIComponent(source)}`, {
+    method: "PATCH",
+    body: { name: target },
+  });
+}
+
+export async function deleteNotebook(name: string, action: DeleteNotebookAction): Promise<void> {
+  const notebook = normalizeNotebook(name);
+  if (action.kind === "archive") {
+    await api<{ ok: boolean; mode: string }>(`/notebooks/${encodeURIComponent(notebook)}`, {
+      method: "DELETE",
+      body: { mode: "archive" },
+    });
+    return;
+  }
+
+  if (action.kind === "purge") {
+    await api<{ ok: boolean; mode: string }>(`/notebooks/${encodeURIComponent(notebook)}`, {
+      method: "DELETE",
+      body: { mode: "purge" },
+    });
+    return;
+  }
+
+  await api<{ ok: boolean; mode: string }>(`/notebooks/${encodeURIComponent(notebook)}`, {
+    method: "DELETE",
+    body: {
+      mode: "move",
+      target: action.target === "__unassigned__" ? "Unassigned" : normalizeNotebook(action.target),
+    },
+  });
 }

@@ -4,7 +4,7 @@ import { MailRail } from "@/components/mail/MailRail";
 import { MessageList } from "@/components/mail/MessageList";
 import { MessageReader } from "@/components/mail/MessageReader";
 import { Composer, type DraftSeed } from "@/components/mail/Composer";
-import { mailAttachmentDownloadUrl, splitMessageId } from "@/lib/mail-api";
+import { mailDownloadAttachment, splitMessageId } from "@/lib/mail-api";
 import { draftSeedFromMessage } from "@/lib/draft-from-message";
 import { replyComposeRecipients } from "@/lib/reply-recipients";
 import { useMail, type Attachment } from "@/lib/use-mail";
@@ -80,12 +80,14 @@ function MailApp() {
 
   const selectedMessage = mail.messages.find((m) => m.id === selectedMessageId);
 
-  const attachmentDownloadHref = useMemo(() => {
+  const onDownloadAttachment = useMemo(() => {
     if (mail.mode !== "imap" || !selectedMessage) return undefined;
     const sp = splitMessageId(selectedMessage.id);
     if (!sp) return undefined;
-    return (att: Attachment) =>
-      att.part ? mailAttachmentDownloadUrl(sp.folderEnc, sp.uid, att.part) : undefined;
+    return async (att: Attachment) => {
+      if (!att.part) return;
+      await mailDownloadAttachment(sp.folderEnc, sp.uid, att.part, att.name || "attachment");
+    };
   }, [mail.mode, selectedMessage]);
 
   const handleSelectFolder = (id: string) => {
@@ -283,7 +285,7 @@ function MailApp() {
                   }
                 : undefined
             }
-            attachmentDownloadHref={attachmentDownloadHref}
+            onDownloadAttachment={onDownloadAttachment}
           />
           <Composer
             open={composerOpen}

@@ -19,6 +19,16 @@ defined('WGW_DATA_DIR') || define('WGW_DATA_DIR', './wgw-content');
 // Can point to manifest.json directly or GitHub releases/latest API URL.
 defined('WGW_UPDATE_FEED_URL') || define('WGW_UPDATE_FEED_URL', 'https://github.com/woutervroege/wegotworkspace/releases/latest/download/manifest.json');
 
+// JWT configuration for /api/v1 bearer tokens (RS256).
+defined('WGW_API_JWT_ISSUER') || define('WGW_API_JWT_ISSUER', 'wegotworkspace-api');
+defined('WGW_API_JWT_AUDIENCE') || define('WGW_API_JWT_AUDIENCE', 'wegotworkspace-clients');
+defined('WGW_API_JWT_KID') || define('WGW_API_JWT_KID', 'wgw-rs256-v1');
+defined('WGW_API_JWT_PRIVATE_KEY_PATH') || define('WGW_API_JWT_PRIVATE_KEY_PATH', './wgw-content/keys/api-jwt-private.pem');
+defined('WGW_API_JWT_PUBLIC_KEY_PATH') || define('WGW_API_JWT_PUBLIC_KEY_PATH', './wgw-content/keys/api-jwt-public.pem');
+// Optional rotation key for verification during key rollover.
+// defined('WGW_API_JWT_PREVIOUS_KID', 'wgw-rs256-v0');
+// defined('WGW_API_JWT_PREVIOUS_PUBLIC_KEY_PATH', './wgw-content/keys/api-jwt-public-old.pem');
+
 // SQLite (recommended): optional path relative to runtime root or absolute path.
 // If omitted, runtime uses WGW_DATA_DIR + '/db.sqlite'.
 defined('WGW_DB_SQLITE_FILE') || define('WGW_DB_SQLITE_FILE', './wgw-content/db.sqlite');

@@ -30,6 +30,10 @@
         "../../apps/wegotworkspace/wgw-modules/install/dist/**"
       ]
     },
+    "test": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
     "dev": {
       "dependsOn": ["^build"],
       "cache": false,
