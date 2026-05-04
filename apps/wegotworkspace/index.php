@@ -97,7 +97,7 @@ $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
 $webBase = WebBase::detect();
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 
-if (!TrustedHostGate::isAllowed($_SERVER, getenv('WGW_TRUSTED_HOSTS'))) {
+if (!TrustedHostGate::isAllowed($_SERVER, getenv('WGW_TRUSTED_HOSTS'), getenv('VHOST_DOMAIN'))) {
     http_response_code(400);
     header('Content-Type: text/plain; charset=utf-8');
     echo "Bad Request\n";
