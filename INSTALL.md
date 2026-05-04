@@ -8,7 +8,7 @@ Upload the deploy package contents to your website folder so these files are in 
 - `index.php`
 - `.htaccess`
 - `packages/api/`
-- `vendor/`
+- `packages/api/vendor/`
 - `wgw-modules/`
 - `wgw-config.sample.php`
 

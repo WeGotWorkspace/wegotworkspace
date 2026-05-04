@@ -123,5 +123,5 @@ echo -e "${GREEN}${BOLD}========================================================
 echo -e "${GREEN}${BOLD}   Bootstrap complete${NC}"
 echo -e "${GREEN}${BOLD}==============================================================${NC}"
 echo ""
-echo -e "Run ${BOLD}pnpm --filter @wgw/wegotworkspace preview:macos${NC} to configure vhosts and start Apache."
+echo -e "Run ${BOLD}pnpm --filter @wgw/api preview:macos${NC} to configure vhosts and start Apache."
 echo ""
