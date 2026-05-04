@@ -8,13 +8,55 @@ final class Paths
 {
     /** @var array<string, mixed>|null */
     private static ?array $fileConfigCache = null;
+    private static ?string $appRootCache = null;
 
     /**
-     * App root (contains index.php, composer.json, wgw-src/, vendor/).
+     * App root (contains index.php, composer.json, packages/, vendor/).
      */
     public static function appRoot(): string
     {
-        return dirname(__DIR__);
+        if (self::$appRootCache !== null) {
+            return self::$appRootCache;
+        }
+
+        $fromEnv = self::envString('WGW_APP_ROOT');
+        if ($fromEnv !== null && is_dir($fromEnv)) {
+            self::$appRootCache = self::trimTrailingSlash(self::normalizePath($fromEnv));
+
+            return self::$appRootCache;
+        }
+
+        $cwd = getcwd();
+        if (is_string($cwd) && self::looksLikeAppRoot($cwd)) {
+            self::$appRootCache = self::trimTrailingSlash(self::normalizePath($cwd));
+
+            return self::$appRootCache;
+        }
+
+        $legacyInApp = dirname(__DIR__);
+        if (self::looksLikeAppRoot($legacyInApp)) {
+            self::$appRootCache = self::trimTrailingSlash(self::normalizePath($legacyInApp));
+
+            return self::$appRootCache;
+        }
+
+        $monorepoApp = dirname(__DIR__, 3).'/apps/wegotworkspace';
+        if (self::looksLikeAppRoot($monorepoApp)) {
+            self::$appRootCache = self::trimTrailingSlash(self::normalizePath($monorepoApp));
+
+            return self::$appRootCache;
+        }
+
+        $vendorInstallApp = dirname(__DIR__, 4);
+        if (self::looksLikeAppRoot($vendorInstallApp)) {
+            self::$appRootCache = self::trimTrailingSlash(self::normalizePath($vendorInstallApp));
+
+            return self::$appRootCache;
+        }
+
+        self::$appRootCache = self::trimTrailingSlash(self::normalizePath($legacyInApp));
+
+        return self::$appRootCache;
     }
 
     /**
@@ -82,8 +124,7 @@ final class Paths
     public static function resources(): string
     {
         $candidates = [
-            self::root().'/wgw-src',
-            self::appRoot().'/wgw-src',
+            self::packageSrc(),
             // Legacy layout fallback.
             self::root().'/resources',
             self::appRoot().'/resources',
@@ -94,7 +135,27 @@ final class Paths
             }
         }
 
-        return self::appRoot().'/wgw-src';
+        return self::packageSrc();
+    }
+
+    public static function packageSrc(): string
+    {
+        $fromRoot = self::root().'/packages/api/src';
+        if (is_dir($fromRoot)) {
+            return $fromRoot;
+        }
+
+        $fromApp = self::appRoot().'/../../packages/api/src';
+        if (is_dir($fromApp)) {
+            return self::trimTrailingSlash(self::normalizePath($fromApp));
+        }
+
+        $fromVendor = self::appRoot().'/vendor/wgw/api/src';
+        if (is_dir($fromVendor)) {
+            return $fromVendor;
+        }
+
+        return dirname(__DIR__);
     }
 
     /**
@@ -404,5 +465,12 @@ final class Paths
         self::$fileConfigCache = $cfg;
 
         return self::$fileConfigCache;
+    }
+
+    private static function looksLikeAppRoot(string $path): bool
+    {
+        $path = self::trimTrailingSlash(self::normalizePath($path));
+
+        return is_file($path.'/index.php') && (is_file($path.'/wgw-config.sample.php') || is_dir($path.'/wgw-modules'));
     }
 }

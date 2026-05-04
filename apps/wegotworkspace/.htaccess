@@ -16,7 +16,7 @@ Options -Indexes -MultiViews
 
     # Never expose runtime internals, config, or source trees directly.
     RewriteRule ^(?:wgw-modules|wgw-private|wgw-content)(?:/|$) - [F,L,NC]
-    RewriteRule ^(?:wgw-src|src|resources|vendor|scripts|patches|config|public)(?:/|$) - [F,L,NC]
+    RewriteRule ^(?:wgw-src|src|resources|vendor|scripts|patches|config|public|packages)(?:/|$) - [F,L,NC]
     RewriteRule ^(?:composer\.(?:json|lock)|package\.json|wgw-config(?:\.sample)?\.php|\.env)$ - [F,L,NC]
 
     # Copy Authorization into the env var Sabre's stack reads.

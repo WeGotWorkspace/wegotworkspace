@@ -40,4 +40,4 @@
 - Update process writes logs to `wgw-content/updates/update.log`.
 - Maintenance mode marker: `wgw-content/updates/.maintenance`.
 - Single-flight lock marker: `wgw-content/updates/update.lock`.
-- Keep `wgw-src/Update/update-public-key.pem` synchronized with release signing key rotation.
+- Keep `packages/api/src/Update/update-public-key.pem` synchronized with release signing key rotation.

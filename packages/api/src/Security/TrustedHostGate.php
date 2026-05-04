@@ -22,7 +22,7 @@ final class TrustedHostGate
             return false;
         }
 
-        $allowed = self::buildAllowedHosts($trustedHostsEnv, $vhostDomainEnv);
+        $allowed = self::buildAllowedHosts($server, $trustedHostsEnv, $vhostDomainEnv);
         if ($allowed === []) {
             return false;
         }
@@ -48,7 +48,7 @@ final class TrustedHostGate
     /**
      * @return list<string>
      */
-    private static function buildAllowedHosts(mixed $trustedHostsEnv, mixed $vhostDomainEnv): array
+    private static function buildAllowedHosts(array $server, mixed $trustedHostsEnv, mixed $vhostDomainEnv): array
     {
         $raw = is_string($trustedHostsEnv) ? trim($trustedHostsEnv) : '';
         $allowed = [];
@@ -71,6 +71,13 @@ final class TrustedHostGate
         $vhost = is_string($vhostDomainEnv) ? trim($vhostDomainEnv) : '';
         if ($vhost !== '') {
             $normalized = self::normalizeHostHeader($vhost);
+            if ($normalized !== null) {
+                $allowed[] = $normalized;
+            }
+        }
+        $serverName = isset($server['SERVER_NAME']) && is_string($server['SERVER_NAME']) ? trim($server['SERVER_NAME']) : '';
+        if ($serverName !== '') {
+            $normalized = self::normalizeHostHeader($serverName);
             if ($normalized !== null) {
                 $allowed[] = $normalized;
             }

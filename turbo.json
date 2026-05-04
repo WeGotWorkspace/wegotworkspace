@@ -7,7 +7,7 @@
     "SABRE_DATA_DIR_NAME",
     "SABRE_DATA_DIR"
   ],
-  "globalDependencies": ["apps/wegotworkspace/composer.json", "apps/wegotworkspace/composer.lock"],
+  "globalDependencies": ["apps/wegotworkspace/composer.json", "apps/wegotworkspace/composer.lock", "packages/api/composer.json"],
   "tasks": {
     "preview:macos": {
       "dependsOn": ["^build"],
