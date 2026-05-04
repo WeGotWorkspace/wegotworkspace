@@ -6,6 +6,7 @@ namespace App\Api;
 
 use App\Config;
 use App\Installer\WebBase;
+use App\Paths;
 use App\SabreUiAuthGate;
 
 final class ApiKernel
@@ -320,7 +321,7 @@ final class ApiKernel
 
     private static function respondSwaggerAsset(string $file, string $contentType): void
     {
-        $path = dirname(__DIR__, 2).'/vendor/swagger-api/swagger-ui/dist/'.$file;
+        $path = self::resolveSwaggerAssetPath($file);
         if (!is_readable($path)) {
             ApiResponse::error(503, 'Swagger UI asset is missing.', 'docs_unavailable');
 
@@ -336,6 +337,22 @@ final class ApiKernel
         header('Content-Type: '.$contentType);
         header('Cache-Control: public, max-age=300');
         echo $bytes;
+    }
+
+    private static function resolveSwaggerAssetPath(string $file): string
+    {
+        $candidates = [
+            Paths::appRoot().'/vendor/swagger-api/swagger-ui/dist/'.$file,
+            dirname(__DIR__, 2).'/vendor/swagger-api/swagger-ui/dist/'.$file,
+            dirname(__DIR__, 4).'/vendor/swagger-api/swagger-ui/dist/'.$file,
+        ];
+        foreach ($candidates as $candidate) {
+            if (is_readable($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return $candidates[0];
     }
 
     /**

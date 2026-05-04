@@ -2,7 +2,7 @@
 <phpunit bootstrap="vendor/autoload.php" colors="true" cacheDirectory=".phpunit.cache">
   <testsuites>
     <testsuite name="wegotworkspace">
-      <directory>tests</directory>
+      <directory>../../packages/api/tests</directory>
     </testsuite>
   </testsuites>
 </phpunit>

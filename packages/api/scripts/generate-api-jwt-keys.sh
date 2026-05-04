@@ -2,7 +2,11 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-APP_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+REPO_ROOT="$(git -C "${SCRIPT_DIR}" rev-parse --show-toplevel 2>/dev/null || true)"
+if [[ -z "${REPO_ROOT}" ]]; then
+  REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+fi
+APP_ROOT="${REPO_ROOT}/apps/wegotworkspace"
 KEY_DIR="${APP_ROOT}/wgw-content/keys"
 PRIV="${KEY_DIR}/api-jwt-private.pem"
 PUB="${KEY_DIR}/api-jwt-public.pem"
