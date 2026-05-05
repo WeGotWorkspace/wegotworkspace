@@ -134,6 +134,7 @@ if ($https) {
 }
 
 $installPrefix = WebBase::url($webBase, '/install');
+$apiV1InstallerPrefix = WebBase::url($webBase, '/api/v1/installer');
 $apiV1AdminUpdatesPrefix = WebBase::url($webBase, '/api/v1/admin/updates');
 
 if (PwaSupport::tryRespond($webBase, $path)) {
@@ -160,12 +161,18 @@ if ($installed && UpdateManager::inMaintenanceMode()) {
 
 if (!$installed) {
     $underInstall = $path === $installPrefix || str_starts_with($path, $installPrefix.'/');
-    if (!$underInstall) {
+    $underInstallerApi = $path === $apiV1InstallerPrefix || str_starts_with($path, $apiV1InstallerPrefix.'/');
+    if (!$underInstall && !$underInstallerApi) {
         header('Location: '.$installPrefix.'/', true, 302);
         exit;
     }
-    InstallerKernel::respond();
-    exit;
+    if ($underInstall) {
+        InstallerKernel::respond();
+        exit;
+    }
+    if (ApiKernel::tryRespond($webBase, $path)) {
+        exit;
+    }
 }
 
 $underInstall = $path === $installPrefix || str_starts_with($path, $installPrefix.'/');
