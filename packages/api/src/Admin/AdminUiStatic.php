@@ -9,7 +9,7 @@ use App\Paths;
 use App\Pwa\PwaSupport;
 
 /**
- * Serves the Admin UI static export at {@code /admin/…} (see {@code packages/admin-ui/}).
+ * Serves the Admin UI static export at {@code /admin/…} (see {@code packages/admin/}).
  */
 final class AdminUiStatic
 {

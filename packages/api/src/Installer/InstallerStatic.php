@@ -7,7 +7,7 @@ namespace App\Installer;
 use App\Paths;
 
 /**
- * Serves install wizard static assets from {@code packages/install-ui/} build output.
+ * Serves install wizard static assets from {@code packages/install/} build output.
  */
 final class InstallerStatic
 {

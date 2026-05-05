@@ -1,0 +1,24 @@
+{
+  "name": "Notes",
+  "short_name": "Notes",
+  "start_url": "/notes",
+  "scope": "/notes",
+  "id": "/notes",
+  "display": "standalone",
+  "background_color": "#23b572",
+  "theme_color": "#23b572",
+  "icons": [
+    {
+      "src": "/icons/notes-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/notes-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

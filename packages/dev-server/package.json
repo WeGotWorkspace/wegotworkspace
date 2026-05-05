@@ -2,13 +2,13 @@
   "name": "@wgw/dev-server",
   "private": true,
   "dependencies": {
-    "@wgw/admin-ui": "workspace:*",
-    "@wgw/drive-ui": "workspace:*",
-    "@wgw/mail-ui": "workspace:*",
-    "@wgw/notes-ui": "workspace:*",
+    "@wgw/admin": "workspace:*",
+    "@wgw/drive": "workspace:*",
+    "@wgw/mail": "workspace:*",
+    "@wgw/notes": "workspace:*",
     "@wgw/php-deps": "workspace:*",
-    "@wgw/user-settings-ui": "workspace:*",
-    "@wgw/voice-ui": "workspace:*"
+    "@wgw/user-settings": "workspace:*",
+    "@wgw/voice": "workspace:*"
   },
   "scripts": {
     "dev": "sh -c 'app_root=\"../../apps/wegotworkspace\"; env -u SABRE_BUILD_DIR php -S 127.0.0.1:8080 -t \"$app_root\" \"$app_root/index.php\"'",
