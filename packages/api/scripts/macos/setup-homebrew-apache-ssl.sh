@@ -28,8 +28,11 @@ warn()   { echo -e "${YELLOW}⚠${NC}  $1"; }
 error()  { echo -e "${RED}✘${NC}  $1"; exit 1; }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-APP_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-WORKSPACE_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+WORKSPACE_ROOT="$(git -C "${SCRIPT_DIR}" rev-parse --show-toplevel 2>/dev/null || true)"
+if [ -z "$WORKSPACE_ROOT" ]; then
+  WORKSPACE_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+fi
+APP_ROOT="$WORKSPACE_ROOT/apps/wegotworkspace"
 
 echo ""
 echo -e "${BOLD}==============================================================${NC}"
@@ -146,16 +149,16 @@ fi
 # -----------------------------------------------------------------------------
 log "Checking Homebrew runtime prerequisites..."
 if ! command -v brew >/dev/null 2>&1; then
-  error "Homebrew not found. Run: pnpm --filter @wgw/wegotworkspace setup:macos"
+  error "Homebrew not found. Run: pnpm --filter @wgw/api setup:macos"
 fi
 if [ ! -f "$HOMEBREW_PREFIX/etc/httpd/httpd.conf" ]; then
-  error "Homebrew httpd config missing. Run: pnpm --filter @wgw/wegotworkspace setup:macos"
+  error "Homebrew httpd config missing. Run: pnpm --filter @wgw/api setup:macos"
 fi
 if ! command -v mkcert >/dev/null 2>&1; then
-  error "mkcert not found. Run: pnpm --filter @wgw/wegotworkspace setup:macos"
+  error "mkcert not found. Run: pnpm --filter @wgw/api setup:macos"
 fi
 if ! command -v php >/dev/null 2>&1; then
-  error "PHP not found. Run: pnpm --filter @wgw/wegotworkspace setup:macos"
+  error "PHP not found. Run: pnpm --filter @wgw/api setup:macos"
 fi
 success "Prerequisites detected"
 

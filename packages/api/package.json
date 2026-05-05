@@ -1,5 +1,5 @@
 {
-  "name": "@wgw/wegotworkspace",
+  "name": "@wgw/api",
   "private": true,
   "packageManager": "pnpm@9.15.4",
   "scripts": {
@@ -7,10 +7,7 @@
     "preview:macos": "bash scripts/macos/setup-homebrew-apache-ssl.sh",
     "enable-php-imap": "bash scripts/macos/enable-php-imap.sh",
     "generate:api-jwt-keys": "bash scripts/generate-api-jwt-keys.sh",
-    "test": "composer test",
-    "test:update-smoke": "bash scripts/update-smoke-test.sh"
-  },
-  "devDependencies": {
-    "turbo": "^2.4.4"
+    "test:update-smoke": "bash scripts/update-smoke-test.sh",
+    "test": "vendor/bin/phpunit -c phpunit.xml"
   }
 }

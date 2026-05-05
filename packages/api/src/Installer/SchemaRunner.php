@@ -11,7 +11,7 @@ final class SchemaRunner
     /**
      * @param 'sqlite'|'mysql' $driver
      *
-     * @return list<string> ordered relative filenames under wgw-src/sql/{driver}
+     * @return list<string> ordered relative filenames under src/sql/{driver}
      */
     public static function files(string $driver): array
     {

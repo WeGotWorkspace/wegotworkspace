@@ -2,6 +2,6 @@
   "name": "@wgw/php-deps",
   "private": true,
   "scripts": {
-    "build": "sh -c 'app_root=\"../../apps/wegotworkspace\"; runtime_root=\"$app_root\"; if [ -n \"${SABRE_BUILD_DIR:-}\" ]; then case \"$SABRE_BUILD_DIR\" in /*) runtime_root=\"${SABRE_BUILD_DIR%/}\" ;; *) runtime_root=\"$app_root/${SABRE_BUILD_DIR%/}\" ;; esac; fi; vendor_dir=\"$runtime_root/vendor\"; COMPOSER_VENDOR_DIR=\"$vendor_dir\" composer install --no-interaction --prefer-dist --working-dir=\"$app_root\"'"
+    "build": "composer install --no-interaction --prefer-dist --working-dir ../../packages/api"
   }
 }
