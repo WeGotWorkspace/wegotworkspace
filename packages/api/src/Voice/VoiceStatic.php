@@ -9,7 +9,7 @@ use App\Paths;
 use App\Pwa\PwaSupport;
 
 /**
- * Serves the Aura Voice static export at {@code /voice/…} (see {@code packages/voice-ui/}).
+ * Serves the Aura Voice static export at {@code /voice/…} (see {@code packages/voice/}).
  */
 final class VoiceStatic
 {

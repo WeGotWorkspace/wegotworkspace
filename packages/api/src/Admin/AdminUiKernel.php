@@ -13,7 +13,7 @@ use App\Settings\SettingsKeys;
 /**
  * Serves the Cloud Harmony admin web UI at {@code /admin/} with the same admin group policy as legacy admin pages.
  *
- * Source: {@code packages/admin-ui/}; build output: {@code wgw-modules/admin/dist/}.
+ * Source: {@code packages/admin/}; build output: {@code wgw-modules/admin/dist/}.
  */
 final class AdminUiKernel
 {
@@ -101,8 +101,8 @@ final class AdminUiKernel
         echo PwaSupport::headMetaTags($webBase, 'admin');
         echo '<style>body{font-family:system-ui,sans-serif;max-width:40rem;margin:2rem auto;padding:0 1rem;line-height:1.5}code{font-size:.9em;background:#f4f4f5;padding:.15rem .4rem;border-radius:4px}</style></head><body>';
         echo '<h1>Admin</h1>';
-        echo '<p>The Admin UI build is missing. From the project root, run <code>pnpm --filter @wgw/admin-ui build</code> or <code>pnpm build</code>.</p>';
-        echo '<p>Source lives in <code>packages/admin-ui/</code>; the Vite build writes to <code>wgw-modules/admin/dist/</code>.</p>';
+        echo '<p>The Admin UI build is missing. From the project root, run <code>pnpm --filter @wgw/admin build</code> or <code>pnpm build</code>.</p>';
+        echo '<p>Source lives in <code>packages/admin/</code>; the Vite build writes to <code>wgw-modules/admin/dist/</code>.</p>';
         echo '<p class="hint">Open <code>'.htmlspecialchars(WebBase::url($webBase, '/admin/'), ENT_QUOTES, 'UTF-8').'</code> after authenticating as an admin user.</p>';
         echo '</body></html>';
     }
