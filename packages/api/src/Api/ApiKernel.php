@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\Api;
 
 use App\Config;
+use App\Installer\InstallerKernel;
 use App\Installer\WebBase;
+use App\Paths;
 use App\SabreUiAuthGate;
+use App\Update\UpdateManager;
 
 final class ApiKernel
 {
@@ -195,6 +198,37 @@ final class ApiKernel
             return true;
         }
 
+        // Installer bootstrap routes must work before DB credentials exist.
+        if ($method === 'GET' && $rel === 'installer/state') {
+            $bootstrap = InstallerKernel::bootstrapPayloadFromApi($webBase);
+            ApiResponse::json(200, [
+                'installed' => is_file(Paths::lockFile()),
+                'maintenance' => UpdateManager::inMaintenanceMode(),
+                'state' => $bootstrap['state'],
+            ]);
+
+            return true;
+        }
+        if ($method === 'GET' && $rel === 'installer/bootstrap') {
+            ApiResponse::json(200, InstallerKernel::bootstrapPayloadFromApi($webBase));
+
+            return true;
+        }
+        if ($method === 'POST' && $rel === 'installer/action') {
+            try {
+                $body = ApiRequest::jsonBody();
+                $action = isset($body['action']) && is_string($body['action']) ? $body['action'] : '';
+                $payload = is_array($body['payload'] ?? null) ? $body['payload'] : [];
+                ApiResponse::json(200, InstallerKernel::applyApiActionFromApi($webBase, $action, $payload));
+            } catch (\InvalidArgumentException $e) {
+                ApiResponse::error(400, $e->getMessage(), 'bad_request');
+            } catch (\Throwable) {
+                ApiResponse::error(500, 'Installer action failed.', 'server_error');
+            }
+
+            return true;
+        }
+
         try {
             [$pdo, $realm] = self::dbAndRealm();
         } catch (\Throwable) {
@@ -320,7 +354,7 @@ final class ApiKernel
 
     private static function respondSwaggerAsset(string $file, string $contentType): void
     {
-        $path = dirname(__DIR__, 2).'/vendor/swagger-api/swagger-ui/dist/'.$file;
+        $path = self::resolveSwaggerAssetPath($file);
         if (!is_readable($path)) {
             ApiResponse::error(503, 'Swagger UI asset is missing.', 'docs_unavailable');
 
@@ -336,6 +370,22 @@ final class ApiKernel
         header('Content-Type: '.$contentType);
         header('Cache-Control: public, max-age=300');
         echo $bytes;
+    }
+
+    private static function resolveSwaggerAssetPath(string $file): string
+    {
+        $candidates = [
+            Paths::appRoot().'/vendor/swagger-api/swagger-ui/dist/'.$file,
+            dirname(__DIR__, 2).'/vendor/swagger-api/swagger-ui/dist/'.$file,
+            dirname(__DIR__, 4).'/vendor/swagger-api/swagger-ui/dist/'.$file,
+        ];
+        foreach ($candidates as $candidate) {
+            if (is_readable($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return $candidates[0];
     }
 
     /**

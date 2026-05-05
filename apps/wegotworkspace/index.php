@@ -6,6 +6,9 @@ declare(strict_types=1);
  * Resolve runtime root from optional SABRE_BUILD_DIR.
  */
 $appRoot = __DIR__;
+putenv('WGW_APP_ROOT='.$appRoot);
+$_ENV['WGW_APP_ROOT'] = $appRoot;
+$_SERVER['WGW_APP_ROOT'] = $appRoot;
 $buildDir = getenv('SABRE_BUILD_DIR');
 if (is_string($buildDir) && trim($buildDir) !== '') {
     $buildDir = trim(str_replace('\\', '/', $buildDir));
@@ -25,6 +28,8 @@ if (is_string($buildDir) && trim($buildDir) !== '') {
 }
 
 $vendorCandidates = [
+    $runtimeRoot.'/packages/api/vendor/autoload.php',
+    $appRoot.'/../../packages/api/vendor/autoload.php',
     $runtimeRoot.'/vendor/autoload.php',
     $appRoot.'/vendor/autoload.php',
 ];
@@ -38,7 +43,7 @@ foreach ($vendorCandidates as $candidate) {
 if ($autoload === null) {
     header('Content-Type: text/plain; charset=utf-8');
     http_response_code(503);
-    echo "Composer dependencies are missing. Run `composer --working-dir apps/wegotworkspace install` (and optionally set COMPOSER_VENDOR_DIR for custom runtime layouts).\n";
+    echo "Composer dependencies are missing. Run `composer --working-dir packages/api install`.\n";
     exit;
 }
 
@@ -57,11 +62,9 @@ spl_autoload_register(static function (string $class) use ($runtimeRoot, $appRoo
         return;
     }
     $candidates = [
-        $runtimeRoot.'/wgw-src/'.$relative.'.php',
-        $appRoot.'/wgw-src/'.$relative.'.php',
-        // Legacy layout fallback.
-        $runtimeRoot.'/src/'.$relative.'.php',
-        $appRoot.'/src/'.$relative.'.php',
+        $runtimeRoot.'/packages/api/src/'.$relative.'.php',
+        $appRoot.'/../../packages/api/src/'.$relative.'.php',
+        $appRoot.'/vendor/wgw/api/src/'.$relative.'.php',
     ];
     foreach ($candidates as $path) {
         if (is_readable($path)) {
@@ -131,6 +134,7 @@ if ($https) {
 }
 
 $installPrefix = WebBase::url($webBase, '/install');
+$apiV1InstallerPrefix = WebBase::url($webBase, '/api/v1/installer');
 $apiV1AdminUpdatesPrefix = WebBase::url($webBase, '/api/v1/admin/updates');
 
 if (PwaSupport::tryRespond($webBase, $path)) {
@@ -157,12 +161,18 @@ if ($installed && UpdateManager::inMaintenanceMode()) {
 
 if (!$installed) {
     $underInstall = $path === $installPrefix || str_starts_with($path, $installPrefix.'/');
-    if (!$underInstall) {
+    $underInstallerApi = $path === $apiV1InstallerPrefix || str_starts_with($path, $apiV1InstallerPrefix.'/');
+    if (!$underInstall && !$underInstallerApi) {
         header('Location: '.$installPrefix.'/', true, 302);
         exit;
     }
-    InstallerKernel::respond();
-    exit;
+    if ($underInstall) {
+        InstallerKernel::respond();
+        exit;
+    }
+    if (ApiKernel::tryRespond($webBase, $path)) {
+        exit;
+    }
 }
 
 $underInstall = $path === $installPrefix || str_starts_with($path, $installPrefix.'/');
