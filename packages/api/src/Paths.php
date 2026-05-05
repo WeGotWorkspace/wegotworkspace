@@ -167,7 +167,7 @@ final class Paths
     }
 
     /**
-     * Drive UI build from {@code packages/drive-ui/}, served at {@code /drive/} when present.
+     * Drive UI build from {@code packages/drive/}, served at {@code /drive/} when present.
      */
     public static function driveDist(): string
     {
@@ -175,7 +175,7 @@ final class Paths
     }
 
     /**
-     * Aura Voice UI build from {@code packages/voice-ui/}, static files for {@code /voice/} when present.
+     * Aura Voice UI build from {@code packages/voice/}, static files for {@code /voice/} when present.
      */
     public static function voiceDist(): string
     {
@@ -183,7 +183,7 @@ final class Paths
     }
 
     /**
-     * Mail (Inkmail) UI build from {@code packages/mail-ui/}, served at {@code /mail/} when present.
+     * Mail (Inkmail) UI build from {@code packages/mail/}, served at {@code /mail/} when present.
      */
     public static function mailDist(): string
     {
@@ -191,7 +191,7 @@ final class Paths
     }
 
     /**
-     * Notes UI build from {@code packages/notes-ui/}, served at {@code /notes/} when present.
+     * Notes UI build from {@code packages/notes/}, served at {@code /notes/} when present.
      */
     public static function notesDist(): string
     {
@@ -199,7 +199,7 @@ final class Paths
     }
 
     /**
-     * Home UI build from {@code packages/home-ui/}, served at install root.
+     * Home UI build from {@code packages/home/}, served at install root.
      */
     public static function homeDist(): string
     {
@@ -207,7 +207,7 @@ final class Paths
     }
 
     /**
-     * Admin UI build from {@code packages/admin-ui/}, served at {@code /admin/} when present.
+     * Admin UI build from {@code packages/admin/}, served at {@code /admin/} when present.
      */
     public static function adminDist(): string
     {
@@ -215,7 +215,7 @@ final class Paths
     }
 
     /**
-     * User Settings UI build from {@code packages/user-settings-ui/}, served at {@code /settings/} when present.
+     * User Settings UI build from {@code packages/user-settings/}, served at {@code /settings/} when present.
      */
     public static function userSettingsDist(): string
     {
@@ -223,7 +223,7 @@ final class Paths
     }
 
     /**
-     * Install UI build from {@code packages/install-ui/}, served at {@code /install/} when present.
+     * Install UI build from {@code packages/install/}, served at {@code /install/} when present.
      */
     public static function installDist(): string
     {
