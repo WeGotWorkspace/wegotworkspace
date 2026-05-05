@@ -7,8 +7,8 @@ This is the quickest way to install on a normal Apache/PHP host.
 Upload the deploy package contents to your website folder so these files are in place:
 - `index.php`
 - `.htaccess`
-- `wgw-src/`
-- `vendor/`
+- `packages/api/`
+- `packages/api/vendor/`
 - `wgw-modules/`
 - `wgw-config.sample.php`
 

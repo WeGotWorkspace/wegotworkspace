@@ -1,6 +1,6 @@
 #!/bin/bash
 # Install PHP ext-imap on macOS when Homebrew PHP does not ship it.
-# Usage: bash apps/wegotworkspace/scripts/macos/enable-php-imap.sh
+# Usage: bash packages/api/scripts/macos/enable-php-imap.sh
 # Then restart your web stack (e.g. brew services restart httpd).
 
 set -e
