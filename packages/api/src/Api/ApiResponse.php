@@ -20,11 +20,14 @@ final class ApiResponse
     public static function error(int $status, string $message, ?string $code = null): void
     {
         $payload = ['error' => $message];
-        if ($status >= 500) {
+        $maskAsGeneric = $status >= 500 && $code !== 'config_error';
+        if ($maskAsGeneric) {
             $debug = trim((string) getenv('WGW_API_DEBUG_ERRORS'));
             if ($debug !== '1') {
                 $payload['error'] = 'Internal server error.';
             }
+        }
+        if ($status >= 500) {
             $payload['request_id'] = self::requestId();
             header('X-Request-Id: '.$payload['request_id']);
         }
