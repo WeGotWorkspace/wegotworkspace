@@ -1,3 +1,27 @@
+import type {
+  MailAttachmentsResponse,
+  MailConfigPutRequest,
+  MailConfigResponse,
+  MailDraftRequest,
+  MailDraftResponse,
+  MailFolder as MailFolderSchema,
+  MailFolderCreateRequest,
+  MailFolderMoveRequest,
+  MailFolderMutationResponse,
+  MailFoldersResponse,
+  MailMessageDetail,
+  MailMessageListItem,
+  MailMessagePatchRequest,
+  MailMessageResponse,
+  MailMessagesResponse,
+  MailMoveRequest,
+  MailPublicConfig,
+  MailSendRequest,
+  MailSendResponse,
+  MailStatusResponse,
+  OkResponse,
+} from "../../../api/openapi/generated/mail-types";
+
 function apiV1BaseUrl(): string {
   if (typeof window === "undefined") {
     return "/api/v1";
@@ -147,82 +171,37 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
   return data as T;
 }
 
-export type MailStatus = {
-  extImap: boolean;
-  /** Per-user IMAP username + password saved for webmail. */
-  accountConfigured: boolean;
-  /** IMAP/SMTP hosts set in Sabre admin settings. */
-  serversConfigured: boolean;
-  /** PHP ext-imap loaded, servers set, and account credentials saved. */
-  ready: boolean;
-  /** @deprecated use {@link MailStatus.accountConfigured} */
-  configured: boolean;
-};
-
-export type MailConfigPublic = {
-  identity: { displayName: string; emailAddress: string };
-  servers: {
-    imap: { host: string; port: number; security: string };
-    smtp: { host: string; port: number; security: string };
-  };
-  account: { imapUsername: string; imapHasPassword: boolean };
-};
-
-export type MailFolder = {
-  id: string;
-  name: string;
-  parentId: string | null;
-  system?: string;
-  virtual?: boolean;
-  /** IMAP STATUS (UNSEEN); omitted for virtual folders (e.g. Starred). */
-  unread?: number;
-};
-
-export type MailMessageDto = {
-  id: string;
-  folderId: string;
-  mailbox?: string;
-  from: { name: string; email: string };
-  to: { name?: string; email: string }[];
-  cc?: { name?: string; email: string }[];
-  subject: string;
-  preview: string;
-  body: string;
-  bodyHtml?: string | null;
-  date: string;
-  read: boolean;
-  starred: boolean;
-  attachments: { id: string; name: string; size: number; type: string; part?: string }[];
-};
+export type MailStatus = MailStatusResponse;
+export type MailConfigPublic = MailPublicConfig;
+export type MailFolder = MailFolderSchema;
+export type MailMessageDto = MailMessageListItem & { bodyHtml?: MailMessageDetail["bodyHtml"] };
 
 export async function mailStatus(): Promise<MailStatus> {
   return req<MailStatus>("/status");
 }
 
-export async function mailConfigGet(): Promise<{ config: MailConfigPublic }> {
-  return req<{ config: MailConfigPublic }>("/config");
+export async function mailConfigGet(): Promise<MailConfigResponse> {
+  return req<MailConfigResponse>("/config");
 }
 
-export async function mailConfigPut(
-  body: unknown,
-): Promise<{ ok: boolean; config: MailConfigPublic }> {
-  return req("/config", { method: "PUT", body: JSON.stringify(body) });
+export async function mailConfigPut(body: MailConfigPutRequest): Promise<MailConfigResponse> {
+  return req<MailConfigResponse>("/config", { method: "PUT", body: JSON.stringify(body) });
 }
 
-export async function mailFolders(): Promise<{ folders: MailFolder[] }> {
-  return req("/folders");
+export async function mailFolders(): Promise<MailFoldersResponse> {
+  return req<MailFoldersResponse>("/folders");
 }
 
 export async function mailMessages(
   folderId: string,
   opts?: { limit?: number; offset?: number; q?: string; unseen?: boolean },
-): Promise<{ messages: MailMessageDto[]; hasMore?: boolean }> {
+): Promise<MailMessagesResponse> {
   const q = new URLSearchParams({ folder: folderId });
   if (opts?.limit != null) q.set("limit", String(opts.limit));
   if (opts?.offset != null) q.set("offset", String(opts.offset));
   if (opts?.q != null && opts.q.trim() !== "") q.set("q", opts.q.trim());
   if (opts?.unseen) q.set("unseen", "1");
-  return req(`/messages?${q.toString()}`);
+  return req<MailMessagesResponse>(`/messages?${q.toString()}`);
 }
 
 export type MailAttachmentHintItem = {
@@ -234,7 +213,7 @@ export type MailAttachmentHintItem = {
 export async function mailMessageAttachmentHints(
   folderId: string,
   messageIds: string[],
-): Promise<{ items: MailAttachmentHintItem[] }> {
+): Promise<MailAttachmentsResponse> {
   const uids: number[] = [];
   const seen = new Set<number>();
   for (const id of messageIds) {
@@ -252,78 +231,50 @@ export async function mailMessageAttachmentHints(
     folder: folderId,
     uids: uids.join(","),
   });
-  return req(`/messages/attachments?${q.toString()}`);
+  return req<MailAttachmentsResponse>(`/messages/attachments?${q.toString()}`);
 }
 
 export async function mailMessage(
   folderEnc: string,
   uid: number,
   opts?: { inlineImages?: boolean },
-): Promise<{ message: MailMessageDto }> {
+): Promise<MailMessageResponse> {
   const q = new URLSearchParams({ folder: folderEnc, uid: String(uid) });
   if (opts?.inlineImages) {
     q.set("inline_images", "1");
   }
-  return req(`/message?${q.toString()}`);
+  return req<MailMessageResponse>(`/message?${q.toString()}`);
 }
 
-export async function mailPatchMessage(payload: {
-  folder: string;
-  uid: number;
-  read?: boolean;
-  starred?: boolean;
-}): Promise<{ ok: boolean }> {
-  return req("/message", { method: "PATCH", body: JSON.stringify(payload) });
+export async function mailPatchMessage(payload: MailMessagePatchRequest): Promise<OkResponse> {
+  return req<OkResponse>("/message", { method: "PATCH", body: JSON.stringify(payload) });
 }
 
-export async function mailMove(payload: {
-  fromFolder: string;
-  toFolder: string;
-  uid: number;
-}): Promise<{ ok: boolean }> {
-  return req("/move", { method: "POST", body: JSON.stringify(payload) });
+export async function mailMove(payload: MailMoveRequest): Promise<OkResponse> {
+  return req<OkResponse>("/move", { method: "POST", body: JSON.stringify(payload) });
 }
 
-export async function mailSend(payload: {
-  to: string;
-  cc?: string;
-  bcc?: string;
-  subject: string;
-  body: string;
-  attachments?: { filename: string; mimeType: string; contentBase64: string }[];
-}): Promise<{ ok: boolean; attachment_report?: { attached: number; skipped: number; totalBytes: number } }> {
-  return req("/send", { method: "POST", body: JSON.stringify(payload) });
+export async function mailSend(payload: MailSendRequest): Promise<MailSendResponse> {
+  return req<MailSendResponse>("/send", { method: "POST", body: JSON.stringify(payload) });
 }
 
-export async function mailSaveDraft(payload: {
-  to: string;
-  cc?: string;
-  bcc?: string;
-  subject: string;
-  body: string;
-  attachments?: { filename: string; mimeType: string; contentBase64: string }[];
-}): Promise<{ ok: boolean; attachment_report?: { attached: number; skipped: number; totalBytes: number } }> {
-  return req("/draft", { method: "POST", body: JSON.stringify(payload) });
+export async function mailSaveDraft(payload: MailDraftRequest): Promise<MailDraftResponse> {
+  return req<MailDraftResponse>("/draft", { method: "POST", body: JSON.stringify(payload) });
 }
 
-export async function mailFolderCreate(body: {
-  name: string;
-  parentMailbox?: string;
-}): Promise<{ ok: boolean; id: string }> {
-  return req("/folders", { method: "POST", body: JSON.stringify(body) });
+export async function mailFolderCreate(body: MailFolderCreateRequest): Promise<MailFolderMutationResponse> {
+  return req<MailFolderMutationResponse>("/folders", { method: "POST", body: JSON.stringify(body) });
 }
 
-export async function mailFolderDelete(folderEnc: string): Promise<{ ok: boolean }> {
+export async function mailFolderDelete(folderEnc: string): Promise<OkResponse> {
   const q = new URLSearchParams({ folder: folderEnc });
-  return req(`/folders?${q.toString()}`, { method: "DELETE" });
+  return req<OkResponse>(`/folders?${q.toString()}`, { method: "DELETE" });
 }
 
-export async function mailFolderMove(body: {
-  folder: string;
-  /** Encoded parent mailbox; omit or empty string for top level (same as create). */
-  parentMailbox?: string;
-}): Promise<{ ok: boolean; id: string; mailbox?: string }> {
-  return req("/folders", {
+export async function mailFolderMove(
+  body: Pick<MailFolderMoveRequest, "folder" | "parentMailbox">,
+): Promise<MailFolderMutationResponse> {
+  return req<MailFolderMutationResponse>("/folders", {
     method: "PATCH",
     body: JSON.stringify({
       folder: body.folder,
