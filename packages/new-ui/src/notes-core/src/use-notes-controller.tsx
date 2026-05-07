@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import {
   Archive,
@@ -14,6 +14,7 @@ import {
 import { useAppToast } from "@/hooks/use-app-toast";
 import { useConfirmDialog } from "@/hooks/use-confirm-dialog";
 import { useIsTouch } from "@/hooks/use-is-touch";
+import { useSelectionResetOnKeyChange } from "@/hooks/use-selection-reset-on-key-change";
 import { useStarredMap } from "@/hooks/use-starred-map";
 import {
   useWorkspaceListController,
@@ -169,10 +170,11 @@ export function useNotesController({
     queueDelayMs: WRITE_QUEUE_DELAY_MS,
   });
 
-  useEffect(() => {
-    setSelectedIds([]);
-    setSelectionMode(false);
-  }, [view, setSelectedIds, setSelectionMode]);
+  useSelectionResetOnKeyChange({
+    resetKey: view,
+    setSelectedIds,
+    setSelectionMode,
+  });
 
   const active = notes.length > 0 ? (notes.find((n) => n.id === activeId) ?? notes[0]) : undefined;
 
