@@ -1,16 +1,10 @@
 import { useEffect, useState } from "react";
-import { Folder, Plus, Tag as TagIcon, Check } from "lucide-react";
+import { BookOpen, Plus, Tag as TagIcon, Check } from "lucide-react";
 import { Button } from "@/ui/button";
 import { Input } from "@/ui/input";
 import { Label } from "@/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/ui/radio-group";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -54,7 +48,7 @@ export function MoveToDialog({
               {notebooks.map((nb) => (
                 <SelectItem key={nb} value={nb}>
                   <span className="inline-flex items-center gap-2">
-                    <Folder className="size-3.5 text-muted-foreground" />
+                    <BookOpen className="size-3.5 text-muted-foreground" />
                     <span>{nb}</span>
                   </span>
                 </SelectItem>
@@ -63,8 +57,12 @@ export function MoveToDialog({
           </Select>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={() => picked && onConfirm(picked)} disabled={!picked}>Move</Button>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button onClick={() => picked && onConfirm(picked)} disabled={!picked}>
+            Move
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -86,7 +84,7 @@ export function AddDialog({
   useEffect(() => {
     if (kind) setValue("");
   }, [kind]);
-  const v = value.trim().replace(/^#/, "");
+  const v = value.trim();
   const dup = !!v && existing.includes(v);
   return (
     <Dialog open={!!kind} onOpenChange={(o) => !o && onClose()}>
@@ -115,8 +113,12 @@ export function AddDialog({
             <p className="text-xs text-destructive mt-2">A {kind} with that name already exists.</p>
           )}
           <DialogFooter className="mt-4">
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" disabled={!v || dup}>Create</Button>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={!v || dup}>
+              Create
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -137,7 +139,7 @@ export function EditDialog({
   useEffect(() => {
     if (item) setValue(item.name);
   }, [item]);
-  const v = value.trim().replace(/^#/, "");
+  const v = value.trim();
   return (
     <Dialog open={!!item} onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
@@ -155,8 +157,12 @@ export function EditDialog({
         >
           <Input autoFocus value={value} onChange={(e) => setValue(e.target.value)} />
           <DialogFooter className="mt-4">
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" disabled={!v}>Save</Button>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={!v}>
+              Save
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -193,7 +199,9 @@ export function DeleteDialog({
     <Dialog open={!!item} onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete {item?.kind} “{item?.name}”?</DialogTitle>
+          <DialogTitle>
+            Delete {item?.kind} “{item?.name}”?
+          </DialogTitle>
           <DialogDescription>
             {isNb
               ? `${affectedCount} item${affectedCount === 1 ? "" : "s"} are in this notebook. Choose what to do with them.`
@@ -205,9 +213,16 @@ export function DeleteDialog({
           <div className="py-2 space-y-3">
             <RadioGroup value={mode} onValueChange={(v) => setMode(v as "transfer" | "archive")}>
               <div className="flex items-start gap-3 rounded-md border p-3">
-                <RadioGroupItem id="mode-transfer" value="transfer" disabled={others.length === 0} className="mt-1" />
+                <RadioGroupItem
+                  id="mode-transfer"
+                  value="transfer"
+                  disabled={others.length === 0}
+                  className="mt-1"
+                />
                 <div className="flex-1">
-                  <Label htmlFor="mode-transfer" className="text-sm font-medium">Move items to another notebook</Label>
+                  <Label htmlFor="mode-transfer" className="text-sm font-medium">
+                    Move items to another notebook
+                  </Label>
                   <div className="mt-2">
                     <select
                       value={target}
@@ -216,7 +231,9 @@ export function DeleteDialog({
                       className="w-full h-9 rounded-md border bg-transparent px-2 text-sm disabled:opacity-50"
                     >
                       {others.map((n) => (
-                        <option key={n} value={n}>{n}</option>
+                        <option key={n} value={n}>
+                          {n}
+                        </option>
                       ))}
                       {others.length === 0 && <option value="">No other notebooks</option>}
                     </select>
@@ -234,7 +251,9 @@ export function DeleteDialog({
         )}
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
           <Button
             variant="destructive"
             onClick={() => {
@@ -271,7 +290,7 @@ export function TagPickerDialog({
   useEffect(() => {
     if (open) setQuery("");
   }, [open]);
-  const q = query.trim().replace(/^#/, "");
+  const q = query.trim();
   const filtered = allTags.filter((t) => t.toLowerCase().includes(q.toLowerCase()));
   const canCreate = !!q && !allTags.includes(q);
 
@@ -298,7 +317,7 @@ export function TagPickerDialog({
                 className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-muted text-left"
               >
                 <TagIcon className="size-3.5 text-muted-foreground" />
-                <span className="flex-1">#{t}</span>
+                <span className="flex-1">{t}</span>
                 {on && <Check className="size-4 text-emerald-600" />}
               </button>
             );
@@ -312,12 +331,14 @@ export function TagPickerDialog({
               className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-muted text-left"
             >
               <Plus className="size-3.5 text-muted-foreground" />
-              <span>Create “#{q}”</span>
+              <span>Create “{q}”</span>
             </button>
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Done</Button>
+          <Button variant="outline" onClick={onClose}>
+            Done
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

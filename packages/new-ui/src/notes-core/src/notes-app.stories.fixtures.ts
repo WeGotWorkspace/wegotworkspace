@@ -85,7 +85,7 @@ export const notesStoryLabels: NotesUILabels = {
   dialogDeleteSelectedDescription: "the selected items",
   dialogDeleteConfirmSuffix: workspaceDestructiveDialogLabels.dialogDeleteConfirmSuffix,
   dialogPermanentDeleteLeadIn: workspaceDestructiveDialogLabels.dialogPermanentDeleteLeadIn,
-  tagViewTitle: (tag) => `#${tag}`,
+  tagViewTitle: (tag) => tag,
   newNoteCategory: "Note",
 };
 

@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { Archive, BookOpen, Files, Star, Tag } from "lucide-react";
 import type { NotesUILabels } from "@/notes-core/src/notes-app.stories.fixtures";
 
 type UseNotesSidebarModelArgs = {
@@ -29,16 +30,19 @@ export function useNotesSidebarModel({
     () => [
       {
         label: labels.sidebarAllItems,
+        icon: <Files className="size-3.5" />,
         selected: view === "all",
         onClick: () => selectView("all"),
       },
       {
         label: labels.sidebarStarred,
+        icon: <Star className="size-3.5" />,
         selected: view === "starred",
         onClick: () => selectView("starred"),
       },
       {
         label: labels.sidebarArchive,
+        icon: <Archive className="size-3.5" />,
         selected: view === "archive",
         onClick: () => selectView("archive"),
       },
@@ -50,6 +54,7 @@ export function useNotesSidebarModel({
     () =>
       notebooks.map((nb) => ({
         label: nb,
+        icon: <BookOpen className="size-3.5" />,
         selected: view === `nb:${nb}`,
         onClick: () => selectView(`nb:${nb}`),
         ...sidebarDropZoneProps(`nb:${nb}`, (ids) => moveToNotebook(ids, nb)),
@@ -60,7 +65,8 @@ export function useNotesSidebarModel({
   const tagSidebarItems = useMemo(
     () =>
       tags.map((tag) => ({
-        label: `#${tag}`,
+        label: tag,
+        icon: <Tag className="size-3.5" />,
         selected: view === `tag:${tag}`,
         onClick: () => selectView(`tag:${tag}`),
         ...sidebarDropZoneProps(`tag:${tag}`, (ids) => assignTagToNotes(ids, tag)),

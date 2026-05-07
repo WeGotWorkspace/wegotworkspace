@@ -1,4 +1,4 @@
-import { Mail as MailIcon } from "lucide-react";
+import { Pencil } from "lucide-react";
 import "react-swipeable-list/dist/styles.css";
 import "@/mail-core/src/mail-ui.css";
 import { MoveToDialog } from "@/dialogs/src/dialogs";
@@ -170,7 +170,7 @@ export function MailWorkspace({
             <div className="px-4 mb-4">
               <AppButton
                 label="Compose"
-                icon={<MailIcon className="size-4" />}
+                icon={<Pencil className="size-4" />}
                 onClick={compose}
                 size="pill"
                 variant="primary"
