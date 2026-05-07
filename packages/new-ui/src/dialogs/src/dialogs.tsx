@@ -20,31 +20,60 @@ export function MoveToDialog({
   currentNotebook,
   onClose,
   onConfirm,
+  title = "Move to notebook",
+  description = "Choose a notebook for the selected items.",
+  confirmLabel = "Move",
+  allowCreate = false,
 }: {
   open: boolean;
   notebooks: string[];
   currentNotebook?: string;
   onClose: () => void;
   onConfirm: (nb: string) => void;
+  title?: string;
+  description?: string;
+  confirmLabel?: string;
+  allowCreate?: boolean;
 }) {
+  const CREATE_NEW_VALUE = "__create_new_notebook__";
   const [picked, setPicked] = useState<string | null>(null);
+  const [newNotebook, setNewNotebook] = useState("");
   useEffect(() => {
-    if (open) setPicked(currentNotebook ?? notebooks[0] ?? null);
+    if (open) {
+      setPicked(currentNotebook ?? notebooks[0] ?? null);
+      setNewNotebook("");
+    }
   }, [open, currentNotebook, notebooks]);
+  const createdNotebook = newNotebook.trim();
+  const canCreateNotebook =
+    allowCreate &&
+    createdNotebook.length > 0 &&
+    !notebooks.some((nb) => nb.toLowerCase() === createdNotebook.toLowerCase());
+  const creatingNewNotebook = allowCreate && picked === CREATE_NEW_VALUE;
+  const confirmedTarget = creatingNewNotebook ? createdNotebook : picked;
+  const canConfirm = creatingNewNotebook ? canCreateNotebook : !!picked;
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Move to notebook</DialogTitle>
-          <DialogDescription>Choose a notebook for the selected items.</DialogDescription>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        <div className="py-2">
+        <div className="py-2 space-y-3">
           <Select value={picked ?? ""} onValueChange={setPicked}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select a notebook" />
             </SelectTrigger>
             <SelectContent>
+              {allowCreate ? (
+                <SelectItem value={CREATE_NEW_VALUE}>
+                  <span className="inline-flex items-center gap-2">
+                    <Plus className="size-3.5 text-muted-foreground" />
+                    <span>Create new…</span>
+                  </span>
+                </SelectItem>
+              ) : null}
               {notebooks.map((nb) => (
                 <SelectItem key={nb} value={nb}>
                   <span className="inline-flex items-center gap-2">
@@ -55,13 +84,34 @@ export function MoveToDialog({
               ))}
             </SelectContent>
           </Select>
+
+          {creatingNewNotebook ? (
+            <div>
+              <Input
+                placeholder="New notebook name"
+                value={newNotebook}
+                onChange={(e) => setNewNotebook(e.target.value)}
+              />
+              {!canCreateNotebook && createdNotebook.length > 0 ? (
+                <p className="mt-2 text-xs text-destructive">
+                  A notebook with this name already exists.
+                </p>
+              ) : null}
+            </div>
+          ) : null}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={() => picked && onConfirm(picked)} disabled={!picked}>
-            Move
+          <Button
+            onClick={() => {
+              if (!confirmedTarget) return;
+              onConfirm(confirmedTarget);
+            }}
+            disabled={!canConfirm}
+          >
+            {confirmLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

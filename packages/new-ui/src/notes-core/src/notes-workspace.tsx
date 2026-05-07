@@ -235,6 +235,10 @@ export function NotesWorkspace({
       <MoveToDialog
         open={!!moveDialog}
         notebooks={notebooks}
+        title="Change notebook"
+        description="Choose or create a notebook for the selected notes."
+        confirmLabel="Change"
+        allowCreate
         currentNotebook={
           moveDialog?.ids.length === 1
             ? notes.find((note) => note.id === moveDialog.ids[0])?.notebook
