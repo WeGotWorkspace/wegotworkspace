@@ -94,17 +94,6 @@ function excerptFromBody(body: string, max = 180): string {
   return `${first.slice(0, max - 1)}…`;
 }
 
-function formatNoteDate(iso?: string): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
-
 export function noteFromWgwItem(row: WgwNoteItem): Note {
   const body = splitBodyParagraphs(row.body ?? "");
   const flat = body.join("\n\n");
@@ -117,7 +106,7 @@ export function noteFromWgwItem(row: WgwNoteItem): Note {
     tags: row.tags ?? [],
     wordCount: wordCountFromText(flat),
     category: "Note",
-    date: formatNoteDate(row.updatedAt) || "—",
+    date: row.updatedAt ?? "—",
     starred: row.starred,
     archived: row.archived,
   };

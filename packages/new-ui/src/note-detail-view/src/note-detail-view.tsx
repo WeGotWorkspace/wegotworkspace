@@ -1,4 +1,4 @@
-import { BookOpen } from "lucide-react";
+import { BookOpen, CalendarDays } from "lucide-react";
 import { EditableText } from "@/editable-text/src/editable-text";
 import { Tag, TagGroup } from "@/tag/src/tag";
 import { cn } from "@/lib/utils";
@@ -46,20 +46,21 @@ export function NoteDetailView({
   return (
     <article className={cn("max-w-[680px] mx-auto", className)}>
       {(notebook != null && notebook !== "") || (lastEdited != null && lastEdited !== "") ? (
-        <div className="flex items-center gap-3 md:gap-6 mb-5">
+        <div className="flex items-center gap-2 md:gap-3 mb-5">
           {notebook != null && notebook !== "" ? (
             <div className="max-w-[260px]">
               <Tag label={notebook} icon={<BookOpen className="size-3.5 opacity-70" />} />
             </div>
           ) : null}
           {lastEdited != null && lastEdited !== "" ? (
-            <span
-              className="tabular-nums text-[11px] uppercase tracking-[0.2em]"
-              style={{ color: "color-mix(in oklab, var(--color-ink) 45%, transparent)" }}
-            >
-              {editedLabel}
-              {lastEdited}
-            </span>
+            <Tag
+              label={`${editedLabel}${lastEdited}`}
+              icon={<CalendarDays className="size-3.5 opacity-70" />}
+              colors={{
+                backgroundColor: "color-mix(in oklab, var(--color-ink) 6%, transparent)",
+                color: "color-mix(in oklab, var(--color-ink) 58%, transparent)",
+              }}
+            />
           ) : null}
         </div>
       ) : null}
