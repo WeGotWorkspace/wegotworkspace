@@ -1,15 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import { Archive, ArchiveRestore, FolderInput, Plus, Star, StarOff, Tag, Trash2, X } from "lucide-react";
-import { FloatingActionBar } from "@/floating-action-bar/src/floating-action-bar";
 import { useAppToast } from "@/hooks/use-app-toast";
 import { useConfirmDialog } from "@/hooks/use-confirm-dialog";
-import { useEntityBatchActions } from "@/hooks/use-entity-batch-actions";
 import { useIsTouch } from "@/hooks/use-is-touch";
-import { useSelectableListState } from "@/hooks/use-selectable-list-state";
-import { useSidebarListDrag } from "@/hooks/use-sidebar-list-drag";
 import { useStarredMap } from "@/hooks/use-starred-map";
-import { useQueuedMutation } from "@/hooks/use-queued-mutation";
+import {
+  useWorkspaceListController,
+  useWorkspaceSelectionPresentation,
+} from "@/hooks/use-workspace-list-controller";
 import { useWorkspaceListKeyboardShortcuts } from "@/hooks/use-workspace-list-keyboard-shortcuts";
 import type { Note } from "@/lib/models/note";
 import type { WorkspaceAppHandle } from "@/workspace-app/src/workspace-app";
@@ -86,10 +85,6 @@ export function useNotesController({ data, labels, listLoading = false, operatio
       show(fallback, { icon: <X className="size-4" /> }),
     [show],
   );
-  const { queueMutation, undoLatest } = useQueuedMutation({
-    delayMs: WRITE_QUEUE_DELAY_MS,
-    onMutationError: showMutationError,
-  });
 
   const visibleNotes = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -132,13 +127,27 @@ export function useNotesController({ data, labels, listLoading = false, operatio
     enterSelectionFor,
     exitSelection,
     selectSingle,
-  } = useSelectableListState({
-    initialId: data.notes[0]?.id,
+    isItemDragging,
+    itemDragHandlers,
+    sidebarDropZoneProps,
+    beginOptimisticUpdate,
+    queueMutation,
+    undoLatest,
+    navigateListByKeyboard,
+  } = useWorkspaceListController<Note>({
+    items: notes,
+    setItems: setNotes,
     visibleIds: visibleNotes.map((n) => n.id),
+    activeId,
+    setActiveId,
+    initialId: data.notes[0]?.id,
     onPrimarySelect: (id) => {
       setActiveId(id);
       workspaceLayoutRef.current?.openMobileDetail();
     },
+    onNavigateToId: () => workspaceLayoutRef.current?.openMobileDetail(),
+    onMutationError: showMutationError,
+    queueDelayMs: WRITE_QUEUE_DELAY_MS,
   });
 
   useEffect(() => {
@@ -147,15 +156,6 @@ export function useNotesController({ data, labels, listLoading = false, operatio
   }, [view, setSelectedIds, setSelectionMode]);
 
   const active = notes.length > 0 ? (notes.find((n) => n.id === activeId) ?? notes[0]) : undefined;
-
-  const { beginOptimisticUpdate } = useEntityBatchActions<Note>({
-    items: notes,
-    setItems: setNotes,
-    visibleIds: visibleNotes.map((n) => n.id),
-    activeId,
-    setActiveId,
-  });
-  const { isItemDragging, itemDragHandlers, sidebarDropZoneProps } = useSidebarListDrag(selectedIds);
 
   const updateAndPersistNote = useCallback(
     (noteId: string, updater: (note: Note) => Note) => {
@@ -638,10 +638,11 @@ export function useNotesController({ data, labels, listLoading = false, operatio
     searchInputRef,
     selectedCount: selectedIds.length,
     onRequestDeleteSelection: requestDeleteSelected,
+    onNavigateList: navigateListByKeyboard,
     onUndoQueuedAction: undoLatest,
   });
 
-  const selectionBarButtons = [
+  const selectionActionButtons = [
     { label: L.selectionStar, icon: <Star className="size-4" />, onClick: batchStar },
     ...(view !== "archive"
       ? [{ label: L.selectionArchive, icon: <Archive className="size-4" />, onClick: batchArchive }]
@@ -660,16 +661,16 @@ export function useNotesController({ data, labels, listLoading = false, operatio
           },
         ]
       : []),
-    {
-      label: L.selectionDone,
-      icon: <X className="size-4" />,
-      onClick: () => exitSelection(activeId),
-    },
   ];
-  const selectionBar =
-    selectionMode || selectedIds.length > 1 ? (
-      <FloatingActionBar items={selectedIds.length} buttons={selectionBarButtons} className="md:hidden" />
-    ) : null;
+  const { selectionBarButtons, selectionBar } = useWorkspaceSelectionPresentation({
+    selectedIds,
+    selectionMode,
+    activeId,
+    exitSelection,
+    actionButtons: selectionActionButtons,
+    doneLabel: L.selectionDone,
+    floatingClassName: "md:hidden",
+  });
 
   return {
     L,
