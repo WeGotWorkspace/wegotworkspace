@@ -22,7 +22,7 @@ export function SidebarSection({
       {title ? (
         <div className="px-4 mb-3 flex items-center justify-between">
           <h3
-            className="text-[10px] uppercase tracking-[0.2em] font-semibold"
+            className="text-[11px] uppercase tracking-[0.2em] font-semibold"
             style={{ color: "color-mix(in oklab, var(--color-ink) 55%, transparent)" }}
           >
             {title}
