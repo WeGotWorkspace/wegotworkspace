@@ -65,6 +65,7 @@ export async function fetchSettingsLiveBootstrap(): Promise<SettingsAppBootstrap
     session: {
       user: {
         displayName: data.user.displayName,
+        username: data.user.username,
         email: data.user.email,
         initials: workspaceUserInitials({ displayName: data.user.displayName }),
       },

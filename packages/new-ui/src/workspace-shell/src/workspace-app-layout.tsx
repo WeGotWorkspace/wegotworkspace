@@ -40,11 +40,7 @@ type WorkspaceSidebarToggleProps = {
   hoverClassName?: string;
 };
 
-export function WorkspaceAppLayout({
-  children,
-  style,
-  className,
-}: WorkspaceAppLayoutProps) {
+export function WorkspaceAppLayout({ children, style, className }: WorkspaceAppLayoutProps) {
   return (
     <div
       className={cn("flex h-dvh w-full overflow-hidden relative notes-root", className)}
@@ -59,10 +55,7 @@ export function WorkspaceAppLayout({
   );
 }
 
-export function WorkspaceSidebar({
-  open,
-  children,
-}: WorkspaceSidebarProps) {
+export function WorkspaceSidebar({ open, children }: WorkspaceSidebarProps) {
   return (
     <aside
       data-open={open}
@@ -72,7 +65,8 @@ export function WorkspaceSidebar({
           : "-translate-x-full w-72 md:w-64 md:-ml-64 md:border-r-0"
       }`}
       style={{
-        backgroundColor: "var(--workspace-sidebar-bg, var(--color-paper, var(--color-cream, #f5f1e8)))",
+        backgroundColor:
+          "var(--workspace-sidebar-bg, var(--color-paper, var(--color-cream, #f5f1e8)))",
         borderColor:
           "var(--workspace-sidebar-border-color, color-mix(in oklab, var(--color-ink) 15%, transparent))",
         color: "var(--workspace-sidebar-color, var(--color-ink))",
@@ -107,12 +101,18 @@ export function WorkspaceUserFooter({
   onLogoutClick,
   linkHoverClassName = "hover:bg-[color-mix(in_oklab,var(--color-ink)_18%,transparent)]",
 }: WorkspaceUserFooterProps) {
-  const avatarName = name || initials;
+  const trimmedName = name.trim();
+  const trimmedDetailLine = detailLine?.trim() ?? "";
+  const trimmedInitials = initials.trim();
+  const hasIdentity = trimmedName.length > 0 || trimmedDetailLine.length > 0;
+  if (!hasIdentity) return null;
+  const avatarName = trimmedName || trimmedInitials;
   return (
     <div
       className="p-4 md:p-6 flex items-center gap-2 shrink-0 border-t"
       style={{
-        color: "var(--workspace-user-footer-text-color, color-mix(in oklab, var(--color-ink) 70%, transparent))",
+        color:
+          "var(--workspace-user-footer-text-color, color-mix(in oklab, var(--color-ink) 70%, transparent))",
         borderColor:
           "var(--workspace-user-footer-border-color, color-mix(in oklab, var(--color-ink) 10%, transparent))",
       }}
@@ -145,7 +145,8 @@ export function WorkspaceUserFooter({
               aria-label="Log out"
               className={`size-9 rounded-full flex items-center justify-center transition-colors ${linkHoverClassName}`}
               style={{
-                color: "var(--workspace-user-footer-link-color, color-mix(in oklab, var(--color-ink) 65%, transparent))",
+                color:
+                  "var(--workspace-user-footer-link-color, color-mix(in oklab, var(--color-ink) 65%, transparent))",
                 backgroundColor:
                   "var(--workspace-user-footer-link-bg, color-mix(in oklab, var(--color-ink) 6%, transparent))",
               }}
@@ -161,7 +162,8 @@ export function WorkspaceUserFooter({
               variant="subtle"
               className={`size-9 rounded-full ${linkHoverClassName}`}
               style={{
-                color: "var(--workspace-user-footer-link-color, color-mix(in oklab, var(--color-ink) 65%, transparent))",
+                color:
+                  "var(--workspace-user-footer-link-color, color-mix(in oklab, var(--color-ink) 65%, transparent))",
                 backgroundColor:
                   "var(--workspace-user-footer-link-bg, color-mix(in oklab, var(--color-ink) 6%, transparent))",
               }}

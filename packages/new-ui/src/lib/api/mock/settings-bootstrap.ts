@@ -9,9 +9,9 @@ export type SettingsAppBootstrap = {
 
 const DEFAULT_DATA: SettingsUIData = {
   user: {
-    username: "elias.linden",
-    displayName: "Elias Linden",
-    email: "elias@northlight.studio",
+    username: "demo.user",
+    displayName: "Demo User",
+    email: "demo@example.test",
   },
   groups: [
     { id: "principals/groups/editorial", displayName: "Editorial Team" },
@@ -20,7 +20,7 @@ const DEFAULT_DATA: SettingsUIData = {
     { id: "principals/groups/bindery", displayName: "Bindery Workshop" },
   ],
   mail: {
-    imapUsername: "elias@northlight.studio",
+    imapUsername: "demo@example.test",
     imapHasPassword: true,
   },
   mailServer: {

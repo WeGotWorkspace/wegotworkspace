@@ -154,6 +154,7 @@ export function NotesWorkspace({
             <WorkspaceUserFooter
               name={session.user.displayName}
               initials={workspaceUserInitials(session.user)}
+              detailLine={session.user.username}
               logoutTo={logoutTo}
               linkHoverClassName="hover:bg-[color-mix(in_oklab,var(--color-ink)_18%,transparent)] hover:text-[var(--color-ink)]"
             />
