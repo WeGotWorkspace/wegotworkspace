@@ -1,11 +1,13 @@
 import { useCallback, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { Archive, FolderInput, Mail as MailIcon, Star, StarOff, Trash2 } from "lucide-react";
+import { runQueuedBatchAction } from "@/hooks/use-batch-actions";
 import {
   collectSnapshotValues,
   nextActiveIdAfterRemoving,
   removeItemsByIds,
 } from "@/hooks/collection-controller-utils";
 import type { BeginOptimisticUpdateFn } from "@/hooks/use-entity-batch-actions";
+import { buildPermanentDeleteDescription } from "@/lib/workspace/destructive-dialog";
 import type { Mail } from "@/types/mail";
 import type { MailAPIOperations } from "@/mail-core/src/mail-types";
 
@@ -275,7 +277,8 @@ export function useMailBatchActions({
         });
         return;
       }
-      queueMutation({
+      runQueuedBatchAction({
+        queueMutation,
         key: `mail:move-many:${targetMailbox}:${ids.slice().sort().join(",")}`,
         toastMessage: `${toastLabel} ${ids.length} message${ids.length === 1 ? "" : "s"}`,
         execute: (_signal) =>
@@ -289,8 +292,7 @@ export function useMailBatchActions({
               );
             })
             .then(() => {}),
-        undo: rollback,
-        onError: rollback,
+        rollback,
         undoToastMessage: "Move undone.",
       });
     },
@@ -328,7 +330,8 @@ export function useMailBatchActions({
       });
       return;
     }
-    queueMutation({
+    runQueuedBatchAction({
+      queueMutation,
       key: `mail:move-trash:${ids.slice().sort().join(",")}`,
       toastMessage: `Moved ${ids.length} message${ids.length === 1 ? "" : "s"} to Trash`,
       execute: (_signal) =>
@@ -342,8 +345,7 @@ export function useMailBatchActions({
             );
           })
           .then(() => {}),
-      undo: rollback,
-      onError: rollback,
+      rollback,
       undoToastMessage: "Trash move undone.",
     });
   }, [
@@ -371,7 +373,8 @@ export function useMailBatchActions({
         show(`Moved ${ids.length} to ${mailbox}`, { icon: <FolderInput className="size-4" /> });
         return;
       }
-      queueMutation({
+      runQueuedBatchAction({
+        queueMutation,
         key: `mail:move-mailbox:${mailbox}:${ids.slice().sort().join(",")}`,
         toastMessage: `Moved ${ids.length} to ${mailbox}`,
         execute: (_signal) =>
@@ -385,8 +388,7 @@ export function useMailBatchActions({
               );
             })
             .then(() => {}),
-        undo: rollback,
-        onError: rollback,
+        rollback,
         undoToastMessage: "Move undone.",
       });
     },
@@ -450,7 +452,11 @@ export function useMailBatchActions({
     }
     requestConfirm({
       title: deleteConfirmCopy.dialogDeleteMessagesTitle(selectedIds.length),
-      description: `${deleteConfirmCopy.dialogPermanentDeleteLeadIn}${deleteConfirmCopy.dialogDeleteSelectedDescription}. ${deleteConfirmCopy.dialogDeleteConfirmSuffix}`,
+      description: buildPermanentDeleteDescription({
+        leadIn: deleteConfirmCopy.dialogPermanentDeleteLeadIn,
+        target: deleteConfirmCopy.dialogDeleteSelectedDescription,
+        suffix: deleteConfirmCopy.dialogDeleteConfirmSuffix,
+      }),
       confirmLabel: deleteConfirmCopy.dialogDelete,
       cancelLabel: deleteConfirmCopy.dialogCancel,
       variant: "destructive",
