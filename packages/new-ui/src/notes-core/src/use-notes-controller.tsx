@@ -1,6 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
-import { Archive, ArchiveRestore, FolderInput, Plus, Star, StarOff, Tag, Trash2, X } from "lucide-react";
+import {
+  Archive,
+  ArchiveRestore,
+  FolderInput,
+  Plus,
+  Star,
+  StarOff,
+  Tag,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useAppToast } from "@/hooks/use-app-toast";
 import { useConfirmDialog } from "@/hooks/use-confirm-dialog";
 import { useIsTouch } from "@/hooks/use-is-touch";
@@ -13,6 +23,7 @@ import { useWorkspaceListKeyboardShortcuts } from "@/hooks/use-workspace-list-ke
 import type { Note } from "@/lib/models/note";
 import type { WorkspaceAppHandle } from "@/workspace-app/src/workspace-app";
 import { mergeNotesLabels, type NotesUILabels } from "./notes-app.stories.fixtures";
+import { useNotesBatchActions } from "./use-notes-batch-actions";
 import type { NotesAPIOperations, NotesUIData } from "./notes-types";
 
 type UseNotesControllerArgs = {
@@ -29,11 +40,7 @@ function persistBestEffort(promise: Promise<unknown>) {
 }
 
 function computeWordCount(body: string[]): number {
-  return body
-    .join(" ")
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean).length;
+  return body.join(" ").trim().split(/\s+/).filter(Boolean).length;
 }
 
 function computeExcerpt(body: string[]): string {
@@ -42,7 +49,12 @@ function computeExcerpt(body: string[]): string {
   return `${text.slice(0, 179)}…`;
 }
 
-export function useNotesController({ data, labels, listLoading = false, operations }: UseNotesControllerArgs) {
+export function useNotesController({
+  data,
+  labels,
+  listLoading = false,
+  operations,
+}: UseNotesControllerArgs) {
   const L = useMemo(() => mergeNotesLabels(labels), [labels]);
   const [notes, setNotes] = useState<Note[]>(() => data.notes);
   const [notebooks, setNotebooks] = useState<string[]>(() => data.notebooks);
@@ -55,10 +67,13 @@ export function useNotesController({ data, labels, listLoading = false, operatio
 
   const [moveDialog, setMoveDialog] = useState<{ ids: string[] } | null>(null);
   const [addDialog, setAddDialog] = useState<null | "notebook" | "tag">(null);
-  const [editDialog, setEditDialog] = useState<null | { kind: "notebook" | "tag"; name: string }>(null);
-  const [deleteDialog, setDeleteDialog] = useState<null | { kind: "notebook" | "tag"; name: string }>(
+  const [editDialog, setEditDialog] = useState<null | { kind: "notebook" | "tag"; name: string }>(
     null,
   );
+  const [deleteDialog, setDeleteDialog] = useState<null | {
+    kind: "notebook" | "tag";
+    name: string;
+  }>(null);
   const [tagDialog, setTagDialog] = useState<null | { noteId: string }>(null);
 
   const initialStarred = useMemo(() => {
@@ -68,7 +83,11 @@ export function useNotesController({ data, labels, listLoading = false, operatio
     }
     return map;
   }, [data.notes]);
-  const { starred, toggleStar: applyStarToggle, batchToggleStarForIds } = useStarredMap(initialStarred);
+  const {
+    starred,
+    toggleStar: applyStarToggle,
+    batchToggleStarForIds,
+  } = useStarredMap(initialStarred);
   const [archived, setArchived] = useState<Record<string, boolean>>(() => {
     const map: Record<string, boolean> = {};
     for (const note of data.notes) {
@@ -178,9 +197,15 @@ export function useNotesController({ data, labels, listLoading = false, operatio
       if (!current) return;
       const beforeStarred = !!starred[id];
       const nowStarred = applyStarToggle(id);
-      setNotes((prev) => prev.map((note) => (note.id === id ? { ...note, starred: nowStarred } : note)));
+      setNotes((prev) =>
+        prev.map((note) => (note.id === id ? { ...note, starred: nowStarred } : note)),
+      );
       show(nowStarred ? "Starred" : "Unstarred", {
-        icon: nowStarred ? <Star className="size-4" fill="currentColor" /> : <StarOff className="size-4" />,
+        icon: nowStarred ? (
+          <Star className="size-4" fill="currentColor" />
+        ) : (
+          <StarOff className="size-4" />
+        ),
       });
       if (!operations) return;
       const updated = { ...current, starred: nowStarred };
@@ -267,7 +292,8 @@ export function useNotesController({ data, labels, listLoading = false, operatio
       queueMutation({
         key: `notes:move:${notebook}:${ids.slice().sort().join(",")}`,
         toastMessage: `Moved ${ids.length} item${ids.length === 1 ? "" : "s"} to “${notebook}”`,
-        execute: () => Promise.all(updatedRows.map((row) => operations.upsertNote(row))).then(() => {}),
+        execute: () =>
+          Promise.all(updatedRows.map((row) => operations.upsertNote(row))).then(() => {}),
         undo: rollback,
         onError: rollback,
         undoToastMessage: "Move undone.",
@@ -296,7 +322,8 @@ export function useNotesController({ data, labels, listLoading = false, operatio
       queueMutation({
         key: `notes:tag:${tag}:${ids.slice().sort().join(",")}`,
         toastMessage: `Tagged ${ids.length} item${ids.length === 1 ? "" : "s"} with #${tag}`,
-        execute: () => Promise.all(updatedRows.map((row) => operations.upsertNote(row))).then(() => {}),
+        execute: () =>
+          Promise.all(updatedRows.map((row) => operations.upsertNote(row))).then(() => {}),
         undo: () => {
           setNotes((prev) =>
             prev.map((note) => {
@@ -437,40 +464,6 @@ export function useNotesController({ data, labels, listLoading = false, operatio
     [show, updateAndPersistNote],
   );
 
-  const deleteSelectedNotes = useCallback(
-    (ids?: string[]) => {
-      const target = ids ?? selectedIds;
-      if (target.length === 0) return;
-      const rows = notes.filter((note) => target.includes(note.id));
-      setNotes((prev) => prev.filter((note) => !target.includes(note.id)));
-      setSelectedIds((prev) => prev.filter((id) => !target.includes(id)));
-      if (target.length === selectedIds.length) setSelectionMode(false);
-      if (operations) rows.forEach((note) => persistBestEffort(operations.deleteNote(note)));
-      show(`Deleted ${target.length} item${target.length === 1 ? "" : "s"}`, {
-        icon: <Trash2 className="size-4" />,
-      });
-    },
-    [notes, operations, selectedIds, setSelectedIds, setSelectionMode, show],
-  );
-
-  const openDeleteConfirm = useCallback(
-    (ids: string[], mode: "selected" | "all") => {
-      requestConfirm({
-        title: mode === "all" ? L.dialogEmptyArchiveTitle : L.dialogDeleteItemsTitle(ids.length),
-        description: `${L.dialogPermanentDeleteLeadIn}${
-          mode === "all"
-            ? L.dialogEmptyArchiveDescription(ids.length)
-            : L.dialogDeleteSelectedDescription
-        }. ${L.dialogDeleteConfirmSuffix}`,
-        confirmLabel: L.dialogDelete,
-        cancelLabel: L.dialogCancel,
-        variant: "destructive",
-        onConfirm: () => deleteSelectedNotes(ids),
-      });
-    },
-    [L, deleteSelectedNotes, requestConfirm],
-  );
-
   const updateNote = useCallback(
     (id: string, patch: Partial<Note>) => {
       updateAndPersistNote(id, (note) => {
@@ -514,7 +507,16 @@ export function useNotesController({ data, labels, listLoading = false, operatio
     workspaceLayoutRef.current?.openMobileDetail();
     if (operations) persistBestEffort(operations.upsertNote(note));
     show(L.toastNewNote, { icon: <Plus className="size-4" /> });
-  }, [L.newNoteCategory, L.toastNewNote, canCreateNote, notebooks, operations, selectSingle, show, view]);
+  }, [
+    L.newNoteCategory,
+    L.toastNewNote,
+    canCreateNote,
+    notebooks,
+    operations,
+    selectSingle,
+    show,
+    view,
+  ]);
 
   const selectedNotebook = view.startsWith("nb:") ? view.slice(3) : null;
   const selectedTag = view.startsWith("tag:") ? view.slice(4) : null;
@@ -528,111 +530,32 @@ export function useNotesController({ data, labels, listLoading = false, operatio
     }
   }, []);
 
-  const batchStar = useCallback(() => {
-    const beforeRows = notes.filter((note) => selectedIds.includes(note.id));
-    const result = batchToggleStarForIds(selectedIds);
-    if (!result) return;
-    const nextStarred = !result.allWereStarred;
-    setNotes((prev) =>
-      prev.map((note) => (selectedIds.includes(note.id) ? { ...note, starred: nextStarred } : note)),
-    );
-    show(`${result.allWereStarred ? "Unstarred" : "Starred"} ${result.count} item${result.count === 1 ? "" : "s"}`, {
-      icon: result.allWereStarred ? <StarOff className="size-4" /> : <Star className="size-4" fill="currentColor" />,
-    });
-    if (!operations) return;
-    const updatedRows = beforeRows.map((note) => ({ ...note, starred: nextStarred }));
-    queueMutation({
-      key: `notes:batch-star:${selectedIds.slice().sort().join(",")}`,
-      toastMessage: `${result.allWereStarred ? "Unstarred" : "Starred"} ${result.count} item${result.count === 1 ? "" : "s"}`,
-      execute: () => Promise.all(updatedRows.map((row) => operations.upsertNote(row))).then(() => {}),
-      undo: () => {
-        batchToggleStarForIds(selectedIds);
-        setNotes((prev) =>
-          prev.map((note) => {
-            const snapshot = beforeRows.find((row) => row.id === note.id);
-            return snapshot ? snapshot : note;
-          }),
-        );
+  const { batchStar, batchArchive, requestDeleteSelected, openDeleteConfirm } =
+    useNotesBatchActions({
+      notes,
+      setNotes,
+      selectedIds,
+      view,
+      archived,
+      setArchived,
+      setSelectedIds,
+      setSelectionMode,
+      operations,
+      queueMutation,
+      batchToggleStarForIds,
+      show,
+      requestConfirm,
+      deleteConfirmCopy: {
+        dialogEmptyArchiveTitle: L.dialogEmptyArchiveTitle,
+        dialogDeleteItemsTitle: L.dialogDeleteItemsTitle,
+        dialogEmptyArchiveDescription: L.dialogEmptyArchiveDescription,
+        dialogDeleteSelectedDescription: L.dialogDeleteSelectedDescription,
+        dialogDeleteConfirmSuffix: L.dialogDeleteConfirmSuffix,
+        dialogPermanentDeleteLeadIn: L.dialogPermanentDeleteLeadIn,
+        dialogDelete: L.dialogDelete,
+        dialogCancel: L.dialogCancel,
       },
-      onError: () => {
-        batchToggleStarForIds(selectedIds);
-        setNotes((prev) =>
-          prev.map((note) => {
-            const snapshot = beforeRows.find((row) => row.id === note.id);
-            return snapshot ? snapshot : note;
-          }),
-        );
-      },
-      undoToastMessage: "Star changes undone.",
     });
-  }, [batchToggleStarForIds, notes, operations, queueMutation, selectedIds, show]);
-
-  const batchArchive = useCallback(() => {
-    const beforeRows = notes.filter((note) => selectedIds.includes(note.id));
-    const beforeArchived = new Map(beforeRows.map((note) => [note.id, !!archived[note.id]] as const));
-    const allArchived = selectedIds.every((id) => archived[id]);
-    const nextArchived = !allArchived;
-    setArchived((state) => {
-      const next = { ...state };
-      selectedIds.forEach((id) => (next[id] = nextArchived));
-      return next;
-    });
-    setNotes((prev) =>
-      prev.map((note) => (selectedIds.includes(note.id) ? { ...note, archived: nextArchived } : note)),
-    );
-    show(`${allArchived ? "Unarchived" : "Archived"} ${selectedIds.length} item${selectedIds.length === 1 ? "" : "s"}`, {
-      icon: allArchived ? <ArchiveRestore className="size-4" /> : <Archive className="size-4" />,
-    });
-    if (!operations) return;
-    queueMutation({
-      key: `notes:batch-archive:${selectedIds.slice().sort().join(",")}`,
-      toastMessage: `${allArchived ? "Unarchived" : "Archived"} ${selectedIds.length} item${selectedIds.length === 1 ? "" : "s"}`,
-      execute: () =>
-        Promise.all(
-          selectedIds.map((id) => (allArchived ? operations.restoreNote(id) : operations.archiveNote(id))),
-        ).then(() => {}),
-      undo: () => {
-        setArchived((state) => {
-          const next = { ...state };
-          beforeArchived.forEach((value, id) => {
-            next[id] = value;
-          });
-          return next;
-        });
-        setNotes((prev) =>
-          prev.map((note) => {
-            const snapshot = beforeRows.find((row) => row.id === note.id);
-            return snapshot ? snapshot : note;
-          }),
-        );
-      },
-      onError: () => {
-        setArchived((state) => {
-          const next = { ...state };
-          beforeArchived.forEach((value, id) => {
-            next[id] = value;
-          });
-          return next;
-        });
-        setNotes((prev) =>
-          prev.map((note) => {
-            const snapshot = beforeRows.find((row) => row.id === note.id);
-            return snapshot ? snapshot : note;
-          }),
-        );
-      },
-      undoToastMessage: "Archive changes undone.",
-    });
-  }, [archived, notes, operations, queueMutation, selectedIds, show]);
-
-  const requestDeleteSelected = useCallback(() => {
-    if (selectedIds.length === 0) return;
-    if (view === "archive") {
-      openDeleteConfirm(selectedIds, "selected");
-      return;
-    }
-    batchArchive();
-  }, [batchArchive, openDeleteConfirm, selectedIds, view]);
 
   useWorkspaceListKeyboardShortcuts({
     searchInputRef,
