@@ -158,3 +158,91 @@ export async function fetchNotesLiveBootstrap(): Promise<NotesAppBootstrap> {
     session,
   };
 }
+
+function parseNoteMutationPayload(json: unknown): WgwNoteItem | null {
+  if (!json || typeof json !== "object") return null;
+  const root = json as Record<string, unknown>;
+  return coerceNoteItem(root.item ?? root.note ?? root.data ?? root);
+}
+
+async function requestNotesJson(
+  path: string,
+  method: "POST" | "PUT" | "PATCH" | "DELETE",
+  body?: unknown,
+  opts?: { signal?: AbortSignal },
+): Promise<unknown> {
+  const res = await wgwFetch(path, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+    signal: opts?.signal,
+  });
+  if (!res.ok) throw new Error(`${method} ${path} failed (${res.status})`);
+  return wgwReadJson(res);
+}
+
+export async function createNoteItem(
+  body: WgwNoteUpsertRequest,
+  opts?: { signal?: AbortSignal },
+): Promise<Note> {
+  const json = await requestNotesJson("/notes/items", "POST", body, opts);
+  const row = parseNoteMutationPayload(json);
+  if (!row) throw new Error("POST /notes/items returned no note payload");
+  return noteFromWgwItem(row);
+}
+
+export async function updateNoteItem(
+  id: string,
+  body: WgwNoteUpsertRequest,
+  opts?: { signal?: AbortSignal },
+): Promise<Note> {
+  const json = await requestNotesJson(`/notes/items/${encodeURIComponent(id)}`, "PUT", body, opts);
+  const row = parseNoteMutationPayload(json);
+  if (!row) throw new Error(`PUT /notes/items/${id} returned no note payload`);
+  return noteFromWgwItem(row);
+}
+
+export async function deleteNoteItem(
+  id: string,
+  body: { notebook: string; archived: boolean },
+  opts?: { signal?: AbortSignal },
+): Promise<void> {
+  await requestNotesJson(`/notes/items/${encodeURIComponent(id)}`, "DELETE", body, opts);
+}
+
+export async function archiveNoteItem(id: string, opts?: { signal?: AbortSignal }): Promise<Note> {
+  const json = await requestNotesJson(`/notes/items/${encodeURIComponent(id)}/archive`, "POST", {}, opts);
+  const row = parseNoteMutationPayload(json);
+  if (!row) throw new Error(`POST /notes/items/${id}/archive returned no note payload`);
+  return noteFromWgwItem(row);
+}
+
+export async function restoreNoteItem(id: string, opts?: { signal?: AbortSignal }): Promise<Note> {
+  const json = await requestNotesJson(`/notes/items/${encodeURIComponent(id)}/restore`, "POST", {}, opts);
+  const row = parseNoteMutationPayload(json);
+  if (!row) throw new Error(`POST /notes/items/${id}/restore returned no note payload`);
+  return noteFromWgwItem(row);
+}
+
+export async function createNotebook(
+  name: string,
+  opts?: { signal?: AbortSignal },
+): Promise<void> {
+  await requestNotesJson("/notes/notebooks", "POST", { name }, opts);
+}
+
+export async function renameNotebook(
+  from: string,
+  to: string,
+  opts?: { signal?: AbortSignal },
+): Promise<void> {
+  await requestNotesJson(`/notes/notebooks/${encodeURIComponent(from)}`, "PATCH", { name: to }, opts);
+}
+
+export async function deleteNotebook(
+  name: string,
+  action: { mode: "archive" | "move" | "purge"; target?: string },
+  opts?: { signal?: AbortSignal },
+): Promise<void> {
+  await requestNotesJson(`/notes/notebooks/${encodeURIComponent(name)}`, "DELETE", action, opts);
+}
