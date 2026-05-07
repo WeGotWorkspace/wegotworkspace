@@ -1,5 +1,5 @@
 import type { MouseEvent as ReactMouseEvent, ReactNode, RefObject } from "react";
-import { Archive, Pencil, Plus, Star, Trash2 } from "lucide-react";
+import { Archive, Pencil, Star, Trash2 } from "lucide-react";
 import { ListAction } from "@/action-buttons/src/action-buttons";
 import { ListHeader } from "@/list-header/src/list-header";
 import { ListItem } from "@/list-item/src/list-item";
@@ -18,7 +18,6 @@ type NotesListPanelProps = {
   searchQuery: string;
   setSearchQuery: (value: string) => void;
   searchInputRef: RefObject<HTMLInputElement | null>;
-  canCreateNote: boolean;
   canEditDelete: boolean;
   selectedNotebook: string | null;
   selectedTag: string | null;
@@ -31,7 +30,6 @@ type NotesListPanelProps = {
   handleSelect: (id: string, e: ReactMouseEvent) => void;
   enterSelectionFor: (id: string) => void;
   itemDragHandlers: (id: string) => Record<string, unknown>;
-  createNote: () => void;
   openEditDialog: (item: { kind: "notebook" | "tag"; name: string }) => void;
   openDeleteDialog: (item: { kind: "notebook" | "tag"; name: string }) => void;
   openDeleteConfirmForArchive: (ids: string[], mode: "selected" | "all") => void;
@@ -51,7 +49,6 @@ export function NotesListPanel({
   searchQuery,
   setSearchQuery,
   searchInputRef,
-  canCreateNote,
   canEditDelete,
   selectedNotebook,
   selectedTag,
@@ -64,7 +61,6 @@ export function NotesListPanel({
   handleSelect,
   enterSelectionFor,
   itemDragHandlers,
-  createNote,
   openEditDialog,
   openDeleteDialog,
   openDeleteConfirmForArchive,
@@ -85,9 +81,6 @@ export function NotesListPanel({
         }
         actions={
           <>
-            <ListAction label={L.newNote} onClick={createNote} disabled={!canCreateNote}>
-              <Plus className="size-4" />
-            </ListAction>
             {canEditDelete ? (
               <>
                 <ListAction
@@ -119,7 +112,12 @@ export function NotesListPanel({
             {view === "archive" && visibleNotes.length > 0 ? (
               <ListAction
                 label={L.emptyArchive}
-                onClick={() => openDeleteConfirmForArchive(visibleNotes.map((n) => n.id), "all")}
+                onClick={() =>
+                  openDeleteConfirmForArchive(
+                    visibleNotes.map((n) => n.id),
+                    "all",
+                  )
+                }
               >
                 <Trash2 className="size-4" />
               </ListAction>
@@ -171,7 +169,12 @@ export function NotesListPanel({
               {...(isTouch
                 ? {
                     swipeLeftAction: {
-                      icon: <Star className="size-5" fill={starred[note.id] ? "currentColor" : "none"} />,
+                      icon: (
+                        <Star
+                          className="size-5"
+                          fill={starred[note.id] ? "currentColor" : "none"}
+                        />
+                      ),
                       color: "var(--color-emerald)",
                       label: starred[note.id] ? L.swipeUnstar : L.swipeStar,
                       onActivate: () => toggleStar(note.id),
