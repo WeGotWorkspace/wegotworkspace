@@ -87,10 +87,10 @@ export const MenuItem = React.forwardRef<HTMLAnchorElement | HTMLButtonElement, 
       "focus-visible:ring-2 focus-visible:ring-[color-mix(in_oklab,currentColor_35%,transparent)] focus-visible:ring-offset-1 focus-visible:ring-offset-transparent",
       tone === "sidebar" &&
         (isDropTarget
-          ? "text-[var(--color-ink)] shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-ink)_35%,transparent)] bg-[color-mix(in_oklab,var(--color-ink)_22%,transparent)]"
+          ? "font-medium text-[var(--color-ink)] shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-ink)_35%,transparent)] bg-[color-mix(in_oklab,var(--color-ink)_22%,transparent)]"
           : selected
-            ? "text-[var(--color-ink)] bg-[color-mix(in_oklab,var(--color-ink)_12%,transparent)]"
-            : "text-[color-mix(in_oklab,var(--color-ink)_75%,transparent)] bg-transparent"),
+            ? "font-medium text-[var(--color-ink)] bg-[color-mix(in_oklab,var(--color-ink)_12%,transparent)]"
+            : "font-medium text-[color-mix(in_oklab,var(--color-ink)_75%,transparent)] bg-transparent"),
       tone === "inherit" && "text-inherit bg-transparent",
       className,
     );
