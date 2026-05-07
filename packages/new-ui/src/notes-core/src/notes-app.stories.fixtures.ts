@@ -1,3 +1,5 @@
+import { workspaceDestructiveDialogLabels } from "@/lib/workspace/destructive-dialog";
+
 /**
  * Mock copy + label bundle for Notes stories and route wiring.
  */
@@ -75,14 +77,14 @@ export const notesStoryLabels: NotesUILabels = {
   toolbarStar: "Star",
   toolbarArchive: "Archive",
   toolbarUnarchive: "Unarchive",
-  dialogCancel: "Cancel",
-  dialogDelete: "Delete",
+  dialogCancel: workspaceDestructiveDialogLabels.dialogCancel,
+  dialogDelete: workspaceDestructiveDialogLabels.dialogDelete,
   dialogEmptyArchiveTitle: "Empty archive?",
   dialogDeleteItemsTitle: (count) => `Delete ${count} item${count === 1 ? "" : "s"}?`,
   dialogEmptyArchiveDescription: (count) => `all ${count} archived item${count === 1 ? "" : "s"}`,
   dialogDeleteSelectedDescription: "the selected items",
-  dialogDeleteConfirmSuffix: "This action cannot be undone.",
-  dialogPermanentDeleteLeadIn: "This will permanently delete ",
+  dialogDeleteConfirmSuffix: workspaceDestructiveDialogLabels.dialogDeleteConfirmSuffix,
+  dialogPermanentDeleteLeadIn: workspaceDestructiveDialogLabels.dialogPermanentDeleteLeadIn,
   tagViewTitle: (tag) => `#${tag}`,
   newNoteCategory: "Note",
 };
