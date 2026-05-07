@@ -48,6 +48,12 @@ export function MailWorkspace({
   operations,
   logoutTo = "/",
 }: MailWorkspaceProps) {
+  const closeSidebarOnMobile = (closeSidebar: () => void) => {
+    if (typeof window === "undefined") return;
+    if (!window.matchMedia("(max-width: 767px)").matches) return;
+    closeSidebar();
+  };
+
   const {
     L,
     allSystemMailboxes,
@@ -171,7 +177,10 @@ export function MailWorkspace({
               <AppButton
                 label="Compose"
                 icon={<Pencil className="size-4" />}
-                onClick={compose}
+                onClick={() => {
+                  compose();
+                  closeSidebarOnMobile(c.closeSidebar);
+                }}
                 size="pill"
                 variant="primary"
               />
