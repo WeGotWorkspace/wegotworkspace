@@ -1,0 +1,30 @@
+.mail-ui-theme {
+  --workspace-root-bg: var(--color-cream, #f5f1e8);
+  --color-emerald: oklch(0.858745 0.15558 94.085);
+  --mail-sidebar: oklch(0.858745 0.15558 94.085);
+  --mail-state-accent: var(--color-emerald);
+  --workspace-user-footer-text-color: color-mix(in oklab, var(--color-ink) 70%, transparent);
+  --workspace-user-footer-border-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
+  --workspace-user-footer-avatar-bg: color-mix(in oklab, var(--color-ink) 12%, transparent);
+  --workspace-user-footer-avatar-color: var(--color-ink);
+  --workspace-user-footer-link-color: color-mix(in oklab, var(--color-ink) 65%, transparent);
+  --workspace-user-footer-link-bg: color-mix(in oklab, var(--color-ink) 6%, transparent);
+}
+
+.mail-state-accent {
+  color: var(--mail-state-accent);
+}
+
+.mail-detail-actions-compact {
+  display: none;
+}
+
+@container workspace-detail (max-width: 56rem) {
+  .mail-detail-actions-desktop {
+    display: none;
+  }
+
+  .mail-detail-actions-compact {
+    display: flex;
+  }
+}
