@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { CalendarDays } from "lucide-react";
-import { Tag } from "@/tag/src/tag";
+import { DetailViewHeader } from "@/detail-view-header/src/detail-view-header";
 import { UserAvatar } from "@/user-avatar/src/user-avatar";
 import { cn } from "@/lib/utils";
 import { mailboxIconForLabel } from "@/mail-core/src/mailbox-icons";
@@ -56,28 +56,31 @@ export function MailDetailView({
 
   return (
     <article className={cn("max-w-[680px] mx-auto", className)}>
-      <div className="flex items-center gap-2 md:gap-3 mb-5">
-        <Tag
-          label={mailbox}
-          icon={mailboxIconForLabel(mailbox)}
-          colors={{
-            color: "var(--color-cream, #f5f1e8)",
-            backgroundColor: "color-mix(in oklab, var(--color-ink) 88%, transparent)",
-          }}
-        />
-        <Tag
-          label={date}
-          icon={<CalendarDays className="size-3.5 opacity-70" />}
-          colors={{
-            backgroundColor: "color-mix(in oklab, var(--color-ink) 6%, transparent)",
-            color: "color-mix(in oklab, var(--color-ink) 58%, transparent)",
-          }}
-        />
-      </div>
-
-      <h1 className="text-3xl md:text-4xl font-sans text-(--color-ink) font-semibold leading-[1.1] tracking-tight mb-8">
-        {title || emptySubjectLabel}
-      </h1>
+      <DetailViewHeader
+        topTags={[
+          {
+            key: "mailbox",
+            label: mailbox,
+            icon: mailboxIconForLabel(mailbox),
+            colors: {
+              color: "var(--color-cream, #f5f1e8)",
+              backgroundColor: "color-mix(in oklab, var(--color-ink) 88%, transparent)",
+            },
+          },
+          {
+            key: "date",
+            label: date,
+            icon: <CalendarDays className="size-3.5 opacity-70" />,
+            colors: {
+              backgroundColor: "color-mix(in oklab, var(--color-ink) 6%, transparent)",
+              color: "color-mix(in oklab, var(--color-ink) 58%, transparent)",
+            },
+          },
+        ]}
+        title={title}
+        emptyTitleLabel={emptySubjectLabel}
+        titleClassName="text-3xl md:text-4xl font-sans text-(--color-ink) font-semibold leading-[1.1] tracking-tight mb-8"
+      />
 
       <div className="flex items-center py-4 border-y border-[color-mix(in_oklab,var(--color-ink)_10%,transparent)] mb-10">
         <UserAvatar
