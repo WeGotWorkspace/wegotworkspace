@@ -38,7 +38,9 @@ function createWgwOperations(): NotesAPIOperations {
       });
       try {
         return await updateNoteItem(note.id, payload, opts);
-      } catch {
+      } catch (error) {
+        const status = (error as { status?: number } | undefined)?.status;
+        if (status !== 404) throw error;
         return createNoteItem(payload, opts);
       }
     },
@@ -63,6 +65,13 @@ function createWgwOperations(): NotesAPIOperations {
   };
 }
 
+export function createWgwNotesApiSource(): NotesApiSource {
+  return {
+    loadBootstrap: fetchNotesLiveBootstrap,
+    createOperations: () => createWgwOperations(),
+  };
+}
+
 export function createDefaultNotesApiSource(): NotesApiSource {
   return createWorkspaceSource<NotesApiSource>({
     isLive: wgwLiveApiEnabled(),
@@ -70,9 +79,6 @@ export function createDefaultNotesApiSource(): NotesApiSource {
       loadBootstrap: () => Promise.resolve(createNotesAppBootstrap()),
       createOperations: () => undefined,
     }),
-    createLiveSource: () => ({
-      loadBootstrap: fetchNotesLiveBootstrap,
-      createOperations: () => createWgwOperations(),
-    }),
+    createLiveSource: createWgwNotesApiSource,
   });
 }
