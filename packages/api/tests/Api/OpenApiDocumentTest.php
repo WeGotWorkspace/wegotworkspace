@@ -127,5 +127,25 @@ final class OpenApiDocumentTest extends TestCase
             '#/components/schemas/NotebookListItem',
             $doc['components']['schemas']['NotebookListResponse']['properties']['items']['items']['$ref'] ?? null
         );
+        self::assertSame(
+            '#/components/schemas/SettingsUserProfile',
+            $doc['components']['schemas']['SettingsStateResponse']['properties']['user']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/SettingsUserGroupList',
+            $doc['components']['schemas']['SettingsStateResponse']['properties']['groups']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/SettingsUserMail',
+            $doc['components']['schemas']['SettingsStateResponse']['properties']['mail']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/SettingsUserMailServer',
+            $doc['components']['schemas']['SettingsStateResponse']['properties']['mailServer']['$ref'] ?? null
+        );
+        self::assertContains(
+            'logoutUrl',
+            $doc['components']['schemas']['SettingsStateResponse']['required'] ?? []
+        );
     }
 }

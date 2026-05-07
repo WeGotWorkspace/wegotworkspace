@@ -1,0 +1,107 @@
+import type { SettingsAppBootstrap } from "@/lib/api/mock/settings-bootstrap";
+import { wgwFetch, wgwFetchPrincipal, wgwReadJson } from "@/lib/api/wgw/http";
+import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
+import type {
+  WgwSettingsMailRequest,
+  WgwSettingsStateResponse,
+  WgwSettingsUserGroup,
+  WgwSettingsUserMail,
+  WgwSettingsUserMailServer,
+  WgwSettingsUserProfile,
+} from "@/lib/api/wgw/types";
+import type { SettingsUIData } from "@/settings-core/src/settings-types";
+
+function toUser(raw: WgwSettingsUserProfile): SettingsUIData["user"] {
+  return {
+    username: raw.username,
+    displayName: raw.displayName,
+    email: raw.email,
+  };
+}
+
+function toGroups(raw: WgwSettingsUserGroup[]): SettingsUIData["groups"] {
+  return raw.map((group) => ({
+    id: group.id,
+    displayName: group.displayName,
+  }));
+}
+
+function toMail(raw: WgwSettingsUserMail): SettingsUIData["mail"] {
+  return {
+    imapUsername: raw.imapUsername,
+    imapHasPassword: raw.imapHasPassword,
+  };
+}
+
+function toMailServer(raw: WgwSettingsUserMailServer): SettingsUIData["mailServer"] {
+  return {
+    imapHost: raw.imapHost,
+    imapPort: raw.imapPort,
+    imapSecurity: raw.imapSecurity,
+    smtpHost: raw.smtpHost,
+    smtpPort: raw.smtpPort,
+    smtpSecurity: raw.smtpSecurity,
+  };
+}
+
+export function mapWgwSettingsStateToUI(state: WgwSettingsStateResponse): SettingsUIData {
+  return {
+    user: toUser(state.user),
+    groups: toGroups(state.groups),
+    mail: toMail(state.mail),
+    mailServer: toMailServer(state.mailServer),
+    logoutUrl: state.logoutUrl,
+  };
+}
+
+export async function fetchSettingsLiveBootstrap(): Promise<SettingsAppBootstrap> {
+  const [session, stateRes] = await Promise.all([wgwFetchPrincipal(), wgwFetch("/settings/state")]);
+  if (!stateRes.ok) throw new Error(`GET /settings/state failed (${stateRes.status})`);
+  const json = (await wgwReadJson(stateRes)) as WgwSettingsStateResponse;
+  const data = mapWgwSettingsStateToUI(json);
+
+  return {
+    data,
+    session: {
+      user: {
+        displayName: data.user.displayName,
+        email: data.user.email,
+        initials: workspaceUserInitials({ displayName: data.user.displayName }),
+      },
+      viewerInboxLabel: session.viewerInboxLabel,
+    },
+  };
+}
+
+async function requestSettings(
+  path: "/settings/profile" | "/settings/mail",
+  body: object,
+  opts?: { signal?: AbortSignal },
+): Promise<WgwSettingsStateResponse> {
+  const res = await wgwFetch(path, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    signal: opts?.signal,
+  });
+  if (!res.ok) {
+    throw new Error(`PUT ${path} failed (${res.status})`);
+  }
+  return (await wgwReadJson(res)) as WgwSettingsStateResponse;
+}
+
+export async function saveSettingsProfile(
+  input: { displayName: string; email: string; password?: string },
+  opts?: { signal?: AbortSignal },
+): Promise<SettingsUIData> {
+  const state = await requestSettings("/settings/profile", input, opts);
+  return mapWgwSettingsStateToUI(state);
+}
+
+export async function saveSettingsMail(
+  input: WgwSettingsMailRequest,
+  opts?: { signal?: AbortSignal },
+): Promise<SettingsUIData> {
+  const state = await requestSettings("/settings/mail", input, opts);
+  return mapWgwSettingsStateToUI(state);
+}

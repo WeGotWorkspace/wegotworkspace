@@ -2532,12 +2532,34 @@ export interface components {
             ok?: boolean;
             saved?: string[];
         };
+        SettingsUserProfile: {
+            username: string;
+            displayName: string;
+            email: string;
+        };
+        SettingsUserGroup: {
+            id: string;
+            displayName: string;
+        };
+        SettingsUserGroupList: components["schemas"]["SettingsUserGroup"][];
+        SettingsUserMail: {
+            imapUsername: string;
+            imapHasPassword: boolean;
+        };
+        SettingsUserMailServer: {
+            imapHost: string;
+            imapPort: number;
+            imapSecurity: string;
+            smtpHost: string;
+            smtpPort: number;
+            smtpSecurity: string;
+        };
         SettingsStateResponse: {
-            user?: Record<string, never>;
-            groups?: Record<string, never>[];
-            mail?: Record<string, never>;
-            mailServer?: Record<string, never>;
-            logoutUrl?: string;
+            user: components["schemas"]["SettingsUserProfile"];
+            groups: components["schemas"]["SettingsUserGroupList"];
+            mail: components["schemas"]["SettingsUserMail"];
+            mailServer: components["schemas"]["SettingsUserMailServer"];
+            logoutUrl: string;
         };
         /**
          * @example {
