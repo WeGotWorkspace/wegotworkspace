@@ -1206,7 +1206,12 @@
                     "baseUri": {
                         "type": "string"
                     }
-                }
+                },
+                "required": [
+                    "enabled",
+                    "distReady",
+                    "baseUri"
+                ]
             },
             "NotesStateResponse": {
                 "type": "object",
@@ -1232,6 +1237,72 @@
                     "distReady": {
                         "type": "boolean"
                     }
+                },
+                "required": [
+                    "baseUri",
+                    "username",
+                    "displayName",
+                    "logoutUrl",
+                    "notesPath",
+                    "filesEnabled",
+                    "distReady"
+                ]
+            },
+            "NoteTagList": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            },
+            "NoteItem": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "username": {
+                        "type": "string"
+                    },
+                    "notebook": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": "string"
+                    },
+                    "tags": {
+                        "$ref": "#/components/schemas/NoteTagList"
+                    },
+                    "starred": {
+                        "type": [
+                            "boolean",
+                            "null"
+                        ]
+                    },
+                    "archived": {
+                        "type": "boolean"
+                    },
+                    "updatedAt": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "username",
+                    "notebook",
+                    "title",
+                    "body",
+                    "tags",
+                    "archived",
+                    "updatedAt"
+                ]
+            },
+            "NoteItemList": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/NoteItem"
                 }
             },
             "NotesItemsResponse": {
@@ -1240,10 +1311,13 @@
                     "items": {
                         "type": "array",
                         "items": {
-                            "type": "object"
+                            "$ref": "#/components/schemas/NoteItem"
                         }
                     }
-                }
+                },
+                "required": [
+                    "items"
+                ]
             },
             "NoteMutationResponse": {
                 "type": "object",
@@ -1252,9 +1326,13 @@
                         "type": "boolean"
                     },
                     "item": {
-                        "type": "object"
+                        "$ref": "#/components/schemas/NoteItem"
                     }
-                }
+                },
+                "required": [
+                    "ok",
+                    "item"
+                ]
             },
             "NoteUpsertRequest": {
                 "type": "object",
@@ -1272,10 +1350,7 @@
                         "type": "string"
                     },
                     "tags": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
+                        "$ref": "#/components/schemas/NoteTagList"
                     },
                     "starred": {
                         "type": "boolean"
@@ -1284,6 +1359,14 @@
                         "type": "boolean"
                     }
                 },
+                "required": [
+                    "notebook",
+                    "title",
+                    "body",
+                    "tags",
+                    "starred",
+                    "archived"
+                ],
                 "example": {
                     "id": "n123",
                     "notebook": "General",
@@ -1305,9 +1388,38 @@
                         "type": "boolean"
                     }
                 },
+                "required": [
+                    "notebook",
+                    "archived"
+                ],
                 "example": {
                     "notebook": "General",
                     "archived": false
+                }
+            },
+            "NotebookListItem": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "activeCount": {
+                        "type": "integer"
+                    },
+                    "archivedCount": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "name",
+                    "activeCount",
+                    "archivedCount"
+                ]
+            },
+            "NotebookListItemList": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/NotebookListItem"
                 }
             },
             "NotebookListResponse": {
@@ -1316,10 +1428,13 @@
                     "items": {
                         "type": "array",
                         "items": {
-                            "type": "object"
+                            "$ref": "#/components/schemas/NotebookListItem"
                         }
                     }
-                }
+                },
+                "required": [
+                    "items"
+                ]
             },
             "NotebookMutationResponse": {
                 "type": "object",
@@ -1338,8 +1453,14 @@
                     },
                     "mode": {
                         "type": "string"
+                    },
+                    "target": {
+                        "type": "string"
                     }
-                }
+                },
+                "required": [
+                    "ok"
+                ]
             },
             "NotebookCreateRequest": {
                 "type": "object",
@@ -1348,6 +1469,9 @@
                         "type": "string"
                     }
                 },
+                "required": [
+                    "name"
+                ],
                 "example": {
                     "name": "Ideas"
                 }
@@ -1359,6 +1483,9 @@
                         "type": "string"
                     }
                 },
+                "required": [
+                    "name"
+                ],
                 "example": {
                     "name": "Projects"
                 }
@@ -1378,6 +1505,9 @@
                         "type": "string"
                     }
                 },
+                "required": [
+                    "mode"
+                ],
                 "example": {
                     "mode": "move",
                     "target": "Archive"

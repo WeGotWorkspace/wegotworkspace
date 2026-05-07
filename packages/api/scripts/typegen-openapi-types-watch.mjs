@@ -1,7 +1,7 @@
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import chokidar from "chokidar";
-import { generateMailTypes } from "./typegen-mail.mjs";
+import { generateOpenApiDomainTypes } from "./typegen-openapi-types.mjs";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const packageRoot = path.resolve(scriptDir, "..");
@@ -10,6 +10,7 @@ const watchPaths = [
   path.resolve(packageRoot, "openapi/openapi.json"),
   path.resolve(packageRoot, "src/Api/OpenApiDocument.php"),
   path.resolve(packageRoot, "src/Mail/**/*.php"),
+  path.resolve(packageRoot, "src/Notes/**/*.php"),
 ];
 
 let running = false;
@@ -25,15 +26,15 @@ async function runTypegen(reason) {
 
   running = true;
   const startedAt = Date.now();
-  process.stdout.write(`[typegen:mail:watch] Regenerating (${reason})...\n`);
+  process.stdout.write(`[typegen:openapi:watch] Regenerating (${reason})...\n`);
   try {
-    await generateMailTypes();
+    await generateOpenApiDomainTypes();
     process.stdout.write(
-      `[typegen:mail:watch] Done in ${Date.now() - startedAt}ms (${reason}).\n`,
+      `[typegen:openapi:watch] Done in ${Date.now() - startedAt}ms (${reason}).\n`,
     );
   } catch (error) {
     process.stderr.write(
-      `[typegen:mail:watch] Failed (${reason}): ${error instanceof Error ? error.message : String(error)}\n`,
+      `[typegen:openapi:watch] Failed (${reason}): ${error instanceof Error ? error.message : String(error)}\n`,
     );
   } finally {
     running = false;

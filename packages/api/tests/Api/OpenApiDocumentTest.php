@@ -115,5 +115,17 @@ final class OpenApiDocumentTest extends TestCase
             '#/components/schemas/MailAttachmentListItem',
             $doc['components']['schemas']['MailAttachmentsResponse']['properties']['items']['items']['$ref'] ?? null
         );
+        self::assertSame(
+            '#/components/schemas/NoteItem',
+            $doc['components']['schemas']['NotesItemsResponse']['properties']['items']['items']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/NoteItem',
+            $doc['components']['schemas']['NoteMutationResponse']['properties']['item']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/NotebookListItem',
+            $doc['components']['schemas']['NotebookListResponse']['properties']['items']['items']['$ref'] ?? null
+        );
     }
 }
