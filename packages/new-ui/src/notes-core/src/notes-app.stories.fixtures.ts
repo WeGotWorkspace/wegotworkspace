@@ -1,7 +1,6 @@
 /**
- * Mock copy + label bundle for Notes stories (and future route wiring).
+ * Mock copy + label bundle for Notes stories and route wiring.
  */
-
 export type NotesUILabels = {
   searchPlaceholder: string;
   sidebarAllItems: string;
@@ -40,11 +39,8 @@ export type NotesUILabels = {
   dialogEmptyArchiveDescription: (count: number) => string;
   dialogDeleteSelectedDescription: string;
   dialogDeleteConfirmSuffix: string;
-  /** Lead-in before `dialogEmptyArchiveDescription` / `dialogDeleteSelectedDescription`. */
   dialogPermanentDeleteLeadIn: string;
-  /** List title when browsing a tag (e.g. `#ideas`). */
   tagViewTitle: (tag: string) => string;
-  /** `category` on newly created notes. */
   newNoteCategory: string;
 };
 
@@ -83,8 +79,7 @@ export const notesStoryLabels: NotesUILabels = {
   dialogDelete: "Delete",
   dialogEmptyArchiveTitle: "Empty archive?",
   dialogDeleteItemsTitle: (count) => `Delete ${count} item${count === 1 ? "" : "s"}?`,
-  dialogEmptyArchiveDescription: (count) =>
-    `all ${count} archived item${count === 1 ? "" : "s"}`,
+  dialogEmptyArchiveDescription: (count) => `all ${count} archived item${count === 1 ? "" : "s"}`,
   dialogDeleteSelectedDescription: "the selected items",
   dialogDeleteConfirmSuffix: "This action cannot be undone.",
   dialogPermanentDeleteLeadIn: "This will permanently delete ",

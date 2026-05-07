@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { NotesUI } from "@/notes-ui/src/notes-ui";
-import { notesStoryLabels } from "@/notes-ui/src/notes-app.stories.fixtures";
+import { NotesWorkspace } from "@/notes-core/src/notes-workspace";
+import { notesStoryLabels } from "@/notes-core/src/notes-app.stories.fixtures";
 import type { NotesAppBootstrap } from "@/lib/api/mock/notes-bootstrap";
 import { clearWgwSession } from "@/lib/api/wgw/http";
 import { fetchNotesLiveBootstrap } from "@/lib/api/wgw/notes";
@@ -26,7 +26,7 @@ function LiveHint() {
   );
 }
 
-function NotesUIFromLiveApiStory() {
+function NotesWorkspaceFromLiveApiStory() {
   const [phase, setPhase] = useState<"loading" | "ready" | "error">("loading");
   const [error, setError] = useState<string | null>(null);
   const [bootstrap, setBootstrap] = useState<NotesAppBootstrap | null>(null);
@@ -75,7 +75,7 @@ function NotesUIFromLiveApiStory() {
   }
 
   return (
-    <NotesUI
+    <NotesWorkspace
       data={bootstrap.data}
       session={bootstrap.session}
       labels={notesStoryLabels}
@@ -84,9 +84,9 @@ function NotesUIFromLiveApiStory() {
   );
 }
 
-const meta: Meta<typeof NotesUIFromLiveApiStory> = {
+const meta: Meta<typeof NotesWorkspaceFromLiveApiStory> = {
   title: "Apps/Notes/Live API",
-  component: NotesUIFromLiveApiStory,
+  component: NotesWorkspaceFromLiveApiStory,
   parameters: {
     layout: "fullscreen",
     routerPath: "/notes",
@@ -94,8 +94,8 @@ const meta: Meta<typeof NotesUIFromLiveApiStory> = {
 };
 
 export default meta;
-type Story = StoryObj<typeof NotesUIFromLiveApiStory>;
+type Story = StoryObj<typeof NotesWorkspaceFromLiveApiStory>;
 
 export const FromWeGotWorkspace: Story = {
-  render: () => <NotesUIFromLiveApiStory />,
+  render: () => <NotesWorkspaceFromLiveApiStory />,
 };
