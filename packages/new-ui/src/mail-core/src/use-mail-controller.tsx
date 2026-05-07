@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FileEdit, Star, StarOff, X } from "lucide-react";
 import { useAppToast } from "@/hooks/use-app-toast";
+import { useSelectionResetOnKeyChange } from "@/hooks/use-selection-reset-on-key-change";
 import { useConfirmDialog } from "@/hooks/use-confirm-dialog";
 import { useStarredMap } from "@/hooks/use-starred-map";
 import { useIsTouch } from "@/hooks/use-is-touch";
@@ -388,10 +389,11 @@ export function useMailController({
     queueDelayMs: WRITE_QUEUE_DELAY_MS,
   });
 
-  useEffect(() => {
-    setSelectedIds([]);
-    setSelectionMode(false);
-  }, [view, setSelectedIds, setSelectionMode]);
+  useSelectionResetOnKeyChange({
+    resetKey: view,
+    setSelectedIds,
+    setSelectionMode,
+  });
 
   const active: Mail | undefined = activeId ? mail.find((m) => m.id === activeId) : undefined;
   const inTrash = view === "mb:Trash";
