@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useWorkspaceApi } from "@/hooks/use-workspace-api";
 import { mockWorkspaceSession } from "@/lib/api/mock/workspace-session-mock";
 import type { NotesUIData } from "@/notes-core/src/notes-types";
@@ -14,13 +14,21 @@ export function useNotesAPI(source?: NotesApiSource) {
     }),
     [],
   );
+  const loadBootstrapFromSource = useCallback(
+    (apiSource: NotesApiSource) => apiSource.loadBootstrap(),
+    [],
+  );
+  const createOperationsFromSource = useCallback(
+    (apiSource: NotesApiSource) => apiSource.createOperations(),
+    [],
+  );
   const { phase, error, retry, successVersion, listLoading, session, data, operations } =
     useWorkspaceApi({
       source: resolvedSource,
       createDefaultSource: createDefaultNotesApiSource,
       placeholderData,
-      loadBootstrap: (apiSource) => apiSource.loadBootstrap(),
-      createOperations: (apiSource) => apiSource.createOperations(),
+      loadBootstrap: loadBootstrapFromSource,
+      createOperations: createOperationsFromSource,
       fallbackSession: mockWorkspaceSession,
     });
 

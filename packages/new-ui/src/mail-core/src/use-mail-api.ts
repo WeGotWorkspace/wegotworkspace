@@ -16,14 +16,24 @@ export function useMailAPI(source?: MailApiSource) {
     }),
     [resolvedSource.systemMailboxes],
   );
+  const loadBootstrapFromSource = useCallback(
+    (apiSource: MailApiSource) => apiSource.loadBootstrap(),
+    [],
+  );
+  const createOperationsFromSource = useCallback(
+    (
+      apiSource: MailApiSource,
+      bootstrapData?: Awaited<ReturnType<MailApiSource["loadBootstrap"]>>,
+    ) => apiSource.createOperations(bootstrapData?.mailboxLoader),
+    [],
+  );
   const { phase, error, retry, successVersion, listLoading, session, data, operations, bootstrap } =
     useWorkspaceApi({
       source: resolvedSource,
       createDefaultSource: createDefaultMailApiSource,
       placeholderData,
-      loadBootstrap: (apiSource) => apiSource.loadBootstrap(),
-      createOperations: (apiSource, bootstrapData) =>
-        apiSource.createOperations(bootstrapData?.mailboxLoader),
+      loadBootstrap: loadBootstrapFromSource,
+      createOperations: createOperationsFromSource,
       fallbackSession: mockWorkspaceSession,
     });
   const mailboxLoader = bootstrap?.mailboxLoader;
