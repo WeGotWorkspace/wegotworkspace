@@ -3,7 +3,7 @@ import type { MouseEvent as ReactMouseEvent } from "react";
 import {
   Archive,
   ArchiveRestore,
-  FolderInput,
+  BookOpen,
   Plus,
   Star,
   StarOff,
@@ -50,6 +50,10 @@ function computeExcerpt(body: string[]): string {
   return `${text.slice(0, 179)}…`;
 }
 
+function normalizeTag(value: string): string {
+  return value.trim();
+}
+
 export function useNotesController({
   data,
   labels,
@@ -58,8 +62,6 @@ export function useNotesController({
 }: UseNotesControllerArgs) {
   const L = useMemo(() => mergeNotesLabels(labels), [labels]);
   const [notes, setNotes] = useState<Note[]>(() => data.notes);
-  const [notebooks, setNotebooks] = useState<string[]>(() => data.notebooks);
-  const [tags, setTags] = useState<string[]>(() => data.tags);
   const [activeId, setActiveId] = useState<string>(() => data.notes[0]?.id ?? "");
   const [view, setView] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -67,7 +69,6 @@ export function useNotesController({
   const workspaceLayoutRef = useRef<WorkspaceAppHandle>(null);
 
   const [moveDialog, setMoveDialog] = useState<{ ids: string[] } | null>(null);
-  const [addDialog, setAddDialog] = useState<null | "notebook" | "tag">(null);
   const [editDialog, setEditDialog] = useState<null | { kind: "notebook" | "tag"; name: string }>(
     null,
   );
@@ -104,6 +105,19 @@ export function useNotesController({
     (fallback = "Could not sync this change. Please try again.") =>
       show(fallback, { icon: <X className="size-4" /> }),
     [show],
+  );
+
+  const notebooks = useMemo(
+    () => [...new Set(notes.map((note) => note.notebook).filter((name) => name.trim().length > 0))],
+    [notes],
+  );
+  const tags = useMemo(
+    () => [
+      ...new Set(
+        notes.flatMap((note) => note.tags.map((tag) => normalizeTag(tag))).filter(Boolean),
+      ),
+    ],
+    [notes],
   );
 
   const visibleNotes = useMemo(() => {
@@ -285,7 +299,7 @@ export function useNotesController({
         updater: (note) => ({ ...note, notebook }),
       });
       show(`Moved ${ids.length} item${ids.length === 1 ? "" : "s"} to “${notebook}”`, {
-        icon: <FolderInput className="size-4" />,
+        icon: <BookOpen className="size-4" />,
       });
       if (!operations) return;
       const updatedRows = notes
@@ -305,7 +319,9 @@ export function useNotesController({
   );
 
   const assignTagToNotes = useCallback(
-    (ids: string[], tag: string) => {
+    (ids: string[], rawTag: string) => {
+      const tag = normalizeTag(rawTag);
+      if (!tag) return;
       const before = notes.filter((note) => ids.includes(note.id));
       setNotes((prev) =>
         prev.map((note) =>
@@ -314,7 +330,7 @@ export function useNotesController({
             : note,
         ),
       );
-      show(`Tagged ${ids.length} item${ids.length === 1 ? "" : "s"} with #${tag}`, {
+      show(`Tagged ${ids.length} item${ids.length === 1 ? "" : "s"} with ${tag}`, {
         icon: <Tag className="size-4" />,
       });
       if (!operations) return;
@@ -323,7 +339,7 @@ export function useNotesController({
       );
       queueMutation({
         key: `notes:tag:${tag}:${ids.slice().sort().join(",")}`,
-        toastMessage: `Tagged ${ids.length} item${ids.length === 1 ? "" : "s"} with #${tag}`,
+        toastMessage: `Tagged ${ids.length} item${ids.length === 1 ? "" : "s"} with ${tag}`,
         execute: () =>
           Promise.all(updatedRows.map((row) => operations.upsertNote(row))).then(() => {}),
         undo: () => {
@@ -348,32 +364,10 @@ export function useNotesController({
     [notes, operations, queueMutation, show],
   );
 
-  const addNotebook = useCallback(
-    (name: string) => {
-      const value = name.trim();
-      if (!value || notebooks.includes(value)) return;
-      setNotebooks((prev) => [...prev, value]);
-      if (operations) persistBestEffort(operations.createNotebook(value));
-      show(`Notebook “${value}” created`, { icon: <FolderInput className="size-4" /> });
-    },
-    [notebooks, operations, show],
-  );
-
-  const addTag = useCallback(
-    (name: string) => {
-      const value = name.trim().replace(/^#/, "");
-      if (!value || tags.includes(value)) return;
-      setTags((prev) => [...prev, value]);
-      show(`Tag #${value} created`, { icon: <Tag className="size-4" /> });
-    },
-    [show, tags],
-  );
-
   const renameNotebook = useCallback(
     (oldName: string, newName: string) => {
       const value = newName.trim();
       if (!value || (value !== oldName && notebooks.includes(value))) return;
-      setNotebooks((prev) => prev.map((notebook) => (notebook === oldName ? value : notebook)));
       setNotes((prev) =>
         prev.map((note) => (note.notebook === oldName ? { ...note, notebook: value } : note)),
       );
@@ -386,9 +380,14 @@ export function useNotesController({
 
   const renameTag = useCallback(
     (oldName: string, newName: string) => {
-      const value = newName.trim().replace(/^#/, "");
+      const value = normalizeTag(newName);
       if (!value || (value !== oldName && tags.includes(value))) return;
-      setTags((prev) => prev.map((tag) => (tag === oldName ? value : tag)));
+      const changedRows = notes
+        .filter((note) => note.tags.includes(oldName))
+        .map((note) => ({
+          ...note,
+          tags: note.tags.map((tag) => (tag === oldName ? value : tag)),
+        }));
       setNotes((prev) =>
         prev.map((note) => ({
           ...note,
@@ -396,9 +395,12 @@ export function useNotesController({
         })),
       );
       if (view === `tag:${oldName}`) setView(`tag:${value}`);
-      show(`Renamed to #${value}`, { icon: <Tag className="size-4" /> });
+      if (operations) {
+        changedRows.forEach((note) => persistBestEffort(operations.upsertNote(note)));
+      }
+      show(`Renamed to ${value}`, { icon: <Tag className="size-4" /> });
     },
-    [show, tags, view],
+    [notes, operations, show, tags, view],
   );
 
   const deleteNotebook = useCallback(
@@ -431,7 +433,6 @@ export function useNotesController({
       } else if (operations) {
         persistBestEffort(operations.deleteNotebook(name, { kind: "purge" }));
       }
-      setNotebooks((prev) => prev.filter((notebook) => notebook !== name));
       if (view === `nb:${name}`) setView("all");
       show(`Notebook “${name}” deleted`, { icon: <Trash2 className="size-4" /> });
     },
@@ -440,18 +441,28 @@ export function useNotesController({
 
   const deleteTag = useCallback(
     (name: string) => {
-      setTags((prev) => prev.filter((tag) => tag !== name));
+      const changedRows = notes
+        .filter((note) => note.tags.includes(name))
+        .map((note) => ({
+          ...note,
+          tags: note.tags.filter((tag) => tag !== name),
+        }));
       setNotes((prev) =>
         prev.map((note) => ({ ...note, tags: note.tags.filter((tag) => tag !== name) })),
       );
       if (view === `tag:${name}`) setView("all");
-      show(`Tag #${name} deleted`, { icon: <Trash2 className="size-4" /> });
+      if (operations) {
+        changedRows.forEach((note) => persistBestEffort(operations.upsertNote(note)));
+      }
+      show(`Tag ${name} deleted`, { icon: <Trash2 className="size-4" /> });
     },
-    [show, view],
+    [notes, operations, show, view],
   );
 
   const toggleNoteTag = useCallback(
-    (noteId: string, tag: string) => {
+    (noteId: string, rawTag: string) => {
+      const tag = normalizeTag(rawTag);
+      if (!tag) return;
       let added = false;
       updateAndPersistNote(noteId, (note) => {
         const has = note.tags.includes(tag);
@@ -461,7 +472,7 @@ export function useNotesController({
           tags: has ? note.tags.filter((current) => current !== tag) : [...note.tags, tag],
         };
       });
-      show(added ? `Added #${tag}` : `Removed #${tag}`, { icon: <Tag className="size-4" /> });
+      show(added ? `Added ${tag}` : `Removed ${tag}`, { icon: <Tag className="size-4" /> });
     },
     [show, updateAndPersistNote],
   );
@@ -500,7 +511,7 @@ export function useNotesController({
       excerpt: "",
       body: [""],
       notebook: targetNotebook,
-      tags: targetTag ? [targetTag] : [],
+      tags: targetTag ? [normalizeTag(targetTag)] : [],
       wordCount: 0,
     };
     setNotes((prev) => [note, ...prev]);
@@ -574,7 +585,7 @@ export function useNotesController({
       : []),
     {
       label: L.selectionMoveToNotebook,
-      icon: <FolderInput className="size-4" />,
+      icon: <BookOpen className="size-4" />,
       onClick: () => setMoveDialog({ ids: selectedIds }),
     },
     ...(view === "archive"
@@ -618,7 +629,6 @@ export function useNotesController({
     searchQuery,
     searchInputRef,
     moveDialog,
-    addDialog,
     editDialog,
     deleteDialog,
     tagDialog,
@@ -637,7 +647,6 @@ export function useNotesController({
     selectView,
     setSearchQuery,
     setMoveDialog,
-    setAddDialog,
     setEditDialog,
     setDeleteDialog,
     setTagDialog,
@@ -648,8 +657,6 @@ export function useNotesController({
     toggleArchive,
     requestDeleteSelected,
     openDeleteConfirm,
-    addNotebook,
-    addTag,
     renameNotebook,
     renameTag,
     deleteNotebook,

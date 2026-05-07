@@ -1,9 +1,11 @@
+import { Pencil } from "lucide-react";
 import type { NotesWorkspaceProps } from "@/notes-core/src/notes-workspace-props";
 import "react-swipeable-list/dist/styles.css";
+import { AppButton } from "@/app-button/src/app-button";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
 import { WorkspaceAppSwitcher } from "@/workspace-app-switcher/src/workspace-app-switcher";
-import { MoveToDialog, AddDialog, EditDialog, DeleteDialog, TagPickerDialog } from "@/dialogs/src/dialogs";
+import { MoveToDialog, EditDialog, DeleteDialog, TagPickerDialog } from "@/dialogs/src/dialogs";
 import { NoteDetailView } from "@/note-detail-view/src/note-detail-view";
 import { MultiSelectionView } from "@/multi-selection-view/src/multi-selection-view";
 import { WorkspaceApp } from "@/workspace-app/src/workspace-app";
@@ -42,7 +44,6 @@ export function NotesWorkspace({
     searchQuery,
     searchInputRef,
     moveDialog,
-    addDialog,
     editDialog,
     deleteDialog,
     tagDialog,
@@ -60,7 +61,6 @@ export function NotesWorkspace({
     selectView,
     setSearchQuery,
     setMoveDialog,
-    setAddDialog,
     setEditDialog,
     setDeleteDialog,
     setTagDialog,
@@ -70,8 +70,6 @@ export function NotesWorkspace({
     toggleStar,
     toggleArchive,
     openDeleteConfirm,
-    addNotebook,
-    addTag,
     renameNotebook,
     renameTag,
     deleteNotebook,
@@ -127,20 +125,20 @@ export function NotesWorkspace({
             onCloseMobile={c.closeSidebar}
             appSwitcher={<WorkspaceAppSwitcher />}
           >
+            <div className="px-4 mb-4">
+              <AppButton
+                label={L.newNote}
+                icon={<Pencil className="size-4" />}
+                onClick={createNote}
+                size="pill"
+                variant="primary"
+                disabled={!canCreateNote}
+              />
+            </div>
             <nav className="flex-1 px-4 space-y-7 overflow-y-auto">
               <SidebarSection items={primarySidebarItems} />
-              <SidebarSection
-                title={L.sectionNotebooks}
-                onAdd={() => setAddDialog("notebook")}
-                addLabel={L.addNotebook}
-                items={notebookSidebarItems}
-              />
-              <SidebarSection
-                title={L.sectionTags}
-                onAdd={() => setAddDialog("tag")}
-                addLabel={L.addTag}
-                items={tagSidebarItems}
-              />
+              <SidebarSection title={L.sectionNotebooks} items={notebookSidebarItems} />
+              <SidebarSection title={L.sectionTags} items={tagSidebarItems} />
             </nav>
 
             <WorkspaceUserFooter
@@ -163,7 +161,6 @@ export function NotesWorkspace({
             searchQuery,
             setSearchQuery,
             searchInputRef,
-            canCreateNote,
             canEditDelete,
             selectedNotebook,
             selectedTag,
@@ -176,7 +173,6 @@ export function NotesWorkspace({
             handleSelect,
             enterSelectionFor,
             itemDragHandlers,
-            createNote,
             openEditDialog: setEditDialog,
             openDeleteDialog: setDeleteDialog,
             openDeleteConfirmForArchive: openDeleteConfirm,
@@ -246,23 +242,14 @@ export function NotesWorkspace({
         open={!!moveDialog}
         notebooks={notebooks}
         currentNotebook={
-          moveDialog?.ids.length === 1 ? notes.find((note) => note.id === moveDialog.ids[0])?.notebook : undefined
+          moveDialog?.ids.length === 1
+            ? notes.find((note) => note.id === moveDialog.ids[0])?.notebook
+            : undefined
         }
         onClose={() => setMoveDialog(null)}
         onConfirm={(notebook) => {
           if (moveDialog) moveToNotebook(moveDialog.ids, notebook);
           setMoveDialog(null);
-        }}
-      />
-
-      <AddDialog
-        kind={addDialog}
-        existing={addDialog === "notebook" ? notebooks : tags}
-        onClose={() => setAddDialog(null)}
-        onConfirm={(name) => {
-          if (addDialog === "notebook") addNotebook(name);
-          else if (addDialog === "tag") addTag(name);
-          setAddDialog(null);
         }}
       />
 
@@ -305,8 +292,7 @@ export function NotesWorkspace({
           if (tagDialog) toggleNoteTag(tagDialog.noteId, tag);
         }}
         onCreate={(tag) => {
-          addTag(tag);
-          if (tagDialog) toggleNoteTag(tagDialog.noteId, tag.trim().replace(/^#/, ""));
+          if (tagDialog) toggleNoteTag(tagDialog.noteId, tag);
         }}
       />
 

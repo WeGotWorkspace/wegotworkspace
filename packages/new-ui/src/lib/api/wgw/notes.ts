@@ -3,6 +3,14 @@ import type { Note } from "@/lib/models/note";
 import type { WgwNoteItem, WgwNoteUpsertRequest } from "@/lib/api/wgw/types";
 import { wgwFetch, wgwFetchPrincipal, wgwReadJson } from "@/lib/api/wgw/http";
 
+export class NotesRequestError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+  }
+}
+
 // --- JSON → WGW note shapes --------------------------------------------------------------------
 
 export function coerceNoteItem(raw: unknown): WgwNoteItem | null {
@@ -177,7 +185,7 @@ async function requestNotesJson(
     body: body === undefined ? undefined : JSON.stringify(body),
     signal: opts?.signal,
   });
-  if (!res.ok) throw new Error(`${method} ${path} failed (${res.status})`);
+  if (!res.ok) throw new NotesRequestError(`${method} ${path} failed (${res.status})`, res.status);
   return wgwReadJson(res);
 }
 
@@ -211,23 +219,30 @@ export async function deleteNoteItem(
 }
 
 export async function archiveNoteItem(id: string, opts?: { signal?: AbortSignal }): Promise<Note> {
-  const json = await requestNotesJson(`/notes/items/${encodeURIComponent(id)}/archive`, "POST", {}, opts);
+  const json = await requestNotesJson(
+    `/notes/items/${encodeURIComponent(id)}/archive`,
+    "POST",
+    {},
+    opts,
+  );
   const row = parseNoteMutationPayload(json);
   if (!row) throw new Error(`POST /notes/items/${id}/archive returned no note payload`);
   return noteFromWgwItem(row);
 }
 
 export async function restoreNoteItem(id: string, opts?: { signal?: AbortSignal }): Promise<Note> {
-  const json = await requestNotesJson(`/notes/items/${encodeURIComponent(id)}/restore`, "POST", {}, opts);
+  const json = await requestNotesJson(
+    `/notes/items/${encodeURIComponent(id)}/restore`,
+    "POST",
+    {},
+    opts,
+  );
   const row = parseNoteMutationPayload(json);
   if (!row) throw new Error(`POST /notes/items/${id}/restore returned no note payload`);
   return noteFromWgwItem(row);
 }
 
-export async function createNotebook(
-  name: string,
-  opts?: { signal?: AbortSignal },
-): Promise<void> {
+export async function createNotebook(name: string, opts?: { signal?: AbortSignal }): Promise<void> {
   await requestNotesJson("/notes/notebooks", "POST", { name }, opts);
 }
 
@@ -236,7 +251,12 @@ export async function renameNotebook(
   to: string,
   opts?: { signal?: AbortSignal },
 ): Promise<void> {
-  await requestNotesJson(`/notes/notebooks/${encodeURIComponent(from)}`, "PATCH", { name: to }, opts);
+  await requestNotesJson(
+    `/notes/notebooks/${encodeURIComponent(from)}`,
+    "PATCH",
+    { name: to },
+    opts,
+  );
 }
 
 export async function deleteNotebook(

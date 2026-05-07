@@ -2,6 +2,7 @@ type AppButtonProps = {
   label?: string;
   icon?: React.ReactNode;
   onClick?: () => void;
+  disabled?: boolean;
   size?: "icon" | "sm" | "md" | "pill";
   variant?: "primary" | "ghost" | "subtle";
   className?: string;
@@ -13,6 +14,7 @@ export function AppButton({
   label,
   icon,
   onClick,
+  disabled = false,
   size = "md",
   variant = "subtle",
   className,
@@ -29,6 +31,7 @@ export function AppButton({
           : "h-9 px-3 rounded-md text-sm";
 
   const baseClassName = `inline-flex items-center justify-center gap-2 transition-colors ${sizeClassName}`;
+  const disabledClassName = disabled ? "opacity-50 cursor-not-allowed pointer-events-none" : "";
 
   const variantClassName =
     variant === "primary"
@@ -58,8 +61,9 @@ export function AppButton({
     <button
       type="button"
       aria-label={ariaLabel ?? label}
-      onClick={onClick}
-      className={`${baseClassName} ${variantClassName}${className ? ` ${className}` : ""}`}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
+      className={`${baseClassName} ${variantClassName} ${disabledClassName}${className ? ` ${className}` : ""}`}
       style={{ ...variantStyle, ...style }}
     >
       {icon}
