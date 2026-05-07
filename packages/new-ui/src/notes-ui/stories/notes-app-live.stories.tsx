@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { NotesWorkspace } from "@/notes-core/src/notes-workspace";
 import { notesStoryLabels } from "@/notes-core/src/notes-app.stories.fixtures";
 import type { NotesAppBootstrap } from "@/lib/api/mock/notes-bootstrap";
-import { clearWgwSession } from "@/lib/api/wgw/http";
-import { fetchNotesLiveBootstrap } from "@/lib/api/wgw/notes";
+import { createWgwNotesApiSource } from "@/notes-core/src/notes-api-source";
 
 /**
  * Hits the real WeGotWorkspace HTTP API (via Storybook’s `/api/v1` proxy).
@@ -27,16 +26,18 @@ function LiveHint() {
 }
 
 function NotesWorkspaceFromLiveApiStory() {
+  const liveSource = useMemo(() => createWgwNotesApiSource(), []);
+  const operations = useMemo(() => liveSource.createOperations(), [liveSource]);
   const [phase, setPhase] = useState<"loading" | "ready" | "error">("loading");
   const [error, setError] = useState<string | null>(null);
   const [bootstrap, setBootstrap] = useState<NotesAppBootstrap | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    clearWgwSession();
     setPhase("loading");
     setError(null);
-    fetchNotesLiveBootstrap()
+    liveSource
+      .loadBootstrap()
       .then((result) => {
         if (!cancelled) {
           setBootstrap(result);
@@ -52,7 +53,7 @@ function NotesWorkspaceFromLiveApiStory() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [liveSource]);
 
   if (phase === "loading") {
     return (
@@ -79,6 +80,7 @@ function NotesWorkspaceFromLiveApiStory() {
       data={bootstrap.data}
       session={bootstrap.session}
       labels={notesStoryLabels}
+      operations={operations}
       logoutTo={false}
     />
   );
