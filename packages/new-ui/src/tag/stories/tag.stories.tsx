@@ -40,7 +40,7 @@ export const TagAtoms: Story = {
   render: () => (
     <div className="flex flex-wrap gap-2">
       <Tag label="readonly" />
-      <Tag label="editable" readonly={false} onDelete={() => {}} />
+      <Tag label="editable" removable onRemove={() => {}} />
     </div>
   ),
 };

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { ContentLabel } from "@/content-label/src/content-label";
+import { Tag } from "@/tag/src/tag";
 import { UserAvatar } from "@/user-avatar/src/user-avatar";
 import { cn } from "@/lib/utils";
 import { mailboxIconForLabel } from "@/mail-core/src/mailbox-icons";
@@ -56,10 +56,10 @@ export function MailDetailView({
   return (
     <article className={cn("max-w-[680px] mx-auto", className)}>
       <div className="flex items-center gap-3 md:gap-6 text-[11px] uppercase tracking-[0.2em] mb-5">
-        <ContentLabel
-          text={mailbox}
+        <Tag
+          label={mailbox}
           icon={mailboxIconForLabel(mailbox)}
-          style={{
+          colors={{
             color: "var(--color-cream, #f5f1e8)",
             backgroundColor: "color-mix(in oklab, var(--color-ink) 88%, transparent)",
           }}

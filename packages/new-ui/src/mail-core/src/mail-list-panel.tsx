@@ -4,6 +4,7 @@ import { Archive, Circle, Loader2, Star } from "lucide-react";
 import { ListHeader } from "@/list-header/src/list-header";
 import { ListItem } from "@/list-item/src/list-item";
 import { WorkspaceSwipeList } from "@/workspace-swipe-list/src/workspace-swipe-list";
+import { WorkspaceListLoadingState } from "@/workspace-list-state/src/workspace-list-loading-state";
 import type { Mail } from "@/types/mail";
 import type { MailUILabels } from "@/mail-core/src/mail-app.stories.fixtures";
 import { formatMailDateForList } from "@/mail-core/src/mail-date-utils";
@@ -78,19 +79,7 @@ export function MailListPanel({
       />
     ),
     listContent: effectiveListLoading ? (
-      <div
-        className="flex flex-col items-center justify-center gap-3 px-6 py-20"
-        aria-busy
-        aria-live="polite"
-      >
-        <Loader2
-          className="size-9 animate-spin text-[color-mix(in_oklab,var(--color-ink)_45%,transparent)]"
-          aria-hidden
-        />
-        <p className="text-center text-sm text-[color-mix(in_oklab,var(--color-ink)_50%,transparent)]">
-          {L.listLoading}
-        </p>
-      </div>
+      <WorkspaceListLoadingState message={L.listLoading} />
     ) : (
       <>
         <WorkspaceSwipeList isTouch={isTouch}>

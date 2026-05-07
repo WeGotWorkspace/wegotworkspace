@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { mockWorkspaceSession } from "@/lib/api/mock/workspace-session-mock";
 import { NotesWorkspace } from "@/notes-core/src/notes-workspace";
 import { notesStoryLabels } from "@/notes-core/src/notes-app.stories.fixtures";
 import type { NotesAppBootstrap } from "@/lib/api/mock/notes-bootstrap";
@@ -55,15 +56,7 @@ function NotesWorkspaceFromLiveApiStory() {
     };
   }, [liveSource]);
 
-  if (phase === "loading") {
-    return (
-      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-2 p-8 text-[color-mix(in_oklab,var(--color-ink)_65%,transparent)]">
-        <p className="text-sm">Loading notes from WeGotWorkspace API…</p>
-      </div>
-    );
-  }
-
-  if (phase === "error" || !bootstrap) {
+  if (phase === "error") {
     return (
       <div className="mx-auto flex max-w-md flex-col gap-3 p-8 text-[var(--color-ink)]">
         <p className="text-sm font-medium">Live notes story could not load</p>
@@ -77,10 +70,18 @@ function NotesWorkspaceFromLiveApiStory() {
 
   return (
     <NotesWorkspace
-      data={bootstrap.data}
-      session={bootstrap.session}
+      key={bootstrap ? "notes-live-ready" : "notes-live-loading"}
+      data={
+        bootstrap?.data ?? {
+          notes: [],
+          notebooks: [],
+          tags: [],
+        }
+      }
+      session={bootstrap?.session ?? mockWorkspaceSession}
       labels={notesStoryLabels}
       operations={operations}
+      listLoading={phase === "loading"}
       logoutTo={false}
     />
   );
