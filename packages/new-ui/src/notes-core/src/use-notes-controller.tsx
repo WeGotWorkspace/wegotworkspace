@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import {
   Archive,
@@ -87,6 +87,7 @@ export function useNotesController({
   }, [data.notes]);
   const {
     starred,
+    setStarred,
     toggleStar: applyStarToggle,
     batchToggleStarForIds,
   } = useStarredMap(initialStarred);
@@ -119,6 +120,14 @@ export function useNotesController({
     ],
     [notes],
   );
+
+  useEffect(() => {
+    const next: Record<string, boolean> = {};
+    for (const note of notes) {
+      if (note.starred) next[note.id] = true;
+    }
+    setStarred(next);
+  }, [notes, setStarred]);
 
   const visibleNotes = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -570,6 +579,15 @@ export function useNotesController({
       },
     });
 
+  const selectedRows = useMemo(
+    () => notes.filter((note) => selectedIds.includes(note.id)),
+    [notes, selectedIds],
+  );
+  const allSelectedStarred =
+    selectedRows.length > 0 && selectedRows.every((note) => !!starred[note.id]);
+  const allSelectedArchived =
+    selectedRows.length > 0 && selectedRows.every((note) => !!archived[note.id]);
+
   useWorkspaceListKeyboardShortcuts({
     searchInputRef,
     selectedCount: selectedIds.length,
@@ -578,26 +596,52 @@ export function useNotesController({
     onUndoQueuedAction: undoLatest,
   });
 
-  const selectionActionButtons = [
-    { label: L.selectionStar, icon: <Star className="size-4" />, onClick: batchStar },
-    ...(view !== "archive"
-      ? [{ label: L.selectionArchive, icon: <Archive className="size-4" />, onClick: batchArchive }]
-      : []),
-    {
-      label: L.selectionMoveToNotebook,
-      icon: <BookOpen className="size-4" />,
-      onClick: () => setMoveDialog({ ids: selectedIds }),
-    },
-    ...(view === "archive"
-      ? [
-          {
-            label: L.selectionDeletePermanently,
-            icon: <Trash2 className="size-4" />,
-            onClick: requestDeleteSelected,
-          },
-        ]
-      : []),
-  ];
+  const selectionActionButtons = useMemo(
+    () => [
+      {
+        label: allSelectedStarred ? L.swipeUnstar : L.selectionStar,
+        icon: <Star className="size-4" fill={allSelectedStarred ? "currentColor" : "none"} />,
+        onClick: batchStar,
+        active: allSelectedStarred,
+      },
+      {
+        label: allSelectedArchived ? L.swipeUnarchive : L.selectionArchive,
+        icon: <Archive className="size-4" />,
+        onClick: batchArchive,
+        active: allSelectedArchived,
+      },
+      {
+        label: L.selectionMoveToNotebook,
+        icon: <BookOpen className="size-4" />,
+        onClick: () => setMoveDialog({ ids: selectedIds }),
+      },
+      ...(view === "archive"
+        ? [
+            {
+              label: L.selectionDeletePermanently,
+              icon: <Trash2 className="size-4" />,
+              onClick: requestDeleteSelected,
+            },
+          ]
+        : []),
+    ],
+    [
+      allSelectedArchived,
+      allSelectedStarred,
+      batchArchive,
+      batchStar,
+      requestDeleteSelected,
+      selectedIds,
+      setMoveDialog,
+      view,
+      L.swipeUnstar,
+      L.selectionStar,
+      L.swipeUnarchive,
+      L.selectionArchive,
+      L.selectionMoveToNotebook,
+      L.selectionDeletePermanently,
+    ],
+  );
   const { selectionBarButtons, selectionBar } = useWorkspaceSelectionPresentation({
     selectedIds,
     selectionMode,
