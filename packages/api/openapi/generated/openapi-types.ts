@@ -2848,25 +2848,38 @@ export interface components {
             data?: string;
         };
         NotesCapabilitiesResponse: {
-            enabled?: boolean;
-            distReady?: boolean;
-            baseUri?: string;
+            enabled: boolean;
+            distReady: boolean;
+            baseUri: string;
         };
         NotesStateResponse: {
-            baseUri?: string;
-            username?: string;
-            displayName?: string;
-            logoutUrl?: string;
-            notesPath?: string;
-            filesEnabled?: boolean;
-            distReady?: boolean;
+            baseUri: string;
+            username: string;
+            displayName: string;
+            logoutUrl: string;
+            notesPath: string;
+            filesEnabled: boolean;
+            distReady: boolean;
         };
+        NoteTagList: string[];
+        NoteItem: {
+            id: string;
+            username: string;
+            notebook: string;
+            title: string;
+            body: string;
+            tags: components["schemas"]["NoteTagList"];
+            starred?: boolean | null;
+            archived: boolean;
+            updatedAt: string;
+        };
+        NoteItemList: components["schemas"]["NoteItem"][];
         NotesItemsResponse: {
-            items?: Record<string, never>[];
+            items: components["schemas"]["NoteItem"][];
         };
         NoteMutationResponse: {
-            ok?: boolean;
-            item?: Record<string, never>;
+            ok: boolean;
+            item: components["schemas"]["NoteItem"];
         };
         /**
          * @example {
@@ -2882,12 +2895,12 @@ export interface components {
          */
         NoteUpsertRequest: {
             id?: string;
-            notebook?: string;
-            title?: string;
-            body?: string;
-            tags?: string[];
-            starred?: boolean;
-            archived?: boolean;
+            notebook: string;
+            title: string;
+            body: string;
+            tags: components["schemas"]["NoteTagList"];
+            starred: boolean;
+            archived: boolean;
         };
         /**
          * @example {
@@ -2896,18 +2909,25 @@ export interface components {
          *     }
          */
         NoteDeleteRequest: {
-            notebook?: string;
-            archived?: boolean;
+            notebook: string;
+            archived: boolean;
         };
+        NotebookListItem: {
+            name: string;
+            activeCount: number;
+            archivedCount: number;
+        };
+        NotebookListItemList: components["schemas"]["NotebookListItem"][];
         NotebookListResponse: {
-            items?: Record<string, never>[];
+            items: components["schemas"]["NotebookListItem"][];
         };
         NotebookMutationResponse: {
-            ok?: boolean;
+            ok: boolean;
             name?: string;
             from?: string;
             to?: string;
             mode?: string;
+            target?: string;
         };
         /**
          * @example {
@@ -2915,7 +2935,7 @@ export interface components {
          *     }
          */
         NotebookCreateRequest: {
-            name?: string;
+            name: string;
         };
         /**
          * @example {
@@ -2923,7 +2943,7 @@ export interface components {
          *     }
          */
         NotebookRenameRequest: {
-            name?: string;
+            name: string;
         };
         /**
          * @example {
@@ -2933,7 +2953,7 @@ export interface components {
          */
         NotebookDeleteRequest: {
             /** @enum {string} */
-            mode?: "archive" | "move" | "purge";
+            mode: "archive" | "move" | "purge";
             target?: string;
         };
         /**
