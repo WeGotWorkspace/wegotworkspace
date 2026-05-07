@@ -1,3 +1,16 @@
+import type {
+  NotebookListResponse,
+  NotebookMutationResponse,
+  NoteDeleteRequest,
+  NoteItem,
+  NoteMutationResponse,
+  NotesCapabilitiesResponse,
+  NotesItemsResponse,
+  NotesStateResponse,
+  NoteUpsertRequest,
+  OkResponse,
+} from "../../../api/openapi/generated/notes-types";
+
 export type StoredNote = {
   id: string;
   notebook: string;
@@ -9,16 +22,7 @@ export type StoredNote = {
   archived?: boolean;
 };
 
-type ApiNote = {
-  id: string;
-  notebook: string;
-  title: string;
-  body: string;
-  tags?: string[];
-  starred?: boolean;
-  updatedAt?: string;
-  archived?: boolean;
-};
+type ApiNote = NoteItem;
 
 type TokenPair = {
   access_token: string;
@@ -30,21 +34,8 @@ export type DeleteNotebookAction =
   | { kind: "archive" }
   | { kind: "purge" };
 
-export type NotesState = {
-  baseUri: string;
-  username: string;
-  displayName: string;
-  logoutUrl: string;
-  notesPath: string;
-  filesEnabled: boolean;
-  distReady: boolean;
-};
-
-export type NotesCapabilities = {
-  enabled: boolean;
-  distReady: boolean;
-  baseUri: string;
-};
+export type NotesState = NotesStateResponse;
+export type NotesCapabilities = NotesCapabilitiesResponse;
 
 let accessToken: string | null = null;
 let refreshToken: string | null = null;
@@ -240,8 +231,11 @@ export async function syncNotes(
   archivedIds: Set<string>,
   notebooks: string[] = [],
 ): Promise<void> {
-  const remote = await api<{ items: ApiNote[] }>("/items");
-  const remoteById = new Map(remote.items.map((note) => [note.id, note]));
+  const remote = await api<NotesItemsResponse>("/items");
+  const remoteItems = (remote.items ?? []).filter(
+    (note): note is ApiNote & { id: string } => typeof note.id === "string" && note.id.trim() !== "",
+  );
+  const remoteById = new Map(remoteItems.map((note) => [note.id, note] as const));
   const expectedIds = new Set(notes.map((note) => note.id));
 
   for (const note of notes) {
@@ -250,7 +244,7 @@ export async function syncNotes(
     if (!noteChanged(note, remoteNote, archived)) {
       continue;
     }
-    await api<{ ok: boolean; item: ApiNote }>(`/items/${encodeURIComponent(note.id)}`, {
+    await api<NoteMutationResponse>(`/items/${encodeURIComponent(note.id)}`, {
       method: "PUT",
       body: {
         notebook: normalizeNotebook(note.notebook),
@@ -259,26 +253,24 @@ export async function syncNotes(
         tags: normalizeTags(note.tags),
         starred: !!note.starred,
         archived,
-      },
+      } satisfies NoteUpsertRequest,
     });
   }
 
-  for (const remoteNote of remote.items) {
+  for (const remoteNote of remoteItems) {
     if (expectedIds.has(remoteNote.id)) {
       continue;
     }
-    await api<{ ok: boolean }>(`/items/${encodeURIComponent(remoteNote.id)}`, {
+    await api<OkResponse>(`/items/${encodeURIComponent(remoteNote.id)}`, {
       method: "DELETE",
       body: {
         notebook: normalizeNotebook(remoteNote.notebook),
         archived: !!remoteNote.archived,
-      },
+      } satisfies NoteDeleteRequest,
     });
   }
 
-  const remoteNotebooks = await api<{ items: { name: string; activeCount: number; archivedCount: number }[] }>(
-    "/notebooks",
-  );
+  const remoteNotebooks = await api<NotebookListResponse>("/notebooks");
   const desiredNotebooks = new Set(
     [...notebooks, ...notes.map((note) => normalizeNotebook(note.notebook))]
       .map((name) => name.trim())
@@ -286,10 +278,10 @@ export async function syncNotes(
   );
 
   for (const name of desiredNotebooks) {
-    if (remoteNotebooks.items.some((item) => item.name === name)) {
+    if ((remoteNotebooks.items ?? []).some((item) => item.name === name)) {
       continue;
     }
-    await api<{ ok: boolean; name: string }>("/notebooks", {
+    await api<NotebookMutationResponse>("/notebooks", {
       method: "POST",
       body: { name },
     });
@@ -297,8 +289,8 @@ export async function syncNotes(
 }
 
 export async function loadNotes(_baseUri: string, _username: string): Promise<StoredNote[]> {
-  const payload = await api<{ items: ApiNote[] }>("/items");
-  return payload.items.map(toStoredNote);
+  const payload = await api<NotesItemsResponse>("/items");
+  return (payload.items ?? []).map(toStoredNote);
 }
 
 export async function loadNotesState(): Promise<NotesState> {
@@ -318,7 +310,7 @@ export async function createNote(note: {
   starred?: boolean;
   archived?: boolean;
 }): Promise<StoredNote> {
-  const payload = await api<{ ok: boolean; item: ApiNote }>("/items", {
+  const payload = await api<NoteMutationResponse>("/items", {
     method: "POST",
     body: {
       id: note.id,
@@ -328,30 +320,39 @@ export async function createNote(note: {
       tags: normalizeTags(note.tags),
       starred: !!note.starred,
       archived: !!note.archived,
-    },
+    } satisfies NoteUpsertRequest,
   });
+  if (!payload.item) {
+    throw new Error("Notes API did not return created note.");
+  }
   return toStoredNote(payload.item);
 }
 
 export async function archiveNote(id: string): Promise<StoredNote> {
-  const payload = await api<{ ok: boolean; item: ApiNote }>(`/items/${encodeURIComponent(id)}/archive`, {
+  const payload = await api<NoteMutationResponse>(`/items/${encodeURIComponent(id)}/archive`, {
     method: "POST",
     body: {},
   });
+  if (!payload.item) {
+    throw new Error("Notes API did not return archived note.");
+  }
   return toStoredNote(payload.item);
 }
 
 export async function restoreNote(id: string): Promise<StoredNote> {
-  const payload = await api<{ ok: boolean; item: ApiNote }>(`/items/${encodeURIComponent(id)}/restore`, {
+  const payload = await api<NoteMutationResponse>(`/items/${encodeURIComponent(id)}/restore`, {
     method: "POST",
     body: {},
   });
+  if (!payload.item) {
+    throw new Error("Notes API did not return restored note.");
+  }
   return toStoredNote(payload.item);
 }
 
 export async function createNotebook(name: string): Promise<void> {
   const normalized = normalizeNotebook(name);
-  await api<{ ok: boolean; name: string }>("/notebooks", {
+  await api<NotebookMutationResponse>("/notebooks", {
     method: "POST",
     body: { name: normalized },
   });
@@ -363,7 +364,7 @@ export async function renameNotebook(from: string, to: string): Promise<void> {
   if (source === target) {
     return;
   }
-  await api<{ ok: boolean; from: string; to: string }>(`/notebooks/${encodeURIComponent(source)}`, {
+  await api<NotebookMutationResponse>(`/notebooks/${encodeURIComponent(source)}`, {
     method: "PATCH",
     body: { name: target },
   });
@@ -372,7 +373,7 @@ export async function renameNotebook(from: string, to: string): Promise<void> {
 export async function deleteNotebook(name: string, action: DeleteNotebookAction): Promise<void> {
   const notebook = normalizeNotebook(name);
   if (action.kind === "archive") {
-    await api<{ ok: boolean; mode: string }>(`/notebooks/${encodeURIComponent(notebook)}`, {
+    await api<NotebookMutationResponse>(`/notebooks/${encodeURIComponent(notebook)}`, {
       method: "DELETE",
       body: { mode: "archive" },
     });
@@ -380,14 +381,14 @@ export async function deleteNotebook(name: string, action: DeleteNotebookAction)
   }
 
   if (action.kind === "purge") {
-    await api<{ ok: boolean; mode: string }>(`/notebooks/${encodeURIComponent(notebook)}`, {
+    await api<NotebookMutationResponse>(`/notebooks/${encodeURIComponent(notebook)}`, {
       method: "DELETE",
       body: { mode: "purge" },
     });
     return;
   }
 
-  await api<{ ok: boolean; mode: string }>(`/notebooks/${encodeURIComponent(notebook)}`, {
+  await api<NotebookMutationResponse>(`/notebooks/${encodeURIComponent(notebook)}`, {
     method: "DELETE",
     body: {
       mode: "move",
