@@ -28,7 +28,6 @@ type WorkspaceUserFooterProps = {
   initials: string;
   /** Optional second line (e.g. email) next to the avatar; when set, name/subtitle use `UserAvatar` layout. */
   detailLine?: string;
-  logoutTo?: string | false;
   onLogoutClick?: () => void;
   linkHoverClassName?: string;
 };
@@ -96,7 +95,6 @@ export function WorkspaceUserFooter({
   name,
   initials,
   detailLine,
-  logoutTo = false,
   onLogoutClick,
   linkHoverClassName = "hover:bg-[color-mix(in_oklab,var(--color-ink)_18%,transparent)]",
 }: WorkspaceUserFooterProps) {
@@ -106,15 +104,7 @@ export function WorkspaceUserFooter({
   const hasIdentity = trimmedName.length > 0 || trimmedDetailLine.length > 0;
   if (!hasIdentity) return null;
   const avatarName = trimmedName || trimmedInitials;
-  const handleLogout = () => {
-    if (onLogoutClick) {
-      onLogoutClick();
-      return;
-    }
-    if (logoutTo) {
-      window.location.assign(logoutTo);
-    }
-  };
+  const handleLogout = () => onLogoutClick?.();
   return (
     <div
       className="p-4 md:p-6 flex items-center gap-2 shrink-0 border-t"
