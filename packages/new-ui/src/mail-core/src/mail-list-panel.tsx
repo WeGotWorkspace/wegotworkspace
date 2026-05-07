@@ -68,9 +68,7 @@ export function MailListPanel({
         sidebarOpen={sidebarOpen}
         onToggleSidebar={onToggleSidebar}
         title={viewLabel}
-        subtitle={
-          selectionMode || selectedIds.length > 1 ? `${selectedIds.length} Selected` : undefined
-        }
+        subtitle={undefined}
         actions={<></>}
         searchPlaceholder="Search mail..."
         searchValue={searchQuery}
