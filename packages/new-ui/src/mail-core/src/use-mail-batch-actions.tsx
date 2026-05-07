@@ -41,7 +41,6 @@ type UseMailBatchActionsArgs = {
   encodeFolderToken: (label: string) => string;
   operations?: MailAPIOperations;
   show: (message: string, opts?: { icon?: ReactNode }) => void;
-  showMutationError: () => void;
   queueMutation: QueueMutation;
   refreshMailboxCache: (label: string) => Promise<void>;
   beginOptimisticUpdate: BeginOptimisticUpdateFn<Mail>;
@@ -72,7 +71,6 @@ export function useMailBatchActions({
   encodeFolderToken,
   operations,
   show,
-  showMutationError,
   queueMutation,
   refreshMailboxCache,
   beginOptimisticUpdate,
@@ -169,19 +167,31 @@ export function useMailBatchActions({
         return;
       }
       const touched = mail.filter((m) => ids.includes(m.id));
-      void Promise.all(
-        touched.map((message) => operations.patchMessage(message, { read: false })),
-      ).catch(() => {
+      const rollback = () => {
         bumpUnreadBadgeDelta(changed, -1);
         setMail((prev) =>
           prev.map((m) =>
             beforeById.has(m.id) ? { ...m, unread: beforeById.get(m.id) ?? m.unread } : m,
           ),
         );
-        showMutationError();
+      };
+      runQueuedBatchAction({
+        queueMutation,
+        key: `mail:read-unread:${ids.slice().sort().join(",")}`,
+        toastMessage: `Marked ${ids.length} as unread`,
+        execute: (_signal) =>
+          Promise.all(
+            touched.map((message) =>
+              operations.patchMessage(message, { read: false }, { signal: _signal }),
+            ),
+          ).then(() => {}),
+        rollback: () => {
+          rollback();
+        },
+        undoToastMessage: "Read status change undone.",
       });
     },
-    [mail, bumpUnreadBadgeDelta, setMail, operations, show, showMutationError],
+    [mail, bumpUnreadBadgeDelta, setMail, operations, show, queueMutation],
   );
 
   const markRead = useCallback(
@@ -197,29 +207,40 @@ export function useMailBatchActions({
         return;
       }
       const touched = mail.filter((m) => ids.includes(m.id));
-      void Promise.all(
-        touched.map((message) => operations.patchMessage(message, { read: true })),
-      ).catch(() => {
+      const rollback = () => {
         bumpUnreadBadgeDelta(changed, 1);
         setMail((prev) =>
           prev.map((m) =>
             beforeById.has(m.id) ? { ...m, unread: beforeById.get(m.id) ?? m.unread } : m,
           ),
         );
-        showMutationError();
+      };
+      runQueuedBatchAction({
+        queueMutation,
+        key: `mail:read-read:${ids.slice().sort().join(",")}`,
+        toastMessage: `Marked ${ids.length} as read`,
+        execute: (_signal) =>
+          Promise.all(
+            touched.map((message) =>
+              operations.patchMessage(message, { read: true }, { signal: _signal }),
+            ),
+          ).then(() => {}),
+        rollback: () => {
+          rollback();
+        },
+        undoToastMessage: "Read status change undone.",
       });
     },
-    [mail, bumpUnreadBadgeDelta, setMail, operations, show, showMutationError],
+    [mail, bumpUnreadBadgeDelta, setMail, operations, show, queueMutation],
   );
 
   const batchStar = useCallback(() => {
     const beforeStarred = new Map(selectedIds.map((id) => [id, !!starred[id]] as const));
     const result = batchToggleStarForIds(selectedIds);
     if (!result) return;
+    const nextStarred = !result.allWereStarred;
     setMail((prev) =>
-      prev.map((m) =>
-        beforeStarred.has(m.id) ? { ...m, starred: !(beforeStarred.get(m.id) ?? !!m.starred) } : m,
-      ),
+      prev.map((m) => (beforeStarred.has(m.id) ? { ...m, starred: nextStarred } : m)),
     );
     if (!operations) {
       show(`${result.allWereStarred ? "Unstarred" : "Starred"} ${result.count}`, {
@@ -232,29 +253,30 @@ export function useMailBatchActions({
       return;
     }
     const changed = mail.filter((m) => beforeStarred.has(m.id));
-    void Promise.all(
-      changed.map((message) =>
-        operations.patchMessage(message, { starred: !(beforeStarred.get(message.id) ?? false) }),
-      ),
-    ).catch(() => {
+    const rollback = () => {
       batchToggleStarForIds(selectedIds);
       setMail((prev) =>
         prev.map((m) =>
           beforeStarred.has(m.id) ? { ...m, starred: beforeStarred.get(m.id) ?? !!m.starred } : m,
         ),
       );
-      showMutationError();
+    };
+    runQueuedBatchAction({
+      queueMutation,
+      key: `mail:batch-star:${selectedIds.slice().sort().join(",")}`,
+      toastMessage: `${result.allWereStarred ? "Unstarred" : "Starred"} ${result.count}`,
+      execute: (_signal) =>
+        Promise.all(
+          changed.map((message) =>
+            operations.patchMessage(message, { starred: nextStarred }, { signal: _signal }),
+          ),
+        ).then(() => {}),
+      rollback: () => {
+        rollback();
+      },
+      undoToastMessage: "Star change undone.",
     });
-  }, [
-    selectedIds,
-    starred,
-    batchToggleStarForIds,
-    setMail,
-    operations,
-    show,
-    mail,
-    showMutationError,
-  ]);
+  }, [selectedIds, starred, batchToggleStarForIds, setMail, operations, show, mail, queueMutation]);
 
   const moveManyToMailbox = useCallback(
     (ids: string[], targetMailbox: string, toastLabel: string) => {
