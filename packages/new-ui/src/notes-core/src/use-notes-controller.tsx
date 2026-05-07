@@ -4,6 +4,7 @@ import {
   Archive,
   ArchiveRestore,
   BookOpen,
+  Check,
   Plus,
   Star,
   StarOff,
@@ -67,6 +68,7 @@ export function useNotesController({
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const workspaceLayoutRef = useRef<WorkspaceAppHandle>(null);
+  const autoSaveToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [moveDialog, setMoveDialog] = useState<{ ids: string[] } | null>(null);
   const [editDialog, setEditDialog] = useState<null | { kind: "notebook" | "tag"; name: string }>(
@@ -106,6 +108,24 @@ export function useNotesController({
     (fallback = "Could not sync this change. Please try again.") =>
       show(fallback, { icon: <X className="size-4" /> }),
     [show],
+  );
+  const queueAutoSaveToast = useCallback(() => {
+    if (autoSaveToastTimerRef.current) {
+      clearTimeout(autoSaveToastTimerRef.current);
+    }
+    autoSaveToastTimerRef.current = setTimeout(() => {
+      show("Saved", { icon: <Check className="size-4" /> });
+      autoSaveToastTimerRef.current = null;
+    }, 700);
+  }, [show]);
+
+  useEffect(
+    () => () => {
+      if (autoSaveToastTimerRef.current) {
+        clearTimeout(autoSaveToastTimerRef.current);
+      }
+    },
+    [],
   );
 
   const notebooks = useMemo(
@@ -202,7 +222,7 @@ export function useNotesController({
   const active = notes.length > 0 ? (notes.find((n) => n.id === activeId) ?? notes[0]) : undefined;
 
   const updateAndPersistNote = useCallback(
-    (noteId: string, updater: (note: Note) => Note) => {
+    (noteId: string, updater: (note: Note) => Note, options?: { autoSaveToast?: boolean }) => {
       let updated: Note | undefined;
       setNotes((prev) =>
         prev.map((note) => {
@@ -211,9 +231,16 @@ export function useNotesController({
           return updated;
         }),
       );
-      if (updated && operations) persistBestEffort(operations.upsertNote(updated));
+      if (updated && operations) {
+        const request = operations.upsertNote(updated);
+        if (options?.autoSaveToast) {
+          persistBestEffort(request.then(() => queueAutoSaveToast()));
+          return;
+        }
+        persistBestEffort(request);
+      }
     },
-    [operations],
+    [operations, queueAutoSaveToast],
   );
 
   const toggleStar = useCallback(
@@ -488,15 +515,19 @@ export function useNotesController({
 
   const updateNote = useCallback(
     (id: string, patch: Partial<Note>) => {
-      updateAndPersistNote(id, (note) => {
-        const body = patch.body ?? note.body;
-        return {
-          ...note,
-          ...patch,
-          excerpt: patch.excerpt ?? computeExcerpt(body),
-          wordCount: patch.wordCount ?? computeWordCount(body),
-        };
-      });
+      updateAndPersistNote(
+        id,
+        (note) => {
+          const body = patch.body ?? note.body;
+          return {
+            ...note,
+            ...patch,
+            excerpt: patch.excerpt ?? computeExcerpt(body),
+            wordCount: patch.wordCount ?? computeWordCount(body),
+          };
+        },
+        { autoSaveToast: true },
+      );
     },
     [updateAndPersistNote],
   );
