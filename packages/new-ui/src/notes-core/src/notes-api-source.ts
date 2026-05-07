@@ -1,4 +1,5 @@
 import { createNotesAppBootstrap, type NotesAppBootstrap } from "@/lib/api/mock/notes-bootstrap";
+import { createWorkspaceSource } from "@/lib/api/create-workspace-source";
 import { wgwLiveApiEnabled } from "@/lib/api/wgw/http";
 import {
   archiveNoteItem,
@@ -42,11 +43,7 @@ function createWgwOperations(): NotesAPIOperations {
       }
     },
     deleteNote(note, opts) {
-      return deleteNoteItem(
-        note.id,
-        { notebook: note.notebook, archived: !!note.archived },
-        opts,
-      );
+      return deleteNoteItem(note.id, { notebook: note.notebook, archived: !!note.archived }, opts);
     },
     archiveNote(id, opts) {
       return archiveNoteItem(id, opts);
@@ -67,14 +64,15 @@ function createWgwOperations(): NotesAPIOperations {
 }
 
 export function createDefaultNotesApiSource(): NotesApiSource {
-  if (!wgwLiveApiEnabled()) {
-    return {
+  return createWorkspaceSource<NotesApiSource>({
+    isLive: wgwLiveApiEnabled(),
+    createMockSource: () => ({
       loadBootstrap: () => Promise.resolve(createNotesAppBootstrap()),
       createOperations: () => undefined,
-    };
-  }
-  return {
-    loadBootstrap: fetchNotesLiveBootstrap,
-    createOperations: () => createWgwOperations(),
-  };
+    }),
+    createLiveSource: () => ({
+      loadBootstrap: fetchNotesLiveBootstrap,
+      createOperations: () => createWgwOperations(),
+    }),
+  });
 }
