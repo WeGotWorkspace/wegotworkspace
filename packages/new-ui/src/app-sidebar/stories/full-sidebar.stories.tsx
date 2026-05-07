@@ -100,11 +100,7 @@ export const MailWorkspaceSidebar: Story = {
         />
       </nav>
 
-      <WorkspaceUserFooter
-        name="Elias Linden"
-        initials="EL"
-        logoutTo={false}
-      />
+      <WorkspaceUserFooter name="Elias Linden" initials="EL" onLogoutClick={() => {}} />
     </aside>
   ),
 };
@@ -166,16 +162,17 @@ export const NotesWorkspaceSidebar: Story = {
           addLabel="New notebook"
           items={[
             { label: "Personal", icon: <Folder className="size-3.5" />, onClick: () => {} },
-            { label: "Work", icon: <Folder className="size-3.5" />, selected: true, onClick: () => {} },
+            {
+              label: "Work",
+              icon: <Folder className="size-3.5" />,
+              selected: true,
+              onClick: () => {},
+            },
           ]}
         />
       </nav>
 
-      <WorkspaceUserFooter
-        name="Elias Linden"
-        initials="EL"
-        logoutTo={false}
-      />
+      <WorkspaceUserFooter name="Elias Linden" initials="EL" onLogoutClick={() => {}} />
     </aside>
   ),
 };

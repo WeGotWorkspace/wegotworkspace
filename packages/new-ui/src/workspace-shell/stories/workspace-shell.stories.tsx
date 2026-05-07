@@ -37,9 +37,7 @@ export const Default: Story = {
           "color-mix(in oklab, var(--color-ink) 6%, transparent)",
       }}
     >
-      <WorkspaceSidebar
-        open
-      >
+      <WorkspaceSidebar open>
         <WorkspaceBrandHeader
           onCloseMobile={() => {}}
           appSwitcher={<StorybookAppSwitcherMock workspace="mail" />}
@@ -54,18 +52,11 @@ export const Default: Story = {
             ]}
           />
         </nav>
-        <WorkspaceUserFooter
-          name="Elias Linden"
-          initials="EL"
-          logoutTo={false}
-        />
+        <WorkspaceUserFooter name="Elias Linden" initials="EL" onLogoutClick={() => {}} />
       </WorkspaceSidebar>
       <WorkspaceSidebarScrim open={false} onClick={() => {}} />
       <section className="flex-1 p-6">
-        <WorkspaceSidebarToggle
-          open
-          onToggle={() => {}}
-        />
+        <WorkspaceSidebarToggle open onToggle={() => {}} />
         <h2 className="mt-4 text-2xl" style={{ fontFamily: "var(--font-serif)" }}>
           Workspace shell demo
         </h2>
