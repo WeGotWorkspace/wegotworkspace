@@ -5,36 +5,37 @@ import { AppButton } from "@/app-button/src/app-button";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/tooltip";
 
-export type LabelChipProps = {
+export type TagProps = {
   label: string;
   icon?: ReactNode;
   removable?: boolean;
   onRemove?: () => void;
   removeAriaLabel?: string;
-  className?: string;
+  colors?: {
+    backgroundColor?: string;
+    color?: string;
+  };
 };
 
-export function LabelChip({
+export function Tag({
   label,
   icon,
   removable = false,
   onRemove,
   removeAriaLabel,
-  className,
-}: LabelChipProps) {
+  colors,
+}: TagProps) {
   return (
     <span
-      className={cn(
-        "text-[13px] px-3 py-1.5 rounded-full font-medium inline-flex items-center gap-1 group",
-        className,
-      )}
+      className="font-sans text-[13px] normal-case tracking-normal px-3 py-1.5 rounded-full font-medium inline-flex items-center gap-1 group min-w-0"
       style={{
-        backgroundColor: "color-mix(in oklab, var(--color-ink) 8%, transparent)",
-        color: "var(--color-ink)",
+        backgroundColor:
+          colors?.backgroundColor ?? "color-mix(in oklab, var(--color-ink) 8%, transparent)",
+        color: colors?.color ?? "var(--color-ink)",
       }}
     >
       {icon}
-      <span>{label}</span>
+      <span className="truncate">{label}</span>
       {removable && onRemove ? (
         <button
           type="button"
@@ -46,27 +47,6 @@ export function LabelChip({
         </button>
       ) : null}
     </span>
-  );
-}
-
-export type TagProps = {
-  label: string;
-  /** When `false`, a remove control is shown and `onDelete` should be provided. */
-  readonly?: boolean;
-  onDelete?: () => void;
-  className?: string;
-};
-
-export function Tag({ label, readonly = true, onDelete, className }: TagProps) {
-  return (
-    <LabelChip
-      label={label}
-      icon={<TagIcon className="size-3.5 opacity-70" />}
-      removable={!readonly}
-      onRemove={onDelete}
-      removeAriaLabel={`Remove tag ${label}`}
-      className={className}
-    />
   );
 }
 
@@ -95,8 +75,10 @@ export function TagGroup({
         <Tag
           key={t}
           label={t}
-          readonly={readonly}
-          onDelete={readonly || !onRemoveTag ? undefined : () => onRemoveTag(t)}
+          icon={<TagIcon className="size-3.5 opacity-70" />}
+          removable={!readonly}
+          onRemove={readonly || !onRemoveTag ? undefined : () => onRemoveTag(t)}
+          removeAriaLabel={`Remove tag ${t}`}
         />
       ))}
       {!readonly && onAdd ? (

@@ -606,7 +606,11 @@ export function useNotesController({
       },
       {
         label: allSelectedArchived ? L.swipeUnarchive : L.selectionArchive,
-        icon: <Archive className="size-4" />,
+        icon: allSelectedArchived ? (
+          <ArchiveRestore className="size-4" />
+        ) : (
+          <Archive className="size-4" />
+        ),
         onClick: batchArchive,
         active: allSelectedArchived,
       },

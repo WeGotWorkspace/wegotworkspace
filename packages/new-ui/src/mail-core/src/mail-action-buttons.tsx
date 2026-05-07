@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Archive, Circle, FolderInput, Star, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, Circle, FolderInput, Star, Trash2 } from "lucide-react";
 
 export type MailActionButtonDescriptor = {
   id: "move-to-mailbox" | "mark-read-unread" | "toggle-star" | "toggle-archive" | "toggle-trash";
@@ -55,7 +55,9 @@ export function buildMailActionButtons({
     },
     {
       id: "mark-read-unread",
-      label: isUnread ? (labels?.markRead ?? "Mark as read") : (labels?.markUnread ?? "Mark as unread"),
+      label: isUnread
+        ? (labels?.markRead ?? "Mark as read")
+        : (labels?.markUnread ?? "Mark as unread"),
       icon: (
         <Circle
           className={`size-4 ${isUnread ? "mail-state-accent" : ""}`}
@@ -76,13 +78,19 @@ export function buildMailActionButtons({
     {
       id: "toggle-archive",
       label: isArchived ? (labels?.unarchive ?? "Unarchive") : (labels?.archive ?? "Archive"),
-      icon: <Archive className={`size-4 ${isArchived ? "mail-state-accent" : ""}`} />,
+      icon: isArchived ? (
+        <ArchiveRestore className="size-4 mail-state-accent" />
+      ) : (
+        <Archive className="size-4" />
+      ),
       onClick: toggleArchive,
       active: isArchived,
     },
     {
       id: "toggle-trash",
-      label: isTrashed ? (labels?.restoreFromTrash ?? "Restore from trash") : (labels?.trash ?? "Trash"),
+      label: isTrashed
+        ? (labels?.restoreFromTrash ?? "Restore from trash")
+        : (labels?.trash ?? "Trash"),
       icon: <Trash2 className={`size-4 ${isTrashed ? "mail-state-accent" : ""}`} />,
       onClick: toggleTrash,
       active: isTrashed,
