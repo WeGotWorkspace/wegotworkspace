@@ -1,7 +1,9 @@
 import type { CSSProperties } from "react";
-import { Plus, X } from "lucide-react";
+import { Plus, Tag as TagIcon, X } from "lucide-react";
 
+import { AppButton } from "@/app-button/src/app-button";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/tooltip";
 
 export type TagProps = {
   label: string;
@@ -23,7 +25,8 @@ export function Tag({ label, readonly = true, onDelete, className }: TagProps) {
         color: "var(--color-ink)",
       }}
     >
-      #{label}
+      <TagIcon className="size-3.5 opacity-70" />
+      <span>{label}</span>
       {!readonly && onDelete ? (
         <button
           type="button"
@@ -43,7 +46,7 @@ export type TagGroupProps = {
   /** When `false`, tags are removable and an add control is shown when `onAdd` is set. */
   readonly?: boolean;
   onAdd?: () => void;
-  /** Called with the tag label (without `#`) when a tag is removed. */
+  /** Called with the tag label when a tag is removed. */
   onRemoveTag?: (label: string) => void;
   className?: string;
   style?: CSSProperties;
@@ -68,17 +71,20 @@ export function TagGroup({
         />
       ))}
       {!readonly && onAdd ? (
-        <button
-          type="button"
-          onClick={onAdd}
-          className="text-[13px] px-3 py-1.5 rounded-full font-medium inline-flex items-center gap-1 border border-dashed transition-colors hover:opacity-80"
-          style={{
-            borderColor: "color-mix(in oklab, var(--color-ink) 25%, transparent)",
-            color: "color-mix(in oklab, var(--color-ink) 65%, transparent)",
-          }}
-        >
-          <Plus className="size-3" /> Tag
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div>
+              <AppButton
+                size="icon"
+                variant="subtle"
+                icon={<Plus className="size-3.5" />}
+                onClick={onAdd}
+                ariaLabel="Add tag"
+              />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>Add tag</TooltipContent>
+        </Tooltip>
       ) : null}
     </div>
   );
