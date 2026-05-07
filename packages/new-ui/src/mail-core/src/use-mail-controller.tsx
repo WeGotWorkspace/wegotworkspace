@@ -1,15 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FileEdit, Star, StarOff, X } from "lucide-react";
-import { FloatingActionBar } from "@/floating-action-bar/src/floating-action-bar";
 import { useAppToast } from "@/hooks/use-app-toast";
 import { useConfirmDialog } from "@/hooks/use-confirm-dialog";
-import { useIsTouch } from "@/hooks/use-is-touch";
-import { useSelectableListState } from "@/hooks/use-selectable-list-state";
-import { useSidebarListDrag } from "@/hooks/use-sidebar-list-drag";
 import { useStarredMap } from "@/hooks/use-starred-map";
-import { useEntityBatchActions } from "@/hooks/use-entity-batch-actions";
-import { useListKeyboardNavigation } from "@/hooks/use-list-keyboard-navigation";
-import { useQueuedMutation } from "@/hooks/use-queued-mutation";
+import { useIsTouch } from "@/hooks/use-is-touch";
+import { useWorkspaceListController } from "@/hooks/use-workspace-list-controller";
 import { useWorkspaceListKeyboardShortcuts } from "@/hooks/use-workspace-list-keyboard-shortcuts";
 import type { WorkspaceAppHandle } from "@/workspace-app/src/workspace-app";
 import type { Mail, MailAttachment } from "@/types/mail";
@@ -134,10 +129,6 @@ export function useMailController({
       show(fallback, { icon: <X className="size-4" /> }),
     [show],
   );
-  const { queueMutation, undoLatest } = useQueuedMutation({
-    delayMs: WRITE_QUEUE_DELAY_MS,
-    onMutationError: showMutationError,
-  });
 
   const [loadingMailbox, setLoadingMailbox] = useState<string | null>(null);
   const [unreadBadgeDeltas, setUnreadBadgeDeltas] = useState<Record<string, number>>({});
@@ -375,17 +366,27 @@ export function useMailController({
     enterSelectionFor,
     exitSelection,
     selectSingle,
-  } = useSelectableListState({
-    initialId: undefined,
+    isItemDragging,
+    itemDragHandlers,
+    sidebarDropZoneProps,
+    beginOptimisticUpdate,
+    queueMutation,
+    undoLatest,
+    navigateListByKeyboard,
+  } = useWorkspaceListController<Mail>({
+    items: mail,
+    setItems: setMail,
     visibleIds: visibleMail.map((m) => m.id),
+    activeId,
+    setActiveId,
     onPrimarySelect: (id) => {
       setActiveId(id);
       workspaceLayoutRef.current?.openMobileDetail();
     },
+    onNavigateToId: () => workspaceLayoutRef.current?.openMobileDetail(),
+    onMutationError: showMutationError,
+    queueDelayMs: WRITE_QUEUE_DELAY_MS,
   });
-
-  const { isItemDragging, itemDragHandlers, sidebarDropZoneProps } =
-    useSidebarListDrag(selectedIds);
 
   useEffect(() => {
     setSelectedIds([]);
@@ -393,13 +394,6 @@ export function useMailController({
   }, [view, setSelectedIds, setSelectionMode]);
 
   const active: Mail | undefined = activeId ? mail.find((m) => m.id === activeId) : undefined;
-  const { beginOptimisticUpdate } = useEntityBatchActions<Mail>({
-    items: mail,
-    setItems: setMail,
-    visibleIds: visibleMail.map((m) => m.id),
-    activeId,
-    setActiveId,
-  });
   const inTrash = view === "mb:Trash";
   const effectiveStarred = useMemo(() => {
     const merged: Record<string, boolean> = {};
@@ -553,16 +547,6 @@ export function useMailController({
       dialogCancel: L.dialogCancel,
     },
     batchToggleStarForIds,
-  });
-
-  const { navigateListByKeyboard } = useListKeyboardNavigation({
-    visibleIds: visibleMail.map((row) => row.id),
-    activeId,
-    selectedIds,
-    setActiveId,
-    setSelectionMode,
-    setSelectedIds,
-    onNavigateToId: () => workspaceLayoutRef.current?.openMobileDetail(),
   });
 
   useWorkspaceListKeyboardShortcuts({
