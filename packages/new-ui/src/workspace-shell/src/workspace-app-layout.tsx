@@ -3,7 +3,7 @@ import { LogOut, Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { AppButton } from "@/app-button/src/app-button";
 import { SidebarLogo } from "@/sidebar-logo/src/sidebar-logo";
 import { UserAvatar } from "@/user-avatar/src/user-avatar";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 type WorkspaceAppLayoutProps = {
@@ -137,41 +137,43 @@ export function WorkspaceUserFooter({
         }
       />
       {!detailLine ? <div className="flex-1 min-w-0 text-sm truncate">{name}</div> : null}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          {logoutTo ? (
-            <Link
-              to={logoutTo}
-              aria-label="Log out"
-              className={`size-9 rounded-full flex items-center justify-center transition-colors ${linkHoverClassName}`}
-              style={{
-                color:
-                  "var(--workspace-user-footer-link-color, color-mix(in oklab, var(--color-ink) 65%, transparent))",
-                backgroundColor:
-                  "var(--workspace-user-footer-link-bg, color-mix(in oklab, var(--color-ink) 6%, transparent))",
-              }}
-            >
-              <LogOut className="size-4" />
-            </Link>
-          ) : (
-            <AppButton
-              icon={<LogOut className="size-4" />}
-              ariaLabel="Log out"
-              onClick={onLogoutClick}
-              size="icon"
-              variant="subtle"
-              className={`size-9 rounded-full ${linkHoverClassName}`}
-              style={{
-                color:
-                  "var(--workspace-user-footer-link-color, color-mix(in oklab, var(--color-ink) 65%, transparent))",
-                backgroundColor:
-                  "var(--workspace-user-footer-link-bg, color-mix(in oklab, var(--color-ink) 6%, transparent))",
-              }}
-            />
-          )}
-        </TooltipTrigger>
-        <TooltipContent>Log out</TooltipContent>
-      </Tooltip>
+      <TooltipProvider delayDuration={300}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            {logoutTo ? (
+              <Link
+                to={logoutTo}
+                aria-label="Log out"
+                className={`size-9 rounded-full flex items-center justify-center transition-colors ${linkHoverClassName}`}
+                style={{
+                  color:
+                    "var(--workspace-user-footer-link-color, color-mix(in oklab, var(--color-ink) 65%, transparent))",
+                  backgroundColor:
+                    "var(--workspace-user-footer-link-bg, color-mix(in oklab, var(--color-ink) 6%, transparent))",
+                }}
+              >
+                <LogOut className="size-4" />
+              </Link>
+            ) : (
+              <AppButton
+                icon={<LogOut className="size-4" />}
+                ariaLabel="Log out"
+                onClick={onLogoutClick}
+                size="icon"
+                variant="subtle"
+                className={`size-9 rounded-full ${linkHoverClassName}`}
+                style={{
+                  color:
+                    "var(--workspace-user-footer-link-color, color-mix(in oklab, var(--color-ink) 65%, transparent))",
+                  backgroundColor:
+                    "var(--workspace-user-footer-link-bg, color-mix(in oklab, var(--color-ink) 6%, transparent))",
+                }}
+              />
+            )}
+          </TooltipTrigger>
+          <TooltipContent>Log out</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
   );
 }
