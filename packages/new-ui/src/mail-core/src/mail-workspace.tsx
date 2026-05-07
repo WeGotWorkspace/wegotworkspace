@@ -198,7 +198,9 @@ export function MailWorkspace({
               name={session.user.displayName}
               initials={workspaceUserInitials(session.user)}
               detailLine={session.user.username}
-              logoutTo={logoutTo}
+              onLogoutClick={() => {
+                if (logoutTo) window.location.assign(logoutTo);
+              }}
               linkHoverClassName="hover:bg-[color-mix(in_oklab,var(--color-ink)_18%,transparent)] hover:text-[var(--color-ink)]"
             />
           </AppSidebar>
