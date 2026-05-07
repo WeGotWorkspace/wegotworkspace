@@ -126,11 +126,60 @@ export async function wgwFetchPrincipal(): Promise<WorkspaceSession> {
   const res = await wgwFetch("/me");
   if (!res.ok) throw new Error(`GET /me failed (${res.status})`);
   const j = (await wgwReadJson(res)) as Record<string, unknown>;
-  const username = typeof j.username === "string" ? j.username : "User";
+  const meUsername = typeof j.username === "string" ? j.username : "User";
+
+  // Keep identity consistent with Settings when available.
+  let settingsUser:
+    | {
+        username?: string;
+        displayName?: string;
+        email?: string;
+      }
+    | undefined;
+  try {
+    const settingsRes = await wgwFetch("/settings/state");
+    if (settingsRes.ok) {
+      const settingsJson = (await wgwReadJson(settingsRes)) as Record<string, unknown>;
+      const user = settingsJson.user;
+      if (user && typeof user === "object") {
+        const candidate = user as Record<string, unknown>;
+        settingsUser = {
+          username: typeof candidate.username === "string" ? candidate.username : undefined,
+          displayName:
+            typeof candidate.displayName === "string" ? candidate.displayName : undefined,
+          email: typeof candidate.email === "string" ? candidate.email : undefined,
+        };
+      }
+    }
+  } catch {
+    // Optional enrichment only; /me remains the fallback source.
+  }
+
+  const username = settingsUser?.username?.trim() || meUsername;
+  const explicitDisplayName =
+    typeof settingsUser?.displayName === "string"
+      ? settingsUser.displayName
+      : typeof j.displayName === "string"
+        ? j.displayName
+        : typeof j.displayname === "string"
+          ? j.displayname
+          : typeof j.name === "string"
+            ? j.name
+            : null;
+  const normalizedDisplayName =
+    explicitDisplayName?.trim() ||
+    username
+      .trim()
+      .split(/[._-]+/)
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ") ||
+    "User";
   const user = {
-    displayName: username,
-    initials: workspaceUserInitials({ displayName: username }),
-    email: typeof j.email === "string" ? j.email : undefined,
+    displayName: normalizedDisplayName,
+    initials: workspaceUserInitials({ displayName: normalizedDisplayName }),
+    username,
+    email: settingsUser?.email ?? (typeof j.email === "string" ? j.email : undefined),
   };
   return { user, viewerInboxLabel: "me" };
 }

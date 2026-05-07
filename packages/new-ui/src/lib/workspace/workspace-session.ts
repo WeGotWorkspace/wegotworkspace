@@ -3,6 +3,8 @@ export type WorkspaceUser = {
   initials?: string;
   /** Primary account email (e.g. compose identity, signatures). */
   email?: string;
+  /** Account login/handle shown in sidebar footers and account context. */
+  username?: string;
 };
 
 /**
