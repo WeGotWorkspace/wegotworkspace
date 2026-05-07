@@ -55,16 +55,19 @@ export function CollectionListWorkspace({
     <CollectionListPane detailOpenMobile={detailOpenMobile}>
       <CollectionHeader>{header}</CollectionHeader>
 
-      <div className="flex-1 overflow-y-auto notes-swipe-list">
-        {listContent}
-        {!hasItems ? (
+      <div
+        className={`flex-1 notes-swipe-list ${hasItems ? "overflow-y-auto" : "overflow-y-hidden"}`}
+      >
+        {hasItems ? (
+          listContent
+        ) : (
           <div
             className="p-10 text-center text-sm"
             style={{ color: "color-mix(in oklab, var(--color-ink) 50%, transparent)" }}
           >
             {emptyLabel}
           </div>
-        ) : null}
+        )}
       </div>
 
       {floatingActionBar}
