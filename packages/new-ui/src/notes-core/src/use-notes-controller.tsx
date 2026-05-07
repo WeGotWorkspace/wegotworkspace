@@ -668,7 +668,7 @@ export function useNotesController({ data, labels, listLoading = false, operatio
   ];
   const selectionBar =
     selectionMode || selectedIds.length > 1 ? (
-      <FloatingActionBar items={selectedIds.length} buttons={selectionBarButtons} />
+      <FloatingActionBar items={selectedIds.length} buttons={selectionBarButtons} className="md:hidden" />
     ) : null;
 
   return {
