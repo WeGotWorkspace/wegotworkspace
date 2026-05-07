@@ -12,6 +12,7 @@ import { WorkspaceApp } from "@/workspace-app/src/workspace-app";
 import { WorkspaceUserFooter } from "@/workspace-shell/src/workspace-app-layout";
 import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
 import { NotesDetailActionBar } from "@/notes-core/src/notes-detail-action-bar";
+import { formatNoteDateForDetail } from "@/notes-core/src/notes-date-utils";
 import { NotesListPanel } from "@/notes-core/src/notes-list-panel";
 import { useNotesController } from "@/notes-core/src/use-notes-controller";
 import { useNotesSidebarModel } from "@/notes-core/src/use-notes-sidebar-model";
@@ -212,7 +213,8 @@ export function NotesWorkspace({
             <NoteDetailView
               noteId={active.id}
               notebook={active.notebook}
-              lastEdited={active.date}
+              lastEdited={formatNoteDateForDetail(active.date)}
+              editedLabel="Last edited "
               title={active.title}
               onTitleChange={(value) => updateNote(active.id, { title: value })}
               tags={active.tags}

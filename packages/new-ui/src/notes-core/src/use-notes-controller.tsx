@@ -538,11 +538,7 @@ export function useNotesController({
     const targetNotebook = view.startsWith("nb:") ? view.slice(3) : (notebooks[0] ?? "Drafts");
     const targetTag = view.startsWith("tag:") ? view.slice(4) : null;
     const id = `n-${Date.now()}`;
-    const date = new Date().toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+    const date = new Date().toISOString();
     const note: Note = {
       id,
       category: L.newNoteCategory,

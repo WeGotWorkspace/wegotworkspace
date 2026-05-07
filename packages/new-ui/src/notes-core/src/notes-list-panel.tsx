@@ -4,6 +4,7 @@ import { ListAction } from "@/action-buttons/src/action-buttons";
 import { ListHeader } from "@/list-header/src/list-header";
 import { ListItem } from "@/list-item/src/list-item";
 import type { Note } from "@/lib/models/note";
+import { formatNoteDateForList } from "@/notes-core/src/notes-date-utils";
 import type { NotesUILabels } from "@/notes-core/src/notes-app.stories.fixtures";
 import { WorkspaceListLoadingState } from "@/workspace-list-state/src/workspace-list-loading-state";
 import { WorkspaceSwipeList } from "@/workspace-swipe-list/src/workspace-swipe-list";
@@ -148,7 +149,7 @@ export function NotesListPanel({
               id={note.id}
               title={note.title}
               subtitle={note.notebook}
-              date={note.date}
+              date={formatNoteDateForList(note.date)}
               text={note.excerpt}
               icons={[
                 <Star
