@@ -1,4 +1,4 @@
-import { Archive, ArchiveRestore, FolderInput, Star } from "lucide-react";
+import { Archive, ArchiveRestore, BookOpen, Star } from "lucide-react";
 import { ToolbarButton } from "@/action-buttons/src/action-buttons";
 import { ActionBar } from "@/action-bar/src/action-bar";
 import type { Note } from "@/lib/models/note";
@@ -38,7 +38,7 @@ export function NotesDetailActionBar({
             label={labels.toolbarMoveToNotebook}
             onClick={() => openMoveDialog([active.id])}
           >
-            <FolderInput className="size-4" />
+            <BookOpen className="size-4" />
           </ToolbarButton>
           <ToolbarButton
             label={labels.toolbarStar}
