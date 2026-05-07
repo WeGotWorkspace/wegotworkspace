@@ -13,6 +13,16 @@ import type {
   MailMoveRequest,
   MailStatusResponse,
 } from "@wgw-api-generated/mail-types";
+import type {
+  NotesCapabilitiesResponse,
+  NotesStateResponse,
+  NotesItemsResponse,
+  NoteItem,
+  NoteUpsertRequest,
+  NoteDeleteRequest,
+  NotebookListItem,
+  NotebookListResponse,
+} from "@wgw-api-generated/notes-types";
 
 export type WgwMailStatusResponse = MailStatusResponse & {
   extImap?: boolean;
@@ -93,59 +103,24 @@ export type WgwMailMoveRequest = MailMoveRequest & {
 export type WgwMailDraftRequest = MailDraftRequest;
 export type WgwMailSendRequest = MailSendRequest;
 
-export type WgwNotesCapabilitiesResponse = {
-  enabled?: boolean;
-  distReady?: boolean;
-  baseUri?: string;
-};
+export type WgwNotesCapabilitiesResponse = NotesCapabilitiesResponse;
 
-export type WgwNotesStateResponse = {
-  baseUri?: string;
-  username?: string;
-  displayName?: string;
-  logoutUrl?: string;
-  notesPath?: string;
-  filesEnabled?: boolean;
-  distReady?: boolean;
-};
+export type WgwNotesStateResponse = NotesStateResponse;
 
-/** Row from `GET /notes/items`. */
-export type WgwNoteItem = {
-  id: string;
-  notebook: string;
+/** Row from `GET /notes/items`, with optional-friendly narrowing for older payloads. */
+export type WgwNoteItem = Omit<NoteItem, "title" | "body" | "tags" | "starred"> & {
   title?: string;
   body?: string;
   tags?: string[];
   starred?: boolean;
-  archived?: boolean;
-  updatedAt?: string;
 };
 
-export type WgwNotesItemsResponse = {
-  items: WgwNoteItem[];
-};
+export type WgwNotesItemsResponse = NotesItemsResponse;
 
-export type WgwNoteUpsertRequest = {
-  id?: string;
-  notebook?: string;
-  title?: string;
-  body?: string;
-  tags?: string[];
-  starred?: boolean;
-  archived?: boolean;
-};
+export type WgwNoteUpsertRequest = NoteUpsertRequest;
 
-export type WgwNoteDeleteRequest = {
-  notebook?: string;
-  archived?: boolean;
-};
+export type WgwNoteDeleteRequest = NoteDeleteRequest;
 
-export type WgwNotebookListItem = {
-  name: string;
-  activeCount?: number;
-  archivedCount?: number;
-};
+export type WgwNotebookListItem = NotebookListItem;
 
-export type WgwNotebookListResponse = {
-  items: WgwNotebookListItem[];
-};
+export type WgwNotebookListResponse = NotebookListResponse;

@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { NotesUI } from "@/notes-ui/src/notes-ui";
+import { NotesWorkspace } from "@/notes-core/src/notes-workspace";
 import { createNotesAppBootstrap } from "@/lib/api/mock/notes-bootstrap";
 import { notesSeedDataFromWgwSamples } from "@/lib/api/mock/notes-wgw-story-seed";
-import { notesStoryLabels } from "../src/notes-app.stories.fixtures";
+import { notesStoryLabels } from "@/notes-core/src/notes-app.stories.fixtures";
 
-const meta: Meta<typeof NotesUI> = {
+const meta: Meta<typeof NotesWorkspace> = {
   title: "Apps/Notes/Full App",
-  component: NotesUI,
+  component: NotesWorkspace,
   parameters: {
     layout: "fullscreen",
     routerPath: "/notes",
@@ -14,7 +14,7 @@ const meta: Meta<typeof NotesUI> = {
 };
 
 export default meta;
-type Story = StoryObj<typeof NotesUI>;
+type Story = StoryObj<typeof NotesWorkspace>;
 
 export const Default: Story = {
   args: {

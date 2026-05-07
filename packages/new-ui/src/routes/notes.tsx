@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { NotesAppRoot } from "@/notes-ui/src/notes-app-root";
+import { NotesApp } from "@/notes-core/src/notes-app";
 import { createPwaHead } from "@/lib/pwa-head";
 
 export const Route = createFileRoute("/notes")({
@@ -17,5 +17,5 @@ export const Route = createFileRoute("/notes")({
 });
 
 function NotesRoute() {
-  return <NotesAppRoot />;
+  return <NotesApp />;
 }
