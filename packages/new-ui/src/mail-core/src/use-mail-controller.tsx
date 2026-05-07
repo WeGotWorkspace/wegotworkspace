@@ -486,8 +486,10 @@ export function useMailController({
 
   const toggleStar = useCallback(
     (id: string) => {
-      const beforeStarred = mail.find((m) => m.id === id)?.starred ?? false;
-      const nowStarred = applyStarToggle(id);
+      const result = batchToggleStarForIds([id]);
+      if (!result) return;
+      const beforeStarred = result.allWereStarred;
+      const nowStarred = !result.allWereStarred;
       setMail((prev) => prev.map((m) => (m.id === id ? { ...m, starred: nowStarred } : m)));
       if (!operations) {
         show(nowStarred ? "Starred" : "Unstarred", {
@@ -501,13 +503,24 @@ export function useMailController({
       }
       const message = mail.find((m) => m.id === id);
       if (!message) return;
-      void operations.patchMessage(message, { starred: nowStarred }).catch(() => {
-        applyStarToggle(id);
+      const rollback = () => {
+        batchToggleStarForIds([id]);
         setMail((prev) => prev.map((m) => (m.id === id ? { ...m, starred: beforeStarred } : m)));
-        showMutationError();
+      };
+      queueMutation({
+        key: `mail:star:${id}`,
+        toastMessage: nowStarred ? "Starred" : "Unstarred",
+        execute: (_signal) =>
+          operations.patchMessage(message, { starred: nowStarred }, { signal: _signal }),
+        undo: rollback,
+        onError: () => {
+          rollback();
+          showMutationError();
+        },
+        undoToastMessage: "Star change undone.",
       });
     },
-    [applyStarToggle, show, operations, mail, showMutationError],
+    [batchToggleStarForIds, show, operations, mail, queueMutation, showMutationError],
   );
 
   const {
@@ -532,7 +545,6 @@ export function useMailController({
     encodeFolderToken,
     operations,
     show,
-    showMutationError,
     queueMutation,
     refreshMailboxCache,
     beginOptimisticUpdate,
