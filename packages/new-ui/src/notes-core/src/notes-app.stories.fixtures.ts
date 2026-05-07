@@ -4,6 +4,7 @@ import { workspaceDestructiveDialogLabels } from "@/lib/workspace/destructive-di
  * Mock copy + label bundle for Notes stories and route wiring.
  */
 export type NotesUILabels = {
+  listLoading: string;
   searchPlaceholder: string;
   sidebarAllItems: string;
   sidebarStarred: string;
@@ -47,6 +48,7 @@ export type NotesUILabels = {
 };
 
 export const notesStoryLabels: NotesUILabels = {
+  listLoading: "Loading notes…",
   searchPlaceholder: "Search notes...",
   sidebarAllItems: "All Items",
   sidebarStarred: "Starred",

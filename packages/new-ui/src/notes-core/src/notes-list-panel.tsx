@@ -5,6 +5,7 @@ import { ListHeader } from "@/list-header/src/list-header";
 import { ListItem } from "@/list-item/src/list-item";
 import type { Note } from "@/lib/models/note";
 import type { NotesUILabels } from "@/notes-core/src/notes-app.stories.fixtures";
+import { WorkspaceListLoadingState } from "@/workspace-list-state/src/workspace-list-loading-state";
 import { WorkspaceSwipeList } from "@/workspace-swipe-list/src/workspace-swipe-list";
 
 type NotesListPanelProps = {
@@ -14,6 +15,7 @@ type NotesListPanelProps = {
   viewLabel: string;
   selectedIds: string[];
   selectionMode: boolean;
+  listLoading: boolean;
   visibleNotes: Note[];
   searchQuery: string;
   setSearchQuery: (value: string) => void;
@@ -45,6 +47,7 @@ export function NotesListPanel({
   viewLabel,
   selectedIds,
   selectionMode,
+  listLoading,
   visibleNotes,
   searchQuery,
   setSearchQuery,
@@ -130,7 +133,9 @@ export function NotesListPanel({
         searchInputRef={searchInputRef}
       />
     ),
-    listContent: (
+    listContent: listLoading ? (
+      <WorkspaceListLoadingState message={L.listLoading} />
+    ) : (
       <WorkspaceSwipeList isTouch={isTouch}>
         {visibleNotes.map((note) => {
           const dragHandlers = itemDragHandlers(note.id) as {
@@ -193,7 +198,7 @@ export function NotesListPanel({
         })}
       </WorkspaceSwipeList>
     ),
-    hasItems: visibleNotes.length > 0,
+    hasItems: listLoading || visibleNotes.length > 0,
     emptyLabel: L.emptyList,
     floatingActionBar: selectionBar,
   };

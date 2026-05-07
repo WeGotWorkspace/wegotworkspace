@@ -157,6 +157,7 @@ export function NotesWorkspace({
             viewLabel,
             selectedIds,
             selectionMode: selectionMode || selectedIds.length > 1,
+            listLoading,
             visibleNotes,
             searchQuery,
             setSearchQuery,
@@ -206,16 +207,7 @@ export function NotesWorkspace({
               />
             );
           }
-          if (!active) {
-            return (
-              <div
-                className="flex flex-1 items-center justify-center p-8 text-sm text-[color-mix(in_oklab,var(--color-ink)_55%,transparent)]"
-                style={{ backgroundColor: "var(--color-paper)" }}
-              >
-                {notes.length === 0 ? L.emptyList : "Select an item."}
-              </div>
-            );
-          }
+          if (!active) return null;
           return (
             <NoteDetailView
               noteId={active.id}
