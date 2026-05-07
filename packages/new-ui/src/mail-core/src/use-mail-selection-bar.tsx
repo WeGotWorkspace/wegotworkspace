@@ -1,10 +1,10 @@
 import { useMemo, type ReactNode } from "react";
-import { X } from "lucide-react";
-import { FloatingActionBar } from "@/floating-action-bar/src/floating-action-bar";
 import {
   buildMailActionButtons,
   type MailActionButtonDescriptor,
 } from "@/mail-core/src/mail-action-buttons";
+import { useWorkspaceSelectionPresentation } from "@/hooks/use-workspace-list-controller";
+import type { WorkspaceActionButton } from "@/hooks/workspace-list-controller-types";
 import type { Mail } from "@/types/mail";
 
 type UseMailSelectionBarArgs = {
@@ -123,26 +123,15 @@ export function useMailSelectionBar({
     ],
   );
 
-  const selectionBarButtons = useMemo<MailSelectionBarButton[]>(
-    () => [
-      ...selectionActionButtons,
-      {
-        label: labels.selectionDone,
-        icon: <X className="size-4" />,
-        onClick: () => exitSelection(activeId),
-      },
-    ],
-    [selectionActionButtons, labels.selectionDone, exitSelection, activeId],
-  );
-
-  const selectionBar =
-    selectionMode || selectedIds.length > 1 ? (
-      <FloatingActionBar
-        items={selectedIds.length}
-        buttons={selectionBarButtons}
-        className="md:hidden"
-      />
-    ) : null;
+  const { selectionBarButtons, selectionBar } = useWorkspaceSelectionPresentation({
+    selectedIds,
+    selectionMode,
+    activeId,
+    exitSelection,
+    actionButtons: selectionActionButtons as WorkspaceActionButton[],
+    doneLabel: labels.selectionDone,
+    floatingClassName: "md:hidden",
+  });
 
   return { selectionBarButtons, selectionBar };
 }
