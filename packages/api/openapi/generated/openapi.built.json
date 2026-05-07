@@ -451,28 +451,118 @@
                     }
                 }
             },
+            "SettingsUserProfile": {
+                "type": "object",
+                "properties": {
+                    "username": {
+                        "type": "string"
+                    },
+                    "displayName": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "username",
+                    "displayName",
+                    "email"
+                ]
+            },
+            "SettingsUserGroup": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "displayName": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "displayName"
+                ]
+            },
+            "SettingsUserGroupList": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/SettingsUserGroup"
+                }
+            },
+            "SettingsUserMail": {
+                "type": "object",
+                "properties": {
+                    "imapUsername": {
+                        "type": "string"
+                    },
+                    "imapHasPassword": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "imapUsername",
+                    "imapHasPassword"
+                ]
+            },
+            "SettingsUserMailServer": {
+                "type": "object",
+                "properties": {
+                    "imapHost": {
+                        "type": "string"
+                    },
+                    "imapPort": {
+                        "type": "integer"
+                    },
+                    "imapSecurity": {
+                        "type": "string"
+                    },
+                    "smtpHost": {
+                        "type": "string"
+                    },
+                    "smtpPort": {
+                        "type": "integer"
+                    },
+                    "smtpSecurity": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "imapHost",
+                    "imapPort",
+                    "imapSecurity",
+                    "smtpHost",
+                    "smtpPort",
+                    "smtpSecurity"
+                ]
+            },
             "SettingsStateResponse": {
                 "type": "object",
                 "properties": {
                     "user": {
-                        "type": "object"
+                        "$ref": "#/components/schemas/SettingsUserProfile"
                     },
                     "groups": {
-                        "type": "array",
-                        "items": {
-                            "type": "object"
-                        }
+                        "$ref": "#/components/schemas/SettingsUserGroupList"
                     },
                     "mail": {
-                        "type": "object"
+                        "$ref": "#/components/schemas/SettingsUserMail"
                     },
                     "mailServer": {
-                        "type": "object"
+                        "$ref": "#/components/schemas/SettingsUserMailServer"
                     },
                     "logoutUrl": {
                         "type": "string"
                     }
-                }
+                },
+                "required": [
+                    "user",
+                    "groups",
+                    "mail",
+                    "mailServer",
+                    "logoutUrl"
+                ]
             },
             "SettingsProfileRequest": {
                 "type": "object",

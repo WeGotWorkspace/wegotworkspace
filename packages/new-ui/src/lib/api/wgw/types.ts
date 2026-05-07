@@ -23,6 +23,14 @@ import type {
   NotebookListItem,
   NotebookListResponse,
 } from "@wgw-api-generated/notes-types";
+import type {
+  SettingsMailRequest,
+  SettingsStateResponse,
+  SettingsUserGroup,
+  SettingsUserMail,
+  SettingsUserMailServer,
+  SettingsUserProfile,
+} from "@wgw-api-generated/settings-types";
 
 export type WgwMailStatusResponse = MailStatusResponse & {
   extImap?: boolean;
@@ -124,3 +132,10 @@ export type WgwNoteDeleteRequest = NoteDeleteRequest;
 export type WgwNotebookListItem = NotebookListItem;
 
 export type WgwNotebookListResponse = NotebookListResponse;
+
+export type WgwSettingsStateResponse = SettingsStateResponse;
+export type WgwSettingsUserProfile = SettingsUserProfile;
+export type WgwSettingsUserGroup = SettingsUserGroup;
+export type WgwSettingsUserMail = SettingsUserMail;
+export type WgwSettingsUserMailServer = SettingsUserMailServer;
+export type WgwSettingsMailRequest = SettingsMailRequest;
