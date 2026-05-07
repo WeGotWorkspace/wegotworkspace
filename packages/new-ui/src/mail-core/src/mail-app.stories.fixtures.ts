@@ -1,3 +1,5 @@
+import { workspaceDestructiveDialogLabels } from "@/lib/workspace/destructive-dialog";
+
 /**
  * Mock copy + label bundle for Mail stories and dev route wiring.
  * Treat as the stand-in for strings you'd later load from an API or i18n.
@@ -83,14 +85,14 @@ export const mailStoryLabels: MailUILabels = {
   toolbarStar: "Star",
   toolbarArchive: "Archive",
   toolbarRestore: "Restore",
-  dialogCancel: "Cancel",
-  dialogDelete: "Delete",
+  dialogCancel: workspaceDestructiveDialogLabels.dialogCancel,
+  dialogDelete: workspaceDestructiveDialogLabels.dialogDelete,
   dialogEmptyTrashTitle: "Empty trash?",
   dialogDeleteMessagesTitle: (count) => `Delete ${count} message${count === 1 ? "" : "s"}?`,
   dialogEmptyTrashDescription: (count) => `all ${count} message${count === 1 ? "" : "s"} in trash`,
   dialogDeleteSelectedDescription: "the selected messages",
-  dialogDeleteConfirmSuffix: "This action cannot be undone.",
-  dialogPermanentDeleteLeadIn: "This will permanently delete ",
+  dialogDeleteConfirmSuffix: workspaceDestructiveDialogLabels.dialogDeleteConfirmSuffix,
+  dialogPermanentDeleteLeadIn: workspaceDestructiveDialogLabels.dialogPermanentDeleteLeadIn,
 };
 
 export function mergeMailLabels(overrides?: Partial<MailUILabels>): MailUILabels {
