@@ -1,6 +1,7 @@
 import { BookOpen, CalendarDays } from "lucide-react";
+import { DetailViewHeader } from "@/detail-view-header/src/detail-view-header";
 import { EditableText } from "@/editable-text/src/editable-text";
-import { Tag, TagGroup } from "@/tag/src/tag";
+import { TagGroup } from "@/tag/src/tag";
 import { cn } from "@/lib/utils";
 
 export type NoteDetailViewProps = {
@@ -45,36 +46,39 @@ export function NoteDetailView({
 
   return (
     <article className={cn("max-w-[680px] mx-auto", className)}>
-      {(notebook != null && notebook !== "") || (lastEdited != null && lastEdited !== "") ? (
-        <div className="flex items-center gap-2 md:gap-3 mb-5">
-          {notebook != null && notebook !== "" ? (
-            <div className="max-w-[260px]">
-              <Tag label={notebook} icon={<BookOpen className="size-3.5 opacity-70" />} />
-            </div>
-          ) : null}
-          {lastEdited != null && lastEdited !== "" ? (
-            <Tag
-              label={`${editedLabel}${lastEdited}`}
-              icon={<CalendarDays className="size-3.5 opacity-70" />}
-              colors={{
-                backgroundColor: "color-mix(in oklab, var(--color-ink) 6%, transparent)",
-                color: "color-mix(in oklab, var(--color-ink) 58%, transparent)",
-              }}
-            />
-          ) : null}
-        </div>
-      ) : null}
-
-      <EditableText
-        key={`${noteId}-title`}
-        value={title ?? ""}
-        onChange={onTitleChange ?? (() => {})}
-        as="h1"
-        editable={editable}
-        className="text-3xl md:text-4xl font-semibold leading-[1.1] tracking-tight mb-8 md:mb-10 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-sm"
-        style={{ fontFamily: "var(--font-sans)", color: "var(--color-ink)" }}
-        singleLine
-        placeholder="Untitled"
+      <DetailViewHeader
+        topTags={[
+          ...(notebook != null && notebook !== ""
+            ? [
+                {
+                  key: "notebook",
+                  label: notebook,
+                  icon: <BookOpen className="size-3.5 opacity-70" />,
+                  wrapperClassName: "max-w-[260px]",
+                },
+              ]
+            : []),
+          ...(lastEdited != null && lastEdited !== ""
+            ? [
+                {
+                  key: "edited",
+                  label: `${editedLabel}${lastEdited}`,
+                  icon: <CalendarDays className="size-3.5 opacity-70" />,
+                  colors: {
+                    backgroundColor: "color-mix(in oklab, var(--color-ink) 6%, transparent)",
+                    color: "color-mix(in oklab, var(--color-ink) 58%, transparent)",
+                  },
+                },
+              ]
+            : []),
+        ]}
+        title={title ?? ""}
+        editable={!readOnly}
+        onTitleChange={onTitleChange}
+        titleKey={`${noteId}-title`}
+        titleClassName="text-3xl md:text-4xl font-semibold leading-[1.1] tracking-tight mb-8 md:mb-10"
+        titleStyle={{ fontFamily: "var(--font-sans)", color: "var(--color-ink)" }}
+        titlePlaceholder="Untitled"
       />
 
       <TagGroup
