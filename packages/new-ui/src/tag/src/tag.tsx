@@ -1,19 +1,27 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { Plus, Tag as TagIcon, X } from "lucide-react";
 
 import { AppButton } from "@/app-button/src/app-button";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/tooltip";
 
-export type TagProps = {
+export type LabelChipProps = {
   label: string;
-  /** When `false`, a remove control is shown and `onDelete` should be provided. */
-  readonly?: boolean;
-  onDelete?: () => void;
+  icon?: ReactNode;
+  removable?: boolean;
+  onRemove?: () => void;
+  removeAriaLabel?: string;
   className?: string;
 };
 
-export function Tag({ label, readonly = true, onDelete, className }: TagProps) {
+export function LabelChip({
+  label,
+  icon,
+  removable = false,
+  onRemove,
+  removeAriaLabel,
+  className,
+}: LabelChipProps) {
   return (
     <span
       className={cn(
@@ -25,19 +33,40 @@ export function Tag({ label, readonly = true, onDelete, className }: TagProps) {
         color: "var(--color-ink)",
       }}
     >
-      <TagIcon className="size-3.5 opacity-70" />
+      {icon}
       <span>{label}</span>
-      {!readonly && onDelete ? (
+      {removable && onRemove ? (
         <button
           type="button"
-          onClick={onDelete}
-          aria-label={`Remove tag ${label}`}
+          onClick={onRemove}
+          aria-label={removeAriaLabel ?? `Remove ${label}`}
           className="opacity-50 hover:opacity-100 transition-opacity"
         >
           <X className="size-3" />
         </button>
       ) : null}
     </span>
+  );
+}
+
+export type TagProps = {
+  label: string;
+  /** When `false`, a remove control is shown and `onDelete` should be provided. */
+  readonly?: boolean;
+  onDelete?: () => void;
+  className?: string;
+};
+
+export function Tag({ label, readonly = true, onDelete, className }: TagProps) {
+  return (
+    <LabelChip
+      label={label}
+      icon={<TagIcon className="size-3.5 opacity-70" />}
+      removable={!readonly}
+      onRemove={onDelete}
+      removeAriaLabel={`Remove tag ${label}`}
+      className={className}
+    />
   );
 }
 
