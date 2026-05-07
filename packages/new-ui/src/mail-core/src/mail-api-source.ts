@@ -1,4 +1,5 @@
 import { createMailAppBootstrap, type MailAppBootstrap } from "@/lib/api/mock/mail-bootstrap";
+import { createWorkspaceSource } from "@/lib/api/create-workspace-source";
 import { wgwLiveApiEnabled } from "@/lib/api/wgw/http";
 import {
   deleteMailMessage,
@@ -74,17 +75,17 @@ function createWgwOperations(mailboxLoader?: MailMailboxLoader): MailAPIOperatio
 }
 
 export function createDefaultMailApiSource(): MailApiSource {
-  if (!wgwLiveApiEnabled()) {
-    return {
+  return createWorkspaceSource<MailApiSource>({
+    isLive: wgwLiveApiEnabled(),
+    createMockSource: () => ({
       loadBootstrap: () => Promise.resolve(createMailAppBootstrap()),
       systemMailboxes: [...WGW_UI_SYSTEM_MAILBOXES] as const,
       createOperations: () => undefined,
-    };
-  }
-
-  return {
-    loadBootstrap: fetchMailLiveBootstrap,
-    systemMailboxes: [...WGW_UI_SYSTEM_MAILBOXES] as const,
-    createOperations: (mailboxLoader) => createWgwOperations(mailboxLoader),
-  };
+    }),
+    createLiveSource: () => ({
+      loadBootstrap: fetchMailLiveBootstrap,
+      systemMailboxes: [...WGW_UI_SYSTEM_MAILBOXES] as const,
+      createOperations: (mailboxLoader) => createWgwOperations(mailboxLoader),
+    }),
+  });
 }
