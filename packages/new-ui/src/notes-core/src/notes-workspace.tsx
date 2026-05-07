@@ -25,6 +25,12 @@ export function NotesWorkspace({
   listLoading = false,
   logoutTo = "/",
 }: NotesWorkspaceProps) {
+  const closeSidebarOnMobile = (closeSidebar: () => void) => {
+    if (typeof window === "undefined") return;
+    if (!window.matchMedia("(max-width: 767px)").matches) return;
+    closeSidebar();
+  };
+
   const {
     L,
     notes,
@@ -130,7 +136,10 @@ export function NotesWorkspace({
               <AppButton
                 label={L.newNote}
                 icon={<Pencil className="size-4" />}
-                onClick={createNote}
+                onClick={() => {
+                  createNote();
+                  closeSidebarOnMobile(c.closeSidebar);
+                }}
                 size="pill"
                 variant="primary"
                 disabled={!canCreateNote}
