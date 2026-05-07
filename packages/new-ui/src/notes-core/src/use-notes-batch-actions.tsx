@@ -70,19 +70,31 @@ export function useNotesBatchActions({
       const target = ids ?? selectedIds;
       if (target.length === 0) return;
       const rows = notes.filter((note) => target.includes(note.id));
+      if (rows.length === 0) return;
+      const previousNotes = notes;
+      const previousSelectedIds = selectedIds;
+      const shouldExitSelection = target.length === selectedIds.length && selectedIds.length > 0;
       setNotes((prev) => prev.filter((note) => !target.includes(note.id)));
       setSelectedIds((prev) => prev.filter((id) => !target.includes(id)));
-      if (target.length === selectedIds.length) setSelectionMode(false);
-      if (operations) {
-        rows.forEach((note) => {
-          void operations.deleteNote(note).catch(() => {});
-        });
-      }
-      show(`Deleted ${target.length} item${target.length === 1 ? "" : "s"}`, {
-        icon: <Trash2 className="size-4" />,
+      if (shouldExitSelection) setSelectionMode(false);
+      const rollback = () => {
+        setNotes(previousNotes);
+        setSelectedIds(previousSelectedIds);
+        if (previousSelectedIds.length > 0) setSelectionMode(true);
+      };
+      queueMutation({
+        key: `notes:delete:${target.slice().sort().join(",")}`,
+        toastMessage: `Deleted ${target.length} item${target.length === 1 ? "" : "s"}`,
+        execute: () =>
+          operations
+            ? Promise.all(rows.map((note) => operations.deleteNote(note))).then(() => {})
+            : Promise.resolve(),
+        undo: rollback,
+        onError: rollback,
+        undoToastMessage: "Deletion undone.",
       });
     },
-    [notes, operations, selectedIds, setNotes, setSelectedIds, setSelectionMode, show],
+    [notes, operations, queueMutation, selectedIds, setNotes, setSelectedIds, setSelectionMode],
   );
 
   const openDeleteConfirm = useCallback(
