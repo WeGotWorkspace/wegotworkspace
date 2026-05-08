@@ -11,7 +11,7 @@ import {
   WorkspaceSidebarToggle,
   WorkspaceUserFooter,
 } from "@/workspace-shell/src/workspace-app-layout";
-import { FormCard } from "@/form-card/src/form-card";
+import { Card } from "@/card/src/card";
 import { FormField } from "@/form-field/src/form-field";
 import { useSettingsController } from "@/settings-core/src/use-settings-controller";
 import type { SettingsWorkspaceProps } from "@/settings-core/src/settings-workspace-props";
@@ -117,7 +117,7 @@ export function SettingsWorkspace(props: SettingsWorkspaceProps) {
           <div className="max-w-2xl mx-auto px-4 md:px-8 py-8 md:py-12">
             {controller.section === "profile" && (
               <>
-                <FormCard title="Identity">
+                <Card title="Identity">
                   <FormField label="Username" readOnly>
                     <Input
                       value={controller.profile.username}
@@ -160,9 +160,9 @@ export function SettingsWorkspace(props: SettingsWorkspaceProps) {
                       }}
                     />
                   </div>
-                </FormCard>
+                </Card>
 
-                <FormCard title="Password">
+                <Card title="Password">
                   <FormField label="New password">
                     <Input
                       type="password"
@@ -197,12 +197,12 @@ export function SettingsWorkspace(props: SettingsWorkspaceProps) {
                       }}
                     />
                   </div>
-                </FormCard>
+                </Card>
               </>
             )}
 
             {controller.section === "memberships" && (
-              <FormCard title="Groups">
+              <Card title="Groups">
                 <ul
                   className="divide-y"
                   style={{
@@ -242,12 +242,12 @@ export function SettingsWorkspace(props: SettingsWorkspaceProps) {
                     </li>
                   ))}
                 </ul>
-              </FormCard>
+              </Card>
             )}
 
             {controller.section === "mail" && (
               <>
-                <FormCard title="Credentials">
+                <Card title="Credentials">
                   <FormField label="Username">
                     <Input
                       value={controller.mail.imapUsername}
@@ -279,9 +279,9 @@ export function SettingsWorkspace(props: SettingsWorkspaceProps) {
                       }}
                     />
                   </div>
-                </FormCard>
+                </Card>
 
-                <FormCard title="IMAP (incoming)">
+                <Card title="IMAP (incoming)">
                   <FormField
                     label="Server"
                     readOnly
@@ -318,9 +318,9 @@ export function SettingsWorkspace(props: SettingsWorkspaceProps) {
                       />
                     </FormField>
                   </div>
-                </FormCard>
+                </Card>
 
-                <FormCard title="SMTP (outgoing)">
+                <Card title="SMTP (outgoing)">
                   <FormField
                     label="Server"
                     readOnly
@@ -357,7 +357,7 @@ export function SettingsWorkspace(props: SettingsWorkspaceProps) {
                       />
                     </FormField>
                   </div>
-                </FormCard>
+                </Card>
               </>
             )}
           </div>

@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
 
-type FormCardProps = {
+export type CardProps = {
   title?: string;
   children: ReactNode;
   className?: string;
 };
 
-export function FormCard({ title, children, className }: FormCardProps) {
+export function Card({ title, children, className }: CardProps) {
   return (
     <section
       className={`rounded-xl border p-6 mb-6 ${className ?? ""}`.trim()}
