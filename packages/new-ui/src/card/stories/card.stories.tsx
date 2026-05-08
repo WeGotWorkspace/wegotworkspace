@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Input } from "@/ui/input";
 import { AppButton } from "@/app-button/src/app-button";
-import { FormCard } from "../src/form-card";
+import { Card } from "../src/card";
 import { FormField } from "@/form-field/src/form-field";
 
-const meta: Meta<typeof FormCard> = {
-  title: "Shared/Form Card",
-  component: FormCard,
+const meta: Meta<typeof Card> = {
+  title: "Shared/Card",
+  component: Card,
   decorators: [
     (Story) => (
       <div
@@ -20,24 +20,24 @@ const meta: Meta<typeof FormCard> = {
 };
 
 export default meta;
-type Story = StoryObj<typeof FormCard>;
+type Story = StoryObj<typeof Card>;
 
 export const ReadonlySummary: Story = {
   render: () => (
-    <FormCard title="Readonly">
+    <Card title="Readonly">
       <FormField label="Username" readOnly>
         <Input value="elias.linden" readOnly className="cursor-default" />
       </FormField>
       <FormField label="Email" readOnly>
         <Input value="elias@northlight.studio" readOnly className="cursor-default" />
       </FormField>
-    </FormCard>
+    </Card>
   ),
 };
 
 export const EditableFormLike: Story = {
   render: () => (
-    <FormCard title="Identity">
+    <Card title="Identity">
       <FormField label="Display name">
         <Input defaultValue="Elias Linden" />
       </FormField>
@@ -51,6 +51,6 @@ export const EditableFormLike: Story = {
           style={{ backgroundColor: "#da9fb8", color: "var(--color-ink)" }}
         />
       </div>
-    </FormCard>
+    </Card>
   ),
 };
