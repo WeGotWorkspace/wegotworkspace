@@ -53,3 +53,25 @@ export const CheckedInheritTone: Story = {
     ),
   ],
 };
+
+export const WithDescription: Story = {
+  args: {
+    label: "Disk space",
+    description: "42.1 GB free of 100 GB",
+    icon: <Folder className="size-4" />,
+    tone: "inherit",
+  },
+  decorators: [
+    (Story: ComponentType) => (
+      <div
+        className="p-4 rounded-md border max-w-xs"
+        style={{
+          backgroundColor: "var(--color-paper)",
+          color: "var(--color-ink)",
+        }}
+      >
+        <Story />
+      </div>
+    ),
+  ],
+};

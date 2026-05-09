@@ -1,7 +1,7 @@
 import { CircleAlert, CircleCheck, CircleX, Info } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { ListItemSummary } from "@/list-item-summary/src/list-item-summary";
+import { MenuItem } from "@/menu-item/src/menu-item";
 
 export type CalloutSeverity = "info" | "success" | "warning" | "error";
 
@@ -61,6 +61,16 @@ export function Callout({
 }: CalloutProps) {
   const tone = toneStyles[severity];
   const Icon = defaultIconForSeverity(severity);
+  const description =
+    message && subtitle ? (
+      <>
+        {message}
+        <span className="opacity-70"> - </span>
+        {subtitle}
+      </>
+    ) : (
+      (message ?? subtitle)
+    );
 
   return (
     <div
@@ -71,11 +81,12 @@ export function Callout({
         color: "var(--color-ink)",
       }}
     >
-      <ListItemSummary
+      <MenuItem
+        tone="inherit"
+        className="px-0 py-0 hover:bg-transparent focus-visible:ring-0"
         icon={icon ?? <Icon className="size-4" style={{ color: tone.iconColor }} aria-hidden />}
-        title={title}
-        message={message}
-        subtitle={subtitle}
+        label={title}
+        description={description}
       />
     </div>
   );
