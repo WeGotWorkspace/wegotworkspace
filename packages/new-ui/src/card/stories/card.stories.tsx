@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { Eraser, RefreshCw } from "lucide-react";
 import { Input } from "@/ui/input";
 import { AppButton } from "@/app-button/src/app-button";
 import { Card } from "../src/card";
@@ -51,6 +52,28 @@ export const EditableFormLike: Story = {
           style={{ backgroundColor: "#da9fb8", color: "var(--color-ink)" }}
         />
       </div>
+    </Card>
+  ),
+};
+
+export const WithHeaderIconActions: Story = {
+  render: () => (
+    <Card
+      title="Update log"
+      iconActions={[
+        {
+          label: "Refresh",
+          icon: <RefreshCw className="size-4" />,
+          onClick: () => {},
+        },
+        {
+          label: "Clear",
+          icon: <Eraser className="size-4" />,
+          onClick: () => {},
+        },
+      ]}
+    >
+      <p className="text-sm opacity-80">Card header supports one or more icon actions.</p>
     </Card>
   ),
 };

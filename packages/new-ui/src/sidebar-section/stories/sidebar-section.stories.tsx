@@ -3,7 +3,7 @@ import { Folder, Tag } from "lucide-react";
 import { SidebarSection } from "../src/sidebar-section";
 
 const meta: Meta<typeof SidebarSection> = {
-  title: "Shared/Sidebar/Sidebar Section",
+  title: "Shared/Sidebar Section",
   component: SidebarSection,
 };
 
