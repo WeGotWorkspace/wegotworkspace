@@ -404,7 +404,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["OkResponse"];
+                        "application/json": components["schemas"]["UpdateLogClearResponse"];
                     };
                 };
             };
@@ -2431,6 +2431,7 @@ export interface components {
         AuthRevokeRequest: {
             refresh_token?: string;
         };
+        AdminUserGroupList: string[];
         /**
          * @example {
          *       "username": "alice",
@@ -2447,7 +2448,7 @@ export interface components {
             password: string;
             displayName?: string;
             email?: string;
-            groups?: string[];
+            groups?: components["schemas"]["AdminUserGroupList"];
         };
         /**
          * @example {
@@ -2462,7 +2463,7 @@ export interface components {
             displayName?: string;
             email?: string;
             password?: string;
-            groups?: string[];
+            groups?: components["schemas"]["AdminUserGroupList"];
         };
         /**
          * @example {
@@ -2485,7 +2486,11 @@ export interface components {
          */
         AdminGroupUpdateRequest: {
             displayName?: string;
-            members?: string[];
+            members?: components["schemas"]["AdminUserGroupList"];
+        };
+        AdminSettingValue: string | number | boolean | null;
+        AdminSettingsValueMap: {
+            [key: string]: components["schemas"]["AdminSettingValue"];
         };
         /**
          * @example {
@@ -2495,27 +2500,126 @@ export interface components {
          *     }
          */
         AdminSettingsSaveRequest: {
-            values?: Record<string, never>;
+            values?: components["schemas"]["AdminSettingsValueMap"];
         };
-        AdminStateResponse: {
-            users?: Record<string, never>[];
-            groups?: Record<string, never>[];
-            mail?: Record<string, never>;
-            voice?: Record<string, never>;
-            apps?: Record<string, never>;
-            webdav?: Record<string, never>;
-            updates?: Record<string, never>;
-            currentUser?: string;
-            logoutUrl?: string;
+        AdminUserSummary: {
+            id: string;
+            username: string;
+            email: string;
+            displayName: string;
+            groups: components["schemas"]["AdminUserGroupList"];
+            createdAt: string;
+        };
+        AdminGroupSummary: {
+            id: string;
+            name: string;
+            displayName: string;
+        };
+        AdminMailSettings: {
+            imapHost: string;
+            imapPort: number;
+            imapSecurity: string;
+            smtpHost: string;
+            smtpPort: number;
+            smtpSecurity: string;
+        };
+        AdminVoiceSettings: {
+            signalingUrl: string;
+            stunUrls: string;
+            turnUrls: string;
+            turnUsername: string;
+            turnPassword: string;
+            forceRelay: boolean;
+        };
+        AdminAppsSettings: {
+            calendars: boolean;
+            contacts: boolean;
+        };
+        AdminWebdavSettings: {
+            sabreUi: boolean;
+            timezone: string;
+            baseUri: string;
+            authRealm: string;
+        };
+        UpdateReleaseMetadata: {
+            version: string;
+            package_url: string;
+            checksum_sha256: string;
+            checksum_signature: string;
+        };
+        UpdateBackupItem: {
+            name: string;
+            sizeBytes: number;
+            modifiedAt: string | null;
+            fromVersion: string | null;
+            toVersion: string | null;
+            format: string;
+            downloadable: boolean;
+        };
+        UpdateCheckItem: {
+            ok: boolean;
+            label: string;
+            detail: string;
+            status?: string;
+        };
+        UpdateCurrentInfo: {
+            from: string;
+            to: string;
+            at: string;
+        };
+        UpdateDownloadProgress: {
+            downloadedBytes: number;
+            totalBytes: number | null;
+            percent: number | null;
+            updatedAt: string;
+        };
+        UpdatePhaseProgress: {
+            completed: number;
+            total: number;
+            percent: number;
+            updatedAt: string;
+        };
+        UpdateApplyResult: {
+            ok: boolean;
+            version: string;
+            message: string;
+            finishedAt: string | null;
         };
         UpdateStateResponse: {
-            installedVersion?: string;
-            updateAvailable?: boolean;
+            installedVersion: string;
+            schemaVersion: number;
+            latest: components["schemas"]["UpdateReleaseMetadata"] | null;
+            updateAvailable: boolean;
+            compatible: boolean;
+            backups: components["schemas"]["UpdateBackupItem"][];
+            checks: components["schemas"]["UpdateCheckItem"][];
+            inProgress: boolean;
+            phase: string | null;
+            current: components["schemas"]["UpdateCurrentInfo"] | null;
+            download: components["schemas"]["UpdateDownloadProgress"] | null;
+            phaseProgress: components["schemas"]["UpdatePhaseProgress"] | null;
+            cancelRequested: boolean;
+            cancelAllowed: boolean;
+            lastCheckedAt: string | null;
+            lastCheckError: string | null;
+            lastResult: components["schemas"]["UpdateApplyResult"] | null;
+        };
+        AdminStateResponse: {
+            users: components["schemas"]["AdminUserSummary"][];
+            groups: components["schemas"]["AdminGroupSummary"][];
+            mail: components["schemas"]["AdminMailSettings"];
+            voice: components["schemas"]["AdminVoiceSettings"];
+            apps: components["schemas"]["AdminAppsSettings"];
+            webdav: components["schemas"]["AdminWebdavSettings"];
+            updates: components["schemas"]["UpdateStateResponse"];
+            currentUser: string;
+            logoutUrl: string;
         };
         UpdateApplyResponse: {
-            ok?: boolean;
-            version?: string;
-            message?: string;
+            ok: boolean;
+            version: string;
+            message: string;
+            finishedAt: string | null;
         };
         /**
          * @example {
@@ -2527,6 +2631,10 @@ export interface components {
         };
         UpdateLogResponse: {
             lines?: string[];
+        };
+        UpdateLogClearResponse: {
+            ok: boolean;
+            lines: string[];
         };
         AdminSettingsSaveResponse: {
             ok?: boolean;

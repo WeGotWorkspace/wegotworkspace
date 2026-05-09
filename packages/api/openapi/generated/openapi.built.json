@@ -237,6 +237,12 @@
                     "refresh_token": "rt_abc123"
                 }
             },
+            "AdminUserGroupList": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            },
             "AdminUserCreateRequest": {
                 "type": "object",
                 "properties": {
@@ -253,10 +259,7 @@
                         "type": "string"
                     },
                     "groups": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
+                        "$ref": "#/components/schemas/AdminUserGroupList"
                     }
                 },
                 "required": [
@@ -286,10 +289,7 @@
                         "type": "string"
                     },
                     "groups": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
+                        "$ref": "#/components/schemas/AdminUserGroupList"
                     }
                 },
                 "example": {
@@ -325,10 +325,7 @@
                         "type": "string"
                     },
                     "members": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
+                        "$ref": "#/components/schemas/AdminUserGroupList"
                     }
                 },
                 "example": {
@@ -339,11 +336,36 @@
                     ]
                 }
             },
+            "AdminSettingValue": {
+                "oneOf": [
+                    {
+                        "type": "string"
+                    },
+                    {
+                        "type": "integer"
+                    },
+                    {
+                        "type": "number"
+                    },
+                    {
+                        "type": "boolean"
+                    },
+                    {
+                        "type": "null"
+                    }
+                ]
+            },
+            "AdminSettingsValueMap": {
+                "type": "object",
+                "additionalProperties": {
+                    "$ref": "#/components/schemas/AdminSettingValue"
+                }
+            },
             "AdminSettingsSaveRequest": {
                 "type": "object",
                 "properties": {
                     "values": {
-                        "type": "object"
+                        "$ref": "#/components/schemas/AdminSettingsValueMap"
                     }
                 },
                 "example": {
@@ -352,43 +374,341 @@
                     }
                 }
             },
-            "AdminStateResponse": {
+            "AdminUserSummary": {
                 "type": "object",
                 "properties": {
-                    "users": {
-                        "type": "array",
-                        "items": {
-                            "type": "object"
-                        }
+                    "id": {
+                        "type": "string"
+                    },
+                    "username": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "displayName": {
+                        "type": "string"
                     },
                     "groups": {
-                        "type": "array",
-                        "items": {
-                            "type": "object"
-                        }
+                        "$ref": "#/components/schemas/AdminUserGroupList"
                     },
-                    "mail": {
-                        "type": "object"
-                    },
-                    "voice": {
-                        "type": "object"
-                    },
-                    "apps": {
-                        "type": "object"
-                    },
-                    "webdav": {
-                        "type": "object"
-                    },
-                    "updates": {
-                        "type": "object"
-                    },
-                    "currentUser": {
-                        "type": "string"
-                    },
-                    "logoutUrl": {
+                    "createdAt": {
                         "type": "string"
                     }
-                }
+                },
+                "required": [
+                    "id",
+                    "username",
+                    "email",
+                    "displayName",
+                    "groups",
+                    "createdAt"
+                ]
+            },
+            "AdminGroupSummary": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "displayName": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "displayName"
+                ]
+            },
+            "AdminMailSettings": {
+                "type": "object",
+                "properties": {
+                    "imapHost": {
+                        "type": "string"
+                    },
+                    "imapPort": {
+                        "type": "integer"
+                    },
+                    "imapSecurity": {
+                        "type": "string"
+                    },
+                    "smtpHost": {
+                        "type": "string"
+                    },
+                    "smtpPort": {
+                        "type": "integer"
+                    },
+                    "smtpSecurity": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "imapHost",
+                    "imapPort",
+                    "imapSecurity",
+                    "smtpHost",
+                    "smtpPort",
+                    "smtpSecurity"
+                ]
+            },
+            "AdminVoiceSettings": {
+                "type": "object",
+                "properties": {
+                    "signalingUrl": {
+                        "type": "string"
+                    },
+                    "stunUrls": {
+                        "type": "string"
+                    },
+                    "turnUrls": {
+                        "type": "string"
+                    },
+                    "turnUsername": {
+                        "type": "string"
+                    },
+                    "turnPassword": {
+                        "type": "string"
+                    },
+                    "forceRelay": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "signalingUrl",
+                    "stunUrls",
+                    "turnUrls",
+                    "turnUsername",
+                    "turnPassword",
+                    "forceRelay"
+                ]
+            },
+            "AdminAppsSettings": {
+                "type": "object",
+                "properties": {
+                    "calendars": {
+                        "type": "boolean"
+                    },
+                    "contacts": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "calendars",
+                    "contacts"
+                ]
+            },
+            "AdminWebdavSettings": {
+                "type": "object",
+                "properties": {
+                    "sabreUi": {
+                        "type": "boolean"
+                    },
+                    "timezone": {
+                        "type": "string"
+                    },
+                    "baseUri": {
+                        "type": "string"
+                    },
+                    "authRealm": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "sabreUi",
+                    "timezone",
+                    "baseUri",
+                    "authRealm"
+                ]
+            },
+            "UpdateReleaseMetadata": {
+                "type": "object",
+                "properties": {
+                    "version": {
+                        "type": "string"
+                    },
+                    "package_url": {
+                        "type": "string"
+                    },
+                    "checksum_sha256": {
+                        "type": "string"
+                    },
+                    "checksum_signature": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "version",
+                    "package_url",
+                    "checksum_sha256",
+                    "checksum_signature"
+                ]
+            },
+            "UpdateBackupItem": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "sizeBytes": {
+                        "type": "integer"
+                    },
+                    "modifiedAt": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "fromVersion": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "toVersion": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "format": {
+                        "type": "string"
+                    },
+                    "downloadable": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "name",
+                    "sizeBytes",
+                    "modifiedAt",
+                    "fromVersion",
+                    "toVersion",
+                    "format",
+                    "downloadable"
+                ]
+            },
+            "UpdateCheckItem": {
+                "type": "object",
+                "properties": {
+                    "ok": {
+                        "type": "boolean"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "detail": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "ok",
+                    "label",
+                    "detail"
+                ]
+            },
+            "UpdateCurrentInfo": {
+                "type": "object",
+                "properties": {
+                    "from": {
+                        "type": "string"
+                    },
+                    "to": {
+                        "type": "string"
+                    },
+                    "at": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "from",
+                    "to",
+                    "at"
+                ]
+            },
+            "UpdateDownloadProgress": {
+                "type": "object",
+                "properties": {
+                    "downloadedBytes": {
+                        "type": "integer"
+                    },
+                    "totalBytes": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "percent": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "updatedAt": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "downloadedBytes",
+                    "totalBytes",
+                    "percent",
+                    "updatedAt"
+                ]
+            },
+            "UpdatePhaseProgress": {
+                "type": "object",
+                "properties": {
+                    "completed": {
+                        "type": "integer"
+                    },
+                    "total": {
+                        "type": "integer"
+                    },
+                    "percent": {
+                        "type": "integer"
+                    },
+                    "updatedAt": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "completed",
+                    "total",
+                    "percent",
+                    "updatedAt"
+                ]
+            },
+            "UpdateApplyResult": {
+                "type": "object",
+                "properties": {
+                    "ok": {
+                        "type": "boolean"
+                    },
+                    "version": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "finishedAt": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "ok",
+                    "version",
+                    "message",
+                    "finishedAt"
+                ]
             },
             "UpdateStateResponse": {
                 "type": "object",
@@ -396,10 +716,173 @@
                     "installedVersion": {
                         "type": "string"
                     },
+                    "schemaVersion": {
+                        "type": "integer"
+                    },
+                    "latest": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/UpdateReleaseMetadata"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
                     "updateAvailable": {
                         "type": "boolean"
+                    },
+                    "compatible": {
+                        "type": "boolean"
+                    },
+                    "backups": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/UpdateBackupItem"
+                        }
+                    },
+                    "checks": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/UpdateCheckItem"
+                        }
+                    },
+                    "inProgress": {
+                        "type": "boolean"
+                    },
+                    "phase": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "current": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/UpdateCurrentInfo"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "download": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/UpdateDownloadProgress"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "phaseProgress": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/UpdatePhaseProgress"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "cancelRequested": {
+                        "type": "boolean"
+                    },
+                    "cancelAllowed": {
+                        "type": "boolean"
+                    },
+                    "lastCheckedAt": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "lastCheckError": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "lastResult": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/UpdateApplyResult"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
                     }
-                }
+                },
+                "required": [
+                    "installedVersion",
+                    "schemaVersion",
+                    "latest",
+                    "updateAvailable",
+                    "compatible",
+                    "backups",
+                    "checks",
+                    "inProgress",
+                    "phase",
+                    "current",
+                    "download",
+                    "phaseProgress",
+                    "cancelRequested",
+                    "cancelAllowed",
+                    "lastCheckedAt",
+                    "lastCheckError",
+                    "lastResult"
+                ]
+            },
+            "AdminStateResponse": {
+                "type": "object",
+                "properties": {
+                    "users": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AdminUserSummary"
+                        }
+                    },
+                    "groups": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AdminGroupSummary"
+                        }
+                    },
+                    "mail": {
+                        "$ref": "#/components/schemas/AdminMailSettings"
+                    },
+                    "voice": {
+                        "$ref": "#/components/schemas/AdminVoiceSettings"
+                    },
+                    "apps": {
+                        "$ref": "#/components/schemas/AdminAppsSettings"
+                    },
+                    "webdav": {
+                        "$ref": "#/components/schemas/AdminWebdavSettings"
+                    },
+                    "updates": {
+                        "$ref": "#/components/schemas/UpdateStateResponse"
+                    },
+                    "currentUser": {
+                        "type": "string"
+                    },
+                    "logoutUrl": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "users",
+                    "groups",
+                    "mail",
+                    "voice",
+                    "apps",
+                    "webdav",
+                    "updates",
+                    "currentUser",
+                    "logoutUrl"
+                ]
             },
             "UpdateApplyResponse": {
                 "type": "object",
@@ -412,8 +895,20 @@
                     },
                     "message": {
                         "type": "string"
+                    },
+                    "finishedAt": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     }
-                }
+                },
+                "required": [
+                    "ok",
+                    "version",
+                    "message",
+                    "finishedAt"
+                ]
             },
             "UpdateApplyRequest": {
                 "type": "object",
@@ -436,6 +931,24 @@
                         }
                     }
                 }
+            },
+            "UpdateLogClearResponse": {
+                "type": "object",
+                "properties": {
+                    "ok": {
+                        "type": "boolean"
+                    },
+                    "lines": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "ok",
+                    "lines"
+                ]
             },
             "AdminSettingsSaveResponse": {
                 "type": "object",
@@ -2033,7 +2546,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/OkResponse"
+                                    "$ref": "#/components/schemas/UpdateLogClearResponse"
                                 }
                             }
                         }
