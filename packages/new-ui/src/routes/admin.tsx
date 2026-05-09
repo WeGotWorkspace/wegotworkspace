@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 import { Card } from "@/card/src/card";
 import { Callout } from "@/callout/src/callout";
-import { ListItemSummary } from "@/list-item-summary/src/list-item-summary";
+import { MenuItem } from "@/menu-item/src/menu-item";
 import {
   Tooltip,
   TooltipContent,
@@ -1388,12 +1388,12 @@ function UpdatesPanel() {
         <ul className="divide-y" style={{ borderColor: "color-mix(in oklab, #1a1a18 10%, transparent)" }}>
           {checks.map((c) => (
             <li key={c.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
-              <ListItemSummary
+              <MenuItem
+                tone="inherit"
                 icon={<StatusDot status={c.status} />}
-                title={c.label}
-                message={c.status === "pending" ? "Checking…" : c.detail}
-                subtitle={`Status: ${c.status}`}
-                className="w-full text-[#1a1a18]"
+                label={c.label}
+                description={c.status === "pending" ? "Checking…" : c.detail}
+                className="w-full px-0 py-0 text-[#1a1a18] hover:bg-transparent focus-visible:ring-0"
               />
             </li>
           ))}

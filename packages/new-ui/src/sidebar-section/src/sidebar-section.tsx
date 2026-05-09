@@ -47,8 +47,8 @@ export function SidebarSection({
       ) : null}
       <ul className="space-y-1">
         {items
-          ? items.map((item) => (
-              <li key={item.label}>
+          ? items.map((item, index) => (
+              <li key={`${index}`}>
                 <MenuItem {...item} />
               </li>
             ))
