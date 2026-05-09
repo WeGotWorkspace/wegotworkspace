@@ -147,5 +147,49 @@ final class OpenApiDocumentTest extends TestCase
             'logoutUrl',
             $doc['components']['schemas']['SettingsStateResponse']['required'] ?? []
         );
+        self::assertSame(
+            '#/components/schemas/AdminUserSummary',
+            $doc['components']['schemas']['AdminStateResponse']['properties']['users']['items']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/AdminGroupSummary',
+            $doc['components']['schemas']['AdminStateResponse']['properties']['groups']['items']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/AdminMailSettings',
+            $doc['components']['schemas']['AdminStateResponse']['properties']['mail']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/AdminVoiceSettings',
+            $doc['components']['schemas']['AdminStateResponse']['properties']['voice']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/AdminAppsSettings',
+            $doc['components']['schemas']['AdminStateResponse']['properties']['apps']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/AdminWebdavSettings',
+            $doc['components']['schemas']['AdminStateResponse']['properties']['webdav']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/UpdateStateResponse',
+            $doc['components']['schemas']['AdminStateResponse']['properties']['updates']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/UpdateLogClearResponse',
+            $doc['paths']['/admin/updates/log']['delete']['responses']['200']['content']['application/json']['schema']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/UpdateBackupItem',
+            $doc['components']['schemas']['UpdateStateResponse']['properties']['backups']['items']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/UpdateCheckItem',
+            $doc['components']['schemas']['UpdateStateResponse']['properties']['checks']['items']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/AdminSettingsValueMap',
+            $doc['components']['schemas']['AdminSettingsSaveRequest']['properties']['values']['$ref'] ?? null
+        );
     }
 }
