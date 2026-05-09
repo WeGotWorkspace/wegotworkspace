@@ -4,7 +4,7 @@ import { SidebarLogo } from "../src/sidebar-logo";
 import { StorybookAppSwitcherMock } from "@/storybook-app-switcher-mock/src/storybook-app-switcher-mock";
 
 const meta: Meta<typeof SidebarLogo> = {
-  title: "Shared/Sidebar/Sidebar Logo",
+  title: "Shared/App Logo",
   component: SidebarLogo,
 };
 
@@ -16,30 +16,10 @@ const logoArgs = {
   onCloseMobile: () => {},
 };
 
-export const WithAppSwitcherMail: Story = {
-  name: "With app switcher (Mail)",
+export const Default: Story = {
+  name: "Default",
   args: {
     ...logoArgs,
     appSwitcher: <StorybookAppSwitcherMock workspace="mail" />,
-  },
-};
-
-export const WithAppSwitcherNotes: Story = {
-  name: "With app switcher (Notes)",
-  render: (args: ComponentProps<typeof SidebarLogo>) => (
-    <div className="max-w-sm border rounded-lg overflow-hidden" style={{ backgroundColor: "var(--color-paper)" }}>
-      <SidebarLogo {...args} />
-    </div>
-  ),
-  args: {
-    ...logoArgs,
-    appSwitcher: <StorybookAppSwitcherMock workspace="notes" />,
-  },
-};
-
-export const LogoOnly: Story = {
-  args: {
-    ...WithAppSwitcherMail.args,
-    showAppSwitcher: false,
   },
 };

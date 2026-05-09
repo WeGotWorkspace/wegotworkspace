@@ -30,6 +30,9 @@ import {
   Rocket,
   Loader2,
 } from "lucide-react";
+import { Card } from "@/card/src/card";
+import { Callout } from "@/callout/src/callout";
+import { ListItemSummary } from "@/list-item-summary/src/list-item-summary";
 import {
   Tooltip,
   TooltipContent,
@@ -273,33 +276,6 @@ function AdminApp() {
         </section>
       </div>
     </TooltipProvider>
-  );
-}
-
-function Card({ title, action, children }: { title?: string; action?: React.ReactNode; children: React.ReactNode }) {
-  return (
-    <section
-      className="rounded-xl border p-6 mb-6"
-      style={{
-        backgroundColor: "color-mix(in oklab, #1a1a18 3%, transparent)",
-        borderColor: "color-mix(in oklab, #1a1a18 12%, transparent)",
-      }}
-    >
-      {(title || action) && (
-        <div className="flex items-center justify-between mb-4">
-          {title && (
-            <h2
-              className="text-[10px] uppercase tracking-[0.2em] font-semibold"
-              style={{ color: "color-mix(in oklab, #1a1a18 55%, transparent)" }}
-            >
-              {title}
-            </h2>
-          )}
-          {action}
-        </div>
-      )}
-      {children}
-    </section>
   );
 }
 
@@ -1290,7 +1266,7 @@ function UpdatesPanel() {
             </div>
             <div className="text-sm" style={{ color: "#1a1a18" }}>stable</div>
           </div>
-          <div className="flex-1 min-w-[8rem]">
+          <div className="flex-1 min-w-32">
             <div className="text-[10px] uppercase tracking-[0.18em] mb-1" style={{ color: "color-mix(in oklab, #1a1a18 55%, transparent)" }}>
               Last checked
             </div>
@@ -1298,36 +1274,22 @@ function UpdatesPanel() {
           </div>
         </div>
 
-        <div
-          className="mt-5 rounded-lg border p-4 flex items-start gap-3"
-          style={{
-            backgroundColor: updateAvailable
-              ? "color-mix(in oklab, #c98a1f 14%, transparent)"
-              : "color-mix(in oklab, #3a8f5a 12%, transparent)",
-            borderColor: updateAvailable
-              ? "color-mix(in oklab, #c98a1f 35%, transparent)"
-              : "color-mix(in oklab, #3a8f5a 35%, transparent)",
-          }}
-        >
-          {updateAvailable ? (
-            <CircleAlert className="size-4 mt-0.5 shrink-0" style={{ color: "#c98a1f" }} />
-          ) : (
-            <PackageCheck className="size-4 mt-0.5 shrink-0" style={{ color: "#3a8f5a" }} />
-          )}
-          <div className="flex-1 text-sm" style={{ color: "#1a1a18" }}>
-            {updateAvailable ? (
-              <>
-                <div className="font-medium">Update available</div>
-                <div className="opacity-75 text-xs mt-0.5">{LATEST} introduces faster sync and security patches.</div>
-              </>
-            ) : (
-              <>
-                <div className="font-medium">You're up to date</div>
-                <div className="opacity-75 text-xs mt-0.5">Running the latest stable release.</div>
-              </>
-            )}
-          </div>
-        </div>
+        <Callout
+          className="mt-5"
+          severity={updateAvailable ? "warning" : "success"}
+          icon={
+            updateAvailable ? undefined : (
+              <PackageCheck className="size-4" style={{ color: "#3a8f5a" }} aria-hidden />
+            )
+          }
+          title={updateAvailable ? "Update available" : "You're up to date"}
+          message={
+            updateAvailable
+              ? `${LATEST} introduces faster sync and security patches.`
+              : "Running the latest stable release."
+          }
+          subtitle={`Checked on ${lastChecked}`}
+        />
 
         <div className="mt-5 flex flex-wrap items-center gap-2">
           <Button variant="outline" onClick={checkForUpdates} disabled={checking || updating}>
@@ -1415,32 +1377,24 @@ function UpdatesPanel() {
 
       <Card
         title="Server checks"
-        action={
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                aria-label="Re-run checks"
-                onClick={refreshChecks}
-                className="size-8 rounded-md flex items-center justify-center hover:bg-[color-mix(in_oklab,#1a1a18_8%,transparent)]"
-              >
-                <RefreshCw className="size-4" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>Re-run checks</TooltipContent>
-          </Tooltip>
-        }
+        iconActions={[
+          {
+            label: "Re-run checks",
+            icon: <RefreshCw className="size-4" />,
+            onClick: refreshChecks,
+          },
+        ]}
       >
         <ul className="divide-y" style={{ borderColor: "color-mix(in oklab, #1a1a18 10%, transparent)" }}>
           {checks.map((c) => (
             <li key={c.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
-              <StatusDot status={c.status} />
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium" style={{ color: "#1a1a18" }}>{c.label}</div>
-                <div className="text-xs" style={{ color: "color-mix(in oklab, #1a1a18 55%, transparent)" }}>
-                  {c.status === "pending" ? "Checking…" : c.detail}
-                </div>
-              </div>
+              <ListItemSummary
+                icon={<StatusDot status={c.status} />}
+                title={c.label}
+                message={c.status === "pending" ? "Checking…" : c.detail}
+                subtitle={`Status: ${c.status}`}
+                className="w-full text-[#1a1a18]"
+              />
             </li>
           ))}
         </ul>
@@ -1448,36 +1402,18 @@ function UpdatesPanel() {
 
       <Card
         title="Update log"
-        action={
-          <div className="flex items-center gap-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  aria-label="Refresh log"
-                  onClick={() => pushLog("info", "Log refreshed.")}
-                  className="size-8 rounded-md flex items-center justify-center hover:bg-[color-mix(in_oklab,#1a1a18_8%,transparent)]"
-                >
-                  <RefreshCw className="size-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>Refresh</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  aria-label="Clear log"
-                  onClick={() => setConfirmClear(true)}
-                  className="size-8 rounded-md flex items-center justify-center hover:bg-[color-mix(in_oklab,#1a1a18_8%,transparent)]"
-                >
-                  <Eraser className="size-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>Clear</TooltipContent>
-            </Tooltip>
-          </div>
-        }
+        iconActions={[
+          {
+            label: "Refresh",
+            icon: <RefreshCw className="size-4" />,
+            onClick: () => pushLog("info", "Log refreshed."),
+          },
+          {
+            label: "Clear",
+            icon: <Eraser className="size-4" />,
+            onClick: () => setConfirmClear(true),
+          },
+        ]}
       >
         {log.length === 0 ? (
           <p className="text-sm py-4" style={{ color: "color-mix(in oklab, #1a1a18 55%, transparent)" }}>

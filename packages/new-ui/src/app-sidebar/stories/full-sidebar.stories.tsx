@@ -5,13 +5,11 @@ import { SidebarLogo } from "@/sidebar-logo/src/sidebar-logo";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
 import { StorybookAppSwitcherMock } from "@/storybook-app-switcher-mock/src/storybook-app-switcher-mock";
 import { WorkspaceUserFooter } from "@/workspace-shell/src/workspace-app-layout";
+import { AppSidebar } from "../src/app-sidebar";
 
-const meta: Meta = {
-  title: "Shared/Sidebar/Full Sidebar",
-  parameters: {
-    layout: "fullscreen",
-    routerPath: "/mail",
-  },
+const meta: Meta<typeof AppSidebar> = {
+  title: "Shared/Sidebar",
+  component: AppSidebar,
 };
 
 export default meta;
