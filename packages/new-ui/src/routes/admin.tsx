@@ -1258,6 +1258,37 @@ function UpdatesPanel() {
 
   const levelColor = (lvl: LogEntry["level"]) =>
     lvl === "error" ? "#b14242" : lvl === "warn" ? "#c98a1f" : lvl === "success" ? "#3a8f5a" : "#1a1a18";
+  const logColumns: DataTableColumn<LogEntry>[] = [
+    {
+      key: "time",
+      header: "Time",
+      headerClassName: "font-medium pb-2 pr-3",
+      cellClassName: "py-2 pr-3 whitespace-nowrap tabular-nums",
+      render: (entry) => (
+        <span style={{ color: "color-mix(in oklab, #1a1a18 50%, transparent)" }}>{entry.time}</span>
+      ),
+    },
+    {
+      key: "level",
+      header: "Level",
+      headerClassName: "font-medium pb-2 pr-3",
+      cellClassName: "py-2 pr-3 uppercase tracking-wider font-semibold whitespace-nowrap",
+      render: (entry) => (
+        <span
+          style={{ color: levelColor(entry.level), minWidth: "3.5rem", display: "inline-block" }}
+        >
+          {entry.level}
+        </span>
+      ),
+    },
+    {
+      key: "message",
+      header: "Message",
+      headerClassName: "font-medium pb-2",
+      cellClassName: "py-2",
+      render: (entry) => <span style={{ color: "#1a1a18" }}>{entry.message}</span>,
+    },
+  ];
 
   return (
     <>
@@ -1439,22 +1470,15 @@ function UpdatesPanel() {
             No log entries.
           </p>
         ) : (
-          <ul className="divide-y font-mono text-xs" style={{ borderColor: "color-mix(in oklab, #1a1a18 10%, transparent)" }}>
-            {log.map((entry) => (
-              <li key={entry.id} className="flex items-start gap-3 py-2 first:pt-0 last:pb-0">
-                <span className="shrink-0 tabular-nums" style={{ color: "color-mix(in oklab, #1a1a18 50%, transparent)" }}>
-                  {entry.time}
-                </span>
-                <span
-                  className="shrink-0 uppercase tracking-wider font-semibold"
-                  style={{ color: levelColor(entry.level), minWidth: "3.5rem" }}
-                >
-                  {entry.level}
-                </span>
-                <span className="flex-1" style={{ color: "#1a1a18" }}>{entry.message}</span>
-              </li>
-            ))}
-          </ul>
+          <DataTable
+            data={log}
+            columns={logColumns}
+            rowKey={(entry) => entry.id}
+            tableClassName="font-mono text-xs"
+            headerClassName="text-left text-[10px] uppercase tracking-[0.18em]"
+            rowClassName="border-t hover:bg-transparent"
+            rowStyle={() => ({ borderColor: "color-mix(in oklab, #1a1a18 10%, transparent)" })}
+          />
         )}
       </Card>
 
