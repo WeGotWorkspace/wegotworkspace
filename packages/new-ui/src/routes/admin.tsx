@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { Card } from "@/card/src/card";
 import { Callout } from "@/callout/src/callout";
+import { DataTable, type DataTableColumn } from "@/data-table/src/data-table";
 import { MenuItem } from "@/menu-item/src/menu-item";
 import {
   Tooltip,
@@ -1028,89 +1029,107 @@ const SEED_BACKUPS: Backup[] = [
 function BackupsPanel() {
   const [backups, setBackups] = useState<Backup[]>(SEED_BACKUPS);
   const [delBackup, setDelBackup] = useState<Backup | null>(null);
+  const columns: DataTableColumn<Backup>[] = [
+    {
+      key: "file",
+      header: "File",
+      headerClassName: "font-medium pb-3 pr-3",
+      cellClassName: "py-3 pr-3",
+      render: (backup) => (
+        <div className="flex items-center gap-2 min-w-0">
+          <FileArchive className="size-4 shrink-0 opacity-60" />
+          <span className="truncate font-medium">{backup.filename}</span>
+        </div>
+      ),
+    },
+    {
+      key: "createdAt",
+      header: "Created",
+      headerClassName: "font-medium pb-3 pr-3",
+      cellClassName: "py-3 pr-3 whitespace-nowrap",
+      render: (backup) => (
+        <span style={{ color: "color-mix(in oklab, #1a1a18 65%, transparent)" }}>
+          {backup.createdAt}
+        </span>
+      ),
+    },
+    {
+      key: "version",
+      header: "Version",
+      headerClassName: "font-medium pb-3 pr-3",
+      cellClassName: "py-3 pr-3 whitespace-nowrap",
+      render: (backup) => (
+        <span
+          className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium"
+          style={{
+            backgroundColor: "color-mix(in oklab, #1a1a18 8%, transparent)",
+            color: "#1a1a18",
+          }}
+        >
+          {backup.version}
+        </span>
+      ),
+    },
+    {
+      key: "size",
+      header: "Size",
+      headerClassName: "font-medium pb-3 pr-3",
+      cellClassName: "py-3 pr-3 whitespace-nowrap",
+      render: (backup) => (
+        <span style={{ color: "color-mix(in oklab, #1a1a18 65%, transparent)" }}>{backup.size}</span>
+      ),
+    },
+    {
+      key: "actions",
+      header: "",
+      headerClassName: "font-medium pb-3 w-1",
+      cellClassName: "py-3 whitespace-nowrap",
+      render: (backup) => (
+        <div className="flex items-center gap-1 justify-end">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label={`Download ${backup.filename}`}
+                onClick={() => toast("Download started", { icon: <Check className="size-4" /> })}
+                className="size-8 rounded-md flex items-center justify-center hover:bg-[color-mix(in_oklab,#1a1a18_8%,transparent)]"
+              >
+                <Download className="size-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Download</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label={`Delete ${backup.filename}`}
+                onClick={() => setDelBackup(backup)}
+                className="size-8 rounded-md flex items-center justify-center hover:bg-[color-mix(in_oklab,#1a1a18_8%,transparent)]"
+              >
+                <Trash2 className="size-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Delete</TooltipContent>
+          </Tooltip>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <>
       <Card title="Database backups">
-        <div className="overflow-x-auto -mx-6 px-6">
-          <table className="w-full text-sm" style={{ color: "#1a1a18" }}>
-            <thead>
-              <tr
-                className="text-left text-[10px] uppercase tracking-[0.18em]"
-                style={{ color: "color-mix(in oklab, #1a1a18 55%, transparent)" }}
-              >
-                <th className="font-medium pb-3 pr-3">File</th>
-                <th className="font-medium pb-3 pr-3">Created</th>
-                <th className="font-medium pb-3 pr-3">Version</th>
-                <th className="font-medium pb-3 pr-3">Size</th>
-                <th className="font-medium pb-3 w-1"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {backups.map((b) => (
-                <tr
-                  key={b.id}
-                  className="border-t"
-                  style={{ borderColor: "color-mix(in oklab, #1a1a18 10%, transparent)" }}
-                >
-                  <td className="py-3 pr-3">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <FileArchive className="size-4 shrink-0 opacity-60" />
-                      <span className="truncate font-medium">{b.filename}</span>
-                    </div>
-                  </td>
-                  <td className="py-3 pr-3 whitespace-nowrap" style={{ color: "color-mix(in oklab, #1a1a18 65%, transparent)" }}>
-                    {b.createdAt}
-                  </td>
-                  <td className="py-3 pr-3 whitespace-nowrap">
-                    <span
-                      className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium"
-                      style={{
-                        backgroundColor: "color-mix(in oklab, #1a1a18 8%, transparent)",
-                        color: "#1a1a18",
-                      }}
-                    >
-                      {b.version}
-                    </span>
-                  </td>
-                  <td className="py-3 pr-3 whitespace-nowrap" style={{ color: "color-mix(in oklab, #1a1a18 65%, transparent)" }}>
-                    {b.size}
-                  </td>
-                  <td className="py-3 whitespace-nowrap">
-                    <div className="flex items-center gap-1 justify-end">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            type="button"
-                            aria-label={`Download ${b.filename}`}
-                            onClick={() => toast("Download started", { icon: <Check className="size-4" /> })}
-                            className="size-8 rounded-md flex items-center justify-center hover:bg-[color-mix(in_oklab,#1a1a18_8%,transparent)]"
-                          >
-                            <Download className="size-4" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent>Download</TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            type="button"
-                            aria-label={`Delete ${b.filename}`}
-                            onClick={() => setDelBackup(b)}
-                            className="size-8 rounded-md flex items-center justify-center hover:bg-[color-mix(in_oklab,#1a1a18_8%,transparent)]"
-                          >
-                            <Trash2 className="size-4" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent>Delete</TooltipContent>
-                      </Tooltip>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          data={backups}
+          columns={columns}
+          rowKey={(backup) => backup.id}
+          className="-mx-6 px-6"
+          tableClassName="text-sm"
+          headerClassName="text-left text-[10px] uppercase tracking-[0.18em]"
+          rowClassName="border-t hover:bg-transparent"
+          rowStyle={() => ({ borderColor: "color-mix(in oklab, #1a1a18 10%, transparent)" })}
+        />
       </Card>
 
       <AlertDialog open={!!delBackup} onOpenChange={(o) => !o && setDelBackup(null)}>
