@@ -39,7 +39,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/ui/dropdown-menu";
+import { Input } from "@/ui/input";
+import { Button } from "@/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,7 +64,6 @@ import type { Note } from "@/lib/models/note";
 import { useIsTouch } from "@/hooks/use-is-touch";
 import { SidebarGroup, SidebarLink } from "@/settings-sidebar/src/settings-sidebar";
 import { ListAction, FabButton } from "@/action-buttons/src/action-buttons";
-import { MoveToDialog } from "@/dialogs/src/dialogs";
 import { WorkspaceAppSwitcher } from "@/workspace-app-switcher/src/workspace-app-switcher";
 import { createPwaHead } from "@/lib/pwa-head";
 import { DriveApp } from "@/drive-core/src/drive-app";
@@ -266,39 +275,69 @@ type DriveWorkspaceProps = {
   listLoading?: boolean;
 };
 
-function rootLabelFromPath(path: string): TopFolder {
-  if (path === "/groups" || path.startsWith("/groups/")) return "Shared with me";
+function normalizeApiVirtualPath(path: string): string {
+  const trimmed = path.trim();
+  if (!trimmed || trimmed === "/") return "/";
+  const withLeading = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+  return withLeading.replace(/\/+$/, "");
+}
+
+function uiPathFromApiPath(path: string, username: string): string {
+  const normalized = normalizeApiVirtualPath(path);
+  const userRoot = `/users/${username}`;
+  if (normalized === "/groups") {
+    return "My Drive";
+  }
+  if (normalized.startsWith("/groups/")) {
+    return normalized.replace(/^\/groups/, "My Drive");
+  }
+  if (normalized === userRoot) {
+    return "My Drive";
+  }
+  if (normalized.startsWith(`${userRoot}/`)) {
+    return `My Drive${normalized.slice(userRoot.length)}`;
+  }
   return "My Drive";
 }
 
-function uiPathFromApiPath(path: string): string {
-  if (path === "/groups" || path.startsWith("/groups/")) {
-    return path.replace(/^\/groups/, "Shared with me");
+function apiPathFromUiPath(path: string, username: string, groupRoots: Set<string>): string {
+  const normalized = path.trim().replace(/\/+$/, "");
+  const userRoot = `/users/${username}`;
+  if (normalized === "My Drive") {
+    return userRoot;
   }
-  if (path === "/users" || path.startsWith("/users/")) {
-    return path.replace(/^\/users/, "My Drive");
+  if (normalized.startsWith("My Drive/")) {
+    const relative = normalized.slice("My Drive/".length);
+    const [head] = relative.split("/");
+    if (head && groupRoots.has(head)) {
+      return `/groups/${relative}`;
+    }
+    return `${userRoot}/${relative}`;
   }
-  return "My Drive";
+  if (normalized === "Trash" || normalized.startsWith("Trash/")) {
+    return userRoot;
+  }
+  return userRoot;
 }
 
-function apiPathFromUiPath(path: string): string {
-  if (path === "Shared with me" || path.startsWith("Shared with me/")) {
-    return path.replace(/^Shared with me/, "/groups");
-  }
-  if (path === "My Drive" || path.startsWith("My Drive/")) {
-    return path.replace(/^My Drive/, "/users");
-  }
-  if (path === "Trash" || path.startsWith("Trash/")) {
-    return "/users";
-  }
-  return "/users";
+function inferFileKindFromName(name: string): FileKind {
+  const lower = name.toLowerCase();
+  if (/\.(png|jpe?g|gif|webp|bmp|svg|avif|heic)$/i.test(lower)) return "image";
+  if (/\.(mp4|mov|m4v|mkv|webm|avi)$/i.test(lower)) return "video";
+  if (/\.(mp3|wav|ogg|flac|m4a|aac)$/i.test(lower)) return "audio";
+  if (/\.(zip|tar|gz|bz2|xz|rar|7z)$/i.test(lower)) return "archive";
+  if (/\.(pdf|docx?|xlsx?|pptx?|txt|rtf|md)$/i.test(lower)) return "doc";
+  return "file";
 }
 
-function driveFileFromEntry(entry: DriveUIData["directory"]["files"][number]): DriveFile {
+function driveFileFromEntry(
+  entry: DriveUIData["directory"]["files"][number],
+  username: string,
+): DriveFile {
   const apiPath = pathFromDirectoryEntry(entry);
   const parentApiPath = parentAndName(apiPath).destination;
-  const parent = uiPathFromApiPath(parentApiPath);
-  const kind: FileKind = entry.type === "dir" ? "folder" : "file";
+  const parent = uiPathFromApiPath(parentApiPath, username);
+  const kind: FileKind = entry.type === "dir" ? "folder" : inferFileKindFromName(entry.name);
   const date = entry.time > 0 ? new Date(entry.time * 1000).toLocaleDateString() : "Now";
   const size =
     entry.type === "dir"
@@ -334,8 +373,11 @@ export function DriveWorkspace({
   operations,
   listLoading = false,
 }: DriveWorkspaceProps) {
+  const currentUsername = data.user.username || session.user.username;
   const [files, setFiles] = useState<DriveFile[]>(
-    operations ? data.directory.files.map((entry) => driveFileFromEntry(entry)) : INITIAL_FILES,
+    operations
+      ? data.directory.files.map((entry) => driveFileFromEntry(entry, currentUsername))
+      : INITIAL_FILES,
   );
   const [view, setView] = useState<ViewKey>({ type: "folder", path: "My Drive" });
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -348,18 +390,47 @@ export function DriveWorkspace({
   const [dragging, setDragging] = useState<string[] | null>(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [moveDialog, setMoveDialog] = useState<{ ids: string[] } | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<null | { ids: string[] }>(null);
+  const [newFolderDialogOpen, setNewFolderDialogOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState<null | { ids: string[]; permanent: boolean }>(
+    null,
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [liveSearchResults, setLiveSearchResults] = useState<DriveFile[] | null>(null);
+  const [knownGroupRoots, setKnownGroupRoots] = useState<string[]>([]);
+  const [imagePreviewUrls, setImagePreviewUrls] = useState<Record<string, string>>({});
+  const [dropUploadActive, setDropUploadActive] = useState(false);
+  const imagePreviewUrlsRef = useRef<Record<string, string>>({});
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
+    const discovered = new Set<string>();
+    for (const file of files) {
+      if (!file.apiPath || !file.apiPath.startsWith("/groups/")) continue;
+      const relative = file.apiPath.slice("/groups/".length);
+      const [root] = relative.split("/");
+      if (root) discovered.add(root);
+    }
+    if (discovered.size === 0) return;
+    setKnownGroupRoots((prev) => {
+      const next = new Set(prev);
+      discovered.forEach((root) => next.add(root));
+      return Array.from(next).sort((a, b) => a.localeCompare(b));
+    });
+  }, [files]);
+
+  const groupRootNames = useMemo(() => new Set(knownGroupRoots), [knownGroupRoots]);
+  const sidebarGroupPaths = useMemo(
+    () => knownGroupRoots.map((root) => `My Drive/${root}`),
+    [knownGroupRoots],
+  );
+
+  useEffect(() => {
     if (!operations) return;
-    setFiles(data.directory.files.map((entry) => driveFileFromEntry(entry)));
-    setView({ type: "folder", path: uiPathFromApiPath(data.cwd) });
-  }, [data, operations]);
+    setFiles(data.directory.files.map((entry) => driveFileFromEntry(entry, currentUsername)));
+    setView({ type: "folder", path: uiPathFromApiPath(data.cwd, currentUsername) });
+  }, [data, operations, currentUsername]);
 
   useEffect(() => {
     if (!operations) return;
@@ -374,7 +445,9 @@ export function DriveWorkspace({
         .search(query, { limit: 200 })
         .then((entries) => {
           if (!cancelled) {
-            setLiveSearchResults(entries.map((entry) => driveFileFromEntry(entry)));
+            setLiveSearchResults(
+              entries.map((entry) => driveFileFromEntry(entry, currentUsername)),
+            );
           }
         })
         .catch((error: unknown) => {
@@ -388,7 +461,7 @@ export function DriveWorkspace({
       cancelled = true;
       window.clearTimeout(timeout);
     };
-  }, [operations, searchQuery]);
+  }, [operations, searchQuery, currentUsername]);
 
   const isTouch = useIsTouch();
 
@@ -402,7 +475,15 @@ export function DriveWorkspace({
     const filtered = sourceFiles.filter((f) => {
       let inView = false;
       if (liveSearchResults) inView = true;
-      else if (view.type === "folder") inView = f.parent === view.path;
+      else if (view.type === "folder")
+        inView =
+          f.parent === view.path &&
+          !(
+            view.path === "My Drive" &&
+            f.kind === "folder" &&
+            typeof f.apiPath === "string" &&
+            f.apiPath.startsWith("/groups/")
+          );
       else if (view.type === "recent") inView = !isUnderTrash(f.parent) && f.kind !== "folder";
       else if (view.type === "starred") inView = !!starred[f.id] && !isUnderTrash(f.parent);
       else if (view.type === "shared")
@@ -462,7 +543,97 @@ export function DriveWorkspace({
     };
   }, [files, starred]);
 
+  useEffect(() => {
+    if (!operations || viewMode !== "grid") return;
+    const imageItems = visibleItems.filter((file) => file.kind === "image" && !!file.apiPath);
+    let cancelled = false;
+    for (const file of imageItems) {
+      if (imagePreviewUrlsRef.current[file.id]) continue;
+      void operations
+        .readFileBlob(file.apiPath!)
+        .then((blob) => {
+          if (cancelled) return;
+          const url = URL.createObjectURL(blob);
+          setImagePreviewUrls((prev) => {
+            if (prev[file.id]) {
+              URL.revokeObjectURL(url);
+              return prev;
+            }
+            const next = { ...prev, [file.id]: url };
+            imagePreviewUrlsRef.current = next;
+            return next;
+          });
+        })
+        .catch(() => {
+          // Ignore preview fetch failures; tile falls back to icon.
+        });
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [operations, viewMode, visibleItems]);
+
+  useEffect(() => {
+    const keepIds = new Set(
+      viewMode === "grid"
+        ? visibleItems
+            .filter((file) => file.kind === "image" && !!file.apiPath)
+            .map((file) => file.id)
+        : [],
+    );
+    setImagePreviewUrls((prev) => {
+      let changed = false;
+      const next: Record<string, string> = {};
+      for (const [id, url] of Object.entries(prev)) {
+        if (keepIds.has(id)) next[id] = url;
+        else {
+          URL.revokeObjectURL(url);
+          changed = true;
+        }
+      }
+      if (!changed && Object.keys(next).length === Object.keys(prev).length) return prev;
+      imagePreviewUrlsRef.current = next;
+      return next;
+    });
+  }, [viewMode, visibleItems]);
+
+  useEffect(() => {
+    return () => {
+      for (const url of Object.values(imagePreviewUrlsRef.current)) {
+        URL.revokeObjectURL(url);
+      }
+      imagePreviewUrlsRef.current = {};
+    };
+  }, []);
+
   const active = activeId ? (files.find((f) => f.id === activeId) ?? null) : null;
+
+  useEffect(() => {
+    if (!operations || !detailOpen || !active || active.kind !== "image" || !active.apiPath) return;
+    if (imagePreviewUrlsRef.current[active.id]) return;
+    let cancelled = false;
+    void operations
+      .readFileBlob(active.apiPath)
+      .then((blob) => {
+        if (cancelled) return;
+        const url = URL.createObjectURL(blob);
+        setImagePreviewUrls((prev) => {
+          if (prev[active.id]) {
+            URL.revokeObjectURL(url);
+            return prev;
+          }
+          const next = { ...prev, [active.id]: url };
+          imagePreviewUrlsRef.current = next;
+          return next;
+        });
+      })
+      .catch(() => {
+        // Keep icon fallback in detail panel.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [operations, detailOpen, active]);
 
   const openFile = (f: DriveFile) => {
     if (f.kind === "folder") {
@@ -470,10 +641,12 @@ export function DriveWorkspace({
       setView({ type: "folder", path: next });
       if (operations) {
         void operations
-          .changeDir(f.apiPath ?? apiPathFromUiPath(next))
+          .changeDir(f.apiPath ?? apiPathFromUiPath(next, currentUsername, groupRootNames))
           .then((nextData) => {
-            setFiles(nextData.directory.files.map((entry) => driveFileFromEntry(entry)));
-            setView({ type: "folder", path: uiPathFromApiPath(nextData.cwd) });
+            setFiles(
+              nextData.directory.files.map((entry) => driveFileFromEntry(entry, currentUsername)),
+            );
+            setView({ type: "folder", path: uiPathFromApiPath(nextData.cwd, currentUsername) });
           })
           .catch((error: unknown) => {
             const message = error instanceof Error ? error.message : String(error);
@@ -534,10 +707,6 @@ export function DriveWorkspace({
       return { ...s, [id]: next };
     });
   };
-  const moveOne = (id: string, parent: string) => {
-    setFiles((p) => p.map((f) => (f.id === id ? { ...f, parent } : f)));
-  };
-
   const batchStar = () => {
     setStarred((s) => {
       const allStarred = selectedIds.every((id) => s[id]);
@@ -553,15 +722,47 @@ export function DriveWorkspace({
       return next;
     });
   };
-  const batchTrash = () => {
-    setFiles((p) => p.map((f) => (selectedIds.includes(f.id) ? { ...f, parent: "Trash" } : f)));
-    toast(`Moved ${selectedIds.length} to Trash`, { icon: <Trash2 className="size-4" /> });
+  const moveToTrash = (ids: string[]) => {
+    setFiles((p) => p.map((f) => (ids.includes(f.id) ? { ...f, parent: "Trash" } : f)));
+    toast(`Moved ${ids.length} to Trash`, { icon: <Trash2 className="size-4" /> });
   };
   const moveToFolder = (ids: string[], parent: string) => {
     setFiles((p) => p.map((f) => (ids.includes(f.id) ? { ...f, parent } : f)));
     toast(`Moved ${ids.length} to ${parent.split("/").pop()}`, {
       icon: <FolderInput className="size-4" />,
     });
+    if (operations) {
+      const destination = apiPathFromUiPath(parent, currentUsername, groupRootNames);
+      const items = files.filter((file) => ids.includes(file.id));
+      if (items.length > 0) {
+        void (async () => {
+          try {
+            let nextData: DriveUIData | null = null;
+            for (const file of items) {
+              const sourcePath =
+                file.apiPath ??
+                normalizeApiVirtualPath(
+                  `${apiPathFromUiPath(file.parent, currentUsername, groupRootNames)}/${file.title}`,
+                );
+              nextData = await operations.renameItem({
+                destination,
+                from: sourcePath,
+                to: file.title,
+              });
+            }
+            if (nextData) {
+              setFiles(
+                nextData.directory.files.map((entry) => driveFileFromEntry(entry, currentUsername)),
+              );
+              setView({ type: "folder", path: uiPathFromApiPath(nextData.cwd, currentUsername) });
+            }
+          } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : String(error);
+            toast.error(message);
+          }
+        })();
+      }
+    }
   };
 
   const startDrag = (id: string) => {
@@ -583,8 +784,7 @@ export function DriveWorkspace({
 
   const requestDeleteSelected = () => {
     if (selectedIds.length === 0) return;
-    if (inTrashView) setConfirmDelete({ ids: selectedIds });
-    else batchTrash();
+    setConfirmDelete({ ids: selectedIds, permanent: inTrashView });
   };
   const reallyDelete = (ids: string[]) => {
     if (operations) {
@@ -596,8 +796,10 @@ export function DriveWorkspace({
         void operations
           .deleteItems(apiPaths)
           .then((nextData) => {
-            setFiles(nextData.directory.files.map((entry) => driveFileFromEntry(entry)));
-            setView({ type: "folder", path: uiPathFromApiPath(nextData.cwd) });
+            setFiles(
+              nextData.directory.files.map((entry) => driveFileFromEntry(entry, currentUsername)),
+            );
+            setView({ type: "folder", path: uiPathFromApiPath(nextData.cwd, currentUsername) });
           })
           .catch((error: unknown) => {
             const message = error instanceof Error ? error.message : String(error);
@@ -619,14 +821,33 @@ export function DriveWorkspace({
 
   const handleUpload = (fileList: FileList | null) => {
     if (!fileList || fileList.length === 0) return;
-    if (operations) {
-      void operations.checkUploadReady().catch((error: unknown) => {
-        const message = error instanceof Error ? error.message : String(error);
-        toast.error(message);
-      });
-    }
+    const selected = Array.from(fileList);
     const targetParent = view.type === "folder" ? view.path : "My Drive";
-    const created: DriveFile[] = Array.from(fileList).map((file, i) => {
+    if (operations) {
+      void operations
+        .checkUploadReady()
+        .then(() =>
+          operations.uploadFiles({
+            cwd: apiPathFromUiPath(targetParent, currentUsername, groupRootNames),
+            files: selected,
+          }),
+        )
+        .then((nextData) => {
+          setFiles(
+            nextData.directory.files.map((entry) => driveFileFromEntry(entry, currentUsername)),
+          );
+          setView({ type: "folder", path: uiPathFromApiPath(nextData.cwd, currentUsername) });
+          toast(`Uploaded ${selected.length} file${selected.length === 1 ? "" : "s"}`, {
+            icon: <Upload className="size-4" />,
+          });
+        })
+        .catch((error: unknown) => {
+          const message = error instanceof Error ? error.message : String(error);
+          toast.error(message);
+        });
+      return;
+    }
+    const created: DriveFile[] = selected.map((file, i) => {
       const kind: FileKind = file.type.startsWith("image/")
         ? "image"
         : file.type.startsWith("video/")
@@ -663,8 +884,12 @@ export function DriveWorkspace({
   };
 
   const createFolder = () => {
-    const name = window.prompt("New folder name");
-    const v = name?.trim();
+    setNewFolderName("");
+    setNewFolderDialogOpen(true);
+  };
+
+  const submitCreateFolder = () => {
+    const v = newFolderName.trim();
     if (!v) return;
     const targetParent = view.type === "folder" ? view.path : "My Drive";
     const id = `f-${Date.now()}`;
@@ -687,17 +912,38 @@ export function DriveWorkspace({
       ...p,
     ]);
     toast(`Folder “${v}” created`, { icon: <FolderPlus className="size-4" /> });
+    setNewFolderDialogOpen(false);
+    setNewFolderName("");
     if (operations) {
       void operations
-        .createFolder({ cwd: apiPathFromUiPath(targetParent), name: v })
+        .createFolder({
+          cwd: apiPathFromUiPath(targetParent, currentUsername, groupRootNames),
+          name: v,
+        })
         .then((nextData) => {
-          setFiles(nextData.directory.files.map((entry) => driveFileFromEntry(entry)));
-          setView({ type: "folder", path: uiPathFromApiPath(nextData.cwd) });
+          setFiles(
+            nextData.directory.files.map((entry) => driveFileFromEntry(entry, currentUsername)),
+          );
+          setView({ type: "folder", path: uiPathFromApiPath(nextData.cwd, currentUsername) });
         })
         .catch((error: unknown) => {
           const message = error instanceof Error ? error.message : String(error);
           toast.error(message);
         });
+    }
+  };
+
+  const copyShareLink = async (file: DriveFile) => {
+    const link =
+      file.apiPath != null
+        ? `${window.location.origin}/drive/#${encodeURIComponent(file.apiPath)}`
+        : `${window.location.origin}/drive/`;
+    try {
+      await navigator.clipboard.writeText(link);
+      toast("Share link copied", { icon: <Share2 className="size-4" /> });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      toast.error(message || "Could not copy share link");
     }
   };
 
@@ -749,12 +995,14 @@ export function DriveWorkspace({
   const selectView = (v: ViewKey) => {
     setView(v);
     setLiveSearchResults(null);
-    if (operations && v.type === "folder") {
+    if (operations && v.type === "folder" && v.path !== "Trash") {
       void operations
-        .changeDir(apiPathFromUiPath(v.path))
+        .changeDir(apiPathFromUiPath(v.path, currentUsername, groupRootNames))
         .then((nextData) => {
-          setFiles(nextData.directory.files.map((entry) => driveFileFromEntry(entry)));
-          setView({ type: "folder", path: uiPathFromApiPath(nextData.cwd) });
+          setFiles(
+            nextData.directory.files.map((entry) => driveFileFromEntry(entry, currentUsername)),
+          );
+          setView({ type: "folder", path: uiPathFromApiPath(nextData.cwd, currentUsername) });
         })
         .catch((error: unknown) => {
           const message = error instanceof Error ? error.message : String(error);
@@ -788,32 +1036,12 @@ export function DriveWorkspace({
       const winDelete = !isMac && e.key === "Delete";
       if ((macDelete || winDelete) && selectedIds.length > 0) {
         e.preventDefault();
-        if (inTrashView) setConfirmDelete({ ids: selectedIds });
-        else {
-          setFiles((p) =>
-            p.map((f) => (selectedIds.includes(f.id) ? { ...f, parent: "Trash" } : f)),
-          );
-          toast(`Moved ${selectedIds.length} to Trash`, {
-            icon: <Trash2 className="size-4" />,
-          });
-        }
+        setConfirmDelete({ ids: selectedIds, permanent: inTrashView });
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [selectedIds, detailOpen, inTrashView]);
-
-  // All folder paths for drop targets and Move dialog
-  const allFolderPaths = useMemo(() => {
-    const set = new Set<string>(["My Drive", "Shared with me", "Trash"]);
-    for (const f of files) {
-      if (f.kind === "folder") {
-        const path = f.parent === "" ? f.title : `${f.parent}/${f.title}`;
-        set.add(path);
-      }
-    }
-    return Array.from(set);
-  }, [files]);
 
   const topFolderIcon: Record<TopFolder, React.ReactNode> = {
     "My Drive": <HardDrive className="size-3.5" />,
@@ -911,6 +1139,31 @@ export function DriveWorkspace({
             <nav className="flex-1 px-4 space-y-7 overflow-y-auto">
               <ul className="space-y-1">
                 <SidebarLink
+                  active={
+                    view.type === "folder" &&
+                    (view.path === "My Drive" || view.path.startsWith("My Drive/"))
+                  }
+                  onClick={() => selectView({ type: "folder", path: "My Drive" })}
+                  icon={topFolderIcon["My Drive"]}
+                  badge={counts.myDrive || undefined}
+                  isDropTarget={dropTarget === "My Drive"}
+                  onDragOver={(e) => {
+                    if (dragging) {
+                      e.preventDefault();
+                      setDropTarget("My Drive");
+                    }
+                  }}
+                  onDragLeave={() =>
+                    setDropTarget((target) => (target === "My Drive" ? null : target))
+                  }
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    dropOnFolder("My Drive");
+                  }}
+                >
+                  My Drive
+                </SidebarLink>
+                <SidebarLink
                   active={view.type === "recent"}
                   onClick={() => selectView({ type: "recent" })}
                   icon={<Clock className="size-3.5" />}
@@ -926,46 +1179,63 @@ export function DriveWorkspace({
                   Starred
                 </SidebarLink>
                 <SidebarLink
-                  active={view.type === "shared"}
-                  onClick={() => selectView({ type: "shared" })}
-                  icon={<Users className="size-3.5" />}
-                  badge={counts.shared || undefined}
+                  active={
+                    view.type === "folder" &&
+                    (view.path === "Trash" || view.path.startsWith("Trash/"))
+                  }
+                  onClick={() => selectView({ type: "folder", path: "Trash" })}
+                  icon={topFolderIcon.Trash}
+                  badge={counts.trash || undefined}
+                  isDropTarget={dropTarget === "Trash"}
+                  onDragOver={(e) => {
+                    if (dragging) {
+                      e.preventDefault();
+                      setDropTarget("Trash");
+                    }
+                  }}
+                  onDragLeave={() =>
+                    setDropTarget((target) => (target === "Trash" ? null : target))
+                  }
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    dropOnFolder("Trash");
+                  }}
                 >
-                  Shared with me
+                  Trash
                 </SidebarLink>
               </ul>
 
-              <SidebarGroup label="Locations">
-                {TOP_FOLDERS.map((fld) => (
-                  <SidebarLink
-                    key={fld}
-                    active={view.type === "folder" && view.path === fld}
-                    onClick={() => selectView({ type: "folder", path: fld })}
-                    icon={topFolderIcon[fld]}
-                    badge={
-                      fld === "My Drive"
-                        ? counts.myDrive || undefined
-                        : fld === "Shared with me"
-                          ? counts.shared || undefined
-                          : counts.trash || undefined
-                    }
-                    isDropTarget={dropTarget === fld}
-                    onDragOver={(e) => {
-                      if (dragging) {
-                        e.preventDefault();
-                        setDropTarget(fld);
+              {sidebarGroupPaths.length > 0 && (
+                <SidebarGroup label="Groups">
+                  {sidebarGroupPaths.map((groupPath) => (
+                    <SidebarLink
+                      key={groupPath}
+                      active={
+                        view.type === "folder" &&
+                        (view.path === groupPath || view.path.startsWith(`${groupPath}/`))
                       }
-                    }}
-                    onDragLeave={() => setDropTarget((t) => (t === fld ? null : t))}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      dropOnFolder(fld);
-                    }}
-                  >
-                    {fld}
-                  </SidebarLink>
-                ))}
-              </SidebarGroup>
+                      onClick={() => selectView({ type: "folder", path: groupPath })}
+                      icon={<Users className="size-3.5" />}
+                      isDropTarget={dropTarget === groupPath}
+                      onDragOver={(e) => {
+                        if (dragging) {
+                          e.preventDefault();
+                          setDropTarget(groupPath);
+                        }
+                      }}
+                      onDragLeave={() =>
+                        setDropTarget((target) => (target === groupPath ? null : target))
+                      }
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        dropOnFolder(groupPath);
+                      }}
+                    >
+                      {groupPath.split("/").pop()}
+                    </SidebarLink>
+                  ))}
+                </SidebarGroup>
+              )}
             </nav>
 
             <WorkspaceUserFooter
@@ -983,7 +1253,31 @@ export function DriveWorkspace({
         <section
           className="flex-1 flex flex-col min-w-0 relative"
           style={{ backgroundColor: "var(--color-cream, #f5f1e8)" }}
+          onDragOver={(event) => {
+            if (!event.dataTransfer.types.includes("Files")) return;
+            event.preventDefault();
+            setDropUploadActive(true);
+          }}
+          onDragLeave={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+              setDropUploadActive(false);
+            }
+          }}
+          onDrop={(event) => {
+            if (!event.dataTransfer.types.includes("Files")) return;
+            event.preventDefault();
+            setDropUploadActive(false);
+            handleUpload(event.dataTransfer.files);
+          }}
         >
+          {dropUploadActive && (
+            <div className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center bg-black/10">
+              <div className="rounded-xl bg-white/90 px-4 py-2 text-sm font-medium text-[#0c8397] shadow">
+                Drop files to upload to{" "}
+                {view.type === "folder" ? view.path.split("/").pop() || "My Drive" : "My Drive"}
+              </div>
+            </div>
+          )}
           <header
             className="px-4 md:px-8 pt-4 md:pt-6 pb-3 border-b shrink-0"
             style={{ borderColor: "color-mix(in oklab, var(--color-ink) 10%, transparent)" }}
@@ -1151,6 +1445,7 @@ export function DriveWorkspace({
               ) : viewMode === "grid" ? (
                 <GridView
                   items={visibleItems}
+                  imagePreviewUrls={imagePreviewUrls}
                   selectedIds={selectedIds}
                   starred={starred}
                   dragging={dragging}
@@ -1180,7 +1475,9 @@ export function DriveWorkspace({
                   onSelect={handleSelect}
                   onOpen={openFile}
                   onStar={toggleStar}
-                  onArchive={(f) => moveOne(f.id, isUnderTrash(f.parent) ? "My Drive" : "Trash")}
+                  onArchive={(f) =>
+                    setConfirmDelete({ ids: [f.id], permanent: isUnderTrash(f.parent) })
+                  }
                   onLongPress={enterSelectionFor}
                   onDragStart={startDrag}
                   onDragEnd={endDrag}
@@ -1201,6 +1498,7 @@ export function DriveWorkspace({
               >
                 <DetailPanel
                   file={active}
+                  previewSrc={imagePreviewUrls[active.id]}
                   isStarred={!!starred[active.id]}
                   onClose={() => setDetailOpen(false)}
                   onDownload={() => {
@@ -1212,11 +1510,11 @@ export function DriveWorkspace({
                     }
                   }}
                   onStar={() => toggleStar(active.id)}
-                  onMove={() => setMoveDialog({ ids: [active.id] })}
+                  onShare={() => copyShareLink(active)}
                   onDelete={() =>
                     isUnderTrash(active.parent)
-                      ? setConfirmDelete({ ids: [active.id] })
-                      : moveOne(active.id, "Trash")
+                      ? setConfirmDelete({ ids: [active.id], permanent: true })
+                      : setConfirmDelete({ ids: [active.id], permanent: false })
                   }
                 />
               </aside>
@@ -1231,6 +1529,7 @@ export function DriveWorkspace({
             >
               <DetailPanel
                 file={active}
+                previewSrc={imagePreviewUrls[active.id]}
                 isStarred={!!starred[active.id]}
                 onClose={() => setDetailOpen(false)}
                 onDownload={() => {
@@ -1242,11 +1541,11 @@ export function DriveWorkspace({
                   }
                 }}
                 onStar={() => toggleStar(active.id)}
-                onMove={() => setMoveDialog({ ids: [active.id] })}
+                onShare={() => copyShareLink(active)}
                 onDelete={() =>
                   isUnderTrash(active.parent)
-                    ? setConfirmDelete({ ids: [active.id] })
-                    : moveOne(active.id, "Trash")
+                    ? setConfirmDelete({ ids: [active.id], permanent: true })
+                    : setConfirmDelete({ ids: [active.id], permanent: false })
                 }
                 mobile
               />
@@ -1281,9 +1580,6 @@ export function DriveWorkspace({
               >
                 <Download className="size-4" />
               </FabButton>
-              <FabButton label="Move to folder" onClick={() => setMoveDialog({ ids: selectedIds })}>
-                <FolderInput className="size-4" />
-              </FabButton>
               <FabButton
                 label={inTrashView ? "Delete permanently" : "Move to trash"}
                 onClick={requestDeleteSelected}
@@ -1297,34 +1593,63 @@ export function DriveWorkspace({
           )}
         </section>
 
-        <MoveToDialog
-          open={!!moveDialog}
-          onClose={() => setMoveDialog(null)}
-          notebooks={allFolderPaths}
-          onConfirm={(folder) => {
-            if (moveDialog) moveToFolder(moveDialog.ids, folder);
-            setMoveDialog(null);
-          }}
-        />
+        <Dialog open={newFolderDialogOpen} onOpenChange={setNewFolderDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create new folder</DialogTitle>
+              <DialogDescription>Enter a name for the new folder.</DialogDescription>
+            </DialogHeader>
+            <Input
+              autoFocus
+              placeholder="Folder name"
+              value={newFolderName}
+              onChange={(event) => setNewFolderName(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  submitCreateFolder();
+                }
+              }}
+            />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setNewFolderDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={submitCreateFolder} disabled={!newFolderName.trim()}>
+                Create folder
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete permanently?</AlertDialogTitle>
+              <AlertDialogTitle>
+                {confirmDelete?.permanent ? "Delete permanently?" : "Move to Trash?"}
+              </AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently delete {confirmDelete?.ids.length} file
-                {confirmDelete && confirmDelete.ids.length === 1 ? "" : "s"}. This cannot be undone.
+                {confirmDelete?.permanent
+                  ? `This will permanently delete ${confirmDelete?.ids.length} file${
+                      confirmDelete && confirmDelete.ids.length === 1 ? "" : "s"
+                    }. This cannot be undone.`
+                  : `This will move ${confirmDelete?.ids.length} file${
+                      confirmDelete && confirmDelete.ids.length === 1 ? "" : "s"
+                    } to Trash.`}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => {
-                  if (confirmDelete) reallyDelete(confirmDelete.ids);
+                  if (confirmDelete) {
+                    if (confirmDelete.permanent) reallyDelete(confirmDelete.ids);
+                    else moveToTrash(confirmDelete.ids);
+                  }
                   setConfirmDelete(null);
                 }}
               >
-                Delete
+                {confirmDelete?.permanent ? "Delete" : "Move to Trash"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -1338,6 +1663,7 @@ export function DriveWorkspace({
 
 function GridView({
   items,
+  imagePreviewUrls,
   selectedIds,
   starred,
   dragging,
@@ -1354,6 +1680,7 @@ function GridView({
   setDropTarget,
 }: {
   items: DriveFile[];
+  imagePreviewUrls: Record<string, string>;
   selectedIds: string[];
   starred: Record<string, boolean>;
   dragging: string[] | null;
@@ -1416,6 +1743,7 @@ function GridView({
               <FileTile
                 key={f.id}
                 file={f}
+                previewSrc={imagePreviewUrls[f.id]}
                 isSelected={selectedIds.includes(f.id)}
                 isStarred={!!starred[f.id]}
                 isDragging={dragging?.includes(f.id) ?? false}
@@ -1570,6 +1898,7 @@ function FolderTile({
 
 function FileTile({
   file,
+  previewSrc,
   isSelected,
   isStarred,
   isDragging,
@@ -1582,6 +1911,7 @@ function FileTile({
   onDragEnd,
 }: {
   file: DriveFile;
+  previewSrc?: string;
   isSelected: boolean;
   isStarred: boolean;
   isDragging: boolean;
@@ -1625,7 +1955,7 @@ function FileTile({
       style={{
         backgroundColor: "color-mix(in oklab, var(--color-ink) 5%, transparent)",
         boxShadow: isSelected
-          ? "inset 0 0 0 2px var(--color-emerald)"
+          ? "inset 0 0 0 3px var(--color-emerald), 0 0 0 1px color-mix(in oklab, var(--color-ink) 22%, transparent)"
           : "inset 0 0 0 1px color-mix(in oklab, var(--color-ink) 8%, transparent)",
       }}
     >
@@ -1636,7 +1966,11 @@ function FileTile({
           color: "var(--drive-sidebar)",
         }}
       >
-        <span className="[&>svg]:size-12 opacity-80">{kindIconLg[file.kind]}</span>
+        {file.kind === "image" && previewSrc ? (
+          <img src={previewSrc} alt={file.title} className="h-full w-full object-cover" />
+        ) : (
+          <span className="[&>svg]:size-12 opacity-80">{kindIconLg[file.kind]}</span>
+        )}
       </div>
       <div
         className="px-3 py-2.5 flex items-center gap-2 border-t"
@@ -1893,20 +2227,22 @@ function ListView({
 
 function DetailPanel({
   file,
+  previewSrc,
   isStarred,
   onClose,
   onDownload,
+  onShare,
   onStar,
-  onMove,
   onDelete,
   mobile,
 }: {
   file: DriveFile;
+  previewSrc?: string;
   isStarred: boolean;
   onClose: () => void;
   onDownload: () => void;
+  onShare: () => void;
   onStar: () => void;
-  onMove: () => void;
   onDelete: () => void;
   mobile?: boolean;
 }) {
@@ -1939,15 +2275,14 @@ function DetailPanel({
           </ListAction>
           <ListAction
             label="Share"
-            onClick={() => toast("Share link copied", { icon: <Share2 className="size-4" /> })}
+            onClick={() => {
+              void onShare();
+            }}
           >
             <Share2 className="size-4" />
           </ListAction>
           <ListAction label={isStarred ? "Unstar" : "Star"} onClick={onStar}>
             <Star className="size-4" fill={isStarred ? "currentColor" : "none"} />
-          </ListAction>
-          <ListAction label="Move" onClick={onMove}>
-            <FolderInput className="size-4" />
           </ListAction>
           <ListAction label="Delete" onClick={onDelete}>
             <Trash2 className="size-4" />
@@ -1962,7 +2297,15 @@ function DetailPanel({
             color: "var(--drive-sidebar)",
           }}
         >
-          <span className="[&>svg]:size-16">{kindIconLg[file.kind]}</span>
+          {file.kind === "image" && previewSrc ? (
+            <img
+              src={previewSrc}
+              alt={file.title}
+              className="h-full w-full rounded-2xl object-cover"
+            />
+          ) : (
+            <span className="[&>svg]:size-16">{kindIconLg[file.kind]}</span>
+          )}
         </div>
         <p
           className="text-[10px] uppercase tracking-[0.18em] mb-2"

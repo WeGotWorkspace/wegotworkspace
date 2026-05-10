@@ -180,9 +180,11 @@ final class DriveKernel
             if ($route === '/renameitem') {
                 $body = self::readJsonBody();
                 $destination = DriveAcl::normalizeVirtualPath((string) ($body['destination'] ?? '/'));
-                $fromName = self::validateItemName((string) ($body['from'] ?? ''));
+                $fromRaw = trim((string) ($body['from'] ?? ''));
                 $toName = self::validateItemName((string) ($body['to'] ?? ''));
-                $fromPath = DriveAcl::normalizeVirtualPath($destination.'/'.$fromName);
+                $fromPath = str_contains($fromRaw, '/')
+                    ? DriveAcl::normalizeVirtualPath($fromRaw)
+                    : DriveAcl::normalizeVirtualPath($destination.'/'.self::validateItemName($fromRaw));
                 $toPath = DriveAcl::normalizeVirtualPath($destination.'/'.$toName);
                 self::assertAllowed($fromPath, $username, $groups, true);
                 self::assertAllowed($toPath, $username, $groups, true);
