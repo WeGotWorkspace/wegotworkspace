@@ -1,0 +1,87 @@
+import { useCallback, useMemo } from "react";
+import { useWorkspaceApi } from "@/hooks/use-workspace-api";
+import { mockWorkspaceSession } from "@/lib/api/mock/workspace-session-mock";
+import {
+  createDefaultAdminApiSource,
+  type AdminApiSource,
+} from "@/admin-core/src/admin-api-source";
+import type { AdminUIData } from "@/admin-core/src/admin-types";
+
+export function useAdminAPI(source?: AdminApiSource) {
+  const resolvedSource = useMemo(() => source ?? createDefaultAdminApiSource(), [source]);
+  const placeholderData = useMemo<AdminUIData>(
+    () => ({
+      users: [],
+      groups: [],
+      mail: {
+        imapHost: "",
+        imapPort: 0,
+        imapSecurity: "",
+        smtpHost: "",
+        smtpPort: 0,
+        smtpSecurity: "",
+      },
+      voice: {
+        signalingUrl: "",
+        stunUrls: "",
+        turnUrls: "",
+        turnUsername: "",
+        turnPassword: "",
+        forceRelay: false,
+      },
+      apps: {
+        calendars: true,
+        contacts: true,
+      },
+      webdav: {
+        sabreUi: true,
+        timezone: "UTC",
+        baseUri: "/",
+        authRealm: "SabreDAV",
+      },
+      updates: {
+        installedVersion: "",
+        schemaVersion: 0,
+        latest: null,
+        updateAvailable: false,
+        compatible: true,
+        backups: [],
+        checks: [],
+        inProgress: false,
+        phase: null,
+        current: null,
+        download: null,
+        phaseProgress: null,
+        cancelRequested: false,
+        cancelAllowed: false,
+        lastCheckedAt: null,
+        lastCheckError: null,
+        lastResult: null,
+      },
+      currentUser: "",
+      logoutUrl: "/",
+      updateLogLines: [],
+    }),
+    [],
+  );
+  const loadBootstrapFromSource = useCallback(
+    (apiSource: AdminApiSource) => apiSource.loadBootstrap(),
+    [],
+  );
+  const createOperationsFromSource = useCallback(
+    (apiSource: AdminApiSource) => apiSource.createOperations(),
+    [],
+  );
+
+  const { phase, error, retry, successVersion, listLoading, session, data, operations } =
+    useWorkspaceApi({
+      source: resolvedSource,
+      createDefaultSource: createDefaultAdminApiSource,
+      placeholderData,
+      loadBootstrap: loadBootstrapFromSource,
+      createOperations: createOperationsFromSource,
+      fallbackSession: mockWorkspaceSession,
+    });
+
+  return { phase, error, retry, successVersion, listLoading, session, data, operations };
+}

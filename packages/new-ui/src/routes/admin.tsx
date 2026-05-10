@@ -34,23 +34,12 @@ import { Card } from "@/card/src/card";
 import { Callout } from "@/callout/src/callout";
 import { DataTable, type DataTableColumn } from "@/data-table/src/data-table";
 import { MenuItem } from "@/menu-item/src/menu-item";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui/tooltip";
 import { Input } from "@/ui/input";
 import { Label } from "@/ui/label";
 import { Button } from "@/ui/button";
 import { Switch } from "@/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -71,9 +60,10 @@ import {
 } from "@/ui/alert-dialog";
 import { SidebarGroup, SidebarLink } from "@/settings-sidebar/src/settings-sidebar";
 import { WorkspaceAppSwitcher } from "@/workspace-app-switcher/src/workspace-app-switcher";
+import { AdminApp as AdminCoreApp } from "@/admin-core/src/admin-app";
 
 export const Route = createFileRoute("/admin")({
-  component: AdminApp,
+  component: AdminCoreApp,
   head: () => ({
     meta: [
       { title: "Admin" },
@@ -92,17 +82,47 @@ export const Route = createFileRoute("/admin")({
 type Section = "users" | "mail" | "voice" | "webdav" | "backups" | "updates";
 
 const SECTIONS: { id: Section; label: string; icon: React.ReactNode; description: string }[] = [
-  { id: "users", label: "Users & Groups", icon: <Users className="size-3.5" />, description: "Manage accounts and group memberships" },
-  { id: "mail", label: "Mail", icon: <MailIcon className="size-3.5" />, description: "Mail server configuration" },
-  { id: "voice", label: "Voice", icon: <Phone className="size-3.5" />, description: "STUN / TURN signalling" },
-  { id: "webdav", label: "WebDAV", icon: <Cloud className="size-3.5" />, description: "Server defaults and DAV features" },
-  { id: "backups", label: "Backups", icon: <Database className="size-3.5" />, description: "Database and system backups" },
-  { id: "updates", label: "Updates", icon: <Rocket className="size-3.5" />, description: "System updates and release status" },
+  {
+    id: "users",
+    label: "Users & Groups",
+    icon: <Users className="size-3.5" />,
+    description: "Manage accounts and group memberships",
+  },
+  {
+    id: "mail",
+    label: "Mail",
+    icon: <MailIcon className="size-3.5" />,
+    description: "Mail server configuration",
+  },
+  {
+    id: "voice",
+    label: "Voice",
+    icon: <Phone className="size-3.5" />,
+    description: "STUN / TURN signalling",
+  },
+  {
+    id: "webdav",
+    label: "WebDAV",
+    icon: <Cloud className="size-3.5" />,
+    description: "Server defaults and DAV features",
+  },
+  {
+    id: "backups",
+    label: "Backups",
+    icon: <Database className="size-3.5" />,
+    description: "Database and system backups",
+  },
+  {
+    id: "updates",
+    label: "Updates",
+    icon: <Rocket className="size-3.5" />,
+    description: "System updates and release status",
+  },
 ];
 
 const ACCENT = "#2f302c";
 
-function AdminApp() {
+function LegacyAdminApp() {
   const [section, setSection] = useState<Section>("users");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -142,8 +162,18 @@ function AdminApp() {
         >
           <div className="p-6 md:p-8 flex items-center gap-3 justify-between">
             <div className="flex items-center gap-2 min-w-0">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 165 227" className="w-auto shrink-0" style={{ height: "54px", marginTop: "-5px" }} fill="none" aria-hidden="true">
-                <path fill="currentColor" d="M72.476 3.94C80.143-2.42 92.81-.847 98.89 6.98c5.026 6.266 5.533 14.693 5.853 22.386.133 12.854-.88 25.667-1.32 38.507 5.693-14.027 9-29.387 18.16-41.72 5.987-8.32 19.013-10.213 26.787-3.347 6.826 6.16 6.92 16.414 5.013 24.747-5.373 21.387-12.547 42.267-19.827 63.067 8.04 6.706 13.44 16.24 15.174 26.56 3.2 19.52-.067 40.493-11.054 57.173-9.333 14.547-24.213 25.493-41.093 29.467-21.293 5.266-45.307 3.2-63.693-9.467C15.556 202.553 5.05 182.86.983 162.66c-1.48-7.8-1.813-16.587 2.8-23.454 3.467-5.813 9.8-8.866 15.88-11.2-1.027-3.68-2.093-7.64-.787-11.4 1.28-4.253 5.08-6.96 8.627-9.266-4.72-18.6-11.293-36.72-15.933-55.374-2.16-8.36-4.56-17.586-.894-25.906 3.507-8.6 14.24-13 22.867-9.734 6.133 2.147 10.44 7.534 13.547 13.014 6.56 12.093 10.013 25.506 14.013 38.573.653-14.707 1.307-29.413 2.64-44.08.747-7.253 2.907-15.04 8.733-19.893m8.84 9.893c-3.533 4.773-3.546 11.027-4.16 16.693-1.613 23.094-2.613 46.214-3.8 69.32 4.92.08 9.827.107 14.747.107.84-24.88 2.52-49.733 2.347-74.627-.187-4.08-.6-8.733-3.68-11.746-1.427-1.627-4.24-1.627-5.454.253M22.85 33.206c-.334 8.267 2.346 16.214 4.52 24.094 4.36 15.146 8.933 30.253 13.506 45.346 5.147-.72 10.294-1.466 15.414-2.36-5.347-17.64-10.36-35.373-16.107-52.893-2.667-6.693-5-14.24-10.8-18.92-3.147-2.36-6.587 1.6-6.533 4.733m110.626-.506c-5.293 6.973-7.773 15.493-10.96 23.533-5.546 14.96-11.466 29.773-16.906 44.773 5.306.667 10.506 1.96 15.72 3.08 6.48-19.693 13.96-39.12 18.48-59.4 1.106-4.586.986-9.466-1.307-13.68-1.72.267-3.987-.093-5.027 1.694M58.01 113.006c-8.974.814-18.32 2.04-26.094 6.92.414 6.587 7.08 9.414 12.6 10.84 14 3.534 28.467 1.174 42.64.254 4.52-.04 9.747-.787 13.52 2.306 3.107 2.56 2.88 7.854-.28 10.28-4.8 4.16-10.293 7.507-14.68 12.134-8.16 7.866-12.84 19.586-11.28 30.92.454 4.44 3.96 8.306 3.107 12.88-.587 2.96-4.427 3.546-6.72 2.2-6.133-2.734-9.32-9.254-10.68-15.507-10.48 4.533-22.48.213-30.147-7.56-4.56-4.667-9.546-10.293-9.253-17.24.133-3.36 4.027-7.013 7.293-4.76 5.454 4.293 8.507 10.96 14.12 15.133 3.147 2.467 7.534 5.014 11.547 3.054 2.56-2.107 1.56-5.934.693-8.654-4.12-10.56-12.293-19.28-21.973-25.026-7.587-4.067-18.747 1.626-18.467 10.666.174 13.24 5.254 26.08 12.254 37.147 8.133 12.867 22.013 21.627 36.986 23.96 16.254 2.52 34 .347 47.654-9.387 15.746-10.96 24.453-30.066 25-48.96.32-10.746-.76-22.613-8.014-31.133-6.813-7.64-17.546-9.387-27.226-10.2-14.174-.893-28.427-1.293-42.6-.267m-.387 32.36a79.6 79.6 0 0 1 8.68 13.48c3.28-5.253 7.24-10.026 11.653-14.373-6.76.6-13.546.867-20.333.893"/>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 165 227"
+                className="w-auto shrink-0"
+                style={{ height: "54px", marginTop: "-5px" }}
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  fill="currentColor"
+                  d="M72.476 3.94C80.143-2.42 92.81-.847 98.89 6.98c5.026 6.266 5.533 14.693 5.853 22.386.133 12.854-.88 25.667-1.32 38.507 5.693-14.027 9-29.387 18.16-41.72 5.987-8.32 19.013-10.213 26.787-3.347 6.826 6.16 6.92 16.414 5.013 24.747-5.373 21.387-12.547 42.267-19.827 63.067 8.04 6.706 13.44 16.24 15.174 26.56 3.2 19.52-.067 40.493-11.054 57.173-9.333 14.547-24.213 25.493-41.093 29.467-21.293 5.266-45.307 3.2-63.693-9.467C15.556 202.553 5.05 182.86.983 162.66c-1.48-7.8-1.813-16.587 2.8-23.454 3.467-5.813 9.8-8.866 15.88-11.2-1.027-3.68-2.093-7.64-.787-11.4 1.28-4.253 5.08-6.96 8.627-9.266-4.72-18.6-11.293-36.72-15.933-55.374-2.16-8.36-4.56-17.586-.894-25.906 3.507-8.6 14.24-13 22.867-9.734 6.133 2.147 10.44 7.534 13.547 13.014 6.56 12.093 10.013 25.506 14.013 38.573.653-14.707 1.307-29.413 2.64-44.08.747-7.253 2.907-15.04 8.733-19.893m8.84 9.893c-3.533 4.773-3.546 11.027-4.16 16.693-1.613 23.094-2.613 46.214-3.8 69.32 4.92.08 9.827.107 14.747.107.84-24.88 2.52-49.733 2.347-74.627-.187-4.08-.6-8.733-3.68-11.746-1.427-1.627-4.24-1.627-5.454.253M22.85 33.206c-.334 8.267 2.346 16.214 4.52 24.094 4.36 15.146 8.933 30.253 13.506 45.346 5.147-.72 10.294-1.466 15.414-2.36-5.347-17.64-10.36-35.373-16.107-52.893-2.667-6.693-5-14.24-10.8-18.92-3.147-2.36-6.587 1.6-6.533 4.733m110.626-.506c-5.293 6.973-7.773 15.493-10.96 23.533-5.546 14.96-11.466 29.773-16.906 44.773 5.306.667 10.506 1.96 15.72 3.08 6.48-19.693 13.96-39.12 18.48-59.4 1.106-4.586.986-9.466-1.307-13.68-1.72.267-3.987-.093-5.027 1.694M58.01 113.006c-8.974.814-18.32 2.04-26.094 6.92.414 6.587 7.08 9.414 12.6 10.84 14 3.534 28.467 1.174 42.64.254 4.52-.04 9.747-.787 13.52 2.306 3.107 2.56 2.88 7.854-.28 10.28-4.8 4.16-10.293 7.507-14.68 12.134-8.16 7.866-12.84 19.586-11.28 30.92.454 4.44 3.96 8.306 3.107 12.88-.587 2.96-4.427 3.546-6.72 2.2-6.133-2.734-9.32-9.254-10.68-15.507-10.48 4.533-22.48.213-30.147-7.56-4.56-4.667-9.546-10.293-9.253-17.24.133-3.36 4.027-7.013 7.293-4.76 5.454 4.293 8.507 10.96 14.12 15.133 3.147 2.467 7.534 5.014 11.547 3.054 2.56-2.107 1.56-5.934.693-8.654-4.12-10.56-12.293-19.28-21.973-25.026-7.587-4.067-18.747 1.626-18.467 10.666.174 13.24 5.254 26.08 12.254 37.147 8.133 12.867 22.013 21.627 36.986 23.96 16.254 2.52 34 .347 47.654-9.387 15.746-10.96 24.453-30.066 25-48.96.32-10.746-.76-22.613-8.014-31.133-6.813-7.64-17.546-9.387-27.226-10.2-14.174-.893-28.427-1.293-42.6-.267m-.387 32.36a79.6 79.6 0 0 1 8.68 13.48c3.28-5.253 7.24-10.026 11.653-14.373-6.76.6-13.546.867-20.333.893"
+                />
               </svg>
               <WorkspaceAppSwitcher />
             </div>
@@ -280,7 +310,15 @@ function AdminApp() {
   );
 }
 
-function Field({ label, children, readOnly }: { label: string; children: React.ReactNode; readOnly?: boolean }) {
+function Field({
+  label,
+  children,
+  readOnly,
+}: {
+  label: string;
+  children: React.ReactNode;
+  readOnly?: boolean;
+}) {
   return (
     <div className="space-y-1.5 mb-4 last:mb-0">
       <Label
@@ -310,9 +348,19 @@ type AdminUser = { id: string; username: string; displayName: string; email: str
 type Group = { id: string; name: string; members: string[] };
 
 const SEED_USERS: AdminUser[] = [
-  { id: "u1", username: "elias.linden", displayName: "Elias Linden", email: "elias@northlight.studio" },
+  {
+    id: "u1",
+    username: "elias.linden",
+    displayName: "Elias Linden",
+    email: "elias@northlight.studio",
+  },
   { id: "u2", username: "hana.ito", displayName: "Hana Ito", email: "hana@northlight.studio" },
-  { id: "u3", username: "marcus.bell", displayName: "Marcus Bell", email: "marcus@northlight.studio" },
+  {
+    id: "u3",
+    username: "marcus.bell",
+    displayName: "Marcus Bell",
+    email: "marcus@northlight.studio",
+  },
 ];
 
 const SEED_GROUPS: Group[] = [
@@ -380,7 +428,10 @@ function UsersGroupsPanel() {
           </Tooltip>
         }
       >
-        <ul className="divide-y" style={{ borderColor: "color-mix(in oklab, #1a1a18 10%, transparent)" }}>
+        <ul
+          className="divide-y"
+          style={{ borderColor: "color-mix(in oklab, #1a1a18 10%, transparent)" }}
+        >
           {users.map((u) => (
             <li
               key={u.id}
@@ -391,20 +442,31 @@ function UsersGroupsPanel() {
                 className="size-9 rounded-full flex items-center justify-center text-[11px] font-medium shrink-0"
                 style={{ backgroundColor: ACCENT, color: "#ffffff" }}
               >
-                {u.displayName.split(" ").map((p) => p[0]).slice(0, 2).join("")}
+                {u.displayName
+                  .split(" ")
+                  .map((p) => p[0])
+                  .slice(0, 2)
+                  .join("")}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium truncate" style={{ color: "#1a1a18" }}>
                   {u.displayName}
                 </div>
-                <div className="text-xs truncate" style={{ color: "color-mix(in oklab, #1a1a18 55%, transparent)" }}>
+                <div
+                  className="text-xs truncate"
+                  style={{ color: "color-mix(in oklab, #1a1a18 55%, transparent)" }}
+                >
                   @{u.username} · {u.email}
                 </div>
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <button type="button" onClick={() => setEditUser(u)} className="size-8 rounded-md flex items-center justify-center hover:bg-[color-mix(in_oklab,#1a1a18_8%,transparent)]">
+                    <button
+                      type="button"
+                      onClick={() => setEditUser(u)}
+                      className="size-8 rounded-md flex items-center justify-center hover:bg-[color-mix(in_oklab,#1a1a18_8%,transparent)]"
+                    >
                       <Pencil className="size-4" />
                     </button>
                   </TooltipTrigger>
@@ -412,7 +474,11 @@ function UsersGroupsPanel() {
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <button type="button" onClick={() => setPwUser(u)} className="size-8 rounded-md flex items-center justify-center hover:bg-[color-mix(in_oklab,#1a1a18_8%,transparent)]">
+                    <button
+                      type="button"
+                      onClick={() => setPwUser(u)}
+                      className="size-8 rounded-md flex items-center justify-center hover:bg-[color-mix(in_oklab,#1a1a18_8%,transparent)]"
+                    >
                       <KeyRound className="size-4" />
                     </button>
                   </TooltipTrigger>
@@ -420,7 +486,11 @@ function UsersGroupsPanel() {
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <button type="button" onClick={() => setDelUser(u)} className="size-8 rounded-md flex items-center justify-center hover:bg-[color-mix(in_oklab,#1a1a18_8%,transparent)]">
+                    <button
+                      type="button"
+                      onClick={() => setDelUser(u)}
+                      className="size-8 rounded-md flex items-center justify-center hover:bg-[color-mix(in_oklab,#1a1a18_8%,transparent)]"
+                    >
                       <Trash2 className="size-4" />
                     </button>
                   </TooltipTrigger>
@@ -451,26 +521,41 @@ function UsersGroupsPanel() {
           </Tooltip>
         }
       >
-        <ul className="divide-y" style={{ borderColor: "color-mix(in oklab, #1a1a18 10%, transparent)" }}>
+        <ul
+          className="divide-y"
+          style={{ borderColor: "color-mix(in oklab, #1a1a18 10%, transparent)" }}
+        >
           {groups.map((g) => (
             <li
               key={g.id}
               className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
               style={{ borderColor: "color-mix(in oklab, #1a1a18 10%, transparent)" }}
             >
-              <div className="size-9 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: ACCENT, color: "#ffffff" }}>
+              <div
+                className="size-9 rounded-full flex items-center justify-center shrink-0"
+                style={{ backgroundColor: ACCENT, color: "#ffffff" }}
+              >
                 <Users className="size-4" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate" style={{ color: "#1a1a18" }}>{g.name}</div>
-                <div className="text-xs truncate" style={{ color: "color-mix(in oklab, #1a1a18 55%, transparent)" }}>
+                <div className="text-sm font-medium truncate" style={{ color: "#1a1a18" }}>
+                  {g.name}
+                </div>
+                <div
+                  className="text-xs truncate"
+                  style={{ color: "color-mix(in oklab, #1a1a18 55%, transparent)" }}
+                >
                   {g.members.length} member{g.members.length === 1 ? "" : "s"}
                 </div>
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <button type="button" onClick={() => setEditGroup(g)} className="size-8 rounded-md flex items-center justify-center hover:bg-[color-mix(in_oklab,#1a1a18_8%,transparent)]">
+                    <button
+                      type="button"
+                      onClick={() => setEditGroup(g)}
+                      className="size-8 rounded-md flex items-center justify-center hover:bg-[color-mix(in_oklab,#1a1a18_8%,transparent)]"
+                    >
                       <Pencil className="size-4" />
                     </button>
                   </TooltipTrigger>
@@ -478,7 +563,11 @@ function UsersGroupsPanel() {
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <button type="button" onClick={() => setDelGroup(g)} className="size-8 rounded-md flex items-center justify-center hover:bg-[color-mix(in_oklab,#1a1a18_8%,transparent)]">
+                    <button
+                      type="button"
+                      onClick={() => setDelGroup(g)}
+                      className="size-8 rounded-md flex items-center justify-center hover:bg-[color-mix(in_oklab,#1a1a18_8%,transparent)]"
+                    >
                       <Trash2 className="size-4" />
                     </button>
                   </TooltipTrigger>
@@ -495,7 +584,10 @@ function UsersGroupsPanel() {
           open
           onOpenChange={(o) => !o && setNewUser(false)}
           title="New user"
-          onSubmit={(u) => { addUser(u); setNewUser(false); }}
+          onSubmit={(u) => {
+            addUser(u);
+            setNewUser(false);
+          }}
         />
       )}
       {editUser && (
@@ -504,7 +596,10 @@ function UsersGroupsPanel() {
           onOpenChange={(o) => !o && setEditUser(null)}
           title="Edit user"
           initial={editUser}
-          onSubmit={(u) => { updateUser({ ...editUser, ...u }); setEditUser(null); }}
+          onSubmit={(u) => {
+            updateUser({ ...editUser, ...u });
+            setEditUser(null);
+          }}
         />
       )}
       {pwUser && (
@@ -512,7 +607,10 @@ function UsersGroupsPanel() {
           open
           onOpenChange={(o) => !o && setPwUser(null)}
           user={pwUser}
-          onSubmit={() => { toast("Password updated", { icon: <Check className="size-4" /> }); setPwUser(null); }}
+          onSubmit={() => {
+            toast("Password updated", { icon: <Check className="size-4" /> });
+            setPwUser(null);
+          }}
         />
       )}
       {newGroup && (
@@ -521,7 +619,10 @@ function UsersGroupsPanel() {
           onOpenChange={(o) => !o && setNewGroup(false)}
           title="New group"
           users={users}
-          onSubmit={(name) => { addGroup(name); setNewGroup(false); }}
+          onSubmit={(name) => {
+            addGroup(name);
+            setNewGroup(false);
+          }}
         />
       )}
       {editGroup && (
@@ -544,13 +645,18 @@ function UsersGroupsPanel() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete user?</AlertDialogTitle>
             <AlertDialogDescription>
-              {delUser ? `${delUser.displayName} (@${delUser.username}) will be permanently removed and unassigned from all groups.` : ""}
+              {delUser
+                ? `${delUser.displayName} (@${delUser.username}) will be permanently removed and unassigned from all groups.`
+                : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => { if (delUser) deleteUser(delUser.id); setDelUser(null); }}
+              onClick={() => {
+                if (delUser) deleteUser(delUser.id);
+                setDelUser(null);
+              }}
               style={{ backgroundColor: ACCENT, color: "#fff" }}
             >
               Delete
@@ -570,7 +676,10 @@ function UsersGroupsPanel() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => { if (delGroup) deleteGroup(delGroup.id); setDelGroup(null); }}
+              onClick={() => {
+                if (delGroup) deleteGroup(delGroup.id);
+                setDelGroup(null);
+              }}
               style={{ backgroundColor: ACCENT, color: "#fff" }}
             >
               Delete
@@ -605,7 +714,9 @@ function UserDialog({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
-            {initial ? "Update display name and email. Username cannot be changed." : "Create a new user account."}
+            {initial
+              ? "Update display name and email. Username cannot be changed."
+              : "Create a new user account."}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
@@ -757,7 +868,11 @@ function GroupDialog({
                           @{u.username}
                         </span>
                       </div>
-                      <Switch checked={checked} onClick={(e) => e.stopPropagation()} onCheckedChange={() => toggle(u.id)} />
+                      <Switch
+                        checked={checked}
+                        onClick={(e) => e.stopPropagation()}
+                        onCheckedChange={() => toggle(u.id)}
+                      />
                     </li>
                   );
                 })}
@@ -769,7 +884,10 @@ function GroupDialog({
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <PrimaryButton onClick={() => onSubmit(name, initial ? members : undefined)} disabled={!name.trim()}>
+          <PrimaryButton
+            onClick={() => onSubmit(name, initial ? members : undefined)}
+            disabled={!name.trim()}
+          >
             Save
           </PrimaryButton>
         </DialogFooter>
@@ -805,7 +923,10 @@ function MailPanel() {
             <Input value={s.imapPort} onChange={set("imapPort")} />
           </Field>
           <Field label="Security">
-            <SecuritySelect value={s.imapSec} onChange={(v) => setS((p) => ({ ...p, imapSec: v }))} />
+            <SecuritySelect
+              value={s.imapSec}
+              onChange={(v) => setS((p) => ({ ...p, imapSec: v }))}
+            />
           </Field>
         </div>
       </Card>
@@ -818,7 +939,10 @@ function MailPanel() {
             <Input value={s.smtpPort} onChange={set("smtpPort")} />
           </Field>
           <Field label="Security">
-            <SecuritySelect value={s.smtpSec} onChange={(v) => setS((p) => ({ ...p, smtpSec: v }))} />
+            <SecuritySelect
+              value={s.smtpSec}
+              onChange={(v) => setS((p) => ({ ...p, smtpSec: v }))}
+            />
           </Field>
         </div>
       </Card>
@@ -876,14 +1000,14 @@ function VoicePanel() {
             <div className="text-sm font-medium" style={{ color: "#1a1a18" }}>
               Force TURN relay for all calls
             </div>
-            <div className="text-xs" style={{ color: "color-mix(in oklab, #1a1a18 55%, transparent)" }}>
+            <div
+              className="text-xs"
+              style={{ color: "color-mix(in oklab, #1a1a18 55%, transparent)" }}
+            >
               Routes every call through the TURN server. Off by default.
             </div>
           </div>
-          <Switch
-            checked={s.forceRelay}
-            onCheckedChange={(v) => setS({ ...s, forceRelay: v })}
-          />
+          <Switch checked={s.forceRelay} onCheckedChange={(v) => setS({ ...s, forceRelay: v })} />
         </div>
       </Card>
       <div className="flex justify-end">
@@ -917,8 +1041,12 @@ function FeatureRow({
       style={{ borderColor: "color-mix(in oklab, #1a1a18 10%, transparent)" }}
     >
       <div className="min-w-0">
-        <div className="text-sm font-medium" style={{ color: "#1a1a18" }}>{label}</div>
-        <div className="text-xs" style={{ color: "color-mix(in oklab, #1a1a18 55%, transparent)" }}>{desc}</div>
+        <div className="text-sm font-medium" style={{ color: "#1a1a18" }}>
+          {label}
+        </div>
+        <div className="text-xs" style={{ color: "color-mix(in oklab, #1a1a18 55%, transparent)" }}>
+          {desc}
+        </div>
       </div>
       <Switch checked={value} onCheckedChange={onChange} />
     </div>
@@ -956,7 +1084,9 @@ function SecuritySelect({ value, onChange }: { value: string; onChange: (v: stri
       </SelectTrigger>
       <SelectContent>
         {options.map((o) => (
-          <SelectItem key={o} value={o}>{o}</SelectItem>
+          <SelectItem key={o} value={o}>
+            {o}
+          </SelectItem>
         ))}
       </SelectContent>
     </Select>
@@ -985,7 +1115,9 @@ function WebDAVPanel() {
             </SelectTrigger>
             <SelectContent className="max-h-72">
               {TIMEZONES.map((tz) => (
-                <SelectItem key={tz} value={tz}>{tz}</SelectItem>
+                <SelectItem key={tz} value={tz}>
+                  {tz}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -998,9 +1130,24 @@ function WebDAVPanel() {
         </Field>
       </Card>
       <Card title="DAV features">
-        <FeatureRow label="Files" desc="Expose user files via WebDAV." value={s.files} onChange={(v) => setS({ ...s, files: v })} />
-        <FeatureRow label="Contacts" desc="Enable CardDAV for address books." value={s.contacts} onChange={(v) => setS({ ...s, contacts: v })} />
-        <FeatureRow label="Calendars" desc="Enable CalDAV for calendars and tasks." value={s.calendars} onChange={(v) => setS({ ...s, calendars: v })} />
+        <FeatureRow
+          label="Files"
+          desc="Expose user files via WebDAV."
+          value={s.files}
+          onChange={(v) => setS({ ...s, files: v })}
+        />
+        <FeatureRow
+          label="Contacts"
+          desc="Enable CardDAV for address books."
+          value={s.contacts}
+          onChange={(v) => setS({ ...s, contacts: v })}
+        />
+        <FeatureRow
+          label="Calendars"
+          desc="Enable CalDAV for calendars and tasks."
+          value={s.calendars}
+          onChange={(v) => setS({ ...s, calendars: v })}
+        />
       </Card>
       <div className="flex justify-end">
         <PrimaryButton
@@ -1019,11 +1166,41 @@ function WebDAVPanel() {
 type Backup = { id: string; filename: string; createdAt: string; version: string; size: string };
 
 const SEED_BACKUPS: Backup[] = [
-  { id: "b1", filename: "db-backup-2026-05-04.zip", createdAt: "2026-05-04 03:00", version: "v2.4.1", size: "184 MB" },
-  { id: "b2", filename: "db-backup-2026-05-03.zip", createdAt: "2026-05-03 03:00", version: "v2.4.1", size: "182 MB" },
-  { id: "b3", filename: "db-backup-2026-05-02.zip", createdAt: "2026-05-02 03:00", version: "v2.4.0", size: "181 MB" },
-  { id: "b4", filename: "db-backup-2026-05-01.zip", createdAt: "2026-05-01 03:00", version: "v2.4.0", size: "180 MB" },
-  { id: "b5", filename: "db-backup-2026-04-30.zip", createdAt: "2026-04-30 03:00", version: "v2.3.9", size: "179 MB" },
+  {
+    id: "b1",
+    filename: "db-backup-2026-05-04.zip",
+    createdAt: "2026-05-04 03:00",
+    version: "v2.4.1",
+    size: "184 MB",
+  },
+  {
+    id: "b2",
+    filename: "db-backup-2026-05-03.zip",
+    createdAt: "2026-05-03 03:00",
+    version: "v2.4.1",
+    size: "182 MB",
+  },
+  {
+    id: "b3",
+    filename: "db-backup-2026-05-02.zip",
+    createdAt: "2026-05-02 03:00",
+    version: "v2.4.0",
+    size: "181 MB",
+  },
+  {
+    id: "b4",
+    filename: "db-backup-2026-05-01.zip",
+    createdAt: "2026-05-01 03:00",
+    version: "v2.4.0",
+    size: "180 MB",
+  },
+  {
+    id: "b5",
+    filename: "db-backup-2026-04-30.zip",
+    createdAt: "2026-04-30 03:00",
+    version: "v2.3.9",
+    size: "179 MB",
+  },
 ];
 
 function BackupsPanel() {
@@ -1076,7 +1253,9 @@ function BackupsPanel() {
       headerClassName: "font-medium pb-3 pr-3",
       cellClassName: "py-3 pr-3 whitespace-nowrap",
       render: (backup) => (
-        <span style={{ color: "color-mix(in oklab, #1a1a18 65%, transparent)" }}>{backup.size}</span>
+        <span style={{ color: "color-mix(in oklab, #1a1a18 65%, transparent)" }}>
+          {backup.size}
+        </span>
       ),
     },
     {
@@ -1137,7 +1316,8 @@ function BackupsPanel() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete backup?</AlertDialogTitle>
             <AlertDialogDescription>
-              This permanently deletes <span className="font-medium">{delBackup?.filename}</span>. This action cannot be undone.
+              This permanently deletes <span className="font-medium">{delBackup?.filename}</span>.
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1162,23 +1342,58 @@ function BackupsPanel() {
 
 /* ---------- Updates ---------- */
 
-type LogEntry = { id: string; time: string; level: "info" | "success" | "warn" | "error"; message: string };
+type LogEntry = {
+  id: string;
+  time: string;
+  level: "info" | "success" | "warn" | "error";
+  message: string;
+};
 type CheckStatus = "ok" | "warn" | "error" | "pending";
 type ServerCheck = { id: string; label: string; status: CheckStatus; detail: string };
 
 const SEED_LOG: LogEntry[] = [
-  { id: "l1", time: "2026-05-05 09:14:02", level: "info", message: "Update channel set to 'stable'." },
-  { id: "l2", time: "2026-05-04 03:00:11", level: "success", message: "Updated to v2.4.1 successfully." },
-  { id: "l3", time: "2026-05-04 02:58:40", level: "info", message: "Pre-update backup created (db-backup-2026-05-04.zip)." },
-  { id: "l4", time: "2026-05-01 12:42:09", level: "warn", message: "Background check skipped: maintenance window active." },
-  { id: "l5", time: "2026-04-28 08:01:33", level: "error", message: "Update v2.4.0-rc.2 rolled back: integrity check failed." },
+  {
+    id: "l1",
+    time: "2026-05-05 09:14:02",
+    level: "info",
+    message: "Update channel set to 'stable'.",
+  },
+  {
+    id: "l2",
+    time: "2026-05-04 03:00:11",
+    level: "success",
+    message: "Updated to v2.4.1 successfully.",
+  },
+  {
+    id: "l3",
+    time: "2026-05-04 02:58:40",
+    level: "info",
+    message: "Pre-update backup created (db-backup-2026-05-04.zip).",
+  },
+  {
+    id: "l4",
+    time: "2026-05-01 12:42:09",
+    level: "warn",
+    message: "Background check skipped: maintenance window active.",
+  },
+  {
+    id: "l5",
+    time: "2026-04-28 08:01:33",
+    level: "error",
+    message: "Update v2.4.0-rc.2 rolled back: integrity check failed.",
+  },
 ];
 
 const SEED_CHECKS: ServerCheck[] = [
   { id: "c1", label: "Disk space", status: "ok", detail: "42.1 GB free of 100 GB" },
   { id: "c2", label: "Database connectivity", status: "ok", detail: "Responding in 4 ms" },
   { id: "c3", label: "Backup freshness", status: "ok", detail: "Last backup 6 hours ago" },
-  { id: "c4", label: "Outbound network", status: "warn", detail: "High latency to update mirror (820 ms)" },
+  {
+    id: "c4",
+    label: "Outbound network",
+    status: "warn",
+    detail: "High latency to update mirror (820 ms)",
+  },
   { id: "c5", label: "Background workers", status: "ok", detail: "3 / 3 healthy" },
 ];
 
@@ -1221,7 +1436,12 @@ function UpdatesPanel() {
     }, 900);
   };
 
-  const UPDATE_STEPS = ["Downloading", "Extracting", "Backing up database", "Applying update"] as const;
+  const UPDATE_STEPS = [
+    "Downloading",
+    "Extracting",
+    "Backing up database",
+    "Applying update",
+  ] as const;
   const [stepIndex, setStepIndex] = useState(-1);
 
   const runUpdate = () => {
@@ -1257,7 +1477,13 @@ function UpdatesPanel() {
   };
 
   const levelColor = (lvl: LogEntry["level"]) =>
-    lvl === "error" ? "#b14242" : lvl === "warn" ? "#c98a1f" : lvl === "success" ? "#3a8f5a" : "#1a1a18";
+    lvl === "error"
+      ? "#b14242"
+      : lvl === "warn"
+        ? "#c98a1f"
+        : lvl === "success"
+          ? "#3a8f5a"
+          : "#1a1a18";
   const logColumns: DataTableColumn<LogEntry>[] = [
     {
       key: "time",
@@ -1295,7 +1521,10 @@ function UpdatesPanel() {
       <Card title="Release status">
         <div className="flex flex-wrap items-center gap-6">
           <div>
-            <div className="text-[10px] uppercase tracking-[0.18em] mb-1" style={{ color: "color-mix(in oklab, #1a1a18 55%, transparent)" }}>
+            <div
+              className="text-[10px] uppercase tracking-[0.18em] mb-1"
+              style={{ color: "color-mix(in oklab, #1a1a18 55%, transparent)" }}
+            >
               Installed
             </div>
             <div className="text-2xl" style={{ fontFamily: "var(--font-serif)", color: "#1a1a18" }}>
@@ -1303,7 +1532,10 @@ function UpdatesPanel() {
             </div>
           </div>
           <div>
-            <div className="text-[10px] uppercase tracking-[0.18em] mb-1" style={{ color: "color-mix(in oklab, #1a1a18 55%, transparent)" }}>
+            <div
+              className="text-[10px] uppercase tracking-[0.18em] mb-1"
+              style={{ color: "color-mix(in oklab, #1a1a18 55%, transparent)" }}
+            >
               Latest
             </div>
             <div className="text-2xl" style={{ fontFamily: "var(--font-serif)", color: "#1a1a18" }}>
@@ -1311,16 +1543,26 @@ function UpdatesPanel() {
             </div>
           </div>
           <div>
-            <div className="text-[10px] uppercase tracking-[0.18em] mb-1" style={{ color: "color-mix(in oklab, #1a1a18 55%, transparent)" }}>
+            <div
+              className="text-[10px] uppercase tracking-[0.18em] mb-1"
+              style={{ color: "color-mix(in oklab, #1a1a18 55%, transparent)" }}
+            >
               Channel
             </div>
-            <div className="text-sm" style={{ color: "#1a1a18" }}>stable</div>
+            <div className="text-sm" style={{ color: "#1a1a18" }}>
+              stable
+            </div>
           </div>
           <div className="flex-1 min-w-32">
-            <div className="text-[10px] uppercase tracking-[0.18em] mb-1" style={{ color: "color-mix(in oklab, #1a1a18 55%, transparent)" }}>
+            <div
+              className="text-[10px] uppercase tracking-[0.18em] mb-1"
+              style={{ color: "color-mix(in oklab, #1a1a18 55%, transparent)" }}
+            >
               Last checked
             </div>
-            <div className="text-sm" style={{ color: "#1a1a18" }}>{lastChecked}</div>
+            <div className="text-sm" style={{ color: "#1a1a18" }}>
+              {lastChecked}
+            </div>
           </div>
         </div>
 
@@ -1346,7 +1588,10 @@ function UpdatesPanel() {
             <RefreshCw className={`size-4 mr-2 ${checking ? "animate-spin" : ""}`} />
             {checking ? "Checking…" : "Check for updates"}
           </Button>
-          <PrimaryButton onClick={() => setConfirmUpdate(true)} disabled={!updateAvailable || updating || checking}>
+          <PrimaryButton
+            onClick={() => setConfirmUpdate(true)}
+            disabled={!updateAvailable || updating || checking}
+          >
             {updating ? (
               <Loader2 className="size-4 mr-2 animate-spin" />
             ) : (
@@ -1365,15 +1610,24 @@ function UpdatesPanel() {
             }}
           >
             <div className="flex items-center justify-between mb-3">
-              <div className="text-[10px] uppercase tracking-[0.18em] font-semibold" style={{ color: "color-mix(in oklab, #1a1a18 55%, transparent)" }}>
+              <div
+                className="text-[10px] uppercase tracking-[0.18em] font-semibold"
+                style={{ color: "color-mix(in oklab, #1a1a18 55%, transparent)" }}
+              >
                 Update progress
               </div>
-              <div className="text-xs tabular-nums" style={{ color: "color-mix(in oklab, #1a1a18 55%, transparent)" }}>
+              <div
+                className="text-xs tabular-nums"
+                style={{ color: "color-mix(in oklab, #1a1a18 55%, transparent)" }}
+              >
                 {Math.min(stepIndex, UPDATE_STEPS.length)} / {UPDATE_STEPS.length}
               </div>
             </div>
 
-            <div className="h-1.5 rounded-full overflow-hidden mb-4" style={{ backgroundColor: "color-mix(in oklab, #1a1a18 10%, transparent)" }}>
+            <div
+              className="h-1.5 rounded-full overflow-hidden mb-4"
+              style={{ backgroundColor: "color-mix(in oklab, #1a1a18 10%, transparent)" }}
+            >
               <div
                 className="h-full transition-all duration-500 ease-out"
                 style={{
@@ -1395,8 +1649,8 @@ function UpdatesPanel() {
                         backgroundColor: done
                           ? ACCENT
                           : active
-                          ? "color-mix(in oklab, #1a1a18 12%, transparent)"
-                          : "color-mix(in oklab, #1a1a18 6%, transparent)",
+                            ? "color-mix(in oklab, #1a1a18 12%, transparent)"
+                            : "color-mix(in oklab, #1a1a18 6%, transparent)",
                         color: done ? "#ffffff" : "#1a1a18",
                       }}
                     >
@@ -1410,7 +1664,10 @@ function UpdatesPanel() {
                     </span>
                     <span
                       style={{
-                        color: done || active ? "#1a1a18" : "color-mix(in oklab, #1a1a18 50%, transparent)",
+                        color:
+                          done || active
+                            ? "#1a1a18"
+                            : "color-mix(in oklab, #1a1a18 50%, transparent)",
                         fontWeight: active ? 600 : 400,
                       }}
                     >
@@ -1435,7 +1692,10 @@ function UpdatesPanel() {
           },
         ]}
       >
-        <ul className="divide-y" style={{ borderColor: "color-mix(in oklab, #1a1a18 10%, transparent)" }}>
+        <ul
+          className="divide-y"
+          style={{ borderColor: "color-mix(in oklab, #1a1a18 10%, transparent)" }}
+        >
           {checks.map((c) => (
             <li key={c.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
               <MenuItem
@@ -1466,7 +1726,10 @@ function UpdatesPanel() {
         ]}
       >
         {log.length === 0 ? (
-          <p className="text-sm py-4" style={{ color: "color-mix(in oklab, #1a1a18 55%, transparent)" }}>
+          <p
+            className="text-sm py-4"
+            style={{ color: "color-mix(in oklab, #1a1a18 55%, transparent)" }}
+          >
             No log entries.
           </p>
         ) : (
@@ -1487,7 +1750,8 @@ function UpdatesPanel() {
           <AlertDialogHeader>
             <AlertDialogTitle>Update to {LATEST}?</AlertDialogTitle>
             <AlertDialogDescription>
-              The server will create a pre-update backup and may restart. Active sessions could briefly disconnect.
+              The server will create a pre-update backup and may restart. Active sessions could
+              briefly disconnect.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
