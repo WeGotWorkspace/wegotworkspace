@@ -152,6 +152,12 @@ export async function fetchAdminUpdateLog(opts?: { signal?: AbortSignal }): Prom
   return payload.lines;
 }
 
+async function fetchAdminUpdateState(opts?: { signal?: AbortSignal }): Promise<AdminUpdateState> {
+  const res = await wgwFetch("/admin/updates/state", { signal: opts?.signal });
+  if (!res.ok) throw new Error(`GET /admin/updates/state failed (${res.status})`);
+  return mapWgwUpdateStateToUI((await wgwReadJson(res)) as WgwUpdateStateResponse);
+}
+
 export async function fetchAdminLiveBootstrap(): Promise<AdminAppBootstrap> {
   const maxAttempts = 5;
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
@@ -236,6 +242,7 @@ export function createWgwAdminOperations(): AdminAPIOperations {
       if (!res.ok) throw new Error(`POST /admin/updates/check failed (${res.status})`);
       return fetchAdminUiData(opts);
     },
+    refreshUpdateState: (opts) => fetchAdminUpdateState(opts),
     applyUpdate: async (version, opts) => {
       const res = await wgwFetch("/admin/updates/apply", {
         method: "POST",
@@ -245,9 +252,13 @@ export function createWgwAdminOperations(): AdminAPIOperations {
       });
       if (!res.ok) {
         if (res.status === 400 || res.status === 503) {
-          const state = await fetchAdminState(opts);
-          if (state.updates.inProgress) {
-            return mapWgwUpdateStateToUI(state.updates);
+          try {
+            const updates = await fetchAdminUpdateState(opts);
+            if (updates.inProgress) {
+              return updates;
+            }
+          } catch {
+            // Fall through to detailed error below.
           }
         }
         const message = await readApiError(res, `POST /admin/updates/apply failed (${res.status})`);

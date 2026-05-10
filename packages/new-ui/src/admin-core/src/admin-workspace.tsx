@@ -296,9 +296,27 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
     },
   ];
   const logColumns: DataTableColumn<UpdateLogRow>[] = [
-    { key: "time", header: "Time", render: (row) => row.time, cellClassName: "font-mono text-xs" },
-    { key: "level", header: "Level", render: (row) => row.level },
-    { key: "message", header: "Message", render: (row) => row.message },
+    {
+      key: "time",
+      header: "Time",
+      headerClassName: "font-medium pb-3 pr-3",
+      cellClassName: "py-3 pr-3 whitespace-nowrap font-mono text-xs",
+      render: (row) => row.time,
+    },
+    {
+      key: "level",
+      header: "Level",
+      headerClassName: "font-medium pb-3 pr-3",
+      cellClassName: "py-3 pr-3 whitespace-nowrap",
+      render: (row) => row.level,
+    },
+    {
+      key: "message",
+      header: "Message",
+      headerClassName: "font-medium pb-3",
+      cellClassName: "py-3",
+      render: (row) => row.message,
+    },
   ];
 
   return (
@@ -1040,7 +1058,13 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
                       data={updateLogRows}
                       columns={logColumns}
                       rowKey={(row) => row.id}
-                      tableClassName="text-sm"
+                      className="-mx-6 px-6"
+                      tableClassName="w-full text-sm"
+                      headerClassName="text-left text-[10px] uppercase tracking-[0.18em]"
+                      rowClassName="border-t"
+                      rowStyle={() => ({
+                        borderColor: "color-mix(in oklab, var(--color-ink) 10%, transparent)",
+                      })}
                     />
                   </Card>
                 </>
