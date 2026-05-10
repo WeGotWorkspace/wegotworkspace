@@ -2615,12 +2615,7 @@ export interface components {
             currentUser: string;
             logoutUrl: string;
         };
-        UpdateApplyResponse: {
-            ok: boolean;
-            version: string;
-            message: string;
-            finishedAt: string | null;
-        };
+        UpdateApplyResponse: components["schemas"]["UpdateApplyResult"];
         /**
          * @example {
          *       "version": "0.1.31"
@@ -2629,16 +2624,18 @@ export interface components {
         UpdateApplyRequest: {
             version?: string;
         };
+        UpdateLogLineList: string[];
         UpdateLogResponse: {
-            lines?: string[];
+            lines: components["schemas"]["UpdateLogLineList"];
         };
         UpdateLogClearResponse: {
             ok: boolean;
-            lines: string[];
+            lines: components["schemas"]["UpdateLogLineList"];
         };
+        AdminSavedSettingKeyList: string[];
         AdminSettingsSaveResponse: {
-            ok?: boolean;
-            saved?: string[];
+            ok: boolean;
+            saved: components["schemas"]["AdminSavedSettingKeyList"];
         };
         SettingsUserProfile: {
             username: string;
@@ -2931,15 +2928,45 @@ export interface components {
         DriveChangeDirRequest: {
             to?: string;
         };
+        /** @enum {string} */
+        DriveEntryType: "dir" | "file";
+        /** @enum {string} */
+        DriveRootPath: "/users" | "/groups";
+        DriveRootPathList: components["schemas"]["DriveRootPath"][];
+        DriveDirectoryEntry: {
+            type: components["schemas"]["DriveEntryType"];
+            path: string;
+            name: string;
+            size: number;
+            time: number;
+            permissions: number;
+        };
+        DriveDirectoryEntryList: components["schemas"]["DriveDirectoryEntry"][];
+        DriveDirectoryData: {
+            location: string;
+            files: components["schemas"]["DriveDirectoryEntryList"];
+        };
+        DriveCwdData: {
+            cwd: string;
+        };
+        DriveUserData: {
+            username: string;
+            name: string;
+            /** @enum {string} */
+            role: "user";
+            roots: components["schemas"]["DriveRootPathList"];
+        };
         /**
          * @example {
+         *       "cwd": "/users/alice",
          *       "name": "Q2",
          *       "type": "dir"
          *     }
          */
         DriveCreateRequest: {
-            name?: string;
-            type?: string;
+            cwd?: string;
+            name: string;
+            type: components["schemas"]["DriveEntryType"];
         };
         /**
          * @example {
@@ -2949,33 +2976,41 @@ export interface components {
          *     }
          */
         DriveRenameRequest: {
-            destination?: string;
-            from?: string;
-            to?: string;
+            destination: string;
+            from: string;
+            to: string;
         };
+        DriveDeleteItem: {
+            path: string;
+            type?: components["schemas"]["DriveEntryType"];
+        };
+        DriveDeleteItemList: components["schemas"]["DriveDeleteItem"][];
         /**
          * @example {
          *       "items": [
          *         {
-         *           "path": "/users/alice/Q1-Archive"
+         *           "path": "/users/alice/Q1-Archive",
+         *           "type": "dir"
          *         }
          *       ]
          *     }
          */
         DriveDeleteItemsRequest: {
-            items?: Record<string, never>[];
+            items: components["schemas"]["DriveDeleteItemList"];
         };
         DriveUserResponse: {
-            data?: Record<string, never>;
+            data: components["schemas"]["DriveUserData"];
         };
         DriveListingResponse: {
-            data?: Record<string, never>;
+            data: components["schemas"]["DriveDirectoryData"];
         };
         DriveCwdResponse: {
-            data?: Record<string, never>;
+            data: components["schemas"]["DriveCwdData"];
         };
+        /** @enum {string} */
+        DriveMutationResult: "Created" | "Renamed" | "Deleted";
         DriveMutationResponse: {
-            data?: string;
+            data: components["schemas"]["DriveMutationResult"];
         };
         NotesCapabilitiesResponse: {
             enabled: boolean;

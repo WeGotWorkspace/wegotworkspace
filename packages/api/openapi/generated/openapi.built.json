@@ -885,30 +885,7 @@
                 ]
             },
             "UpdateApplyResponse": {
-                "type": "object",
-                "properties": {
-                    "ok": {
-                        "type": "boolean"
-                    },
-                    "version": {
-                        "type": "string"
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "finishedAt": {
-                        "type": [
-                            "string",
-                            "null"
-                        ]
-                    }
-                },
-                "required": [
-                    "ok",
-                    "version",
-                    "message",
-                    "finishedAt"
-                ]
+                "$ref": "#/components/schemas/UpdateApplyResult"
             },
             "UpdateApplyRequest": {
                 "type": "object",
@@ -921,16 +898,22 @@
                     "version": "0.1.31"
                 }
             },
+            "UpdateLogLineList": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            },
             "UpdateLogResponse": {
                 "type": "object",
                 "properties": {
                     "lines": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
+                        "$ref": "#/components/schemas/UpdateLogLineList"
                     }
-                }
+                },
+                "required": [
+                    "lines"
+                ]
             },
             "UpdateLogClearResponse": {
                 "type": "object",
@@ -939,16 +922,19 @@
                         "type": "boolean"
                     },
                     "lines": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
+                        "$ref": "#/components/schemas/UpdateLogLineList"
                     }
                 },
                 "required": [
                     "ok",
                     "lines"
                 ]
+            },
+            "AdminSavedSettingKeyList": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
             },
             "AdminSettingsSaveResponse": {
                 "type": "object",
@@ -957,12 +943,13 @@
                         "type": "boolean"
                     },
                     "saved": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
+                        "$ref": "#/components/schemas/AdminSavedSettingKeyList"
                     }
-                }
+                },
+                "required": [
+                    "ok",
+                    "saved"
+                ]
             },
             "SettingsUserProfile": {
                 "type": "object",
@@ -1713,17 +1700,134 @@
                     "to": "/users/alice/Documents"
                 }
             },
+            "DriveEntryType": {
+                "type": "string",
+                "enum": [
+                    "dir",
+                    "file"
+                ]
+            },
+            "DriveRootPath": {
+                "type": "string",
+                "enum": [
+                    "/users",
+                    "/groups"
+                ]
+            },
+            "DriveRootPathList": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/DriveRootPath"
+                }
+            },
+            "DriveDirectoryEntry": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "$ref": "#/components/schemas/DriveEntryType"
+                    },
+                    "path": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "size": {
+                        "type": "integer"
+                    },
+                    "time": {
+                        "type": "integer"
+                    },
+                    "permissions": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "type",
+                    "path",
+                    "name",
+                    "size",
+                    "time",
+                    "permissions"
+                ]
+            },
+            "DriveDirectoryEntryList": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/DriveDirectoryEntry"
+                }
+            },
+            "DriveDirectoryData": {
+                "type": "object",
+                "properties": {
+                    "location": {
+                        "type": "string"
+                    },
+                    "files": {
+                        "$ref": "#/components/schemas/DriveDirectoryEntryList"
+                    }
+                },
+                "required": [
+                    "location",
+                    "files"
+                ]
+            },
+            "DriveCwdData": {
+                "type": "object",
+                "properties": {
+                    "cwd": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "cwd"
+                ]
+            },
+            "DriveUserData": {
+                "type": "object",
+                "properties": {
+                    "username": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": "string",
+                        "enum": [
+                            "user"
+                        ]
+                    },
+                    "roots": {
+                        "$ref": "#/components/schemas/DriveRootPathList"
+                    }
+                },
+                "required": [
+                    "username",
+                    "name",
+                    "role",
+                    "roots"
+                ]
+            },
             "DriveCreateRequest": {
                 "type": "object",
                 "properties": {
+                    "cwd": {
+                        "type": "string"
+                    },
                     "name": {
                         "type": "string"
                     },
                     "type": {
-                        "type": "string"
+                        "$ref": "#/components/schemas/DriveEntryType"
                     }
                 },
+                "required": [
+                    "name",
+                    "type"
+                ],
                 "example": {
+                    "cwd": "/users/alice",
                     "name": "Q2",
                     "type": "dir"
                 }
@@ -1741,26 +1845,52 @@
                         "type": "string"
                     }
                 },
+                "required": [
+                    "destination",
+                    "from",
+                    "to"
+                ],
                 "example": {
                     "destination": "/users/alice",
                     "from": "Q1",
                     "to": "Q1-Archive"
                 }
             },
+            "DriveDeleteItem": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/DriveEntryType"
+                    }
+                },
+                "required": [
+                    "path"
+                ]
+            },
+            "DriveDeleteItemList": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/DriveDeleteItem"
+                }
+            },
             "DriveDeleteItemsRequest": {
                 "type": "object",
                 "properties": {
                     "items": {
-                        "type": "array",
-                        "items": {
-                            "type": "object"
-                        }
+                        "$ref": "#/components/schemas/DriveDeleteItemList"
                     }
                 },
+                "required": [
+                    "items"
+                ],
                 "example": {
                     "items": [
                         {
-                            "path": "/users/alice/Q1-Archive"
+                            "path": "/users/alice/Q1-Archive",
+                            "type": "dir"
                         }
                     ]
                 }
@@ -1769,33 +1899,53 @@
                 "type": "object",
                 "properties": {
                     "data": {
-                        "type": "object"
+                        "$ref": "#/components/schemas/DriveUserData"
                     }
-                }
+                },
+                "required": [
+                    "data"
+                ]
             },
             "DriveListingResponse": {
                 "type": "object",
                 "properties": {
                     "data": {
-                        "type": "object"
+                        "$ref": "#/components/schemas/DriveDirectoryData"
                     }
-                }
+                },
+                "required": [
+                    "data"
+                ]
             },
             "DriveCwdResponse": {
                 "type": "object",
                 "properties": {
                     "data": {
-                        "type": "object"
+                        "$ref": "#/components/schemas/DriveCwdData"
                     }
-                }
+                },
+                "required": [
+                    "data"
+                ]
+            },
+            "DriveMutationResult": {
+                "type": "string",
+                "enum": [
+                    "Created",
+                    "Renamed",
+                    "Deleted"
+                ]
             },
             "DriveMutationResponse": {
                 "type": "object",
                 "properties": {
                     "data": {
-                        "type": "string"
+                        "$ref": "#/components/schemas/DriveMutationResult"
                     }
-                }
+                },
+                "required": [
+                    "data"
+                ]
             },
             "NotesCapabilitiesResponse": {
                 "type": "object",
