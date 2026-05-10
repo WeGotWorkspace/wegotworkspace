@@ -13,6 +13,7 @@ const mailTypesPath = path.resolve(generatedDir, "mail-types.ts");
 const notesTypesPath = path.resolve(generatedDir, "notes-types.ts");
 const settingsTypesPath = path.resolve(generatedDir, "settings-types.ts");
 const adminTypesPath = path.resolve(generatedDir, "admin-types.ts");
+const driveTypesPath = path.resolve(generatedDir, "drive-types.ts");
 
 function buildDomainTypesModule({
   domainName,
@@ -85,6 +86,12 @@ export async function generateOpenApiDomainTypes() {
     pathPrefix: "admin",
     outputPath: adminTypesPath,
   });
+  buildDomainTypesModule({
+    domainName: "Drive",
+    domainPrefix: "Drive",
+    pathPrefix: "drive",
+    outputPath: driveTypesPath,
+  });
 }
 
 if (import.meta.url === new URL(process.argv[1], "file://").href) {
@@ -95,4 +102,5 @@ if (import.meta.url === new URL(process.argv[1], "file://").href) {
   process.stdout.write(`Wrote ${notesTypesPath}\n`);
   process.stdout.write(`Wrote ${settingsTypesPath}\n`);
   process.stdout.write(`Wrote ${adminTypesPath}\n`);
+  process.stdout.write(`Wrote ${driveTypesPath}\n`);
 }

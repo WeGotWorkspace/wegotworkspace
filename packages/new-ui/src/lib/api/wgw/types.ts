@@ -50,6 +50,25 @@ import type {
   UpdateLogResponse,
   UpdateStateResponse,
 } from "@wgw-api-generated/admin-types";
+import type {
+  DriveChangeDirRequest,
+  DriveCreateRequest,
+  DriveCwdResponse,
+  DriveDeleteItem,
+  DriveDeleteItemsRequest,
+  DriveDirectoryData,
+  DriveDirectoryEntry,
+  DriveEntryType,
+  DriveGetDirRequest,
+  DriveListingResponse,
+  DriveMutationResponse,
+  DriveMutationResult,
+  DriveRenameRequest,
+  DriveRootPath,
+  DriveSearchRequest,
+  DriveUserData,
+  DriveUserResponse,
+} from "@wgw-api-generated/drive-types";
 
 export type WgwMailStatusResponse = MailStatusResponse & {
   extImap?: boolean;
@@ -176,3 +195,20 @@ export type WgwUpdateApplyRequest = UpdateApplyRequest;
 export type WgwUpdateApplyResponse = UpdateApplyResponse;
 export type WgwUpdateLogResponse = UpdateLogResponse;
 export type WgwUpdateBackupItem = UpdateBackupItem;
+export type WgwDriveEntryType = DriveEntryType;
+export type WgwDriveRootPath = DriveRootPath;
+export type WgwDriveDirectoryEntry = DriveDirectoryEntry;
+export type WgwDriveDirectoryData = DriveDirectoryData;
+export type WgwDriveGetDirRequest = DriveGetDirRequest;
+export type WgwDriveSearchRequest = DriveSearchRequest;
+export type WgwDriveChangeDirRequest = DriveChangeDirRequest;
+export type WgwDriveCreateRequest = DriveCreateRequest;
+export type WgwDriveRenameRequest = DriveRenameRequest;
+export type WgwDriveDeleteItem = DriveDeleteItem;
+export type WgwDriveDeleteItemsRequest = DriveDeleteItemsRequest;
+export type WgwDriveUserData = DriveUserData;
+export type WgwDriveUserResponse = DriveUserResponse;
+export type WgwDriveListingResponse = DriveListingResponse;
+export type WgwDriveCwdResponse = DriveCwdResponse;
+export type WgwDriveMutationResult = DriveMutationResult;
+export type WgwDriveMutationResponse = DriveMutationResponse;
