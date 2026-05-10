@@ -57,7 +57,10 @@ function fromBackendState(
 }
 
 async function jsonFetch<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(url, init);
+  const response = await fetch(url, {
+    cache: "no-store",
+    ...init,
+  });
   if (!response.ok) {
     throw new Error(`Request failed (${response.status})`);
   }
@@ -92,6 +95,7 @@ export function Installer() {
   const [installing, setInstalling] = useState(false);
   const [homeUrl, setHomeUrl] = useState("/");
   const [adminUrl, setAdminUrl] = useState("/admin/");
+  const [bootstrapError, setBootstrapError] = useState<string | null>(null);
 
   const idx = STEPS.findIndex((s) => s.id === step);
   const alreadyInstalled = backend?.already_installed === true;
@@ -102,23 +106,26 @@ export function Installer() {
     (patch: Partial<InstallerData[K]>) =>
       setData((d) => ({ ...d, [key]: { ...d[key], ...patch } }));
 
+  async function loadBootstrap() {
+    setLoading(true);
+    setBootstrapError(null);
+    try {
+      const boot = await jsonFetch<BootstrapResponse>(
+        `${INSTALLER_API_BASE}/bootstrap?t=${Date.now()}`,
+      );
+      setBackend(boot.state);
+      setStep(backendToStep(boot.state.step));
+      setData((current) => fromBackendState(boot.state, current));
+    } catch (error) {
+      setBackend(null);
+      setBootstrapError((error as Error).message || "Unknown error");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
-    void (async () => {
-      try {
-        const boot = await jsonFetch<BootstrapResponse>(
-          `${INSTALLER_API_BASE}/bootstrap`,
-        );
-        setBackend(boot.state);
-        setStep(backendToStep(boot.state.step));
-        setData((current) => fromBackendState(boot.state, current));
-      } catch (error) {
-        toast.error("Could not load installer", {
-          description: (error as Error).message,
-        });
-      } finally {
-        setLoading(false);
-      }
-    })();
+    void loadBootstrap();
   }, []);
 
   const checks = useMemo(() => backend?.checks ?? [], [backend?.checks]);
@@ -227,12 +234,38 @@ export function Installer() {
     return response;
   }
 
-  if (loading || backend === null) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-[radial-gradient(circle_at_top,_var(--brand-red-soft),_transparent_55%)]">
         <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4 py-8 sm:px-6 sm:py-12">
           <p className="text-sm text-muted-foreground">Loading installer...</p>
         </div>
+        <Toaster position="bottom-right" richColors />
+      </div>
+    );
+  }
+
+  if (backend === null) {
+    return (
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top,_var(--brand-red-soft),_transparent_55%)]">
+        <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4 py-8 sm:px-6 sm:py-12">
+          <div className="w-full rounded-2xl border bg-card p-6 shadow-[var(--shadow-card)] sm:p-10">
+            <h2 className="text-xl font-semibold">Could not load installer</h2>
+            <p className="mt-3 text-sm text-muted-foreground">
+              {bootstrapError || "Request failed."}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                void loadBootstrap();
+              }}
+              className="mt-6 inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+        <Toaster position="bottom-right" richColors />
       </div>
     );
   }
