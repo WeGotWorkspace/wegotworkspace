@@ -16,6 +16,10 @@ final class LoginThrottle
 
     public static function allowAndRecord(string $ip, string $username): bool
     {
+        if (self::isDisabled()) {
+            return true;
+        }
+
         $ipNorm = self::normalizeIp($ip);
         $userNorm = self::normalizeUser($username);
 
@@ -27,10 +31,21 @@ final class LoginThrottle
 
     public static function clearUserIp(string $ip, string $username): void
     {
+        if (self::isDisabled()) {
+            return;
+        }
+
         $ipNorm = self::normalizeIp($ip);
         $userNorm = self::normalizeUser($username);
         $file = self::bucketFile('user:'.$userNorm.'|ip:'.$ipNorm);
         @unlink($file);
+    }
+
+    private static function isDisabled(): bool
+    {
+        $raw = strtolower(trim((string) getenv('WGW_DISABLE_LOGIN_THROTTLE')));
+
+        return $raw === '1' || $raw === 'true' || $raw === 'yes' || $raw === 'on';
     }
 
     private static function allowForKey(string $key, int $maxAttempts): bool

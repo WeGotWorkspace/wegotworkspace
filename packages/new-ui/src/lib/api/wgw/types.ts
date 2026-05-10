@@ -31,6 +31,25 @@ import type {
   SettingsUserMailServer,
   SettingsUserProfile,
 } from "@wgw-api-generated/settings-types";
+import type {
+  AdminAppsSettings,
+  AdminGroupCreateRequest,
+  AdminGroupSummary,
+  AdminGroupUpdateRequest,
+  AdminMailSettings,
+  AdminSettingsSaveRequest,
+  AdminStateResponse,
+  AdminUserCreateRequest,
+  AdminUserSummary,
+  AdminUserUpdateRequest,
+  AdminVoiceSettings,
+  AdminWebdavSettings,
+  UpdateApplyRequest,
+  UpdateApplyResponse,
+  UpdateBackupItem,
+  UpdateLogResponse,
+  UpdateStateResponse,
+} from "@wgw-api-generated/admin-types";
 
 export type WgwMailStatusResponse = MailStatusResponse & {
   extImap?: boolean;
@@ -139,3 +158,21 @@ export type WgwSettingsUserGroup = SettingsUserGroup;
 export type WgwSettingsUserMail = SettingsUserMail;
 export type WgwSettingsUserMailServer = SettingsUserMailServer;
 export type WgwSettingsMailRequest = SettingsMailRequest;
+
+export type WgwAdminStateResponse = AdminStateResponse;
+export type WgwAdminUserSummary = AdminUserSummary;
+export type WgwAdminGroupSummary = AdminGroupSummary;
+export type WgwAdminMailSettings = AdminMailSettings;
+export type WgwAdminVoiceSettings = AdminVoiceSettings;
+export type WgwAdminAppsSettings = AdminAppsSettings;
+export type WgwAdminWebdavSettings = AdminWebdavSettings;
+export type WgwAdminSettingsSaveRequest = AdminSettingsSaveRequest;
+export type WgwAdminUserCreateRequest = AdminUserCreateRequest;
+export type WgwAdminUserUpdateRequest = AdminUserUpdateRequest;
+export type WgwAdminGroupCreateRequest = AdminGroupCreateRequest;
+export type WgwAdminGroupUpdateRequest = AdminGroupUpdateRequest;
+export type WgwUpdateStateResponse = UpdateStateResponse;
+export type WgwUpdateApplyRequest = UpdateApplyRequest;
+export type WgwUpdateApplyResponse = UpdateApplyResponse;
+export type WgwUpdateLogResponse = UpdateLogResponse;
+export type WgwUpdateBackupItem = UpdateBackupItem;
