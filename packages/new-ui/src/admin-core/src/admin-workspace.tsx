@@ -59,7 +59,7 @@ import { useAdminController } from "@/admin-core/src/use-admin-controller";
 import type { AdminWorkspaceProps } from "@/admin-core/src/admin-workspace-props";
 import { Tag } from "@/tag/src/tag";
 
-type UpdateLogRow = { id: string; time: string; level: string; message: string };
+type UpdateLogRow = { id: string; date: string | null; level: string; message: string };
 
 type CheckVisual = { Icon: typeof CheckCircle2; color: string };
 
@@ -99,15 +99,30 @@ function getServerCheckVisual(check: {
 }
 
 function parseUpdateLogLine(line: string, index: number): UpdateLogRow {
-  const match = line.match(/^\[([^\]]+)\]\s+\[([A-Z]+)\]\s+(.*)$/);
-  if (!match) {
-    return { id: `${index}`, time: "-", level: "INFO", message: line };
+  const matchWithLevel = line.match(/^\[([^\]]+)\]\s+\[([A-Z]+)\]\s+(.*)$/);
+  if (matchWithLevel) {
+    return {
+      id: `${index}`,
+      date: matchWithLevel[1] ?? null,
+      level: matchWithLevel[2] ?? "INFO",
+      message: matchWithLevel[3] ?? "",
+    };
   }
+  const matchWithoutLevel = line.match(/^\[([^\]]+)\]\s+(.*)$/);
+  if (matchWithoutLevel) {
+    return {
+      id: `${index}`,
+      date: matchWithoutLevel[1] ?? null,
+      level: "INFO",
+      message: matchWithoutLevel[2] ?? "",
+    };
+  }
+
   return {
     id: `${index}`,
-    time: match[1] ?? "-",
-    level: match[2] ?? "INFO",
-    message: match[3] ?? "",
+    date: null,
+    level: "INFO",
+    message: line,
   };
 }
 
@@ -174,7 +189,8 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
     onClick: () => controller.selectSection(candidate.id),
   }));
   const updateLogRows = useMemo(
-    () => controller.updateLogLines.map((line, index) => parseUpdateLogLine(line, index)),
+    () =>
+      controller.updateLogLines.map((line, index) => parseUpdateLogLine(line, index)).slice(-25),
     [controller.updateLogLines],
   );
   const groupMemberCount = useMemo(() => {
@@ -305,10 +321,10 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
   const logColumns: DataTableColumn<UpdateLogRow>[] = [
     {
       key: "time",
-      header: "Time",
+      header: "Date",
       headerClassName: "font-medium pb-3 pr-3",
       cellClassName: "py-3 pr-3 whitespace-nowrap font-mono text-xs",
-      render: (row) => row.time,
+      render: (row) => formatHumanDateTime(row.date),
     },
     {
       key: "level",
@@ -1049,6 +1065,11 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
                   <Card
                     title="Update log"
                     iconActions={[
+                      {
+                        icon: <Download className="size-4" />,
+                        label: "Download full log",
+                        onClick: controller.actions.downloadUpdateLog,
+                      },
                       {
                         icon: <RefreshCw className="size-4" />,
                         label: "Refresh logs",
