@@ -157,6 +157,10 @@ if ($installed && UpdateManager::inMaintenanceMode()) {
 }
 
 if (!$installed) {
+    // Allow installer bootstrap/action API routes before lock file exists.
+    if (ApiKernel::tryRespond($webBase, $path)) {
+        exit;
+    }
     $underInstall = $path === $installPrefix || str_starts_with($path, $installPrefix.'/');
     if (!$underInstall) {
         header('Location: '.$installPrefix.'/', true, 302);
