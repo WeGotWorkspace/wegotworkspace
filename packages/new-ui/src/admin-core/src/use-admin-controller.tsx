@@ -211,6 +211,33 @@ export function useAdminController({
     }
   };
 
+  const downloadUpdateLog = async () => {
+    try {
+      const lines = (await operations?.refreshUpdateLog()) ?? updateLogLines;
+      if (lines.length === 0) {
+        toast.error("No update logs to download");
+        return;
+      }
+      setUpdateLogLines(lines);
+      const blob = new Blob([`${lines.join("\n")}\n`], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      try {
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = `update-log-${new Date().toISOString().replace(/[:]/g, "-")}.log`;
+        document.body.append(anchor);
+        anchor.click();
+        anchor.remove();
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+      toast("Update log downloaded", { icon: <Check className="size-4" /> });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not download update logs";
+      toast.error(message);
+    }
+  };
+
   const deleteBackup = async (name: string) => {
     try {
       const next = await operations?.deleteBackup(name);
@@ -538,6 +565,7 @@ export function useAdminController({
       checkUpdates,
       clearUpdateLog,
       refreshUpdateLog,
+      downloadUpdateLog,
       deleteBackup,
       createBackup,
       downloadBackup,
