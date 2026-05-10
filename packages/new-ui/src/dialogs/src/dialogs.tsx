@@ -24,6 +24,9 @@ export function MoveToDialog({
   description = "Choose a notebook for the selected items.",
   confirmLabel = "Move",
   allowCreate = false,
+  selectPlaceholder = "Select a notebook",
+  createPlaceholder = "New notebook name",
+  duplicateCreateMessage = "A notebook with this name already exists.",
 }: {
   open: boolean;
   notebooks: string[];
@@ -34,6 +37,9 @@ export function MoveToDialog({
   description?: string;
   confirmLabel?: string;
   allowCreate?: boolean;
+  selectPlaceholder?: string;
+  createPlaceholder?: string;
+  duplicateCreateMessage?: string;
 }) {
   const CREATE_NEW_VALUE = "__create_new_notebook__";
   const [picked, setPicked] = useState<string | null>(null);
@@ -63,7 +69,7 @@ export function MoveToDialog({
         <div className="py-2 space-y-3">
           <Select value={picked ?? ""} onValueChange={setPicked}>
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select a notebook" />
+              <SelectValue placeholder={selectPlaceholder} />
             </SelectTrigger>
             <SelectContent>
               {allowCreate ? (
@@ -88,14 +94,12 @@ export function MoveToDialog({
           {creatingNewNotebook ? (
             <div>
               <Input
-                placeholder="New notebook name"
+                placeholder={createPlaceholder}
                 value={newNotebook}
                 onChange={(e) => setNewNotebook(e.target.value)}
               />
               {!canCreateNotebook && createdNotebook.length > 0 ? (
-                <p className="mt-2 text-xs text-destructive">
-                  A notebook with this name already exists.
-                </p>
+                <p className="mt-2 text-xs text-destructive">{duplicateCreateMessage}</p>
               ) : null}
             </div>
           ) : null}
