@@ -1,15 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   Star,
   Trash2,
-  Menu,
   X,
-  LogOut,
   Search,
-  PanelLeftClose,
-  PanelLeftOpen,
   Upload,
   FolderInput,
   StarOff,
@@ -43,12 +39,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui/tooltip";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -65,22 +56,31 @@ import { SidebarGroup, SidebarLink } from "@/settings-sidebar/src/settings-sideb
 import { ListAction, FabButton } from "@/action-buttons/src/action-buttons";
 import { MoveToDialog } from "@/dialogs/src/dialogs";
 import { WorkspaceAppSwitcher } from "@/workspace-app-switcher/src/workspace-app-switcher";
+import { createPwaHead } from "@/lib/pwa-head";
+import { DriveApp } from "@/drive-core/src/drive-app";
+import type { DriveAPIOperations, DriveUIData } from "@/drive-core/src/drive-types";
+import { parentAndName, pathFromDirectoryEntry } from "@/lib/api/wgw/drive";
+import { AppSidebar, AppSidebarScrim } from "@/app-sidebar/src/app-sidebar";
+import {
+  WorkspaceAppLayout,
+  WorkspaceSidebarToggle,
+  WorkspaceUserFooter,
+} from "@/workspace-shell/src/workspace-app-layout";
+import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
+import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
 
 export const Route = createFileRoute("/drive")({
-  component: DriveApp,
-  head: () => ({
-    meta: [
-      { title: "Drive" },
-      { name: "description", content: "Files and folders, organized." },
-      { name: "theme-color", content: "#0c8397" },
-      { name: "apple-mobile-web-app-title", content: "Drive" },
-    ],
-    links: [
-      { rel: "manifest", href: "/manifests/drive.webmanifest" },
-      { rel: "apple-touch-icon", href: "/icons/drive-180.png" },
-      { rel: "icon", type: "image/png", href: "/icons/drive-192.png" },
-    ],
-  }),
+  component: DriveRoute,
+  head: () =>
+    createPwaHead({
+      title: "Drive",
+      description: "Files and folders, organized.",
+      themeColor: "#0c8397",
+      appTitle: "Drive",
+      manifest: "/manifests/drive.webmanifest",
+      icon180: "/icons/drive-180.png",
+      icon192: "/icons/drive-192.png",
+    }),
 });
 
 const TOP_FOLDERS = ["My Drive", "Shared with me", "Trash"] as const;
@@ -92,6 +92,7 @@ type DriveFile = Note & {
   kind: FileKind;
   size: string;
   owner: string;
+  apiPath?: string;
 };
 
 const kindIcon: Record<FileKind, React.ReactNode> = {
@@ -258,8 +259,84 @@ type ViewKey =
   | { type: "starred" }
   | { type: "shared" };
 
-function DriveApp() {
-  const [files, setFiles] = useState<DriveFile[]>(INITIAL_FILES);
+type DriveWorkspaceProps = {
+  data: DriveUIData;
+  session: WorkspaceSession;
+  operations?: DriveAPIOperations;
+  listLoading?: boolean;
+};
+
+function rootLabelFromPath(path: string): TopFolder {
+  if (path === "/groups" || path.startsWith("/groups/")) return "Shared with me";
+  return "My Drive";
+}
+
+function uiPathFromApiPath(path: string): string {
+  if (path === "/groups" || path.startsWith("/groups/")) {
+    return path.replace(/^\/groups/, "Shared with me");
+  }
+  if (path === "/users" || path.startsWith("/users/")) {
+    return path.replace(/^\/users/, "My Drive");
+  }
+  return "My Drive";
+}
+
+function apiPathFromUiPath(path: string): string {
+  if (path === "Shared with me" || path.startsWith("Shared with me/")) {
+    return path.replace(/^Shared with me/, "/groups");
+  }
+  if (path === "My Drive" || path.startsWith("My Drive/")) {
+    return path.replace(/^My Drive/, "/users");
+  }
+  if (path === "Trash" || path.startsWith("Trash/")) {
+    return "/users";
+  }
+  return "/users";
+}
+
+function driveFileFromEntry(entry: DriveUIData["directory"]["files"][number]): DriveFile {
+  const apiPath = pathFromDirectoryEntry(entry);
+  const parentApiPath = parentAndName(apiPath).destination;
+  const parent = uiPathFromApiPath(parentApiPath);
+  const kind: FileKind = entry.type === "dir" ? "folder" : "file";
+  const date = entry.time > 0 ? new Date(entry.time * 1000).toLocaleDateString() : "Now";
+  const size =
+    entry.type === "dir"
+      ? "—"
+      : entry.size > 0
+        ? `${Math.max(1, Math.round(entry.size / 1024))} KB`
+        : "0 KB";
+  return {
+    id: apiPath,
+    notebook: entry.type === "dir" ? "Folder" : `File · ${size}`,
+    category: entry.type === "dir" ? "Folder" : "File",
+    date,
+    title: entry.name,
+    excerpt: entry.path,
+    body: [],
+    tags: [],
+    wordCount: 0,
+    parent,
+    kind,
+    size,
+    owner: "You",
+    apiPath,
+  };
+}
+
+function DriveRoute() {
+  return <DriveApp renderWorkspace={(props) => <DriveWorkspace {...props} />} />;
+}
+
+export function DriveWorkspace({
+  data,
+  session,
+  operations,
+  listLoading = false,
+}: DriveWorkspaceProps) {
+  const [files, setFiles] = useState<DriveFile[]>(
+    operations ? data.directory.files.map((entry) => driveFileFromEntry(entry)) : INITIAL_FILES,
+  );
   const [view, setView] = useState<ViewKey>({ type: "folder", path: "My Drive" });
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -274,8 +351,44 @@ function DriveApp() {
   const [moveDialog, setMoveDialog] = useState<{ ids: string[] } | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<null | { ids: string[] }>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [liveSearchResults, setLiveSearchResults] = useState<DriveFile[] | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (!operations) return;
+    setFiles(data.directory.files.map((entry) => driveFileFromEntry(entry)));
+    setView({ type: "folder", path: uiPathFromApiPath(data.cwd) });
+  }, [data, operations]);
+
+  useEffect(() => {
+    if (!operations) return;
+    const query = searchQuery.trim();
+    if (!query) {
+      setLiveSearchResults(null);
+      return;
+    }
+    let cancelled = false;
+    const timeout = window.setTimeout(() => {
+      void operations
+        .search(query, { limit: 200 })
+        .then((entries) => {
+          if (!cancelled) {
+            setLiveSearchResults(entries.map((entry) => driveFileFromEntry(entry)));
+          }
+        })
+        .catch((error: unknown) => {
+          if (cancelled) return;
+          const message = error instanceof Error ? error.message : String(error);
+          toast.error(message);
+        });
+    }, 180);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+    };
+  }, [operations, searchQuery]);
 
   const isTouch = useIsTouch();
 
@@ -285,9 +398,11 @@ function DriveApp() {
 
   const visibleItems = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    const filtered = files.filter((f) => {
+    const sourceFiles = liveSearchResults ?? files;
+    const filtered = sourceFiles.filter((f) => {
       let inView = false;
-      if (view.type === "folder") inView = f.parent === view.path;
+      if (liveSearchResults) inView = true;
+      else if (view.type === "folder") inView = f.parent === view.path;
       else if (view.type === "recent") inView = !isUnderTrash(f.parent) && f.kind !== "folder";
       else if (view.type === "starred") inView = !!starred[f.id] && !isUnderTrash(f.parent);
       else if (view.type === "shared")
@@ -303,14 +418,18 @@ function DriveApp() {
       if (b.kind === "folder" && a.kind !== "folder") return 1;
       return 0;
     });
-  }, [files, view, starred, searchQuery]);
+  }, [files, liveSearchResults, view, starred, searchQuery]);
 
   const breadcrumbs = useMemo(() => {
     if (view.type !== "folder") {
       return [
         {
           label:
-            view.type === "recent" ? "Recent" : view.type === "starred" ? "Starred" : "Shared with me",
+            view.type === "recent"
+              ? "Recent"
+              : view.type === "starred"
+                ? "Starred"
+                : "Shared with me",
           path: null as string | null,
         },
       ];
@@ -320,13 +439,14 @@ function DriveApp() {
   }, [view]);
 
   const viewLabel = breadcrumbs[breadcrumbs.length - 1].label;
+  const viewResetKey = view.type === "folder" ? `${view.type}:${view.path}` : view.type;
 
   useEffect(() => {
     setSelectedIds([]);
     setActiveId(null);
     setSelectionMode(false);
     setDetailOpen(false);
-  }, [view.type, view.type === "folder" ? view.path : ""]);
+  }, [viewResetKey]);
 
   const counts = useMemo(() => {
     const byPath: Record<string, number> = {};
@@ -342,12 +462,24 @@ function DriveApp() {
     };
   }, [files, starred]);
 
-  const active = activeId ? files.find((f) => f.id === activeId) ?? null : null;
+  const active = activeId ? (files.find((f) => f.id === activeId) ?? null) : null;
 
   const openFile = (f: DriveFile) => {
     if (f.kind === "folder") {
       const next = f.parent === "" ? f.title : `${f.parent}/${f.title}`;
       setView({ type: "folder", path: next });
+      if (operations) {
+        void operations
+          .changeDir(f.apiPath ?? apiPathFromUiPath(next))
+          .then((nextData) => {
+            setFiles(nextData.directory.files.map((entry) => driveFileFromEntry(entry)));
+            setView({ type: "folder", path: uiPathFromApiPath(nextData.cwd) });
+          })
+          .catch((error: unknown) => {
+            const message = error instanceof Error ? error.message : String(error);
+            toast.error(message);
+          });
+      }
     } else {
       setActiveId(f.id);
       setSelectedIds([f.id]);
@@ -393,7 +525,11 @@ function DriveApp() {
     setStarred((s) => {
       const next = !s[id];
       toast(next ? "Starred" : "Unstarred", {
-        icon: next ? <Star className="size-4" fill="currentColor" /> : <StarOff className="size-4" />,
+        icon: next ? (
+          <Star className="size-4" fill="currentColor" />
+        ) : (
+          <StarOff className="size-4" />
+        ),
       });
       return { ...s, [id]: next };
     });
@@ -408,7 +544,11 @@ function DriveApp() {
       const next = { ...s };
       selectedIds.forEach((id) => (next[id] = !allStarred));
       toast(`${allStarred ? "Unstarred" : "Starred"} ${selectedIds.length}`, {
-        icon: allStarred ? <StarOff className="size-4" /> : <Star className="size-4" fill="currentColor" />,
+        icon: allStarred ? (
+          <StarOff className="size-4" />
+        ) : (
+          <Star className="size-4" fill="currentColor" />
+        ),
       });
       return next;
     });
@@ -419,7 +559,9 @@ function DriveApp() {
   };
   const moveToFolder = (ids: string[], parent: string) => {
     setFiles((p) => p.map((f) => (ids.includes(f.id) ? { ...f, parent } : f)));
-    toast(`Moved ${ids.length} to ${parent.split("/").pop()}`, { icon: <FolderInput className="size-4" /> });
+    toast(`Moved ${ids.length} to ${parent.split("/").pop()}`, {
+      icon: <FolderInput className="size-4" />,
+    });
   };
 
   const startDrag = (id: string) => {
@@ -432,7 +574,10 @@ function DriveApp() {
   };
   const dropOnFolder = (parent: string) => {
     if (!dragging) return;
-    moveToFolder(dragging.filter((id) => !parent.startsWith(id)), parent);
+    moveToFolder(
+      dragging.filter((id) => !parent.startsWith(id)),
+      parent,
+    );
     endDrag();
   };
 
@@ -442,6 +587,24 @@ function DriveApp() {
     else batchTrash();
   };
   const reallyDelete = (ids: string[]) => {
+    if (operations) {
+      const apiPaths = files
+        .filter((file) => ids.includes(file.id))
+        .map((file) => file.apiPath)
+        .filter((path): path is string => typeof path === "string");
+      if (apiPaths.length > 0) {
+        void operations
+          .deleteItems(apiPaths)
+          .then((nextData) => {
+            setFiles(nextData.directory.files.map((entry) => driveFileFromEntry(entry)));
+            setView({ type: "folder", path: uiPathFromApiPath(nextData.cwd) });
+          })
+          .catch((error: unknown) => {
+            const message = error instanceof Error ? error.message : String(error);
+            toast.error(message);
+          });
+      }
+    }
     setFiles((p) => p.filter((f) => !ids.includes(f.id)));
     setSelectedIds((p) => p.filter((id) => !ids.includes(id)));
     setSelectionMode(false);
@@ -449,11 +612,19 @@ function DriveApp() {
       setActiveId(null);
       setDetailOpen(false);
     }
-    toast(`Deleted ${ids.length} file${ids.length === 1 ? "" : "s"}`, { icon: <Trash2 className="size-4" /> });
+    toast(`Deleted ${ids.length} file${ids.length === 1 ? "" : "s"}`, {
+      icon: <Trash2 className="size-4" />,
+    });
   };
 
   const handleUpload = (fileList: FileList | null) => {
     if (!fileList || fileList.length === 0) return;
+    if (operations) {
+      void operations.checkUploadReady().catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        toast.error(message);
+      });
+    }
     const targetParent = view.type === "folder" ? view.path : "My Drive";
     const created: DriveFile[] = Array.from(fileList).map((file, i) => {
       const kind: FileKind = file.type.startsWith("image/")
@@ -516,15 +687,42 @@ function DriveApp() {
       ...p,
     ]);
     toast(`Folder “${v}” created`, { icon: <FolderPlus className="size-4" /> });
+    if (operations) {
+      void operations
+        .createFolder({ cwd: apiPathFromUiPath(targetParent), name: v })
+        .then((nextData) => {
+          setFiles(nextData.directory.files.map((entry) => driveFileFromEntry(entry)));
+          setView({ type: "folder", path: uiPathFromApiPath(nextData.cwd) });
+        })
+        .catch((error: unknown) => {
+          const message = error instanceof Error ? error.message : String(error);
+          toast.error(message);
+        });
+    }
   };
 
   const createBlank = (kind: "doc" | "sheet" | "slides") => {
     const meta =
       kind === "doc"
-        ? { title: "Untitled document.docx", category: "Document", note: "Doc · 0 KB", k: "doc" as FileKind }
+        ? {
+            title: "Untitled document.docx",
+            category: "Document",
+            note: "Doc · 0 KB",
+            k: "doc" as FileKind,
+          }
         : kind === "sheet"
-          ? { title: "Untitled spreadsheet.xlsx", category: "Spreadsheet", note: "Sheet · 0 KB", k: "doc" as FileKind }
-          : { title: "Untitled presentation.pptx", category: "Presentation", note: "Slides · 0 KB", k: "doc" as FileKind };
+          ? {
+              title: "Untitled spreadsheet.xlsx",
+              category: "Spreadsheet",
+              note: "Sheet · 0 KB",
+              k: "doc" as FileKind,
+            }
+          : {
+              title: "Untitled presentation.pptx",
+              category: "Presentation",
+              note: "Slides · 0 KB",
+              k: "doc" as FileKind,
+            };
     const targetParent = view.type === "folder" ? view.path : "My Drive";
     const id = `f-${Date.now()}`;
     setFiles((p) => [
@@ -550,16 +748,31 @@ function DriveApp() {
 
   const selectView = (v: ViewKey) => {
     setView(v);
+    setLiveSearchResults(null);
+    if (operations && v.type === "folder") {
+      void operations
+        .changeDir(apiPathFromUiPath(v.path))
+        .then((nextData) => {
+          setFiles(nextData.directory.files.map((entry) => driveFileFromEntry(entry)));
+          setView({ type: "folder", path: uiPathFromApiPath(nextData.cwd) });
+        })
+        .catch((error: unknown) => {
+          const message = error instanceof Error ? error.message : String(error);
+          toast.error(message);
+        });
+    }
     if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
       setSidebarOpen(false);
     }
   };
 
   useEffect(() => {
-    const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+    const isMac =
+      typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.platform);
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
-      const inField = !!target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
+      const inField =
+        !!target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
       if ((e.key === "k" && (e.metaKey || e.ctrlKey)) || (!inField && e.key === "/")) {
         e.preventDefault();
         searchInputRef.current?.focus();
@@ -575,12 +788,20 @@ function DriveApp() {
       const winDelete = !isMac && e.key === "Delete";
       if ((macDelete || winDelete) && selectedIds.length > 0) {
         e.preventDefault();
-        requestDeleteSelected();
+        if (inTrashView) setConfirmDelete({ ids: selectedIds });
+        else {
+          setFiles((p) =>
+            p.map((f) => (selectedIds.includes(f.id) ? { ...f, parent: "Trash" } : f)),
+          );
+          toast(`Moved ${selectedIds.length} to Trash`, {
+            icon: <Trash2 className="size-4" />,
+          });
+        }
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [selectedIds, view, detailOpen]);
+  }, [selectedIds, detailOpen, inTrashView]);
 
   // All folder paths for drop targets and Move dialog
   const allFolderPaths = useMemo(() => {
@@ -602,13 +823,18 @@ function DriveApp() {
 
   return (
     <TooltipProvider delayDuration={300}>
-      <div
-        className="flex h-dvh w-full overflow-hidden relative notes-root"
+      <WorkspaceAppLayout
+        className="notes-root"
         style={{
-          backgroundColor: "var(--color-cream, #f5f1e8)",
-          fontFamily: "var(--font-sans)",
           ["--color-emerald" as string]: "#0c8397",
           ["--drive-sidebar" as string]: "#0c8397",
+          ["--app-sidebar-bg" as string]: "var(--drive-sidebar)",
+          ["--app-sidebar-border-color" as string]: "color-mix(in oklab, #ffffff 18%, transparent)",
+          ["--app-sidebar-color" as string]: "#ffffff",
+          ["--sidebar-badge-fg" as string]: "#0c8397",
+          ["--workspace-sidebar-toggle-color" as string]: "var(--color-ink)",
+          ["--workspace-sidebar-toggle-bg" as string]:
+            "color-mix(in oklab, var(--color-ink) 6%, transparent)",
         }}
       >
         <input
@@ -623,183 +849,135 @@ function DriveApp() {
         />
 
         {/* Sidebar */}
-        <aside
-          data-open={sidebarOpen}
-          className={`fixed md:static z-40 inset-y-0 left-0 shrink-0 flex flex-col border-r shadow-2xl md:shadow-none transition-[transform,margin,border-width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] overflow-hidden will-change-transform ${
-            sidebarOpen
-              ? "translate-x-0 w-72 md:w-64"
-              : "-translate-x-full w-72 md:w-64 md:-ml-64 md:border-r-0"
-          }`}
-          style={{
-            backgroundColor: "var(--drive-sidebar)",
-            borderColor: "color-mix(in oklab, var(--color-ink) 15%, transparent)",
-            color: "var(--color-cream)",
-            ["--color-ink" as string]: "#ffffff",
-            ["--sidebar-badge-fg" as string]: "#0c8397",
-          }}
+        <AppSidebar
+          open={sidebarOpen}
+          onCloseMobile={() => setSidebarOpen(false)}
+          appSwitcher={<WorkspaceAppSwitcher />}
         >
-          <div className="p-6 md:p-8 flex items-center gap-3 justify-between">
-            <div className="flex items-center gap-2 min-w-0">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 165 227" className="w-auto shrink-0" style={{ height: "54px", marginTop: "-5px" }} fill="none" aria-hidden="true">
-                <path fill="currentColor" d="M72.476 3.94C80.143-2.42 92.81-.847 98.89 6.98c5.026 6.266 5.533 14.693 5.853 22.386.133 12.854-.88 25.667-1.32 38.507 5.693-14.027 9-29.387 18.16-41.72 5.987-8.32 19.013-10.213 26.787-3.347 6.826 6.16 6.92 16.414 5.013 24.747-5.373 21.387-12.547 42.267-19.827 63.067 8.04 6.706 13.44 16.24 15.174 26.56 3.2 19.52-.067 40.493-11.054 57.173-9.333 14.547-24.213 25.493-41.093 29.467-21.293 5.266-45.307 3.2-63.693-9.467C15.556 202.553 5.05 182.86.983 162.66c-1.48-7.8-1.813-16.587 2.8-23.454 3.467-5.813 9.8-8.866 15.88-11.2-1.027-3.68-2.093-7.64-.787-11.4 1.28-4.253 5.08-6.96 8.627-9.266-4.72-18.6-11.293-36.72-15.933-55.374-2.16-8.36-4.56-17.586-.894-25.906 3.507-8.6 14.24-13 22.867-9.734 6.133 2.147 10.44 7.534 13.547 13.014 6.56 12.093 10.013 25.506 14.013 38.573.653-14.707 1.307-29.413 2.64-44.08.747-7.253 2.907-15.04 8.733-19.893m8.84 9.893c-3.533 4.773-3.546 11.027-4.16 16.693-1.613 23.094-2.613 46.214-3.8 69.32 4.92.08 9.827.107 14.747.107.84-24.88 2.52-49.733 2.347-74.627-.187-4.08-.6-8.733-3.68-11.746-1.427-1.627-4.24-1.627-5.454.253M22.85 33.206c-.334 8.267 2.346 16.214 4.52 24.094 4.36 15.146 8.933 30.253 13.506 45.346 5.147-.72 10.294-1.466 15.414-2.36-5.347-17.64-10.36-35.373-16.107-52.893-2.667-6.693-5-14.24-10.8-18.92-3.147-2.36-6.587 1.6-6.533 4.733m110.626-.506c-5.293 6.973-7.773 15.493-10.96 23.533-5.546 14.96-11.466 29.773-16.906 44.773 5.306.667 10.506 1.96 15.72 3.08 6.48-19.693 13.96-39.12 18.48-59.4 1.106-4.586.986-9.466-1.307-13.68-1.72.267-3.987-.093-5.027 1.694M58.01 113.006c-8.974.814-18.32 2.04-26.094 6.92.414 6.587 7.08 9.414 12.6 10.84 14 3.534 28.467 1.174 42.64.254 4.52-.04 9.747-.787 13.52 2.306 3.107 2.56 2.88 7.854-.28 10.28-4.8 4.16-10.293 7.507-14.68 12.134-8.16 7.866-12.84 19.586-11.28 30.92.454 4.44 3.96 8.306 3.107 12.88-.587 2.96-4.427 3.546-6.72 2.2-6.133-2.734-9.32-9.254-10.68-15.507-10.48 4.533-22.48.213-30.147-7.56-4.56-4.667-9.546-10.293-9.253-17.24.133-3.36 4.027-7.013 7.293-4.76 5.454 4.293 8.507 10.96 14.12 15.133 3.147 2.467 7.534 5.014 11.547 3.054 2.56-2.107 1.56-5.934.693-8.654-4.12-10.56-12.293-19.28-21.973-25.026-7.587-4.067-18.747 1.626-18.467 10.666.174 13.24 5.254 26.08 12.254 37.147 8.133 12.867 22.013 21.627 36.986 23.96 16.254 2.52 34 .347 47.654-9.387 15.746-10.96 24.453-30.066 25-48.96.32-10.746-.76-22.613-8.014-31.133-6.813-7.64-17.546-9.387-27.226-10.2-14.174-.893-28.427-1.293-42.6-.267m-.387 32.36a79.6 79.6 0 0 1 8.68 13.48c3.28-5.253 7.24-10.026 11.653-14.373-6.76.6-13.546.867-20.333.893"/>
-              </svg>
-              <WorkspaceAppSwitcher />
+          <div className="flex h-full flex-col" style={{ ["--color-ink" as string]: "#ffffff" }}>
+            <div className="px-4 mb-4">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="w-full flex items-center justify-center gap-2 h-11 rounded-full text-sm font-medium transition-transform hover:-translate-y-0.5"
+                    style={{
+                      backgroundColor: "var(--color-ink)",
+                      color: "var(--drive-sidebar)",
+                      boxShadow:
+                        "0 10px 24px -12px color-mix(in oklab, var(--color-ink) 60%, transparent)",
+                    }}
+                  >
+                    <Plus className="size-4" /> New
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" sideOffset={8} className="min-w-[14rem]">
+                  <DropdownMenuItem onClick={createFolder} className="cursor-pointer gap-2.5 py-2">
+                    <FolderPlus className="size-4 opacity-70" />
+                    <span>New folder</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => fileInputRef.current?.click()}
+                    className="cursor-pointer gap-2.5 py-2"
+                  >
+                    <Upload className="size-4 opacity-70" />
+                    <span>Upload files</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => createBlank("doc")}
+                    className="cursor-pointer gap-2.5 py-2"
+                  >
+                    <FileText className="size-4 opacity-70" />
+                    <span>New document</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => createBlank("sheet")}
+                    className="cursor-pointer gap-2.5 py-2"
+                  >
+                    <FileSpreadsheet className="size-4 opacity-70" />
+                    <span>New spreadsheet</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => createBlank("slides")}
+                    className="cursor-pointer gap-2.5 py-2"
+                  >
+                    <Presentation className="size-4 opacity-70" />
+                    <span>New presentation</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-            <button
-              aria-label="Close menu"
-              onClick={() => setSidebarOpen(false)}
-              className="size-8 rounded-full flex items-center justify-center transition-colors hover:bg-[color-mix(in_oklab,var(--color-ink)_8%,transparent)] md:hidden"
-              style={{ color: "var(--color-ink)" }}
-            >
-              <X className="size-4" />
-            </button>
-          </div>
 
-          <div className="px-4 mb-4">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className="w-full flex items-center justify-center gap-2 h-11 rounded-full text-sm font-medium transition-transform hover:-translate-y-0.5"
-                  style={{
-                    backgroundColor: "var(--color-ink)",
-                    color: "var(--drive-sidebar)",
-                    boxShadow:
-                      "0 10px 24px -12px color-mix(in oklab, var(--color-ink) 60%, transparent)",
-                  }}
-                >
-                  <Plus className="size-4" /> New
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" sideOffset={8} className="min-w-[14rem]">
-                <DropdownMenuItem onClick={createFolder} className="cursor-pointer gap-2.5 py-2">
-                  <FolderPlus className="size-4 opacity-70" />
-                  <span>New folder</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => fileInputRef.current?.click()} className="cursor-pointer gap-2.5 py-2">
-                  <Upload className="size-4 opacity-70" />
-                  <span>Upload files</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => createBlank("doc")} className="cursor-pointer gap-2.5 py-2">
-                  <FileText className="size-4 opacity-70" />
-                  <span>New document</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => createBlank("sheet")} className="cursor-pointer gap-2.5 py-2">
-                  <FileSpreadsheet className="size-4 opacity-70" />
-                  <span>New spreadsheet</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => createBlank("slides")} className="cursor-pointer gap-2.5 py-2">
-                  <Presentation className="size-4 opacity-70" />
-                  <span>New presentation</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          <nav className="flex-1 px-4 space-y-7 overflow-y-auto">
-            <ul className="space-y-1">
-              <SidebarLink
-                active={view.type === "recent"}
-                onClick={() => selectView({ type: "recent" })}
-                icon={<Clock className="size-3.5" />}
-              >
-                Recent
-              </SidebarLink>
-              <SidebarLink
-                active={view.type === "starred"}
-                onClick={() => selectView({ type: "starred" })}
-                icon={<Star className="size-3.5" />}
-                badge={counts.starred || undefined}
-              >
-                Starred
-              </SidebarLink>
-              <SidebarLink
-                active={view.type === "shared"}
-                onClick={() => selectView({ type: "shared" })}
-                icon={<Users className="size-3.5" />}
-                badge={counts.shared || undefined}
-              >
-                Shared with me
-              </SidebarLink>
-            </ul>
-
-            <SidebarGroup label="Locations">
-              {TOP_FOLDERS.map((fld) => (
+            <nav className="flex-1 px-4 space-y-7 overflow-y-auto">
+              <ul className="space-y-1">
                 <SidebarLink
-                  key={fld}
-                  active={view.type === "folder" && view.path === fld}
-                  onClick={() => selectView({ type: "folder", path: fld })}
-                  icon={topFolderIcon[fld]}
-                  badge={
-                    fld === "My Drive"
-                      ? counts.myDrive || undefined
-                      : fld === "Shared with me"
-                        ? counts.shared || undefined
-                        : counts.trash || undefined
-                  }
-                  isDropTarget={dropTarget === fld}
-                  onDragOver={(e) => {
-                    if (dragging) {
-                      e.preventDefault();
-                      setDropTarget(fld);
-                    }
-                  }}
-                  onDragLeave={() => setDropTarget((t) => (t === fld ? null : t))}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    dropOnFolder(fld);
-                  }}
+                  active={view.type === "recent"}
+                  onClick={() => selectView({ type: "recent" })}
+                  icon={<Clock className="size-3.5" />}
                 >
-                  {fld}
+                  Recent
                 </SidebarLink>
-              ))}
-            </SidebarGroup>
-          </nav>
-
-          <div
-            className="p-4 md:p-6 flex items-center gap-2 shrink-0 border-t"
-            style={{
-              color: "color-mix(in oklab, var(--color-ink) 80%, transparent)",
-              borderColor: "color-mix(in oklab, var(--color-ink) 18%, transparent)",
-            }}
-          >
-            <div
-              className="size-9 rounded-full flex items-center justify-center text-[11px] font-medium shrink-0"
-              style={{
-                backgroundColor: "color-mix(in oklab, var(--color-ink) 18%, transparent)",
-                color: "var(--color-ink)",
-              }}
-            >
-              EL
-            </div>
-            <div className="flex-1 min-w-0 text-sm truncate" style={{ color: "var(--color-ink)" }}>
-              Elias Linden
-            </div>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link
-                  to="/"
-                  aria-label="Log out"
-                  className="size-9 rounded-full flex items-center justify-center transition-colors hover:bg-[color-mix(in_oklab,var(--color-ink)_18%,transparent)]"
-                  style={{
-                    color: "var(--color-ink)",
-                    backgroundColor: "color-mix(in oklab, var(--color-ink) 10%, transparent)",
-                  }}
+                <SidebarLink
+                  active={view.type === "starred"}
+                  onClick={() => selectView({ type: "starred" })}
+                  icon={<Star className="size-3.5" />}
+                  badge={counts.starred || undefined}
                 >
-                  <LogOut className="size-4" />
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent>Log out</TooltipContent>
-            </Tooltip>
-          </div>
-        </aside>
+                  Starred
+                </SidebarLink>
+                <SidebarLink
+                  active={view.type === "shared"}
+                  onClick={() => selectView({ type: "shared" })}
+                  icon={<Users className="size-3.5" />}
+                  badge={counts.shared || undefined}
+                >
+                  Shared with me
+                </SidebarLink>
+              </ul>
 
-        {sidebarOpen && (
-          <div
-            className="fixed inset-0 z-30 bg-black/30 md:hidden animate-in fade-in duration-300"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
+              <SidebarGroup label="Locations">
+                {TOP_FOLDERS.map((fld) => (
+                  <SidebarLink
+                    key={fld}
+                    active={view.type === "folder" && view.path === fld}
+                    onClick={() => selectView({ type: "folder", path: fld })}
+                    icon={topFolderIcon[fld]}
+                    badge={
+                      fld === "My Drive"
+                        ? counts.myDrive || undefined
+                        : fld === "Shared with me"
+                          ? counts.shared || undefined
+                          : counts.trash || undefined
+                    }
+                    isDropTarget={dropTarget === fld}
+                    onDragOver={(e) => {
+                      if (dragging) {
+                        e.preventDefault();
+                        setDropTarget(fld);
+                      }
+                    }}
+                    onDragLeave={() => setDropTarget((t) => (t === fld ? null : t))}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      dropOnFolder(fld);
+                    }}
+                  >
+                    {fld}
+                  </SidebarLink>
+                ))}
+              </SidebarGroup>
+            </nav>
+
+            <WorkspaceUserFooter
+              name={session.user.displayName}
+              initials={workspaceUserInitials(session.user)}
+              detailLine={session.user.username}
+              onLogoutClick={() => window.location.assign("/")}
+              linkHoverClassName="hover:bg-[color-mix(in_oklab,var(--color-ink)_18%,transparent)]"
+            />
+          </div>
+        </AppSidebar>
+        <AppSidebarScrim open={sidebarOpen} onClick={() => setSidebarOpen(false)} />
 
         {/* Main browser */}
         <section
@@ -811,30 +989,17 @@ function DriveApp() {
             style={{ borderColor: "color-mix(in oklab, var(--color-ink) 10%, transparent)" }}
           >
             <div className="flex items-center gap-3">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    aria-label={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
-                    onClick={() => setSidebarOpen((v) => !v)}
-                    className="size-9 rounded-full flex items-center justify-center shrink-0 transition-colors hover:bg-[color-mix(in_oklab,var(--color-ink)_12%,transparent)]"
-                    style={{
-                      color: "var(--color-ink)",
-                      backgroundColor: "color-mix(in oklab, var(--color-ink) 6%, transparent)",
-                    }}
-                  >
-                    <Menu className="size-4 md:hidden" />
-                    {sidebarOpen ? (
-                      <PanelLeftClose className="size-4 hidden md:block" />
-                    ) : (
-                      <PanelLeftOpen className="size-4 hidden md:block" />
-                    )}
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>{sidebarOpen ? "Hide sidebar" : "Show sidebar"}</TooltipContent>
-              </Tooltip>
+              <WorkspaceSidebarToggle
+                open={sidebarOpen}
+                onToggle={() => setSidebarOpen((v) => !v)}
+                hoverClassName="hover:bg-[color-mix(in_oklab,var(--color-ink)_12%,transparent)]"
+              />
 
               {/* Breadcrumbs */}
-              <nav className="flex-1 min-w-0 flex items-center gap-1 overflow-x-auto" aria-label="Breadcrumb">
+              <nav
+                className="flex-1 min-w-0 flex items-center gap-1 overflow-x-auto"
+                aria-label="Breadcrumb"
+              >
                 {breadcrumbs.map((b, i) => {
                   const isLast = i === breadcrumbs.length - 1;
                   return (
@@ -842,7 +1007,9 @@ function DriveApp() {
                       {i > 0 && (
                         <ChevronRight
                           className="size-4 shrink-0"
-                          style={{ color: "color-mix(in oklab, var(--color-ink) 35%, transparent)" }}
+                          style={{
+                            color: "color-mix(in oklab, var(--color-ink) 35%, transparent)",
+                          }}
                         />
                       )}
                       {isLast || !b.path ? (
@@ -872,7 +1039,9 @@ function DriveApp() {
               <div className="flex items-center gap-1.5 shrink-0">
                 <div
                   className="hidden sm:flex items-center rounded-full p-0.5"
-                  style={{ backgroundColor: "color-mix(in oklab, var(--color-ink) 6%, transparent)" }}
+                  style={{
+                    backgroundColor: "color-mix(in oklab, var(--color-ink) 6%, transparent)",
+                  }}
                 >
                   <button
                     aria-label="Grid view"
@@ -880,9 +1049,7 @@ function DriveApp() {
                     className="size-8 rounded-full flex items-center justify-center transition-colors"
                     style={{
                       backgroundColor:
-                        viewMode === "grid"
-                          ? "var(--color-cream, #f5f1e8)"
-                          : "transparent",
+                        viewMode === "grid" ? "var(--color-cream, #f5f1e8)" : "transparent",
                       color: "var(--color-ink)",
                       boxShadow:
                         viewMode === "grid"
@@ -898,9 +1065,7 @@ function DriveApp() {
                     className="size-8 rounded-full flex items-center justify-center transition-colors"
                     style={{
                       backgroundColor:
-                        viewMode === "list"
-                          ? "var(--color-cream, #f5f1e8)"
-                          : "transparent",
+                        viewMode === "list" ? "var(--color-cream, #f5f1e8)" : "transparent",
                       color: "var(--color-ink)",
                       boxShadow:
                         viewMode === "list"
@@ -911,7 +1076,10 @@ function DriveApp() {
                     <ListIcon className="size-4" />
                   </button>
                 </div>
-                <ListAction label={detailOpen ? "Hide details" : "Show details"} onClick={() => setDetailOpen((v) => !v)}>
+                <ListAction
+                  label={detailOpen ? "Hide details" : "Show details"}
+                  onClick={() => setDetailOpen((v) => !v)}
+                >
                   <Info className="size-4" />
                 </ListAction>
                 {inTrashView && visibleItems.length > 0 && (
@@ -1035,6 +1203,14 @@ function DriveApp() {
                   file={active}
                   isStarred={!!starred[active.id]}
                   onClose={() => setDetailOpen(false)}
+                  onDownload={() => {
+                    if (operations && active.apiPath && active.kind !== "folder") {
+                      void operations.downloadFile(active.apiPath).catch((error: unknown) => {
+                        const message = error instanceof Error ? error.message : String(error);
+                        toast.error(message);
+                      });
+                    }
+                  }}
                   onStar={() => toggleStar(active.id)}
                   onMove={() => setMoveDialog({ ids: [active.id] })}
                   onDelete={() =>
@@ -1057,6 +1233,14 @@ function DriveApp() {
                 file={active}
                 isStarred={!!starred[active.id]}
                 onClose={() => setDetailOpen(false)}
+                onDownload={() => {
+                  if (operations && active.apiPath && active.kind !== "folder") {
+                    void operations.downloadFile(active.apiPath).catch((error: unknown) => {
+                      const message = error instanceof Error ? error.message : String(error);
+                      toast.error(message);
+                    });
+                  }
+                }}
                 onStar={() => toggleStar(active.id)}
                 onMove={() => setMoveDialog({ ids: [active.id] })}
                 onDelete={() =>
@@ -1080,13 +1264,30 @@ function DriveApp() {
               <FabButton label="Star" onClick={batchStar}>
                 <Star className="size-4" />
               </FabButton>
-              <FabButton label="Download" onClick={() => toast("Download started", { icon: <Download className="size-4" /> })}>
+              <FabButton
+                label="Download"
+                onClick={() => {
+                  const first = files.find(
+                    (file) => selectedIds.includes(file.id) && file.kind !== "folder",
+                  );
+                  if (operations && first?.apiPath) {
+                    void operations.downloadFile(first.apiPath).catch((error: unknown) => {
+                      const message = error instanceof Error ? error.message : String(error);
+                      toast.error(message);
+                    });
+                  }
+                  toast("Download started", { icon: <Download className="size-4" /> });
+                }}
+              >
                 <Download className="size-4" />
               </FabButton>
               <FabButton label="Move to folder" onClick={() => setMoveDialog({ ids: selectedIds })}>
                 <FolderInput className="size-4" />
               </FabButton>
-              <FabButton label={inTrashView ? "Delete permanently" : "Move to trash"} onClick={requestDeleteSelected}>
+              <FabButton
+                label={inTrashView ? "Delete permanently" : "Move to trash"}
+                onClick={requestDeleteSelected}
+              >
                 <Trash2 className="size-4" />
               </FabButton>
               <FabButton label="Done" onClick={exitSelection}>
@@ -1128,7 +1329,7 @@ function DriveApp() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </div>
+      </WorkspaceAppLayout>
     </TooltipProvider>
   );
 }
@@ -1183,9 +1384,7 @@ function GridView({
                 isSelected={selectedIds.includes(f.id)}
                 isStarred={!!starred[f.id]}
                 isDragging={dragging?.includes(f.id) ?? false}
-                isDropTarget={
-                  dropTarget === (f.parent === "" ? f.title : `${f.parent}/${f.title}`)
-                }
+                isDropTarget={dropTarget === (f.parent === "" ? f.title : `${f.parent}/${f.title}`)}
                 isTouch={isTouch}
                 onSelect={(e) => onSelect(f.id, e)}
                 onOpen={() => onOpen(f)}
@@ -1538,11 +1737,21 @@ function ListView({
               color: headMuted,
             }}
           >
-            <th className="font-medium uppercase tracking-[0.14em] text-[10px] py-2.5 px-3 w-[44%]">Name</th>
-            <th className="font-medium uppercase tracking-[0.14em] text-[10px] py-2.5 px-3 hidden md:table-cell">Owner</th>
-            <th className="font-medium uppercase tracking-[0.14em] text-[10px] py-2.5 px-3 hidden sm:table-cell">Modified</th>
-            <th className="font-medium uppercase tracking-[0.14em] text-[10px] py-2.5 px-3 hidden lg:table-cell">Kind</th>
-            <th className="font-medium uppercase tracking-[0.14em] text-[10px] py-2.5 px-3 text-right">Size</th>
+            <th className="font-medium uppercase tracking-[0.14em] text-[10px] py-2.5 px-3 w-[44%]">
+              Name
+            </th>
+            <th className="font-medium uppercase tracking-[0.14em] text-[10px] py-2.5 px-3 hidden md:table-cell">
+              Owner
+            </th>
+            <th className="font-medium uppercase tracking-[0.14em] text-[10px] py-2.5 px-3 hidden sm:table-cell">
+              Modified
+            </th>
+            <th className="font-medium uppercase tracking-[0.14em] text-[10px] py-2.5 px-3 hidden lg:table-cell">
+              Kind
+            </th>
+            <th className="font-medium uppercase tracking-[0.14em] text-[10px] py-2.5 px-3 text-right">
+              Size
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -1598,9 +1807,7 @@ function ListView({
                       }
                     : undefined
                 }
-                onDragLeave={
-                  f.kind === "folder" ? () => setDropTarget(null) : undefined
-                }
+                onDragLeave={f.kind === "folder" ? () => setDropTarget(null) : undefined}
                 onDrop={
                   f.kind === "folder"
                     ? (e) => {
@@ -1619,9 +1826,7 @@ function ListView({
                       : isActive
                         ? "color-mix(in oklab, var(--color-ink) 8%, transparent)"
                         : "transparent",
-                  boxShadow: isDropTarget
-                    ? `inset 0 0 0 1.5px var(--color-emerald)`
-                    : "none",
+                  boxShadow: isDropTarget ? `inset 0 0 0 1.5px var(--color-emerald)` : "none",
                 }}
               >
                 <td className="py-2 px-3">
@@ -1630,9 +1835,7 @@ function ListView({
                       className="shrink-0 [&>svg]:size-4"
                       style={{
                         color:
-                          f.kind === "folder"
-                            ? "var(--color-emerald)"
-                            : "var(--drive-sidebar)",
+                          f.kind === "folder" ? "var(--color-emerald)" : "var(--drive-sidebar)",
                       }}
                     >
                       {f.kind === "folder" ? (
@@ -1665,7 +1868,10 @@ function ListView({
                 <td className="py-2 px-3 hidden md:table-cell" style={{ color: muted }}>
                   {f.owner}
                 </td>
-                <td className="py-2 px-3 hidden sm:table-cell tabular-nums" style={{ color: muted }}>
+                <td
+                  className="py-2 px-3 hidden sm:table-cell tabular-nums"
+                  style={{ color: muted }}
+                >
                   {f.date}
                 </td>
                 <td className="py-2 px-3 hidden lg:table-cell" style={{ color: muted }}>
@@ -1689,6 +1895,7 @@ function DetailPanel({
   file,
   isStarred,
   onClose,
+  onDownload,
   onStar,
   onMove,
   onDelete,
@@ -1697,6 +1904,7 @@ function DetailPanel({
   file: DriveFile;
   isStarred: boolean;
   onClose: () => void;
+  onDownload: () => void;
   onStar: () => void;
   onMove: () => void;
   onDelete: () => void;
@@ -1720,10 +1928,19 @@ function DetailPanel({
           {mobile ? <ArrowLeft className="size-4" /> : <X className="size-4" />}
         </button>
         <div className="flex items-center gap-1.5">
-          <ListAction label="Download" onClick={() => toast("Download started", { icon: <Download className="size-4" /> })}>
+          <ListAction
+            label="Download"
+            onClick={() => {
+              onDownload();
+              toast("Download started", { icon: <Download className="size-4" /> });
+            }}
+          >
             <Download className="size-4" />
           </ListAction>
-          <ListAction label="Share" onClick={() => toast("Share link copied", { icon: <Share2 className="size-4" /> })}>
+          <ListAction
+            label="Share"
+            onClick={() => toast("Share link copied", { icon: <Share2 className="size-4" /> })}
+          >
             <Share2 className="size-4" />
           </ListAction>
           <ListAction label={isStarred ? "Unstar" : "Star"} onClick={onStar}>
@@ -1781,7 +1998,10 @@ function DetailPanel({
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between gap-4 py-1.5 border-b" style={{ borderColor: "color-mix(in oklab, var(--color-ink) 8%, transparent)" }}>
+    <div
+      className="flex justify-between gap-4 py-1.5 border-b"
+      style={{ borderColor: "color-mix(in oklab, var(--color-ink) 8%, transparent)" }}
+    >
       <dt
         className="text-[11px] uppercase tracking-wider"
         style={{ color: "color-mix(in oklab, var(--color-ink) 50%, transparent)" }}
