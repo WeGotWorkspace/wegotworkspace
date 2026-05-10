@@ -1869,7 +1869,7 @@ function FolderTile({
         boxShadow: isDropTarget
           ? "inset 0 0 0 1.5px var(--color-emerald)"
           : isSelected
-            ? "inset 0 0 0 1px color-mix(in oklab, var(--color-emerald) 45%, transparent)"
+            ? "inset 0 0 0 3px var(--color-emerald), 0 0 0 1px color-mix(in oklab, var(--color-emerald) 35%, transparent)"
             : "none",
       }}
     >
@@ -1955,8 +1955,10 @@ function FileTile({
       style={{
         backgroundColor: "color-mix(in oklab, var(--color-ink) 5%, transparent)",
         boxShadow: isSelected
-          ? "inset 0 0 0 3px var(--color-emerald), 0 0 0 1px color-mix(in oklab, var(--color-ink) 22%, transparent)"
+          ? "inset 0 0 0 3px var(--color-emerald), 0 0 0 1px color-mix(in oklab, var(--color-emerald) 35%, transparent)"
           : "inset 0 0 0 1px color-mix(in oklab, var(--color-ink) 8%, transparent)",
+        outline: isSelected ? "2px solid var(--color-emerald)" : "none",
+        outlineOffset: "-2px",
       }}
     >
       <div
