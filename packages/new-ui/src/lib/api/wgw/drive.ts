@@ -31,6 +31,11 @@ function downloadPathToken(path: string): string {
   return btoa(binary);
 }
 
+function uploadIdentifier(file: File): string {
+  const raw = `${file.name}-${file.size}-${file.lastModified}`;
+  return raw.replace(/[^0-9A-Za-z_]/g, "_");
+}
+
 async function fetchDriveUser(opts?: { signal?: AbortSignal }) {
   const res = await wgwFetch("/drive/user", { signal: opts?.signal });
   if (!res.ok) throw new Error(`GET /drive/user failed (${res.status})`);
@@ -51,7 +56,30 @@ async function fetchListing(dir: string, opts?: { signal?: AbortSignal }) {
 }
 
 async function fetchState(dir: string, opts?: { signal?: AbortSignal }): Promise<DriveUIData> {
-  const [user, directory] = await Promise.all([fetchDriveUser(opts), fetchListing(dir, opts)]);
+  const user = await fetchDriveUser(opts);
+  const userRoot = normalizePath(`/users/${user.username}`);
+  const requested = normalizePath(dir);
+  const targetDir = requested === "/" || requested === "/users" ? userRoot : requested;
+  const directory = await fetchListing(targetDir, opts);
+
+  // Expose member groups under My Drive root by merging /groups folders there.
+  if (normalizePath(directory.location) === userRoot) {
+    try {
+      const groupsDir = await fetchListing("/groups", opts);
+      const existing = new Set(directory.files.map((entry) => normalizePath(entry.path)));
+      const groupFolders = groupsDir.files.filter(
+        (entry) => entry.type === "dir" && !existing.has(normalizePath(entry.path)),
+      );
+      return {
+        user,
+        cwd: directory.location,
+        directory: { ...directory, files: [...directory.files, ...groupFolders] },
+      };
+    } catch {
+      // Group merge is additive only; keep user root listing if /groups fetch fails.
+    }
+  }
+
   return { user, cwd: directory.location, directory };
 }
 
@@ -145,9 +173,36 @@ export function createWgwDriveOperations(initialCwd = "/"): DriveAPIOperations {
         URL.revokeObjectURL(url);
       }
     },
+    async readFileBlob(path, opts) {
+      const encoded = encodeURIComponent(downloadPathToken(normalizePath(path)));
+      const res = await wgwFetch(`/drive/download?path=${encoded}`, { signal: opts?.signal });
+      if (!res.ok) throw new Error(`GET /drive/download failed (${res.status})`);
+      return res.blob();
+    },
     async checkUploadReady(opts) {
       const res = await wgwFetch("/drive/upload", { method: "GET", signal: opts?.signal });
       if (!res.ok) throw new Error(`GET /drive/upload failed (${res.status})`);
+    },
+    async uploadFiles(input, opts) {
+      const targetCwd = normalizePath(input.cwd);
+      for (const file of input.files) {
+        const form = new FormData();
+        form.append("file", file);
+        form.append("resumableFilename", file.name);
+        form.append("resumableIdentifier", uploadIdentifier(file));
+        form.append("resumableChunkNumber", "1");
+        form.append("resumableTotalChunks", "1");
+        form.append("cwd", targetCwd);
+        const res = await wgwFetch("/drive/upload", {
+          method: "POST",
+          body: form,
+          signal: opts?.signal,
+        });
+        if (!res.ok) throw new Error(`POST /drive/upload failed (${res.status})`);
+      }
+      const state = await fetchState(targetCwd, opts);
+      cwd = normalizePath(state.cwd);
+      return state;
     },
   };
 }

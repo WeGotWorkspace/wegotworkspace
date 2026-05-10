@@ -33,5 +33,10 @@ export type DriveAPIOperations = {
   ) => Promise<DriveUIData>;
   deleteItems: (paths: string[], opts?: { signal?: AbortSignal }) => Promise<DriveUIData>;
   downloadFile: (path: string, opts?: { signal?: AbortSignal }) => Promise<void>;
+  readFileBlob: (path: string, opts?: { signal?: AbortSignal }) => Promise<Blob>;
   checkUploadReady: (opts?: { signal?: AbortSignal }) => Promise<void>;
+  uploadFiles: (
+    input: { cwd: string; files: File[] },
+    opts?: { signal?: AbortSignal },
+  ) => Promise<DriveUIData>;
 };
