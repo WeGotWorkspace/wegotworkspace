@@ -1,8 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
+  Check,
   CheckCircle2,
+  CircleX,
   Download,
+  Eraser,
   FileArchive,
   KeyRound,
   Loader2,
@@ -16,6 +19,7 @@ import {
 import { Input } from "@/ui/input";
 import { Switch } from "@/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/tooltip";
 import { Button } from "@/ui/button";
 import {
   Dialog,
@@ -56,6 +60,43 @@ import type { AdminWorkspaceProps } from "@/admin-core/src/admin-workspace-props
 import { Tag } from "@/tag/src/tag";
 
 type UpdateLogRow = { id: string; time: string; level: string; message: string };
+
+type CheckVisual = { Icon: typeof CheckCircle2; color: string };
+
+function getServerCheckVisual(check: {
+  ok: boolean;
+  status?: string;
+  detail?: string;
+}): CheckVisual {
+  const normalizedStatus = (check.status ?? "").toLowerCase();
+  const normalizedDetail = (check.detail ?? "").toLowerCase();
+
+  if (
+    normalizedStatus === "error" ||
+    normalizedStatus === "fail" ||
+    normalizedStatus === "failed"
+  ) {
+    return { Icon: CircleX, color: "#b14242" };
+  }
+
+  if (
+    normalizedStatus === "warn" ||
+    normalizedStatus === "warning" ||
+    normalizedStatus === "unknown"
+  ) {
+    return { Icon: AlertTriangle, color: "#c98a1f" };
+  }
+
+  if (normalizedDetail.startsWith("unknown")) {
+    return { Icon: AlertTriangle, color: "#c98a1f" };
+  }
+
+  if (check.ok) {
+    return { Icon: CheckCircle2, color: "#3a8f5a" };
+  }
+
+  return { Icon: CircleX, color: "#b14242" };
+}
 
 function parseUpdateLogLine(line: string, index: number): UpdateLogRow {
   const match = line.match(/^\[([^\]]+)\]\s+\[([A-Z]+)\]\s+(.*)$/);
@@ -98,6 +139,30 @@ const TIMEZONES = [
   "America/Sao_Paulo",
 ];
 
+const UPDATE_PROGRESS_STEPS: Array<{ label: string; phases: string[] }> = [
+  { label: "Downloading", phases: ["downloading"] },
+  { label: "Extracting", phases: ["extracting"] },
+  { label: "Backing up database", phases: ["backing_up"] },
+  { label: "Applying update", phases: ["applying_files", "running_migrations"] },
+];
+
+function formatHumanDateTime(input: string | null): string {
+  if (!input) return "-";
+  const parsed = new Date(input);
+  if (Number.isNaN(parsed.getTime())) return input;
+  return new Intl.DateTimeFormat(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(parsed);
+}
+
+function isProtectedGroup(groupId: string): boolean {
+  return groupId === "principals/groups/administrators";
+}
+
 export function AdminWorkspace(props: AdminWorkspaceProps) {
   const { data, session } = props;
   const logoutHref = props.logoutTo === false ? null : (props.logoutTo ?? data.logoutUrl ?? "/");
@@ -122,6 +187,21 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
     });
     return map;
   }, [controller.groups, controller.users]);
+  const activeProgressStep = UPDATE_PROGRESS_STEPS.findIndex((step) =>
+    step.phases.includes(controller.updates.phase ?? ""),
+  );
+  const completedProgressSteps =
+    activeProgressStep < 0
+      ? 0
+      : Math.min(UPDATE_PROGRESS_STEPS.length, Math.max(activeProgressStep, 0));
+  const displayProgressCount = controller.updates.phaseProgress
+    ? `${Math.min(controller.updates.phaseProgress.completed, controller.updates.phaseProgress.total)} / ${controller.updates.phaseProgress.total}`
+    : `${Math.max(0, completedProgressSteps)} / ${UPDATE_PROGRESS_STEPS.length}`;
+  const progressPercent = controller.updates.phaseProgress?.percent
+    ? Math.max(2, Math.min(100, controller.updates.phaseProgress.percent))
+    : activeProgressStep >= 0
+      ? Math.max(2, Math.min(95, ((activeProgressStep + 1) / UPDATE_PROGRESS_STEPS.length) * 100))
+      : 2;
   const [newUserOpen, setNewUserOpen] = useState(false);
   const [editUserId, setEditUserId] = useState<string | null>(null);
   const [passwordUserId, setPasswordUserId] = useState<string | null>(null);
@@ -129,6 +209,9 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
   const [newGroupOpen, setNewGroupOpen] = useState(false);
   const [editGroupId, setEditGroupId] = useState<string | null>(null);
   const [deleteGroupId, setDeleteGroupId] = useState<string | null>(null);
+  const [confirmClearLogsOpen, setConfirmClearLogsOpen] = useState(false);
+  const [confirmUpdateOpen, setConfirmUpdateOpen] = useState(false);
+  const [updatingNow, setUpdatingNow] = useState(false);
   const editingUser = controller.users.find((user) => user.id === editUserId) ?? null;
   const passwordUser = controller.users.find((user) => user.id === passwordUserId) ?? null;
   const deletingUser = controller.users.find((user) => user.id === deleteUserId) ?? null;
@@ -155,7 +238,7 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
       cellClassName: "py-3 pr-3 whitespace-nowrap",
       render: (row) => (
         <span style={{ color: "color-mix(in oklab, var(--color-ink) 65%, transparent)" }}>
-          {row.modifiedAt ?? "-"}
+          {formatHumanDateTime(row.modifiedAt)}
         </span>
       ),
     },
@@ -195,23 +278,19 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
       render: (row) => (
         <div className="flex items-center gap-1 justify-end">
           {row.downloadable ? (
-            <button
-              type="button"
-              className="size-8 rounded-md flex items-center justify-center hover:bg-[color-mix(in_oklab,#1a1a18_8%,transparent)]"
-              aria-label={`Download ${row.name}`}
+            <IconActionButton
+              label={`Download ${row.name}`}
               onClick={() => controller.actions.downloadBackup(row.name)}
             >
               <Download className="size-4" />
-            </button>
+            </IconActionButton>
           ) : null}
-          <button
-            type="button"
-            className="size-8 rounded-md flex items-center justify-center hover:bg-[color-mix(in_oklab,#1a1a18_8%,transparent)]"
+          <IconActionButton
+            label={`Delete ${row.name}`}
             onClick={() => controller.actions.deleteBackup(row.name)}
-            aria-label={`Delete ${row.name}`}
           >
             <Trash2 className="size-4" />
-          </button>
+          </IconActionButton>
         </div>
       ),
     },
@@ -308,15 +387,9 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
                   <Card
                     title="Users"
                     action={
-                      <button
-                        type="button"
-                        aria-label="New user"
-                        className="size-8 rounded-md flex items-center justify-center hover:bg-[color-mix(in_oklab,#1a1a18_8%,transparent)]"
-                        style={{ color: "var(--color-ink)" }}
-                        onClick={() => setNewUserOpen(true)}
-                      >
+                      <IconActionButton label="New user" onClick={() => setNewUserOpen(true)}>
                         <Plus className="size-4" />
-                      </button>
+                      </IconActionButton>
                     }
                   >
                     <ul
@@ -351,30 +424,24 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
                             </div>
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
-                            <button
-                              type="button"
-                              className="size-8 rounded-md flex items-center justify-center hover:bg-[color-mix(in_oklab,#1a1a18_8%,transparent)]"
-                              aria-label={`Edit ${user.displayName}`}
+                            <IconActionButton
+                              label={`Edit ${user.displayName}`}
                               onClick={() => setEditUserId(user.id)}
                             >
                               <Pencil className="size-4" />
-                            </button>
-                            <button
-                              type="button"
-                              className="size-8 rounded-md flex items-center justify-center hover:bg-[color-mix(in_oklab,#1a1a18_8%,transparent)]"
-                              aria-label={`Set password for ${user.displayName}`}
+                            </IconActionButton>
+                            <IconActionButton
+                              label={`Set password for ${user.displayName}`}
                               onClick={() => setPasswordUserId(user.id)}
                             >
                               <KeyRound className="size-4" />
-                            </button>
-                            <button
-                              type="button"
-                              className="size-8 rounded-md flex items-center justify-center hover:bg-[color-mix(in_oklab,#1a1a18_8%,transparent)]"
-                              aria-label={`Delete ${user.displayName}`}
+                            </IconActionButton>
+                            <IconActionButton
+                              label={`Delete ${user.displayName}`}
                               onClick={() => setDeleteUserId(user.id)}
                             >
                               <Trash2 className="size-4" />
-                            </button>
+                            </IconActionButton>
                           </div>
                         </li>
                       ))}
@@ -383,15 +450,9 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
                   <Card
                     title="Groups"
                     action={
-                      <button
-                        type="button"
-                        aria-label="New group"
-                        className="size-8 rounded-md flex items-center justify-center hover:bg-[color-mix(in_oklab,#1a1a18_8%,transparent)]"
-                        style={{ color: "var(--color-ink)" }}
-                        onClick={() => setNewGroupOpen(true)}
-                      >
+                      <IconActionButton label="New group" onClick={() => setNewGroupOpen(true)}>
                         <Plus className="size-4" />
-                      </button>
+                      </IconActionButton>
                     }
                   >
                     <ul
@@ -430,22 +491,20 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
                             </div>
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
-                            <button
-                              type="button"
-                              className="size-8 rounded-md flex items-center justify-center hover:bg-[color-mix(in_oklab,#1a1a18_8%,transparent)]"
-                              aria-label={`Edit ${group.displayName}`}
+                            <IconActionButton
+                              label={`Edit ${group.displayName}`}
                               onClick={() => setEditGroupId(group.id)}
                             >
                               <Pencil className="size-4" />
-                            </button>
-                            <button
-                              type="button"
-                              className="size-8 rounded-md flex items-center justify-center hover:bg-[color-mix(in_oklab,#1a1a18_8%,transparent)]"
-                              aria-label={`Delete ${group.displayName}`}
-                              onClick={() => setDeleteGroupId(group.id)}
-                            >
-                              <Trash2 className="size-4" />
-                            </button>
+                            </IconActionButton>
+                            {!isProtectedGroup(group.id) ? (
+                              <IconActionButton
+                                label={`Delete ${group.displayName}`}
+                                onClick={() => setDeleteGroupId(group.id)}
+                              >
+                                <Trash2 className="size-4" />
+                              </IconActionButton>
+                            ) : null}
                           </div>
                         </li>
                       ))}
@@ -732,16 +791,7 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
               ) : null}
 
               {controller.section === "backups" ? (
-                <Card
-                  title="Database backups"
-                  iconActions={[
-                    {
-                      icon: <Plus className="size-4" />,
-                      label: "Create backup",
-                      onClick: controller.actions.createBackup,
-                    },
-                  ]}
-                >
+                <Card title="Database backups">
                   <DataTable
                     data={controller.updates.backups}
                     columns={backupColumns}
@@ -819,7 +869,7 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
                         >
                           Last checked
                         </div>
-                        <Tag label={controller.updates.lastCheckedAt ?? "-"} />
+                        <Tag label={formatHumanDateTime(controller.updates.lastCheckedAt)} />
                       </div>
                     </div>
                     <Callout
@@ -836,6 +886,78 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
                           : "Running the latest stable release."
                       }
                     />
+                    {controller.updates.inProgress ? (
+                      <div
+                        className="mt-5 rounded-lg border p-4"
+                        style={{
+                          backgroundColor: "color-mix(in oklab, var(--color-ink) 4%, transparent)",
+                          borderColor: "color-mix(in oklab, var(--color-ink) 12%, transparent)",
+                        }}
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <div
+                            className="text-[10px] uppercase tracking-[0.18em] font-semibold"
+                            style={{
+                              color: "color-mix(in oklab, var(--color-ink) 55%, transparent)",
+                            }}
+                          >
+                            Update progress
+                          </div>
+                          <div
+                            className="text-xs tabular-nums"
+                            style={{
+                              color: "color-mix(in oklab, var(--color-ink) 55%, transparent)",
+                            }}
+                          >
+                            {displayProgressCount}
+                          </div>
+                        </div>
+                        <div
+                          className="h-1.5 rounded-full overflow-hidden mb-4"
+                          style={{
+                            backgroundColor:
+                              "color-mix(in oklab, var(--color-ink) 10%, transparent)",
+                          }}
+                        >
+                          <div
+                            className="h-full transition-all duration-500 ease-out"
+                            style={{ width: `${progressPercent}%`, backgroundColor: "#2f302c" }}
+                          />
+                        </div>
+                        <ol className="space-y-2">
+                          {UPDATE_PROGRESS_STEPS.map((step, index) => {
+                            const isDone = activeProgressStep > index;
+                            const isActive = activeProgressStep === index;
+                            return (
+                              <li key={step.label} className="flex items-center gap-3 text-sm">
+                                <span
+                                  className="size-5 rounded-full flex items-center justify-center shrink-0 transition-colors"
+                                  style={{
+                                    backgroundColor:
+                                      isDone || isActive
+                                        ? "var(--color-ink)"
+                                        : "color-mix(in oklab, var(--color-ink) 12%, transparent)",
+                                    color:
+                                      isDone || isActive
+                                        ? "var(--color-cream, #f5f1e8)"
+                                        : "var(--color-ink)",
+                                  }}
+                                >
+                                  {isDone ? (
+                                    <Check className="size-3" />
+                                  ) : isActive ? (
+                                    <Loader2 className="size-3 animate-spin" />
+                                  ) : (
+                                    <span className="size-1.5 rounded-full bg-current" />
+                                  )}
+                                </span>
+                                <span style={{ color: "var(--color-ink)" }}>{step.label}</span>
+                              </li>
+                            );
+                          })}
+                        </ol>
+                      </div>
+                    ) : null}
                     {controller.updates.lastCheckError ? (
                       <p className="mt-3 text-sm text-red-700">
                         {controller.updates.lastCheckError}
@@ -855,9 +977,11 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
                         {controller.checkingUpdates ? "Checking..." : "Check for updates"}
                       </Button>
                       <Button
-                        onClick={controller.actions.applyUpdate}
+                        onClick={() => setConfirmUpdateOpen(true)}
                         disabled={
-                          !controller.updates.updateAvailable || !controller.updates.compatible
+                          !controller.updates.updateAvailable ||
+                          !controller.updates.compatible ||
+                          updatingNow
                         }
                         style={{ backgroundColor: "#2f302c", color: "#ffffff" }}
                       >
@@ -879,20 +1003,21 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
                     ]}
                   >
                     <div className="space-y-1">
-                      {controller.updates.checks.map((check, index) => (
-                        <MenuItem
-                          key={`${check.label}-${index}`}
-                          icon={
-                            check.ok ? (
-                              <CheckCircle2 className="size-4" />
-                            ) : (
-                              <AlertTriangle className="size-4" />
-                            )
-                          }
-                          label={check.label}
-                          description={check.detail}
-                        />
-                      ))}
+                      {controller.updates.checks.map((check, index) =>
+                        (() => {
+                          const { Icon, color } = getServerCheckVisual(check);
+                          return (
+                            <MenuItem
+                              key={`${check.label}-${index}`}
+                              tone="inherit"
+                              className="px-0 py-2 text-(--color-ink) hover:bg-transparent focus-visible:ring-0"
+                              icon={<Icon className="size-4" style={{ color }} />}
+                              label={check.label}
+                              description={check.detail}
+                            />
+                          );
+                        })(),
+                      )}
                     </div>
                   </Card>
 
@@ -905,9 +1030,9 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
                         onClick: controller.actions.refreshUpdateLog,
                       },
                       {
-                        icon: <Trash2 className="size-4" />,
+                        icon: <Eraser className="size-4" />,
                         label: "Clear logs",
-                        onClick: controller.actions.clearUpdateLog,
+                        onClick: () => setConfirmClearLogsOpen(true),
                       },
                     ]}
                   >
@@ -1050,7 +1175,100 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={confirmClearLogsOpen} onOpenChange={setConfirmClearLogsOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear update logs?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This removes all current update log lines from the log panel. This action cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                await controller.actions.clearUpdateLog();
+                setConfirmClearLogsOpen(false);
+              }}
+            >
+              Clear logs
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmUpdateOpen} onOpenChange={setConfirmUpdateOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {`Update to ${controller.updates.latest?.version ?? "latest"}?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              The server will create a pre-update backup and may restart. Active sessions could
+              briefly disconnect.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={updatingNow}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={updatingNow}
+              onClick={async (event) => {
+                event.preventDefault();
+                setUpdatingNow(true);
+                try {
+                  await controller.actions.applyUpdate();
+                  setConfirmUpdateOpen(false);
+                } finally {
+                  setUpdatingNow(false);
+                }
+              }}
+              style={{ backgroundColor: "#2f302c", color: "#ffffff" }}
+            >
+              {updatingNow ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Update now"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
+  );
+}
+
+function IconActionButton({
+  label,
+  onClick,
+  children,
+  disabled,
+}: {
+  label: string;
+  onClick: () => void;
+  children: ReactNode;
+  disabled?: boolean;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          aria-label={label}
+          className="size-8 rounded-md flex items-center justify-center hover:bg-[color-mix(in_oklab,#1a1a18_8%,transparent)] disabled:opacity-50 disabled:pointer-events-none"
+          style={{ color: "var(--color-ink)" }}
+          onClick={onClick}
+          disabled={disabled}
+        >
+          {children}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
   );
 }
 

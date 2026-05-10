@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Check } from "lucide-react";
 import { toast } from "sonner";
 import type { AdminSection } from "@/admin-core/src/admin-types";
@@ -81,6 +81,7 @@ export function useAdminController({
   data,
   operations,
 }: Pick<AdminWorkspaceProps, "data" | "operations">) {
+  const isProtectedGroupId = (groupId: string) => groupId === "principals/groups/administrators";
   const [section, setSection] = useState<AdminSection>("users");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [users, setUsers] = useState(data.users);
@@ -99,6 +100,30 @@ export function useAdminController({
     setUpdates(next.updates);
     setUpdateLogLines(next.updateLogLines);
   };
+
+  useEffect(() => {
+    if (!updates.inProgress || !operations?.refreshState) return;
+    let cancelled = false;
+    const poll = async () => {
+      try {
+        const next = await operations.refreshState();
+        if (!cancelled) {
+          setUpdates(next.updates);
+          setUpdateLogLines(next.updateLogLines);
+        }
+      } catch {
+        // Keep showing existing progress if a poll fails temporarily.
+      }
+    };
+    void poll();
+    const intervalId = window.setInterval(() => {
+      void poll();
+    }, 2000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [updates.inProgress, operations]);
 
   const currentSection = useMemo(
     () => sections.find((candidate) => candidate.id === section) ?? sections[0],
@@ -169,6 +194,7 @@ export function useAdminController({
     try {
       const lines = await operations?.refreshUpdateLog();
       if (lines) setUpdateLogLines(lines);
+      toast("Update logs refreshed", { icon: <Check className="size-4" /> });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not refresh update logs";
       toast.error(message);
@@ -219,10 +245,17 @@ export function useAdminController({
 
   const applyUpdate = async () => {
     try {
+      const wasInProgress = updates.inProgress;
       const next = await operations?.applyUpdate(updates.latest?.version);
       if (!next) return;
       setUpdates(next);
-      toast("Update run started", { icon: <Check className="size-4" /> });
+      if (next.inProgress && !wasInProgress) {
+        toast("Update run started", { icon: <Check className="size-4" /> });
+      } else if (next.inProgress && wasInProgress) {
+        toast("Update is already in progress", { icon: <Check className="size-4" /> });
+      } else {
+        toast("Update request completed", { icon: <Check className="size-4" /> });
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not apply update";
       toast.error(message);
@@ -448,6 +481,10 @@ export function useAdminController({
   };
 
   const deleteGroup = async (groupId: string) => {
+    if (isProtectedGroupId(groupId)) {
+      toast.error("The administrators group is protected and cannot be deleted.");
+      return false;
+    }
     if (operations?.deleteGroup) {
       try {
         const next = await operations.deleteGroup(groupId);
