@@ -153,15 +153,31 @@ export async function fetchAdminUpdateLog(opts?: { signal?: AbortSignal }): Prom
 }
 
 export async function fetchAdminLiveBootstrap(): Promise<AdminAppBootstrap> {
-  const [session, state, logLines] = await Promise.all([
-    wgwFetchPrincipal(),
-    fetchAdminState(),
-    fetchAdminUpdateLog(),
-  ]);
-  return {
-    session,
-    data: mapWgwAdminStateToUI(state, logLines),
-  };
+  const maxAttempts = 5;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      const [session, state, logLines] = await Promise.all([
+        wgwFetchPrincipal(),
+        fetchAdminState(),
+        fetchAdminUpdateLog(),
+      ]);
+      return {
+        session,
+        data: mapWgwAdminStateToUI(state, logLines),
+      };
+    } catch (error) {
+      const canRetry =
+        error instanceof Error &&
+        (error.message.includes("(503)") || error.message.includes("HTTP 503")) &&
+        attempt < maxAttempts;
+      if (!canRetry) {
+        throw error;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 800 * attempt));
+    }
+  }
+
+  throw new Error("Could not load admin state.");
 }
 
 async function fetchAdminUiData(opts?: { signal?: AbortSignal }): Promise<AdminUIData> {
@@ -174,6 +190,26 @@ async function fetchAdminUiData(opts?: { signal?: AbortSignal }): Promise<AdminU
     logLines = [];
   }
   return mapWgwAdminStateToUI(state, logLines);
+}
+
+async function readApiError(res: Response, fallback: string): Promise<string> {
+  try {
+    const payload = (await wgwReadJson(res)) as { error?: string; message?: string };
+    const detail = payload.error ?? payload.message;
+    if (detail && detail.trim() !== "") {
+      return detail;
+    }
+  } catch {
+    try {
+      const text = await res.text();
+      if (text.trim() !== "") {
+        return text.trim();
+      }
+    } catch {
+      // Ignore parse failures and return fallback below.
+    }
+  }
+  return fallback;
 }
 
 export function createWgwAdminOperations(): AdminAPIOperations {
@@ -207,7 +243,16 @@ export function createWgwAdminOperations(): AdminAPIOperations {
         body: JSON.stringify({ version }),
         signal: opts?.signal,
       });
-      if (!res.ok) throw new Error(`POST /admin/updates/apply failed (${res.status})`);
+      if (!res.ok) {
+        if (res.status === 400 || res.status === 503) {
+          const state = await fetchAdminState(opts);
+          if (state.updates.inProgress) {
+            return mapWgwUpdateStateToUI(state.updates);
+          }
+        }
+        const message = await readApiError(res, `POST /admin/updates/apply failed (${res.status})`);
+        throw new Error(message);
+      }
       const payload = (await wgwReadJson(res)) as WgwUpdateApplyResponse;
       return mapWgwUpdateStateToUI(payload.state);
     },

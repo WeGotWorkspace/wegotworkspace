@@ -25,6 +25,7 @@ import {
   Eraser,
   CircleCheck,
   CircleAlert,
+  CircleX,
   CircleDashed,
   PackageCheck,
   Rocket,
@@ -1398,14 +1399,17 @@ const SEED_CHECKS: ServerCheck[] = [
 ];
 
 function StatusDot({ status }: { status: CheckStatus }) {
-  const map: Record<CheckStatus, { bg: string; Icon: typeof CircleCheck }> = {
-    ok: { bg: "#3a8f5a", Icon: CircleCheck },
-    warn: { bg: "#c98a1f", Icon: CircleAlert },
-    error: { bg: "#b14242", Icon: CircleAlert },
-    pending: { bg: "#7a7a78", Icon: CircleDashed },
+  const map: Record<CheckStatus, { color: string; Icon: typeof CircleCheck }> = {
+    ok: { color: "#3a8f5a", Icon: CircleCheck },
+    warn: { color: "#c98a1f", Icon: CircleAlert },
+    error: { color: "#b14242", Icon: CircleX },
+    pending: {
+      color: "color-mix(in oklab, var(--color-ink) 55%, transparent)",
+      Icon: CircleDashed,
+    },
   };
-  const { bg, Icon } = map[status];
-  return <Icon className="size-4 shrink-0" style={{ color: bg }} aria-hidden />;
+  const { color, Icon } = map[status];
+  return <Icon className="size-4 shrink-0" style={{ color }} aria-hidden />;
 }
 
 function UpdatesPanel() {
