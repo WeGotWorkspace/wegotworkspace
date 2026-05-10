@@ -136,6 +136,7 @@ export type AdminAPIOperations = {
     opts?: { signal?: AbortSignal },
   ) => Promise<AdminUIData>;
   checkUpdates: (opts?: { signal?: AbortSignal }) => Promise<AdminUIData>;
+  refreshUpdateState: (opts?: { signal?: AbortSignal }) => Promise<AdminUpdateState>;
   applyUpdate: (version?: string, opts?: { signal?: AbortSignal }) => Promise<AdminUpdateState>;
   cancelUpdate: (opts?: { signal?: AbortSignal }) => Promise<AdminUpdateState>;
   refreshUpdateLog: (opts?: { signal?: AbortSignal }) => Promise<string[]>;

@@ -102,14 +102,24 @@ export function useAdminController({
   };
 
   useEffect(() => {
-    if (!updates.inProgress || !operations?.refreshState) return;
+    if (!updates.inProgress) return;
+    const refreshProgress = operations?.refreshUpdateState;
+    const refreshAll = operations?.refreshState;
+    if (!refreshProgress && !refreshAll) return;
     let cancelled = false;
     const poll = async () => {
       try {
-        const next = await operations.refreshState();
-        if (!cancelled) {
-          setUpdates(next.updates);
-          setUpdateLogLines(next.updateLogLines);
+        if (refreshProgress) {
+          const nextUpdates = await refreshProgress();
+          if (!cancelled) {
+            setUpdates(nextUpdates);
+          }
+        } else if (refreshAll) {
+          const next = await refreshAll();
+          if (!cancelled) {
+            setUpdates(next.updates);
+            setUpdateLogLines(next.updateLogLines);
+          }
         }
       } catch {
         // Keep showing existing progress if a poll fails temporarily.
@@ -123,7 +133,7 @@ export function useAdminController({
       cancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [updates.inProgress, operations]);
+  }, [updates.inProgress, operations?.refreshState, operations?.refreshUpdateState]);
 
   const currentSection = useMemo(
     () => sections.find((candidate) => candidate.id === section) ?? sections[0],
