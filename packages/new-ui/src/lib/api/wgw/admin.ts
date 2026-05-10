@@ -158,6 +158,19 @@ async function fetchAdminUpdateState(opts?: { signal?: AbortSignal }): Promise<A
   return mapWgwUpdateStateToUI((await wgwReadJson(res)) as WgwUpdateStateResponse);
 }
 
+async function fetchAdminUpdateStateWithWarmup(opts?: {
+  signal?: AbortSignal;
+}): Promise<AdminUpdateState> {
+  let latest = await fetchAdminUpdateState(opts);
+  if (latest.inProgress) return latest;
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    latest = await fetchAdminUpdateState(opts);
+    if (latest.inProgress) return latest;
+  }
+  return latest;
+}
+
 export async function fetchAdminLiveBootstrap(): Promise<AdminAppBootstrap> {
   const maxAttempts = 5;
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
@@ -253,7 +266,7 @@ export function createWgwAdminOperations(): AdminAPIOperations {
       if (!res.ok) {
         if (res.status === 400 || res.status === 503) {
           try {
-            const updates = await fetchAdminUpdateState(opts);
+            const updates = await fetchAdminUpdateStateWithWarmup(opts);
             if (updates.inProgress) {
               return updates;
             }
@@ -264,8 +277,8 @@ export function createWgwAdminOperations(): AdminAPIOperations {
         const message = await readApiError(res, `POST /admin/updates/apply failed (${res.status})`);
         throw new Error(message);
       }
-      const payload = (await wgwReadJson(res)) as WgwUpdateApplyResponse;
-      return mapWgwUpdateStateToUI(payload.state);
+      await wgwReadJson(res as Response);
+      return fetchAdminUpdateStateWithWarmup(opts);
     },
     cancelUpdate: async (opts) => {
       const res = await wgwFetch("/admin/updates/cancel", { method: "POST", signal: opts?.signal });
