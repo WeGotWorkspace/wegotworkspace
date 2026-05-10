@@ -218,6 +218,13 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
   const editingGroup = controller.groups.find((group) => group.id === editGroupId) ?? null;
   const deletingGroup = controller.groups.find((group) => group.id === deleteGroupId) ?? null;
 
+  useEffect(() => {
+    if (controller.updates.inProgress && confirmUpdateOpen) {
+      setConfirmUpdateOpen(false);
+      setUpdatingNow(false);
+    }
+  }, [controller.updates.inProgress, confirmUpdateOpen]);
+
   const backupColumns: DataTableColumn<(typeof controller.updates.backups)[number]>[] = [
     {
       key: "file",
@@ -1238,12 +1245,11 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
             <AlertDialogCancel disabled={updatingNow}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               disabled={updatingNow}
-              onClick={async (event) => {
-                event.preventDefault();
+              onClick={async () => {
+                setConfirmUpdateOpen(false);
                 setUpdatingNow(true);
                 try {
                   await controller.actions.applyUpdate();
-                  setConfirmUpdateOpen(false);
                 } finally {
                   setUpdatingNow(false);
                 }
