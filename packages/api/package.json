@@ -3,8 +3,10 @@
   "private": true,
   "packageManager": "pnpm@9.15.4",
   "scripts": {
+    "build": "composer install --no-interaction --prefer-dist",
     "setup:macos": "bash scripts/macos/install-homebrew-apache-ssl.sh",
     "preview:macos": "bash scripts/macos/setup-homebrew-apache-ssl.sh",
+    "dev:php": "sh -c 'app_root=\"../../apps/wegotworkspace\"; env -u SABRE_BUILD_DIR php -S 127.0.0.1:8080 -t \"$app_root\" \"$app_root/index.php\"'",
     "enable-php-imap": "bash scripts/macos/enable-php-imap.sh",
     "generate:api-jwt-keys": "bash scripts/generate-api-jwt-keys.sh",
     "openapi:build-json": "node scripts/build-openapi-built-json.mjs",
