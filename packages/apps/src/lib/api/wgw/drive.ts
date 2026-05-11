@@ -194,6 +194,38 @@ export function createWgwDriveOperations(initialCwd = "/"): DriveAPIOperations {
       const payload = (await wgwReadJson(res)) as WgwDriveStarsResponse;
       return payload.data.paths ?? [];
     },
+    async listEntriesByPaths(paths, opts) {
+      const normalized = Array.from(
+        new Set(
+          paths
+            .map((path) => normalizePath(path))
+            .filter((path) => path !== "/" && path.length > 1),
+        ),
+      );
+      if (normalized.length === 0) return [];
+
+      const parentDirs = Array.from(
+        new Set(normalized.map((path) => parentAndName(path).destination)),
+      );
+      const entriesByPath = new Map<string, WgwDriveDirectoryEntry>();
+
+      await Promise.all(
+        parentDirs.map(async (dir) => {
+          try {
+            const listing = await fetchListing(dir, opts);
+            for (const entry of listing.files) {
+              entriesByPath.set(normalizePath(entry.path), entry);
+            }
+          } catch {
+            // Skip directories we cannot read; keep partial starred results.
+          }
+        }),
+      );
+
+      return normalized
+        .map((path) => entriesByPath.get(path))
+        .filter((entry): entry is WgwDriveDirectoryEntry => !!entry);
+    },
     async setStar(input, opts) {
       const payload: WgwDriveStarUpdateRequest = {
         path: normalizePath(input.path),

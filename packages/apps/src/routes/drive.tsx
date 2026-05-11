@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   Star,
@@ -428,6 +428,7 @@ export function DriveWorkspace({
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [liveSearchResults, setLiveSearchResults] = useState<DriveFile[] | null>(null);
+  const [starredItems, setStarredItems] = useState<DriveFile[] | null>(null);
   const [knownGroupRoots, setKnownGroupRoots] = useState<string[]>([]);
   const [imagePreviewUrls, setImagePreviewUrls] = useState<Record<string, string>>({});
   const [dropUploadActive, setDropUploadActive] = useState(false);
@@ -439,6 +440,7 @@ export function DriveWorkspace({
   } | null>(null);
   const imagePreviewUrlsRef = useRef<Record<string, string>>({});
   const uploadProgressResetTimerRef = useRef<number | null>(null);
+  const starredLoadVersionRef = useRef(0);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -469,6 +471,51 @@ export function DriveWorkspace({
     setFiles(data.directory.files.map((entry) => driveFileFromEntry(entry, currentUsername)));
     setView({ type: "folder", path: uiPathFromApiPath(data.cwd, currentUsername) });
   }, [data, operations, currentUsername]);
+
+  const loadStarredItemsFromPaths = useCallback(
+    (paths: string[]) => {
+      if (!operations) {
+        setStarredItems(null);
+        return;
+      }
+      const requestVersion = starredLoadVersionRef.current + 1;
+      starredLoadVersionRef.current = requestVersion;
+      if (paths.length === 0) {
+        setStarredItems([]);
+        return;
+      }
+      void operations
+        .listEntriesByPaths(paths)
+        .then((entries) => {
+          if (requestVersion !== starredLoadVersionRef.current) return;
+          setStarredItems(entries.map((entry) => driveFileFromEntry(entry, currentUsername)));
+        })
+        .catch((error: unknown) => {
+          if (requestVersion !== starredLoadVersionRef.current) return;
+          const message = error instanceof Error ? error.message : String(error);
+          toast.error(message);
+        });
+    },
+    [operations, currentUsername],
+  );
+
+  const reloadStarredFromServer = useCallback(() => {
+    if (!operations) return;
+    void operations
+      .listStars()
+      .then((paths) => {
+        const next: Record<string, boolean> = {};
+        for (const path of paths) {
+          next[path] = true;
+        }
+        setStarred(next);
+        loadStarredItemsFromPaths(paths);
+      })
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        toast.error(message);
+      });
+  }, [operations, loadStarredItemsFromPaths]);
 
   useEffect(() => {
     if (!operations) return;
@@ -505,27 +552,12 @@ export function DriveWorkspace({
   const lastTouchTapRef = useRef<{ id: string; at: number } | null>(null);
 
   useEffect(() => {
-    if (!operations) return;
-    let cancelled = false;
-    void operations
-      .listStars()
-      .then((paths) => {
-        if (cancelled) return;
-        const next: Record<string, boolean> = {};
-        for (const path of paths) {
-          next[path] = true;
-        }
-        setStarred(next);
-      })
-      .catch((error: unknown) => {
-        if (cancelled) return;
-        const message = error instanceof Error ? error.message : String(error);
-        toast.error(message);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [operations, currentUsername]);
+    if (!operations) {
+      setStarredItems(null);
+      return;
+    }
+    reloadStarredFromServer();
+  }, [operations, currentUsername, reloadStarredFromServer]);
 
   const inTrashView = view.type === "folder" && view.path === "Trash";
 
@@ -534,6 +566,7 @@ export function DriveWorkspace({
   const visibleItems = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     const sourceFiles = liveSearchResults ?? files;
+    const starredSourceFiles = operations ? (starredItems ?? []) : sourceFiles;
     const filtered = sourceFiles.filter((f) => {
       let inView = false;
       if (liveSearchResults) inView = true;
@@ -547,7 +580,10 @@ export function DriveWorkspace({
             f.apiPath.startsWith("/groups/")
           );
       else if (view.type === "recent") inView = !isUnderTrash(f.parent) && f.kind !== "folder";
-      else if (view.type === "starred") inView = !!starred[f.id] && !isUnderTrash(f.parent);
+      else if (view.type === "starred") {
+        if (operations) return false;
+        inView = !!starred[f.id] && !isUnderTrash(f.parent);
+      }
       else if (view.type === "shared")
         inView = f.parent === "Shared with me" || f.parent.startsWith("Shared with me/");
       if (!inView) return false;
@@ -555,13 +591,23 @@ export function DriveWorkspace({
       const hay = `${f.title} ${f.excerpt} ${f.owner}`.toLowerCase();
       return hay.includes(q);
     });
+    const starredFiltered =
+      view.type === "starred" && operations
+        ? starredSourceFiles.filter((f) => {
+            if (!starred[f.id] || isUnderTrash(f.parent)) return false;
+            if (!q) return true;
+            const hay = `${f.title} ${f.excerpt} ${f.owner}`.toLowerCase();
+            return hay.includes(q);
+          })
+        : null;
+    const items = starredFiltered ?? filtered;
     // folders first
-    return filtered.sort((a, b) => {
+    return items.sort((a, b) => {
       if (a.kind === "folder" && b.kind !== "folder") return -1;
       if (b.kind === "folder" && a.kind !== "folder") return 1;
       return 0;
     });
-  }, [files, liveSearchResults, view, starred, searchQuery]);
+  }, [files, liveSearchResults, operations, searchQuery, starred, starredItems, view]);
 
   const breadcrumbs = useMemo(() => {
     if (view.type !== "folder") {
@@ -780,21 +826,6 @@ export function DriveWorkspace({
     (liveSearchResults?.find((file) => file.id === id) ?? files.find((file) => file.id === id)) ||
     null;
 
-  const reloadStarredFromServer = () => {
-    if (!operations) return;
-    void operations
-      .listStars()
-      .then((paths) => {
-        const next: Record<string, boolean> = {};
-        for (const path of paths) next[path] = true;
-        setStarred(next);
-      })
-      .catch((error: unknown) => {
-        const message = error instanceof Error ? error.message : String(error);
-        toast.error(message);
-      });
-  };
-
   const toggleStar = (id: string) => {
     const target = fileById(id);
     let nextValue = false;
@@ -812,6 +843,9 @@ export function DriveWorkspace({
     if (!operations || !target?.apiPath) return;
     void operations
       .setStar({ path: target.apiPath, starred: nextValue })
+      .then(() => {
+        if (view.type === "starred") reloadStarredFromServer();
+      })
       .catch((error: unknown) => {
         setStarred((s) => ({ ...s, [id]: !nextValue }));
         reloadStarredFromServer();
@@ -850,6 +884,8 @@ export function DriveWorkspace({
       if (failed) {
         reloadStarredFromServer();
         toast.error("Could not sync one or more star changes.");
+      } else if (view.type === "starred") {
+        reloadStarredFromServer();
       }
     })();
   };
@@ -2263,6 +2299,19 @@ function FileTile({
         outlineOffset: "-2px",
       }}
     >
+      {isStarred && (
+        <span
+          className="absolute top-2 right-2 z-10 rounded-full p-1.5 pointer-events-none"
+          style={{
+            backgroundColor: "color-mix(in oklab, var(--color-cream, #f5f1e8) 90%, transparent)",
+            color: "var(--color-emerald)",
+            boxShadow: "0 2px 8px color-mix(in oklab, var(--color-ink) 20%, transparent)",
+          }}
+          aria-hidden="true"
+        >
+          <Star className="size-3.5" fill="currentColor" />
+        </span>
+      )}
       <div
         className="aspect-[4/3] flex items-center justify-center"
         style={{
