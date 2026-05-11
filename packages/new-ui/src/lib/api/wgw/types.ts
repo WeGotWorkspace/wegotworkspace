@@ -69,6 +69,20 @@ import type {
   DriveUserData,
   DriveUserResponse,
 } from "@wgw-api-generated/drive-types";
+import type {
+  VoiceChatRequest,
+  VoiceChatResponse,
+  VoiceJoinRequest,
+  VoiceJoinResponse,
+  VoiceLeaveRequest,
+  VoiceLeaveResponse,
+  VoicePeer,
+  VoicePollRequest,
+  VoicePollResponse,
+  VoiceSendRequest,
+  VoiceSendResponse,
+  VoiceSignalEnvelope,
+} from "@wgw-api-generated/voice-types";
 
 export type WgwMailStatusResponse = MailStatusResponse & {
   extImap?: boolean;
@@ -222,3 +236,15 @@ export type WgwDriveStarUpdateRequest = {
   path: string;
   starred: boolean;
 };
+export type WgwVoicePeer = VoicePeer;
+export type WgwVoiceSignalEnvelope = VoiceSignalEnvelope;
+export type WgwVoiceJoinRequest = VoiceJoinRequest;
+export type WgwVoiceJoinResponse = VoiceJoinResponse;
+export type WgwVoicePollRequest = VoicePollRequest;
+export type WgwVoicePollResponse = VoicePollResponse;
+export type WgwVoiceSendRequest = VoiceSendRequest;
+export type WgwVoiceSendResponse = VoiceSendResponse;
+export type WgwVoiceLeaveRequest = VoiceLeaveRequest;
+export type WgwVoiceLeaveResponse = VoiceLeaveResponse;
+export type WgwVoiceChatRequest = VoiceChatRequest;
+export type WgwVoiceChatResponse = VoiceChatResponse;

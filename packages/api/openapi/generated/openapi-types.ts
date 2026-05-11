@@ -1452,6 +1452,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/drive/stars": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List starred drive paths for current user */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Starred paths */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DriveStarsResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Set starred state for a drive path */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["DriveStarUpdateRequest"];
+                };
+            };
+            responses: {
+                /** @description Starred state updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DriveStarUpdateResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/notes/capabilities": {
         parameters: {
             query?: never;
@@ -1975,7 +2035,7 @@ export interface paths {
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["VoiceSignalRequest"];
+                    "application/json": components["schemas"]["VoiceJoinRequest"];
                 };
             };
             responses: {
@@ -1985,7 +2045,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["GenericObject"];
+                        "application/json": components["schemas"]["VoiceJoinResponse"];
                     };
                 };
             };
@@ -2015,7 +2075,7 @@ export interface paths {
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["VoiceSignalRequest"];
+                    "application/json": components["schemas"]["VoicePollRequest"];
                 };
             };
             responses: {
@@ -2025,7 +2085,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["GenericObject"];
+                        "application/json": components["schemas"]["VoicePollResponse"];
                     };
                 };
             };
@@ -2055,7 +2115,7 @@ export interface paths {
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["VoiceSignalRequest"];
+                    "application/json": components["schemas"]["VoiceSendRequest"];
                 };
             };
             responses: {
@@ -2065,7 +2125,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["GenericObject"];
+                        "application/json": components["schemas"]["VoiceSendResponse"];
                     };
                 };
             };
@@ -2095,7 +2155,7 @@ export interface paths {
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["VoiceSignalRequest"];
+                    "application/json": components["schemas"]["VoiceLeaveRequest"];
                 };
             };
             responses: {
@@ -2105,7 +2165,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["GenericObject"];
+                        "application/json": components["schemas"]["VoiceLeaveResponse"];
                     };
                 };
             };
@@ -2135,7 +2195,7 @@ export interface paths {
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["VoiceSignalRequest"];
+                    "application/json": components["schemas"]["VoiceChatRequest"];
                 };
             };
             responses: {
@@ -2145,7 +2205,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["GenericObject"];
+                        "application/json": components["schemas"]["VoiceChatResponse"];
                     };
                 };
             };
@@ -3012,6 +3072,28 @@ export interface components {
         DriveMutationResponse: {
             data: components["schemas"]["DriveMutationResult"];
         };
+        DriveStarPathList: string[];
+        DriveStarsData: {
+            paths: components["schemas"]["DriveStarPathList"];
+        };
+        DriveStarsResponse: {
+            data: components["schemas"]["DriveStarsData"];
+        };
+        /**
+         * @example {
+         *       "path": "/groups/team/invoice.pdf",
+         *       "starred": true
+         *     }
+         */
+        DriveStarUpdateRequest: {
+            path: string;
+            starred: boolean;
+        };
+        /** @enum {string} */
+        DriveStarUpdateResult: "Updated";
+        DriveStarUpdateResponse: {
+            data: components["schemas"]["DriveStarUpdateResult"];
+        };
         NotesCapabilitiesResponse: {
             enabled: boolean;
             distReady: boolean;
@@ -3121,21 +3203,123 @@ export interface components {
             mode: "archive" | "move" | "purge";
             target?: string;
         };
+        VoiceSessionKey: string;
+        VoicePeer: {
+            id: string;
+            name: string;
+        };
+        VoicePeerList: components["schemas"]["VoicePeer"][];
+        /** @enum {string} */
+        VoiceMessageType: "offer" | "answer" | "ice" | "bye" | "chat";
+        /** @enum {string} */
+        VoiceSendType: "offer" | "answer" | "ice" | "bye";
+        VoiceSdpPayload: {
+            sdp: string;
+            type?: string;
+        };
+        VoiceIcePayload: {
+            candidate: string;
+            sdpMid?: string;
+            sdpMLineIndex?: number;
+            usernameFragment?: string;
+        };
+        VoiceChatPayload: {
+            text: string;
+        };
+        VoiceByePayload: {
+            reason?: string;
+        };
+        VoiceSignalPayload: components["schemas"]["VoiceSdpPayload"] | components["schemas"]["VoiceIcePayload"] | components["schemas"]["VoiceChatPayload"] | components["schemas"]["VoiceByePayload"] | null;
+        VoiceSignalEnvelope: {
+            from: string;
+            type: components["schemas"]["VoiceMessageType"];
+            payload: components["schemas"]["VoiceSignalPayload"];
+        };
+        VoiceSignalEnvelopeList: components["schemas"]["VoiceSignalEnvelope"][];
         /**
          * @example {
-         *       "room": "daily",
-         *       "peerId": "alice",
+         *       "room": "daily-room",
+         *       "peerId": "peer1234",
+         *       "name": "Guest User"
+         *     }
+         */
+        VoiceJoinRequest: {
+            room: string;
+            peerId: string;
+            name?: string;
+            sessionKey?: components["schemas"]["VoiceSessionKey"];
+        };
+        /**
+         * @example {
+         *       "room": "daily-room",
+         *       "peerId": "peer1234"
+         *     }
+         */
+        VoicePollRequest: {
+            room: string;
+            peerId: string;
+            sessionKey?: components["schemas"]["VoiceSessionKey"];
+        };
+        /**
+         * @example {
+         *       "room": "daily-room",
+         *       "from": "peer-a",
+         *       "to": "peer-b",
+         *       "type": "offer",
          *       "payload": {
-         *         "sdp": "..."
+         *         "sdp": "v=0..."
          *       }
          *     }
          */
-        VoiceSignalRequest: {
-            room?: string;
-            peerId?: string;
-            target?: string;
-            message?: string;
-            payload?: Record<string, never>;
+        VoiceSendRequest: {
+            room: string;
+            from: string;
+            to: string;
+            type: components["schemas"]["VoiceSendType"];
+            payload?: components["schemas"]["VoiceSignalPayload"];
+            sessionKey?: components["schemas"]["VoiceSessionKey"];
+        };
+        /**
+         * @example {
+         *       "room": "daily-room",
+         *       "peerId": "peer1234"
+         *     }
+         */
+        VoiceLeaveRequest: {
+            room: string;
+            peerId: string;
+            sessionKey?: components["schemas"]["VoiceSessionKey"];
+        };
+        /**
+         * @example {
+         *       "room": "daily-room",
+         *       "from": "peer1234",
+         *       "text": "Hello team"
+         *     }
+         */
+        VoiceChatRequest: {
+            room: string;
+            from: string;
+            text: string;
+            sessionKey?: components["schemas"]["VoiceSessionKey"];
+        };
+        VoiceJoinResponse: {
+            peers: components["schemas"]["VoicePeerList"];
+            sessionKey: string | null;
+        };
+        VoicePollResponse: {
+            peers: components["schemas"]["VoicePeerList"];
+            messages: components["schemas"]["VoiceSignalEnvelopeList"];
+        };
+        VoiceSendResponse: {
+            ok: boolean;
+        };
+        VoiceLeaveResponse: {
+            ok: boolean;
+        };
+        VoiceChatResponse: {
+            ok: boolean;
+            delivered: number;
         };
         OfficeCapabilitiesResponse: {
             enabled?: boolean;
