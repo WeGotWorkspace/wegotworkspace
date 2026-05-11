@@ -1,12 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { LoginScreen } from "@/login-core/src/login-screen";
 
-export const Route = createFileRoute("/")({
-  component: SignIn,
+export const Route = createFileRoute("/login")({
+  component: LoginScreen,
   head: () => ({
     meta: [
-      { title: "Sign In — WeGotWorkspace" },
-      { name: "description", content: "Sign in to WeGotWorkspace." },
+      { title: "Sign in — WeGotWorkspace" },
+      { name: "description", content: "Sign in to your workspace to continue." },
       { name: "theme-color", content: "#042318" },
       { name: "apple-mobile-web-app-title", content: "WeGotWorkspace" },
     ],
@@ -17,7 +17,3 @@ export const Route = createFileRoute("/")({
     ],
   }),
 });
-
-function SignIn() {
-  return <LoginScreen />;
-}
