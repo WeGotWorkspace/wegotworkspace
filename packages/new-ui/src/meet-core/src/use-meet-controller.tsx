@@ -818,7 +818,9 @@ export function useMeetController({
 
   const callLink = useMemo(() => {
     if (!roomCode || typeof window === "undefined") return "";
-    return `${window.location.origin}/meet/guest?room=${encodeURIComponent(roomCode)}`;
+    const url = new URL(window.location.href);
+    url.searchParams.set("room", roomCode);
+    return url.toString();
   }, [roomCode]);
 
   useEffect(() => {
@@ -865,6 +867,7 @@ export function useMeetController({
     selectedCamId,
     ensureLocalMedia,
     startMeeting,
+    joinRoom,
     leave,
     sendChat,
     toggleMic,

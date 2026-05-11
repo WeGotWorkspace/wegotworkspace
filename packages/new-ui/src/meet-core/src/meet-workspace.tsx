@@ -172,6 +172,7 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
   const [chatOpen, setChatOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [speakerId, setSpeakerId] = useState<string>("default");
+  const didAutoJoinRef = useRef(false);
   const displayName = controller.displayName || session.user.displayName || "Guest";
 
   const cameras = useMemo(
@@ -193,6 +194,18 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
     });
   }, [controller]);
 
+  useEffect(() => {
+    if (didAutoJoinRef.current) return;
+    if (typeof window === "undefined") return;
+    if (controller.inCall || controller.status === "failed") return;
+    const room = new URLSearchParams(window.location.search).get("room")?.trim();
+    if (!room) return;
+    didAutoJoinRef.current = true;
+    void controller.joinRoom(room).catch(() => {
+      // Keep default lobby flow available if auto-join fails.
+    });
+  }, [controller]);
+
   const participantCount = controller.peers.length + (controller.inCall ? 1 : 0);
   const sharing = controller.screenOn;
 
@@ -210,7 +223,7 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
   return (
     <TooltipProvider delayDuration={200}>
       <div
-        className="h-dvh w-full flex flex-col overflow-hidden"
+        className={`h-dvh w-full flex flex-col ${controller.inCall ? "overflow-hidden" : "overflow-y-auto"}`}
         style={{ background: SURFACE, color: TEXT, fontFamily: "var(--font-sans)" }}
       >
         <header className="flex items-center justify-between p-6 md:p-8 shrink-0">
@@ -225,7 +238,7 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
           <main className="flex-1 flex items-center justify-center px-6 py-12">
             <div className="w-full max-w-md">
               <h1
-                className="text-5xl md:text-6xl leading-[0.95] tracking-tight mb-10 whitespace-nowrap"
+                className="text-4xl sm:text-5xl md:text-6xl leading-[0.95] tracking-tight mb-10 whitespace-nowrap"
                 style={{ fontFamily: "var(--font-serif)" }}
               >
                 Ready when you are.

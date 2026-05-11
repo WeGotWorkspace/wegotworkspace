@@ -85,7 +85,7 @@ function GuestJoin() {
         <main className="flex-1 flex items-center justify-center px-6 py-12">
           <div className="w-full max-w-md">
             <h1
-              className="text-5xl md:text-6xl leading-[0.95] tracking-tight mb-10 whitespace-nowrap"
+              className="text-4xl sm:text-5xl md:text-6xl leading-[0.95] tracking-tight mb-10 whitespace-nowrap"
               style={{ fontFamily: "var(--font-serif)" }}
             >
               Join the meeting.
