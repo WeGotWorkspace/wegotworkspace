@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import type { ReactElement } from "react";
+import { clearWgwSession } from "@/lib/api/wgw/http";
 import { LiveBootstrapErrorPanel } from "@/lib/live/live-bootstrap-error-panel";
 
 type WorkspaceLiveAppShellProps = {
@@ -18,6 +20,20 @@ export function WorkspaceLiveAppShell({
   successVersion,
   render,
 }: WorkspaceLiveAppShellProps) {
+  useEffect(() => {
+    if (phase !== "error" || typeof window === "undefined") return;
+    const message = typeof error === "string" ? error : error instanceof Error ? error.message : "";
+    const normalized = message.toLowerCase();
+    const isAuthError =
+      normalized.includes("(401)") ||
+      normalized.includes("unauthorized") ||
+      normalized.includes("missing or invalid bearer token") ||
+      normalized.includes("missing auth session");
+    if (!isAuthError) return;
+    clearWgwSession();
+    window.location.assign("/");
+  }, [error, phase]);
+
   if (phase === "error") {
     return <LiveBootstrapErrorPanel title={errorTitle} error={error} onRetry={retry} />;
   }
