@@ -36,6 +36,8 @@ function uploadIdentifier(file: File): string {
   return raw.replace(/[^0-9A-Za-z_]/g, "_");
 }
 
+const DRIVE_UPLOAD_CHUNK_SIZE = 1 * 1024 * 1024; // Stay below stricter upload_max_filesize defaults.
+
 async function fetchDriveUser(opts?: { signal?: AbortSignal }) {
   const res = await wgwFetch("/drive/user", { signal: opts?.signal });
   if (!res.ok) throw new Error(`GET /drive/user failed (${res.status})`);
@@ -186,19 +188,28 @@ export function createWgwDriveOperations(initialCwd = "/"): DriveAPIOperations {
     async uploadFiles(input, opts) {
       const targetCwd = normalizePath(input.cwd);
       for (const file of input.files) {
-        const form = new FormData();
-        form.append("file", file);
-        form.append("resumableFilename", file.name);
-        form.append("resumableIdentifier", uploadIdentifier(file));
-        form.append("resumableChunkNumber", "1");
-        form.append("resumableTotalChunks", "1");
-        form.append("cwd", targetCwd);
-        const res = await wgwFetch("/drive/upload", {
-          method: "POST",
-          body: form,
-          signal: opts?.signal,
-        });
-        if (!res.ok) throw new Error(`POST /drive/upload failed (${res.status})`);
+        const totalChunks = Math.max(1, Math.ceil(file.size / DRIVE_UPLOAD_CHUNK_SIZE));
+        const identifier = uploadIdentifier(file);
+        for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex += 1) {
+          const start = chunkIndex * DRIVE_UPLOAD_CHUNK_SIZE;
+          const end = Math.min(file.size, start + DRIVE_UPLOAD_CHUNK_SIZE);
+          const chunkBlob = file.slice(start, end);
+
+          const form = new FormData();
+          form.append("file", chunkBlob, file.name);
+          form.append("resumableFilename", file.name);
+          form.append("resumableIdentifier", identifier);
+          form.append("resumableChunkNumber", String(chunkIndex + 1));
+          form.append("resumableTotalChunks", String(totalChunks));
+          form.append("cwd", targetCwd);
+
+          const res = await wgwFetch("/drive/upload", {
+            method: "POST",
+            body: form,
+            signal: opts?.signal,
+          });
+          if (!res.ok) throw new Error(`POST /drive/upload failed (${res.status})`);
+        }
       }
       const state = await fetchState(targetCwd, opts);
       cwd = normalizePath(state.cwd);

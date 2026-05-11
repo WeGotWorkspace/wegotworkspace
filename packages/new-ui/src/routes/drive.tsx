@@ -545,9 +545,11 @@ export function DriveWorkspace({
 
   useEffect(() => {
     if (!operations || viewMode !== "grid") return;
-    const imageItems = visibleItems.filter((file) => file.kind === "image" && !!file.apiPath);
+    const previewableItems = visibleItems.filter(
+      (file) => (file.kind === "image" || file.kind === "video") && !!file.apiPath,
+    );
     let cancelled = false;
-    for (const file of imageItems) {
+    for (const file of previewableItems) {
       if (imagePreviewUrlsRef.current[file.id]) continue;
       void operations
         .readFileBlob(file.apiPath!)
@@ -577,7 +579,7 @@ export function DriveWorkspace({
     const keepIds = new Set(
       viewMode === "grid"
         ? visibleItems
-            .filter((file) => file.kind === "image" && !!file.apiPath)
+            .filter((file) => (file.kind === "image" || file.kind === "video") && !!file.apiPath)
             .map((file) => file.id)
         : [],
     );
@@ -609,7 +611,14 @@ export function DriveWorkspace({
   const active = activeId ? (files.find((f) => f.id === activeId) ?? null) : null;
 
   useEffect(() => {
-    if (!operations || !detailOpen || !active || active.kind !== "image" || !active.apiPath) return;
+    if (
+      !operations ||
+      !detailOpen ||
+      !active ||
+      (active.kind !== "image" && active.kind !== "video") ||
+      !active.apiPath
+    )
+      return;
     if (imagePreviewUrlsRef.current[active.id]) return;
     let cancelled = false;
     void operations
@@ -1968,8 +1977,18 @@ function FileTile({
           color: "var(--drive-sidebar)",
         }}
       >
-        {file.kind === "image" && previewSrc ? (
-          <img src={previewSrc} alt={file.title} className="h-full w-full object-cover" />
+        {(file.kind === "image" || file.kind === "video") && previewSrc ? (
+          file.kind === "video" ? (
+            <video
+              src={previewSrc}
+              className="h-full w-full object-cover"
+              muted
+              playsInline
+              preload="metadata"
+            />
+          ) : (
+            <img src={previewSrc} alt={file.title} className="h-full w-full object-cover" />
+          )
         ) : (
           <span className="[&>svg]:size-12 opacity-80">{kindIconLg[file.kind]}</span>
         )}
@@ -2299,12 +2318,22 @@ function DetailPanel({
             color: "var(--drive-sidebar)",
           }}
         >
-          {file.kind === "image" && previewSrc ? (
-            <img
-              src={previewSrc}
-              alt={file.title}
-              className="h-full w-full rounded-2xl object-cover"
-            />
+          {(file.kind === "image" || file.kind === "video") && previewSrc ? (
+            file.kind === "video" ? (
+              <video
+                src={previewSrc}
+                className="h-full w-full rounded-2xl object-cover"
+                controls
+                playsInline
+                preload="metadata"
+              />
+            ) : (
+              <img
+                src={previewSrc}
+                alt={file.title}
+                className="h-full w-full rounded-2xl object-cover"
+              />
+            )
           ) : (
             <span className="[&>svg]:size-16">{kindIconLg[file.kind]}</span>
           )}
