@@ -13,6 +13,7 @@ export type AppSwitcherProps = {
   tagline?: string;
   subtitle?: string;
   items: AppSwitcherItem[];
+  disabled?: boolean;
   menuContentClassName?: string;
   menuContentStyle?: React.CSSProperties;
 };
@@ -21,6 +22,7 @@ export function AppSwitcher({
   tagline = "We got",
   subtitle = "Apps",
   items,
+  disabled = false,
   menuContentClassName,
   menuContentStyle,
 }: AppSwitcherProps) {
@@ -36,6 +38,7 @@ export function AppSwitcher({
       labelTop={tagline}
       labelBottom={subtitle}
       items={menuItems}
+      disabled={disabled}
       contentClassName={menuContentClassName}
       contentStyle={menuContentStyle}
     />

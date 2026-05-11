@@ -6,6 +6,7 @@ export type LabeledDropdownMenuProps = {
   labelTop?: string;
   labelBottom: string;
   items: MenuDropdownItemProps[];
+  disabled?: boolean;
   contentClassName?: string;
   contentStyle?: React.CSSProperties;
 };
@@ -17,6 +18,7 @@ export function LabeledDropdownMenu({
   labelTop,
   labelBottom,
   items,
+  disabled = false,
   contentClassName,
   contentStyle,
 }: LabeledDropdownMenuProps) {
@@ -25,7 +27,8 @@ export function LabeledDropdownMenu({
       trigger={
         <button
           type="button"
-          className="group inline-flex items-stretch gap-2 rounded-lg pr-2 pl-1 py-1 -ml-1 transition-colors hover:bg-[color-mix(in_oklab,currentColor_8%,transparent)]"
+          disabled={disabled}
+          className="group inline-flex items-stretch gap-2 rounded-lg pr-2 pl-1 py-1 -ml-1 transition-colors hover:bg-[color-mix(in_oklab,currentColor_8%,transparent)] disabled:opacity-70 disabled:cursor-default disabled:hover:bg-transparent"
         >
           <span
             className="flex flex-col items-start leading-[0.85] tracking-wide text-left uppercase text-3xl"
@@ -44,6 +47,7 @@ export function LabeledDropdownMenu({
         </button>
       }
       items={items}
+      disabled={disabled}
       contentClassName={contentClassName}
       contentStyle={contentStyle}
     />
