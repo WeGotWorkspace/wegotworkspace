@@ -172,8 +172,12 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
   const [chatOpen, setChatOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [speakerId, setSpeakerId] = useState<string>("default");
-  const didAutoJoinRef = useRef(false);
   const displayName = controller.displayName || session.user.displayName || "Guest";
+  const invitedRoom = useMemo(() => {
+    if (typeof window === "undefined") return null;
+    const room = new URLSearchParams(window.location.search).get("room")?.trim();
+    return room && room.length > 0 ? room : null;
+  }, []);
 
   const cameras = useMemo(
     () => normalizeDeviceOptions("videoinput", controller.videoInputs),
@@ -191,18 +195,6 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
   useEffect(() => {
     void controller.ensureLocalMedia().catch(() => {
       // Keep lobby usable if the user declines camera/mic permissions.
-    });
-  }, [controller]);
-
-  useEffect(() => {
-    if (didAutoJoinRef.current) return;
-    if (typeof window === "undefined") return;
-    if (controller.inCall || controller.status === "failed") return;
-    const room = new URLSearchParams(window.location.search).get("room")?.trim();
-    if (!room) return;
-    didAutoJoinRef.current = true;
-    void controller.joinRoom(room).catch(() => {
-      // Keep default lobby flow available if auto-join fails.
     });
   }, [controller]);
 
@@ -326,11 +318,15 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
                 />
 
                 <Button
-                  onClick={() => void controller.startMeeting()}
+                  onClick={() =>
+                    void (invitedRoom
+                      ? controller.joinRoom(invitedRoom)
+                      : controller.startMeeting())
+                  }
                   className="w-full h-12 rounded-full text-base font-medium"
                   style={{ background: ACCENT, color: TEXT }}
                 >
-                  Start meeting
+                  {invitedRoom ? "Join meeting" : "Start meeting"}
                 </Button>
                 {controller.error && (
                   <p className="text-xs" style={{ color: "#fda4af" }}>
