@@ -1,4 +1,5 @@
-import { wgwFetch, wgwFetchPrincipal, wgwReadJson } from "@/lib/api/wgw/http";
+import { wgwApiBaseUrl, wgwFetch, wgwFetchPrincipal, wgwReadJson } from "@/lib/api/wgw/http";
+import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
 import type {
   WgwAdminStateResponse,
   WgwVoiceChatRequest,
@@ -64,6 +65,25 @@ async function postVoiceJson<T>(
   return (await wgwReadJson(res)) as T;
 }
 
+async function postVoiceJsonGuest<T>(
+  action: "join" | "poll" | "send" | "leave" | "chat",
+  body: object,
+  opts?: MeetRequestOptions,
+): Promise<T> {
+  const base = wgwApiBaseUrl();
+  const res = await fetch(`${base}/voice/${action}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    signal: opts?.signal,
+  });
+  if (!res.ok) {
+    const fallback = `POST /voice/${action} failed (${res.status})`;
+    throw new Error(await readApiError(res, fallback));
+  }
+  return (await wgwReadJson(res)) as T;
+}
+
 async function fetchRtcSettings(): Promise<MeetRtcSettings> {
   const res = await wgwFetch("/admin/state");
   if (!res.ok) return DEFAULT_RTC_SETTINGS;
@@ -93,6 +113,22 @@ export async function fetchVoiceLiveBootstrap(): Promise<MeetAppBootstrap> {
   };
 }
 
+export async function fetchVoiceGuestBootstrap(): Promise<MeetAppBootstrap> {
+  return {
+    session: {
+      user: {
+        displayName: "Guest",
+        initials: workspaceUserInitials({ displayName: "Guest" }),
+      },
+      viewerInboxLabel: "guest",
+    },
+    data: {
+      defaultDisplayName: "Guest",
+      rtc: DEFAULT_RTC_SETTINGS,
+    },
+  };
+}
+
 export function createWgwVoiceOperations(): MeetAPIOperations {
   return {
     join: (input: WgwVoiceJoinRequest, opts?: MeetRequestOptions) =>
@@ -105,5 +141,20 @@ export function createWgwVoiceOperations(): MeetAPIOperations {
       postVoiceJson<WgwVoiceLeaveResponse>("leave", input, opts),
     chat: (input: WgwVoiceChatRequest, opts?: MeetRequestOptions) =>
       postVoiceJson<WgwVoiceChatResponse>("chat", input, opts),
+  };
+}
+
+export function createWgwVoiceGuestOperations(): MeetAPIOperations {
+  return {
+    join: (input: WgwVoiceJoinRequest, opts?: MeetRequestOptions) =>
+      postVoiceJsonGuest<WgwVoiceJoinResponse>("join", input, opts),
+    poll: (input: WgwVoicePollRequest, opts?: MeetRequestOptions) =>
+      postVoiceJsonGuest<WgwVoicePollResponse>("poll", input, opts),
+    send: (input: WgwVoiceSendRequest, opts?: MeetRequestOptions) =>
+      postVoiceJsonGuest<WgwVoiceSendResponse>("send", input, opts),
+    leave: (input: WgwVoiceLeaveRequest, opts?: MeetRequestOptions) =>
+      postVoiceJsonGuest<WgwVoiceLeaveResponse>("leave", input, opts),
+    chat: (input: WgwVoiceChatRequest, opts?: MeetRequestOptions) =>
+      postVoiceJsonGuest<WgwVoiceChatResponse>("chat", input, opts),
   };
 }

@@ -1,10 +1,15 @@
 import { WorkspaceLiveAppShell } from "@/lib/live/workspace-live-app-shell";
 import { MeetWorkspace } from "@/meet-core/src/meet-workspace";
 import { useMeetAPI } from "@/meet-core/src/use-meet-api";
+import type { MeetApiSource } from "@/meet-core/src/meet-api-source";
 
-export function MeetApp() {
+type MeetAppProps = {
+  source?: MeetApiSource;
+};
+
+export function MeetApp({ source }: MeetAppProps) {
   const { phase, error, retry, successVersion, listLoading, data, session, operations } =
-    useMeetAPI();
+    useMeetAPI(source);
 
   return (
     <WorkspaceLiveAppShell
