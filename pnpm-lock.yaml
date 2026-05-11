@@ -23,9 +23,9 @@ importers:
 
   packages/dev-server:
     dependencies:
-      '@wgw/new-ui':
+      '@wgw/apps':
         specifier: workspace:*
-        version: link:../new-ui
+        version: link:../apps
       '@wgw/onlyoffice-web':
         specifier: workspace:*
         version: link:../onlyoffice-web
@@ -33,7 +33,7 @@ importers:
         specifier: workspace:*
         version: link:../php-deps
 
-  packages/new-ui:
+  packages/apps:
     dependencies:
       '@cloudflare/vite-plugin':
         specifier: ^1.25.5

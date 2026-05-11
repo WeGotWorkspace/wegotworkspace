@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "sh -c 'if [ -f .env ]; then set -a; . ./.env; set +a; fi; turbo run typegen:watch dev watch --concurrency=30'",
     "dev:php": "sh -c 'if [ -f .env ]; then set -a; . ./.env; set +a; fi; turbo run dev:php --filter=@wgw/dev-server'",
-    "dev:ui:watch": "sh -c 'if [ -f .env ]; then set -a; . ./.env; set +a; fi; turbo run typegen:watch watch --filter=@wgw/api --filter=@wgw/new-ui'",
+    "dev:ui:watch": "sh -c 'if [ -f .env ]; then set -a; . ./.env; set +a; fi; turbo run typegen:watch watch --filter=@wgw/api --filter=@wgw/apps'",
     "build": "sh -c 'if [ -f .env ]; then set -a; . ./.env; set +a; fi; turbo run typegen build'",
     "check:api-types": "sh -c 'if [ -f .env ]; then set -a; . ./.env; set +a; fi; turbo run typegen:check --filter=@wgw/api'",
     "test": "sh -c 'if [ -f .env ]; then set -a; . ./.env; set +a; fi; turbo run test --filter=@wgw/api'",

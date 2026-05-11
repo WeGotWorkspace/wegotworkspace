@@ -2,7 +2,7 @@
   "name": "@wgw/dev-server",
   "private": true,
   "dependencies": {
-    "@wgw/new-ui": "workspace:*",
+    "@wgw/apps": "workspace:*",
     "@wgw/php-deps": "workspace:*",
     "@wgw/onlyoffice-web": "workspace:*"
   },
