@@ -1947,6 +1947,70 @@
                     "data"
                 ]
             },
+            "DriveStarPathList": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            },
+            "DriveStarsData": {
+                "type": "object",
+                "properties": {
+                    "paths": {
+                        "$ref": "#/components/schemas/DriveStarPathList"
+                    }
+                },
+                "required": [
+                    "paths"
+                ]
+            },
+            "DriveStarsResponse": {
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/DriveStarsData"
+                    }
+                },
+                "required": [
+                    "data"
+                ]
+            },
+            "DriveStarUpdateRequest": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string"
+                    },
+                    "starred": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "path",
+                    "starred"
+                ],
+                "example": {
+                    "path": "/groups/team/invoice.pdf",
+                    "starred": true
+                }
+            },
+            "DriveStarUpdateResult": {
+                "type": "string",
+                "enum": [
+                    "Updated"
+                ]
+            },
+            "DriveStarUpdateResponse": {
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/DriveStarUpdateResult"
+                    }
+                },
+                "required": [
+                    "data"
+                ]
+            },
             "NotesCapabilitiesResponse": {
                 "type": "object",
                 "properties": {
@@ -2266,32 +2330,364 @@
                     "target": "Archive"
                 }
             },
-            "VoiceSignalRequest": {
+            "VoiceSessionKey": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{32}$"
+            },
+            "VoicePeer": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name"
+                ]
+            },
+            "VoicePeerList": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/VoicePeer"
+                }
+            },
+            "VoiceMessageType": {
+                "type": "string",
+                "enum": [
+                    "offer",
+                    "answer",
+                    "ice",
+                    "bye",
+                    "chat"
+                ]
+            },
+            "VoiceSendType": {
+                "type": "string",
+                "enum": [
+                    "offer",
+                    "answer",
+                    "ice",
+                    "bye"
+                ]
+            },
+            "VoiceSdpPayload": {
+                "type": "object",
+                "properties": {
+                    "sdp": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "sdp"
+                ]
+            },
+            "VoiceIcePayload": {
+                "type": "object",
+                "properties": {
+                    "candidate": {
+                        "type": "string"
+                    },
+                    "sdpMid": {
+                        "type": "string"
+                    },
+                    "sdpMLineIndex": {
+                        "type": "integer"
+                    },
+                    "usernameFragment": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "candidate"
+                ]
+            },
+            "VoiceChatPayload": {
+                "type": "object",
+                "properties": {
+                    "text": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "text"
+                ]
+            },
+            "VoiceByePayload": {
+                "type": "object",
+                "properties": {
+                    "reason": {
+                        "type": "string"
+                    }
+                }
+            },
+            "VoiceSignalPayload": {
+                "oneOf": [
+                    {
+                        "$ref": "#/components/schemas/VoiceSdpPayload"
+                    },
+                    {
+                        "$ref": "#/components/schemas/VoiceIcePayload"
+                    },
+                    {
+                        "$ref": "#/components/schemas/VoiceChatPayload"
+                    },
+                    {
+                        "$ref": "#/components/schemas/VoiceByePayload"
+                    },
+                    {
+                        "type": "null"
+                    }
+                ]
+            },
+            "VoiceSignalEnvelope": {
+                "type": "object",
+                "properties": {
+                    "from": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/VoiceMessageType"
+                    },
+                    "payload": {
+                        "$ref": "#/components/schemas/VoiceSignalPayload"
+                    }
+                },
+                "required": [
+                    "from",
+                    "type",
+                    "payload"
+                ]
+            },
+            "VoiceSignalEnvelopeList": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/VoiceSignalEnvelope"
+                }
+            },
+            "VoiceJoinRequest": {
                 "type": "object",
                 "properties": {
                     "room": {
-                        "type": "string"
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{4,64}$"
                     },
                     "peerId": {
-                        "type": "string"
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{4,64}$"
                     },
-                    "target": {
-                        "type": "string"
+                    "name": {
+                        "type": "string",
+                        "maxLength": 64
                     },
-                    "message": {
-                        "type": "string"
-                    },
-                    "payload": {
-                        "type": "object"
+                    "sessionKey": {
+                        "$ref": "#/components/schemas/VoiceSessionKey"
                     }
                 },
+                "required": [
+                    "room",
+                    "peerId"
+                ],
                 "example": {
-                    "room": "daily",
-                    "peerId": "alice",
+                    "room": "daily-room",
+                    "peerId": "peer1234",
+                    "name": "Guest User"
+                }
+            },
+            "VoicePollRequest": {
+                "type": "object",
+                "properties": {
+                    "room": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{4,64}$"
+                    },
+                    "peerId": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{4,64}$"
+                    },
+                    "sessionKey": {
+                        "$ref": "#/components/schemas/VoiceSessionKey"
+                    }
+                },
+                "required": [
+                    "room",
+                    "peerId"
+                ],
+                "example": {
+                    "room": "daily-room",
+                    "peerId": "peer1234"
+                }
+            },
+            "VoiceSendRequest": {
+                "type": "object",
+                "properties": {
+                    "room": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{4,64}$"
+                    },
+                    "from": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{4,64}$"
+                    },
+                    "to": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{4,64}$"
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/VoiceSendType"
+                    },
                     "payload": {
-                        "sdp": "..."
+                        "$ref": "#/components/schemas/VoiceSignalPayload"
+                    },
+                    "sessionKey": {
+                        "$ref": "#/components/schemas/VoiceSessionKey"
+                    }
+                },
+                "required": [
+                    "room",
+                    "from",
+                    "to",
+                    "type"
+                ],
+                "example": {
+                    "room": "daily-room",
+                    "from": "peer-a",
+                    "to": "peer-b",
+                    "type": "offer",
+                    "payload": {
+                        "sdp": "v=0..."
                     }
                 }
+            },
+            "VoiceLeaveRequest": {
+                "type": "object",
+                "properties": {
+                    "room": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{4,64}$"
+                    },
+                    "peerId": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{4,64}$"
+                    },
+                    "sessionKey": {
+                        "$ref": "#/components/schemas/VoiceSessionKey"
+                    }
+                },
+                "required": [
+                    "room",
+                    "peerId"
+                ],
+                "example": {
+                    "room": "daily-room",
+                    "peerId": "peer1234"
+                }
+            },
+            "VoiceChatRequest": {
+                "type": "object",
+                "properties": {
+                    "room": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{4,64}$"
+                    },
+                    "from": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{4,64}$"
+                    },
+                    "text": {
+                        "type": "string",
+                        "maxLength": 2000
+                    },
+                    "sessionKey": {
+                        "$ref": "#/components/schemas/VoiceSessionKey"
+                    }
+                },
+                "required": [
+                    "room",
+                    "from",
+                    "text"
+                ],
+                "example": {
+                    "room": "daily-room",
+                    "from": "peer1234",
+                    "text": "Hello team"
+                }
+            },
+            "VoiceJoinResponse": {
+                "type": "object",
+                "properties": {
+                    "peers": {
+                        "$ref": "#/components/schemas/VoicePeerList"
+                    },
+                    "sessionKey": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "peers",
+                    "sessionKey"
+                ]
+            },
+            "VoicePollResponse": {
+                "type": "object",
+                "properties": {
+                    "peers": {
+                        "$ref": "#/components/schemas/VoicePeerList"
+                    },
+                    "messages": {
+                        "$ref": "#/components/schemas/VoiceSignalEnvelopeList"
+                    }
+                },
+                "required": [
+                    "peers",
+                    "messages"
+                ]
+            },
+            "VoiceSendResponse": {
+                "type": "object",
+                "properties": {
+                    "ok": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "ok"
+                ]
+            },
+            "VoiceLeaveResponse": {
+                "type": "object",
+                "properties": {
+                    "ok": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "ok"
+                ]
+            },
+            "VoiceChatResponse": {
+                "type": "object",
+                "properties": {
+                    "ok": {
+                        "type": "boolean"
+                    },
+                    "delivered": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "ok",
+                    "delivered"
+                ]
             },
             "OfficeCapabilitiesResponse": {
                 "type": "object",
@@ -3646,6 +4042,64 @@
                 }
             }
         },
+        "/drive/stars": {
+            "get": {
+                "tags": [
+                    "Drive"
+                ],
+                "summary": "List starred drive paths for current user",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Starred paths",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DriveStarsResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Drive"
+                ],
+                "summary": "Set starred state for a drive path",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Starred state updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DriveStarUpdateResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DriveStarUpdateRequest"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/notes/capabilities": {
             "get": {
                 "tags": [
@@ -4163,7 +4617,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/GenericObject"
+                                    "$ref": "#/components/schemas/VoiceJoinResponse"
                                 }
                             }
                         }
@@ -4174,7 +4628,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/VoiceSignalRequest"
+                                "$ref": "#/components/schemas/VoiceJoinRequest"
                             }
                         }
                     }
@@ -4193,7 +4647,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/GenericObject"
+                                    "$ref": "#/components/schemas/VoicePollResponse"
                                 }
                             }
                         }
@@ -4204,7 +4658,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/VoiceSignalRequest"
+                                "$ref": "#/components/schemas/VoicePollRequest"
                             }
                         }
                     }
@@ -4223,7 +4677,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/GenericObject"
+                                    "$ref": "#/components/schemas/VoiceSendResponse"
                                 }
                             }
                         }
@@ -4234,7 +4688,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/VoiceSignalRequest"
+                                "$ref": "#/components/schemas/VoiceSendRequest"
                             }
                         }
                     }
@@ -4253,7 +4707,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/GenericObject"
+                                    "$ref": "#/components/schemas/VoiceLeaveResponse"
                                 }
                             }
                         }
@@ -4264,7 +4718,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/VoiceSignalRequest"
+                                "$ref": "#/components/schemas/VoiceLeaveRequest"
                             }
                         }
                     }
@@ -4283,7 +4737,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/GenericObject"
+                                    "$ref": "#/components/schemas/VoiceChatResponse"
                                 }
                             }
                         }
@@ -4294,7 +4748,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/VoiceSignalRequest"
+                                "$ref": "#/components/schemas/VoiceChatRequest"
                             }
                         }
                     }
