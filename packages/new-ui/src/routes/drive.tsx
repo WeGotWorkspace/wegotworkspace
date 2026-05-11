@@ -30,6 +30,8 @@ import {
   Plus,
   FileSpreadsheet,
   Presentation,
+  MoreHorizontal,
+  Pencil,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -398,6 +400,8 @@ export function DriveWorkspace({
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [newFolderDialogOpen, setNewFolderDialogOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
+  const [renameDialog, setRenameDialog] = useState<null | { id: string }>(null);
+  const [renameName, setRenameName] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<null | { ids: string[]; permanent: boolean }>(
     null,
   );
@@ -557,6 +561,7 @@ export function DriveWorkspace({
     setActiveId(null);
     setSelectionMode(false);
     setDetailOpen(false);
+    setRenameDialog(null);
     lastTouchTapRef.current = null;
   }, [viewResetKey]);
 
@@ -880,6 +885,55 @@ export function DriveWorkspace({
   const requestDeleteSelected = () => {
     if (selectedIds.length === 0) return;
     setConfirmDelete({ ids: selectedIds, permanent: inTrashView });
+  };
+  const requestDeleteItem = (file: DriveFile) => {
+    setConfirmDelete({ ids: [file.id], permanent: isUnderTrash(file.parent) });
+  };
+  const requestRenameItem = (file: DriveFile) => {
+    setRenameDialog({ id: file.id });
+    setRenameName(file.title);
+  };
+  const submitRenameItem = () => {
+    if (!renameDialog) return;
+    const file = fileById(renameDialog.id);
+    if (!file) {
+      setRenameDialog(null);
+      return;
+    }
+    const nextName = renameName.trim();
+    if (!nextName || nextName === file.title) {
+      setRenameDialog(null);
+      return;
+    }
+    const previousName = file.title;
+    setFiles((prev) =>
+      prev.map((item) => (item.id === file.id ? { ...item, title: nextName } : item)),
+    );
+    setRenameDialog(null);
+    setRenameName("");
+    toast(`Renamed to “${nextName}”`, { icon: <Pencil className="size-4" /> });
+    if (!operations) return;
+    const destination = apiPathFromUiPath(file.parent, currentUsername, groupRootNames);
+    const fromPath = file.apiPath ?? normalizeApiVirtualPath(`${destination}/${previousName}`);
+    void operations
+      .renameItem({
+        destination,
+        from: fromPath,
+        to: nextName,
+      })
+      .then((nextData) => {
+        setFiles(
+          nextData.directory.files.map((entry) => driveFileFromEntry(entry, currentUsername)),
+        );
+        setView({ type: "folder", path: uiPathFromApiPath(nextData.cwd, currentUsername) });
+      })
+      .catch((error: unknown) => {
+        setFiles((prev) =>
+          prev.map((item) => (item.id === file.id ? { ...item, title: previousName } : item)),
+        );
+        const message = error instanceof Error ? error.message : String(error);
+        toast.error(message);
+      });
   };
   const reallyDelete = (ids: string[]) => {
     if (operations) {
@@ -1515,6 +1569,8 @@ export function DriveWorkspace({
                   onOpen={openFile}
                   onLongPress={enterSelectionFor}
                   onStar={toggleStar}
+                  onTrash={requestDeleteItem}
+                  onRename={requestRenameItem}
                   onDragStart={startDrag}
                   onDragEnd={endDrag}
                   onDropOnFolder={(parentPath) => dropOnFolder(parentPath)}
@@ -1534,9 +1590,8 @@ export function DriveWorkspace({
                   onSelect={handleSelect}
                   onOpen={openFile}
                   onStar={toggleStar}
-                  onArchive={(f) =>
-                    setConfirmDelete({ ids: [f.id], permanent: isUnderTrash(f.parent) })
-                  }
+                  onTrash={requestDeleteItem}
+                  onRename={requestRenameItem}
                   onLongPress={enterSelectionFor}
                   onDragStart={startDrag}
                   onDragEnd={endDrag}
@@ -1681,6 +1736,49 @@ export function DriveWorkspace({
           </DialogContent>
         </Dialog>
 
+        <Dialog
+          open={!!renameDialog}
+          onOpenChange={(open) => {
+            if (!open) {
+              setRenameDialog(null);
+              setRenameName("");
+            }
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Rename item</DialogTitle>
+              <DialogDescription>Enter a new name for this file or folder.</DialogDescription>
+            </DialogHeader>
+            <Input
+              autoFocus
+              placeholder="Name"
+              value={renameName}
+              onChange={(event) => setRenameName(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  submitRenameItem();
+                }
+              }}
+            />
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setRenameDialog(null);
+                  setRenameName("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button onClick={submitRenameItem} disabled={!renameName.trim()}>
+                Rename
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -1733,6 +1831,8 @@ function GridView({
   onOpen,
   onLongPress,
   onStar,
+  onTrash,
+  onRename,
   onDragStart,
   onDragEnd,
   onDropOnFolder,
@@ -1750,6 +1850,8 @@ function GridView({
   onOpen: (f: DriveFile) => void;
   onLongPress: (id: string) => void;
   onStar: (id: string) => void;
+  onTrash: (file: DriveFile) => void;
+  onRename: (file: DriveFile) => void;
   onDragStart: (id: string) => void;
   onDragEnd: () => void;
   onDropOnFolder: (parentPath: string) => void;
@@ -1776,6 +1878,8 @@ function GridView({
                 onOpen={() => onOpen(f)}
                 onLongPress={() => onLongPress(f.id)}
                 onStar={() => onStar(f.id)}
+                onTrash={() => onTrash(f)}
+                onRename={() => onRename(f)}
                 onDragStart={() => onDragStart(f.id)}
                 onDragEnd={onDragEnd}
                 onDragOver={(e) => {
@@ -1811,6 +1915,8 @@ function GridView({
                 onOpen={() => onOpen(f)}
                 onLongPress={() => onLongPress(f.id)}
                 onStar={() => onStar(f.id)}
+                onTrash={() => onTrash(f)}
+                onRename={() => onRename(f)}
                 onDragStart={() => onDragStart(f.id)}
                 onDragEnd={onDragEnd}
               />
@@ -1867,6 +1973,8 @@ function FolderTile({
   onOpen,
   onLongPress,
   onStar,
+  onTrash,
+  onRename,
   onDragStart,
   onDragEnd,
   onDragOver,
@@ -1883,6 +1991,8 @@ function FolderTile({
   onOpen: () => void;
   onLongPress: () => void;
   onStar: () => void;
+  onTrash: () => void;
+  onRename: () => void;
   onDragStart: () => void;
   onDragEnd: () => void;
   onDragOver: (e: React.DragEvent) => void;
@@ -1951,6 +2061,12 @@ function FolderTile({
           style={{ color: "var(--color-emerald)" }}
         />
       )}
+      <ItemActionsMenu
+        isStarred={isStarred}
+        onStar={onStar}
+        onTrash={onTrash}
+        onRename={onRename}
+      />
     </button>
   );
 }
@@ -1966,6 +2082,8 @@ function FileTile({
   onOpen,
   onLongPress,
   onStar,
+  onTrash,
+  onRename,
   onDragStart,
   onDragEnd,
 }: {
@@ -1979,6 +2097,8 @@ function FileTile({
   onOpen: () => void;
   onLongPress: () => void;
   onStar: () => void;
+  onTrash: () => void;
+  onRename: () => void;
   onDragStart: () => void;
   onDragEnd: () => void;
 }) {
@@ -2059,22 +2179,81 @@ function FileTile({
         >
           {file.title}
         </span>
-        <button
-          aria-label={isStarred ? "Unstar" : "Star"}
-          onClick={(e) => {
-            e.stopPropagation();
-            onStar();
-          }}
-          className="size-6 rounded-full flex items-center justify-center transition-opacity"
-          style={{
-            opacity: isStarred ? 1 : 0,
-            color: "var(--color-emerald)",
-          }}
-        >
-          <Star className="size-3.5" fill="currentColor" />
-        </button>
+        <ItemActionsMenu
+          isStarred={isStarred}
+          onStar={onStar}
+          onTrash={onTrash}
+          onRename={onRename}
+        />
       </div>
     </div>
+  );
+}
+
+function ItemActionsMenu({
+  isStarred,
+  onStar,
+  onTrash,
+  onRename,
+}: {
+  isStarred: boolean;
+  onStar: () => void;
+  onTrash: () => void;
+  onRename: () => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <span
+          role="button"
+          tabIndex={0}
+          aria-label="More actions"
+          onClick={(event) => event.stopPropagation()}
+          className="size-7 rounded-full flex items-center justify-center transition-colors hover:bg-[color-mix(in_oklab,var(--color-ink)_10%,transparent)]"
+          style={{ color: "color-mix(in oklab, var(--color-ink) 70%, transparent)" }}
+        >
+          <MoreHorizontal className="size-4" />
+        </span>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        sideOffset={6}
+        onClick={(event) => event.stopPropagation()}
+        className="min-w-40"
+      >
+        <DropdownMenuItem
+          onClick={(event) => {
+            event.preventDefault();
+            onStar();
+          }}
+          className="cursor-pointer gap-2.5"
+        >
+          <Star className="size-4" fill={isStarred ? "currentColor" : "none"} />
+          {isStarred ? "Unstar" : "Star"}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={(event) => {
+            event.preventDefault();
+            onRename();
+          }}
+          className="cursor-pointer gap-2.5"
+        >
+          <Pencil className="size-4" />
+          Rename
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={(event) => {
+            event.preventDefault();
+            onTrash();
+          }}
+          className="cursor-pointer gap-2.5 text-red-600 focus:text-red-600"
+        >
+          <Trash2 className="size-4" />
+          Move to Trash
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -2100,6 +2279,8 @@ function ListView({
   onSelect,
   onOpen,
   onStar,
+  onTrash,
+  onRename,
   onLongPress,
   onDragStart,
   onDragEnd,
@@ -2119,7 +2300,8 @@ function ListView({
   onSelect: (id: string, e: React.MouseEvent) => void;
   onOpen: (f: DriveFile) => void;
   onStar: (id: string) => void;
-  onArchive: (f: DriveFile) => void;
+  onTrash: (file: DriveFile) => void;
+  onRename: (file: DriveFile) => void;
   onLongPress: (id: string) => void;
   onDragStart: (id: string) => void;
   onDragEnd: () => void;
@@ -2257,17 +2439,14 @@ function ListView({
                         style={{ color: "var(--color-emerald)" }}
                       />
                     )}
-                    <button
-                      aria-label={starred[f.id] ? "Unstar" : "Star"}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onStar(f.id);
-                      }}
-                      className="ml-auto size-6 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
-                      style={{ color: muted }}
-                    >
-                      <Star className="size-3.5" fill={starred[f.id] ? "currentColor" : "none"} />
-                    </button>
+                    <div className="ml-auto">
+                      <ItemActionsMenu
+                        isStarred={!!starred[f.id]}
+                        onStar={() => onStar(f.id)}
+                        onTrash={() => onTrash(f)}
+                        onRename={() => onRename(f)}
+                      />
+                    </div>
                   </div>
                 </td>
                 <td className="py-2 px-3 hidden md:table-cell" style={{ color: muted }}>
