@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 APP_ROOT="$REPO_ROOT/apps/wegotworkspace"
-PRIVATE_DIR_NAME="${SABRE_PRIVATE_DIR_NAME:-wgw-modules}"
+PRIVATE_DIR_NAME="${SABRE_PRIVATE_DIR_NAME:-packages/apps}"
 RUNTIME_ROOT="$APP_ROOT"
 
 if [[ -n "${SABRE_BUILD_DIR:-}" ]]; then

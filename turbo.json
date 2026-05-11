@@ -19,8 +19,8 @@
       "cache": false,
       "outputs": [
         "../../packages/api/vendor/**",
-        "../../apps/wegotworkspace/wgw-modules/office/build/**",
-        "../../apps/wegotworkspace/wgw-modules/*/dist/**"
+        "../../apps/wegotworkspace/packages/apps/office/build/**",
+        "../../apps/wegotworkspace/packages/apps/*/dist/**"
       ]
     },
     "typegen": {
