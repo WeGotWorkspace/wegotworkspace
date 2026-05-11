@@ -172,12 +172,22 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
   const [chatOpen, setChatOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [speakerId, setSpeakerId] = useState<string>("default");
+  const hasSignedInIdentity = Boolean(session.user.username?.trim() || session.user.email?.trim());
   const displayName = controller.displayName || session.user.displayName || "Guest";
   const invitedRoom = useMemo(() => {
     if (typeof window === "undefined") return null;
     const room = new URLSearchParams(window.location.search).get("room")?.trim();
     return room && room.length > 0 ? room : null;
   }, []);
+  const inJoinFlow = Boolean(invitedRoom);
+  const disableAppSwitcher = !hasSignedInIdentity || inJoinFlow;
+  const callExitLabel = inJoinFlow || !hasSignedInIdentity ? "Leave call" : "End call";
+  const callExitTitle =
+    callExitLabel === "Leave call" ? "Leave this call?" : "End call for everyone?";
+  const callExitDescription =
+    callExitLabel === "Leave call"
+      ? "This only disconnects you from the meeting."
+      : "This will disconnect all participants from the meeting.";
 
   const cameras = useMemo(
     () => normalizeDeviceOptions("videoinput", controller.videoInputs),
@@ -221,9 +231,13 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
         <header className="flex items-center justify-between p-6 md:p-8 shrink-0">
           <div className="flex items-center gap-2 min-w-0">
             <BrandMark className="w-auto shrink-0" />
-            <WorkspaceAppSwitcher />
+            <WorkspaceAppSwitcher disabled={disableAppSwitcher} />
           </div>
-          <UserMenu displayName={displayName} />
+          {hasSignedInIdentity ? (
+            <UserMenu displayName={displayName} />
+          ) : (
+            <div className="size-9" aria-hidden />
+          )}
         </header>
 
         {!controller.inCall ? (
@@ -233,7 +247,7 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
                 className="text-4xl sm:text-5xl md:text-6xl leading-[0.95] tracking-tight mb-10 whitespace-nowrap"
                 style={{ fontFamily: "var(--font-serif)" }}
               >
-                Ready when you are.
+                {inJoinFlow ? "Ready to join?" : "Ready when you are."}
               </h1>
 
               <div
@@ -521,7 +535,7 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
                       <TooltipTrigger asChild>
                         <AlertDialogTrigger asChild>
                           <button
-                            aria-label="End call"
+                            aria-label={callExitLabel}
                             className="inline-flex size-11 items-center justify-center rounded-full transition-colors text-white"
                             style={{ background: "var(--destructive, #dc2626)" }}
                           >
@@ -529,14 +543,12 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
                           </button>
                         </AlertDialogTrigger>
                       </TooltipTrigger>
-                      <TooltipContent>End call</TooltipContent>
+                      <TooltipContent>{callExitLabel}</TooltipContent>
                     </Tooltip>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>End call for everyone?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will disconnect all participants from the meeting.
-                        </AlertDialogDescription>
+                        <AlertDialogTitle>{callExitTitle}</AlertDialogTitle>
+                        <AlertDialogDescription>{callExitDescription}</AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -544,7 +556,7 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
                           onClick={() => void controller.leave()}
                           style={{ background: "var(--destructive, #dc2626)", color: "#fff" }}
                         >
-                          End call
+                          {callExitLabel}
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
@@ -591,7 +603,7 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
                         </span>
                       </div>
                       <div
-                        className="rounded-lg px-3 py-2 text-sm break-words"
+                        className="rounded-lg px-3 py-2 text-sm wrap-break-word"
                         style={{ background: PANEL_SOFT }}
                       >
                         {renderChatBody(message.body)}

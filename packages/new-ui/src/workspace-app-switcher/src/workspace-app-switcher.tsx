@@ -62,7 +62,7 @@ const WORKSPACE_APPS = [
 ] as const;
 
 /** Wires the default workspace app list and router to the presentational `AppSwitcher`. */
-export function WorkspaceAppSwitcher() {
+export function WorkspaceAppSwitcher({ disabled = false }: { disabled?: boolean }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();
   const current = WORKSPACE_APPS.find((a) => path.startsWith(a.to)) ?? WORKSPACE_APPS[0];
@@ -70,6 +70,7 @@ export function WorkspaceAppSwitcher() {
   return (
     <AppSwitcher
       subtitle={current.label}
+      disabled={disabled}
       items={WORKSPACE_APPS.map((app) => {
         const Icon = app.icon;
         return {
@@ -78,6 +79,7 @@ export function WorkspaceAppSwitcher() {
           icon: <Icon className="size-4" />,
           checked: app.id === current.id,
           onSelect: () => {
+            if (disabled) return;
             void navigate({ to: app.to });
           },
         };
