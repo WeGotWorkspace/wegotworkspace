@@ -4,7 +4,7 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
-    "dev": "storybook dev",
+    "dev": "storybook dev -p 6006",
     "dev:app": "vite dev",
     "typegen": "echo \"@wgw/apps uses shared @wgw/api generated OpenAPI types\"",
     "build": "vite build",
@@ -13,7 +13,7 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "storybook": "storybook dev",
+    "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
   "dependencies": {
