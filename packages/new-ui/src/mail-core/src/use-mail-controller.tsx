@@ -63,6 +63,14 @@ function ensureSubjectPrefix(subject: string, prefix: "Re" | "Fwd"): string {
   return pattern.test(trimmed) ? trimmed : `${prefix}: ${trimmed}`;
 }
 
+function normalizeComposeSubject(subject: string, noSubjectLabel: string): string | undefined {
+  const normalized = subject.trim();
+  if (!normalized) return undefined;
+  if (normalized.toLowerCase() === noSubjectLabel.trim().toLowerCase()) return undefined;
+  if (normalized.toLowerCase() === "(no subject)") return undefined;
+  return normalized;
+}
+
 function quotedOriginalMessage(source: Mail): string {
   const sourceBody = source.body.join("\n\n").trim() || source.excerpt.trim();
   if (!sourceBody) return "";
@@ -750,11 +758,12 @@ export function useMailController({
         { icon: <FileEdit className="size-4" /> },
       );
       if (!operations) return;
+      const normalizedSubject = normalizeComposeSubject(draftState.subject, L.noSubject);
       const draftPayload: WgwMailDraftRequest = {
         to: draftState.to || undefined,
         cc: draftState.cc || undefined,
         bcc: draftState.bcc || undefined,
-        subject: draftState.subject || undefined,
+        subject: normalizedSubject,
         body: draftState.body || undefined,
       };
       void operations.createDraft(draftPayload).catch(() => {
@@ -765,6 +774,7 @@ export function useMailController({
     },
     [
       L.draftFromLabel,
+      L.noSubject,
       L.toastNewMessage,
       encodeFolderToken,
       session.user.email,
@@ -832,11 +842,12 @@ export function useMailController({
         prev[id] ? { ...prev, [id]: { ...prev[id]!, saving: true } } : prev,
       );
       try {
+        const normalizedSubject = normalizeComposeSubject(draft.subject, L.noSubject);
         await operations.saveDraft({
           to: draft.to || undefined,
           cc: draft.cc || undefined,
           bcc: draft.bcc || undefined,
-          subject: draft.subject || undefined,
+          subject: normalizedSubject,
           body: draft.body || undefined,
         });
         show("Draft saved.", { icon: <FileEdit className="size-4" /> });
@@ -850,7 +861,7 @@ export function useMailController({
         );
       }
     },
-    [composeDrafts, operations, show],
+    [composeDrafts, operations, show, L.noSubject],
   );
 
   const sendComposeDraft = useCallback(
@@ -866,11 +877,12 @@ export function useMailController({
       );
       try {
         if (operations) {
+          const normalizedSubject = normalizeComposeSubject(draft.subject, L.noSubject);
           await operations.sendMessage({
             to: draft.to,
             cc: draft.cc || undefined,
             bcc: draft.bcc || undefined,
-            subject: draft.subject || undefined,
+            subject: normalizedSubject,
             body: draft.body || undefined,
           });
         }
@@ -899,14 +911,15 @@ export function useMailController({
         setView("mb:Sent");
         setActiveId(id);
         show("Message sent.", { icon: <FileEdit className="size-4" /> });
-      } catch {
+      } catch (error) {
         setComposeDrafts((prev) =>
           prev[id] ? { ...prev, [id]: { ...prev[id]!, sending: false } } : prev,
         );
-        show("Could not send message. Please try again.", { icon: <X className="size-4" /> });
+        const message = error instanceof Error ? error.message : "Could not send message.";
+        show(message, { icon: <X className="size-4" /> });
       }
     },
-    [composeDrafts, operations, show, encodeFolderToken, closeComposeDialog],
+    [composeDrafts, operations, show, encodeFolderToken, closeComposeDialog, L.noSubject],
   );
 
   const discardComposeDraft = useCallback(
@@ -1057,6 +1070,7 @@ export function useMailController({
     reply,
     replyAll,
     forward,
+    openDraftInComposer,
     composeDialogId,
     closeComposeDialog,
     composeDrafts,

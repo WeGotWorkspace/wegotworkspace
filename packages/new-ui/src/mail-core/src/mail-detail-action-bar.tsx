@@ -1,4 +1,4 @@
-import { Forward, MoreHorizontal, Reply, ReplyAll } from "lucide-react";
+import { FileEdit, Forward, MoreHorizontal, Reply, ReplyAll } from "lucide-react";
 import { ToolbarButton } from "@/action-buttons/src/action-buttons";
 import { ActionBar } from "@/action-bar/src/action-bar";
 import { MenuDropdown } from "@/menu-dropdown/src/menu-dropdown";
@@ -12,6 +12,7 @@ type MailDetailActionBarProps = {
   onReply: () => void;
   onReplyAll: () => void;
   onForward: () => void;
+  onEditDraft: () => void;
   setMoveDialog: (value: { ids: string[]; currentMailbox?: string } | null) => void;
   markRead: (ids: string[]) => void;
   markUnread: (ids: string[]) => void;
@@ -27,6 +28,7 @@ export function MailDetailActionBar({
   onReply,
   onReplyAll,
   onForward,
+  onEditDraft,
   setMoveDialog,
   markRead,
   markUnread,
@@ -36,6 +38,7 @@ export function MailDetailActionBar({
   toggleTrashForMessage,
 }: MailDetailActionBarProps) {
   if (!active) return <ActionBar onBack={closeMobileDetail} />;
+  const isDraft = active.mailbox === "Drafts";
   const moveToMailbox = () => setMoveDialog({ ids: [active.id], currentMailbox: active.mailbox });
   const toggleUnreadForActive = () =>
     active.unread ? markRead([active.id]) : markUnread([active.id]);
@@ -43,13 +46,24 @@ export function MailDetailActionBar({
   const toggleArchiveForActive = () => toggleArchiveForMessage(active.id);
   const toggleTrashForActive = () => toggleTrashForMessage(active.id);
   const mobileReplyItems: MenuDropdownItemProps[] = [
-    { id: "reply", label: "Reply", icon: <Reply className="size-4" />, onClick: onReply },
-    {
-      id: "reply-all",
-      label: "Reply all",
-      icon: <ReplyAll className="size-4" />,
-      onClick: onReplyAll,
-    },
+    ...(isDraft
+      ? [
+          {
+            id: "edit-draft",
+            label: "Edit draft",
+            icon: <FileEdit className="size-4" />,
+            onClick: onEditDraft,
+          },
+        ]
+      : [
+          { id: "reply", label: "Reply", icon: <Reply className="size-4" />, onClick: onReply },
+          {
+            id: "reply-all",
+            label: "Reply all",
+            icon: <ReplyAll className="size-4" />,
+            onClick: onReplyAll,
+          },
+        ]),
   ];
   const detailActionButtons = buildMailActionButtons({
     moveToMailbox,
@@ -76,39 +90,55 @@ export function MailDetailActionBar({
       left={
         <>
           <div className="mail-detail-actions-desktop flex items-center gap-2">
-            <ToolbarButton label="Reply" onClick={onReply}>
-              <Reply className="size-4" />
-            </ToolbarButton>
-            <ToolbarButton label="Reply all" onClick={onReplyAll}>
-              <ReplyAll className="size-4" />
-            </ToolbarButton>
-            <ToolbarButton label="Forward" onClick={onForward}>
-              <Forward className="size-4" />
-            </ToolbarButton>
+            {isDraft ? (
+              <ToolbarButton label="Edit draft" onClick={onEditDraft}>
+                <FileEdit className="size-4" />
+              </ToolbarButton>
+            ) : (
+              <>
+                <ToolbarButton label="Reply" onClick={onReply}>
+                  <Reply className="size-4" />
+                </ToolbarButton>
+                <ToolbarButton label="Reply all" onClick={onReplyAll}>
+                  <ReplyAll className="size-4" />
+                </ToolbarButton>
+                <ToolbarButton label="Forward" onClick={onForward}>
+                  <Forward className="size-4" />
+                </ToolbarButton>
+              </>
+            )}
           </div>
           <div className="mail-detail-actions-compact items-center gap-2">
-            <MenuDropdown
-              align="start"
-              sideOffset={10}
-              items={mobileReplyItems}
-              contentClassName="min-w-[11rem] p-1.5"
-              trigger={
-                <button
-                  type="button"
-                  aria-label="Reply options"
-                  className="size-9 rounded-full flex items-center justify-center transition-colors"
-                  style={{
-                    color: "color-mix(in oklab, var(--color-ink) 70%, transparent)",
-                    backgroundColor: "color-mix(in oklab, var(--color-ink) 6%, transparent)",
-                  }}
-                >
-                  <Reply className="size-4" />
-                </button>
-              }
-            />
-            <ToolbarButton label="Forward" onClick={onForward}>
-              <Forward className="size-4" />
-            </ToolbarButton>
+            {isDraft ? (
+              <ToolbarButton label="Edit draft" onClick={onEditDraft}>
+                <FileEdit className="size-4" />
+              </ToolbarButton>
+            ) : (
+              <MenuDropdown
+                align="start"
+                sideOffset={10}
+                items={mobileReplyItems}
+                contentClassName="min-w-[11rem] p-1.5"
+                trigger={
+                  <button
+                    type="button"
+                    aria-label="Reply options"
+                    className="size-9 rounded-full flex items-center justify-center transition-colors"
+                    style={{
+                      color: "color-mix(in oklab, var(--color-ink) 70%, transparent)",
+                      backgroundColor: "color-mix(in oklab, var(--color-ink) 6%, transparent)",
+                    }}
+                  >
+                    <Reply className="size-4" />
+                  </button>
+                }
+              />
+            )}
+            {!isDraft ? (
+              <ToolbarButton label="Forward" onClick={onForward}>
+                <Forward className="size-4" />
+              </ToolbarButton>
+            ) : null}
           </div>
         </>
       }
