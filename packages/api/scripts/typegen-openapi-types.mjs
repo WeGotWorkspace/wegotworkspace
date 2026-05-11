@@ -15,6 +15,7 @@ const settingsTypesPath = path.resolve(generatedDir, "settings-types.ts");
 const adminTypesPath = path.resolve(generatedDir, "admin-types.ts");
 const driveTypesPath = path.resolve(generatedDir, "drive-types.ts");
 const voiceTypesPath = path.resolve(generatedDir, "voice-types.ts");
+const installerTypesPath = path.resolve(generatedDir, "installer-types.ts");
 
 function buildDomainTypesModule({
   domainName,
@@ -99,6 +100,12 @@ export async function generateOpenApiDomainTypes() {
     pathPrefix: "voice",
     outputPath: voiceTypesPath,
   });
+  buildDomainTypesModule({
+    domainName: "Installer",
+    domainPrefix: "Installer",
+    pathPrefix: "installer",
+    outputPath: installerTypesPath,
+  });
 }
 
 if (import.meta.url === new URL(process.argv[1], "file://").href) {
@@ -111,4 +118,5 @@ if (import.meta.url === new URL(process.argv[1], "file://").href) {
   process.stdout.write(`Wrote ${adminTypesPath}\n`);
   process.stdout.write(`Wrote ${driveTypesPath}\n`);
   process.stdout.write(`Wrote ${voiceTypesPath}\n`);
+  process.stdout.write(`Wrote ${installerTypesPath}\n`);
 }

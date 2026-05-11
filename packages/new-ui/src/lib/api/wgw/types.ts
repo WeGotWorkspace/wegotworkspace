@@ -83,6 +83,19 @@ import type {
   VoiceSendResponse,
   VoiceSignalEnvelope,
 } from "@wgw-api-generated/voice-types";
+import type {
+  InstallerAction,
+  InstallerActionPayload,
+  InstallerActionRequest,
+  InstallerActionResponse,
+  InstallerBootstrapResponse,
+  InstallerCheck,
+  InstallerDbDriver,
+  InstallerDbState,
+  InstallerRuntimeState,
+  InstallerStateResponse,
+  InstallerStep,
+} from "@wgw-api-generated/installer-types";
 
 export type WgwMailStatusResponse = MailStatusResponse & {
   extImap?: boolean;
@@ -248,3 +261,14 @@ export type WgwVoiceLeaveRequest = VoiceLeaveRequest;
 export type WgwVoiceLeaveResponse = VoiceLeaveResponse;
 export type WgwVoiceChatRequest = VoiceChatRequest;
 export type WgwVoiceChatResponse = VoiceChatResponse;
+export type WgwInstallerStep = InstallerStep;
+export type WgwInstallerDbDriver = InstallerDbDriver;
+export type WgwInstallerDbState = InstallerDbState;
+export type WgwInstallerCheck = InstallerCheck;
+export type WgwInstallerRuntimeState = InstallerRuntimeState;
+export type WgwInstallerStateResponse = InstallerStateResponse;
+export type WgwInstallerBootstrapResponse = InstallerBootstrapResponse;
+export type WgwInstallerAction = InstallerAction;
+export type WgwInstallerActionPayload = InstallerActionPayload;
+export type WgwInstallerActionRequest = InstallerActionRequest;
+export type WgwInstallerActionResponse = InstallerActionResponse;

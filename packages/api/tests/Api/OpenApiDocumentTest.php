@@ -81,8 +81,20 @@ final class OpenApiDocumentTest extends TestCase
             $doc['paths']['/drive/getdir']['post']['requestBody']['content']['application/json']['schema']['$ref'] ?? null
         );
         self::assertSame(
-            '#/components/schemas/VoiceSignalRequest',
+            '#/components/schemas/VoiceJoinRequest',
             $doc['paths']['/voice/join']['post']['requestBody']['content']['application/json']['schema']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/InstallerActionRequest',
+            $doc['paths']['/installer/action']['post']['requestBody']['content']['application/json']['schema']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/InstallerRuntimeState',
+            $doc['components']['schemas']['InstallerBootstrapResponse']['properties']['state']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/InstallerAction',
+            $doc['components']['schemas']['InstallerActionRequest']['properties']['action']['$ref'] ?? null
         );
         self::assertSame(
             '#/components/schemas/OfficeDocumentCreateRequest',

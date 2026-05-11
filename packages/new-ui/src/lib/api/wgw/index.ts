@@ -4,3 +4,4 @@ export * from "@/lib/api/wgw/mail";
 export * from "@/lib/api/wgw/notes";
 export * from "@/lib/api/wgw/settings";
 export * from "@/lib/api/wgw/admin";
+export * from "@/lib/api/wgw/installer";
