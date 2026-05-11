@@ -277,6 +277,8 @@ type ViewKey =
   | { type: "starred" }
   | { type: "shared" };
 
+const OFFICE_EDITOR_EXTENSIONS = new Set(["docx", "xlsx", "pptx", "pdf"]);
+
 type DriveWorkspaceProps = {
   data: DriveUIData;
   session: WorkspaceSession;
@@ -344,6 +346,12 @@ function inferFileKindFromName(name: string): FileKind {
   if (/\.(zip|tar|gz|bz2|xz|rar|7z)$/i.test(lower)) return "archive";
   if (/\.(pdf|docx?|xlsx?|pptx?|txt|rtf|md)$/i.test(lower)) return "doc";
   return "file";
+}
+
+function extensionFromFileName(name: string): string {
+  const trimmed = name.trim();
+  if (!trimmed.includes(".")) return "";
+  return (trimmed.split(".").pop() ?? "").toLowerCase();
 }
 
 function formatBytesCompact(bytes: number): string {
@@ -766,6 +774,13 @@ export function DriveWorkspace({
           });
       }
     } else {
+      const officeExt = extensionFromFileName(f.title);
+      if (f.apiPath && OFFICE_EDITOR_EXTENSIONS.has(officeExt)) {
+        const rel = f.apiPath.replace(/^\/+/, "");
+        const qp = new URLSearchParams({ file: rel });
+        window.location.assign(`/office/editor?${qp.toString()}`);
+        return;
+      }
       setActiveId(f.id);
       setSelectedIds([f.id]);
       setDetailOpen(true);
@@ -1211,48 +1226,9 @@ export function DriveWorkspace({
   };
 
   const createBlank = (kind: "doc" | "sheet" | "slides") => {
-    const meta =
-      kind === "doc"
-        ? {
-            title: "Untitled document.docx",
-            category: "Document",
-            note: "Doc · 0 KB",
-            k: "doc" as FileKind,
-          }
-        : kind === "sheet"
-          ? {
-              title: "Untitled spreadsheet.xlsx",
-              category: "Spreadsheet",
-              note: "Sheet · 0 KB",
-              k: "doc" as FileKind,
-            }
-          : {
-              title: "Untitled presentation.pptx",
-              category: "Presentation",
-              note: "Slides · 0 KB",
-              k: "doc" as FileKind,
-            };
-    const targetParent = view.type === "folder" ? view.path : "My Drive";
-    const id = `f-${Date.now()}`;
-    setFiles((p) => [
-      {
-        id,
-        notebook: meta.note,
-        category: meta.category,
-        date: "Now",
-        title: meta.title,
-        excerpt: "Created just now",
-        body: [],
-        tags: [],
-        wordCount: 0,
-        parent: targetParent,
-        kind: meta.k,
-        size: "0 KB",
-        owner: "You",
-      },
-      ...p,
-    ]);
-    toast(`${meta.category} created`, { icon: <Plus className="size-4" /> });
+    const editorKind = kind === "doc" ? "docx" : kind === "sheet" ? "xlsx" : "pptx";
+    const qp = new URLSearchParams({ new: editorKind });
+    window.location.assign(`/office/editor?${qp.toString()}`);
   };
 
   const selectView = (v: ViewKey) => {
