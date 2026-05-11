@@ -212,3 +212,13 @@ export type WgwDriveListingResponse = DriveListingResponse;
 export type WgwDriveCwdResponse = DriveCwdResponse;
 export type WgwDriveMutationResult = DriveMutationResult;
 export type WgwDriveMutationResponse = DriveMutationResponse;
+export type WgwDriveStarsData = {
+  paths: string[];
+};
+export type WgwDriveStarsResponse = {
+  data: WgwDriveStarsData;
+};
+export type WgwDriveStarUpdateRequest = {
+  path: string;
+  starred: boolean;
+};

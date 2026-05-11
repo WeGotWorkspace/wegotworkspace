@@ -472,6 +472,29 @@ export function DriveWorkspace({
   const isTouch = useIsTouch();
   const lastTouchTapRef = useRef<{ id: string; at: number } | null>(null);
 
+  useEffect(() => {
+    if (!operations) return;
+    let cancelled = false;
+    void operations
+      .listStars()
+      .then((paths) => {
+        if (cancelled) return;
+        const next: Record<string, boolean> = {};
+        for (const path of paths) {
+          next[path] = true;
+        }
+        setStarred(next);
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        const message = error instanceof Error ? error.message : String(error);
+        toast.error(message);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [operations, currentUsername]);
+
   const inTrashView = view.type === "folder" && view.path === "Trash";
 
   const isUnderTrash = (parent: string) => parent === "Trash" || parent.startsWith("Trash/");
@@ -717,33 +740,82 @@ export function DriveWorkspace({
     setSelectedIds(activeId ? [activeId] : []);
   };
 
+  const fileById = (id: string) =>
+    (liveSearchResults?.find((file) => file.id === id) ?? files.find((file) => file.id === id)) ||
+    null;
+
+  const reloadStarredFromServer = () => {
+    if (!operations) return;
+    void operations
+      .listStars()
+      .then((paths) => {
+        const next: Record<string, boolean> = {};
+        for (const path of paths) next[path] = true;
+        setStarred(next);
+      })
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        toast.error(message);
+      });
+  };
+
   const toggleStar = (id: string) => {
+    const target = fileById(id);
+    let nextValue = false;
     setStarred((s) => {
-      const next = !s[id];
-      toast(next ? "Starred" : "Unstarred", {
-        icon: next ? (
+      nextValue = !s[id];
+      toast(nextValue ? "Starred" : "Unstarred", {
+        icon: nextValue ? (
           <Star className="size-4" fill="currentColor" />
         ) : (
           <StarOff className="size-4" />
         ),
       });
-      return { ...s, [id]: next };
+      return { ...s, [id]: nextValue };
     });
+    if (!operations || !target?.apiPath) return;
+    void operations
+      .setStar({ path: target.apiPath, starred: nextValue })
+      .catch((error: unknown) => {
+        setStarred((s) => ({ ...s, [id]: !nextValue }));
+        reloadStarredFromServer();
+        const message = error instanceof Error ? error.message : String(error);
+        toast.error(message);
+      });
   };
   const batchStar = () => {
+    const nextValue = !selectedIds.every((id) => starred[id]);
     setStarred((s) => {
-      const allStarred = selectedIds.every((id) => s[id]);
       const next = { ...s };
-      selectedIds.forEach((id) => (next[id] = !allStarred));
-      toast(`${allStarred ? "Unstarred" : "Starred"} ${selectedIds.length}`, {
-        icon: allStarred ? (
-          <StarOff className="size-4" />
-        ) : (
+      selectedIds.forEach((id) => (next[id] = nextValue));
+      toast(`${nextValue ? "Starred" : "Unstarred"} ${selectedIds.length}`, {
+        icon: nextValue ? (
           <Star className="size-4" fill="currentColor" />
+        ) : (
+          <StarOff className="size-4" />
         ),
       });
       return next;
     });
+    if (!operations) return;
+    const targets = selectedIds
+      .map((id) => fileById(id))
+      .filter((file): file is DriveFile => !!file?.apiPath);
+    if (targets.length === 0) return;
+    void (async () => {
+      let failed = false;
+      for (const file of targets) {
+        try {
+          await operations.setStar({ path: file.apiPath!, starred: nextValue });
+        } catch {
+          failed = true;
+        }
+      }
+      if (failed) {
+        reloadStarredFromServer();
+        toast.error("Could not sync one or more star changes.");
+      }
+    })();
   };
   const moveToTrash = (ids: string[]) => {
     setFiles((p) => p.map((f) => (ids.includes(f.id) ? { ...f, parent: "Trash" } : f)));
@@ -1391,13 +1463,17 @@ export function DriveWorkspace({
                         {i > 0 && (
                           <ChevronRight
                             className="size-4 shrink-0"
-                            style={{ color: "color-mix(in oklab, var(--color-ink) 35%, transparent)" }}
+                            style={{
+                              color: "color-mix(in oklab, var(--color-ink) 35%, transparent)",
+                            }}
                           />
                         )}
                         {isLast || !b.path ? (
                           <span
                             className="text-sm md:text-base leading-none truncate"
-                            style={{ color: "color-mix(in oklab, var(--color-ink) 72%, transparent)" }}
+                            style={{
+                              color: "color-mix(in oklab, var(--color-ink) 72%, transparent)",
+                            }}
                           >
                             {b.label}
                           </span>
@@ -1405,7 +1481,9 @@ export function DriveWorkspace({
                           <button
                             onClick={() => selectView({ type: "folder", path: b.path! })}
                             className="text-sm md:text-base leading-none truncate hover:underline underline-offset-4"
-                            style={{ color: "color-mix(in oklab, var(--color-ink) 55%, transparent)" }}
+                            style={{
+                              color: "color-mix(in oklab, var(--color-ink) 55%, transparent)",
+                            }}
                           >
                             {b.label}
                           </button>

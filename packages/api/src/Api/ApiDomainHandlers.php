@@ -413,7 +413,7 @@ final class ApiDomainHandlers
 
         if (
             str_starts_with($rel, 'drive/')
-            && preg_match('#^(getdir|searchfiles|changedir|createnew|renameitem|deleteitems|download|upload)$#', substr($rel, 6)) === 1
+            && preg_match('#^(getdir|searchfiles|changedir|createnew|renameitem|deleteitems|download|upload|stars)$#', substr($rel, 6)) === 1
         ) {
             $user = self::requireRole($principal, 'user');
             if ($user === null) {

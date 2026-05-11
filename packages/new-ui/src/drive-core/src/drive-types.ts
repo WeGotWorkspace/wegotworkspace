@@ -35,6 +35,11 @@ export type DriveAPIOperations = {
   downloadFile: (path: string, opts?: { signal?: AbortSignal }) => Promise<void>;
   readFileBlob: (path: string, opts?: { signal?: AbortSignal }) => Promise<Blob>;
   checkUploadReady: (opts?: { signal?: AbortSignal }) => Promise<void>;
+  listStars: (opts?: { signal?: AbortSignal }) => Promise<string[]>;
+  setStar: (
+    input: { path: string; starred: boolean },
+    opts?: { signal?: AbortSignal },
+  ) => Promise<void>;
   uploadFiles: (
     input: { cwd: string; files: File[] },
     opts?: { signal?: AbortSignal },
