@@ -19,7 +19,7 @@ const clientAssetsDir = resolve(packageRoot, "dist", "client", "assets");
 const clientFontsDir = resolve(packageRoot, "dist", "client", "fonts");
 const clientIconsDir = resolve(packageRoot, "dist", "client", "icons");
 const clientManifestsDir = resolve(packageRoot, "dist", "client", "manifests");
-const runtimeModulesRoot = resolve(repoRoot, "apps", "wegotworkspace", "wgw-modules");
+const runtimeAppsRoot = resolve(repoRoot, "apps", "wegotworkspace", "packages", "apps");
 
 const modules = [
   { name: "shell", title: "WeGotWorkspace", assetDir: "assets" },
@@ -43,7 +43,7 @@ if (!mainJs || !mainCss) {
 }
 
 for (const module of modules) {
-  const distRoot = resolve(runtimeModulesRoot, module.name, "dist");
+  const distRoot = resolve(runtimeAppsRoot, module.name, "dist");
   const targetAssetsDir = resolve(distRoot, module.assetDir);
   const targetMainJsPath = resolve(targetAssetsDir, mainJs);
 
@@ -71,7 +71,7 @@ for (const module of modules) {
 }
 
 console.log(
-  `Synced frontend runtime modules (${modules.map((m) => m.name).join(", ")}) using ${mainJs} and ${mainCss}.`
+  `Synced frontend runtime app builds (${modules.map((m) => m.name).join(", ")}) using ${mainJs} and ${mainCss}.`
 );
 
 function pickLargestFile(allFiles, pattern) {

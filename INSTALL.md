@@ -9,7 +9,7 @@ Upload the deploy package contents to your website folder so these files are in 
 - `.htaccess`
 - `packages/api/`
 - `packages/api/vendor/`
-- `wgw-modules/`
+- `packages/apps/` (includes built web app bundles, for example `packages/apps/drive/dist/`)
 - `wgw-config.sample.php`
 
 Your site document root must point to this folder.

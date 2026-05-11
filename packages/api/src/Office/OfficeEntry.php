@@ -98,7 +98,7 @@ final class OfficeEntry
             header('Content-Type: text/html; charset=utf-8');
             echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Office unavailable</title></head><body>';
             echo '<h1>Office UI is not built</h1>';
-            echo '<p>Run <code>pnpm --filter @wgw/onlyoffice-web build</code> (output: <code>apps/wegotworkspace/wgw-modules/office/build/</code>), then reload.</p>';
+            echo '<p>Run <code>pnpm --filter @wgw/onlyoffice-web build</code> (output: <code>apps/wegotworkspace/packages/apps/office/build/</code>), then reload.</p>';
             echo '</body></html>';
 
             return true;

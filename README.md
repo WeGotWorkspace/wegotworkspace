@@ -36,7 +36,7 @@ pnpm dev
 
 Open `http://127.0.0.1:8080/install/`.
 
-Frontend note: all first-party web apps (`/admin`, `/drive`, `/mail`, `/notes`, `/voice`, `/settings`, `/home`, `/install`) are built from `packages/apps` and emitted into `apps/wegotworkspace/wgw-modules/*/dist/`.
+Frontend note: all first-party web apps (`/admin`, `/drive`, `/mail`, `/notes`, `/voice`, `/settings`, `/home`, `/install`) are built from `packages/apps` and emitted into `apps/wegotworkspace/packages/apps/*/dist/`.
 
 ## Updating ONLYOFFICE Web
 
@@ -54,7 +54,7 @@ Optional args:
 bash tools/update-onlyoffice-web-subtree.sh <repo-url> <branch> [--squash|--no-squash]
 ```
 
-After updating, rebuild the package so runtime assets are synced into `apps/wegotworkspace/wgw-modules/office/build/`:
+After updating, rebuild the package so runtime assets are synced into `apps/wegotworkspace/packages/apps/office/build/`:
 
 ```bash
 pnpm --filter @wgw/onlyoffice-web build

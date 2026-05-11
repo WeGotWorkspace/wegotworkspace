@@ -27,6 +27,8 @@ if (is_string($buildDir) && trim($buildDir) !== '') {
 $vendorCandidates = [
     $runtimeRoot.'/vendor/autoload.php',
     $appRoot.'/vendor/autoload.php',
+    $runtimeRoot.'/packages/api/vendor/autoload.php',
+    $appRoot.'/packages/api/vendor/autoload.php',
 ];
 $autoload = null;
 foreach ($vendorCandidates as $candidate) {
@@ -38,7 +40,7 @@ foreach ($vendorCandidates as $candidate) {
 if ($autoload === null) {
     header('Content-Type: text/plain; charset=utf-8');
     http_response_code(503);
-    echo "Composer dependencies are missing. Run `composer --working-dir apps/wegotworkspace install` (and optionally set COMPOSER_VENDOR_DIR for custom runtime layouts).\n";
+    echo "Composer dependencies are missing. Run `composer --working-dir packages/api install` (and optionally set COMPOSER_VENDOR_DIR for custom runtime layouts).\n";
     exit;
 }
 
