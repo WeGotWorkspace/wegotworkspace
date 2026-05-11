@@ -24,18 +24,23 @@ final class UpdateManager
         $checks = array_merge($checks, self::capacityChecks(Paths::appRoot()));
         $inProgress = is_file(UpdateStateStore::lockPath());
         $phase = $inProgress && is_string($state['phase'] ?? null) ? $state['phase'] : null;
+        $current = $inProgress && is_array($state['current'] ?? null) ? $state['current'] : null;
+        $installedVersion = AppVersion::current();
+        if ($inProgress && is_array($current) && is_string($current['from'] ?? null) && trim((string) $current['from']) !== '') {
+            $installedVersion = trim((string) $current['from']);
+        }
 
         return [
-            'installedVersion' => AppVersion::current(),
+            'installedVersion' => $installedVersion,
             'schemaVersion' => SchemaMigrationRunner::currentVersion($pdo),
             'latest' => $latest,
-            'updateAvailable' => $hasRequiredMetadata && self::isUpdateAvailable(AppVersion::current(), $latest),
+            'updateAvailable' => $hasRequiredMetadata && self::isUpdateAvailable($installedVersion, $latest),
             'compatible' => $compatible,
             'backups' => self::listBackups(),
             'checks' => $checks,
             'inProgress' => $inProgress,
             'phase' => $phase,
-            'current' => $inProgress && is_array($state['current'] ?? null) ? $state['current'] : null,
+            'current' => $current,
             'download' => $inProgress && is_array($state['download'] ?? null) ? $state['download'] : null,
             'phaseProgress' => $inProgress && is_array($state['phase_progress'] ?? null) ? $state['phase_progress'] : null,
             'cancelRequested' => $inProgress && (bool) ($state['cancel_requested'] ?? false),
