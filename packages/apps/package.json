@@ -1,19 +1,19 @@
 {
-  "name": "@wgw/new-ui",
+  "name": "@wgw/apps",
   "private": true,
   "sideEffects": false,
   "type": "module",
   "scripts": {
-    "dev": "storybook dev -p 6007",
+    "dev": "storybook dev",
     "dev:app": "vite dev",
-    "typegen": "echo \"@wgw/new-ui uses shared @wgw/api generated OpenAPI types\"",
+    "typegen": "echo \"@wgw/apps uses shared @wgw/api generated OpenAPI types\"",
     "build": "vite build",
     "watch": "vite build --watch",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "storybook": "storybook dev -p 6007",
+    "storybook": "storybook dev",
     "build-storybook": "storybook build"
   },
   "dependencies": {

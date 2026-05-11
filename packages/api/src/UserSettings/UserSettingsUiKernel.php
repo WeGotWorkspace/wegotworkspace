@@ -138,8 +138,8 @@ final class UserSettingsUiKernel
         echo PwaSupport::headMetaTags($webBase, 'settings');
         echo '<style>body{font-family:system-ui,sans-serif;max-width:40rem;margin:2rem auto;padding:0 1rem;line-height:1.5}code{font-size:.9em;background:#f4f4f5;padding:.15rem .4rem;border-radius:4px}</style></head><body>';
         echo '<h1>User Settings</h1>';
-        echo '<p>The User Settings UI build is missing. From the project root, run <code>pnpm --filter @wgw/new-ui build</code> or <code>pnpm build</code>.</p>';
-        echo '<p>Source lives in <code>packages/new-ui/</code>; app builds write to <code>wgw-modules/settings/dist/</code>.</p>';
+        echo '<p>The User Settings UI build is missing. From the project root, run <code>pnpm --filter @wgw/apps build</code> or <code>pnpm build</code>.</p>';
+        echo '<p>Source lives in <code>packages/apps/</code>; app builds write to <code>wgw-modules/settings/dist/</code>.</p>';
         echo '<p class="hint">Open <code>'.htmlspecialchars(WebBase::url($webBase, '/settings/'), ENT_QUOTES, 'UTF-8').'</code> after signing in.</p>';
         echo '</body></html>';
     }
