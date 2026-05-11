@@ -1059,6 +1059,13 @@ export function useMeetController({
   const callLink = useMemo(() => {
     if (!roomCode || typeof window === "undefined") return "";
     const url = new URL(window.location.href);
+    if (/\/meet\/guest\/?$/.test(url.pathname)) {
+      url.pathname = url.pathname.replace(/\/meet\/guest\/?$/, "/meet/guest");
+    } else if (/\/meet\/?$/.test(url.pathname)) {
+      url.pathname = url.pathname.replace(/\/meet\/?$/, "/meet/guest");
+    } else {
+      url.pathname = "/meet/guest";
+    }
     url.searchParams.set("room", roomCode);
     return url.toString();
   }, [roomCode]);
