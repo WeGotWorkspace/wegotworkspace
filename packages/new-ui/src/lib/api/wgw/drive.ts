@@ -6,6 +6,8 @@ import type {
   WgwDriveDirectoryEntry,
   WgwDriveListingResponse,
   WgwDriveRenameRequest,
+  WgwDriveStarUpdateRequest,
+  WgwDriveStarsResponse,
   WgwDriveUserResponse,
 } from "@/lib/api/wgw/types";
 import type {
@@ -184,6 +186,19 @@ export function createWgwDriveOperations(initialCwd = "/"): DriveAPIOperations {
     async checkUploadReady(opts) {
       const res = await wgwFetch("/drive/upload", { method: "GET", signal: opts?.signal });
       if (!res.ok) throw new Error(`GET /drive/upload failed (${res.status})`);
+    },
+    async listStars(opts) {
+      const res = await wgwFetch("/drive/stars", { method: "GET", signal: opts?.signal });
+      if (!res.ok) throw new Error(`GET /drive/stars failed (${res.status})`);
+      const payload = (await wgwReadJson(res)) as WgwDriveStarsResponse;
+      return payload.data.paths ?? [];
+    },
+    async setStar(input, opts) {
+      const payload: WgwDriveStarUpdateRequest = {
+        path: normalizePath(input.path),
+        starred: !!input.starred,
+      };
+      await postJson("/drive/stars", payload, opts);
     },
     async uploadFiles(input, opts) {
       const targetCwd = normalizePath(input.cwd);
