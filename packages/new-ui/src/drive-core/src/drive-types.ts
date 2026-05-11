@@ -16,6 +16,16 @@ export type DriveAppBootstrap = {
   session: WorkspaceSession;
 };
 
+export type DriveUploadProgress = {
+  uploadedBytes: number;
+  totalBytes: number;
+  uploadedChunks: number;
+  totalChunks: number;
+  currentFileName: string;
+  filesCompleted: number;
+  filesTotal: number;
+};
+
 export type DriveAPIOperations = {
   refreshState: (opts?: { signal?: AbortSignal }) => Promise<DriveUIData>;
   changeDir: (to: string, opts?: { signal?: AbortSignal }) => Promise<DriveUIData>;
@@ -42,6 +52,9 @@ export type DriveAPIOperations = {
   ) => Promise<void>;
   uploadFiles: (
     input: { cwd: string; files: File[] },
-    opts?: { signal?: AbortSignal },
+    opts?: {
+      signal?: AbortSignal;
+      onProgress?: (progress: DriveUploadProgress) => void;
+    },
   ) => Promise<DriveUIData>;
 };
