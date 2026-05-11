@@ -102,11 +102,12 @@ export function useAdminController({
   };
 
   useEffect(() => {
-    if (!updates.inProgress) return;
     const refreshProgress = operations?.refreshUpdateState;
     const refreshAll = operations?.refreshState;
     if (!refreshProgress && !refreshAll) return;
     let cancelled = false;
+    let timeoutId: number | null = null;
+
     const poll = async () => {
       try {
         if (refreshProgress) {
@@ -125,13 +126,28 @@ export function useAdminController({
         // Keep showing existing progress if a poll fails temporarily.
       }
     };
-    void poll();
-    const intervalId = window.setInterval(() => {
-      void poll();
-    }, 2000);
+
+    const schedulePoll = () => {
+      if (cancelled) return;
+      timeoutId = window.setTimeout(
+        () => {
+          void poll().finally(() => {
+            schedulePoll();
+          });
+        },
+        updates.inProgress ? 2000 : 4000,
+      );
+    };
+
+    void poll().finally(() => {
+      schedulePoll();
+    });
+
     return () => {
       cancelled = true;
-      window.clearInterval(intervalId);
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
     };
   }, [updates.inProgress, operations?.refreshState, operations?.refreshUpdateState]);
 

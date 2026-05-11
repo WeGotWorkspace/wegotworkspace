@@ -49,7 +49,26 @@ final class UpdateManager
     private static function recoverStaleLockState(): void
     {
         $lockPath = UpdateStateStore::lockPath();
+        $maintenancePath = UpdateStateStore::maintenancePath();
+
         if (!is_file($lockPath)) {
+            if (is_file($maintenancePath)) {
+                @unlink($maintenancePath);
+                UpdateStateStore::clearCancelRequest();
+                $state = UpdateStateStore::read();
+                if (
+                    isset($state['phase'])
+                    || isset($state['current'])
+                    || isset($state['download'])
+                    || isset($state['phase_progress'])
+                    || isset($state['cancel_requested'])
+                ) {
+                    unset($state['phase'], $state['current'], $state['download'], $state['phase_progress'], $state['cancel_requested']);
+                    UpdateStateStore::write($state);
+                }
+                UpdateStateStore::appendLog('Recovered stale maintenance mode marker without active update lock.');
+            }
+
             return;
         }
         $lock = @fopen($lockPath, 'c+');
@@ -66,7 +85,7 @@ final class UpdateManager
         flock($lock, LOCK_UN);
         fclose($lock);
         @unlink($lockPath);
-        @unlink(UpdateStateStore::maintenancePath());
+        @unlink($maintenancePath);
         UpdateStateStore::clearCancelRequest();
 
         $state = UpdateStateStore::read();
