@@ -9,7 +9,7 @@ use App\Paths;
 use App\Pwa\PwaSupport;
 
 /**
- * Serves the Mail (Inkmail) UI static assets at {@code /mail/…} (see {@code packages/mail/}).
+ * Serves the Mail (Inkmail) UI static assets at {@code /mail/…} (see {@code packages/new-ui/}).
  */
 final class MailStatic
 {

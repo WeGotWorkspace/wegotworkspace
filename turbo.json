@@ -20,14 +20,7 @@
       "outputs": [
         "../../packages/api/vendor/**",
         "../../apps/wegotworkspace/wgw-modules/office/build/**",
-        "../../apps/wegotworkspace/wgw-modules/admin/dist/**",
-        "../../apps/wegotworkspace/wgw-modules/settings/dist/**",
-        "../../apps/wegotworkspace/wgw-modules/drive/dist/**",
-        "../../apps/wegotworkspace/wgw-modules/voice/dist/**",
-        "../../apps/wegotworkspace/wgw-modules/mail/dist/**",
-        "../../apps/wegotworkspace/wgw-modules/notes/dist/**",
-        "../../apps/wegotworkspace/wgw-modules/home/dist/**",
-        "../../apps/wegotworkspace/wgw-modules/install/dist/**"
+        "../../apps/wegotworkspace/wgw-modules/*/dist/**"
       ]
     },
     "typegen": {
