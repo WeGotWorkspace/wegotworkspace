@@ -39,6 +39,7 @@ type ListItemProps = {
   isTouch: boolean;
   isDragging: boolean;
   onClick: (e: React.MouseEvent) => void;
+  onDoubleClick?: (e: React.MouseEvent) => void;
   onLongPress: () => void;
   onDragStart: () => void;
   onDragEnd: () => void;
@@ -77,6 +78,7 @@ export function ListItem({
   isTouch,
   isDragging,
   onClick,
+  onDoubleClick,
   onLongPress,
   onDragStart,
   onDragEnd,
@@ -156,6 +158,9 @@ export function ListItem({
           return;
         }
         onClick(e);
+      }}
+      onDoubleClick={(e) => {
+        onDoubleClick?.(e);
       }}
       onMouseDown={(e) => {
         if (e.shiftKey) e.preventDefault();
@@ -249,7 +254,10 @@ export function ListItem({
 
   const leadingActions = swipeLeftAction ? (
     <LeadingActions>
-      <SwipeActionPrimitive onClick={swipeLeftAction.onActivate} destructive={swipeLeftAction.destructive}>
+      <SwipeActionPrimitive
+        onClick={swipeLeftAction.onActivate}
+        destructive={swipeLeftAction.destructive}
+      >
         <div
           className="flex items-center justify-center text-white text-xs font-medium gap-1 flex-col w-full"
           style={{ backgroundColor: swipeLeftAction.color, minWidth: 80 }}

@@ -10,6 +10,8 @@ import { WorkspaceApp } from "@/workspace-app/src/workspace-app";
 import { WorkspaceUserFooter } from "@/workspace-shell/src/workspace-app-layout";
 import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
 import { MailDetailView } from "@/mail-core/src/mail-detail-view";
+import { MailComposeView } from "@/mail-core/src/mail-compose-view";
+import { Dialog, DialogContent } from "@/ui/dialog";
 import { MultiSelectionView } from "@/multi-selection-view/src/multi-selection-view";
 import { formatMailDateForDetail } from "@/mail-core/src/mail-date-utils";
 import { MailDetailActionBar } from "@/mail-core/src/mail-detail-action-bar";
@@ -79,6 +81,7 @@ export function MailWorkspace({
     selectedIds,
     selectionMode,
     handleSelect,
+    handleMailItemDoubleClick,
     enterSelectionFor,
     setMoveDialog,
     setSearchQuery,
@@ -90,6 +93,16 @@ export function MailWorkspace({
     mailboxView,
     selectView,
     compose,
+    reply,
+    replyAll,
+    forward,
+    composeDialogId,
+    closeComposeDialog,
+    composeDrafts,
+    updateComposeDraft,
+    saveComposeDraft,
+    sendComposeDraft,
+    discardComposeDraft,
     toggleStar,
     moveOne,
     toggleArchiveForMessage,
@@ -98,7 +111,6 @@ export function MailWorkspace({
     markRead,
     markUnread,
     sidebarUnreadBadge,
-    show,
     downloadAttachment,
   } = useMailController({
     messages,
@@ -159,6 +171,11 @@ export function MailWorkspace({
     if (selectedMailboxes.size === 1) return Array.from(selectedMailboxes)[0];
     return undefined;
   })();
+  const composeTarget = composeDialogId
+    ? mail.find((row) => row.id === composeDialogId)
+    : undefined;
+  const composeTargetDraft =
+    composeDialogId && composeTarget ? composeDrafts[composeDialogId] : undefined;
 
   return (
     <>
@@ -224,6 +241,7 @@ export function MailWorkspace({
             activeId,
             isItemDragging,
             handleSelect,
+            handleDoubleClick: handleMailItemDoubleClick,
             enterSelectionFor,
             itemDragHandlers,
             toggleStar,
@@ -238,7 +256,9 @@ export function MailWorkspace({
             <MailDetailActionBar
               active={active}
               closeMobileDetail={c.closeMobileDetail}
-              show={show}
+              onReply={reply}
+              onReplyAll={replyAll}
+              onForward={forward}
               setMoveDialog={setMoveDialog}
               markRead={markRead}
               markUnread={markUnread}
@@ -279,6 +299,40 @@ export function MailWorkspace({
           ) : null;
         }}
       />
+
+      {composeTarget && composeTargetDraft ? (
+        <Dialog
+          open={!!composeDialogId}
+          onOpenChange={(open) => (!open ? closeComposeDialog() : null)}
+        >
+          <DialogContent className="max-w-[980px] w-[min(980px,96vw)] p-0 overflow-hidden">
+            <div className="p-4 md:p-6">
+              <MailComposeView
+                mailId={composeTarget.id}
+                mailbox={composeTarget.mailbox}
+                date={formatMailDateForDetail(composeTarget.date)}
+                to={composeTargetDraft.to}
+                cc={composeTargetDraft.cc}
+                bcc={composeTargetDraft.bcc}
+                subject={composeTargetDraft.subject}
+                body={composeTargetDraft.body}
+                onToChange={(value) => updateComposeDraft(composeTarget.id, { to: value })}
+                onCcChange={(value) => updateComposeDraft(composeTarget.id, { cc: value })}
+                onBccChange={(value) => updateComposeDraft(composeTarget.id, { bcc: value })}
+                onSubjectChange={(value) =>
+                  updateComposeDraft(composeTarget.id, { subject: value })
+                }
+                onBodyChange={(value) => updateComposeDraft(composeTarget.id, { body: value })}
+                onSaveDraft={() => void saveComposeDraft(composeTarget.id)}
+                onSend={() => void sendComposeDraft(composeTarget.id)}
+                onDiscard={() => void discardComposeDraft(composeTarget.id)}
+                saving={composeTargetDraft.saving}
+                sending={composeTargetDraft.sending}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      ) : null}
 
       <MoveToDialog
         open={!!moveDialog}
