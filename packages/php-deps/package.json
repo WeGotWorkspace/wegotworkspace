@@ -1,7 +1,0 @@
-{
-  "name": "@wgw/php-deps",
-  "private": true,
-  "scripts": {
-    "build": "composer install --no-interaction --prefer-dist --working-dir ../../packages/api"
-  }
-}
