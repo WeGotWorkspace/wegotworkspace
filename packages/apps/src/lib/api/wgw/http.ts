@@ -28,6 +28,7 @@ let storageHydrated = false;
 
 const ACCESS_TOKEN_KEY = "wgw.api.access_token";
 const REFRESH_TOKEN_KEY = "wgw.api.refresh_token";
+const LOGGED_OUT_KEY = "wgw.api.logged_out";
 
 function hasWindowStorage(): boolean {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
@@ -52,6 +53,28 @@ function persistTokens(): void {
     else window.localStorage.removeItem(ACCESS_TOKEN_KEY);
     if (refreshToken) window.localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
     else window.localStorage.removeItem(REFRESH_TOKEN_KEY);
+  } catch {
+    // Ignore storage failures and keep in-memory fallback.
+  }
+}
+
+function readLoggedOutMarker(): boolean {
+  if (!hasWindowStorage()) return false;
+  try {
+    return window.localStorage.getItem(LOGGED_OUT_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function setLoggedOutMarker(value: boolean): void {
+  if (!hasWindowStorage()) return;
+  try {
+    if (value) {
+      window.localStorage.setItem(LOGGED_OUT_KEY, "1");
+    } else {
+      window.localStorage.removeItem(LOGGED_OUT_KEY);
+    }
   } catch {
     // Ignore storage failures and keep in-memory fallback.
   }
@@ -99,12 +122,14 @@ function applyTokens(tokens: TokenResponse): void {
   refreshToken = tokens.refresh_token;
   storageHydrated = true;
   persistTokens();
+  setLoggedOutMarker(false);
 }
 
 export function wgwSessionAvailable(): boolean {
   hydrateTokensFromStorage();
   const hasTokenPair = Boolean(accessToken && refreshToken);
   if (hasTokenPair) return true;
+  if (readLoggedOutMarker()) return false;
   const username = import.meta.env.VITE_WGW_DEV_USERNAME as string | undefined;
   const password = import.meta.env.VITE_WGW_DEV_PASSWORD as string | undefined;
   return Boolean(username?.trim() && password && password.trim());
@@ -122,6 +147,7 @@ export async function wgwLoginWithCredentials(username: string, password: string
 
 export async function wgwLogout(): Promise<void> {
   hydrateTokensFromStorage();
+  setLoggedOutMarker(true);
   try {
     if (refreshToken || accessToken) {
       await postJson(
@@ -145,6 +171,10 @@ export async function wgwEnsureSession(): Promise<void> {
   if (refreshToken) {
     const refreshed = await wgwTryRefresh();
     if (refreshed && accessToken) return;
+  }
+
+  if (readLoggedOutMarker()) {
+    throw new Error("Missing auth session. Sign in to continue.");
   }
 
   const username = import.meta.env.VITE_WGW_DEV_USERNAME as string | undefined;

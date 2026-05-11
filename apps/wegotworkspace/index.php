@@ -172,8 +172,13 @@ if ($underInstall) {
 
 $rootPath = WebBase::url($webBase, '/');
 if ($path === $rootPath || ($webBase !== '' && ($path === $webBase || $path === $webBase.'/'))) {
-    header('Location: '.WebBase::url($webBase, '/drive/'), true, 302);
-    exit;
+    $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+    $accept = strtolower((string) ($_SERVER['HTTP_ACCEPT'] ?? ''));
+    $isBrowserNav = ($method === 'GET' || $method === 'HEAD') && str_contains($accept, 'text/html');
+    if ($isBrowserNav) {
+        header('Location: '.WebBase::url($webBase, '/drive/'), true, 302);
+        exit;
+    }
 }
 
 if (ApiKernel::tryRespond($webBase, $path)) {
