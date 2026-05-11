@@ -1,7 +1,12 @@
 import { createWorkspaceSource } from "@/lib/api/create-workspace-source";
 import { wgwLiveApiEnabled } from "@/lib/api/wgw/http";
 import { mockWorkspaceSession } from "@/lib/api/mock/workspace-session-mock";
-import { createWgwVoiceOperations, fetchVoiceLiveBootstrap } from "@/lib/api/wgw/voice";
+import {
+  createWgwVoiceGuestOperations,
+  createWgwVoiceOperations,
+  fetchVoiceGuestBootstrap,
+  fetchVoiceLiveBootstrap,
+} from "@/lib/api/wgw/voice";
 import type { MeetAPIOperations, MeetAppBootstrap } from "@/meet-core/src/meet-types";
 
 export type MeetApiSource = {
@@ -13,6 +18,13 @@ export function createWgwMeetApiSource(): MeetApiSource {
   return {
     loadBootstrap: fetchVoiceLiveBootstrap,
     createOperations: () => createWgwVoiceOperations(),
+  };
+}
+
+export function createWgwMeetGuestApiSource(): MeetApiSource {
+  return {
+    loadBootstrap: fetchVoiceGuestBootstrap,
+    createOperations: () => createWgwVoiceGuestOperations(),
   };
 }
 
