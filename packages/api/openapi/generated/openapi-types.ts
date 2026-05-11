@@ -2438,19 +2438,84 @@ export interface components {
             auth?: Record<string, never>;
             domains?: Record<string, never>[];
         };
+        /** @enum {string} */
+        InstallerStep: "welcome" | "requirements" | "database" | "site" | "account" | "done" | "installed";
+        /** @enum {string} */
+        InstallerDbDriver: "sqlite" | "mysql";
+        InstallerCheck: {
+            ok: boolean;
+            label: string;
+            detail: string;
+        };
+        InstallerChecks: components["schemas"]["InstallerCheck"][];
+        InstallerDbState: {
+            sqlite_path?: string;
+            mysql_host?: string;
+            mysql_port?: number;
+            mysql_db?: string;
+            mysql_user?: string;
+        };
+        InstallerRuntimeState: {
+            step: components["schemas"]["InstallerStep"];
+            flash: string | null;
+            db_driver: components["schemas"]["InstallerDbDriver"];
+            db: components["schemas"]["InstallerDbState"];
+            timezone: string;
+            base_uri: string;
+            enable_files: boolean;
+            enable_calendars: boolean;
+            enable_contacts: boolean;
+            show_browser_ui: boolean;
+            checks: components["schemas"]["InstallerChecks"];
+            already_installed?: boolean;
+            admin_updates_url?: string;
+        };
         InstallerBootstrapResponse: {
-            state?: Record<string, never>;
+            state: components["schemas"]["InstallerRuntimeState"];
         };
         InstallerStateResponse: {
-            installed?: boolean;
-            maintenance?: boolean;
-            state?: Record<string, never>;
+            installed: boolean;
+            maintenance: boolean;
+            state: components["schemas"]["InstallerRuntimeState"];
         };
         InstallerActionResponse: {
-            ok?: boolean;
+            ok: boolean;
             error?: string;
             redirect?: string;
-            state?: Record<string, never>;
+            state?: components["schemas"]["InstallerRuntimeState"];
+        };
+        /** @enum {string} */
+        InstallerAction: "welcome_next" | "requirements_check" | "requirements_next" | "database_test" | "database_next" | "site_next" | "install";
+        InstallerActionPayload: {
+            db_driver?: components["schemas"]["InstallerDbDriver"];
+            sqlite_path?: string;
+            mysql_host?: string;
+            mysql_port?: number;
+            mysql_db?: string;
+            mysql_user?: string;
+            mysql_password?: string;
+            base_uri_override?: string;
+            timezone?: string;
+            enable_files?: boolean;
+            enable_calendars?: boolean;
+            enable_contacts?: boolean;
+            show_browser_ui?: boolean;
+            username?: string;
+            display_name?: string;
+            email?: string;
+            password?: string;
+            password_confirm?: string;
+            mail_enabled?: boolean;
+            mail_imap_host?: string;
+            mail_imap_port?: string;
+            mail_imap_security?: string;
+            mail_smtp_host?: string;
+            mail_smtp_port?: string;
+            mail_smtp_security?: string;
+            voice_enabled?: boolean;
+            voice_turn_url?: string;
+            voice_turn_username?: string;
+            voice_turn_credential?: string;
         };
         /**
          * @example {
@@ -2462,8 +2527,8 @@ export interface components {
          *     }
          */
         InstallerActionRequest: {
-            action?: string;
-            payload?: Record<string, never>;
+            action: components["schemas"]["InstallerAction"];
+            payload?: components["schemas"]["InstallerActionPayload"];
         };
         /**
          * @example {

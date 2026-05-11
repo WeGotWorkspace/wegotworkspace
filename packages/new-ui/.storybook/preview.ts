@@ -28,6 +28,7 @@ const preview: Preview = {
         createRoute({ getParentRoute: () => rootRoute, path: "notes", component: renderStory }),
         createRoute({ getParentRoute: () => rootRoute, path: "mail", component: renderStory }),
         createRoute({ getParentRoute: () => rootRoute, path: "drive", component: renderStory }),
+        createRoute({ getParentRoute: () => rootRoute, path: "install", component: renderStory }),
         createRoute({ getParentRoute: () => rootRoute, path: "settings", component: renderStory }),
         createRoute({ getParentRoute: () => rootRoute, path: "meet", component: renderStory }),
         createRoute({ getParentRoute: () => rootRoute, path: "admin", component: renderStory }),
