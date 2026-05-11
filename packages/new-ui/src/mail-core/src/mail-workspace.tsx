@@ -96,6 +96,7 @@ export function MailWorkspace({
     reply,
     replyAll,
     forward,
+    openDraftInComposer,
     composeDialogId,
     closeComposeDialog,
     composeDrafts,
@@ -259,6 +260,9 @@ export function MailWorkspace({
               onReply={reply}
               onReplyAll={replyAll}
               onForward={forward}
+              onEditDraft={() => {
+                if (active) openDraftInComposer(active.id);
+              }}
               setMoveDialog={setMoveDialog}
               markRead={markRead}
               markUnread={markUnread}
