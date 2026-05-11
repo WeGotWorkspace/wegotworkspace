@@ -13,6 +13,7 @@ import type {
 import type {
   DriveAPIOperations,
   DriveAppBootstrap,
+  DriveUploadProgress,
   DriveUIData,
 } from "@/drive-core/src/drive-types";
 
@@ -202,10 +203,33 @@ export function createWgwDriveOperations(initialCwd = "/"): DriveAPIOperations {
     },
     async uploadFiles(input, opts) {
       const targetCwd = normalizePath(input.cwd);
+      const totalBytes = input.files.reduce((sum, file) => sum + file.size, 0);
+      const allChunks = input.files.reduce(
+        (sum, file) => sum + Math.max(1, Math.ceil(file.size / DRIVE_UPLOAD_CHUNK_SIZE)),
+        0,
+      );
+      let uploadedBytes = 0;
+      let uploadedChunks = 0;
+      let filesCompleted = 0;
+      const filesTotal = input.files.length;
+      const publishProgress = (currentFileName: string) => {
+        if (!opts?.onProgress) return;
+        const progress: DriveUploadProgress = {
+          uploadedBytes,
+          totalBytes,
+          uploadedChunks,
+          totalChunks: allChunks,
+          currentFileName,
+          filesCompleted,
+          filesTotal,
+        };
+        opts.onProgress(progress);
+      };
+      publishProgress(input.files[0]?.name ?? "");
       for (const file of input.files) {
-        const totalChunks = Math.max(1, Math.ceil(file.size / DRIVE_UPLOAD_CHUNK_SIZE));
+        const fileChunks = Math.max(1, Math.ceil(file.size / DRIVE_UPLOAD_CHUNK_SIZE));
         const identifier = uploadIdentifier(file);
-        for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex += 1) {
+        for (let chunkIndex = 0; chunkIndex < fileChunks; chunkIndex += 1) {
           const start = chunkIndex * DRIVE_UPLOAD_CHUNK_SIZE;
           const end = Math.min(file.size, start + DRIVE_UPLOAD_CHUNK_SIZE);
           const chunkBlob = file.slice(start, end);
@@ -215,7 +239,7 @@ export function createWgwDriveOperations(initialCwd = "/"): DriveAPIOperations {
           form.append("resumableFilename", file.name);
           form.append("resumableIdentifier", identifier);
           form.append("resumableChunkNumber", String(chunkIndex + 1));
-          form.append("resumableTotalChunks", String(totalChunks));
+          form.append("resumableTotalChunks", String(fileChunks));
           form.append("cwd", targetCwd);
 
           const res = await wgwFetch("/drive/upload", {
@@ -224,7 +248,12 @@ export function createWgwDriveOperations(initialCwd = "/"): DriveAPIOperations {
             signal: opts?.signal,
           });
           if (!res.ok) throw new Error(`POST /drive/upload failed (${res.status})`);
+          uploadedChunks += 1;
+          uploadedBytes += chunkBlob.size;
+          publishProgress(file.name);
         }
+        filesCompleted += 1;
+        publishProgress(file.name);
       }
       const state = await fetchState(targetCwd, opts);
       cwd = normalizePath(state.cwd);

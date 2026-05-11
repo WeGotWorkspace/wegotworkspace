@@ -69,7 +69,11 @@ import { WorkspaceAppSwitcher } from "@/workspace-app-switcher/src/workspace-app
 import { ListHeader } from "@/list-header/src/list-header";
 import { createPwaHead } from "@/lib/pwa-head";
 import { DriveApp } from "@/drive-core/src/drive-app";
-import type { DriveAPIOperations, DriveUIData } from "@/drive-core/src/drive-types";
+import type {
+  DriveAPIOperations,
+  DriveUIData,
+  DriveUploadProgress,
+} from "@/drive-core/src/drive-types";
 import { parentAndName, pathFromDirectoryEntry } from "@/lib/api/wgw/drive";
 import { AppSidebar, AppSidebarScrim } from "@/app-sidebar/src/app-sidebar";
 import {
@@ -338,6 +342,19 @@ function inferFileKindFromName(name: string): FileKind {
   return "file";
 }
 
+function formatBytesCompact(bytes: number): string {
+  if (bytes <= 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB"];
+  let value = bytes;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit += 1;
+  }
+  const precision = value >= 100 || unit === 0 ? 0 : 1;
+  return `${value.toFixed(precision)} ${units[unit]}`;
+}
+
 function driveFileFromEntry(
   entry: DriveUIData["directory"]["files"][number],
   username: string,
@@ -410,7 +427,14 @@ export function DriveWorkspace({
   const [knownGroupRoots, setKnownGroupRoots] = useState<string[]>([]);
   const [imagePreviewUrls, setImagePreviewUrls] = useState<Record<string, string>>({});
   const [dropUploadActive, setDropUploadActive] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{
+    label: string;
+    percent: number;
+    detail: string;
+    done: boolean;
+  } | null>(null);
   const imagePreviewUrlsRef = useRef<Record<string, string>>({});
+  const uploadProgressResetTimerRef = useRef<number | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -627,6 +651,9 @@ export function DriveWorkspace({
         URL.revokeObjectURL(url);
       }
       imagePreviewUrlsRef.current = {};
+      if (uploadProgressResetTimerRef.current !== null) {
+        window.clearTimeout(uploadProgressResetTimerRef.current);
+      }
     };
   }, []);
 
@@ -972,25 +999,62 @@ export function DriveWorkspace({
     if (!fileList || fileList.length === 0) return;
     const selected = Array.from(fileList);
     const targetParent = view.type === "folder" ? view.path : "My Drive";
+    const showProgress = (progress: DriveUploadProgress) => {
+      const totalBytes = Math.max(1, progress.totalBytes);
+      const percent = Math.min(100, Math.round((progress.uploadedBytes / totalBytes) * 100));
+      const fileLabel =
+        progress.currentFileName.trim() !== ""
+          ? `Uploading ${progress.currentFileName}`
+          : "Uploading files";
+      const detail = `${formatBytesCompact(progress.uploadedBytes)} / ${formatBytesCompact(progress.totalBytes)} · ${progress.filesCompleted}/${progress.filesTotal} files`;
+      setUploadProgress({ label: fileLabel, percent, detail, done: false });
+    };
+    if (uploadProgressResetTimerRef.current !== null) {
+      window.clearTimeout(uploadProgressResetTimerRef.current);
+      uploadProgressResetTimerRef.current = null;
+    }
+    setUploadProgress({
+      label:
+        selected.length === 1
+          ? `Uploading ${selected[0]!.name}`
+          : `Uploading ${selected.length} files`,
+      percent: 0,
+      detail: `0 / ${formatBytesCompact(selected.reduce((sum, file) => sum + file.size, 0))}`,
+      done: false,
+    });
     if (operations) {
       void operations
         .checkUploadReady()
         .then(() =>
-          operations.uploadFiles({
-            cwd: apiPathFromUiPath(targetParent, currentUsername, groupRootNames),
-            files: selected,
-          }),
+          operations.uploadFiles(
+            {
+              cwd: apiPathFromUiPath(targetParent, currentUsername, groupRootNames),
+              files: selected,
+            },
+            { onProgress: showProgress },
+          ),
         )
         .then((nextData) => {
           setFiles(
             nextData.directory.files.map((entry) => driveFileFromEntry(entry, currentUsername)),
           );
           setView({ type: "folder", path: uiPathFromApiPath(nextData.cwd, currentUsername) });
+          setUploadProgress({
+            label: `Uploaded ${selected.length} file${selected.length === 1 ? "" : "s"}`,
+            percent: 100,
+            detail: "Upload complete",
+            done: true,
+          });
+          uploadProgressResetTimerRef.current = window.setTimeout(() => {
+            setUploadProgress(null);
+            uploadProgressResetTimerRef.current = null;
+          }, 1400);
           toast(`Uploaded ${selected.length} file${selected.length === 1 ? "" : "s"}`, {
             icon: <Upload className="size-4" />,
           });
         })
         .catch((error: unknown) => {
+          setUploadProgress(null);
           const message = error instanceof Error ? error.message : String(error);
           toast.error(message);
         });
@@ -1027,6 +1091,16 @@ export function DriveWorkspace({
       };
     });
     setFiles((p) => [...created, ...p]);
+    setUploadProgress({
+      label: `Uploaded ${created.length} file${created.length === 1 ? "" : "s"}`,
+      percent: 100,
+      detail: "Upload complete",
+      done: true,
+    });
+    uploadProgressResetTimerRef.current = window.setTimeout(() => {
+      setUploadProgress(null);
+      uploadProgressResetTimerRef.current = null;
+    }, 1200);
     toast(`Uploaded ${created.length} file${created.length === 1 ? "" : "s"}`, {
       icon: <Upload className="size-4" />,
     });
@@ -1503,6 +1577,49 @@ export function DriveWorkspace({
               searchInputRef={searchInputRef}
             />
           </header>
+          {uploadProgress && (
+            <div
+              className="px-4 md:px-8 py-2.5 border-b shrink-0"
+              style={{ borderColor: "color-mix(in oklab, var(--color-ink) 8%, transparent)" }}
+            >
+              <div className="flex items-center justify-between gap-3 text-xs">
+                <span
+                  className="font-medium truncate"
+                  style={{ color: "color-mix(in oklab, var(--color-ink) 85%, transparent)" }}
+                >
+                  {uploadProgress.label}
+                </span>
+                <span
+                  className="tabular-nums shrink-0"
+                  style={{ color: "color-mix(in oklab, var(--color-ink) 60%, transparent)" }}
+                >
+                  {uploadProgress.percent}%
+                </span>
+              </div>
+              <div
+                className="mt-1.5 h-1.5 w-full rounded-full overflow-hidden"
+                style={{
+                  backgroundColor: "color-mix(in oklab, var(--color-ink) 10%, transparent)",
+                }}
+              >
+                <div
+                  className="h-full rounded-full transition-[width] duration-150"
+                  style={{
+                    width: `${uploadProgress.percent}%`,
+                    backgroundColor: uploadProgress.done
+                      ? "var(--color-emerald)"
+                      : "var(--drive-sidebar)",
+                  }}
+                />
+              </div>
+              <p
+                className="mt-1 text-[11px]"
+                style={{ color: "color-mix(in oklab, var(--color-ink) 58%, transparent)" }}
+              >
+                {uploadProgress.detail}
+              </p>
+            </div>
+          )}
 
           {/* Content */}
           <div className="flex-1 flex min-h-0">
