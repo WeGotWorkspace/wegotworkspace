@@ -1,4 +1,7 @@
-import { useMemo } from "react";
+import { useMemo, useState, type FormEvent } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { wgwLoginWithCredentials } from "@/lib/api/wgw/http";
+import { sanitizeWgwReturnPath } from "@/lib/api/wgw/route-guard";
 
 type LoginScreenError = "" | "invalid" | "throttled";
 
@@ -8,18 +11,53 @@ export type LoginScreenProps = {
 };
 
 export function LoginScreen({ returnPath = "/", error = "" }: LoginScreenProps = {}) {
+  const navigate = useNavigate();
   const search = useMemo(() => {
     if (typeof window === "undefined") return new URLSearchParams();
     return new URLSearchParams(window.location.search);
   }, []);
-  const resolvedReturnPath = returnPath || search.get("return")?.trim() || "/";
+  const resolvedReturnPath = sanitizeWgwReturnPath(returnPath || search.get("return"));
   const resolvedError = (error || search.get("error")?.trim() || "") as LoginScreenError;
-  const errorMessage =
-    resolvedError === "invalid"
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [runtimeError, setRuntimeError] = useState("");
+  const errorMessage = useMemo(() => {
+    if (runtimeError.trim()) return runtimeError.trim();
+    return resolvedError === "invalid"
       ? "That username or password does not match this server."
       : resolvedError === "throttled"
         ? "Too many sign-in attempts. Wait a few minutes and try again."
         : "";
+  }, [resolvedError, runtimeError]);
+
+  const submitAuth = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setRuntimeError("");
+    const normalizedUsername = username.trim();
+    if (!normalizedUsername || !password) {
+      setRuntimeError("Username and password are required.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await wgwLoginWithCredentials(normalizedUsername, password);
+      await navigate({ to: resolvedReturnPath });
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message.trim() : "Could not sign in.";
+      const normalized = message.toLowerCase();
+      if (normalized.includes("invalid credentials")) {
+        setRuntimeError("That username or password does not match this server.");
+      } else if (normalized.includes("too many login attempts")) {
+        setRuntimeError("Too many sign-in attempts. Wait a few minutes and try again.");
+      } else {
+        setRuntimeError(message || "Could not sign in.");
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <main
@@ -70,7 +108,7 @@ export function LoginScreen({ returnPath = "/", error = "" }: LoginScreenProps =
               </p>
             )}
 
-            <form className="space-y-7" method="post" action="/login/">
+            <form className="space-y-7" onSubmit={submitAuth}>
               <input type="hidden" name="return" value={resolvedReturnPath} />
               <div>
                 <label
@@ -84,9 +122,12 @@ export function LoginScreen({ returnPath = "/", error = "" }: LoginScreenProps =
                   id="username"
                   name="username"
                   type="text"
+                  value={username}
+                  onChange={(event) => setUsername(event.target.value)}
                   autoComplete="username"
                   placeholder="yourname"
                   required
+                  disabled={submitting}
                   className="w-full bg-transparent border-0 border-b-2 pb-2 text-lg focus:outline-none transition-colors"
                   style={{
                     borderColor: "var(--color-ghost)",
@@ -108,9 +149,12 @@ export function LoginScreen({ returnPath = "/", error = "" }: LoginScreenProps =
                   id="password"
                   name="password"
                   type="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
                   autoComplete="current-password"
                   placeholder="••••••••"
                   required
+                  disabled={submitting}
                   className="w-full bg-transparent border-0 border-b-2 pb-2 text-lg focus:outline-none transition-colors"
                   style={{
                     borderColor: "var(--color-ghost)",
@@ -122,6 +166,7 @@ export function LoginScreen({ returnPath = "/", error = "" }: LoginScreenProps =
 
               <button
                 type="submit"
+                disabled={submitting}
                 className="group w-full py-4 rounded-full text-base font-medium transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2"
                 style={{
                   backgroundColor: "var(--color-forest)",
@@ -131,7 +176,7 @@ export function LoginScreen({ returnPath = "/", error = "" }: LoginScreenProps =
                     "0 10px 30px -10px color-mix(in oklab, var(--color-forest) 60%, transparent)",
                 }}
               >
-                Sign in
+                {submitting ? "Signing in..." : "Sign in"}
               </button>
             </form>
           </div>

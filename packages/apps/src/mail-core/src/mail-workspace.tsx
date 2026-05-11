@@ -48,7 +48,7 @@ export function MailWorkspace({
   encodeFolderToken = defaultEncodeFolderToken,
   mailboxLoader,
   operations,
-  logoutTo = "/",
+  logoutTo = "/logout",
 }: MailWorkspaceProps) {
   const closeSidebarOnMobile = (closeSidebar: () => void) => {
     if (typeof window === "undefined") return;
