@@ -39,6 +39,10 @@ function uploadIdentifier(file: File): string {
   return raw.replace(/[^0-9A-Za-z_]/g, "_");
 }
 
+function isVisibleDriveEntry(entry: WgwDriveDirectoryEntry): boolean {
+  return !entry.name.trim().startsWith(".");
+}
+
 const DRIVE_UPLOAD_CHUNK_SIZE = 1 * 1024 * 1024; // Stay below stricter upload_max_filesize defaults.
 
 async function fetchDriveUser(opts?: { signal?: AbortSignal }) {
@@ -57,7 +61,10 @@ async function fetchListing(dir: string, opts?: { signal?: AbortSignal }) {
   });
   if (!res.ok) throw new Error(`POST /drive/getdir failed (${res.status})`);
   const payload = (await wgwReadJson(res)) as WgwDriveListingResponse;
-  return payload.data;
+  return {
+    ...payload.data,
+    files: payload.data.files.filter(isVisibleDriveEntry),
+  };
 }
 
 async function fetchState(dir: string, opts?: { signal?: AbortSignal }): Promise<DriveUIData> {
@@ -134,7 +141,7 @@ export function createWgwDriveOperations(initialCwd = "/"): DriveAPIOperations {
       });
       if (!res.ok) throw new Error(`POST /drive/searchfiles failed (${res.status})`);
       const payload = (await wgwReadJson(res)) as WgwDriveListingResponse;
-      return payload.data.files;
+      return payload.data.files.filter(isVisibleDriveEntry);
     },
     async createFolder(input, opts) {
       const payload: WgwDriveCreateRequest = {
