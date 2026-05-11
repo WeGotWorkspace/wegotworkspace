@@ -1,8 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { MailApp } from "@/mail-core/src/mail-app";
 import { createPwaHead } from "@/lib/pwa-head";
+import { requireWgwAuth } from "@/lib/api/wgw/route-guard";
 
 export const Route = createFileRoute("/mail")({
+  beforeLoad: ({ location }) => {
+    requireWgwAuth(location);
+  },
   component: MailRoute,
   head: () =>
     createPwaHead({

@@ -72,25 +72,19 @@ spl_autoload_register(static function (string $class) use ($runtimeRoot, $appRoo
     }
 }, true, true);
 
-use App\Admin\AdminUiKernel;
+use App\AppShell\AppShellStatic;
 use App\Api\ApiKernel;
-use App\Auth\UiLoginKernel;
 use App\Config;
-use App\Drive\DriveKernel;
 use App\Installer\InstallerKernel;
 use App\Installer\WebBase;
 use App\Paths;
 use App\Server\SabreApp;
-use App\Home\HomeKernel;
-use App\Mail\MailKernel;
-use App\Notes\NotesKernel;
 use App\Office\OfficeEntry;
 use App\Office\OfficeStatic;
 use App\Pwa\PwaSupport;
 use App\Security\TrustedHostGate;
-use App\Voice\VoiceKernel;
-use App\UserSettings\UserSettingsUiKernel;
 use App\Update\UpdateManager;
+use App\Voice\VoiceKernel;
 
 $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
     || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
@@ -176,19 +170,9 @@ if ($underInstall) {
     exit;
 }
 
-$adminPrefix = WebBase::url($webBase, '/admin');
-if ($path === $adminPrefix || str_starts_with($path, $adminPrefix.'/')) {
-    AdminUiKernel::tryRespond($webBase, $path);
-    exit;
-}
-
-$settingsPrefix = WebBase::url($webBase, '/settings');
-if ($path === $settingsPrefix || str_starts_with($path, $settingsPrefix.'/')) {
-    UserSettingsUiKernel::tryRespond($webBase, $path);
-    exit;
-}
-
-if (UiLoginKernel::tryRespond($webBase, $path)) {
+$rootPath = WebBase::url($webBase, '/');
+if ($path === $rootPath || ($webBase !== '' && ($path === $webBase || $path === $webBase.'/'))) {
+    header('Location: '.WebBase::url($webBase, '/drive/'), true, 302);
     exit;
 }
 
@@ -235,19 +219,7 @@ if (VoiceKernel::tryRespond($webBase, $path)) {
     exit;
 }
 
-if (MailKernel::tryRespond($webBase, $path)) {
-    exit;
-}
-
-if (NotesKernel::tryRespond($webBase, $path)) {
-    exit;
-}
-
-if (DriveKernel::tryRespond($webBase, $path)) {
-    exit;
-}
-
-if (HomeKernel::tryRespond($webBase, $path)) {
+if (AppShellStatic::tryServe($webBase, $path)) {
     exit;
 }
 

@@ -62,8 +62,12 @@ import {
 import { SidebarGroup, SidebarLink } from "@/settings-sidebar/src/settings-sidebar";
 import { WorkspaceAppSwitcher } from "@/workspace-app-switcher/src/workspace-app-switcher";
 import { AdminApp as AdminCoreApp } from "@/admin-core/src/admin-app";
+import { requireWgwAuth } from "@/lib/api/wgw/route-guard";
 
 export const Route = createFileRoute("/admin")({
+  beforeLoad: ({ location }) => {
+    requireWgwAuth(location);
+  },
   component: AdminCoreApp,
   head: () => ({
     meta: [

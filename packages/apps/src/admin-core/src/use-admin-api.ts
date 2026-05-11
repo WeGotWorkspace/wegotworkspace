@@ -59,7 +59,7 @@ export function useAdminAPI(source?: AdminApiSource) {
         lastResult: null,
       },
       currentUser: "",
-      logoutUrl: "/",
+      logoutUrl: "/logout",
       updateLogLines: [],
     }),
     [],

@@ -1,7 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SettingsApp } from "@/settings-core/src/settings-app";
+import { requireWgwAuth } from "@/lib/api/wgw/route-guard";
 
 export const Route = createFileRoute("/settings")({
+  beforeLoad: ({ location }) => {
+    requireWgwAuth(location);
+  },
   component: SettingsApp,
   head: () => ({
     meta: [

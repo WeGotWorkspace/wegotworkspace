@@ -23,7 +23,7 @@ export function NotesWorkspace({
   labels,
   operations,
   listLoading = false,
-  logoutTo = "/",
+  logoutTo = "/logout",
 }: NotesWorkspaceProps) {
   const closeSidebarOnMobile = (closeSidebar: () => void) => {
     if (typeof window === "undefined") return;

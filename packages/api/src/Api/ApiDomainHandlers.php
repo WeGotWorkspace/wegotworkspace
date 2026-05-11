@@ -434,7 +434,7 @@ final class ApiDomainHandlers
                 'baseUri' => (string) ($cfg[SettingsKeys::BASE_URI] ?? '/'),
                 'username' => $user['username'],
                 'displayName' => self::principalDisplayName($pdo, $user['username']),
-                'logoutUrl' => WebBase::url($webBase, '/logout/'),
+                'logoutUrl' => WebBase::url($webBase, '/logout'),
                 'notesPath' => WebBase::url($webBase, '/notes/'),
                 'filesEnabled' => (bool) ($cfg[SettingsKeys::FILES_ENABLED] ?? true),
                 'distReady' => is_file(Paths::notesDist().'/index.html'),
@@ -717,7 +717,7 @@ final class ApiDomainHandlers
                 'smtpPort' => (int) ($cfg[SettingsKeys::MAIL_SMTP_PORT] ?? 465),
                 'smtpSecurity' => (string) ($cfg[SettingsKeys::MAIL_SMTP_SECURITY] ?? 'ssl'),
             ],
-            'logoutUrl' => WebBase::url($webBase, '/logout/'),
+            'logoutUrl' => WebBase::url($webBase, '/logout'),
         ];
     }
 
@@ -874,7 +874,7 @@ final class ApiDomainHandlers
             ],
             'updates' => UpdateManager::getState($pdo),
             'currentUser' => $adminUser,
-            'logoutUrl' => WebBase::url($webBase, '/logout/'),
+            'logoutUrl' => WebBase::url($webBase, '/logout'),
         ];
     }
 

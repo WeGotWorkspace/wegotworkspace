@@ -24,10 +24,44 @@ type TokenResponse = {
 
 let accessToken: string | null = null;
 let refreshToken: string | null = null;
+let storageHydrated = false;
+
+const ACCESS_TOKEN_KEY = "wgw.api.access_token";
+const REFRESH_TOKEN_KEY = "wgw.api.refresh_token";
+
+function hasWindowStorage(): boolean {
+  return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+}
+
+function hydrateTokensFromStorage(): void {
+  if (storageHydrated) return;
+  storageHydrated = true;
+  if (!hasWindowStorage()) return;
+  try {
+    accessToken = window.localStorage.getItem(ACCESS_TOKEN_KEY);
+    refreshToken = window.localStorage.getItem(REFRESH_TOKEN_KEY);
+  } catch {
+    // Ignore storage failures and keep in-memory fallback.
+  }
+}
+
+function persistTokens(): void {
+  if (!hasWindowStorage()) return;
+  try {
+    if (accessToken) window.localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
+    else window.localStorage.removeItem(ACCESS_TOKEN_KEY);
+    if (refreshToken) window.localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+    else window.localStorage.removeItem(REFRESH_TOKEN_KEY);
+  } catch {
+    // Ignore storage failures and keep in-memory fallback.
+  }
+}
 
 export function clearWgwSession(): void {
   accessToken = null;
   refreshToken = null;
+  storageHydrated = true;
+  persistTokens();
 }
 
 async function postJson(path: string, body: unknown, auth?: string): Promise<Response> {
@@ -60,22 +94,65 @@ async function readTokenResponse(res: Response): Promise<TokenResponse> {
   return { access_token: at, refresh_token: rt, expires_in: Number(o.expires_in) || undefined };
 }
 
+function applyTokens(tokens: TokenResponse): void {
+  accessToken = tokens.access_token;
+  refreshToken = tokens.refresh_token;
+  storageHydrated = true;
+  persistTokens();
+}
+
+export function wgwSessionAvailable(): boolean {
+  hydrateTokensFromStorage();
+  const hasTokenPair = Boolean(accessToken && refreshToken);
+  if (hasTokenPair) return true;
+  const username = import.meta.env.VITE_WGW_DEV_USERNAME as string | undefined;
+  const password = import.meta.env.VITE_WGW_DEV_PASSWORD as string | undefined;
+  return Boolean(username?.trim() && password && password.trim());
+}
+
+export async function wgwLoginWithCredentials(username: string, password: string): Promise<void> {
+  const normalized = username.trim();
+  if (!normalized || !password) {
+    throw new Error("Username and password are required.");
+  }
+  const res = await postJson("/auth/token", { username: normalized, password });
+  const tokens = await readTokenResponse(res);
+  applyTokens(tokens);
+}
+
+export async function wgwLogout(): Promise<void> {
+  hydrateTokensFromStorage();
+  try {
+    if (refreshToken || accessToken) {
+      await postJson(
+        "/auth/revoke",
+        refreshToken ? { refresh_token: refreshToken } : {},
+        accessToken ?? undefined,
+      );
+    }
+  } catch {
+    // Best effort: local token cleanup always runs.
+  } finally {
+    clearWgwSession();
+  }
+}
+
 /** Obtain tokens using `VITE_WGW_DEV_USERNAME` / `VITE_WGW_DEV_PASSWORD` (local `.env.local` only). */
 export async function wgwEnsureSession(): Promise<void> {
+  hydrateTokensFromStorage();
   if (accessToken) return;
+
+  if (refreshToken) {
+    const refreshed = await wgwTryRefresh();
+    if (refreshed && accessToken) return;
+  }
 
   const username = import.meta.env.VITE_WGW_DEV_USERNAME as string | undefined;
   const password = import.meta.env.VITE_WGW_DEV_PASSWORD as string | undefined;
   if (!username?.trim() || password === undefined || password === "") {
-    throw new Error(
-      "Live API: set VITE_WGW_DEV_USERNAME and VITE_WGW_DEV_PASSWORD in .env.local (see .env.example).",
-    );
+    throw new Error("Missing auth session. Sign in to continue.");
   }
-
-  const res = await postJson("/auth/token", { username: username.trim(), password });
-  const tokens = await readTokenResponse(res);
-  accessToken = tokens.access_token;
-  refreshToken = tokens.refresh_token;
+  await wgwLoginWithCredentials(username.trim(), password);
 }
 
 async function wgwTryRefresh(): Promise<boolean> {
@@ -83,8 +160,7 @@ async function wgwTryRefresh(): Promise<boolean> {
   try {
     const res = await postJson("/auth/refresh", { refresh_token: refreshToken });
     const tokens = await readTokenResponse(res);
-    accessToken = tokens.access_token;
-    refreshToken = tokens.refresh_token;
+    applyTokens(tokens);
     return true;
   } catch {
     clearWgwSession();

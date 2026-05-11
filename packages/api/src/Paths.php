@@ -231,6 +231,14 @@ final class Paths
     }
 
     /**
+     * Unified app shell build emitted by {@code packages/apps/}, served at multiple web app routes.
+     */
+    public static function shellDist(): string
+    {
+        return self::privateDir().'/shell/dist';
+    }
+
+    /**
      * Writable Drive state: logs, tmp, sessions, {@code users.json}.
      */
     public static function driveData(): string
