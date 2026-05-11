@@ -15,6 +15,7 @@ use App\Installer\WebBase;
 use App\Mail\MailApi;
 use App\Mail\MailCredentialStore;
 use App\Paths;
+use App\SabreUiAuthGate;
 use App\Settings\SettingsDefaults;
 use App\Settings\SettingsKeys;
 use App\Settings\SettingsRepository;
@@ -574,6 +575,17 @@ final class ApiDomainHandlers
                 'indexReady' => is_readable($officeRoot.'/index.html'),
                 'editorReady' => is_readable($officeRoot.'/editor.html') || is_readable($officeRoot.'/editor/index.html'),
             ]);
+
+            return true;
+        }
+
+        if ($method === 'POST' && $rel === 'office/session') {
+            $user = self::requireRole($principal, 'user');
+            if ($user === null) {
+                return true;
+            }
+            SabreUiAuthGate::establishSession($user['username'], $realm, $webBase);
+            ApiResponse::json(200, ['ok' => true]);
 
             return true;
         }

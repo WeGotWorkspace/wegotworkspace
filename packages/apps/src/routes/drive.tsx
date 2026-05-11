@@ -83,6 +83,7 @@ import {
 import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
 import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
 import { requireWgwAuth } from "@/lib/api/wgw/route-guard";
+import { wgwEnsureOfficeSession } from "@/lib/api/wgw/http";
 
 export const Route = createFileRoute("/drive")({
   beforeLoad: ({ location }) => {
@@ -410,6 +411,17 @@ export function DriveWorkspace({
   operations,
   listLoading = false,
 }: DriveWorkspaceProps) {
+  const launchOfficeEditor = useCallback((params: URLSearchParams) => {
+    const target = `/office/editor?${params.toString()}`;
+    void wgwEnsureOfficeSession()
+      .catch(() => {
+        // Best effort: navigation still proceeds and server auth gate handles fallback.
+      })
+      .finally(() => {
+        window.location.assign(target);
+      });
+  }, []);
+
   const currentUsername = data.user.username || session.user.username;
   const [files, setFiles] = useState<DriveFile[]>(
     operations
@@ -778,7 +790,7 @@ export function DriveWorkspace({
       if (f.apiPath && OFFICE_EDITOR_EXTENSIONS.has(officeExt)) {
         const rel = f.apiPath.replace(/^\/+/, "");
         const qp = new URLSearchParams({ file: rel });
-        window.location.assign(`/office/editor?${qp.toString()}`);
+        launchOfficeEditor(qp);
         return;
       }
       setActiveId(f.id);
@@ -1228,7 +1240,7 @@ export function DriveWorkspace({
   const createBlank = (kind: "doc" | "sheet" | "slides") => {
     const editorKind = kind === "doc" ? "docx" : kind === "sheet" ? "xlsx" : "pptx";
     const qp = new URLSearchParams({ new: editorKind });
-    window.location.assign(`/office/editor?${qp.toString()}`);
+    launchOfficeEditor(qp);
   };
 
   const selectView = (v: ViewKey) => {

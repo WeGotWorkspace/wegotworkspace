@@ -289,3 +289,15 @@ export async function wgwFetchPrincipal(): Promise<WorkspaceSession> {
   };
   return { user, viewerInboxLabel: "me" };
 }
+
+export async function wgwEnsureOfficeSession(): Promise<void> {
+  if (!wgwLiveApiEnabled()) return;
+  const res = await wgwFetch("/office/session", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: "{}",
+  });
+  if (!res.ok) {
+    throw new Error(`POST /office/session failed (${res.status})`);
+  }
+}
