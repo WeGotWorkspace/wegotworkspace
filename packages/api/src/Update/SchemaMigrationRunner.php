@@ -6,7 +6,7 @@ namespace App\Update;
 
 final class SchemaMigrationRunner
 {
-    public const CURRENT_SCHEMA_VERSION = 4;
+    public const CURRENT_SCHEMA_VERSION = 5;
 
     public static function migrate(\PDO $pdo): int
     {
@@ -71,6 +71,11 @@ final class SchemaMigrationRunner
 
         if ($current < 4) {
             self::migrateV4CreateApiTokenTables($pdo);
+            $current = 4;
+        }
+
+        if ($current < 5) {
+            self::migrateV5CreateDriveStarTable($pdo);
         }
     }
 
@@ -232,5 +237,34 @@ final class SchemaMigrationRunner
 
         $stmt = $pdo->prepare('INSERT INTO app_migrations (version, name, applied_at) VALUES (?, ?, ?)');
         $stmt->execute([4, 'create_api_token_tables', date('c')]);
+    }
+
+    private static function migrateV5CreateDriveStarTable(\PDO $pdo): void
+    {
+        $driver = (string) $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'mysql') {
+            $pdo->exec(
+                'CREATE TABLE IF NOT EXISTS drive_starred_items (
+                    username VARCHAR(190) NOT NULL,
+                    path VARCHAR(1024) NOT NULL,
+                    created_at BIGINT NOT NULL,
+                    PRIMARY KEY(username, path),
+                    KEY idx_drive_starred_user (username)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+            );
+        } else {
+            $pdo->exec(
+                'CREATE TABLE IF NOT EXISTS drive_starred_items (
+                    username TEXT NOT NULL,
+                    path TEXT NOT NULL,
+                    created_at INTEGER NOT NULL,
+                    PRIMARY KEY(username, path)
+                )'
+            );
+            $pdo->exec('CREATE INDEX IF NOT EXISTS idx_drive_starred_user ON drive_starred_items(username)');
+        }
+
+        $stmt = $pdo->prepare('INSERT INTO app_migrations (version, name, applied_at) VALUES (?, ?, ?)');
+        $stmt->execute([5, 'create_drive_starred_items', date('c')]);
     }
 }

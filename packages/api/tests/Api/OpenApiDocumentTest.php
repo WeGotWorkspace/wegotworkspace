@@ -81,8 +81,20 @@ final class OpenApiDocumentTest extends TestCase
             $doc['paths']['/drive/getdir']['post']['requestBody']['content']['application/json']['schema']['$ref'] ?? null
         );
         self::assertSame(
-            '#/components/schemas/VoiceSignalRequest',
+            '#/components/schemas/VoiceJoinRequest',
             $doc['paths']['/voice/join']['post']['requestBody']['content']['application/json']['schema']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/InstallerActionRequest',
+            $doc['paths']['/installer/action']['post']['requestBody']['content']['application/json']['schema']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/InstallerRuntimeState',
+            $doc['components']['schemas']['InstallerBootstrapResponse']['properties']['state']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/InstallerAction',
+            $doc['components']['schemas']['InstallerActionRequest']['properties']['action']['$ref'] ?? null
         );
         self::assertSame(
             '#/components/schemas/OfficeDocumentCreateRequest',
@@ -107,5 +119,89 @@ final class OpenApiDocumentTest extends TestCase
             $doc['paths']['/drive/download']['get']['responses']['200']['content']['application/octet-stream']['schema']['$ref'] ?? null
         );
         self::assertIsArray($doc['components']['schemas']['GenericObject']['properties'] ?? null);
+        self::assertSame(
+            '#/components/schemas/MailMessageListItem',
+            $doc['components']['schemas']['MailMessagesResponse']['properties']['messages']['items']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/MailAttachmentListItem',
+            $doc['components']['schemas']['MailAttachmentsResponse']['properties']['items']['items']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/NoteItem',
+            $doc['components']['schemas']['NotesItemsResponse']['properties']['items']['items']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/NoteItem',
+            $doc['components']['schemas']['NoteMutationResponse']['properties']['item']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/NotebookListItem',
+            $doc['components']['schemas']['NotebookListResponse']['properties']['items']['items']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/SettingsUserProfile',
+            $doc['components']['schemas']['SettingsStateResponse']['properties']['user']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/SettingsUserGroupList',
+            $doc['components']['schemas']['SettingsStateResponse']['properties']['groups']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/SettingsUserMail',
+            $doc['components']['schemas']['SettingsStateResponse']['properties']['mail']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/SettingsUserMailServer',
+            $doc['components']['schemas']['SettingsStateResponse']['properties']['mailServer']['$ref'] ?? null
+        );
+        self::assertContains(
+            'logoutUrl',
+            $doc['components']['schemas']['SettingsStateResponse']['required'] ?? []
+        );
+        self::assertSame(
+            '#/components/schemas/AdminUserSummary',
+            $doc['components']['schemas']['AdminStateResponse']['properties']['users']['items']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/AdminGroupSummary',
+            $doc['components']['schemas']['AdminStateResponse']['properties']['groups']['items']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/AdminMailSettings',
+            $doc['components']['schemas']['AdminStateResponse']['properties']['mail']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/AdminVoiceSettings',
+            $doc['components']['schemas']['AdminStateResponse']['properties']['voice']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/AdminAppsSettings',
+            $doc['components']['schemas']['AdminStateResponse']['properties']['apps']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/AdminWebdavSettings',
+            $doc['components']['schemas']['AdminStateResponse']['properties']['webdav']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/UpdateStateResponse',
+            $doc['components']['schemas']['AdminStateResponse']['properties']['updates']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/UpdateLogClearResponse',
+            $doc['paths']['/admin/updates/log']['delete']['responses']['200']['content']['application/json']['schema']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/UpdateBackupItem',
+            $doc['components']['schemas']['UpdateStateResponse']['properties']['backups']['items']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/UpdateCheckItem',
+            $doc['components']['schemas']['UpdateStateResponse']['properties']['checks']['items']['$ref'] ?? null
+        );
+        self::assertSame(
+            '#/components/schemas/AdminSettingsValueMap',
+            $doc['components']['schemas']['AdminSettingsSaveRequest']['properties']['values']['$ref'] ?? null
+        );
     }
 }

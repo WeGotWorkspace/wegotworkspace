@@ -13,6 +13,10 @@ final class ApiRateLimiter
 {
     public static function allowLoginAttempt(string $username, string $ip): bool
     {
+        if (self::isDisabled()) {
+            return true;
+        }
+
         $user = self::normalizeUser($username);
         $ipNorm = self::normalizeIp($ip);
 
@@ -27,10 +31,21 @@ final class ApiRateLimiter
 
     public static function resetUserIp(string $username, string $ip): void
     {
+        if (self::isDisabled()) {
+            return;
+        }
+
         $user = self::normalizeUser($username);
         $ipNorm = self::normalizeIp($ip);
         $limiter = self::factory(8, '10 minutes')->create('api-login-user-'.$user.'-ip-'.$ipNorm);
         $limiter->reset();
+    }
+
+    private static function isDisabled(): bool
+    {
+        $raw = strtolower(trim((string) getenv('WGW_DISABLE_LOGIN_THROTTLE')));
+
+        return $raw === '1' || $raw === 'true' || $raw === 'yes' || $raw === 'on';
     }
 
     private static function factory(int $limit, string $interval): RateLimiterFactory

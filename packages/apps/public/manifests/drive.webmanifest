@@ -1,0 +1,24 @@
+{
+  "name": "Drive",
+  "short_name": "Drive",
+  "start_url": "/drive",
+  "scope": "/drive",
+  "id": "/drive",
+  "display": "standalone",
+  "background_color": "#0c8397",
+  "theme_color": "#0c8397",
+  "icons": [
+    {
+      "src": "/icons/drive-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/drive-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
