@@ -5,7 +5,6 @@ import {
   Star,
   Trash2,
   X,
-  Search,
   Upload,
   FolderInput,
   StarOff,
@@ -65,6 +64,7 @@ import { useIsTouch } from "@/hooks/use-is-touch";
 import { SidebarGroup, SidebarLink } from "@/settings-sidebar/src/settings-sidebar";
 import { ListAction, FabButton } from "@/action-buttons/src/action-buttons";
 import { WorkspaceAppSwitcher } from "@/workspace-app-switcher/src/workspace-app-switcher";
+import { ListHeader } from "@/list-header/src/list-header";
 import { createPwaHead } from "@/lib/pwa-head";
 import { DriveApp } from "@/drive-core/src/drive-app";
 import type { DriveAPIOperations, DriveUIData } from "@/drive-core/src/drive-types";
@@ -72,7 +72,6 @@ import { parentAndName, pathFromDirectoryEntry } from "@/lib/api/wgw/drive";
 import { AppSidebar, AppSidebarScrim } from "@/app-sidebar/src/app-sidebar";
 import {
   WorkspaceAppLayout,
-  WorkspaceSidebarToggle,
   WorkspaceUserFooter,
 } from "@/workspace-shell/src/workspace-app-layout";
 import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
@@ -464,6 +463,7 @@ export function DriveWorkspace({
   }, [operations, searchQuery, currentUsername]);
 
   const isTouch = useIsTouch();
+  const lastTouchTapRef = useRef<{ id: string; at: number } | null>(null);
 
   const inTrashView = view.type === "folder" && view.path === "Trash";
 
@@ -527,6 +527,7 @@ export function DriveWorkspace({
     setActiveId(null);
     setSelectionMode(false);
     setDetailOpen(false);
+    lastTouchTapRef.current = null;
   }, [viewResetKey]);
 
   const counts = useMemo(() => {
@@ -608,7 +609,11 @@ export function DriveWorkspace({
     };
   }, []);
 
-  const active = activeId ? (files.find((f) => f.id === activeId) ?? null) : null;
+  const active = activeId
+    ? ((liveSearchResults?.find((f) => f.id === activeId) ??
+        files.find((f) => f.id === activeId) ??
+        null) as DriveFile | null)
+    : null;
 
   useEffect(() => {
     if (
@@ -670,6 +675,22 @@ export function DriveWorkspace({
   };
 
   const handleSelect = (id: string, e: React.MouseEvent) => {
+    if (isTouch && !selectionMode && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
+      const now = Date.now();
+      const lastTap = lastTouchTapRef.current;
+      if (lastTap && lastTap.id === id && now - lastTap.at < 350) {
+        const tappedItem = visibleItems.find((file) => file.id === id);
+        if (tappedItem) {
+          lastTouchTapRef.current = null;
+          openFile(tappedItem);
+          return;
+        }
+      }
+      lastTouchTapRef.current = { id, at: now };
+    } else if (!isTouch) {
+      lastTouchTapRef.current = null;
+    }
+
     if (selectionMode) {
       setSelectedIds((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
       setLastClickedId(id);
@@ -1068,6 +1089,7 @@ export function DriveWorkspace({
           ["--app-sidebar-bg" as string]: "var(--drive-sidebar)",
           ["--app-sidebar-border-color" as string]: "color-mix(in oklab, #ffffff 18%, transparent)",
           ["--app-sidebar-color" as string]: "#ffffff",
+          ["--sidebar-logo-close-button-color" as string]: "var(--app-sidebar-color)",
           ["--sidebar-badge-fg" as string]: "#0c8397",
           ["--workspace-sidebar-toggle-color" as string]: "var(--color-ink)",
           ["--workspace-sidebar-toggle-bg" as string]:
@@ -1291,158 +1313,118 @@ export function DriveWorkspace({
             className="px-4 md:px-8 pt-4 md:pt-6 pb-3 border-b shrink-0"
             style={{ borderColor: "color-mix(in oklab, var(--color-ink) 10%, transparent)" }}
           >
-            <div className="flex items-center gap-3">
-              <WorkspaceSidebarToggle
-                open={sidebarOpen}
-                onToggle={() => setSidebarOpen((v) => !v)}
-                hoverClassName="hover:bg-[color-mix(in_oklab,var(--color-ink)_12%,transparent)]"
-              />
-
-              {/* Breadcrumbs */}
-              <nav
-                className="flex-1 min-w-0 flex items-center gap-1 overflow-x-auto"
-                aria-label="Breadcrumb"
-              >
-                {breadcrumbs.map((b, i) => {
-                  const isLast = i === breadcrumbs.length - 1;
-                  return (
-                    <span key={i} className="flex items-center gap-1 shrink-0">
-                      {i > 0 && (
-                        <ChevronRight
-                          className="size-4 shrink-0"
-                          style={{
-                            color: "color-mix(in oklab, var(--color-ink) 35%, transparent)",
-                          }}
-                        />
-                      )}
-                      {isLast || !b.path ? (
-                        <span
-                          className="text-2xl md:text-3xl leading-none truncate"
-                          style={{ fontFamily: "var(--font-serif)", color: "var(--color-ink)" }}
-                        >
-                          {b.label}
-                        </span>
-                      ) : (
-                        <button
-                          onClick={() => selectView({ type: "folder", path: b.path! })}
-                          className="text-2xl md:text-3xl leading-none truncate hover:underline underline-offset-4"
-                          style={{
-                            fontFamily: "var(--font-serif)",
-                            color: "color-mix(in oklab, var(--color-ink) 55%, transparent)",
-                          }}
-                        >
-                          {b.label}
-                        </button>
-                      )}
-                    </span>
-                  );
-                })}
-              </nav>
-
-              <div className="flex items-center gap-1.5 shrink-0">
-                <div
-                  className="hidden sm:flex items-center rounded-full p-0.5"
-                  style={{
-                    backgroundColor: "color-mix(in oklab, var(--color-ink) 6%, transparent)",
-                  }}
-                >
-                  <button
-                    aria-label="Grid view"
-                    onClick={() => setViewMode("grid")}
-                    className="size-8 rounded-full flex items-center justify-center transition-colors"
-                    style={{
-                      backgroundColor:
-                        viewMode === "grid" ? "var(--color-cream, #f5f1e8)" : "transparent",
-                      color: "var(--color-ink)",
-                      boxShadow:
-                        viewMode === "grid"
-                          ? "0 1px 2px color-mix(in oklab, var(--color-ink) 20%, transparent)"
-                          : "none",
-                    }}
-                  >
-                    <LayoutGrid className="size-4" />
-                  </button>
-                  <button
-                    aria-label="List view"
-                    onClick={() => setViewMode("list")}
-                    className="size-8 rounded-full flex items-center justify-center transition-colors"
-                    style={{
-                      backgroundColor:
-                        viewMode === "list" ? "var(--color-cream, #f5f1e8)" : "transparent",
-                      color: "var(--color-ink)",
-                      boxShadow:
-                        viewMode === "list"
-                          ? "0 1px 2px color-mix(in oklab, var(--color-ink) 20%, transparent)"
-                          : "none",
-                    }}
-                  >
-                    <ListIcon className="size-4" />
-                  </button>
-                </div>
-                <ListAction
-                  label={detailOpen ? "Hide details" : "Show details"}
-                  onClick={() => setDetailOpen((v) => !v)}
-                >
-                  <Info className="size-4" />
-                </ListAction>
-                {inTrashView && visibleItems.length > 0 && (
-                  <ListAction
-                    label="Empty trash"
-                    onClick={() => setConfirmDelete({ ids: visibleItems.map((f) => f.id) })}
-                  >
-                    <Trash2 className="size-4" />
-                  </ListAction>
-                )}
-              </div>
-            </div>
-
-            <div className="mt-3 flex items-center gap-3">
-              <div
-                className="flex-1 flex items-center gap-2 px-3 h-9 rounded-md max-w-md"
-                style={{
-                  backgroundColor: "color-mix(in oklab, var(--color-ink) 6%, transparent)",
-                  color: "var(--color-ink)",
-                }}
-              >
-                <Search className="size-4 opacity-60 shrink-0" />
-                <input
-                  ref={searchInputRef}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search in Drive…"
-                  className="flex-1 bg-transparent outline-none text-sm placeholder:opacity-50"
-                  onKeyDown={(e) => {
-                    if (e.key === "Escape") {
-                      e.preventDefault();
-                      setSearchQuery("");
-                      (e.target as HTMLInputElement).blur();
-                    }
-                  }}
-                />
-                {searchQuery && (
-                  <button
-                    aria-label="Clear search"
-                    onClick={() => setSearchQuery("")}
-                    className="size-6 rounded-full flex items-center justify-center hover:bg-[color-mix(in_oklab,var(--color-ink)_10%,transparent)]"
-                  >
-                    <X className="size-3.5" />
-                  </button>
-                )}
-              </div>
-              <p
-                className="text-[10px] uppercase tracking-[0.18em] shrink-0"
-                style={{ color: "color-mix(in oklab, var(--color-ink) 45%, transparent)" }}
-              >
-                {selectionMode || selectedIds.length > 1
+            <ListHeader
+              sidebarOpen={sidebarOpen}
+              onToggleSidebar={() => setSidebarOpen((v) => !v)}
+              title={viewLabel}
+              subtitle={
+                selectionMode || selectedIds.length > 1
                   ? `${selectedIds.length} Selected`
-                  : `${visibleItems.length} Items`}
-              </p>
-            </div>
+                  : `${visibleItems.length} Items`
+              }
+              actions={
+                <>
+                  <div
+                    className="hidden sm:flex items-center rounded-full p-0.5"
+                    style={{
+                      backgroundColor: "color-mix(in oklab, var(--color-ink) 6%, transparent)",
+                    }}
+                  >
+                    <button
+                      aria-label="Grid view"
+                      onClick={() => setViewMode("grid")}
+                      className="size-8 rounded-full flex items-center justify-center transition-colors"
+                      style={{
+                        backgroundColor:
+                          viewMode === "grid" ? "var(--color-cream, #f5f1e8)" : "transparent",
+                        color: "var(--color-ink)",
+                        boxShadow:
+                          viewMode === "grid"
+                            ? "0 1px 2px color-mix(in oklab, var(--color-ink) 20%, transparent)"
+                            : "none",
+                      }}
+                    >
+                      <LayoutGrid className="size-4" />
+                    </button>
+                    <button
+                      aria-label="List view"
+                      onClick={() => setViewMode("list")}
+                      className="size-8 rounded-full flex items-center justify-center transition-colors"
+                      style={{
+                        backgroundColor:
+                          viewMode === "list" ? "var(--color-cream, #f5f1e8)" : "transparent",
+                        color: "var(--color-ink)",
+                        boxShadow:
+                          viewMode === "list"
+                            ? "0 1px 2px color-mix(in oklab, var(--color-ink) 20%, transparent)"
+                            : "none",
+                      }}
+                    >
+                      <ListIcon className="size-4" />
+                    </button>
+                  </div>
+                  <ListAction
+                    label={detailOpen ? "Hide details" : "Show details"}
+                    onClick={() => setDetailOpen((v) => !v)}
+                  >
+                    <Info className="size-4" />
+                  </ListAction>
+                  {inTrashView && visibleItems.length > 0 && (
+                    <ListAction
+                      label="Empty trash"
+                      onClick={() => setConfirmDelete({ ids: visibleItems.map((f) => f.id) })}
+                    >
+                      <Trash2 className="size-4" />
+                    </ListAction>
+                  )}
+                </>
+              }
+              searchPlaceholder="Search in Drive..."
+              searchValue={searchQuery}
+              onSearchInput={setSearchQuery}
+              searchInputRef={searchInputRef}
+            />
           </header>
 
           {/* Content */}
           <div className="flex-1 flex min-h-0">
             <div className="flex-1 overflow-y-auto min-w-0">
+              <div className="px-4 md:px-8 pt-4 md:pt-6 pb-2">
+                <nav
+                  className="min-w-0 flex items-center gap-1 overflow-x-auto"
+                  aria-label="Breadcrumb"
+                >
+                  {breadcrumbs.map((b, i) => {
+                    const isLast = i === breadcrumbs.length - 1;
+                    return (
+                      <span key={i} className="flex items-center gap-1 shrink-0">
+                        {i > 0 && (
+                          <ChevronRight
+                            className="size-4 shrink-0"
+                            style={{ color: "color-mix(in oklab, var(--color-ink) 35%, transparent)" }}
+                          />
+                        )}
+                        {isLast || !b.path ? (
+                          <span
+                            className="text-sm md:text-base leading-none truncate"
+                            style={{ color: "color-mix(in oklab, var(--color-ink) 72%, transparent)" }}
+                          >
+                            {b.label}
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => selectView({ type: "folder", path: b.path! })}
+                            className="text-sm md:text-base leading-none truncate hover:underline underline-offset-4"
+                            style={{ color: "color-mix(in oklab, var(--color-ink) 55%, transparent)" }}
+                          >
+                            {b.label}
+                          </button>
+                        )}
+                      </span>
+                    );
+                  })}
+                </nav>
+              </div>
               {visibleItems.length === 0 ? (
                 <div
                   className="p-16 text-center text-sm"
