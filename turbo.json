@@ -15,20 +15,26 @@
       "persistent": true
     },
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "typegen"],
       "cache": false,
       "outputs": [
         "../../packages/api/vendor/**",
         "../../apps/wegotworkspace/wgw-modules/office/build/**",
-        "../../apps/wegotworkspace/wgw-modules/admin/dist/**",
-        "../../apps/wegotworkspace/wgw-modules/settings/dist/**",
-        "../../apps/wegotworkspace/wgw-modules/drive/dist/**",
-        "../../apps/wegotworkspace/wgw-modules/voice/dist/**",
-        "../../apps/wegotworkspace/wgw-modules/mail/dist/**",
-        "../../apps/wegotworkspace/wgw-modules/notes/dist/**",
-        "../../apps/wegotworkspace/wgw-modules/home/dist/**",
-        "../../apps/wegotworkspace/wgw-modules/install/dist/**"
+        "../../apps/wegotworkspace/wgw-modules/*/dist/**"
       ]
+    },
+    "typegen": {
+      "dependsOn": ["^typegen"],
+      "cache": false,
+      "outputs": ["openapi/generated/**"]
+    },
+    "typegen:check": {
+      "dependsOn": ["typegen", "^typegen:check"],
+      "cache": false
+    },
+    "typegen:watch": {
+      "cache": false,
+      "persistent": true
     },
     "test": {
       "dependsOn": ["^build"],

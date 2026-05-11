@@ -15,6 +15,7 @@ use App\Installer\WebBase;
 use App\Mail\MailApi;
 use App\Mail\MailCredentialStore;
 use App\Paths;
+use App\SabreUiAuthGate;
 use App\Settings\SettingsDefaults;
 use App\Settings\SettingsKeys;
 use App\Settings\SettingsRepository;
@@ -413,7 +414,7 @@ final class ApiDomainHandlers
 
         if (
             str_starts_with($rel, 'drive/')
-            && preg_match('#^(getdir|searchfiles|changedir|createnew|renameitem|deleteitems|download|upload)$#', substr($rel, 6)) === 1
+            && preg_match('#^(getdir|searchfiles|changedir|createnew|renameitem|deleteitems|download|upload|stars)$#', substr($rel, 6)) === 1
         ) {
             $user = self::requireRole($principal, 'user');
             if ($user === null) {
@@ -434,7 +435,7 @@ final class ApiDomainHandlers
                 'baseUri' => (string) ($cfg[SettingsKeys::BASE_URI] ?? '/'),
                 'username' => $user['username'],
                 'displayName' => self::principalDisplayName($pdo, $user['username']),
-                'logoutUrl' => WebBase::url($webBase, '/logout/'),
+                'logoutUrl' => WebBase::url($webBase, '/logout'),
                 'notesPath' => WebBase::url($webBase, '/notes/'),
                 'filesEnabled' => (bool) ($cfg[SettingsKeys::FILES_ENABLED] ?? true),
                 'distReady' => is_file(Paths::notesDist().'/index.html'),
@@ -578,6 +579,17 @@ final class ApiDomainHandlers
             return true;
         }
 
+        if ($method === 'POST' && $rel === 'office/session') {
+            $user = self::requireRole($principal, 'user');
+            if ($user === null) {
+                return true;
+            }
+            SabreUiAuthGate::establishSession($user['username'], $realm, $webBase);
+            ApiResponse::json(200, ['ok' => true]);
+
+            return true;
+        }
+
         if ($rel === 'office/documents' && in_array($method, ['POST', 'PUT'], true)) {
             $user = self::requireRole($principal, 'user');
             if ($user === null) {
@@ -717,7 +729,7 @@ final class ApiDomainHandlers
                 'smtpPort' => (int) ($cfg[SettingsKeys::MAIL_SMTP_PORT] ?? 465),
                 'smtpSecurity' => (string) ($cfg[SettingsKeys::MAIL_SMTP_SECURITY] ?? 'ssl'),
             ],
-            'logoutUrl' => WebBase::url($webBase, '/logout/'),
+            'logoutUrl' => WebBase::url($webBase, '/logout'),
         ];
     }
 
@@ -874,7 +886,7 @@ final class ApiDomainHandlers
             ],
             'updates' => UpdateManager::getState($pdo),
             'currentUser' => $adminUser,
-            'logoutUrl' => WebBase::url($webBase, '/logout/'),
+            'logoutUrl' => WebBase::url($webBase, '/logout'),
         ];
     }
 

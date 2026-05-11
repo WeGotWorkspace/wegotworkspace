@@ -1,0 +1,257 @@
+import type { NotesAppBootstrap } from "@/lib/api/mock/notes-bootstrap";
+import type { Note } from "@/lib/models/note";
+import type { WgwNoteItem, WgwNoteUpsertRequest } from "@/lib/api/wgw/types";
+import { wgwFetch, wgwFetchPrincipal, wgwReadJson } from "@/lib/api/wgw/http";
+
+export class NotesRequestError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+  }
+}
+
+// --- JSON → WGW note shapes --------------------------------------------------------------------
+
+export function coerceNoteItem(raw: unknown): WgwNoteItem | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  const id = r.id;
+  const notebook = r.notebook ?? r.notebookName ?? r.book;
+  if (id == null || notebook == null) return null;
+  const tagsRaw = r.tags;
+  const tags = Array.isArray(tagsRaw) ? tagsRaw.map((t) => String(t)) : undefined;
+  return {
+    id: String(id),
+    notebook: String(notebook),
+    title: r.title != null ? String(r.title) : undefined,
+    body: r.body != null ? String(r.body) : undefined,
+    tags,
+    starred: typeof r.starred === "boolean" ? r.starred : undefined,
+    archived: typeof r.archived === "boolean" ? r.archived : undefined,
+    updatedAt:
+      r.updatedAt != null
+        ? String(r.updatedAt)
+        : r.updated_at != null
+          ? String(r.updated_at)
+          : undefined,
+  };
+}
+
+export function parseNotesItemsPayload(json: unknown): WgwNoteItem[] {
+  if (!json || typeof json !== "object") return [];
+  const o = json as Record<string, unknown>;
+  let raw: unknown = o.items ?? o.notes ?? o.data;
+  if (!Array.isArray(raw) && raw && typeof raw === "object") {
+    const inner = raw as Record<string, unknown>;
+    if (Array.isArray(inner.items)) raw = inner.items;
+    else if (Array.isArray(inner.notes)) raw = inner.notes;
+  }
+  if (!Array.isArray(raw)) return [];
+  return raw.map(coerceNoteItem).filter(Boolean) as WgwNoteItem[];
+}
+
+export function coerceNotebookRow(raw: unknown): { name: string } | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  const name = r.name ?? r.title ?? r.notebook;
+  if (name == null) return null;
+  return { name: String(name) };
+}
+
+export function parseNotebooksPayload(json: unknown): string[] {
+  if (!json || typeof json !== "object") return [];
+  const o = json as Record<string, unknown>;
+  const raw = o.items ?? o.notebooks ?? o.data;
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map(coerceNotebookRow)
+    .filter((x): x is { name: string } => x !== null)
+    .map((x) => x.name);
+}
+
+// --- WGW note shapes → app `Note` + request helpers ----------------------------------------------
+
+function wordCountFromText(text: string): number {
+  const t = text.trim();
+  if (!t) return 0;
+  return t.split(/\s+/).filter(Boolean).length;
+}
+
+function splitBodyParagraphs(body: string): string[] {
+  const t = body.trim();
+  if (!t) return [""];
+  const parts = t
+    .split(/\n\n+/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  return parts.length > 0 ? parts : [t];
+}
+
+function excerptFromBody(body: string, max = 180): string {
+  const first = splitBodyParagraphs(body)[0] ?? "";
+  if (first.length <= max) return first;
+  return `${first.slice(0, max - 1)}…`;
+}
+
+export function noteFromWgwItem(row: WgwNoteItem): Note {
+  const body = splitBodyParagraphs(row.body ?? "");
+  const flat = body.join("\n\n");
+  return {
+    id: row.id,
+    notebook: row.notebook,
+    title: row.title ?? "",
+    excerpt: excerptFromBody(row.body ?? ""),
+    body,
+    tags: row.tags ?? [],
+    wordCount: wordCountFromText(flat),
+    category: "Note",
+    date: row.updatedAt ?? "—",
+    starred: row.starred,
+    archived: row.archived,
+  };
+}
+
+export function wgwNoteUpsertFromNote(
+  note: Note,
+  opts?: { starred?: boolean; archived?: boolean },
+): WgwNoteUpsertRequest {
+  return {
+    id: note.id,
+    notebook: note.notebook,
+    title: note.title,
+    body: note.body.join("\n\n"),
+    tags: note.tags,
+    ...(opts?.starred !== undefined && { starred: opts.starred }),
+    ...(opts?.archived !== undefined && { archived: opts.archived }),
+  };
+}
+
+// --- live bootstrap ----------------------------------------------------------------------------
+
+/** Load notes + notebook names from the configured WeGotWorkspace API. */
+export async function fetchNotesLiveBootstrap(): Promise<NotesAppBootstrap> {
+  const session = await wgwFetchPrincipal();
+
+  const itemsRes = await wgwFetch("/notes/items");
+  if (!itemsRes.ok) throw new Error(`GET /notes/items failed (${itemsRes.status})`);
+  const itemsJson = await wgwReadJson(itemsRes);
+  const rawItems = parseNotesItemsPayload(itemsJson);
+  const notes = rawItems.map(noteFromWgwItem);
+
+  let notebookNames: string[] = [];
+  const nbRes = await wgwFetch("/notes/notebooks");
+  if (nbRes.ok) {
+    const nbJson = await wgwReadJson(nbRes);
+    notebookNames = parseNotebooksPayload(nbJson);
+  }
+
+  const fromNotes = [...new Set(notes.map((n) => n.notebook))];
+  const notebooks = [...new Set([...notebookNames, ...fromNotes])];
+  const tags = [...new Set(notes.flatMap((n) => n.tags))];
+
+  return {
+    data: { notes, notebooks, tags },
+    session,
+  };
+}
+
+function parseNoteMutationPayload(json: unknown): WgwNoteItem | null {
+  if (!json || typeof json !== "object") return null;
+  const root = json as Record<string, unknown>;
+  return coerceNoteItem(root.item ?? root.note ?? root.data ?? root);
+}
+
+async function requestNotesJson(
+  path: string,
+  method: "POST" | "PUT" | "PATCH" | "DELETE",
+  body?: unknown,
+  opts?: { signal?: AbortSignal },
+): Promise<unknown> {
+  const res = await wgwFetch(path, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+    signal: opts?.signal,
+  });
+  if (!res.ok) throw new NotesRequestError(`${method} ${path} failed (${res.status})`, res.status);
+  return wgwReadJson(res);
+}
+
+export async function createNoteItem(
+  body: WgwNoteUpsertRequest,
+  opts?: { signal?: AbortSignal },
+): Promise<Note> {
+  const json = await requestNotesJson("/notes/items", "POST", body, opts);
+  const row = parseNoteMutationPayload(json);
+  if (!row) throw new Error("POST /notes/items returned no note payload");
+  return noteFromWgwItem(row);
+}
+
+export async function updateNoteItem(
+  id: string,
+  body: WgwNoteUpsertRequest,
+  opts?: { signal?: AbortSignal },
+): Promise<Note> {
+  const json = await requestNotesJson(`/notes/items/${encodeURIComponent(id)}`, "PUT", body, opts);
+  const row = parseNoteMutationPayload(json);
+  if (!row) throw new Error(`PUT /notes/items/${id} returned no note payload`);
+  return noteFromWgwItem(row);
+}
+
+export async function deleteNoteItem(
+  id: string,
+  body: { notebook: string; archived: boolean },
+  opts?: { signal?: AbortSignal },
+): Promise<void> {
+  await requestNotesJson(`/notes/items/${encodeURIComponent(id)}`, "DELETE", body, opts);
+}
+
+export async function archiveNoteItem(id: string, opts?: { signal?: AbortSignal }): Promise<Note> {
+  const json = await requestNotesJson(
+    `/notes/items/${encodeURIComponent(id)}/archive`,
+    "POST",
+    {},
+    opts,
+  );
+  const row = parseNoteMutationPayload(json);
+  if (!row) throw new Error(`POST /notes/items/${id}/archive returned no note payload`);
+  return noteFromWgwItem(row);
+}
+
+export async function restoreNoteItem(id: string, opts?: { signal?: AbortSignal }): Promise<Note> {
+  const json = await requestNotesJson(
+    `/notes/items/${encodeURIComponent(id)}/restore`,
+    "POST",
+    {},
+    opts,
+  );
+  const row = parseNoteMutationPayload(json);
+  if (!row) throw new Error(`POST /notes/items/${id}/restore returned no note payload`);
+  return noteFromWgwItem(row);
+}
+
+export async function createNotebook(name: string, opts?: { signal?: AbortSignal }): Promise<void> {
+  await requestNotesJson("/notes/notebooks", "POST", { name }, opts);
+}
+
+export async function renameNotebook(
+  from: string,
+  to: string,
+  opts?: { signal?: AbortSignal },
+): Promise<void> {
+  await requestNotesJson(
+    `/notes/notebooks/${encodeURIComponent(from)}`,
+    "PATCH",
+    { name: to },
+    opts,
+  );
+}
+
+export async function deleteNotebook(
+  name: string,
+  action: { mode: "archive" | "move" | "purge"; target?: string },
+  opts?: { signal?: AbortSignal },
+): Promise<void> {
+  await requestNotesJson(`/notes/notebooks/${encodeURIComponent(name)}`, "DELETE", action, opts);
+}

@@ -1,0 +1,5121 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "WeGotWorkspace API",
+        "version": "1.0.0",
+        "description": "Parallel OpenAPI-first REST API for all app domains."
+    },
+    "servers": [
+        {
+            "url": "/api/v1"
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT"
+            }
+        },
+        "schemas": {
+            "Error": {
+                "type": "object",
+                "required": [
+                    "error"
+                ],
+                "properties": {
+                    "error": {
+                        "type": "string"
+                    },
+                    "code": {
+                        "type": "string"
+                    }
+                }
+            },
+            "AuthTokenResponse": {
+                "type": "object",
+                "required": [
+                    "access_token",
+                    "refresh_token",
+                    "token_type",
+                    "expires_in",
+                    "role",
+                    "username"
+                ],
+                "properties": {
+                    "access_token": {
+                        "type": "string"
+                    },
+                    "refresh_token": {
+                        "type": "string"
+                    },
+                    "token_type": {
+                        "type": "string"
+                    },
+                    "expires_in": {
+                        "type": "integer"
+                    },
+                    "role": {
+                        "type": "string",
+                        "enum": [
+                            "guest",
+                            "user",
+                            "admin"
+                        ]
+                    },
+                    "username": {
+                        "type": "string"
+                    }
+                }
+            },
+            "Principal": {
+                "type": "object",
+                "required": [
+                    "username",
+                    "role"
+                ],
+                "properties": {
+                    "username": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": "string",
+                        "enum": [
+                            "guest",
+                            "user",
+                            "admin"
+                        ]
+                    }
+                }
+            },
+            "GenericObject": {
+                "type": "object",
+                "properties": []
+            },
+            "BinaryPayload": {
+                "type": "string",
+                "format": "binary"
+            },
+            "OkResponse": {
+                "type": "object",
+                "properties": {
+                    "ok": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "HealthResponse": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string"
+                    },
+                    "apiVersion": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "string"
+                    }
+                }
+            },
+            "CapabilitiesResponse": {
+                "type": "object",
+                "properties": {
+                    "apiVersion": {
+                        "type": "string"
+                    },
+                    "auth": {
+                        "type": "object"
+                    },
+                    "domains": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "InstallerStep": {
+                "type": "string",
+                "enum": [
+                    "welcome",
+                    "requirements",
+                    "database",
+                    "site",
+                    "account",
+                    "done",
+                    "installed"
+                ]
+            },
+            "InstallerDbDriver": {
+                "type": "string",
+                "enum": [
+                    "sqlite",
+                    "mysql"
+                ]
+            },
+            "InstallerCheck": {
+                "type": "object",
+                "properties": {
+                    "ok": {
+                        "type": "boolean"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "detail": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "ok",
+                    "label",
+                    "detail"
+                ]
+            },
+            "InstallerChecks": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/InstallerCheck"
+                }
+            },
+            "InstallerDbState": {
+                "type": "object",
+                "properties": {
+                    "sqlite_path": {
+                        "type": "string"
+                    },
+                    "mysql_host": {
+                        "type": "string"
+                    },
+                    "mysql_port": {
+                        "type": "integer"
+                    },
+                    "mysql_db": {
+                        "type": "string"
+                    },
+                    "mysql_user": {
+                        "type": "string"
+                    }
+                }
+            },
+            "InstallerRuntimeState": {
+                "type": "object",
+                "properties": {
+                    "step": {
+                        "$ref": "#/components/schemas/InstallerStep"
+                    },
+                    "flash": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "db_driver": {
+                        "$ref": "#/components/schemas/InstallerDbDriver"
+                    },
+                    "db": {
+                        "$ref": "#/components/schemas/InstallerDbState"
+                    },
+                    "timezone": {
+                        "type": "string"
+                    },
+                    "base_uri": {
+                        "type": "string"
+                    },
+                    "enable_files": {
+                        "type": "boolean"
+                    },
+                    "enable_calendars": {
+                        "type": "boolean"
+                    },
+                    "enable_contacts": {
+                        "type": "boolean"
+                    },
+                    "show_browser_ui": {
+                        "type": "boolean"
+                    },
+                    "checks": {
+                        "$ref": "#/components/schemas/InstallerChecks"
+                    },
+                    "already_installed": {
+                        "type": "boolean"
+                    },
+                    "admin_updates_url": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "step",
+                    "flash",
+                    "db_driver",
+                    "db",
+                    "timezone",
+                    "base_uri",
+                    "enable_files",
+                    "enable_calendars",
+                    "enable_contacts",
+                    "show_browser_ui",
+                    "checks"
+                ]
+            },
+            "InstallerBootstrapResponse": {
+                "type": "object",
+                "properties": {
+                    "state": {
+                        "$ref": "#/components/schemas/InstallerRuntimeState"
+                    }
+                },
+                "required": [
+                    "state"
+                ]
+            },
+            "InstallerStateResponse": {
+                "type": "object",
+                "properties": {
+                    "installed": {
+                        "type": "boolean"
+                    },
+                    "maintenance": {
+                        "type": "boolean"
+                    },
+                    "state": {
+                        "$ref": "#/components/schemas/InstallerRuntimeState"
+                    }
+                },
+                "required": [
+                    "installed",
+                    "maintenance",
+                    "state"
+                ]
+            },
+            "InstallerActionResponse": {
+                "type": "object",
+                "properties": {
+                    "ok": {
+                        "type": "boolean"
+                    },
+                    "error": {
+                        "type": "string"
+                    },
+                    "redirect": {
+                        "type": "string"
+                    },
+                    "state": {
+                        "$ref": "#/components/schemas/InstallerRuntimeState"
+                    }
+                },
+                "required": [
+                    "ok"
+                ]
+            },
+            "InstallerAction": {
+                "type": "string",
+                "enum": [
+                    "welcome_next",
+                    "requirements_check",
+                    "requirements_next",
+                    "database_test",
+                    "database_next",
+                    "site_next",
+                    "install"
+                ]
+            },
+            "InstallerActionPayload": {
+                "type": "object",
+                "properties": {
+                    "db_driver": {
+                        "$ref": "#/components/schemas/InstallerDbDriver"
+                    },
+                    "sqlite_path": {
+                        "type": "string"
+                    },
+                    "mysql_host": {
+                        "type": "string"
+                    },
+                    "mysql_port": {
+                        "type": "integer"
+                    },
+                    "mysql_db": {
+                        "type": "string"
+                    },
+                    "mysql_user": {
+                        "type": "string"
+                    },
+                    "mysql_password": {
+                        "type": "string"
+                    },
+                    "base_uri_override": {
+                        "type": "string"
+                    },
+                    "timezone": {
+                        "type": "string"
+                    },
+                    "enable_files": {
+                        "type": "boolean"
+                    },
+                    "enable_calendars": {
+                        "type": "boolean"
+                    },
+                    "enable_contacts": {
+                        "type": "boolean"
+                    },
+                    "show_browser_ui": {
+                        "type": "boolean"
+                    },
+                    "username": {
+                        "type": "string"
+                    },
+                    "display_name": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "password": {
+                        "type": "string"
+                    },
+                    "password_confirm": {
+                        "type": "string"
+                    },
+                    "mail_enabled": {
+                        "type": "boolean"
+                    },
+                    "mail_imap_host": {
+                        "type": "string"
+                    },
+                    "mail_imap_port": {
+                        "type": "string"
+                    },
+                    "mail_imap_security": {
+                        "type": "string"
+                    },
+                    "mail_smtp_host": {
+                        "type": "string"
+                    },
+                    "mail_smtp_port": {
+                        "type": "string"
+                    },
+                    "mail_smtp_security": {
+                        "type": "string"
+                    },
+                    "voice_enabled": {
+                        "type": "boolean"
+                    },
+                    "voice_turn_url": {
+                        "type": "string"
+                    },
+                    "voice_turn_username": {
+                        "type": "string"
+                    },
+                    "voice_turn_credential": {
+                        "type": "string"
+                    }
+                }
+            },
+            "InstallerActionRequest": {
+                "type": "object",
+                "properties": {
+                    "action": {
+                        "$ref": "#/components/schemas/InstallerAction"
+                    },
+                    "payload": {
+                        "$ref": "#/components/schemas/InstallerActionPayload"
+                    }
+                },
+                "required": [
+                    "action"
+                ],
+                "example": {
+                    "action": "database_test",
+                    "payload": {
+                        "db_driver": "sqlite",
+                        "sqlite_path": "wgw-content/database.sqlite"
+                    }
+                }
+            },
+            "AuthTokenRequest": {
+                "type": "object",
+                "properties": {
+                    "username": {
+                        "type": "string"
+                    },
+                    "password": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "username",
+                    "password"
+                ],
+                "example": {
+                    "username": "admin",
+                    "password": "secret123"
+                }
+            },
+            "AuthRefreshRequest": {
+                "type": "object",
+                "properties": {
+                    "refresh_token": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "refresh_token"
+                ],
+                "example": {
+                    "refresh_token": "rt_abc123"
+                }
+            },
+            "AuthRevokeRequest": {
+                "type": "object",
+                "properties": {
+                    "refresh_token": {
+                        "type": "string"
+                    }
+                },
+                "example": {
+                    "refresh_token": "rt_abc123"
+                }
+            },
+            "AdminUserGroupList": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            },
+            "AdminUserCreateRequest": {
+                "type": "object",
+                "properties": {
+                    "username": {
+                        "type": "string"
+                    },
+                    "password": {
+                        "type": "string"
+                    },
+                    "displayName": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "groups": {
+                        "$ref": "#/components/schemas/AdminUserGroupList"
+                    }
+                },
+                "required": [
+                    "username",
+                    "password"
+                ],
+                "example": {
+                    "username": "alice",
+                    "password": "strong-password",
+                    "displayName": "Alice",
+                    "email": "alice@example.test",
+                    "groups": [
+                        "principals/groups/support"
+                    ]
+                }
+            },
+            "AdminUserUpdateRequest": {
+                "type": "object",
+                "properties": {
+                    "displayName": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "password": {
+                        "type": "string"
+                    },
+                    "groups": {
+                        "$ref": "#/components/schemas/AdminUserGroupList"
+                    }
+                },
+                "example": {
+                    "displayName": "Alice Cooper",
+                    "email": "alice@example.test",
+                    "groups": [
+                        "principals/groups/support"
+                    ]
+                }
+            },
+            "AdminGroupCreateRequest": {
+                "type": "object",
+                "properties": {
+                    "slug": {
+                        "type": "string"
+                    },
+                    "displayName": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "slug"
+                ],
+                "example": {
+                    "slug": "support",
+                    "displayName": "Support"
+                }
+            },
+            "AdminGroupUpdateRequest": {
+                "type": "object",
+                "properties": {
+                    "displayName": {
+                        "type": "string"
+                    },
+                    "members": {
+                        "$ref": "#/components/schemas/AdminUserGroupList"
+                    }
+                },
+                "example": {
+                    "displayName": "Support Team",
+                    "members": [
+                        "alice",
+                        "bob"
+                    ]
+                }
+            },
+            "AdminSettingValue": {
+                "oneOf": [
+                    {
+                        "type": "string"
+                    },
+                    {
+                        "type": "integer"
+                    },
+                    {
+                        "type": "number"
+                    },
+                    {
+                        "type": "boolean"
+                    },
+                    {
+                        "type": "null"
+                    }
+                ]
+            },
+            "AdminSettingsValueMap": {
+                "type": "object",
+                "additionalProperties": {
+                    "$ref": "#/components/schemas/AdminSettingValue"
+                }
+            },
+            "AdminSettingsSaveRequest": {
+                "type": "object",
+                "properties": {
+                    "values": {
+                        "$ref": "#/components/schemas/AdminSettingsValueMap"
+                    }
+                },
+                "example": {
+                    "values": {
+                        "timezone": "UTC"
+                    }
+                }
+            },
+            "AdminUserSummary": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "username": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "displayName": {
+                        "type": "string"
+                    },
+                    "groups": {
+                        "$ref": "#/components/schemas/AdminUserGroupList"
+                    },
+                    "createdAt": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "username",
+                    "email",
+                    "displayName",
+                    "groups",
+                    "createdAt"
+                ]
+            },
+            "AdminGroupSummary": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "displayName": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "displayName"
+                ]
+            },
+            "AdminMailSettings": {
+                "type": "object",
+                "properties": {
+                    "imapHost": {
+                        "type": "string"
+                    },
+                    "imapPort": {
+                        "type": "integer"
+                    },
+                    "imapSecurity": {
+                        "type": "string"
+                    },
+                    "smtpHost": {
+                        "type": "string"
+                    },
+                    "smtpPort": {
+                        "type": "integer"
+                    },
+                    "smtpSecurity": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "imapHost",
+                    "imapPort",
+                    "imapSecurity",
+                    "smtpHost",
+                    "smtpPort",
+                    "smtpSecurity"
+                ]
+            },
+            "AdminVoiceSettings": {
+                "type": "object",
+                "properties": {
+                    "signalingUrl": {
+                        "type": "string"
+                    },
+                    "stunUrls": {
+                        "type": "string"
+                    },
+                    "turnUrls": {
+                        "type": "string"
+                    },
+                    "turnUsername": {
+                        "type": "string"
+                    },
+                    "turnPassword": {
+                        "type": "string"
+                    },
+                    "forceRelay": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "signalingUrl",
+                    "stunUrls",
+                    "turnUrls",
+                    "turnUsername",
+                    "turnPassword",
+                    "forceRelay"
+                ]
+            },
+            "AdminAppsSettings": {
+                "type": "object",
+                "properties": {
+                    "calendars": {
+                        "type": "boolean"
+                    },
+                    "contacts": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "calendars",
+                    "contacts"
+                ]
+            },
+            "AdminWebdavSettings": {
+                "type": "object",
+                "properties": {
+                    "sabreUi": {
+                        "type": "boolean"
+                    },
+                    "timezone": {
+                        "type": "string"
+                    },
+                    "baseUri": {
+                        "type": "string"
+                    },
+                    "authRealm": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "sabreUi",
+                    "timezone",
+                    "baseUri",
+                    "authRealm"
+                ]
+            },
+            "UpdateReleaseMetadata": {
+                "type": "object",
+                "properties": {
+                    "version": {
+                        "type": "string"
+                    },
+                    "package_url": {
+                        "type": "string"
+                    },
+                    "checksum_sha256": {
+                        "type": "string"
+                    },
+                    "checksum_signature": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "version",
+                    "package_url",
+                    "checksum_sha256",
+                    "checksum_signature"
+                ]
+            },
+            "UpdateBackupItem": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "sizeBytes": {
+                        "type": "integer"
+                    },
+                    "modifiedAt": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "fromVersion": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "toVersion": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "format": {
+                        "type": "string"
+                    },
+                    "downloadable": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "name",
+                    "sizeBytes",
+                    "modifiedAt",
+                    "fromVersion",
+                    "toVersion",
+                    "format",
+                    "downloadable"
+                ]
+            },
+            "UpdateCheckItem": {
+                "type": "object",
+                "properties": {
+                    "ok": {
+                        "type": "boolean"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "detail": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "ok",
+                    "label",
+                    "detail"
+                ]
+            },
+            "UpdateCurrentInfo": {
+                "type": "object",
+                "properties": {
+                    "from": {
+                        "type": "string"
+                    },
+                    "to": {
+                        "type": "string"
+                    },
+                    "at": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "from",
+                    "to",
+                    "at"
+                ]
+            },
+            "UpdateDownloadProgress": {
+                "type": "object",
+                "properties": {
+                    "downloadedBytes": {
+                        "type": "integer"
+                    },
+                    "totalBytes": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "percent": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "updatedAt": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "downloadedBytes",
+                    "totalBytes",
+                    "percent",
+                    "updatedAt"
+                ]
+            },
+            "UpdatePhaseProgress": {
+                "type": "object",
+                "properties": {
+                    "completed": {
+                        "type": "integer"
+                    },
+                    "total": {
+                        "type": "integer"
+                    },
+                    "percent": {
+                        "type": "integer"
+                    },
+                    "updatedAt": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "completed",
+                    "total",
+                    "percent",
+                    "updatedAt"
+                ]
+            },
+            "UpdateApplyResult": {
+                "type": "object",
+                "properties": {
+                    "ok": {
+                        "type": "boolean"
+                    },
+                    "version": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "finishedAt": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "ok",
+                    "version",
+                    "message",
+                    "finishedAt"
+                ]
+            },
+            "UpdateStateResponse": {
+                "type": "object",
+                "properties": {
+                    "installedVersion": {
+                        "type": "string"
+                    },
+                    "schemaVersion": {
+                        "type": "integer"
+                    },
+                    "latest": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/UpdateReleaseMetadata"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "updateAvailable": {
+                        "type": "boolean"
+                    },
+                    "compatible": {
+                        "type": "boolean"
+                    },
+                    "backups": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/UpdateBackupItem"
+                        }
+                    },
+                    "checks": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/UpdateCheckItem"
+                        }
+                    },
+                    "inProgress": {
+                        "type": "boolean"
+                    },
+                    "phase": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "current": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/UpdateCurrentInfo"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "download": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/UpdateDownloadProgress"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "phaseProgress": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/UpdatePhaseProgress"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "cancelRequested": {
+                        "type": "boolean"
+                    },
+                    "cancelAllowed": {
+                        "type": "boolean"
+                    },
+                    "lastCheckedAt": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "lastCheckError": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "lastResult": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/UpdateApplyResult"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "required": [
+                    "installedVersion",
+                    "schemaVersion",
+                    "latest",
+                    "updateAvailable",
+                    "compatible",
+                    "backups",
+                    "checks",
+                    "inProgress",
+                    "phase",
+                    "current",
+                    "download",
+                    "phaseProgress",
+                    "cancelRequested",
+                    "cancelAllowed",
+                    "lastCheckedAt",
+                    "lastCheckError",
+                    "lastResult"
+                ]
+            },
+            "AdminStateResponse": {
+                "type": "object",
+                "properties": {
+                    "users": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AdminUserSummary"
+                        }
+                    },
+                    "groups": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AdminGroupSummary"
+                        }
+                    },
+                    "mail": {
+                        "$ref": "#/components/schemas/AdminMailSettings"
+                    },
+                    "voice": {
+                        "$ref": "#/components/schemas/AdminVoiceSettings"
+                    },
+                    "apps": {
+                        "$ref": "#/components/schemas/AdminAppsSettings"
+                    },
+                    "webdav": {
+                        "$ref": "#/components/schemas/AdminWebdavSettings"
+                    },
+                    "updates": {
+                        "$ref": "#/components/schemas/UpdateStateResponse"
+                    },
+                    "currentUser": {
+                        "type": "string"
+                    },
+                    "logoutUrl": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "users",
+                    "groups",
+                    "mail",
+                    "voice",
+                    "apps",
+                    "webdav",
+                    "updates",
+                    "currentUser",
+                    "logoutUrl"
+                ]
+            },
+            "UpdateApplyResponse": {
+                "$ref": "#/components/schemas/UpdateApplyResult"
+            },
+            "UpdateApplyRequest": {
+                "type": "object",
+                "properties": {
+                    "version": {
+                        "type": "string"
+                    }
+                },
+                "example": {
+                    "version": "0.1.31"
+                }
+            },
+            "UpdateLogLineList": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            },
+            "UpdateLogResponse": {
+                "type": "object",
+                "properties": {
+                    "lines": {
+                        "$ref": "#/components/schemas/UpdateLogLineList"
+                    }
+                },
+                "required": [
+                    "lines"
+                ]
+            },
+            "UpdateLogClearResponse": {
+                "type": "object",
+                "properties": {
+                    "ok": {
+                        "type": "boolean"
+                    },
+                    "lines": {
+                        "$ref": "#/components/schemas/UpdateLogLineList"
+                    }
+                },
+                "required": [
+                    "ok",
+                    "lines"
+                ]
+            },
+            "AdminSavedSettingKeyList": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            },
+            "AdminSettingsSaveResponse": {
+                "type": "object",
+                "properties": {
+                    "ok": {
+                        "type": "boolean"
+                    },
+                    "saved": {
+                        "$ref": "#/components/schemas/AdminSavedSettingKeyList"
+                    }
+                },
+                "required": [
+                    "ok",
+                    "saved"
+                ]
+            },
+            "SettingsUserProfile": {
+                "type": "object",
+                "properties": {
+                    "username": {
+                        "type": "string"
+                    },
+                    "displayName": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "username",
+                    "displayName",
+                    "email"
+                ]
+            },
+            "SettingsUserGroup": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "displayName": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "displayName"
+                ]
+            },
+            "SettingsUserGroupList": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/SettingsUserGroup"
+                }
+            },
+            "SettingsUserMail": {
+                "type": "object",
+                "properties": {
+                    "imapUsername": {
+                        "type": "string"
+                    },
+                    "imapHasPassword": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "imapUsername",
+                    "imapHasPassword"
+                ]
+            },
+            "SettingsUserMailServer": {
+                "type": "object",
+                "properties": {
+                    "imapHost": {
+                        "type": "string"
+                    },
+                    "imapPort": {
+                        "type": "integer"
+                    },
+                    "imapSecurity": {
+                        "type": "string"
+                    },
+                    "smtpHost": {
+                        "type": "string"
+                    },
+                    "smtpPort": {
+                        "type": "integer"
+                    },
+                    "smtpSecurity": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "imapHost",
+                    "imapPort",
+                    "imapSecurity",
+                    "smtpHost",
+                    "smtpPort",
+                    "smtpSecurity"
+                ]
+            },
+            "SettingsStateResponse": {
+                "type": "object",
+                "properties": {
+                    "user": {
+                        "$ref": "#/components/schemas/SettingsUserProfile"
+                    },
+                    "groups": {
+                        "$ref": "#/components/schemas/SettingsUserGroupList"
+                    },
+                    "mail": {
+                        "$ref": "#/components/schemas/SettingsUserMail"
+                    },
+                    "mailServer": {
+                        "$ref": "#/components/schemas/SettingsUserMailServer"
+                    },
+                    "logoutUrl": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "user",
+                    "groups",
+                    "mail",
+                    "mailServer",
+                    "logoutUrl"
+                ]
+            },
+            "SettingsProfileRequest": {
+                "type": "object",
+                "properties": {
+                    "displayName": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "password": {
+                        "type": "string"
+                    }
+                },
+                "example": {
+                    "displayName": "Alice Example",
+                    "email": "alice@example.test"
+                }
+            },
+            "SettingsMailRequest": {
+                "type": "object",
+                "properties": {
+                    "imapUsername": {
+                        "type": "string"
+                    },
+                    "imapPassword": {
+                        "type": "string"
+                    }
+                },
+                "example": {
+                    "imapUsername": "alice@example.test",
+                    "imapPassword": "secret"
+                }
+            },
+            "MailStatusResponse": {
+                "type": "object",
+                "properties": {
+                    "extImap": {
+                        "type": "boolean"
+                    },
+                    "serversConfigured": {
+                        "type": "boolean"
+                    },
+                    "accountConfigured": {
+                        "type": "boolean"
+                    },
+                    "configured": {
+                        "type": "boolean"
+                    },
+                    "ready": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "MailIdentity": {
+                "type": "object",
+                "properties": {
+                    "displayName": {
+                        "type": "string"
+                    },
+                    "emailAddress": {
+                        "type": "string"
+                    }
+                }
+            },
+            "MailServerEndpoint": {
+                "type": "object",
+                "properties": {
+                    "host": {
+                        "type": "string"
+                    },
+                    "port": {
+                        "type": "integer"
+                    },
+                    "security": {
+                        "type": "string"
+                    }
+                }
+            },
+            "MailServerSettings": {
+                "type": "object",
+                "properties": {
+                    "imap": {
+                        "$ref": "#/components/schemas/MailServerEndpoint"
+                    },
+                    "smtp": {
+                        "$ref": "#/components/schemas/MailServerEndpoint"
+                    }
+                }
+            },
+            "MailAccountConfig": {
+                "type": "object",
+                "properties": {
+                    "imapUsername": {
+                        "type": "string"
+                    },
+                    "imapHasPassword": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "MailPublicConfig": {
+                "type": "object",
+                "properties": {
+                    "identity": {
+                        "$ref": "#/components/schemas/MailIdentity"
+                    },
+                    "servers": {
+                        "$ref": "#/components/schemas/MailServerSettings"
+                    },
+                    "account": {
+                        "$ref": "#/components/schemas/MailAccountConfig"
+                    }
+                }
+            },
+            "MailConfigResponse": {
+                "type": "object",
+                "properties": {
+                    "ok": {
+                        "type": "boolean"
+                    },
+                    "config": {
+                        "$ref": "#/components/schemas/MailPublicConfig"
+                    }
+                }
+            },
+            "MailAddress": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    }
+                }
+            },
+            "MailAttachmentSummary": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "size": {
+                        "type": "integer"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "part": {
+                        "type": "string"
+                    }
+                }
+            },
+            "MailAddressList": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/MailAddress"
+                }
+            },
+            "MailAttachmentSummaryList": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/MailAttachmentSummary"
+                }
+            },
+            "MailAttachmentListItem": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "attachments": {
+                        "$ref": "#/components/schemas/MailAttachmentSummaryList"
+                    }
+                }
+            },
+            "MailAttachmentList": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/MailAttachmentListItem"
+                }
+            },
+            "MailFolder": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "parentId": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "system": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "virtual": {
+                        "type": "boolean"
+                    },
+                    "unread": {
+                        "type": "integer"
+                    }
+                }
+            },
+            "MailFolderList": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/MailFolder"
+                }
+            },
+            "MailFoldersResponse": {
+                "type": "object",
+                "properties": {
+                    "folders": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/MailFolder"
+                        }
+                    }
+                }
+            },
+            "MailMessageListItem": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "folderId": {
+                        "type": "string"
+                    },
+                    "mailbox": {
+                        "type": "string"
+                    },
+                    "from": {
+                        "$ref": "#/components/schemas/MailAddress"
+                    },
+                    "to": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/MailAddress"
+                        }
+                    },
+                    "cc": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/MailAddress"
+                        }
+                    },
+                    "subject": {
+                        "type": "string"
+                    },
+                    "preview": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": "string"
+                    },
+                    "date": {
+                        "type": "string"
+                    },
+                    "read": {
+                        "type": "boolean"
+                    },
+                    "starred": {
+                        "type": "boolean"
+                    },
+                    "attachments": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/MailAttachmentSummary"
+                        }
+                    }
+                }
+            },
+            "MailMessageList": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/MailMessageListItem"
+                }
+            },
+            "MailMessageDetail": {
+                "type": "object",
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/MailMessageListItem"
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "bodyHtml": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        }
+                    }
+                ]
+            },
+            "MailMessagesResponse": {
+                "type": "object",
+                "properties": {
+                    "messages": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/MailMessageListItem"
+                        }
+                    },
+                    "hasMore": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "MailAttachmentsResponse": {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/MailAttachmentListItem"
+                        }
+                    }
+                }
+            },
+            "MailMessageResponse": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "$ref": "#/components/schemas/MailMessageDetail"
+                    }
+                }
+            },
+            "MailFolderMutationResponse": {
+                "type": "object",
+                "properties": {
+                    "ok": {
+                        "type": "boolean"
+                    },
+                    "mailbox": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    }
+                }
+            },
+            "MailAttachmentReport": {
+                "type": "object",
+                "properties": {
+                    "attached": {
+                        "type": "integer"
+                    },
+                    "skipped": {
+                        "type": "integer"
+                    },
+                    "totalBytes": {
+                        "type": "integer"
+                    }
+                }
+            },
+            "MailSendResponse": {
+                "type": "object",
+                "properties": {
+                    "ok": {
+                        "type": "boolean"
+                    },
+                    "attachment_report": {
+                        "$ref": "#/components/schemas/MailAttachmentReport"
+                    },
+                    "sent_copy_failed": {
+                        "type": "string"
+                    }
+                }
+            },
+            "MailDraftResponse": {
+                "type": "object",
+                "properties": {
+                    "ok": {
+                        "type": "boolean"
+                    },
+                    "attachment_report": {
+                        "$ref": "#/components/schemas/MailAttachmentReport"
+                    }
+                }
+            },
+            "MailConfigPutImapInput": {
+                "type": "object",
+                "properties": {
+                    "username": {
+                        "type": "string"
+                    },
+                    "password": {
+                        "type": "string"
+                    }
+                }
+            },
+            "MailConfigPutRequest": {
+                "type": "object",
+                "properties": {
+                    "imap": {
+                        "$ref": "#/components/schemas/MailConfigPutImapInput"
+                    }
+                },
+                "example": {
+                    "imap": {
+                        "username": "alice@example.test",
+                        "password": "secret"
+                    }
+                }
+            },
+            "MailFolderCreateRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "parentMailbox": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "name"
+                ],
+                "example": {
+                    "name": "Projects",
+                    "parentMailbox": "INBOX"
+                }
+            },
+            "MailFolderMoveRequest": {
+                "type": "object",
+                "properties": {
+                    "folder": {
+                        "type": "string"
+                    },
+                    "parentMailbox": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "folder"
+                ],
+                "example": {
+                    "folder": "UHJvamVjdHM",
+                    "parentMailbox": "SU5CT1g"
+                }
+            },
+            "MailFolderDeleteRequest": {
+                "type": "object",
+                "properties": {
+                    "folder": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "folder"
+                ],
+                "example": {
+                    "folder": "UHJvamVjdHM"
+                }
+            },
+            "MailMessagePatchRequest": {
+                "type": "object",
+                "properties": {
+                    "folder": {
+                        "type": "string"
+                    },
+                    "uid": {
+                        "type": "integer"
+                    },
+                    "read": {
+                        "type": "boolean"
+                    },
+                    "starred": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "folder",
+                    "uid"
+                ],
+                "example": {
+                    "folder": "SU5CT1g",
+                    "uid": 42,
+                    "read": true,
+                    "starred": false
+                }
+            },
+            "MailMoveRequest": {
+                "type": "object",
+                "properties": {
+                    "fromFolder": {
+                        "type": "string"
+                    },
+                    "toFolder": {
+                        "type": "string"
+                    },
+                    "uid": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "fromFolder",
+                    "toFolder",
+                    "uid"
+                ],
+                "example": {
+                    "fromFolder": "SU5CT1g",
+                    "toFolder": "trash",
+                    "uid": 42
+                }
+            },
+            "MailComposeAttachmentUpload": {
+                "type": "object",
+                "properties": {
+                    "filename": {
+                        "type": "string"
+                    },
+                    "mimeType": {
+                        "type": "string"
+                    },
+                    "contentBase64": {
+                        "type": "string"
+                    }
+                }
+            },
+            "MailComposeAttachmentUploadList": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/MailComposeAttachmentUpload"
+                }
+            },
+            "MailSendRequest": {
+                "type": "object",
+                "properties": {
+                    "to": {
+                        "type": "string"
+                    },
+                    "subject": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": "string"
+                    },
+                    "cc": {
+                        "type": "string"
+                    },
+                    "bcc": {
+                        "type": "string"
+                    },
+                    "attachments": {
+                        "$ref": "#/components/schemas/MailComposeAttachmentUploadList"
+                    }
+                },
+                "required": [
+                    "to"
+                ],
+                "example": {
+                    "to": "bob@example.test",
+                    "subject": "Hello",
+                    "body": "Hi Bob"
+                }
+            },
+            "MailDraftRequest": {
+                "type": "object",
+                "properties": {
+                    "to": {
+                        "type": "string"
+                    },
+                    "subject": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": "string"
+                    },
+                    "cc": {
+                        "type": "string"
+                    },
+                    "bcc": {
+                        "type": "string"
+                    },
+                    "attachments": {
+                        "$ref": "#/components/schemas/MailComposeAttachmentUploadList"
+                    }
+                },
+                "example": {
+                    "subject": "Draft subject",
+                    "body": "Draft body"
+                }
+            },
+            "DriveGetDirRequest": {
+                "type": "object",
+                "properties": {
+                    "dir": {
+                        "type": "string"
+                    }
+                },
+                "example": {
+                    "dir": "/users/alice/"
+                }
+            },
+            "DriveSearchRequest": {
+                "type": "object",
+                "properties": {
+                    "q": {
+                        "type": "string"
+                    },
+                    "limit": {
+                        "type": "integer"
+                    }
+                },
+                "example": {
+                    "q": "invoice",
+                    "limit": 25
+                }
+            },
+            "DriveChangeDirRequest": {
+                "type": "object",
+                "properties": {
+                    "to": {
+                        "type": "string"
+                    }
+                },
+                "example": {
+                    "to": "/users/alice/Documents"
+                }
+            },
+            "DriveEntryType": {
+                "type": "string",
+                "enum": [
+                    "dir",
+                    "file"
+                ]
+            },
+            "DriveRootPath": {
+                "type": "string",
+                "enum": [
+                    "/users",
+                    "/groups"
+                ]
+            },
+            "DriveRootPathList": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/DriveRootPath"
+                }
+            },
+            "DriveDirectoryEntry": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "$ref": "#/components/schemas/DriveEntryType"
+                    },
+                    "path": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "size": {
+                        "type": "integer"
+                    },
+                    "time": {
+                        "type": "integer"
+                    },
+                    "permissions": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "type",
+                    "path",
+                    "name",
+                    "size",
+                    "time",
+                    "permissions"
+                ]
+            },
+            "DriveDirectoryEntryList": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/DriveDirectoryEntry"
+                }
+            },
+            "DriveDirectoryData": {
+                "type": "object",
+                "properties": {
+                    "location": {
+                        "type": "string"
+                    },
+                    "files": {
+                        "$ref": "#/components/schemas/DriveDirectoryEntryList"
+                    }
+                },
+                "required": [
+                    "location",
+                    "files"
+                ]
+            },
+            "DriveCwdData": {
+                "type": "object",
+                "properties": {
+                    "cwd": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "cwd"
+                ]
+            },
+            "DriveUserData": {
+                "type": "object",
+                "properties": {
+                    "username": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": "string",
+                        "enum": [
+                            "user"
+                        ]
+                    },
+                    "roots": {
+                        "$ref": "#/components/schemas/DriveRootPathList"
+                    }
+                },
+                "required": [
+                    "username",
+                    "name",
+                    "role",
+                    "roots"
+                ]
+            },
+            "DriveCreateRequest": {
+                "type": "object",
+                "properties": {
+                    "cwd": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/DriveEntryType"
+                    }
+                },
+                "required": [
+                    "name",
+                    "type"
+                ],
+                "example": {
+                    "cwd": "/users/alice",
+                    "name": "Q2",
+                    "type": "dir"
+                }
+            },
+            "DriveRenameRequest": {
+                "type": "object",
+                "properties": {
+                    "destination": {
+                        "type": "string"
+                    },
+                    "from": {
+                        "type": "string"
+                    },
+                    "to": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "destination",
+                    "from",
+                    "to"
+                ],
+                "example": {
+                    "destination": "/users/alice",
+                    "from": "Q1",
+                    "to": "Q1-Archive"
+                }
+            },
+            "DriveDeleteItem": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/DriveEntryType"
+                    }
+                },
+                "required": [
+                    "path"
+                ]
+            },
+            "DriveDeleteItemList": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/DriveDeleteItem"
+                }
+            },
+            "DriveDeleteItemsRequest": {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "$ref": "#/components/schemas/DriveDeleteItemList"
+                    }
+                },
+                "required": [
+                    "items"
+                ],
+                "example": {
+                    "items": [
+                        {
+                            "path": "/users/alice/Q1-Archive",
+                            "type": "dir"
+                        }
+                    ]
+                }
+            },
+            "DriveUserResponse": {
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/DriveUserData"
+                    }
+                },
+                "required": [
+                    "data"
+                ]
+            },
+            "DriveListingResponse": {
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/DriveDirectoryData"
+                    }
+                },
+                "required": [
+                    "data"
+                ]
+            },
+            "DriveCwdResponse": {
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/DriveCwdData"
+                    }
+                },
+                "required": [
+                    "data"
+                ]
+            },
+            "DriveMutationResult": {
+                "type": "string",
+                "enum": [
+                    "Created",
+                    "Renamed",
+                    "Deleted"
+                ]
+            },
+            "DriveMutationResponse": {
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/DriveMutationResult"
+                    }
+                },
+                "required": [
+                    "data"
+                ]
+            },
+            "DriveStarPathList": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            },
+            "DriveStarsData": {
+                "type": "object",
+                "properties": {
+                    "paths": {
+                        "$ref": "#/components/schemas/DriveStarPathList"
+                    }
+                },
+                "required": [
+                    "paths"
+                ]
+            },
+            "DriveStarsResponse": {
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/DriveStarsData"
+                    }
+                },
+                "required": [
+                    "data"
+                ]
+            },
+            "DriveStarUpdateRequest": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string"
+                    },
+                    "starred": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "path",
+                    "starred"
+                ],
+                "example": {
+                    "path": "/groups/team/invoice.pdf",
+                    "starred": true
+                }
+            },
+            "DriveStarUpdateResult": {
+                "type": "string",
+                "enum": [
+                    "Updated"
+                ]
+            },
+            "DriveStarUpdateResponse": {
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/DriveStarUpdateResult"
+                    }
+                },
+                "required": [
+                    "data"
+                ]
+            },
+            "NotesCapabilitiesResponse": {
+                "type": "object",
+                "properties": {
+                    "enabled": {
+                        "type": "boolean"
+                    },
+                    "distReady": {
+                        "type": "boolean"
+                    },
+                    "baseUri": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "enabled",
+                    "distReady",
+                    "baseUri"
+                ]
+            },
+            "NotesStateResponse": {
+                "type": "object",
+                "properties": {
+                    "baseUri": {
+                        "type": "string"
+                    },
+                    "username": {
+                        "type": "string"
+                    },
+                    "displayName": {
+                        "type": "string"
+                    },
+                    "logoutUrl": {
+                        "type": "string"
+                    },
+                    "notesPath": {
+                        "type": "string"
+                    },
+                    "filesEnabled": {
+                        "type": "boolean"
+                    },
+                    "distReady": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "baseUri",
+                    "username",
+                    "displayName",
+                    "logoutUrl",
+                    "notesPath",
+                    "filesEnabled",
+                    "distReady"
+                ]
+            },
+            "NoteTagList": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            },
+            "NoteItem": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "username": {
+                        "type": "string"
+                    },
+                    "notebook": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": "string"
+                    },
+                    "tags": {
+                        "$ref": "#/components/schemas/NoteTagList"
+                    },
+                    "starred": {
+                        "type": [
+                            "boolean",
+                            "null"
+                        ]
+                    },
+                    "archived": {
+                        "type": "boolean"
+                    },
+                    "updatedAt": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "username",
+                    "notebook",
+                    "title",
+                    "body",
+                    "tags",
+                    "archived",
+                    "updatedAt"
+                ]
+            },
+            "NoteItemList": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/NoteItem"
+                }
+            },
+            "NotesItemsResponse": {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/NoteItem"
+                        }
+                    }
+                },
+                "required": [
+                    "items"
+                ]
+            },
+            "NoteMutationResponse": {
+                "type": "object",
+                "properties": {
+                    "ok": {
+                        "type": "boolean"
+                    },
+                    "item": {
+                        "$ref": "#/components/schemas/NoteItem"
+                    }
+                },
+                "required": [
+                    "ok",
+                    "item"
+                ]
+            },
+            "NoteUpsertRequest": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "notebook": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": "string"
+                    },
+                    "tags": {
+                        "$ref": "#/components/schemas/NoteTagList"
+                    },
+                    "starred": {
+                        "type": "boolean"
+                    },
+                    "archived": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "notebook",
+                    "title",
+                    "body",
+                    "tags",
+                    "starred",
+                    "archived"
+                ],
+                "example": {
+                    "id": "n123",
+                    "notebook": "General",
+                    "title": "Roadmap",
+                    "body": "Draft roadmap",
+                    "tags": [
+                        "planning"
+                    ],
+                    "starred": true
+                }
+            },
+            "NoteDeleteRequest": {
+                "type": "object",
+                "properties": {
+                    "notebook": {
+                        "type": "string"
+                    },
+                    "archived": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "notebook",
+                    "archived"
+                ],
+                "example": {
+                    "notebook": "General",
+                    "archived": false
+                }
+            },
+            "NotebookListItem": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "activeCount": {
+                        "type": "integer"
+                    },
+                    "archivedCount": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "name",
+                    "activeCount",
+                    "archivedCount"
+                ]
+            },
+            "NotebookListItemList": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/NotebookListItem"
+                }
+            },
+            "NotebookListResponse": {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/NotebookListItem"
+                        }
+                    }
+                },
+                "required": [
+                    "items"
+                ]
+            },
+            "NotebookMutationResponse": {
+                "type": "object",
+                "properties": {
+                    "ok": {
+                        "type": "boolean"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "from": {
+                        "type": "string"
+                    },
+                    "to": {
+                        "type": "string"
+                    },
+                    "mode": {
+                        "type": "string"
+                    },
+                    "target": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "ok"
+                ]
+            },
+            "NotebookCreateRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "name"
+                ],
+                "example": {
+                    "name": "Ideas"
+                }
+            },
+            "NotebookRenameRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "name"
+                ],
+                "example": {
+                    "name": "Projects"
+                }
+            },
+            "NotebookDeleteRequest": {
+                "type": "object",
+                "properties": {
+                    "mode": {
+                        "type": "string",
+                        "enum": [
+                            "archive",
+                            "move",
+                            "purge"
+                        ]
+                    },
+                    "target": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "mode"
+                ],
+                "example": {
+                    "mode": "move",
+                    "target": "Archive"
+                }
+            },
+            "VoiceSessionKey": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{32}$"
+            },
+            "VoicePeer": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name"
+                ]
+            },
+            "VoicePeerList": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/VoicePeer"
+                }
+            },
+            "VoiceMessageType": {
+                "type": "string",
+                "enum": [
+                    "offer",
+                    "answer",
+                    "ice",
+                    "bye",
+                    "chat"
+                ]
+            },
+            "VoiceSendType": {
+                "type": "string",
+                "enum": [
+                    "offer",
+                    "answer",
+                    "ice",
+                    "bye"
+                ]
+            },
+            "VoiceSdpPayload": {
+                "type": "object",
+                "properties": {
+                    "sdp": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "sdp"
+                ]
+            },
+            "VoiceIcePayload": {
+                "type": "object",
+                "properties": {
+                    "candidate": {
+                        "type": "string"
+                    },
+                    "sdpMid": {
+                        "type": "string"
+                    },
+                    "sdpMLineIndex": {
+                        "type": "integer"
+                    },
+                    "usernameFragment": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "candidate"
+                ]
+            },
+            "VoiceChatPayload": {
+                "type": "object",
+                "properties": {
+                    "text": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "text"
+                ]
+            },
+            "VoiceByePayload": {
+                "type": "object",
+                "properties": {
+                    "reason": {
+                        "type": "string"
+                    }
+                }
+            },
+            "VoiceSignalPayload": {
+                "oneOf": [
+                    {
+                        "$ref": "#/components/schemas/VoiceSdpPayload"
+                    },
+                    {
+                        "$ref": "#/components/schemas/VoiceIcePayload"
+                    },
+                    {
+                        "$ref": "#/components/schemas/VoiceChatPayload"
+                    },
+                    {
+                        "$ref": "#/components/schemas/VoiceByePayload"
+                    },
+                    {
+                        "type": "null"
+                    }
+                ]
+            },
+            "VoiceSignalEnvelope": {
+                "type": "object",
+                "properties": {
+                    "from": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/VoiceMessageType"
+                    },
+                    "payload": {
+                        "$ref": "#/components/schemas/VoiceSignalPayload"
+                    }
+                },
+                "required": [
+                    "from",
+                    "type",
+                    "payload"
+                ]
+            },
+            "VoiceSignalEnvelopeList": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/components/schemas/VoiceSignalEnvelope"
+                }
+            },
+            "VoiceJoinRequest": {
+                "type": "object",
+                "properties": {
+                    "room": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{4,64}$"
+                    },
+                    "peerId": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{4,64}$"
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 64
+                    },
+                    "sessionKey": {
+                        "$ref": "#/components/schemas/VoiceSessionKey"
+                    }
+                },
+                "required": [
+                    "room",
+                    "peerId"
+                ],
+                "example": {
+                    "room": "daily-room",
+                    "peerId": "peer1234",
+                    "name": "Guest User"
+                }
+            },
+            "VoicePollRequest": {
+                "type": "object",
+                "properties": {
+                    "room": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{4,64}$"
+                    },
+                    "peerId": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{4,64}$"
+                    },
+                    "sessionKey": {
+                        "$ref": "#/components/schemas/VoiceSessionKey"
+                    }
+                },
+                "required": [
+                    "room",
+                    "peerId"
+                ],
+                "example": {
+                    "room": "daily-room",
+                    "peerId": "peer1234"
+                }
+            },
+            "VoiceSendRequest": {
+                "type": "object",
+                "properties": {
+                    "room": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{4,64}$"
+                    },
+                    "from": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{4,64}$"
+                    },
+                    "to": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{4,64}$"
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/VoiceSendType"
+                    },
+                    "payload": {
+                        "$ref": "#/components/schemas/VoiceSignalPayload"
+                    },
+                    "sessionKey": {
+                        "$ref": "#/components/schemas/VoiceSessionKey"
+                    }
+                },
+                "required": [
+                    "room",
+                    "from",
+                    "to",
+                    "type"
+                ],
+                "example": {
+                    "room": "daily-room",
+                    "from": "peer-a",
+                    "to": "peer-b",
+                    "type": "offer",
+                    "payload": {
+                        "sdp": "v=0..."
+                    }
+                }
+            },
+            "VoiceLeaveRequest": {
+                "type": "object",
+                "properties": {
+                    "room": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{4,64}$"
+                    },
+                    "peerId": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{4,64}$"
+                    },
+                    "sessionKey": {
+                        "$ref": "#/components/schemas/VoiceSessionKey"
+                    }
+                },
+                "required": [
+                    "room",
+                    "peerId"
+                ],
+                "example": {
+                    "room": "daily-room",
+                    "peerId": "peer1234"
+                }
+            },
+            "VoiceChatRequest": {
+                "type": "object",
+                "properties": {
+                    "room": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{4,64}$"
+                    },
+                    "from": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{4,64}$"
+                    },
+                    "text": {
+                        "type": "string",
+                        "maxLength": 2000
+                    },
+                    "sessionKey": {
+                        "$ref": "#/components/schemas/VoiceSessionKey"
+                    }
+                },
+                "required": [
+                    "room",
+                    "from",
+                    "text"
+                ],
+                "example": {
+                    "room": "daily-room",
+                    "from": "peer1234",
+                    "text": "Hello team"
+                }
+            },
+            "VoiceJoinResponse": {
+                "type": "object",
+                "properties": {
+                    "peers": {
+                        "$ref": "#/components/schemas/VoicePeerList"
+                    },
+                    "sessionKey": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "peers",
+                    "sessionKey"
+                ]
+            },
+            "VoicePollResponse": {
+                "type": "object",
+                "properties": {
+                    "peers": {
+                        "$ref": "#/components/schemas/VoicePeerList"
+                    },
+                    "messages": {
+                        "$ref": "#/components/schemas/VoiceSignalEnvelopeList"
+                    }
+                },
+                "required": [
+                    "peers",
+                    "messages"
+                ]
+            },
+            "VoiceSendResponse": {
+                "type": "object",
+                "properties": {
+                    "ok": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "ok"
+                ]
+            },
+            "VoiceLeaveResponse": {
+                "type": "object",
+                "properties": {
+                    "ok": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "ok"
+                ]
+            },
+            "VoiceChatResponse": {
+                "type": "object",
+                "properties": {
+                    "ok": {
+                        "type": "boolean"
+                    },
+                    "delivered": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "ok",
+                    "delivered"
+                ]
+            },
+            "OfficeCapabilitiesResponse": {
+                "type": "object",
+                "properties": {
+                    "enabled": {
+                        "type": "boolean"
+                    },
+                    "indexReady": {
+                        "type": "boolean"
+                    },
+                    "editorReady": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "OfficeDocumentCreateRequest": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string"
+                    },
+                    "content_base64": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "path"
+                ],
+                "example": {
+                    "path": "/users/alice/New Document.docx"
+                }
+            },
+            "OfficeDocumentUpdateRequest": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string"
+                    },
+                    "content_base64": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "path",
+                    "content_base64"
+                ],
+                "example": {
+                    "path": "/users/alice/New Document.docx",
+                    "content_base64": "UEsDBBQAAAAIAAAAIQAAAAAAAAAAAAAAAAAJAAAAd29yZC9QSw=="
+                }
+            },
+            "OfficeDocumentMutationResponse": {
+                "type": "object",
+                "properties": {
+                    "ok": {
+                        "type": "boolean"
+                    },
+                    "path": {
+                        "type": "string"
+                    },
+                    "bytes": {
+                        "type": "integer"
+                    }
+                }
+            },
+            "HomeStateResponse": {
+                "type": "object",
+                "properties": {
+                    "username": {
+                        "type": "string"
+                    },
+                    "isAdmin": {
+                        "type": "boolean"
+                    },
+                    "availability": {
+                        "type": "object"
+                    }
+                }
+            },
+            "DavCapabilitiesResponse": {
+                "type": "object",
+                "properties": {
+                    "baseUri": {
+                        "type": "string"
+                    },
+                    "filesEnabled": {
+                        "type": "boolean"
+                    },
+                    "calendarEnabled": {
+                        "type": "boolean"
+                    },
+                    "contactsEnabled": {
+                        "type": "boolean"
+                    }
+                }
+            }
+        }
+    },
+    "paths": {
+        "/health": {
+            "get": {
+                "tags": [
+                    "System"
+                ],
+                "summary": "Health check",
+                "responses": {
+                    "200": {
+                        "description": "Service health",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HealthResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/capabilities": {
+            "get": {
+                "tags": [
+                    "System"
+                ],
+                "summary": "Platform capabilities and domains",
+                "responses": {
+                    "200": {
+                        "description": "Capabilities response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CapabilitiesResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/.well-known/jwks.json": {
+            "get": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Public JWKS for JWT verification",
+                "responses": {
+                    "200": {
+                        "description": "JWK set",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GenericObject"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/token": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Issue RS256 bearer token from username/password",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AuthTokenRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Token issued",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthTokenResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GenericObject"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GenericObject"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many login attempts",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GenericObject"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "JWT not configured",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GenericObject"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/refresh": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Refresh access token using refresh token",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AuthRefreshRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Refreshed token pair",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuthTokenResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GenericObject"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GenericObject"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/revoke": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Revoke current access token and/or refresh token",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AuthRevokeRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Revocation result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OkResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/me": {
+            "get": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Current authenticated principal",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Current principal",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Principal"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/state": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Admin aggregate state",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Admin state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AdminStateResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/updates/log": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Read update process log lines",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Update log lines",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UpdateLogResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Clear update process log",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Log cleared",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UpdateLogClearResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/updates/backups/{name}": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Download an update backup archive",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "name",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Backup ZIP stream",
+                        "content": {
+                            "application/octet-stream": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BinaryPayload"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Delete an update backup archive",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "name",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated backup state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UpdateStateResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/groups/{group}/members/{username}": {
+            "put": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Add user to admin group",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "group",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "username",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Membership added",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OkResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Remove user from admin group",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "group",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "username",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Membership removed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OkResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/settings/state": {
+            "get": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "User settings aggregate state",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Settings state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SettingsStateResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/settings/profile": {
+            "put": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Update profile details for current user",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated settings state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SettingsStateResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SettingsProfileRequest"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/settings/mail": {
+            "put": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Update personal mail credentials for current user",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated settings state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SettingsStateResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SettingsMailRequest"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/mail/status": {
+            "get": {
+                "tags": [
+                    "Mail"
+                ],
+                "summary": "Mail runtime status",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Mail status",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MailStatusResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/mail/folders": {
+            "get": {
+                "tags": [
+                    "Mail"
+                ],
+                "summary": "List mail folders",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Mail folder tree",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MailFoldersResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Mail"
+                ],
+                "summary": "Create mail folder",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Folder created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MailFolderMutationResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MailFolderCreateRequest"
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Mail"
+                ],
+                "summary": "Move mail folder",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Folder moved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MailFolderMutationResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MailFolderMoveRequest"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Mail"
+                ],
+                "summary": "Delete mail folder",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Folder deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OkResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MailFolderDeleteRequest"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/mail/messages": {
+            "get": {
+                "tags": [
+                    "Mail"
+                ],
+                "summary": "List messages in a folder",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Message list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MailMessagesResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/mail/messages/attachments": {
+            "get": {
+                "tags": [
+                    "Mail"
+                ],
+                "summary": "List attachment metadata for messages",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Attachment metadata",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MailAttachmentsResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/mail/message": {
+            "get": {
+                "tags": [
+                    "Mail"
+                ],
+                "summary": "Get a single message",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Message payload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MailMessageResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Mail"
+                ],
+                "summary": "Patch read/starred flags on a message",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Message updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OkResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MailMessagePatchRequest"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/mail/message/attachment": {
+            "get": {
+                "tags": [
+                    "Mail"
+                ],
+                "summary": "Download a message attachment",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Attachment stream",
+                        "content": {
+                            "application/octet-stream": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BinaryPayload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/mail/move": {
+            "post": {
+                "tags": [
+                    "Mail"
+                ],
+                "summary": "Move a message to another folder",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Message moved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OkResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MailMoveRequest"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/mail/send": {
+            "post": {
+                "tags": [
+                    "Mail"
+                ],
+                "summary": "Send an email",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Message sent",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MailSendResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MailSendRequest"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/mail/draft": {
+            "post": {
+                "tags": [
+                    "Mail"
+                ],
+                "summary": "Save a message draft",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Draft saved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MailDraftResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MailDraftRequest"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/drive/user": {
+            "get": {
+                "tags": [
+                    "Drive"
+                ],
+                "summary": "Drive user context",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Drive user payload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DriveUserResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/drive/getdir": {
+            "post": {
+                "tags": [
+                    "Drive"
+                ],
+                "summary": "Read directory listing",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Directory listing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DriveListingResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DriveGetDirRequest"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/drive/searchfiles": {
+            "post": {
+                "tags": [
+                    "Drive"
+                ],
+                "summary": "Search files and directories",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Search results",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DriveListingResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DriveSearchRequest"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/drive/changedir": {
+            "post": {
+                "tags": [
+                    "Drive"
+                ],
+                "summary": "Change current drive directory",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Current directory updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DriveCwdResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DriveChangeDirRequest"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/drive/createnew": {
+            "post": {
+                "tags": [
+                    "Drive"
+                ],
+                "summary": "Create a new drive directory",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Item created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DriveMutationResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DriveCreateRequest"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/drive/renameitem": {
+            "post": {
+                "tags": [
+                    "Drive"
+                ],
+                "summary": "Rename a drive item",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Item renamed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DriveMutationResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DriveRenameRequest"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/drive/deleteitems": {
+            "post": {
+                "tags": [
+                    "Drive"
+                ],
+                "summary": "Delete one or more drive items",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Items deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DriveMutationResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DriveDeleteItemsRequest"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/drive/download": {
+            "get": {
+                "tags": [
+                    "Drive"
+                ],
+                "summary": "Download a drive file",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "File stream",
+                        "content": {
+                            "application/octet-stream": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BinaryPayload"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/drive/upload": {
+            "get": {
+                "tags": [
+                    "Drive"
+                ],
+                "summary": "Drive upload readiness probe",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Upload is available",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Drive"
+                ],
+                "summary": "Upload file chunk(s) to drive",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Upload accepted",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/drive/stars": {
+            "get": {
+                "tags": [
+                    "Drive"
+                ],
+                "summary": "List starred drive paths for current user",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Starred paths",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DriveStarsResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Drive"
+                ],
+                "summary": "Set starred state for a drive path",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Starred state updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DriveStarUpdateResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DriveStarUpdateRequest"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/notes/capabilities": {
+            "get": {
+                "tags": [
+                    "Notes"
+                ],
+                "summary": "Notes capabilities",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notes capabilities",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NotesCapabilitiesResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/notes/state": {
+            "get": {
+                "tags": [
+                    "Notes"
+                ],
+                "summary": "Notes runtime boot state for authenticated user",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notes state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NotesStateResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/notes/items": {
+            "get": {
+                "tags": [
+                    "Notes"
+                ],
+                "summary": "List notes with optional archive/notebook/search filters",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notes list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NotesItemsResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Notes"
+                ],
+                "summary": "Create a new note",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created note",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NoteMutationResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NoteUpsertRequest"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/notes/items/{id}": {
+            "put": {
+                "tags": [
+                    "Notes"
+                ],
+                "summary": "Save/update a note",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated note",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NoteMutationResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NoteUpsertRequest"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Notes"
+                ],
+                "summary": "Delete a note",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted note",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OkResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NoteDeleteRequest"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/notes/items/{id}/archive": {
+            "post": {
+                "tags": [
+                    "Notes"
+                ],
+                "summary": "Archive a note",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Archived note",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NoteMutationResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/notes/items/{id}/restore": {
+            "post": {
+                "tags": [
+                    "Notes"
+                ],
+                "summary": "Restore an archived note",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Restored note",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NoteMutationResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/notes/notebooks": {
+            "get": {
+                "tags": [
+                    "Notes"
+                ],
+                "summary": "List notebooks with active/archive counts",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notebook list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NotebookListResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Notes"
+                ],
+                "summary": "Create notebook",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Notebook created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NotebookMutationResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NotebookCreateRequest"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/notes/notebooks/{name}": {
+            "patch": {
+                "tags": [
+                    "Notes"
+                ],
+                "summary": "Rename notebook",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "name",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notebook renamed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NotebookMutationResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NotebookRenameRequest"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Notes"
+                ],
+                "summary": "Delete notebook (archive, move, or purge)",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "name",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notebook deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NotebookMutationResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NotebookDeleteRequest"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/office/capabilities": {
+            "get": {
+                "tags": [
+                    "Office"
+                ],
+                "summary": "Office capabilities",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Office capabilities",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OfficeCapabilitiesResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/office/documents": {
+            "post": {
+                "tags": [
+                    "Office"
+                ],
+                "summary": "Create Office document (.docx/.xlsx/.pptx)",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Created Office document",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OfficeDocumentMutationResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OfficeDocumentCreateRequest"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Office"
+                ],
+                "summary": "Update Office document content (.docx/.xlsx/.pptx)",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated Office document",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OfficeDocumentMutationResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OfficeDocumentUpdateRequest"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/voice/join": {
+            "post": {
+                "tags": [
+                    "Voice"
+                ],
+                "summary": "Join voice room (guest or authenticated)",
+                "responses": {
+                    "200": {
+                        "description": "Join response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VoiceJoinResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VoiceJoinRequest"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/voice/poll": {
+            "post": {
+                "tags": [
+                    "Voice"
+                ],
+                "summary": "Poll voice messages",
+                "responses": {
+                    "200": {
+                        "description": "Poll response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VoicePollResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VoicePollRequest"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/voice/send": {
+            "post": {
+                "tags": [
+                    "Voice"
+                ],
+                "summary": "Send voice signaling message",
+                "responses": {
+                    "200": {
+                        "description": "Send response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VoiceSendResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VoiceSendRequest"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/voice/leave": {
+            "post": {
+                "tags": [
+                    "Voice"
+                ],
+                "summary": "Leave voice room",
+                "responses": {
+                    "200": {
+                        "description": "Leave response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VoiceLeaveResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VoiceLeaveRequest"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/voice/chat": {
+            "post": {
+                "tags": [
+                    "Voice"
+                ],
+                "summary": "Voice room chat message",
+                "responses": {
+                    "200": {
+                        "description": "Chat response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VoiceChatResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VoiceChatRequest"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/installer/state": {
+            "get": {
+                "tags": [
+                    "Installer"
+                ],
+                "summary": "Installer summary and current state snapshot",
+                "responses": {
+                    "200": {
+                        "description": "Installer state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InstallerStateResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/installer/bootstrap": {
+            "get": {
+                "tags": [
+                    "Installer"
+                ],
+                "summary": "Installer bootstrap payload (full state)",
+                "responses": {
+                    "200": {
+                        "description": "Installer bootstrap payload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InstallerBootstrapResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/installer/action": {
+            "post": {
+                "tags": [
+                    "Installer"
+                ],
+                "summary": "Perform installer step action",
+                "responses": {
+                    "200": {
+                        "description": "Installer action result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InstallerActionResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InstallerActionRequest"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/home/state": {
+            "get": {
+                "tags": [
+                    "Home"
+                ],
+                "summary": "Home app state",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Home state",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HomeStateResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/dav/capabilities": {
+            "get": {
+                "tags": [
+                    "Dav"
+                ],
+                "summary": "DAV capabilities",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "DAV capabilities",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DavCapabilitiesResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

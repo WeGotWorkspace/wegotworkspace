@@ -85,6 +85,7 @@ final class DriveKernel
         }
 
         $groups = DriveAcl::allowedGroupSlugs($pdo, $username);
+        self::ensureStarredItemsTable($pdo);
         $filesRoot = Paths::data().'/files';
         if (!is_dir($filesRoot)) {
             @mkdir($filesRoot, 0775, true);
@@ -111,6 +112,12 @@ final class DriveKernel
 
             if ($method === 'GET' && $route === '/upload') {
                 self::plain(200, 'OK');
+
+                return;
+            }
+
+            if ($method === 'GET' && $route === '/stars') {
+                self::json(200, ['data' => ['paths' => self::listStarredPaths($pdo, $username, $groups)]]);
 
                 return;
             }
@@ -180,9 +187,11 @@ final class DriveKernel
             if ($route === '/renameitem') {
                 $body = self::readJsonBody();
                 $destination = DriveAcl::normalizeVirtualPath((string) ($body['destination'] ?? '/'));
-                $fromName = self::validateItemName((string) ($body['from'] ?? ''));
+                $fromRaw = trim((string) ($body['from'] ?? ''));
                 $toName = self::validateItemName((string) ($body['to'] ?? ''));
-                $fromPath = DriveAcl::normalizeVirtualPath($destination.'/'.$fromName);
+                $fromPath = str_contains($fromRaw, '/')
+                    ? DriveAcl::normalizeVirtualPath($fromRaw)
+                    : DriveAcl::normalizeVirtualPath($destination.'/'.self::validateItemName($fromRaw));
                 $toPath = DriveAcl::normalizeVirtualPath($destination.'/'.$toName);
                 self::assertAllowed($fromPath, $username, $groups, true);
                 self::assertAllowed($toPath, $username, $groups, true);
@@ -219,6 +228,16 @@ final class DriveKernel
             }
             if ($route === '/upload') {
                 self::handleUpload($filesRoot, $username, $groups);
+
+                return;
+            }
+            if ($route === '/stars') {
+                $body = self::readJsonBody();
+                $path = DriveAcl::normalizeVirtualPath((string) ($body['path'] ?? '/'));
+                $starred = self::parseRequiredBoolean($body['starred'] ?? null, 'starred');
+                self::assertAllowed($path, $username, $groups, false);
+                self::setStarredPath($pdo, $username, $path, $starred);
+                self::json(200, ['data' => 'Updated']);
 
                 return;
             }
@@ -546,6 +565,98 @@ final class DriveKernel
         echo $text;
     }
 
+    private static function ensureStarredItemsTable(\PDO $pdo): void
+    {
+        $driver = (string) $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'mysql') {
+            $pdo->exec(
+                'CREATE TABLE IF NOT EXISTS drive_starred_items (
+                    username VARCHAR(190) NOT NULL,
+                    path VARCHAR(1024) NOT NULL,
+                    created_at BIGINT NOT NULL,
+                    PRIMARY KEY(username, path),
+                    KEY idx_drive_starred_user (username)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+            );
+
+            return;
+        }
+
+        $pdo->exec(
+            'CREATE TABLE IF NOT EXISTS drive_starred_items (
+                username TEXT NOT NULL,
+                path TEXT NOT NULL,
+                created_at INTEGER NOT NULL,
+                PRIMARY KEY(username, path)
+            )'
+        );
+        $pdo->exec('CREATE INDEX IF NOT EXISTS idx_drive_starred_user ON drive_starred_items(username)');
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function listStarredPaths(\PDO $pdo, string $username, array $groups): array
+    {
+        $stmt = $pdo->prepare('SELECT path FROM drive_starred_items WHERE username = ? ORDER BY created_at DESC');
+        $stmt->execute([$username]);
+        $rows = $stmt->fetchAll(\PDO::FETCH_COLUMN) ?: [];
+        $out = [];
+        foreach ($rows as $path) {
+            if (!is_string($path)) {
+                continue;
+            }
+            $normalized = DriveAcl::normalizeVirtualPath($path);
+            if (!DriveAcl::isPathAllowed($normalized, $username, $groups, false)) {
+                continue;
+            }
+            if (self::isHiddenNotesPath($normalized)) {
+                continue;
+            }
+            $out[] = $normalized;
+        }
+
+        return array_values(array_unique($out));
+    }
+
+    private static function setStarredPath(\PDO $pdo, string $username, string $path, bool $starred): void
+    {
+        if ($path === '/') {
+            throw new \InvalidArgumentException('Cannot star root path.');
+        }
+        if ($starred) {
+            $driver = (string) $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
+            if ($driver === 'mysql') {
+                $stmt = $pdo->prepare(
+                    'INSERT INTO drive_starred_items (username, path, created_at) VALUES (?, ?, ?)
+                    ON DUPLICATE KEY UPDATE created_at = VALUES(created_at)'
+                );
+                $stmt->execute([$username, $path, time()]);
+
+                return;
+            }
+
+            $stmt = $pdo->prepare(
+                'INSERT INTO drive_starred_items (username, path, created_at) VALUES (?, ?, ?)
+                ON CONFLICT(username, path) DO UPDATE SET created_at = excluded.created_at'
+            );
+            $stmt->execute([$username, $path, time()]);
+
+            return;
+        }
+
+        $stmt = $pdo->prepare('DELETE FROM drive_starred_items WHERE username = ? AND path = ?');
+        $stmt->execute([$username, $path]);
+    }
+
+    private static function parseRequiredBoolean(mixed $value, string $field): bool
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+        throw new \InvalidArgumentException(sprintf('Invalid "%s" value.', $field));
+    }
+
     private static function assertAllowed(string $virtualPath, string $username, array $groups, bool $forWrite): void
     {
         if (!DriveAcl::isPathAllowed($virtualPath, $username, $groups, $forWrite)) {
@@ -646,8 +757,8 @@ final class DriveKernel
         echo PwaSupport::headMetaTags($webBase, 'drive');
         echo '<style>body{font-family:system-ui,sans-serif;max-width:40rem;margin:2rem auto;padding:0 1rem;line-height:1.5}code{font-size:.9em;background:#f4f4f5;padding:.15rem .4rem;border-radius:4px}</style></head><body>';
         echo '<h1>Drive</h1>';
-        echo '<p>The Drive UI build is missing. From the project root, run <code>pnpm --filter @wgw/drive-ui build</code> or <code>pnpm build</code>.</p>';
-        echo '<p>Source lives in <code>packages/drive-ui/</code>; the Vite build writes to <code>wgw-modules/drive/dist/</code>.</p>';
+        echo '<p>The Drive UI build is missing. From the project root, run <code>pnpm --filter @wgw/apps build</code> or <code>pnpm build</code>.</p>';
+        echo '<p>Source lives in <code>packages/apps/</code>; app builds write to <code>wgw-modules/drive/dist/</code>.</p>';
         echo '<p class="hint">Open <code>'.htmlspecialchars(WebBase::url($webBase, '/drive/'), ENT_QUOTES, 'UTF-8').'</code> after signing in at <code>'.htmlspecialchars(WebBase::url($webBase, '/login/'), ENT_QUOTES, 'UTF-8').'</code>.</p>';
         echo '</body></html>';
     }

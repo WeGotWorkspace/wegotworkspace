@@ -921,6 +921,40 @@
         }
       }
     },
+    "/drive/stars": {
+      "get": {
+        "tags": [
+          "Drive"
+        ],
+        "summary": "List starred drive paths for current user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Starred paths"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Drive"
+        ],
+        "summary": "Set starred state for a drive path",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Starred state updated"
+          }
+        }
+      }
+    },
     "/notes/capabilities": {
       "get": {
         "tags": [

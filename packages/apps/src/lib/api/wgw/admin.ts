@@ -1,0 +1,411 @@
+import type { AdminAppBootstrap } from "@/lib/api/mock/admin-bootstrap";
+import { wgwFetch, wgwFetchPrincipal, wgwReadJson } from "@/lib/api/wgw/http";
+import type {
+  WgwAdminStateResponse,
+  WgwAdminSettingsSaveRequest,
+  WgwUpdateApplyResponse,
+  WgwUpdateLogResponse,
+  WgwUpdateStateResponse,
+} from "@/lib/api/wgw/types";
+import type {
+  AdminAPIOperations,
+  AdminUIData,
+  AdminUpdateBackupItem,
+  AdminUpdateCheck,
+  AdminUpdateState,
+} from "@/admin-core/src/admin-types";
+
+function coerceUpdateBackupItem(input: AdminUpdateBackupItem): AdminUpdateBackupItem {
+  return {
+    name: input.name,
+    sizeBytes: input.sizeBytes,
+    modifiedAt: input.modifiedAt ?? null,
+    fromVersion: input.fromVersion ?? null,
+    toVersion: input.toVersion ?? null,
+    format: input.format,
+    downloadable: input.downloadable,
+  };
+}
+
+function coerceUpdateCheck(input: AdminUpdateCheck): AdminUpdateCheck {
+  return {
+    ok: input.ok,
+    label: input.label,
+    detail: input.detail,
+    status: input.status,
+  };
+}
+
+export function mapWgwUpdateStateToUI(state: WgwUpdateStateResponse): AdminUpdateState {
+  return {
+    installedVersion: state.installedVersion,
+    schemaVersion: state.schemaVersion,
+    latest: state.latest
+      ? {
+          version: state.latest.version,
+          package_url: state.latest.package_url,
+          checksum_sha256: state.latest.checksum_sha256,
+          checksum_signature: state.latest.checksum_signature,
+        }
+      : null,
+    updateAvailable: state.updateAvailable,
+    compatible: state.compatible,
+    backups: state.backups.map((item) => coerceUpdateBackupItem(item)),
+    checks: state.checks.map((check) => coerceUpdateCheck(check)),
+    inProgress: state.inProgress,
+    phase: state.phase ?? null,
+    current: state.current
+      ? { from: state.current.from, to: state.current.to, at: state.current.at }
+      : null,
+    download: state.download
+      ? {
+          downloadedBytes: state.download.downloadedBytes,
+          totalBytes: state.download.totalBytes ?? null,
+          percent: state.download.percent ?? null,
+          updatedAt: state.download.updatedAt,
+        }
+      : null,
+    phaseProgress: state.phaseProgress
+      ? {
+          completed: state.phaseProgress.completed,
+          total: state.phaseProgress.total,
+          percent: state.phaseProgress.percent,
+          updatedAt: state.phaseProgress.updatedAt,
+        }
+      : null,
+    cancelRequested: state.cancelRequested,
+    cancelAllowed: state.cancelAllowed,
+    lastCheckedAt: state.lastCheckedAt ?? null,
+    lastCheckError: state.lastCheckError ?? null,
+    lastResult: state.lastResult
+      ? {
+          ok: state.lastResult.ok,
+          version: state.lastResult.version,
+          message: state.lastResult.message,
+          finishedAt: state.lastResult.finishedAt ?? null,
+        }
+      : null,
+  };
+}
+
+export function mapWgwAdminStateToUI(
+  state: WgwAdminStateResponse,
+  updateLogLines: string[],
+): AdminUIData {
+  return {
+    users: state.users.map((user) => ({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      displayName: user.displayName,
+      groups: user.groups,
+      createdAt: user.createdAt,
+    })),
+    groups: state.groups.map((group) => ({
+      id: group.id,
+      name: group.name,
+      displayName: group.displayName,
+    })),
+    mail: {
+      imapHost: state.mail.imapHost,
+      imapPort: state.mail.imapPort,
+      imapSecurity: state.mail.imapSecurity,
+      smtpHost: state.mail.smtpHost,
+      smtpPort: state.mail.smtpPort,
+      smtpSecurity: state.mail.smtpSecurity,
+    },
+    voice: {
+      signalingUrl: state.voice.signalingUrl,
+      stunUrls: state.voice.stunUrls,
+      turnUrls: state.voice.turnUrls,
+      turnUsername: state.voice.turnUsername,
+      turnPassword: state.voice.turnPassword,
+      forceRelay: state.voice.forceRelay,
+    },
+    apps: {
+      calendars: state.apps.calendars,
+      contacts: state.apps.contacts,
+    },
+    webdav: {
+      sabreUi: state.webdav.sabreUi,
+      timezone: state.webdav.timezone,
+      baseUri: state.webdav.baseUri,
+      authRealm: state.webdav.authRealm,
+    },
+    updates: mapWgwUpdateStateToUI(state.updates),
+    currentUser: state.currentUser,
+    logoutUrl: state.logoutUrl,
+    updateLogLines,
+  };
+}
+
+async function fetchAdminState(opts?: { signal?: AbortSignal }): Promise<WgwAdminStateResponse> {
+  const res = await wgwFetch("/admin/state", { signal: opts?.signal });
+  if (!res.ok) throw new Error(`GET /admin/state failed (${res.status})`);
+  return (await wgwReadJson(res)) as WgwAdminStateResponse;
+}
+
+export async function fetchAdminUpdateLog(opts?: { signal?: AbortSignal }): Promise<string[]> {
+  const res = await wgwFetch("/admin/updates/log", { signal: opts?.signal });
+  if (!res.ok) throw new Error(`GET /admin/updates/log failed (${res.status})`);
+  const payload = (await wgwReadJson(res)) as WgwUpdateLogResponse;
+  return payload.lines;
+}
+
+async function fetchAdminUpdateState(opts?: { signal?: AbortSignal }): Promise<AdminUpdateState> {
+  const res = await wgwFetch("/admin/updates/state", { signal: opts?.signal });
+  if (!res.ok) throw new Error(`GET /admin/updates/state failed (${res.status})`);
+  return mapWgwUpdateStateToUI((await wgwReadJson(res)) as WgwUpdateStateResponse);
+}
+
+async function fetchAdminUpdateStateWithWarmup(opts?: {
+  signal?: AbortSignal;
+}): Promise<AdminUpdateState> {
+  let latest = await fetchAdminUpdateState(opts);
+  if (latest.inProgress) return latest;
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    latest = await fetchAdminUpdateState(opts);
+    if (latest.inProgress) return latest;
+  }
+  return latest;
+}
+
+export async function fetchAdminLiveBootstrap(): Promise<AdminAppBootstrap> {
+  const maxAttempts = 5;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      const [session, state, logLines] = await Promise.all([
+        wgwFetchPrincipal(),
+        fetchAdminState(),
+        fetchAdminUpdateLog(),
+      ]);
+      return {
+        session,
+        data: mapWgwAdminStateToUI(state, logLines),
+      };
+    } catch (error) {
+      const canRetry =
+        error instanceof Error &&
+        (error.message.includes("(503)") || error.message.includes("HTTP 503")) &&
+        attempt < maxAttempts;
+      if (!canRetry) {
+        throw error;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 800 * attempt));
+    }
+  }
+
+  throw new Error("Could not load admin state.");
+}
+
+async function fetchAdminUiData(opts?: { signal?: AbortSignal }): Promise<AdminUIData> {
+  const state = await fetchAdminState(opts);
+  let logLines: string[] = [];
+  try {
+    logLines = await fetchAdminUpdateLog(opts);
+  } catch {
+    // Some deployments can disable or protect update logs. Keep admin usable.
+    logLines = [];
+  }
+  return mapWgwAdminStateToUI(state, logLines);
+}
+
+async function readApiError(res: Response, fallback: string): Promise<string> {
+  try {
+    const payload = (await wgwReadJson(res)) as { error?: string; message?: string };
+    const detail = payload.error ?? payload.message;
+    if (detail && detail.trim() !== "") {
+      return detail;
+    }
+  } catch {
+    try {
+      const text = await res.text();
+      if (text.trim() !== "") {
+        return text.trim();
+      }
+    } catch {
+      // Ignore parse failures and return fallback below.
+    }
+  }
+  return fallback;
+}
+
+export function createWgwAdminOperations(): AdminAPIOperations {
+  const toGroupSlug = (groupIdOrSlug: string): string =>
+    groupIdOrSlug.startsWith("principals/groups/")
+      ? groupIdOrSlug.slice("principals/groups/".length)
+      : groupIdOrSlug;
+
+  return {
+    refreshState: (opts) => fetchAdminUiData(opts),
+    saveSettings: async (values, opts) => {
+      const payload: WgwAdminSettingsSaveRequest = { values };
+      const res = await wgwFetch("/admin/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        signal: opts?.signal,
+      });
+      if (!res.ok) throw new Error(`PUT /admin/settings failed (${res.status})`);
+      return fetchAdminUiData(opts);
+    },
+    checkUpdates: async (opts) => {
+      const res = await wgwFetch("/admin/updates/check", { method: "POST", signal: opts?.signal });
+      if (!res.ok) throw new Error(`POST /admin/updates/check failed (${res.status})`);
+      return fetchAdminUiData(opts);
+    },
+    refreshUpdateState: (opts) => fetchAdminUpdateState(opts),
+    applyUpdate: async (version, opts) => {
+      const res = await wgwFetch("/admin/updates/apply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ version }),
+        signal: opts?.signal,
+      });
+      if (!res.ok) {
+        if (res.status === 400 || res.status === 503) {
+          try {
+            const updates = await fetchAdminUpdateStateWithWarmup(opts);
+            if (updates.inProgress) {
+              return updates;
+            }
+          } catch {
+            // Fall through to detailed error below.
+          }
+        }
+        const message = await readApiError(res, `POST /admin/updates/apply failed (${res.status})`);
+        throw new Error(message);
+      }
+      await wgwReadJson(res as Response);
+      return fetchAdminUpdateStateWithWarmup(opts);
+    },
+    cancelUpdate: async (opts) => {
+      const res = await wgwFetch("/admin/updates/cancel", { method: "POST", signal: opts?.signal });
+      if (!res.ok) throw new Error(`POST /admin/updates/cancel failed (${res.status})`);
+      const payload = (await wgwReadJson(res)) as { state: WgwUpdateStateResponse };
+      return mapWgwUpdateStateToUI(payload.state);
+    },
+    refreshUpdateLog: (opts) => fetchAdminUpdateLog(opts),
+    clearUpdateLog: async (opts) => {
+      const res = await wgwFetch("/admin/updates/log", { method: "DELETE", signal: opts?.signal });
+      if (!res.ok) throw new Error(`DELETE /admin/updates/log failed (${res.status})`);
+      await wgwReadJson(res);
+      return [];
+    },
+    deleteBackup: async (name, opts) => {
+      const res = await wgwFetch(`/admin/updates/backups/${encodeURIComponent(name)}`, {
+        method: "DELETE",
+        signal: opts?.signal,
+      });
+      if (!res.ok) throw new Error(`DELETE /admin/updates/backups/${name} failed (${res.status})`);
+      await wgwReadJson(res);
+      return fetchAdminUiData(opts);
+    },
+    createBackup: async (opts) => {
+      const res = await wgwFetch("/admin/updates/backups", {
+        method: "POST",
+        signal: opts?.signal,
+      });
+      if (res.status === 404) {
+        throw new Error("Manual database backup creation is not available on this server yet.");
+      }
+      if (!res.ok) throw new Error(`POST /admin/updates/backups failed (${res.status})`);
+      await wgwReadJson(res);
+      return fetchAdminUiData(opts);
+    },
+    downloadBackup: async (name, opts) => {
+      const res = await wgwFetch(`/admin/updates/backups/${encodeURIComponent(name)}`, {
+        method: "GET",
+        signal: opts?.signal,
+      });
+      if (!res.ok) throw new Error(`GET /admin/updates/backups/${name} failed (${res.status})`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      try {
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = name;
+        document.body.append(anchor);
+        anchor.click();
+        anchor.remove();
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    },
+    createUser: async (input, opts) => {
+      const res = await wgwFetch("/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: input.username,
+          password: input.password,
+          displayName: input.displayName,
+          email: input.email,
+          groups: (input.groups ?? []).filter((group) => group.startsWith("principals/groups/")),
+        }),
+        signal: opts?.signal,
+      });
+      if (!res.ok) throw new Error(`POST /admin/users failed (${res.status})`);
+      await wgwReadJson(res);
+      return fetchAdminUiData(opts);
+    },
+    updateUser: async (username, input, opts) => {
+      const res = await wgwFetch(`/admin/users/${encodeURIComponent(username)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+        signal: opts?.signal,
+      });
+      if (!res.ok) throw new Error(`PATCH /admin/users/${username} failed (${res.status})`);
+      await wgwReadJson(res);
+      return fetchAdminUiData(opts);
+    },
+    deleteUser: async (username, opts) => {
+      const res = await wgwFetch(`/admin/users/${encodeURIComponent(username)}`, {
+        method: "DELETE",
+        signal: opts?.signal,
+      });
+      if (!res.ok) throw new Error(`DELETE /admin/users/${username} failed (${res.status})`);
+      await wgwReadJson(res);
+      return fetchAdminUiData(opts);
+    },
+    createGroup: async (input, opts) => {
+      const res = await wgwFetch("/admin/groups", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: input.name,
+          slug: input.name,
+          displayName: input.displayName ?? input.name,
+        }),
+        signal: opts?.signal,
+      });
+      if (!res.ok) throw new Error(`POST /admin/groups failed (${res.status})`);
+      await wgwReadJson(res);
+      return fetchAdminUiData(opts);
+    },
+    updateGroup: async (groupSlug, input, opts) => {
+      const slug = toGroupSlug(groupSlug);
+      const res = await wgwFetch(`/admin/groups/${encodeURIComponent(slug)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+        signal: opts?.signal,
+      });
+      if (!res.ok) throw new Error(`PATCH /admin/groups/${slug} failed (${res.status})`);
+      await wgwReadJson(res);
+      return fetchAdminUiData(opts);
+    },
+    deleteGroup: async (groupSlug, opts) => {
+      const slug = toGroupSlug(groupSlug);
+      const res = await wgwFetch(`/admin/groups/${encodeURIComponent(slug)}`, {
+        method: "DELETE",
+        signal: opts?.signal,
+      });
+      if (!res.ok) throw new Error(`DELETE /admin/groups/${slug} failed (${res.status})`);
+      await wgwReadJson(res);
+      return fetchAdminUiData(opts);
+    },
+  };
+}
