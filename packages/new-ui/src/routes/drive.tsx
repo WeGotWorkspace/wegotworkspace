@@ -285,10 +285,10 @@ function uiPathFromApiPath(path: string, username: string): string {
   const normalized = normalizeApiVirtualPath(path);
   const userRoot = `/users/${username}`;
   if (normalized === "/groups") {
-    return "My Drive";
+    return "Groups";
   }
   if (normalized.startsWith("/groups/")) {
-    return normalized.replace(/^\/groups/, "My Drive");
+    return normalized.replace(/^\/groups/, "Groups");
   }
   if (normalized === userRoot) {
     return "My Drive";
@@ -304,6 +304,13 @@ function apiPathFromUiPath(path: string, username: string, groupRoots: Set<strin
   const userRoot = `/users/${username}`;
   if (normalized === "My Drive") {
     return userRoot;
+  }
+  if (normalized === "Groups") {
+    return "/groups";
+  }
+  if (normalized.startsWith("Groups/")) {
+    const relative = normalized.slice("Groups/".length);
+    return `/groups/${relative}`;
   }
   if (normalized.startsWith("My Drive/")) {
     const relative = normalized.slice("My Drive/".length);
@@ -421,7 +428,7 @@ export function DriveWorkspace({
 
   const groupRootNames = useMemo(() => new Set(knownGroupRoots), [knownGroupRoots]);
   const sidebarGroupPaths = useMemo(
-    () => knownGroupRoots.map((root) => `My Drive/${root}`),
+    () => knownGroupRoots.map((root) => `Groups/${root}`),
     [knownGroupRoots],
   );
 
@@ -529,20 +536,6 @@ export function DriveWorkspace({
     setDetailOpen(false);
     lastTouchTapRef.current = null;
   }, [viewResetKey]);
-
-  const counts = useMemo(() => {
-    const byPath: Record<string, number> = {};
-    for (const f of files) byPath[f.parent] = (byPath[f.parent] ?? 0) + 1;
-    const topCount = (top: string) =>
-      files.filter((f) => f.parent === top || f.parent.startsWith(top + "/")).length;
-    return {
-      byPath,
-      myDrive: topCount("My Drive"),
-      trash: topCount("Trash"),
-      starred: files.filter((f) => starred[f.id] && !isUnderTrash(f.parent)).length,
-      shared: topCount("Shared with me"),
-    };
-  }, [files, starred]);
 
   useEffect(() => {
     if (!operations || viewMode !== "grid") return;
@@ -1176,7 +1169,6 @@ export function DriveWorkspace({
                   }
                   onClick={() => selectView({ type: "folder", path: "My Drive" })}
                   icon={topFolderIcon["My Drive"]}
-                  badge={counts.myDrive || undefined}
                   isDropTarget={dropTarget === "My Drive"}
                   onDragOver={(e) => {
                     if (dragging) {
@@ -1205,7 +1197,6 @@ export function DriveWorkspace({
                   active={view.type === "starred"}
                   onClick={() => selectView({ type: "starred" })}
                   icon={<Star className="size-3.5" />}
-                  badge={counts.starred || undefined}
                 >
                   Starred
                 </SidebarLink>
@@ -1216,7 +1207,6 @@ export function DriveWorkspace({
                   }
                   onClick={() => selectView({ type: "folder", path: "Trash" })}
                   icon={topFolderIcon.Trash}
-                  badge={counts.trash || undefined}
                   isDropTarget={dropTarget === "Trash"}
                   onDragOver={(e) => {
                     if (dragging) {
