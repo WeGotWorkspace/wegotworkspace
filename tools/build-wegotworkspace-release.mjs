@@ -86,7 +86,7 @@ const manifest = {
   package_url: "",
   checksum_sha256: checksum,
   checksum_signature: checksumSignature,
-  min_php: "8.1.0",
+  min_php: "8.4.0",
   min_schema: 1,
   released_at: new Date().toISOString(),
   notes_url: "",
