@@ -202,13 +202,14 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
   }, [waitingForAdmission]);
 
   useEffect(() => {
+    if (!hasSignedInIdentity) return;
     const previous = previousKnockerCountRef.current;
     if (controller.knockers.length > previous) {
       playKnockSound();
       toast.info("Someone is knocking to join.");
     }
     previousKnockerCountRef.current = controller.knockers.length;
-  }, [controller.knockers.length]);
+  }, [controller.knockers.length, hasSignedInIdentity]);
 
   const cameras = useMemo(
     () => normalizeDeviceOptions("videoinput", controller.videoInputs),
@@ -438,7 +439,7 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
                   </Tooltip>
                 </div>
                 <div className="flex items-center gap-2">
-                  {controller.knockers.length > 0 && (
+                  {hasSignedInIdentity && controller.knockers.length > 0 && (
                     <KnockBadge
                       knockers={controller.knockers}
                       onAdmit={(peerId) => void controller.admitKnocker(peerId)}
