@@ -283,6 +283,24 @@ export function useAdminController({
   const applyUpdate = async () => {
     try {
       const wasInProgress = updates.inProgress;
+      const requestedVersion = updates.latest?.version ?? updates.installedVersion;
+      if (!wasInProgress) {
+        const startedAt = new Date().toISOString();
+        setUpdates((prev) => ({
+          ...prev,
+          inProgress: true,
+          phase: prev.phase ?? "downloading",
+          current:
+            prev.current ??
+            ({
+              from: prev.installedVersion,
+              to: requestedVersion,
+              at: startedAt,
+            } as NonNullable<typeof prev.current>),
+          cancelRequested: false,
+          lastResult: null,
+        }));
+      }
       const next = await operations?.applyUpdate(updates.latest?.version);
       if (!next) return;
       setUpdates(next);
@@ -294,6 +312,21 @@ export function useAdminController({
         toast("Update request completed", { icon: <Check className="size-4" /> });
       }
     } catch (error) {
+      try {
+        const latest = await operations?.refreshUpdateState();
+        if (latest) setUpdates(latest);
+      } catch {
+        setUpdates((prev) => ({
+          ...prev,
+          inProgress: false,
+          phase: null,
+          current: null,
+          download: null,
+          phaseProgress: null,
+          cancelRequested: false,
+          cancelAllowed: false,
+        }));
+      }
       const message = error instanceof Error ? error.message : "Could not apply update";
       toast.error(message);
     }
