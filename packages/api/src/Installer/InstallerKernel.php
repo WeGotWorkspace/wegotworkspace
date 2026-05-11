@@ -653,7 +653,7 @@ final class InstallerKernel
         http_response_code(503);
         header('Content-Type: text/plain; charset=utf-8');
         $expected = InstallerStatic::distRoot().'/index.html';
-        echo "Install UI build is missing. Run `pnpm --filter @wgw/install build` from the repo root.\n";
+        echo "Install UI build is missing. Run `pnpm --filter @wgw/new-ui build` from the repo root.\n";
         echo "Expected index file: ".$expected."\n";
         echo "Expected file readable by this PHP process: ".(is_readable($expected) ? 'yes' : 'no')."\n";
         echo "Runtime root: ".Paths::root()."\n";

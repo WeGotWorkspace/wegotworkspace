@@ -134,8 +134,8 @@ final class VoiceKernel
         echo PwaSupport::headMetaTags($webBase, 'voice');
         echo '<style>body{font-family:system-ui,sans-serif;max-width:40rem;margin:2rem auto;padding:0 1rem;line-height:1.5}code{font-size:.9em;background:#f4f4f5;padding:.15rem .4rem;border-radius:4px}</style></head><body>';
         echo '<h1>Aura Voice</h1>';
-        echo '<p>The Voice UI build is missing. From the project root, run <code>pnpm --filter @wgw/voice build</code> or <code>pnpm build</code>.</p>';
-        echo '<p>Source lives in <code>packages/voice/</code>; the Vite build writes to <code>wgw-modules/voice/dist/</code>.</p>';
+        echo '<p>The Voice UI build is missing. From the project root, run <code>pnpm --filter @wgw/new-ui build</code> or <code>pnpm build</code>.</p>';
+        echo '<p>Source lives in <code>packages/new-ui/</code>; app builds write to <code>wgw-modules/voice/dist/</code>.</p>';
         echo '<p class="hint">Signed-in users: <code>'.htmlspecialchars(WebBase::url($webBase, '/voice/'), ENT_QUOTES, 'UTF-8').'</code> · Guests (join with a room code only): <code>'.htmlspecialchars(WebBase::url($webBase, '/voice/join/'), ENT_QUOTES, 'UTF-8').'</code></p>';
         echo '</body></html>';
     }
