@@ -411,7 +411,14 @@ export async function fetchMailLiveBootstrap(): Promise<MailAppBootstrap> {
   const session = await wgwFetchPrincipal();
 
   const foldersRes = await wgwFetch("/mail/folders");
-  if (!foldersRes.ok) throw new Error(`GET /mail/folders failed (${foldersRes.status})`);
+  if (!foldersRes.ok) {
+    const payload = (await wgwReadJson(foldersRes).catch(() => ({}))) as Record<string, unknown>;
+    const apiError = typeof payload.error === "string" ? payload.error : "";
+    if (apiError === "not_configured") {
+      throw new Error("MAIL_SETTINGS_MISSING");
+    }
+    throw new Error(`GET /mail/folders failed (${foldersRes.status})`);
+  }
   const foldersJson = await wgwReadJson(foldersRes);
   const roots = parseMailFoldersPayload(foldersJson);
   const { slotToId, slotToUnreadCount, moreMailboxes } = classifyFolderTree(roots);
