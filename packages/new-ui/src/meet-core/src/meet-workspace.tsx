@@ -12,6 +12,8 @@ import {
   Link as LinkIcon,
   Send,
   MessageSquare,
+  Hand,
+  Check,
   X,
   Copy,
   MoreVertical,
@@ -172,6 +174,8 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
   const [chatOpen, setChatOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [speakerId, setSpeakerId] = useState<string>("default");
+  const [knockDots, setKnockDots] = useState(1);
+  const previousKnockerCountRef = useRef(0);
   const hasSignedInIdentity = Boolean(session.user.username?.trim() || session.user.email?.trim());
   const displayName = controller.displayName || session.user.displayName || "Guest";
   const invitedRoom = useMemo(() => {
@@ -180,6 +184,7 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
     return room && room.length > 0 ? room : null;
   }, []);
   const inJoinFlow = Boolean(invitedRoom);
+  const waitingForAdmission = controller.waitingForAdmission && inJoinFlow;
   const disableAppSwitcher = !hasSignedInIdentity || inJoinFlow;
   const callExitLabel = inJoinFlow || !hasSignedInIdentity ? "Leave call" : "End call";
   const callExitTitle =
@@ -188,6 +193,21 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
     callExitLabel === "Leave call"
       ? "This only disconnects you from the meeting."
       : "This will disconnect all participants from the meeting.";
+
+  useEffect(() => {
+    if (!waitingForAdmission) return;
+    const id = window.setInterval(() => setKnockDots((dots) => (dots % 3) + 1), 500);
+    return () => window.clearInterval(id);
+  }, [waitingForAdmission]);
+
+  useEffect(() => {
+    const previous = previousKnockerCountRef.current;
+    if (controller.knockers.length > previous) {
+      playKnockSound();
+      toast.info("Someone is knocking to join.");
+    }
+    previousKnockerCountRef.current = controller.knockers.length;
+  }, [controller.knockers.length]);
 
   const cameras = useMemo(
     () => normalizeDeviceOptions("videoinput", controller.videoInputs),
@@ -283,6 +303,23 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
                     label={controller.videoOn ? "Stop video" : "Start video"}
                   />
                 </div>
+                {waitingForAdmission && (
+                  <div
+                    className="absolute inset-0 flex flex-col items-center justify-center backdrop-blur-sm"
+                    style={{ background: "rgba(8,9,18,0.6)" }}
+                  >
+                    <div
+                      className="mb-3 flex size-16 items-center justify-center rounded-full"
+                      style={{ background: ACCENT }}
+                    >
+                      <Hand className="size-7" />
+                    </div>
+                    <div className="text-base font-semibold">Knocking{".".repeat(knockDots)}</div>
+                    <div className="mt-1 text-xs" style={{ color: MUTED }}>
+                      Waiting for the host to let you in
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-6">
@@ -331,20 +368,38 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
                   options={speakers}
                 />
 
-                <Button
-                  onClick={() =>
-                    void (invitedRoom
-                      ? controller.joinRoom(invitedRoom)
-                      : controller.startMeeting())
-                  }
-                  className="w-full h-12 rounded-full text-base font-medium"
-                  style={{ background: ACCENT, color: TEXT }}
-                >
-                  {invitedRoom ? "Join meeting" : "Start meeting"}
-                </Button>
+                {!waitingForAdmission ? (
+                  <Button
+                    onClick={() => {
+                      if (invitedRoom) {
+                        void controller.requestJoin(invitedRoom);
+                        return;
+                      }
+                      void controller.startMeeting();
+                    }}
+                    className="w-full h-12 rounded-full text-base font-medium"
+                    style={{ background: ACCENT, color: TEXT }}
+                  >
+                    {invitedRoom ? "Ask to join" : "Start meeting"}
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => void controller.leave()}
+                    variant="outline"
+                    className="w-full h-12 rounded-full border-0 text-base font-medium"
+                    style={{ background: PANEL_SOFT, color: TEXT }}
+                  >
+                    Cancel request
+                  </Button>
+                )}
                 {controller.error && (
                   <p className="text-xs" style={{ color: "#fda4af" }}>
                     {controller.error}
+                  </p>
+                )}
+                {controller.endedMessage && !controller.error && (
+                  <p className="text-xs" style={{ color: MUTED }}>
+                    {controller.endedMessage}
                   </p>
                 )}
               </div>
@@ -382,6 +437,13 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
                   </Tooltip>
                 </div>
                 <div className="flex items-center gap-2">
+                  {controller.knockers.length > 0 && (
+                    <KnockBadge
+                      knockers={controller.knockers}
+                      onAdmit={(peerId) => void controller.admitKnocker(peerId)}
+                      onDeny={(peerId) => void controller.denyKnocker(peerId)}
+                    />
+                  )}
                   <ShareButton link={controller.callLink} />
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -432,14 +494,15 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
                         </div>
                       ) : (
                         <div
-                          className="flex items-center justify-center rounded-2xl border text-xs"
+                          className="flex flex-col items-center justify-center rounded-2xl border p-4 text-xs gap-3"
                           style={{
                             borderColor: "rgba(255,255,255,0.06)",
                             color: MUTED,
                             background: "rgba(255,255,255,0.02)",
                           }}
                         >
-                          Waiting for others to join...
+                          <span>Waiting for others to join...</span>
+                          <ShareInline link={controller.callLink} />
                         </div>
                       )}
                     </div>
@@ -451,14 +514,15 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
                     </div>
                   ) : (
                     <div
-                      className="h-full rounded-2xl border flex items-center justify-center text-sm"
+                      className="h-full rounded-2xl border flex flex-col items-center justify-center text-sm gap-3 p-4"
                       style={{
                         borderColor: "rgba(255,255,255,0.06)",
                         color: MUTED,
                         background: "rgba(255,255,255,0.02)",
                       }}
                     >
-                      Waiting for others to join...
+                      <span>Waiting for others to join...</span>
+                      <ShareInline link={controller.callLink} />
                     </div>
                   )}
 
@@ -553,7 +617,11 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
-                          onClick={() => void controller.leave()}
+                          onClick={() =>
+                            void (callExitLabel === "End call"
+                              ? controller.endCallForAll()
+                              : controller.leave())
+                          }
                           style={{ background: "var(--destructive, #dc2626)", color: "#fff" }}
                         >
                           {callExitLabel}
@@ -1150,8 +1218,140 @@ function ShareButton({ link }: { link: string }) {
   );
 }
 
+function ShareInline({ link }: { link: string }) {
+  return (
+    <div className="w-full max-w-md rounded-lg px-3 py-2" style={{ background: PANEL_SOFT }}>
+      <div className="flex items-center gap-2">
+        <span className="flex-1 truncate text-xs">{link || "Share link will appear here."}</span>
+        <Button
+          size="icon"
+          className="size-7"
+          style={{ background: ACCENT }}
+          disabled={!link}
+          onClick={() => {
+            if (!link) return;
+            void navigator.clipboard?.writeText(link);
+            toast.success("Link copied");
+          }}
+          aria-label="Copy link"
+        >
+          <Copy className="size-3.5" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function KnockBadge({
+  knockers,
+  onAdmit,
+  onDeny,
+}: {
+  knockers: Array<{ id: string; name: string }>;
+  onAdmit: (peerId: string) => void;
+  onDeny: (peerId: string) => void;
+}) {
+  return (
+    <Popover>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <PopoverTrigger asChild>
+            <button
+              className="relative inline-flex size-9 items-center justify-center rounded-lg"
+              style={{ background: PANEL_SOFT, color: TEXT }}
+              aria-label={`${knockers.length} waiting to join`}
+            >
+              <Hand className="size-4" />
+              <span
+                className="absolute -top-1 -right-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold"
+                style={{ background: ACCENT, color: TEXT }}
+              >
+                {knockers.length}
+              </span>
+            </button>
+          </PopoverTrigger>
+        </TooltipTrigger>
+        <TooltipContent>{knockers.length} waiting to join</TooltipContent>
+      </Tooltip>
+      <PopoverContent
+        align="end"
+        className="w-80 border-0 p-2"
+        style={{ background: PANEL, color: TEXT }}
+      >
+        <div className="space-y-1">
+          {knockers.map((knocker) => (
+            <div
+              key={knocker.id}
+              className="flex items-center gap-3 rounded-lg p-2"
+              style={{ background: PANEL_SOFT }}
+            >
+              <Avatar name={knocker.name} size={36} />
+              <div className="flex-1">
+                <div className="text-sm font-medium">{knocker.name}</div>
+                <div className="text-[11px]" style={{ color: MUTED }}>
+                  wants to join
+                </div>
+              </div>
+              <button
+                onClick={() => onDeny(knocker.id)}
+                className="inline-flex size-8 items-center justify-center rounded-md"
+                style={{ background: "rgba(255,255,255,0.06)", color: TEXT }}
+                aria-label={`Deny ${knocker.name}`}
+              >
+                <X className="size-4" />
+              </button>
+              <button
+                onClick={() => onAdmit(knocker.id)}
+                className="inline-flex size-8 items-center justify-center rounded-md"
+                style={{ background: ACCENT, color: TEXT }}
+                aria-label={`Admit ${knocker.name}`}
+              >
+                <Check className="size-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function formatTime(ts: number) {
   return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+function playKnockSound() {
+  const AudioCtx =
+    window.AudioContext ||
+    (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!AudioCtx) return;
+  const context = new AudioCtx();
+  const now = context.currentTime;
+  const gain = context.createGain();
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.16, now + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
+  gain.connect(context.destination);
+
+  const toneA = context.createOscillator();
+  toneA.type = "sine";
+  toneA.frequency.setValueAtTime(740, now);
+  toneA.connect(gain);
+  toneA.start(now);
+  toneA.stop(now + 0.16);
+
+  const toneB = context.createOscillator();
+  toneB.type = "sine";
+  toneB.frequency.setValueAtTime(988, now + 0.18);
+  toneB.connect(gain);
+  toneB.start(now + 0.18);
+  toneB.stop(now + 0.38);
+
+  window.setTimeout(() => {
+    void context.close().catch(() => {
+      // Ignore close race errors.
+    });
+  }, 700);
 }
 
 function renderChatBody(text: string) {
