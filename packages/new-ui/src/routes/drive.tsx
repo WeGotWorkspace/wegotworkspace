@@ -1448,6 +1448,7 @@ export function DriveWorkspace({
                   >
                     <button
                       aria-label="Grid view"
+                      title="Grid view"
                       onClick={() => setViewMode("grid")}
                       className="size-8 rounded-full flex items-center justify-center transition-colors"
                       style={{
@@ -1464,6 +1465,7 @@ export function DriveWorkspace({
                     </button>
                     <button
                       aria-label="List view"
+                      title="List view"
                       onClick={() => setViewMode("list")}
                       className="size-8 rounded-full flex items-center justify-center transition-colors"
                       style={{
@@ -2208,6 +2210,7 @@ function ItemActionsMenu({
           role="button"
           tabIndex={0}
           aria-label="More actions"
+          title="More actions"
           onClick={(event) => event.stopPropagation()}
           className="size-7 rounded-full flex items-center justify-center transition-colors hover:bg-[color-mix(in_oklab,var(--color-ink)_10%,transparent)]"
           style={{ color: "color-mix(in oklab, var(--color-ink) 70%, transparent)" }}
@@ -2504,6 +2507,7 @@ function DetailPanel({
       >
         <button
           aria-label="Close"
+          title={mobile ? "Back" : "Close"}
           onClick={onClose}
           className="size-9 rounded-full flex items-center justify-center"
           style={{
