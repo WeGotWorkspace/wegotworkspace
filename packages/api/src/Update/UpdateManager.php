@@ -149,7 +149,7 @@ final class UpdateManager
             'VERSION',
             'wgw-config.sample.php',
             'packages/api',
-            'wgw-modules',
+            'packages/apps',
         ];
 
         $result = [

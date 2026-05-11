@@ -60,7 +60,7 @@ final class Paths
     }
 
     /**
-     * Runtime root (contains index.php, wgw-modules/, wgw-content/, wgw-config.php by default).
+     * Runtime root (contains index.php, packages/, wgw-content/, wgw-config.php by default).
      * Can still be moved under a build folder with SABRE_BUILD_DIR.
      */
     public static function root(): string
@@ -80,7 +80,7 @@ final class Paths
 
     public static function privateDirName(): string
     {
-        return self::envSegment('SABRE_PRIVATE_DIR_NAME', 'wgw-modules');
+        return self::envRelativePath('SABRE_PRIVATE_DIR_NAME', 'packages/apps');
     }
 
     public static function dataDirName(): string
@@ -366,6 +366,26 @@ final class Paths
         return $value;
     }
 
+    private static function envRelativePath(string $name, string $default): string
+    {
+        $value = self::envString($name);
+        if ($value === null) {
+            return $default;
+        }
+        $normalized = trim(str_replace('\\', '/', $value), '/');
+        if ($normalized === '') {
+            throw new \RuntimeException($name.' must not be empty.');
+        }
+        if (preg_match('#(^|/)\.\.(/|$)#', $normalized) === 1) {
+            throw new \RuntimeException($name.' must not contain ".." path segments.');
+        }
+        if (preg_match('/^[A-Za-z0-9._\/-]+$/', $normalized) !== 1) {
+            throw new \RuntimeException($name.' must be a relative path using letters, digits, dot, slash, underscore, hyphen.');
+        }
+
+        return $normalized;
+    }
+
     private static function resolvePathFrom(string $base, string $path): string
     {
         $path = str_replace('\\', '/', trim($path));
@@ -479,6 +499,11 @@ final class Paths
     {
         $path = self::trimTrailingSlash(self::normalizePath($path));
 
-        return is_file($path.'/index.php') && (is_file($path.'/wgw-config.sample.php') || is_dir($path.'/wgw-modules'));
+        return is_file($path.'/index.php')
+            && (
+                is_file($path.'/wgw-config.sample.php')
+                || is_dir($path.'/packages')
+                || is_dir($path.'/wgw-modules')
+            );
     }
 }
