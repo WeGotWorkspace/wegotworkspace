@@ -174,6 +174,20 @@ function formatHumanDateTime(input: string | null): string {
   }).format(parsed);
 }
 
+function formatByteCount(input: number | null | undefined): string {
+  const bytes = Math.max(0, Number(input ?? 0));
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let value = bytes;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+  const precision = value >= 100 || unitIndex === 0 ? 0 : 1;
+  return `${value.toFixed(precision)} ${units[unitIndex]}`;
+}
+
 function isProtectedGroup(groupId: string): boolean {
   return groupId === "principals/groups/administrators";
 }
@@ -209,15 +223,29 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
   const completedProgressSteps =
     activeProgressStep < 0
       ? 0
-      : Math.min(UPDATE_PROGRESS_STEPS.length, Math.max(activeProgressStep, 0));
-  const displayProgressCount = controller.updates.phaseProgress
-    ? `${Math.min(controller.updates.phaseProgress.completed, controller.updates.phaseProgress.total)} / ${controller.updates.phaseProgress.total}`
-    : `${Math.max(0, completedProgressSteps)} / ${UPDATE_PROGRESS_STEPS.length}`;
-  const progressPercent = controller.updates.phaseProgress?.percent
-    ? Math.max(2, Math.min(100, controller.updates.phaseProgress.percent))
-    : activeProgressStep >= 0
-      ? Math.max(2, Math.min(95, ((activeProgressStep + 1) / UPDATE_PROGRESS_STEPS.length) * 100))
-      : 2;
+      : Math.min(UPDATE_PROGRESS_STEPS.length, Math.max(activeProgressStep + 1, 1));
+  const displayProgressCount =
+    controller.updates.phase === "downloading" && controller.updates.download
+      ? controller.updates.download.totalBytes && controller.updates.download.totalBytes > 0
+        ? `${formatByteCount(controller.updates.download.downloadedBytes)} / ${formatByteCount(controller.updates.download.totalBytes)}`
+        : `${formatByteCount(controller.updates.download.downloadedBytes)} downloaded`
+      : controller.updates.phaseProgress
+        ? `${Math.min(controller.updates.phaseProgress.completed, controller.updates.phaseProgress.total)} / ${controller.updates.phaseProgress.total}`
+        : `${Math.max(0, completedProgressSteps)} / ${UPDATE_PROGRESS_STEPS.length}`;
+  const progressPercent =
+    controller.updates.phase === "downloading" && controller.updates.download
+      ? controller.updates.download.percent !== null &&
+        controller.updates.download.percent !== undefined
+        ? Math.max(2, Math.min(100, controller.updates.download.percent))
+        : 6
+      : controller.updates.phaseProgress?.percent
+        ? Math.max(2, Math.min(100, controller.updates.phaseProgress.percent))
+        : activeProgressStep >= 0
+          ? Math.max(
+              2,
+              Math.min(95, ((activeProgressStep + 1) / UPDATE_PROGRESS_STEPS.length) * 100),
+            )
+          : 2;
   const [newUserOpen, setNewUserOpen] = useState(false);
   const [editUserId, setEditUserId] = useState<string | null>(null);
   const [passwordUserId, setPasswordUserId] = useState<string | null>(null);
@@ -915,16 +943,26 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
                     </div>
                     <Callout
                       className="mt-5"
-                      severity={controller.updates.updateAvailable ? "warning" : "success"}
+                      severity={
+                        controller.updates.inProgress
+                          ? "warning"
+                          : controller.updates.updateAvailable
+                            ? "warning"
+                            : "success"
+                      }
                       title={
-                        controller.updates.updateAvailable
-                          ? "Update available"
-                          : "You're up to date"
+                        controller.updates.inProgress
+                          ? "Update in progress"
+                          : controller.updates.updateAvailable
+                            ? "Update available"
+                            : "You're up to date"
                       }
                       message={
-                        controller.updates.updateAvailable
-                          ? `${controller.updates.latest?.version ?? "Latest"} introduces faster sync and security patches.`
-                          : "Running the latest stable release."
+                        controller.updates.inProgress
+                          ? `Applying ${controller.updates.current?.from ?? controller.updates.installedVersion} -> ${controller.updates.current?.to ?? controller.updates.latest?.version ?? "latest"} (${controller.updates.phase?.replace(/_/g, " ") ?? "processing"}).`
+                          : controller.updates.updateAvailable
+                            ? `${controller.updates.latest?.version ?? "Latest"} introduces faster sync and security patches.`
+                            : "Running the latest stable release."
                       }
                     />
                     {controller.updates.inProgress ? (
