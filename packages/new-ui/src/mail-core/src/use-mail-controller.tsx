@@ -121,6 +121,7 @@ export function useMailController({
   const listEndRef = useRef<HTMLDivElement | null>(null);
   const attemptedAutoReadSyncRef = useRef<Set<string>>(new Set());
   const fetchedDetailIdsRef = useRef<Set<string>>(new Set());
+  const pendingDetailIdsRef = useRef<Set<string>>(new Set());
 
   const { show } = useAppToast();
   const { confirmDialog, requestConfirm } = useConfirmDialog();
@@ -429,17 +430,25 @@ export function useMailController({
 
   useEffect(() => {
     if (!operations || !active) return;
+    if (active.detailLoaded) {
+      fetchedDetailIdsRef.current.add(active.id);
+      return;
+    }
     if (fetchedDetailIdsRef.current.has(active.id)) return;
-    fetchedDetailIdsRef.current.add(active.id);
+    if (pendingDetailIdsRef.current.has(active.id)) return;
+    const targetId = active.id;
+    pendingDetailIdsRef.current.add(targetId);
     let cancelled = false;
     void operations
       .fetchMessageDetail({ folder: active.folder, uid: active.uid })
       .then((detail) => {
+        pendingDetailIdsRef.current.delete(targetId);
         if (cancelled) return;
         if (!detail) {
           setMail((prev) =>
-            prev.map((m) => (m.id === active.id ? { ...m, detailLoaded: true } : m)),
+            prev.map((m) => (m.id === targetId ? { ...m, detailLoaded: true } : m)),
           );
+          fetchedDetailIdsRef.current.add(targetId);
           return;
         }
         const fullBodySource = plainTextFromWgwDetail(detail);
@@ -447,7 +456,7 @@ export function useMailController({
         const excerpt = fullBodySource.replace(/\s+/g, " ").trim();
         setMail((prev) =>
           prev.map((m) =>
-            m.id === active.id
+            m.id === targetId
               ? {
                   ...m,
                   body: body.some((p) => p.length > 0) ? body : m.body,
@@ -459,9 +468,10 @@ export function useMailController({
               : m,
           ),
         );
+        fetchedDetailIdsRef.current.add(targetId);
       })
       .catch(() => {
-        fetchedDetailIdsRef.current.delete(active.id);
+        pendingDetailIdsRef.current.delete(targetId);
       });
     return () => {
       cancelled = true;
