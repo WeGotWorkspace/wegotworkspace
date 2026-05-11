@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Check } from "lucide-react";
 import { toast } from "sonner";
 import type { AdminSection } from "@/admin-core/src/admin-types";
@@ -92,6 +92,7 @@ export function useAdminController({
   const [updates, setUpdates] = useState(data.updates);
   const [updateLogLines, setUpdateLogLines] = useState(data.updateLogLines);
   const [checkingUpdates, setCheckingUpdates] = useState(false);
+  const applyRequestPendingRef = useRef(false);
   const sections = useAdminSidebarModel();
   const applyAdminData = (next: AdminWorkspaceProps["data"]) => {
     setUsers(next.users);
@@ -113,12 +114,36 @@ export function useAdminController({
         if (refreshProgress) {
           const nextUpdates = await refreshProgress();
           if (!cancelled) {
-            setUpdates(nextUpdates);
+            setUpdates((prev) => {
+              if (applyRequestPendingRef.current && !nextUpdates.inProgress) {
+                return {
+                  ...prev,
+                  inProgress: true,
+                  phase: prev.phase ?? "downloading",
+                  current: prev.current,
+                  cancelRequested: false,
+                  lastResult: null,
+                };
+              }
+              return nextUpdates;
+            });
           }
         } else if (refreshAll) {
           const next = await refreshAll();
           if (!cancelled) {
-            setUpdates(next.updates);
+            setUpdates((prev) => {
+              if (applyRequestPendingRef.current && !next.updates.inProgress) {
+                return {
+                  ...prev,
+                  inProgress: true,
+                  phase: prev.phase ?? "downloading",
+                  current: prev.current,
+                  cancelRequested: false,
+                  lastResult: null,
+                };
+              }
+              return next.updates;
+            });
             setUpdateLogLines(next.updateLogLines);
           }
         }
@@ -297,6 +322,7 @@ export function useAdminController({
   };
 
   const applyUpdate = async () => {
+    applyRequestPendingRef.current = true;
     try {
       const wasInProgress = updates.inProgress;
       const requestedVersion = updates.latest?.version ?? updates.installedVersion;
@@ -345,6 +371,8 @@ export function useAdminController({
       }
       const message = error instanceof Error ? error.message : "Could not apply update";
       toast.error(message);
+    } finally {
+      applyRequestPendingRef.current = false;
     }
   };
 
