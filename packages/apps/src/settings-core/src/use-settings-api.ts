@@ -22,7 +22,7 @@ export function useSettingsAPI(source?: SettingsApiSource) {
         smtpPort: 0,
         smtpSecurity: "",
       },
-      logoutUrl: "/",
+      logoutUrl: "/logout",
     }),
     [],
   );

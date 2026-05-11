@@ -1,5 +1,6 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { AppToaster } from "@/ui/sonner";
+import { TooltipProvider } from "@/ui/tooltip";
 
 import appCss from "../styles.css?url";
 
@@ -14,10 +15,10 @@ function NotFoundComponent() {
         </p>
         <div className="mt-6">
           <Link
-            to="/"
+            to="/drive"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Go home
+            Go to Drive
           </Link>
         </div>
       </div>
@@ -61,7 +62,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        {children}
+        <TooltipProvider delayDuration={300}>{children}</TooltipProvider>
         <AppToaster />
         <Scripts />
       </body>

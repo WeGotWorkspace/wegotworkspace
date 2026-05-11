@@ -1,8 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createPwaHead } from "@/lib/pwa-head";
 import { MeetApp } from "@/meet-core/src/meet-app";
+import { requireWgwAuth } from "@/lib/api/wgw/route-guard";
 
 export const Route = createFileRoute("/meet")({
+  beforeLoad: ({ location }) => {
+    requireWgwAuth(location);
+  },
   component: MeetApp,
   head: () =>
     createPwaHead({

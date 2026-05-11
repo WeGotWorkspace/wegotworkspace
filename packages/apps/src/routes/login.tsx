@@ -1,7 +1,17 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { LoginScreen } from "@/login-core/src/login-screen";
+import { wgwLiveApiEnabled, wgwSessionAvailable } from "@/lib/api/wgw/http";
+import { sanitizeWgwReturnPath } from "@/lib/api/wgw/route-guard";
 
 export const Route = createFileRoute("/login")({
+  beforeLoad: ({ search }) => {
+    if (!wgwLiveApiEnabled()) return;
+    if (!wgwSessionAvailable()) return;
+    const returnPath = sanitizeWgwReturnPath(
+      typeof search.return === "string" ? search.return : undefined,
+    );
+    throw redirect({ to: returnPath });
+  },
   component: LoginScreen,
   head: () => ({
     meta: [

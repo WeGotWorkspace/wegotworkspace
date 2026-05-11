@@ -82,8 +82,12 @@ import {
 } from "@/workspace-shell/src/workspace-app-layout";
 import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
 import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
+import { requireWgwAuth } from "@/lib/api/wgw/route-guard";
 
 export const Route = createFileRoute("/drive")({
+  beforeLoad: ({ location }) => {
+    requireWgwAuth(location);
+  },
   component: DriveRoute,
   head: () =>
     createPwaHead({
@@ -1463,7 +1467,7 @@ export function DriveWorkspace({
               name={session.user.displayName}
               initials={workspaceUserInitials(session.user)}
               detailLine={session.user.username}
-              onLogoutClick={() => window.location.assign("/")}
+              onLogoutClick={() => window.location.assign("/logout")}
               linkHoverClassName="hover:bg-[color-mix(in_oklab,var(--color-ink)_18%,transparent)]"
             />
           </div>

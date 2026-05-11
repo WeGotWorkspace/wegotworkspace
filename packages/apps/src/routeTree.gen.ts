@@ -13,6 +13,7 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as NotesRouteImport } from './routes/notes'
 import { Route as MeetRouteImport } from './routes/meet'
 import { Route as MailRouteImport } from './routes/mail'
+import { Route as LogoutRouteImport } from './routes/logout'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as InstallRouteImport } from './routes/install'
 import { Route as DriveRouteImport } from './routes/drive'
@@ -38,6 +39,11 @@ const MeetRoute = MeetRouteImport.update({
 const MailRoute = MailRouteImport.update({
   id: '/mail',
   path: '/mail',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LogoutRoute = LogoutRouteImport.update({
+  id: '/logout',
+  path: '/logout',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -77,6 +83,7 @@ export interface FileRoutesByFullPath {
   '/drive': typeof DriveRoute
   '/install': typeof InstallRoute
   '/login': typeof LoginRoute
+  '/logout': typeof LogoutRoute
   '/mail': typeof MailRoute
   '/meet': typeof MeetRoute
   '/notes': typeof NotesRoute
@@ -89,6 +96,7 @@ export interface FileRoutesByTo {
   '/drive': typeof DriveRoute
   '/install': typeof InstallRoute
   '/login': typeof LoginRoute
+  '/logout': typeof LogoutRoute
   '/mail': typeof MailRoute
   '/meet': typeof MeetRoute
   '/notes': typeof NotesRoute
@@ -102,6 +110,7 @@ export interface FileRoutesById {
   '/drive': typeof DriveRoute
   '/install': typeof InstallRoute
   '/login': typeof LoginRoute
+  '/logout': typeof LogoutRoute
   '/mail': typeof MailRoute
   '/meet': typeof MeetRoute
   '/notes': typeof NotesRoute
@@ -116,6 +125,7 @@ export interface FileRouteTypes {
     | '/drive'
     | '/install'
     | '/login'
+    | '/logout'
     | '/mail'
     | '/meet'
     | '/notes'
@@ -128,6 +138,7 @@ export interface FileRouteTypes {
     | '/drive'
     | '/install'
     | '/login'
+    | '/logout'
     | '/mail'
     | '/meet'
     | '/notes'
@@ -140,6 +151,7 @@ export interface FileRouteTypes {
     | '/drive'
     | '/install'
     | '/login'
+    | '/logout'
     | '/mail'
     | '/meet'
     | '/notes'
@@ -153,6 +165,7 @@ export interface RootRouteChildren {
   DriveRoute: typeof DriveRoute
   InstallRoute: typeof InstallRoute
   LoginRoute: typeof LoginRoute
+  LogoutRoute: typeof LogoutRoute
   MailRoute: typeof MailRoute
   MeetRoute: typeof MeetRoute
   NotesRoute: typeof NotesRoute
@@ -188,6 +201,13 @@ declare module '@tanstack/react-router' {
       path: '/mail'
       fullPath: '/mail'
       preLoaderRoute: typeof MailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/logout': {
+      id: '/logout'
+      path: '/logout'
+      fullPath: '/logout'
+      preLoaderRoute: typeof LogoutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -241,6 +261,7 @@ const rootRouteChildren: RootRouteChildren = {
   DriveRoute: DriveRoute,
   InstallRoute: InstallRoute,
   LoginRoute: LoginRoute,
+  LogoutRoute: LogoutRoute,
   MailRoute: MailRoute,
   MeetRoute: MeetRoute,
   NotesRoute: NotesRoute,

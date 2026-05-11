@@ -31,7 +31,7 @@ const DEFAULT_DATA: SettingsUIData = {
     smtpPort: 465,
     smtpSecurity: "ssl",
   },
-  logoutUrl: "/",
+  logoutUrl: "/logout",
 };
 
 export function createSettingsAppBootstrap(overrides?: {

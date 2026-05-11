@@ -71,7 +71,7 @@ const DEFAULT_DATA: AdminUIData = {
     lastResult: null,
   },
   currentUser: "",
-  logoutUrl: "/",
+  logoutUrl: "/logout",
   updateLogLines: [],
 };
 
