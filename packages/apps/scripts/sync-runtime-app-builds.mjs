@@ -46,6 +46,7 @@ for (const module of modules) {
   const distRoot = resolve(runtimeAppsRoot, module.name, "dist");
   const targetAssetsDir = resolve(distRoot, module.assetDir);
   const targetMainJsPath = resolve(targetAssetsDir, mainJs);
+  const targetMainCssPath = resolve(targetAssetsDir, mainCss);
 
   mkdirSync(distRoot, { recursive: true });
   rmSync(resolve(distRoot, "assets"), { recursive: true, force: true });
@@ -61,6 +62,7 @@ for (const module of modules) {
   // Static LAMP runtime serves plain index.html without SSR payload.
   // TanStack Start entry must run in pure client mode here.
   patchStaticRuntimeEntry(targetMainJsPath);
+  patchStaticRuntimeStylesheet(targetMainCssPath);
 
   const html = renderIndexHtml({
     title: module.title,
@@ -126,4 +128,16 @@ function patchStaticRuntimeEntry(filePath) {
     throw new Error(`Could not patch static runtime entry: ${filePath}`);
   }
   writeFileSync(filePath, clientRendered, "utf8");
+}
+
+function patchStaticRuntimeStylesheet(filePath) {
+  const source = readFileSync(filePath, "utf8");
+  const withRelativeAssetLinks = source
+    .replace(/url\((['"]?)\/fonts\//g, "url($1../fonts/")
+    .replace(/url\((['"]?)\/icons\//g, "url($1../icons/")
+    .replace(/url\((['"]?)\/manifests\//g, "url($1../manifests/")
+    .replace(/url\((['"]?)\/assets\//g, "url($1./assets/");
+  if (withRelativeAssetLinks !== source) {
+    writeFileSync(filePath, withRelativeAssetLinks, "utf8");
+  }
 }
