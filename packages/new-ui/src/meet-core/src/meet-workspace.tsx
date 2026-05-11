@@ -184,6 +184,7 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
     return room && room.length > 0 ? room : null;
   }, []);
   const inJoinFlow = Boolean(invitedRoom);
+  const showUserMenu = hasSignedInIdentity && !inJoinFlow;
   const waitingForAdmission = controller.waitingForAdmission && inJoinFlow;
   const disableAppSwitcher = !hasSignedInIdentity || inJoinFlow;
   const callExitLabel = inJoinFlow || !hasSignedInIdentity ? "Leave call" : "End call";
@@ -253,7 +254,7 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
             <BrandMark className="w-auto shrink-0" />
             <WorkspaceAppSwitcher disabled={disableAppSwitcher} />
           </div>
-          {hasSignedInIdentity ? (
+          {showUserMenu ? (
             <UserMenu displayName={displayName} />
           ) : (
             <div className="size-9" aria-hidden />
