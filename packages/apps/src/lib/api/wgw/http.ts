@@ -3,8 +3,18 @@ import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
 
 /** When true, mail/notes routes load from WeGotWorkspace instead of mock adapters. */
 export function wgwLiveApiEnabled(): boolean {
-  const v = import.meta.env.VITE_WGW_USE_LIVE_API;
-  return v === "1" || v === "true";
+  const v = parseEnvBoolean(import.meta.env.VITE_WGW_USE_LIVE_API as string | undefined);
+  if (v !== null) return v;
+  // In bundled/runtime environments we should talk to the real API by default.
+  return Boolean(import.meta.env.PROD);
+}
+
+function parseEnvBoolean(value: string | undefined): boolean | null {
+  const normalized = value?.trim().toLowerCase();
+  if (!normalized) return null;
+  if (["1", "true", "yes", "on"].includes(normalized)) return true;
+  if (["0", "false", "no", "off"].includes(normalized)) return false;
+  return null;
 }
 
 /**
