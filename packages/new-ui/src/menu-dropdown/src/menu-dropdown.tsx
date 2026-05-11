@@ -12,6 +12,7 @@ export type MenuDropdownItemProps = MenuItemProps & { id?: string };
 export type MenuDropdownProps = {
   trigger: React.ReactNode;
   items: MenuDropdownItemProps[];
+  disabled?: boolean;
   align?: "start" | "center" | "end";
   sideOffset?: number;
   contentClassName?: string;
@@ -21,11 +22,13 @@ export type MenuDropdownProps = {
 export function MenuDropdown({
   trigger,
   items,
+  disabled = false,
   align = "start",
   sideOffset = 8,
   contentClassName,
   contentStyle,
 }: MenuDropdownProps) {
+  if (disabled) return <>{trigger}</>;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
@@ -37,7 +40,11 @@ export function MenuDropdown({
       >
         {items.map((item) => (
           <DropdownMenuItem key={item.id ?? item.label} asChild className="cursor-pointer p-0">
-            <MenuItem {...item} tone="inherit" className={cn("gap-2.5 px-2.5 py-2 rounded-md", item.className)} />
+            <MenuItem
+              {...item}
+              tone="inherit"
+              className={cn("gap-2.5 px-2.5 py-2 rounded-md", item.className)}
+            />
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
