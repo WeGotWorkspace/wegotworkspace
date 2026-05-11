@@ -1298,7 +1298,17 @@ final class MailApi
         $mail->SMTPKeepAlive = false;
         $mail->Username = $cred['smtp']['username'];
         $mail->Password = $cred['smtp']['password'];
-        $fromAddr = $cred['emailAddress'] !== '' ? $cred['emailAddress'] : $cred['imap']['username'];
+        $candidateIdentity = trim((string) ($cred['emailAddress'] ?? ''));
+        $candidateAccount = trim((string) ($cred['imap']['username'] ?? ''));
+        $fromAddr = '';
+        if ($candidateAccount !== '' && PHPMailer::validateAddress($candidateAccount)) {
+            $fromAddr = $candidateAccount;
+        } elseif ($candidateIdentity !== '' && PHPMailer::validateAddress($candidateIdentity)) {
+            $fromAddr = $candidateIdentity;
+        }
+        if ($fromAddr === '') {
+            throw new \RuntimeException('invalid_from_address');
+        }
         $mail->setFrom($fromAddr, $cred['displayName'] ?: '');
 
         return $fromAddr;

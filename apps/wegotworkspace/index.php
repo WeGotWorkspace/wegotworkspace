@@ -6,9 +6,6 @@ declare(strict_types=1);
  * Resolve runtime root from optional SABRE_BUILD_DIR.
  */
 $appRoot = __DIR__;
-putenv('WGW_APP_ROOT='.$appRoot);
-$_ENV['WGW_APP_ROOT'] = $appRoot;
-$_SERVER['WGW_APP_ROOT'] = $appRoot;
 $buildDir = getenv('SABRE_BUILD_DIR');
 if (is_string($buildDir) && trim($buildDir) !== '') {
     $buildDir = trim(str_replace('\\', '/', $buildDir));
@@ -28,8 +25,6 @@ if (is_string($buildDir) && trim($buildDir) !== '') {
 }
 
 $vendorCandidates = [
-    $runtimeRoot.'/packages/api/vendor/autoload.php',
-    $appRoot.'/../../packages/api/vendor/autoload.php',
     $runtimeRoot.'/vendor/autoload.php',
     $appRoot.'/vendor/autoload.php',
 ];
@@ -43,7 +38,7 @@ foreach ($vendorCandidates as $candidate) {
 if ($autoload === null) {
     header('Content-Type: text/plain; charset=utf-8');
     http_response_code(503);
-    echo "Composer dependencies are missing. Run `composer --working-dir packages/api install`.\n";
+    echo "Composer dependencies are missing. Run `composer --working-dir apps/wegotworkspace install` (and optionally set COMPOSER_VENDOR_DIR for custom runtime layouts).\n";
     exit;
 }
 
@@ -62,9 +57,11 @@ spl_autoload_register(static function (string $class) use ($runtimeRoot, $appRoo
         return;
     }
     $candidates = [
-        $runtimeRoot.'/packages/api/src/'.$relative.'.php',
-        $appRoot.'/../../packages/api/src/'.$relative.'.php',
-        $appRoot.'/vendor/wgw/api/src/'.$relative.'.php',
+        $runtimeRoot.'/wgw-src/'.$relative.'.php',
+        $appRoot.'/wgw-src/'.$relative.'.php',
+        // Legacy layout fallback.
+        $runtimeRoot.'/src/'.$relative.'.php',
+        $appRoot.'/src/'.$relative.'.php',
     ];
     foreach ($candidates as $path) {
         if (is_readable($path)) {
@@ -75,32 +72,26 @@ spl_autoload_register(static function (string $class) use ($runtimeRoot, $appRoo
     }
 }, true, true);
 
-use App\Admin\AdminUiKernel;
+use App\AppShell\AppShellStatic;
 use App\Api\ApiKernel;
-use App\Auth\UiLoginKernel;
 use App\Config;
-use App\Drive\DriveKernel;
 use App\Installer\InstallerKernel;
 use App\Installer\WebBase;
 use App\Paths;
 use App\Server\SabreApp;
-use App\Home\HomeKernel;
-use App\Mail\MailKernel;
-use App\Notes\NotesKernel;
 use App\Office\OfficeEntry;
 use App\Office\OfficeStatic;
 use App\Pwa\PwaSupport;
 use App\Security\TrustedHostGate;
-use App\Voice\VoiceKernel;
-use App\UserSettings\UserSettingsUiKernel;
 use App\Update\UpdateManager;
+use App\Voice\VoiceKernel;
 
 $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
     || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
 $webBase = WebBase::detect();
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 
-if (!TrustedHostGate::isAllowed($_SERVER, getenv('WGW_TRUSTED_HOSTS'), getenv('VHOST_DOMAIN'))) {
+if (!TrustedHostGate::isAllowed($_SERVER, getenv('WGW_TRUSTED_HOSTS'))) {
     http_response_code(400);
     header('Content-Type: text/plain; charset=utf-8');
     echo "Bad Request\n";
@@ -117,8 +108,6 @@ $scriptSrc = "'self' 'unsafe-inline'";
 $styleSrc = "'self' 'unsafe-inline' https://fonts.googleapis.com";
 $fontSrc = "'self' data: https://fonts.gstatic.com";
 $connectSrc = "'self' https: wss:";
-$apiDocsPrefix = WebBase::url($webBase, '/api/docs');
-$isApiDocsRequest = $path === $apiDocsPrefix || $path === $apiDocsPrefix.'/' || str_starts_with($path, $apiDocsPrefix.'/');
 if ($isOfficeRequest) {
     // ONLYOFFICE web-apps uses dynamic template evaluation and blob workers in editor runtime.
     $scriptSrc .= " 'unsafe-eval' blob:";
@@ -134,8 +123,8 @@ if ($https) {
 }
 
 $installPrefix = WebBase::url($webBase, '/install');
-$apiV1InstallerPrefix = WebBase::url($webBase, '/api/v1/installer');
-$apiV1AdminUpdatesPrefix = WebBase::url($webBase, '/api/v1/admin/updates');
+$adminApiUpdatesPrefix = WebBase::url($webBase, '/admin/api/updates');
+$apiV1UpdatesPrefix = WebBase::url($webBase, '/api/v1/admin/updates');
 
 if (PwaSupport::tryRespond($webBase, $path)) {
     exit;
@@ -145,8 +134,10 @@ $installed = is_file(Paths::lockFile());
 
 if ($installed && UpdateManager::inMaintenanceMode()) {
     $allowUpdateApi =
-        $path === $apiV1AdminUpdatesPrefix
-        || str_starts_with($path, $apiV1AdminUpdatesPrefix.'/');
+        $path === $adminApiUpdatesPrefix
+        || str_starts_with($path, $adminApiUpdatesPrefix.'/')
+        || $path === $apiV1UpdatesPrefix
+        || str_starts_with($path, $apiV1UpdatesPrefix.'/');
     if (!$allowUpdateApi) {
         http_response_code(503);
         header('Content-Type: text/html; charset=utf-8');
@@ -160,19 +151,17 @@ if ($installed && UpdateManager::inMaintenanceMode()) {
 }
 
 if (!$installed) {
-    $underInstall = $path === $installPrefix || str_starts_with($path, $installPrefix.'/');
-    $underInstallerApi = $path === $apiV1InstallerPrefix || str_starts_with($path, $apiV1InstallerPrefix.'/');
-    if (!$underInstall && !$underInstallerApi) {
-        header('Location: '.$installPrefix.'/', true, 302);
-        exit;
-    }
-    if ($underInstall) {
-        InstallerKernel::respond();
-        exit;
-    }
+    // Allow installer bootstrap/action API routes before lock file exists.
     if (ApiKernel::tryRespond($webBase, $path)) {
         exit;
     }
+    $underInstall = $path === $installPrefix || str_starts_with($path, $installPrefix.'/');
+    if (!$underInstall) {
+        header('Location: '.$installPrefix.'/', true, 302);
+        exit;
+    }
+    InstallerKernel::respond();
+    exit;
 }
 
 $underInstall = $path === $installPrefix || str_starts_with($path, $installPrefix.'/');
@@ -181,20 +170,15 @@ if ($underInstall) {
     exit;
 }
 
-$adminPrefix = WebBase::url($webBase, '/admin');
-if ($path === $adminPrefix || str_starts_with($path, $adminPrefix.'/')) {
-    AdminUiKernel::tryRespond($webBase, $path);
-    exit;
-}
-
-$settingsPrefix = WebBase::url($webBase, '/settings');
-if ($path === $settingsPrefix || str_starts_with($path, $settingsPrefix.'/')) {
-    UserSettingsUiKernel::tryRespond($webBase, $path);
-    exit;
-}
-
-if (UiLoginKernel::tryRespond($webBase, $path)) {
-    exit;
+$rootPath = WebBase::url($webBase, '/');
+if ($path === $rootPath || ($webBase !== '' && ($path === $webBase || $path === $webBase.'/'))) {
+    $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+    $accept = strtolower((string) ($_SERVER['HTTP_ACCEPT'] ?? ''));
+    $isBrowserNav = ($method === 'GET' || $method === 'HEAD') && str_contains($accept, 'text/html');
+    if ($isBrowserNav) {
+        header('Location: '.WebBase::url($webBase, '/drive/'), true, 302);
+        exit;
+    }
 }
 
 if (ApiKernel::tryRespond($webBase, $path)) {
@@ -240,19 +224,7 @@ if (VoiceKernel::tryRespond($webBase, $path)) {
     exit;
 }
 
-if (MailKernel::tryRespond($webBase, $path)) {
-    exit;
-}
-
-if (NotesKernel::tryRespond($webBase, $path)) {
-    exit;
-}
-
-if (DriveKernel::tryRespond($webBase, $path)) {
-    exit;
-}
-
-if (HomeKernel::tryRespond($webBase, $path)) {
+if (AppShellStatic::tryServe($webBase, $path)) {
     exit;
 }
 

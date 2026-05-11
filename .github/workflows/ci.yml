@@ -33,5 +33,8 @@ jobs:
       - name: Run backend API tests
         run: composer --working-dir packages/api test
 
+      - name: Verify generated API types are up to date
+        run: pnpm run check:api-types
+
       - name: Build (Composer + UI via Turborepo)
         run: pnpm run build

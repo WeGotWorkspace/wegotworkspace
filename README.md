@@ -36,6 +36,8 @@ pnpm dev
 
 Open `http://127.0.0.1:8080/install/`.
 
+Frontend note: all first-party web apps (`/admin`, `/drive`, `/mail`, `/notes`, `/voice`, `/settings`, `/home`, `/install`) are built from `packages/apps` and emitted into `apps/wegotworkspace/wgw-modules/*/dist/`.
+
 ## Updating ONLYOFFICE Web
 
 `packages/onlyoffice-web` is tracked as a git-subtree style vendored dependency.
