@@ -27,6 +27,7 @@ type MailListPanelProps = {
   activeId: string;
   isItemDragging: (id: string) => boolean;
   handleSelect: (id: string, e: ReactMouseEvent) => void;
+  handleDoubleClick: (id: string, e: ReactMouseEvent) => void;
   enterSelectionFor: (id: string) => void;
   itemDragHandlers: (id: string) => Record<string, unknown>;
   toggleStar: (id: string) => void;
@@ -54,6 +55,7 @@ export function MailListPanel({
   activeId,
   isItemDragging,
   handleSelect,
+  handleDoubleClick,
   enterSelectionFor,
   itemDragHandlers,
   toggleStar,
@@ -112,6 +114,7 @@ export function MailListPanel({
                 isTouch={isTouch}
                 isDragging={isItemDragging(m.id)}
                 onClick={(e: ReactMouseEvent) => handleSelect(m.id, e)}
+                onDoubleClick={(e: ReactMouseEvent) => handleDoubleClick(m.id, e)}
                 onLongPress={() => enterSelectionFor(m.id)}
                 {...dragHandlers}
                 onDragStart={dragHandlers.onDragStart ?? (() => {})}

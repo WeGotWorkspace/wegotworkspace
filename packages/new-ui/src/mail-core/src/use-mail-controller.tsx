@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 import { FileEdit, Star, StarOff, X } from "lucide-react";
 import { useAppToast } from "@/hooks/use-app-toast";
 import { useSelectionResetOnKeyChange } from "@/hooks/use-selection-reset-on-key-change";
@@ -32,6 +33,19 @@ const DEFAULT_MAILBOX_PAGE_SIZE = 40;
 const PRIMARY_MAILBOXES = ["Inbox", "Starred"] as const;
 const WRITE_QUEUE_DELAY_MS = 2500;
 
+type ComposeMode = "new" | "reply" | "reply-all" | "forward" | "draft";
+
+type MailComposeDraft = {
+  mode: ComposeMode;
+  to: string;
+  cc: string;
+  bcc: string;
+  subject: string;
+  body: string;
+  saving: boolean;
+  sending: boolean;
+};
+
 function splitDetailBodyParagraphs(body: string): string[] {
   const cleaned = body.trim();
   if (!cleaned) return [""];
@@ -40,6 +54,80 @@ function splitDetailBodyParagraphs(body: string): string[] {
     .map((part) => part.trim())
     .filter(Boolean);
   return parts.length > 0 ? parts : [cleaned];
+}
+
+function ensureSubjectPrefix(subject: string, prefix: "Re" | "Fwd"): string {
+  const trimmed = subject.trim();
+  if (!trimmed) return `${prefix}: `;
+  const pattern = prefix === "Re" ? /^\s*re:/i : /^\s*fwd:/i;
+  return pattern.test(trimmed) ? trimmed : `${prefix}: ${trimmed}`;
+}
+
+function quotedOriginalMessage(source: Mail): string {
+  const sourceBody = source.body.join("\n\n").trim() || source.excerpt.trim();
+  if (!sourceBody) return "";
+  const header = [
+    "",
+    "",
+    "--- Original message ---",
+    `From: ${source.from}${source.email ? ` <${source.email}>` : ""}`,
+    `Subject: ${source.title || "(no subject)"}`,
+    "",
+  ].join("\n");
+  const quotedBody = sourceBody
+    .split("\n")
+    .map((line) => `> ${line}`)
+    .join("\n");
+  return `${header}${quotedBody}`;
+}
+
+function draftForMode(mode: ComposeMode, source?: Mail): MailComposeDraft {
+  if (!source) {
+    return {
+      mode,
+      to: "",
+      cc: "",
+      bcc: "",
+      subject: "",
+      body: "",
+      saving: false,
+      sending: false,
+    };
+  }
+  if (mode === "draft") {
+    return {
+      mode,
+      to: "",
+      cc: "",
+      bcc: "",
+      subject: source.title,
+      body: source.body.join("\n\n"),
+      saving: false,
+      sending: false,
+    };
+  }
+  if (mode === "forward") {
+    return {
+      mode,
+      to: "",
+      cc: "",
+      bcc: "",
+      subject: ensureSubjectPrefix(source.title, "Fwd"),
+      body: quotedOriginalMessage(source),
+      saving: false,
+      sending: false,
+    };
+  }
+  return {
+    mode,
+    to: source.email,
+    cc: "",
+    bcc: "",
+    subject: ensureSubjectPrefix(source.title, "Re"),
+    body: quotedOriginalMessage(source),
+    saving: false,
+    sending: false,
+  };
 }
 
 function withDetailLoadedFlag(row: Mail): Mail {
@@ -115,6 +203,8 @@ export function useMailController({
   const [moveDialog, setMoveDialog] = useState<{ ids: string[]; currentMailbox?: string } | null>(
     null,
   );
+  const [composeDrafts, setComposeDrafts] = useState<Record<string, MailComposeDraft>>({});
+  const [composeDialogId, setComposeDialogId] = useState<string | null>(null);
   const [returnMailboxById, setReturnMailboxById] = useState<Record<string, string>>({});
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement | null>(null);
@@ -581,57 +671,275 @@ export function useMailController({
     onUndoQueuedAction: undoLatest,
   });
 
-  const compose = useCallback(() => {
-    const id = `m-${Date.now()}`;
-    const selfLabel = L.draftFromLabel;
-    const draft: Mail = {
-      id,
-      folder: encodeFolderToken("Drafts"),
-      uid: Math.floor(Math.random() * 1_000_000_000),
-      from: selfLabel,
-      email: session.user.email ?? "",
-      notebook: selfLabel,
-      category: "Draft",
-      date: "Now",
-      title: "",
-      excerpt: "",
-      body: [""],
-      tags: [],
-      wordCount: 0,
-      mailbox: "Drafts",
-      unread: false,
-      detailLoaded: true,
-    };
-    setMail((p) => [draft, ...p]);
-    setActiveId(id);
-    selectSingle(id);
-    setView("mb:Drafts");
+  const syncMailRowFromCompose = useCallback((id: string, draft: MailComposeDraft) => {
+    setMail((prev) =>
+      prev.map((message) =>
+        message.id === id
+          ? {
+              ...message,
+              title: draft.subject,
+              excerpt: draft.body.replace(/\s+/g, " ").trim().slice(0, 180),
+              body: splitDetailBodyParagraphs(draft.body),
+              detailLoaded: true,
+            }
+          : message,
+      ),
+    );
+  }, []);
+
+  const ensureComposeDraftForMessage = useCallback(
+    (message: Mail, mode: ComposeMode = "draft"): MailComposeDraft => {
+      const existing = composeDrafts[message.id];
+      if (existing) return existing;
+      const seeded: MailComposeDraft =
+        mode === "draft"
+          ? {
+              mode,
+              to: "",
+              cc: "",
+              bcc: "",
+              subject: message.title,
+              body: message.body.join("\n\n"),
+              saving: false,
+              sending: false,
+            }
+          : draftForMode(mode, message);
+      setComposeDrafts((prev) => ({ ...prev, [message.id]: seeded }));
+      return seeded;
+    },
+    [composeDrafts],
+  );
+
+  const openComposeDialog = useCallback((messageId: string) => {
+    setComposeDialogId(messageId);
     workspaceLayoutRef.current?.openMobileDetail();
-    show(L.toastNewMessage, { icon: <FileEdit className="size-4" /> });
-    if (!operations) return;
-    // Keep compose instant without user-facing errors until draft editing/saving exists.
-    if (!draft.title.trim() && draft.body.every((part) => !part.trim())) return;
-    const draftPayload = {
-      subject: draft.title,
-      body: draft.body.join("\n\n"),
-      to: [],
-      cc: [],
-      bcc: [],
-    } as unknown as WgwMailDraftRequest;
-    void operations.createDraft(draftPayload).catch(() => {
-      show("Draft created locally, but could not sync to server yet.", {
-        icon: <FileEdit className="size-4" />,
+  }, []);
+
+  const closeComposeDialog = useCallback(() => {
+    setComposeDialogId(null);
+  }, []);
+
+  const startCompose = useCallback(
+    (mode: ComposeMode, source?: Mail) => {
+      const id = `m-${Date.now()}`;
+      const selfLabel = L.draftFromLabel;
+      const draftState = draftForMode(mode, source);
+      const draft: Mail = {
+        id,
+        folder: encodeFolderToken("Drafts"),
+        uid: Math.floor(Math.random() * 1_000_000_000),
+        from: selfLabel,
+        email: session.user.email ?? "",
+        notebook: selfLabel,
+        category: "Draft",
+        date: "Now",
+        title: draftState.subject,
+        excerpt: draftState.body.replace(/\s+/g, " ").trim().slice(0, 180),
+        body: splitDetailBodyParagraphs(draftState.body),
+        tags: [],
+        wordCount: 0,
+        mailbox: "Drafts",
+        unread: false,
+        detailLoaded: true,
+      };
+      setMail((prev) => [draft, ...prev]);
+      setComposeDrafts((prev) => ({ ...prev, [id]: draftState }));
+      openComposeDialog(id);
+      show(
+        mode === "new" ? L.toastNewMessage : mode === "forward" ? "Forward draft" : "Reply draft",
+        { icon: <FileEdit className="size-4" /> },
+      );
+      if (!operations) return;
+      const draftPayload: WgwMailDraftRequest = {
+        to: draftState.to || undefined,
+        cc: draftState.cc || undefined,
+        bcc: draftState.bcc || undefined,
+        subject: draftState.subject || undefined,
+        body: draftState.body || undefined,
+      };
+      void operations.createDraft(draftPayload).catch(() => {
+        show("Draft created locally, but could not sync to server yet.", {
+          icon: <FileEdit className="size-4" />,
+        });
       });
-    });
-  }, [
-    L.draftFromLabel,
-    L.toastNewMessage,
-    encodeFolderToken,
-    selectSingle,
-    session.user.email,
-    show,
-    operations,
-  ]);
+    },
+    [
+      L.draftFromLabel,
+      L.toastNewMessage,
+      encodeFolderToken,
+      session.user.email,
+      show,
+      operations,
+      openComposeDialog,
+    ],
+  );
+
+  const compose = useCallback(() => {
+    startCompose("new");
+  }, [startCompose]);
+
+  const reply = useCallback(() => {
+    if (!active) return;
+    startCompose("reply", active);
+  }, [active, startCompose]);
+
+  const replyAll = useCallback(() => {
+    if (!active) return;
+    startCompose("reply-all", active);
+  }, [active, startCompose]);
+
+  const forward = useCallback(() => {
+    if (!active) return;
+    startCompose("forward", active);
+  }, [active, startCompose]);
+
+  const openDraftInComposer = useCallback(
+    (id: string) => {
+      const message = mail.find((candidate) => candidate.id === id);
+      if (!message) return;
+      if (message.mailbox !== "Drafts" && !composeDrafts[id]) return;
+      ensureComposeDraftForMessage(message, "draft");
+      openComposeDialog(id);
+    },
+    [mail, composeDrafts, ensureComposeDraftForMessage, openComposeDialog],
+  );
+
+  const updateComposeDraft = useCallback(
+    (
+      id: string,
+      patch: Partial<Pick<MailComposeDraft, "to" | "cc" | "bcc" | "subject" | "body">>,
+    ) => {
+      setComposeDrafts((prev) => {
+        const current = prev[id];
+        if (!current) return prev;
+        const next = { ...current, ...patch };
+        syncMailRowFromCompose(id, next);
+        return { ...prev, [id]: next };
+      });
+    },
+    [syncMailRowFromCompose],
+  );
+
+  const saveComposeDraft = useCallback(
+    async (id: string) => {
+      const draft = composeDrafts[id];
+      if (!draft) return;
+      if (!operations) {
+        show("Draft saved locally.", { icon: <FileEdit className="size-4" /> });
+        return;
+      }
+      setComposeDrafts((prev) =>
+        prev[id] ? { ...prev, [id]: { ...prev[id]!, saving: true } } : prev,
+      );
+      try {
+        await operations.saveDraft({
+          to: draft.to || undefined,
+          cc: draft.cc || undefined,
+          bcc: draft.bcc || undefined,
+          subject: draft.subject || undefined,
+          body: draft.body || undefined,
+        });
+        show("Draft saved.", { icon: <FileEdit className="size-4" /> });
+      } catch {
+        show("Saved locally. Server draft sync is unavailable right now.", {
+          icon: <FileEdit className="size-4" />,
+        });
+      } finally {
+        setComposeDrafts((prev) =>
+          prev[id] ? { ...prev, [id]: { ...prev[id]!, saving: false } } : prev,
+        );
+      }
+    },
+    [composeDrafts, operations, show],
+  );
+
+  const sendComposeDraft = useCallback(
+    async (id: string) => {
+      const draft = composeDrafts[id];
+      if (!draft) return;
+      if (!draft.to.trim()) {
+        show("Add at least one recipient in To.", { icon: <X className="size-4" /> });
+        return;
+      }
+      setComposeDrafts((prev) =>
+        prev[id] ? { ...prev, [id]: { ...prev[id]!, sending: true } } : prev,
+      );
+      try {
+        if (operations) {
+          await operations.sendMessage({
+            to: draft.to,
+            cc: draft.cc || undefined,
+            bcc: draft.bcc || undefined,
+            subject: draft.subject || undefined,
+            body: draft.body || undefined,
+          });
+        }
+        setComposeDrafts((prev) => {
+          const next = { ...prev };
+          delete next[id];
+          return next;
+        });
+        closeComposeDialog();
+        setMail((prev) =>
+          prev.map((message) =>
+            message.id === id
+              ? {
+                  ...message,
+                  mailbox: "Sent",
+                  folder: encodeFolderToken("Sent"),
+                  category: "Sent",
+                  date: "Now",
+                  title: draft.subject,
+                  excerpt: draft.body.replace(/\s+/g, " ").trim().slice(0, 180),
+                  body: splitDetailBodyParagraphs(draft.body),
+                }
+              : message,
+          ),
+        );
+        setView("mb:Sent");
+        setActiveId(id);
+        show("Message sent.", { icon: <FileEdit className="size-4" /> });
+      } catch {
+        setComposeDrafts((prev) =>
+          prev[id] ? { ...prev, [id]: { ...prev[id]!, sending: false } } : prev,
+        );
+        show("Could not send message. Please try again.", { icon: <X className="size-4" /> });
+      }
+    },
+    [composeDrafts, operations, show, encodeFolderToken, closeComposeDialog],
+  );
+
+  const discardComposeDraft = useCallback(
+    async (id: string) => {
+      const message = mail.find((candidate) => candidate.id === id);
+      const shouldAttemptRemoteDelete =
+        !!message &&
+        !message.id.startsWith("m-") &&
+        !!operations &&
+        Number.isFinite(message.uid) &&
+        message.uid > 0;
+      if (shouldAttemptRemoteDelete) {
+        try {
+          await operations.deleteMessages([{ folder: message.folder, uid: message.uid }]);
+        } catch {
+          show("Discarded locally. Could not delete this draft on server.", {
+            icon: <X className="size-4" />,
+          });
+        }
+      }
+      setComposeDrafts((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+      setMail((prev) => prev.filter((message) => message.id !== id));
+      setSelectedIds((prev) => prev.filter((selectedId) => selectedId !== id));
+      setActiveId((current) => (current === id ? "" : current));
+      closeComposeDialog();
+      show("Draft discarded and removed from your list.", { icon: <X className="size-4" /> });
+    },
+    [mail, operations, show, setSelectedIds, closeComposeDialog],
+  );
 
   const selectView = useCallback((v: string) => {
     setView(v);
@@ -667,6 +975,14 @@ export function useMailController({
       selectionDone: L.selectionDone,
     },
   });
+
+  const handleMailItemDoubleClick = useCallback(
+    (id: string, e: ReactMouseEvent) => {
+      handleSelect(id, e);
+      openDraftInComposer(id);
+    },
+    [handleSelect, openDraftInComposer],
+  );
 
   const downloadAttachment = useCallback(
     async (attachment: MailAttachment) => {
@@ -726,6 +1042,7 @@ export function useMailController({
     selectedIds,
     selectionMode,
     handleSelect,
+    handleMailItemDoubleClick,
     enterSelectionFor,
     setMoveDialog,
     setSearchQuery,
@@ -737,6 +1054,16 @@ export function useMailController({
     mailboxView,
     selectView,
     compose,
+    reply,
+    replyAll,
+    forward,
+    composeDialogId,
+    closeComposeDialog,
+    composeDrafts,
+    updateComposeDraft,
+    saveComposeDraft,
+    sendComposeDraft,
+    discardComposeDraft,
     toggleStar,
     moveOne,
     toggleArchiveForMessage,

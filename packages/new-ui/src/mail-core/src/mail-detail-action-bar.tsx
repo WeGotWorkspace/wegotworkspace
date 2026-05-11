@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import { Forward, MoreHorizontal, Reply, ReplyAll } from "lucide-react";
 import { ToolbarButton } from "@/action-buttons/src/action-buttons";
 import { ActionBar } from "@/action-bar/src/action-bar";
@@ -10,7 +9,9 @@ import { buildMailActionButtons } from "@/mail-core/src/mail-action-buttons";
 type MailDetailActionBarProps = {
   active: Mail | undefined;
   closeMobileDetail: () => void;
-  show: (title: string, opts: { icon: ReactNode }) => void;
+  onReply: () => void;
+  onReplyAll: () => void;
+  onForward: () => void;
   setMoveDialog: (value: { ids: string[]; currentMailbox?: string } | null) => void;
   markRead: (ids: string[]) => void;
   markUnread: (ids: string[]) => void;
@@ -23,7 +24,9 @@ type MailDetailActionBarProps = {
 export function MailDetailActionBar({
   active,
   closeMobileDetail,
-  show,
+  onReply,
+  onReplyAll,
+  onForward,
   setMoveDialog,
   markRead,
   markUnread,
@@ -34,21 +37,18 @@ export function MailDetailActionBar({
 }: MailDetailActionBarProps) {
   if (!active) return <ActionBar onBack={closeMobileDetail} />;
   const moveToMailbox = () => setMoveDialog({ ids: [active.id], currentMailbox: active.mailbox });
-  const reply = () => show("Reply", { icon: <Reply className="size-4" /> });
-  const replyAll = () => show("Reply all", { icon: <ReplyAll className="size-4" /> });
-  const forward = () => show("Forward", { icon: <Forward className="size-4" /> });
   const toggleUnreadForActive = () =>
     active.unread ? markRead([active.id]) : markUnread([active.id]);
   const toggleStarForActive = () => toggleStar(active.id);
   const toggleArchiveForActive = () => toggleArchiveForMessage(active.id);
   const toggleTrashForActive = () => toggleTrashForMessage(active.id);
   const mobileReplyItems: MenuDropdownItemProps[] = [
-    { id: "reply", label: "Reply", icon: <Reply className="size-4" />, onClick: reply },
+    { id: "reply", label: "Reply", icon: <Reply className="size-4" />, onClick: onReply },
     {
       id: "reply-all",
       label: "Reply all",
       icon: <ReplyAll className="size-4" />,
-      onClick: replyAll,
+      onClick: onReplyAll,
     },
   ];
   const detailActionButtons = buildMailActionButtons({
@@ -76,13 +76,13 @@ export function MailDetailActionBar({
       left={
         <>
           <div className="mail-detail-actions-desktop flex items-center gap-2">
-            <ToolbarButton label="Reply" onClick={reply}>
+            <ToolbarButton label="Reply" onClick={onReply}>
               <Reply className="size-4" />
             </ToolbarButton>
-            <ToolbarButton label="Reply all" onClick={replyAll}>
+            <ToolbarButton label="Reply all" onClick={onReplyAll}>
               <ReplyAll className="size-4" />
             </ToolbarButton>
-            <ToolbarButton label="Forward" onClick={forward}>
+            <ToolbarButton label="Forward" onClick={onForward}>
               <Forward className="size-4" />
             </ToolbarButton>
           </div>
@@ -106,7 +106,7 @@ export function MailDetailActionBar({
                 </button>
               }
             />
-            <ToolbarButton label="Forward" onClick={forward}>
+            <ToolbarButton label="Forward" onClick={onForward}>
               <Forward className="size-4" />
             </ToolbarButton>
           </div>
