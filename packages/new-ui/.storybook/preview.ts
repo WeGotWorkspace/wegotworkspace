@@ -24,6 +24,7 @@ const preview: Preview = {
       const renderStory = () => createElement(Story);
       const routes = [
         createRoute({ getParentRoute: () => rootRoute, path: "/", component: renderStory }),
+        createRoute({ getParentRoute: () => rootRoute, path: "login", component: renderStory }),
         createRoute({ getParentRoute: () => rootRoute, path: "notes", component: renderStory }),
         createRoute({ getParentRoute: () => rootRoute, path: "mail", component: renderStory }),
         createRoute({ getParentRoute: () => rootRoute, path: "drive", component: renderStory }),
