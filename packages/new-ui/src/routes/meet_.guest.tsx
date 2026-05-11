@@ -4,19 +4,8 @@ import { Mic, MicOff, Video, VideoOff, Hand, Volume2 } from "lucide-react";
 import { Input } from "@/ui/input";
 import { Label } from "@/ui/label";
 import { Button } from "@/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/ui/tooltip";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui/tooltip";
 import { WorkspaceAppSwitcher } from "@/workspace-app-switcher/src/workspace-app-switcher";
 import { BrandMark } from "@/brand-mark/src/brand-mark";
 
@@ -88,7 +77,9 @@ function GuestJoin() {
             <BrandLogo />
             <WorkspaceAppSwitcher />
           </div>
-          <div className="text-xs" style={{ color: MUTED }}>You're joining as a guest</div>
+          <div className="text-xs" style={{ color: MUTED }}>
+            You're joining as a guest
+          </div>
         </header>
 
         <main className="flex-1 flex items-center justify-center px-6 py-12">
@@ -117,7 +108,10 @@ function GuestJoin() {
               )}
 
               {knocking && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center backdrop-blur-sm" style={{ background: "rgba(8,9,18,0.6)" }}>
+                <div
+                  className="absolute inset-0 flex flex-col items-center justify-center backdrop-blur-sm"
+                  style={{ background: "rgba(8,9,18,0.6)" }}
+                >
                   <div
                     className="mb-3 flex size-16 items-center justify-center rounded-full"
                     style={{ background: ACCENT, animation: "pulse 1.4s ease-in-out infinite" }}
@@ -125,19 +119,35 @@ function GuestJoin() {
                     <Hand className="size-7" />
                   </div>
                   <div className="text-base font-semibold">Knocking{".".repeat(dots)}</div>
-                  <div className="mt-1 text-xs" style={{ color: MUTED }}>Waiting for the host to let you in</div>
+                  <div className="mt-1 text-xs" style={{ color: MUTED }}>
+                    Waiting for the host to let you in
+                  </div>
                 </div>
               )}
 
               <div className="absolute bottom-3 right-3 flex gap-2">
-                <CircleToggle on={micOn} onClick={() => setMicOn(!micOn)} OnIcon={Mic} OffIcon={MicOff} label={micOn ? "Mute" : "Unmute"} />
-                <CircleToggle on={videoOn} onClick={() => setVideoOn(!videoOn)} OnIcon={Video} OffIcon={VideoOff} label={videoOn ? "Stop video" : "Start video"} />
+                <CircleToggle
+                  on={micOn}
+                  onClick={() => setMicOn(!micOn)}
+                  OnIcon={Mic}
+                  OffIcon={MicOff}
+                  label={micOn ? "Mute" : "Unmute"}
+                />
+                <CircleToggle
+                  on={videoOn}
+                  onClick={() => setVideoOn(!videoOn)}
+                  OnIcon={Video}
+                  OffIcon={VideoOff}
+                  label={videoOn ? "Stop video" : "Start video"}
+                />
               </div>
             </div>
 
             <div className="space-y-6">
               <div className="space-y-1.5">
-                <Label className="text-[11px] uppercase tracking-[0.18em]" style={{ color: MUTED }}>Your name</Label>
+                <Label className="text-[11px] uppercase tracking-[0.18em]" style={{ color: MUTED }}>
+                  Your name
+                </Label>
                 <Input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -148,9 +158,27 @@ function GuestJoin() {
                 />
               </div>
 
-              <DeviceRow icon={<Video className="size-4" />} label="Camera" value={cam} onChange={setCam} options={CAMS} />
-              <DeviceRow icon={<Mic className="size-4" />} label="Microphone" value={mic} onChange={setMic} options={MICS} />
-              <DeviceRow icon={<Volume2 className="size-4" />} label="Speaker" value={spk} onChange={setSpk} options={SPEAKERS} />
+              <DeviceRow
+                icon={<Video className="size-4" />}
+                label="Camera"
+                value={cam}
+                onChange={setCam}
+                options={CAMS}
+              />
+              <DeviceRow
+                icon={<Mic className="size-4" />}
+                label="Microphone"
+                value={mic}
+                onChange={setMic}
+                options={MICS}
+              />
+              <DeviceRow
+                icon={<Volume2 className="size-4" />}
+                label="Speaker"
+                value={spk}
+                onChange={setSpk}
+                options={SPEAKERS}
+              />
 
               {!knocking ? (
                 <Button
@@ -181,11 +209,23 @@ function GuestJoin() {
 }
 
 function Initials({ name }: { name: string }) {
-  const initials = name.split(/\s+/).map((s) => s[0]).slice(0, 2).join("").toUpperCase() || "?";
+  const initials =
+    name
+      .split(/\s+/)
+      .map((s) => s[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "?";
   return (
     <div
       className="flex items-center justify-center rounded-full font-semibold"
-      style={{ width: 84, height: 84, fontSize: 30, background: "rgba(255,255,255,0.1)", color: TEXT }}
+      style={{
+        width: 84,
+        height: 84,
+        fontSize: 30,
+        background: "rgba(255,255,255,0.1)",
+        color: TEXT,
+      }}
     >
       {initials}
     </div>
@@ -193,7 +233,11 @@ function Initials({ name }: { name: string }) {
 }
 
 function DeviceRow({
-  icon, label, value, onChange, options,
+  icon,
+  label,
+  value,
+  onChange,
+  options,
 }: {
   icon: React.ReactNode;
   label: string;
@@ -203,18 +247,28 @@ function DeviceRow({
 }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="flex size-9 items-center justify-center rounded-lg shrink-0" style={{ background: PANEL_SOFT, color: MUTED }}>
+      <div
+        className="flex size-9 items-center justify-center rounded-lg shrink-0"
+        style={{ background: PANEL_SOFT, color: MUTED }}
+      >
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <Label className="text-[10px] uppercase tracking-[0.18em]" style={{ color: MUTED }}>{label}</Label>
+        <Label className="text-[10px] uppercase tracking-[0.18em]" style={{ color: MUTED }}>
+          {label}
+        </Label>
         <Select value={value} onValueChange={onChange}>
-          <SelectTrigger className="border-0 px-0 text-sm h-7" style={{ background: "transparent", color: TEXT }}>
+          <SelectTrigger
+            className="border-0 px-0 text-sm h-7"
+            style={{ background: "transparent", color: TEXT }}
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {options.map((o) => (
-              <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>
+              <SelectItem key={o.id} value={o.id}>
+                {o.label}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -224,7 +278,11 @@ function DeviceRow({
 }
 
 function CircleToggle({
-  on, onClick, OnIcon, OffIcon, label,
+  on,
+  onClick,
+  OnIcon,
+  OffIcon,
+  label,
 }: {
   on: boolean;
   onClick: () => void;
