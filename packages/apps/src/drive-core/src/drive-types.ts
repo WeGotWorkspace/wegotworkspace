@@ -46,6 +46,7 @@ export type DriveAPIOperations = {
   readFileBlob: (path: string, opts?: { signal?: AbortSignal }) => Promise<Blob>;
   checkUploadReady: (opts?: { signal?: AbortSignal }) => Promise<void>;
   listStars: (opts?: { signal?: AbortSignal }) => Promise<string[]>;
+  listEntriesByPaths: (paths: string[], opts?: { signal?: AbortSignal }) => Promise<WgwDriveDirectoryEntry[]>;
   setStar: (
     input: { path: string; starred: boolean },
     opts?: { signal?: AbortSignal },

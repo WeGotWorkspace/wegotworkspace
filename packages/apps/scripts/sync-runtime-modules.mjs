@@ -110,7 +110,13 @@ function patchStaticRuntimeEntry(filePath) {
       /\.stores\.matchesId\.get\(\)\.length\|\|await [A-Za-z$_][\w$]*\([^)]*\)/,
       ".stores.matchesId.get().length||void 0",
     );
-  const clientRendered = withoutHydrateSsr
+  // Static runtime can be hosted under subpaths (for example /files/drive/).
+  // Vite may emit absolute CSS hrefs in JS chunks; rewrite them to relative.
+  const withRelativeAssetLinks = withoutHydrateSsr.replace(
+    /(["'])\/assets\//g,
+    "$1./assets/",
+  );
+  const clientRendered = withRelativeAssetLinks
     .replace(
       /clientExports\.hydrateRoot\(\s*document,\s*/,
       "clientExports.createRoot(document).render(",
