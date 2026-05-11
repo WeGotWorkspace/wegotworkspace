@@ -107,7 +107,21 @@ async function postOrPatchMail(
     body: JSON.stringify(body),
     signal: opts?.signal,
   });
-  if (!res.ok) throw new Error(`${method} ${path} failed (${res.status})`);
+  if (!res.ok) {
+    const text = (await res.text()).trim();
+    let detail = text;
+    try {
+      const json = text ? (JSON.parse(text) as Record<string, unknown>) : null;
+      const candidate =
+        json && typeof json === "object"
+          ? (json.error ?? json.message ?? json.detail ?? json.reason)
+          : undefined;
+      if (typeof candidate === "string" && candidate.trim()) detail = candidate.trim();
+    } catch {
+      // Keep raw text if parsing fails.
+    }
+    throw new Error(`${method} ${path} failed (${res.status})${detail ? `: ${detail}` : ""}`);
+  }
 }
 
 function parseMessageDetailPayload(json: unknown): WgwMailMessageDetail {
