@@ -30,7 +30,7 @@ const appReleaseEntries = [
   "wgw-modules/install/dist",
   "wgw-modules/mail/dist",
   "wgw-modules/notes/dist",
-  "wgw-modules/home/dist",
+  "wgw-modules/shell/dist",
   "wgw-modules/settings/dist",
   "wgw-modules/voice/dist",
 ];
