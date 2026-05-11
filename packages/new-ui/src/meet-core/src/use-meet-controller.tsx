@@ -220,6 +220,7 @@ export function useMeetController({
   rtc,
   operations,
 }: UseMeetControllerArgs) {
+  const canModerateKnocks = Boolean(session.user.username?.trim() || session.user.email?.trim());
   const [status, setStatus] = useState<CallStatus>("idle");
   const [error, setError] = useState<string | null>(null);
   const [roomCode, setRoomCode] = useState<string | null>(null);
@@ -821,27 +822,35 @@ export function useMeetController({
     [ensureLocalMedia, startPolling],
   );
 
-  const admitKnocker = useCallback(async (peerId: string) => {
-    if (!operationsRef.current || !roomCodeRef.current || !selfIdRef.current) return;
-    await operationsRef.current.chat({
-      room: roomCodeRef.current,
-      from: selfIdRef.current,
-      text: buildControlMessage({ kind: "admit", peerId }),
-      sessionKey: joinedSessionKeyRef.current ?? undefined,
-    });
-    setKnockers((prev) => prev.filter((entry) => entry.id !== peerId));
-  }, []);
+  const admitKnocker = useCallback(
+    async (peerId: string) => {
+      if (!canModerateKnocks) return;
+      if (!operationsRef.current || !roomCodeRef.current || !selfIdRef.current) return;
+      await operationsRef.current.chat({
+        room: roomCodeRef.current,
+        from: selfIdRef.current,
+        text: buildControlMessage({ kind: "admit", peerId }),
+        sessionKey: joinedSessionKeyRef.current ?? undefined,
+      });
+      setKnockers((prev) => prev.filter((entry) => entry.id !== peerId));
+    },
+    [canModerateKnocks],
+  );
 
-  const denyKnocker = useCallback(async (peerId: string) => {
-    if (!operationsRef.current || !roomCodeRef.current || !selfIdRef.current) return;
-    await operationsRef.current.chat({
-      room: roomCodeRef.current,
-      from: selfIdRef.current,
-      text: buildControlMessage({ kind: "deny", peerId }),
-      sessionKey: joinedSessionKeyRef.current ?? undefined,
-    });
-    setKnockers((prev) => prev.filter((entry) => entry.id !== peerId));
-  }, []);
+  const denyKnocker = useCallback(
+    async (peerId: string) => {
+      if (!canModerateKnocks) return;
+      if (!operationsRef.current || !roomCodeRef.current || !selfIdRef.current) return;
+      await operationsRef.current.chat({
+        room: roomCodeRef.current,
+        from: selfIdRef.current,
+        text: buildControlMessage({ kind: "deny", peerId }),
+        sessionKey: joinedSessionKeyRef.current ?? undefined,
+      });
+      setKnockers((prev) => prev.filter((entry) => entry.id !== peerId));
+    },
+    [canModerateKnocks],
+  );
 
   const endCallForAll = useCallback(async () => {
     if (!operationsRef.current || !roomCodeRef.current || !selfIdRef.current) {
