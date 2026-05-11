@@ -5,7 +5,7 @@ import type { MeetAPIOperations, MeetRtcSettings } from "@/meet-core/src/meet-ty
 
 type SignalType = "offer" | "answer" | "ice" | "bye" | "chat";
 type IceMode = "direct" | "relay";
-type CallStatus = "idle" | "preparing" | "in-call" | "failed";
+type CallStatus = "idle" | "preparing" | "waiting" | "in-call" | "failed";
 
 type RemotePeer = {
   id: string;
@@ -23,6 +23,11 @@ type ChatLine = {
   isSelf: boolean;
 };
 
+type Knocker = {
+  id: string;
+  name: string;
+};
+
 type PeerEntry = {
   pc: RTCPeerConnection;
   name: string;
@@ -31,6 +36,15 @@ type PeerEntry = {
   relayFallbackTried: boolean;
   pendingIce: RTCIceCandidateInit[];
 };
+
+type ControlMessage =
+  | { kind: "knock"; peerId: string; name: string }
+  | { kind: "admit"; peerId: string }
+  | { kind: "deny"; peerId: string }
+  | { kind: "end"; by: string };
+
+const KNOCK_NAME_PREFIX = "__wgw_knock__:";
+const CONTROL_PREFIX = "__wgw_meet_control__:";
 
 const EU_STUN_SERVERS: RTCIceServer[] = [
   { urls: "stun:stun.nextcloud.com:443" },
@@ -129,6 +143,44 @@ function sortSignalMessages(messages: Array<{ from: string; type: SignalType; pa
   });
 }
 
+function encodeKnockerName(displayName: string): string {
+  const safeName = displayName.trim() || "Guest";
+  return `${KNOCK_NAME_PREFIX}${safeName}`;
+}
+
+function decodeKnockerName(peerName: string): string | null {
+  if (!peerName.startsWith(KNOCK_NAME_PREFIX)) return null;
+  const name = peerName.slice(KNOCK_NAME_PREFIX.length).trim();
+  return name === "" ? "Guest" : name;
+}
+
+function buildControlMessage(payload: ControlMessage): string {
+  return `${CONTROL_PREFIX}${JSON.stringify(payload)}`;
+}
+
+function parseControlMessage(text: string): ControlMessage | null {
+  if (!text.startsWith(CONTROL_PREFIX)) return null;
+  try {
+    const parsed = JSON.parse(text.slice(CONTROL_PREFIX.length)) as Record<string, unknown>;
+    if (
+      parsed.kind === "knock" &&
+      typeof parsed.peerId === "string" &&
+      typeof parsed.name === "string"
+    ) {
+      return { kind: "knock", peerId: parsed.peerId, name: parsed.name };
+    }
+    if ((parsed.kind === "admit" || parsed.kind === "deny") && typeof parsed.peerId === "string") {
+      return { kind: parsed.kind, peerId: parsed.peerId };
+    }
+    if (parsed.kind === "end" && typeof parsed.by === "string") {
+      return { kind: "end", by: parsed.by };
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 function toSessionDescription(
   payload: unknown,
   fallbackType: RTCSdpType,
@@ -187,6 +239,9 @@ export function useMeetController({
   const [selectedMicId, setSelectedMicId] = useState<string | null>(null);
   const [selectedCamId, setSelectedCamId] = useState<string | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [waitingForAdmission, setWaitingForAdmission] = useState(false);
+  const [knockers, setKnockers] = useState<Knocker[]>([]);
+  const [endedMessage, setEndedMessage] = useState<string | null>(null);
 
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
@@ -200,12 +255,16 @@ export function useMeetController({
   const statusRef = useRef<CallStatus>("idle");
   const displayNameRef = useRef(displayName);
   const operationsRef = useRef(operations);
+  const waitingForAdmissionRef = useRef(false);
+  const leaveRef = useRef<null | (() => Promise<void>)>(null);
+  const rosterRef = useRef<Map<string, string>>(new Map());
 
   operationsRef.current = operations;
   statusRef.current = status;
   displayNameRef.current = displayName;
   selfIdRef.current = selfId;
   roomCodeRef.current = roomCode;
+  waitingForAdmissionRef.current = waitingForAdmission;
 
   const refreshPeers = useCallback(() => {
     const next: RemotePeer[] = [];
@@ -467,11 +526,77 @@ export function useMeetController({
       payload: unknown;
     }>;
     const selfPeerId = selfIdRef.current;
+    const pendingKnockers = roster
+      .map((peer) => {
+        const name = decodeKnockerName(peer.name);
+        if (!name) return null;
+        return { id: peer.id, name } satisfies Knocker;
+      })
+      .filter((peer): peer is Knocker => peer !== null);
+    setKnockers(pendingKnockers);
+    const pendingKnockerIds = new Set(pendingKnockers.map((peer) => peer.id));
+    const activeRoster = new Map<string, string>();
+    for (const peer of roster) {
+      if (pendingKnockerIds.has(peer.id)) continue;
+      activeRoster.set(peer.id, peer.name);
+    }
+    const previousRoster = rosterRef.current;
+    if (statusRef.current === "in-call") {
+      activeRoster.forEach((name, id) => {
+        if (!previousRoster.has(id)) toast.success(`${name} joined the call`);
+      });
+      previousRoster.forEach((name, id) => {
+        if (!activeRoster.has(id)) toast(`${name} left the call`);
+      });
+    }
+    rosterRef.current = activeRoster;
 
     for (const msg of incoming) {
       if (msg.type !== "chat") continue;
       const text = (msg.payload as { text?: unknown } | null)?.text;
       if (typeof text !== "string" || text.trim() === "") continue;
+      const control = parseControlMessage(text.trim());
+      if (control) {
+        if (control.kind === "knock") {
+          setKnockers((prev) => {
+            if (prev.some((entry) => entry.id === control.peerId)) return prev;
+            return [...prev, { id: control.peerId, name: control.name }];
+          });
+        }
+        if (control.kind === "end") {
+          if (statusRef.current === "in-call") {
+            setEndedMessage(`Call ended by ${control.by}.`);
+            toast.info(`Call ended by ${control.by}.`);
+            await leaveRef.current?.();
+          }
+          continue;
+        }
+        if (control.peerId !== selfPeerId) continue;
+        if (control.kind === "admit") {
+          if (
+            waitingForAdmissionRef.current &&
+            operationsRef.current &&
+            roomCodeRef.current &&
+            selfIdRef.current
+          ) {
+            const joined = await operationsRef.current.join({
+              room: roomCodeRef.current,
+              peerId: selfIdRef.current,
+              name: displayNameRef.current.trim() || "Guest",
+            });
+            joinedSessionKeyRef.current =
+              typeof joined.sessionKey === "string" ? joined.sessionKey : null;
+            setWaitingForAdmission(false);
+            setStatus("in-call");
+            setStartedAt(Date.now());
+            toast.success("You were let in.");
+          }
+        } else if (control.kind === "deny") {
+          toast.error("The host denied your request to join.");
+          await leaveRef.current?.();
+        }
+        continue;
+      }
       const fromName = roster.find((peer) => peer.id === msg.from)?.name ?? "Peer";
       setChatMessages((prev) => [
         ...prev,
@@ -488,6 +613,8 @@ export function useMeetController({
 
     const signals = sortSignalMessages(incoming.filter((msg) => msg.type !== "chat"));
     for (const signal of signals) {
+      if (waitingForAdmissionRef.current) continue;
+      if (pendingKnockerIds.has(signal.from)) continue;
       const fromName = roster.find((peer) => peer.id === signal.from)?.name ?? "Peer";
       await handleSignal(signal, fromName);
     }
@@ -495,6 +622,7 @@ export function useMeetController({
     const known = peersRef.current;
     for (const peer of roster) {
       if (known.has(peer.id) || !selfPeerId) continue;
+      if (waitingForAdmissionRef.current || pendingKnockerIds.has(peer.id)) continue;
       if (selfPeerId > peer.id) {
         const entry = createPeerConnection(peer.id, peer.name, rtc.forceRelay ? "relay" : "direct");
         const offer = await entry.pc.createOffer();
@@ -527,14 +655,15 @@ export function useMeetController({
   const startPolling = useCallback(() => {
     stopPolling();
     const tick = async () => {
-      if (statusRef.current !== "in-call") return;
+      const isActive = statusRef.current === "in-call" || statusRef.current === "waiting";
+      if (!isActive) return;
       try {
         await pollOnce();
       } catch (e) {
         const message = e instanceof Error ? e.message : "Could not poll room updates.";
         setError(message);
       } finally {
-        if (statusRef.current === "in-call") {
+        if (statusRef.current === "in-call" || statusRef.current === "waiting") {
           pollTimerRef.current = window.setTimeout(tick, 1200);
         }
       }
@@ -553,6 +682,10 @@ export function useMeetController({
       selfIdRef.current = peerId;
       roomCodeRef.current = target;
       setChatMessages([]);
+      setWaitingForAdmission(false);
+      setKnockers([]);
+      setEndedMessage(null);
+      rosterRef.current = new Map();
 
       try {
         await ensureLocalMedia();
@@ -629,9 +762,107 @@ export function useMeetController({
     setVideoOn(true);
     setPeers([]);
     setChatMessages([]);
+    setWaitingForAdmission(false);
+    setKnockers([]);
+    rosterRef.current = new Map();
     roomCodeRef.current = null;
     selfIdRef.current = null;
   }, [closePeer, stopPolling]);
+  leaveRef.current = leave;
+
+  const requestJoin = useCallback(
+    async (room: string) => {
+      const target = room.trim().toLowerCase();
+      if (!target) return;
+      const peerId = randomId(10);
+      setError(null);
+      setStatus("preparing");
+      setRoomCode(target);
+      setSelfId(peerId);
+      selfIdRef.current = peerId;
+      roomCodeRef.current = target;
+      setChatMessages([]);
+      setWaitingForAdmission(true);
+      setKnockers([]);
+      setEndedMessage(null);
+      rosterRef.current = new Map();
+
+      try {
+        await ensureLocalMedia();
+        if (operationsRef.current) {
+          const joined = await operationsRef.current.join({
+            room: target,
+            peerId,
+            name: encodeKnockerName(displayNameRef.current),
+          });
+          joinedSessionKeyRef.current =
+            typeof joined.sessionKey === "string" ? joined.sessionKey : null;
+          await operationsRef.current.chat({
+            room: target,
+            from: peerId,
+            text: buildControlMessage({
+              kind: "knock",
+              peerId,
+              name: displayNameRef.current.trim() || "Guest",
+            }),
+            sessionKey: joinedSessionKeyRef.current ?? undefined,
+          });
+        }
+        setStatus("waiting");
+        startPolling();
+      } catch (e) {
+        const message = e instanceof Error ? e.message : "Could not request to join.";
+        setStatus("failed");
+        setError(message);
+        setWaitingForAdmission(false);
+        throw e;
+      }
+    },
+    [ensureLocalMedia, startPolling],
+  );
+
+  const admitKnocker = useCallback(async (peerId: string) => {
+    if (!operationsRef.current || !roomCodeRef.current || !selfIdRef.current) return;
+    await operationsRef.current.chat({
+      room: roomCodeRef.current,
+      from: selfIdRef.current,
+      text: buildControlMessage({ kind: "admit", peerId }),
+      sessionKey: joinedSessionKeyRef.current ?? undefined,
+    });
+    setKnockers((prev) => prev.filter((entry) => entry.id !== peerId));
+  }, []);
+
+  const denyKnocker = useCallback(async (peerId: string) => {
+    if (!operationsRef.current || !roomCodeRef.current || !selfIdRef.current) return;
+    await operationsRef.current.chat({
+      room: roomCodeRef.current,
+      from: selfIdRef.current,
+      text: buildControlMessage({ kind: "deny", peerId }),
+      sessionKey: joinedSessionKeyRef.current ?? undefined,
+    });
+    setKnockers((prev) => prev.filter((entry) => entry.id !== peerId));
+  }, []);
+
+  const endCallForAll = useCallback(async () => {
+    if (!operationsRef.current || !roomCodeRef.current || !selfIdRef.current) {
+      await leave();
+      return;
+    }
+    try {
+      await operationsRef.current.chat({
+        room: roomCodeRef.current,
+        from: selfIdRef.current,
+        text: buildControlMessage({
+          kind: "end",
+          by: displayNameRef.current.trim() || "Host",
+        }),
+        sessionKey: joinedSessionKeyRef.current ?? undefined,
+      });
+    } catch {
+      // Continue with local leave even if broadcast fails.
+    }
+    await leave();
+  }, [leave]);
 
   const sendChat = useCallback(async (body: string) => {
     const text = body.trim();
@@ -794,7 +1025,7 @@ export function useMeetController({
   }, [leave]);
 
   useEffect(() => {
-    const isMeetingActive = status === "in-call" || status === "preparing";
+    const isMeetingActive = status === "in-call" || status === "preparing" || status === "waiting";
     if (!isMeetingActive) return;
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
       event.preventDefault();
@@ -859,6 +1090,9 @@ export function useMeetController({
     startedAt,
     elapsedLabel,
     peers,
+    knockers,
+    waitingForAdmission,
+    endedMessage,
     chatMessages,
     localVideoRef,
     audioInputs,
@@ -868,6 +1102,10 @@ export function useMeetController({
     ensureLocalMedia,
     startMeeting,
     joinRoom,
+    requestJoin,
+    admitKnocker,
+    denyKnocker,
+    endCallForAll,
     leave,
     sendChat,
     toggleMic,
