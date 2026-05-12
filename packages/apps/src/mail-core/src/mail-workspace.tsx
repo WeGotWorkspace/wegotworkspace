@@ -309,8 +309,8 @@ export function MailWorkspace({
           open={!!composeDialogId}
           onOpenChange={(open) => (!open ? closeComposeDialog() : null)}
         >
-          <DialogContent className="max-w-[980px] w-[min(980px,96vw)] p-0 overflow-hidden">
-            <div className="p-4 md:p-6">
+          <DialogContent className="max-w-[980px] w-[min(980px,96vw)] max-h-[96dvh] p-0">
+            <div className="max-h-[96dvh] overflow-y-auto p-4 md:p-6">
               <MailComposeView
                 mailId={composeTarget.id}
                 mailbox={composeTarget.mailbox}
