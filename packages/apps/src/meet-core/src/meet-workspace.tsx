@@ -190,6 +190,12 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
   const showUserMenu = hasSignedInIdentity && !inJoinFlow;
   const waitingForAdmission = controller.waitingForAdmission && inJoinFlow;
   const disableAppSwitcher = !hasSignedInIdentity || inJoinFlow;
+  const [guestInviteState, setGuestInviteState] = useState<"checking" | "active" | "missing">(
+    inJoinFlow && !hasSignedInIdentity ? "checking" : "active",
+  );
+  const isGuestInviteFlow = inJoinFlow && !hasSignedInIdentity;
+  const showMissingInviteScreen = isGuestInviteFlow && guestInviteState === "missing";
+  const showInviteCheckingScreen = isGuestInviteFlow && guestInviteState === "checking";
   const callExitLabel = inJoinFlow || !hasSignedInIdentity ? "Leave call" : "End call";
   const callExitTitle =
     callExitLabel === "Leave call" ? "Leave this call?" : "End call for everyone?";
@@ -228,10 +234,32 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
   );
 
   useEffect(() => {
+    if (!isGuestInviteFlow || !invitedRoom) {
+      setGuestInviteState("active");
+      return;
+    }
+    if (!operations) {
+      setGuestInviteState("checking");
+      return;
+    }
+    setGuestInviteState("checking");
+    void operations
+      .roomStatus({ room: invitedRoom })
+      .then((result) => {
+        setGuestInviteState(result.active ? "active" : "missing");
+      })
+      .catch(() => {
+        // Fail closed for guest invite validation.
+        setGuestInviteState("missing");
+      });
+  }, [invitedRoom, isGuestInviteFlow, operations]);
+
+  useEffect(() => {
+    if (showMissingInviteScreen || showInviteCheckingScreen) return;
     void controller.ensureLocalMedia().catch(() => {
       // Keep lobby usable if the user declines camera/mic permissions.
     });
-  }, [controller]);
+  }, [controller, showInviteCheckingScreen, showMissingInviteScreen]);
 
   const participantCount = controller.peers.length + (controller.inCall ? 1 : 0);
   const sharing = controller.screenOn;
@@ -280,6 +308,36 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
                 </h1>
                 <p className="text-sm" style={{ color: MUTED }}>
                   {controller.endedMessage}
+                </p>
+              </div>
+            ) : showMissingInviteScreen ? (
+              <div
+                className="w-full max-w-md rounded-2xl border p-8 text-center space-y-3"
+                style={{ background: PANEL, borderColor: "rgba(255,255,255,0.08)" }}
+              >
+                <h1
+                  className="text-3xl sm:text-4xl leading-[0.95] tracking-tight"
+                  style={{ fontFamily: "var(--font-serif)" }}
+                >
+                  Nothing here
+                </h1>
+                <p className="text-sm" style={{ color: MUTED }}>
+                  This meeting is not active. Ask the host for a fresh invite link.
+                </p>
+              </div>
+            ) : showInviteCheckingScreen ? (
+              <div
+                className="w-full max-w-md rounded-2xl border p-8 text-center space-y-3"
+                style={{ background: PANEL, borderColor: "rgba(255,255,255,0.08)" }}
+              >
+                <h1
+                  className="text-2xl sm:text-3xl leading-[0.95] tracking-tight"
+                  style={{ fontFamily: "var(--font-serif)" }}
+                >
+                  Checking meeting
+                </h1>
+                <p className="text-sm" style={{ color: MUTED }}>
+                  Validating this invite link...
                 </p>
               </div>
             ) : (

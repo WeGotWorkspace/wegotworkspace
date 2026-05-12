@@ -131,6 +131,8 @@ export async function fetchVoiceGuestBootstrap(): Promise<MeetAppBootstrap> {
 
 export function createWgwVoiceOperations(): MeetAPIOperations {
   return {
+    roomStatus: (input: { room: string }, opts?: MeetRequestOptions) =>
+      postVoiceJson<{ active: boolean }>("room", input, opts),
     join: (input: WgwVoiceJoinRequest, opts?: MeetRequestOptions) =>
       postVoiceJson<WgwVoiceJoinResponse>("join", input, opts),
     poll: (input: WgwVoicePollRequest, opts?: MeetRequestOptions) =>
@@ -146,6 +148,8 @@ export function createWgwVoiceOperations(): MeetAPIOperations {
 
 export function createWgwVoiceGuestOperations(): MeetAPIOperations {
   return {
+    roomStatus: (input: { room: string }, opts?: MeetRequestOptions) =>
+      postVoiceJsonGuest<{ active: boolean }>("room", input, opts),
     join: (input: WgwVoiceJoinRequest, opts?: MeetRequestOptions) =>
       postVoiceJsonGuest<WgwVoiceJoinResponse>("join", input, opts),
     poll: (input: WgwVoicePollRequest, opts?: MeetRequestOptions) =>
