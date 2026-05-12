@@ -172,17 +172,6 @@ if ($underInstall) {
     exit;
 }
 
-$rootPath = WebBase::url($webBase, '/');
-if ($path === $rootPath || ($webBase !== '' && ($path === $webBase || $path === $webBase.'/'))) {
-    $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
-    $accept = strtolower((string) ($_SERVER['HTTP_ACCEPT'] ?? ''));
-    $isBrowserNav = ($method === 'GET' || $method === 'HEAD') && str_contains($accept, 'text/html');
-    if ($isBrowserNav) {
-        header('Location: '.WebBase::url($webBase, '/drive/'), true, 302);
-        exit;
-    }
-}
-
 if (ApiKernel::tryRespond($webBase, $path)) {
     exit;
 }
@@ -226,7 +215,9 @@ if (VoiceKernel::tryRespond($webBase, $path)) {
     exit;
 }
 
-if (AppShellStatic::tryServe($webBase, $path)) {
+$method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+$isShellMethod = $method === 'GET' || $method === 'HEAD';
+if ($isShellMethod && AppShellStatic::tryServe($webBase, $path)) {
     exit;
 }
 
