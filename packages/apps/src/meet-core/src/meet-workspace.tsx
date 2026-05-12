@@ -267,82 +267,98 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
 
         {!controller.inCall ? (
           <main className="flex-1 flex items-center justify-center px-6 py-12">
-            <div className="w-full max-w-md">
-              <h1
-                className="text-4xl sm:text-5xl md:text-6xl leading-[0.95] tracking-tight mb-10 whitespace-nowrap"
-                style={{ fontFamily: "var(--font-serif)" }}
-              >
-                {inJoinFlow ? "Ready to join?" : "Ready when you are."}
-              </h1>
-
+            {controller.endedMessage ? (
               <div
-                className="relative aspect-video w-full overflow-hidden rounded-2xl border mb-8"
-                style={{ background: PANEL, borderColor: "rgba(255,255,255,0.06)" }}
+                className="w-full max-w-md rounded-2xl border p-8 text-center space-y-5"
+                style={{ background: PANEL, borderColor: "rgba(255,255,255,0.08)" }}
               >
-                {controller.videoOn ? (
-                  <video
-                    ref={controller.localVideoRef}
-                    autoPlay
-                    muted
-                    playsInline
-                    className="h-full w-full object-cover"
-                    style={{ transform: "scaleX(-1)" }}
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center">
-                    <Avatar name={displayName} size={84} />
-                  </div>
-                )}
-                <div className="absolute bottom-3 right-3 flex gap-2">
-                  <CircleToggle
-                    on={controller.micOn}
-                    onClick={controller.toggleMic}
-                    OnIcon={Mic}
-                    OffIcon={MicOff}
-                    label={controller.micOn ? "Mute" : "Unmute"}
-                  />
-                  <CircleToggle
-                    on={controller.videoOn}
-                    onClick={controller.toggleVideo}
-                    OnIcon={Video}
-                    OffIcon={VideoOff}
-                    label={controller.videoOn ? "Stop video" : "Start video"}
-                  />
-                </div>
-                {waitingForAdmission && (
-                  <div
-                    className="absolute inset-0 flex flex-col items-center justify-center backdrop-blur-sm"
-                    style={{ background: "rgba(8,9,18,0.6)" }}
-                  >
-                    <div
-                      className="mb-3 flex size-16 items-center justify-center rounded-full"
-                      style={{ background: ACCENT }}
-                    >
-                      <Hand className="size-7" />
-                    </div>
-                    <div className="text-base font-semibold">Knocking{".".repeat(knockDots)}</div>
-                    <div className="mt-1 text-xs" style={{ color: MUTED }}>
-                      Waiting for the host to let you in
-                    </div>
-                  </div>
-                )}
+                <h1
+                  className="text-3xl sm:text-4xl leading-[0.95] tracking-tight"
+                  style={{ fontFamily: "var(--font-serif)" }}
+                >
+                  Call ended
+                </h1>
+                <p className="text-sm" style={{ color: MUTED }}>
+                  {controller.endedMessage}
+                </p>
               </div>
+            ) : (
+              <div className="w-full max-w-md">
+                <h1
+                  className="text-4xl sm:text-5xl md:text-6xl leading-[0.95] tracking-tight mb-10 whitespace-nowrap"
+                  style={{ fontFamily: "var(--font-serif)" }}
+                >
+                  {inJoinFlow ? "Ready to join?" : "Ready when you are."}
+                </h1>
 
-              <div className="space-y-6">
-                <div className="space-y-1.5">
-                  <Label
-                    className="text-[11px] uppercase tracking-[0.18em]"
-                    style={{ color: MUTED }}
-                  >
-                    Display name
-                  </Label>
-                  <Input
-                    value={controller.displayName}
-                    onChange={(event) => controller.setDisplayName(event.target.value)}
-                    className="border-0 border-b-2 rounded-none bg-transparent px-0 text-lg focus-visible:ring-0"
-                    style={{ borderColor: "rgba(255,255,255,0.15)", color: TEXT }}
-                  />
+                <div
+                  className="relative aspect-video w-full overflow-hidden rounded-2xl border mb-8"
+                  style={{ background: PANEL, borderColor: "rgba(255,255,255,0.06)" }}
+                >
+                  {controller.videoOn ? (
+                    <video
+                      ref={controller.localVideoRef}
+                      autoPlay
+                      muted
+                      playsInline
+                      className="h-full w-full object-cover"
+                      style={{ transform: "scaleX(-1)" }}
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center">
+                      <Avatar name={displayName} size={84} />
+                    </div>
+                  )}
+                  <div className="absolute bottom-3 right-3 flex gap-2">
+                    <CircleToggle
+                      on={controller.micOn}
+                      onClick={controller.toggleMic}
+                      OnIcon={Mic}
+                      OffIcon={MicOff}
+                      label={controller.micOn ? "Mute" : "Unmute"}
+                    />
+                    <CircleToggle
+                      on={controller.videoOn}
+                      onClick={controller.toggleVideo}
+                      OnIcon={Video}
+                      OffIcon={VideoOff}
+                      label={controller.videoOn ? "Stop video" : "Start video"}
+                    />
+                  </div>
+                  {waitingForAdmission && (
+                    <div
+                      className="absolute inset-0 flex flex-col items-center justify-center backdrop-blur-sm"
+                      style={{ background: "rgba(8,9,18,0.6)" }}
+                    >
+                      <div
+                        className="mb-3 flex size-16 items-center justify-center rounded-full"
+                        style={{ background: ACCENT }}
+                      >
+                        <Hand className="size-7" />
+                      </div>
+                      <div className="text-base font-semibold">Knocking{".".repeat(knockDots)}</div>
+                      <div className="mt-1 text-xs" style={{ color: MUTED }}>
+                        Waiting for the host to let you in
+                      </div>
+                    </div>
+                  )}
                 </div>
+
+                <div className="space-y-6">
+                  <div className="space-y-1.5">
+                    <Label
+                      className="text-[11px] uppercase tracking-[0.18em]"
+                      style={{ color: MUTED }}
+                    >
+                      Display name
+                    </Label>
+                    <Input
+                      value={controller.displayName}
+                      onChange={(event) => controller.setDisplayName(event.target.value)}
+                      className="border-0 border-b-2 rounded-none bg-transparent px-0 text-lg focus-visible:ring-0"
+                      style={{ borderColor: "rgba(255,255,255,0.15)", color: TEXT }}
+                    />
+                  </div>
 
                 <DeviceRow
                   icon={<Video className="size-4" />}
@@ -383,16 +399,20 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
                           : controller.requestJoin(invitedRoom));
                         return;
                       }
+                      if (!hasSignedInIdentity) return;
                       void controller.startMeeting();
                     }}
                     className="w-full h-12 rounded-full text-base font-medium"
                     style={{ background: ACCENT, color: TEXT }}
+                    disabled={!hasSignedInIdentity && !invitedRoom}
                   >
                     {invitedRoom
                       ? hasSignedInIdentity
                         ? "Join meeting"
                         : "Ask to join"
-                      : "Start meeting"}
+                      : hasSignedInIdentity
+                        ? "Start meeting"
+                        : "Invite link required"}
                   </Button>
                 ) : (
                   <Button
@@ -409,13 +429,9 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
                     {controller.error}
                   </p>
                 )}
-                {controller.endedMessage && !controller.error && (
-                  <p className="text-xs" style={{ color: MUTED }}>
-                    {controller.endedMessage}
-                  </p>
-                )}
+                </div>
               </div>
-            </div>
+            )}
           </main>
         ) : (
           <main

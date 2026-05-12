@@ -257,7 +257,7 @@ export function useMeetController({
   const displayNameRef = useRef(displayName);
   const operationsRef = useRef(operations);
   const waitingForAdmissionRef = useRef(false);
-  const leaveRef = useRef<null | (() => Promise<void>)>(null);
+  const leaveRef = useRef<null | ((opts?: { preserveEndedMessage?: boolean }) => Promise<void>)>(null);
   const rosterRef = useRef<Map<string, string>>(new Map());
 
   operationsRef.current = operations;
@@ -568,7 +568,7 @@ export function useMeetController({
           if (statusRef.current === "in-call") {
             setEndedMessage(`Call ended by ${control.by}.`);
             toast.info(`Call ended by ${control.by}.`);
-            await leaveRef.current?.();
+            await leaveRef.current?.({ preserveEndedMessage: true });
           }
           continue;
         }
@@ -712,7 +712,7 @@ export function useMeetController({
     [ensureLocalMedia, startPolling],
   );
 
-  const leave = useCallback(async () => {
+  const leave = useCallback(async (opts?: { preserveEndedMessage?: boolean }) => {
     stopPolling();
     const currentRoom = roomCodeRef.current;
     const currentPeerId = selfIdRef.current;
@@ -765,6 +765,9 @@ export function useMeetController({
     setChatMessages([]);
     setWaitingForAdmission(false);
     setKnockers([]);
+    if (!opts?.preserveEndedMessage) {
+      setEndedMessage(null);
+    }
     rosterRef.current = new Map();
     roomCodeRef.current = null;
     selfIdRef.current = null;
