@@ -594,7 +594,11 @@ export function InstallWorkspace({ bootstrapState = null }: InstallWorkspaceProp
             voice_turn_credential: meet.turnPwd,
           };
           const response = syncAction(await installerInstall(payload));
-          if (response.state) setStepFromBackend(response.state, "done");
+          if (response.redirect && typeof window !== "undefined") {
+            window.location.assign(response.redirect);
+            return;
+          }
+          if (response.state) setStepFromBackend(response.state);
           toast("Installation complete", { icon: <Check className="size-4" /> });
         }
       });
@@ -1198,7 +1202,15 @@ export function InstallWorkspace({ bootstrapState = null }: InstallWorkspaceProp
                     >
                       Your server has been configured. Continue to the admin panel.
                     </p>
-                    <PrimaryButton onClick={() => navigate({ to: "/admin" })}>
+                    <PrimaryButton
+                      onClick={() => {
+                        if (typeof window !== "undefined") {
+                          window.location.assign("/login?return=%2Fadmin%2F");
+                          return;
+                        }
+                        navigate({ to: "/login", search: { return: "/admin/" } });
+                      }}
+                    >
                       Open admin panel
                       <ChevronRight className="size-4 ml-1" />
                     </PrimaryButton>
