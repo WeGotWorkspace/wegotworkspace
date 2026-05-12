@@ -283,6 +283,7 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
                     muted
                     playsInline
                     className="h-full w-full object-cover"
+                    style={{ transform: "scaleX(-1)" }}
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center">
@@ -911,7 +912,14 @@ function SelfPreviewPiP({
       }}
     >
       {videoOn ? (
-        <video ref={videoRef} autoPlay muted playsInline className="h-full w-full object-cover" />
+        <video
+          ref={videoRef}
+          autoPlay
+          muted
+          playsInline
+          className="h-full w-full object-cover"
+          style={{ transform: "scaleX(-1)" }}
+        />
       ) : (
         <div className="flex h-full items-center justify-center">
           <Avatar name={name} size={48} />
