@@ -3,7 +3,9 @@
   "private": true,
   "packageManager": "pnpm@9.15.4",
   "scripts": {
-    "build": "composer install --no-interaction --prefer-dist",
+    "build": "composer install --no-interaction --prefer-dist && node scripts/sync-runtime-api-package.mjs --with-vendor",
+    "watch": "node scripts/watch-runtime-api-package.mjs",
+    "sync:runtime": "node scripts/sync-runtime-api-package.mjs",
     "setup:macos": "bash scripts/macos/install-homebrew-apache-ssl.sh",
     "preview:macos": "bash scripts/macos/setup-homebrew-apache-ssl.sh",
     "dev:php": "sh -c 'app_root=\"../../apps/wegotworkspace\"; env -u SABRE_BUILD_DIR php -S 127.0.0.1:8080 -t \"$app_root\" \"$app_root/index.php\"'",
