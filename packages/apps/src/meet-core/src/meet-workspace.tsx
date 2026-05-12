@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import {
   Mic,
@@ -130,7 +129,6 @@ function deviceIdForOption(options: DeviceOption[], optionId: string): string | 
 }
 
 function UserMenu({ displayName }: { displayName: string }) {
-  const navigate = useNavigate();
   const initials = displayName
     .split(/\s+/)
     .map((segment) => segment[0])
@@ -156,7 +154,12 @@ function UserMenu({ displayName }: { displayName: string }) {
         <DropdownMenuItem className="text-xs opacity-60 focus:bg-transparent">
           {displayName}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => navigate({ to: "/" })} className="cursor-pointer">
+        <DropdownMenuItem
+          onClick={() => {
+            window.location.assign("/logout");
+          }}
+          className="cursor-pointer"
+        >
           <LogOut className="size-4 mr-2" /> Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -375,7 +378,9 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
                   <Button
                     onClick={() => {
                       if (invitedRoom) {
-                        void controller.requestJoin(invitedRoom);
+                        void (hasSignedInIdentity
+                          ? controller.joinRoom(invitedRoom)
+                          : controller.requestJoin(invitedRoom));
                         return;
                       }
                       void controller.startMeeting();
@@ -383,7 +388,11 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
                     className="w-full h-12 rounded-full text-base font-medium"
                     style={{ background: ACCENT, color: TEXT }}
                   >
-                    {invitedRoom ? "Ask to join" : "Start meeting"}
+                    {invitedRoom
+                      ? hasSignedInIdentity
+                        ? "Join meeting"
+                        : "Ask to join"
+                      : "Start meeting"}
                   </Button>
                 ) : (
                   <Button
@@ -1230,12 +1239,12 @@ function ShareButton({ link }: { link: string }) {
 
 function ShareInline({ link }: { link: string }) {
   return (
-    <div className="w-full max-w-md rounded-lg px-3 py-2" style={{ background: PANEL_SOFT }}>
-      <div className="flex items-center gap-2">
-        <span className="flex-1 truncate text-xs">{link || "Share link will appear here."}</span>
+    <div className="w-full max-w-2xl rounded-xl px-4 py-3" style={{ background: PANEL_SOFT }}>
+      <div className="flex items-center gap-3">
+        <span className="flex-1 truncate text-sm">{link || "Share link will appear here."}</span>
         <Button
           size="icon"
-          className="size-7"
+          className="size-8"
           style={{ background: ACCENT }}
           disabled={!link}
           onClick={() => {
