@@ -425,33 +425,22 @@ final class InstallerKernel
         $pass2 = (string) ($_POST['password_confirm'] ?? '');
 
         if (!preg_match('/^[a-z0-9][a-z0-9_-]{1,62}$/', $username)) {
-            $s['_flash'] = 'Username must be 2–63 characters: lowercase letters, digits, underscore, or hyphen.';
-            self::saveState($s);
-            self::redirect($webBase);
-
-            return;
+            self::failInstall($webBase, $s, 'Username must be 2–63 characters: lowercase letters, digits, underscore, or hyphen.');
         }
         if (strlen($pass) < 10) {
-            $s['_flash'] = 'Use a password of at least 10 characters.';
-            self::saveState($s);
-            self::redirect($webBase);
-
-            return;
+            self::failInstall($webBase, $s, 'Use a password of at least 10 characters.');
         }
         if (!hash_equals($pass, $pass2)) {
-            $s['_flash'] = 'Passwords do not match.';
-            self::saveState($s);
-            self::redirect($webBase);
-
-            return;
+            self::failInstall($webBase, $s, 'Passwords do not match.');
         }
         /** @var array<string, mixed> $db */
         $db = $s['db'] ?? [];
         if ($db === []) {
-            self::saveState(['step' => 'welcome', '_flash' => 'Your session expired before installation finished. Please start again.']);
-            self::redirect($webBase);
-
-            return;
+            self::failInstall(
+                $webBase,
+                ['step' => 'welcome'],
+                'Your session expired before installation finished. Please start again.'
+            );
         }
 
         $enableCalendars = (bool) ($s['enable_calendars'] ?? true);
@@ -503,11 +492,7 @@ final class InstallerKernel
             );
         } catch (\Throwable $e) {
             error_log('[wegotworkspace] install failed: '.$e::class.': '.$e->getMessage()."\n".$e->getTraceAsString());
-            $s['_flash'] = 'Installation failed: '.$e->getMessage();
-            self::saveState($s);
-            self::redirect($webBase);
-
-            return;
+            self::failInstall($webBase, $s, 'Installation failed: '.$e->getMessage());
         }
 
         $pdoExport = self::pdoConfigForWrite($db);
@@ -522,19 +507,11 @@ final class InstallerKernel
             ConfigWriter::writeBootstrap($bootstrap);
         } catch (\Throwable $e) {
             error_log('[wegotworkspace] '.$e->getMessage());
-            $s['_flash'] = 'Could not write configuration file.';
-            self::saveState($s);
-            self::redirect($webBase);
-
-            return;
+            self::failInstall($webBase, $s, 'Could not write configuration file.');
         }
 
         if (file_put_contents(Paths::lockFile(), date('c')."\n", LOCK_EX) === false) {
-            $s['_flash'] = 'Database was set up but the install lock file could not be written.';
-            self::saveState($s);
-            self::redirect($webBase);
-
-            return;
+            self::failInstall($webBase, $s, 'Database was set up but the install lock file could not be written.');
         }
         @chmod(Paths::lockFile(), 0600);
 
@@ -549,11 +526,12 @@ final class InstallerKernel
         ];
         $_SESSION['_install_done'] = true;
 
-        $adminUrl = WebBase::url($webBase, '/admin/');
+        $adminPath = WebBase::url($webBase, '/admin/');
+        $loginUrl = WebBase::url($webBase, '/login?return='.rawurlencode($adminPath));
         if (self::$apiMode) {
-            throw new \RuntimeException('__INSTALL_REDIRECT__:'.$adminUrl);
+            throw new \RuntimeException('__INSTALL_REDIRECT__:'.$loginUrl);
         }
-        header('Location: '.$adminUrl, true, 302);
+        header('Location: '.$loginUrl, true, 302);
         exit;
     }
 
@@ -636,6 +614,19 @@ final class InstallerKernel
         }
 
         return $fallback;
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     */
+    private static function failInstall(string $webBase, array $state, string $message): void
+    {
+        $state['_flash'] = $message;
+        self::saveState($state);
+        if (self::$apiMode) {
+            throw new \RuntimeException('__INSTALL_ERROR__:'.$message);
+        }
+        self::redirect($webBase);
     }
 
     private static function redirect(string $webBase): void

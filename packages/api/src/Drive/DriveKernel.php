@@ -572,7 +572,7 @@ final class DriveKernel
             $pdo->exec(
                 'CREATE TABLE IF NOT EXISTS drive_starred_items (
                     username VARCHAR(190) NOT NULL,
-                    path VARCHAR(1024) NOT NULL,
+                    path VARBINARY(1024) NOT NULL,
                     created_at BIGINT NOT NULL,
                     PRIMARY KEY(username, path),
                     KEY idx_drive_starred_user (username)
