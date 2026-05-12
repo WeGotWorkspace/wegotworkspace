@@ -10,7 +10,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const packageRoot = resolve(__dirname, "..");
@@ -32,49 +32,55 @@ const modules = [
   { name: "voice", title: "Voice - WeGotWorkspace", assetDir: "assets" },
 ];
 
-const files = readdirSync(clientAssetsDir);
-const mainJs = pickLargestFile(files, /^index-.*\.js$/);
-const mainCss = pickLargestFile(files, /^styles-.*\.css$/);
+export function syncRuntimeAppBuilds() {
+  const files = readdirSync(clientAssetsDir);
+  const mainJs = pickLargestFile(files, /^index-.*\.js$/);
+  const mainCss = pickLargestFile(files, /^styles-.*\.css$/);
 
-if (!mainJs || !mainCss) {
-  throw new Error(
-    `Could not determine main app entry files in ${clientAssetsDir}. Found index js=${String(mainJs)}, css=${String(mainCss)}`
+  if (!mainJs || !mainCss) {
+    throw new Error(
+      `Could not determine main app entry files in ${clientAssetsDir}. Found index js=${String(mainJs)}, css=${String(mainCss)}`
+    );
+  }
+
+  for (const module of modules) {
+    const distRoot = resolve(runtimeAppsRoot, module.name, "dist");
+    const targetAssetsDir = resolve(distRoot, module.assetDir);
+    const targetMainJsPath = resolve(targetAssetsDir, mainJs);
+    const targetMainCssPath = resolve(targetAssetsDir, mainCss);
+
+    mkdirSync(distRoot, { recursive: true });
+    rmSync(resolve(distRoot, "assets"), { recursive: true, force: true });
+    rmSync(resolve(distRoot, "fonts"), { recursive: true, force: true });
+    rmSync(resolve(distRoot, "icons"), { recursive: true, force: true });
+    rmSync(resolve(distRoot, "manifests"), { recursive: true, force: true });
+    rmSync(targetAssetsDir, { recursive: true, force: true });
+    cpSync(clientAssetsDir, targetAssetsDir, { recursive: true });
+    cpSync(clientFontsDir, resolve(distRoot, "fonts"), { recursive: true });
+    cpSync(clientIconsDir, resolve(distRoot, "icons"), { recursive: true });
+    cpSync(clientManifestsDir, resolve(distRoot, "manifests"), { recursive: true });
+
+    // Static LAMP runtime serves plain index.html without SSR payload.
+    // TanStack Start entry must run in pure client mode here.
+    patchStaticRuntimeEntry(targetMainJsPath);
+    patchStaticRuntimeStylesheet(targetMainCssPath);
+
+    const html = renderIndexHtml({
+      title: module.title,
+      scriptPath: `./${module.assetDir}/${mainJs}`,
+      cssPath: `./${module.assetDir}/${mainCss}`,
+    });
+    writeFileSync(resolve(distRoot, "index.html"), html, "utf8");
+  }
+
+  console.log(
+    `Synced frontend runtime app builds (${modules.map((m) => m.name).join(", ")}) using ${mainJs} and ${mainCss}.`
   );
 }
 
-for (const module of modules) {
-  const distRoot = resolve(runtimeAppsRoot, module.name, "dist");
-  const targetAssetsDir = resolve(distRoot, module.assetDir);
-  const targetMainJsPath = resolve(targetAssetsDir, mainJs);
-  const targetMainCssPath = resolve(targetAssetsDir, mainCss);
-
-  mkdirSync(distRoot, { recursive: true });
-  rmSync(resolve(distRoot, "assets"), { recursive: true, force: true });
-  rmSync(resolve(distRoot, "fonts"), { recursive: true, force: true });
-  rmSync(resolve(distRoot, "icons"), { recursive: true, force: true });
-  rmSync(resolve(distRoot, "manifests"), { recursive: true, force: true });
-  rmSync(targetAssetsDir, { recursive: true, force: true });
-  cpSync(clientAssetsDir, targetAssetsDir, { recursive: true });
-  cpSync(clientFontsDir, resolve(distRoot, "fonts"), { recursive: true });
-  cpSync(clientIconsDir, resolve(distRoot, "icons"), { recursive: true });
-  cpSync(clientManifestsDir, resolve(distRoot, "manifests"), { recursive: true });
-
-  // Static LAMP runtime serves plain index.html without SSR payload.
-  // TanStack Start entry must run in pure client mode here.
-  patchStaticRuntimeEntry(targetMainJsPath);
-  patchStaticRuntimeStylesheet(targetMainCssPath);
-
-  const html = renderIndexHtml({
-    title: module.title,
-    scriptPath: `./${module.assetDir}/${mainJs}`,
-    cssPath: `./${module.assetDir}/${mainCss}`,
-  });
-  writeFileSync(resolve(distRoot, "index.html"), html, "utf8");
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  syncRuntimeAppBuilds();
 }
-
-console.log(
-  `Synced frontend runtime app builds (${modules.map((m) => m.name).join(", ")}) using ${mainJs} and ${mainCss}.`
-);
 
 function pickLargestFile(allFiles, pattern) {
   const matches = allFiles.filter((file) => pattern.test(file));
