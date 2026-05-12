@@ -251,6 +251,12 @@ export type WgwDriveStarUpdateRequest = {
 };
 export type WgwVoicePeer = VoicePeer;
 export type WgwVoiceSignalEnvelope = VoiceSignalEnvelope;
+export type WgwVoiceRoomStatusRequest = {
+  room: string;
+};
+export type WgwVoiceRoomStatusResponse = {
+  active: boolean;
+};
 export type WgwVoiceJoinRequest = VoiceJoinRequest;
 export type WgwVoiceJoinResponse = VoiceJoinResponse;
 export type WgwVoicePollRequest = VoicePollRequest;

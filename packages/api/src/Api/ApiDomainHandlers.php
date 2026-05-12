@@ -641,7 +641,7 @@ final class ApiDomainHandlers
 
         if (
             $method === 'POST'
-            && in_array($rel, ['voice/join', 'voice/poll', 'voice/send', 'voice/leave', 'voice/chat'], true)
+            && in_array($rel, ['voice/room', 'voice/join', 'voice/poll', 'voice/send', 'voice/leave', 'voice/chat'], true)
         ) {
             $_GET['action'] = explode('/', $rel)[1] ?? '';
             VoiceSignaling::respond($pdo, $realm);

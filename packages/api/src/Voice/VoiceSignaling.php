@@ -12,6 +12,7 @@ final class VoiceSignaling
 {
     private const T_PEERS = 'voice_peers';
     private const T_MESSAGES = 'voice_messages';
+    private const KNOCK_NAME_PREFIX = '__wgw_knock__:';
 
     public static function respond(\PDO $pdo, string $realm): void
     {
@@ -38,14 +39,26 @@ final class VoiceSignaling
         $db = $pdo;
 
         switch ($action) {
+            case 'room': {
+                $room = self::cleanRoom($body['room'] ?? null);
+                echo json_encode([
+                    'active' => self::roomHasJoinablePeer($db, $room),
+                ]);
+                break;
+            }
+
             case 'join': {
                 $username = VoiceSabreAuth::tryAuthenticatedUser($pdo, $realm);
                 $room = self::cleanRoom($body['room'] ?? null);
                 $peerId = self::cleanPeer($body['peerId'] ?? null);
                 $name = mb_substr((string) ($body['name'] ?? ''), 0, 64);
+                $isKnockRequest = str_starts_with($name, self::KNOCK_NAME_PREFIX);
                 $guestSessionKey = null;
                 $ownerMarker = self::ownerMarkerForAuthenticatedUser($username);
                 if ($ownerMarker === null) {
+                    if ($isKnockRequest && !self::roomHasJoinablePeer($db, $room)) {
+                        self::bad('room_not_active', 404);
+                    }
                     $guestSessionKey = self::newGuestSessionKey();
                     $ownerMarker = self::ownerMarkerForGuestSession($guestSessionKey);
                 }
@@ -360,5 +373,25 @@ final class VoiceSignaling
         }
 
         return $p;
+    }
+
+    private static function roomHasJoinablePeer(\PDO $db, string $room): bool
+    {
+        $stmt = $db->prepare('SELECT owner_user, name FROM '.self::T_PEERS.' WHERE room = :r LIMIT 32');
+        $stmt->execute([':r' => $room]);
+        /** @var list<array{owner_user?: mixed, name?: mixed}> $rows */
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        foreach ($rows as $row) {
+            $owner = is_string($row['owner_user'] ?? null) ? $row['owner_user'] : '';
+            if (str_starts_with($owner, 'u:')) {
+                return true;
+            }
+            $name = is_string($row['name'] ?? null) ? trim($row['name']) : '';
+            if ($name !== '' && !str_starts_with($name, self::KNOCK_NAME_PREFIX)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
