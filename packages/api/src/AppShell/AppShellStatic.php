@@ -10,6 +10,7 @@ use App\Paths;
 final class AppShellStatic
 {
     private const ROUTE_PREFIXES = [
+        '/',
         '/admin',
         '/drive',
         '/login',

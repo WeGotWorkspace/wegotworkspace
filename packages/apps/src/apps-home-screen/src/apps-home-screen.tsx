@@ -1,0 +1,140 @@
+import type { ReactNode } from "react";
+import { LogOut } from "lucide-react";
+import { AppSwitcher } from "@/app-switcher/src/app-switcher";
+import { BrandMark } from "@/brand-mark/src/brand-mark";
+import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/ui/dropdown-menu";
+
+export type AppsHomeScreenItem = {
+  id: string;
+  label: string;
+  icon: ReactNode;
+  accent: string;
+  fg?: string;
+  onSelect?: () => void;
+};
+
+type AppsHomeScreenProps = {
+  apps: AppsHomeScreenItem[];
+  className?: string;
+  userDisplayName?: string;
+  showUserMenu?: boolean;
+  onLogout?: () => void;
+};
+
+/** Shared, presentational app home screen with a rounded icon grid. */
+export function AppsHomeScreen({
+  apps,
+  className,
+  userDisplayName = "User",
+  showUserMenu = false,
+  onLogout,
+}: AppsHomeScreenProps) {
+  const current = apps[0];
+
+  return (
+    <section
+      className={cn("w-full min-h-dvh", className)}
+      style={{ backgroundColor: "#0e0f17", color: "#ffffff" }}
+    >
+      <header className="flex items-center justify-between p-6 md:p-8 shrink-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <BrandMark className="w-auto shrink-0" />
+          {
+            <AppSwitcher
+              tagline="We Got"
+              subtitle="Workspace"
+              items={apps.map((app) => ({
+                id: app.id,
+                label: app.label,
+                icon: app.icon,
+                checked: app.id === current?.id,
+                onSelect: app.onSelect ?? (() => {}),
+              }))}
+              menuContentClassName="min-w-[12rem] p-1.5"
+              menuContentStyle={{
+                backgroundColor: current?.accent ?? "var(--color-paper)",
+                color: current?.fg ?? "var(--color-ink)",
+                borderColor: "color-mix(in oklab, currentColor 25%, transparent)",
+              }}
+            />
+          }
+        </div>
+        {showUserMenu ? (
+          <HomeUserMenu displayName={userDisplayName} onLogout={onLogout} />
+        ) : (
+          <div className="size-9" aria-hidden />
+        )}
+      </header>
+
+      <div className="mx-auto w-full max-w-5xl px-6 pb-10 md:px-10 md:pb-14">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-3">
+          {apps.map((app) => (
+            <button
+              key={app.id}
+              type="button"
+              onClick={app.onSelect}
+              className="group flex w-full min-h-44 flex-col items-center justify-center gap-4 rounded-3xl p-3 text-center transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--color-ink) focus-visible:ring-offset-2"
+              aria-label={app.label}
+            >
+              <span
+                className="flex size-28 items-center justify-center rounded-3xl shadow-[0_12px_30px_-18px_color-mix(in_oklab,var(--color-ink)_80%,transparent)] transition-transform group-hover:scale-[1.03]"
+                style={{ backgroundColor: app.accent, color: app.fg ?? "var(--color-ink)" }}
+              >
+                <span className="text-current [&_svg]:size-10">{app.icon}</span>
+              </span>
+              <span className="text-sm font-medium text-white">{app.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function HomeUserMenu({ displayName, onLogout }: { displayName: string; onLogout?: () => void }) {
+  const initials = displayName
+    .split(/\s+/)
+    .map((segment) => segment[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          className="size-9 rounded-full flex items-center justify-center text-xs font-semibold transition-colors"
+          style={{
+            backgroundColor: "rgba(255,255,255,0.16)",
+            color: "#ffffff",
+            border: "1px solid rgba(255,255,255,0.22)",
+          }}
+          aria-label="User menu"
+        >
+          {initials || "U"}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        style={{
+          backgroundColor: "var(--color-paper, #ffffff)",
+          color: "var(--color-ink)",
+          borderColor: "color-mix(in oklab, var(--color-ink) 15%, transparent)",
+        }}
+      >
+        <DropdownMenuItem className="text-xs opacity-60 focus:bg-transparent">
+          {displayName}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onLogout} className="cursor-pointer">
+          <LogOut className="size-4 mr-2" /> Sign out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
