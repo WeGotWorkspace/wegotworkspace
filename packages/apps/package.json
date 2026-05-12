@@ -8,7 +8,7 @@
     "dev:app": "vite dev",
     "typegen": "echo \"@wgw/apps uses shared @wgw/api generated OpenAPI types\"",
     "build": "vite build && node scripts/sync-runtime-app-builds.mjs",
-    "watch": "vite build --watch",
+    "watch": "node scripts/watch-runtime-app-builds.mjs",
     "build:dev": "vite build --mode development && node scripts/sync-runtime-app-builds.mjs",
     "preview": "vite preview",
     "lint": "eslint .",
