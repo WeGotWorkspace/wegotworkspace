@@ -8,6 +8,8 @@ import type {
   WgwVoiceLeaveResponse,
   WgwVoicePollRequest,
   WgwVoicePollResponse,
+  WgwVoiceRoomStatusRequest,
+  WgwVoiceRoomStatusResponse,
   WgwVoiceSendRequest,
   WgwVoiceSendResponse,
 } from "@/lib/api/wgw/types";
@@ -35,6 +37,10 @@ export type MeetRequestOptions = {
 };
 
 export type MeetAPIOperations = {
+  roomStatus: (
+    input: WgwVoiceRoomStatusRequest,
+    opts?: MeetRequestOptions,
+  ) => Promise<WgwVoiceRoomStatusResponse>;
   join: (input: WgwVoiceJoinRequest, opts?: MeetRequestOptions) => Promise<WgwVoiceJoinResponse>;
   poll: (input: WgwVoicePollRequest, opts?: MeetRequestOptions) => Promise<WgwVoicePollResponse>;
   send: (input: WgwVoiceSendRequest, opts?: MeetRequestOptions) => Promise<WgwVoiceSendResponse>;
