@@ -771,6 +771,36 @@ export function useMeetController({
   }, [closePeer, stopPolling]);
   leaveRef.current = leave;
 
+  const sendLeaveBeacon = useCallback(() => {
+    const room = roomCodeRef.current;
+    const peerId = selfIdRef.current;
+    if (!room || !peerId) return;
+    const payload = JSON.stringify({
+      room,
+      peerId,
+      sessionKey: joinedSessionKeyRef.current ?? undefined,
+    });
+    const endpoint = "/api/v1/voice/leave";
+    let sent = false;
+    try {
+      if (typeof navigator.sendBeacon === "function") {
+        sent = navigator.sendBeacon(endpoint, new Blob([payload], { type: "application/json" }));
+      }
+    } catch {
+      sent = false;
+    }
+    if (sent) return;
+    void fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: payload,
+      keepalive: true,
+      credentials: "same-origin",
+    }).catch(() => {
+      // Ignore best-effort unload failures.
+    });
+  }, []);
+
   const requestJoin = useCallback(
     async (room: string) => {
       const target = room.trim().toLowerCase();
@@ -1046,6 +1076,16 @@ export function useMeetController({
   }, [status]);
 
   useEffect(() => {
+    const onPageHide = () => {
+      const active = statusRef.current === "in-call" || statusRef.current === "waiting";
+      if (!active) return;
+      sendLeaveBeacon();
+    };
+    window.addEventListener("pagehide", onPageHide);
+    return () => window.removeEventListener("pagehide", onPageHide);
+  }, [sendLeaveBeacon]);
+
+  useEffect(() => {
     if (!startedAt) {
       setElapsedSeconds(0);
       return;
@@ -1068,6 +1108,18 @@ export function useMeetController({
     }
     url.searchParams.set("room", roomCode);
     return url.toString();
+  }, [roomCode]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!roomCode) return;
+    const next = new URL(window.location.href);
+    next.searchParams.set("room", roomCode);
+    const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    const nextUrl = `${next.pathname}${next.search}${next.hash}`;
+    if (currentUrl !== nextUrl) {
+      window.history.replaceState(window.history.state, "", nextUrl);
+    }
   }, [roomCode]);
 
   useEffect(() => {
