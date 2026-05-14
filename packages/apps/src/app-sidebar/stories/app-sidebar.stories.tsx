@@ -3,7 +3,7 @@ import { FileEdit, Folder, Inbox, Mail, NotebookPen, Star, Tag } from "lucide-re
 import { Button } from "@/button/src/button";
 import { SidebarLogo } from "@/sidebar-logo/src/sidebar-logo";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
-import { StorybookAppSwitcherMock } from "@/storybook-app-switcher-mock/src/storybook-app-switcher-mock";
+import { WorkspaceAppSwitcher } from "@/workspace-app-switcher/src/workspace-app-switcher";
 import { WorkspaceUserFooter } from "@/workspace-shell/src/workspace-app-layout";
 import { AppSidebar } from "../src/app-sidebar";
 
@@ -16,6 +16,9 @@ export default meta;
 type Story = StoryObj;
 
 export const MailWorkspaceSidebar: Story = {
+  parameters: {
+    routerPath: "/mail",
+  },
   render: () => (
     <aside
       className="w-72 h-dvh flex flex-col border-r"
@@ -39,7 +42,7 @@ export const MailWorkspaceSidebar: Story = {
     >
       <SidebarLogo
         showAppSwitcher
-        appSwitcher={<StorybookAppSwitcherMock workspace="mail" />}
+        appSwitcher={<WorkspaceAppSwitcher />}
         onCloseMobile={() => {}}
       />
 
@@ -132,7 +135,7 @@ export const NotesWorkspaceSidebar: Story = {
     >
       <SidebarLogo
         showAppSwitcher
-        appSwitcher={<StorybookAppSwitcherMock workspace="notes" />}
+        appSwitcher={<WorkspaceAppSwitcher />}
         onCloseMobile={() => {}}
       />
 
@@ -155,7 +158,6 @@ export const NotesWorkspaceSidebar: Story = {
             { label: "Archive", onClick: () => {} },
           ]}
         />
-
         <SidebarSection
           title="Notebooks"
           onAdd={() => {}}
@@ -171,7 +173,6 @@ export const NotesWorkspaceSidebar: Story = {
           ]}
         />
       </nav>
-
       <WorkspaceUserFooter name="Elias Linden" initials="EL" onLogoutClick={() => {}} />
     </aside>
   ),
