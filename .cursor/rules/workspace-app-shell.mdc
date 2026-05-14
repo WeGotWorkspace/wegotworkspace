@@ -1,0 +1,29 @@
+---
+description: Workspace shell layout, sidebar scrim, and app-owned navigation for apps packages.
+globs: packages/apps/src/workspace-shell/**/*.{ts,tsx,css},packages/apps/src/**/*-workspace.tsx,packages/apps/src/**/*-app.tsx
+alwaysApply: false
+---
+
+# Workspace shell and workspace components
+
+## `WorkspaceAppLayout` split mode
+
+For settings-style shells (fixed `AppSidebar` + main column with header and scroll body), use the **split** API instead of hand-rolling `<section>`, header, and scroll wrappers:
+
+- `sidebar` — e.g. `AppSidebar` and nav.
+- `mainHeader` — optional pinned header (e.g. `ListHeader`).
+- `main` — scrollable body (pane content).
+
+Shared chrome lives in `workspace-app-layout.css` (`.workspace-app-layout__main*`). Tune width and colors with **CSS variables** on the product root (e.g. `--workspace-main-content-max-width`), not duplicate layout markup.
+
+## `AppSidebar` mobile scrim
+
+The dimmed full-screen scrim is **rendered inside `AppSidebar`** when `open` is true. Do not add a second scrim component beside the sidebar.
+
+## Navigation and logout
+
+**Workspace / feature packages must not call `window.location.assign` or router APIs** for flows the app shell should own (logout, deep links to other apps). Expose **callbacks** on workspace props (e.g. `onLogout?: () => void`) and implement navigation only in route-level **`*App`** components (or route modules).
+
+## Local slot helpers
+
+When split props become large, **file-private** helpers (`Sidebar`, `MainHeader`, `MainContent`) are fine. Import concrete types (`SettingsControllerState`, `WorkspaceSession`, `MenuItemProps[]` for `SidebarSection` items) from their defining modules instead of inventing local aliases like `Session` or `SidebarItem`.

@@ -1,12 +1,16 @@
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
+import type { MenuItemProps } from "@/menu-item/src/menu-item";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
-import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
+import { workspaceUserInitials, type WorkspaceSession } from "@/lib/workspace/workspace-session";
 import {
   WorkspaceAppLayout,
   WorkspaceUserFooter,
 } from "@/workspace-shell/src/workspace-app-layout";
 import { ListHeader } from "@/list-header/src/list-header";
-import { useSettingsController } from "@/settings-core/src/use-settings-controller";
+import {
+  useSettingsController,
+  type SettingsControllerState,
+} from "@/settings-core/src/use-settings-controller";
 import type { SettingsWorkspaceProps } from "@/settings-core/src/settings-workspace-props";
 import { SettingsMailPane } from "@/settings-core/src/settings-mail-pane";
 import { SettingsMembershipsPane } from "@/settings-core/src/settings-memberships-pane";
@@ -28,40 +32,73 @@ export function SettingsWorkspace(props: SettingsWorkspaceProps) {
     <WorkspaceAppLayout
       className={cn("settings-workspace", className)}
       sidebar={
-        <AppSidebar
-          open={controller.sidebarOpen}
-          onCloseMobile={() => controller.setSidebarOpen(false)}
-          footer={
-            <WorkspaceUserFooter
-              name={session.user.displayName}
-              initials={workspaceUserInitials(session.user)}
-              detailLine={session.user.username}
-              onLogoutClick={onLogout}
-            />
-          }
-        >
-          <SidebarSection title="Account" items={sidebarItems} />
-        </AppSidebar>
-      }
-      mainHeader={
-        <ListHeader
-          title={controller.currentSection.label}
-          subtitle={controller.currentSection.description}
-          sidebarOpen={controller.sidebarOpen}
-          onToggleSidebar={() => controller.setSidebarOpen((value) => !value)}
+        <Sidebar
+          controller={controller}
+          sidebarItems={sidebarItems}
+          session={session}
+          onLogout={onLogout}
         />
       }
-      main={
-        <>
-          {controller.section === "profile" ? (
-            <SettingsProfilePane profile={controller.profile} />
-          ) : null}
-          {controller.section === "memberships" ? (
-            <SettingsMembershipsPane groups={controller.memberships} />
-          ) : null}
-          {controller.section === "mail" ? <SettingsMailPane mail={controller.mail} /> : null}
-        </>
-      }
+      mainHeader={<MainHeader controller={controller} />}
+      main={<MainContent controller={controller} />}
+    />
+  );
+}
+
+function Sidebar({
+  controller,
+  sidebarItems,
+  session,
+  onLogout,
+}: {
+  controller: SettingsControllerState;
+  sidebarItems: MenuItemProps[];
+  session: WorkspaceSession;
+  onLogout?: () => void;
+}) {
+  return (
+    <AppSidebar
+      footer={<MainFooter session={session} onLogout={onLogout} />}
+      open={controller.sidebarOpen}
+      onCloseMobile={() => controller.setSidebarOpen(false)}
+    >
+      <SidebarSection title="Account" items={sidebarItems} />
+    </AppSidebar>
+  );
+}
+
+function MainHeader({ controller }: { controller: SettingsControllerState }) {
+  return (
+    <ListHeader
+      title={controller.currentSection.label}
+      subtitle={controller.currentSection.description}
+      sidebarOpen={controller.sidebarOpen}
+      onToggleSidebar={() => controller.setSidebarOpen((value) => !value)}
+    />
+  );
+}
+
+function MainContent({ controller }: { controller: SettingsControllerState }) {
+  return (
+    <>
+      {controller.section === "profile" ? (
+        <SettingsProfilePane profile={controller.profile} />
+      ) : null}
+      {controller.section === "memberships" ? (
+        <SettingsMembershipsPane groups={controller.memberships} />
+      ) : null}
+      {controller.section === "mail" ? <SettingsMailPane mail={controller.mail} /> : null}
+    </>
+  );
+}
+
+function MainFooter({ session, onLogout }: { session: WorkspaceSession; onLogout?: () => void }) {
+  return (
+    <WorkspaceUserFooter
+      name={session.user.displayName}
+      initials={workspaceUserInitials(session.user)}
+      detailLine={session.user.username}
+      onLogoutClick={onLogout}
     />
   );
 }
