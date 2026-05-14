@@ -1,6 +1,10 @@
 import type { Preview } from "@storybook/react-vite";
 import { Fragment, createElement } from "react";
-import { MINIMAL_VIEWPORTS } from "storybook/viewport";
+import {
+  DEFAULT_VIEWPORT,
+  MINIMAL_VIEWPORTS,
+  responsiveViewport,
+} from "storybook/viewport";
 import {
   createMemoryHistory,
   createRootRoute,
@@ -58,7 +62,10 @@ const preview: Preview = {
       },
     },
     viewport: {
-      options: MINIMAL_VIEWPORTS,
+      options: {
+        [DEFAULT_VIEWPORT]: responsiveViewport,
+        ...MINIMAL_VIEWPORTS,
+      },
     },
 
     a11y: {
@@ -69,7 +76,7 @@ const preview: Preview = {
     },
   },
   initialGlobals: {
-    viewport: { value: "desktop", isRotated: false },
+    viewport: { value: DEFAULT_VIEWPORT, isRotated: false },
   },
 };
 
