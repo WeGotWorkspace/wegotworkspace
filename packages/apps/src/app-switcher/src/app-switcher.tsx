@@ -1,5 +1,7 @@
-import { LabeledDropdownMenu } from "@/menu-dropdown/src/labeled-dropdown-menu";
-import type { MenuDropdownItemProps } from "@/menu-dropdown/src/menu-dropdown";
+import { ChevronDown } from "lucide-react";
+import { DropdownMenu } from "@/menu-dropdown/src/dropdown-menu";
+import type { DropdownMenuItemProps } from "@/menu-dropdown/src/dropdown-menu";
+import "@/app-switcher/src/app-switcher.css";
 
 export type AppSwitcherItem = {
   id: string;
@@ -26,7 +28,7 @@ export function AppSwitcher({
   menuContentClassName,
   menuContentStyle,
 }: AppSwitcherProps) {
-  const menuItems: MenuDropdownItemProps[] = items.map((item) => ({
+  const menuItems: DropdownMenuItemProps[] = items.map((item) => ({
     id: item.id,
     label: item.label,
     icon: item.icon,
@@ -34,9 +36,19 @@ export function AppSwitcher({
     onClick: item.onSelect,
   }));
   return (
-    <LabeledDropdownMenu
-      labelTop={tagline}
-      labelBottom={subtitle}
+    <DropdownMenu
+      trigger={
+        <button type="button" disabled={disabled} className="app-switcher__trigger">
+          <span className="app-switcher__label">
+            {tagline ? <span className="app-switcher__label-top">{tagline}</span> : null}
+            <span>{subtitle}</span>
+          </span>
+          <span className="app-switcher__chevron-stack">
+            <span aria-hidden />
+            <ChevronDown className="app-switcher__chevron" aria-hidden />
+          </span>
+        </button>
+      }
       items={menuItems}
       disabled={disabled}
       contentClassName={menuContentClassName}

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { ArrowLeft, MoreHorizontal } from "lucide-react";
 import { IconButton } from "@/button/src/button";
-import { MenuDropdown } from "@/menu-dropdown/src/menu-dropdown";
+import { DropdownMenu } from "@/menu-dropdown/src/dropdown-menu";
 import { cn } from "@/lib/utils";
 import "@/action-bar/src/action-bar.css";
 
@@ -54,7 +54,7 @@ function renderCompactDropdown(
 ) {
   return (
     <div className={className}>
-      <MenuDropdown
+      <DropdownMenu
         align={align}
         sideOffset={10}
         items={actions.map((action) => ({

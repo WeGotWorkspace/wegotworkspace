@@ -1,0 +1,14 @@
+@import "../../styles.css" reference;
+
+.menu-dropdown-story__panel {
+  @apply min-w-48 p-1.5;
+}
+
+.menu-dropdown-story__panel--warm {
+  --menu-dropdown-story-bg: oklch(0.858745 0.15558 94.085);
+  --menu-dropdown-story-fg: var(--color-ink);
+  --menu-dropdown-story-border: color-mix(in oklab, currentColor 25%, transparent);
+  background-color: var(--menu-dropdown-story-bg);
+  color: var(--menu-dropdown-story-fg);
+  border-color: var(--menu-dropdown-story-border);
+}
