@@ -12,6 +12,7 @@ When building or refactoring UI components in `packages/apps/src/**/*.{ts,tsx,cs
 - Primitives consume variables with defaults, e.g. `var(--button-subtle-color, <fallback>)`.
 - Keep state behavior (hover, active, disabled) in primitive CSS; let parents override via variables only.
 - Prefer CSS files for styling contracts; do not centralize style presets in TypeScript objects.
+- When parent width drives behavior, prefer container queries in shared CSS with media fallback.
 
 Example direction:
 
