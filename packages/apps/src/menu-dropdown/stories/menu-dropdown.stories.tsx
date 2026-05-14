@@ -1,36 +1,35 @@
-import type { CSSProperties } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Archive, Mail, NotebookPen, Star } from "lucide-react";
 import { Button } from "@/button/src/button";
-import { MenuDropdown } from "../src/menu-dropdown";
-import type { MenuDropdownItemProps } from "../src/menu-dropdown";
+import { DropdownMenu } from "../src/dropdown-menu";
+import type { DropdownMenuItemProps } from "../src/dropdown-menu";
+import "./menu-dropdown.stories.css";
 
-const meta: Meta<typeof MenuDropdown> = {
-  title: "Shared/Menu Dropdown",
-  component: MenuDropdown,
+const meta: Meta<typeof DropdownMenu> = {
+  title: "Shared/Dropdown Menu",
+  component: DropdownMenu,
+  args: {
+    align: "start",
+  },
+  argTypes: {
+    align: { control: "select", options: ["start", "center", "end"] },
+  },
 };
 
 export default meta;
-type Story = StoryObj<typeof MenuDropdown>;
+type Story = StoryObj<typeof DropdownMenu>;
 
-const baseItems: MenuDropdownItemProps[] = [
+const baseItems: DropdownMenuItemProps[] = [
   { id: "notes", label: "Notes", icon: <NotebookPen className="size-4" />, onClick: () => {} },
   { id: "mail", label: "Mail", icon: <Mail className="size-4" />, onClick: () => {} },
   { id: "archive", label: "Archive", icon: <Archive className="size-4" />, onClick: () => {} },
 ];
 
-const warmPanelStyle = {
-  backgroundColor: "oklch(0.858745 0.15558 94.085)",
-  color: "var(--color-ink)",
-  borderColor: "color-mix(in oklab, currentColor 25%, transparent)",
-} satisfies CSSProperties;
-
 export const Default: Story = {
   args: {
     trigger: <Button label="Open menu" variant="subtle" />,
     items: baseItems,
-    align: "start",
-    contentClassName: "min-w-[12rem] p-1.5",
+    contentClassName: "menu-dropdown-story__panel",
   },
 };
 
@@ -48,8 +47,7 @@ export const CheckedState: Story = {
       },
       { id: "starred", label: "Starred", icon: <Star className="size-4" />, onClick: () => {} },
     ],
-    align: "end",
-    contentStyle: warmPanelStyle,
+    contentClassName: "menu-dropdown-story__panel menu-dropdown-story__panel--warm",
   },
 };
 
@@ -57,6 +55,6 @@ export const Disabled: Story = {
   args: {
     ...Default.args,
     disabled: true,
-    trigger: <Button label="Menu disabled" variant="subtle" disabled />,
+    trigger: <Button label="Dropdown disabled" variant="subtle" disabled />,
   },
 };

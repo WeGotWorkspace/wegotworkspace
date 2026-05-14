@@ -1,0 +1,38 @@
+@import "../../styles.css" reference;
+
+.app-switcher__trigger {
+  @apply inline-flex items-stretch gap-2 rounded-lg pr-2 pl-1 py-1 -ml-1 transition-colors;
+}
+
+.app-switcher__trigger:hover {
+  background-color: color-mix(in oklab, currentColor 8%, transparent);
+}
+
+.app-switcher__trigger:disabled {
+  @apply opacity-70 cursor-default;
+}
+
+.app-switcher__trigger:disabled:hover {
+  background-color: transparent;
+}
+
+.app-switcher__label {
+  @apply flex flex-col items-start leading-[0.85] tracking-wide text-left uppercase text-3xl;
+  font-family: var(--font-app);
+}
+
+.app-switcher__label-top {
+  @apply opacity-60;
+}
+
+.app-switcher__chevron-stack {
+  @apply grid grid-rows-2 leading-[0.85];
+}
+
+.app-switcher__chevron {
+  @apply size-4 opacity-50 self-center transition-transform;
+}
+
+.app-switcher__trigger[data-state="open"] .app-switcher__chevron {
+  @apply rotate-180;
+}
