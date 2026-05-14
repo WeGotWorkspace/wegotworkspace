@@ -1,6 +1,7 @@
 import { ArrowLeft } from "lucide-react";
-
+import { IconButton } from "@/button/src/button";
 import { cn } from "@/lib/utils";
+import "@/action-bar/src/action-bar.css";
 
 export type ActionBarProps = {
   /** Shown only below the `md` breakpoint; typically closes the mobile detail stack. */
@@ -11,44 +12,23 @@ export type ActionBarProps = {
   /** Secondary actions (e.g. archive), aligned to the trailing edge. */
   right?: React.ReactNode;
   className?: string;
-  style?: React.CSSProperties;
 };
 
-export function ActionBar({
-  onBack,
-  backLabel = "Back",
-  left,
-  right,
-  className,
-  style,
-}: ActionBarProps) {
+export function ActionBar({ onBack, backLabel = "Back", left, right, className }: ActionBarProps) {
   return (
-    <nav
-      className={cn(
-        "px-4 md:px-12 h-16 md:h-20 border-b flex items-center shrink-0 gap-3",
-        className,
-      )}
-      style={{
-        borderColor: "color-mix(in oklab, var(--color-ink) 10%, transparent)",
-        ...style,
-      }}
-    >
+    <nav className={cn("action-bar", className)}>
       {onBack ? (
-        <button
-          type="button"
-          aria-label={backLabel}
+        <IconButton
+          label={backLabel}
           onClick={onBack}
-          className="md:hidden size-9 rounded-full flex items-center justify-center shrink-0 transition-colors hover:opacity-90"
-          style={{
-            color: "var(--color-ink)",
-          }}
-        >
-          <ArrowLeft className="size-4" />
-        </button>
+          icon={<ArrowLeft />}
+          variant="ghost"
+          className="action-bar__back"
+        />
       ) : null}
-      {left != null ? <div className="flex items-center gap-2 shrink-0">{left}</div> : null}
-      <div className="flex-1 min-w-0" />
-      {right != null ? <div className="flex items-center gap-2 shrink-0">{right}</div> : null}
+      {left != null ? <div className="action-bar__left">{left}</div> : null}
+      <div className="action-bar__spacer" />
+      {right != null ? <div className="action-bar__right">{right}</div> : null}
     </nav>
   );
 }

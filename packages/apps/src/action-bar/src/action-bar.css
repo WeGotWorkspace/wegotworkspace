@@ -1,0 +1,35 @@
+@import "../../styles.css" reference;
+
+.action-bar {
+  @apply px-4 md:px-12 h-16 md:h-20 border-b flex items-center shrink-0 gap-3;
+  --action-bar-border-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
+  --action-bar-back-color: var(--color-ink);
+  --button-subtle-color: color-mix(in oklab, var(--color-ink) 70%, transparent);
+  --button-subtle-background: color-mix(in oklab, var(--color-ink) 6%, transparent);
+  --button-subtle-hover-background: color-mix(in oklab, var(--color-ink) 18%, transparent);
+  border-color: var(--action-bar-border-color);
+}
+
+.action-bar__back {
+  @apply size-9 rounded-full shrink-0 transition-colors;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  --button-ghost-color: var(--action-bar-back-color);
+  --button-ghost-hover-background: color-mix(in oklab, var(--color-ink) 8%, transparent);
+}
+
+.action-bar__left,
+.action-bar__right {
+  @apply flex items-center gap-2 shrink-0;
+}
+
+.action-bar__spacer {
+  @apply flex-1 min-w-0;
+}
+
+@media (min-width: 768px) {
+  .action-bar__back {
+    display: none;
+  }
+}

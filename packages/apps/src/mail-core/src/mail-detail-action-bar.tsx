@@ -6,7 +6,6 @@ import type { MenuDropdownItemProps } from "@/menu-dropdown/src/menu-dropdown";
 import type { Mail } from "@/types/mail";
 import { buildMailActionButtons } from "@/mail-core/src/mail-action-buttons";
 import { MAIL_DETAIL_ICON_TRIGGER_STYLE } from "@/mail-core/src/mail-detail-action-bar.styles";
-import "@/mail-core/src/mail-detail-action-bar.css";
 
 type MailDetailActionBarProps = {
   active: Mail | undefined;

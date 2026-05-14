@@ -3,7 +3,6 @@ import { IconButton } from "@/button/src/button";
 import { ActionBar } from "@/action-bar/src/action-bar";
 import type { Note } from "@/lib/models/note";
 import type { NotesUILabels } from "@/notes-core/src/notes-app.stories.fixtures";
-import "@/notes-core/src/notes-detail-action-bar.css";
 
 type NotesDetailActionBarProps = {
   active: Note | undefined;
@@ -34,7 +33,7 @@ export function NotesDetailActionBar({
     <ActionBar
       onBack={closeMobileDetail}
       right={
-        <div className="notes-detail-action-bar__actions flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <IconButton
             label={labels.toolbarMoveToNotebook}
             onClick={() => openMoveDialog([active.id])}
