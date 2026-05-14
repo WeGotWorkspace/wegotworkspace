@@ -1,0 +1,20 @@
+@import "../../styles.css" reference;
+
+.icon-button--size-sm {
+  @apply size-8 rounded-full;
+  --button-icon-size: 0.875rem;
+}
+
+.icon-button--size-md {
+  @apply size-9 rounded-full;
+  --button-icon-size: 1rem;
+}
+
+.icon-button--size-lg {
+  @apply size-11 rounded-full;
+  --button-icon-size: 1.25rem;
+}
+
+.icon-button--active .button__icon > svg {
+  fill: currentColor;
+}

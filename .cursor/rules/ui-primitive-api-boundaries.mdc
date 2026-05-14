@@ -1,0 +1,20 @@
+---
+description: Preserve clear API boundaries between component logic and styling context
+alwaysApply: true
+---
+
+# Primitive API Boundaries
+
+For shared primitives (`Button`, `IconButton`, and similar):
+
+- Expose behavior/state props (`variant`, `size`, `active`, `disabled`) but avoid context props like `context="toolbar"`.
+- Do not require parent components to pass inline style objects for recurring visual contexts.
+- Use class names for structure/layout only; use CSS variables for theme/context values.
+- Internal icon sizing and state-dependent fill/stroke belong to the primitive, not callsites.
+- Prefer introducing new CSS variables over adding one-off variant branches in TypeScript.
+
+Refactor checklist:
+
+- Move duplicated `style={...}` presets into parent-scoped CSS variables.
+- Remove unused preset helper files after migration.
+- Verify callsites no longer hardcode icon sizing/fill when primitive already owns it.
