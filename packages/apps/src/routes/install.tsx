@@ -36,7 +36,7 @@ import { Switch } from "@/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui/tooltip";
 import { SidebarGroup, SidebarLink } from "@/settings-sidebar/src/settings-sidebar";
-import { AppSidebar, AppSidebarScrim } from "@/app-sidebar/src/app-sidebar";
+import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import {
   WorkspaceAppLayout,
   WorkspaceSidebarToggle,
@@ -697,7 +697,6 @@ export function InstallWorkspace({ bootstrapState = null }: InstallWorkspaceProp
             })}
           </SidebarGroup>
         </AppSidebar>
-        <AppSidebarScrim open={sidebarOpen} onClick={() => setSidebarOpen(false)} />
 
         <section
           className="flex-1 flex flex-col min-w-0 relative"

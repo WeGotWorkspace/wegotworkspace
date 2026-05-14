@@ -7,12 +7,34 @@ import {
   WORKSPACE_USER_LOGOUT_STYLE,
 } from "@/workspace-shell/src/workspace-app-layout.styles";
 import { cn } from "@/lib/utils";
+import "@/workspace-shell/src/workspace-app-layout.css";
 
-type WorkspaceAppLayoutProps = {
-  children: React.ReactNode;
+type WorkspaceAppLayoutBaseProps = {
   style?: React.CSSProperties;
   className?: string;
 };
+
+/** Full-width row of arbitrary nodes (e.g. drive + legacy stories). */
+export type WorkspaceAppLayoutFlatProps = WorkspaceAppLayoutBaseProps & {
+  children: React.ReactNode;
+  sidebar?: undefined;
+  main?: undefined;
+  mainHeader?: undefined;
+};
+
+/** Sidebar + main column with optional header and a scrollable body (settings, admin). */
+export type WorkspaceAppLayoutSplitProps = WorkspaceAppLayoutBaseProps & {
+  sidebar: React.ReactNode;
+  main: React.ReactNode;
+  mainHeader?: React.ReactNode;
+  children?: undefined;
+};
+
+export type WorkspaceAppLayoutProps = WorkspaceAppLayoutFlatProps | WorkspaceAppLayoutSplitProps;
+
+function isSplitLayout(props: WorkspaceAppLayoutProps): props is WorkspaceAppLayoutSplitProps {
+  return "sidebar" in props && "main" in props;
+}
 
 type WorkspaceSidebarProps = {
   open: boolean;
@@ -41,7 +63,8 @@ type WorkspaceSidebarToggleProps = {
   hoverClassName?: string;
 };
 
-export function WorkspaceAppLayout({ children, style, className }: WorkspaceAppLayoutProps) {
+export function WorkspaceAppLayout(props: WorkspaceAppLayoutProps) {
+  const { style, className } = props;
   return (
     <div
       className={cn("flex h-dvh w-full overflow-hidden relative notes-root", className)}
@@ -51,7 +74,21 @@ export function WorkspaceAppLayout({ children, style, className }: WorkspaceAppL
         ...style,
       }}
     >
-      {children}
+      {isSplitLayout(props) ? (
+        <>
+          {props.sidebar}
+          <section className="workspace-app-layout__main">
+            {props.mainHeader != null ? (
+              <header className="workspace-app-layout__main-header">{props.mainHeader}</header>
+            ) : null}
+            <div className="workspace-app-layout__main-scroll">
+              <div className="workspace-app-layout__main-content">{props.main}</div>
+            </div>
+          </section>
+        </>
+      ) : (
+        props.children
+      )}
     </div>
   );
 }
