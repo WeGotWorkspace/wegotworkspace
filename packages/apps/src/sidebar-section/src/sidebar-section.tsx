@@ -1,14 +1,24 @@
+import { useId, type ReactNode } from "react";
 import { Plus } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/tooltip";
+import { IconButton } from "@/button/src/button";
 import { MenuItem, type MenuItemProps } from "@/menu-item/src/menu-item";
+import { cn } from "@/lib/utils";
+import "@/sidebar-section/src/sidebar-section.css";
 
 type SidebarSectionProps = {
   title?: string;
   onAdd?: () => void;
   addLabel?: string;
   items?: MenuItemProps[];
-  children?: React.ReactNode;
+  children?: ReactNode;
+  className?: string;
 };
+
+function itemListKey(item: MenuItemProps, index: number): string {
+  if (item.to) return item.to;
+  if (typeof item.label === "string") return `${index}:${item.label}`;
+  return `item-${index}`;
+}
 
 export function SidebarSection({
   title,
@@ -16,44 +26,41 @@ export function SidebarSection({
   addLabel = "Add item",
   items,
   children,
+  className,
 }: SidebarSectionProps) {
+  const titleId = useId();
+
   return (
-    <div>
+    <section
+      className={cn("sidebar-section", className)}
+      aria-labelledby={title ? titleId : undefined}
+    >
       {title ? (
-        <div className="px-4 mb-3 flex items-center justify-between">
-          <h3
-            className="text-[11px] uppercase tracking-[0.2em] font-semibold"
-            style={{ color: "color-mix(in oklab, var(--color-ink) 55%, transparent)" }}
-          >
+        <div className="sidebar-section__heading">
+          <h3 id={titleId} className="sidebar-section__title">
             {title}
           </h3>
           {onAdd ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  aria-label={addLabel}
-                  onClick={onAdd}
-                  className="size-6 rounded-full flex items-center justify-center transition-colors opacity-60 hover:opacity-100 hover:bg-[color-mix(in_oklab,var(--color-ink)_10%,transparent)]"
-                  style={{ color: "var(--color-ink)" }}
-                >
-                  <Plus className="size-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>{addLabel}</TooltipContent>
-            </Tooltip>
+            <IconButton
+              label={addLabel}
+              icon={<Plus className="size-3.5" aria-hidden />}
+              size="sm"
+              variant="subtle"
+              onClick={onAdd}
+              className="sidebar-section__add"
+            />
           ) : null}
         </div>
       ) : null}
-      <ul className="space-y-1">
+      <ul className="sidebar-section__list">
         {items
           ? items.map((item, index) => (
-              <li key={`${index}`}>
+              <li key={itemListKey(item, index)}>
                 <MenuItem {...item} />
               </li>
             ))
           : children}
       </ul>
-    </div>
+    </section>
   );
 }

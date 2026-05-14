@@ -38,3 +38,12 @@ export const WithAddButton: Story = {
     addLabel: "Add mailbox",
   },
 };
+
+export const Untitled: Story = {
+  args: {
+    ...Default.args,
+    title: undefined,
+    onAdd: () => {},
+    addLabel: "Add mailbox",
+  },
+};
