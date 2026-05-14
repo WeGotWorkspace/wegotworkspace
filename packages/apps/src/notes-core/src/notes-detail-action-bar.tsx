@@ -1,5 +1,4 @@
-import { Archive, ArchiveRestore, BookOpen, Star } from "lucide-react";
-import { IconButton } from "@/button/src/button";
+import { Archive, ArchiveRestore, BookOpen, MoreHorizontal, Star } from "lucide-react";
 import { ActionBar } from "@/action-bar/src/action-bar";
 import type { Note } from "@/lib/models/note";
 import type { NotesUILabels } from "@/notes-core/src/notes-app.stories.fixtures";
@@ -29,39 +28,35 @@ export function NotesDetailActionBar({
     return <ActionBar onBack={closeMobileDetail} />;
   }
 
+  const rightActions = [
+    {
+      id: "move-to-notebook",
+      label: labels.toolbarMoveToNotebook,
+      onClick: () => openMoveDialog([active.id]),
+      icon: <BookOpen />,
+    },
+    {
+      id: "toggle-star",
+      label: labels.toolbarStar,
+      onClick: () => toggleStar(active.id),
+      active: !!starred[active.id],
+      icon: <Star />,
+    },
+    {
+      id: "toggle-archive",
+      label: archived[active.id] ? labels.toolbarUnarchive : labels.toolbarArchive,
+      onClick: () => toggleArchive(active.id),
+      active: !!archived[active.id],
+      icon: archived[active.id] ? <ArchiveRestore /> : <Archive />,
+    },
+  ];
+
   return (
     <ActionBar
       onBack={closeMobileDetail}
-      right={
-        <div className="flex items-center gap-2">
-          <IconButton
-            label={labels.toolbarMoveToNotebook}
-            onClick={() => openMoveDialog([active.id])}
-            icon={<BookOpen />}
-            variant="subtle"
-          />
-          <IconButton
-            label={labels.toolbarStar}
-            onClick={() => toggleStar(active.id)}
-            active={!!starred[active.id]}
-            icon={<Star />}
-            variant="subtle"
-          />
-          <IconButton
-            label={archived[active.id] ? labels.toolbarUnarchive : labels.toolbarArchive}
-            onClick={() => toggleArchive(active.id)}
-            active={!!archived[active.id]}
-            icon={
-              archived[active.id] ? (
-                <ArchiveRestore />
-              ) : (
-                <Archive />
-              )
-            }
-            variant="subtle"
-          />
-        </div>
-      }
+      rightActions={rightActions}
+      rightMenuLabel="More actions"
+      rightMenuIcon={<MoreHorizontal />}
     />
   );
 }
