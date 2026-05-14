@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { BookOpen, Plus, Tag as TagIcon, Check } from "lucide-react";
-import { Button } from "@/app-button/src/button";
+import { Button } from "@/button/src/button";
 import { Input } from "@/ui/input";
 import { Label } from "@/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/ui/radio-group";

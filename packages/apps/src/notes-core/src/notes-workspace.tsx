@@ -1,7 +1,7 @@
 import { Pencil } from "lucide-react";
 import type { NotesWorkspaceProps } from "@/notes-core/src/notes-workspace-props";
 import "react-swipeable-list/dist/styles.css";
-import { Button } from "@/app-button/src/button";
+import { Button } from "@/button/src/button";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
 import { WorkspaceAppSwitcher } from "@/workspace-app-switcher/src/workspace-app-switcher";
@@ -135,7 +135,7 @@ export function NotesWorkspace({
             <div className="px-4 mb-4">
               <Button
                 label={L.newNote}
-                icon={<Pencil className="size-4" />}
+                icon={<Pencil />}
                 onClick={() => {
                   createNote();
                   closeSidebarOnMobile(c.closeSidebar);

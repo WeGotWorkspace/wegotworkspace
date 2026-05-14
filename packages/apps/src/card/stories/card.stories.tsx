@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Eraser, RefreshCw } from "lucide-react";
 import { Input } from "@/ui/input";
-import { Button } from "@/app-button/src/button";
+import { Button } from "@/button/src/button";
 import { Card } from "../src/card";
 import { FormField } from "@/form-field/src/form-field";
 

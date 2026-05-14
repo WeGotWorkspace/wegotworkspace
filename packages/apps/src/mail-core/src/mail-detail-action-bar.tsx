@@ -1,6 +1,6 @@
 import { FileEdit, Forward, MoreHorizontal, Reply, ReplyAll } from "lucide-react";
-import { IconButton } from "@/app-button/src/button";
-import { TOOLBAR_ICON_BUTTON_STYLE } from "@/app-button/src/icon-button-presets";
+import { IconButton } from "@/button/src/button";
+import { TOOLBAR_ICON_BUTTON_STYLE } from "@/button/src/icon-button-presets";
 import { ActionBar } from "@/action-bar/src/action-bar";
 import { MenuDropdown } from "@/menu-dropdown/src/menu-dropdown";
 import type { MenuDropdownItemProps } from "@/menu-dropdown/src/menu-dropdown";
@@ -96,7 +96,7 @@ export function MailDetailActionBar({
               <IconButton
                 label="Edit draft"
                 onClick={onEditDraft}
-                icon={<FileEdit className="size-4" />}
+                icon={<FileEdit />}
                 variant="subtle"
                 style={TOOLBAR_ICON_BUTTON_STYLE}
               />
@@ -105,21 +105,21 @@ export function MailDetailActionBar({
                 <IconButton
                   label="Reply"
                   onClick={onReply}
-                  icon={<Reply className="size-4" />}
+                  icon={<Reply />}
                   variant="subtle"
                   style={TOOLBAR_ICON_BUTTON_STYLE}
                 />
                 <IconButton
                   label="Reply all"
                   onClick={onReplyAll}
-                  icon={<ReplyAll className="size-4" />}
+                  icon={<ReplyAll />}
                   variant="subtle"
                   style={TOOLBAR_ICON_BUTTON_STYLE}
                 />
                 <IconButton
                   label="Forward"
                   onClick={onForward}
-                  icon={<Forward className="size-4" />}
+                  icon={<Forward />}
                   variant="subtle"
                   style={TOOLBAR_ICON_BUTTON_STYLE}
                 />
@@ -131,7 +131,7 @@ export function MailDetailActionBar({
               <IconButton
                 label="Edit draft"
                 onClick={onEditDraft}
-                icon={<FileEdit className="size-4" />}
+                icon={<FileEdit />}
                 variant="subtle"
                 style={TOOLBAR_ICON_BUTTON_STYLE}
               />
@@ -144,7 +144,7 @@ export function MailDetailActionBar({
                 trigger={
                   <IconButton
                     label="Reply options"
-                    icon={<Reply className="size-4" />}
+                    icon={<Reply />}
                     showTooltip={false}
                     variant="subtle"
                     style={MAIL_DETAIL_ICON_TRIGGER_STYLE}
@@ -156,7 +156,7 @@ export function MailDetailActionBar({
               <IconButton
                 label="Forward"
                 onClick={onForward}
-                icon={<Forward className="size-4" />}
+                icon={<Forward />}
                 variant="subtle"
                 style={TOOLBAR_ICON_BUTTON_STYLE}
               />
@@ -188,7 +188,7 @@ export function MailDetailActionBar({
               trigger={
                 <IconButton
                   label="More actions"
-                  icon={<MoreHorizontal className="size-4" />}
+                  icon={<MoreHorizontal />}
                   showTooltip={false}
                   variant="subtle"
                   style={MAIL_DETAIL_ICON_TRIGGER_STYLE}

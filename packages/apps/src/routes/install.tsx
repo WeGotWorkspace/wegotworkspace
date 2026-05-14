@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/ui/input";
 import { Label } from "@/ui/label";
-import { Button } from "@/app-button/src/button";
+import { Button } from "@/button/src/button";
 import { Switch } from "@/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui/tooltip";

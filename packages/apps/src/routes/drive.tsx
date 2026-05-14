@@ -45,8 +45,8 @@ import {
   FAB_ICON_BUTTON_CLASSNAME,
   FAB_ICON_BUTTON_STYLE,
   LIST_ICON_BUTTON_STYLE,
-} from "@/app-button/src/icon-button-presets";
-import { Button, IconButton } from "@/app-button/src/button";
+} from "@/button/src/icon-button-presets";
+import { Button, IconButton } from "@/button/src/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui/tooltip";
 import {
   Dialog,
@@ -607,8 +607,7 @@ export function DriveWorkspace({
       else if (view.type === "starred") {
         if (operations) return false;
         inView = !!starred[f.id] && !isUnderTrash(f.parent);
-      }
-      else if (view.type === "shared")
+      } else if (view.type === "shared")
         inView = f.parent === "Shared with me" || f.parent.startsWith("Shared with me/");
       if (!inView) return false;
       if (!q) return true;
@@ -1590,7 +1589,7 @@ export function DriveWorkspace({
                   <IconButton
                     label={detailOpen ? "Hide details" : "Show details"}
                     onClick={() => setDetailOpen((v) => !v)}
-                    icon={<Info className="size-4" />}
+                    icon={<Info />}
                     size="sm"
                     variant="subtle"
                     style={LIST_ICON_BUTTON_STYLE}
@@ -1599,7 +1598,7 @@ export function DriveWorkspace({
                     <IconButton
                       label="Empty trash"
                       onClick={() => setConfirmDelete({ ids: visibleItems.map((f) => f.id) })}
-                      icon={<Trash2 className="size-4" />}
+                      icon={<Trash2 />}
                       size="sm"
                       variant="subtle"
                       style={LIST_ICON_BUTTON_STYLE}
@@ -1832,7 +1831,7 @@ export function DriveWorkspace({
               <IconButton
                 label="Star"
                 onClick={batchStar}
-                icon={<Star className="size-4" />}
+                icon={<Star />}
                 variant="ghost"
                 className={FAB_ICON_BUTTON_CLASSNAME}
                 style={FAB_ICON_BUTTON_STYLE}
@@ -1851,7 +1850,7 @@ export function DriveWorkspace({
                   }
                   toast("Download started", { icon: <Download className="size-4" /> });
                 }}
-                icon={<Download className="size-4" />}
+                icon={<Download />}
                 variant="ghost"
                 className={FAB_ICON_BUTTON_CLASSNAME}
                 style={FAB_ICON_BUTTON_STYLE}
@@ -1859,7 +1858,7 @@ export function DriveWorkspace({
               <IconButton
                 label={inTrashView ? "Delete permanently" : "Move to trash"}
                 onClick={requestDeleteSelected}
-                icon={<Trash2 className="size-4" />}
+                icon={<Trash2 />}
                 variant="ghost"
                 className={FAB_ICON_BUTTON_CLASSNAME}
                 style={FAB_ICON_BUTTON_STYLE}
@@ -1867,7 +1866,7 @@ export function DriveWorkspace({
               <IconButton
                 label="Done"
                 onClick={exitSelection}
-                icon={<X className="size-4" />}
+                icon={<X />}
                 variant="ghost"
                 className={FAB_ICON_BUTTON_CLASSNAME}
                 style={FAB_ICON_BUTTON_STYLE}
@@ -2704,7 +2703,7 @@ function DetailPanel({
               onDownload();
               toast("Download started", { icon: <Download className="size-4" /> });
             }}
-            icon={<Download className="size-4" />}
+            icon={<Download />}
             size="sm"
             variant="subtle"
             style={LIST_ICON_BUTTON_STYLE}
@@ -2714,7 +2713,7 @@ function DetailPanel({
             onClick={() => {
               void onShare();
             }}
-            icon={<Share2 className="size-4" />}
+            icon={<Share2 />}
             size="sm"
             variant="subtle"
             style={LIST_ICON_BUTTON_STYLE}
@@ -2722,7 +2721,8 @@ function DetailPanel({
           <IconButton
             label={isStarred ? "Unstar" : "Star"}
             onClick={onStar}
-            icon={<Star className="size-4" fill={isStarred ? "currentColor" : "none"} />}
+            active={isStarred}
+            icon={<Star />}
             size="sm"
             variant="subtle"
             style={LIST_ICON_BUTTON_STYLE}
@@ -2730,7 +2730,7 @@ function DetailPanel({
           <IconButton
             label="Delete"
             onClick={onDelete}
-            icon={<Trash2 className="size-4" />}
+            icon={<Trash2 />}
             size="sm"
             variant="subtle"
             style={LIST_ICON_BUTTON_STYLE}

@@ -1,6 +1,6 @@
 import { Archive, ArchiveRestore, BookOpen, Star } from "lucide-react";
-import { IconButton } from "@/app-button/src/button";
-import { TOOLBAR_ICON_BUTTON_STYLE } from "@/app-button/src/icon-button-presets";
+import { IconButton } from "@/button/src/button";
+import { TOOLBAR_ICON_BUTTON_STYLE } from "@/button/src/icon-button-presets";
 import { ActionBar } from "@/action-bar/src/action-bar";
 import type { Note } from "@/lib/models/note";
 import type { NotesUILabels } from "@/notes-core/src/notes-app.stories.fixtures";
@@ -38,7 +38,7 @@ export function NotesDetailActionBar({
           <IconButton
             label={labels.toolbarMoveToNotebook}
             onClick={() => openMoveDialog([active.id])}
-            icon={<BookOpen className="size-4" />}
+            icon={<BookOpen />}
             variant="subtle"
             style={TOOLBAR_ICON_BUTTON_STYLE}
           />
@@ -46,7 +46,7 @@ export function NotesDetailActionBar({
             label={labels.toolbarStar}
             onClick={() => toggleStar(active.id)}
             active={!!starred[active.id]}
-            icon={<Star className="size-4" fill={starred[active.id] ? "currentColor" : "none"} />}
+            icon={<Star />}
             variant="subtle"
             style={TOOLBAR_ICON_BUTTON_STYLE}
           />

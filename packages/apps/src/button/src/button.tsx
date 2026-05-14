@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/tooltip";
-import "@/app-button/src/button.css";
+import "@/button/src/button.css";
 
 export const BUTTON_SIZE_OPTIONS = ["sm", "md", "lg"] as const;
 export const ICON_BUTTON_SIZE_OPTIONS = ["sm", "md", "lg"] as const;
@@ -13,12 +13,14 @@ export const BUTTON_VARIANT_OPTIONS = [
   "subtle",
 ] as const;
 
-const BUTTON_BASE_CLASSNAME = "app-button";
-const BUTTON_PILL_CLASSNAME = "app-button--pill";
+const BUTTON_BASE_CLASSNAME = "button";
+const BUTTON_PILL_CLASSNAME = "button--pill";
+const BUTTON_ICON_SLOT_CLASSNAME = "button__icon";
+const ICON_BUTTON_ACTIVE_CLASSNAME = "app-icon-button--active";
 const BUTTON_SIZE_CLASSNAMES: Record<ButtonSize, string> = {
-  sm: "app-button--size-sm",
-  md: "app-button--size-md",
-  lg: "app-button--size-lg",
+  sm: "button--size-sm",
+  md: "button--size-md",
+  lg: "button--size-lg",
 };
 const ICON_BUTTON_SIZE_CLASSNAMES: Record<IconButtonSize, string> = {
   sm: "app-icon-button--size-sm",
@@ -26,11 +28,11 @@ const ICON_BUTTON_SIZE_CLASSNAMES: Record<IconButtonSize, string> = {
   lg: "app-icon-button--size-lg",
 };
 const BUTTON_VARIANT_CLASSNAMES: Record<ButtonVariant, string> = {
-  primary: "app-button--variant-primary",
-  destructive: "app-button--variant-destructive",
-  outline: "app-button--variant-outline",
-  ghost: "app-button--variant-ghost",
-  subtle: "app-button--variant-subtle",
+  primary: "button--variant-primary",
+  destructive: "button--variant-destructive",
+  outline: "button--variant-outline",
+  ghost: "button--variant-ghost",
+  subtle: "button--variant-subtle",
 };
 
 type ButtonVariantStyle = {
@@ -109,7 +111,7 @@ export function Button({
 }: ButtonProps) {
   const content = children ?? (
     <>
-      {icon}
+      {icon ? <span className={BUTTON_ICON_SLOT_CLASSNAME}>{icon}</span> : null}
       {label ? <span>{label}</span> : null}
     </>
   );
@@ -152,13 +154,14 @@ export function IconButton({
       className={cn(
         BUTTON_BASE_CLASSNAME,
         ICON_BUTTON_SIZE_CLASSNAMES[size],
+        active && ICON_BUTTON_ACTIVE_CLASSNAME,
         BUTTON_VARIANT_CLASSNAMES[variant],
         className,
       )}
       style={{ ...getButtonVariantStyle(variant, active), ...style }}
       {...props}
     >
-      {icon}
+      <span className={BUTTON_ICON_SLOT_CLASSNAME}>{icon}</span>
     </button>
   );
 
