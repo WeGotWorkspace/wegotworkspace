@@ -41,11 +41,6 @@ import {
   DropdownMenuTrigger,
 } from "@/ui/dropdown-menu";
 import { Input } from "@/ui/input";
-import {
-  FAB_ICON_BUTTON_CLASSNAME,
-  FAB_ICON_BUTTON_STYLE,
-  LIST_ICON_BUTTON_STYLE,
-} from "@/button/src/icon-button-presets";
 import { Button, IconButton } from "@/button/src/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui/tooltip";
 import {
@@ -88,6 +83,7 @@ import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
 import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
 import { requireWgwAuth } from "@/lib/api/wgw/route-guard";
 import { wgwEnsureOfficeSession } from "@/lib/api/wgw/http";
+import "@/routes/drive.css";
 
 export const Route = createFileRoute("/drive")({
   beforeLoad: ({ location }) => {
@@ -1586,24 +1582,24 @@ export function DriveWorkspace({
                       <ListIcon className="size-4" />
                     </button>
                   </div>
-                  <IconButton
-                    label={detailOpen ? "Hide details" : "Show details"}
-                    onClick={() => setDetailOpen((v) => !v)}
-                    icon={<Info />}
-                    size="sm"
-                    variant="subtle"
-                    style={LIST_ICON_BUTTON_STYLE}
-                  />
-                  {inTrashView && visibleItems.length > 0 && (
+                  <div className="drive-list-header-actions flex items-center gap-2">
                     <IconButton
-                      label="Empty trash"
-                      onClick={() => setConfirmDelete({ ids: visibleItems.map((f) => f.id) })}
-                      icon={<Trash2 />}
+                      label={detailOpen ? "Hide details" : "Show details"}
+                      onClick={() => setDetailOpen((v) => !v)}
+                      icon={<Info />}
                       size="sm"
                       variant="subtle"
-                      style={LIST_ICON_BUTTON_STYLE}
                     />
-                  )}
+                    {inTrashView && visibleItems.length > 0 && (
+                      <IconButton
+                        label="Empty trash"
+                        onClick={() => setConfirmDelete({ ids: visibleItems.map((f) => f.id) })}
+                        icon={<Trash2 />}
+                        size="sm"
+                        variant="subtle"
+                      />
+                    )}
+                  </div>
                 </>
               }
               searchPlaceholder="Search in Drive..."
@@ -1822,7 +1818,7 @@ export function DriveWorkspace({
 
           {(selectionMode || selectedIds.length > 1) && (
             <div
-              className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1 px-2 py-2 rounded-full shadow-lg whitespace-nowrap"
+              className="drive-selection-actions absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1 px-2 py-2 rounded-full shadow-lg whitespace-nowrap"
               style={{ backgroundColor: "var(--color-ink)", color: "var(--color-cream, #f5f1e8)" }}
             >
               <span className="text-xs px-3 font-medium tabular-nums leading-9 inline-flex items-center">
@@ -1833,8 +1829,6 @@ export function DriveWorkspace({
                 onClick={batchStar}
                 icon={<Star />}
                 variant="ghost"
-                className={FAB_ICON_BUTTON_CLASSNAME}
-                style={FAB_ICON_BUTTON_STYLE}
               />
               <IconButton
                 label="Download"
@@ -1852,24 +1846,18 @@ export function DriveWorkspace({
                 }}
                 icon={<Download />}
                 variant="ghost"
-                className={FAB_ICON_BUTTON_CLASSNAME}
-                style={FAB_ICON_BUTTON_STYLE}
               />
               <IconButton
                 label={inTrashView ? "Delete permanently" : "Move to trash"}
                 onClick={requestDeleteSelected}
                 icon={<Trash2 />}
                 variant="ghost"
-                className={FAB_ICON_BUTTON_CLASSNAME}
-                style={FAB_ICON_BUTTON_STYLE}
               />
               <IconButton
                 label="Done"
                 onClick={exitSelection}
                 icon={<X />}
                 variant="ghost"
-                className={FAB_ICON_BUTTON_CLASSNAME}
-                style={FAB_ICON_BUTTON_STYLE}
               />
             </div>
           )}
@@ -2696,7 +2684,7 @@ function DetailPanel({
         >
           {mobile ? <ArrowLeft className="size-4" /> : <X className="size-4" />}
         </button>
-        <div className="flex items-center gap-1.5">
+        <div className="drive-detail-actions flex items-center gap-1.5">
           <IconButton
             label="Download"
             onClick={() => {
@@ -2706,7 +2694,6 @@ function DetailPanel({
             icon={<Download />}
             size="sm"
             variant="subtle"
-            style={LIST_ICON_BUTTON_STYLE}
           />
           <IconButton
             label="Share"
@@ -2716,7 +2703,6 @@ function DetailPanel({
             icon={<Share2 />}
             size="sm"
             variant="subtle"
-            style={LIST_ICON_BUTTON_STYLE}
           />
           <IconButton
             label={isStarred ? "Unstar" : "Star"}
@@ -2725,7 +2711,6 @@ function DetailPanel({
             icon={<Star />}
             size="sm"
             variant="subtle"
-            style={LIST_ICON_BUTTON_STYLE}
           />
           <IconButton
             label="Delete"
@@ -2733,7 +2718,6 @@ function DetailPanel({
             icon={<Trash2 />}
             size="sm"
             variant="subtle"
-            style={LIST_ICON_BUTTON_STYLE}
           />
         </div>
       </div>

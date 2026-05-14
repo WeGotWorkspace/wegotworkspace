@@ -1,0 +1,13 @@
+@import "../styles.css" reference;
+
+.drive-list-header-actions,
+.drive-detail-actions {
+  --button-subtle-color: color-mix(in oklab, var(--color-ink) 65%, transparent);
+  --button-subtle-background: color-mix(in oklab, var(--color-ink) 6%, transparent);
+  --button-subtle-hover-background: color-mix(in oklab, var(--color-ink) 18%, transparent);
+}
+
+.drive-selection-actions {
+  --button-ghost-color: inherit;
+  --button-ghost-hover-background: color-mix(in oklab, white 10%, transparent);
+}
