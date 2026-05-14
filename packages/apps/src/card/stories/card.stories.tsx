@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Eraser, RefreshCw } from "lucide-react";
 import { Input } from "@/ui/input";
-import { AppButton } from "@/app-button/src/app-button";
+import { Button } from "@/app-button/src/app-button";
 import { Card } from "../src/card";
 import { FormField } from "@/form-field/src/form-field";
 
@@ -46,7 +46,7 @@ export const EditableFormLike: Story = {
         <Input defaultValue="elias@northlight.studio" type="email" />
       </FormField>
       <div className="flex justify-end pt-2">
-        <AppButton
+        <Button
           label="Save"
           variant="subtle"
           style={{ backgroundColor: "#da9fb8", color: "var(--color-ink)" }}

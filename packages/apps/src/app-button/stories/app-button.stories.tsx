@@ -1,40 +1,70 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { LogOut, PenSquare } from "lucide-react";
-import { AppButton } from "../src/app-button";
+import { PenSquare, Star } from "lucide-react";
+import { Button, IconButton } from "../src/app-button";
 
-const meta: Meta<typeof AppButton> = {
-  title: "Shared/App Button",
-  component: AppButton,
+const meta: Meta<typeof Button> = {
+  title: "Shared/Buttons",
+  component: Button,
 };
 
 export default meta;
-type Story = StoryObj<typeof AppButton>;
+type Story = StoryObj<typeof Button>;
 
-export const IconSubtle: Story = {
+export const Primary: Story = {
   args: {
-    icon: <LogOut className="size-4" />,
-    ariaLabel: "Log out",
-    size: "icon",
-    variant: "subtle",
-    onClick: () => {},
-  },
-};
-
-export const PillPrimary: Story = {
-  args: {
-    icon: <PenSquare className="size-4" />,
     label: "Compose",
-    size: "pill",
+    icon: <PenSquare className="size-4" />,
     variant: "primary",
     onClick: () => {},
   },
 };
 
-export const MediumGhost: Story = {
+export const PrimaryPill: Story = {
+  args: { ...Primary.args, size: "pill" },
+};
+
+export const Subtle: Story = {
+  args: { ...Primary.args, variant: "subtle" },
+};
+
+export const Ghost: Story = {
+  args: { ...Primary.args, variant: "ghost" },
+};
+
+export const Outline: Story = {
+  args: { ...Primary.args, variant: "outline" },
+};
+
+export const Destructive: Story = {
+  args: { ...Primary.args, variant: "destructive" },
+};
+
+export const Disabled: Story = {
+  args: { ...Primary.args, disabled: true },
+};
+
+export const IconButtonDefault: StoryObj<typeof IconButton> = {
   args: {
-    label: "Edit",
+    label: "Favorite",
+    icon: <Star className="size-4" fill="currentColor" />,
     size: "md",
-    variant: "ghost",
+    variant: "subtle",
     onClick: () => {},
   },
+  render: (args) => <IconButton {...args} />,
+};
+
+export const IconButtonActive: StoryObj<typeof IconButton> = {
+  ...IconButtonDefault,
+  args: { ...IconButtonDefault.args, active: true },
+};
+
+export const IconButtonGhost: StoryObj<typeof IconButton> = {
+  ...IconButtonDefault,
+  args: { ...IconButtonDefault.args, variant: "ghost" },
+};
+
+export const IconButtonDisabled: StoryObj<typeof IconButton> = {
+  ...IconButtonDefault,
+  args: { ...IconButtonDefault.args, disabled: true },
 };

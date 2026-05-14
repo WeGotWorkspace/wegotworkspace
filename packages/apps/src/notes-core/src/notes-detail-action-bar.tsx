@@ -1,5 +1,6 @@
 import { Archive, ArchiveRestore, BookOpen, Star } from "lucide-react";
-import { ToolbarButton } from "@/action-buttons/src/action-buttons";
+import { IconButton } from "@/app-button/src/app-button";
+import { TOOLBAR_ICON_BUTTON_STYLE } from "@/app-button/src/icon-button-presets";
 import { ActionBar } from "@/action-bar/src/action-bar";
 import type { Note } from "@/lib/models/note";
 import type { NotesUILabels } from "@/notes-core/src/notes-app.stories.fixtures";
@@ -34,30 +35,35 @@ export function NotesDetailActionBar({
       onBack={closeMobileDetail}
       right={
         <>
-          <ToolbarButton
+          <IconButton
             label={labels.toolbarMoveToNotebook}
             onClick={() => openMoveDialog([active.id])}
-          >
-            <BookOpen className="size-4" />
-          </ToolbarButton>
-          <ToolbarButton
+            icon={<BookOpen className="size-4" />}
+            variant="subtle"
+            style={TOOLBAR_ICON_BUTTON_STYLE}
+          />
+          <IconButton
             label={labels.toolbarStar}
             onClick={() => toggleStar(active.id)}
             active={!!starred[active.id]}
-          >
-            <Star className="size-4" fill={starred[active.id] ? "currentColor" : "none"} />
-          </ToolbarButton>
-          <ToolbarButton
+            icon={<Star className="size-4" fill={starred[active.id] ? "currentColor" : "none"} />}
+            variant="subtle"
+            style={TOOLBAR_ICON_BUTTON_STYLE}
+          />
+          <IconButton
             label={archived[active.id] ? labels.toolbarUnarchive : labels.toolbarArchive}
             onClick={() => toggleArchive(active.id)}
             active={!!archived[active.id]}
-          >
-            {archived[active.id] ? (
-              <ArchiveRestore className="size-4" />
-            ) : (
-              <Archive className="size-4" />
-            )}
-          </ToolbarButton>
+            icon={
+              archived[active.id] ? (
+                <ArchiveRestore className="size-4" />
+              ) : (
+                <Archive className="size-4" />
+              )
+            }
+            variant="subtle"
+            style={TOOLBAR_ICON_BUTTON_STYLE}
+          />
         </>
       }
     />

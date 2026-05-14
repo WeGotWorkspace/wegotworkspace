@@ -1,5 +1,6 @@
 import { CheckSquare2 } from "lucide-react";
-import { ToolbarButton } from "@/action-buttons/src/action-buttons";
+import { IconButton } from "@/app-button/src/app-button";
+import { TOOLBAR_ICON_BUTTON_STYLE } from "@/app-button/src/icon-button-presets";
 import { cn } from "@/lib/utils";
 
 export type MultiSelectionViewAction = {
@@ -64,15 +65,16 @@ export function MultiSelectionView({
       {actions.length > 0 ? (
         <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
           {actions.map((action) => (
-            <ToolbarButton
+            <IconButton
               key={action.id ?? action.label}
               label={action.label}
               onClick={action.onClick}
               active={action.active}
+              icon={action.icon}
               size="lg"
-            >
-              {action.icon}
-            </ToolbarButton>
+              variant="subtle"
+              style={TOOLBAR_ICON_BUTTON_STYLE}
+            />
           ))}
         </div>
       ) : null}

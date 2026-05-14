@@ -1,8 +1,11 @@
 import { LogOut, Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
-import { AppButton } from "@/app-button/src/app-button";
+import { IconButton } from "@/app-button/src/app-button";
 import { SidebarLogo } from "@/sidebar-logo/src/sidebar-logo";
 import { UserAvatar } from "@/user-avatar/src/user-avatar";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui/tooltip";
+import {
+  WORKSPACE_SIDEBAR_TOGGLE_STYLE,
+  WORKSPACE_USER_LOGOUT_STYLE,
+} from "@/workspace-shell/src/workspace-app-layout.styles";
 import { cn } from "@/lib/utils";
 
 type WorkspaceAppLayoutProps = {
@@ -135,27 +138,14 @@ export function WorkspaceUserFooter({
         }
       />
       {!detailLine ? <div className="flex-1 min-w-0 text-sm truncate">{name}</div> : null}
-      <TooltipProvider delayDuration={300}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <AppButton
-              icon={<LogOut className="size-4" />}
-              ariaLabel="Log out"
-              onClick={handleLogout}
-              size="icon"
-              variant="subtle"
-              className={`size-9 rounded-full ${linkHoverClassName}`}
-              style={{
-                color:
-                  "var(--workspace-user-footer-link-color, color-mix(in oklab, var(--color-ink) 65%, transparent))",
-                backgroundColor:
-                  "var(--workspace-user-footer-link-bg, color-mix(in oklab, var(--color-ink) 6%, transparent))",
-              }}
-            />
-          </TooltipTrigger>
-          <TooltipContent>Log out</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <IconButton
+        label="Log out"
+        icon={<LogOut className="size-4" />}
+        onClick={handleLogout}
+        variant="subtle"
+        className={cn("size-9", linkHoverClassName)}
+        style={WORKSPACE_USER_LOGOUT_STYLE}
+      />
     </div>
   );
 }
@@ -176,27 +166,22 @@ export function WorkspaceSidebarToggle({
   hoverClassName = "hover:bg-[color-mix(in_oklab,var(--color-ink)_12%,transparent)]",
 }: WorkspaceSidebarToggleProps) {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          aria-label={open ? "Hide sidebar" : "Show sidebar"}
-          onClick={onToggle}
-          className={`size-9 rounded-full flex items-center justify-center shrink-0 transition-colors ${hoverClassName}`}
-          style={{
-            color: "var(--workspace-sidebar-toggle-color, var(--color-ink))",
-            backgroundColor:
-              "var(--workspace-sidebar-toggle-bg, color-mix(in oklab, var(--color-ink) 6%, transparent))",
-          }}
-        >
+    <IconButton
+      label={open ? "Hide sidebar" : "Show sidebar"}
+      onClick={onToggle}
+      icon={
+        <>
           <Menu className="size-4 md:hidden" />
           {open ? (
             <PanelLeftClose className="size-4 hidden md:block" />
           ) : (
             <PanelLeftOpen className="size-4 hidden md:block" />
           )}
-        </button>
-      </TooltipTrigger>
-      <TooltipContent>{open ? "Hide sidebar" : "Show sidebar"}</TooltipContent>
-    </Tooltip>
+        </>
+      }
+      variant="subtle"
+      className={cn("size-9 shrink-0", hoverClassName)}
+      style={WORKSPACE_SIDEBAR_TOGGLE_STYLE}
+    />
   );
 }
