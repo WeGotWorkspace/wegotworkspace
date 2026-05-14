@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { PenSquare, Trash2 } from "lucide-react";
-import { ListAction } from "@/action-buttons/src/action-buttons";
+import { IconButton } from "@/app-button/src/app-button";
+import { LIST_ICON_BUTTON_STYLE } from "@/app-button/src/icon-button-presets";
 import { ListHeader } from "@/list-header/src/list-header";
 
 const meta: Meta<typeof ListHeader> = {
@@ -19,12 +20,22 @@ export const Default: Story = {
     onToggleSidebar: () => {},
     actions: (
       <>
-        <ListAction label="Compose" onClick={() => {}}>
-          <PenSquare className="size-4" />
-        </ListAction>
-        <ListAction label="Delete" onClick={() => {}}>
-          <Trash2 className="size-4" />
-        </ListAction>
+        <IconButton
+          label="Compose"
+          onClick={() => {}}
+          icon={<PenSquare className="size-4" />}
+          size="sm"
+          variant="subtle"
+          style={LIST_ICON_BUTTON_STYLE}
+        />
+        <IconButton
+          label="Delete"
+          onClick={() => {}}
+          icon={<Trash2 className="size-4" />}
+          size="sm"
+          variant="subtle"
+          style={LIST_ICON_BUTTON_STYLE}
+        />
       </>
     ),
     searchPlaceholder: "Search notes...",

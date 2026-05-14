@@ -1,6 +1,6 @@
 import { Mail as MailIcon, Users } from "lucide-react";
 import { Input } from "@/ui/input";
-import { AppButton } from "@/app-button/src/app-button";
+import { Button } from "@/app-button/src/app-button";
 import { AppSidebar, AppSidebarScrim } from "@/app-sidebar/src/app-sidebar";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
 import { WorkspaceAppSwitcher } from "@/workspace-app-switcher/src/workspace-app-switcher";
@@ -144,7 +144,7 @@ export function SettingsWorkspace(props: SettingsWorkspaceProps) {
                     />
                   </FormField>
                   <div className="flex justify-end pt-2">
-                    <AppButton
+                    <Button
                       onClick={controller.profile.saveProfile}
                       disabled={
                         !controller.profile.profileDirty &&
@@ -183,7 +183,7 @@ export function SettingsWorkspace(props: SettingsWorkspaceProps) {
                     />
                   </FormField>
                   <div className="flex justify-end pt-2">
-                    <AppButton
+                    <Button
                       onClick={controller.profile.saveProfile}
                       disabled={
                         !controller.profile.newPassword && !controller.profile.confirmPassword
@@ -267,7 +267,7 @@ export function SettingsWorkspace(props: SettingsWorkspaceProps) {
                     />
                   </FormField>
                   <div className="flex justify-end pt-2">
-                    <AppButton
+                    <Button
                       onClick={controller.mail.saveMail}
                       disabled={!controller.mail.mailDirty}
                       label="Save changes"

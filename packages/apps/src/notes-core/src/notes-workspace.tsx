@@ -1,7 +1,7 @@
 import { Pencil } from "lucide-react";
 import type { NotesWorkspaceProps } from "@/notes-core/src/notes-workspace-props";
 import "react-swipeable-list/dist/styles.css";
-import { AppButton } from "@/app-button/src/app-button";
+import { Button } from "@/app-button/src/app-button";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
 import { WorkspaceAppSwitcher } from "@/workspace-app-switcher/src/workspace-app-switcher";
@@ -133,7 +133,7 @@ export function NotesWorkspace({
             appSwitcher={<WorkspaceAppSwitcher />}
           >
             <div className="px-4 mb-4">
-              <AppButton
+              <Button
                 label={L.newNote}
                 icon={<Pencil className="size-4" />}
                 onClick={() => {

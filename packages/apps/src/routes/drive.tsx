@@ -41,7 +41,12 @@ import {
   DropdownMenuTrigger,
 } from "@/ui/dropdown-menu";
 import { Input } from "@/ui/input";
-import { Button } from "@/ui/button";
+import {
+  FAB_ICON_BUTTON_CLASSNAME,
+  FAB_ICON_BUTTON_STYLE,
+  LIST_ICON_BUTTON_STYLE,
+} from "@/app-button/src/icon-button-presets";
+import { Button, IconButton } from "@/app-button/src/app-button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui/tooltip";
 import {
   Dialog,
@@ -64,7 +69,6 @@ import {
 import type { Note } from "@/lib/models/note";
 import { useIsTouch } from "@/hooks/use-is-touch";
 import { SidebarGroup, SidebarLink } from "@/settings-sidebar/src/settings-sidebar";
-import { ListAction, FabButton } from "@/action-buttons/src/action-buttons";
 import { WorkspaceAppSwitcher } from "@/workspace-app-switcher/src/workspace-app-switcher";
 import { ListHeader } from "@/list-header/src/list-header";
 import { createPwaHead } from "@/lib/pwa-head";
@@ -1583,19 +1587,23 @@ export function DriveWorkspace({
                       <ListIcon className="size-4" />
                     </button>
                   </div>
-                  <ListAction
+                  <IconButton
                     label={detailOpen ? "Hide details" : "Show details"}
                     onClick={() => setDetailOpen((v) => !v)}
-                  >
-                    <Info className="size-4" />
-                  </ListAction>
+                    icon={<Info className="size-4" />}
+                    size="sm"
+                    variant="subtle"
+                    style={LIST_ICON_BUTTON_STYLE}
+                  />
                   {inTrashView && visibleItems.length > 0 && (
-                    <ListAction
+                    <IconButton
                       label="Empty trash"
                       onClick={() => setConfirmDelete({ ids: visibleItems.map((f) => f.id) })}
-                    >
-                      <Trash2 className="size-4" />
-                    </ListAction>
+                      icon={<Trash2 className="size-4" />}
+                      size="sm"
+                      variant="subtle"
+                      style={LIST_ICON_BUTTON_STYLE}
+                    />
                   )}
                 </>
               }
@@ -1821,10 +1829,15 @@ export function DriveWorkspace({
               <span className="text-xs px-3 font-medium tabular-nums leading-9 inline-flex items-center">
                 {selectedIds.length} items
               </span>
-              <FabButton label="Star" onClick={batchStar}>
-                <Star className="size-4" />
-              </FabButton>
-              <FabButton
+              <IconButton
+                label="Star"
+                onClick={batchStar}
+                icon={<Star className="size-4" />}
+                variant="ghost"
+                className={FAB_ICON_BUTTON_CLASSNAME}
+                style={FAB_ICON_BUTTON_STYLE}
+              />
+              <IconButton
                 label="Download"
                 onClick={() => {
                   const first = files.find(
@@ -1838,18 +1851,27 @@ export function DriveWorkspace({
                   }
                   toast("Download started", { icon: <Download className="size-4" /> });
                 }}
-              >
-                <Download className="size-4" />
-              </FabButton>
-              <FabButton
+                icon={<Download className="size-4" />}
+                variant="ghost"
+                className={FAB_ICON_BUTTON_CLASSNAME}
+                style={FAB_ICON_BUTTON_STYLE}
+              />
+              <IconButton
                 label={inTrashView ? "Delete permanently" : "Move to trash"}
                 onClick={requestDeleteSelected}
-              >
-                <Trash2 className="size-4" />
-              </FabButton>
-              <FabButton label="Done" onClick={exitSelection}>
-                <X className="size-4" />
-              </FabButton>
+                icon={<Trash2 className="size-4" />}
+                variant="ghost"
+                className={FAB_ICON_BUTTON_CLASSNAME}
+                style={FAB_ICON_BUTTON_STYLE}
+              />
+              <IconButton
+                label="Done"
+                onClick={exitSelection}
+                icon={<X className="size-4" />}
+                variant="ghost"
+                className={FAB_ICON_BUTTON_CLASSNAME}
+                style={FAB_ICON_BUTTON_STYLE}
+              />
             </div>
           )}
         </section>
@@ -2676,29 +2698,43 @@ function DetailPanel({
           {mobile ? <ArrowLeft className="size-4" /> : <X className="size-4" />}
         </button>
         <div className="flex items-center gap-1.5">
-          <ListAction
+          <IconButton
             label="Download"
             onClick={() => {
               onDownload();
               toast("Download started", { icon: <Download className="size-4" /> });
             }}
-          >
-            <Download className="size-4" />
-          </ListAction>
-          <ListAction
+            icon={<Download className="size-4" />}
+            size="sm"
+            variant="subtle"
+            style={LIST_ICON_BUTTON_STYLE}
+          />
+          <IconButton
             label="Share"
             onClick={() => {
               void onShare();
             }}
-          >
-            <Share2 className="size-4" />
-          </ListAction>
-          <ListAction label={isStarred ? "Unstar" : "Star"} onClick={onStar}>
-            <Star className="size-4" fill={isStarred ? "currentColor" : "none"} />
-          </ListAction>
-          <ListAction label="Delete" onClick={onDelete}>
-            <Trash2 className="size-4" />
-          </ListAction>
+            icon={<Share2 className="size-4" />}
+            size="sm"
+            variant="subtle"
+            style={LIST_ICON_BUTTON_STYLE}
+          />
+          <IconButton
+            label={isStarred ? "Unstar" : "Star"}
+            onClick={onStar}
+            icon={<Star className="size-4" fill={isStarred ? "currentColor" : "none"} />}
+            size="sm"
+            variant="subtle"
+            style={LIST_ICON_BUTTON_STYLE}
+          />
+          <IconButton
+            label="Delete"
+            onClick={onDelete}
+            icon={<Trash2 className="size-4" />}
+            size="sm"
+            variant="subtle"
+            style={LIST_ICON_BUTTON_STYLE}
+          />
         </div>
       </div>
       <div className="flex-1 overflow-y-auto px-5 md:px-6 py-6">

@@ -1,10 +1,12 @@
 import { FileEdit, Forward, MoreHorizontal, Reply, ReplyAll } from "lucide-react";
-import { ToolbarButton } from "@/action-buttons/src/action-buttons";
+import { IconButton } from "@/app-button/src/app-button";
+import { TOOLBAR_ICON_BUTTON_STYLE } from "@/app-button/src/icon-button-presets";
 import { ActionBar } from "@/action-bar/src/action-bar";
 import { MenuDropdown } from "@/menu-dropdown/src/menu-dropdown";
 import type { MenuDropdownItemProps } from "@/menu-dropdown/src/menu-dropdown";
 import type { Mail } from "@/types/mail";
 import { buildMailActionButtons } from "@/mail-core/src/mail-action-buttons";
+import { MAIL_DETAIL_ICON_TRIGGER_STYLE } from "@/mail-core/src/mail-detail-action-bar.styles";
 
 type MailDetailActionBarProps = {
   active: Mail | undefined;
@@ -91,28 +93,48 @@ export function MailDetailActionBar({
         <>
           <div className="mail-detail-actions-desktop flex items-center gap-2">
             {isDraft ? (
-              <ToolbarButton label="Edit draft" onClick={onEditDraft}>
-                <FileEdit className="size-4" />
-              </ToolbarButton>
+              <IconButton
+                label="Edit draft"
+                onClick={onEditDraft}
+                icon={<FileEdit className="size-4" />}
+                variant="subtle"
+                style={TOOLBAR_ICON_BUTTON_STYLE}
+              />
             ) : (
               <>
-                <ToolbarButton label="Reply" onClick={onReply}>
-                  <Reply className="size-4" />
-                </ToolbarButton>
-                <ToolbarButton label="Reply all" onClick={onReplyAll}>
-                  <ReplyAll className="size-4" />
-                </ToolbarButton>
-                <ToolbarButton label="Forward" onClick={onForward}>
-                  <Forward className="size-4" />
-                </ToolbarButton>
+                <IconButton
+                  label="Reply"
+                  onClick={onReply}
+                  icon={<Reply className="size-4" />}
+                  variant="subtle"
+                  style={TOOLBAR_ICON_BUTTON_STYLE}
+                />
+                <IconButton
+                  label="Reply all"
+                  onClick={onReplyAll}
+                  icon={<ReplyAll className="size-4" />}
+                  variant="subtle"
+                  style={TOOLBAR_ICON_BUTTON_STYLE}
+                />
+                <IconButton
+                  label="Forward"
+                  onClick={onForward}
+                  icon={<Forward className="size-4" />}
+                  variant="subtle"
+                  style={TOOLBAR_ICON_BUTTON_STYLE}
+                />
               </>
             )}
           </div>
           <div className="mail-detail-actions-compact items-center gap-2">
             {isDraft ? (
-              <ToolbarButton label="Edit draft" onClick={onEditDraft}>
-                <FileEdit className="size-4" />
-              </ToolbarButton>
+              <IconButton
+                label="Edit draft"
+                onClick={onEditDraft}
+                icon={<FileEdit className="size-4" />}
+                variant="subtle"
+                style={TOOLBAR_ICON_BUTTON_STYLE}
+              />
             ) : (
               <MenuDropdown
                 align="start"
@@ -120,24 +142,24 @@ export function MailDetailActionBar({
                 items={mobileReplyItems}
                 contentClassName="min-w-[11rem] p-1.5"
                 trigger={
-                  <button
-                    type="button"
-                    aria-label="Reply options"
-                    className="size-9 rounded-full flex items-center justify-center transition-colors"
-                    style={{
-                      color: "color-mix(in oklab, var(--color-ink) 70%, transparent)",
-                      backgroundColor: "color-mix(in oklab, var(--color-ink) 6%, transparent)",
-                    }}
-                  >
-                    <Reply className="size-4" />
-                  </button>
+                  <IconButton
+                    label="Reply options"
+                    icon={<Reply className="size-4" />}
+                    showTooltip={false}
+                    variant="subtle"
+                    style={MAIL_DETAIL_ICON_TRIGGER_STYLE}
+                  />
                 }
               />
             )}
             {!isDraft ? (
-              <ToolbarButton label="Forward" onClick={onForward}>
-                <Forward className="size-4" />
-              </ToolbarButton>
+              <IconButton
+                label="Forward"
+                onClick={onForward}
+                icon={<Forward className="size-4" />}
+                variant="subtle"
+                style={TOOLBAR_ICON_BUTTON_STYLE}
+              />
             ) : null}
           </div>
         </>
@@ -146,14 +168,15 @@ export function MailDetailActionBar({
         <>
           <div className="mail-detail-actions-desktop flex items-center gap-2">
             {detailActionButtons.map((button) => (
-              <ToolbarButton
+              <IconButton
                 key={button.id}
                 label={button.label}
                 onClick={button.onClick}
                 active={button.active}
-              >
-                {button.icon}
-              </ToolbarButton>
+                icon={button.icon}
+                variant="subtle"
+                style={TOOLBAR_ICON_BUTTON_STYLE}
+              />
             ))}
           </div>
           <div className="mail-detail-actions-compact">
@@ -163,17 +186,13 @@ export function MailDetailActionBar({
               items={overflowItems}
               contentClassName="min-w-[12.5rem] p-1.5"
               trigger={
-                <button
-                  type="button"
-                  aria-label="More actions"
-                  className="size-9 rounded-full flex items-center justify-center transition-colors"
-                  style={{
-                    color: "color-mix(in oklab, var(--color-ink) 70%, transparent)",
-                    backgroundColor: "color-mix(in oklab, var(--color-ink) 6%, transparent)",
-                  }}
-                >
-                  <MoreHorizontal className="size-4" />
-                </button>
+                <IconButton
+                  label="More actions"
+                  icon={<MoreHorizontal className="size-4" />}
+                  showTooltip={false}
+                  variant="subtle"
+                  style={MAIL_DETAIL_ICON_TRIGGER_STYLE}
+                />
               }
             />
           </div>

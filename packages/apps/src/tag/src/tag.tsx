@@ -1,9 +1,8 @@
 import type { CSSProperties, ReactNode } from "react";
 import { Plus, Tag as TagIcon, X } from "lucide-react";
 
-import { AppButton } from "@/app-button/src/app-button";
+import { IconButton } from "@/app-button/src/app-button";
 import { cn } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/tooltip";
 
 export type TagProps = {
   label: string;
@@ -82,20 +81,13 @@ export function TagGroup({
         />
       ))}
       {!readonly && onAdd ? (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div>
-              <AppButton
-                size="icon"
-                variant="subtle"
-                icon={<Plus className="size-3.5" />}
-                onClick={onAdd}
-                ariaLabel="Add tag"
-              />
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>Add tag</TooltipContent>
-        </Tooltip>
+        <IconButton
+          label="Add tag"
+          icon={<Plus className="size-3.5" />}
+          onClick={onAdd}
+          size="md"
+          variant="subtle"
+        />
       ) : null}
     </div>
   );

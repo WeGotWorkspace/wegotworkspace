@@ -1,8 +1,8 @@
 import { CalendarDays, Mailbox } from "lucide-react";
 import { DetailViewHeader } from "@/detail-view-header/src/detail-view-header";
+import { Button } from "@/app-button/src/app-button";
 import { Input } from "@/ui/input";
 import { Textarea } from "@/ui/textarea";
-import { Button } from "@/ui/button";
 import { cn } from "@/lib/utils";
 
 type MailComposeViewProps = {

@@ -20,9 +20,9 @@ import {
   Users,
   PictureInPicture2,
 } from "lucide-react";
+import { Button, IconButton } from "@/app-button/src/app-button";
 import { Input } from "@/ui/input";
 import { Label } from "@/ui/label";
-import { Button } from "@/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -777,14 +777,13 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
                       className="border-0 text-sm"
                       style={{ background: PANEL_SOFT, color: TEXT }}
                     />
-                    <Button
+                    <IconButton
                       onClick={sendMessage}
-                      size="icon"
+                      icon={<Send className="size-4" />}
                       style={{ background: ACCENT, color: TEXT }}
-                      aria-label="Send"
-                    >
-                      <Send className="size-4" />
-                    </Button>
+                      label="Send"
+                      showTooltip={false}
+                    />
                   </div>
                 </div>
               </aside>
@@ -1290,8 +1289,7 @@ function ShareButton({ link }: { link: string }) {
             <span className="flex-1 truncate text-sm">
               {link || "Start a meeting to generate a share link"}
             </span>
-            <Button
-              size="icon"
+            <IconButton
               className="size-7"
               style={{ background: ACCENT }}
               disabled={!link}
@@ -1300,10 +1298,10 @@ function ShareButton({ link }: { link: string }) {
                 void navigator.clipboard?.writeText(link);
                 toast.success("Link copied");
               }}
-              aria-label="Copy link"
-            >
-              <Copy className="size-3.5" />
-            </Button>
+              label="Copy link"
+              icon={<Copy className="size-3.5" />}
+              showTooltip={false}
+            />
           </div>
         </div>
       </PopoverContent>
@@ -1316,8 +1314,7 @@ function ShareInline({ link }: { link: string }) {
     <div className="w-full max-w-2xl rounded-xl px-4 py-3" style={{ background: PANEL_SOFT }}>
       <div className="flex items-center gap-3">
         <span className="flex-1 truncate text-sm">{link || "Share link will appear here."}</span>
-        <Button
-          size="icon"
+        <IconButton
           className="size-8"
           style={{ background: ACCENT }}
           disabled={!link}
@@ -1326,10 +1323,10 @@ function ShareInline({ link }: { link: string }) {
             void navigator.clipboard?.writeText(link);
             toast.success("Link copied");
           }}
-          aria-label="Copy link"
-        >
-          <Copy className="size-3.5" />
-        </Button>
+          label="Copy link"
+          icon={<Copy className="size-3.5" />}
+          showTooltip={false}
+        />
       </div>
     </div>
   );
