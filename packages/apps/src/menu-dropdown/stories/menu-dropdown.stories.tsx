@@ -8,11 +8,16 @@ import "./menu-dropdown.stories.css";
 const meta: Meta<typeof DropdownMenu> = {
   title: "Shared/Dropdown Menu",
   component: DropdownMenu,
+  parameters: {
+    layout: "centered",
+  },
   args: {
     align: "start",
   },
   argTypes: {
     align: { control: "select", options: ["start", "center", "end"] },
+    trigger: { control: false },
+    items: { control: false },
   },
 };
 
@@ -27,34 +32,51 @@ const baseItems: DropdownMenuItemProps[] = [
 
 export const Default: Story = {
   args: {
-    trigger: <Button label="Open menu" variant="subtle" />,
-    items: baseItems,
     contentClassName: "menu-dropdown-story__panel",
   },
+  render: (args) => (
+    <DropdownMenu
+      {...args}
+      trigger={<Button label="Open menu" variant="subtle" />}
+      items={baseItems}
+    />
+  ),
 };
 
 export const CheckedState: Story = {
   args: {
     ...Default.args,
-    items: [
-      { id: "notes", label: "Notes", icon: <NotebookPen className="size-4" />, onClick: () => {} },
-      {
-        id: "mail",
-        label: "Mail",
-        icon: <Mail className="size-4" />,
-        checked: true,
-        onClick: () => {},
-      },
-      { id: "starred", label: "Starred", icon: <Star className="size-4" />, onClick: () => {} },
-    ],
     contentClassName: "menu-dropdown-story__panel menu-dropdown-story__panel--warm",
   },
+  render: (args) => (
+    <DropdownMenu
+      {...args}
+      trigger={<Button label="Open menu" variant="subtle" />}
+      items={[
+        { id: "notes", label: "Notes", icon: <NotebookPen className="size-4" />, onClick: () => {} },
+        {
+          id: "mail",
+          label: "Mail",
+          icon: <Mail className="size-4" />,
+          checked: true,
+          onClick: () => {},
+        },
+        { id: "starred", label: "Starred", icon: <Star className="size-4" />, onClick: () => {} },
+      ]}
+    />
+  ),
 };
 
 export const Disabled: Story = {
   args: {
     ...Default.args,
     disabled: true,
-    trigger: <Button label="Dropdown disabled" variant="subtle" disabled />,
   },
+  render: (args) => (
+    <DropdownMenu
+      {...args}
+      trigger={<Button label="Dropdown disabled" variant="subtle" disabled />}
+      items={baseItems}
+    />
+  ),
 };
