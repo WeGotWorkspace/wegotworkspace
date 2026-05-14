@@ -6,6 +6,7 @@ import {
 } from "@/ui/dropdown-menu";
 import { MenuItem, type MenuItemProps } from "@/menu-item/src/menu-item";
 import { cn } from "@/lib/utils";
+import "@/menu-dropdown/src/menu-dropdown.css";
 
 export type MenuDropdownItemProps = MenuItemProps & { id?: string };
 
@@ -35,15 +36,19 @@ export function MenuDropdown({
       <DropdownMenuContent
         align={align}
         sideOffset={sideOffset}
-        className={contentClassName}
+        className={cn("menu-dropdown__content", contentClassName)}
         style={contentStyle}
       >
-        {items.map((item) => (
-          <DropdownMenuItem key={item.id ?? item.label} asChild className="cursor-pointer p-0">
+        {items.map((item, index) => (
+          <DropdownMenuItem
+            key={item.id ?? `${index}-${String(item.label)}`}
+            asChild
+            className="menu-dropdown__item"
+          >
             <MenuItem
               {...item}
               tone="inherit"
-              className={cn("gap-2.5 px-2.5 py-2 rounded-md", item.className)}
+              className={cn("menu-dropdown__menu-item", item.className)}
             />
           </DropdownMenuItem>
         ))}
