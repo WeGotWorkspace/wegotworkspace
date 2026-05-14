@@ -1,5 +1,12 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { HardDrive, Mail as MailIcon, NotebookPen, Settings as SettingsIcon, Shield, Video } from "lucide-react";
+import {
+  HardDrive,
+  Mail as MailIcon,
+  NotebookPen,
+  Settings as SettingsIcon,
+  Shield,
+  Video,
+} from "lucide-react";
 import { AppsHomeScreen } from "../src/apps-home-screen";
 
 const meta: Meta<typeof AppsHomeScreen> = {
@@ -7,6 +14,7 @@ const meta: Meta<typeof AppsHomeScreen> = {
   component: AppsHomeScreen,
   parameters: {
     layout: "fullscreen",
+    routerPath: "/",
   },
   decorators: [
     (Story) => (

@@ -37,7 +37,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui/tooltip";
 import { SidebarGroup, SidebarLink } from "@/settings-sidebar/src/settings-sidebar";
 import { AppSidebar, AppSidebarScrim } from "@/app-sidebar/src/app-sidebar";
-import { AppSwitcher } from "@/app-switcher/src/app-switcher";
+import { AppSwitchButton } from "@/app-switch-button/src/app-switch-button";
 import {
   WorkspaceAppLayout,
   WorkspaceSidebarToggle,
@@ -648,7 +648,7 @@ export function InstallWorkspace({ bootstrapState = null }: InstallWorkspaceProp
           open={sidebarOpen}
           onCloseMobile={() => setSidebarOpen(false)}
           showAppSwitcher
-          appSwitcher={<AppSwitcher tagline="We got" subtitle="Workspace" items={[]} disabled />}
+          appSwitcher={<AppSwitchButton disabled subtitle="Workspace" />}
           closeButtonHoverClassName="hover:bg-[color-mix(in_oklab,#042318_12%,transparent)]"
         >
           <nav className="flex-1 px-4 space-y-7 overflow-y-auto">
