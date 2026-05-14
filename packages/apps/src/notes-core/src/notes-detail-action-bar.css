@@ -1,7 +1,0 @@
-@import "../../styles.css" reference;
-
-.notes-detail-action-bar__actions {
-  --button-subtle-color: color-mix(in oklab, var(--color-ink) 70%, transparent);
-  --button-subtle-background: color-mix(in oklab, var(--color-ink) 6%, transparent);
-  --button-subtle-hover-background: color-mix(in oklab, var(--color-ink) 18%, transparent);
-}
