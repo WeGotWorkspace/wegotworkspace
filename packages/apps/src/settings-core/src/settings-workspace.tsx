@@ -3,7 +3,6 @@ import { Input } from "@/ui/input";
 import { Button } from "@/button/src/button";
 import { AppSidebar, AppSidebarScrim } from "@/app-sidebar/src/app-sidebar";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
-import { WorkspaceAppSwitcher } from "@/workspace-app-switcher/src/workspace-app-switcher";
 import { UserAvatar } from "@/user-avatar/src/user-avatar";
 import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
 import {
@@ -60,21 +59,19 @@ export function SettingsWorkspace(props: SettingsWorkspaceProps) {
       <AppSidebar
         open={controller.sidebarOpen}
         onCloseMobile={() => controller.setSidebarOpen(false)}
-        appSwitcher={<WorkspaceAppSwitcher />}
+        footer={
+          <WorkspaceUserFooter
+            name={session.user.displayName}
+            initials={workspaceUserInitials(session.user)}
+            detailLine={session.user.username}
+            onLogoutClick={() => {
+              if (logoutHref) window.location.assign(logoutHref);
+            }}
+            linkHoverClassName="hover:bg-[color-mix(in_oklab,var(--color-ink)_18%,transparent)]"
+          />
+        }
       >
-        <nav className="flex-1 px-4 space-y-7 overflow-y-auto">
-          <SidebarSection title="Account" items={sidebarItems} />
-        </nav>
-
-        <WorkspaceUserFooter
-          name={session.user.displayName}
-          initials={workspaceUserInitials(session.user)}
-          detailLine={session.user.username}
-          onLogoutClick={() => {
-            if (logoutHref) window.location.assign(logoutHref);
-          }}
-          linkHoverClassName="hover:bg-[color-mix(in_oklab,var(--color-ink)_18%,transparent)]"
-        />
+        <SidebarSection title="Account" items={sidebarItems} />
       </AppSidebar>
       <AppSidebarScrim
         open={controller.sidebarOpen}

@@ -64,7 +64,6 @@ import {
 import type { Note } from "@/lib/models/note";
 import { useIsTouch } from "@/hooks/use-is-touch";
 import { SidebarGroup, SidebarLink } from "@/settings-sidebar/src/settings-sidebar";
-import { WorkspaceAppSwitcher } from "@/workspace-app-switcher/src/workspace-app-switcher";
 import { ListHeader } from "@/list-header/src/list-header";
 import { createPwaHead } from "@/lib/pwa-head";
 import { DriveApp } from "@/drive-core/src/drive-app";
@@ -1331,161 +1330,8 @@ export function DriveWorkspace({
         <AppSidebar
           open={sidebarOpen}
           onCloseMobile={() => setSidebarOpen(false)}
-          appSwitcher={<WorkspaceAppSwitcher />}
-        >
-          <div className="flex h-full flex-col" style={{ ["--color-ink" as string]: "#ffffff" }}>
-            <div className="px-4 mb-4">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    className="w-full flex items-center justify-center gap-2 h-11 rounded-full text-sm font-medium transition-transform hover:-translate-y-0.5"
-                    style={{
-                      backgroundColor: "var(--color-ink)",
-                      color: "var(--drive-sidebar)",
-                      boxShadow:
-                        "0 10px 24px -12px color-mix(in oklab, var(--color-ink) 60%, transparent)",
-                    }}
-                  >
-                    <Plus className="size-4" /> New
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" sideOffset={8} className="min-w-[14rem]">
-                  <DropdownMenuItem onClick={createFolder} className="cursor-pointer gap-2.5 py-2">
-                    <FolderPlus className="size-4 opacity-70" />
-                    <span>New folder</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => fileInputRef.current?.click()}
-                    className="cursor-pointer gap-2.5 py-2"
-                  >
-                    <Upload className="size-4 opacity-70" />
-                    <span>Upload files</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => createBlank("doc")}
-                    className="cursor-pointer gap-2.5 py-2"
-                  >
-                    <FileText className="size-4 opacity-70" />
-                    <span>New document</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => createBlank("sheet")}
-                    className="cursor-pointer gap-2.5 py-2"
-                  >
-                    <FileSpreadsheet className="size-4 opacity-70" />
-                    <span>New spreadsheet</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => createBlank("slides")}
-                    className="cursor-pointer gap-2.5 py-2"
-                  >
-                    <Presentation className="size-4 opacity-70" />
-                    <span>New presentation</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
-            <nav className="flex-1 px-4 space-y-7 overflow-y-auto">
-              <ul className="space-y-1">
-                <SidebarLink
-                  active={
-                    view.type === "folder" &&
-                    (view.path === "My Drive" || view.path.startsWith("My Drive/"))
-                  }
-                  onClick={() => selectView({ type: "folder", path: "My Drive" })}
-                  icon={topFolderIcon["My Drive"]}
-                  isDropTarget={dropTarget === "My Drive"}
-                  onDragOver={(e) => {
-                    if (dragging) {
-                      e.preventDefault();
-                      setDropTarget("My Drive");
-                    }
-                  }}
-                  onDragLeave={() =>
-                    setDropTarget((target) => (target === "My Drive" ? null : target))
-                  }
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    dropOnFolder("My Drive");
-                  }}
-                >
-                  My Drive
-                </SidebarLink>
-                <SidebarLink
-                  active={view.type === "recent"}
-                  onClick={() => selectView({ type: "recent" })}
-                  icon={<Clock className="size-3.5" />}
-                >
-                  Recent
-                </SidebarLink>
-                <SidebarLink
-                  active={view.type === "starred"}
-                  onClick={() => selectView({ type: "starred" })}
-                  icon={<Star className="size-3.5" />}
-                >
-                  Starred
-                </SidebarLink>
-                <SidebarLink
-                  active={
-                    view.type === "folder" &&
-                    (view.path === "Trash" || view.path.startsWith("Trash/"))
-                  }
-                  onClick={() => selectView({ type: "folder", path: "Trash" })}
-                  icon={topFolderIcon.Trash}
-                  isDropTarget={dropTarget === "Trash"}
-                  onDragOver={(e) => {
-                    if (dragging) {
-                      e.preventDefault();
-                      setDropTarget("Trash");
-                    }
-                  }}
-                  onDragLeave={() =>
-                    setDropTarget((target) => (target === "Trash" ? null : target))
-                  }
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    dropOnFolder("Trash");
-                  }}
-                >
-                  Trash
-                </SidebarLink>
-              </ul>
-
-              {sidebarGroupPaths.length > 0 && (
-                <SidebarGroup label="Groups">
-                  {sidebarGroupPaths.map((groupPath) => (
-                    <SidebarLink
-                      key={groupPath}
-                      active={
-                        view.type === "folder" &&
-                        (view.path === groupPath || view.path.startsWith(`${groupPath}/`))
-                      }
-                      onClick={() => selectView({ type: "folder", path: groupPath })}
-                      icon={<Users className="size-3.5" />}
-                      isDropTarget={dropTarget === groupPath}
-                      onDragOver={(e) => {
-                        if (dragging) {
-                          e.preventDefault();
-                          setDropTarget(groupPath);
-                        }
-                      }}
-                      onDragLeave={() =>
-                        setDropTarget((target) => (target === groupPath ? null : target))
-                      }
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        dropOnFolder(groupPath);
-                      }}
-                    >
-                      {groupPath.split("/").pop()}
-                    </SidebarLink>
-                  ))}
-                </SidebarGroup>
-              )}
-            </nav>
-
+          scrollSurfaceStyle={{ ["--color-ink" as string]: "#ffffff" }}
+          footer={
             <WorkspaceUserFooter
               name={session.user.displayName}
               initials={workspaceUserInitials(session.user)}
@@ -1493,7 +1339,152 @@ export function DriveWorkspace({
               onLogoutClick={() => window.location.assign("/logout")}
               linkHoverClassName="hover:bg-[color-mix(in_oklab,var(--color-ink)_18%,transparent)]"
             />
-          </div>
+          }
+          primaryButton={
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="flex h-11 w-full items-center justify-center gap-2 rounded-full text-sm font-medium transition-transform hover:-translate-y-0.5"
+                  style={{
+                    backgroundColor: "var(--color-ink)",
+                    color: "var(--drive-sidebar)",
+                    boxShadow:
+                      "0 10px 24px -12px color-mix(in oklab, var(--color-ink) 60%, transparent)",
+                  }}
+                >
+                  <Plus className="size-4" /> New
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" sideOffset={8} className="min-w-[14rem]">
+                <DropdownMenuItem onClick={createFolder} className="cursor-pointer gap-2.5 py-2">
+                  <FolderPlus className="size-4 opacity-70" />
+                  <span>New folder</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => fileInputRef.current?.click()}
+                  className="cursor-pointer gap-2.5 py-2"
+                >
+                  <Upload className="size-4 opacity-70" />
+                  <span>Upload files</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => createBlank("doc")}
+                  className="cursor-pointer gap-2.5 py-2"
+                >
+                  <FileText className="size-4 opacity-70" />
+                  <span>New document</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => createBlank("sheet")}
+                  className="cursor-pointer gap-2.5 py-2"
+                >
+                  <FileSpreadsheet className="size-4 opacity-70" />
+                  <span>New spreadsheet</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => createBlank("slides")}
+                  className="cursor-pointer gap-2.5 py-2"
+                >
+                  <Presentation className="size-4 opacity-70" />
+                  <span>New presentation</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          }
+        >
+          <ul className="space-y-1">
+            <SidebarLink
+              active={
+                view.type === "folder" &&
+                (view.path === "My Drive" || view.path.startsWith("My Drive/"))
+              }
+              onClick={() => selectView({ type: "folder", path: "My Drive" })}
+              icon={topFolderIcon["My Drive"]}
+              isDropTarget={dropTarget === "My Drive"}
+              onDragOver={(e) => {
+                if (dragging) {
+                  e.preventDefault();
+                  setDropTarget("My Drive");
+                }
+              }}
+              onDragLeave={() => setDropTarget((target) => (target === "My Drive" ? null : target))}
+              onDrop={(e) => {
+                e.preventDefault();
+                dropOnFolder("My Drive");
+              }}
+            >
+              My Drive
+            </SidebarLink>
+            <SidebarLink
+              active={view.type === "recent"}
+              onClick={() => selectView({ type: "recent" })}
+              icon={<Clock className="size-3.5" />}
+            >
+              Recent
+            </SidebarLink>
+            <SidebarLink
+              active={view.type === "starred"}
+              onClick={() => selectView({ type: "starred" })}
+              icon={<Star className="size-3.5" />}
+            >
+              Starred
+            </SidebarLink>
+            <SidebarLink
+              active={
+                view.type === "folder" && (view.path === "Trash" || view.path.startsWith("Trash/"))
+              }
+              onClick={() => selectView({ type: "folder", path: "Trash" })}
+              icon={topFolderIcon.Trash}
+              isDropTarget={dropTarget === "Trash"}
+              onDragOver={(e) => {
+                if (dragging) {
+                  e.preventDefault();
+                  setDropTarget("Trash");
+                }
+              }}
+              onDragLeave={() => setDropTarget((target) => (target === "Trash" ? null : target))}
+              onDrop={(e) => {
+                e.preventDefault();
+                dropOnFolder("Trash");
+              }}
+            >
+              Trash
+            </SidebarLink>
+          </ul>
+
+          {sidebarGroupPaths.length > 0 ? (
+            <SidebarGroup label="Groups">
+              {sidebarGroupPaths.map((groupPath) => (
+                <SidebarLink
+                  key={groupPath}
+                  active={
+                    view.type === "folder" &&
+                    (view.path === groupPath || view.path.startsWith(`${groupPath}/`))
+                  }
+                  onClick={() => selectView({ type: "folder", path: groupPath })}
+                  icon={<Users className="size-3.5" />}
+                  isDropTarget={dropTarget === groupPath}
+                  onDragOver={(e) => {
+                    if (dragging) {
+                      e.preventDefault();
+                      setDropTarget(groupPath);
+                    }
+                  }}
+                  onDragLeave={() =>
+                    setDropTarget((target) => (target === groupPath ? null : target))
+                  }
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    dropOnFolder(groupPath);
+                  }}
+                >
+                  {groupPath.split("/").pop()}
+                </SidebarLink>
+              ))}
+            </SidebarGroup>
+          ) : null}
         </AppSidebar>
         <AppSidebarScrim open={sidebarOpen} onClick={() => setSidebarOpen(false)} />
 
@@ -1824,12 +1815,7 @@ export function DriveWorkspace({
               <span className="text-xs px-3 font-medium tabular-nums leading-9 inline-flex items-center">
                 {selectedIds.length} items
               </span>
-              <IconButton
-                label="Star"
-                onClick={batchStar}
-                icon={<Star />}
-                variant="ghost"
-              />
+              <IconButton label="Star" onClick={batchStar} icon={<Star />} variant="ghost" />
               <IconButton
                 label="Download"
                 onClick={() => {
@@ -1853,12 +1839,7 @@ export function DriveWorkspace({
                 icon={<Trash2 />}
                 variant="ghost"
               />
-              <IconButton
-                label="Done"
-                onClick={exitSelection}
-                icon={<X />}
-                variant="ghost"
-              />
+              <IconButton label="Done" onClick={exitSelection} icon={<X />} variant="ghost" />
             </div>
           )}
         </section>
