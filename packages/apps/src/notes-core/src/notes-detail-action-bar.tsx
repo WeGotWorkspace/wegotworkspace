@@ -1,9 +1,9 @@
 import { Archive, ArchiveRestore, BookOpen, Star } from "lucide-react";
 import { IconButton } from "@/button/src/button";
-import { TOOLBAR_ICON_BUTTON_STYLE } from "@/button/src/icon-button-presets";
 import { ActionBar } from "@/action-bar/src/action-bar";
 import type { Note } from "@/lib/models/note";
 import type { NotesUILabels } from "@/notes-core/src/notes-app.stories.fixtures";
+import "@/notes-core/src/notes-detail-action-bar.css";
 
 type NotesDetailActionBarProps = {
   active: Note | undefined;
@@ -34,13 +34,12 @@ export function NotesDetailActionBar({
     <ActionBar
       onBack={closeMobileDetail}
       right={
-        <>
+        <div className="notes-detail-action-bar__actions flex items-center gap-2">
           <IconButton
             label={labels.toolbarMoveToNotebook}
             onClick={() => openMoveDialog([active.id])}
             icon={<BookOpen />}
             variant="subtle"
-            style={TOOLBAR_ICON_BUTTON_STYLE}
           />
           <IconButton
             label={labels.toolbarStar}
@@ -48,7 +47,6 @@ export function NotesDetailActionBar({
             active={!!starred[active.id]}
             icon={<Star />}
             variant="subtle"
-            style={TOOLBAR_ICON_BUTTON_STYLE}
           />
           <IconButton
             label={archived[active.id] ? labels.toolbarUnarchive : labels.toolbarArchive}
@@ -56,15 +54,14 @@ export function NotesDetailActionBar({
             active={!!archived[active.id]}
             icon={
               archived[active.id] ? (
-                <ArchiveRestore className="size-4" />
+                <ArchiveRestore />
               ) : (
-                <Archive className="size-4" />
+                <Archive />
               )
             }
             variant="subtle"
-            style={TOOLBAR_ICON_BUTTON_STYLE}
           />
-        </>
+        </div>
       }
     />
   );

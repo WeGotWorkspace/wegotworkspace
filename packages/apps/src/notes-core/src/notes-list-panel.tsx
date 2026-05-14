@@ -1,7 +1,6 @@
 import type { MouseEvent as ReactMouseEvent, ReactNode, RefObject } from "react";
 import { Archive, Pencil, Star, Trash2 } from "lucide-react";
 import { IconButton } from "@/button/src/button";
-import { LIST_ICON_BUTTON_STYLE } from "@/button/src/icon-button-presets";
 import { ListHeader } from "@/list-header/src/list-header";
 import { ListItem } from "@/list-item/src/list-item";
 import type { Note } from "@/lib/models/note";
@@ -9,6 +8,7 @@ import { formatNoteDateForList } from "@/notes-core/src/notes-date-utils";
 import type { NotesUILabels } from "@/notes-core/src/notes-app.stories.fixtures";
 import { WorkspaceListLoadingState } from "@/workspace-list-state/src/workspace-list-loading-state";
 import { WorkspaceSwipeList } from "@/workspace-swipe-list/src/workspace-swipe-list";
+import "@/notes-core/src/notes-list-panel.css";
 
 type NotesListPanelProps = {
   L: NotesUILabels;
@@ -85,7 +85,7 @@ export function NotesListPanel({
             : L.listFiles(visibleNotes.length)
         }
         actions={
-          <>
+          <div className="notes-list-panel__header-actions flex items-center gap-2">
             {canEditDelete ? (
               <>
                 <IconButton
@@ -100,7 +100,6 @@ export function NotesListPanel({
                   icon={<Pencil />}
                   size="sm"
                   variant="subtle"
-                  style={LIST_ICON_BUTTON_STYLE}
                 />
                 <IconButton
                   label={L.remove}
@@ -114,7 +113,6 @@ export function NotesListPanel({
                   icon={<Trash2 />}
                   size="sm"
                   variant="subtle"
-                  style={LIST_ICON_BUTTON_STYLE}
                 />
               </>
             ) : null}
@@ -130,10 +128,9 @@ export function NotesListPanel({
                 icon={<Trash2 />}
                 size="sm"
                 variant="subtle"
-                style={LIST_ICON_BUTTON_STYLE}
               />
             ) : null}
-          </>
+          </div>
         }
         searchPlaceholder={L.searchPlaceholder}
         searchValue={searchQuery}

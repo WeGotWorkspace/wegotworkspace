@@ -56,19 +56,15 @@ const BUTTON_VARIANT_STYLES: Record<ButtonVariant, ButtonVariantStyle> = {
     boxShadow: "0 1px 2px color-mix(in oklab, var(--color-ink) 8%, transparent)",
   },
   ghost: {
-    color: "var(--color-ink)",
     backgroundColor: "transparent",
   },
-  subtle: {
-    color: "color-mix(in oklab, var(--color-ink) 65%, transparent)",
-    backgroundColor: "color-mix(in oklab, var(--color-ink) 6%, transparent)",
-  },
+  subtle: {},
 };
 function getButtonVariantStyle(variant: ButtonVariant, active?: boolean): ButtonVariantStyle {
   if (!active) return BUTTON_VARIANT_STYLES[variant];
   return {
     ...BUTTON_VARIANT_STYLES[variant],
-    color: "var(--color-emerald)",
+    color: "var(--button-active-color, var(--color-emerald))",
   };
 }
 

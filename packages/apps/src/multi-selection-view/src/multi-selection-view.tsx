@@ -1,7 +1,7 @@
 import { CheckSquare2 } from "lucide-react";
 import { IconButton } from "@/button/src/button";
-import { TOOLBAR_ICON_BUTTON_STYLE } from "@/button/src/icon-button-presets";
 import { cn } from "@/lib/utils";
+import "@/multi-selection-view/src/multi-selection-view.css";
 
 export type MultiSelectionViewAction = {
   id?: string;
@@ -66,7 +66,7 @@ export function MultiSelectionView({
       </h1>
 
       {actions.length > 0 ? (
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+        <div className="multi-selection-view__actions mt-6 flex flex-wrap items-center justify-center gap-2">
           {actions.map((action) => (
             <IconButton
               key={action.id ?? action.label}
@@ -76,7 +76,6 @@ export function MultiSelectionView({
               icon={action.icon}
               size="lg"
               variant="subtle"
-              style={TOOLBAR_ICON_BUTTON_STYLE}
             />
           ))}
         </div>

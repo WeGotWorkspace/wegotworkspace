@@ -1,12 +1,12 @@
 import { FileEdit, Forward, MoreHorizontal, Reply, ReplyAll } from "lucide-react";
 import { IconButton } from "@/button/src/button";
-import { TOOLBAR_ICON_BUTTON_STYLE } from "@/button/src/icon-button-presets";
 import { ActionBar } from "@/action-bar/src/action-bar";
 import { MenuDropdown } from "@/menu-dropdown/src/menu-dropdown";
 import type { MenuDropdownItemProps } from "@/menu-dropdown/src/menu-dropdown";
 import type { Mail } from "@/types/mail";
 import { buildMailActionButtons } from "@/mail-core/src/mail-action-buttons";
 import { MAIL_DETAIL_ICON_TRIGGER_STYLE } from "@/mail-core/src/mail-detail-action-bar.styles";
+import "@/mail-core/src/mail-detail-action-bar.css";
 
 type MailDetailActionBarProps = {
   active: Mail | undefined;
@@ -98,7 +98,6 @@ export function MailDetailActionBar({
                 onClick={onEditDraft}
                 icon={<FileEdit />}
                 variant="subtle"
-                style={TOOLBAR_ICON_BUTTON_STYLE}
               />
             ) : (
               <>
@@ -107,21 +106,18 @@ export function MailDetailActionBar({
                   onClick={onReply}
                   icon={<Reply />}
                   variant="subtle"
-                  style={TOOLBAR_ICON_BUTTON_STYLE}
                 />
                 <IconButton
                   label="Reply all"
                   onClick={onReplyAll}
                   icon={<ReplyAll />}
                   variant="subtle"
-                  style={TOOLBAR_ICON_BUTTON_STYLE}
                 />
                 <IconButton
                   label="Forward"
                   onClick={onForward}
                   icon={<Forward />}
                   variant="subtle"
-                  style={TOOLBAR_ICON_BUTTON_STYLE}
                 />
               </>
             )}
@@ -133,7 +129,6 @@ export function MailDetailActionBar({
                 onClick={onEditDraft}
                 icon={<FileEdit />}
                 variant="subtle"
-                style={TOOLBAR_ICON_BUTTON_STYLE}
               />
             ) : (
               <MenuDropdown
@@ -158,7 +153,6 @@ export function MailDetailActionBar({
                 onClick={onForward}
                 icon={<Forward />}
                 variant="subtle"
-                style={TOOLBAR_ICON_BUTTON_STYLE}
               />
             ) : null}
           </div>
@@ -175,7 +169,6 @@ export function MailDetailActionBar({
                 active={button.active}
                 icon={button.icon}
                 variant="subtle"
-                style={TOOLBAR_ICON_BUTTON_STYLE}
               />
             ))}
           </div>
