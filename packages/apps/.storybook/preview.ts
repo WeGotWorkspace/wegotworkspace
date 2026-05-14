@@ -1,5 +1,6 @@
 import type { Preview } from "@storybook/react-vite";
 import { Fragment, createElement } from "react";
+import { MINIMAL_VIEWPORTS } from "storybook/viewport";
 import {
   createMemoryHistory,
   createRootRoute,
@@ -56,6 +57,9 @@ const preview: Preview = {
         date: /Date$/i,
       },
     },
+    viewport: {
+      options: MINIMAL_VIEWPORTS,
+    },
 
     a11y: {
       // 'todo' - show a11y violations in the test UI only
@@ -63,6 +67,9 @@ const preview: Preview = {
       // 'off' - skip a11y checks entirely
       test: "todo",
     },
+  },
+  initialGlobals: {
+    viewport: { value: "desktop", isRotated: false },
   },
 };
 

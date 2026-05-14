@@ -37,3 +37,29 @@ export const NotesLike: Story = {
     rightMenuLabel: "More actions",
   },
 };
+
+export const CompactOverflow: Story = {
+  args: {
+    ...MailLike.args,
+  },
+  globals: {
+    viewport: {
+      value: "mobile1",
+      isRotated: false,
+    },
+  },
+};
+
+export const CustomOverflowIcons: Story = {
+  args: {
+    ...MailLike.args,
+    leftMenuIcon: <Forward />,
+    rightMenuIcon: <Star />,
+  },
+  globals: {
+    viewport: {
+      value: "mobile1",
+      isRotated: false,
+    },
+  },
+};
