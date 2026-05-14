@@ -3,7 +3,7 @@ import { BrandMark } from "@/brand-mark/src/brand-mark";
 
 type SidebarLogoProps = {
   showAppSwitcher?: boolean;
-  /** When `showAppSwitcher` is true, render this node (e.g. `WorkspaceAppSwitcher` or presentational `AppSwitchButton`). */
+  /** When `showAppSwitcher` is true, render this node (e.g. `WorkspaceAppSwitcher` / `AppSwitchButton`, which includes the brand mark). */
   appSwitcher?: React.ReactNode;
   onCloseMobile: () => void;
   closeButtonHoverClassName?: string;
@@ -18,8 +18,7 @@ export function SidebarLogo({
   return (
     <div className="p-6 md:p-8 flex items-center gap-3 justify-between">
       <div className="flex items-center gap-2 min-w-0">
-        <BrandMark className="w-auto shrink-0" fill="var(--sidebar-logo-brand-fill, var(--color-ink))" />
-        {showAppSwitcher && appSwitcher ? appSwitcher : null}
+        {showAppSwitcher && appSwitcher ? appSwitcher : <BrandMark />}
       </div>
       <button
         aria-label="Close menu"

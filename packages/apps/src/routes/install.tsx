@@ -37,7 +37,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui/tooltip";
 import { SidebarGroup, SidebarLink } from "@/settings-sidebar/src/settings-sidebar";
 import { AppSidebar, AppSidebarScrim } from "@/app-sidebar/src/app-sidebar";
-import { AppSwitchButton } from "@/app-switch-button/src/app-switch-button";
 import {
   WorkspaceAppLayout,
   WorkspaceSidebarToggle,
@@ -639,6 +638,10 @@ export function InstallWorkspace({ bootstrapState = null }: InstallWorkspaceProp
           ["--workspace-root-bg" as string]: "var(--color-cream, #f5f1e8)",
           ["--app-sidebar-bg" as string]: ACCENT_DEEP,
           ["--app-sidebar-color" as string]: "#042318",
+          ["--sidebar-logo-brand-fill" as string]: "#042318",
+          ["--sidebar-logo-close-button-color" as string]: "#042318",
+          ["--app-sidebar-close-hover-bg" as string]:
+            "color-mix(in oklab, #042318 12%, transparent)",
           ["--workspace-sidebar-toggle-color" as string]: INK,
           ["--workspace-sidebar-toggle-bg" as string]:
             "color-mix(in oklab, #1a1a18 6%, transparent)",
@@ -647,53 +650,52 @@ export function InstallWorkspace({ bootstrapState = null }: InstallWorkspaceProp
         <AppSidebar
           open={sidebarOpen}
           onCloseMobile={() => setSidebarOpen(false)}
-          showAppSwitcher
-          appSwitcher={<AppSwitchButton disabled subtitle="Workspace" />}
-          closeButtonHoverClassName="hover:bg-[color-mix(in_oklab,#042318_12%,transparent)]"
+          appSwitchDisabled
+          appSwitchSubtitle="Workspace"
+          footer={
+            <div
+              className="p-4 md:p-6 text-xs shrink-0 border-t"
+              style={{
+                borderColor: "color-mix(in oklab, #042318 22%, transparent)",
+                color: "color-mix(in oklab, #042318 75%, transparent)",
+              }}
+            >
+              Step {stepIdx + 1} of {STEPS.length}
+            </div>
+          }
         >
-          <nav className="flex-1 px-4 space-y-7 overflow-y-auto">
-            <SidebarGroup label="Setup steps">
-              {STEPS.map((candidate, index) => {
-                const done = index < stepIdx;
-                const active = index === stepIdx;
-                const reachable = index <= stepIdx;
-                return (
-                  <SidebarLink
-                    key={candidate.id}
-                    active={active}
-                    onClick={reachable ? () => goToStep(index) : undefined}
-                    icon={
-                      <span
-                        className="size-5 rounded-full flex items-center justify-center text-[10px] tabular-nums"
-                        style={{
-                          backgroundColor: done
-                            ? "#042318"
-                            : active
-                              ? "color-mix(in oklab, #042318 22%, transparent)"
-                              : "color-mix(in oklab, #042318 10%, transparent)",
-                          color: done ? ACCENT_DEEP : "#042318",
-                          fontWeight: 600,
-                        }}
-                      >
-                        {done ? <Check className="size-3" /> : index + 1}
-                      </span>
-                    }
-                  >
-                    <span style={{ opacity: reachable ? 1 : 0.5 }}>{candidate.label}</span>
-                  </SidebarLink>
-                );
-              })}
-            </SidebarGroup>
-          </nav>
-          <div
-            className="p-4 md:p-6 text-xs shrink-0 border-t"
-            style={{
-              borderColor: "color-mix(in oklab, #042318 22%, transparent)",
-              color: "color-mix(in oklab, #042318 75%, transparent)",
-            }}
-          >
-            Step {stepIdx + 1} of {STEPS.length}
-          </div>
+          <SidebarGroup label="Setup steps">
+            {STEPS.map((candidate, index) => {
+              const done = index < stepIdx;
+              const active = index === stepIdx;
+              const reachable = index <= stepIdx;
+              return (
+                <SidebarLink
+                  key={candidate.id}
+                  active={active}
+                  onClick={reachable ? () => goToStep(index) : undefined}
+                  icon={
+                    <span
+                      className="size-5 rounded-full flex items-center justify-center text-[10px] tabular-nums"
+                      style={{
+                        backgroundColor: done
+                          ? "#042318"
+                          : active
+                            ? "color-mix(in oklab, #042318 22%, transparent)"
+                            : "color-mix(in oklab, #042318 10%, transparent)",
+                        color: done ? ACCENT_DEEP : "#042318",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {done ? <Check className="size-3" /> : index + 1}
+                    </span>
+                  }
+                >
+                  <span style={{ opacity: reachable ? 1 : 0.5 }}>{candidate.label}</span>
+                </SidebarLink>
+              );
+            })}
+          </SidebarGroup>
         </AppSidebar>
         <AppSidebarScrim open={sidebarOpen} onClick={() => setSidebarOpen(false)} />
 

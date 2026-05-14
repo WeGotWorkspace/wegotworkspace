@@ -3,7 +3,6 @@ import "react-swipeable-list/dist/styles.css";
 import "@/mail-core/src/mail-ui.css";
 import { MoveToDialog } from "@/dialogs/src/dialogs";
 import { Button } from "@/button/src/button";
-import { WorkspaceAppSwitcher } from "@/workspace-app-switcher/src/workspace-app-switcher";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
 import { WorkspaceApp } from "@/workspace-app/src/workspace-app";
@@ -189,9 +188,18 @@ export function MailWorkspace({
           <AppSidebar
             open={c.sidebarOpen}
             onCloseMobile={c.closeSidebar}
-            appSwitcher={<WorkspaceAppSwitcher />}
-          >
-            <div className="px-4 mb-4">
+            footer={
+              <WorkspaceUserFooter
+                name={session.user.displayName}
+                initials={workspaceUserInitials(session.user)}
+                detailLine={session.user.username}
+                onLogoutClick={() => {
+                  if (logoutTo) window.location.assign(logoutTo);
+                }}
+                linkHoverClassName="hover:bg-[color-mix(in_oklab,var(--color-ink)_18%,transparent)] hover:text-[var(--color-ink)]"
+              />
+            }
+            primaryButton={
               <Button
                 label="Compose"
                 icon={<Pencil />}
@@ -203,25 +211,13 @@ export function MailWorkspace({
                 pill
                 variant="primary"
               />
-            </div>
-
-            <nav className="flex-1 px-4 space-y-7 overflow-y-auto">
-              <SidebarSection items={primarySidebarItems} />
-              <SidebarSection title={L.sectionMailboxes} items={systemSidebarItems} />
-              {moreMailboxes.length > 0 ? (
-                <SidebarSection title={L.sectionMore} items={moreSidebarItems} />
-              ) : null}
-            </nav>
-
-            <WorkspaceUserFooter
-              name={session.user.displayName}
-              initials={workspaceUserInitials(session.user)}
-              detailLine={session.user.username}
-              onLogoutClick={() => {
-                if (logoutTo) window.location.assign(logoutTo);
-              }}
-              linkHoverClassName="hover:bg-[color-mix(in_oklab,var(--color-ink)_18%,transparent)] hover:text-[var(--color-ink)]"
-            />
+            }
+          >
+            <SidebarSection items={primarySidebarItems} />
+            <SidebarSection title={L.sectionMailboxes} items={systemSidebarItems} />
+            {moreMailboxes.length > 0 ? (
+              <SidebarSection title={L.sectionMore} items={moreSidebarItems} />
+            ) : null}
           </AppSidebar>
         )}
         list={(c) =>

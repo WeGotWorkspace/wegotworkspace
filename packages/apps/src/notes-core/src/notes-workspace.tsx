@@ -4,7 +4,6 @@ import "react-swipeable-list/dist/styles.css";
 import { Button } from "@/button/src/button";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
-import { WorkspaceAppSwitcher } from "@/workspace-app-switcher/src/workspace-app-switcher";
 import { MoveToDialog, EditDialog, DeleteDialog, TagPickerDialog } from "@/dialogs/src/dialogs";
 import { NoteDetailView } from "@/note-detail-view/src/note-detail-view";
 import { MultiSelectionView } from "@/multi-selection-view/src/multi-selection-view";
@@ -130,9 +129,18 @@ export function NotesWorkspace({
           <AppSidebar
             open={c.sidebarOpen}
             onCloseMobile={c.closeSidebar}
-            appSwitcher={<WorkspaceAppSwitcher />}
-          >
-            <div className="px-4 mb-4">
+            footer={
+              <WorkspaceUserFooter
+                name={session.user.displayName}
+                initials={workspaceUserInitials(session.user)}
+                detailLine={session.user.username}
+                onLogoutClick={() => {
+                  if (logoutTo) window.location.assign(logoutTo);
+                }}
+                linkHoverClassName="hover:bg-[color-mix(in_oklab,var(--color-ink)_18%,transparent)] hover:text-[var(--color-ink)]"
+              />
+            }
+            primaryButton={
               <Button
                 label={L.newNote}
                 icon={<Pencil />}
@@ -145,22 +153,11 @@ export function NotesWorkspace({
                 variant="primary"
                 disabled={!canCreateNote}
               />
-            </div>
-            <nav className="flex-1 px-4 space-y-7 overflow-y-auto">
-              <SidebarSection items={primarySidebarItems} />
-              <SidebarSection title={L.sectionNotebooks} items={notebookSidebarItems} />
-              <SidebarSection title={L.sectionTags} items={tagSidebarItems} />
-            </nav>
-
-            <WorkspaceUserFooter
-              name={session.user.displayName}
-              initials={workspaceUserInitials(session.user)}
-              detailLine={session.user.username}
-              onLogoutClick={() => {
-                if (logoutTo) window.location.assign(logoutTo);
-              }}
-              linkHoverClassName="hover:bg-[color-mix(in_oklab,var(--color-ink)_18%,transparent)] hover:text-[var(--color-ink)]"
-            />
+            }
+          >
+            <SidebarSection items={primarySidebarItems} />
+            <SidebarSection title={L.sectionNotebooks} items={notebookSidebarItems} />
+            <SidebarSection title={L.sectionTags} items={tagSidebarItems} />
           </AppSidebar>
         )}
         list={(c) =>

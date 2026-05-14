@@ -1,54 +1,68 @@
-import { SidebarLogo } from "@/sidebar-logo/src/sidebar-logo";
+import type { CSSProperties, ReactNode } from "react";
+import { X } from "lucide-react";
+import { AppSwitchButton } from "@/app-switch-button/src/app-switch-button";
+import { cn } from "@/lib/utils";
+import "@/app-sidebar/src/app-sidebar.css";
 
-type AppSidebarProps = {
+export type AppSidebarProps = {
   open: boolean;
-  children: React.ReactNode;
   onCloseMobile: () => void;
-  showAppSwitcher?: boolean;
-  appSwitcher?: React.ReactNode;
-  closeButtonHoverClassName?: string;
+  /** Main nav / section content (e.g. `SidebarSection` list). Padding and scroll live in the shell. */
+  children: ReactNode;
+  /** Pinned below the scroll region (e.g. `WorkspaceUserFooter`). */
+  footer?: ReactNode;
+  /** Primary CTA under the header (e.g. Compose, New). */
+  primaryButton?: ReactNode;
+  /** Applied to the scroll stack (primary button + sections), e.g. drive `--color-ink` override. */
+  scrollSurfaceStyle?: CSSProperties;
+  /** Passed to `AppSwitchButton` (e.g. install shell). */
+  appSwitchDisabled?: boolean;
+  appSwitchSubtitle?: string;
+  className?: string;
 };
 
 export function AppSidebar({
   open,
-  children,
   onCloseMobile,
-  showAppSwitcher = true,
-  appSwitcher,
-  closeButtonHoverClassName = "hover:bg-[color-mix(in_oklab,var(--color-ink)_8%,transparent)]",
+  children,
+  footer,
+  primaryButton,
+  scrollSurfaceStyle,
+  appSwitchDisabled = false,
+  appSwitchSubtitle,
+  className,
 }: AppSidebarProps) {
   return (
-    <aside
-      data-open={open}
-      className={`fixed md:static z-40 inset-y-0 left-0 shrink-0 flex flex-col border-r shadow-2xl md:shadow-none transition-[translate,margin,border-width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] overflow-hidden will-change-transform ${
-        open
-          ? "translate-x-0 w-72 md:w-64"
-          : "-translate-x-full w-72 md:w-64 md:-ml-64 md:border-r-0"
-      }`}
-      style={{
-        backgroundColor: "var(--app-sidebar-bg, var(--mail-sidebar, var(--color-cream, #f5f1e8)))",
-        borderColor:
-          "var(--app-sidebar-border-color, color-mix(in oklab, var(--color-ink) 15%, transparent))",
-        color: "var(--app-sidebar-color, var(--color-ink))",
-      }}
-    >
-      <SidebarLogo
-        onCloseMobile={onCloseMobile}
-        showAppSwitcher={showAppSwitcher}
-        appSwitcher={appSwitcher}
-        closeButtonHoverClassName={closeButtonHoverClassName}
-      />
-      {children}
+    <aside data-open={open ? "true" : "false"} className={cn("app-sidebar", className)}>
+      <header className="app-sidebar__header">
+        <div className="app-sidebar__header-main">
+          <AppSwitchButton disabled={appSwitchDisabled} subtitle={appSwitchSubtitle} />
+        </div>
+        <button
+          type="button"
+          aria-label="Close menu"
+          onClick={onCloseMobile}
+          className="app-sidebar__close"
+        >
+          <X className="size-4" aria-hidden />
+        </button>
+      </header>
+
+      <div className="app-sidebar__scroll">
+        <div className="app-sidebar__scroll-surface" style={scrollSurfaceStyle}>
+          {primaryButton != null ? (
+            <div className="app-sidebar__primary-button">{primaryButton}</div>
+          ) : null}
+          <div className="app-sidebar__sections">{children}</div>
+        </div>
+      </div>
+
+      {footer ? <footer className="app-sidebar__footer">{footer}</footer> : null}
     </aside>
   );
 }
 
 export function AppSidebarScrim({ open, onClick }: { open: boolean; onClick: () => void }) {
   if (!open) return null;
-  return (
-    <div
-      className="fixed inset-0 z-30 bg-black/30 md:hidden animate-in fade-in duration-300"
-      onClick={onClick}
-    />
-  );
+  return <div className="app-sidebar__scrim" onClick={onClick} />;
 }
