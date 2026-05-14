@@ -16,16 +16,16 @@ export const BUTTON_VARIANT_OPTIONS = [
 const BUTTON_BASE_CLASSNAME = "button";
 const BUTTON_PILL_CLASSNAME = "button--pill";
 const BUTTON_ICON_SLOT_CLASSNAME = "button__icon";
-const ICON_BUTTON_ACTIVE_CLASSNAME = "app-icon-button--active";
+const ICON_BUTTON_ACTIVE_CLASSNAME = "icon-button--active";
 const BUTTON_SIZE_CLASSNAMES: Record<ButtonSize, string> = {
   sm: "button--size-sm",
   md: "button--size-md",
   lg: "button--size-lg",
 };
 const ICON_BUTTON_SIZE_CLASSNAMES: Record<IconButtonSize, string> = {
-  sm: "app-icon-button--size-sm",
-  md: "app-icon-button--size-md",
-  lg: "app-icon-button--size-lg",
+  sm: "icon-button--size-sm",
+  md: "icon-button--size-md",
+  lg: "icon-button--size-lg",
 };
 const BUTTON_VARIANT_CLASSNAMES: Record<ButtonVariant, string> = {
   primary: "button--variant-primary",
