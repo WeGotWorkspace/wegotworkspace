@@ -1084,7 +1084,6 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
                           return (
                             <MenuItem
                               key={`${check.label}-${index}`}
-                              tone="inherit"
                               className="px-0 py-2 text-(--color-ink) hover:bg-transparent focus-visible:ring-0"
                               icon={<Icon style={{ color }} />}
                               label={check.label}
