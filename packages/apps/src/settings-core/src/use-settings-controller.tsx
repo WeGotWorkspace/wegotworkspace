@@ -101,3 +101,5 @@ export function useSettingsController({
     },
   };
 }
+
+export type SettingsControllerState = ReturnType<typeof useSettingsController>;

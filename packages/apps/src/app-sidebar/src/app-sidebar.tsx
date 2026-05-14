@@ -33,36 +33,34 @@ export function AppSidebar({
   className,
 }: AppSidebarProps) {
   return (
-    <aside data-open={open ? "true" : "false"} className={cn("app-sidebar", className)}>
-      <header className="app-sidebar__header">
-        <div className="app-sidebar__header-main">
-          <AppSwitchButton disabled={appSwitchDisabled} subtitle={appSwitchSubtitle} />
-        </div>
-        <button
-          type="button"
-          aria-label="Close menu"
-          onClick={onCloseMobile}
-          className="app-sidebar__close"
-        >
-          <X className="size-4" aria-hidden />
-        </button>
-      </header>
+    <>
+      {open ? <div className="app-sidebar__scrim" onClick={onCloseMobile} aria-hidden /> : null}
+      <aside data-open={open ? "true" : "false"} className={cn("app-sidebar", className)}>
+        <header className="app-sidebar__header">
+          <div className="app-sidebar__header-main">
+            <AppSwitchButton disabled={appSwitchDisabled} subtitle={appSwitchSubtitle} />
+          </div>
+          <button
+            type="button"
+            aria-label="Close menu"
+            onClick={onCloseMobile}
+            className="app-sidebar__close"
+          >
+            <X className="size-4" aria-hidden />
+          </button>
+        </header>
 
-      <div className="app-sidebar__scroll">
-        <div className="app-sidebar__scroll-surface" style={scrollSurfaceStyle}>
-          {primaryButton != null ? (
-            <div className="app-sidebar__primary-button">{primaryButton}</div>
-          ) : null}
-          <div className="app-sidebar__sections">{children}</div>
+        <div className="app-sidebar__scroll">
+          <div className="app-sidebar__scroll-surface" style={scrollSurfaceStyle}>
+            {primaryButton != null ? (
+              <div className="app-sidebar__primary-button">{primaryButton}</div>
+            ) : null}
+            <div className="app-sidebar__sections">{children}</div>
+          </div>
         </div>
-      </div>
 
-      {footer ? <footer className="app-sidebar__footer">{footer}</footer> : null}
-    </aside>
+        {footer ? <footer className="app-sidebar__footer">{footer}</footer> : null}
+      </aside>
+    </>
   );
-}
-
-export function AppSidebarScrim({ open, onClick }: { open: boolean; onClick: () => void }) {
-  if (!open) return null;
-  return <div className="app-sidebar__scrim" onClick={onClick} />;
 }

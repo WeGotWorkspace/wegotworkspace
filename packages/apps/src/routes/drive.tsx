@@ -73,7 +73,7 @@ import type {
   DriveUploadProgress,
 } from "@/drive-core/src/drive-types";
 import { parentAndName, pathFromDirectoryEntry } from "@/lib/api/wgw/drive";
-import { AppSidebar, AppSidebarScrim } from "@/app-sidebar/src/app-sidebar";
+import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import {
   WorkspaceAppLayout,
   WorkspaceUserFooter,
@@ -1486,7 +1486,6 @@ export function DriveWorkspace({
             </SidebarGroup>
           ) : null}
         </AppSidebar>
-        <AppSidebarScrim open={sidebarOpen} onClick={() => setSidebarOpen(false)} />
 
         {/* Main browser */}
         <section

@@ -6,5 +6,7 @@ export type SettingsWorkspaceProps = {
   session: WorkspaceSession;
   operations?: SettingsAPIOperations;
   listLoading?: boolean;
-  logoutTo?: string | false;
+  /** Invoked when the user chooses log out; navigation is owned by the app shell. */
+  onLogout?: () => void;
+  className?: string;
 };

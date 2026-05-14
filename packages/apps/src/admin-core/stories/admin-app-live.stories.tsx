@@ -10,7 +10,6 @@ const meta: Meta<typeof AdminApp> = {
   component: AdminApp,
   parameters: {
     layout: "fullscreen",
-    routerPath: "/admin",
   },
 };
 
