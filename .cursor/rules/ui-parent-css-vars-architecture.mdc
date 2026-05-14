@@ -1,0 +1,19 @@
+---
+description: Parent-scoped CSS variable architecture for reusable UI primitives
+alwaysApply: true
+---
+
+# Parent-Scoped CSS Variables
+
+When building or refactoring UI components in `packages/apps/src/**/*.{ts,tsx,css}`:
+
+- Keep primitives context-agnostic; avoid semantic context classes like `*-toolbar`, `*-list`, `*-fab` on primitive instances.
+- Let parent containers own visual context by setting CSS custom properties in parent CSS files.
+- Primitives consume variables with defaults, e.g. `var(--button-subtle-color, <fallback>)`.
+- Keep state behavior (hover, active, disabled) in primitive CSS; let parents override via variables only.
+- Prefer CSS files for styling contracts; do not centralize style presets in TypeScript objects.
+
+Example direction:
+
+- Parent CSS: set `--button-subtle-*` and `--button-ghost-*` on container selectors.
+- Primitive CSS: read those vars in `.button--variant-*` rules with sensible fallbacks.

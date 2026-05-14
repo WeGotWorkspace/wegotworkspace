@@ -28,28 +28,9 @@
   @apply rounded-full;
 }
 
-.icon-button--size-sm {
-  @apply size-8 rounded-full;
-  --button-icon-size: 0.875rem;
-}
-
-.icon-button--size-md {
-  @apply size-9 rounded-full;
-  --button-icon-size: 1rem;
-}
-
-.icon-button--size-lg {
-  @apply size-11 rounded-full;
-  --button-icon-size: 1.25rem;
-}
-
 .button__icon > svg {
   width: var(--button-icon-size) !important;
   height: var(--button-icon-size) !important;
-}
-
-.icon-button--active .button__icon > svg {
-  fill: currentColor;
 }
 
 .button--variant-primary:hover {
