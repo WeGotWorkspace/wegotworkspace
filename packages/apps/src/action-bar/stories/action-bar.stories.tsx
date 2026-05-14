@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Archive, Forward, Reply, Star } from "lucide-react";
 import { IconButton } from "@/button/src/button";
-import { TOOLBAR_ICON_BUTTON_STYLE } from "@/button/src/icon-button-presets";
 import { ActionBar } from "../src/action-bar";
+import "./action-bar.stories.css";
 
 const meta: Meta<typeof ActionBar> = {
   title: "Shared/Action Bar",
@@ -16,40 +16,36 @@ export const MailLike: Story = {
   args: {
     onBack: () => {},
     left: (
-      <>
+      <div className="action-bar-story-toolbar-actions flex items-center gap-2">
         <IconButton
           label="Reply"
           onClick={() => {}}
           icon={<Reply />}
           variant="subtle"
-          style={TOOLBAR_ICON_BUTTON_STYLE}
         />
         <IconButton
           label="Forward"
           onClick={() => {}}
           icon={<Forward />}
           variant="subtle"
-          style={TOOLBAR_ICON_BUTTON_STYLE}
         />
-      </>
+      </div>
     ),
     right: (
-      <>
+      <div className="action-bar-story-toolbar-actions flex items-center gap-2">
         <IconButton
           label="Star"
           onClick={() => {}}
           icon={<Star />}
           variant="subtle"
-          style={TOOLBAR_ICON_BUTTON_STYLE}
         />
         <IconButton
           label="Archive"
           onClick={() => {}}
           icon={<Archive />}
           variant="subtle"
-          style={TOOLBAR_ICON_BUTTON_STYLE}
         />
-      </>
+      </div>
     ),
   },
 };
@@ -58,22 +54,20 @@ export const NotesLike: Story = {
   args: {
     onBack: () => {},
     right: (
-      <>
+      <div className="action-bar-story-toolbar-actions flex items-center gap-2">
         <IconButton
           label="Star"
           onClick={() => {}}
           icon={<Star />}
           variant="subtle"
-          style={TOOLBAR_ICON_BUTTON_STYLE}
         />
         <IconButton
           label="Archive"
           onClick={() => {}}
           icon={<Archive />}
           variant="subtle"
-          style={TOOLBAR_ICON_BUTTON_STYLE}
         />
-      </>
+      </div>
     ),
   },
 };
