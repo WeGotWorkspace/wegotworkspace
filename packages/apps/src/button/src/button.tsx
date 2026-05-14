@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ComponentPropsWithRef, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import "@/button/src/button.css";
 import {
@@ -25,7 +25,7 @@ export {
 export { IconButton } from "@/button/src/icon-button";
 export type { IconButtonProps } from "@/button/src/icon-button";
 
-export type ButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children"> & {
+export type ButtonProps = Omit<ComponentPropsWithRef<"button">, "children"> & {
   label?: string;
   icon?: ReactNode;
   size?: ButtonSize;
@@ -35,6 +35,7 @@ export type ButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "childre
 };
 
 export function Button({
+  ref,
   label,
   icon,
   size = "md",
@@ -65,6 +66,7 @@ export function Button({
       )}
       style={{ ...getButtonVariantStyle(variant), ...style }}
       {...props}
+      ref={ref}
     >
       {content}
     </button>
