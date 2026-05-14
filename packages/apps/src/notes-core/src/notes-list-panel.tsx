@@ -1,7 +1,7 @@
 import type { MouseEvent as ReactMouseEvent, ReactNode, RefObject } from "react";
 import { Archive, Pencil, Star, Trash2 } from "lucide-react";
-import { IconButton } from "@/app-button/src/button";
-import { LIST_ICON_BUTTON_STYLE } from "@/app-button/src/icon-button-presets";
+import { IconButton } from "@/button/src/button";
+import { LIST_ICON_BUTTON_STYLE } from "@/button/src/icon-button-presets";
 import { ListHeader } from "@/list-header/src/list-header";
 import { ListItem } from "@/list-item/src/list-item";
 import type { Note } from "@/lib/models/note";
@@ -97,7 +97,7 @@ export function NotesListPanel({
                         : { kind: "tag", name: selectedTag! },
                     )
                   }
-                  icon={<Pencil className="size-4" />}
+                  icon={<Pencil />}
                   size="sm"
                   variant="subtle"
                   style={LIST_ICON_BUTTON_STYLE}
@@ -111,7 +111,7 @@ export function NotesListPanel({
                         : { kind: "tag", name: selectedTag! },
                     )
                   }
-                  icon={<Trash2 className="size-4" />}
+                  icon={<Trash2 />}
                   size="sm"
                   variant="subtle"
                   style={LIST_ICON_BUTTON_STYLE}
@@ -127,7 +127,7 @@ export function NotesListPanel({
                     "all",
                   )
                 }
-                icon={<Trash2 className="size-4" />}
+                icon={<Trash2 />}
                 size="sm"
                 variant="subtle"
                 style={LIST_ICON_BUTTON_STYLE}

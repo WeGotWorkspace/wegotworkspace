@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Archive, Forward, Reply, Star } from "lucide-react";
-import { IconButton } from "@/app-button/src/button";
-import { TOOLBAR_ICON_BUTTON_STYLE } from "@/app-button/src/icon-button-presets";
+import { IconButton } from "@/button/src/button";
+import { TOOLBAR_ICON_BUTTON_STYLE } from "@/button/src/icon-button-presets";
 import { ActionBar } from "../src/action-bar";
 
 const meta: Meta<typeof ActionBar> = {
@@ -20,14 +20,14 @@ export const MailLike: Story = {
         <IconButton
           label="Reply"
           onClick={() => {}}
-          icon={<Reply className="size-4" />}
+          icon={<Reply />}
           variant="subtle"
           style={TOOLBAR_ICON_BUTTON_STYLE}
         />
         <IconButton
           label="Forward"
           onClick={() => {}}
-          icon={<Forward className="size-4" />}
+          icon={<Forward />}
           variant="subtle"
           style={TOOLBAR_ICON_BUTTON_STYLE}
         />
@@ -38,14 +38,14 @@ export const MailLike: Story = {
         <IconButton
           label="Star"
           onClick={() => {}}
-          icon={<Star className="size-4" />}
+          icon={<Star />}
           variant="subtle"
           style={TOOLBAR_ICON_BUTTON_STYLE}
         />
         <IconButton
           label="Archive"
           onClick={() => {}}
-          icon={<Archive className="size-4" />}
+          icon={<Archive />}
           variant="subtle"
           style={TOOLBAR_ICON_BUTTON_STYLE}
         />
@@ -62,14 +62,14 @@ export const NotesLike: Story = {
         <IconButton
           label="Star"
           onClick={() => {}}
-          icon={<Star className="size-4" />}
+          icon={<Star />}
           variant="subtle"
           style={TOOLBAR_ICON_BUTTON_STYLE}
         />
         <IconButton
           label="Archive"
           onClick={() => {}}
-          icon={<Archive className="size-4" />}
+          icon={<Archive />}
           variant="subtle"
           style={TOOLBAR_ICON_BUTTON_STYLE}
         />

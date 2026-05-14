@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { PenSquare, Trash2 } from "lucide-react";
-import { IconButton } from "@/app-button/src/button";
-import { LIST_ICON_BUTTON_STYLE } from "@/app-button/src/icon-button-presets";
+import { IconButton } from "@/button/src/button";
+import { LIST_ICON_BUTTON_STYLE } from "@/button/src/icon-button-presets";
 import { ListHeader } from "@/list-header/src/list-header";
 
 const meta: Meta<typeof ListHeader> = {
@@ -23,7 +23,7 @@ export const Default: Story = {
         <IconButton
           label="Compose"
           onClick={() => {}}
-          icon={<PenSquare className="size-4" />}
+          icon={<PenSquare />}
           size="sm"
           variant="subtle"
           style={LIST_ICON_BUTTON_STYLE}
@@ -31,7 +31,7 @@ export const Default: Story = {
         <IconButton
           label="Delete"
           onClick={() => {}}
-          icon={<Trash2 className="size-4" />}
+          icon={<Trash2 />}
           size="sm"
           variant="subtle"
           style={LIST_ICON_BUTTON_STYLE}

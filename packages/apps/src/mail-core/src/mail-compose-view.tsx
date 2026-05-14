@@ -1,6 +1,6 @@
 import { CalendarDays, Mailbox } from "lucide-react";
 import { DetailViewHeader } from "@/detail-view-header/src/detail-view-header";
-import { Button } from "@/app-button/src/button";
+import { Button } from "@/button/src/button";
 import { Input } from "@/ui/input";
 import { Textarea } from "@/ui/textarea";
 import { cn } from "@/lib/utils";

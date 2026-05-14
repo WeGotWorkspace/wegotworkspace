@@ -1,6 +1,6 @@
 import { CheckSquare2 } from "lucide-react";
-import { IconButton } from "@/app-button/src/button";
-import { TOOLBAR_ICON_BUTTON_STYLE } from "@/app-button/src/icon-button-presets";
+import { IconButton } from "@/button/src/button";
+import { TOOLBAR_ICON_BUTTON_STYLE } from "@/button/src/icon-button-presets";
 import { cn } from "@/lib/utils";
 
 export type MultiSelectionViewAction = {
@@ -36,7 +36,10 @@ export function MultiSelectionView({
 
   return (
     <article
-      className={cn("mx-auto flex max-w-[680px] flex-col items-center pt-12 md:pt-14 text-center", className)}
+      className={cn(
+        "mx-auto flex max-w-[680px] flex-col items-center pt-12 md:pt-14 text-center",
+        className,
+      )}
     >
       <div
         className="mb-6 flex size-20 items-center justify-center rounded-full"
