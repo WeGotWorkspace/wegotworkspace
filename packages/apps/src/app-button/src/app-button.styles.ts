@@ -4,10 +4,10 @@ export const APP_BUTTON_BASE_CLASSNAME =
   "inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none";
 
 export const APP_BUTTON_SIZE_CLASSNAMES = {
-  sm: "h-8 px-3 rounded-md text-xs",
-  md: "h-9 px-3 rounded-md text-sm",
-  lg: "h-10 px-8 rounded-md text-sm",
-  pill: "h-10 w-full rounded-full text-sm font-medium",
+  sm: "h-8 px-3 rounded-md text-xs font-medium",
+  md: "h-9 px-3 rounded-md text-sm font-medium",
+  lg: "h-10 px-8 rounded-md text-sm font-medium",
+  pill: "h-10 px-8 rounded-full text-sm font-medium",
 } as const;
 
 export const APP_ICON_BUTTON_SIZE_CLASSNAMES = {
@@ -18,8 +18,7 @@ export const APP_ICON_BUTTON_SIZE_CLASSNAMES = {
 
 export const APP_BUTTON_VARIANT_CLASSNAMES = {
   primary: "hover:opacity-95",
-  destructive:
-    "hover:bg-[color-mix(in_oklab,var(--color-red-500,#dc2626)_88%,black)]",
+  destructive: "hover:bg-[color-mix(in_oklab,var(--color-red-500,#dc2626)_88%,black)]",
   outline:
     "border border-[color:color-mix(in_oklab,var(--color-ink)_20%,transparent)] hover:bg-[color-mix(in_oklab,var(--color-ink)_8%,transparent)]",
   ghost: "hover:bg-[color-mix(in_oklab,var(--color-ink)_12%,transparent)]",

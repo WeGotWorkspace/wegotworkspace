@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { PenSquare, Star } from "lucide-react";
-import { Button, IconButton } from "../src/app-button";
+import { PenSquare } from "lucide-react";
+import { Button } from "../src/app-button";
 
 const meta: Meta<typeof Button> = {
-  title: "Shared/Buttons",
+  title: "Shared/Buttons/Button",
   component: Button,
 };
 
@@ -41,30 +41,4 @@ export const Destructive: Story = {
 
 export const Disabled: Story = {
   args: { ...Primary.args, disabled: true },
-};
-
-export const IconButtonDefault: StoryObj<typeof IconButton> = {
-  args: {
-    label: "Favorite",
-    icon: <Star className="size-4" fill="currentColor" />,
-    size: "md",
-    variant: "subtle",
-    onClick: () => {},
-  },
-  render: (args) => <IconButton {...args} />,
-};
-
-export const IconButtonActive: StoryObj<typeof IconButton> = {
-  ...IconButtonDefault,
-  args: { ...IconButtonDefault.args, active: true },
-};
-
-export const IconButtonGhost: StoryObj<typeof IconButton> = {
-  ...IconButtonDefault,
-  args: { ...IconButtonDefault.args, variant: "ghost" },
-};
-
-export const IconButtonDisabled: StoryObj<typeof IconButton> = {
-  ...IconButtonDefault,
-  args: { ...IconButtonDefault.args, disabled: true },
 };
