@@ -1,0 +1,20 @@
+---
+description: Standardize responsive action bars/toolbars with descriptor-driven APIs
+alwaysApply: true
+---
+
+# Responsive Action Surfaces
+
+When a component must switch between inline actions and overflow menus:
+
+- Prefer structured action descriptors (for example `{ id, label, icon, onClick, active }[]`) over arbitrary `ReactNode` slots.
+- Keep the adaptive behavior inside the shared component (row vs dropdown), not duplicated in each consumer.
+- Use container query behavior first and provide a media-query fallback for reliability.
+- Expose optional trigger override props (for example `leftMenuIcon` / `rightMenuIcon`) so products can keep context-specific affordances.
+- Keep legacy slot props only for compatibility; avoid introducing them in new callsites.
+
+Implementation checklist:
+
+- Shared component owns dropdown trigger rendering and menu item mapping.
+- Consumer components pass action descriptors and labels, not ad-hoc dropdown trees.
+- Dropdown item icon sizing is normalized by shared CSS.
