@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
-import { StorybookAppSwitcherMock } from "@/storybook-app-switcher-mock/src/storybook-app-switcher-mock";
+import { WorkspaceAppSwitcher } from "@/workspace-app-switcher/src/workspace-app-switcher";
 import {
   WorkspaceBrandHeader,
   WorkspaceAppLayout,
@@ -18,6 +18,9 @@ export default meta;
 type Story = StoryObj;
 
 export const Default: Story = {
+  parameters: {
+    routerPath: "/mail",
+  },
   render: () => (
     <WorkspaceAppLayout
       style={{
@@ -38,10 +41,7 @@ export const Default: Story = {
       }}
     >
       <WorkspaceSidebar open>
-        <WorkspaceBrandHeader
-          onCloseMobile={() => {}}
-          appSwitcher={<StorybookAppSwitcherMock workspace="mail" />}
-        />
+        <WorkspaceBrandHeader onCloseMobile={() => {}} appSwitcher={<WorkspaceAppSwitcher />} />
         <nav className="flex-1 px-4 space-y-7 overflow-y-auto">
           <SidebarSection
             title="Library"

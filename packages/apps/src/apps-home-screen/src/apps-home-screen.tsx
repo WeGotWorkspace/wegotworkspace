@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { LogOut } from "lucide-react";
-import { AppSwitcher } from "@/app-switcher/src/app-switcher";
+import { AppSwitchButton } from "@/app-switch-button/src/app-switch-button";
 import { BrandMark } from "@/brand-mark/src/brand-mark";
 import { cn } from "@/lib/utils";
 import {
@@ -35,8 +35,6 @@ export function AppsHomeScreen({
   showUserMenu = false,
   onLogout,
 }: AppsHomeScreenProps) {
-  const current = apps[0];
-
   return (
     <section
       className={cn("w-full min-h-dvh", className)}
@@ -45,25 +43,7 @@ export function AppsHomeScreen({
       <header className="flex items-center justify-between p-6 md:p-8 shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           <BrandMark className="w-auto shrink-0" />
-          {
-            <AppSwitcher
-              tagline="We Got"
-              subtitle="Workspace"
-              items={apps.map((app) => ({
-                id: app.id,
-                label: app.label,
-                icon: app.icon,
-                checked: app.id === current?.id,
-                onSelect: app.onSelect ?? (() => {}),
-              }))}
-              menuContentClassName="min-w-[12rem] p-1.5"
-              menuContentStyle={{
-                backgroundColor: current?.accent ?? "var(--color-paper)",
-                color: current?.fg ?? "var(--color-ink)",
-                borderColor: "color-mix(in oklab, currentColor 25%, transparent)",
-              }}
-            />
-          }
+          <AppSwitchButton subtitle="Workspace" />
         </div>
         {showUserMenu ? (
           <HomeUserMenu displayName={userDisplayName} onLogout={onLogout} />

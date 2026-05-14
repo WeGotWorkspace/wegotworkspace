@@ -1,7 +1,6 @@
-import type { ComponentProps } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { SidebarLogo } from "../src/sidebar-logo";
-import { StorybookAppSwitcherMock } from "@/storybook-app-switcher-mock/src/storybook-app-switcher-mock";
+import { WorkspaceAppSwitcher } from "@/workspace-app-switcher/src/workspace-app-switcher";
 
 const meta: Meta<typeof SidebarLogo> = {
   title: "Shared/App Logo",
@@ -17,9 +16,11 @@ const logoArgs = {
 };
 
 export const Default: Story = {
-  name: "Default",
+  parameters: {
+    routerPath: "/mail",
+  },
   args: {
     ...logoArgs,
-    appSwitcher: <StorybookAppSwitcherMock workspace="mail" />,
+    appSwitcher: <WorkspaceAppSwitcher />,
   },
 };
