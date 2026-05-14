@@ -9,6 +9,7 @@ node_modules/
 /apps/wegotworkspace/wgw-config.php
 /apps/wegotworkspace/wgw-content/*
 /apps/wegotworkspace/wgw-content/sessions/*
+/apps/wegotworkspace/packages/
 /apps/wegotworkspace/packages/apps/docs/build/
 /apps/wegotworkspace/packages/apps/office/build/
 /apps/wegotworkspace/packages/apps/drive/dist/
