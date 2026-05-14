@@ -16,7 +16,6 @@ type Story = StoryObj<typeof SettingsWorkspace>;
 
 export const Default: Story = {
   args: {
-    logoutTo: false,
     ...createSettingsAppBootstrap(),
   },
 };

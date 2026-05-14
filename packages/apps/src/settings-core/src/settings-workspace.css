@@ -1,0 +1,61 @@
+@import "../../styles.css" reference;
+
+.settings-workspace {
+  --settings-accent-bg: #da9fb8;
+
+  --workspace-root-bg: var(--color-cream, #f5f1e8);
+  --app-sidebar-bg: var(--settings-accent-bg);
+  --app-sidebar-border-color: color-mix(in oklab, var(--color-ink) 15%, transparent);
+  --app-sidebar-color: var(--color-ink);
+  --workspace-sidebar-toggle-color: var(--color-ink);
+  --workspace-sidebar-toggle-bg: color-mix(in oklab, var(--color-ink) 6%, transparent);
+  --workspace-user-footer-text-color: color-mix(in oklab, var(--color-ink) 80%, transparent);
+  --workspace-user-footer-border-color: color-mix(in oklab, var(--color-ink) 18%, transparent);
+  --workspace-user-footer-avatar-bg: color-mix(in oklab, var(--color-ink) 18%, transparent);
+  --workspace-user-footer-avatar-color: var(--color-ink);
+  --workspace-user-footer-link-color: var(--color-ink);
+  --workspace-user-footer-link-bg: color-mix(in oklab, var(--color-ink) 10%, transparent);
+
+  --button-subtle-background: var(--settings-accent-bg);
+  --button-subtle-color: var(--color-ink);
+}
+
+.settings-workspace__input-readonly {
+  @apply cursor-default;
+  background-color: color-mix(in oklab, var(--color-ink) 4%, transparent);
+}
+
+.settings-workspace__form-actions {
+  @apply flex justify-end pt-2;
+}
+
+.settings-workspace__grid-2 {
+  @apply grid grid-cols-2 gap-3;
+}
+
+.settings-workspace__group-list {
+  @apply space-y-0;
+}
+
+.settings-workspace__group-list > li + li {
+  border-top: 1px solid color-mix(in oklab, var(--color-ink) 10%, transparent);
+}
+
+.settings-workspace__group-row {
+  @apply flex items-center gap-3 py-3 first:pt-0 last:pb-0;
+}
+
+.settings-workspace__group-avatar {
+  --user-avatar-bg: var(--settings-accent-bg);
+  --user-avatar-fg: var(--color-ink);
+}
+
+.settings-workspace__group-name {
+  @apply truncate text-sm font-medium;
+  color: var(--color-ink);
+}
+
+.settings-workspace__group-meta {
+  @apply truncate text-xs;
+  color: color-mix(in oklab, var(--color-ink) 55%, transparent);
+}
