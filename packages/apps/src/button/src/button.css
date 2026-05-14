@@ -1,4 +1,4 @@
-@reference "../../styles.css";
+@import "../../styles.css" reference;
 
 .button {
   @apply inline-flex items-center justify-center gap-2 transition-colors;
@@ -28,17 +28,17 @@
   @apply rounded-full;
 }
 
-.app-icon-button--size-sm {
+.icon-button--size-sm {
   @apply size-8 rounded-full;
   --button-icon-size: 0.875rem;
 }
 
-.app-icon-button--size-md {
+.icon-button--size-md {
   @apply size-9 rounded-full;
   --button-icon-size: 1rem;
 }
 
-.app-icon-button--size-lg {
+.icon-button--size-lg {
   @apply size-11 rounded-full;
   --button-icon-size: 1.25rem;
 }
@@ -48,7 +48,7 @@
   height: var(--button-icon-size) !important;
 }
 
-.app-icon-button--active .button__icon > svg {
+.icon-button--active .button__icon > svg {
   fill: currentColor;
 }
 
