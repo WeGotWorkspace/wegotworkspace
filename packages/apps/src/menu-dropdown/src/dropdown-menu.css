@@ -1,9 +1,9 @@
 @import "../../styles.css" reference;
 
-.menu-dropdown__item {
+.dropdown-menu__item {
   @apply cursor-pointer p-0;
 }
 
-.menu-dropdown__menu-item {
+.dropdown-menu__menu-item {
   @apply gap-2.5 px-2.5 py-2 rounded-md;
 }

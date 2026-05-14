@@ -1,0 +1,125 @@
+@import "../styles.css" reference;
+
+.dropdown-menu-ui__sub-trigger {
+  @apply flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none;
+}
+
+.dropdown-menu-ui__sub-trigger:focus,
+.dropdown-menu-ui__sub-trigger[data-state="open"] {
+  @apply bg-accent;
+}
+
+.dropdown-menu-ui__sub-trigger--inset {
+  @apply pl-8;
+}
+
+.dropdown-menu-ui__sub-trigger svg {
+  @apply pointer-events-none size-4 shrink-0;
+}
+
+.dropdown-menu-ui__sub-trigger-chevron {
+  @apply ml-auto;
+}
+
+.dropdown-menu-ui__sub-content {
+  @apply z-50 min-w-[8rem] overflow-hidden rounded-md bg-popover p-1 text-popover-foreground shadow-lg;
+  transform-origin: var(--radix-dropdown-menu-content-transform-origin);
+}
+
+.dropdown-menu-ui__content {
+  @apply z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-[8rem] overflow-y-auto overflow-x-hidden rounded-md bg-popover p-1 text-popover-foreground shadow-md;
+  transform-origin: var(--radix-dropdown-menu-content-transform-origin);
+}
+
+.dropdown-menu-ui__sub-content[data-state="open"],
+.dropdown-menu-ui__content[data-state="open"] {
+  @apply animate-in fade-in-0 zoom-in-95;
+}
+
+.dropdown-menu-ui__sub-content[data-state="closed"],
+.dropdown-menu-ui__content[data-state="closed"] {
+  @apply animate-out fade-out-0 zoom-out-95;
+}
+
+.dropdown-menu-ui__sub-content[data-side="bottom"],
+.dropdown-menu-ui__content[data-side="bottom"] {
+  @apply slide-in-from-top-2;
+}
+
+.dropdown-menu-ui__sub-content[data-side="left"],
+.dropdown-menu-ui__content[data-side="left"] {
+  @apply slide-in-from-right-2;
+}
+
+.dropdown-menu-ui__sub-content[data-side="right"],
+.dropdown-menu-ui__content[data-side="right"] {
+  @apply slide-in-from-left-2;
+}
+
+.dropdown-menu-ui__sub-content[data-side="top"],
+.dropdown-menu-ui__content[data-side="top"] {
+  @apply slide-in-from-bottom-2;
+}
+
+.dropdown-menu-ui__item {
+  @apply relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors;
+}
+
+.dropdown-menu-ui__item:focus {
+  @apply bg-accent text-accent-foreground;
+}
+
+.dropdown-menu-ui__item[data-disabled] {
+  @apply pointer-events-none opacity-50;
+}
+
+.dropdown-menu-ui__item > svg {
+  @apply size-4 shrink-0;
+}
+
+.dropdown-menu-ui__item--inset {
+  @apply pl-8;
+}
+
+.dropdown-menu-ui__checkbox-item,
+.dropdown-menu-ui__radio-item {
+  @apply relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors;
+}
+
+.dropdown-menu-ui__checkbox-item:focus,
+.dropdown-menu-ui__radio-item:focus {
+  @apply bg-accent text-accent-foreground;
+}
+
+.dropdown-menu-ui__checkbox-item[data-disabled],
+.dropdown-menu-ui__radio-item[data-disabled] {
+  @apply pointer-events-none opacity-50;
+}
+
+.dropdown-menu-ui__indicator {
+  @apply absolute left-2 flex h-3.5 w-3.5 items-center justify-center;
+}
+
+.dropdown-menu-ui__indicator-check {
+  @apply h-4 w-4;
+}
+
+.dropdown-menu-ui__indicator-circle {
+  @apply h-2 w-2 fill-current;
+}
+
+.dropdown-menu-ui__label {
+  @apply px-2 py-1.5 text-sm font-semibold;
+}
+
+.dropdown-menu-ui__label--inset {
+  @apply pl-8;
+}
+
+.dropdown-menu-ui__separator {
+  @apply -mx-1 my-1 h-px bg-muted;
+}
+
+.dropdown-menu-ui__shortcut {
+  @apply ml-auto text-xs tracking-widest opacity-60;
+}
