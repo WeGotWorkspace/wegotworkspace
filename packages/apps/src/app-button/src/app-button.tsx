@@ -1,73 +1,103 @@
-type AppButtonProps = {
+import type { ButtonHTMLAttributes, ReactNode } from "react";
+import {
+  APP_BUTTON_BASE_CLASSNAME,
+  APP_BUTTON_SIZE_CLASSNAMES,
+  APP_BUTTON_VARIANT_CLASSNAMES,
+  APP_ICON_BUTTON_SIZE_CLASSNAMES,
+  getButtonVariantStyle,
+} from "@/app-button/src/app-button.styles";
+import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/tooltip";
+
+type AppVariant = keyof typeof APP_BUTTON_VARIANT_CLASSNAMES;
+
+type ButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children"> & {
   label?: string;
-  icon?: React.ReactNode;
-  onClick?: () => void;
-  disabled?: boolean;
-  size?: "icon" | "sm" | "md" | "pill";
-  variant?: "primary" | "ghost" | "subtle";
-  className?: string;
-  style?: React.CSSProperties;
-  ariaLabel?: string;
+  icon?: ReactNode;
+  size?: keyof typeof APP_BUTTON_SIZE_CLASSNAMES;
+  variant?: AppVariant;
+  children?: ReactNode;
 };
 
-export function AppButton({
+type IconButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children" | "aria-label"> & {
+  label: string;
+  icon: ReactNode;
+  size?: keyof typeof APP_ICON_BUTTON_SIZE_CLASSNAMES;
+  variant?: AppVariant;
+  active?: boolean;
+  showTooltip?: boolean;
+  tooltipClassName?: string;
+};
+
+export function Button({
   label,
   icon,
-  onClick,
-  disabled = false,
   size = "md",
-  variant = "subtle",
+  variant = "primary",
   className,
   style,
-  ariaLabel,
-}: AppButtonProps) {
-  const sizeClassName =
-    size === "icon"
-      ? "size-9 rounded-full"
-      : size === "sm"
-        ? "h-8 px-3 rounded-md text-xs"
-        : size === "pill"
-          ? "h-10 w-full rounded-full text-sm font-medium"
-          : "h-9 px-3 rounded-md text-sm";
-
-  const baseClassName = `inline-flex items-center justify-center gap-2 transition-colors ${sizeClassName}`;
-  const disabledClassName = disabled ? "opacity-50 cursor-not-allowed pointer-events-none" : "";
-
-  const variantClassName =
-    variant === "primary"
-      ? "hover:opacity-95"
-      : variant === "ghost"
-        ? "hover:bg-[color-mix(in_oklab,var(--color-ink)_12%,transparent)]"
-        : "hover:bg-[color-mix(in_oklab,var(--color-ink)_18%,transparent)]";
-
-  const variantStyle =
-    variant === "primary"
-      ? {
-          backgroundColor: "var(--color-ink)",
-          color: "var(--color-emerald)",
-          boxShadow: "0 10px 24px -12px color-mix(in oklab, var(--color-ink) 60%, transparent)",
-        }
-      : variant === "ghost"
-        ? {
-            color: "var(--color-ink)",
-            backgroundColor: "transparent",
-          }
-        : {
-            color: "color-mix(in oklab, var(--color-ink) 65%, transparent)",
-            backgroundColor: "color-mix(in oklab, var(--color-ink) 6%, transparent)",
-          };
+  children,
+  ...props
+}: ButtonProps) {
+  const content = children ?? (
+    <>
+      {icon}
+      {label ? <span>{label}</span> : null}
+    </>
+  );
 
   return (
     <button
       type="button"
-      aria-label={ariaLabel ?? label}
-      onClick={disabled ? undefined : onClick}
-      disabled={disabled}
-      className={`${baseClassName} ${variantClassName} ${disabledClassName}${className ? ` ${className}` : ""}`}
-      style={{ ...variantStyle, ...style }}
+      aria-label={props["aria-label"] ?? label}
+      className={cn(
+        APP_BUTTON_BASE_CLASSNAME,
+        APP_BUTTON_SIZE_CLASSNAMES[size],
+        APP_BUTTON_VARIANT_CLASSNAMES[variant],
+        className,
+      )}
+      style={{ ...getButtonVariantStyle(variant), ...style }}
+      {...props}
+    >
+      {content}
+    </button>
+  );
+}
+
+export function IconButton({
+  label,
+  icon,
+  size = "md",
+  variant = "subtle",
+  active = false,
+  showTooltip = true,
+  tooltipClassName,
+  className,
+  style,
+  ...props
+}: IconButtonProps) {
+  const button = (
+    <button
+      type="button"
+      aria-label={label}
+      className={cn(
+        APP_BUTTON_BASE_CLASSNAME,
+        APP_ICON_BUTTON_SIZE_CLASSNAMES[size],
+        APP_BUTTON_VARIANT_CLASSNAMES[variant],
+        className,
+      )}
+      style={{ ...getButtonVariantStyle(variant, active), ...style }}
+      {...props}
     >
       {icon}
-      {label ? <span>{label}</span> : null}
     </button>
+  );
+
+  if (!showTooltip) return button;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{button}</TooltipTrigger>
+      <TooltipContent className={tooltipClassName}>{label}</TooltipContent>
+    </Tooltip>
   );
 }

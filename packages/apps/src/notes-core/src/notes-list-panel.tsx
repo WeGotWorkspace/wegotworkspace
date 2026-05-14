@@ -1,6 +1,7 @@
 import type { MouseEvent as ReactMouseEvent, ReactNode, RefObject } from "react";
 import { Archive, Pencil, Star, Trash2 } from "lucide-react";
-import { ListAction } from "@/action-buttons/src/action-buttons";
+import { IconButton } from "@/app-button/src/app-button";
+import { LIST_ICON_BUTTON_STYLE } from "@/app-button/src/icon-button-presets";
 import { ListHeader } from "@/list-header/src/list-header";
 import { ListItem } from "@/list-item/src/list-item";
 import type { Note } from "@/lib/models/note";
@@ -87,7 +88,7 @@ export function NotesListPanel({
           <>
             {canEditDelete ? (
               <>
-                <ListAction
+                <IconButton
                   label={L.edit}
                   onClick={() =>
                     openEditDialog(
@@ -96,10 +97,12 @@ export function NotesListPanel({
                         : { kind: "tag", name: selectedTag! },
                     )
                   }
-                >
-                  <Pencil className="size-4" />
-                </ListAction>
-                <ListAction
+                  icon={<Pencil className="size-4" />}
+                  size="sm"
+                  variant="subtle"
+                  style={LIST_ICON_BUTTON_STYLE}
+                />
+                <IconButton
                   label={L.remove}
                   onClick={() =>
                     openDeleteDialog(
@@ -108,13 +111,15 @@ export function NotesListPanel({
                         : { kind: "tag", name: selectedTag! },
                     )
                   }
-                >
-                  <Trash2 className="size-4" />
-                </ListAction>
+                  icon={<Trash2 className="size-4" />}
+                  size="sm"
+                  variant="subtle"
+                  style={LIST_ICON_BUTTON_STYLE}
+                />
               </>
             ) : null}
             {view === "archive" && visibleNotes.length > 0 ? (
-              <ListAction
+              <IconButton
                 label={L.emptyArchive}
                 onClick={() =>
                   openDeleteConfirmForArchive(
@@ -122,9 +127,11 @@ export function NotesListPanel({
                     "all",
                   )
                 }
-              >
-                <Trash2 className="size-4" />
-              </ListAction>
+                icon={<Trash2 className="size-4" />}
+                size="sm"
+                variant="subtle"
+                style={LIST_ICON_BUTTON_STYLE}
+              />
             ) : null}
           </>
         }

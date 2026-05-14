@@ -1,22 +1,12 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Archive, Forward, Reply, Star } from "lucide-react";
+import { IconButton } from "@/app-button/src/app-button";
+import { TOOLBAR_ICON_BUTTON_STYLE } from "@/app-button/src/icon-button-presets";
 import { ActionBar } from "../src/action-bar";
-import { ToolbarButton } from "@/action-buttons/src/action-buttons";
 
 const meta: Meta<typeof ActionBar> = {
   title: "Shared/Action Bar",
   component: ActionBar,
-  decorators: [
-    (Story) => (
-      <div
-        className="max-w-3xl border rounded-lg overflow-hidden"
-        style={{ backgroundColor: "var(--color-cream, #f5f1e8)" }}
-      >
-        <Story />
-        <div className="p-8 text-sm text-muted-foreground">Detail content below</div>
-      </div>
-    ),
-  ],
 };
 
 export default meta;
@@ -27,22 +17,38 @@ export const MailLike: Story = {
     onBack: () => {},
     left: (
       <>
-        <ToolbarButton label="Reply" onClick={() => {}}>
-          <Reply className="size-4" />
-        </ToolbarButton>
-        <ToolbarButton label="Forward" onClick={() => {}}>
-          <Forward className="size-4" />
-        </ToolbarButton>
+        <IconButton
+          label="Reply"
+          onClick={() => {}}
+          icon={<Reply className="size-4" />}
+          variant="subtle"
+          style={TOOLBAR_ICON_BUTTON_STYLE}
+        />
+        <IconButton
+          label="Forward"
+          onClick={() => {}}
+          icon={<Forward className="size-4" />}
+          variant="subtle"
+          style={TOOLBAR_ICON_BUTTON_STYLE}
+        />
       </>
     ),
     right: (
       <>
-        <ToolbarButton label="Star" onClick={() => {}}>
-          <Star className="size-4" />
-        </ToolbarButton>
-        <ToolbarButton label="Archive" onClick={() => {}}>
-          <Archive className="size-4" />
-        </ToolbarButton>
+        <IconButton
+          label="Star"
+          onClick={() => {}}
+          icon={<Star className="size-4" />}
+          variant="subtle"
+          style={TOOLBAR_ICON_BUTTON_STYLE}
+        />
+        <IconButton
+          label="Archive"
+          onClick={() => {}}
+          icon={<Archive className="size-4" />}
+          variant="subtle"
+          style={TOOLBAR_ICON_BUTTON_STYLE}
+        />
       </>
     ),
   },
@@ -53,12 +59,20 @@ export const NotesLike: Story = {
     onBack: () => {},
     right: (
       <>
-        <ToolbarButton label="Star" onClick={() => {}}>
-          <Star className="size-4" />
-        </ToolbarButton>
-        <ToolbarButton label="Archive" onClick={() => {}}>
-          <Archive className="size-4" />
-        </ToolbarButton>
+        <IconButton
+          label="Star"
+          onClick={() => {}}
+          icon={<Star className="size-4" />}
+          variant="subtle"
+          style={TOOLBAR_ICON_BUTTON_STYLE}
+        />
+        <IconButton
+          label="Archive"
+          onClick={() => {}}
+          icon={<Archive className="size-4" />}
+          variant="subtle"
+          style={TOOLBAR_ICON_BUTTON_STYLE}
+        />
       </>
     ),
   },

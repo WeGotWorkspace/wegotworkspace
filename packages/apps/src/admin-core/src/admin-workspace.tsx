@@ -19,8 +19,6 @@ import {
 import { Input } from "@/ui/input";
 import { Switch } from "@/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/tooltip";
-import { Button } from "@/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -39,7 +37,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/ui/alert-dialog";
-import { AppButton } from "@/app-button/src/app-button";
+import { Button, IconButton } from "@/app-button/src/app-button";
 import { AppSidebar, AppSidebarScrim } from "@/app-sidebar/src/app-sidebar";
 import { Card } from "@/card/src/card";
 import { Callout } from "@/callout/src/callout";
@@ -677,7 +675,7 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
                     </div>
                   </Card>
                   <div className="flex justify-end">
-                    <AppButton
+                    <Button
                       label="Save changes"
                       variant="primary"
                       onClick={controller.actions.saveSettings}
@@ -766,7 +764,7 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
                     </div>
                   </Card>
                   <div className="flex justify-end">
-                    <AppButton
+                    <Button
                       label="Save changes"
                       variant="primary"
                       onClick={controller.actions.saveSettings}
@@ -849,7 +847,7 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
                     />
                   </Card>
                   <div className="flex justify-end">
-                    <AppButton
+                    <Button
                       label="Save changes"
                       variant="primary"
                       onClick={controller.actions.saveSettings}
@@ -1343,21 +1341,15 @@ function IconActionButton({
   disabled?: boolean;
 }) {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          aria-label={label}
-          className="size-8 rounded-md flex items-center justify-center hover:bg-[color-mix(in_oklab,#1a1a18_8%,transparent)] disabled:opacity-50 disabled:pointer-events-none"
-          style={{ color: "var(--color-ink)" }}
-          onClick={onClick}
-          disabled={disabled}
-        >
-          {children}
-        </button>
-      </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
+    <IconButton
+      label={label}
+      icon={children}
+      onClick={onClick}
+      disabled={disabled}
+      size="sm"
+      variant="subtle"
+      style={{ color: "var(--color-ink)" }}
+    />
   );
 }
 

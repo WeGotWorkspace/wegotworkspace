@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { FileEdit, Folder, Inbox, Mail, NotebookPen, Star, Tag } from "lucide-react";
-import { AppButton } from "@/app-button/src/app-button";
+import { Button } from "@/app-button/src/app-button";
 import { SidebarLogo } from "@/sidebar-logo/src/sidebar-logo";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
 import { StorybookAppSwitcherMock } from "@/storybook-app-switcher-mock/src/storybook-app-switcher-mock";
@@ -44,7 +44,7 @@ export const MailWorkspaceSidebar: Story = {
       />
 
       <div className="px-4 mb-4">
-        <AppButton
+        <Button
           label="Compose"
           icon={<FileEdit className="size-4" />}
           onClick={() => {}}
@@ -136,7 +136,7 @@ export const NotesWorkspaceSidebar: Story = {
       />
 
       <div className="px-4 mb-4">
-        <AppButton
+        <Button
           label="New note"
           icon={<NotebookPen className="size-4" />}
           onClick={() => {}}
