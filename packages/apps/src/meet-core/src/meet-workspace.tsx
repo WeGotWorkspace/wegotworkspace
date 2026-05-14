@@ -20,7 +20,7 @@ import {
   Users,
   PictureInPicture2,
 } from "lucide-react";
-import { Button, IconButton } from "@/app-button/src/button";
+import { Button, IconButton } from "@/button/src/button";
 import { Input } from "@/ui/input";
 import { Label } from "@/ui/label";
 import {
@@ -418,75 +418,75 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
                     />
                   </div>
 
-                <DeviceRow
-                  icon={<Video className="size-4" />}
-                  label="Camera"
-                  value={activeCamera}
-                  onChange={(id) => {
-                    const deviceId = deviceIdForOption(cameras, id);
-                    if (!deviceId) return;
-                    void controller.switchCamera(deviceId);
-                  }}
-                  options={cameras}
-                />
-                <DeviceRow
-                  icon={<Mic className="size-4" />}
-                  label="Microphone"
-                  value={activeMic}
-                  onChange={(id) => {
-                    const deviceId = deviceIdForOption(microphones, id);
-                    if (!deviceId) return;
-                    void controller.switchMic(deviceId);
-                  }}
-                  options={microphones}
-                />
-                <DeviceRow
-                  icon={<SettingsIcon className="size-4" />}
-                  label="Speaker"
-                  value={activeSpeaker}
-                  onChange={setSpeakerId}
-                  options={speakers}
-                />
-
-                {!waitingForAdmission ? (
-                  <Button
-                    onClick={() => {
-                      if (invitedRoom) {
-                        void (hasSignedInIdentity
-                          ? controller.joinRoom(invitedRoom)
-                          : controller.requestJoin(invitedRoom));
-                        return;
-                      }
-                      if (!hasSignedInIdentity) return;
-                      void controller.startMeeting();
+                  <DeviceRow
+                    icon={<Video />}
+                    label="Camera"
+                    value={activeCamera}
+                    onChange={(id) => {
+                      const deviceId = deviceIdForOption(cameras, id);
+                      if (!deviceId) return;
+                      void controller.switchCamera(deviceId);
                     }}
-                    className="w-full h-12 rounded-full text-base font-medium"
-                    style={{ background: ACCENT, color: TEXT }}
-                    disabled={!hasSignedInIdentity && !invitedRoom}
-                  >
-                    {invitedRoom
-                      ? hasSignedInIdentity
-                        ? "Join meeting"
-                        : "Ask to join"
-                      : hasSignedInIdentity
-                        ? "Start meeting"
-                        : "Invite link required"}
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={() => void controller.leave()}
-                    variant="outline"
-                    className="w-full h-12 rounded-full border-0 text-base font-medium"
-                    style={{ background: PANEL_SOFT, color: TEXT }}
-                  >
-                    Cancel request
-                  </Button>
-                )}
-                {controller.error && (
-                  <p className="text-xs" style={{ color: "#fda4af" }}>
-                    {controller.error}
-                  </p>
-                )}
+                    options={cameras}
+                  />
+                  <DeviceRow
+                    icon={<Mic />}
+                    label="Microphone"
+                    value={activeMic}
+                    onChange={(id) => {
+                      const deviceId = deviceIdForOption(microphones, id);
+                      if (!deviceId) return;
+                      void controller.switchMic(deviceId);
+                    }}
+                    options={microphones}
+                  />
+                  <DeviceRow
+                    icon={<SettingsIcon />}
+                    label="Speaker"
+                    value={activeSpeaker}
+                    onChange={setSpeakerId}
+                    options={speakers}
+                  />
+
+                  {!waitingForAdmission ? (
+                    <Button
+                      onClick={() => {
+                        if (invitedRoom) {
+                          void (hasSignedInIdentity
+                            ? controller.joinRoom(invitedRoom)
+                            : controller.requestJoin(invitedRoom));
+                          return;
+                        }
+                        if (!hasSignedInIdentity) return;
+                        void controller.startMeeting();
+                      }}
+                      className="w-full h-12 rounded-full text-base font-medium"
+                      style={{ background: ACCENT, color: TEXT }}
+                      disabled={!hasSignedInIdentity && !invitedRoom}
+                    >
+                      {invitedRoom
+                        ? hasSignedInIdentity
+                          ? "Join meeting"
+                          : "Ask to join"
+                        : hasSignedInIdentity
+                          ? "Start meeting"
+                          : "Invite link required"}
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => void controller.leave()}
+                      variant="outline"
+                      className="w-full h-12 rounded-full border-0 text-base font-medium"
+                      style={{ background: PANEL_SOFT, color: TEXT }}
+                    >
+                      Cancel request
+                    </Button>
+                  )}
+                  {controller.error && (
+                    <p className="text-xs" style={{ color: "#fda4af" }}>
+                      {controller.error}
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -779,7 +779,7 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
                     />
                     <IconButton
                       onClick={sendMessage}
-                      icon={<Send className="size-4" />}
+                      icon={<Send />}
                       style={{ background: ACCENT, color: TEXT }}
                       label="Send"
                       showTooltip={false}
@@ -1230,21 +1230,21 @@ function DevicePopover({
       >
         <div className="space-y-3">
           <DeviceRow
-            icon={<Video className="size-4" />}
+            icon={<Video />}
             label="Camera"
             value={camera}
             onChange={onCamera}
             options={cameras}
           />
           <DeviceRow
-            icon={<Mic className="size-4" />}
+            icon={<Mic />}
             label="Microphone"
             value={microphone}
             onChange={onMicrophone}
             options={microphones}
           />
           <DeviceRow
-            icon={<SettingsIcon className="size-4" />}
+            icon={<SettingsIcon />}
             label="Speaker"
             value={speaker}
             onChange={onSpeaker}
@@ -1299,7 +1299,7 @@ function ShareButton({ link }: { link: string }) {
                 toast.success("Link copied");
               }}
               label="Copy link"
-              icon={<Copy className="size-3.5" />}
+              icon={<Copy />}
               showTooltip={false}
             />
           </div>
@@ -1324,7 +1324,7 @@ function ShareInline({ link }: { link: string }) {
             toast.success("Link copied");
           }}
           label="Copy link"
-          icon={<Copy className="size-3.5" />}
+          icon={<Copy />}
           showTooltip={false}
         />
       </div>

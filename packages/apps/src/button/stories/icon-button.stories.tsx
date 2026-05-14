@@ -1,13 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Star } from "lucide-react";
-import {
-  BUTTON_VARIANT_OPTIONS,
-  ICON_BUTTON_SIZE_OPTIONS,
-  IconButton,
-} from "../src/button";
+import { BUTTON_VARIANT_OPTIONS, ICON_BUTTON_SIZE_OPTIONS, IconButton } from "../src/button";
 
 const meta: Meta<typeof IconButton> = {
-  title: "Shared/Buttons/IconButton",
+  title: "Shared/Buttons/Icon Button",
   component: IconButton,
   argTypes: {
     size: {
@@ -27,7 +23,7 @@ type Story = StoryObj<typeof IconButton>;
 export const Default: StoryObj<typeof IconButton> = {
   args: {
     label: "Favorite",
-    icon: <Star className="size-4" fill="currentColor" />,
+    icon: <Star />,
     size: "md",
     variant: "subtle",
     onClick: () => {},

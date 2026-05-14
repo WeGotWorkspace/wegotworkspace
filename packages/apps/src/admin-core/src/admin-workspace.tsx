@@ -37,7 +37,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/ui/alert-dialog";
-import { Button, IconButton } from "@/app-button/src/button";
+import { Button, IconButton } from "@/button/src/button";
 import { AppSidebar, AppSidebarScrim } from "@/app-sidebar/src/app-sidebar";
 import { Card } from "@/card/src/card";
 import { Callout } from "@/callout/src/callout";
@@ -1088,7 +1088,7 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
                               key={`${check.label}-${index}`}
                               tone="inherit"
                               className="px-0 py-2 text-(--color-ink) hover:bg-transparent focus-visible:ring-0"
-                              icon={<Icon className="size-4" style={{ color }} />}
+                              icon={<Icon style={{ color }} />}
                               label={check.label}
                               description={check.detail}
                             />

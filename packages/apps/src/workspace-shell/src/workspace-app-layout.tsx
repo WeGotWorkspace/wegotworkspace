@@ -1,5 +1,5 @@
 import { LogOut, Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
-import { IconButton } from "@/app-button/src/button";
+import { IconButton } from "@/button/src/button";
 import { SidebarLogo } from "@/sidebar-logo/src/sidebar-logo";
 import { UserAvatar } from "@/user-avatar/src/user-avatar";
 import {
@@ -140,7 +140,7 @@ export function WorkspaceUserFooter({
       {!detailLine ? <div className="flex-1 min-w-0 text-sm truncate">{name}</div> : null}
       <IconButton
         label="Log out"
-        icon={<LogOut className="size-4" />}
+        icon={<LogOut />}
         onClick={handleLogout}
         variant="subtle"
         className={cn("size-9", linkHoverClassName)}

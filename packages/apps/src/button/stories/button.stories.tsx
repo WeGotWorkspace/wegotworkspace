@@ -26,7 +26,7 @@ type Story = StoryObj<typeof Button>;
 export const Primary: Story = {
   args: {
     label: "Compose",
-    icon: <PenSquare className="size-4" />,
+    icon: <PenSquare />,
     variant: "primary",
     onClick: () => {},
   },
