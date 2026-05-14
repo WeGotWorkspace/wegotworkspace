@@ -46,7 +46,7 @@ import {
   FAB_ICON_BUTTON_STYLE,
   LIST_ICON_BUTTON_STYLE,
 } from "@/app-button/src/icon-button-presets";
-import { Button, IconButton } from "@/app-button/src/app-button";
+import { Button, IconButton } from "@/app-button/src/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui/tooltip";
 import {
   Dialog,

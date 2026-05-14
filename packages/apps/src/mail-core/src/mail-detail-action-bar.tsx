@@ -1,5 +1,5 @@
 import { FileEdit, Forward, MoreHorizontal, Reply, ReplyAll } from "lucide-react";
-import { IconButton } from "@/app-button/src/app-button";
+import { IconButton } from "@/app-button/src/button";
 import { TOOLBAR_ICON_BUTTON_STYLE } from "@/app-button/src/icon-button-presets";
 import { ActionBar } from "@/action-bar/src/action-bar";
 import { MenuDropdown } from "@/menu-dropdown/src/menu-dropdown";

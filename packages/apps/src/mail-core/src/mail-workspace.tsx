@@ -2,7 +2,7 @@ import { Pencil } from "lucide-react";
 import "react-swipeable-list/dist/styles.css";
 import "@/mail-core/src/mail-ui.css";
 import { MoveToDialog } from "@/dialogs/src/dialogs";
-import { Button } from "@/app-button/src/app-button";
+import { Button } from "@/app-button/src/button";
 import { WorkspaceAppSwitcher } from "@/workspace-app-switcher/src/workspace-app-switcher";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
@@ -199,7 +199,8 @@ export function MailWorkspace({
                   compose();
                   closeSidebarOnMobile(c.closeSidebar);
                 }}
-                size="pill"
+                size="lg"
+                pill
                 variant="primary"
               />
             </div>

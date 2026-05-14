@@ -37,7 +37,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/ui/alert-dialog";
-import { Button, IconButton } from "@/app-button/src/app-button";
+import { Button, IconButton } from "@/app-button/src/button";
 import { AppSidebar, AppSidebarScrim } from "@/app-sidebar/src/app-sidebar";
 import { Card } from "@/card/src/card";
 import { Callout } from "@/callout/src/callout";

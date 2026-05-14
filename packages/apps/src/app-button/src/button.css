@@ -1,0 +1,65 @@
+@reference "../../styles.css";
+
+.app-button {
+  @apply inline-flex items-center justify-center gap-2 transition-colors;
+}
+
+.app-button:disabled {
+  @apply opacity-50 cursor-not-allowed pointer-events-none;
+}
+
+.app-button--size-sm {
+  @apply h-8 px-3 rounded-md text-xs font-medium;
+}
+
+.app-button--size-md {
+  @apply h-9 px-3 rounded-md text-sm font-medium;
+}
+
+.app-button--size-lg {
+  @apply h-10 px-8 rounded-md text-sm font-medium;
+}
+
+.app-button--pill {
+  @apply rounded-full;
+}
+
+.app-icon-button--size-sm {
+  @apply size-8 rounded-full;
+}
+
+.app-icon-button--size-md {
+  @apply size-9 rounded-full;
+}
+
+.app-icon-button--size-lg {
+  @apply size-11 rounded-full;
+}
+
+.app-icon-button--size-lg > svg {
+  @apply size-5;
+}
+
+.app-button--variant-primary:hover {
+  opacity: 0.95;
+}
+
+.app-button--variant-destructive:hover {
+  background-color: color-mix(in oklab, var(--color-red-500, #dc2626) 88%, black);
+}
+
+.app-button--variant-outline {
+  border: 1px solid color-mix(in oklab, var(--color-ink) 20%, transparent);
+}
+
+.app-button--variant-outline:hover {
+  background-color: color-mix(in oklab, var(--color-ink) 8%, transparent);
+}
+
+.app-button--variant-ghost:hover {
+  background-color: color-mix(in oklab, var(--color-ink) 12%, transparent);
+}
+
+.app-button--variant-subtle:hover {
+  background-color: color-mix(in oklab, var(--color-ink) 18%, transparent);
+}

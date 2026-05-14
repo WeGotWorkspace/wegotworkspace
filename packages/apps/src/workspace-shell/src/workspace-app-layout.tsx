@@ -1,5 +1,5 @@
 import { LogOut, Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
-import { IconButton } from "@/app-button/src/app-button";
+import { IconButton } from "@/app-button/src/button";
 import { SidebarLogo } from "@/sidebar-logo/src/sidebar-logo";
 import { UserAvatar } from "@/user-avatar/src/user-avatar";
 import {
