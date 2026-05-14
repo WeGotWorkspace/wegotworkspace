@@ -45,7 +45,6 @@ import { DataTable, type DataTableColumn } from "@/data-table/src/data-table";
 import { FormField } from "@/form-field/src/form-field";
 import { MenuItem } from "@/menu-item/src/menu-item";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
-import { WorkspaceAppSwitcher } from "@/workspace-app-switcher/src/workspace-app-switcher";
 import { UserAvatar } from "@/user-avatar/src/user-avatar";
 import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
 import {
@@ -396,20 +395,19 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
         <AppSidebar
           open={controller.sidebarOpen}
           onCloseMobile={() => controller.setSidebarOpen(false)}
-          appSwitcher={<WorkspaceAppSwitcher />}
+          footer={
+            <WorkspaceUserFooter
+              name={session.user.displayName}
+              initials={workspaceUserInitials(session.user)}
+              detailLine={session.user.username}
+              onLogoutClick={() => {
+                if (logoutHref) window.location.assign(logoutHref);
+              }}
+              linkHoverClassName="hover:bg-[color-mix(in_oklab,var(--color-ink)_18%,transparent)]"
+            />
+          }
         >
-          <nav className="flex-1 px-4 space-y-7 overflow-y-auto">
-            <SidebarSection title="Administration" items={sidebarItems} />
-          </nav>
-          <WorkspaceUserFooter
-            name={session.user.displayName}
-            initials={workspaceUserInitials(session.user)}
-            detailLine={session.user.username}
-            onLogoutClick={() => {
-              if (logoutHref) window.location.assign(logoutHref);
-            }}
-            linkHoverClassName="hover:bg-[color-mix(in_oklab,var(--color-ink)_18%,transparent)]"
-          />
+          <SidebarSection title="Administration" items={sidebarItems} />
         </AppSidebar>
         <AppSidebarScrim
           open={controller.sidebarOpen}

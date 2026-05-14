@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { LogOut } from "lucide-react";
 import { AppSwitchButton } from "@/app-switch-button/src/app-switch-button";
-import { BrandMark } from "@/brand-mark/src/brand-mark";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -41,8 +40,7 @@ export function AppsHomeScreen({
       style={{ backgroundColor: "#0e0f17", color: "#ffffff" }}
     >
       <header className="flex items-center justify-between p-6 md:p-8 shrink-0">
-        <div className="flex items-center gap-2 min-w-0">
-          <BrandMark className="w-auto shrink-0" />
+        <div className="flex min-w-0 items-center">
           <AppSwitchButton subtitle="Workspace" />
         </div>
         {showUserMenu ? (

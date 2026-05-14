@@ -44,7 +44,6 @@ import {
   DropdownMenuTrigger,
 } from "@/ui/dropdown-menu";
 import { WorkspaceAppSwitcher } from "@/workspace-app-switcher/src/workspace-app-switcher";
-import { BrandMark } from "@/brand-mark/src/brand-mark";
 import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
 import type { MeetAPIOperations, MeetUIData } from "@/meet-core/src/meet-types";
 import { useMeetController } from "@/meet-core/src/use-meet-controller";
@@ -282,8 +281,7 @@ export function MeetWorkspace({ data, session, operations }: MeetWorkspaceProps)
         style={{ background: SURFACE, color: TEXT, fontFamily: "var(--font-sans)" }}
       >
         <header className="flex items-center justify-between p-6 md:p-8 shrink-0">
-          <div className="flex items-center gap-2 min-w-0">
-            <BrandMark className="w-auto shrink-0" />
+          <div className="flex min-w-0 items-center">
             <WorkspaceAppSwitcher disabled={disableAppSwitcher} />
           </div>
           {showUserMenu ? (
