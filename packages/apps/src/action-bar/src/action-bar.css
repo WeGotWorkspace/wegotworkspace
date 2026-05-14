@@ -2,6 +2,7 @@
 
 .action-bar {
   @apply px-4 md:px-12 h-16 md:h-20 border-b flex items-center shrink-0 gap-3;
+  container: action-bar / inline-size;
   --action-bar-border-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
   --action-bar-back-color: var(--color-ink);
   --button-subtle-color: color-mix(in oklab, var(--color-ink) 70%, transparent);
@@ -24,6 +25,23 @@
   @apply flex items-center gap-2 shrink-0;
 }
 
+.action-bar__row {
+  @apply flex items-center gap-2;
+}
+
+.action-bar__menu {
+  display: none;
+}
+
+.action-bar__menu-trigger {
+  @apply size-9;
+}
+
+.action-bar__menu-item-icon > svg {
+  width: 1rem;
+  height: 1rem;
+}
+
 .action-bar__spacer {
   @apply flex-1 min-w-0;
 }
@@ -31,5 +49,26 @@
 @media (min-width: 768px) {
   .action-bar__back {
     display: none;
+  }
+}
+
+@container action-bar (max-width: 56rem) {
+  .action-bar__row {
+    display: none;
+  }
+
+  .action-bar__menu {
+    display: inline-flex;
+  }
+}
+
+/* Fallback for environments/layouts where named container query isn't applied as expected. */
+@media (max-width: 64rem) {
+  .action-bar__row {
+    display: none;
+  }
+
+  .action-bar__menu {
+    display: inline-flex;
   }
 }

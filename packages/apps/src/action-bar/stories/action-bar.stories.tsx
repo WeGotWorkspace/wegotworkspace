@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Archive, Forward, Reply, Star } from "lucide-react";
-import { IconButton } from "@/button/src/button";
 import { ActionBar } from "../src/action-bar";
 
 const meta: Meta<typeof ActionBar> = {
@@ -14,29 +13,27 @@ type Story = StoryObj<typeof ActionBar>;
 export const MailLike: Story = {
   args: {
     onBack: () => {},
-    left: (
-      <>
-        <IconButton label="Reply" onClick={() => {}} icon={<Reply />} variant="subtle" />
-        <IconButton label="Forward" onClick={() => {}} icon={<Forward />} variant="subtle" />
-      </>
-    ),
-    right: (
-      <>
-        <IconButton label="Star" onClick={() => {}} icon={<Star />} variant="subtle" />
-        <IconButton label="Archive" onClick={() => {}} icon={<Archive />} variant="subtle" />
-      </>
-    ),
+    leftActions: [
+      { id: "reply", label: "Reply", onClick: () => {}, icon: <Reply /> },
+      { id: "forward", label: "Forward", onClick: () => {}, icon: <Forward /> },
+    ],
+    rightActions: [
+      { id: "star", label: "Star", onClick: () => {}, icon: <Star /> },
+      { id: "archive", label: "Archive", onClick: () => {}, icon: <Archive /> },
+    ],
+    leftMenuLabel: "Reply options",
+    leftMenuIcon: <Reply />,
+    rightMenuLabel: "More actions",
   },
 };
 
 export const NotesLike: Story = {
   args: {
     onBack: () => {},
-    right: (
-      <>
-        <IconButton label="Star" onClick={() => {}} icon={<Star />} variant="subtle" />
-        <IconButton label="Archive" onClick={() => {}} icon={<Archive />} variant="subtle" />
-      </>
-    ),
+    rightActions: [
+      { id: "star", label: "Star", onClick: () => {}, icon: <Star /> },
+      { id: "archive", label: "Archive", onClick: () => {}, icon: <Archive /> },
+    ],
+    rightMenuLabel: "More actions",
   },
 };
