@@ -8,7 +8,11 @@ const wgwProxyTarget = process.env.WGW_PROXY_TARGET ?? "https://wegotworkspace.l
 
 const config: StorybookConfig = {
   stories: ["../src/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
-  addons: ["@chromatic-com/storybook", "@storybook/addon-a11y", "@storybook/addon-docs"],
+  addons: [
+    "@chromatic-com/storybook",
+    "@storybook/addon-a11y",
+    "@storybook/addon-docs",
+  ],
   framework: {
     name: "@storybook/react-vite",
     options: {
