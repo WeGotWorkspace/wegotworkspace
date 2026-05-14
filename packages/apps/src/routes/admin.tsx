@@ -1565,17 +1565,14 @@ function UpdatesPanel() {
           className="mt-5"
           severity={updateAvailable ? "warning" : "success"}
           icon={
-            updateAvailable ? undefined : (
-              <PackageCheck className="size-4" style={{ color: "#3a8f5a" }} aria-hidden />
-            )
+            updateAvailable ? undefined : <PackageCheck className="callout__icon" aria-hidden />
           }
           title={updateAvailable ? "Update available" : "You're up to date"}
           message={
             updateAvailable
-              ? `${LATEST} introduces faster sync and security patches.`
-              : "Running the latest stable release."
+              ? `${LATEST} introduces faster sync and security patches. Checked on ${lastChecked}.`
+              : `Running the latest stable release. Checked on ${lastChecked}.`
           }
-          subtitle={`Checked on ${lastChecked}`}
         />
 
         <div className="mt-5 flex flex-wrap items-center gap-2">
@@ -1694,7 +1691,6 @@ function UpdatesPanel() {
           {checks.map((c) => (
             <li key={c.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
               <MenuItem
-                tone="inherit"
                 icon={<StatusDot status={c.status} />}
                 label={c.label}
                 description={c.status === "pending" ? "Checking…" : c.detail}

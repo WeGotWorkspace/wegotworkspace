@@ -1,0 +1,53 @@
+@import "../../styles.css" reference;
+
+.callout {
+  @apply rounded-lg border p-4;
+  background-color: var(--callout-bg);
+  border-color: var(--callout-border);
+  color: var(--callout-text, var(--color-ink));
+}
+
+.callout .menu-item {
+  @apply px-0 py-0;
+}
+
+.callout__body {
+  @apply flex min-w-0 items-center gap-4;
+}
+
+.callout__content {
+  @apply min-w-0 flex-1;
+}
+
+.callout__action {
+  @apply flex shrink-0 items-center justify-center;
+}
+
+.callout--info {
+  --callout-bg: color-mix(in oklab, #1a1a18 5%, transparent);
+  --callout-border: color-mix(in oklab, #1a1a18 15%, transparent);
+  --callout-icon-color: #1a1a18;
+}
+
+.callout--success {
+  --callout-bg: color-mix(in oklab, #3a8f5a 12%, transparent);
+  --callout-border: color-mix(in oklab, #3a8f5a 35%, transparent);
+  --callout-icon-color: #3a8f5a;
+}
+
+.callout--warning {
+  --callout-bg: color-mix(in oklab, #c98a1f 14%, transparent);
+  --callout-border: color-mix(in oklab, #c98a1f 35%, transparent);
+  --callout-icon-color: #c98a1f;
+}
+
+.callout--error {
+  --callout-bg: color-mix(in oklab, #b14242 14%, transparent);
+  --callout-border: color-mix(in oklab, #b14242 35%, transparent);
+  --callout-icon-color: #b14242;
+}
+
+.callout__icon {
+  @apply size-4 shrink-0;
+  color: var(--callout-icon-color, currentColor);
+}

@@ -53,7 +53,12 @@ export const CheckedState: Story = {
       {...args}
       trigger={<Button label="Open menu" variant="subtle" />}
       items={[
-        { id: "notes", label: "Notes", icon: <NotebookPen className="size-4" />, onClick: () => {} },
+        {
+          id: "notes",
+          label: "Notes",
+          icon: <NotebookPen className="size-4" />,
+          onClick: () => {},
+        },
         {
           id: "mail",
           label: "Mail",
