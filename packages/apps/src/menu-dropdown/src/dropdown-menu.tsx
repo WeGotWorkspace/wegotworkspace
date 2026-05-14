@@ -45,11 +45,7 @@ export function DropdownMenu({
             asChild
             className="dropdown-menu__item"
           >
-            <MenuItem
-              {...item}
-              tone="inherit"
-              className={cn("dropdown-menu__menu-item", item.className)}
-            />
+            <MenuItem {...item} className={cn("dropdown-menu__menu-item", item.className)} />
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

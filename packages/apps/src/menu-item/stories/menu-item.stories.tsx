@@ -1,4 +1,3 @@
-import type { ComponentType } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Folder, Star } from "lucide-react";
 import { MenuItem } from "../src/menu-item";
@@ -6,6 +5,23 @@ import { MenuItem } from "../src/menu-item";
 const meta: Meta<typeof MenuItem> = {
   title: "Shared/Menu Item",
   component: MenuItem,
+  decorators: [
+    (Story) => (
+      <section
+        className="sidebar-section w-72 rounded-lg border p-3"
+        style={{
+          backgroundColor: "var(--color-paper)",
+          borderColor: "color-mix(in oklab, var(--color-ink) 12%, transparent)",
+        }}
+      >
+        <ul className="sidebar-section__list">
+          <li>
+            <Story />
+          </li>
+        </ul>
+      </section>
+    ),
+  ],
 };
 
 export default meta;
@@ -30,48 +46,10 @@ export const SelectedWithBadge: Story = {
   },
 };
 
-export const CheckedInheritTone: Story = {
-  args: {
-    label: "Notes",
-    icon: <Folder className="size-4" />,
-    checked: true,
-    tone: "inherit",
-    className: "gap-2.5 px-2.5 py-2 rounded-md",
-    onClick: () => {},
-  },
-  decorators: [
-    (Story: ComponentType) => (
-      <div
-        className="p-4 rounded-md border max-w-xs"
-        style={{
-          backgroundColor: "var(--color-paper)",
-          color: "var(--color-ink)",
-        }}
-      >
-        <Story />
-      </div>
-    ),
-  ],
-};
-
 export const WithDescription: Story = {
   args: {
     label: "Disk space",
     description: "42.1 GB free of 100 GB",
     icon: <Folder className="size-4" />,
-    tone: "inherit",
   },
-  decorators: [
-    (Story: ComponentType) => (
-      <div
-        className="p-4 rounded-md border max-w-xs"
-        style={{
-          backgroundColor: "var(--color-paper)",
-          color: "var(--color-ink)",
-        }}
-      >
-        <Story />
-      </div>
-    ),
-  ],
 };

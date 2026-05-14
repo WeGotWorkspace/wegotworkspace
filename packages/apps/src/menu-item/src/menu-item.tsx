@@ -3,8 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-
-export type MenuItemTone = "sidebar" | "inherit";
+import "@/menu-item/src/menu-item.css";
 
 export type MenuItemProps = {
   label: React.ReactNode;
@@ -17,7 +16,6 @@ export type MenuItemProps = {
   isDropTarget?: boolean;
   to?: string;
   className?: string;
-  tone?: MenuItemTone;
   onDragOver?: (e: React.DragEvent) => void;
   onDragLeave?: (e: React.DragEvent) => void;
   onDrop?: (e: React.DragEvent) => void;
@@ -38,7 +36,6 @@ export const MenuItem = React.forwardRef<
     isDropTarget,
     to,
     className,
-    tone = "sidebar",
     onDragOver,
     onDragLeave,
     onDrop,
@@ -48,70 +45,41 @@ export const MenuItem = React.forwardRef<
   const hasDescription = Boolean(description);
   const interactive = Boolean(to || onClick || onDragOver || onDragLeave || onDrop);
 
+  const surfaceClass = isDropTarget
+    ? "menu-item--surface-drop"
+    : selected
+      ? "menu-item--surface-selected"
+      : "menu-item--surface-idle";
+
   const row = (
     <>
       <span
         className={cn(
-          "flex-1 min-w-0",
-          hasDescription
-            ? "inline-flex items-start gap-2.5"
-            : "inline-flex items-center gap-2.5 truncate",
+          "menu-item__main",
+          hasDescription ? "menu-item__main--stacked" : "menu-item__main--compact",
         )}
       >
         {icon != null ? (
-          <span
-            aria-hidden
-            className="shrink-0"
-            style={tone === "sidebar" ? { opacity: selected ? 0.9 : 0.65 } : { opacity: 0.7 }}
-          >
+          <span aria-hidden className="menu-item__icon-slot">
             {icon}
           </span>
         ) : null}
-        <span className={cn("min-w-0", hasDescription ? "flex-1" : "truncate")}>
-          <span className={cn("block", !hasDescription && "truncate")}>{label}</span>
-          {hasDescription ? (
-            <span className="block text-xs opacity-75 mt-0.5 truncate">{description}</span>
-          ) : null}
+        <span className="menu-item__text">
+          <span className="menu-item__label">{label}</span>
+          {hasDescription ? <span className="menu-item__description">{description}</span> : null}
         </span>
       </span>
-      {badge != null && badge !== false ? (
-        <span
-          className="shrink-0 inline-flex items-center justify-center min-w-5 h-5 px-1.5 text-[10px] font-semibold tabular-nums rounded-full"
-          style={
-            tone === "sidebar"
-              ? {
-                  backgroundColor: selected
-                    ? "var(--color-ink)"
-                    : "color-mix(in oklab, var(--color-ink) 14%, transparent)",
-                  color: selected
-                    ? "var(--sidebar-badge-fg, var(--color-cream, #f5f1e8))"
-                    : "color-mix(in oklab, var(--color-ink) 80%, transparent)",
-                }
-              : {
-                  backgroundColor: "color-mix(in oklab, currentColor 18%, transparent)",
-                  color: "inherit",
-                }
-          }
-        >
-          {badge}
-        </span>
-      ) : null}
-      {checked ? <Check className="size-3.5 shrink-0 opacity-70" aria-hidden /> : null}
+      {badge != null && badge !== false ? <span className="menu-item__badge">{badge}</span> : null}
+      {checked ? <Check className="menu-item__check" aria-hidden /> : null}
     </>
   );
 
   const sharedClass = cn(
-    "w-full text-left flex gap-2 px-4 py-2 text-sm rounded transition-[color,background-color,box-shadow] outline-none",
-    hasDescription ? "items-start" : "items-center",
-    interactive &&
-      "hover:bg-[color-mix(in_oklab,currentColor_12%,transparent)] focus-visible:ring-2 focus-visible:ring-[color-mix(in_oklab,currentColor_35%,transparent)] focus-visible:ring-offset-1 focus-visible:ring-offset-transparent",
-    tone === "sidebar" &&
-      (isDropTarget
-        ? "font-medium text-[var(--color-ink)] shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-ink)_35%,transparent)] bg-[color-mix(in_oklab,var(--color-ink)_22%,transparent)]"
-        : selected
-          ? "font-medium text-[var(--color-ink)] bg-[color-mix(in_oklab,var(--color-ink)_12%,transparent)]"
-          : "font-medium text-[color-mix(in_oklab,var(--color-ink)_75%,transparent)] bg-transparent"),
-    tone === "inherit" && "text-inherit bg-transparent",
+    "menu-item",
+    selected && "menu-item--selected",
+    interactive && "menu-item--interactive",
+    hasDescription ? "menu-item--align-start" : "menu-item--align-center",
+    surfaceClass,
     className,
   );
 

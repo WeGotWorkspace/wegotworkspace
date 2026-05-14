@@ -1,0 +1,128 @@
+@import "../../styles.css" reference;
+
+/* ----- Root (all contexts) ----- */
+
+.menu-item {
+  @apply flex w-full gap-2 rounded px-4 py-2 text-left text-sm outline-none transition-[color,background-color,box-shadow];
+}
+
+.menu-item--interactive:hover {
+  background-color: color-mix(in oklab, currentColor 12%, transparent);
+}
+
+.menu-item--interactive:focus-visible {
+  @apply outline-none ring-2 ring-offset-1 ring-offset-transparent;
+  --tw-ring-color: color-mix(in oklab, currentColor 35%, transparent);
+}
+
+.menu-item--align-start {
+  @apply items-start;
+}
+
+.menu-item--align-center {
+  @apply items-center;
+}
+
+/* ----- Surface (structural; sidebar ink only under .sidebar-section) ----- */
+
+.menu-item--surface-idle {
+  @apply bg-transparent;
+}
+
+.sidebar-section .menu-item--surface-idle {
+  @apply font-medium;
+  color: color-mix(in oklab, var(--color-ink) 75%, transparent);
+}
+
+.menu-item--surface-selected {
+  @apply bg-transparent;
+}
+
+.sidebar-section .menu-item--surface-selected {
+  @apply bg-[color-mix(in_oklab,var(--color-ink)_12%,transparent)] font-medium text-[var(--color-ink)];
+}
+
+.menu-item--surface-drop {
+  @apply bg-transparent;
+}
+
+.sidebar-section .menu-item--surface-drop {
+  @apply bg-[color-mix(in_oklab,var(--color-ink)_22%,transparent)] font-medium text-[var(--color-ink)] shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--color-ink)_35%,transparent)];
+}
+
+/* ----- Icon slot ----- */
+
+.menu-item__icon-slot {
+  @apply shrink-0;
+  opacity: 0.7;
+}
+
+.sidebar-section .menu-item:not(.menu-item--selected) .menu-item__icon-slot {
+  opacity: 0.65;
+}
+
+.sidebar-section .menu-item.menu-item--selected .menu-item__icon-slot {
+  opacity: 0.9;
+}
+
+/* ----- Main row ----- */
+
+.menu-item__main {
+  @apply min-w-0 flex-1;
+}
+
+.menu-item__main--stacked {
+  @apply inline-flex items-start gap-2.5;
+}
+
+.menu-item__main--compact {
+  @apply inline-flex items-center gap-2.5 truncate;
+}
+
+.menu-item__text {
+  @apply min-w-0;
+}
+
+.menu-item__main--stacked .menu-item__text {
+  @apply flex-1;
+}
+
+.menu-item__main--compact .menu-item__text {
+  @apply truncate;
+}
+
+.menu-item__label {
+  @apply block;
+}
+
+.menu-item__main--compact .menu-item__label {
+  @apply truncate;
+}
+
+.menu-item__description {
+  @apply mt-0.5 block truncate text-xs opacity-75;
+}
+
+/* ----- Badge ----- */
+
+.menu-item__badge {
+  @apply inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full px-1.5 text-[10px] font-semibold tabular-nums;
+  background-color: color-mix(in oklab, currentColor 18%, transparent);
+  color: inherit;
+}
+
+.sidebar-section .menu-item__badge {
+  background-color: color-mix(in oklab, var(--color-ink) 14%, transparent);
+  color: color-mix(in oklab, var(--color-ink) 80%, transparent);
+}
+
+.sidebar-section .menu-item.menu-item--selected .menu-item__badge {
+  background-color: var(--color-ink);
+  color: var(--sidebar-badge-fg, var(--color-cream, #f5f1e8));
+}
+
+/* ----- Checked ----- */
+
+.menu-item__check {
+  @apply size-3.5 shrink-0 opacity-70;
+}

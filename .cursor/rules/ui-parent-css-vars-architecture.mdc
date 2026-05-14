@@ -13,6 +13,7 @@ When building or refactoring UI components in `packages/apps/src/**/*.{ts,tsx,cs
 - Keep state behavior (hover, active, disabled) in primitive CSS; let parents override via variables only.
 - Prefer CSS files for styling contracts; do not centralize style presets in TypeScript objects.
 - When parent width drives behavior, prefer container queries in shared CSS with media fallback.
+- For SVG marks, logos, and similar accents: co-locate a `*.css` next to the component, expose tokens such as `--*-fill` (and optional `--*-height` / offset), and use a short fallback chain (for example app tokens then `currentColor`) instead of presentation props like `fill={...}` on the React surface.
 
 Example direction:
 

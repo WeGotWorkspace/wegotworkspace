@@ -2,6 +2,7 @@ import { CircleAlert, CircleCheck, CircleX, Info } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { MenuItem } from "@/menu-item/src/menu-item";
+import "@/callout/src/callout.css";
 
 export type CalloutSeverity = "info" | "success" | "warning" | "error";
 
@@ -9,32 +10,11 @@ export type CalloutProps = {
   severity?: CalloutSeverity;
   title: ReactNode;
   message?: ReactNode;
-  subtitle?: ReactNode;
+  /** Use `className="callout__icon"` on Lucide (or similar) icons so severity tint applies. */
   icon?: ReactNode;
+  /** Optional control (e.g. `Button`) aligned to the right, vertically centered with the content. */
+  action?: ReactNode;
   className?: string;
-};
-
-const toneStyles: Record<CalloutSeverity, { bg: string; border: string; iconColor: string }> = {
-  info: {
-    bg: "color-mix(in oklab, #1a1a18 5%, transparent)",
-    border: "color-mix(in oklab, #1a1a18 15%, transparent)",
-    iconColor: "#1a1a18",
-  },
-  success: {
-    bg: "color-mix(in oklab, #3a8f5a 12%, transparent)",
-    border: "color-mix(in oklab, #3a8f5a 35%, transparent)",
-    iconColor: "#3a8f5a",
-  },
-  warning: {
-    bg: "color-mix(in oklab, #c98a1f 14%, transparent)",
-    border: "color-mix(in oklab, #c98a1f 35%, transparent)",
-    iconColor: "#c98a1f",
-  },
-  error: {
-    bg: "color-mix(in oklab, #b14242 14%, transparent)",
-    border: "color-mix(in oklab, #b14242 35%, transparent)",
-    iconColor: "#b14242",
-  },
 };
 
 function defaultIconForSeverity(severity: CalloutSeverity) {
@@ -55,39 +35,24 @@ export function Callout({
   severity = "info",
   title,
   message,
-  subtitle,
   icon,
+  action,
   className,
 }: CalloutProps) {
-  const tone = toneStyles[severity];
   const Icon = defaultIconForSeverity(severity);
-  const description =
-    message && subtitle ? (
-      <>
-        {message}
-        <span className="opacity-70"> - </span>
-        {subtitle}
-      </>
-    ) : (
-      (message ?? subtitle)
-    );
 
   return (
-    <div
-      className={cn("rounded-lg border p-4", className)}
-      style={{
-        backgroundColor: tone.bg,
-        borderColor: tone.border,
-        color: "var(--color-ink)",
-      }}
-    >
-      <MenuItem
-        tone="inherit"
-        className="px-0 py-0 hover:bg-transparent focus-visible:ring-0"
-        icon={icon ?? <Icon className="size-4" style={{ color: tone.iconColor }} aria-hidden />}
-        label={title}
-        description={description}
-      />
+    <div className={cn("callout", `callout--${severity}`, className)}>
+      <div className="callout__body">
+        <div className="callout__content">
+          <MenuItem
+            icon={icon ?? <Icon className="callout__icon" aria-hidden />}
+            label={title}
+            description={message}
+          />
+        </div>
+        {action != null ? <div className="callout__action">{action}</div> : null}
+      </div>
     </div>
   );
 }
