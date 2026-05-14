@@ -1,7 +1,7 @@
 import { Pencil } from "lucide-react";
 import type { NotesWorkspaceProps } from "@/notes-core/src/notes-workspace-props";
 import "react-swipeable-list/dist/styles.css";
-import { Button } from "@/app-button/src/app-button";
+import { Button } from "@/app-button/src/button";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
 import { WorkspaceAppSwitcher } from "@/workspace-app-switcher/src/workspace-app-switcher";
@@ -140,7 +140,8 @@ export function NotesWorkspace({
                   createNote();
                   closeSidebarOnMobile(c.closeSidebar);
                 }}
-                size="pill"
+                size="lg"
+                pill
                 variant="primary"
                 disabled={!canCreateNote}
               />

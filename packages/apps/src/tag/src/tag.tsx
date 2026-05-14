@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import { Plus, Tag as TagIcon, X } from "lucide-react";
 
-import { IconButton } from "@/app-button/src/app-button";
+import { IconButton } from "@/app-button/src/button";
 import { cn } from "@/lib/utils";
 
 export type TagProps = {

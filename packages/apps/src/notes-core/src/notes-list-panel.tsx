@@ -1,6 +1,6 @@
 import type { MouseEvent as ReactMouseEvent, ReactNode, RefObject } from "react";
 import { Archive, Pencil, Star, Trash2 } from "lucide-react";
-import { IconButton } from "@/app-button/src/app-button";
+import { IconButton } from "@/app-button/src/button";
 import { LIST_ICON_BUTTON_STYLE } from "@/app-button/src/icon-button-presets";
 import { ListHeader } from "@/list-header/src/list-header";
 import { ListItem } from "@/list-item/src/list-item";

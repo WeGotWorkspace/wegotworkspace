@@ -20,7 +20,7 @@ import {
   Users,
   PictureInPicture2,
 } from "lucide-react";
-import { Button, IconButton } from "@/app-button/src/app-button";
+import { Button, IconButton } from "@/app-button/src/button";
 import { Input } from "@/ui/input";
 import { Label } from "@/ui/label";
 import {

@@ -1,10 +1,23 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { PenSquare } from "lucide-react";
-import { Button } from "../src/app-button";
+import { BUTTON_SIZE_OPTIONS, BUTTON_VARIANT_OPTIONS, Button } from "../src/button";
 
 const meta: Meta<typeof Button> = {
   title: "Shared/Buttons/Button",
   component: Button,
+  argTypes: {
+    size: {
+      control: "select",
+      options: BUTTON_SIZE_OPTIONS,
+    },
+    variant: {
+      control: "select",
+      options: BUTTON_VARIANT_OPTIONS,
+    },
+    pill: {
+      control: "boolean",
+    },
+  },
 };
 
 export default meta;
@@ -20,7 +33,7 @@ export const Primary: Story = {
 };
 
 export const PrimaryPill: Story = {
-  args: { ...Primary.args, size: "pill" },
+  args: { ...Primary.args, size: "lg", pill: true },
 };
 
 export const Subtle: Story = {

@@ -38,7 +38,7 @@ import { MenuItem } from "@/menu-item/src/menu-item";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/ui/tooltip";
 import { Input } from "@/ui/input";
 import { Label } from "@/ui/label";
-import { Button } from "@/app-button/src/app-button";
+import { Button } from "@/app-button/src/button";
 import { Switch } from "@/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
 import {

@@ -1,5 +1,5 @@
 import { CheckSquare2 } from "lucide-react";
-import { IconButton } from "@/app-button/src/app-button";
+import { IconButton } from "@/app-button/src/button";
 import { TOOLBAR_ICON_BUTTON_STYLE } from "@/app-button/src/icon-button-presets";
 import { cn } from "@/lib/utils";
 
