@@ -1,6 +1,6 @@
 import { Mail as MailIcon, Users } from "lucide-react";
 import { Input } from "@/ui/input";
-import { Button } from "@/app-button/src/app-button";
+import { Button } from "@/app-button/src/button";
 import { AppSidebar, AppSidebarScrim } from "@/app-sidebar/src/app-sidebar";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
 import { WorkspaceAppSwitcher } from "@/workspace-app-switcher/src/workspace-app-switcher";

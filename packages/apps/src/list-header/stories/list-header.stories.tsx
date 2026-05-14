@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { PenSquare, Trash2 } from "lucide-react";
-import { IconButton } from "@/app-button/src/app-button";
+import { IconButton } from "@/app-button/src/button";
 import { LIST_ICON_BUTTON_STYLE } from "@/app-button/src/icon-button-presets";
 import { ListHeader } from "@/list-header/src/list-header";
 
