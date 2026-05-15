@@ -34,12 +34,26 @@ const DEFAULT_DATA: SettingsUIData = {
   logoutUrl: "/logout",
 };
 
+/** Aligns chrome session with settings `data.user` so sidebar footers (session-driven) match profile mocks. */
+function workspaceSessionForSettingsData(data: SettingsUIData): WorkspaceSession {
+  return {
+    ...mockWorkspaceSession,
+    user: {
+      ...mockWorkspaceSession.user,
+      displayName: data.user.displayName,
+      username: data.user.username,
+      email: data.user.email,
+    },
+  };
+}
+
 export function createSettingsAppBootstrap(overrides?: {
   data?: SettingsUIData;
   session?: WorkspaceSession;
 }): SettingsAppBootstrap {
+  const data = overrides?.data ?? DEFAULT_DATA;
   return {
-    data: overrides?.data ?? DEFAULT_DATA,
-    session: overrides?.session ?? mockWorkspaceSession,
+    data,
+    session: overrides?.session ?? workspaceSessionForSettingsData(data),
   };
 }
