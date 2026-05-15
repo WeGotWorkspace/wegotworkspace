@@ -1,17 +1,12 @@
 import { Input } from "@/ui/input";
 import { Card } from "@/card/src/card";
+import { formatMailTransportSecurityLabel } from "@/settings-core/src/settings-mail-display";
 import { settingsWorkspaceFormLayout } from "@/settings-core/src/settings-workspace-form-layout";
 import type { SettingsControllerState } from "@/settings-core/src/use-settings-controller";
 import { Form } from "@/ui/form";
 import { FieldLabelRow } from "@/ui/field-label-row";
 import { FormSaveActionRow } from "@/ui/form-save-action-row";
 import { FormTextField } from "@/ui/form-text-field";
-
-function securityLabel(security: string): string {
-  if (!security) return "Unknown";
-  if (security.toLowerCase() === "ssl") return "SSL/TLS";
-  return security.toUpperCase();
-}
 
 export type SettingsMailPaneProps = {
   mail: SettingsControllerState["mail"];
@@ -57,7 +52,7 @@ export function SettingsMailPane({ mail }: SettingsMailPaneProps) {
             <Input value={server.imapPort} readOnly />
           </FieldLabelRow>
           <FieldLabelRow {...settingsWorkspaceFormLayout.displayField} label="Security" readOnly>
-            <Input value={securityLabel(server.imapSecurity)} readOnly />
+            <Input value={formatMailTransportSecurityLabel(server.imapSecurity)} readOnly />
           </FieldLabelRow>
         </div>
       </Card>
@@ -71,7 +66,7 @@ export function SettingsMailPane({ mail }: SettingsMailPaneProps) {
             <Input value={server.smtpPort} readOnly />
           </FieldLabelRow>
           <FieldLabelRow {...settingsWorkspaceFormLayout.displayField} label="Security" readOnly>
-            <Input value={securityLabel(server.smtpSecurity)} readOnly />
+            <Input value={formatMailTransportSecurityLabel(server.smtpSecurity)} readOnly />
           </FieldLabelRow>
         </div>
       </Card>
