@@ -5,7 +5,7 @@ import { ListHeader } from "@/list-header/src/list-header";
 import { ListItem } from "@/list-item/src/list-item";
 import type { Note } from "@/lib/models/note";
 import { formatNoteDateForList } from "@/notes-core/src/notes-date-utils";
-import type { NotesUILabels } from "@/notes-core/src/notes-app.stories.fixtures";
+import type { NotesUILabels } from "@/notes-core/src/notes-labels";
 import { WorkspaceListLoadingState } from "@/workspace-list-state/src/workspace-list-loading-state";
 import { WorkspaceSwipeList } from "@/workspace-swipe-list/src/workspace-swipe-list";
 import "@/notes-core/src/notes-list-panel.css";
@@ -156,15 +156,13 @@ export function NotesListPanel({
               date={formatNoteDateForList(note.date)}
               text={note.excerpt}
               icons={[
-                <Star
+                <span
                   key="star"
-                  className="size-3 transition-opacity"
-                  fill="currentColor"
-                  style={{
-                    color: "var(--color-emerald)",
-                    opacity: starred[note.id] ? 1 : 0,
-                  }}
-                />,
+                  className="notes-list-panel__star-pip"
+                  data-active={starred[note.id] ? "true" : "false"}
+                >
+                  <Star className="notes-list-panel__star-icon" fill="currentColor" />
+                </span>,
               ]}
               isActive={note.id === activeId}
               isSelected={selectedIds.includes(note.id)}

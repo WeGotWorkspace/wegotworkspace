@@ -1,7 +1,8 @@
 import { workspaceDestructiveDialogLabels } from "@/lib/workspace/destructive-dialog";
 
 /**
- * Mock copy + label bundle for Notes stories and route wiring.
+ * User-visible copy for the notes workspace (sidebar, list chrome, dialogs, toasts).
+ * Override via {@link NotesWorkspaceProps.labels} in stories/tests.
  */
 export type NotesUILabels = {
   listLoading: string;
@@ -47,7 +48,7 @@ export type NotesUILabels = {
   newNoteCategory: string;
 };
 
-export const notesStoryLabels: NotesUILabels = {
+export const defaultNotesLabels: NotesUILabels = {
   listLoading: "Loading notes…",
   searchPlaceholder: "Search notes...",
   sidebarAllItems: "All Items",
@@ -92,6 +93,6 @@ export const notesStoryLabels: NotesUILabels = {
 };
 
 export function mergeNotesLabels(overrides?: Partial<NotesUILabels>): NotesUILabels {
-  if (!overrides) return notesStoryLabels;
-  return { ...notesStoryLabels, ...overrides };
+  if (!overrides) return defaultNotesLabels;
+  return { ...defaultNotesLabels, ...overrides };
 }

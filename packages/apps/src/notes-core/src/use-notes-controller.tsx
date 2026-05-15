@@ -23,7 +23,7 @@ import {
 import { useWorkspaceListKeyboardShortcuts } from "@/hooks/use-workspace-list-keyboard-shortcuts";
 import type { Note } from "@/lib/models/note";
 import type { WorkspaceAppHandle } from "@/workspace-app/src/workspace-app";
-import { mergeNotesLabels, type NotesUILabels } from "./notes-app.stories.fixtures";
+import { mergeNotesLabels, type NotesUILabels } from "./notes-labels";
 import { useNotesBatchActions } from "./use-notes-batch-actions";
 import type { NotesAPIOperations, NotesUIData } from "./notes-types";
 
