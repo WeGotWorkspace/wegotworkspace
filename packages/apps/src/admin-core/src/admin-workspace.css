@@ -1,4 +1,5 @@
 @import "../styles.css" reference;
+@import "./admin-panes.css";
 
 .admin-workspace {
   --workspace-root-bg: var(--color-cream, #f5f1e8);

@@ -21,7 +21,7 @@ export function IconActionButton({
       disabled={disabled}
       size="sm"
       variant="subtle"
-      style={{ color: "var(--color-ink)" }}
+      className="admin-icon-action"
     />
   );
 }
@@ -38,20 +38,10 @@ export function FeatureRow({
   onChange: (next: boolean) => void;
 }) {
   return (
-    <div
-      className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0 border-t first:border-t-0"
-      style={{ borderColor: "color-mix(in oklab, var(--color-ink) 10%, transparent)" }}
-    >
+    <div className="admin-feature-row">
       <div className="min-w-0">
-        <div className="text-sm font-medium" style={{ color: "var(--color-ink)" }}>
-          {label}
-        </div>
-        <div
-          className="text-xs"
-          style={{ color: "color-mix(in oklab, var(--color-ink) 55%, transparent)" }}
-        >
-          {desc}
-        </div>
+        <div className="admin-feature-row__title">{label}</div>
+        <div className="admin-feature-row__desc">{desc}</div>
       </div>
       <Switch checked={value} onCheckedChange={onChange} />
     </div>

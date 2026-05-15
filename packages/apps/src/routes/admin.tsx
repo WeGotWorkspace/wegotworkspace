@@ -841,7 +841,13 @@ function GroupDialog({
                       className="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-[color-mix(in_oklab,#1a1a18_4%,transparent)]"
                       onClick={() => toggle(u.id)}
                     >
-                      <div
+                      <UserAvatar
+                        displayName={u.displayName}
+                        subtitle={`@${u.username}`}
+                        size="sm"
+                        className="flex-1"
+                      />
+                      {/* <div
                         className="size-6 rounded-full flex items-center justify-center text-[10px] font-medium"
                         style={{ backgroundColor: ACCENT, color: "#fff" }}
                       >
@@ -859,7 +865,7 @@ function GroupDialog({
                         >
                           @{u.username}
                         </span>
-                      </div>
+                      </div> */}
                       <Switch
                         checked={checked}
                         onClick={(e) => e.stopPropagation()}

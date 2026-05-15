@@ -95,36 +95,16 @@ export function AdminUpdatesPane({
   return (
     <>
       <Card title="Release status">
-        <div className="flex flex-wrap items-center gap-6">
+        <div className="admin-updates-release-grid">
           <div>
-            <div
-              className="text-[10px] uppercase tracking-[0.18em] mb-1"
-              style={{
-                color: "color-mix(in oklab, var(--color-ink) 55%, transparent)",
-              }}
-            >
-              Installed
-            </div>
-            <div
-              className="text-2xl"
-              style={{ fontFamily: "var(--font-serif)", color: "var(--color-ink)" }}
-            >
+            <div className="admin-updates-stat-label">Installed</div>
+            <div className="admin-updates-stat-value">
               <Tag label={controller.updates.installedVersion || "-"} />
             </div>
           </div>
           <div>
-            <div
-              className="text-[10px] uppercase tracking-[0.18em] mb-1"
-              style={{
-                color: "color-mix(in oklab, var(--color-ink) 55%, transparent)",
-              }}
-            >
-              Latest
-            </div>
-            <div
-              className="text-2xl"
-              style={{ fontFamily: "var(--font-serif)", color: "var(--color-ink)" }}
-            >
+            <div className="admin-updates-stat-label">Latest</div>
+            <div className="admin-updates-stat-value">
               <Tag
                 label={
                   controller.updates.latest?.version ?? controller.updates.installedVersion ?? "-"
@@ -133,25 +113,11 @@ export function AdminUpdatesPane({
             </div>
           </div>
           <div>
-            <div
-              className="text-[10px] uppercase tracking-[0.18em] mb-1"
-              style={{
-                color: "color-mix(in oklab, var(--color-ink) 55%, transparent)",
-              }}
-            >
-              Channel
-            </div>
+            <div className="admin-updates-stat-label">Channel</div>
             <Tag label="stable" />
           </div>
           <div className="flex-1 min-w-32">
-            <div
-              className="text-[10px] uppercase tracking-[0.18em] mb-1"
-              style={{
-                color: "color-mix(in oklab, var(--color-ink) 55%, transparent)",
-              }}
-            >
-              Last checked
-            </div>
+            <div className="admin-updates-stat-label">Last checked</div>
             <Tag label={formatHumanDateTime(controller.updates.lastCheckedAt)} />
           </div>
         </div>
@@ -180,59 +146,25 @@ export function AdminUpdatesPane({
           }
         />
         {controller.updates.inProgress ? (
-          <div
-            className="mt-5 rounded-lg border p-4"
-            style={{
-              backgroundColor: "color-mix(in oklab, var(--color-ink) 4%, transparent)",
-              borderColor: "color-mix(in oklab, var(--color-ink) 12%, transparent)",
-            }}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div
-                className="text-[10px] uppercase tracking-[0.18em] font-semibold"
-                style={{
-                  color: "color-mix(in oklab, var(--color-ink) 55%, transparent)",
-                }}
-              >
-                Update progress
-              </div>
-              <div
-                className="text-xs tabular-nums"
-                style={{
-                  color: "color-mix(in oklab, var(--color-ink) 55%, transparent)",
-                }}
-              >
-                {displayProgressCount}
-              </div>
+          <div className="admin-updates-progress-card">
+            <div className="admin-updates-progress-head">
+              <div className="admin-updates-stat-label--strong">Update progress</div>
+              <div className="admin-updates-progress-count">{displayProgressCount}</div>
             </div>
-            <div
-              className="h-1.5 rounded-full overflow-hidden mb-4"
-              style={{
-                backgroundColor: "color-mix(in oklab, var(--color-ink) 10%, transparent)",
-              }}
-            >
+            <div className="admin-updates-progress-track">
               <div
-                className="h-full transition-all duration-500 ease-out"
-                style={{ width: `${progressPercent}%`, backgroundColor: "#2f302c" }}
+                className="admin-updates-progress-fill"
+                style={{ width: `${progressPercent}%` }}
               />
             </div>
-            <ol className="space-y-2">
+            <ol className="admin-updates-step-list">
               {UPDATE_PROGRESS_STEPS.map((step, index) => {
                 const isDone = activeProgressStep > index;
                 const isActive = activeProgressStep === index;
+                const stepState = isDone ? "done" : isActive ? "active" : "pending";
                 return (
-                  <li key={step.label} className="flex items-center gap-3 text-sm">
-                    <span
-                      className="size-5 rounded-full flex items-center justify-center shrink-0 transition-colors"
-                      style={{
-                        backgroundColor:
-                          isDone || isActive
-                            ? "var(--color-ink)"
-                            : "color-mix(in oklab, var(--color-ink) 12%, transparent)",
-                        color:
-                          isDone || isActive ? "var(--color-cream, #f5f1e8)" : "var(--color-ink)",
-                      }}
-                    >
+                  <li key={step.label} className="admin-updates-step-row">
+                    <span className="admin-updates-step-dot" data-step-state={stepState}>
                       {isDone ? (
                         <Check className="size-3" />
                       ) : isActive ? (
@@ -241,7 +173,7 @@ export function AdminUpdatesPane({
                         <span className="size-1.5 rounded-full bg-current" />
                       )}
                     </span>
-                    <span style={{ color: "var(--color-ink)" }}>{step.label}</span>
+                    <span className="admin-updates-step-label">{step.label}</span>
                   </li>
                 );
               })}
@@ -251,7 +183,7 @@ export function AdminUpdatesPane({
         {controller.updates.lastCheckError ? (
           <p className="mt-3 text-sm text-red-700">{controller.updates.lastCheckError}</p>
         ) : null}
-        <div className="mt-5 flex flex-wrap items-center gap-2">
+        <div className="admin-updates-actions">
           <Button
             variant="outline"
             onClick={controller.actions.checkUpdates}
@@ -294,7 +226,7 @@ export function AdminUpdatesPane({
               return (
                 <MenuItem
                   key={`${check.label}-${index}`}
-                  className="px-0 py-2 text-(--color-ink) hover:bg-transparent focus-visible:ring-0"
+                  className="admin-server-check-item"
                   icon={<Icon style={{ color }} />}
                   label={check.label}
                   description={check.detail}
@@ -331,11 +263,8 @@ export function AdminUpdatesPane({
           rowKey={(row) => row.id}
           className="-mx-6 px-6"
           tableClassName="w-full text-sm"
-          headerClassName="text-left text-[10px] uppercase tracking-[0.18em]"
-          rowClassName="border-t"
-          rowStyle={() => ({
-            borderColor: "color-mix(in oklab, var(--color-ink) 10%, transparent)",
-          })}
+          headerClassName="admin-table-head"
+          rowClassName="admin-data-table-row"
         />
       </Card>
     </>

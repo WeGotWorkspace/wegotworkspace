@@ -17,8 +17,8 @@ export function AdminBackupsPane({ controller }: AdminBackupsPaneProps) {
       headerClassName: "font-medium pb-3 pr-3",
       cellClassName: "py-3 pr-3",
       render: (row) => (
-        <div className="flex items-center gap-2 min-w-0">
-          <FileArchive className="size-4 shrink-0 opacity-60" />
+        <div className="admin-backup-file-row">
+          <FileArchive className="admin-backup-file-icon" />
           <span className="truncate font-medium">{row.name}</span>
         </div>
       ),
@@ -29,9 +29,7 @@ export function AdminBackupsPane({ controller }: AdminBackupsPaneProps) {
       headerClassName: "font-medium pb-3 pr-3",
       cellClassName: "py-3 pr-3 whitespace-nowrap",
       render: (row) => (
-        <span style={{ color: "color-mix(in oklab, var(--color-ink) 65%, transparent)" }}>
-          {formatHumanDateTime(row.modifiedAt)}
-        </span>
+        <span className="admin-text-muted-65">{formatHumanDateTime(row.modifiedAt)}</span>
       ),
     },
     {
@@ -40,15 +38,7 @@ export function AdminBackupsPane({ controller }: AdminBackupsPaneProps) {
       headerClassName: "font-medium pb-3 pr-3",
       cellClassName: "py-3 pr-3 whitespace-nowrap",
       render: (row) => (
-        <span
-          className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium"
-          style={{
-            backgroundColor: "color-mix(in oklab, var(--color-ink) 8%, transparent)",
-            color: "var(--color-ink)",
-          }}
-        >
-          {row.toVersion ?? row.fromVersion ?? "-"}
-        </span>
+        <span className="admin-backup-version-pill">{row.toVersion ?? row.fromVersion ?? "-"}</span>
       ),
     },
     {
@@ -57,9 +47,7 @@ export function AdminBackupsPane({ controller }: AdminBackupsPaneProps) {
       headerClassName: "font-medium pb-3 pr-3",
       cellClassName: "py-3 pr-3 whitespace-nowrap",
       render: (row) => (
-        <span style={{ color: "color-mix(in oklab, var(--color-ink) 65%, transparent)" }}>
-          {`${Math.round(row.sizeBytes / 1024 / 1024)} MB`}
-        </span>
+        <span className="admin-text-muted-65">{`${Math.round(row.sizeBytes / 1024 / 1024)} MB`}</span>
       ),
     },
     {
@@ -96,11 +84,8 @@ export function AdminBackupsPane({ controller }: AdminBackupsPaneProps) {
         rowKey={(row) => row.name}
         className="-mx-6 px-6"
         tableClassName="w-full text-sm"
-        headerClassName="text-left text-[10px] uppercase tracking-[0.18em]"
-        rowClassName="border-t"
-        rowStyle={() => ({
-          borderColor: "color-mix(in oklab, var(--color-ink) 10%, transparent)",
-        })}
+        headerClassName="admin-table-head"
+        rowClassName="admin-data-table-row"
       />
     </Card>
   );

@@ -1,0 +1,190 @@
+@import "../styles.css" reference;
+
+/**
+ * Admin pane chrome under the workspace shell or portaled dialogs (`admin-dialog-surface`).
+ * Use these instead of long `className` / `style` stacks on pane TSX — see `.cursor/rules/ui-parent-css-vars-architecture.mdc`.
+ */
+
+/* --- Lists (users, groups, group dialog) --- */
+:is(.admin-workspace, .admin-dialog-surface) .admin-divided-list > * + * {
+  border-top: 1px solid color-mix(in oklab, var(--color-ink) 10%, transparent);
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-list-row {
+  @apply flex items-center gap-3 py-3 first:pt-0 last:pb-0;
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-group-avatar-slot {
+  @apply size-9 rounded-full flex items-center justify-center shrink-0;
+  background-color: var(--app-sidebar-bg);
+  color: var(--app-sidebar-color);
+}
+
+/* --- Typography --- */
+:is(.admin-workspace, .admin-dialog-surface) .admin-text-title {
+  @apply text-sm font-medium truncate;
+  color: var(--color-ink);
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-text-subtle {
+  @apply text-xs truncate;
+  color: color-mix(in oklab, var(--color-ink) 55%, transparent);
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-text-caption {
+  @apply text-xs truncate;
+  color: color-mix(in oklab, var(--color-ink) 50%, transparent);
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-text-muted-65 {
+  color: color-mix(in oklab, var(--color-ink) 65%, transparent);
+}
+
+/* --- Feature rows (WebDAV, Meet routing) --- */
+:is(.admin-workspace, .admin-dialog-surface) .admin-feature-row {
+  @apply flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0 border-t first:border-t-0;
+  border-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-feature-row__title {
+  @apply text-sm font-medium;
+  color: var(--color-ink);
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-feature-row__desc {
+  @apply text-xs;
+  color: color-mix(in oklab, var(--color-ink) 55%, transparent);
+}
+
+/* --- Toolbar icon buttons in panes --- */
+:is(.admin-workspace, .admin-dialog-surface) .admin-icon-action {
+  color: var(--color-ink);
+}
+
+/* --- Data tables (backups, update log) --- */
+:is(.admin-workspace, .admin-dialog-surface) .admin-data-table-row {
+  @apply border-t;
+  border-top-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-table-head {
+  @apply text-left text-[10px] uppercase tracking-[0.18em];
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-backup-version-pill {
+  @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium;
+  background-color: color-mix(in oklab, var(--color-ink) 8%, transparent);
+  color: var(--color-ink);
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-backup-file-row {
+  @apply flex items-center gap-2 min-w-0;
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-backup-file-icon {
+  @apply size-4 shrink-0 opacity-60;
+}
+
+/* --- Updates: release status --- */
+:is(.admin-workspace, .admin-dialog-surface) .admin-updates-release-grid {
+  @apply flex flex-wrap items-center gap-6;
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-updates-stat-label {
+  @apply text-[10px] uppercase tracking-[0.18em] mb-1;
+  color: color-mix(in oklab, var(--color-ink) 55%, transparent);
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-updates-stat-label--strong {
+  @apply text-[10px] uppercase tracking-[0.18em] font-semibold mb-1;
+  color: color-mix(in oklab, var(--color-ink) 55%, transparent);
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-updates-stat-value {
+  @apply text-2xl;
+  font-family: var(--font-serif);
+  color: var(--color-ink);
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-updates-progress-card {
+  @apply mt-5 rounded-lg border p-4;
+  background-color: color-mix(in oklab, var(--color-ink) 4%, transparent);
+  border-color: color-mix(in oklab, var(--color-ink) 12%, transparent);
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-updates-progress-head {
+  @apply flex items-center justify-between mb-3;
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-updates-progress-count {
+  @apply text-xs tabular-nums;
+  color: color-mix(in oklab, var(--color-ink) 55%, transparent);
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-updates-progress-track {
+  @apply h-1.5 rounded-full overflow-hidden mb-4;
+  background-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-updates-progress-fill {
+  @apply h-full transition-all duration-500 ease-out;
+  background-color: var(--button-primary-bg, #2f302c);
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-updates-step-list {
+  @apply space-y-2;
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-updates-step-row {
+  @apply flex items-center gap-3 text-sm;
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-updates-step-dot {
+  @apply size-5 rounded-full flex items-center justify-center shrink-0 transition-colors;
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-updates-step-dot[data-step-state="done"],
+:is(.admin-workspace, .admin-dialog-surface) .admin-updates-step-dot[data-step-state="active"] {
+  background-color: var(--color-ink);
+  color: var(--color-cream, #f5f1e8);
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-updates-step-dot[data-step-state="pending"] {
+  background-color: color-mix(in oklab, var(--color-ink) 12%, transparent);
+  color: var(--color-ink);
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-updates-step-label {
+  color: var(--color-ink);
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-updates-actions {
+  @apply mt-5 flex flex-wrap items-center gap-2;
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-member-name-line {
+  @apply flex-1 min-w-0 truncate text-sm font-medium;
+  color: var(--color-ink);
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-inline-handle {
+  @apply ml-2 text-xs font-normal;
+  color: color-mix(in oklab, var(--color-ink) 50%, transparent);
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-group-member-list {
+  @apply rounded-md border;
+  border-color: color-mix(in oklab, var(--color-ink) 12%, transparent);
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-group-member-list > li + li {
+  border-top: 1px solid color-mix(in oklab, var(--color-ink) 10%, transparent);
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-group-member-row {
+  @apply flex items-center gap-3 px-3 py-2;
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-server-check-item {
+  @apply px-0 py-2 text-(--color-ink) hover:bg-transparent focus-visible:ring-0;
+}
