@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { mockWorkspaceSession } from "@/lib/api/mock/workspace-session-mock";
-import { NotesWorkspace } from "@/notes-core/src/notes-workspace";
-import { notesStoryLabels } from "@/notes-core/src/notes-app.stories.fixtures";
 import type { NotesAppBootstrap } from "@/lib/api/mock/notes-bootstrap";
 import { createWgwNotesApiSource } from "@/notes-core/src/notes-api-source";
+import { NotesWorkspace } from "@/notes-core/src/notes-workspace";
 
 /**
  * Hits the real WeGotWorkspace HTTP API (via Storybook’s `/api/v1` proxy).
@@ -79,10 +78,8 @@ function NotesWorkspaceFromLiveApiStory() {
         }
       }
       session={bootstrap?.session ?? mockWorkspaceSession}
-      labels={notesStoryLabels}
       operations={operations}
       listLoading={phase === "loading"}
-      logoutTo={false}
     />
   );
 }
