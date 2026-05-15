@@ -1,6 +1,10 @@
+import { useEffect, useState } from "react";
+import type { ComponentProps, CSSProperties } from "react";
+import { createPortal } from "react-dom";
 import { Toaster as Sonner } from "sonner";
+import "@/ui/app-toaster.css";
 
-type ToasterProps = React.ComponentProps<typeof Sonner>;
+type ToasterProps = ComponentProps<typeof Sonner>;
 
 const Toaster = ({ ...props }: ToasterProps) => {
   return (
@@ -20,16 +24,27 @@ const Toaster = ({ ...props }: ToasterProps) => {
   );
 };
 
-/** Renders the live-app toast stack (used in document shell + Storybook). */
-export function AppToaster() {
+function AppToasterSurface() {
   return (
     <Toaster
       position="bottom-right"
+      offset={{
+        bottom: "max(0.75rem, env(safe-area-inset-bottom, 0px))",
+        right: "max(0.75rem, env(safe-area-inset-right, 0px))",
+      }}
+      style={
+        {
+          ["--width" as string]: "min(100vw - 1rem, 28rem)",
+          fontFamily: "var(--font-sans)",
+        } as CSSProperties
+      }
       toastOptions={{
         unstyled: true,
         classNames: {
           toast:
-            "flex items-center gap-3 w-full rounded-md px-3.5 py-2.5 text-sm shadow-lg",
+            "flex w-full min-w-0 max-w-none items-stretch gap-0 rounded-md p-0 text-sm shadow-none",
+          content: "flex w-full min-w-0 flex-col gap-0",
+          title: "m-0 w-full min-w-0 p-0 font-[inherit] leading-[inherit]",
           icon: "shrink-0 [&>svg]:size-4",
         },
         style: {
@@ -41,6 +56,24 @@ export function AppToaster() {
       }}
     />
   );
+}
+
+/**
+ * Toast stack: portaled to `document.body` so `position: fixed` uses the
+ * viewport (Storybook/canvas transforms otherwise pin toasts to the story frame).
+ */
+export function AppToaster() {
+  const [container, setContainer] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    setContainer(document.body);
+  }, []);
+
+  if (container == null) {
+    return null;
+  }
+
+  return createPortal(<AppToasterSurface />, container);
 }
 
 export { Toaster };

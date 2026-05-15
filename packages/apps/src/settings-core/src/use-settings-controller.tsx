@@ -1,6 +1,16 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Check } from "lucide-react";
-import { useAppToast } from "@/hooks/use-app-toast";
+import { useForm } from "react-hook-form";
+import { useRunWithAppToast } from "@/hooks/use-run-with-app-toast";
+import {
+  settingsMailFormSchema,
+  type SettingsMailFormValues,
+} from "@/settings-core/src/settings-mail-form-schema";
+import {
+  settingsProfileFormSchema,
+  type SettingsProfileFormValues,
+} from "@/settings-core/src/settings-profile-form-schema";
 import type { SettingsSection } from "@/settings-core/src/settings-types";
 import type { SettingsWorkspaceProps } from "@/settings-core/src/settings-workspace-props";
 import { useSettingsSidebarModel } from "@/settings-core/src/use-settings-sidebar-model";
@@ -9,17 +19,49 @@ export function useSettingsController({
   data,
   operations,
 }: Pick<SettingsWorkspaceProps, "data" | "operations">) {
-  const { showSuccess, showError } = useAppToast();
+  const runWithAppToast = useRunWithAppToast();
   const [section, setSection] = useState<SettingsSection>("profile");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  const [displayName, setDisplayName] = useState(data.user.displayName);
-  const [email, setEmail] = useState(data.user.email);
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const profileForm = useForm<SettingsProfileFormValues>({
+    resolver: zodResolver(settingsProfileFormSchema),
+    defaultValues: {
+      displayName: data.user.displayName,
+      email: data.user.email,
+      newPassword: "",
+      confirmPassword: "",
+    },
+    mode: "onSubmit",
+  });
 
-  const [imapUsername, setImapUsername] = useState(data.mail.imapUsername);
-  const [imapPassword, setImapPassword] = useState("");
+  const { reset: resetProfile } = profileForm;
+
+  useEffect(() => {
+    resetProfile({
+      displayName: data.user.displayName,
+      email: data.user.email,
+      newPassword: "",
+      confirmPassword: "",
+    });
+  }, [data.user.displayName, data.user.email, resetProfile]);
+
+  const mailForm = useForm<SettingsMailFormValues>({
+    resolver: zodResolver(settingsMailFormSchema),
+    defaultValues: {
+      imapUsername: data.mail.imapUsername,
+      imapPassword: "",
+    },
+    mode: "onSubmit",
+  });
+
+  const { reset: resetMail } = mailForm;
+
+  useEffect(() => {
+    resetMail({
+      imapUsername: data.mail.imapUsername,
+      imapPassword: "",
+    });
+  }, [data.mail.imapUsername, resetMail]);
 
   const sections = useSettingsSidebarModel();
   const currentSection = useMemo(
@@ -34,40 +76,48 @@ export function useSettingsController({
     }
   };
 
-  const profileDirty = displayName !== data.user.displayName || email !== data.user.email;
-  const mailDirty = imapUsername !== data.mail.imapUsername || imapPassword.length > 0;
+  const saveProfile = profileForm.handleSubmit(async (values) => {
+    await runWithAppToast(
+      async () => {
+        await operations?.saveProfile({
+          displayName: values.displayName,
+          email: values.email,
+          password: values.newPassword.trim() || undefined,
+        });
+        resetProfile({
+          ...values,
+          newPassword: "",
+          confirmPassword: "",
+        });
+      },
+      {
+        success: "Profile saved",
+        successOptions: { icon: <Check className="size-4" /> },
+        mapError: (error) => (error instanceof Error ? error.message : "Could not save profile"),
+      },
+    );
+  });
 
-  const saveProfile = async () => {
-    try {
-      const password = newPassword.trim();
-      if (password.length > 0 && password.length < 8) {
-        showError("Password must be at least 8 characters");
-        return;
-      }
-      if (password.length > 0 && password !== confirmPassword) {
-        showError("Passwords do not match");
-        return;
-      }
-      await operations?.saveProfile({ displayName, email, password: password || undefined });
-      setNewPassword("");
-      setConfirmPassword("");
-      showSuccess("Profile saved", { icon: <Check className="size-4" /> });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Could not save profile";
-      showError(message);
-    }
-  };
-
-  const saveMail = async () => {
-    try {
-      await operations?.saveMail({ imapUsername, imapPassword });
-      setImapPassword("");
-      showSuccess("Mail credentials saved", { icon: <Check className="size-4" /> });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Could not save mail credentials";
-      showError(message);
-    }
-  };
+  const saveMail = mailForm.handleSubmit(async (values) => {
+    await runWithAppToast(
+      async () => {
+        await operations?.saveMail({
+          imapUsername: values.imapUsername,
+          imapPassword: values.imapPassword,
+        });
+        resetMail({
+          ...values,
+          imapPassword: "",
+        });
+      },
+      {
+        success: "Mail credentials saved",
+        successOptions: { icon: <Check className="size-4" /> },
+        mapError: (error) =>
+          error instanceof Error ? error.message : "Could not save mail credentials",
+      },
+    );
+  });
 
   return {
     section,
@@ -78,27 +128,16 @@ export function useSettingsController({
     selectSection,
     profile: {
       username: data.user.username,
-      displayName,
-      email,
-      newPassword,
-      confirmPassword,
-      profileDirty,
-      setDisplayName,
-      setEmail,
-      setNewPassword,
-      setConfirmPassword,
+      form: profileForm,
       saveProfile,
     },
     memberships: data.groups,
     mail: {
-      imapUsername,
-      imapPassword,
-      mailDirty,
+      form: mailForm,
+      saveMail,
       imapHasPassword: data.mail.imapHasPassword,
       server: data.mailServer,
-      setImapUsername,
-      setImapPassword,
-      saveMail,
+      savedImapUsername: data.mail.imapUsername,
     },
   };
 }

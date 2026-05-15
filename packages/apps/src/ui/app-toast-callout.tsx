@@ -26,6 +26,7 @@ export function AppToastCallout({
 }: AppToastCalloutProps) {
   return (
     <Callout
+      className="w-full min-w-0"
       severity={severity}
       title={title}
       message={message}

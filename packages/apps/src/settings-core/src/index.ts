@@ -13,3 +13,11 @@ export type {
   SettingsUIData,
   SettingsUser,
 } from "./settings-types";
+export {
+  settingsProfileFormSchema,
+  type SettingsProfileFormValues,
+} from "./settings-profile-form-schema";
+export {
+  settingsMailFormSchema,
+  type SettingsMailFormValues,
+} from "./settings-mail-form-schema";

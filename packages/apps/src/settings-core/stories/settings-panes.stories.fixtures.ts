@@ -1,43 +1,42 @@
 import { createSettingsAppBootstrap } from "@/lib/api/mock/settings-bootstrap";
 import type { SettingsGroup } from "@/settings-core/src/settings-types";
-import type { SettingsControllerState } from "@/settings-core/src/use-settings-controller";
+import type { SettingsMailFormValues } from "@/settings-core/src/settings-mail-form-schema";
+import type { SettingsProfileFormValues } from "@/settings-core/src/settings-profile-form-schema";
 
-const asyncNoop = async () => {};
-
-export function createMockProfile(
-  overrides: Partial<SettingsControllerState["profile"]> = {},
-): SettingsControllerState["profile"] {
+export function getProfileFormDefaults(
+  overrides: Partial<SettingsProfileFormValues> = {},
+): SettingsProfileFormValues {
   const { data } = createSettingsAppBootstrap();
   return {
-    username: data.user.username,
     displayName: data.user.displayName,
     email: data.user.email,
     newPassword: "",
     confirmPassword: "",
-    profileDirty: false,
-    setDisplayName: () => {},
-    setEmail: () => {},
-    setNewPassword: () => {},
-    setConfirmPassword: () => {},
-    saveProfile: asyncNoop,
     ...overrides,
   };
 }
 
-export function createMockMail(
-  overrides: Partial<SettingsControllerState["mail"]> = {},
-): SettingsControllerState["mail"] {
+export function getProfileStoryUsername(): string {
+  return createSettingsAppBootstrap().data.user.username;
+}
+
+export function getMailFormDefaults(
+  overrides: Partial<SettingsMailFormValues> = {},
+): SettingsMailFormValues {
   const { data } = createSettingsAppBootstrap();
   return {
     imapUsername: data.mail.imapUsername,
     imapPassword: "",
-    mailDirty: false,
-    imapHasPassword: data.mail.imapHasPassword,
-    server: data.mailServer,
-    setImapUsername: () => {},
-    setImapPassword: () => {},
-    saveMail: asyncNoop,
     ...overrides,
+  };
+}
+
+export function getMailStoryMeta(overrides: { imapHasPassword?: boolean } = {}) {
+  const { data } = createSettingsAppBootstrap();
+  return {
+    server: data.mailServer,
+    imapHasPassword: overrides.imapHasPassword ?? data.mail.imapHasPassword,
+    savedImapUsername: data.mail.imapUsername,
   };
 }
 
