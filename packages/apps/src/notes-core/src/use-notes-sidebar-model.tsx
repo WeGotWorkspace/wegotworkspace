@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Archive, BookOpen, Files, Star, Tag } from "lucide-react";
-import type { NotesUILabels } from "@/notes-core/src/notes-app.stories.fixtures";
+import type { NotesUILabels } from "@/notes-core/src/notes-labels";
 
 type UseNotesSidebarModelArgs = {
   labels: NotesUILabels;

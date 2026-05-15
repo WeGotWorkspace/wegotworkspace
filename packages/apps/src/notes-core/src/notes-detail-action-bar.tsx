@@ -1,7 +1,7 @@
 import { Archive, ArchiveRestore, BookOpen, MoreHorizontal, Star } from "lucide-react";
 import { ActionBar } from "@/action-bar/src/action-bar";
 import type { Note } from "@/lib/models/note";
-import type { NotesUILabels } from "@/notes-core/src/notes-app.stories.fixtures";
+import type { NotesUILabels } from "@/notes-core/src/notes-labels";
 
 type NotesDetailActionBarProps = {
   active: Note | undefined;

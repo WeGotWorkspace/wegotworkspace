@@ -1,7 +1,24 @@
 @import "../../styles.css" reference;
 
-.notes-list-panel__header-actions {
+.notes-workspace .notes-list-panel__header-actions {
   --button-subtle-color: color-mix(in oklab, var(--color-ink) 65%, transparent);
   --button-subtle-background: color-mix(in oklab, var(--color-ink) 6%, transparent);
   --button-subtle-hover-background: color-mix(in oklab, var(--color-ink) 18%, transparent);
+}
+
+.notes-workspace .notes-list-panel__star-pip {
+  display: inline-flex;
+}
+
+.notes-workspace .notes-list-panel__star-icon {
+  @apply size-3 transition-opacity;
+  color: var(--notes-list-star-color, var(--color-emerald));
+}
+
+.notes-workspace .notes-list-panel__star-pip[data-active="false"] .notes-list-panel__star-icon {
+  opacity: 0;
+}
+
+.notes-workspace .notes-list-panel__star-pip[data-active="true"] .notes-list-panel__star-icon {
+  opacity: 1;
 }
