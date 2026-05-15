@@ -134,6 +134,7 @@ export function NotesWorkspace({
                 pill
                 variant="primary"
                 disabled={!canCreateNote}
+                className="w-full"
               />
             }
           >
