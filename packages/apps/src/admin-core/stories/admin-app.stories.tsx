@@ -1,24 +1,20 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { AdminApp } from "@/admin-core/src/admin-app";
+import { createAdminAppBootstrap } from "@/lib/api/mock/admin-bootstrap";
+import { AdminWorkspace } from "@/admin-core/src/admin-workspace";
 
-const meta: Meta<typeof AdminApp> = {
+const meta: Meta<typeof AdminWorkspace> = {
   title: "Apps/Admin",
-  component: AdminApp,
+  component: AdminWorkspace,
   parameters: {
     layout: "fullscreen",
-    routerPath: "/admin",
-    docs: {
-      description: {
-        component:
-          "Uses mock admin data and in-memory API when `wgwLiveApiEnabled()` is false (typical Storybook). Server checks are pre-filled in mock bootstrap. **Refresh checks** on the Server checks card only re-fetches state (no full update check). **Check for updates** runs a simulated release check. For real HTTP behavior, see **Apps/Admin/Live API**.",
-      },
-    },
   },
 };
 
 export default meta;
-type Story = StoryObj<typeof AdminApp>;
+type Story = StoryObj<typeof AdminWorkspace>;
 
-export const Mock: Story = {
-  render: () => <AdminApp />,
+export const Default: Story = {
+  args: {
+    ...createAdminAppBootstrap(),
+  },
 };
