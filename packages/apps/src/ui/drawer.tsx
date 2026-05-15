@@ -2,6 +2,7 @@ import * as React from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
 
 import { cn } from "@/lib/utils";
+import "@/ui/modal-title.css";
 
 const Drawer = ({
   shouldScaleBackground = true,
@@ -64,11 +65,7 @@ const DrawerTitle = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Title>
 >(({ className, ...props }, ref) => (
-  <DrawerPrimitive.Title
-    ref={ref}
-    className={cn("font-serif text-2xl font-semibold leading-none tracking-tight", className)}
-    {...props}
-  />
+  <DrawerPrimitive.Title ref={ref} className={cn("ui-modal-title", className)} {...props} />
 ));
 DrawerTitle.displayName = DrawerPrimitive.Title.displayName;
 

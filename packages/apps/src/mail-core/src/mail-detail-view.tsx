@@ -55,7 +55,7 @@ export function MailDetailView({
   const showPlainBody = detailLoaded && !hasHtmlBody;
 
   return (
-    <article className={cn("max-w-[680px] mx-auto", className)}>
+    <article className={cn("mail-detail-view max-w-[680px] mx-auto", className)}>
       <DetailViewHeader
         topTags={[
           {
@@ -82,13 +82,8 @@ export function MailDetailView({
         titleClassName="text-3xl md:text-4xl font-sans text-(--color-ink) font-semibold leading-[1.1] tracking-tight mb-8"
       />
 
-      <div className="flex items-center py-4 border-y border-[color-mix(in_oklab,var(--color-ink)_10%,transparent)] mb-10">
-        <UserAvatar
-          displayName={from}
-          subtitle={senderMetaLine}
-          size="md"
-          className="gap-3 w-full [--user-avatar-bg:var(--color-emerald)] [--user-avatar-fg:var(--color-ink)]"
-        />
+      <div className="mail-detail-view__sender-row">
+        <UserAvatar displayName={from} subtitle={senderMetaLine} size="md" />
       </div>
 
       {showIframe ? (

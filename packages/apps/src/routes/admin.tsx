@@ -32,6 +32,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { Card } from "@/card/src/card";
+import { UserAvatar } from "@/user-avatar/src/user-avatar";
 import { Callout } from "@/callout/src/callout";
 import { DataTable, type DataTableColumn } from "@/data-table/src/data-table";
 import { MenuItem } from "@/menu-item/src/menu-item";

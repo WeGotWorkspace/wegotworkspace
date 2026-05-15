@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 import "./card.css";
 
@@ -27,8 +28,7 @@ function CardIconActionButton({ icon, label, onClick, disabled }: CardIconAction
           aria-label={label}
           onClick={onClick}
           disabled={disabled}
-          className="size-8 rounded-md flex items-center justify-center transition-colors hover:bg-[color-mix(in_oklab,var(--color-ink)_8%,transparent)] disabled:opacity-50 disabled:pointer-events-none"
-          style={{ color: "var(--color-ink)" }}
+          className="card__icon-action"
         >
           {icon}
         </button>
@@ -40,18 +40,12 @@ function CardIconActionButton({ icon, label, onClick, disabled }: CardIconAction
 
 export function Card({ title, children, className, action, iconActions }: CardProps) {
   return (
-    <section
-      className={`rounded-xl border p-6 mb-6 ${className ?? ""}`.trim()}
-      style={{
-        backgroundColor: "color-mix(in oklab, var(--color-ink) 3%, transparent)",
-        borderColor: "color-mix(in oklab, var(--color-ink) 12%, transparent)",
-      }}
-    >
+    <section className={cn("card", className)}>
       {(title || action || (iconActions && iconActions.length > 0)) && (
-        <div className="flex items-center justify-between mb-4 gap-2">
+        <div className="card__header-row">
           {title ? <h2 className="card__title">{title}</h2> : <span />}
           {iconActions && iconActions.length > 0 ? (
-            <div className="flex items-center gap-1">
+            <div className="card__icon-actions">
               {iconActions.map((iconAction) => (
                 <CardIconActionButton key={iconAction.label} {...iconAction} />
               ))}

@@ -146,33 +146,12 @@ export function WorkspaceUserFooter({
   const avatarName = trimmedName || trimmedInitials;
   const handleLogout = () => onLogoutClick?.();
   return (
-    <div
-      className="p-4 md:p-6 flex items-center gap-2 shrink-0 border-t"
-      style={{
-        color:
-          "var(--workspace-user-footer-text-color, color-mix(in oklab, var(--color-ink) 70%, transparent))",
-        borderColor:
-          "var(--workspace-user-footer-border-color, color-mix(in oklab, var(--color-ink) 10%, transparent))",
-      }}
-    >
+    <div className="workspace-app-layout__user-footer">
       <UserAvatar
         displayName={avatarName}
         subtitle={detailLine}
         compact={!detailLine}
         className={detailLine ? "flex-1 min-w-0" : "shrink-0"}
-        // Keep avatar visuals themeable without pushing color props through component APIs.
-        style={
-          {
-            ["--user-avatar-bg" as string]:
-              "var(--workspace-user-footer-avatar-bg, color-mix(in oklab, var(--color-ink) 12%, transparent))",
-            ["--user-avatar-fg" as string]:
-              "var(--workspace-user-footer-avatar-color, var(--color-ink))",
-            ["--user-avatar-label-color" as string]:
-              "var(--workspace-user-footer-text-color, color-mix(in oklab, var(--color-ink) 70%, transparent))",
-            ["--user-avatar-subtitle-color" as string]:
-              "var(--workspace-user-footer-subtitle-color, color-mix(in oklab, var(--color-ink) 55%, transparent))",
-          } as React.CSSProperties
-        }
       />
       {!detailLine ? <div className="flex-1 min-w-0 text-sm truncate">{name}</div> : null}
       <IconButton

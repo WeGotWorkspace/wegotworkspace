@@ -1,6 +1,7 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
+import "@/user-avatar/src/user-avatar.css";
 
 export type UserAvatarSize = "sm" | "md";
 
@@ -14,7 +15,6 @@ export type UserAvatarProps = {
   size?: UserAvatarSize;
   onClick?: () => void;
   className?: string;
-  style?: CSSProperties;
 };
 
 function initialsFromDisplayName(displayName: string) {
@@ -32,67 +32,40 @@ export function UserAvatar({
   size = "sm",
   onClick,
   className,
-  style,
 }: UserAvatarProps) {
   const initials = initialsFromDisplayName(displayName) || "?";
-
-  const circleClass =
-    size === "md"
-      ? "size-10 rounded-full flex items-center justify-center text-xs font-medium shrink-0"
-      : "size-9 rounded-full flex items-center justify-center text-[11px] font-medium shrink-0";
+  const sizeClass = size === "md" ? "user-avatar--md" : "user-avatar--sm";
 
   const circle = onClick ? (
     <button
       type="button"
       onClick={onClick}
       aria-label={`${displayName} avatar`}
-      className={circleClass}
-      style={{
-        backgroundColor:
-          "var(--user-avatar-bg, color-mix(in oklab, var(--color-ink) 12%, transparent))",
-        color: "var(--user-avatar-fg, var(--color-ink))",
-      }}
+      className="user-avatar__mark"
     >
       {initials}
     </button>
   ) : (
-    <div
-      className={circleClass}
-      style={{
-        backgroundColor:
-          "var(--user-avatar-bg, color-mix(in oklab, var(--color-ink) 12%, transparent))",
-        color: "var(--user-avatar-fg, var(--color-ink))",
-      }}
-      role="img"
-      aria-label={`${displayName} avatar`}
-    >
+    <div className="user-avatar__mark" role="img" aria-label={`${displayName} avatar`}>
       {initials}
     </div>
   );
 
   return (
-    <div className={cn("flex items-center gap-2 min-w-0", className)} style={style}>
+    <div className={cn("user-avatar", sizeClass, className)}>
       {circle}
       {!compact ? (
-        <div className="flex flex-col min-w-0 flex-1 gap-0.5">
+        <div className="user-avatar__text">
           <div
-            className={cn("truncate", subtitle ? "text-sm font-medium" : "text-sm")}
-            style={{
-              color: "var(--user-avatar-label-color, var(--user-avatar-fg, var(--color-ink)))",
-            }}
+            className={cn(
+              "user-avatar__name",
+              subtitle != null && subtitle !== "" && "user-avatar__name--emphasized",
+            )}
           >
             {displayName}
           </div>
           {subtitle != null && subtitle !== "" ? (
-            <div
-              className="text-xs truncate"
-              style={{
-                color:
-                  "var(--user-avatar-subtitle-color, color-mix(in oklab, var(--color-ink) 55%, transparent))",
-              }}
-            >
-              {subtitle}
-            </div>
+            <div className="user-avatar__subtitle">{subtitle}</div>
           ) : null}
         </div>
       ) : null}
