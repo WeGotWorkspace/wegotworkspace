@@ -10,11 +10,13 @@ import { MultiSelectionView } from "@/multi-selection-view/src/multi-selection-v
 import { WorkspaceApp } from "@/workspace-app/src/workspace-app";
 import { WorkspaceUserFooter } from "@/workspace-shell/src/workspace-app-layout";
 import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
+import { cn } from "@/lib/utils";
 import { NotesDetailActionBar } from "@/notes-core/src/notes-detail-action-bar";
 import { formatNoteDateForList } from "@/notes-core/src/notes-date-utils";
 import { NotesListPanel } from "@/notes-core/src/notes-list-panel";
 import { useNotesController } from "@/notes-core/src/use-notes-controller";
 import { useNotesSidebarModel } from "@/notes-core/src/use-notes-sidebar-model";
+import "@/notes-core/src/notes-workspace.css";
 
 export function NotesWorkspace({
   data,
@@ -22,7 +24,8 @@ export function NotesWorkspace({
   labels,
   operations,
   listLoading = false,
-  logoutTo = "/logout",
+  onLogout,
+  className,
 }: NotesWorkspaceProps) {
   const closeSidebarOnMobile = (closeSidebar: () => void) => {
     if (typeof window === "undefined") return;
@@ -105,25 +108,7 @@ export function NotesWorkspace({
       <WorkspaceApp
         ref={workspaceLayoutRef}
         workspaceRoot={{
-          style: {
-            ["--workspace-root-bg" as string]: "var(--color-paper)",
-            ["--app-sidebar-bg" as string]: "var(--color-paper)",
-            ["--app-sidebar-border-color" as string]:
-              "color-mix(in oklab, var(--color-ink) 15%, transparent)",
-            ["--app-sidebar-brand-fill" as string]: "var(--color-ink)",
-            ["--app-sidebar-close-button-color" as string]: "var(--color-ink)",
-            ["--workspace-user-footer-text-color" as string]:
-              "color-mix(in oklab, var(--color-ink) 70%, transparent)",
-            ["--workspace-user-footer-border-color" as string]:
-              "color-mix(in oklab, var(--color-ink) 10%, transparent)",
-            ["--workspace-user-footer-avatar-bg" as string]:
-              "color-mix(in oklab, var(--color-ink) 12%, transparent)",
-            ["--workspace-user-footer-avatar-color" as string]: "var(--color-ink)",
-            ["--workspace-user-footer-link-color" as string]:
-              "color-mix(in oklab, var(--color-ink) 65%, transparent)",
-            ["--workspace-user-footer-link-bg" as string]:
-              "color-mix(in oklab, var(--color-ink) 6%, transparent)",
-          },
+          className: cn("notes-workspace", className),
         }}
         sidebar={(c) => (
           <AppSidebar
@@ -134,10 +119,7 @@ export function NotesWorkspace({
                 name={session.user.displayName}
                 initials={workspaceUserInitials(session.user)}
                 detailLine={session.user.username}
-                onLogoutClick={() => {
-                  if (logoutTo) window.location.assign(logoutTo);
-                }}
-                linkHoverClassName="hover:bg-[color-mix(in_oklab,var(--color-ink)_18%,transparent)] hover:text-[var(--color-ink)]"
+                onLogoutClick={onLogout}
               />
             }
             primaryButton={

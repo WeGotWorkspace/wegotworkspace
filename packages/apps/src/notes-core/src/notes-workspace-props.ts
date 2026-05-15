@@ -1,5 +1,5 @@
 import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
-import type { NotesUILabels } from "@/notes-core/src/notes-app.stories.fixtures";
+import type { NotesUILabels } from "@/notes-core/src/notes-labels";
 import type { NotesAPIOperations, NotesUIData } from "@/notes-core/src/notes-types";
 
 export type NotesWorkspaceProps = {
@@ -10,6 +10,7 @@ export type NotesWorkspaceProps = {
   operations?: NotesAPIOperations;
   /** Show list-column spinner while notes bootstrap (shell + sidebar visible). */
   listLoading?: boolean;
-  /** Logout link target, or `false` to omit navigation (e.g. Storybook). Default `/`. */
-  logoutTo?: string | false;
+  /** Invoked when the user chooses log out; navigation is owned by the app shell. */
+  onLogout?: () => void;
+  className?: string;
 };
