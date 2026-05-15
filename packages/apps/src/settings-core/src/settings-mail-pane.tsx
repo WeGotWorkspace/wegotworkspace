@@ -50,44 +50,28 @@ export function SettingsMailPane({ mail }: SettingsMailPaneProps) {
 
       <Card title="IMAP (incoming)">
         <FieldLabelRow {...settingsWorkspaceFormLayout.displayField} label="Server" readOnly>
-          <Input value={server.imapHost} readOnly className="settings-workspace__input-readonly" />
+          <Input value={server.imapHost} readOnly />
         </FieldLabelRow>
-        <div className="settings-workspace__grid-2">
+        <div className={settingsWorkspaceFormLayout.grid2}>
           <FieldLabelRow {...settingsWorkspaceFormLayout.displayField} label="Port" readOnly>
-            <Input
-              value={String(server.imapPort)}
-              readOnly
-              className="settings-workspace__input-readonly"
-            />
+            <Input value={server.imapPort} readOnly />
           </FieldLabelRow>
           <FieldLabelRow {...settingsWorkspaceFormLayout.displayField} label="Security" readOnly>
-            <Input
-              value={securityLabel(server.imapSecurity)}
-              readOnly
-              className="settings-workspace__input-readonly"
-            />
+            <Input value={securityLabel(server.imapSecurity)} readOnly />
           </FieldLabelRow>
         </div>
       </Card>
 
       <Card title="SMTP (outgoing)">
         <FieldLabelRow {...settingsWorkspaceFormLayout.displayField} label="Server" readOnly>
-          <Input value={server.smtpHost} readOnly className="settings-workspace__input-readonly" />
+          <Input value={server.smtpHost} readOnly />
         </FieldLabelRow>
-        <div className="settings-workspace__grid-2">
+        <div className={settingsWorkspaceFormLayout.grid2}>
           <FieldLabelRow {...settingsWorkspaceFormLayout.displayField} label="Port" readOnly>
-            <Input
-              value={String(server.smtpPort)}
-              readOnly
-              className="settings-workspace__input-readonly"
-            />
+            <Input value={server.smtpPort} readOnly />
           </FieldLabelRow>
           <FieldLabelRow {...settingsWorkspaceFormLayout.displayField} label="Security" readOnly>
-            <Input
-              value={securityLabel(server.smtpSecurity)}
-              readOnly
-              className="settings-workspace__input-readonly"
-            />
+            <Input value={securityLabel(server.smtpSecurity)} readOnly />
           </FieldLabelRow>
         </div>
       </Card>

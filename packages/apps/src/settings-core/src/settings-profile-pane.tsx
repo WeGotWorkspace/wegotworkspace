@@ -26,7 +26,7 @@ export function SettingsProfilePane({ profile }: SettingsProfilePaneProps) {
     <Form {...form}>
       <Card title="Identity">
         <FieldLabelRow {...settingsWorkspaceFormLayout.displayField} label="Username" readOnly>
-          <Input value={username} readOnly className="settings-workspace__input-readonly" />
+          <Input value={username} readOnly />
         </FieldLabelRow>
         <FormTextField
           {...settingsWorkspaceFormLayout.textField}
