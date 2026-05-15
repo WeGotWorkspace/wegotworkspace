@@ -1,6 +1,6 @@
 ---
 description: Blueprint for *App + *Workspace + controller + panes (settings-core pattern) when refactoring apps packages.
-globs: packages/apps/src/**/*-app.tsx,packages/apps/src/**/*-workspace.tsx,packages/apps/src/**/*-core/**/use-*-controller.tsx,packages/apps/src/**/*-core/**/use-*-api.ts,packages/apps/src/**/*-core/**/*-workspace*.css,packages/apps/src/**/*-core/**/*workspace-form-layout.ts
+globs: packages/apps/src/**/*-app.tsx,packages/apps/src/**/*-workspace.tsx,packages/apps/src/**/*-core/**/use-*-controller.tsx,packages/apps/src/**/*-core/**/use-*-api.ts,packages/apps/src/**/*-core/**/*-workspace*.css,packages/apps/src/**/*-core/**/*-workspace.styles.ts
 alwaysApply: false
 ---
 
@@ -14,7 +14,7 @@ Use **`packages/apps/src/settings-core/`** as the reference when splitting a pro
 2. **`*Workspace.tsx`** — `WorkspaceAppLayout` split (`sidebar`, `mainHeader`, `main`). Root **`className={cn("<product>-workspace", className)}`** imports **one shell CSS file** (tokens + descendant pane helpers). **File-private** helpers (`Sidebar`, `MainHeader`, `MainContent`, footer) keep this file readable; pass **typed controller state** into children.
 3. **`use*Controller`** — Holds **shell state** (section nav, `sidebarOpen`, sidebar item model) together with **domain slices** (`use*ProfileForm`, `use*MailForm`, …) when the shell is small and only composed here. If shell logic grows large, extract a dedicated **`use*Shell`** hook again and call it from the controller.
 4. **`*WorkspaceProps`** — Explicit contract: `data` (UI/bootstrap shape), `session` (`WorkspaceSession` for chrome/footer), optional `operations`, optional `className` / `onLogout`. **Session drives chrome** (footer, avatars); **data drives forms** — mocks/stories must align both (see `createSettingsAppBootstrap`).
-5. **Panes** — **`SettingsProfilePane`**, **`SettingsMailPane`**, etc.: presentational; receive **only the slice** they need (`profile`, `mail`, …). Prefer **`Form` + `FormTextField` + `FormSaveActionRow`** with a small **`settingsWorkspaceFormLayout`**-style object exporting **class name strings** wired to the shell CSS file.
+5. **Panes** — **`SettingsProfilePane`**, **`SettingsMailPane`**, etc.: presentational; receive **only the slice** they need (`profile`, `mail`, …). Prefer **`Form` + `FormTextField` + `FormSaveActionRow`** with a **`settings-workspace.styles.ts`** (or `*WorkspacePaneClasses`) object whose strings match **descendant selectors** in the sibling **`settings-workspace.css`**.
 6. **`*workspace.css`** — Scoped to **`.<product>-workspace`**: CSS variables for sidebar, footer, buttons, **`--field-label-color`** (shared with `field-label-row__label`). Descendant utilities (**`settings-form-field`**, **`settings-grid-2`**, …) instead of repeating a long BEM prefix on every node. Read-only display rows: **`FieldLabelRow` + `Input readOnly`**; shell may style via **`.<product>-workspace .field-label-row:has(input[readonly]) .input`** so inputs need no extra `className`.
 
 ## Data and API
