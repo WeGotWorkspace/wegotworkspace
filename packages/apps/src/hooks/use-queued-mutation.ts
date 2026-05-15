@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useAppToast } from "@/hooks/use-app-toast";
 
-type QueueMutationArgs = {
+/** Arguments for a single deferred API write (undo + `AbortSignal` while pending). */
+export type DeferredApiWriteArgs = {
   key: string;
   toastMessage: string;
   execute: (signal: AbortSignal) => Promise<void>;
@@ -26,25 +27,26 @@ type UseQueuedMutationOptions = {
   onMutationError: () => void;
 };
 
-export function useQueuedMutation({
-  delayMs = 2500,
-  onMutationError,
-}: UseQueuedMutationOptions) {
+/**
+ * Queues **deferred** API writes: shows a Callout toast with **Undo**, waits `delayMs`,
+ * then runs `execute(AbortSignal)`. Undo clears the timer, aborts the in-flight request
+ * if already started, rolls back via `undo`, and shows `undoToastMessage`.
+ *
+ * Pair with {@link runQueuedBatchAction} for batch helpers, or call `queueMutation` directly.
+ */
+export function useQueuedMutation({ delayMs = 2500, onMutationError }: UseQueuedMutationOptions) {
   const { show, dismiss } = useAppToast();
   const pendingByKeyRef = useRef<Map<string, PendingMutation>>(new Map());
   const orderRef = useRef<string[]>([]);
 
-  const removePending = useCallback(
-    (key: string) => {
-      pendingByKeyRef.current.delete(key);
-      orderRef.current = orderRef.current.filter((item) => item !== key);
-    },
-    [],
-  );
+  const removePending = useCallback((key: string) => {
+    pendingByKeyRef.current.delete(key);
+    orderRef.current = orderRef.current.filter((item) => item !== key);
+  }, []);
 
   const showUndoToast = useCallback(
     (message?: string) => {
-      show(message ?? "Change undone.");
+      show(message ?? "Change undone.", { severity: "info" });
     },
     [show],
   );
@@ -65,7 +67,7 @@ export function useQueuedMutation({
   );
 
   const queueMutation = useCallback(
-    ({ key, toastMessage, execute, undo, onError, undoToastMessage }: QueueMutationArgs) => {
+    ({ key, toastMessage, execute, undo, onError, undoToastMessage }: DeferredApiWriteArgs) => {
       const existing = pendingByKeyRef.current.get(key);
       if (existing) {
         if (existing.timer) clearTimeout(existing.timer);
@@ -104,11 +106,11 @@ export function useQueuedMutation({
       entry.toastId =
         show(toastMessage, {
           duration: delayMs + 3500,
-          action: {
-            label: "Undo",
-            onClick: () => {
-              void undoPending(entry, { showToast: true });
-            },
+          severity: "success",
+          canUndo: true,
+          undoLabel: "Undo",
+          onUndo: () => {
+            void undoPending(entry, { showToast: true });
           },
         }) ?? "";
 

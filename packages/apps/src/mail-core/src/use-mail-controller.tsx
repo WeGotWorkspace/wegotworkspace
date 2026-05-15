@@ -221,13 +221,12 @@ export function useMailController({
   const fetchedDetailIdsRef = useRef<Set<string>>(new Set());
   const pendingDetailIdsRef = useRef<Set<string>>(new Set());
 
-  const { show } = useAppToast();
+  const { show, showError } = useAppToast();
   const { confirmDialog, requestConfirm } = useConfirmDialog();
   const isTouch = useIsTouch();
   const showMutationError = useCallback(
-    (fallback = "Could not sync this change. Please try again.") =>
-      show(fallback, { icon: <X className="size-4" /> }),
-    [show],
+    (fallback = "Could not sync this change. Please try again.") => showError(fallback),
+    [showError],
   );
 
   const [loadingMailbox, setLoadingMailbox] = useState<string | null>(null);
@@ -869,7 +868,10 @@ export function useMailController({
       const draft = composeDrafts[id];
       if (!draft) return;
       if (!draft.to.trim()) {
-        show("Add at least one recipient in To.", { icon: <X className="size-4" /> });
+        show("Add at least one recipient in To.", {
+          icon: <X className="size-4" />,
+          severity: "warning",
+        });
         return;
       }
       setComposeDrafts((prev) =>
@@ -916,7 +918,7 @@ export function useMailController({
           prev[id] ? { ...prev, [id]: { ...prev[id]!, sending: false } } : prev,
         );
         const message = error instanceof Error ? error.message : "Could not send message.";
-        show(message, { icon: <X className="size-4" /> });
+        show(message, { icon: <X className="size-4" />, severity: "error" });
       }
     },
     [composeDrafts, operations, show, encodeFolderToken, closeComposeDialog, L.noSubject],
@@ -937,6 +939,7 @@ export function useMailController({
         } catch {
           show("Discarded locally. Could not delete this draft on server.", {
             icon: <X className="size-4" />,
+            severity: "warning",
           });
         }
       }
@@ -949,7 +952,10 @@ export function useMailController({
       setSelectedIds((prev) => prev.filter((selectedId) => selectedId !== id));
       setActiveId((current) => (current === id ? "" : current));
       closeComposeDialog();
-      show("Draft discarded and removed from your list.", { icon: <X className="size-4" /> });
+      show("Draft discarded and removed from your list.", {
+        icon: <X className="size-4" />,
+        severity: "info",
+      });
     },
     [mail, operations, show, setSelectedIds, closeComposeDialog],
   );

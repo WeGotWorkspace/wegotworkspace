@@ -1,6 +1,7 @@
 import { useCallback, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { Archive, FolderInput, Mail as MailIcon, Star, StarOff, Trash2 } from "lucide-react";
 import { runQueuedBatchAction } from "@/hooks/use-batch-actions";
+import type { DeferredApiWriteArgs } from "@/hooks/use-queued-mutation";
 import {
   collectSnapshotValues,
   nextActiveIdAfterRemoving,
@@ -11,14 +12,7 @@ import { buildPermanentDeleteDescription } from "@/lib/workspace/destructive-dia
 import type { Mail } from "@/types/mail";
 import type { MailAPIOperations } from "@/mail-core/src/mail-types";
 
-type QueueMutation = (args: {
-  key: string;
-  toastMessage: string;
-  execute: (signal: AbortSignal) => Promise<void>;
-  undo: () => void;
-  onError?: () => void;
-  undoToastMessage?: string;
-}) => void;
+type QueueMutation = (args: DeferredApiWriteArgs) => void;
 
 type DeleteConfirmCopy = {
   dialogDeleteMessagesTitle: (count: number) => string;
