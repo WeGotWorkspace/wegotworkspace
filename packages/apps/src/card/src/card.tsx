@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/tooltip";
 
+import "./card.css";
+
 export type CardProps = {
   title?: string;
   children: ReactNode;
@@ -47,16 +49,7 @@ export function Card({ title, children, className, action, iconActions }: CardPr
     >
       {(title || action || (iconActions && iconActions.length > 0)) && (
         <div className="flex items-center justify-between mb-4 gap-2">
-          {title ? (
-            <h2
-              className="text-[10px] uppercase tracking-[0.2em] font-semibold"
-              style={{ color: "color-mix(in oklab, var(--color-ink) 55%, transparent)" }}
-            >
-              {title}
-            </h2>
-          ) : (
-            <span />
-          )}
+          {title ? <h2 className="card__title">{title}</h2> : <span />}
           {iconActions && iconActions.length > 0 ? (
             <div className="flex items-center gap-1">
               {iconActions.map((iconAction) => (

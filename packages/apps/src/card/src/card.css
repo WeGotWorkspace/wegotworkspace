@@ -1,0 +1,9 @@
+@import "../../styles.css" reference;
+
+/**
+ * Card chrome. Optional: `--card-title-size`, `--card-title-tracking`, `--card-title-color`.
+ */
+.card__title {
+  @apply font-serif leading-tight text-2xl mb-4;
+  color: var(--card-title-color, color-mix(in oklab, var(--color-ink) 75%, transparent));
+}
