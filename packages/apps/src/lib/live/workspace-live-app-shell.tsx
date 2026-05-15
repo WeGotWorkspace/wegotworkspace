@@ -31,6 +31,9 @@ export function WorkspaceLiveAppShell({
   useEffect(() => {
     if (phase !== "error" || typeof window === "undefined") return;
     if (!isAuthError) return;
+    // Storybook and local Vite dev: stay on the page and show the error panel instead of a blank
+    // iframe / broken `/login` navigation. Production keeps the redirect to the real login route.
+    if (import.meta.env.DEV) return;
     clearWgwSession();
     const returnPath = encodeURIComponent(
       `${window.location.pathname}${window.location.search}${window.location.hash}`,
@@ -39,11 +42,10 @@ export function WorkspaceLiveAppShell({
   }, [isAuthError, phase]);
 
   if (phase === "error") {
-    if (isAuthError) {
-      // Redirect side effect above handles auth failures; avoid showing misleading dev hints.
+    if (isAuthError && !import.meta.env.DEV) {
       return null;
     }
-    return <LiveBootstrapErrorPanel title={errorTitle} error={error} onRetry={retry} />;
+    return <LiveBootstrapErrorPanel title={errorTitle} error={message || null} onRetry={retry} />;
   }
 
   return render(successVersion);

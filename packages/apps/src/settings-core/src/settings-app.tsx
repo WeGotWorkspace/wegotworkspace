@@ -1,10 +1,16 @@
 import { WorkspaceLiveAppShell } from "@/lib/live/workspace-live-app-shell";
+import type { SettingsApiSource } from "@/settings-core/src/settings-api-source";
 import { useSettingsAPI } from "@/settings-core/src/use-settings-api";
 import { SettingsWorkspace } from "@/settings-core/src/settings-workspace";
 
-export function SettingsApp() {
+export type SettingsAppProps = {
+  /** When set (e.g. Storybook live story), bypasses `wgwLiveApiEnabled()` routing. */
+  apiSource?: SettingsApiSource;
+};
+
+export function SettingsApp({ apiSource }: SettingsAppProps = {}) {
   const { phase, error, retry, successVersion, listLoading, session, data, operations } =
-    useSettingsAPI();
+    useSettingsAPI(apiSource);
 
   return (
     <WorkspaceLiveAppShell
