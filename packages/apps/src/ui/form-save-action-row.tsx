@@ -19,7 +19,7 @@ export function FormSaveActionRow({
   disabled,
   onSave,
   className,
-  variant = "subtle",
+  variant = "primary",
   size = "md",
 }: FormSaveActionRowProps) {
   return (

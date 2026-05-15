@@ -84,17 +84,10 @@ export function AdminMeetPane({ controller }: AdminMeetPaneProps) {
       </Card>
 
       <Card title="Routing">
-        <div className="flex items-center justify-between gap-4">
+        <div className="admin-feature-row">
           <div className="min-w-0">
-            <div className="text-sm font-medium" style={{ color: "var(--color-ink)" }}>
-              Force TURN relay for all calls
-            </div>
-            <div
-              className="text-xs"
-              style={{
-                color: "color-mix(in oklab, var(--color-ink) 55%, transparent)",
-              }}
-            >
+            <div className="admin-feature-row__title">Force TURN relay for all calls</div>
+            <div className="admin-feature-row__desc">
               Routes every call through the TURN server. Off by default.
             </div>
           </div>

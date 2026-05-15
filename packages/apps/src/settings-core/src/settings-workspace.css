@@ -18,7 +18,13 @@
   --workspace-user-footer-link-color: var(--color-ink);
   --workspace-user-footer-link-bg: color-mix(in oklab, var(--color-ink) 10%, transparent);
 
-  --button-subtle-background: var(--settings-accent-bg);
+  /* Primary actions: same charcoal + white as admin (sidebar keeps accent via --app-sidebar-bg). */
+  --button-primary-bg: #2f302c;
+  --button-primary-fg: #ffffff;
+  --primary: #2f302c;
+  --primary-foreground: #ffffff;
+
+  --button-subtle-background: color-mix(in oklab, var(--color-ink) 6%, transparent);
   --button-subtle-color: var(--color-ink);
 
   /* Shared with `field-label-row__label` (FieldLabelRow, FormTextField, @/form-field FormField). */

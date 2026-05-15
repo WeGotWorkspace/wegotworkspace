@@ -38,37 +38,15 @@ export function AdminUsersPane({
           </IconActionButton>
         }
       >
-        <ul
-          className="divide-y"
-          style={{
-            borderColor: "color-mix(in oklab, var(--color-ink) 10%, transparent)",
-          }}
-        >
+        <ul className="admin-divided-list">
           {controller.users.map((user) => (
-            <li
-              key={user.id}
-              className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
-              style={{
-                borderColor: "color-mix(in oklab, var(--color-ink) 10%, transparent)",
-              }}
-            >
+            <li key={user.id} className="admin-list-row">
               <UserAvatar
                 displayName={user.displayName}
-                compact
+                subtitle={user.username}
                 size="sm"
-                className="shrink-0 gap-0 [--user-avatar-bg:var(--app-sidebar-bg)] [--user-avatar-fg:var(--app-sidebar-color)]"
+                className="flex-1"
               />
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate">{user.displayName}</div>
-                <div
-                  className="text-xs truncate"
-                  style={{
-                    color: "color-mix(in oklab, var(--color-ink) 55%, transparent)",
-                  }}
-                >
-                  @{user.username} · {user.email}
-                </div>
-              </div>
               <div className="flex items-center gap-1 shrink-0">
                 <IconActionButton
                   label={`Edit ${user.displayName}`}
@@ -101,41 +79,15 @@ export function AdminUsersPane({
           </IconActionButton>
         }
       >
-        <ul
-          className="divide-y"
-          style={{
-            borderColor: "color-mix(in oklab, var(--color-ink) 10%, transparent)",
-          }}
-        >
+        <ul className="admin-divided-list">
           {controller.groups.map((group) => (
-            <li
-              key={group.id}
-              className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
-              style={{
-                borderColor: "color-mix(in oklab, var(--color-ink) 10%, transparent)",
-              }}
-            >
-              <div
-                className="size-9 rounded-full flex items-center justify-center shrink-0"
-                style={{
-                  backgroundColor: "var(--app-sidebar-bg)",
-                  color: "var(--app-sidebar-color)",
-                }}
-              >
-                <UsersIcon className="size-4" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate">{group.displayName}</div>
-                <div
-                  className="text-xs truncate"
-                  style={{
-                    color: "color-mix(in oklab, var(--color-ink) 55%, transparent)",
-                  }}
-                >
-                  {groupMemberCount.get(group.id) ?? 0} member
-                  {(groupMemberCount.get(group.id) ?? 0) === 1 ? "" : "s"}
-                </div>
-              </div>
+            <li key={group.id} className="admin-list-row">
+              <UserAvatar
+                displayName={group.displayName}
+                subtitle={`${groupMemberCount.get(group.id) ?? 0} member${(groupMemberCount.get(group.id) ?? 0) === 1 ? "" : "s"}`}
+                size="sm"
+                className="flex-1"
+              />
               <div className="flex items-center gap-1 shrink-0">
                 <IconActionButton
                   label={`Edit ${group.displayName}`}
