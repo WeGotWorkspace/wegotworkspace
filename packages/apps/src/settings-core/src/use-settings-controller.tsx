@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Check } from "lucide-react";
-import { toast } from "sonner";
+import { useAppToast } from "@/hooks/use-app-toast";
 import type { SettingsSection } from "@/settings-core/src/settings-types";
 import type { SettingsWorkspaceProps } from "@/settings-core/src/settings-workspace-props";
 import { useSettingsSidebarModel } from "@/settings-core/src/use-settings-sidebar-model";
@@ -9,6 +9,7 @@ export function useSettingsController({
   data,
   operations,
 }: Pick<SettingsWorkspaceProps, "data" | "operations">) {
+  const { showSuccess, showError } = useAppToast();
   const [section, setSection] = useState<SettingsSection>("profile");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -40,20 +41,20 @@ export function useSettingsController({
     try {
       const password = newPassword.trim();
       if (password.length > 0 && password.length < 8) {
-        toast.error("Password must be at least 8 characters");
+        showError("Password must be at least 8 characters");
         return;
       }
       if (password.length > 0 && password !== confirmPassword) {
-        toast.error("Passwords do not match");
+        showError("Passwords do not match");
         return;
       }
       await operations?.saveProfile({ displayName, email, password: password || undefined });
       setNewPassword("");
       setConfirmPassword("");
-      toast("Profile saved", { icon: <Check className="size-4" /> });
+      showSuccess("Profile saved", { icon: <Check className="size-4" /> });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not save profile";
-      toast.error(message);
+      showError(message);
     }
   };
 
@@ -61,10 +62,10 @@ export function useSettingsController({
     try {
       await operations?.saveMail({ imapUsername, imapPassword });
       setImapPassword("");
-      toast("Mail credentials saved", { icon: <Check className="size-4" /> });
+      showSuccess("Mail credentials saved", { icon: <Check className="size-4" /> });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not save mail credentials";
-      toast.error(message);
+      showError(message);
     }
   };
 

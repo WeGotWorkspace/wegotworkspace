@@ -1,11 +1,6 @@
-type QueueMutation = (args: {
-  key: string;
-  toastMessage: string;
-  execute: (signal: AbortSignal) => Promise<void>;
-  undo: () => void;
-  onError?: () => void;
-  undoToastMessage?: string;
-}) => void;
+import type { DeferredApiWriteArgs } from "@/hooks/use-queued-mutation";
+
+type QueueMutation = (args: DeferredApiWriteArgs) => void;
 
 type RunBatchActionArgs = {
   queueMutation: QueueMutation;

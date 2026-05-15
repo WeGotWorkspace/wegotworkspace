@@ -1,5 +1,6 @@
 import type { Dispatch, ReactNode, SetStateAction } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
+import type { DeferredApiWriteArgs } from "@/hooks/use-queued-mutation";
 
 export type WorkspaceActionButton = {
   label: string;
@@ -36,26 +37,12 @@ export type WorkspaceListControllerResult<TItem> = {
     targetKey: string,
     onCommit: (ids: string[]) => void,
   ) => Record<string, unknown>;
-  beginOptimisticUpdate: ({
-    ids,
-    updater,
-  }: {
-    ids: string[];
-    updater: (item: TItem) => TItem;
-  }) => {
+  beginOptimisticUpdate: ({ ids, updater }: { ids: string[]; updater: (item: TItem) => TItem }) => {
     snapshotById: Map<string, TItem>;
     affectedItems: TItem[];
     rollback: () => void;
   };
-  queueMutation: (args: {
-    key: string;
-    toastMessage: string;
-    execute: (signal: AbortSignal) => Promise<void>;
-    undo: () => void;
-    onError?: () => void;
-    undoToastMessage?: string;
-  }) => void;
+  queueMutation: (args: DeferredApiWriteArgs) => void;
   undoLatest: () => boolean;
   navigateListByKeyboard: (direction: -1 | 1, extendSelection: boolean) => void;
 };
-

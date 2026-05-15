@@ -10,7 +10,6 @@ import {
   StarOff,
   Tag,
   Trash2,
-  X,
 } from "lucide-react";
 import { useAppToast } from "@/hooks/use-app-toast";
 import { useConfirmDialog } from "@/hooks/use-confirm-dialog";
@@ -101,13 +100,12 @@ export function useNotesController({
     return map;
   });
 
-  const { show } = useAppToast();
+  const { show, showError } = useAppToast();
   const { confirmDialog, requestConfirm } = useConfirmDialog();
   const isTouch = useIsTouch();
   const showMutationError = useCallback(
-    (fallback = "Could not sync this change. Please try again.") =>
-      show(fallback, { icon: <X className="size-4" /> }),
-    [show],
+    (fallback = "Could not sync this change. Please try again.") => showError(fallback),
+    [showError],
   );
   const queueAutoSaveToast = useCallback(() => {
     if (autoSaveToastTimerRef.current) {
