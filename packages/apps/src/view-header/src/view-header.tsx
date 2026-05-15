@@ -1,24 +1,25 @@
+import type { ReactNode, RefObject } from "react";
 import { useEffect, useState } from "react";
 import { WorkspaceSidebarToggle } from "@/workspace-shell/src/workspace-app-layout";
 import { CollectionSearchInput } from "@/collection-search-input/src/collection-search-input";
 import { cn } from "@/lib/utils";
 
-import "./list-header.css";
+import "./view-header.css";
 
-type ListHeaderProps = {
+type ViewHeaderProps = {
   title: string;
   subtitle?: string;
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
-  actions?: React.ReactNode;
+  actions?: ReactNode;
   searchPlaceholder?: string;
   searchValue?: string;
   onSearchInput?: (query: string) => void;
   searchDebounceMs?: number;
-  searchInputRef?: React.RefObject<HTMLInputElement | null>;
+  searchInputRef?: RefObject<HTMLInputElement | null>;
 };
 
-export function ListHeader({
+export function ViewHeader({
   title,
   subtitle,
   sidebarOpen,
@@ -29,7 +30,7 @@ export function ListHeader({
   onSearchInput,
   searchDebounceMs = 180,
   searchInputRef,
-}: ListHeaderProps) {
+}: ViewHeaderProps) {
   const [query, setQuery] = useState(searchValue);
 
   useEffect(() => {
@@ -46,18 +47,18 @@ export function ListHeader({
     <>
       <div className="flex items-start gap-3">
         <WorkspaceSidebarToggle open={sidebarOpen} onToggle={onToggleSidebar} />
-        <div className="list-header__main">
-          <div className="flex items-center gap-3 min-w-0">
+        <div className="view-header__main">
+          <div className="view-header__title-row">
             <h2
-              className="text-3xl leading-none flex-1 min-w-0 truncate"
+              className="text-3xl leading-none min-w-0 truncate"
               style={{ fontFamily: "var(--font-serif)", color: "var(--color-ink)" }}
             >
               {title}
             </h2>
-            {actions ? <div className="flex items-center gap-1.5 shrink-0">{actions}</div> : null}
+            <div className="view-header__actions">{actions}</div>
           </div>
           {subtitle ? (
-            <p className={cn("field-label-row__label", "list-header__subtitle", "mt-2")}>
+            <p className={cn("field-label-row__label", "view-header__subtitle", "mt-2")}>
               {subtitle}
             </p>
           ) : null}

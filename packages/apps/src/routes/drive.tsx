@@ -64,7 +64,7 @@ import {
 import type { Note } from "@/lib/models/note";
 import { useIsTouch } from "@/hooks/use-is-touch";
 import { SidebarGroup, SidebarLink } from "@/settings-sidebar/src/settings-sidebar";
-import { ListHeader } from "@/list-header/src/list-header";
+import { ViewHeader } from "@/view-header/src/view-header";
 import { createPwaHead } from "@/lib/pwa-head";
 import { DriveApp } from "@/drive-core/src/drive-app";
 import type {
@@ -1520,7 +1520,7 @@ export function DriveWorkspace({
             className="px-4 md:px-8 pt-4 md:pt-6 pb-3 border-b shrink-0"
             style={{ borderColor: "color-mix(in oklab, var(--color-ink) 10%, transparent)" }}
           >
-            <ListHeader
+            <ViewHeader
               sidebarOpen={sidebarOpen}
               onToggleSidebar={() => setSidebarOpen((v) => !v)}
               title={viewLabel}
@@ -1572,7 +1572,7 @@ export function DriveWorkspace({
                       <ListIcon className="size-4" />
                     </button>
                   </div>
-                  <div className="drive-list-header-actions flex items-center gap-2">
+                  <div className="drive-view-header-actions flex items-center gap-2">
                     <IconButton
                       label={detailOpen ? "Hide details" : "Show details"}
                       onClick={() => setDetailOpen((v) => !v)}

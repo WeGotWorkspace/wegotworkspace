@@ -6,7 +6,7 @@ import {
   WorkspaceAppLayout,
   WorkspaceUserFooter,
 } from "@/workspace-shell/src/workspace-app-layout";
-import { ListHeader } from "@/list-header/src/list-header";
+import { ViewHeader } from "@/view-header/src/view-header";
 import { useAdminController } from "@/admin-core/src/use-admin-controller";
 import type { AdminWorkspaceProps } from "@/admin-core/src/admin-workspace-props";
 import { AdminBackupsPane } from "@/admin-core/src/admin-backups-pane";
@@ -86,7 +86,7 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
           </AppSidebar>
         }
         mainHeader={
-          <ListHeader
+          <ViewHeader
             title={controller.currentSection.label}
             subtitle={controller.currentSection.description}
             sidebarOpen={controller.sidebarOpen}
