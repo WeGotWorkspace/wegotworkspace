@@ -53,7 +53,7 @@ export const defaultNotesLabels: NotesUILabels = {
   searchPlaceholder: "Search notes...",
   sidebarAllItems: "All Items",
   sidebarStarred: "Starred",
-  sidebarArchive: "Archive",
+  sidebarArchive: "Archived",
   sectionNotebooks: "Notebooks",
   sectionTags: "Tags",
   addNotebook: "New notebook",

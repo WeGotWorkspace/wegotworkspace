@@ -1,5 +1,5 @@
 import { useCallback, type Dispatch, type ReactNode, type SetStateAction } from "react";
-import { Archive, ArchiveRestore, Star, StarOff, Trash2 } from "lucide-react";
+import { Star, StarOff } from "lucide-react";
 import { runQueuedBatchAction } from "@/hooks/use-batch-actions";
 import { buildPermanentDeleteDescription } from "@/lib/workspace/destructive-dialog";
 import type { Note } from "@/lib/models/note";
@@ -178,20 +178,20 @@ export function useNotesBatchActions({
       ),
     );
     const toastMessage = `${allArchived ? "Unarchived" : "Archived"} ${selectedIds.length} item${selectedIds.length === 1 ? "" : "s"}`;
-    show(toastMessage, {
-      icon: allArchived ? <ArchiveRestore className="size-4" /> : <Archive className="size-4" />,
-    });
-    if (!operations) return;
     runQueuedBatchAction({
       queueMutation,
       key: `notes:batch-archive:${selectedIds.slice().sort().join(",")}`,
       toastMessage,
-      execute: () =>
-        Promise.all(
+      execute: async (signal) => {
+        if (!operations) return;
+        await Promise.all(
           selectedIds.map((id) =>
-            allArchived ? operations.restoreNote(id) : operations.archiveNote(id),
+            allArchived
+              ? operations.restoreNote(id, { signal })
+              : operations.archiveNote(id, { signal }),
           ),
-        ).then(() => {}),
+        );
+      },
       rollback: () => {
         setArchived((state) => {
           const next = { ...state };
@@ -209,7 +209,7 @@ export function useNotesBatchActions({
       },
       undoToastMessage: "Archive changes undone.",
     });
-  }, [archived, notes, operations, queueMutation, selectedIds, setArchived, setNotes, show]);
+  }, [archived, notes, operations, queueMutation, selectedIds, setArchived, setNotes]);
 
   const requestDeleteSelected = useCallback(() => {
     if (selectedIds.length === 0) return;
