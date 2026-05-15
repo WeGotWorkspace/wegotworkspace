@@ -1,7 +1,46 @@
+import { useEffect, useMemo } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import { SettingsProfilePane } from "@/settings-core/src/settings-profile-pane";
-import { createMockProfile } from "./settings-panes.stories.fixtures";
+import {
+  settingsProfileFormSchema,
+  type SettingsProfileFormValues,
+} from "@/settings-core/src/settings-profile-form-schema";
+import { getProfileFormDefaults, getProfileStoryUsername } from "./settings-panes.stories.fixtures";
 import { settingsPaneDecorator } from "./settings-panes.stories.decorator";
+
+type ProfileStoryVariant = "default" | "dirtyIdentity" | "passwordFilled";
+
+function ProfileStoryHarness({ variant = "default" }: { variant?: ProfileStoryVariant }) {
+  const defaults = useMemo(() => getProfileFormDefaults(), []);
+  const form = useForm<SettingsProfileFormValues>({
+    resolver: zodResolver(settingsProfileFormSchema),
+    defaultValues: defaults,
+    mode: "onSubmit",
+  });
+
+  useEffect(() => {
+    if (variant === "dirtyIdentity") {
+      form.setValue("displayName", "Edited display name", { shouldDirty: true });
+    }
+    if (variant === "passwordFilled") {
+      form.setValue("newPassword", "hunter2hunter", { shouldDirty: true });
+      form.setValue("confirmPassword", "hunter2hunter", { shouldDirty: true });
+    }
+  }, [variant, form]);
+
+  const profile = useMemo(
+    () => ({
+      username: getProfileStoryUsername(),
+      form,
+      saveProfile: form.handleSubmit(async () => {}),
+    }),
+    [form],
+  );
+
+  return <SettingsProfilePane profile={profile} />;
+}
 
 const meta = {
   title: "Apps/Settings/Panes/Profile",
@@ -10,34 +49,19 @@ const meta = {
   parameters: {
     layout: "fullscreen",
   },
-  argTypes: {
-    profile: { control: false },
-  },
 } satisfies Meta<typeof SettingsProfilePane>;
 
 export default meta;
 type Story = StoryObj<typeof SettingsProfilePane>;
 
 export const Default: Story = {
-  args: {
-    profile: createMockProfile(),
-  },
+  render: () => <ProfileStoryHarness variant="default" />,
 };
 
 export const DirtyIdentity: Story = {
-  args: {
-    profile: createMockProfile({
-      displayName: "Edited display name",
-      profileDirty: true,
-    }),
-  },
+  render: () => <ProfileStoryHarness variant="dirtyIdentity" />,
 };
 
 export const PasswordFilled: Story = {
-  args: {
-    profile: createMockProfile({
-      newPassword: "hunter2hunter",
-      confirmPassword: "hunter2hunter",
-    }),
-  },
+  render: () => <ProfileStoryHarness variant="passwordFilled" />,
 };

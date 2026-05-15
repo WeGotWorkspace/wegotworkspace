@@ -6,8 +6,9 @@ import { AppToastCallout } from "@/ui/app-toast-callout";
 
 const DEFAULT_DURATION_MS = 4000;
 
+/** Fills Sonner’s `[data-sonner-toaster]` width (`--width`); keep chrome inside {@link AppToastCallout}. */
 const CUSTOM_TOAST_FRAME_CLASS =
-  "!w-[min(100vw-1.5rem,26rem)] !max-w-none !bg-transparent !p-0 !border-0 !shadow-none";
+  "w-full min-w-0 max-w-none !bg-transparent !p-0 !border-0 !shadow-none";
 
 export type AppToastShowOptions = {
   severity?: CalloutSeverity;
@@ -60,6 +61,9 @@ export function useAppToast(): AppToastApi {
       {
         duration,
         className: CUSTOM_TOAST_FRAME_CLASS,
+        style: { width: "100%", maxWidth: "100%" },
+        /** Aligns with default toaster position so Sonner’s height stack filter matches. */
+        position: "bottom-right",
       },
     );
   }, []);

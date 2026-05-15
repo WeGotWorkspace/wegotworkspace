@@ -21,24 +21,11 @@ import "@/settings-core/src/settings-workspace.css";
 export function SettingsWorkspace(props: SettingsWorkspaceProps) {
   const { data, session, operations, className, onLogout } = props;
   const controller = useSettingsController({ data, operations });
-  const sidebarItems = controller.sections.map((candidate) => ({
-    label: candidate.label,
-    icon: candidate.icon,
-    selected: controller.section === candidate.id,
-    onClick: () => controller.selectSection(candidate.id),
-  }));
 
   return (
     <WorkspaceAppLayout
       className={cn("settings-workspace", className)}
-      sidebar={
-        <Sidebar
-          controller={controller}
-          sidebarItems={sidebarItems}
-          session={session}
-          onLogout={onLogout}
-        />
-      }
+      sidebar={<Sidebar controller={controller} session={session} onLogout={onLogout} />}
       mainHeader={<MainHeader controller={controller} />}
       main={<MainContent controller={controller} />}
     />
@@ -47,15 +34,20 @@ export function SettingsWorkspace(props: SettingsWorkspaceProps) {
 
 function Sidebar({
   controller,
-  sidebarItems,
   session,
   onLogout,
 }: {
   controller: SettingsControllerState;
-  sidebarItems: MenuItemProps[];
   session: WorkspaceSession;
   onLogout?: () => void;
 }) {
+  const sidebarItems: MenuItemProps[] = controller.sections.map((candidate) => ({
+    label: candidate.label,
+    icon: candidate.icon,
+    selected: controller.section === candidate.id,
+    onClick: () => controller.selectSection(candidate.id),
+  }));
+
   return (
     <AppSidebar
       footer={<MainFooter session={session} onLogout={onLogout} />}

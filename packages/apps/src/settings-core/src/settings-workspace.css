@@ -29,6 +29,15 @@
   @apply flex justify-end pt-2;
 }
 
+.settings-workspace__form-field {
+  @apply space-y-1.5 mb-4 last:mb-0;
+}
+
+.settings-workspace__form-label {
+  @apply text-xs uppercase tracking-wider font-medium;
+  color: color-mix(in oklab, var(--color-ink) 60%, transparent);
+}
+
 .settings-workspace__grid-2 {
   @apply grid grid-cols-2 gap-3;
 }
