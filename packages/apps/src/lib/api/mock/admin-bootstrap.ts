@@ -81,12 +81,40 @@ const DEFAULT_DATA: AdminUIData = {
   updateLogLines: [],
 };
 
+/** Aligns chrome session with admin directory data so sidebar footers match mock principals. */
+function workspaceSessionForAdminData(data: AdminUIData): WorkspaceSession {
+  const handle = data.currentUser?.trim();
+  const match = handle ? data.users.find((u) => u.username === handle) : undefined;
+  const row = match ?? data.users[0];
+  if (row) {
+    return {
+      ...mockWorkspaceSession,
+      user: {
+        ...mockWorkspaceSession.user,
+        displayName: row.displayName,
+        username: row.username,
+        email: row.email,
+      },
+    };
+  }
+  return {
+    ...mockWorkspaceSession,
+    user: {
+      ...mockWorkspaceSession.user,
+      displayName: "Administrator",
+      username: "admin",
+      email: "admin@example.test",
+    },
+  };
+}
+
 export function createAdminAppBootstrap(overrides?: {
   data?: AdminUIData;
   session?: WorkspaceSession;
 }): AdminAppBootstrap {
+  const data = overrides?.data ?? DEFAULT_DATA;
   return {
-    data: overrides?.data ?? DEFAULT_DATA,
-    session: overrides?.session ?? mockWorkspaceSession,
+    data,
+    session: overrides?.session ?? workspaceSessionForAdminData(data),
   };
 }

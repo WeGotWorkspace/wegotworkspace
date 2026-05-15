@@ -1,21 +1,32 @@
 ---
-description: Parent-scoped CSS variable architecture for reusable UI primitives
+description: Mandatory parent-scoped CSS variables, workspace pane CSS, and Tailwind usage boundaries for apps UI
 alwaysApply: true
 ---
 
-# Parent-Scoped CSS Variables
+# Parent-Scoped CSS Variables and Workspace Styling
 
-When building or refactoring UI components in `packages/apps/src/**/*.{ts,tsx,css}`:
+When building or refactoring UI in `packages/apps/src/**/*.{ts,tsx,css}`:
 
-- Keep primitives context-agnostic; avoid semantic context classes like `*-toolbar`, `*-list`, `*-fab` on primitive instances.
-- Let parent containers own visual context by setting CSS custom properties in parent CSS files.
-- Primitives consume variables with defaults, e.g. `var(--button-subtle-color, <fallback>)`.
-- Keep state behavior (hover, active, disabled) in primitive CSS; let parents override via variables only.
-- Prefer CSS files for styling contracts; do not centralize style presets in TypeScript objects.
-- When parent width drives behavior, prefer container queries in shared CSS with media fallback.
-- For SVG marks, logos, and similar accents: co-locate a `*.css` next to the component, expose tokens such as `--*-fill` (and optional `--*-height` / offset), and use a short fallback chain (for example app tokens then `currentColor`) instead of presentation props like `fill={...}` on the React surface.
+## Primitives and tokens
 
-Example direction:
+- Primitives MUST stay context-agnostic; do not put semantic context classes like `*-toolbar`, `*-list`, `*-fab` on primitive instances.
+- Parent containers MUST own visual context by setting CSS custom properties in parent CSS files (for example `.settings-workspace`, `.admin-workspace`, `.admin-dialog-surface`).
+- Primitives MUST consume variables with defaults, e.g. `var(--button-subtle-color, <fallback>)`.
+- State behavior (hover, active, disabled) MUST live in primitive CSS; parents MUST override via variables only, not by reimplementing state in TSX.
+- Styling contracts MUST live in CSS files; do NOT centralize recurring visual presets in TypeScript objects.
+- When layout depends on parent width, you MUST use container queries in shared CSS with a media-query fallback where needed.
+- For SVG marks, logos, and accents: co-locate a `*.css` next to the component, expose tokens such as `--*-fill` (and optional `--*-height` / offset), and use a short fallback chain (app tokens then `currentColor`) instead of presentation props like `fill={...}` on the React surface.
 
-- Parent CSS: set `--button-subtle-*` and `--button-ghost-*` on container selectors.
+Example:
+
+- Parent CSS: set `--button-subtle-*`, `--button-ghost-*`, `--button-primary-*` on the workspace or dialog root.
 - Primitive CSS: read those vars in `.button--variant-*` rules with sensible fallbacks.
+
+## Tailwind and `className` in workspace panes
+
+- Repeated pane layout, typography, list chrome, tables, and tone MUST NOT be expressed as long duplicated Tailwind utility stacks or ad hoc `style={{ color: ... }}` in TSX.
+- Those concerns MUST live in the workspace stylesheet (for example `settings-workspace.css` under `.settings-workspace`, or `admin-panes.css` included from `admin-workspace.css` and scoped with `:is(.admin-workspace, .admin-dialog-surface)` where portaled surfaces need the same tokens).
+- Pane TSX MUST use semantic class names tied to that stylesheet for those contracts.
+- TSX MAY keep Tailwind only for true one-offs or layout that is not part of a repeated visual contract; anything copied across rows/cards/sections MUST move to CSS.
+
+Dynamic values that depend on runtime data (for example `style={{ width: \`\${percent}%\` }}`) MUST stay in TSX.

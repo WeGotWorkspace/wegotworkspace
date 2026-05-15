@@ -191,24 +191,15 @@ export function GroupDialog({
           </FormField>
           {initial ? (
             <FormField label="Members">
-              <ul className="rounded-md border divide-y">
+              <ul className="admin-group-member-list">
                 {users.map((user) => (
-                  <li key={user.id} className="flex items-center gap-3 px-3 py-2">
+                  <li key={user.id} className="admin-group-member-row">
                     <UserAvatar
                       displayName={user.displayName}
-                      compact
+                      subtitle={user.username}
                       size="sm"
-                      className="shrink-0 gap-0 [--user-avatar-bg:var(--app-sidebar-bg)] [--user-avatar-fg:var(--app-sidebar-color)]"
+                      className="flex-1"
                     />
-                    <div className="flex-1 min-w-0 text-sm truncate">
-                      {user.displayName}
-                      <span
-                        className="ml-2 text-xs"
-                        style={{ color: "color-mix(in oklab, var(--color-ink) 50%, transparent)" }}
-                      >
-                        @{user.username}
-                      </span>
-                    </div>
                     <Switch
                       checked={memberUserIds.includes(user.id)}
                       disabled={

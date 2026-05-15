@@ -38,7 +38,7 @@ export function UserAvatar({
 
   const circleClass =
     size === "md"
-      ? "size-10 rounded-full flex items-center justify-center text-xs font-semibold shrink-0"
+      ? "size-10 rounded-full flex items-center justify-center text-xs font-medium shrink-0"
       : "size-9 rounded-full flex items-center justify-center text-[11px] font-medium shrink-0";
 
   const circle = onClick ? (
@@ -48,7 +48,8 @@ export function UserAvatar({
       aria-label={`${displayName} avatar`}
       className={circleClass}
       style={{
-        backgroundColor: "var(--user-avatar-bg, color-mix(in oklab, var(--color-ink) 12%, transparent))",
+        backgroundColor:
+          "var(--user-avatar-bg, color-mix(in oklab, var(--color-ink) 12%, transparent))",
         color: "var(--user-avatar-fg, var(--color-ink))",
       }}
     >
@@ -58,7 +59,8 @@ export function UserAvatar({
     <div
       className={circleClass}
       style={{
-        backgroundColor: "var(--user-avatar-bg, color-mix(in oklab, var(--color-ink) 12%, transparent))",
+        backgroundColor:
+          "var(--user-avatar-bg, color-mix(in oklab, var(--color-ink) 12%, transparent))",
         color: "var(--user-avatar-fg, var(--color-ink))",
       }}
       role="img"
@@ -74,7 +76,7 @@ export function UserAvatar({
       {!compact ? (
         <div className="flex flex-col min-w-0 flex-1 gap-0.5">
           <div
-            className={cn("truncate", subtitle ? "text-sm font-semibold" : "text-sm")}
+            className={cn("truncate", subtitle ? "text-sm font-medium" : "text-sm")}
             style={{
               color: "var(--user-avatar-label-color, var(--user-avatar-fg, var(--color-ink)))",
             }}
@@ -85,7 +87,8 @@ export function UserAvatar({
             <div
               className="text-xs truncate"
               style={{
-                color: "var(--user-avatar-subtitle-color, color-mix(in oklab, var(--color-ink) 55%, transparent))",
+                color:
+                  "var(--user-avatar-subtitle-color, color-mix(in oklab, var(--color-ink) 55%, transparent))",
               }}
             >
               {subtitle}
