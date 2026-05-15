@@ -1,4 +1,5 @@
 export { SettingsApp } from "./settings-app";
+export type { SettingsAppProps } from "./settings-app";
 export { SettingsWorkspace } from "./settings-workspace";
 export { useSettingsAPI } from "./use-settings-api";
 export { useSettingsShell } from "./use-settings-shell";
@@ -8,7 +9,7 @@ export type { SettingsProfileFormController } from "./use-settings-profile-form"
 export { useSettingsMailForm } from "./use-settings-mail-form";
 export type { SettingsMailFormController } from "./use-settings-mail-form";
 export { useSettingsController } from "./use-settings-controller";
-export { createDefaultSettingsApiSource } from "./settings-api-source";
+export { createDefaultSettingsApiSource, createWgwSettingsApiSource } from "./settings-api-source";
 export type { SettingsApiSource } from "./settings-api-source";
 export type { SettingsWorkspaceProps } from "./settings-workspace-props";
 export type {
