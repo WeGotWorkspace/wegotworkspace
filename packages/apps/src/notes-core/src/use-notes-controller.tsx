@@ -294,36 +294,33 @@ export function useNotesController({
       setNotes((prev) =>
         prev.map((note) => (note.id === id ? { ...note, archived: nextArchived } : note)),
       );
-      show(nextArchived ? "Archived" : "Unarchived", {
-        icon: nextArchived ? <Archive className="size-4" /> : <ArchiveRestore className="size-4" />,
-      });
-      if (!operations) return;
+
+      const toastMessage = nextArchived ? "Archived" : "Unarchived";
+
+      const rollback = () => {
+        setArchived((state) => ({ ...state, [id]: beforeArchived }));
+        setNotes((prev) =>
+          prev.map((note) => (note.id === id ? { ...row, archived: beforeArchived } : note)),
+        );
+      };
+
       queueMutation({
         key: `notes:archive:${id}`,
-        toastMessage: nextArchived ? "Archived" : "Unarchived",
-        execute: () =>
-          (nextArchived ? operations.archiveNote(id) : operations.restoreNote(id))
-            .then((serverRow) => {
-              setArchived((state) => ({ ...state, [id]: !!serverRow.archived }));
-              setNotes((prev) => prev.map((note) => (note.id === id ? serverRow : note)));
-            })
-            .then(() => {}),
-        undo: () => {
-          setArchived((state) => ({ ...state, [id]: beforeArchived }));
-          setNotes((prev) =>
-            prev.map((note) => (note.id === id ? { ...row, archived: beforeArchived } : note)),
-          );
+        toastMessage,
+        execute: async (signal) => {
+          if (!operations) return;
+          const serverRow = nextArchived
+            ? await operations.archiveNote(id, { signal })
+            : await operations.restoreNote(id, { signal });
+          setArchived((state) => ({ ...state, [id]: !!serverRow.archived }));
+          setNotes((prev) => prev.map((note) => (note.id === id ? serverRow : note)));
         },
-        onError: () => {
-          setArchived((state) => ({ ...state, [id]: beforeArchived }));
-          setNotes((prev) =>
-            prev.map((note) => (note.id === id ? { ...row, archived: beforeArchived } : note)),
-          );
-        },
+        undo: rollback,
+        onError: rollback,
         undoToastMessage: "Archive change undone.",
       });
     },
-    [archived, notes, operations, queueMutation, show],
+    [archived, notes, operations, queueMutation],
   );
 
   const moveToNotebook = useCallback(
