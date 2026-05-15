@@ -2,8 +2,6 @@ export { SettingsApp } from "./settings-app";
 export type { SettingsAppProps } from "./settings-app";
 export { SettingsWorkspace } from "./settings-workspace";
 export { useSettingsAPI } from "./use-settings-api";
-export { useSettingsShell } from "./use-settings-shell";
-export type { SettingsShellState } from "./use-settings-shell";
 export { useSettingsProfileForm } from "./use-settings-profile-form";
 export type { SettingsProfileFormController } from "./use-settings-profile-form";
 export { useSettingsMailForm } from "./use-settings-mail-form";
