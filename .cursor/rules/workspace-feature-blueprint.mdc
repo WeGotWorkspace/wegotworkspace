@@ -12,7 +12,7 @@ Use **`packages/apps/src/settings-core/`** as the reference when splitting a pro
 
 1. **`*App.tsx`** — Wiring only: `use*API` (or injectable `apiSource`), `WorkspaceLiveAppShell` (loading / error / `successVersion` remount), render **`*Workspace`** with `data`, `session`, `operations`, and **callbacks** for shell-owned navigation (`onLogout`, etc.). No feature layout here beyond the live shell.
 2. **`*Workspace.tsx`** — `WorkspaceAppLayout` split (`sidebar`, `mainHeader`, `main`). Root **`className={cn("<product>-workspace", className)}`** imports **one shell CSS file** (tokens + descendant pane helpers). **File-private** helpers (`Sidebar`, `MainHeader`, `MainContent`, footer) keep this file readable; pass **typed controller state** into children.
-3. **`use*Controller`** — Composes **`use*Shell`** (section nav, `sidebarOpen`, `SidebarSection` item model) with **domain slices** (`use*ProfileForm`, `use*MailForm`, …). Returns a single object panes consume; **do not** merge unrelated concerns into one mega-hook without slices.
+3. **`use*Controller`** — Holds **shell state** (section nav, `sidebarOpen`, sidebar item model) together with **domain slices** (`use*ProfileForm`, `use*MailForm`, …) when the shell is small and only composed here. If shell logic grows large, extract a dedicated **`use*Shell`** hook again and call it from the controller.
 4. **`*WorkspaceProps`** — Explicit contract: `data` (UI/bootstrap shape), `session` (`WorkspaceSession` for chrome/footer), optional `operations`, optional `className` / `onLogout`. **Session drives chrome** (footer, avatars); **data drives forms** — mocks/stories must align both (see `createSettingsAppBootstrap`).
 5. **Panes** — **`SettingsProfilePane`**, **`SettingsMailPane`**, etc.: presentational; receive **only the slice** they need (`profile`, `mail`, …). Prefer **`Form` + `FormTextField` + `FormSaveActionRow`** with a small **`settingsWorkspaceFormLayout`**-style object exporting **class name strings** wired to the shell CSS file.
 6. **`*workspace.css`** — Scoped to **`.<product>-workspace`**: CSS variables for sidebar, footer, buttons, **`--field-label-color`** (shared with `field-label-row__label`). Descendant utilities (**`settings-form-field`**, **`settings-grid-2`**, …) instead of repeating a long BEM prefix on every node. Read-only display rows: **`FieldLabelRow` + `Input readOnly`**; shell may style via **`.<product>-workspace .field-label-row:has(input[readonly]) .input`** so inputs need no extra `className`.
@@ -31,8 +31,8 @@ Use **`packages/apps/src/settings-core/`** as the reference when splitting a pro
 
 ## Refactoring another app toward this shape
 
-- [ ] Extract **`use*Shell`** if nav / layout state is mixed with data fetching or forms.
-- [ ] Extract **`use*Controller`** that only composes shell + existing hooks; **`Workspace`** receives `Pick<Props, "data" | "operations">` or the same shape settings uses.
+- [ ] If nav / layout state is tangled with data fetching, peel **`use*Shell`** (or similar) out of **`use*Controller`** once it earns its own file.
+- [ ] **`use*Controller`** composes shell state + domain hooks; **`Workspace`** passes `Pick<Props, "data" | "operations">` (or the same shape settings uses).
 - [ ] Move layout from route files into **`*Workspace.tsx`** using **`WorkspaceAppLayout`** split props (see **`workspace-app-shell.mdc`**).
 - [ ] Replace inline `window.location` / logout in packages with **`onLogout`** (or similar) props implemented in **`*App`**.
 - [ ] Colocate **shell CSS variables** on the workspace root class (e.g. `.settings-workspace`); panes use **shared caption** patterns (`field-label-row__label`, `--field-label-color`).

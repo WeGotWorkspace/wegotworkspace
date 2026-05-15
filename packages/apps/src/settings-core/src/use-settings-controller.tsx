@@ -1,17 +1,33 @@
+import { useMemo, useState } from "react";
 import type { SettingsWorkspaceProps } from "@/settings-core/src/settings-workspace-props";
+import type { SettingsSection } from "@/settings-core/src/settings-types";
 import { useSettingsMailForm } from "@/settings-core/src/use-settings-mail-form";
 import { useSettingsProfileForm } from "@/settings-core/src/use-settings-profile-form";
-import { useSettingsShell } from "@/settings-core/src/use-settings-shell";
+import { useSettingsSidebarModel } from "@/settings-core/src/use-settings-sidebar-model";
 
 /**
- * Composes settings shell navigation with independent profile and mail form controllers
- * so each form can be reused outside this workspace.
+ * Settings workspace: section nav + sidebar visibility, plus independent profile and mail form
+ * slices so each form hook can be reused outside this workspace.
  */
 export function useSettingsController({
   data,
   operations,
 }: Pick<SettingsWorkspaceProps, "data" | "operations">) {
-  const shell = useSettingsShell();
+  const [section, setSection] = useState<SettingsSection>("profile");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const sections = useSettingsSidebarModel();
+  const currentSection = useMemo(
+    () => sections.find((candidate) => candidate.id === section) ?? sections[0],
+    [section, sections],
+  );
+
+  const selectSection = (nextSection: SettingsSection) => {
+    setSection(nextSection);
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
+      setSidebarOpen(false);
+    }
+  };
+
   const profile = useSettingsProfileForm({ user: data.user, operations });
   const mail = useSettingsMailForm({
     mail: data.mail,
@@ -20,7 +36,12 @@ export function useSettingsController({
   });
 
   return {
-    ...shell,
+    section,
+    sections,
+    currentSection,
+    sidebarOpen,
+    setSidebarOpen,
+    selectSection,
     profile,
     memberships: data.groups,
     mail,
