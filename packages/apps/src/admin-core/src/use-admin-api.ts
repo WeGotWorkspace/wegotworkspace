@@ -69,7 +69,8 @@ export function useAdminAPI(source?: AdminApiSource) {
     [],
   );
   const createOperationsFromSource = useCallback(
-    (apiSource: AdminApiSource) => apiSource.createOperations(),
+    (apiSource: AdminApiSource, bootstrap: Parameters<AdminApiSource["createOperations"]>[1]) =>
+      apiSource.createOperations(apiSource, bootstrap),
     [],
   );
 

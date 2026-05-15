@@ -9,7 +9,7 @@ import {
   PanelLeftOpen,
   Users,
   Mail as MailIcon,
-  Phone,
+  Video,
   Cloud,
   Check,
   Lock,
@@ -84,7 +84,7 @@ export const Route = createFileRoute("/admin")({
   }),
 });
 
-type Section = "users" | "mail" | "voice" | "webdav" | "backups" | "updates";
+type Section = "users" | "mail" | "meet" | "webdav" | "backups" | "updates";
 
 const SECTIONS: { id: Section; label: string; icon: React.ReactNode; description: string }[] = [
   {
@@ -100,10 +100,10 @@ const SECTIONS: { id: Section; label: string; icon: React.ReactNode; description
     description: "Mail server configuration",
   },
   {
-    id: "voice",
-    label: "Voice",
-    icon: <Phone className="size-3.5" />,
-    description: "STUN / TURN signalling",
+    id: "meet",
+    label: "Meet",
+    icon: <Video className="size-3.5" />,
+    description: "Meet signaling and TURN",
   },
   {
     id: "webdav",
@@ -290,7 +290,7 @@ function LegacyAdminApp() {
             <div className="max-w-3xl mx-auto px-4 md:px-8 py-8 md:py-12">
               {section === "users" && <UsersGroupsPanel />}
               {section === "mail" && <MailPanel />}
-              {section === "voice" && <VoicePanel />}
+              {section === "meet" && <MeetPanel />}
               {section === "webdav" && <WebDAVPanel />}
               {section === "backups" && <BackupsPanel />}
               {section === "updates" && <UpdatesPanel />}
@@ -952,7 +952,7 @@ function MailPanel() {
 
 /* ---------- Voice ---------- */
 
-function VoicePanel() {
+function MeetPanel() {
   const initial = {
     stun: "stun:stun.northlight.studio:3478",
     turn: "turn:turn.northlight.studio:3478?transport=udp",

@@ -1,0 +1,134 @@
+import { AlertTriangle, CheckCircle2, CircleX, type LucideIcon } from "lucide-react";
+
+export type UpdateLogRow = { id: string; date: string | null; level: string; message: string };
+
+export type CheckVisual = { Icon: LucideIcon; color: string };
+
+export function getServerCheckVisual(check: {
+  ok: boolean;
+  status?: string;
+  detail?: string;
+}): CheckVisual {
+  const normalizedStatus = (check.status ?? "").toLowerCase();
+  const normalizedDetail = (check.detail ?? "").toLowerCase();
+
+  if (
+    normalizedStatus === "error" ||
+    normalizedStatus === "fail" ||
+    normalizedStatus === "failed"
+  ) {
+    return { Icon: CircleX, color: "#b14242" };
+  }
+
+  if (
+    normalizedStatus === "warn" ||
+    normalizedStatus === "warning" ||
+    normalizedStatus === "unknown"
+  ) {
+    return { Icon: AlertTriangle, color: "#c98a1f" };
+  }
+
+  if (normalizedDetail.startsWith("unknown")) {
+    return { Icon: AlertTriangle, color: "#c98a1f" };
+  }
+
+  if (check.ok) {
+    return { Icon: CheckCircle2, color: "#3a8f5a" };
+  }
+
+  return { Icon: CircleX, color: "#b14242" };
+}
+
+export function parseUpdateLogLine(line: string, index: number): UpdateLogRow {
+  const matchWithLevel = line.match(/^\[([^\]]+)\]\s+\[([A-Z]+)\]\s+(.*)$/);
+  if (matchWithLevel) {
+    return {
+      id: `${index}`,
+      date: matchWithLevel[1] ?? null,
+      level: matchWithLevel[2] ?? "INFO",
+      message: matchWithLevel[3] ?? "",
+    };
+  }
+  const matchWithoutLevel = line.match(/^\[([^\]]+)\]\s+(.*)$/);
+  if (matchWithoutLevel) {
+    return {
+      id: `${index}`,
+      date: matchWithoutLevel[1] ?? null,
+      level: "INFO",
+      message: matchWithoutLevel[2] ?? "",
+    };
+  }
+
+  return {
+    id: `${index}`,
+    date: null,
+    level: "INFO",
+    message: line,
+  };
+}
+
+export const SECURITY_OPTIONS = [
+  { value: "none", label: "None" },
+  { value: "starttls", label: "STARTTLS" },
+  { value: "ssl", label: "SSL/TLS" },
+] as const;
+
+export const TIMEZONES = [
+  "UTC",
+  "Europe/London",
+  "Europe/Berlin",
+  "Europe/Paris",
+  "Europe/Stockholm",
+  "Europe/Madrid",
+  "Europe/Athens",
+  "Africa/Cairo",
+  "Asia/Dubai",
+  "Asia/Kolkata",
+  "Asia/Singapore",
+  "Asia/Tokyo",
+  "Australia/Sydney",
+  "Pacific/Auckland",
+  "America/New_York",
+  "America/Chicago",
+  "America/Denver",
+  "America/Los_Angeles",
+  "America/Sao_Paulo",
+] as const;
+
+export const UPDATE_PROGRESS_STEPS: Array<{ label: string; phases: string[] }> = [
+  { label: "Downloading", phases: ["downloading"] },
+  { label: "Extracting", phases: ["extracting"] },
+  { label: "Backing up database", phases: ["backing_up"] },
+  { label: "Applying update", phases: ["applying_files", "running_migrations"] },
+];
+
+export function formatHumanDateTime(input: string | null): string {
+  if (!input) return "-";
+  const parsed = new Date(input);
+  if (Number.isNaN(parsed.getTime())) return input;
+  return new Intl.DateTimeFormat(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(parsed);
+}
+
+export function formatByteCount(input: number | null | undefined): string {
+  const bytes = Math.max(0, Number(input ?? 0));
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let value = bytes;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+  const precision = value >= 100 || unitIndex === 0 ? 0 : 1;
+  return `${value.toFixed(precision)} ${units[unitIndex]}`;
+}
+
+export function isProtectedGroup(groupId: string): boolean {
+  return groupId === "principals/groups/administrators";
+}

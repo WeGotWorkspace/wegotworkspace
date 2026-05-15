@@ -1,0 +1,237 @@
+import { useEffect, useState } from "react";
+import { Button } from "@/button/src/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/ui/dialog";
+import { FieldLabelRow as FormField } from "@/ui/field-label-row";
+import { Input } from "@/ui/input";
+import { Switch } from "@/ui/switch";
+import { UserAvatar } from "@/user-avatar/src/user-avatar";
+
+type UserDialogProps = {
+  open: boolean;
+  title: string;
+  initial?: { username: string; displayName: string; email: string };
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (payload: { username: string; displayName: string; email: string }) => void;
+};
+
+export function UserDialog({ open, title, initial, onOpenChange, onSubmit }: UserDialogProps) {
+  const [username, setUsername] = useState(initial?.username ?? "");
+  const [displayName, setDisplayName] = useState(initial?.displayName ?? "");
+  const [email, setEmail] = useState(initial?.email ?? "");
+  useEffect(() => {
+    if (!open) return;
+    setUsername(initial?.username ?? "");
+    setDisplayName(initial?.displayName ?? "");
+    setEmail(initial?.email ?? "");
+  }, [open, initial]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="admin-dialog-surface">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>
+            {initial
+              ? "Update display name and email. Username cannot be changed."
+              : "Create a new user account."}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <FormField label="Username" readOnly={Boolean(initial)}>
+            <Input
+              value={username}
+              readOnly={Boolean(initial)}
+              onChange={(event) => setUsername(event.currentTarget.value)}
+              placeholder="jane.doe"
+            />
+          </FormField>
+          <FormField label="Display name">
+            <Input
+              value={displayName}
+              onChange={(event) => setDisplayName(event.currentTarget.value)}
+            />
+          </FormField>
+          <FormField label="Email">
+            <Input
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.currentTarget.value)}
+            />
+          </FormField>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={() => onSubmit({ username, displayName, email })}
+            disabled={!username.trim() || !displayName.trim() || !email.trim()}
+          >
+            Save
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+type PasswordDialogProps = {
+  open: boolean;
+  user: { displayName: string } | null;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (payload: { password: string; confirmPassword: string }) => void;
+};
+
+export function PasswordDialog({ open, user, onOpenChange, onSubmit }: PasswordDialogProps) {
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  useEffect(() => {
+    if (!open) return;
+    setPassword("");
+    setConfirmPassword("");
+  }, [open, user?.displayName]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="admin-dialog-surface">
+        <DialogHeader>
+          <DialogTitle>Set password</DialogTitle>
+          <DialogDescription>
+            {user ? `Set a new password for ${user.displayName}.` : "Set a new password."}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <FormField label="New password">
+            <Input
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.currentTarget.value)}
+            />
+          </FormField>
+          <FormField label="Confirm password">
+            <Input
+              type="password"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.currentTarget.value)}
+            />
+          </FormField>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={() => onSubmit({ password, confirmPassword })}
+            disabled={!password || !confirmPassword}
+          >
+            Update password
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+type GroupDialogProps = {
+  open: boolean;
+  title: string;
+  initial?: { id: string; displayName: string };
+  users: Array<{ id: string; displayName: string; username: string; groups: string[] }>;
+  currentUsername: string;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (payload: { name: string; memberUserIds: string[] }) => void;
+};
+
+export function GroupDialog({
+  open,
+  title,
+  initial,
+  users,
+  currentUsername,
+  onOpenChange,
+  onSubmit,
+}: GroupDialogProps) {
+  const [name, setName] = useState(initial?.displayName ?? "");
+  const [memberUserIds, setMemberUserIds] = useState<string[]>(
+    initial ? users.filter((user) => user.groups.includes(initial.id)).map((user) => user.id) : [],
+  );
+  useEffect(() => {
+    if (!open) return;
+    setName(initial?.displayName ?? "");
+    setMemberUserIds(
+      initial
+        ? users.filter((user) => user.groups.includes(initial.id)).map((user) => user.id)
+        : [],
+    );
+  }, [open, initial, users]);
+  const toggleMember = (userId: string) =>
+    setMemberUserIds((prev) =>
+      prev.includes(userId) ? prev.filter((candidate) => candidate !== userId) : [...prev, userId],
+    );
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="admin-dialog-surface">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>
+            {initial ? "Rename and assign members." : "Create a new group."}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <FormField label="Group name">
+            <Input value={name} onChange={(event) => setName(event.currentTarget.value)} />
+          </FormField>
+          {initial ? (
+            <FormField label="Members">
+              <ul className="rounded-md border divide-y">
+                {users.map((user) => (
+                  <li key={user.id} className="flex items-center gap-3 px-3 py-2">
+                    <UserAvatar
+                      displayName={user.displayName}
+                      compact
+                      size="sm"
+                      className="shrink-0 gap-0 [--user-avatar-bg:var(--app-sidebar-bg)] [--user-avatar-fg:var(--app-sidebar-color)]"
+                    />
+                    <div className="flex-1 min-w-0 text-sm truncate">
+                      {user.displayName}
+                      <span
+                        className="ml-2 text-xs"
+                        style={{ color: "color-mix(in oklab, var(--color-ink) 50%, transparent)" }}
+                      >
+                        @{user.username}
+                      </span>
+                    </div>
+                    <Switch
+                      checked={memberUserIds.includes(user.id)}
+                      disabled={
+                        initial?.id === "principals/groups/administrators" &&
+                        user.username === currentUsername
+                      }
+                      onCheckedChange={() => toggleMember(user.id)}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </FormField>
+          ) : null}
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button onClick={() => onSubmit({ name, memberUserIds })} disabled={!name.trim()}>
+            Save
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

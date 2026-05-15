@@ -1,0 +1,136 @@
+import { useState } from "react";
+import { Button } from "@/button/src/button";
+import { Card } from "@/card/src/card";
+import { FieldLabelRow as FormField } from "@/ui/field-label-row";
+import { Input } from "@/ui/input";
+import { Switch } from "@/ui/switch";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/ui/alert-dialog";
+import type { AdminControllerState } from "@/admin-core/src/use-admin-controller";
+
+export type AdminMeetPaneProps = {
+  controller: AdminControllerState;
+};
+
+export function AdminMeetPane({ controller }: AdminMeetPaneProps) {
+  const [forceRelayConfirmOpen, setForceRelayConfirmOpen] = useState(false);
+
+  const onForceRelayChange = (next: boolean) => {
+    if (next && !controller.settingsForm.forceRelay) {
+      setForceRelayConfirmOpen(true);
+      return;
+    }
+    controller.setSettingsForm((prev) => ({ ...prev, forceRelay: Boolean(next) }));
+  };
+
+  return (
+    <>
+      <Card title="ICE servers">
+        <FormField label="Signaling URL">
+          <Input
+            value={controller.settingsForm.signalingUrl}
+            onChange={(event) =>
+              controller.setSettingsForm((prev) => ({
+                ...prev,
+                signalingUrl: event.currentTarget.value,
+              }))
+            }
+          />
+        </FormField>
+        <FormField label="TURN URLs">
+          <Input
+            value={controller.settingsForm.turnUrls}
+            onChange={(event) =>
+              controller.setSettingsForm((prev) => ({
+                ...prev,
+                turnUrls: event.currentTarget.value,
+              }))
+            }
+          />
+        </FormField>
+        <div className="grid md:grid-cols-2 gap-3">
+          <FormField label="TURN username">
+            <Input
+              value={controller.settingsForm.turnUsername}
+              onChange={(event) =>
+                controller.setSettingsForm((prev) => ({
+                  ...prev,
+                  turnUsername: event.currentTarget.value,
+                }))
+              }
+            />
+          </FormField>
+          <FormField label="TURN password">
+            <Input
+              type="password"
+              value={controller.settingsForm.turnPassword}
+              onChange={(event) =>
+                controller.setSettingsForm((prev) => ({
+                  ...prev,
+                  turnPassword: event.currentTarget.value,
+                }))
+              }
+            />
+          </FormField>
+        </div>
+      </Card>
+
+      <Card title="Routing">
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <div className="text-sm font-medium" style={{ color: "var(--color-ink)" }}>
+              Force TURN relay for all calls
+            </div>
+            <div
+              className="text-xs"
+              style={{
+                color: "color-mix(in oklab, var(--color-ink) 55%, transparent)",
+              }}
+            >
+              Routes every call through the TURN server. Off by default.
+            </div>
+          </div>
+          <Switch
+            checked={controller.settingsForm.forceRelay}
+            onCheckedChange={onForceRelayChange}
+          />
+        </div>
+      </Card>
+      <div className="flex justify-end">
+        <Button label="Save changes" variant="primary" onClick={controller.actions.saveSettings} />
+      </div>
+
+      <AlertDialog open={forceRelayConfirmOpen} onOpenChange={setForceRelayConfirmOpen}>
+        <AlertDialogContent className="admin-dialog-surface">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Force TURN relay for all calls?</AlertDialogTitle>
+            <AlertDialogDescription>
+              When enabled, every Meet call is sent through your TURN server. This increases
+              bandwidth use and can add latency, but helps clients behind strict firewalls. You
+              still need to save changes for this to take effect on the server.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                controller.setSettingsForm((prev) => ({ ...prev, forceRelay: true }));
+                setForceRelayConfirmOpen(false);
+              }}
+            >
+              Turn on relay
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}

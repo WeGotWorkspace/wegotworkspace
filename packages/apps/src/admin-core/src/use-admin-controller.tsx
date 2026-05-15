@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check } from "lucide-react";
-import { toast } from "sonner";
+import { useAppToast } from "@/hooks/use-app-toast";
 import type { AdminSection } from "@/admin-core/src/admin-types";
 import type { AdminWorkspaceProps } from "@/admin-core/src/admin-workspace-props";
 import { useAdminSidebarModel } from "@/admin-core/src/use-admin-sidebar-model";
@@ -81,6 +80,7 @@ export function useAdminController({
   data,
   operations,
 }: Pick<AdminWorkspaceProps, "data" | "operations">) {
+  const { showSuccess, showError } = useAppToast();
   const isProtectedGroupId = (groupId: string) => groupId === "principals/groups/administrators";
   const [section, setSection] = useState<AdminSection>("users");
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -92,6 +92,7 @@ export function useAdminController({
   const [updates, setUpdates] = useState(data.updates);
   const [updateLogLines, setUpdateLogLines] = useState(data.updateLogLines);
   const [checkingUpdates, setCheckingUpdates] = useState(false);
+  const [refreshingServerChecks, setRefreshingServerChecks] = useState(false);
   const applyRequestPendingRef = useRef(false);
   const sections = useAdminSidebarModel();
   const applyAdminData = (next: AdminWorkspaceProps["data"]) => {
@@ -195,10 +196,10 @@ export function useAdminController({
         setUpdates(next.updates);
         setUpdateLogLines(next.updateLogLines);
       }
-      toast("Admin settings saved", { icon: <Check className="size-4" /> });
+      showSuccess("Admin settings saved");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not save admin settings";
-      toast.error(message);
+      showError(message);
     }
   };
 
@@ -207,10 +208,10 @@ export function useAdminController({
       const next = await operations?.refreshState();
       if (!next) return;
       applyAdminData(next);
-      toast("Admin state refreshed", { icon: <Check className="size-4" /> });
+      showSuccess("Admin state refreshed");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not refresh admin state";
-      toast.error(message);
+      showError(message);
     }
   };
 
@@ -221,12 +222,28 @@ export function useAdminController({
       if (!next) return;
       setUpdates(next.updates);
       setUpdateLogLines(next.updateLogLines);
-      toast("Update check completed", { icon: <Check className="size-4" /> });
+      showSuccess("Update check completed");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Update check failed";
-      toast.error(message);
+      showError(message);
     } finally {
       setCheckingUpdates(false);
+    }
+  };
+
+  /** Re-fetch update state (including server checks) without running POST /updates/check. */
+  const refreshServerChecks = async () => {
+    setRefreshingServerChecks(true);
+    try {
+      const next = await operations?.refreshUpdateState();
+      if (!next) return;
+      setUpdates(next);
+      showSuccess("Server checks refreshed");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not refresh server checks";
+      showError(message);
+    } finally {
+      setRefreshingServerChecks(false);
     }
   };
 
@@ -234,10 +251,10 @@ export function useAdminController({
     try {
       const lines = await operations?.clearUpdateLog();
       if (lines) setUpdateLogLines(lines);
-      toast("Update logs cleared", { icon: <Check className="size-4" /> });
+      showSuccess("Update logs cleared");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not clear update logs";
-      toast.error(message);
+      showError(message);
     }
   };
 
@@ -245,10 +262,10 @@ export function useAdminController({
     try {
       const lines = await operations?.refreshUpdateLog();
       if (lines) setUpdateLogLines(lines);
-      toast("Update logs refreshed", { icon: <Check className="size-4" /> });
+      showSuccess("Update logs refreshed");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not refresh update logs";
-      toast.error(message);
+      showError(message);
     }
   };
 
@@ -256,7 +273,7 @@ export function useAdminController({
     try {
       const lines = (await operations?.refreshUpdateLog()) ?? updateLogLines;
       if (lines.length === 0) {
-        toast.error("No update logs to download");
+        showError("No update logs to download");
         return;
       }
       setUpdateLogLines(lines);
@@ -272,10 +289,10 @@ export function useAdminController({
       } finally {
         URL.revokeObjectURL(url);
       }
-      toast("Update log downloaded", { icon: <Check className="size-4" /> });
+      showSuccess("Update log downloaded");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not download update logs";
-      toast.error(message);
+      showError(message);
     }
   };
 
@@ -285,10 +302,10 @@ export function useAdminController({
       if (!next) return;
       setUpdates(next.updates);
       setUpdateLogLines(next.updateLogLines);
-      toast("Backup deleted", { icon: <Check className="size-4" /> });
+      showSuccess("Backup deleted");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not delete backup";
-      toast.error(message);
+      showError(message);
     }
   };
 
@@ -296,15 +313,15 @@ export function useAdminController({
     try {
       const next = await operations?.createBackup();
       if (!next) {
-        toast.error("Manual backup creation endpoint is not available yet.");
+        showError("Manual backup creation endpoint is not available yet.");
         return;
       }
       setUpdates(next.updates);
       setUpdateLogLines(next.updateLogLines);
-      toast("Backup created", { icon: <Check className="size-4" /> });
+      showSuccess("Backup created");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not create backup";
-      toast.error(message);
+      showError(message);
     }
   };
 
@@ -317,7 +334,7 @@ export function useAdminController({
       window.open(`/api/v1/admin/updates/backups/${encodeURIComponent(name)}`, "_blank");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not download backup";
-      toast.error(message);
+      showError(message);
     }
   };
 
@@ -347,11 +364,11 @@ export function useAdminController({
       if (!next) return;
       setUpdates(next);
       if (next.inProgress && !wasInProgress) {
-        toast("Update run started", { icon: <Check className="size-4" /> });
+        showSuccess("Update run started");
       } else if (next.inProgress && wasInProgress) {
-        toast("Update is already in progress", { icon: <Check className="size-4" /> });
+        showSuccess("Update is already in progress");
       } else {
-        toast("Update request completed", { icon: <Check className="size-4" /> });
+        showSuccess("Update request completed");
       }
     } catch (error) {
       try {
@@ -370,7 +387,7 @@ export function useAdminController({
         }));
       }
       const message = error instanceof Error ? error.message : "Could not apply update";
-      toast.error(message);
+      showError(message);
     } finally {
       applyRequestPendingRef.current = false;
     }
@@ -381,21 +398,21 @@ export function useAdminController({
       const next = await operations?.cancelUpdate();
       if (!next) return;
       setUpdates(next);
-      toast("Cancel requested", { icon: <Check className="size-4" /> });
+      showSuccess("Cancel requested");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not cancel update";
-      toast.error(message);
+      showError(message);
     }
   };
 
   const createUser = async (input: { username: string; displayName: string; email: string }) => {
     const username = input.username.trim();
     if (!username) {
-      toast.error("Username is required");
+      showError("Username is required");
       return false;
     }
     if (users.some((user) => user.username.toLowerCase() === username.toLowerCase())) {
-      toast.error("Username already exists");
+      showError("Username already exists");
       return false;
     }
     if (operations?.createUser) {
@@ -409,11 +426,11 @@ export function useAdminController({
           groups: [],
         });
         applyAdminData(next);
-        toast("User created", { icon: <Check className="size-4" /> });
+        showSuccess("User created");
         return true;
       } catch (error) {
         const message = error instanceof Error ? error.message : "Could not create user";
-        toast.error(message);
+        showError(message);
         return false;
       }
     }
@@ -428,7 +445,7 @@ export function useAdminController({
         createdAt: new Date().toISOString(),
       },
     ]);
-    toast("User created", { icon: <Check className="size-4" /> });
+    showSuccess("User created");
     return true;
   };
 
@@ -443,11 +460,11 @@ export function useAdminController({
           email: input.email.trim() || "",
         });
         applyAdminData(next);
-        toast("User updated", { icon: <Check className="size-4" /> });
+        showSuccess("User updated");
         return true;
       } catch (error) {
         const message = error instanceof Error ? error.message : "Could not update user";
-        toast.error(message);
+        showError(message);
         return false;
       }
     }
@@ -462,7 +479,7 @@ export function useAdminController({
           : user,
       ),
     );
-    toast("User updated", { icon: <Check className="size-4" /> });
+    showSuccess("User updated");
     return true;
   };
 
@@ -471,16 +488,16 @@ export function useAdminController({
       try {
         const next = await operations.deleteUser(userId);
         applyAdminData(next);
-        toast("User deleted", { icon: <Check className="size-4" /> });
+        showSuccess("User deleted");
         return true;
       } catch (error) {
         const message = error instanceof Error ? error.message : "Could not delete user";
-        toast.error(message);
+        showError(message);
         return false;
       }
     }
     setUsers((prev) => prev.filter((user) => user.id !== userId));
-    toast("User deleted", { icon: <Check className="size-4" /> });
+    showSuccess("User deleted");
     return true;
   };
 
@@ -490,11 +507,11 @@ export function useAdminController({
     confirmPassword: string;
   }) => {
     if (input.password.length < 8) {
-      toast.error("Password must be at least 8 characters");
+      showError("Password must be at least 8 characters");
       return false;
     }
     if (input.password !== input.confirmPassword) {
-      toast.error("Passwords do not match");
+      showError("Passwords do not match");
       return false;
     }
     if (operations?.updateUser) {
@@ -503,18 +520,18 @@ export function useAdminController({
         applyAdminData(next);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Could not update password";
-        toast.error(message);
+        showError(message);
         return false;
       }
     }
-    toast("Password updated", { icon: <Check className="size-4" /> });
+    showSuccess("Password updated");
     return true;
   };
 
   const createGroup = async (name: string) => {
     const value = name.trim();
     if (!value) {
-      toast.error("Group name is required");
+      showError("Group name is required");
       return false;
     }
     const idToken = value.toLowerCase().replace(/[^a-z0-9]+/g, "-");
@@ -522,30 +539,30 @@ export function useAdminController({
     if (
       groups.some((group) => group.id === id || group.name.toLowerCase() === value.toLowerCase())
     ) {
-      toast.error("Group already exists");
+      showError("Group already exists");
       return false;
     }
     if (operations?.createGroup) {
       try {
         const next = await operations.createGroup({ name: value, displayName: value });
         applyAdminData(next);
-        toast("Group created", { icon: <Check className="size-4" /> });
+        showSuccess("Group created");
         return true;
       } catch (error) {
         const message = error instanceof Error ? error.message : "Could not create group";
-        toast.error(message);
+        showError(message);
         return false;
       }
     }
     setGroups((prev) => [...prev, { id, name: value, displayName: value }]);
-    toast("Group created", { icon: <Check className="size-4" /> });
+    showSuccess("Group created");
     return true;
   };
 
   const updateGroup = async (groupId: string, input: { name: string; memberUserIds: string[] }) => {
     const value = input.name.trim();
     if (!value) {
-      toast.error("Group name is required");
+      showError("Group name is required");
       return false;
     }
     if (operations?.updateGroup) {
@@ -558,11 +575,11 @@ export function useAdminController({
           members: selectedUsernames,
         });
         applyAdminData(next);
-        toast("Group saved", { icon: <Check className="size-4" /> });
+        showSuccess("Group saved");
         return true;
       } catch (error) {
         const message = error instanceof Error ? error.message : "Could not update group";
-        toast.error(message);
+        showError(message);
         return false;
       }
     }
@@ -590,24 +607,24 @@ export function useAdminController({
         };
       }),
     );
-    toast("Group saved", { icon: <Check className="size-4" /> });
+    showSuccess("Group saved");
     return true;
   };
 
   const deleteGroup = async (groupId: string) => {
     if (isProtectedGroupId(groupId)) {
-      toast.error("The administrators group is protected and cannot be deleted.");
+      showError("The administrators group is protected and cannot be deleted.");
       return false;
     }
     if (operations?.deleteGroup) {
       try {
         const next = await operations.deleteGroup(groupId);
         applyAdminData(next);
-        toast("Group deleted", { icon: <Check className="size-4" /> });
+        showSuccess("Group deleted");
         return true;
       } catch (error) {
         const message = error instanceof Error ? error.message : "Could not delete group";
-        toast.error(message);
+        showError(message);
         return false;
       }
     }
@@ -618,7 +635,7 @@ export function useAdminController({
         groups: user.groups.filter((candidate) => candidate !== groupId),
       })),
     );
-    toast("Group deleted", { icon: <Check className="size-4" /> });
+    showSuccess("Group deleted");
     return true;
   };
 
@@ -634,12 +651,14 @@ export function useAdminController({
     updates,
     updateLogLines,
     checkingUpdates,
+    refreshingServerChecks,
     settingsForm,
     setSettingsForm,
     actions: {
       saveSettings,
       refresh,
       checkUpdates,
+      refreshServerChecks,
       clearUpdateLog,
       refreshUpdateLog,
       downloadUpdateLog,
@@ -658,3 +677,5 @@ export function useAdminController({
     },
   };
 }
+
+export type AdminControllerState = ReturnType<typeof useAdminController>;
