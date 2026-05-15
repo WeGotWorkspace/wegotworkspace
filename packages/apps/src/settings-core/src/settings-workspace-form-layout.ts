@@ -3,13 +3,10 @@
  * Generic layout primitives live under `@/ui/*`; this file only wires them to that stylesheet.
  */
 export const settingsWorkspaceFormLayout = {
-  displayField: {
-    className: "settings-workspace__form-field",
-    labelClassName: "settings-workspace__form-label",
-  },
+  /** Row/label look comes from `.settings-workspace` + `field-label-row` (no extra classes). */
+  displayField: {},
   textField: {
     itemClassName: "settings-workspace__form-field",
-    labelClassName: "settings-workspace__form-label",
   },
   saveActionRow: "settings-workspace__form-actions",
 } as const;

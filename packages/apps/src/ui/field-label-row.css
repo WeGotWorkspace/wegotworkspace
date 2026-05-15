@@ -1,0 +1,20 @@
+@import "../styles.css" reference;
+
+/** Row spacing for label + control (read-only or arbitrary children). */
+.field-label-row {
+  @apply space-y-1.5 mb-4 last:mb-0;
+}
+
+/**
+ * Dense uppercase field caption. Parents override tone via `labelClassName` or
+ * `--field-label-color` / `--field-label-font-family` on an ancestor.
+ */
+.field-label-row__label {
+  @apply flex items-center gap-1.5 text-xs font-normal uppercase tracking-wider;
+  font-family: var(--field-label-font-family, var(--font-mono, ui-monospace, monospace));
+  color: var(--field-label-color, var(--color-muted-foreground));
+}
+
+.field-label-row__lock {
+  @apply size-3 shrink-0 opacity-60;
+}

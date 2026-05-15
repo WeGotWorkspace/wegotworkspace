@@ -1,0 +1,6 @@
+@import "../styles.css" reference;
+
+.admin-root {
+  /* Match legacy admin `FormField` caption tone (see `field-label-row__label`). */
+  --field-label-color: color-mix(in oklab, var(--color-ink) 60%, transparent);
+}

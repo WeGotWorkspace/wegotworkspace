@@ -3,7 +3,7 @@ import { Eraser, RefreshCw } from "lucide-react";
 import { Input } from "@/ui/input";
 import { Button } from "@/button/src/button";
 import { Card } from "../src/card";
-import { FormField } from "@/form-field/src/form-field";
+import { FieldLabelRow as FormField } from "@/ui/field-label-row";
 
 const meta: Meta<typeof Card> = {
   title: "Shared/Card",

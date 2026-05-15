@@ -4,7 +4,7 @@ import { Card } from "@/card/src/card";
 import { settingsWorkspaceFormLayout } from "@/settings-core/src/settings-workspace-form-layout";
 import type { SettingsControllerState } from "@/settings-core/src/use-settings-controller";
 import { Form } from "@/ui/form";
-import { FormDisplayField } from "@/ui/form-display-field";
+import { FieldLabelRow } from "@/ui/field-label-row";
 import { FormSaveActionRow } from "@/ui/form-save-action-row";
 import { FormTextField } from "@/ui/form-text-field";
 
@@ -50,56 +50,46 @@ export function SettingsMailPane({ mail }: SettingsMailPaneProps) {
       </Form>
 
       <Card title="IMAP (incoming)">
-        <FormDisplayField
-          {...settingsWorkspaceFormLayout.displayField}
-          label="Server"
-          readOnly
-          icon={<MailIcon className="size-3.5 opacity-70" />}
-        >
+        <FieldLabelRow {...settingsWorkspaceFormLayout.displayField} label="Server" readOnly>
           <Input value={server.imapHost} readOnly className="settings-workspace__input-readonly" />
-        </FormDisplayField>
+        </FieldLabelRow>
         <div className="settings-workspace__grid-2">
-          <FormDisplayField {...settingsWorkspaceFormLayout.displayField} label="Port" readOnly>
+          <FieldLabelRow {...settingsWorkspaceFormLayout.displayField} label="Port" readOnly>
             <Input
               value={String(server.imapPort)}
               readOnly
               className="settings-workspace__input-readonly"
             />
-          </FormDisplayField>
-          <FormDisplayField {...settingsWorkspaceFormLayout.displayField} label="Security" readOnly>
+          </FieldLabelRow>
+          <FieldLabelRow {...settingsWorkspaceFormLayout.displayField} label="Security" readOnly>
             <Input
               value={securityLabel(server.imapSecurity)}
               readOnly
               className="settings-workspace__input-readonly"
             />
-          </FormDisplayField>
+          </FieldLabelRow>
         </div>
       </Card>
 
       <Card title="SMTP (outgoing)">
-        <FormDisplayField
-          {...settingsWorkspaceFormLayout.displayField}
-          label="Server"
-          readOnly
-          icon={<MailIcon className="size-3.5 opacity-70" />}
-        >
+        <FieldLabelRow {...settingsWorkspaceFormLayout.displayField} label="Server" readOnly>
           <Input value={server.smtpHost} readOnly className="settings-workspace__input-readonly" />
-        </FormDisplayField>
+        </FieldLabelRow>
         <div className="settings-workspace__grid-2">
-          <FormDisplayField {...settingsWorkspaceFormLayout.displayField} label="Port" readOnly>
+          <FieldLabelRow {...settingsWorkspaceFormLayout.displayField} label="Port" readOnly>
             <Input
               value={String(server.smtpPort)}
               readOnly
               className="settings-workspace__input-readonly"
             />
-          </FormDisplayField>
-          <FormDisplayField {...settingsWorkspaceFormLayout.displayField} label="Security" readOnly>
+          </FieldLabelRow>
+          <FieldLabelRow {...settingsWorkspaceFormLayout.displayField} label="Security" readOnly>
             <Input
               value={securityLabel(server.smtpSecurity)}
               readOnly
               className="settings-workspace__input-readonly"
             />
-          </FormDisplayField>
+          </FieldLabelRow>
         </div>
       </Card>
     </>

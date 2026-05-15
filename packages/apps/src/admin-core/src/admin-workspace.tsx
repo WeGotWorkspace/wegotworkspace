@@ -42,7 +42,7 @@ import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import { Card } from "@/card/src/card";
 import { Callout } from "@/callout/src/callout";
 import { DataTable, type DataTableColumn } from "@/data-table/src/data-table";
-import { FormField } from "@/form-field/src/form-field";
+import { FieldLabelRow as FormField } from "@/ui/field-label-row";
 import { MenuItem } from "@/menu-item/src/menu-item";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
 import { UserAvatar } from "@/user-avatar/src/user-avatar";
@@ -55,6 +55,8 @@ import {
 import { useAdminController } from "@/admin-core/src/use-admin-controller";
 import type { AdminWorkspaceProps } from "@/admin-core/src/admin-workspace-props";
 import { Tag } from "@/tag/src/tag";
+
+import "@/admin-core/src/admin-workspace.css";
 
 type UpdateLogRow = { id: string; date: string | null; level: string; message: string };
 
