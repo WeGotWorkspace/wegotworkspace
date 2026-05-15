@@ -1,16 +1,12 @@
 @import "../../styles.css" reference;
 
-.sidebar-section {
-  --sidebar-section-title-color: color-mix(in oklab, var(--color-ink) 55%, transparent);
-}
-
 .sidebar-section__heading {
   @apply px-4 mb-3 flex items-center justify-between gap-2 min-w-0 h-6;
 }
 
+/** Caption look comes from `field-label-row__label` (see field-label-row.css). */
 .sidebar-section__title {
-  @apply text-[11px] uppercase tracking-[0.2em] font-semibold truncate;
-  color: var(--sidebar-section-title-color);
+  @apply truncate min-w-0;
 }
 
 .sidebar-section__list {
