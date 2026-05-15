@@ -3,7 +3,7 @@ import { createSettingsAppBootstrap } from "@/lib/api/mock/settings-bootstrap";
 import { SettingsWorkspace } from "@/settings-core/src/settings-workspace";
 
 const meta: Meta<typeof SettingsWorkspace> = {
-  title: "Apps/Settings/SettingsWorkspace",
+  title: "Apps/Settings",
   component: SettingsWorkspace,
   parameters: {
     layout: "fullscreen",
