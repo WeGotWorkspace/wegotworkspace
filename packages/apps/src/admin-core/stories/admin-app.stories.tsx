@@ -7,6 +7,12 @@ const meta: Meta<typeof AdminApp> = {
   parameters: {
     layout: "fullscreen",
     routerPath: "/admin",
+    docs: {
+      description: {
+        component:
+          "Uses mock admin data and in-memory API when `wgwLiveApiEnabled()` is false (typical Storybook). Server checks are pre-filled in mock bootstrap. **Refresh checks** on the Server checks card only re-fetches state (no full update check). **Check for updates** runs a simulated release check. For real HTTP behavior, see **Apps/Admin/Live API**.",
+      },
+    },
   },
 };
 

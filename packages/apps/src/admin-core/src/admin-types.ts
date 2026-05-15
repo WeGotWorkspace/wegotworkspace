@@ -1,4 +1,4 @@
-export type AdminSection = "users" | "mail" | "voice" | "webdav" | "backups" | "updates";
+export type AdminSection = "users" | "mail" | "meet" | "webdav" | "backups" | "updates";
 
 export type AdminUser = {
   id: string;

@@ -43,9 +43,10 @@ export const BUTTON_VARIANT_CLASSNAMES: Record<ButtonVariant, string> = {
 
 const BUTTON_VARIANT_STYLES: Record<ButtonVariant, ButtonVariantStyle> = {
   primary: {
-    backgroundColor: "var(--color-ink)",
-    color: "var(--color-emerald)",
-    boxShadow: "0 10px 24px -12px color-mix(in oklab, var(--color-ink) 60%, transparent)",
+    backgroundColor: "var(--button-primary-bg, var(--color-ink))",
+    color: "var(--button-primary-fg, var(--color-emerald))",
+    boxShadow:
+      "0 10px 24px -12px color-mix(in oklab, var(--button-primary-bg, var(--color-ink)) 60%, transparent)",
   },
   destructive: {
     backgroundColor: "var(--color-red-500, #dc2626)",
@@ -62,7 +63,10 @@ const BUTTON_VARIANT_STYLES: Record<ButtonVariant, ButtonVariantStyle> = {
   subtle: {},
 };
 
-export function getButtonVariantStyle(variant: ButtonVariant, active?: boolean): ButtonVariantStyle {
+export function getButtonVariantStyle(
+  variant: ButtonVariant,
+  active?: boolean,
+): ButtonVariantStyle {
   if (!active) return BUTTON_VARIANT_STYLES[variant];
   return {
     ...BUTTON_VARIANT_STYLES[variant],

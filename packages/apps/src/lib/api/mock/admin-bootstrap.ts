@@ -1,6 +1,12 @@
 import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
 import { mockWorkspaceSession } from "@/lib/api/mock/workspace-session-mock";
-import type { AdminUIData } from "@/admin-core/src/admin-types";
+import type { AdminUIData, AdminUpdateCheck } from "@/admin-core/src/admin-types";
+
+const DEFAULT_SERVER_CHECKS: AdminUpdateCheck[] = [
+  { ok: true, label: "PHP runtime", detail: "Meets minimum version for this release." },
+  { ok: true, label: "Database", detail: "Schema and migrations are consistent." },
+  { ok: true, label: "Disk space", detail: "Enough free space for updates and backups." },
+];
 
 export type AdminAppBootstrap = {
   data: AdminUIData;
@@ -58,7 +64,7 @@ const DEFAULT_DATA: AdminUIData = {
     updateAvailable: false,
     compatible: true,
     backups: [],
-    checks: [],
+    checks: DEFAULT_SERVER_CHECKS,
     inProgress: false,
     phase: null,
     current: null,

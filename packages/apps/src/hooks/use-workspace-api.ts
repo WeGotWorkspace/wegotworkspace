@@ -37,7 +37,7 @@ export function useWorkspaceApi<TSource, TData, TOperations, TExtra extends obje
   );
   const { phase, error, data, load, successVersion } = useLiveBootstrap(runBootstrap);
   const operations = useMemo(
-    () => createOperations(resolvedSource, data),
+    () => createOperations(resolvedSource, data ?? undefined),
     [createOperations, resolvedSource, data],
   );
 

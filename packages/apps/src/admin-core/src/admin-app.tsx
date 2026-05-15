@@ -20,6 +20,9 @@ export function AdminApp() {
           session={session}
           operations={operations}
           listLoading={listLoading}
+          onLogout={() => {
+            window.location.assign(data.logoutUrl ?? "/");
+          }}
         />
       )}
     />
