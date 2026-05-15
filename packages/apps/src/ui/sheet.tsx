@@ -6,6 +6,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import "@/ui/modal-title.css";
 
 const Sheet = SheetPrimitive.Root;
 
@@ -88,11 +89,7 @@ const SheetTitle = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof SheetPrimitive.Title>
 >(({ className, ...props }, ref) => (
-  <SheetPrimitive.Title
-    ref={ref}
-    className={cn("font-serif text-2xl font-semibold text-foreground", className)}
-    {...props}
-  />
+  <SheetPrimitive.Title ref={ref} className={cn("ui-modal-title", className)} {...props} />
 ));
 SheetTitle.displayName = SheetPrimitive.Title.displayName;
 

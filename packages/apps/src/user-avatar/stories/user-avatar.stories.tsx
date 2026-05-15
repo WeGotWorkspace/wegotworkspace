@@ -1,5 +1,8 @@
+import type { CSSProperties } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { UserAvatar } from "../src/user-avatar";
+import "@/mail-core/src/mail-ui.css";
+import "@/workspace-shell/src/workspace-app-layout.css";
 
 const meta: Meta<typeof UserAvatar> = {
   title: "Shared/User Avatar",
@@ -23,11 +26,21 @@ export const Compact: Story = {
 };
 
 export const CustomColors: Story = {
-  args: {
-    displayName: "Ada Pereira",
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    color: "#ffffff",
-  },
+  render: () => (
+    <div
+      style={
+        {
+          ["--user-avatar-bg" as string]: "rgba(255, 255, 255, 0.2)",
+          ["--user-avatar-fg" as string]: "#ffffff",
+          ["--user-avatar-label-color" as string]: "#ffffff",
+          padding: "1.5rem",
+          background: "#1a3d2e",
+        } as CSSProperties
+      }
+    >
+      <UserAvatar displayName="Ada Pereira" subtitle="ada@example.com" />
+    </div>
+  ),
 };
 
 export const Clickable: Story = {
@@ -46,23 +59,22 @@ export const WithSubtitle: Story = {
 
 /** Mail detail sender row: larger chip, emerald fill, two-line label. */
 export const MailSenderRow: Story = {
-  args: {
-    displayName: "Ops Bot",
-    subtitle: "ops@example.com · to you",
-    size: "md",
-    backgroundColor: "var(--color-emerald)",
-    color: "var(--color-ink)",
-  },
+  render: () => (
+    <div className="mail-detail-view__sender-row max-w-[680px]">
+      <UserAvatar displayName="Ops Bot" subtitle="ops@example.com · to you" size="md" />
+    </div>
+  ),
 };
 
-/** Sidebar-style: chip uses `avatarColor`, name uses shell `labelColor`. */
+/** Sidebar-style: chip uses footer avatar tokens, name uses shell label tone. */
 export const FooterTwoLine: Story = {
-  args: {
-    displayName: "Elias Linden",
-    subtitle: "elias@example.com",
-    backgroundColor: "color-mix(in oklab, var(--color-ink) 12%, transparent)",
-    color: "var(--color-ink)",
-    labelColor: "var(--color-ink)",
-    subtitleColor: "color-mix(in oklab, var(--color-ink) 55%, transparent)",
-  },
+  render: () => (
+    <div className="workspace-app-layout__user-footer max-w-sm border border-[color-mix(in_oklab,var(--color-ink)_12%,transparent)] rounded-lg">
+      <UserAvatar
+        displayName="Elias Linden"
+        subtitle="elias@example.com"
+        className="flex-1 min-w-0"
+      />
+    </div>
+  ),
 };

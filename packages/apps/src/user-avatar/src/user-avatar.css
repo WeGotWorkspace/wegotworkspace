@@ -1,0 +1,71 @@
+@import "../../styles.css" reference;
+
+.user-avatar {
+  display: flex;
+  align-items: center;
+  gap: var(--user-avatar-gap, 0.5rem);
+  min-width: 0;
+}
+
+.user-avatar__mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  font-weight: 500;
+  background-color: var(--user-avatar-bg, color-mix(in oklab, var(--color-ink) 12%, transparent));
+  color: var(--user-avatar-fg, var(--color-ink));
+}
+
+button.user-avatar__mark {
+  margin: 0;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  text-align: center;
+}
+
+.user-avatar--sm .user-avatar__mark {
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: 11px;
+}
+
+.user-avatar--md .user-avatar__mark {
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 0.75rem;
+}
+
+.user-avatar__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  gap: 0.125rem;
+}
+
+.user-avatar__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  color: var(--user-avatar-label-color, var(--user-avatar-fg, var(--color-ink)));
+}
+
+.user-avatar__name--emphasized {
+  font-weight: 500;
+}
+
+.user-avatar__subtitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  color: var(
+    --user-avatar-subtitle-color,
+    color-mix(in oklab, var(--color-ink) 55%, transparent)
+  );
+}

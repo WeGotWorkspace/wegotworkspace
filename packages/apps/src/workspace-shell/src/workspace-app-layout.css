@@ -19,5 +19,34 @@
 
 .workspace-app-layout__main-content {
   @apply mx-auto px-4 py-8 md:px-8 md:py-12;
+  /* Default 42rem; split workspaces override via `workspace-split-app.css` on the root. */
   max-width: var(--workspace-main-content-max-width, 42rem);
+}
+
+.workspace-app-layout__user-footer {
+  @apply p-4 md:p-6 flex items-center gap-2 shrink-0 border-t;
+  color: var(
+    --workspace-user-footer-text-color,
+    color-mix(in oklab, var(--color-ink) 70%, transparent)
+  );
+  border-color: var(
+    --workspace-user-footer-border-color,
+    color-mix(in oklab, var(--color-ink) 10%, transparent)
+  );
+}
+
+.workspace-app-layout__user-footer .user-avatar {
+  --user-avatar-bg: var(
+    --workspace-user-footer-avatar-bg,
+    color-mix(in oklab, var(--color-ink) 12%, transparent)
+  );
+  --user-avatar-fg: var(--workspace-user-footer-avatar-color, var(--color-ink));
+  --user-avatar-label-color: var(
+    --workspace-user-footer-text-color,
+    color-mix(in oklab, var(--color-ink) 70%, transparent)
+  );
+  --user-avatar-subtitle-color: var(
+    --workspace-user-footer-subtitle-color,
+    color-mix(in oklab, var(--color-ink) 55%, transparent)
+  );
 }
