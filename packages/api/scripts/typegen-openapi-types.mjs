@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { readFileSync, writeFileSync } from "node:fs";
 import { buildOpenApiBuiltJson } from "./build-openapi-built-json.mjs";
+import { generateSettingsRequestZod } from "./typegen-openapi-settings-zod.mjs";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const packageRoot = path.resolve(scriptDir, "..");
@@ -106,6 +107,8 @@ export async function generateOpenApiDomainTypes() {
     pathPrefix: "installer",
     outputPath: installerTypesPath,
   });
+
+  generateSettingsRequestZod();
 }
 
 if (import.meta.url === new URL(process.argv[1], "file://").href) {
@@ -119,4 +122,7 @@ if (import.meta.url === new URL(process.argv[1], "file://").href) {
   process.stdout.write(`Wrote ${driveTypesPath}\n`);
   process.stdout.write(`Wrote ${voiceTypesPath}\n`);
   process.stdout.write(`Wrote ${installerTypesPath}\n`);
+  process.stdout.write(
+    `Wrote ${path.resolve(packageRoot, "openapi/generated/settings-request-zod.ts")}\n`,
+  );
 }

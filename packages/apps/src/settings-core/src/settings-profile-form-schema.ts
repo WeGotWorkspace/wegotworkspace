@@ -1,8 +1,13 @@
+import type { SettingsProfileRequest } from "@wgw-api-generated/settings-types";
+import { settingsProfileRequestOpenapiSchema } from "@wgw-api-generated/settings-request-zod";
 import { z } from "zod";
 
 /**
  * Profile + optional password change for settings. Used with
  * {@link https://react-hook-form.com/ react-hook-form} + {@link zodResolver}.
+ *
+ * Wire JSON for `PUT /settings/profile` is validated with the OpenAPI-generated
+ * {@link settingsProfileRequestOpenapiSchema} via {@link settingsProfileFormToRequest}.
  */
 export const settingsProfileFormSchema = z
   .object({
@@ -30,3 +35,15 @@ export const settingsProfileFormSchema = z
   });
 
 export type SettingsProfileFormValues = z.infer<typeof settingsProfileFormSchema>;
+
+/** Map UI form values to OpenAPI `SettingsProfileRequest` and validate against the spec. */
+export function settingsProfileFormToRequest(
+  values: SettingsProfileFormValues,
+): SettingsProfileRequest {
+  const password = values.newPassword.trim();
+  return settingsProfileRequestOpenapiSchema.parse({
+    displayName: values.displayName,
+    email: values.email,
+    ...(password.length > 0 ? { password } : {}),
+  }) as SettingsProfileRequest;
+}
