@@ -1,9 +1,11 @@
 import { Input } from "@/ui/input";
-import { Button } from "@/button/src/button";
 import { Card } from "@/card/src/card";
-import { FormField as LegacyFormField } from "@/form-field/src/form-field";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/ui/form";
+import { settingsWorkspaceFormLayout } from "@/settings-core/src/settings-workspace-form-layout";
 import type { SettingsControllerState } from "@/settings-core/src/use-settings-controller";
+import { Form } from "@/ui/form";
+import { FormDisplayField } from "@/ui/form-display-field";
+import { FormSaveActionRow } from "@/ui/form-save-action-row";
+import { FormTextField } from "@/ui/form-text-field";
 
 export type SettingsProfilePaneProps = {
   profile: SettingsControllerState["profile"];
@@ -23,84 +25,48 @@ export function SettingsProfilePane({ profile }: SettingsProfilePaneProps) {
   return (
     <Form {...form}>
       <Card title="Identity">
-        <LegacyFormField label="Username" readOnly>
+        <FormDisplayField {...settingsWorkspaceFormLayout.displayField} label="Username" readOnly>
           <Input value={username} readOnly className="settings-workspace__input-readonly" />
-        </LegacyFormField>
-        <FormField
-          control={form.control}
+        </FormDisplayField>
+        <FormTextField
+          {...settingsWorkspaceFormLayout.textField}
           name="displayName"
-          render={({ field }) => (
-            <FormItem className="settings-workspace__form-field">
-              <FormLabel className="settings-workspace__form-label">Display name</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          label="Display name"
         />
-        <FormField
-          control={form.control}
+        <FormTextField
+          {...settingsWorkspaceFormLayout.textField}
           name="email"
-          render={({ field }) => (
-            <FormItem className="settings-workspace__form-field">
-              <FormLabel className="settings-workspace__form-label">Email</FormLabel>
-              <FormControl>
-                <Input type="email" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          label="Email"
+          type="email"
         />
-        <div className="settings-workspace__form-actions">
-          <Button
-            type="button"
-            onClick={() => void saveProfile()}
-            disabled={identityDisabled}
-            label="Save changes"
-            variant="subtle"
-            size="md"
-          />
-        </div>
+        <FormSaveActionRow
+          className={settingsWorkspaceFormLayout.saveActionRow}
+          label="Save changes"
+          disabled={identityDisabled}
+          onSave={saveProfile}
+        />
       </Card>
 
       <Card title="Password">
-        <FormField
-          control={form.control}
+        <FormTextField
+          {...settingsWorkspaceFormLayout.textField}
           name="newPassword"
-          render={({ field }) => (
-            <FormItem className="settings-workspace__form-field">
-              <FormLabel className="settings-workspace__form-label">New password</FormLabel>
-              <FormControl>
-                <Input type="password" {...field} placeholder="At least 8 characters" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          label="New password"
+          type="password"
+          placeholder="At least 8 characters"
         />
-        <FormField
-          control={form.control}
+        <FormTextField
+          {...settingsWorkspaceFormLayout.textField}
           name="confirmPassword"
-          render={({ field }) => (
-            <FormItem className="settings-workspace__form-field">
-              <FormLabel className="settings-workspace__form-label">Confirm password</FormLabel>
-              <FormControl>
-                <Input type="password" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          label="Confirm password"
+          type="password"
         />
-        <div className="settings-workspace__form-actions">
-          <Button
-            type="button"
-            onClick={() => void saveProfile()}
-            disabled={passwordDisabled}
-            label="Set password"
-            variant="subtle"
-            size="md"
-          />
-        </div>
+        <FormSaveActionRow
+          className={settingsWorkspaceFormLayout.saveActionRow}
+          label="Set password"
+          disabled={passwordDisabled}
+          onSave={saveProfile}
+        />
       </Card>
     </Form>
   );
