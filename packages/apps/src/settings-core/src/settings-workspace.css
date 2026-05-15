@@ -1,5 +1,7 @@
 @import "../../styles.css" reference;
 
+/* Pane class fragments: `settings-workspace.styles.ts` (must stay in sync). */
+
 .settings-workspace {
   --settings-accent-bg: #da9fb8;
 
