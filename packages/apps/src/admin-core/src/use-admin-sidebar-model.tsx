@@ -1,4 +1,4 @@
-import { BellRing, DatabaseBackup, Database, Mail, ShieldCheck, Users } from "lucide-react";
+import { DatabaseBackup, Database, Mail, ShieldCheck, Users, Video } from "lucide-react";
 import type { AdminSection } from "@/admin-core/src/admin-types";
 
 export type AdminSectionDescriptor = {
@@ -23,10 +23,10 @@ export function useAdminSidebarModel(): AdminSectionDescriptor[] {
       icon: <Mail className="size-3.5" />,
     },
     {
-      id: "voice",
-      label: "Voice",
-      description: "Signaling and TURN options",
-      icon: <BellRing className="size-3.5" />,
+      id: "meet",
+      label: "Meet",
+      description: "Meet signaling and TURN options",
+      icon: <Video className="size-3.5" />,
     },
     {
       id: "webdav",

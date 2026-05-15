@@ -18,3 +18,9 @@
 .field-label-row__lock {
   @apply size-3 shrink-0 opacity-60;
 }
+
+/** Read-only inputs: dimmed fill matches admin/settings card fields (works in portaled dialogs). */
+.field-label-row:has(input[readonly]) .input {
+  @apply cursor-default;
+  background-color: color-mix(in oklab, var(--color-ink) 4%, transparent);
+}
