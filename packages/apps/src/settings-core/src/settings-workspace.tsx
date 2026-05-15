@@ -6,7 +6,7 @@ import {
   WorkspaceAppLayout,
   WorkspaceUserFooter,
 } from "@/workspace-shell/src/workspace-app-layout";
-import { ListHeader } from "@/list-header/src/list-header";
+import { ViewHeader } from "@/view-header/src/view-header";
 import {
   useSettingsController,
   type SettingsControllerState,
@@ -61,7 +61,7 @@ function Sidebar({
 
 function MainHeader({ controller }: { controller: SettingsControllerState }) {
   return (
-    <ListHeader
+    <ViewHeader
       title={controller.currentSection.label}
       subtitle={controller.currentSection.description}
       sidebarOpen={controller.sidebarOpen}

@@ -26,7 +26,7 @@ Use **`packages/apps/src/settings-core/`** as the reference when splitting a pro
 ## Shell chrome
 
 - **Sidebar**: `AppSidebar` + **`SidebarSection`**; items as **`MenuItemProps[]`** from controller (`selected`, `onClick`). Footer: **`WorkspaceUserFooter`** + `workspaceUserInitials(session.user)`.
-- **Main header**: **`ListHeader`** with section label/description from shell model and **`sidebarOpen` / toggle** from controller.
+- **Main header**: **`ViewHeader`** with section label/description from shell model and **`sidebarOpen` / toggle** from controller.
 - **Main body**: Switch or conditional render **one pane per section**; avoid mounting all panes at once unless needed.
 
 ## Refactoring another app toward this shape
