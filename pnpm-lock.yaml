@@ -20,6 +20,9 @@ importers:
       openapi-typescript:
         specifier: ^7.13.0
         version: 7.13.0(typescript@5.9.3)
+      zod:
+        specifier: ^3.24.2
+        version: 3.25.76
 
   packages/apps:
     dependencies:

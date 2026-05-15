@@ -1,8 +1,11 @@
+import type {
+  SettingsMailRequest,
+  SettingsProfileRequest,
+} from "@wgw-api-generated/settings-types";
 import type { SettingsAppBootstrap } from "@/lib/api/mock/settings-bootstrap";
 import { wgwFetch, wgwFetchPrincipal, wgwReadJson } from "@/lib/api/wgw/http";
 import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
 import type {
-  WgwSettingsMailRequest,
   WgwSettingsStateResponse,
   WgwSettingsUserGroup,
   WgwSettingsUserMail,
@@ -92,7 +95,7 @@ async function requestSettings(
 }
 
 export async function saveSettingsProfile(
-  input: { displayName: string; email: string; password?: string },
+  input: SettingsProfileRequest,
   opts?: { signal?: AbortSignal },
 ): Promise<SettingsUIData> {
   const state = await requestSettings("/settings/profile", input, opts);
@@ -100,7 +103,7 @@ export async function saveSettingsProfile(
 }
 
 export async function saveSettingsMail(
-  input: WgwSettingsMailRequest,
+  input: SettingsMailRequest,
   opts?: { signal?: AbortSignal },
 ): Promise<SettingsUIData> {
   const state = await requestSettings("/settings/mail", input, opts);
