@@ -2,7 +2,8 @@ import { Mail as MailIcon } from "lucide-react";
 import { Input } from "@/ui/input";
 import { Button } from "@/button/src/button";
 import { Card } from "@/card/src/card";
-import { FormField } from "@/form-field/src/form-field";
+import { FormField as LegacyFormField } from "@/form-field/src/form-field";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/ui/form";
 import type { SettingsControllerState } from "@/settings-core/src/use-settings-controller";
 
 function securityLabel(security: string): string {
@@ -16,83 +17,107 @@ export type SettingsMailPaneProps = {
 };
 
 export function SettingsMailPane({ mail }: SettingsMailPaneProps) {
+  const { form, saveMail, imapHasPassword, server, savedImapUsername } = mail;
+  const [imapUsernameWatch, imapPasswordWatch] = form.watch(["imapUsername", "imapPassword"]);
+
+  const credentialsDirty = imapUsernameWatch !== savedImapUsername || imapPasswordWatch.length > 0;
+
   return (
     <>
-      <Card title="Credentials">
-        <FormField label="Username">
-          <Input
-            value={mail.imapUsername}
-            onChange={(event) => mail.setImapUsername(event.currentTarget.value)}
+      <Form {...form}>
+        <Card title="Credentials">
+          <FormField
+            control={form.control}
+            name="imapUsername"
+            render={({ field }) => (
+              <FormItem className="settings-workspace__form-field">
+                <FormLabel className="settings-workspace__form-label">Username</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </FormField>
-        <FormField label="Password">
-          <Input
-            type="password"
-            value={mail.imapPassword}
-            onChange={(event) => mail.setImapPassword(event.currentTarget.value)}
-            placeholder={mail.imapHasPassword ? "••••••••" : "Enter password"}
+          <FormField
+            control={form.control}
+            name="imapPassword"
+            render={({ field }) => (
+              <FormItem className="settings-workspace__form-field">
+                <FormLabel className="settings-workspace__form-label">Password</FormLabel>
+                <FormControl>
+                  <Input
+                    type="password"
+                    {...field}
+                    placeholder={imapHasPassword ? "••••••••" : "Enter password"}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </FormField>
-        <div className="settings-workspace__form-actions">
-          <Button
-            onClick={mail.saveMail}
-            disabled={!mail.mailDirty}
-            label="Save changes"
-            variant="subtle"
-            size="md"
-          />
-        </div>
-      </Card>
+          <div className="settings-workspace__form-actions">
+            <Button
+              type="button"
+              onClick={() => void saveMail()}
+              disabled={!credentialsDirty}
+              label="Save changes"
+              variant="subtle"
+              size="md"
+            />
+          </div>
+        </Card>
+      </Form>
 
       <Card title="IMAP (incoming)">
-        <FormField label="Server" readOnly icon={<MailIcon className="size-3.5 opacity-70" />}>
-          <Input
-            value={mail.server.imapHost}
-            readOnly
-            className="settings-workspace__input-readonly"
-          />
-        </FormField>
+        <LegacyFormField
+          label="Server"
+          readOnly
+          icon={<MailIcon className="size-3.5 opacity-70" />}
+        >
+          <Input value={server.imapHost} readOnly className="settings-workspace__input-readonly" />
+        </LegacyFormField>
         <div className="settings-workspace__grid-2">
-          <FormField label="Port" readOnly>
+          <LegacyFormField label="Port" readOnly>
             <Input
-              value={String(mail.server.imapPort)}
+              value={String(server.imapPort)}
               readOnly
               className="settings-workspace__input-readonly"
             />
-          </FormField>
-          <FormField label="Security" readOnly>
+          </LegacyFormField>
+          <LegacyFormField label="Security" readOnly>
             <Input
-              value={securityLabel(mail.server.imapSecurity)}
+              value={securityLabel(server.imapSecurity)}
               readOnly
               className="settings-workspace__input-readonly"
             />
-          </FormField>
+          </LegacyFormField>
         </div>
       </Card>
 
       <Card title="SMTP (outgoing)">
-        <FormField label="Server" readOnly icon={<MailIcon className="size-3.5 opacity-70" />}>
-          <Input
-            value={mail.server.smtpHost}
-            readOnly
-            className="settings-workspace__input-readonly"
-          />
-        </FormField>
+        <LegacyFormField
+          label="Server"
+          readOnly
+          icon={<MailIcon className="size-3.5 opacity-70" />}
+        >
+          <Input value={server.smtpHost} readOnly className="settings-workspace__input-readonly" />
+        </LegacyFormField>
         <div className="settings-workspace__grid-2">
-          <FormField label="Port" readOnly>
+          <LegacyFormField label="Port" readOnly>
             <Input
-              value={String(mail.server.smtpPort)}
+              value={String(server.smtpPort)}
               readOnly
               className="settings-workspace__input-readonly"
             />
-          </FormField>
-          <FormField label="Security" readOnly>
+          </LegacyFormField>
+          <LegacyFormField label="Security" readOnly>
             <Input
-              value={securityLabel(mail.server.smtpSecurity)}
+              value={securityLabel(server.smtpSecurity)}
               readOnly
               className="settings-workspace__input-readonly"
             />
-          </FormField>
+          </LegacyFormField>
         </div>
       </Card>
     </>

@@ -1,0 +1,39 @@
+@import "../styles.css" reference;
+
+/**
+ * Sonner renders `toast.custom` JSX inside [data-content] > [data-title].
+ * Unstyled toasts skip Sonner’s `width: var(--width)` on the <li>, so we
+ * stretch the shell so Callout can use the full toaster width.
+ */
+[data-sonner-toast][data-styled="false"] {
+  width: 100%;
+  max-width: 100%;
+}
+
+[data-sonner-toast][data-styled="false"] [data-content] {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
+/**
+ * Sonner only fades default styled toasts when collapsed; custom JSX needs the
+ * same treatment or taller callouts overflow the fixed peek height and overlap.
+ */
+[data-sonner-toast][data-styled="false"][data-expanded="false"][data-front="false"] {
+  overflow: hidden;
+}
+
+[data-sonner-toast][data-expanded="false"][data-front="false"][data-styled="false"] > * {
+  opacity: 0;
+}
+
+[data-sonner-toast][data-styled="false"] [data-title] {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  line-height: inherit;
+}
