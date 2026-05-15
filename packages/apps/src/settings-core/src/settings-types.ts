@@ -1,3 +1,8 @@
+import type {
+  SettingsMailRequest,
+  SettingsProfileRequest,
+} from "@wgw-api-generated/settings-types";
+
 export type SettingsSection = "profile" | "memberships" | "mail";
 
 export type SettingsSectionDescriptor = {
@@ -41,11 +46,11 @@ export type SettingsUIData = {
 
 export type SettingsAPIOperations = {
   saveProfile: (
-    input: { displayName: string; email: string; password?: string },
+    input: SettingsProfileRequest,
     opts?: { signal?: AbortSignal },
   ) => Promise<SettingsUIData>;
   saveMail: (
-    input: { imapUsername: string; imapPassword: string },
+    input: SettingsMailRequest,
     opts?: { signal?: AbortSignal },
   ) => Promise<SettingsUIData>;
 };
