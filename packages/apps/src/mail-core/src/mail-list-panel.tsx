@@ -1,7 +1,7 @@
 import type { ReactNode, RefObject } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import { Archive, Circle, Loader2, Star } from "lucide-react";
-import { ListHeader } from "@/list-header/src/list-header";
+import { ViewHeader } from "@/view-header/src/view-header";
 import { ListItem } from "@/list-item/src/list-item";
 import { WorkspaceSwipeList } from "@/workspace-swipe-list/src/workspace-swipe-list";
 import { WorkspaceListLoadingState } from "@/workspace-list-state/src/workspace-list-loading-state";
@@ -66,12 +66,10 @@ export function MailListPanel({
 }: MailListPanelProps) {
   return {
     header: (
-      <ListHeader
+      <ViewHeader
         sidebarOpen={sidebarOpen}
         onToggleSidebar={onToggleSidebar}
         title={viewLabel}
-        subtitle={undefined}
-        actions={<></>}
         searchPlaceholder="Search mail..."
         searchValue={searchQuery}
         onSearchInput={setSearchQuery}

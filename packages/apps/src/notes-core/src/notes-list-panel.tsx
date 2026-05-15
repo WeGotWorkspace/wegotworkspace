@@ -1,7 +1,7 @@
 import type { MouseEvent as ReactMouseEvent, ReactNode, RefObject } from "react";
 import { Archive, Pencil, Star, Trash2 } from "lucide-react";
 import { IconButton } from "@/button/src/button";
-import { ListHeader } from "@/list-header/src/list-header";
+import { ViewHeader } from "@/view-header/src/view-header";
 import { ListItem } from "@/list-item/src/list-item";
 import type { Note } from "@/lib/models/note";
 import { formatNoteDateForList } from "@/notes-core/src/notes-date-utils";
@@ -75,7 +75,7 @@ export function NotesListPanel({
 }: NotesListPanelProps) {
   return {
     header: (
-      <ListHeader
+      <ViewHeader
         sidebarOpen={sidebarOpen}
         onToggleSidebar={onToggleSidebar}
         title={viewLabel}

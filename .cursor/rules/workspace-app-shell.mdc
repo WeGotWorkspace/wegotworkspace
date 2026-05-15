@@ -11,7 +11,7 @@ alwaysApply: false
 For settings-style shells (fixed `AppSidebar` + main column with header and scroll body), use the **split** API instead of hand-rolling `<section>`, header, and scroll wrappers:
 
 - `sidebar` — e.g. `AppSidebar` and nav.
-- `mainHeader` — optional pinned header (e.g. `ListHeader`).
+- `mainHeader` — optional pinned header (e.g. `ViewHeader`).
 - `main` — scrollable body (pane content).
 
 Shared layout chrome lives in `workspace-app-layout.css` (`.workspace-app-layout__main*`). **Shared split-workspace tokens** (sidebar chrome, footer, primary buttons, main column `--workspace-main-content-max-width`, etc.) live in `workspace-shell/src/workspace-split-app.css` and apply to `:is(.admin-workspace, .settings-workspace)` — import that sheet from each product workspace CSS, then only set product-specific overrides on the root class. Do not duplicate those variables across admin and settings.

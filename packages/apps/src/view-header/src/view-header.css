@@ -1,0 +1,27 @@
+@import "../../styles.css" reference;
+@import "../../ui/field-label-row.css";
+
+/** Title + subtitle stack; sits beside the sidebar toggle so the subtitle aligns with the title, not the toggle. */
+.view-header__main {
+  @apply flex min-w-0 flex-1 flex-col;
+}
+
+/**
+ * Grid keeps title truncation predictable; min-height matches default icon-button row (size-md / 2.25rem)
+ * so subtitle/search do not jump when actions are present vs absent.
+ */
+.view-header__title-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  align-items: center;
+  column-gap: 0.75rem;
+  min-height: var(--view-header-title-row-min-height, 2.25rem);
+}
+
+.view-header__actions {
+  @apply flex shrink-0 items-center justify-end gap-1.5;
+}
+
+.view-header__subtitle {
+  @apply max-w-full;
+}

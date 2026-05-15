@@ -1,16 +1,16 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { PenSquare, Trash2 } from "lucide-react";
 import { IconButton } from "@/button/src/button";
-import { ListHeader } from "@/list-header/src/list-header";
-import "./list-header.stories.css";
+import { ViewHeader } from "@/view-header/src/view-header";
+import "./view-header.stories.css";
 
-const meta: Meta<typeof ListHeader> = {
-  title: "Shared/List Header",
-  component: ListHeader,
+const meta: Meta<typeof ViewHeader> = {
+  title: "Shared/View Header",
+  component: ViewHeader,
 };
 
 export default meta;
-type Story = StoryObj<typeof ListHeader>;
+type Story = StoryObj<typeof ViewHeader>;
 
 export const Default: Story = {
   args: {
@@ -19,7 +19,7 @@ export const Default: Story = {
     sidebarOpen: true,
     onToggleSidebar: () => {},
     actions: (
-      <div className="list-header-story-actions flex items-center gap-2">
+      <div className="view-header-story-actions flex items-center gap-2">
         <IconButton
           label="Compose"
           onClick={() => {}}
