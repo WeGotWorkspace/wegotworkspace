@@ -3,7 +3,7 @@ import { Card } from "@/card/src/card";
 import { settingsWorkspaceFormLayout } from "@/settings-core/src/settings-workspace-form-layout";
 import type { SettingsControllerState } from "@/settings-core/src/use-settings-controller";
 import { Form } from "@/ui/form";
-import { FormDisplayField } from "@/ui/form-display-field";
+import { FieldLabelRow } from "@/ui/field-label-row";
 import { FormSaveActionRow } from "@/ui/form-save-action-row";
 import { FormTextField } from "@/ui/form-text-field";
 
@@ -25,9 +25,9 @@ export function SettingsProfilePane({ profile }: SettingsProfilePaneProps) {
   return (
     <Form {...form}>
       <Card title="Identity">
-        <FormDisplayField {...settingsWorkspaceFormLayout.displayField} label="Username" readOnly>
+        <FieldLabelRow {...settingsWorkspaceFormLayout.displayField} label="Username" readOnly>
           <Input value={username} readOnly className="settings-workspace__input-readonly" />
-        </FormDisplayField>
+        </FieldLabelRow>
         <FormTextField
           {...settingsWorkspaceFormLayout.textField}
           name="displayName"

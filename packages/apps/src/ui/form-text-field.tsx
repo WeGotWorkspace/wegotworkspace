@@ -2,8 +2,11 @@ import type { ReactNode } from "react";
 import type { FieldPath, FieldValues } from "react-hook-form";
 import { useFormContext } from "react-hook-form";
 
+import { cn } from "@/lib/utils";
 import { Input } from "@/ui/input";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/ui/form";
+
+import "@/ui/field-label-row.css";
 
 export type FormTextFieldProps<TFieldValues extends FieldValues> = {
   name: FieldPath<TFieldValues>;
@@ -36,7 +39,7 @@ export function FormTextField<TFieldValues extends FieldValues>({
       name={name}
       render={({ field }) => (
         <FormItem className={itemClassName}>
-          <FormLabel className={labelClassName}>{label}</FormLabel>
+          <FormLabel className={cn("field-label-row__label", labelClassName)}>{label}</FormLabel>
           <FormControl>
             <Input {...inputProps} {...field} />
           </FormControl>

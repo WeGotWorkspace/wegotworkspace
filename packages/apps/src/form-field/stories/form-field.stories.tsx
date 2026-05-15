@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Mail, User } from "lucide-react";
 import { Input } from "@/ui/input";
-import { FormField } from "../src/form-field";
+import { FormField } from "../src";
 
 const meta: Meta<typeof FormField> = {
   title: "Shared/Form Field",
