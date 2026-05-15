@@ -1,6 +1,6 @@
 import { Input } from "@/ui/input";
 import { Card } from "@/card/src/card";
-import { settingsWorkspaceFormLayout } from "@/settings-core/src/settings-workspace-form-layout";
+import { settingsWorkspacePaneClasses } from "@/settings-core/src/settings-workspace.styles";
 import type { SettingsControllerState } from "@/settings-core/src/use-settings-controller";
 import { Form } from "@/ui/form";
 import { FieldLabelRow } from "@/ui/field-label-row";
@@ -25,22 +25,22 @@ export function SettingsProfilePane({ profile }: SettingsProfilePaneProps) {
   return (
     <Form {...form}>
       <Card title="Identity">
-        <FieldLabelRow {...settingsWorkspaceFormLayout.displayField} label="Username" readOnly>
+        <FieldLabelRow label="Username" readOnly>
           <Input value={username} readOnly />
         </FieldLabelRow>
         <FormTextField
-          {...settingsWorkspaceFormLayout.textField}
+          {...settingsWorkspacePaneClasses.formTextField}
           name="displayName"
           label="Display name"
         />
         <FormTextField
-          {...settingsWorkspaceFormLayout.textField}
+          {...settingsWorkspacePaneClasses.formTextField}
           name="email"
           label="Email"
           type="email"
         />
         <FormSaveActionRow
-          className={settingsWorkspaceFormLayout.saveActionRow}
+          className={settingsWorkspacePaneClasses.saveActionRow}
           label="Save changes"
           disabled={identityDisabled}
           onSave={saveProfile}
@@ -49,20 +49,20 @@ export function SettingsProfilePane({ profile }: SettingsProfilePaneProps) {
 
       <Card title="Password">
         <FormTextField
-          {...settingsWorkspaceFormLayout.textField}
+          {...settingsWorkspacePaneClasses.formTextField}
           name="newPassword"
           label="New password"
           type="password"
           placeholder="At least 8 characters"
         />
         <FormTextField
-          {...settingsWorkspaceFormLayout.textField}
+          {...settingsWorkspacePaneClasses.formTextField}
           name="confirmPassword"
           label="Confirm password"
           type="password"
         />
         <FormSaveActionRow
-          className={settingsWorkspaceFormLayout.saveActionRow}
+          className={settingsWorkspacePaneClasses.saveActionRow}
           label="Set password"
           disabled={passwordDisabled}
           onSave={saveProfile}
