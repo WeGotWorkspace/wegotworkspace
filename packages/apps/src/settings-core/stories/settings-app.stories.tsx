@@ -3,11 +3,10 @@ import { createSettingsAppBootstrap } from "@/lib/api/mock/settings-bootstrap";
 import { SettingsWorkspace } from "@/settings-core/src/settings-workspace";
 
 const meta: Meta<typeof SettingsWorkspace> = {
-  title: "Apps/Settings/Full App",
+  title: "Apps/Settings/SettingsWorkspace",
   component: SettingsWorkspace,
   parameters: {
     layout: "fullscreen",
-    routerPath: "/settings",
   },
 };
 
