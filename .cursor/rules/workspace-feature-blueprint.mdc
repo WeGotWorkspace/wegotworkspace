@@ -1,0 +1,47 @@
+---
+description: Blueprint for *App + *Workspace + controller + panes (settings-core pattern) when refactoring apps packages.
+globs: packages/apps/src/**/*-app.tsx,packages/apps/src/**/*-workspace.tsx,packages/apps/src/**/*-core/**/use-*-controller.tsx,packages/apps/src/**/*-core/**/use-*-api.ts,packages/apps/src/**/*-core/**/*-workspace*.css,packages/apps/src/**/*-core/**/*workspace-form-layout.ts
+alwaysApply: false
+---
+
+# Workspace feature blueprint (settings-style)
+
+Use **`packages/apps/src/settings-core/`** as the reference when splitting a product into a thin route **`*App`**, a composable **`*Workspace`**, a **controller** hook, and **panes**. Aligns with **`workspace-app-shell.mdc`** for `WorkspaceAppLayout`, `AppSidebar`, and navigation ownership.
+
+## Layers (top to bottom)
+
+1. **`*App.tsx`** — Wiring only: `use*API` (or injectable `apiSource`), `WorkspaceLiveAppShell` (loading / error / `successVersion` remount), render **`*Workspace`** with `data`, `session`, `operations`, and **callbacks** for shell-owned navigation (`onLogout`, etc.). No feature layout here beyond the live shell.
+2. **`*Workspace.tsx`** — `WorkspaceAppLayout` split (`sidebar`, `mainHeader`, `main`). Root **`className={cn("<product>-workspace", className)}`** imports **one shell CSS file** (tokens + descendant pane helpers). **File-private** helpers (`Sidebar`, `MainHeader`, `MainContent`, footer) keep this file readable; pass **typed controller state** into children.
+3. **`use*Controller`** — Composes **`use*Shell`** (section nav, `sidebarOpen`, `SidebarSection` item model) with **domain slices** (`use*ProfileForm`, `use*MailForm`, …). Returns a single object panes consume; **do not** merge unrelated concerns into one mega-hook without slices.
+4. **`*WorkspaceProps`** — Explicit contract: `data` (UI/bootstrap shape), `session` (`WorkspaceSession` for chrome/footer), optional `operations`, optional `className` / `onLogout`. **Session drives chrome** (footer, avatars); **data drives forms** — mocks/stories must align both (see `createSettingsAppBootstrap`).
+5. **Panes** — **`SettingsProfilePane`**, **`SettingsMailPane`**, etc.: presentational; receive **only the slice** they need (`profile`, `mail`, …). Prefer **`Form` + `FormTextField` + `FormSaveActionRow`** with a small **`settingsWorkspaceFormLayout`**-style object exporting **class name strings** wired to the shell CSS file.
+6. **`*workspace.css`** — Scoped to **`.<product>-workspace`**: CSS variables for sidebar, footer, buttons, **`--field-label-color`** (shared with `field-label-row__label`). Descendant utilities (**`settings-form-field`**, **`settings-grid-2`**, …) instead of repeating a long BEM prefix on every node. Read-only display rows: **`FieldLabelRow` + `Input readOnly`**; shell may style via **`.<product>-workspace .field-label-row:has(input[readonly]) .input`** so inputs need no extra `className`.
+
+## Data and API
+
+- **`use*API`**: `useMemo` default **`*ApiSource`**, **`placeholderData`** for stable loading shape, **`useWorkspaceApi`** with `loadBootstrap`, `createOperations`, `fallbackSession`. Keeps Storybook and routes consistent.
+- **Operations** optional on props/hooks so panes render without writes in stories.
+- **Toasts / saves**: domain hooks (`useSettingsProfileForm`) use **`useRunWithAppToast`** (or project equivalent) around server calls; keep **zod** schema + **`settingsProfileFormToRequest`**-style mappers next to the schema file.
+
+## Shell chrome
+
+- **Sidebar**: `AppSidebar` + **`SidebarSection`**; items as **`MenuItemProps[]`** from controller (`selected`, `onClick`). Footer: **`WorkspaceUserFooter`** + `workspaceUserInitials(session.user)`.
+- **Main header**: **`ListHeader`** with section label/description from shell model and **`sidebarOpen` / toggle** from controller.
+- **Main body**: Switch or conditional render **one pane per section**; avoid mounting all panes at once unless needed.
+
+## Refactoring another app toward this shape
+
+- [ ] Extract **`use*Shell`** if nav / layout state is mixed with data fetching or forms.
+- [ ] Extract **`use*Controller`** that only composes shell + existing hooks; **`Workspace`** receives `Pick<Props, "data" | "operations">` or the same shape settings uses.
+- [ ] Move layout from route files into **`*Workspace.tsx`** using **`WorkspaceAppLayout`** split props (see **`workspace-app-shell.mdc`**).
+- [ ] Replace inline `window.location` / logout in packages with **`onLogout`** (or similar) props implemented in **`*App`**.
+- [ ] Colocate **shell CSS variables** on the workspace root class (e.g. `.settings-workspace`); panes use **shared caption** patterns (`field-label-row__label`, `--field-label-color`).
+- [ ] Storybook: **`layout: "fullscreen"`** for workspace stories; decorator applies the **same workspace root class** as production so descendant CSS applies; bootstrap factory returns coherent **`data` + `session`**.
+
+## Anti-patterns
+
+- Duplicating **`WorkspaceAppLayout`** scroll/header markup in a route instead of split props.
+- A second **mobile scrim** beside `AppSidebar` (scrim lives inside `AppSidebar`).
+- **`*Workspace`** importing routers or assigning `window.location` (belongs in **`*App`** or routes).
+- **Panes** importing **`use*API`** or holding section state (belongs in controller / shell hook).
+- **Read-only `Input`** styling via repeated one-off `className`s when the shell can scope **`:has(input[readonly])`** under the workspace root.
