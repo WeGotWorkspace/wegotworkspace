@@ -9,19 +9,15 @@ export type SettingsMembershipsPaneProps = {
 export function SettingsMembershipsPane({ groups }: SettingsMembershipsPaneProps) {
   return (
     <Card title="Groups">
-      <ul className="settings-workspace__group-list">
+      <ul className="settings-group-list">
         {groups.map((group) => (
-          <li key={group.id} className="settings-workspace__group-row">
+          <li key={group.id} className="settings-group-row">
             <UserAvatar
               displayName={group.displayName}
-              compact
+              subtitle={group.id}
               size="sm"
-              className="settings-workspace__group-avatar shrink-0 gap-0"
+              className="settings-group-avatar"
             />
-            <div className="min-w-0 flex-1">
-              <div className="settings-workspace__group-name">{group.displayName}</div>
-              <div className="settings-workspace__group-meta">{group.id}</div>
-            </div>
           </li>
         ))}
       </ul>
