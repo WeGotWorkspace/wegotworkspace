@@ -1,4 +1,3 @@
-import { Mail as MailIcon } from "lucide-react";
 import { Input } from "@/ui/input";
 import { Card } from "@/card/src/card";
 import { settingsWorkspaceFormLayout } from "@/settings-core/src/settings-workspace-form-layout";
