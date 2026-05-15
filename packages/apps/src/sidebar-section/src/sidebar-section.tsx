@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { IconButton } from "@/button/src/button";
 import { MenuItem, type MenuItemProps } from "@/menu-item/src/menu-item";
 import { cn } from "@/lib/utils";
+import "@/ui/field-label-row.css";
 import "@/sidebar-section/src/sidebar-section.css";
 
 type SidebarSectionProps = {
@@ -37,7 +38,7 @@ export function SidebarSection({
     >
       {title ? (
         <div className="sidebar-section__heading">
-          <h3 id={titleId} className="sidebar-section__title">
+          <h3 id={titleId} className={cn("field-label-row__label", "sidebar-section__title")}>
             {title}
           </h3>
           {onAdd ? (

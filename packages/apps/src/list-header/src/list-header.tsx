@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { WorkspaceSidebarToggle } from "@/workspace-shell/src/workspace-app-layout";
 import { CollectionSearchInput } from "@/collection-search-input/src/collection-search-input";
+import { cn } from "@/lib/utils";
+
+import "./list-header.css";
 
 type ListHeaderProps = {
   title: string;
@@ -41,27 +44,25 @@ export function ListHeader({
 
   return (
     <>
-      <div className="flex items-center gap-3">
-        <WorkspaceSidebarToggle
-          open={sidebarOpen}
-          onToggle={onToggleSidebar}
-        />
-        <h2
-          className="text-3xl leading-none flex-1 min-w-0 truncate"
-          style={{ fontFamily: "var(--font-serif)", color: "var(--color-ink)" }}
-        >
-          {title}
-        </h2>
-        {actions ? <div className="flex items-center gap-1.5 shrink-0">{actions}</div> : null}
+      <div className="flex items-start gap-3">
+        <WorkspaceSidebarToggle open={sidebarOpen} onToggle={onToggleSidebar} />
+        <div className="list-header__main">
+          <div className="flex items-center gap-3 min-w-0">
+            <h2
+              className="text-3xl leading-none flex-1 min-w-0 truncate"
+              style={{ fontFamily: "var(--font-serif)", color: "var(--color-ink)" }}
+            >
+              {title}
+            </h2>
+            {actions ? <div className="flex items-center gap-1.5 shrink-0">{actions}</div> : null}
+          </div>
+          {subtitle ? (
+            <p className={cn("field-label-row__label", "list-header__subtitle", "mt-2")}>
+              {subtitle}
+            </p>
+          ) : null}
+        </div>
       </div>
-      {subtitle ? (
-        <p
-          className="text-[10px] mt-2 uppercase tracking-[0.18em]"
-          style={{ color: "color-mix(in oklab, var(--color-ink) 45%, transparent)" }}
-        >
-          {subtitle}
-        </p>
-      ) : null}
       {searchPlaceholder ? (
         <CollectionSearchInput
           inputRef={searchInputRef}
