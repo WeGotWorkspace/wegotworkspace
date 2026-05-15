@@ -14,7 +14,7 @@ For settings-style shells (fixed `AppSidebar` + main column with header and scro
 - `mainHeader` — optional pinned header (e.g. `ListHeader`).
 - `main` — scrollable body (pane content).
 
-Shared chrome lives in `workspace-app-layout.css` (`.workspace-app-layout__main*`). Tune width and colors with **CSS variables** on the product root (e.g. `--workspace-main-content-max-width`), not duplicate layout markup.
+Shared layout chrome lives in `workspace-app-layout.css` (`.workspace-app-layout__main*`). **Shared split-workspace tokens** (sidebar chrome, footer, primary buttons, main column `--workspace-main-content-max-width`, etc.) live in `workspace-shell/src/workspace-split-app.css` and apply to `:is(.admin-workspace, .settings-workspace)` — import that sheet from each product workspace CSS, then only set product-specific overrides on the root class. Do not duplicate those variables across admin and settings.
 
 ## `AppSidebar` mobile scrim
 

@@ -1,34 +1,10 @@
-@import "../../styles.css" reference;
+@import "../../workspace-shell/src/workspace-split-app.css";
 
 /* Pane class fragments: `settings-workspace.styles.ts` (must stay in sync). */
 
 .settings-workspace {
   --settings-accent-bg: #da9fb8;
-
-  --workspace-root-bg: var(--color-cream, #f5f1e8);
   --app-sidebar-bg: var(--settings-accent-bg);
-  --app-sidebar-border-color: color-mix(in oklab, var(--color-ink) 15%, transparent);
-  --app-sidebar-color: var(--color-ink);
-  --workspace-sidebar-toggle-color: var(--color-ink);
-  --workspace-sidebar-toggle-bg: color-mix(in oklab, var(--color-ink) 6%, transparent);
-  --workspace-user-footer-text-color: color-mix(in oklab, var(--color-ink) 80%, transparent);
-  --workspace-user-footer-border-color: color-mix(in oklab, var(--color-ink) 18%, transparent);
-  --workspace-user-footer-avatar-bg: color-mix(in oklab, var(--color-ink) 18%, transparent);
-  --workspace-user-footer-avatar-color: var(--color-ink);
-  --workspace-user-footer-link-color: var(--color-ink);
-  --workspace-user-footer-link-bg: color-mix(in oklab, var(--color-ink) 10%, transparent);
-
-  /* Primary actions: same charcoal + white as admin (sidebar keeps accent via --app-sidebar-bg). */
-  --button-primary-bg: #2f302c;
-  --button-primary-fg: #ffffff;
-  --primary: #2f302c;
-  --primary-foreground: #ffffff;
-
-  --button-subtle-background: color-mix(in oklab, var(--color-ink) 6%, transparent);
-  --button-subtle-color: var(--color-ink);
-
-  /* Shared with `field-label-row__label` (FieldLabelRow, FormTextField, @/form-field FormField). */
-  --field-label-color: color-mix(in oklab, var(--color-ink) 60%, transparent);
 }
 
 /* Descendant classes — only use inside `SettingsWorkspace` (`.settings-workspace`). */

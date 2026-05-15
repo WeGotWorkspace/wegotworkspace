@@ -2,6 +2,7 @@ import * as React from "react";
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 
 import { cn } from "@/lib/utils";
+import "@/ui/modal-title.css";
 import { buttonVariants } from "@/ui/button";
 
 const AlertDialog = AlertDialogPrimitive.Root;
@@ -60,11 +61,7 @@ const AlertDialogTitle = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Title>
 >(({ className, ...props }, ref) => (
-  <AlertDialogPrimitive.Title
-    ref={ref}
-    className={cn("font-serif text-2xl font-semibold", className)}
-    {...props}
-  />
+  <AlertDialogPrimitive.Title ref={ref} className={cn("ui-modal-title", className)} {...props} />
 ));
 AlertDialogTitle.displayName = AlertDialogPrimitive.Title.displayName;
 
