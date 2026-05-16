@@ -1,6 +1,7 @@
 import { Pencil } from "lucide-react";
 import "react-swipeable-list/dist/styles.css";
 import { cn } from "@/lib/utils";
+import type { MailComposeMode } from "@/mail-core/src/mail-compose-view";
 import "@/mail-core/src/mail-workspace.css";
 import { mailWorkspacePaneClasses } from "@/mail-core/src/mail-workspace.styles";
 import { MoveToDialog } from "@/dialogs/src/dialogs";
@@ -210,6 +211,7 @@ export function MailWorkspace({
                 size="lg"
                 pill
                 variant="primary"
+                className="w-full"
               />
             }
           >
@@ -306,31 +308,32 @@ export function MailWorkspace({
           open={!!composeDialogId}
           onOpenChange={(open) => (!open ? closeComposeDialog() : null)}
         >
-          <DialogContent className={mailWorkspacePaneClasses.composeDialog}>
-            <div className={mailWorkspacePaneClasses.composeDialogScroll}>
-              <MailComposeView
-                mailId={composeTarget.id}
-                mailbox={composeTarget.mailbox}
-                date={formatMailDateForDetail(composeTarget.date)}
-                to={composeTargetDraft.to}
-                cc={composeTargetDraft.cc}
-                bcc={composeTargetDraft.bcc}
-                subject={composeTargetDraft.subject}
-                body={composeTargetDraft.body}
-                onToChange={(value) => updateComposeDraft(composeTarget.id, { to: value })}
-                onCcChange={(value) => updateComposeDraft(composeTarget.id, { cc: value })}
-                onBccChange={(value) => updateComposeDraft(composeTarget.id, { bcc: value })}
-                onSubjectChange={(value) =>
-                  updateComposeDraft(composeTarget.id, { subject: value })
-                }
-                onBodyChange={(value) => updateComposeDraft(composeTarget.id, { body: value })}
-                onSaveDraft={() => void saveComposeDraft(composeTarget.id)}
-                onSend={() => void sendComposeDraft(composeTarget.id)}
-                onDiscard={() => void discardComposeDraft(composeTarget.id)}
-                saving={composeTargetDraft.saving}
-                sending={composeTargetDraft.sending}
-              />
-            </div>
+          <DialogContent
+            className={cn(
+              mailWorkspacePaneClasses.composeDialog,
+              mailWorkspacePaneClasses.composeDialogSurface,
+            )}
+          >
+            <MailComposeView
+              composeMode={composeTargetDraft.mode as MailComposeMode}
+              mailbox={composeTarget.mailbox}
+              date={formatMailDateForDetail(composeTarget.date)}
+              to={composeTargetDraft.to}
+              cc={composeTargetDraft.cc}
+              bcc={composeTargetDraft.bcc}
+              subject={composeTargetDraft.subject}
+              body={composeTargetDraft.body}
+              onToChange={(value) => updateComposeDraft(composeTarget.id, { to: value })}
+              onCcChange={(value) => updateComposeDraft(composeTarget.id, { cc: value })}
+              onBccChange={(value) => updateComposeDraft(composeTarget.id, { bcc: value })}
+              onSubjectChange={(value) => updateComposeDraft(composeTarget.id, { subject: value })}
+              onBodyChange={(value) => updateComposeDraft(composeTarget.id, { body: value })}
+              onSaveDraft={() => void saveComposeDraft(composeTarget.id)}
+              onSend={() => void sendComposeDraft(composeTarget.id)}
+              onDiscard={() => void discardComposeDraft(composeTarget.id)}
+              saving={composeTargetDraft.saving}
+              sending={composeTargetDraft.sending}
+            />
           </DialogContent>
         </Dialog>
       ) : null}
