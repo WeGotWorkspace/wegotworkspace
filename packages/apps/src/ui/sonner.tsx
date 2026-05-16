@@ -25,16 +25,19 @@ const Toaster = ({ ...props }: ToasterProps) => {
 };
 
 function AppToasterSurface() {
+  const safeOffset = {
+    bottom: "max(0.75rem, env(safe-area-inset-bottom, 0px))",
+    right: "max(0.75rem, env(safe-area-inset-right, 0px))",
+    left: "max(0.75rem, env(safe-area-inset-left, 0px))",
+  };
+
   return (
     <Toaster
       position="bottom-right"
-      offset={{
-        bottom: "max(0.75rem, env(safe-area-inset-bottom, 0px))",
-        right: "max(0.75rem, env(safe-area-inset-right, 0px))",
-      }}
+      offset={safeOffset}
+      mobileOffset={safeOffset}
       style={
         {
-          ["--width" as string]: "min(100vw - 1rem, 28rem)",
           fontFamily: "var(--font-sans)",
         } as CSSProperties
       }
@@ -42,16 +45,10 @@ function AppToasterSurface() {
         unstyled: true,
         classNames: {
           toast:
-            "flex w-full min-w-0 max-w-none items-stretch gap-0 rounded-md p-0 text-sm shadow-none",
-          content: "flex w-full min-w-0 flex-col gap-0",
-          title: "m-0 w-full min-w-0 p-0 font-[inherit] leading-[inherit]",
+            "flex w-full min-w-0 max-w-full items-stretch gap-0 rounded-md p-0 text-sm shadow-none",
+          content: "flex w-full min-w-0 max-w-full flex-col gap-0",
+          title: "m-0 w-full min-w-0 max-w-full p-0 font-[inherit] leading-[inherit]",
           icon: "shrink-0 [&>svg]:size-4",
-        },
-        style: {
-          background: "var(--color-ink)",
-          color: "var(--color-cream)",
-          fontFamily: "var(--font-sans)",
-          border: "1px solid color-mix(in oklab, var(--color-cream) 12%, transparent)",
         },
       }}
     />

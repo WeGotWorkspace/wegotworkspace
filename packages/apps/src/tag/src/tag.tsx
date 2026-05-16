@@ -3,6 +3,7 @@ import { Plus, Tag as TagIcon, X } from "lucide-react";
 
 import { IconButton } from "@/button/src/button";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/tooltip";
 
 export type TagProps = {
   label: string;
@@ -36,14 +37,19 @@ export function Tag({
       {icon}
       <span className="truncate">{label}</span>
       {removable && onRemove ? (
-        <button
-          type="button"
-          onClick={onRemove}
-          aria-label={removeAriaLabel ?? `Remove ${label}`}
-          className="opacity-50 hover:opacity-100 transition-opacity"
-        >
-          <X className="size-3" />
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={onRemove}
+              aria-label={removeAriaLabel ?? `Remove ${label}`}
+              className="opacity-50 hover:opacity-100 transition-opacity"
+            >
+              <X className="size-3" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>{removeAriaLabel ?? `Remove ${label}`}</TooltipContent>
+        </Tooltip>
       ) : null}
     </span>
   );
@@ -56,6 +62,7 @@ export type TagGroupProps = {
   onAdd?: () => void;
   /** Called with the tag label when a tag is removed. */
   onRemoveTag?: (label: string) => void;
+  tagColors?: TagProps["colors"];
   className?: string;
   style?: CSSProperties;
 };
@@ -65,6 +72,7 @@ export function TagGroup({
   readonly = true,
   onAdd,
   onRemoveTag,
+  tagColors,
   className,
   style,
 }: TagGroupProps) {
@@ -75,19 +83,14 @@ export function TagGroup({
           key={t}
           label={t}
           icon={<TagIcon className="size-3.5 opacity-70" />}
+          colors={tagColors}
           removable={!readonly}
           onRemove={readonly || !onRemoveTag ? undefined : () => onRemoveTag(t)}
           removeAriaLabel={`Remove tag ${t}`}
         />
       ))}
       {!readonly && onAdd ? (
-        <IconButton
-          label="Add tag"
-          icon={<Plus />}
-          onClick={onAdd}
-          size="md"
-          variant="subtle"
-        />
+        <IconButton label="Add tag" icon={<Plus />} onClick={onAdd} size="md" variant="subtle" />
       ) : null}
     </div>
   );

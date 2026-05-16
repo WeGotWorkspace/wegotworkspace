@@ -22,6 +22,7 @@ import {
 } from "@/hooks/use-workspace-list-controller";
 import { useWorkspaceListKeyboardShortcuts } from "@/hooks/use-workspace-list-keyboard-shortcuts";
 import type { Note } from "@/lib/models/note";
+import { markdownToPlainText, noteBodyToMarkdown } from "@/lib/models/note-body-markdown";
 import type { WorkspaceAppHandle } from "@/workspace-app/src/workspace-app";
 import { mergeNotesLabels, type NotesUILabels } from "./notes-labels";
 import { useNotesBatchActions } from "./use-notes-batch-actions";
@@ -35,17 +36,25 @@ type UseNotesControllerArgs = {
 };
 
 const WRITE_QUEUE_DELAY_MS = 2500;
+/** Debounce bursts of edits before showing a save toast. */
+const AUTO_SAVE_TOAST_DEBOUNCE_MS = 1200;
+/** At most one save toast per interval while the user keeps typing. */
+const AUTO_SAVE_TOAST_THROTTLE_MS = 8000;
 
 function persistBestEffort(promise: Promise<unknown>) {
   promise.catch(() => {});
 }
 
+function plainTextFromBody(body: string[]): string {
+  return markdownToPlainText(noteBodyToMarkdown(body));
+}
+
 function computeWordCount(body: string[]): number {
-  return body.join(" ").trim().split(/\s+/).filter(Boolean).length;
+  return plainTextFromBody(body).split(/\s+/).filter(Boolean).length;
 }
 
 function computeExcerpt(body: string[]): string {
-  const text = body.join(" ").trim();
+  const text = plainTextFromBody(body);
   if (text.length <= 180) return text;
   return `${text.slice(0, 179)}…`;
 }
@@ -61,13 +70,20 @@ export function useNotesController({
   operations,
 }: UseNotesControllerArgs) {
   const L = useMemo(() => mergeNotesLabels(labels), [labels]);
-  const [notes, setNotes] = useState<Note[]>(() => data.notes);
+  const [notes, setNotes] = useState<Note[]>(() =>
+    data.notes.map((note) => ({
+      ...note,
+      excerpt: computeExcerpt(note.body),
+      wordCount: computeWordCount(note.body),
+    })),
+  );
   const [activeId, setActiveId] = useState<string>(() => data.notes[0]?.id ?? "");
   const [view, setView] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const workspaceLayoutRef = useRef<WorkspaceAppHandle>(null);
   const autoSaveToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastAutoSaveToastAtRef = useRef(0);
 
   const [moveDialog, setMoveDialog] = useState<{ ids: string[] } | null>(null);
   const [editDialog, setEditDialog] = useState<null | { kind: "notebook" | "tag"; name: string }>(
@@ -112,10 +128,16 @@ export function useNotesController({
       clearTimeout(autoSaveToastTimerRef.current);
     }
     autoSaveToastTimerRef.current = setTimeout(() => {
-      show("Saved", { icon: <Check className="size-4" /> });
+      const now = Date.now();
+      if (now - lastAutoSaveToastAtRef.current < AUTO_SAVE_TOAST_THROTTLE_MS) {
+        autoSaveToastTimerRef.current = null;
+        return;
+      }
+      lastAutoSaveToastAtRef.current = now;
+      show(L.toastSaved, { icon: <Check className="size-4" /> });
       autoSaveToastTimerRef.current = null;
-    }, 700);
-  }, [show]);
+    }, AUTO_SAVE_TOAST_DEBOUNCE_MS);
+  }, [L.toastSaved, show]);
 
   useEffect(
     () => () => {
@@ -229,13 +251,13 @@ export function useNotesController({
           return updated;
         }),
       );
-      if (updated && operations) {
-        const request = operations.upsertNote(updated);
+      if (updated) {
         if (options?.autoSaveToast) {
-          persistBestEffort(request.then(() => queueAutoSaveToast()));
-          return;
+          queueAutoSaveToast();
         }
-        persistBestEffort(request);
+        if (operations) {
+          persistBestEffort(operations.upsertNote(updated));
+        }
       }
     },
     [operations, queueAutoSaveToast],

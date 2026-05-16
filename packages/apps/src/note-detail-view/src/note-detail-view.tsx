@@ -5,6 +5,12 @@ import { cn } from "@/lib/utils";
 import { noteBodyToMarkdown } from "@/lib/models/note-body-markdown";
 import { NoteMilkdownBody } from "@/note-milkdown-body/src/note-milkdown-body";
 
+const noteDetailTagColors = {
+  backgroundColor:
+    "var(--note-detail-tag-bg, color-mix(in oklab, var(--color-ink) 14%, transparent))",
+  color: "var(--note-detail-tag-fg, color-mix(in oklab, var(--color-ink) 80%, transparent))",
+};
+
 export type NoteDetailViewProps = {
   /** Used for React keys on editors when switching notes. */
   noteId: string;
@@ -60,6 +66,7 @@ export function NoteDetailView({
                   label: notebook,
                   icon: <BookOpen className="size-3.5 opacity-70" />,
                   wrapperClassName: "max-w-[260px]",
+                  colors: noteDetailTagColors,
                 },
               ]
             : []),
@@ -90,6 +97,7 @@ export function NoteDetailView({
         className="py-6 border-y mb-12"
         style={{ borderColor: "color-mix(in oklab, var(--color-ink) 10%, transparent)" }}
         tags={tags}
+        tagColors={noteDetailTagColors}
         readonly={readOnly}
         onAdd={readOnly ? undefined : onTagAdd}
         onRemoveTag={readOnly ? undefined : onTagRemove}

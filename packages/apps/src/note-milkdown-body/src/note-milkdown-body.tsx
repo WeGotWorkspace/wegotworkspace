@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { Crepe, CrepeFeature } from "@milkdown/crepe";
 import { Milkdown, MilkdownProvider, useEditor } from "@milkdown/react";
+import { replaceAll } from "@milkdown/utils";
 
 import "@milkdown/crepe/theme/frame.css";
 /** Toolbar, ProseMirror chrome, CodeMirror — required; `frame.css` is only Crepe theme variables */
@@ -41,11 +42,20 @@ function CrepeNoteEditorInner({
   const onChangeRef = useRef(onMarkdownChange);
   onChangeRef.current = onMarkdownChange;
 
+  const noteIdRef = useRef(noteId);
+  noteIdRef.current = noteId;
+
+  const markdownRef = useRef(defaultMarkdown);
+  markdownRef.current = defaultMarkdown;
+
   useEditor(
     (root) => {
+      const editorNoteId = noteId;
+      const initialMarkdown = markdownRef.current;
+
       const crepe = new Crepe({
         root,
-        defaultValue: defaultMarkdown,
+        defaultValue: initialMarkdown,
         features: {
           [CrepeFeature.Latex]: false,
           [CrepeFeature.AI]: false,
@@ -55,7 +65,12 @@ function CrepeNoteEditorInner({
       });
       crepe.editor.use(milkdownUnderlinePlugins);
       crepe.on((listener) => {
+        listener.mounted((ctx) => {
+          if (editorNoteId !== noteIdRef.current) return;
+          crepe.editor.action(replaceAll(initialMarkdown, true));
+        });
         listener.markdownUpdated((_ctx, markdown, prevMarkdown) => {
+          if (editorNoteId !== noteIdRef.current) return;
           if (readOnlyRef.current) return;
           const emit = onChangeRef.current;
           if (!emit) return;
