@@ -16,17 +16,6 @@ import type {
   InstallerBackendStep,
 } from "@/install-core/src/install-types";
 
-export const INSTALL_TIMEZONES = [
-  "UTC",
-  "Europe/London",
-  "Europe/Berlin",
-  "Europe/Paris",
-  "Europe/Stockholm",
-  "America/New_York",
-  "America/Los_Angeles",
-  "Asia/Tokyo",
-] as const;
-
 export const INSTALL_STEPS: { id: InstallStepId; label: string; icon: ReactNode }[] = [
   { id: "welcome", label: "Welcome", icon: <Sparkles className="size-3.5" /> },
   { id: "server", label: "Server check", icon: <ServerCog className="size-3.5" /> },

@@ -75,10 +75,10 @@ export type InstallMailForm = {
 };
 
 export type InstallMeetForm = {
+  enabled: boolean;
   turn: string;
   turnUser: string;
   turnPwd: string;
-  tz: string;
 };
 
 export type InstallAdminForm = {

@@ -2,9 +2,7 @@ import type { MenuItemProps } from "@/menu-item/src/menu-item";
 import { TooltipProvider } from "@/ui/tooltip";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
-import {
-  WorkspaceAppLayout,
-} from "@/workspace-shell/src/workspace-app-layout";
+import { WorkspaceAppLayout } from "@/workspace-shell/src/workspace-app-layout";
 import { ViewHeader } from "@/view-header/src/view-header";
 import { cn } from "@/lib/utils";
 import type { InstallWorkspaceProps } from "@/install-core/src/install-workspace-props";
@@ -42,9 +40,7 @@ export function InstallWorkspace({
       <WorkspaceAppLayout
         className={cn("install-workspace", className)}
         sidebar={<Sidebar controller={controller} sections={sections} />}
-        mainHeader={
-          <MainHeader controller={controller} currentSection={currentSection} />
-        }
+        mainHeader={<MainHeader controller={controller} currentSection={currentSection} />}
         main={<MainContent controller={controller} onOpenAdmin={onOpenAdmin} />}
       />
     </TooltipProvider>
@@ -58,7 +54,8 @@ function Sidebar({
   controller: InstallControllerState;
   sections: ReturnType<typeof useInstallSidebarModel>;
 }) {
-  const { stepIdx, sidebarOpen, setSidebarOpen, goToStep } = controller;
+  const { stepIdx, sidebarOpen, setSidebarOpen, goToStep, steps } = controller;
+  const progressPercent = ((stepIdx + 1) / steps.length) * 100;
 
   const sidebarItems: MenuItemProps[] = sections.map((candidate, index) => {
     const reachable = index <= stepIdx;
@@ -79,7 +76,22 @@ function Sidebar({
       appSwitchSubtitle="Workspace"
       footer={
         <div className="install-sidebar-step-footer">
-          Step {stepIdx + 1} of {sections.length}
+          <p className="install-sidebar-step-footer__label">
+            Step {stepIdx + 1} of {sections.length}
+          </p>
+          <div
+            className="install-sidebar-progress"
+            role="progressbar"
+            aria-valuenow={stepIdx + 1}
+            aria-valuemin={1}
+            aria-valuemax={sections.length}
+            aria-label={`Setup progress, step ${stepIdx + 1} of ${sections.length}`}
+          >
+            <div
+              className="install-sidebar-progress-fill"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
         </div>
       }
     >
@@ -95,30 +107,13 @@ function MainHeader({
   controller: InstallControllerState;
   currentSection: ReturnType<typeof useInstallSidebarModel>[number];
 }) {
-  const { stepIdx, steps, sidebarOpen, setSidebarOpen } = controller;
-  const progressPercent = ((stepIdx + 1) / steps.length) * 100;
+  const { sidebarOpen, setSidebarOpen } = controller;
 
   return (
     <ViewHeader
       title={installStepTitle(currentSection.id)}
-      subtitle={`Step ${stepIdx + 1} of ${steps.length} · ${currentSection.description}`}
       sidebarOpen={sidebarOpen}
       onToggleSidebar={() => setSidebarOpen((value) => !value)}
-      actions={
-        <div
-          className="install-view-header-progress"
-          role="progressbar"
-          aria-valuenow={stepIdx + 1}
-          aria-valuemin={1}
-          aria-valuemax={steps.length}
-          aria-label={`Setup progress, step ${stepIdx + 1} of ${steps.length}`}
-        >
-          <div
-            className="install-view-header-progress-fill"
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
-      }
     />
   );
 }

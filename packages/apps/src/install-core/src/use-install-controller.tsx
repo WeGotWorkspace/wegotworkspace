@@ -59,10 +59,10 @@ export function useInstallController({
     smtpSec: "starttls",
   });
   const [meet, setMeet] = useState<InstallMeetForm>({
+    enabled: false,
     turn: "",
     turnUser: "",
     turnPwd: "",
-    tz: "UTC",
   });
   const [admin, setAdmin] = useState<InstallAdminForm>({
     username: "",
@@ -102,7 +102,6 @@ export function useInstallController({
       calendars: !!state.enable_calendars,
       contacts: !!state.enable_contacts,
     });
-    setMeet((current) => ({ ...current, tz: state.timezone || current.tz }));
   }, []);
 
   useEffect(() => {
@@ -234,7 +233,7 @@ export function useInstallController({
         if (step.id === "dav") {
           const payload: InstallerSitePayload = {
             base_uri_override: "",
-            timezone: meet.tz,
+            timezone: "UTC",
             enable_files: dav.files,
             enable_calendars: dav.calendars,
             enable_contacts: dav.contacts,
@@ -266,7 +265,7 @@ export function useInstallController({
             mail_smtp_host: mail.smtpHost,
             mail_smtp_port: mail.smtpPort,
             mail_smtp_security: mail.smtpSec,
-            voice_enabled: meet.turn.trim().length > 0,
+            voice_enabled: meet.enabled,
             voice_turn_url: meet.turn,
             voice_turn_username: meet.turnUser,
             voice_turn_credential: meet.turnPwd,
