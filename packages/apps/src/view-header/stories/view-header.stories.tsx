@@ -47,3 +47,12 @@ export const WithoutSearch: Story = {
     searchPlaceholder: undefined,
   },
 };
+
+/** Portaled surfaces (e.g. mail compose dialog) omit the sidebar toggle. */
+export const WithoutSidebarToggle: Story = {
+  args: {
+    title: "New message",
+    subtitle: "Drafts · Today 14:32",
+    hideSidebarToggle: true,
+  },
+};
