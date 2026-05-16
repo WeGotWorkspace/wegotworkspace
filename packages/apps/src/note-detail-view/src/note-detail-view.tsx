@@ -88,13 +88,13 @@ export function NoteDetailView({
         editable={!readOnly}
         onTitleChange={onTitleChange}
         titleKey={`${noteId}-title`}
-        titleClassName="text-3xl md:text-4xl font-semibold leading-[1.1] tracking-tight mb-8 md:mb-10"
-        titleStyle={{ fontFamily: "var(--font-sans)", color: "var(--color-ink)" }}
+        titleClassName="note-detail-view__title font-serif text-3xl md:text-4xl font-semibold leading-[1.1] tracking-tight mb-8 md:mb-10"
+        titleStyle={{ color: "var(--color-ink)" }}
         titlePlaceholder="Untitled"
       />
 
       <TagGroup
-        className="py-6 border-y mb-12"
+        className="py-6 border-y mb-6"
         style={{ borderColor: "color-mix(in oklab, var(--color-ink) 10%, transparent)" }}
         tags={tags}
         tagColors={noteDetailTagColors}
