@@ -18,3 +18,10 @@ export const Default: Story = {
     initialPath: "/login",
   },
 };
+
+export const Installer: Story = {
+  name: "Installer",
+  args: {
+    initialPath: "/install",
+  },
+};
