@@ -17,7 +17,8 @@ For each `*-core` package, Storybook titles should reflect the same hierarchy as
 | Level | Title pattern | `component` | Example |
 |-------|----------------|-------------|---------|
 | App shell | `Apps/<Product>` | `*Workspace` | `Apps/Meet` → `MeetWorkspace` — **one `Default` story only** |
-| Full product | `Apps/WeGotWorkspace` | `WeGotWorkspace` | Login + home + all apps (production route tree, mock API in Storybook) |
+| Full product | `Apps/WeGotWorkspace` | `WeGotWorkspace` | Mock shell (`Default`, `Installer`) |
+| Full product (live) | `Apps/WeGotWorkspace` → `Live API` | `WeGotWorkspaceLive` | Real API via `apiBaseUrl` prop + Storybook `/api/v1` proxy |
 | Panes | `Apps/<Product>/Panes/<ComponentExportName>` | **pane component** | `Apps/Meet/Panes/MeetLobbyPane` → `MeetLobbyPane` |
 | Building blocks | `Apps/<Product>/Components/<ComponentExportName>` | **that component** | `Apps/Meet/Components/MeetAvatar` → `MeetAvatar` |
 
