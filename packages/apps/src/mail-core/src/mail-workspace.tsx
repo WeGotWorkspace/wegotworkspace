@@ -20,8 +20,8 @@ import { MailDetailActionBar } from "@/mail-core/src/mail-detail-action-bar";
 import { MailListPanel } from "@/mail-core/src/mail-list-panel";
 import { useMailSidebarModel } from "@/mail-core/src/use-mail-sidebar-model";
 import { useMailController } from "@/mail-core/src/use-mail-controller";
+import { folderTokenFromMailboxLabel } from "@/lib/api/wgw/mail";
 import type { MailWorkspaceProps } from "@/mail-core/src/mail-workspace-props";
-import type { Mail } from "@/types/mail";
 
 const DEFAULT_SYSTEM_MAILBOXES = [
   "Inbox",
@@ -33,13 +33,6 @@ const DEFAULT_SYSTEM_MAILBOXES = [
   "Trash",
 ] as const;
 
-function defaultEncodeFolderToken(label: string): string {
-  const bytes = new TextEncoder().encode(label);
-  let binary = "";
-  for (let i = 0; i < bytes.length; i += 1) binary += String.fromCharCode(bytes[i]!);
-  return btoa(binary);
-}
-
 export function MailWorkspace({
   messages,
   mailboxes,
@@ -47,7 +40,7 @@ export function MailWorkspace({
   labels,
   listLoading = false,
   systemMailboxes = DEFAULT_SYSTEM_MAILBOXES,
-  encodeFolderToken = defaultEncodeFolderToken,
+  encodeFolderToken = folderTokenFromMailboxLabel,
   mailboxLoader,
   operations,
   onLogout,
@@ -71,6 +64,8 @@ export function MailWorkspace({
     view,
     viewLabel,
     moveDialog,
+    moveMailboxOptions,
+    moveDialogCurrentMailbox,
     searchQuery,
     searchInputRef,
     listEndRef,
@@ -139,42 +134,6 @@ export function MailWorkspace({
     sidebarDropZoneProps,
     moveToMailbox,
   });
-  const moveNotebookOptions = Array.from(
-    new Set(["Inbox", ...allSystemMailboxes, ...moreMailboxes]),
-  );
-  const resolveNotebookOption = (row: Mail | undefined): string | undefined => {
-    if (!row) return undefined;
-    const byLabel = moveNotebookOptions.find(
-      (option) => option.toLowerCase() === row.mailbox.toLowerCase(),
-    );
-    if (byLabel) return byLabel;
-    const byFolderToken = moveNotebookOptions.find(
-      (option) => encodeFolderToken(option) === row.folder,
-    );
-    return byFolderToken;
-  };
-  const moveDialogCurrentMailbox = (() => {
-    if (!moveDialog || moveDialog.ids.length === 0) return undefined;
-    if (view.startsWith("mb:")) {
-      const currentViewMailbox = view.slice(3).trim();
-      const byView = moveNotebookOptions.find(
-        (option) => option.trim().toLowerCase() === currentViewMailbox.toLowerCase(),
-      );
-      if (byView) return byView;
-    }
-    if (moveDialog.currentMailbox) {
-      const byDialogMailbox = moveNotebookOptions.find(
-        (option) => option.trim().toLowerCase() === moveDialog.currentMailbox?.trim().toLowerCase(),
-      );
-      if (byDialogMailbox) return byDialogMailbox;
-    }
-    const selectedMailboxes = new Set(
-      moveDialog.ids.map((id) => resolveNotebookOption(mail.find((m) => m.id === id))),
-    );
-    selectedMailboxes.delete(undefined);
-    if (selectedMailboxes.size === 1) return Array.from(selectedMailboxes)[0];
-    return undefined;
-  })();
   const composeTarget = composeDialogId
     ? mail.find((row) => row.id === composeDialogId)
     : undefined;
@@ -340,7 +299,7 @@ export function MailWorkspace({
 
       <MoveToDialog
         open={!!moveDialog}
-        notebooks={moveNotebookOptions}
+        notebooks={moveMailboxOptions}
         currentNotebook={moveDialogCurrentMailbox}
         onClose={() => setMoveDialog(null)}
         onConfirm={(mailbox) => {
