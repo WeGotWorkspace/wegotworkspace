@@ -1,0 +1,153 @@
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { MeetLobbyPane } from "@/meet-core/src/meet-lobby-pane";
+import { meetLobbyPaneDecorator } from "@/meet-core/stories/meet-panes.stories.decorator";
+import {
+  MeetLobbyPaneStory,
+  type MeetLobbyPaneStoryArgs,
+} from "@/meet-core/stories/meet-story-renders";
+import {
+  meetStoryParameters,
+  storyBooleanControl,
+  storyNumberControl,
+  storyTextControl,
+} from "@/meet-core/stories/meet-story-shared";
+
+/**
+ * `MeetLobbyPane` requires `MeetControllerState` (WebRTC). The render wrapper supplies a mock
+ * controller via `MeetLobbyPaneHarness`; controls map to pane props and controller fields.
+ */
+const meta = {
+  title: "Apps/Meet/Panes/MeetLobbyPane",
+  component: MeetLobbyPane,
+  render: (args) => <MeetLobbyPaneStory {...args} />,
+  decorators: [meetLobbyPaneDecorator],
+  parameters: {
+    layout: "fullscreen",
+    ...meetStoryParameters({
+      componentDescription:
+        "Pre-call lobby. Requires `MeetControllerState`; stories use `MeetLobbyPaneHarness` with a mock controller.",
+      snippet: `<MeetLobbyPane
+  controller={controller}
+  displayName="Demo User"
+  inJoinFlow={false}
+  hasSignedInIdentity
+  invitedRoom={null}
+  waitingForAdmission={false}
+  knockDots={1}
+  endedMessage={null}
+  showMissingInviteScreen={false}
+  showInviteCheckingScreen={false}
+  onDisplayNameChange={setDisplayName}
+  onJoin={join}
+  onCancelJoin={cancelJoin}
+  onLeaveEndedCall={leaveEndedCall}
+/>`,
+    }),
+  },
+  argTypes: {
+    displayName: storyTextControl,
+    inJoinFlow: storyBooleanControl,
+    hasSignedInIdentity: storyBooleanControl,
+    invitedRoom: storyTextControl,
+    waitingForAdmission: storyBooleanControl,
+    knockDots: storyNumberControl(1, 3),
+    endedMessage: storyTextControl,
+    showMissingInviteScreen: storyBooleanControl,
+    showInviteCheckingScreen: storyBooleanControl,
+    videoOn: storyBooleanControl,
+    error: storyTextControl,
+  },
+} satisfies Meta<MeetLobbyPaneStoryArgs>;
+
+export default meta;
+type Story = StoryObj<MeetLobbyPaneStoryArgs>;
+
+const hostBase: MeetLobbyPaneStoryArgs = {
+  displayName: "Demo User",
+  inJoinFlow: false,
+  hasSignedInIdentity: true,
+  invitedRoom: "",
+  waitingForAdmission: false,
+  knockDots: 1,
+  endedMessage: "",
+  showMissingInviteScreen: false,
+  showInviteCheckingScreen: false,
+  videoOn: true,
+  error: "",
+};
+
+export const HostReady: Story = {
+  name: "Host ready",
+  args: hostBase,
+};
+
+export const HostCameraOff: Story = {
+  name: "Host camera off",
+  args: { ...hostBase, videoOn: false },
+};
+
+export const GuestJoin: Story = {
+  name: "Guest join",
+  args: {
+    displayName: "Guest",
+    inJoinFlow: true,
+    hasSignedInIdentity: false,
+    invitedRoom: "demo-room",
+    waitingForAdmission: false,
+    knockDots: 1,
+    endedMessage: "",
+    showMissingInviteScreen: false,
+    showInviteCheckingScreen: false,
+    videoOn: true,
+    error: "",
+  },
+};
+
+export const Knocking: Story = {
+  name: "Knocking",
+  args: {
+    displayName: "Guest",
+    inJoinFlow: true,
+    hasSignedInIdentity: false,
+    invitedRoom: "demo-room",
+    waitingForAdmission: true,
+    knockDots: 2,
+    endedMessage: "",
+    showMissingInviteScreen: false,
+    showInviteCheckingScreen: false,
+    videoOn: true,
+    error: "",
+  },
+};
+
+export const CallEnded: Story = {
+  name: "Call ended",
+  args: {
+    ...hostBase,
+    endedMessage: "The host ended the meeting for everyone.",
+  },
+};
+
+export const MissingInvite: Story = {
+  name: "Missing invite",
+  args: {
+    ...hostBase,
+    showMissingInviteScreen: true,
+  },
+};
+
+export const CheckingInvite: Story = {
+  name: "Checking invite",
+  args: {
+    ...hostBase,
+    showInviteCheckingScreen: true,
+  },
+};
+
+export const DeviceError: Story = {
+  name: "Device error",
+  args: {
+    ...hostBase,
+    error: "Microphone permission was denied.",
+  },
+};
