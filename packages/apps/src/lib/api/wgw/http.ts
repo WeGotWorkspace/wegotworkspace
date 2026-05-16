@@ -145,10 +145,19 @@ export function wgwSessionAvailable(): boolean {
   return Boolean(username?.trim() && password && password.trim());
 }
 
+/** Offline / Storybook: accept any credentials without calling `/auth/token`. */
+export function wgwEstablishMockSession(): void {
+  applyTokens({ access_token: "mock", refresh_token: "mock" });
+}
+
 export async function wgwLoginWithCredentials(username: string, password: string): Promise<void> {
   const normalized = username.trim();
   if (!normalized || !password) {
     throw new Error("Username and password are required.");
+  }
+  if (!wgwLiveApiEnabled()) {
+    wgwEstablishMockSession();
+    return;
   }
   const res = await postJson("/auth/token", { username: normalized, password });
   const tokens = await readTokenResponse(res);

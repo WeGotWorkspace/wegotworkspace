@@ -1,4 +1,9 @@
-import { createRouter, useRouter } from "@tanstack/react-router";
+import {
+  createMemoryHistory,
+  createRouter,
+  useRouter,
+  type RouterHistory,
+} from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 
 function DefaultErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
@@ -54,14 +59,15 @@ function DefaultErrorComponent({ error, reset }: { error: Error; reset: () => vo
   );
 }
 
-export const getRouter = () => {
-  const router = createRouter({
+export function createWgwRouter(history?: RouterHistory) {
+  return createRouter({
     routeTree,
+    history,
     context: {},
     scrollRestoration: true,
     defaultPreloadStaleTime: 0,
     defaultErrorComponent: DefaultErrorComponent,
   });
+}
 
-  return router;
-};
+export const getRouter = () => createWgwRouter();
