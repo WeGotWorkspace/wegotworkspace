@@ -19,6 +19,12 @@
   background: transparent;
   --crepe-font-title: var(--font-serif), Georgia, "Times New Roman", serif;
   --crepe-font-default: var(--font-sans), system-ui, sans-serif;
+  --note-editor-strong-weight: 600;
+}
+
+/* Crepe leaves strong at browser bold (700); soften for General Sans body copy. */
+.note-milkdown-body .milkdown .ProseMirror strong {
+  font-weight: var(--note-editor-strong-weight);
 }
 
 .note-milkdown-body .milkdown .ProseMirror {
