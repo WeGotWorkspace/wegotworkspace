@@ -5,7 +5,7 @@ import { MeetApp } from "@/meet-core/src/meet-app";
  * Uses the real WeGotWorkspace Voice API (`/voice/*`) through Storybook's `/api/v1` proxy.
  */
 const meta: Meta<typeof MeetApp> = {
-  title: "Apps/Meet/Live API",
+  title: "Apps/Meet/App (live API)",
   component: MeetApp,
   parameters: {
     layout: "fullscreen",
