@@ -1,4 +1,4 @@
-import { useCallback, useState, type ReactNode } from "react";
+import { useCallback, useRef, useState, type ReactNode } from "react";
 
 import {
   AlertDialog,
@@ -29,6 +29,7 @@ export type ConfirmDialogRequest = {
  */
 export function useConfirmDialog() {
   const [request, setRequest] = useState<ConfirmDialogRequest | null>(null);
+  const suppressParentDismissRef = useRef(false);
 
   const dismiss = useCallback(() => {
     setRequest(null);
@@ -38,9 +39,18 @@ export function useConfirmDialog() {
     setRequest(r);
   }, []);
 
+  const consumeParentDismissSuppression = useCallback(() => {
+    if (!suppressParentDismissRef.current) return false;
+    suppressParentDismissRef.current = false;
+    return true;
+  }, []);
+
   const handleOpenChange = useCallback(
     (open: boolean) => {
-      if (!open) dismiss();
+      if (!open) {
+        suppressParentDismissRef.current = true;
+        dismiss();
+      }
     },
     [dismiss],
   );
@@ -75,5 +85,5 @@ export function useConfirmDialog() {
     </AlertDialog>
   );
 
-  return { confirmDialog, requestConfirm, dismiss };
+  return { confirmDialog, requestConfirm, dismiss, consumeParentDismissSuppression };
 }

@@ -16,8 +16,14 @@ import type {
   MailMailboxLoader,
   MailAPIOperations,
 } from "@/mail-core/src/mail-types";
-import type { WgwMailDraftRequest } from "@/lib/api/wgw/types";
 import { mergeMailLabels, type MailUILabels } from "@/mail-core/src/mail-app.stories.fixtures";
+import {
+  composeDraftHasContent,
+  composeDraftToApiPayload,
+  isComposeDraftDirty,
+  serializeComposeSnapshot,
+  type MailComposeAttachment,
+} from "@/mail-core/src/mail-compose-utils";
 import {
   buildMoveMailboxOptions,
   resolveMoveDialogCurrentMailbox,
@@ -46,9 +52,12 @@ type MailComposeDraft = {
   bcc: string;
   subject: string;
   body: string;
+  attachments: MailComposeAttachment[];
   saving: boolean;
   sending: boolean;
 };
+
+const EMPTY_COMPOSE_ATTACHMENTS: MailComposeAttachment[] = [];
 
 function splitDetailBodyParagraphs(body: string): string[] {
   const cleaned = body.trim();
@@ -102,6 +111,7 @@ function draftForMode(mode: ComposeMode, source?: Mail): MailComposeDraft {
       bcc: "",
       subject: "",
       body: "",
+      attachments: EMPTY_COMPOSE_ATTACHMENTS,
       saving: false,
       sending: false,
     };
@@ -114,6 +124,7 @@ function draftForMode(mode: ComposeMode, source?: Mail): MailComposeDraft {
       bcc: "",
       subject: source.title,
       body: source.body.join("\n\n"),
+      attachments: EMPTY_COMPOSE_ATTACHMENTS,
       saving: false,
       sending: false,
     };
@@ -126,6 +137,7 @@ function draftForMode(mode: ComposeMode, source?: Mail): MailComposeDraft {
       bcc: "",
       subject: ensureSubjectPrefix(source.title, "Fwd"),
       body: quotedOriginalMessage(source),
+      attachments: EMPTY_COMPOSE_ATTACHMENTS,
       saving: false,
       sending: false,
     };
@@ -137,6 +149,7 @@ function draftForMode(mode: ComposeMode, source?: Mail): MailComposeDraft {
     bcc: "",
     subject: ensureSubjectPrefix(source.title, "Re"),
     body: quotedOriginalMessage(source),
+    attachments: EMPTY_COMPOSE_ATTACHMENTS,
     saving: false,
     sending: false,
   };
@@ -217,6 +230,7 @@ export function useMailController({
   );
   const [composeDrafts, setComposeDrafts] = useState<Record<string, MailComposeDraft>>({});
   const [composeDialogId, setComposeDialogId] = useState<string | null>(null);
+  const composeBaselineRef = useRef<Record<string, string>>({});
   const [returnMailboxById, setReturnMailboxById] = useState<Record<string, string>>({});
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement | null>(null);
@@ -226,7 +240,8 @@ export function useMailController({
   const pendingDetailIdsRef = useRef<Set<string>>(new Set());
 
   const { show, showError } = useAppToast();
-  const { confirmDialog, requestConfirm } = useConfirmDialog();
+  const { confirmDialog, requestConfirm, consumeParentDismissSuppression } =
+    useConfirmDialog();
   const isTouch = useIsTouch();
   const showMutationError = useCallback(
     (fallback = "Could not sync this change. Please try again.") => showError(fallback),
@@ -711,6 +726,7 @@ export function useMailController({
               bcc: "",
               subject: message.title,
               body: message.body.join("\n\n"),
+              attachments: EMPTY_COMPOSE_ATTACHMENTS,
               saving: false,
               sending: false,
             }
@@ -727,8 +743,18 @@ export function useMailController({
   }, []);
 
   const closeComposeDialog = useCallback(() => {
-    setComposeDialogId(null);
+    setComposeDialogId((current) => {
+      if (current) delete composeBaselineRef.current[current];
+      return null;
+    });
   }, []);
+
+  useEffect(() => {
+    if (!composeDialogId) return;
+    const draft = composeDrafts[composeDialogId];
+    if (!draft || composeBaselineRef.current[composeDialogId]) return;
+    composeBaselineRef.current[composeDialogId] = serializeComposeSnapshot(draft);
+  }, [composeDialogId, composeDrafts]);
 
   const startCompose = useCallback(
     (mode: ComposeMode, source?: Mail) => {
@@ -756,24 +782,19 @@ export function useMailController({
       setMail((prev) => [draft, ...prev]);
       setComposeDrafts((prev) => ({ ...prev, [id]: draftState }));
       openComposeDialog(id);
-      show(
-        mode === "new" ? L.toastNewMessage : mode === "forward" ? "Forward draft" : "Reply draft",
-        { icon: <FileEdit className="size-4" /> },
-      );
+      if (mode === "new") {
+        show(L.toastNewMessage, { icon: <FileEdit className="size-4" /> });
+      }
       if (!operations) return;
-      const normalizedSubject = normalizeComposeSubject(draftState.subject, L.noSubject);
-      const draftPayload: WgwMailDraftRequest = {
-        to: draftState.to || undefined,
-        cc: draftState.cc || undefined,
-        bcc: draftState.bcc || undefined,
-        subject: normalizedSubject,
-        body: draftState.body || undefined,
-      };
-      void operations.createDraft(draftPayload).catch(() => {
-        show("Draft created locally, but could not sync to server yet.", {
-          icon: <FileEdit className="size-4" />,
+      void composeDraftToApiPayload(draftState, (subject) =>
+        normalizeComposeSubject(subject, L.noSubject),
+      )
+        .then((draftPayload) => operations.createDraft(draftPayload))
+        .catch(() => {
+          show("Draft created locally, but could not sync to server yet.", {
+            icon: <FileEdit className="size-4" />,
+          });
         });
-      });
     },
     [
       L.draftFromLabel,
@@ -820,7 +841,9 @@ export function useMailController({
   const updateComposeDraft = useCallback(
     (
       id: string,
-      patch: Partial<Pick<MailComposeDraft, "to" | "cc" | "bcc" | "subject" | "body">>,
+      patch: Partial<
+        Pick<MailComposeDraft, "to" | "cc" | "bcc" | "subject" | "body" | "attachments">
+      >,
     ) => {
       setComposeDrafts((prev) => {
         const current = prev[id];
@@ -845,14 +868,11 @@ export function useMailController({
         prev[id] ? { ...prev, [id]: { ...prev[id]!, saving: true } } : prev,
       );
       try {
-        const normalizedSubject = normalizeComposeSubject(draft.subject, L.noSubject);
-        await operations.saveDraft({
-          to: draft.to || undefined,
-          cc: draft.cc || undefined,
-          bcc: draft.bcc || undefined,
-          subject: normalizedSubject,
-          body: draft.body || undefined,
-        });
+        const draftPayload = await composeDraftToApiPayload(draft, (subject) =>
+          normalizeComposeSubject(subject, L.noSubject),
+        );
+        await operations.saveDraft(draftPayload);
+        composeBaselineRef.current[id] = serializeComposeSnapshot(draft);
         show("Draft saved.", { icon: <FileEdit className="size-4" /> });
       } catch {
         show("Saved locally. Server draft sync is unavailable right now.", {
@@ -883,13 +903,12 @@ export function useMailController({
       );
       try {
         if (operations) {
-          const normalizedSubject = normalizeComposeSubject(draft.subject, L.noSubject);
+          const draftPayload = await composeDraftToApiPayload(draft, (subject) =>
+            normalizeComposeSubject(subject, L.noSubject),
+          );
           await operations.sendMessage({
             to: draft.to,
-            cc: draft.cc || undefined,
-            bcc: draft.bcc || undefined,
-            subject: normalizedSubject,
-            body: draft.body || undefined,
+            ...draftPayload,
           });
         }
         setComposeDrafts((prev) => {
@@ -897,6 +916,7 @@ export function useMailController({
           delete next[id];
           return next;
         });
+        delete composeBaselineRef.current[id];
         closeComposeDialog();
         setMail((prev) =>
           prev.map((message) =>
@@ -952,6 +972,7 @@ export function useMailController({
         delete next[id];
         return next;
       });
+      delete composeBaselineRef.current[id];
       setMail((prev) => prev.filter((message) => message.id !== id));
       setSelectedIds((prev) => prev.filter((selectedId) => selectedId !== id));
       setActiveId((current) => (current === id ? "" : current));
@@ -962,6 +983,67 @@ export function useMailController({
       });
     },
     [mail, operations, show, setSelectedIds, closeComposeDialog],
+  );
+
+  const requestCloseComposeDialog = useCallback(
+    (id: string) => {
+      const draft = composeDrafts[id];
+      if (!draft) {
+        closeComposeDialog();
+        return;
+      }
+      const baseline = composeBaselineRef.current[id];
+      const dirty = baseline ? isComposeDraftDirty(draft, baseline) : composeDraftHasContent(draft);
+      if (!dirty) {
+        closeComposeDialog();
+        return;
+      }
+      requestConfirm({
+        title: L.composeCloseTitle,
+        description: L.composeCloseDescription,
+        cancelLabel: L.composeKeepEditing,
+        confirmLabel: L.composeCloseConfirm,
+        onConfirm: closeComposeDialog,
+      });
+    },
+    [
+      composeDrafts,
+      closeComposeDialog,
+      requestConfirm,
+      L.composeCloseTitle,
+      L.composeCloseDescription,
+      L.composeKeepEditing,
+      L.composeCloseConfirm,
+    ],
+  );
+
+  const requestDiscardComposeDraft = useCallback(
+    (id: string) => {
+      const draft = composeDrafts[id];
+      if (!draft || !composeDraftHasContent(draft)) {
+        void discardComposeDraft(id);
+        return;
+      }
+      requestConfirm({
+        title: L.composeDiscardTitle,
+        description: L.composeDiscardDescription,
+        variant: "destructive",
+        cancelLabel: L.dialogCancel,
+        confirmLabel: L.composeDeleteDraft,
+        onConfirm: () => {
+          void discardComposeDraft(id);
+        },
+      });
+    },
+    [
+      composeDrafts,
+      discardComposeDraft,
+      requestConfirm,
+      L.composeDiscardTitle,
+      L.composeDiscardDescription,
+      L.dialogCancel,
+      L.composeDeleteDraft,
+    ],
   );
 
   const selectView = useCallback((v: string) => {
@@ -1075,6 +1157,7 @@ export function useMailController({
     listEndRef,
     workspaceLayoutRef,
     confirmDialog,
+    consumeParentDismissSuppression,
     isTouch,
     inTrash,
     isItemDragging,
@@ -1101,11 +1184,13 @@ export function useMailController({
     openDraftInComposer,
     composeDialogId,
     closeComposeDialog,
+    requestCloseComposeDialog,
     composeDrafts,
     updateComposeDraft,
     saveComposeDraft,
     sendComposeDraft,
     discardComposeDraft,
+    requestDiscardComposeDraft,
     toggleStar,
     moveOne,
     toggleArchiveForMessage,

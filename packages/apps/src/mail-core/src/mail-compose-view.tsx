@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { Button } from "@/button/src/button";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { Paperclip, Trash2, X } from "lucide-react";
+import { Button, IconButton } from "@/button/src/button";
 import { ViewHeader } from "@/view-header/src/view-header";
 import { FieldLabelRow } from "@/ui/field-label-row";
 import { Input } from "@/ui/input";
@@ -7,23 +8,34 @@ import { Textarea } from "@/ui/textarea";
 import { DialogFooter } from "@/ui/dialog";
 import { cn } from "@/lib/utils";
 import { mailWorkspacePaneClasses } from "@/mail-core/src/mail-workspace.styles";
+import {
+  formatComposeAttachmentSize,
+  type MailComposeAttachment,
+} from "@/mail-core/src/mail-compose-utils";
+import { useComposeMessageHeight } from "@/mail-core/src/use-compose-message-height";
 
 export type MailComposeMode = "new" | "reply" | "reply-all" | "forward" | "draft";
 
 type MailComposeViewProps = {
   composeMode?: MailComposeMode;
   mailbox: string;
-  date: string;
   to: string;
   cc: string;
   bcc: string;
   subject: string;
   body: string;
+  attachments: MailComposeAttachment[];
   onToChange: (value: string) => void;
   onCcChange: (value: string) => void;
   onBccChange: (value: string) => void;
   onSubjectChange: (value: string) => void;
   onBodyChange: (value: string) => void;
+  onAddAttachments: (files: File[]) => void;
+  onRemoveAttachment: (attachmentId: string) => void;
+  attachFilesLabel: string;
+  attachmentsLabel: string;
+  removeAttachmentLabel: string;
+  deleteDraftLabel: string;
   onSaveDraft: () => void;
   onSend: () => void;
   onDiscard: () => void;
@@ -50,17 +62,23 @@ function composeHeaderTitle(mode: MailComposeMode): string {
 export function MailComposeView({
   composeMode = "new",
   mailbox,
-  date,
   to,
   cc,
   bcc,
   subject,
   body,
+  attachments,
   onToChange,
   onCcChange,
   onBccChange,
   onSubjectChange,
   onBodyChange,
+  onAddAttachments,
+  onRemoveAttachment,
+  attachFilesLabel,
+  attachmentsLabel,
+  removeAttachmentLabel,
+  deleteDraftLabel,
   onSaveDraft,
   onSend,
   onDiscard,
@@ -70,10 +88,18 @@ export function MailComposeView({
 }: MailComposeViewProps) {
   const disableActions = saving || sending;
   const [showCcBcc, setShowCcBcc] = useState(() => Boolean(cc.trim() || bcc.trim()));
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { textareaRef, fieldRef, syncHeight } = useComposeMessageHeight(body);
 
   useEffect(() => {
     if (cc.trim() || bcc.trim()) setShowCcBcc(true);
   }, [cc, bcc]);
+
+  const handleFilesSelected = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files ? Array.from(event.target.files) : [];
+    if (files.length > 0) onAddAttachments(files);
+    event.target.value = "";
+  };
 
   return (
     <div className={cn(mailWorkspacePaneClasses.composeView, className)}>
@@ -81,7 +107,7 @@ export function MailComposeView({
         <ViewHeader
           hideSidebarToggle
           title={composeHeaderTitle(composeMode)}
-          subtitle={`${mailbox} · ${date}`}
+          subtitle={mailbox}
         />
       </header>
 
@@ -137,38 +163,95 @@ export function MailComposeView({
           />
         </FieldLabelRow>
 
-        <FieldLabelRow label="Message" className={mailWorkspacePaneClasses.composeMessageField}>
-          <Textarea
-            value={body}
-            onChange={(event) => onBodyChange(event.target.value)}
-            placeholder="Write your message..."
-            className={mailWorkspacePaneClasses.composeMessageInput}
-          />
-        </FieldLabelRow>
+        {attachments.length > 0 ? (
+          <div className={mailWorkspacePaneClasses.composeAttachmentsSection}>
+            <ul
+              className={mailWorkspacePaneClasses.composeAttachmentsList}
+              aria-label={attachmentsLabel}
+            >
+              {attachments.map((attachment) => (
+                <li key={attachment.id} className={mailWorkspacePaneClasses.composeAttachmentItem}>
+                  <span className={mailWorkspacePaneClasses.composeAttachmentName}>
+                    {attachment.filename}
+                  </span>
+                  <span className={mailWorkspacePaneClasses.composeAttachmentMeta}>
+                    {formatComposeAttachmentSize(attachment.size)}
+                  </span>
+                  <IconButton
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    label={`${removeAttachmentLabel}: ${attachment.filename}`}
+                    icon={<X className="size-4" aria-hidden />}
+                    showTooltip={false}
+                    onClick={() => onRemoveAttachment(attachment.id)}
+                    disabled={disableActions}
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
+        <div ref={fieldRef} className={mailWorkspacePaneClasses.composeMessageShell}>
+          <FieldLabelRow label="Message" className={mailWorkspacePaneClasses.composeMessageField}>
+            <Textarea
+              ref={textareaRef}
+              value={body}
+              onChange={(event) => onBodyChange(event.target.value)}
+              onInput={syncHeight}
+              placeholder="Write your message..."
+              className={mailWorkspacePaneClasses.composeMessageInput}
+            />
+          </FieldLabelRow>
+        </div>
       </div>
 
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        className={mailWorkspacePaneClasses.composeAttachmentsInput}
+        onChange={handleFilesSelected}
+      />
+
       <DialogFooter className={mailWorkspacePaneClasses.composeFooter}>
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={onDiscard}
-          disabled={disableActions}
-          label="Discard"
-        />
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onSaveDraft}
-          disabled={disableActions}
-          label={saving ? "Saving..." : "Save draft"}
-        />
-        <Button
-          type="button"
-          variant="primary"
-          onClick={onSend}
-          disabled={disableActions || !to.trim()}
-          label={sending ? "Sending..." : "Send"}
-        />
+        <div className={mailWorkspacePaneClasses.composeFooterStart}>
+          <IconButton
+            type="button"
+            variant="ghost"
+            size="sm"
+            label={attachFilesLabel}
+            icon={<Paperclip className="size-4" aria-hidden />}
+            onClick={() => fileInputRef.current?.click()}
+            disabled={disableActions}
+          />
+          <IconButton
+            type="button"
+            variant="ghost"
+            size="sm"
+            label={deleteDraftLabel}
+            icon={<Trash2 className="size-4" aria-hidden />}
+            onClick={onDiscard}
+            disabled={disableActions}
+          />
+        </div>
+        <div className={mailWorkspacePaneClasses.composeFooterEnd}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onSaveDraft}
+            disabled={disableActions}
+            label={saving ? "Saving..." : "Save draft"}
+          />
+          <Button
+            type="button"
+            variant="primary"
+            onClick={onSend}
+            disabled={disableActions || !to.trim()}
+            label={sending ? "Sending..." : "Send"}
+          />
+        </div>
       </DialogFooter>
     </div>
   );

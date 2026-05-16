@@ -13,6 +13,7 @@ import { WorkspaceUserFooter } from "@/workspace-shell/src/workspace-app-layout"
 import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
 import { MailDetailView } from "@/mail-core/src/mail-detail-view";
 import { MailComposeView } from "@/mail-core/src/mail-compose-view";
+import { createComposeAttachment } from "@/mail-core/src/mail-compose-utils";
 import { Dialog, DialogContent } from "@/ui/dialog";
 import { MultiSelectionView } from "@/multi-selection-view/src/multi-selection-view";
 import { formatMailDateForDetail } from "@/mail-core/src/mail-date-utils";
@@ -96,12 +97,12 @@ export function MailWorkspace({
     forward,
     openDraftInComposer,
     composeDialogId,
-    closeComposeDialog,
+    requestCloseComposeDialog,
     composeDrafts,
     updateComposeDraft,
     saveComposeDraft,
     sendComposeDraft,
-    discardComposeDraft,
+    requestDiscardComposeDraft,
     toggleStar,
     moveOne,
     toggleArchiveForMessage,
@@ -111,6 +112,7 @@ export function MailWorkspace({
     markUnread,
     sidebarUnreadBadge,
     downloadAttachment,
+    consumeParentDismissSuppression,
   } = useMailController({
     messages,
     mailboxes,
@@ -265,18 +267,22 @@ export function MailWorkspace({
       {composeTarget && composeTargetDraft ? (
         <Dialog
           open={!!composeDialogId}
-          onOpenChange={(open) => (!open ? closeComposeDialog() : null)}
+          onOpenChange={(open) => {
+            if (!open && consumeParentDismissSuppression()) return;
+            if (!open && composeDialogId) requestCloseComposeDialog(composeDialogId);
+          }}
         >
           <DialogContent
             className={cn(
               mailWorkspacePaneClasses.composeDialog,
               mailWorkspacePaneClasses.composeDialogSurface,
             )}
+            onPointerDownOutside={(event) => event.preventDefault()}
+            onInteractOutside={(event) => event.preventDefault()}
           >
             <MailComposeView
               composeMode={composeTargetDraft.mode as MailComposeMode}
               mailbox={composeTarget.mailbox}
-              date={formatMailDateForDetail(composeTarget.date)}
               to={composeTargetDraft.to}
               cc={composeTargetDraft.cc}
               bcc={composeTargetDraft.bcc}
@@ -289,7 +295,27 @@ export function MailWorkspace({
               onBodyChange={(value) => updateComposeDraft(composeTarget.id, { body: value })}
               onSaveDraft={() => void saveComposeDraft(composeTarget.id)}
               onSend={() => void sendComposeDraft(composeTarget.id)}
-              onDiscard={() => void discardComposeDraft(composeTarget.id)}
+              attachments={composeTargetDraft.attachments}
+              onAddAttachments={(files) =>
+                updateComposeDraft(composeTarget.id, {
+                  attachments: [
+                    ...composeTargetDraft.attachments,
+                    ...files.map((file) => createComposeAttachment(file)),
+                  ],
+                })
+              }
+              onRemoveAttachment={(attachmentId) =>
+                updateComposeDraft(composeTarget.id, {
+                  attachments: composeTargetDraft.attachments.filter(
+                    (attachment) => attachment.id !== attachmentId,
+                  ),
+                })
+              }
+              attachFilesLabel={L.composeAttachFiles}
+              attachmentsLabel={L.composeAttachmentsLabel}
+              removeAttachmentLabel={L.composeRemoveAttachment}
+              deleteDraftLabel={L.composeDeleteDraft}
+              onDiscard={() => requestDiscardComposeDraft(composeTarget.id)}
               saving={composeTargetDraft.saving}
               sending={composeTargetDraft.sending}
             />
