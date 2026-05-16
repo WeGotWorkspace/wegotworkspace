@@ -1,17 +1,14 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import "@/mail-core/src/mail-workspace.css";
 import { MailAttachments } from "../src/mail-attachments";
+import { mailPaneDecorator } from "./mail-panes.stories.decorator";
 
 const meta: Meta<typeof MailAttachments> = {
-  title: "Apps/Mail/Mail Attachments",
+  title: "Apps/Mail/Panes/Attachments",
   component: MailAttachments,
-  decorators: [
-    (Story) => (
-      <div className="mail-workspace mx-auto max-w-3xl rounded-lg border p-8">
-        <Story />
-      </div>
-    ),
-  ],
+  decorators: [mailPaneDecorator],
+  parameters: {
+    layout: "fullscreen",
+  },
 };
 
 export default meta;

@@ -3,10 +3,10 @@ import { MailApp } from "@/mail-core/src/mail-app";
 
 /**
  * Hits the real WeGotWorkspace HTTP API (via Storybook's `/api/v1` proxy).
- * Not the same as **FromOpenApiShapes**, which uses static in-repo fixtures only.
+ * Not the same as **Apps/Mail**, which uses static in-repo fixtures only.
  */
 const meta: Meta<typeof MailApp> = {
-  title: "Apps/Mail/App",
+  title: "Apps/Mail/App (live API)",
   component: MailApp,
   parameters: {
     layout: "fullscreen",

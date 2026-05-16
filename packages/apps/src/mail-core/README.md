@@ -23,4 +23,17 @@ This lets each app swap backend providers while reusing the same controller/UI b
 
 ## Styling
 
-Pane and detail styling lives under `.mail-workspace` in `mail-workspace.css`, with class name fragments in `mail-workspace.styles.ts`. Storybook decorators should apply the `mail-workspace` root class so descendant CSS applies.
+Pane and detail styling lives under `.mail-workspace` in `mail-workspace.css`, with class name fragments in `mail-workspace.styles.ts`. Portaled compose uses `.mail-compose-dialog-surface` in the same file. Storybook decorators in `stories/mail-panes.stories.decorator.tsx` apply the same root classes as production.
+
+## Storybook
+
+| Story | Purpose |
+|-------|---------|
+| `Apps/Mail` | Full workspace with mock bootstrap (`HtmlDetail` opens seeded HTML iframe) |
+| `Apps/Mail/Panes/List` | List column harness |
+| `Apps/Mail/Panes/Detail` | Detail view (plain + HTML iframe + attachments) |
+| `Apps/Mail/Panes/Detail action bar` | Toolbar variants |
+| `Apps/Mail/Panes/Compose` | Compose dialog surface |
+| `Apps/Mail/Panes/Attachments` | Attachment grid |
+| `Apps/Mail/Panes/Multi selection` | Batch selection surface |
+| `Apps/Mail/App (live API)` | Live `MailApp` against `/api/v1` |
