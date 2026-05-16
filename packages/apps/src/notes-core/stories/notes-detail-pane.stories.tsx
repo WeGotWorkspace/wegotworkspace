@@ -32,17 +32,7 @@ function NotesDetailPaneHarness({
       readOnly={readOnly}
       pullQuote={base.pullQuote}
       body={body}
-      onBodyParagraphChange={
-        readOnly
-          ? undefined
-          : (index, value) => {
-              setBody((prev) => {
-                const next = [...prev];
-                next[index] = value;
-                return next;
-              });
-            }
-      }
+      onBodyMarkdownChange={readOnly ? undefined : (markdown) => setBody([markdown])}
     />
   );
 }
