@@ -1,6 +1,8 @@
 import { Pencil } from "lucide-react";
 import "react-swipeable-list/dist/styles.css";
-import "@/mail-core/src/mail-ui.css";
+import { cn } from "@/lib/utils";
+import "@/mail-core/src/mail-workspace.css";
+import { mailWorkspacePaneClasses } from "@/mail-core/src/mail-workspace.styles";
 import { MoveToDialog } from "@/dialogs/src/dialogs";
 import { Button } from "@/button/src/button";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
@@ -47,7 +49,8 @@ export function MailWorkspace({
   encodeFolderToken = defaultEncodeFolderToken,
   mailboxLoader,
   operations,
-  logoutTo = "/logout",
+  onLogout,
+  className,
 }: MailWorkspaceProps) {
   const closeSidebarOnMobile = (closeSidebar: () => void) => {
     if (typeof window === "undefined") return;
@@ -182,7 +185,7 @@ export function MailWorkspace({
       <WorkspaceApp
         ref={workspaceLayoutRef}
         workspaceRoot={{
-          className: "mail-ui-theme",
+          className: cn("mail-workspace", className),
         }}
         sidebar={(c) => (
           <AppSidebar
@@ -193,10 +196,7 @@ export function MailWorkspace({
                 name={session.user.displayName}
                 initials={workspaceUserInitials(session.user)}
                 detailLine={session.user.username}
-                onLogoutClick={() => {
-                  if (logoutTo) window.location.assign(logoutTo);
-                }}
-                linkHoverClassName="hover:bg-[color-mix(in_oklab,var(--color-ink)_18%,transparent)] hover:text-[var(--color-ink)]"
+                onLogoutClick={onLogout}
               />
             }
             primaryButton={
@@ -306,8 +306,8 @@ export function MailWorkspace({
           open={!!composeDialogId}
           onOpenChange={(open) => (!open ? closeComposeDialog() : null)}
         >
-          <DialogContent className="max-w-[980px] w-[min(980px,96vw)] max-h-[96dvh] p-0">
-            <div className="max-h-[96dvh] overflow-y-auto p-4 md:p-6">
+          <DialogContent className={mailWorkspacePaneClasses.composeDialog}>
+            <div className={mailWorkspacePaneClasses.composeDialogScroll}>
               <MailComposeView
                 mailId={composeTarget.id}
                 mailbox={composeTarget.mailbox}

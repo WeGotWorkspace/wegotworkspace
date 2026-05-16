@@ -1,0 +1,283 @@
+@import "../../workspace-shell/src/workspace-split-app.css";
+
+/**
+ * Mail product shell: cream root + emerald sidebar accent.
+ * Import only from {@link MailWorkspace}.
+ */
+.mail-workspace {
+  --workspace-root-bg: var(--color-cream, #f5f1e8);
+  --color-emerald: oklch(0.858745 0.15558 94.085);
+  --mail-sidebar: oklch(0.858745 0.15558 94.085);
+  --app-sidebar-bg: var(--mail-sidebar);
+  --mail-state-accent: var(--color-emerald);
+
+  --workspace-user-footer-text-color: color-mix(in oklab, var(--color-ink) 70%, transparent);
+  --workspace-user-footer-border-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
+  --workspace-user-footer-avatar-bg: color-mix(in oklab, var(--color-ink) 12%, transparent);
+  --workspace-user-footer-avatar-color: var(--color-ink);
+  --workspace-user-footer-link-color: color-mix(in oklab, var(--color-ink) 65%, transparent);
+  --workspace-user-footer-link-bg: color-mix(in oklab, var(--color-ink) 6%, transparent);
+
+  --mail-detail-tag-primary-fg: var(--color-cream, #f5f1e8);
+  --mail-detail-tag-primary-bg: color-mix(in oklab, var(--color-ink) 88%, transparent);
+  --mail-detail-tag-muted-bg: color-mix(in oklab, var(--color-ink) 6%, transparent);
+  --mail-detail-tag-muted-fg: color-mix(in oklab, var(--color-ink) 58%, transparent);
+  --mail-detail-title-font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+
+  --mail-list-loader-color: color-mix(in oklab, var(--color-ink) 45%, transparent);
+  --mail-swipe-star-color: var(--color-emerald);
+  --mail-swipe-archive-color: var(--color-ink);
+}
+
+.mail-workspace .mail-state-accent {
+  color: var(--mail-state-accent);
+}
+
+.mail-workspace .mail-detail-view {
+  max-width: 680px;
+  margin-inline: auto;
+}
+
+.mail-workspace .mail-detail-view__title {
+  font-family: var(--mail-detail-title-font-family);
+  font-size: 1.875rem;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  color: var(--color-ink);
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+  .mail-workspace .mail-detail-view__title {
+    font-size: 2.25rem;
+  }
+}
+
+.mail-workspace .mail-detail-view__sender-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding-block: 1rem;
+  margin-bottom: 2.5rem;
+  border-top: 1px solid color-mix(in oklab, var(--color-ink) 10%, transparent);
+  border-bottom: 1px solid color-mix(in oklab, var(--color-ink) 10%, transparent);
+}
+
+.mail-workspace .mail-detail-view__sender-row .user-avatar {
+  --user-avatar-bg: var(--color-emerald);
+  --user-avatar-fg: var(--color-ink);
+  --user-avatar-gap: 0.75rem;
+  width: 100%;
+}
+
+.mail-workspace .mail-detail-view__body {
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+  font-size: 1rem;
+  line-height: 1.75;
+  color: color-mix(in oklab, var(--color-ink) 82%, transparent);
+}
+
+.mail-workspace .mail-compose-view {
+  max-width: 760px;
+  margin-inline: auto;
+}
+
+.mail-workspace .mail-compose-view__title {
+  font-family: var(--mail-detail-title-font-family);
+  font-size: 1.875rem;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  color: var(--color-ink);
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .mail-workspace .mail-compose-view__title {
+    font-size: 2.25rem;
+  }
+}
+
+.mail-workspace .mail-compose-view__fields {
+  border-radius: 0.75rem;
+  border: 1px solid color-mix(in oklab, var(--color-ink) 12%, transparent);
+  background: color-mix(in oklab, var(--color-cream) 86%, white);
+  padding: 1rem;
+}
+
+@media (min-width: 768px) {
+  .mail-workspace .mail-compose-view__fields {
+    padding: 1.25rem;
+  }
+}
+
+.mail-workspace .mail-compose-view__fields > * + * {
+  margin-top: 0.75rem;
+}
+
+.mail-workspace .mail-compose-field {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.mail-workspace .mail-compose-field__label {
+  width: 2.75rem;
+  flex-shrink: 0;
+  color: color-mix(in oklab, var(--color-ink) 58%, transparent);
+}
+
+.mail-workspace .mail-compose-field .input {
+  border: 0;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  padding-inline: 0;
+  height: 2.5rem;
+  box-shadow: none;
+}
+
+.mail-workspace .mail-compose-field .input:focus-visible {
+  box-shadow: none;
+  border-bottom-color: color-mix(in oklab, var(--color-ink) 20%, transparent);
+}
+
+.mail-workspace .mail-compose-view__body {
+  display: block;
+  padding-top: 0.5rem;
+}
+
+.mail-workspace .mail-compose-view__body .textarea {
+  min-height: 320px;
+  resize: vertical;
+  border-color: color-mix(in oklab, var(--color-ink) 15%, transparent);
+}
+
+@media (min-width: 768px) {
+  .mail-workspace .mail-compose-view__body .textarea {
+    min-height: 400px;
+  }
+}
+
+.mail-workspace .mail-compose-view__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+}
+
+/* Portaled compose dialog — not under `.mail-workspace` in the DOM */
+.mail-compose-dialog {
+  max-width: 980px;
+  width: min(980px, 96vw);
+  max-height: 96dvh;
+  padding: 0;
+}
+
+.mail-compose-dialog__scroll {
+  max-height: 96dvh;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+@media (min-width: 768px) {
+  .mail-compose-dialog__scroll {
+    padding: 1.5rem;
+  }
+}
+
+.mail-workspace .mail-attachments {
+  margin-top: 2rem;
+}
+
+.mail-workspace .mail-attachments__label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: color-mix(in oklab, var(--color-ink) 55%, transparent);
+}
+
+.mail-workspace .mail-attachments__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .mail-workspace .mail-attachments__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.mail-workspace .mail-attachments__item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in oklab, var(--color-ink) 10%, transparent);
+  padding: 0.625rem 0.75rem;
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+
+.mail-workspace .mail-attachments__item:hover {
+  background: color-mix(in oklab, var(--color-ink) 4%, transparent);
+}
+
+.mail-workspace .mail-attachments__item:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-emerald);
+}
+
+.mail-workspace .mail-attachments__icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  background: color-mix(in oklab, var(--color-ink) 8%, transparent);
+  color: color-mix(in oklab, var(--color-ink) 75%, transparent);
+}
+
+.mail-workspace .mail-attachments__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-ink);
+}
+
+.mail-workspace .mail-attachments__meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  color: color-mix(in oklab, var(--color-ink) 55%, transparent);
+}
+
+.mail-workspace .mail-attachments__download {
+  flex-shrink: 0;
+  opacity: 0;
+  color: color-mix(in oklab, var(--color-ink) 65%, transparent);
+  transition: opacity 0.15s ease;
+}
+
+.mail-workspace .mail-attachments__item:hover .mail-attachments__download {
+  opacity: 1;
+}
+
+.mail-workspace .mail-list-panel__loader {
+  color: var(--mail-list-loader-color);
+}
