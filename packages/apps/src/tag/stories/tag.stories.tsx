@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { TooltipProvider } from "@/ui/tooltip";
 import { Tag, TagGroup } from "../src/tag";
 
 const meta: Meta<typeof TagGroup> = {
@@ -6,12 +7,14 @@ const meta: Meta<typeof TagGroup> = {
   component: TagGroup,
   decorators: [
     (Story) => (
-      <div
-        className="max-w-md p-6 rounded-lg border"
-        style={{ backgroundColor: "var(--color-cream, #f5f1e8)" }}
-      >
-        <Story />
-      </div>
+      <TooltipProvider>
+        <div
+          className="max-w-md p-6 rounded-lg border"
+          style={{ backgroundColor: "var(--color-cream, #f5f1e8)" }}
+        >
+          <Story />
+        </div>
+      </TooltipProvider>
     ),
   ],
 };

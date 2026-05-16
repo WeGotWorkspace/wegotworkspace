@@ -18,4 +18,8 @@
   --workspace-user-footer-avatar-color: var(--color-ink);
   --workspace-user-footer-link-color: color-mix(in oklab, var(--color-ink) 65%, transparent);
   --workspace-user-footer-link-bg: color-mix(in oklab, var(--color-ink) 6%, transparent);
+
+  /* Detail tags/notebook chip — same ink-on-paper contrast as sidebar section badges */
+  --note-detail-tag-bg: color-mix(in oklab, var(--color-ink) 14%, transparent);
+  --note-detail-tag-fg: color-mix(in oklab, var(--color-ink) 80%, transparent);
 }

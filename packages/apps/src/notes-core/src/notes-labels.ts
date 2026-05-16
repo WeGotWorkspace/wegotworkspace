@@ -23,6 +23,7 @@ export type NotesUILabels = {
   emptyArchive: string;
   fallbackViewTitle: string;
   toastNewNote: string;
+  toastSaved: string;
   selectionStar: string;
   selectionArchive: string;
   selectionMoveToNotebook: string;
@@ -67,6 +68,7 @@ export const defaultNotesLabels: NotesUILabels = {
   emptyArchive: "Empty archive",
   fallbackViewTitle: "Writings",
   toastNewNote: "New note",
+  toastSaved: "Note saved",
   selectionStar: "Star",
   selectionArchive: "Archive",
   selectionMoveToNotebook: "Change notebook",
