@@ -80,6 +80,14 @@
   color: color-mix(in oklab, var(--color-ink) 82%, transparent);
 }
 
+.mail-workspace .mail-detail-view__body-frame {
+  display: block;
+  width: 100%;
+  border-radius: 0.375rem;
+  border: 1px solid color-mix(in oklab, var(--color-ink) 12%, transparent);
+  background: transparent;
+}
+
 /**
  * Portaled compose dialog — not under `.mail-workspace` in the DOM.
  * {@link Button} and field labels read tokens from {@link mailWorkspacePaneClasses.composeDialogSurface}.

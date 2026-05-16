@@ -5,6 +5,9 @@
 export const mailWorkspacePaneClasses = {
   detailView: "mail-detail-view",
   detailTitle: "mail-detail-view__title",
+  detailSenderRow: "mail-detail-view__sender-row",
+  detailPlainBody: "mail-detail-view__body",
+  detailBodyFrame: "mail-detail-view__body-frame",
   composeView: "mail-compose-view",
   composeHeader: "mail-compose-view__header",
   composeBody: "mail-compose-view__body",
