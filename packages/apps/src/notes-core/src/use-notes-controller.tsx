@@ -623,7 +623,6 @@ export function useNotesController({
       operations,
       queueMutation,
       batchToggleStarForIds,
-      show,
       requestConfirm,
       deleteConfirmCopy: {
         dialogEmptyArchiveTitle: L.dialogEmptyArchiveTitle,

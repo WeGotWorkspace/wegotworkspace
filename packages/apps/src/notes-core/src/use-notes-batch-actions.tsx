@@ -1,4 +1,4 @@
-import { useCallback, type Dispatch, type ReactNode, type SetStateAction } from "react";
+import { useCallback, type Dispatch, type SetStateAction } from "react";
 import { Star, StarOff } from "lucide-react";
 import { runQueuedBatchAction } from "@/hooks/use-batch-actions";
 import { buildPermanentDeleteDescription } from "@/lib/workspace/destructive-dialog";
@@ -37,7 +37,6 @@ type UseNotesBatchActionsArgs = {
   operations?: NotesAPIOperations;
   queueMutation: QueueMutation;
   batchToggleStarForIds: (ids: string[]) => { count: number; allWereStarred: boolean } | null;
-  show: (message: string, opts?: { icon?: ReactNode }) => void;
   requestConfirm: (args: {
     title: string;
     description: string;
@@ -61,7 +60,6 @@ export function useNotesBatchActions({
   operations,
   queueMutation,
   batchToggleStarForIds,
-  show,
   requestConfirm,
   deleteConfirmCopy,
 }: UseNotesBatchActionsArgs) {
@@ -132,21 +130,21 @@ export function useNotesBatchActions({
       ),
     );
     const toastMessage = `${result.allWereStarred ? "Unstarred" : "Starred"} ${result.count} item${result.count === 1 ? "" : "s"}`;
-    show(toastMessage, {
-      icon: result.allWereStarred ? (
-        <StarOff className="size-4" />
-      ) : (
-        <Star className="size-4" fill="currentColor" />
-      ),
-    });
-    if (!operations) return;
+    const toastIcon = result.allWereStarred ? (
+      <StarOff className="size-4" />
+    ) : (
+      <Star className="size-4" fill="currentColor" />
+    );
     const updatedRows = beforeRows.map((note) => ({ ...note, starred: nextStarred }));
     runQueuedBatchAction({
       queueMutation,
       key: `notes:batch-star:${selectedIds.slice().sort().join(",")}`,
       toastMessage,
-      execute: () =>
-        Promise.all(updatedRows.map((row) => operations.upsertNote(row))).then(() => {}),
+      icon: toastIcon,
+      execute: async () => {
+        if (!operations) return;
+        await Promise.all(updatedRows.map((row) => operations.upsertNote(row)));
+      },
       rollback: () => {
         batchToggleStarForIds(selectedIds);
         setNotes((prev) =>
@@ -158,7 +156,7 @@ export function useNotesBatchActions({
       },
       undoToastMessage: "Star changes undone.",
     });
-  }, [batchToggleStarForIds, notes, operations, queueMutation, selectedIds, setNotes, show]);
+  }, [batchToggleStarForIds, notes, operations, queueMutation, selectedIds, setNotes]);
 
   const batchArchive = useCallback(() => {
     const beforeRows = notes.filter((note) => selectedIds.includes(note.id));
