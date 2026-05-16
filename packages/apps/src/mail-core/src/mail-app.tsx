@@ -47,6 +47,9 @@ export function MailApp() {
           systemMailboxes={systemMailboxes}
           encodeFolderToken={encodeFolderToken}
           operations={operations}
+          onLogout={() => {
+            window.location.assign("/logout");
+          }}
         />
       )}
     />

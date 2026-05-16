@@ -123,13 +123,13 @@ export function MailListPanel({
                         icon: (
                           <Star className="size-5" fill={starred[m.id] ? "currentColor" : "none"} />
                         ),
-                        color: "var(--color-emerald)",
+                        color: "var(--mail-swipe-star-color)",
                         label: starred[m.id] ? "Unstar" : "Star",
                         onActivate: () => toggleStar(m.id),
                       },
                       swipeRightAction: {
                         icon: <Archive className="size-5" />,
-                        color: "var(--color-ink)",
+                        color: "var(--mail-swipe-archive-color)",
                         label: "Archive",
                         destructive: true,
                         onActivate: () => moveOne(m.id, "Archive"),
@@ -144,7 +144,7 @@ export function MailListPanel({
         {isLoadingMore ? (
           <div className="flex items-center justify-center py-3">
             <Loader2
-              className="size-5 animate-spin text-[color-mix(in_oklab,var(--color-ink)_45%,transparent)]"
+              className="mail-list-panel__loader size-5 animate-spin"
               aria-label={L.listLoading}
             />
           </div>

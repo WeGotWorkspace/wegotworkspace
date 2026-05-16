@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import { cn } from "@/lib/utils";
+import { mailWorkspacePaneClasses } from "@/mail-core/src/mail-workspace.styles";
 import type { MailAttachment } from "@/types/mail";
 
 type MailAttachmentsProps = {
@@ -92,58 +93,33 @@ export function MailAttachments({
   if (!attachments || attachments.length === 0) return null;
 
   return (
-    <section className={cn("mt-8", className)} aria-label={label}>
-      <div
-        className="mb-3 flex items-center gap-2 text-[11px] uppercase tracking-[0.2em]"
-        style={{ color: "color-mix(in oklab, var(--color-ink) 55%, transparent)" }}
-      >
+    <section className={cn(mailWorkspacePaneClasses.attachments, className)} aria-label={label}>
+      <div className={mailWorkspacePaneClasses.attachmentsLabel}>
         <Paperclip className="size-3.5" />
         <span>
           {label} ({attachments.length})
         </span>
       </div>
 
-      <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+      <ul className={mailWorkspacePaneClasses.attachmentsGrid}>
         {attachments.map((attachment, index) => {
           const Icon = iconForAttachment(attachment.type, attachment.name);
           const sizeLabel = formatAttachmentSize(attachment.size);
           const url = buildDownloadUrl?.(attachment);
           const metadata = [attachment.type, sizeLabel].filter(Boolean).join(" | ");
-          const itemClassName = cn(
-            "group flex w-full items-center gap-3 rounded-2xl border px-3 py-2.5 text-left transition-colors",
-            "hover:bg-[color-mix(in_oklab,var(--color-ink)_4%,transparent)]",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-emerald)]",
-          );
-          const itemStyle = {
-            borderColor: "color-mix(in oklab, var(--color-ink) 10%, transparent)",
-          } as const;
           const content = (
             <>
-              <div
-                className="flex size-10 shrink-0 items-center justify-center rounded-xl"
-                style={{
-                  backgroundColor: "color-mix(in oklab, var(--color-ink) 8%, transparent)",
-                  color: "color-mix(in oklab, var(--color-ink) 75%, transparent)",
-                }}
-              >
+              <div className={mailWorkspacePaneClasses.attachmentIcon}>
                 <Icon className="size-5" />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-medium" style={{ color: "var(--color-ink)" }}>
-                  {attachment.name}
-                </div>
+                <div className={mailWorkspacePaneClasses.attachmentName}>{attachment.name}</div>
                 {metadata ? (
-                  <div
-                    className="truncate text-xs"
-                    style={{ color: "color-mix(in oklab, var(--color-ink) 55%, transparent)" }}
-                  >
-                    {metadata}
-                  </div>
+                  <div className={mailWorkspacePaneClasses.attachmentMeta}>{metadata}</div>
                 ) : null}
               </div>
               <Download
-                className="size-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
-                style={{ color: "color-mix(in oklab, var(--color-ink) 65%, transparent)" }}
+                className={cn("size-4", mailWorkspacePaneClasses.attachmentDownload)}
                 aria-hidden="true"
               />
             </>
@@ -156,8 +132,7 @@ export function MailAttachments({
                   href={url}
                   download={attachment.name}
                   rel="noopener"
-                  className={itemClassName}
-                  style={itemStyle}
+                  className={mailWorkspacePaneClasses.attachmentItem}
                   aria-label={`Download ${attachment.name}`}
                 >
                   {content}
@@ -166,8 +141,7 @@ export function MailAttachments({
                 <button
                   type="button"
                   onClick={() => onDownload?.(attachment)}
-                  className={itemClassName}
-                  style={itemStyle}
+                  className={mailWorkspacePaneClasses.attachmentItem}
                   aria-label={`Download ${attachment.name}`}
                 >
                   {content}
