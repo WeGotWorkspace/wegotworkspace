@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { createMemoryHistory, RouterProvider } from "@tanstack/react-router";
-import { createWeGotWorkspaceStoryRouter } from "@/wegotworkspace/src/wegotworkspace-story-routes";
+import { createMemoryHistory } from "@tanstack/react-router";
+import { WeGotWorkspaceRouter } from "@/wegotworkspace/src/wegotworkspace-router";
 
 export type WeGotWorkspaceProps = {
   /** Starting route (default sign-in). */
@@ -8,19 +8,16 @@ export type WeGotWorkspaceProps = {
 };
 
 /**
- * Full WeGotWorkspace shell for Storybook and offline demos: login, app home, and every
- * product workspace with mock bootstrap data (no TanStack Start / live API required).
+ * Mock WeGotWorkspace shell for Storybook and offline demos (no live API).
  */
 export function WeGotWorkspace({ initialPath = "/login" }: WeGotWorkspaceProps) {
-  const router = useMemo(
+  const history = useMemo(
     () =>
-      createWeGotWorkspaceStoryRouter(
-        createMemoryHistory({
-          initialEntries: [initialPath],
-        }),
-      ),
+      createMemoryHistory({
+        initialEntries: [initialPath],
+      }),
     [initialPath],
   );
 
-  return <RouterProvider router={router} />;
+  return <WeGotWorkspaceRouter mode="mock" history={history} />;
 }
