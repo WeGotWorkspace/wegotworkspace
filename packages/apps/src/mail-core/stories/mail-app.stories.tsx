@@ -41,11 +41,3 @@ const workspaceArgs = {
 export const Default: Story = {
   args: workspaceArgs,
 };
-
-/** Opens the seeded inbox message with HTML body (iframe, links, attachments). */
-export const HtmlDetail: Story = {
-  args: {
-    ...workspaceArgs,
-    initialActiveId: "m1",
-  },
-};

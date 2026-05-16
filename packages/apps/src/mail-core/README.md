@@ -36,4 +36,4 @@ Pane and detail styling lives under `.mail-workspace` in `mail-workspace.css`, w
 | `Apps/Mail/Panes/Compose` | Compose dialog surface |
 | `Apps/Mail/Panes/Attachments` | Attachment grid |
 | `Apps/Mail/Panes/Multi selection` | Batch selection surface |
-| `Apps/Mail/App (live API)` | Live `MailApp` against `/api/v1` |
+| `Apps/WeGotWorkspace` | Full shell (login → home → all apps, mock API in Storybook) |
