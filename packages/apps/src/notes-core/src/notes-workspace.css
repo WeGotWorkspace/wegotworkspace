@@ -22,4 +22,9 @@
   /* Detail tags/notebook chip — same ink-on-paper contrast as sidebar section badges */
   --note-detail-tag-bg: color-mix(in oklab, var(--color-ink) 14%, transparent);
   --note-detail-tag-fg: color-mix(in oklab, var(--color-ink) 80%, transparent);
+  --note-detail-title-font-family: var(--font-serif);
+}
+
+.notes-workspace .note-detail-view__title {
+  font-family: var(--note-detail-title-font-family);
 }
