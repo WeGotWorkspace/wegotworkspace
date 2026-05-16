@@ -48,6 +48,16 @@ export type MailUILabels = {
   dialogDeleteSelectedDescription: string;
   dialogDeleteConfirmSuffix: string;
   dialogPermanentDeleteLeadIn: string;
+  composeCloseTitle: string;
+  composeCloseDescription: string;
+  composeKeepEditing: string;
+  composeCloseConfirm: string;
+  composeDiscardTitle: string;
+  composeDiscardDescription: string;
+  composeDeleteDraft: string;
+  composeAttachFiles: string;
+  composeAttachmentsLabel: string;
+  composeRemoveAttachment: string;
 };
 
 export const mailStoryLabels: MailUILabels = {
@@ -93,6 +103,18 @@ export const mailStoryLabels: MailUILabels = {
   dialogDeleteSelectedDescription: "the selected messages",
   dialogDeleteConfirmSuffix: workspaceDestructiveDialogLabels.dialogDeleteConfirmSuffix,
   dialogPermanentDeleteLeadIn: workspaceDestructiveDialogLabels.dialogPermanentDeleteLeadIn,
+  composeCloseTitle: "Close composer?",
+  composeCloseDescription:
+    "Your draft stays in the list. You can reopen it from Drafts and keep editing.",
+  composeKeepEditing: "Keep editing",
+  composeCloseConfirm: "Close",
+  composeDiscardTitle: "Delete draft?",
+  composeDiscardDescription:
+    "This removes the draft from your list permanently. This cannot be undone.",
+  composeDeleteDraft: "Delete draft",
+  composeAttachFiles: "Attach files",
+  composeAttachmentsLabel: "Attachments",
+  composeRemoveAttachment: "Remove attachment",
 };
 
 export function mergeMailLabels(overrides?: Partial<MailUILabels>): MailUILabels {
