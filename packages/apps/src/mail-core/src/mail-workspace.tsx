@@ -45,6 +45,7 @@ export function MailWorkspace({
   mailboxLoader,
   operations,
   onLogout,
+  initialActiveId,
   className,
 }: MailWorkspaceProps) {
   const closeSidebarOnMobile = (closeSidebar: () => void) => {
@@ -123,6 +124,7 @@ export function MailWorkspace({
     encodeFolderToken,
     mailboxLoader,
     operations,
+    initialActiveId,
   });
 
   const { primarySidebarItems, systemSidebarItems, moreSidebarItems } = useMailSidebarModel({

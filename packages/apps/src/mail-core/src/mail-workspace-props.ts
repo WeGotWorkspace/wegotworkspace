@@ -24,5 +24,7 @@ export type MailWorkspaceProps = {
   operations?: MailAPIOperations;
   /** Invoked when the user chooses log out; navigation is owned by the app shell. */
   onLogout?: () => void;
+  /** Storybook / tests: open this message in the detail pane on first render. */
+  initialActiveId?: string;
   className?: string;
 };
