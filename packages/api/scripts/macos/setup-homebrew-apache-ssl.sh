@@ -241,6 +241,24 @@ sed -i '' 's|DirectoryIndex index.html|DirectoryIndex index.php index.html|' "$H
 # Set DocumentRoot
 sed -i '' "s|^DocumentRoot .*|DocumentRoot \"$DOCROOT\"|" "$HTTPD_CONF"
 sed -i '' "s|^<Directory \"$HOMEBREW_PREFIX/var/www\">|<Directory \"$DOCROOT\">|" "$HTTPD_CONF"
+python3 - "$HTTPD_CONF" "$DOCROOT" <<'PY'
+import re, sys
+from pathlib import Path
+
+conf_path, docroot = sys.argv[1:3]
+lines = Path(conf_path).read_text().splitlines(keepends=True)
+out = []
+in_dir = False
+for line in lines:
+    if line.startswith(f'<Directory "{docroot}"'):
+        in_dir = True
+    elif in_dir and line.strip() == '</Directory>':
+        in_dir = False
+    if in_dir and re.match(r'\s*AllowOverride\s+', line):
+        line = re.sub(r'AllowOverride\s+\S+', 'AllowOverride All', line)
+    out.append(line)
+Path(conf_path).write_text(''.join(out))
+PY
 
 success "httpd.conf configured"
 
@@ -256,6 +274,50 @@ sed -i '' "s|DocumentRoot .*|DocumentRoot \"$DOCROOT\"|" "$SSL_CONF"
 
 # Fix default ServerName so SNI routing works for named vhosts
 sed -i '' 's|ServerName www.example.com:8443|ServerName localhost:8443|' "$SSL_CONF"
+
+# Default SSL vhost must honor .htaccess (routes /install/, /api/, etc. to index.php).
+WGW_SSL_DIR_MARKER="# WGW preview docroot (AllowOverride)"
+if ! grep -qF "$WGW_SSL_DIR_MARKER" "$SSL_CONF"; then
+  WGW_SSL_DIR_BLOCK="${WGW_SSL_DIR_MARKER}
+<Directory \"${DOCROOT}\">
+    Options Indexes FollowSymLinks
+    AllowOverride All
+    Require all granted
+</Directory>"
+  DOCROOT_LINE="DocumentRoot \"${DOCROOT}\""
+  python3 - "$SSL_CONF" "$DOCROOT_LINE" "$WGW_SSL_DIR_BLOCK" <<'PY'
+import sys
+from pathlib import Path
+
+conf_path, docroot_line, directory_block = sys.argv[1:4]
+text = Path(conf_path).read_text()
+if directory_block.splitlines()[0] in text:
+    sys.exit(0)
+if docroot_line not in text:
+    sys.stderr.write(f"Could not find {docroot_line!r} in {conf_path}\n")
+    sys.exit(1)
+Path(conf_path).write_text(text.replace(docroot_line, docroot_line + "\n" + directory_block, 1))
+PY
+else
+  python3 - "$SSL_CONF" "$DOCROOT" <<'PY'
+import re, sys
+from pathlib import Path
+
+conf_path, docroot = sys.argv[1:3]
+lines = Path(conf_path).read_text().splitlines(keepends=True)
+out = []
+in_dir = False
+for line in lines:
+    if line.startswith(f'<Directory "{docroot}"'):
+        in_dir = True
+    elif in_dir and line.strip() == '</Directory>':
+        in_dir = False
+    if in_dir and re.match(r'\s*AllowOverride\s+', line):
+        line = re.sub(r'AllowOverride\s+\S+', 'AllowOverride All', line)
+    out.append(line)
+Path(conf_path).write_text(''.join(out))
+PY
+fi
 
 success "SSL config updated"
 
