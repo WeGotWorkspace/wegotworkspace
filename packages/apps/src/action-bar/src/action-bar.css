@@ -52,7 +52,7 @@
   }
 }
 
-@container action-bar (max-width: 56rem) {
+@container action-bar (max-width: 36rem) {
   .action-bar__row {
     display: none;
   }
@@ -62,13 +62,15 @@
   }
 }
 
-/* Fallback for environments/layouts where named container query isn't applied as expected. */
-@media (max-width: 64rem) {
-  .action-bar__row {
-    display: none;
-  }
+/* Viewport fallback only when container queries are unavailable. */
+@supports not (container-type: inline-size) {
+  @media (max-width: 36rem) {
+    .action-bar__row {
+      display: none;
+    }
 
-  .action-bar__menu {
-    display: inline-flex;
+    .action-bar__menu {
+      display: inline-flex;
+    }
   }
 }
