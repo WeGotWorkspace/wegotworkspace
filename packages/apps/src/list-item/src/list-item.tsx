@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { Archive, Check } from "lucide-react";
 import {
   SwipeableListItem,
@@ -93,7 +93,6 @@ export function ListItem({
   const longPressFired = useRef(false);
   const longPressBlockedBySwipeRef = useRef(false);
   const touchStartYRef = useRef<number | null>(null);
-  const mouseLongPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const startLongPress = (e: React.TouchEvent<HTMLButtonElement>) => {
     touchStartYRef.current = e.touches[0]?.clientY ?? null;
@@ -124,24 +123,6 @@ export function ListItem({
     touchStartYRef.current = null;
   };
 
-  const startMouseLongPress = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (isTouch) return;
-    if (e.button !== 0) return;
-    longPressFired.current = false;
-    if (mouseLongPressTimer.current) clearTimeout(mouseLongPressTimer.current);
-    mouseLongPressTimer.current = setTimeout(() => {
-      longPressFired.current = true;
-      onLongPress();
-    }, LONG_PRESS_DELAY_MS);
-  };
-
-  const cancelMouseLongPress = () => {
-    if (mouseLongPressTimer.current) clearTimeout(mouseLongPressTimer.current);
-    mouseLongPressTimer.current = null;
-  };
-
-  useEffect(() => () => cancelMouseLongPress(), []);
-
   const bg = isSelected
     ? palette.selectedBackground
     : isActive
@@ -164,19 +145,13 @@ export function ListItem({
       }}
       onMouseDown={(e) => {
         if (e.shiftKey) e.preventDefault();
-        startMouseLongPress(e);
       }}
-      onMouseUp={cancelMouseLongPress}
-      onMouseLeave={cancelMouseLongPress}
-      onTouchStart={startLongPress}
+      onTouchStart={isTouch ? startLongPress : undefined}
       onTouchEnd={resetTouchIntent}
       onTouchCancel={resetTouchIntent}
       onTouchMove={handleTouchMove}
       onContextMenu={(e) => {
-        if (!isTouch) {
-          e.preventDefault();
-          onLongPress();
-        }
+        if (isTouch) e.preventDefault();
       }}
       draggable={!isTouch}
       onDragStart={(e) => {

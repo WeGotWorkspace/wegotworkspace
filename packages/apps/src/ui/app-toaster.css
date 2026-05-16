@@ -1,6 +1,33 @@
 @import "../styles.css" reference;
 
 /**
+ * App toast stack — above workspace mobile panes (z-20–40), Milkdown toolbars (50), dialogs (50).
+ */
+[data-sonner-toaster] {
+  --app-toast-z: 100;
+  --width: min(
+    calc(100vw - max(1.5rem, env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px))),
+    28rem
+  );
+  z-index: var(--app-toast-z) !important;
+  width: var(--width) !important;
+  max-width: min(
+    100%,
+    calc(100vw - max(1.5rem, env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px)))
+  ) !important;
+  max-height: calc(
+    100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 1rem
+  );
+  pointer-events: none;
+}
+
+[data-sonner-toast] {
+  width: 100%;
+  max-width: 100%;
+  pointer-events: auto;
+}
+
+/**
  * Sonner renders `toast.custom` JSX inside [data-content] > [data-title].
  * Unstyled toasts skip Sonner’s `width: var(--width)` on the <li>, so we
  * stretch the shell so Callout can use the full toaster width.
@@ -36,4 +63,45 @@
   padding: 0;
   font: inherit;
   line-height: inherit;
+}
+
+/* Solid surfaces — default Callout mixes are too faint on busy workspaces. */
+[data-sonner-toast] .callout {
+  --callout-bg: var(--color-ink);
+  --callout-border: color-mix(in oklab, var(--color-cream) 22%, transparent);
+  --callout-text: var(--color-cream);
+  --callout-icon-color: var(--color-cream);
+  background-color: var(--callout-bg);
+  border-color: var(--callout-border);
+  color: var(--callout-text);
+  box-shadow:
+    0 6px 24px color-mix(in oklab, var(--color-ink) 50%, transparent),
+    inset 0 1px 0 color-mix(in oklab, var(--color-cream) 14%, transparent);
+}
+
+[data-sonner-toast] .callout--success {
+  --callout-icon-color: var(--color-emerald);
+  --callout-border: color-mix(in oklab, var(--color-emerald) 38%, var(--color-ink));
+}
+
+[data-sonner-toast] .callout--error {
+  --callout-icon-color: #f4a4a4;
+  --callout-border: color-mix(in oklab, #f4a4a4 40%, var(--color-ink));
+}
+
+[data-sonner-toast] .callout--warning {
+  --callout-icon-color: #f0c06a;
+  --callout-border: color-mix(in oklab, #f0c06a 40%, var(--color-ink));
+}
+
+[data-sonner-toast] .callout--info {
+  --callout-icon-color: color-mix(in oklab, var(--color-cream) 88%, transparent);
+}
+
+[data-sonner-toast] .menu-item {
+  color: var(--color-cream);
+}
+
+[data-sonner-toast] .menu-item__description {
+  color: color-mix(in oklab, var(--color-cream) 78%, transparent);
 }
