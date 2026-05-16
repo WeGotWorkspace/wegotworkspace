@@ -3,8 +3,8 @@
 import {
   cpSync,
   mkdirSync,
-  readFileSync,
   readdirSync,
+  readFileSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -15,66 +15,99 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const packageRoot = resolve(__dirname, "..");
 const repoRoot = resolve(packageRoot, "..", "..");
-const clientAssetsDir = resolve(packageRoot, "dist", "client", "assets");
-const clientFontsDir = resolve(packageRoot, "dist", "client", "fonts");
-const clientIconsDir = resolve(packageRoot, "dist", "client", "icons");
-const clientManifestsDir = resolve(packageRoot, "dist", "client", "manifests");
+const distRoot = resolve(packageRoot, "dist");
+const assetsDir = resolve(distRoot, "assets");
 const runtimeAppsRoot = resolve(repoRoot, "apps", "wegotworkspace", "packages", "apps");
 
 const modules = [
-  { name: "shell", title: "WeGotWorkspace", assetDir: "assets" },
-  { name: "admin", title: "Admin Console - WeGotWorkspace", assetDir: "assets" },
-  { name: "drive", title: "Drive - WeGotWorkspace", assetDir: "assets" },
-  { name: "install", title: "WeGotWorkspace Installer", assetDir: "assets" },
-  { name: "mail", title: "Mail - WeGotWorkspace", assetDir: "assets" },
-  { name: "notes", title: "Notes - WeGotWorkspace", assetDir: "assets" },
-  { name: "settings", title: "Settings - WeGotWorkspace", assetDir: "assets" },
-  { name: "voice", title: "Voice - WeGotWorkspace", assetDir: "assets" },
+  { name: "shell", title: "WeGotWorkspace" },
+  { name: "admin", title: "Admin Console - WeGotWorkspace" },
+  { name: "drive", title: "Drive - WeGotWorkspace" },
+  { name: "install", title: "WeGotWorkspace Installer" },
+  { name: "mail", title: "Mail - WeGotWorkspace" },
+  { name: "notes", title: "Notes - WeGotWorkspace" },
+  { name: "settings", title: "Settings - WeGotWorkspace" },
+  { name: "voice", title: "Meet - WeGotWorkspace" },
 ];
 
+const RUNTIME_FONT_PRELOADS = [
+  "GeneralSans-Variable.woff2",
+  "GeneralSans-VariableItalic.woff2",
+  "LibreCaslonCondensed.woff2",
+  "JetBrainsMono-Variable.woff2",
+];
+
+function renderFontPreloadTags() {
+  return RUNTIME_FONT_PRELOADS.map(
+    (file) =>
+      `    <link rel="preload" href="./fonts/${file}" as="font" type="font/woff2" crossorigin>`,
+  ).join("\n");
+}
+
+function renderIndexHtml({ title, scriptPath, cssPath }) {
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${title}</title>
+${renderFontPreloadTags()}
+    <script type="module" crossorigin src="${scriptPath}"></script>
+    <link rel="stylesheet" crossorigin href="${cssPath}">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
+`;
+}
+
 export function syncRuntimeAppBuilds() {
-  const files = readdirSync(clientAssetsDir);
+  const files = readdirSync(assetsDir);
   const mainJs = pickLargestFile(files, /^index-.*\.js$/);
-  const mainCss = pickLargestFile(files, /^styles-.*\.css$/);
+  const mainCss = pickLargestFile(files, /^index-.*\.css$/) ?? pickLargestFile(files, /^styles-.*\.css$/);
 
   if (!mainJs || !mainCss) {
     throw new Error(
-      `Could not determine main app entry files in ${clientAssetsDir}. Found index js=${String(mainJs)}, css=${String(mainCss)}`
+      `Could not determine main app entry files in ${assetsDir}. Found js=${String(mainJs)}, css=${String(mainCss)}`,
     );
   }
 
   for (const module of modules) {
-    const distRoot = resolve(runtimeAppsRoot, module.name, "dist");
-    const targetAssetsDir = resolve(distRoot, module.assetDir);
-    const targetMainJsPath = resolve(targetAssetsDir, mainJs);
-    const targetMainCssPath = resolve(targetAssetsDir, mainCss);
+    const targetDist = resolve(runtimeAppsRoot, module.name, "dist");
+    const targetAssetsDir = resolve(targetDist, "assets");
 
-    mkdirSync(distRoot, { recursive: true });
-    rmSync(resolve(distRoot, "assets"), { recursive: true, force: true });
-    rmSync(resolve(distRoot, "fonts"), { recursive: true, force: true });
-    rmSync(resolve(distRoot, "icons"), { recursive: true, force: true });
-    rmSync(resolve(distRoot, "manifests"), { recursive: true, force: true });
+    mkdirSync(targetDist, { recursive: true });
     rmSync(targetAssetsDir, { recursive: true, force: true });
-    cpSync(clientAssetsDir, targetAssetsDir, { recursive: true });
-    cpSync(clientFontsDir, resolve(distRoot, "fonts"), { recursive: true });
-    cpSync(clientIconsDir, resolve(distRoot, "icons"), { recursive: true });
-    cpSync(clientManifestsDir, resolve(distRoot, "manifests"), { recursive: true });
+    rmSync(resolve(targetDist, "fonts"), { recursive: true, force: true });
+    rmSync(resolve(targetDist, "icons"), { recursive: true, force: true });
+    rmSync(resolve(targetDist, "manifests"), { recursive: true, force: true });
 
-    // Static LAMP runtime serves plain index.html without SSR payload.
-    // TanStack Start entry must run in pure client mode here.
-    patchStaticRuntimeEntry(targetMainJsPath);
-    patchStaticRuntimeStylesheet(targetMainCssPath);
+    cpSync(assetsDir, targetAssetsDir, { recursive: true });
+    cpSync(resolve(distRoot, "fonts"), resolve(targetDist, "fonts"), { recursive: true });
+    cpSync(resolve(distRoot, "icons"), resolve(targetDist, "icons"), { recursive: true });
+    cpSync(resolve(distRoot, "manifests"), resolve(targetDist, "manifests"), { recursive: true });
+
+    for (const file of readdirSync(targetAssetsDir)) {
+      const filePath = resolve(targetAssetsDir, file);
+      if (file.endsWith(".js")) {
+        patchRelativeAssetPaths(filePath);
+      }
+      if (file.endsWith(".css")) {
+        patchStaticRuntimeStylesheet(filePath);
+      }
+    }
 
     const html = renderIndexHtml({
       title: module.title,
-      scriptPath: `./${module.assetDir}/${mainJs}`,
-      cssPath: `./${module.assetDir}/${mainCss}`,
+      scriptPath: `./assets/${mainJs}`,
+      cssPath: `./assets/${mainCss}`,
     });
-    writeFileSync(resolve(distRoot, "index.html"), html, "utf8");
+    writeFileSync(resolve(targetDist, "index.html"), html, "utf8");
   }
 
   console.log(
-    `Synced frontend runtime app builds (${modules.map((m) => m.name).join(", ")}) using ${mainJs} and ${mainCss}.`
+    `Synced frontend runtime app builds (${modules.map((m) => m.name).join(", ")}) using ${mainJs} and ${mainCss}.`,
   );
 }
 
@@ -86,54 +119,19 @@ function pickLargestFile(allFiles, pattern) {
   const matches = allFiles.filter((file) => pattern.test(file));
   if (matches.length === 0) return null;
   return matches
-    .map((file) => ({ file, size: statSync(resolve(clientAssetsDir, file)).size }))
+    .map((file) => ({ file, size: statSync(resolve(assetsDir, file)).size }))
     .sort((a, b) => b.size - a.size)[0]?.file;
 }
 
-function renderIndexHtml({ title, scriptPath, cssPath }) {
-  return `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${title}</title>
-    <script type="module" crossorigin src="${scriptPath}"></script>
-    <link rel="stylesheet" crossorigin href="${cssPath}">
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
-</html>
-`;
-}
-
-function patchStaticRuntimeEntry(filePath) {
+function patchRelativeAssetPaths(filePath) {
   const source = readFileSync(filePath, "utf8");
-  const withoutHydrateSsr = source
-    .replace(
-      "if (!router.stores.matchesId.get().length) await hydrate(router);",
-      "/* static lamp: skip SSR hydration */",
-    )
-    .replace(
-      /\.stores\.matchesId\.get\(\)\.length\|\|await [A-Za-z$_][\w$]*\([^)]*\)/,
-      ".stores.matchesId.get().length||void 0",
-    );
-  // Static runtime can be hosted under subpaths (for example /files/drive/).
-  // Vite may emit absolute CSS hrefs in JS chunks; rewrite them to relative.
-  const withRelativeAssetLinks = withoutHydrateSsr.replace(
-    /(["'])\/assets\//g,
-    "$1./assets/",
-  );
-  const clientRendered = withRelativeAssetLinks
-    .replace(
-      /clientExports\.hydrateRoot\(\s*document,\s*/,
-      "clientExports.createRoot(document).render(",
-    )
-    .replace(/\.hydrateRoot\(\s*document,\s*/, ".createRoot(document).render(");
-  if (clientRendered === source) {
-    throw new Error(`Could not patch static runtime entry: ${filePath}`);
+  const patched = source
+    .replace(/(["'])\/assets\//g, "$1./assets/")
+    .replace(/(["'])assets\//g, "$1./assets/")
+    .replace(/\/assets\//g, "./assets/");
+  if (patched !== source) {
+    writeFileSync(filePath, patched, "utf8");
   }
-  writeFileSync(filePath, clientRendered, "utf8");
 }
 
 function patchStaticRuntimeStylesheet(filePath) {

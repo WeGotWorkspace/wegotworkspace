@@ -1,8 +1,8 @@
 import { useMemo } from "react";
-import { createMemoryHistory, RouterProvider } from "@tanstack/react-router";
+import { createMemoryHistory } from "@tanstack/react-router";
 import { WgwApiRuntimeProvider } from "@/lib/api/wgw/wgw-api-runtime-provider";
 import type { WeGotWorkspaceProps } from "@/wegotworkspace/src/wegotworkspace";
-import { createWeGotWorkspaceLiveRouter } from "@/wegotworkspace/src/wegotworkspace-live-routes";
+import { WeGotWorkspaceRouter } from "@/wegotworkspace/src/wegotworkspace-router";
 
 export type WeGotWorkspaceLiveProps = WeGotWorkspaceProps & {
   /**
@@ -12,28 +12,22 @@ export type WeGotWorkspaceLiveProps = WeGotWorkspaceProps & {
   apiBaseUrl: string;
 };
 
-function WeGotWorkspaceLiveRouter({ initialPath = "/login" }: WeGotWorkspaceProps) {
-  const router = useMemo(
+/**
+ * Live API shell for Storybook manual testing (memory history + configurable base URL).
+ * Production uses {@link WeGotWorkspaceApp} with browser history instead.
+ */
+export function WeGotWorkspaceLive({ apiBaseUrl, initialPath = "/login" }: WeGotWorkspaceLiveProps) {
+  const history = useMemo(
     () =>
-      createWeGotWorkspaceLiveRouter(
-        createMemoryHistory({
-          initialEntries: [initialPath],
-        }),
-      ),
+      createMemoryHistory({
+        initialEntries: [initialPath],
+      }),
     [initialPath],
   );
 
-  return <RouterProvider router={router} />;
-}
-
-/**
- * Full WeGotWorkspace shell against a real API: configures fetch base URL for the
- * subtree and renders production `*App` routes (login, home, mail, notes, …).
- */
-export function WeGotWorkspaceLive({ apiBaseUrl, initialPath }: WeGotWorkspaceLiveProps) {
   return (
     <WgwApiRuntimeProvider apiBaseUrl={apiBaseUrl}>
-      <WeGotWorkspaceLiveRouter initialPath={initialPath} />
+      <WeGotWorkspaceRouter mode="live" history={history} />
     </WgwApiRuntimeProvider>
   );
 }

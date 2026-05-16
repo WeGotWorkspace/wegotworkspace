@@ -1,4 +1,6 @@
 @import "../../workspace-shell/src/workspace-split-app.css";
+@import "@/button/src/button.css";
+@import "@/ui/app-toaster.css";
 
 /* Pane class fragments: `install-workspace.styles.ts` (must stay in sync). */
 

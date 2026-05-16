@@ -19,6 +19,7 @@ final class AppShellStatic
         '/meet',
         '/notes',
         '/settings',
+        '/voice',
     ];
     private const GLOBAL_PREFIXES = [
         '/assets',

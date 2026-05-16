@@ -211,13 +211,13 @@ if ($path === $legacyTalk || $path === $legacyTalk.'/' || str_starts_with($path,
     exit;
 }
 
-if (VoiceKernel::tryRespond($webBase, $path)) {
-    exit;
-}
-
 $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
 $isShellMethod = $method === 'GET' || $method === 'HEAD';
 if ($isShellMethod && AppShellStatic::tryServe($webBase, $path)) {
+    exit;
+}
+
+if (VoiceKernel::tryRespond($webBase, $path)) {
     exit;
 }
 
