@@ -1,9 +1,10 @@
 import { WorkspaceLiveAppShell } from "@/lib/live/workspace-live-app-shell";
-import { InstallWorkspace } from "@/routes/install";
-import { useInstallAPI } from "./use-install-api";
+import { InstallWorkspace } from "@/install-core/src/install-workspace";
+import { useInstallAPI } from "@/install-core/src/use-install-api";
 
 export function InstallApp() {
-  const { phase, error, retry, successVersion, bootstrap } = useInstallAPI();
+  const { phase, error, retry, successVersion, data } = useInstallAPI();
+
   return (
     <WorkspaceLiveAppShell
       phase={phase}
@@ -11,7 +12,22 @@ export function InstallApp() {
       retry={retry}
       errorTitle="Could not load installer"
       successVersion={successVersion}
-      render={(key) => <InstallWorkspace key={key} bootstrapState={bootstrap?.state ?? null} />}
+      render={(key) => (
+        <InstallWorkspace
+          key={key}
+          data={data}
+          onInstallRedirect={(url) => {
+            if (typeof window !== "undefined") {
+              window.location.assign(url);
+            }
+          }}
+          onOpenAdmin={() => {
+            if (typeof window !== "undefined") {
+              window.location.assign("/login?return=%2Fadmin%2F");
+            }
+          }}
+        />
+      )}
     />
   );
 }
