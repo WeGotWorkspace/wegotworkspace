@@ -3,6 +3,7 @@ import {
   openMailBodyLink,
   prepareMailBodyHtmlLinks,
 } from "@/mail-core/src/mail-body-iframe-links";
+import { mailWorkspacePaneClasses } from "@/mail-core/src/mail-workspace.styles";
 
 type MailBodyIframeProps = {
   bodyHtml: string;
@@ -104,7 +105,7 @@ export function MailBodyIframe({ bodyHtml }: MailBodyIframeProps) {
       title="Mail message body"
       srcDoc={iframeDoc}
       onLoad={handleIframeLoad}
-      className="w-full rounded-md border border-[color-mix(in_oklab,var(--color-ink)_12%,transparent)] bg-transparent"
+      className={mailWorkspacePaneClasses.detailBodyFrame}
       style={{ height: "420px", overflow: "hidden" }}
       scrolling="no"
       sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
