@@ -1,6 +1,8 @@
 @import "../../workspace-shell/src/workspace-split-app.css";
 
 .meet-workspace {
+  @apply flex h-dvh w-full flex-col;
+
   --meet-accent: #4f7cff;
   --meet-surface: #0e0f17;
   --meet-panel: #171826;
@@ -26,6 +28,14 @@
   --button-subtle-color: var(--meet-text);
   --button-subtle-hover-background: color-mix(in oklab, var(--meet-text) 12%, var(--meet-panel-soft));
 
+  --workspace-user-footer-text-color: var(--meet-text);
+  --workspace-user-footer-subtitle-color: var(--meet-muted);
+  --workspace-user-footer-border-color: transparent;
+  --workspace-user-footer-avatar-bg: var(--meet-panel-soft);
+  --workspace-user-footer-avatar-color: var(--meet-text);
+  --workspace-user-footer-link-color: var(--meet-text);
+  --workspace-user-footer-link-bg: var(--meet-panel-soft);
+
   background-color: var(--meet-surface);
   color: var(--meet-text);
   font-family: var(--font-sans);
@@ -43,8 +53,20 @@
   @apply flex shrink-0 items-center justify-between p-6 md:p-8;
 }
 
+.meet-workspace__header-start {
+  @apply flex min-w-0 items-center;
+}
+
+.meet-workspace__header-account {
+  @apply shrink-0;
+}
+
+.meet-workspace__header-account .workspace-app-layout__user-footer {
+  @apply gap-2 border-0 p-0;
+}
+
 .meet-workspace__header-spacer {
-  @apply size-9;
+  @apply size-9 shrink-0;
 }
 
 .meet-workspace__lobby {
@@ -286,12 +308,6 @@
 :is(.meet-workspace, .meet-dialog-surface) .meet-avatar {
   @apply flex items-center justify-center rounded-full font-semibold;
   background-color: var(--meet-avatar-bg);
-  color: var(--meet-text);
-}
-
-:is(.meet-workspace, .meet-dialog-surface) .meet-user-menu-trigger {
-  @apply flex size-9 items-center justify-center rounded-full text-xs font-semibold transition-colors;
-  background-color: var(--meet-panel-soft);
   color: var(--meet-text);
 }
 
