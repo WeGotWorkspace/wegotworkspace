@@ -1,0 +1,41 @@
+import { useEffect, type ComponentType, type ReactNode } from "react";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
+import { wgwLiveApiEnabled, wgwSessionAvailable } from "@/lib/api/wgw/http";
+import { sanitizeWgwReturnPath } from "@/lib/api/wgw/route-guard";
+
+type WeGotWorkspaceRequireAuthProps = {
+  children: ReactNode;
+};
+
+function WeGotWorkspaceRequireAuth({ children }: WeGotWorkspaceRequireAuthProps) {
+  const navigate = useNavigate();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const searchStr = useRouterState({ select: (state) => state.location.searchStr });
+  const hash = useRouterState({ select: (state) => state.location.hash });
+
+  useEffect(() => {
+    if (!wgwLiveApiEnabled()) return;
+    if (wgwSessionAvailable()) return;
+    const returnPath = sanitizeWgwReturnPath(`${pathname}${searchStr}${hash}`);
+    void navigate({
+      to: "/login",
+      search: { return: returnPath },
+    });
+  }, [hash, navigate, pathname, searchStr]);
+
+  return children;
+}
+
+export function withWeGotWorkspaceAuth<Props extends object>(
+  Component: ComponentType<Props>,
+): ComponentType<Props> {
+  function AuthenticatedRoute(props: Props) {
+    return (
+      <WeGotWorkspaceRequireAuth>
+        <Component {...props} />
+      </WeGotWorkspaceRequireAuth>
+    );
+  }
+  AuthenticatedRoute.displayName = `WithWeGotWorkspaceAuth(${Component.displayName ?? Component.name ?? "Route"})`;
+  return AuthenticatedRoute;
+}
