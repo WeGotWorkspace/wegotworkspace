@@ -42,11 +42,15 @@
 }
 
 .button--variant-outline {
-  border: 1px solid color-mix(in oklab, var(--color-ink) 20%, transparent);
+  border: 1px solid
+    var(--button-outline-border-color, color-mix(in oklab, var(--color-ink) 20%, transparent));
 }
 
 .button--variant-outline:hover {
-  background-color: color-mix(in oklab, var(--color-ink) 8%, transparent);
+  background-color: var(
+    --button-outline-hover-background,
+    color-mix(in oklab, var(--color-ink) 8%, transparent)
+  );
 }
 
 .button--variant-ghost:hover {
