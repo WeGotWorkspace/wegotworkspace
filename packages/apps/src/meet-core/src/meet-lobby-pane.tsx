@@ -12,14 +12,14 @@ import { Label } from "@/ui/label";
 import { MeetAvatar } from "@/meet-core/src/meet-avatar";
 import { MeetCircleToggle } from "@/meet-core/src/meet-circle-toggle";
 import { MeetDeviceRow } from "@/meet-core/src/meet-device-row";
+import type { MeetControllerState } from "@/meet-core/src/meet-controller-state";
 import type { MeetDeviceOption } from "@/meet-core/src/meet-device-utils";
+import { meetDeviceIdForOption } from "@/meet-core/src/meet-device-utils";
+import { MeetLobbyStatusCard } from "@/meet-core/src/meet-lobby-status-card";
 import { meetLabels } from "@/meet-core/src/meet-labels";
-import type { useMeetController } from "@/meet-core/src/use-meet-controller";
 
-type MeetController = ReturnType<typeof useMeetController>;
-
-type MeetLobbyPaneProps = {
-  controller: MeetController;
+export type MeetLobbyPaneProps = {
+  controller: MeetControllerState;
   displayName: string;
   inJoinFlow: boolean;
   hasSignedInIdentity: boolean;
@@ -59,28 +59,30 @@ export function MeetLobbyPane({
 }: MeetLobbyPaneProps) {
   if (endedMessage) {
     return (
-      <div className="meet-workspace__card meet-workspace__card--stack-lg">
-        <h1 className="meet-workspace__title meet-workspace__title--lg">{meetLabels.callEndedTitle}</h1>
-        <p className="meet-workspace__muted">{endedMessage}</p>
-      </div>
+      <MeetLobbyStatusCard
+        title={meetLabels.callEndedTitle}
+        body={endedMessage}
+        titleSize="lg"
+      />
     );
   }
 
   if (showMissingInviteScreen) {
     return (
-      <div className="meet-workspace__card meet-workspace__card--stack">
-        <h1 className="meet-workspace__title meet-workspace__title--lg">{meetLabels.missingInviteTitle}</h1>
-        <p className="meet-workspace__muted">{meetLabels.missingInviteBody}</p>
-      </div>
+      <MeetLobbyStatusCard
+        title={meetLabels.missingInviteTitle}
+        body={meetLabels.missingInviteBody}
+      />
     );
   }
 
   if (showInviteCheckingScreen) {
     return (
-      <div className="meet-workspace__card meet-workspace__card--stack">
-        <h1 className="meet-workspace__title meet-workspace__title--md">{meetLabels.checkingInviteTitle}</h1>
-        <p className="meet-workspace__muted">{meetLabels.checkingInviteBody}</p>
-      </div>
+      <MeetLobbyStatusCard
+        title={meetLabels.checkingInviteTitle}
+        body={meetLabels.checkingInviteBody}
+        titleSize="md"
+      />
     );
   }
 
@@ -151,7 +153,7 @@ export function MeetLobbyPane({
           label={meetLabels.cameraLabel}
           value={activeCamera}
           onChange={(id) => {
-            const deviceId = cameras.find((option) => option.id === id)?.deviceId;
+            const deviceId = meetDeviceIdForOption(cameras, id);
             if (!deviceId) return;
             void controller.switchCamera(deviceId);
           }}
@@ -162,7 +164,7 @@ export function MeetLobbyPane({
           label={meetLabels.microphoneLabel}
           value={activeMic}
           onChange={(id) => {
-            const deviceId = microphones.find((option) => option.id === id)?.deviceId;
+            const deviceId = meetDeviceIdForOption(microphones, id);
             if (!deviceId) return;
             void controller.switchMic(deviceId);
           }}

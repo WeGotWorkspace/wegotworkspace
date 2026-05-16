@@ -15,6 +15,8 @@ type MeetDevicePopoverProps = {
   onCamera: (value: string) => void;
   onMicrophone: (value: string) => void;
   onSpeaker: (value: string) => void;
+  /** Storybook: start with the device sheet open. */
+  defaultOpen?: boolean;
 };
 
 export function MeetDevicePopover({
@@ -27,9 +29,10 @@ export function MeetDevicePopover({
   onCamera,
   onMicrophone,
   onSpeaker,
+  defaultOpen,
 }: MeetDevicePopoverProps) {
   return (
-    <Popover>
+    <Popover defaultOpen={defaultOpen}>
       <Tooltip>
         <TooltipTrigger asChild>
           <PopoverTrigger asChild>

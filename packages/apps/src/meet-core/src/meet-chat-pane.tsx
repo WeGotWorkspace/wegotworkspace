@@ -4,7 +4,7 @@ import { Input } from "@/ui/input";
 import { formatMeetChatTime, renderMeetChatBody } from "@/meet-core/src/meet-chat-utils";
 import { meetLabels } from "@/meet-core/src/meet-labels";
 
-type MeetChatMessage = {
+export type MeetChatMessage = {
   id: string;
   fromName: string;
   body: string;
