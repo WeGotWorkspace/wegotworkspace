@@ -169,6 +169,7 @@ type UseMailUIControllerArgs = {
   encodeFolderToken: (label: string) => string;
   mailboxLoader?: MailMailboxLoader;
   operations?: MailAPIOperations;
+  initialActiveId?: string;
 };
 
 export function useMailController({
@@ -181,6 +182,7 @@ export function useMailController({
   encodeFolderToken,
   mailboxLoader,
   operations,
+  initialActiveId = "",
 }: UseMailUIControllerArgs) {
   const L = useMemo(() => mergeMailLabels(labels), [labels]);
   const allSystemMailboxes = systemMailboxes;
@@ -210,7 +212,7 @@ export function useMailController({
   useEffect(() => {
     mailRef.current = mail;
   }, [mail]);
-  const [activeId, setActiveId] = useState<string>("");
+  const [activeId, setActiveId] = useState<string>(initialActiveId);
   const initialStarred = useMemo(() => {
     const map: Record<string, boolean> = {};
     for (const row of messages) {
@@ -543,6 +545,19 @@ export function useMailController({
     },
     [seededUnreadByMailbox, unreadByMailbox, unreadBadgeDeltas],
   );
+
+  useEffect(() => {
+    if (operations || !active) return;
+    if (active.detailLoaded) return;
+    const hasSeededDetail =
+      Boolean(active.bodyHtml?.trim()) || active.body.some((paragraph) => paragraph.trim().length > 0);
+    if (!hasSeededDetail) return;
+    setMail((prev) =>
+      prev.map((message) =>
+        message.id === active.id ? { ...message, detailLoaded: true } : message,
+      ),
+    );
+  }, [active, operations]);
 
   useEffect(() => {
     if (!operations || !active) return;
