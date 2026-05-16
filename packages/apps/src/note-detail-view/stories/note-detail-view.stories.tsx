@@ -29,7 +29,7 @@ const base = {
   onTitleChange: () => {},
   onTagAdd: () => {},
   onTagRemove: () => {},
-  onBodyParagraphChange: () => {},
+  onBodyMarkdownChange: () => {},
 };
 
 export const Editable: Story = {

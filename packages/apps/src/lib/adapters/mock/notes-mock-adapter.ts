@@ -13,8 +13,6 @@ const INITIAL_NOTES: Note[] = [
     title: "The Architecture of Quiet",
     excerpt:
       "The silence of a library is not the absence of sound, but rather the presence of intense focus. We must consider...",
-    pullQuote:
-      "The silence of a library is not the absence of sound, but rather the presence of intense focus.",
     body: [
       "We must consider how space dictates thought. A high ceiling invites abstraction; a narrow corridor forces momentum. In designing digital workspaces, we have too often favored the momentum of the corridor - the endless scroll - over the contemplation of the high-ceilinged room.",
       "Consider the library at Oxford. The wood-paneled walls don't just insulate sound; they create an atmosphere of permanence. When you sit there, you are not merely a user of data, but a participant in a lineage of inquiry. Digital tools should strive for this same sense of gravitas.",

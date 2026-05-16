@@ -1,8 +1,9 @@
 import { BookOpen, CalendarDays } from "lucide-react";
 import { DetailViewHeader } from "@/detail-view-header/src/detail-view-header";
-import { EditableText } from "@/editable-text/src/editable-text";
 import { TagGroup } from "@/tag/src/tag";
 import { cn } from "@/lib/utils";
+import { noteBodyToMarkdown } from "@/lib/models/note-body-markdown";
+import { NoteMilkdownBody } from "@/note-milkdown-body/src/note-milkdown-body";
 
 export type NoteDetailViewProps = {
   /** Used for React keys on editors when switching notes. */
@@ -18,9 +19,13 @@ export type NoteDetailViewProps = {
   onTagAdd?: () => void;
   onTagRemove?: (label: string) => void;
   pullQuote?: string;
-  /** Body paragraphs; each is editable when `readOnly` is false. */
+  /** Body paragraphs; persisted as markdown via {@link noteBodyToMarkdown}. */
   body: string[];
-  onBodyParagraphChange?: (index: number, value: string) => void;
+  /**
+   * Persisted as a single markdown string (`body` becomes `[markdown]`).
+   * When omitted but `readOnly` is false, the body shows as read-only plain text.
+   */
+  onBodyMarkdownChange?: (markdown: string) => void;
   /** When `true`, title, body, and tags are display-only. Default `false` (editing on). */
   readOnly?: boolean;
   className?: string;
@@ -38,11 +43,11 @@ export function NoteDetailView({
   onTagRemove,
   pullQuote,
   body,
-  onBodyParagraphChange,
+  onBodyMarkdownChange,
   readOnly = false,
   className,
 }: NoteDetailViewProps) {
-  const editable = !readOnly;
+  const markdown = noteBodyToMarkdown(body);
 
   return (
     <article className={cn("max-w-[680px] mx-auto", className)}>
@@ -102,20 +107,12 @@ export function NoteDetailView({
         </p>
       ) : null}
 
-      <div className="space-y-6">
-        {body.map((p, i) => (
-          <EditableText
-            key={`${noteId}-p-${i}`}
-            value={p}
-            onChange={(v) => onBodyParagraphChange?.(i, v)}
-            as="p"
-            editable={editable}
-            className="text-base leading-relaxed outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-sm whitespace-pre-wrap"
-            style={{ color: "color-mix(in oklab, var(--color-ink) 80%, transparent)" }}
-            placeholder="Write…"
-          />
-        ))}
-      </div>
+      <NoteMilkdownBody
+        noteId={noteId}
+        initialMarkdown={markdown}
+        readOnly={readOnly || !onBodyMarkdownChange}
+        onMarkdownChange={readOnly ? undefined : onBodyMarkdownChange}
+      />
     </article>
   );
 }

@@ -215,11 +215,7 @@ export function NotesWorkspace({
               onTagRemove={(tag) => toggleNoteTag(active.id, tag)}
               pullQuote={active.pullQuote}
               body={active.body}
-              onBodyParagraphChange={(index, value) => {
-                const nextBody = [...active.body];
-                nextBody[index] = value;
-                updateNote(active.id, { body: nextBody });
-              }}
+              onBodyMarkdownChange={(markdown) => updateNote(active.id, { body: [markdown] })}
             />
           );
         }}
