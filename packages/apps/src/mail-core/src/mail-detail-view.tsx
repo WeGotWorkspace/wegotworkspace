@@ -80,14 +80,14 @@ export function MailDetailView({
         titleClassName={mailWorkspacePaneClasses.detailTitle}
       />
 
-      <div className="mail-detail-view__sender-row">
+      <div className={mailWorkspacePaneClasses.detailSenderRow}>
         <UserAvatar displayName={from} subtitle={senderMetaLine} size="md" />
       </div>
 
       {showIframe ? (
         <MailBodyIframe key={`${mailId}-body-frame`} bodyHtml={bodyHtml ?? ""} />
       ) : showPlainBody ? (
-        <div className="mail-detail-view__body">{plainBodyFallback}</div>
+        <div className={mailWorkspacePaneClasses.detailPlainBody}>{plainBodyFallback}</div>
       ) : null}
 
       {attachments && attachments.length > 0 ? (
