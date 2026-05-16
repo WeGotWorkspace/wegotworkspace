@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import "@/mail-core/src/mail-workspace.css";
 import { MailAttachments } from "../src/mail-attachments";
 
 const meta: Meta<typeof MailAttachments> = {
@@ -6,10 +7,7 @@ const meta: Meta<typeof MailAttachments> = {
   component: MailAttachments,
   decorators: [
     (Story) => (
-      <div
-        className="mx-auto max-w-3xl rounded-lg border p-8"
-        style={{ backgroundColor: "var(--color-cream, #f5f1e8)" }}
-      >
+      <div className="mail-workspace mx-auto max-w-3xl rounded-lg border p-8">
         <Story />
       </div>
     ),

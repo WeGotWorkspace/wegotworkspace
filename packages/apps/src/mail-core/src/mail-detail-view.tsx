@@ -4,6 +4,10 @@ import { DetailViewHeader } from "@/detail-view-header/src/detail-view-header";
 import { UserAvatar } from "@/user-avatar/src/user-avatar";
 import { cn } from "@/lib/utils";
 import { mailboxIconForLabel } from "@/mail-core/src/mailbox-icons";
+import {
+  mailDetailTagColors,
+  mailWorkspacePaneClasses,
+} from "@/mail-core/src/mail-workspace.styles";
 import type { MailAttachment } from "@/types/mail";
 import { MailAttachments } from "./mail-attachments";
 import { MailBodyIframe } from "./mail-body-iframe";
@@ -55,31 +59,25 @@ export function MailDetailView({
   const showPlainBody = detailLoaded && !hasHtmlBody;
 
   return (
-    <article className={cn("mail-detail-view max-w-[680px] mx-auto", className)}>
+    <article className={cn(mailWorkspacePaneClasses.detailView, className)}>
       <DetailViewHeader
         topTags={[
           {
             key: "mailbox",
             label: mailbox,
             icon: mailboxIconForLabel(mailbox),
-            colors: {
-              color: "var(--color-cream, #f5f1e8)",
-              backgroundColor: "color-mix(in oklab, var(--color-ink) 88%, transparent)",
-            },
+            colors: mailDetailTagColors.primary,
           },
           {
             key: "date",
             label: date,
             icon: <CalendarDays className="size-3.5 opacity-70" />,
-            colors: {
-              backgroundColor: "color-mix(in oklab, var(--color-ink) 6%, transparent)",
-              color: "color-mix(in oklab, var(--color-ink) 58%, transparent)",
-            },
+            colors: mailDetailTagColors.muted,
           },
         ]}
         title={title}
         emptyTitleLabel={emptySubjectLabel}
-        titleClassName="text-3xl md:text-4xl font-sans text-(--color-ink) font-semibold leading-[1.1] tracking-tight mb-8"
+        titleClassName={mailWorkspacePaneClasses.detailTitle}
       />
 
       <div className="mail-detail-view__sender-row">
@@ -89,9 +87,7 @@ export function MailDetailView({
       {showIframe ? (
         <MailBodyIframe key={`${mailId}-body-frame`} bodyHtml={bodyHtml ?? ""} />
       ) : showPlainBody ? (
-        <div className="whitespace-pre-wrap wrap-break-word font-sans text-base leading-7 text-[color-mix(in_oklab,var(--color-ink)_82%,transparent)]">
-          {plainBodyFallback}
-        </div>
+        <div className="mail-detail-view__body">{plainBodyFallback}</div>
       ) : null}
 
       {attachments && attachments.length > 0 ? (

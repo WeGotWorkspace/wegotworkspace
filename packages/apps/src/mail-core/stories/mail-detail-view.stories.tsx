@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import "@/mail-core/src/mail-workspace.css";
 import { MailDetailView } from "../src/mail-detail-view";
 import { mailStoryLabels } from "@/mail-core/src/mail-app.stories.fixtures";
 
@@ -7,10 +8,7 @@ const meta: Meta<typeof MailDetailView> = {
   component: MailDetailView,
   decorators: [
     (Story) => (
-      <div
-        className="max-w-3xl mx-auto p-8 rounded-lg border"
-        style={{ backgroundColor: "var(--color-cream, #f5f1e8)" }}
-      >
+      <div className="mail-workspace max-w-3xl mx-auto p-8 rounded-lg border">
         <Story />
       </div>
     ),

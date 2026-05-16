@@ -4,6 +4,10 @@ import { Button } from "@/button/src/button";
 import { Input } from "@/ui/input";
 import { Textarea } from "@/ui/textarea";
 import { cn } from "@/lib/utils";
+import {
+  mailDetailTagColors,
+  mailWorkspacePaneClasses,
+} from "@/mail-core/src/mail-workspace.styles";
 
 type MailComposeViewProps = {
   mailId: string;
@@ -39,15 +43,12 @@ function ComposeField({
   placeholder: string;
 }) {
   return (
-    <label className="flex items-center gap-3 text-sm">
-      <span className="w-11 shrink-0 text-[color-mix(in_oklab,var(--color-ink)_58%,transparent)]">
-        {label}
-      </span>
+    <label className={mailWorkspacePaneClasses.composeField}>
+      <span className={mailWorkspacePaneClasses.composeFieldLabel}>{label}</span>
       <Input
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="border-0 border-b rounded-none px-0 h-10 shadow-none focus-visible:ring-0 focus-visible:border-b"
       />
     </label>
   );
@@ -77,37 +78,31 @@ export function MailComposeView({
   const disableActions = saving || sending;
 
   return (
-    <article className={cn("max-w-[760px] mx-auto", className)}>
+    <article className={cn(mailWorkspacePaneClasses.composeView, className)}>
       <DetailViewHeader
         topTags={[
           {
             key: "mailbox",
             label: mailbox,
             icon: <Mailbox className="size-3.5 opacity-70" />,
-            colors: {
-              color: "var(--color-cream, #f5f1e8)",
-              backgroundColor: "color-mix(in oklab, var(--color-ink) 88%, transparent)",
-            },
+            colors: mailDetailTagColors.primary,
           },
           {
             key: "date",
             label: date,
             icon: <CalendarDays className="size-3.5 opacity-70" />,
-            colors: {
-              backgroundColor: "color-mix(in oklab, var(--color-ink) 6%, transparent)",
-              color: "color-mix(in oklab, var(--color-ink) 58%, transparent)",
-            },
+            colors: mailDetailTagColors.muted,
           },
         ]}
         title={subject}
         editable
         onTitleChange={onSubjectChange}
         titleKey={`${mailId}-compose-subject`}
-        titleClassName="text-3xl md:text-4xl font-sans text-(--color-ink) font-semibold leading-[1.1] tracking-tight mb-6"
+        titleClassName={mailWorkspacePaneClasses.composeTitle}
         titlePlaceholder="Subject"
       />
 
-      <div className="rounded-xl border border-[color-mix(in_oklab,var(--color-ink)_12%,transparent)] bg-[color-mix(in_oklab,var(--color-cream)_86%,white)] p-4 md:p-5 space-y-3">
+      <div className={mailWorkspacePaneClasses.composeFields}>
         <ComposeField
           label="To"
           value={to}
@@ -117,17 +112,16 @@ export function MailComposeView({
         <ComposeField label="Cc" value={cc} onChange={onCcChange} placeholder="Optional" />
         <ComposeField label="Bcc" value={bcc} onChange={onBccChange} placeholder="Optional" />
 
-        <label className="block pt-2">
+        <label className={mailWorkspacePaneClasses.composeBody}>
           <span className="sr-only">Message body</span>
           <Textarea
             value={body}
             onChange={(event) => onBodyChange(event.target.value)}
             placeholder="Write your message..."
-            className="min-h-[320px] md:min-h-[400px] resize-y border-[color-mix(in_oklab,var(--color-ink)_15%,transparent)]"
           />
         </label>
 
-        <div className="flex items-center justify-end gap-2 pt-2">
+        <div className={mailWorkspacePaneClasses.composeActions}>
           <Button type="button" variant="ghost" onClick={onDiscard} disabled={disableActions}>
             Discard
           </Button>
