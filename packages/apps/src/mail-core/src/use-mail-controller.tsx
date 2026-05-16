@@ -18,6 +18,10 @@ import type {
 } from "@/mail-core/src/mail-types";
 import type { WgwMailDraftRequest } from "@/lib/api/wgw/types";
 import { mergeMailLabels, type MailUILabels } from "@/mail-core/src/mail-app.stories.fixtures";
+import {
+  buildMoveMailboxOptions,
+  resolveMoveDialogCurrentMailbox,
+} from "@/mail-core/src/mail-move-dialog";
 import { useMailBatchActions } from "@/mail-core/src/use-mail-batch-actions";
 import { useMailSelectionBar } from "@/mail-core/src/use-mail-selection-bar";
 import { compareMailDesc } from "@/mail-core/src/mail-date-utils";
@@ -970,6 +974,22 @@ export function useMailController({
 
   const mailboxView = useCallback((mailbox: string) => `mb:${mailbox}`, []);
 
+  const moveMailboxOptions = useMemo(
+    () => buildMoveMailboxOptions(allSystemMailboxes, moreMailboxes),
+    [allSystemMailboxes, moreMailboxes],
+  );
+  const moveDialogCurrentMailbox = useMemo(
+    () =>
+      resolveMoveDialogCurrentMailbox({
+        moveDialog,
+        view,
+        mail,
+        moveMailboxOptions,
+        encodeFolderToken,
+      }),
+    [moveDialog, view, mail, moveMailboxOptions, encodeFolderToken],
+  );
+
   const { selectionBarButtons, selectionBar } = useMailSelectionBar({
     mail,
     selectedIds,
@@ -1048,6 +1068,8 @@ export function useMailController({
     view,
     viewLabel,
     moveDialog,
+    moveMailboxOptions,
+    moveDialogCurrentMailbox,
     searchQuery,
     searchInputRef,
     listEndRef,
