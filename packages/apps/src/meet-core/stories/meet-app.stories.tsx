@@ -16,5 +16,6 @@ type Story = StoryObj<typeof MeetWorkspace>;
 export const Default: Story = {
   args: {
     ...createMeetAppBootstrap(),
+    onLogout: () => {},
   },
 };
