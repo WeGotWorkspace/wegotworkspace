@@ -18,8 +18,18 @@ import { AppToaster } from "../src/ui/sonner";
 import { TooltipProvider } from "../src/ui/tooltip";
 
 const preview: Preview = {
+  tags: ["autodocs"],
   decorators: [
     (Story, context) => {
+      if (context.parameters.wegotworkspaceRouter) {
+        return createElement(
+          Fragment,
+          null,
+          createElement(Story),
+          createElement(AppToaster),
+        );
+      }
+
       const initialPath = (context.parameters.routerPath as string) ?? "/notes";
 
       const rootRoute = createRootRoute({
@@ -73,6 +83,13 @@ const preview: Preview = {
       // 'error' - fail CI on a11y violations
       // 'off' - skip a11y checks entirely
       test: "todo",
+    },
+    docs: {
+      codePanel: true,
+      source: {
+        type: "code",
+        excludeDecorators: true,
+      },
     },
   },
   initialGlobals: {
