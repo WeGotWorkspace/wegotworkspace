@@ -1,24 +1,11 @@
-import type { ReactElement } from "react";
 import { WorkspaceLiveAppShell } from "@/lib/live/workspace-live-app-shell";
 import { useDriveAPI } from "@/drive-core/src/use-drive-api";
-import type { DriveAPIOperations, DriveUIData } from "@/drive-core/src/drive-types";
-import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
+import { DriveWorkspace } from "@/drive-core/src/drive-workspace";
+import type { DriveAppProps } from "@/drive-core/src/drive-app-props";
 
-export type DriveWorkspaceRenderProps = {
-  data: DriveUIData;
-  session: WorkspaceSession;
-  operations?: DriveAPIOperations;
-  listLoading: boolean;
-  successVersion: number;
-};
-
-export function DriveApp({
-  renderWorkspace,
-}: {
-  renderWorkspace: (props: DriveWorkspaceRenderProps) => ReactElement;
-}) {
+export function DriveApp({ apiSource }: DriveAppProps = {}) {
   const { phase, error, retry, successVersion, listLoading, session, data, operations } =
-    useDriveAPI();
+    useDriveAPI(apiSource);
 
   return (
     <WorkspaceLiveAppShell
@@ -27,15 +14,18 @@ export function DriveApp({
       retry={retry}
       errorTitle="Could not load drive"
       successVersion={successVersion}
-      render={() =>
-        renderWorkspace({
-          data,
-          session,
-          operations,
-          listLoading,
-          successVersion,
-        })
-      }
+      render={(key) => (
+        <DriveWorkspace
+          key={key}
+          data={data}
+          session={session}
+          operations={operations}
+          listLoading={listLoading}
+          onLogout={() => {
+            window.location.assign("/logout");
+          }}
+        />
+      )}
     />
   );
 }

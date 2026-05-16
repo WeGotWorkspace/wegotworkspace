@@ -1,14 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { DriveApp } from "@/drive-core/src/drive-app";
-import { DriveWorkspace } from "@/routes/drive";
 
-function DriveStoryApp() {
-  return <DriveApp renderWorkspace={(props) => <DriveWorkspace {...props} />} />;
-}
-
-const meta: Meta<typeof DriveStoryApp> = {
+const meta: Meta<typeof DriveApp> = {
   title: "Apps/Drive",
-  component: DriveStoryApp,
+  component: DriveApp,
   parameters: {
     layout: "fullscreen",
     routerPath: "/drive",
@@ -16,8 +11,8 @@ const meta: Meta<typeof DriveStoryApp> = {
 };
 
 export default meta;
-type Story = StoryObj<typeof DriveStoryApp>;
+type Story = StoryObj<typeof DriveApp>;
 
-export const Mock: Story = {
-  render: () => <DriveStoryApp />,
+export const Default: Story = {
+  render: () => <DriveApp />,
 };
