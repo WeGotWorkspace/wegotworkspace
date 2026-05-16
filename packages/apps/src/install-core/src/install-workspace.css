@@ -22,8 +22,8 @@
   --install-border: color-mix(in oklab, var(--color-ink) 10%, transparent);
   --install-sidebar-footer-border: color-mix(in oklab, var(--install-sidebar-fg) 22%, transparent);
   --install-sidebar-footer-fg: color-mix(in oklab, var(--install-sidebar-fg) 75%, transparent);
-  --install-progress-track: color-mix(in oklab, var(--color-ink) 10%, transparent);
-  --install-progress-fill: var(--install-accent);
+  --install-sidebar-progress-track: color-mix(in oklab, var(--install-sidebar-fg) 28%, transparent);
+  --install-sidebar-progress-fill: var(--install-sidebar-fg);
   --install-status-ok: #3a8f5a;
   --install-status-error: #b14242;
   --install-status-pending: #7a7a78;
@@ -31,9 +31,23 @@
 }
 
 .install-workspace .install-sidebar-step-footer {
-  @apply p-4 md:p-6 text-xs shrink-0 border-t;
+  @apply p-4 md:p-6 shrink-0 border-t space-y-2;
   border-color: var(--install-sidebar-footer-border);
   color: var(--install-sidebar-footer-fg);
+}
+
+.install-workspace .install-sidebar-step-footer__label {
+  @apply text-xs;
+}
+
+.install-workspace .install-sidebar-progress {
+  @apply h-1.5 w-full rounded-full overflow-hidden;
+  background-color: var(--install-sidebar-progress-track);
+}
+
+.install-workspace .install-sidebar-progress-fill {
+  @apply h-full transition-all duration-500 ease-out rounded-full;
+  background-color: var(--install-sidebar-progress-fill);
 }
 
 /* Sidebar nav on accent background: use inherited sidebar color, not main-column ink. */
@@ -53,16 +67,6 @@
 
 .install-workspace .sidebar-section__title {
   color: color-mix(in oklab, currentColor 55%, transparent);
-}
-
-.install-workspace .install-view-header-progress {
-  @apply h-1.5 w-32 md:w-40 rounded-full overflow-hidden shrink-0;
-  background-color: var(--install-progress-track);
-}
-
-.install-workspace .install-view-header-progress-fill {
-  @apply h-full transition-all duration-500 ease-out;
-  background-color: var(--install-progress-fill);
 }
 
 .install-workspace .install-field-stack {
