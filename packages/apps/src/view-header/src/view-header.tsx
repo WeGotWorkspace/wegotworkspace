@@ -9,8 +9,10 @@ import "./view-header.css";
 type ViewHeaderProps = {
   title: string;
   subtitle?: string;
-  sidebarOpen: boolean;
-  onToggleSidebar: () => void;
+  /** When true, omits the workspace sidebar toggle (e.g. portaled compose dialog). */
+  hideSidebarToggle?: boolean;
+  sidebarOpen?: boolean;
+  onToggleSidebar?: () => void;
   actions?: ReactNode;
   searchPlaceholder?: string;
   searchValue?: string;
@@ -22,7 +24,8 @@ type ViewHeaderProps = {
 export function ViewHeader({
   title,
   subtitle,
-  sidebarOpen,
+  hideSidebarToggle = false,
+  sidebarOpen = false,
   onToggleSidebar,
   actions,
   searchPlaceholder,
@@ -46,7 +49,9 @@ export function ViewHeader({
   return (
     <>
       <div className="flex items-start gap-3">
-        <WorkspaceSidebarToggle open={sidebarOpen} onToggle={onToggleSidebar} />
+        {hideSidebarToggle ? null : (
+          <WorkspaceSidebarToggle open={sidebarOpen} onToggle={onToggleSidebar ?? (() => {})} />
+        )}
         <div className="view-header__main">
           <div className="view-header__title-row">
             <h2
