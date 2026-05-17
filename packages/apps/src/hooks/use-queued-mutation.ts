@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
+import type { ReactNode } from "react";
 import { useAppToast } from "@/hooks/use-app-toast";
 
 /** Arguments for a single deferred API write (undo + `AbortSignal` while pending). */
@@ -9,6 +10,7 @@ export type DeferredApiWriteArgs = {
   undo: () => void;
   onError?: () => void;
   undoToastMessage?: string;
+  icon?: ReactNode;
 };
 
 type PendingMutation = {
@@ -67,7 +69,7 @@ export function useQueuedMutation({ delayMs = 2500, onMutationError }: UseQueued
   );
 
   const queueMutation = useCallback(
-    ({ key, toastMessage, execute, undo, onError, undoToastMessage }: DeferredApiWriteArgs) => {
+    ({ key, toastMessage, execute, undo, onError, undoToastMessage, icon }: DeferredApiWriteArgs) => {
       const existing = pendingByKeyRef.current.get(key);
       if (existing) {
         if (existing.timer) clearTimeout(existing.timer);
@@ -109,6 +111,7 @@ export function useQueuedMutation({ delayMs = 2500, onMutationError }: UseQueued
           severity: "success",
           canUndo: true,
           undoLabel: "Undo",
+          icon,
           onUndo: () => {
             void undoPending(entry, { showToast: true });
           },

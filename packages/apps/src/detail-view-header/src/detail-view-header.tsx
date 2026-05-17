@@ -51,7 +51,7 @@ export function DetailViewHeader({
           onChange={onTitleChange ?? (() => {})}
           as="h1"
           editable
-          className={`${titleClassName} outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-sm`}
+          className={`${titleClassName} outline-none focus:outline-none focus:ring-0 focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-sm`}
           style={titleStyle}
           singleLine
           placeholder={titlePlaceholder}

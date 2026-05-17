@@ -1,0 +1,156 @@
+@import "../../workspace-shell/src/workspace-split-app.css";
+@import "./drive-browser.css";
+
+.drive-workspace {
+  --color-emerald: #0c8397;
+  --drive-sidebar: #0c8397;
+  --app-sidebar-bg: var(--drive-sidebar);
+  --app-sidebar-border-color: color-mix(in oklab, #ffffff 18%, transparent);
+  --app-sidebar-color: #ffffff;
+  --sidebar-logo-close-button-color: var(--app-sidebar-color);
+  --sidebar-badge-fg: #0c8397;
+  --workspace-sidebar-toggle-color: var(--color-ink);
+  --workspace-sidebar-toggle-bg: color-mix(in oklab, var(--color-ink) 6%, transparent);
+  --workspace-user-footer-link-hover-bg: color-mix(in oklab, var(--color-ink) 18%, transparent);
+}
+
+.drive-workspace .app-sidebar__scroll {
+  --color-ink: #ffffff;
+}
+
+.drive-workspace .drive-new-button {
+  @apply flex h-11 w-full items-center justify-center gap-2 rounded-full text-sm font-medium transition-transform hover:-translate-y-0.5;
+  background-color: var(--color-ink);
+  color: var(--drive-sidebar);
+  box-shadow: 0 10px 24px -12px color-mix(in oklab, var(--color-ink) 60%, transparent);
+}
+
+.drive-workspace .drive-view-header-actions,
+.drive-workspace .drive-detail-actions {
+  --button-subtle-color: color-mix(in oklab, var(--color-ink) 65%, transparent);
+  --button-subtle-background: color-mix(in oklab, var(--color-ink) 6%, transparent);
+  --button-subtle-hover-background: color-mix(in oklab, var(--color-ink) 18%, transparent);
+}
+
+.drive-workspace .drive-view-mode-toggle {
+  background-color: color-mix(in oklab, var(--color-ink) 6%, transparent);
+}
+
+.drive-workspace .drive-view-mode-button {
+  color: var(--color-ink);
+}
+
+.drive-workspace .drive-view-mode-button--active {
+  background-color: var(--color-cream, #f5f1e8);
+  box-shadow: 0 1px 2px color-mix(in oklab, var(--color-ink) 20%, transparent);
+}
+
+.drive-workspace .drive-main-pane {
+  @apply flex flex-col min-w-0 relative flex-1;
+  background-color: var(--color-cream, #f5f1e8);
+}
+
+.drive-workspace .drive-main-header {
+  @apply px-4 md:px-8 pt-4 md:pt-6 pb-3 border-b shrink-0;
+  border-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
+}
+
+.drive-workspace .drive-upload-progress {
+  @apply px-4 md:px-8 py-2.5 border-b shrink-0;
+  border-color: color-mix(in oklab, var(--color-ink) 8%, transparent);
+}
+
+.drive-workspace .drive-upload-progress__label {
+  @apply font-medium truncate text-xs;
+  color: color-mix(in oklab, var(--color-ink) 85%, transparent);
+}
+
+.drive-workspace .drive-upload-progress__percent {
+  @apply tabular-nums shrink-0 text-xs;
+  color: color-mix(in oklab, var(--color-ink) 60%, transparent);
+}
+
+.drive-workspace .drive-upload-progress__track {
+  @apply mt-1.5 h-1.5 w-full rounded-full overflow-hidden;
+  background-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
+}
+
+.drive-workspace .drive-upload-progress__fill {
+  @apply h-full rounded-full transition-[width] duration-150;
+}
+
+.drive-workspace .drive-upload-progress__fill--active {
+  background-color: var(--drive-sidebar);
+}
+
+.drive-workspace .drive-upload-progress__fill--done {
+  background-color: var(--color-emerald);
+}
+
+.drive-workspace .drive-upload-progress__detail {
+  @apply mt-1 text-[11px];
+  color: color-mix(in oklab, var(--color-ink) 58%, transparent);
+}
+
+.drive-workspace .drive-drop-overlay {
+  @apply pointer-events-none absolute inset-0 z-40 flex items-center justify-center bg-black/10;
+}
+
+.drive-workspace .drive-drop-overlay__card {
+  @apply rounded-xl bg-white/90 px-4 py-2 text-sm font-medium shadow;
+  color: var(--drive-sidebar);
+}
+
+.drive-workspace .drive-breadcrumbs {
+  @apply min-w-0 flex items-center gap-1 overflow-x-auto px-4 md:px-8 pt-4 md:pt-6 pb-2;
+}
+
+.drive-workspace .drive-breadcrumb-separator {
+  @apply size-4 shrink-0;
+  color: color-mix(in oklab, var(--color-ink) 35%, transparent);
+}
+
+.drive-workspace .drive-breadcrumb-current {
+  @apply text-sm md:text-base leading-none truncate;
+  color: color-mix(in oklab, var(--color-ink) 72%, transparent);
+}
+
+.drive-workspace .drive-breadcrumb-link {
+  @apply text-sm md:text-base leading-none truncate hover:underline underline-offset-4;
+  color: color-mix(in oklab, var(--color-ink) 55%, transparent);
+}
+
+.drive-workspace .drive-empty-state {
+  @apply p-16 text-center text-sm;
+  color: color-mix(in oklab, var(--color-ink) 50%, transparent);
+}
+
+.drive-workspace .drive-empty-state__icon {
+  @apply size-12 mx-auto mb-4 opacity-30;
+}
+
+.drive-workspace .drive-detail-aside {
+  @apply hidden md:flex w-80 lg:w-96 shrink-0 border-l flex-col;
+  background-color: var(--color-cream, #f5f1e8);
+  border-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
+}
+
+.drive-workspace .drive-detail-overlay {
+  @apply md:hidden fixed inset-0 z-50 flex flex-col;
+  background-color: var(--color-cream, #f5f1e8);
+}
+
+.drive-workspace .drive-selection-bar {
+  --button-ghost-color: inherit;
+  --button-ghost-hover-background: color-mix(in oklab, white 10%, transparent);
+  background-color: var(--color-ink) !important;
+  color: var(--color-cream, #f5f1e8) !important;
+}
+
+.drive-workspace .drive-detail-panel__scroll {
+  @apply flex-1 overflow-y-auto px-5 md:px-6 py-6;
+}
+
+.drive-workspace .drive-header-actions {
+  @apply flex items-center gap-2;
+}

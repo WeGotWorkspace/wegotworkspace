@@ -1,14 +1,20 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
+import {
+  openMailBodyLink,
+  prepareMailBodyHtmlLinks,
+} from "@/mail-core/src/mail-body-iframe-links";
+import { mailWorkspacePaneClasses } from "@/mail-core/src/mail-workspace.styles";
 
 type MailBodyIframeProps = {
   bodyHtml: string;
 };
 
 function toIframeDoc(bodyHtml: string): string {
+  const preparedBody = prepareMailBodyHtmlLinks(bodyHtml);
   const baseHead = `<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1" />`;
   const normalizedStyle =
-    "<style>html,body{margin:0!important;overflow:hidden!important;max-width:100%!important;}body{padding:12px 4px;font-family:var(--font-sans,system-ui,-apple-system,sans-serif);font-size:16px;line-height:1.65;color:color-mix(in oklab,var(--color-ink,#1f1f1f) 82%,transparent);overflow-wrap:anywhere;word-break:break-word;}p,div,span,td,th,li{font-family:inherit;}img,table{max-width:100%!important;height:auto!important;}</style>";
-  return `<!doctype html><html><head>${baseHead}${normalizedStyle}</head><body>${bodyHtml}</body></html>`;
+    "<style>html,body{margin:0!important;overflow:hidden!important;max-width:100%!important;}body{padding:12px 4px;font-family:var(--font-sans,system-ui,-apple-system,sans-serif);font-size:16px;line-height:1.65;color:color-mix(in oklab,var(--color-ink,#1f1f1f) 82%,transparent);overflow-wrap:anywhere;word-break:break-word;}p,div,span,td,th,li{font-family:inherit;}a{color:inherit;}img,table{max-width:100%!important;height:auto!important;}</style>";
+  return `<!doctype html><html><head>${baseHead}${normalizedStyle}</head><body>${preparedBody}</body></html>`;
 }
 
 export function MailBodyIframe({ bodyHtml }: MailBodyIframeProps) {
@@ -39,6 +45,17 @@ export function MailBodyIframe({ bodyHtml }: MailBodyIframeProps) {
     teardownAutoHeightRef.current?.();
     syncHeight();
 
+    const handleLinkClick = (event: MouseEvent) => {
+      const anchor = (event.target as Element | null)?.closest("a");
+      if (!anchor?.href) return;
+      const href = anchor.href;
+      if (!href || href.startsWith("#")) return;
+      event.preventDefault();
+      openMailBodyLink(href);
+    };
+
+    doc.addEventListener("click", handleLinkClick, true);
+
     const update = () => syncHeight();
     const resizeObserver =
       typeof ResizeObserver !== "undefined" ? new ResizeObserver(update) : null;
@@ -66,6 +83,7 @@ export function MailBodyIframe({ bodyHtml }: MailBodyIframeProps) {
     const timers = [0, 50, 200, 700].map((delay) => window.setTimeout(update, delay));
 
     teardownAutoHeightRef.current = () => {
+      doc.removeEventListener("click", handleLinkClick, true);
       resizeObserver?.disconnect();
       mutationObserver?.disconnect();
       for (const img of images) {
@@ -87,10 +105,10 @@ export function MailBodyIframe({ bodyHtml }: MailBodyIframeProps) {
       title="Mail message body"
       srcDoc={iframeDoc}
       onLoad={handleIframeLoad}
-      className="w-full rounded-md border border-[color-mix(in_oklab,var(--color-ink)_12%,transparent)] bg-transparent"
+      className={mailWorkspacePaneClasses.detailBodyFrame}
       style={{ height: "420px", overflow: "hidden" }}
       scrolling="no"
-      sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
+      sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
     />
   );
 }

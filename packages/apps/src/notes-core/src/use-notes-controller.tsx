@@ -516,18 +516,32 @@ export function useNotesController({
     (noteId: string, rawTag: string) => {
       const tag = normalizeTag(rawTag);
       if (!tag) return;
-      let added = false;
-      updateAndPersistNote(noteId, (note) => {
-        const has = note.tags.includes(tag);
-        added = !has;
-        return {
-          ...note,
-          tags: has ? note.tags.filter((current) => current !== tag) : [...note.tags, tag],
-        };
+      const before = notes.find((note) => note.id === noteId);
+      if (!before) return;
+      const has = before.tags.includes(tag);
+      const added = !has;
+      const updated = {
+        ...before,
+        tags: has ? before.tags.filter((current) => current !== tag) : [...before.tags, tag],
+      };
+      setNotes((prev) => prev.map((note) => (note.id === noteId ? updated : note)));
+      const toastMessage = added ? `Added ${tag}` : `Removed ${tag}`;
+      const rollback = () => {
+        setNotes((prev) => prev.map((note) => (note.id === noteId ? before : note)));
+      };
+      queueMutation({
+        key: `notes:tag-toggle:${noteId}:${tag}`,
+        toastMessage,
+        icon: <Tag className="size-4" />,
+        execute: async (signal) => {
+          if (operations) await operations.upsertNote(updated, { signal });
+        },
+        undo: rollback,
+        onError: rollback,
+        undoToastMessage: added ? "Tag assignment undone." : "Tag removal undone.",
       });
-      show(added ? `Added ${tag}` : `Removed ${tag}`, { icon: <Tag className="size-4" /> });
     },
-    [show, updateAndPersistNote],
+    [notes, operations, queueMutation],
   );
 
   const updateNote = useCallback(
@@ -609,7 +623,6 @@ export function useNotesController({
       operations,
       queueMutation,
       batchToggleStarForIds,
-      show,
       requestConfirm,
       deleteConfirmCopy: {
         dialogEmptyArchiveTitle: L.dialogEmptyArchiveTitle,

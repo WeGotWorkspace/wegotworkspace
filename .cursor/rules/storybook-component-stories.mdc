@@ -1,0 +1,127 @@
+---
+description: Storybook coverage for workspace apps — one story file per UI component, Controls for simple props, named stories per meaningful state.
+globs: packages/apps/src/**/*-core/stories/**/*.stories.tsx,packages/apps/src/**/*-core/stories/**/*.stories.ts
+alwaysApply: false
+---
+
+# Storybook component stories
+
+Goal: the **full UI component tree** for each product is represented in Storybook so visual regression (e.g. Chromatic) can catch drift over time. Prefer **component-level** stories with **Controls**; use **multiple named stories** when states are meaningfully different.
+
+Reference implementations: `packages/apps/src/mail-core/stories/`, `packages/apps/src/settings-core/stories/`, `packages/apps/src/meet-core/stories/` (target shape).
+
+## Story tree (mirror the component tree)
+
+For each `*-core` package, Storybook titles should reflect the same hierarchy as production:
+
+| Level | Title pattern | `component` | Example |
+|-------|----------------|-------------|---------|
+| App shell | `Apps/<Product>` | `*Workspace` | `Apps/Meet` → `MeetWorkspace` — **one `Default` story only** |
+| Full product | `Apps/WeGotWorkspace` | `WeGotWorkspace` | Mock shell (`Default`, `Installer`) |
+| Full product (live) | `Apps/WeGotWorkspace` → `Live API` | `WeGotWorkspaceLive` | Real API via `apiBaseUrl` prop + Storybook `/api/v1` proxy |
+| Panes | `Apps/<Product>/Panes/<ComponentExportName>` | **pane component** | `Apps/Meet/Panes/MeetLobbyPane` → `MeetLobbyPane` |
+| Building blocks | `Apps/<Product>/Components/<ComponentExportName>` | **that component** | `Apps/Meet/Components/MeetAvatar` → `MeetAvatar` |
+
+### Sidebar must show the component name
+
+- The **last title segment** MUST be the exact React export name (`MeetAvatar`, `MeetLobbyPane`), not a shortened label (`Avatar`, `Lobby`, `Circle toggle`).
+- Story **leaf** names describe state only (`Lobby preview`, `With peers`) via the `name` field on each story export — the parent node in the tree is then unambiguous.
+- Target sidebar shape: `MeetAvatar` → `Lobby preview` | `Compact`, not `Lobby preview` at the top level with no component folder.
+
+**Every exported presentational component** under `*-core/src/` that renders UI should have a matching `stories/<kebab-name>.stories.tsx`, unless it is a pure type/util file (no DOM).
+
+Checklist when adding or refactoring a product:
+
+- [ ] Each pane (`*-lobby-pane`, `*-room-pane`, …) has its own story file.
+- [ ] Each shared building block (toolbar, status bar, avatar, device row, …) has its own story file.
+- [ ] Workspace stories exist at `Apps/<Product>` with a single **`Default`** story (mock bootstrap args).
+- [ ] Do **not** add `App (live API)` stories — use `Apps/WeGotWorkspace` for end-to-end navigation instead.
+- [ ] No “orphan” components only reachable via a parent pane story — children get their own file first; pane stories compose real children.
+
+## `component` must be the real component
+
+- Set `component` in meta to the **actual** React component under test, not a one-off harness, when the component can render with mock props.
+- **Harnesses** (`*-pane-stories.harness.tsx`, fixtures) are allowed only when the component **requires** a controller, router, or API hook and splitting props is impractical. Even then:
+  - Prefer a thin harness that spreads `args` onto the real pane/component.
+  - Document in the story file why a harness is required.
+- Do **not** replace per-component stories with only workspace-level or pane-level integration stories.
+
+## Controls (`argTypes`) for simple props
+
+Expose Storybook **Controls** for props that are easy to tune in isolation:
+
+- `string`, `number`, `boolean`, enums/unions, optional text labels.
+- Use `satisfies Meta<typeof Component>` and `args` on stories so autodocs infers types.
+
+```tsx
+const meta = {
+  title: "Apps/Meet/Components/MeetAvatar",
+  component: MeetAvatar,
+  tags: ["autodocs"],
+  decorators: [meetComponentPaneDecorator],
+  parameters: meetStoryParameters(),
+  argTypes: {
+    name: { control: "text" },
+    size: { control: { type: "number", min: 24, max: 120, step: 4 } },
+  },
+} satisfies Meta<typeof MeetAvatar>;
+
+export const LobbyPreview: Story = {
+  name: "Lobby preview",
+  args: { name: "Demo User", size: 84 },
+};
+```
+
+Enable Docs globally in `.storybook/preview.ts` (`tags: ["autodocs"]`, `parameters.docs.codePanel`) and `docs.autodocs: "tag"` in `.storybook/main.ts`. When using a custom `render`, pass an explicit copy-paste snippet via `meetStoryParameters({ snippet: "..." })` so the **Code** panel is not empty.
+
+Storybook 10 requires `meta.title` to be a **string literal** (not a helper function). Use `title: "Apps/Meet/Components/MeetAvatar"` directly.
+
+**Do not** add controls for:
+
+- Callbacks (`onClick`, `onLogout`) — use no-op stubs in `args`.
+- Opaque objects (`controller`, `operations`, `MediaStream`) — fix via fixtures or named stories.
+- Mutually exclusive visual modes — use separate named stories (below), not a single “mode” select unless it helps review all variants in one place *and* you still have dedicated stories per mode.
+
+## Named stories = meaningful states
+
+Create **multiple exports** when reviewers need to sign off on distinct UI outcomes separately:
+
+- Empty vs populated (chat, peer grid, knock queue).
+- Error / loading / success.
+- Permission or identity variants (guest vs signed-in, camera on vs off).
+- Layout modes (chat open, screen sharing, compact tile).
+
+```tsx
+export const Empty: Story = { args: { messages: [] } };
+export const WithMessages: Story = { args: { messages: STORY_CHAT_MESSAGES } };
+```
+
+Use a **single** `Default` story only when the component has one stable visual. Avoid one mega-story that encodes every state behind many controls — that is hard to regression-test and review.
+
+## Decorators, layout, and CSS
+
+- Import the product **workspace CSS** in decorators (see `*-panes.stories.decorator.tsx`).
+- Apply the same **root class** as production (e.g. `.meet-workspace`) so parent-scoped tokens match.
+- Use `parameters.layout: "fullscreen"` for workspace and pane stories; narrower decorators are fine for small components.
+- Portaled surfaces: add a decorator variant with the dialog surface class when needed (e.g. `.meet-dialog-surface`).
+
+## Fixtures
+
+- Colocate mock data in `stories/*-pane-stories.fixtures.ts` or `stories/*-app.stories.fixtures.ts`.
+- Bootstrap factories (`create*AppBootstrap`) must return coherent **`data` + `session`** (and optional `operations`).
+
+## Docs and Code panel
+
+- Every story file: `tags: ["autodocs"]` (or rely on preview-level `tags: ["autodocs"]`).
+- `component` in meta must match the real export so **Docs** renders props + description.
+- Custom `render` / harness: add `parameters.docs.source.code` with a copy-pasteable JSX snippet (`meetStoryParameters({ snippet })` in meet-core).
+- Do not set `component` to a harness when the real component can be listed for autodocs; use `render` + `snippet` instead.
+
+## Anti-patterns
+
+- Title segments like `Components/Avatar` or `Panes/Lobby` — use `MeetAvatar`, `MeetLobbyPane` instead.
+- Only `Apps/<Product>/Panes/*` stories with no `Components/*` — tree is incomplete for Chromatic.
+- `component: PaneHarness` with no dedicated file for child components.
+- All state driven by Storybook controls and a single story — no per-state snapshots.
+- Inline mock data duplicated across every story file — use shared fixtures.
+- Decorator missing workspace root class — components look unstyled vs production.

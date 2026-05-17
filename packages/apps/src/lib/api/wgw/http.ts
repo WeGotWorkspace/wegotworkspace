@@ -1,8 +1,11 @@
 import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
 import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
+import { activeWgwApiRuntime } from "@/lib/api/wgw/wgw-api-runtime";
 
 /** When true, mail/notes routes load from WeGotWorkspace instead of mock adapters. */
 export function wgwLiveApiEnabled(): boolean {
+  const runtime = activeWgwApiRuntime();
+  if (runtime) return runtime.useLiveApi;
   const v = parseEnvBoolean(import.meta.env.VITE_WGW_USE_LIVE_API as string | undefined);
   if (v !== null) return v;
   // In bundled/runtime environments we should talk to the real API by default.
@@ -22,6 +25,8 @@ function parseEnvBoolean(value: string | undefined): boolean | null {
  * (see `vite.config.ts`) and avoid CORS against `wegotworkspace.local`.
  */
 export function wgwApiBaseUrl(): string {
+  const runtime = activeWgwApiRuntime();
+  if (runtime?.baseUrl) return runtime.baseUrl;
   const raw = (import.meta.env.VITE_WGW_API_BASE_URL as string | undefined)?.trim();
   return (raw && raw.length > 0 ? raw : "/api/v1").replace(/\/$/, "");
 }
@@ -145,10 +150,19 @@ export function wgwSessionAvailable(): boolean {
   return Boolean(username?.trim() && password && password.trim());
 }
 
+/** Offline / Storybook: accept any credentials without calling `/auth/token`. */
+export function wgwEstablishMockSession(): void {
+  applyTokens({ access_token: "mock", refresh_token: "mock" });
+}
+
 export async function wgwLoginWithCredentials(username: string, password: string): Promise<void> {
   const normalized = username.trim();
   if (!normalized || !password) {
     throw new Error("Username and password are required.");
+  }
+  if (!wgwLiveApiEnabled()) {
+    wgwEstablishMockSession();
+    return;
   }
   const res = await postJson("/auth/token", { username: normalized, password });
   const tokens = await readTokenResponse(res);
