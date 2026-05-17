@@ -5,7 +5,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/ui/dropdown-menu";
-import { MeetAvatar } from "@/meet-core/src/meet-avatar";
+import { UserAvatar } from "@/user-avatar/src/user-avatar";
 import { MeetStreamVideo } from "@/meet-core/src/meet-stream-video";
 import { meetLabels } from "@/meet-core/src/meet-labels";
 import { cn } from "@/lib/utils";
@@ -24,7 +24,7 @@ export function MeetPeerTile({ name, stream, compact, onMuteSoon }: MeetPeerTile
         <MeetStreamVideo stream={stream} className="h-full w-full object-cover" />
       ) : (
         <div className="flex h-full items-center justify-center">
-          <MeetAvatar name={name} size={compact ? 40 : 80} />
+          <UserAvatar displayName={name} compact size={compact ? "md" : "xl"} />
         </div>
       )}
       <div className="meet-peer-tile__name">

@@ -1,7 +1,7 @@
 import { Check, Hand, X } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/tooltip";
-import { MeetAvatar } from "@/meet-core/src/meet-avatar";
+import { UserAvatar } from "@/user-avatar/src/user-avatar";
 import { meetLabels } from "@/meet-core/src/meet-labels";
 
 type MeetKnocker = { id: string; name: string };
@@ -34,7 +34,7 @@ export function MeetKnockBadge({ knockers, onAdmit, onDeny }: MeetKnockBadgeProp
         <div className="space-y-1">
           {knockers.map((knocker) => (
             <div key={knocker.id} className="meet-knock-row">
-              <MeetAvatar name={knocker.name} size={36} />
+              <UserAvatar displayName={knocker.name} compact size="sm" />
               <div className="flex-1">
                 <div className="text-sm font-medium">{knocker.name}</div>
                 <div className="text-[11px]" style={{ color: "var(--meet-muted)" }}>
