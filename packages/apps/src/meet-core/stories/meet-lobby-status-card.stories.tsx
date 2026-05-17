@@ -1,16 +1,16 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { MeetLobbyStatusCard } from "@/meet-core/src/meet-lobby-status-card";
 import { meetLabels } from "@/meet-core/src/meet-labels";
-import { meetLobbyPaneDecorator } from "@/meet-core/stories/meet-panes.stories.decorator";
 import {
   meetStoryParameters,
   storyTextControl,
+  renderInMeetScope,
 } from "@/meet-core/stories/meet-story-shared";
 
 const meta = {
   title: "Apps/Meet/Components/MeetLobbyStatusCard",
   component: MeetLobbyStatusCard,
-  decorators: [meetLobbyPaneDecorator],
+  render: renderInMeetScope(MeetLobbyStatusCard, "root"),
   parameters: meetStoryParameters(),
   argTypes: {
     title: storyTextControl,

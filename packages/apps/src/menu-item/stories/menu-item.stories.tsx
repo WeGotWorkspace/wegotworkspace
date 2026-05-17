@@ -5,23 +5,6 @@ import { MenuItem } from "../src/menu-item";
 const meta: Meta<typeof MenuItem> = {
   title: "Shared/Menu Item",
   component: MenuItem,
-  decorators: [
-    (Story) => (
-      <section
-        className="sidebar-section w-72 rounded-lg border p-3"
-        style={{
-          backgroundColor: "var(--color-paper)",
-          borderColor: "color-mix(in oklab, var(--color-ink) 12%, transparent)",
-        }}
-      >
-        <ul className="sidebar-section__list">
-          <li>
-            <Story />
-          </li>
-        </ul>
-      </section>
-    ),
-  ],
 };
 
 export default meta;

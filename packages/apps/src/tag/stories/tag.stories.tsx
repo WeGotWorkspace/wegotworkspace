@@ -1,22 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { TooltipProvider } from "@/ui/tooltip";
 import { Tag, TagGroup } from "../src/tag";
 
 const meta: Meta<typeof TagGroup> = {
   title: "Shared/Tag Group",
   component: TagGroup,
-  decorators: [
-    (Story) => (
-      <TooltipProvider>
-        <div
-          className="max-w-md p-6 rounded-lg border"
-          style={{ backgroundColor: "var(--color-cream, #f5f1e8)" }}
-        >
-          <Story />
-        </div>
-      </TooltipProvider>
-    ),
-  ],
 };
 
 export default meta;

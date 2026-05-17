@@ -1,16 +1,16 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { MeetKnockBadge } from "@/meet-core/src/meet-knock-badge";
 import { STORY_MEET_KNOCKERS } from "@/meet-core/stories/meet-pane-stories.fixtures";
-import { meetComponentPaneDecorator } from "@/meet-core/stories/meet-panes.stories.decorator";
 import {
   meetStoryParameters,
   STORY_NOOP,
+  renderInMeetScope,
 } from "@/meet-core/stories/meet-story-shared";
 
 const meta = {
   title: "Apps/Meet/Components/MeetKnockBadge",
   component: MeetKnockBadge,
-  decorators: [meetComponentPaneDecorator],
+  render: renderInMeetScope(MeetKnockBadge, "root"),
   parameters: meetStoryParameters(),
 } satisfies Meta<typeof MeetKnockBadge>;
 

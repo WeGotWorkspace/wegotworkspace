@@ -1,17 +1,20 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { AdminWebdavPane } from "@/admin-core/src/admin-webdav-pane";
-import { adminPaneStoryDecorator } from "@/admin-core/stories/admin-pane-stories.decorator";
 import { useAdminPaneStoryController } from "@/admin-core/stories/admin-pane-stories.harness";
+import { AdminStoryScope } from "@/admin-core/stories/admin-story-scope";
 
 function WebdavPaneHarness() {
   const controller = useAdminPaneStoryController();
-  return <AdminWebdavPane controller={controller} />;
+  return (
+    <AdminStoryScope>
+      <AdminWebdavPane controller={controller} />
+    </AdminStoryScope>
+  );
 }
 
 const meta = {
   title: "Apps/Admin/Panes/WebDAV",
   component: AdminWebdavPane,
-  decorators: [adminPaneStoryDecorator],
   parameters: {
     layout: "fullscreen",
   },

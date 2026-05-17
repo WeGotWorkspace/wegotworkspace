@@ -4,16 +4,6 @@ import { NoteDetailView } from "../src/note-detail-view";
 const meta: Meta<typeof NoteDetailView> = {
   title: "Apps/Notes/Note Detail View",
   component: NoteDetailView,
-  decorators: [
-    (Story) => (
-      <div
-        className="max-w-3xl mx-auto p-8 rounded-lg border"
-        style={{ backgroundColor: "var(--color-cream, #f5f1e8)" }}
-      >
-        <Story />
-      </div>
-    ),
-  ],
 };
 
 export default meta;

@@ -5,16 +5,6 @@ import { MultiSelectionView } from "../src/multi-selection-view";
 const meta: Meta<typeof MultiSelectionView> = {
   title: "Shared/Multi Selection View",
   component: MultiSelectionView,
-  decorators: [
-    (Story) => (
-      <div
-        className="mx-auto max-w-3xl rounded-lg border p-8"
-        style={{ backgroundColor: "var(--color-cream, #f5f1e8)" }}
-      >
-        <Story />
-      </div>
-    ),
-  ],
 };
 
 export default meta;

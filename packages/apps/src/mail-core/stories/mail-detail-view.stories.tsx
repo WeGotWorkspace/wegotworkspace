@@ -2,14 +2,18 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { MailDetailView } from "@/mail-core/src/mail-detail-view";
 import { mailStoryLabels } from "@/mail-core/src/mail-app.stories.fixtures";
 import { MOCK_MAIL_DETAIL_HTML_BODY } from "@/lib/api/mock/mail-seed";
-import { mailDetailPaneDecorator } from "./mail-panes.stories.decorator";
+import { MailStoryScope } from "./mail-story-scope";
 
 const L = mailStoryLabels;
 
 const meta = {
   title: "Apps/Mail/Panes/Detail",
   component: MailDetailView,
-  decorators: [mailDetailPaneDecorator],
+  render: (args) => (
+    <MailStoryScope variant="detail">
+      <MailDetailView {...args} />
+    </MailStoryScope>
+  ),
   parameters: {
     layout: "fullscreen",
   },

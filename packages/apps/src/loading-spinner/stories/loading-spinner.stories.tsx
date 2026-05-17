@@ -10,13 +10,6 @@ const meta = {
   title: "Shared/Loading Spinner",
   component: LoadingSpinner,
   parameters: { layout: "padded" },
-  decorators: [
-    (Story) => (
-      <div className="flex items-center justify-center rounded-lg p-12" style={surfaceStyle}>
-        <Story />
-      </div>
-    ),
-  ],
   argTypes: {
     size: { control: "radio", options: ["sm", "lg"] },
     label: { control: "text" },

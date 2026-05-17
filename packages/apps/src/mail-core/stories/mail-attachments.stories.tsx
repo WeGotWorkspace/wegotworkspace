@@ -1,11 +1,15 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { MailAttachments } from "../src/mail-attachments";
-import { mailPaneDecorator } from "./mail-panes.stories.decorator";
+import { MailStoryScope } from "./mail-story-scope";
 
 const meta: Meta<typeof MailAttachments> = {
   title: "Apps/Mail/Panes/Attachments",
   component: MailAttachments,
-  decorators: [mailPaneDecorator],
+  render: (args) => (
+    <MailStoryScope variant="pane">
+      <MailAttachments {...args} />
+    </MailStoryScope>
+  ),
   parameters: {
     layout: "fullscreen",
   },

@@ -1,12 +1,16 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { SettingsMembershipsPane } from "@/settings-core/src/settings-memberships-pane";
 import { createMockGroups } from "./settings-panes.stories.fixtures";
-import { settingsPaneDecorator } from "./settings-panes.stories.decorator";
+import { SettingsStoryScope } from "./settings-story-scope";
 
 const meta = {
   title: "Apps/Settings/Panes/Memberships",
   component: SettingsMembershipsPane,
-  decorators: [settingsPaneDecorator],
+  render: (args) => (
+    <SettingsStoryScope>
+      <SettingsMembershipsPane {...args} />
+    </SettingsStoryScope>
+  ),
   parameters: {
     layout: "fullscreen",
   },

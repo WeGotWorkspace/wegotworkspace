@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { NoteDetailView } from "@/note-detail-view/src/note-detail-view";
 import { getNotesDetailStoryProps } from "./notes-pane-stories.fixtures";
-import { notesDetailPaneDecorator } from "./notes-panes.stories.decorator";
+import { NotesStoryScope } from "./notes-story-scope";
 
 function NotesDetailPaneHarness({
   readOnly = false,
@@ -21,7 +21,8 @@ function NotesDetailPaneHarness({
   const [body, setBody] = useState(base.body);
 
   return (
-    <NoteDetailView
+    <NotesStoryScope variant="detail">
+      <NoteDetailView
       noteId={base.noteId}
       notebook={base.notebook}
       lastEdited={base.lastEdited}
@@ -33,14 +34,14 @@ function NotesDetailPaneHarness({
       pullQuote={base.pullQuote}
       body={body}
       onBodyMarkdownChange={readOnly ? undefined : (markdown) => setBody([markdown])}
-    />
+      />
+    </NotesStoryScope>
   );
 }
 
 const meta = {
   title: "Apps/Notes/Panes/Detail",
   component: NotesDetailPaneHarness,
-  decorators: [notesDetailPaneDecorator],
   parameters: {
     layout: "fullscreen",
   },

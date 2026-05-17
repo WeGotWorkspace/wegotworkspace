@@ -11,6 +11,7 @@ import {
   STORY_MEET_MICROPHONES,
   STORY_MEET_SPEAKERS,
 } from "@/meet-core/stories/meet-pane-stories.fixtures";
+import { MeetStoryScope } from "@/meet-core/stories/meet-story-scope";
 
 type DeviceSelection = {
   cameras: typeof STORY_MEET_DEVICES;
@@ -47,8 +48,9 @@ export function MeetLobbyPaneHarness(
   const knockDots = props.knockDots ?? 2;
 
   return (
-    <div className="meet-workspace__lobby">
-      <MeetLobbyPane
+    <MeetStoryScope>
+      <div className="meet-workspace__lobby flex-1 min-h-dvh">
+        <MeetLobbyPane
         controller={controller}
         displayName={props.displayName ?? controller.displayName}
         inJoinFlow={props.inJoinFlow ?? false}
@@ -66,8 +68,9 @@ export function MeetLobbyPaneHarness(
         endedMessage={props.endedMessage ?? null}
         showMissingInviteScreen={props.showMissingInviteScreen ?? false}
         showInviteCheckingScreen={props.showInviteCheckingScreen ?? false}
-      />
-    </div>
+        />
+      </div>
+    </MeetStoryScope>
   );
 }
 
@@ -82,12 +85,15 @@ export function MeetRoomPaneHarness(
   const [chatOpen, setChatOpen] = useState(props.chatOpen ?? false);
 
   return (
-    <div
-      className={
-        chatOpen ? "meet-workspace__room meet-workspace__room--chat-open" : "meet-workspace__room meet-workspace__room--chat-closed"
-      }
-    >
-      <MeetRoomPane
+    <MeetStoryScope variant="in-call">
+      <div
+        className={
+          chatOpen
+            ? "meet-workspace__room meet-workspace__room--chat-open"
+            : "meet-workspace__room meet-workspace__room--chat-closed"
+        }
+      >
+        <MeetRoomPane
         controller={controller}
         displayName={props.displayName ?? controller.displayName}
         hasSignedInIdentity={props.hasSignedInIdentity ?? true}
@@ -108,7 +114,8 @@ export function MeetRoomPaneHarness(
         onMuteSoon={props.onMuteSoon ?? (() => {})}
         onToastInfo={props.onToastInfo ?? (() => {})}
         onToastError={props.onToastError ?? (() => {})}
-      />
-    </div>
+        />
+      </div>
+    </MeetStoryScope>
   );
 }

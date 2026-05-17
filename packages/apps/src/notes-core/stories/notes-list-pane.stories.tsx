@@ -2,8 +2,8 @@ import { useEffect } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { CollectionListWorkspace } from "@/collection-layout/src/collection-layout";
 import { NotesListPanel } from "@/notes-core/src/notes-list-panel";
-import { notesListColumnDecorator } from "./notes-panes.stories.decorator";
 import { useNotesPaneStoryController } from "./notes-pane-stories.harness";
+import { NotesStoryScope } from "./notes-story-scope";
 
 const storyChrome = {
   sidebarOpen: true,
@@ -64,17 +64,16 @@ export function NotesListPaneHarness({ preset = "default" }: { preset?: NotesLis
   });
 
   return (
-    <>
+    <NotesStoryScope variant="list-column">
       <CollectionListWorkspace detailOpenMobile={false} {...listProps} />
       {controller.confirmDialog}
-    </>
+    </NotesStoryScope>
   );
 }
 
 const meta = {
   title: "Apps/Notes/Panes/List",
   component: NotesListPaneHarness,
-  decorators: [notesListColumnDecorator],
   parameters: {
     layout: "fullscreen",
   },

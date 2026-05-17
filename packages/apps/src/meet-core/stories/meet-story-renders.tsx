@@ -8,6 +8,7 @@ import {
 } from "@/meet-core/stories/meet-pane-stories.harness";
 import { STORY_MEET_CHAT_MESSAGES, STORY_MEET_KNOCKERS, STORY_MEET_PEERS } from "@/meet-core/stories/meet-pane-stories.fixtures";
 import { STORY_NOOP } from "@/meet-core/stories/meet-story-shared";
+import { MeetStoryScope } from "@/meet-core/stories/meet-story-scope";
 
 /** Thin render wrappers: meta `component` stays the real pane; controller comes from harness. */
 
@@ -94,13 +95,15 @@ export type MeetChatPaneStoryArgs = {
 export function MeetChatPaneStory({ draft: draftInitial, hasMessages }: MeetChatPaneStoryArgs) {
   const [draft, setDraft] = useState(draftInitial);
   return (
-    <MeetChatPane
-      messages={hasMessages ? STORY_MEET_CHAT_MESSAGES : []}
-      draft={draft}
-      onDraftChange={setDraft}
-      onSend={() => setDraft("")}
-      onClose={STORY_NOOP}
-    />
+    <MeetStoryScope variant="chat-column">
+      <MeetChatPane
+        messages={hasMessages ? STORY_MEET_CHAT_MESSAGES : []}
+        draft={draft}
+        onDraftChange={setDraft}
+        onSend={() => setDraft("")}
+        onClose={STORY_NOOP}
+      />
+    </MeetStoryScope>
   );
 }
 
@@ -135,13 +138,15 @@ export function MeetSelfPreviewPiPStory({ name, videoOn, micOn }: MeetSelfPrevie
   }, [videoOn]);
 
   return (
-    <MeetSelfPreviewPiP
-      name={name}
-      videoOn={videoOn}
-      micOn={micOn}
-      videoRef={videoRef}
-      onInfo={STORY_NOOP}
-      onError={STORY_NOOP}
-    />
+    <MeetStoryScope variant="pip-stage">
+      <MeetSelfPreviewPiP
+        name={name}
+        videoOn={videoOn}
+        micOn={micOn}
+        videoRef={videoRef}
+        onInfo={STORY_NOOP}
+        onError={STORY_NOOP}
+      />
+    </MeetStoryScope>
   );
 }
