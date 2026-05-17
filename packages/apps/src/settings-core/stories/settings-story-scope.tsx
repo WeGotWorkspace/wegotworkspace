@@ -1,7 +1,7 @@
-import type { ReactElement } from "react";
+import type { ReactNode } from "react";
 import "@/settings-core/src/settings-workspace.css";
 
-export function settingsPaneDecorator(Story: () => ReactElement) {
+export function SettingsStoryScope({ children }: { children: ReactNode }) {
   return (
     <div
       className="settings-workspace p-6 md:p-10"
@@ -10,9 +10,7 @@ export function settingsPaneDecorator(Story: () => ReactElement) {
         backgroundColor: "var(--color-cream, #f5f1e8)",
       }}
     >
-      <div className="mx-auto max-w-2xl">
-        <Story />
-      </div>
+      <div className="mx-auto max-w-2xl">{children}</div>
     </div>
   );
 }

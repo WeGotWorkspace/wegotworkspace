@@ -2,13 +2,14 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Archive, BookOpen, Star, Trash2 } from "lucide-react";
 import { MultiSelectionView } from "@/multi-selection-view/src/multi-selection-view";
 import { defaultNotesLabels } from "@/notes-core/src/notes-labels";
-import { notesDetailPaneDecorator } from "./notes-panes.stories.decorator";
+import { NotesStoryScope } from "./notes-story-scope";
 
 const L = defaultNotesLabels;
 
 function NotesMultiSelectionPaneHarness({ count = 3 }: { count?: number }) {
   return (
-    <MultiSelectionView
+    <NotesStoryScope variant="detail">
+      <MultiSelectionView
       count={count}
       label="Multiple selection"
       title={(n) => `${n} ${n === 1 ? "note" : "notes"} selected`}
@@ -38,14 +39,14 @@ function NotesMultiSelectionPaneHarness({ count = 3 }: { count?: number }) {
           onClick: () => {},
         },
       ]}
-    />
+      />
+    </NotesStoryScope>
   );
 }
 
 const meta = {
   title: "Apps/Notes/Panes/Multi selection",
   component: NotesMultiSelectionPaneHarness,
-  decorators: [notesDetailPaneDecorator],
   parameters: {
     layout: "fullscreen",
   },

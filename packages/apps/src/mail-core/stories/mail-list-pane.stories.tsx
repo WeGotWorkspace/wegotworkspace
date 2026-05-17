@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { CollectionListWorkspace } from "@/collection-layout/src/collection-layout";
 import { MailListPanel } from "@/mail-core/src/mail-list-panel";
-import { mailListColumnDecorator } from "./mail-panes.stories.decorator";
 import { useMailPaneStoryController } from "./mail-pane-stories.harness";
+import { MailStoryScope } from "./mail-story-scope";
 
 const storyChrome = {
   sidebarOpen: true,
@@ -49,17 +49,16 @@ function MailListPaneHarness({ preset = "default" }: { preset?: MailListPanePres
   });
 
   return (
-    <>
+    <MailStoryScope variant="list-column">
       <CollectionListWorkspace detailOpenMobile={false} {...listProps} />
       {controller.confirmDialog}
-    </>
+    </MailStoryScope>
   );
 }
 
 const meta = {
   title: "Apps/Mail/Panes/List",
   component: MailListPaneHarness,
-  decorators: [mailListColumnDecorator],
   parameters: {
     layout: "fullscreen",
   },

@@ -1,3 +1,6 @@
+import { createElement, type ComponentType } from "react";
+import { MeetStoryScope, type MeetStoryScopeVariant } from "@/meet-core/stories/meet-story-scope";
+
 /** Storybook-only helpers (no-op handlers). */
 export const STORY_NOOP = () => {};
 export const STORY_NOOP_ASYNC = async () => {};
@@ -45,4 +48,13 @@ export function meetStoryParameters(options: MeetStoryDocsOptions = {}) {
   }
 
   return parameters;
+}
+
+/** Wrap a component in {@link MeetStoryScope} for story `render` (no Storybook decorators). */
+export function renderInMeetScope<T extends Record<string, unknown>>(
+  Component: ComponentType<T>,
+  scope: MeetStoryScopeVariant = "root",
+) {
+  return (args: T) =>
+    createElement(MeetStoryScope, { variant: scope }, createElement(Component, args));
 }

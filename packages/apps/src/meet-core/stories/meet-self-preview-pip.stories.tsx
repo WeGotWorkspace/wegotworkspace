@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { MeetSelfPreviewPiP } from "@/meet-core/src/meet-self-preview-pip";
-import { meetPipStageDecorator } from "@/meet-core/stories/meet-panes.stories.decorator";
 import {
   MeetSelfPreviewPiPStory,
   type MeetSelfPreviewPiPStoryArgs,
@@ -15,7 +14,6 @@ const meta = {
   title: "Apps/Meet/Components/MeetSelfPreviewPiP",
   component: MeetSelfPreviewPiP,
   render: (args) => <MeetSelfPreviewPiPStory {...args} />,
-  decorators: [meetPipStageDecorator],
   parameters: {
     layout: "fullscreen",
     ...meetStoryParameters({

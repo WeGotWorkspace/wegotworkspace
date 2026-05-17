@@ -5,13 +5,6 @@ import { ContentLabel } from "../src/content-label";
 const meta: Meta<typeof ContentLabel> = {
   title: "Shared/Content Label",
   component: ContentLabel,
-  decorators: [
-    (Story) => (
-      <div className="p-6" style={{ backgroundColor: "var(--color-cream, #f5f1e8)" }}>
-        <Story />
-      </div>
-    ),
-  ],
 };
 
 export default meta;

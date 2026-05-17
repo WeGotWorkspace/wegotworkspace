@@ -13,13 +13,6 @@ const meta: Meta<typeof AppSidebar> = {
     layout: "fullscreen",
     routerPath: "/mail",
   },
-  decorators: [
-    (Story) => (
-      <div className="flex h-dvh w-full bg-[var(--color-cream,#f5f1e8)]">
-        <Story />
-      </div>
-    ),
-  ],
 };
 
 export default meta;

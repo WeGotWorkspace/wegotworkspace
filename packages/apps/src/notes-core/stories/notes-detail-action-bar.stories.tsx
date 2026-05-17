@@ -4,7 +4,7 @@ import { createNotesAppBootstrap } from "@/lib/api/mock/notes-bootstrap";
 import { NotesDetailActionBar } from "@/notes-core/src/notes-detail-action-bar";
 import { defaultNotesLabels } from "@/notes-core/src/notes-labels";
 import { useStarredMap } from "@/hooks/use-starred-map";
-import { notesDetailPaneDecorator } from "./notes-panes.stories.decorator";
+import { NotesStoryScope } from "./notes-story-scope";
 
 function NotesDetailActionBarHarness({
   archived: archivedInitial = false,
@@ -34,14 +34,15 @@ function NotesDetailActionBarHarness({
   }
 
   return (
-    <div
-      className="sticky top-0 z-10 border-b px-2 py-2"
-      style={{
-        borderColor: "color-mix(in oklab, var(--color-ink) 10%, transparent)",
-        backgroundColor: "var(--color-cream, #f5f1e8)",
-      }}
-    >
-      <NotesDetailActionBar
+    <NotesStoryScope variant="detail">
+      <div
+        className="sticky top-0 z-10 border-b px-2 py-2"
+        style={{
+          borderColor: "color-mix(in oklab, var(--color-ink) 10%, transparent)",
+          backgroundColor: "var(--color-cream, #f5f1e8)",
+        }}
+      >
+        <NotesDetailActionBar
         active={active}
         labels={defaultNotesLabels}
         archived={archivedMap}
@@ -55,15 +56,15 @@ function NotesDetailActionBarHarness({
             [id]: !prev[id],
           }));
         }}
-      />
-    </div>
+        />
+      </div>
+    </NotesStoryScope>
   );
 }
 
 const meta = {
   title: "Apps/Notes/Panes/Detail action bar",
   component: NotesDetailActionBarHarness,
-  decorators: [notesDetailPaneDecorator],
   parameters: {
     layout: "fullscreen",
   },

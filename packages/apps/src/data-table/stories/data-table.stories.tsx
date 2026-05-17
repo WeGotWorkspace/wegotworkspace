@@ -106,16 +106,6 @@ const columns: DataTableColumn<BackupRow>[] = [
 const meta: Meta<typeof DataTable<BackupRow>> = {
   title: "Shared/Data Table",
   component: DataTable<BackupRow>,
-  decorators: [
-    (Story) => (
-      <div
-        className="max-w-4xl p-6 rounded-xl border"
-        style={{ backgroundColor: "var(--color-cream, #f5f1e8)", color: "#1a1a18" }}
-      >
-        <Story />
-      </div>
-    ),
-  ],
 };
 
 export default meta;

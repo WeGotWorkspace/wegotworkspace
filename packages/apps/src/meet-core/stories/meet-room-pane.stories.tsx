@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { MeetRoomPane } from "@/meet-core/src/meet-room-pane";
-import { meetRoomPaneDecorator } from "@/meet-core/stories/meet-panes.stories.decorator";
 import {
   MeetRoomPaneStory,
   type MeetRoomPaneStoryArgs,
@@ -20,7 +19,6 @@ const meta = {
   title: "Apps/Meet/Panes/MeetRoomPane",
   component: MeetRoomPane,
   render: (args) => <MeetRoomPaneStory {...args} />,
-  decorators: [meetRoomPaneDecorator],
   parameters: {
     layout: "fullscreen",
     ...meetStoryParameters({

@@ -1,25 +1,26 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import type { AdminStoryDataOverride } from "@/admin-core/stories/admin-pane-stories.harness";
 import { AdminUpdatesPane } from "@/admin-core/src/admin-updates-pane";
-import { adminPaneStoryDecorator } from "@/admin-core/stories/admin-pane-stories.decorator";
 import { useAdminPaneStoryController } from "@/admin-core/stories/admin-pane-stories.harness";
+import { AdminStoryScope } from "@/admin-core/stories/admin-story-scope";
 
 function UpdatesPaneHarness({ dataOverride }: { dataOverride?: AdminStoryDataOverride }) {
   const controller = useAdminPaneStoryController(dataOverride);
   return (
-    <AdminUpdatesPane
-      controller={controller}
-      setConfirmClearLogsOpen={() => {}}
-      setConfirmUpdateOpen={() => {}}
-      updatingNow={false}
-    />
+    <AdminStoryScope>
+      <AdminUpdatesPane
+        controller={controller}
+        setConfirmClearLogsOpen={() => {}}
+        setConfirmUpdateOpen={() => {}}
+        updatingNow={false}
+      />
+    </AdminStoryScope>
   );
 }
 
 const meta = {
   title: "Apps/Admin/Panes/Updates",
   component: AdminUpdatesPane,
-  decorators: [adminPaneStoryDecorator],
   parameters: {
     layout: "fullscreen",
   },

@@ -6,13 +6,6 @@ import { DetailViewHeader } from "@/detail-view-header/src/detail-view-header";
 const meta: Meta<typeof DetailViewHeader> = {
   title: "Shared/Detail View Header",
   component: DetailViewHeader,
-  decorators: [
-    (Story) => (
-      <div className="max-w-[680px] mx-auto p-6">
-        <Story />
-      </div>
-    ),
-  ],
 };
 
 export default meta;

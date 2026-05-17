@@ -6,10 +6,10 @@ import {
   STORY_MEET_MICROPHONES,
   STORY_MEET_SPEAKERS,
 } from "@/meet-core/stories/meet-pane-stories.fixtures";
-import { meetRoomPaneDecorator } from "@/meet-core/stories/meet-panes.stories.decorator";
 import {
   meetStoryParameters,
   storyBooleanControl,
+  renderInMeetScope,
 } from "@/meet-core/stories/meet-story-shared";
 
 type MeetDevicePopoverStoryArgs = {
@@ -43,7 +43,6 @@ const meta = {
   title: "Apps/Meet/Components/MeetDevicePopover",
   component: MeetDevicePopover,
   render: (args) => <MeetDevicePopoverStory {...args} />,
-  decorators: [meetRoomPaneDecorator],
   parameters: {
     layout: "fullscreen",
     ...meetStoryParameters({

@@ -16,13 +16,6 @@ const meta: Meta<typeof AppsHomeScreen> = {
     layout: "fullscreen",
     routerPath: "/",
   },
-  decorators: [
-    (Story) => (
-      <div className="min-h-screen">
-        <Story />
-      </div>
-    ),
-  ],
 };
 
 export default meta;

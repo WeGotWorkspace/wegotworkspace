@@ -6,16 +6,6 @@ import { FormField } from "../src";
 const meta: Meta<typeof FormField> = {
   title: "Shared/Form Field",
   component: FormField,
-  decorators: [
-    (Story) => (
-      <div
-        className="max-w-lg p-6 rounded-xl border"
-        style={{ backgroundColor: "var(--color-cream, #f5f1e8)" }}
-      >
-        <Story />
-      </div>
-    ),
-  ],
 };
 
 export default meta;

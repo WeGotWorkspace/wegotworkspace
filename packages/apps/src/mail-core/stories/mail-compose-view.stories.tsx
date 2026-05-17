@@ -4,7 +4,7 @@ import { MailComposeView } from "@/mail-core/src/mail-compose-view";
 import { mailStoryLabels } from "@/mail-core/src/mail-app.stories.fixtures";
 import { createComposeAttachment } from "@/mail-core/src/mail-compose-utils";
 import type { MailComposeAttachment } from "@/mail-core/src/mail-compose-utils";
-import { mailComposeDialogDecorator } from "./mail-panes.stories.decorator";
+import { MailStoryScope } from "./mail-story-scope";
 
 const L = mailStoryLabels;
 
@@ -25,7 +25,8 @@ function MailComposeViewHarness({ mode = "new" as const }: { mode?: "new" | "rep
   const [sending, setSending] = useState(false);
 
   return (
-    <MailComposeView
+    <MailStoryScope variant="compose-dialog">
+      <MailComposeView
       composeMode={mode}
       mailbox="Drafts"
       to={to}
@@ -60,14 +61,14 @@ function MailComposeViewHarness({ mode = "new" as const }: { mode?: "new" | "rep
       onDiscard={() => {}}
       saving={saving}
       sending={sending}
-    />
+      />
+    </MailStoryScope>
   );
 }
 
 const meta = {
   title: "Apps/Mail/Panes/Compose",
   component: MailComposeViewHarness,
-  decorators: [mailComposeDialogDecorator],
   parameters: {
     layout: "fullscreen",
   },
