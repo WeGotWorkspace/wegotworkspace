@@ -1,13 +1,9 @@
 import { WorkspaceLiveAppShell } from "@/lib/live/workspace-live-app-shell";
+import type { MeetAppProps } from "@/meet-core/src/meet-app-props";
 import { MeetWorkspace } from "@/meet-core/src/meet-workspace";
 import { useMeetAPI } from "@/meet-core/src/use-meet-api";
-import type { MeetApiSource } from "@/meet-core/src/meet-api-source";
 
-type MeetAppProps = {
-  source?: MeetApiSource;
-};
-
-export function MeetApp({ source }: MeetAppProps) {
+export function MeetApp({ source }: MeetAppProps = {}) {
   const { phase, error, retry, successVersion, listLoading, data, session, operations } =
     useMeetAPI(source);
 
@@ -25,6 +21,9 @@ export function MeetApp({ source }: MeetAppProps) {
           session={session}
           operations={operations}
           listLoading={listLoading}
+          onLogout={() => {
+            window.location.assign("/logout");
+          }}
         />
       )}
     />

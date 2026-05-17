@@ -1,24 +1,41 @@
-import { CalendarDays, Mailbox } from "lucide-react";
-import { DetailViewHeader } from "@/detail-view-header/src/detail-view-header";
-import { Button } from "@/button/src/button";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { Paperclip, Trash2, X } from "lucide-react";
+import { Button, IconButton } from "@/button/src/button";
+import { ViewHeader } from "@/view-header/src/view-header";
+import { FieldLabelRow } from "@/ui/field-label-row";
 import { Input } from "@/ui/input";
 import { Textarea } from "@/ui/textarea";
+import { DialogFooter } from "@/ui/dialog";
 import { cn } from "@/lib/utils";
+import { mailWorkspacePaneClasses } from "@/mail-core/src/mail-workspace.styles";
+import {
+  formatComposeAttachmentSize,
+  type MailComposeAttachment,
+} from "@/mail-core/src/mail-compose-utils";
+import { useComposeMessageHeight } from "@/mail-core/src/use-compose-message-height";
+
+export type MailComposeMode = "new" | "reply" | "reply-all" | "forward" | "draft";
 
 type MailComposeViewProps = {
-  mailId: string;
+  composeMode?: MailComposeMode;
   mailbox: string;
-  date: string;
   to: string;
   cc: string;
   bcc: string;
   subject: string;
   body: string;
+  attachments: MailComposeAttachment[];
   onToChange: (value: string) => void;
   onCcChange: (value: string) => void;
   onBccChange: (value: string) => void;
   onSubjectChange: (value: string) => void;
   onBodyChange: (value: string) => void;
+  onAddAttachments: (files: File[]) => void;
+  onRemoveAttachment: (attachmentId: string) => void;
+  attachFilesLabel: string;
+  attachmentsLabel: string;
+  removeAttachmentLabel: string;
+  deleteDraftLabel: string;
   onSaveDraft: () => void;
   onSend: () => void;
   onDiscard: () => void;
@@ -27,46 +44,41 @@ type MailComposeViewProps = {
   className?: string;
 };
 
-function ComposeField({
-  label,
-  value,
-  onChange,
-  placeholder,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-}) {
-  return (
-    <label className="flex items-center gap-3 text-sm">
-      <span className="w-11 shrink-0 text-[color-mix(in_oklab,var(--color-ink)_58%,transparent)]">
-        {label}
-      </span>
-      <Input
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        className="border-0 border-b rounded-none px-0 h-10 shadow-none focus-visible:ring-0 focus-visible:border-b"
-      />
-    </label>
-  );
+function composeHeaderTitle(mode: MailComposeMode): string {
+  switch (mode) {
+    case "reply":
+      return "Reply";
+    case "reply-all":
+      return "Reply all";
+    case "forward":
+      return "Forward";
+    case "draft":
+      return "Edit draft";
+    default:
+      return "New message";
+  }
 }
 
 export function MailComposeView({
-  mailId,
+  composeMode = "new",
   mailbox,
-  date,
   to,
   cc,
   bcc,
   subject,
   body,
+  attachments,
   onToChange,
   onCcChange,
   onBccChange,
   onSubjectChange,
   onBodyChange,
+  onAddAttachments,
+  onRemoveAttachment,
+  attachFilesLabel,
+  attachmentsLabel,
+  removeAttachmentLabel,
+  deleteDraftLabel,
   onSaveDraft,
   onSend,
   onDiscard,
@@ -75,70 +87,172 @@ export function MailComposeView({
   className,
 }: MailComposeViewProps) {
   const disableActions = saving || sending;
+  const [showCcBcc, setShowCcBcc] = useState(() => Boolean(cc.trim() || bcc.trim()));
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { textareaRef, fieldRef, syncHeight } = useComposeMessageHeight(body);
+
+  useEffect(() => {
+    if (cc.trim() || bcc.trim()) setShowCcBcc(true);
+  }, [cc, bcc]);
+
+  const handleFilesSelected = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files ? Array.from(event.target.files) : [];
+    if (files.length > 0) onAddAttachments(files);
+    event.target.value = "";
+  };
 
   return (
-    <article className={cn("max-w-[760px] mx-auto", className)}>
-      <DetailViewHeader
-        topTags={[
-          {
-            key: "mailbox",
-            label: mailbox,
-            icon: <Mailbox className="size-3.5 opacity-70" />,
-            colors: {
-              color: "var(--color-cream, #f5f1e8)",
-              backgroundColor: "color-mix(in oklab, var(--color-ink) 88%, transparent)",
-            },
-          },
-          {
-            key: "date",
-            label: date,
-            icon: <CalendarDays className="size-3.5 opacity-70" />,
-            colors: {
-              backgroundColor: "color-mix(in oklab, var(--color-ink) 6%, transparent)",
-              color: "color-mix(in oklab, var(--color-ink) 58%, transparent)",
-            },
-          },
-        ]}
-        title={subject}
-        editable
-        onTitleChange={onSubjectChange}
-        titleKey={`${mailId}-compose-subject`}
-        titleClassName="text-3xl md:text-4xl font-sans text-(--color-ink) font-semibold leading-[1.1] tracking-tight mb-6"
-        titlePlaceholder="Subject"
-      />
-
-      <div className="rounded-xl border border-[color-mix(in_oklab,var(--color-ink)_12%,transparent)] bg-[color-mix(in_oklab,var(--color-cream)_86%,white)] p-4 md:p-5 space-y-3">
-        <ComposeField
-          label="To"
-          value={to}
-          onChange={onToChange}
-          placeholder="alice@example.com, bob@example.com"
+    <div className={cn(mailWorkspacePaneClasses.composeView, className)}>
+      <header className={mailWorkspacePaneClasses.composeHeader}>
+        <ViewHeader
+          hideSidebarToggle
+          title={composeHeaderTitle(composeMode)}
+          subtitle={mailbox}
         />
-        <ComposeField label="Cc" value={cc} onChange={onCcChange} placeholder="Optional" />
-        <ComposeField label="Bcc" value={bcc} onChange={onBccChange} placeholder="Optional" />
+      </header>
 
-        <label className="block pt-2">
-          <span className="sr-only">Message body</span>
-          <Textarea
-            value={body}
-            onChange={(event) => onBodyChange(event.target.value)}
-            placeholder="Write your message..."
-            className="min-h-[320px] md:min-h-[400px] resize-y border-[color-mix(in_oklab,var(--color-ink)_15%,transparent)]"
+      <div className={mailWorkspacePaneClasses.composeBody}>
+        <FieldLabelRow label="To" className={mailWorkspacePaneClasses.composeField}>
+          <div className={mailWorkspacePaneClasses.composeToRow}>
+            <Input
+              className={mailWorkspacePaneClasses.composeToInput}
+              value={to}
+              onChange={(event) => onToChange(event.target.value)}
+              placeholder="alice@example.com, bob@example.com"
+              autoComplete="off"
+            />
+            {!showCcBcc ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="primary"
+                label="(B)cc"
+                onClick={() => setShowCcBcc(true)}
+              />
+            ) : null}
+          </div>
+        </FieldLabelRow>
+
+        {showCcBcc ? (
+          <>
+            <FieldLabelRow label="Cc" className={mailWorkspacePaneClasses.composeField}>
+              <Input
+                value={cc}
+                onChange={(event) => onCcChange(event.target.value)}
+                placeholder="Optional"
+                autoComplete="off"
+              />
+            </FieldLabelRow>
+            <FieldLabelRow label="Bcc" className={mailWorkspacePaneClasses.composeField}>
+              <Input
+                value={bcc}
+                onChange={(event) => onBccChange(event.target.value)}
+                placeholder="Optional"
+                autoComplete="off"
+              />
+            </FieldLabelRow>
+          </>
+        ) : null}
+
+        <FieldLabelRow label="Subject" className={mailWorkspacePaneClasses.composeField}>
+          <Input
+            value={subject}
+            onChange={(event) => onSubjectChange(event.target.value)}
+            placeholder="Subject"
+            autoComplete="off"
           />
-        </label>
+        </FieldLabelRow>
 
-        <div className="flex items-center justify-end gap-2 pt-2">
-          <Button type="button" variant="ghost" onClick={onDiscard} disabled={disableActions}>
-            Discard
-          </Button>
-          <Button type="button" variant="outline" onClick={onSaveDraft} disabled={disableActions}>
-            {saving ? "Saving..." : "Save draft"}
-          </Button>
-          <Button type="button" onClick={onSend} disabled={disableActions || !to.trim()}>
-            {sending ? "Sending..." : "Send"}
-          </Button>
+        {attachments.length > 0 ? (
+          <div className={mailWorkspacePaneClasses.composeAttachmentsSection}>
+            <ul
+              className={mailWorkspacePaneClasses.composeAttachmentsList}
+              aria-label={attachmentsLabel}
+            >
+              {attachments.map((attachment) => (
+                <li key={attachment.id} className={mailWorkspacePaneClasses.composeAttachmentItem}>
+                  <span className={mailWorkspacePaneClasses.composeAttachmentName}>
+                    {attachment.filename}
+                  </span>
+                  <span className={mailWorkspacePaneClasses.composeAttachmentMeta}>
+                    {formatComposeAttachmentSize(attachment.size)}
+                  </span>
+                  <IconButton
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    label={`${removeAttachmentLabel}: ${attachment.filename}`}
+                    icon={<X className="size-4" aria-hidden />}
+                    showTooltip={false}
+                    onClick={() => onRemoveAttachment(attachment.id)}
+                    disabled={disableActions}
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
+        <div ref={fieldRef} className={mailWorkspacePaneClasses.composeMessageShell}>
+          <FieldLabelRow label="Message" className={mailWorkspacePaneClasses.composeMessageField}>
+            <Textarea
+              ref={textareaRef}
+              value={body}
+              onChange={(event) => onBodyChange(event.target.value)}
+              onInput={syncHeight}
+              placeholder="Write your message..."
+              className={mailWorkspacePaneClasses.composeMessageInput}
+            />
+          </FieldLabelRow>
         </div>
       </div>
-    </article>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        className={mailWorkspacePaneClasses.composeAttachmentsInput}
+        onChange={handleFilesSelected}
+      />
+
+      <DialogFooter className={mailWorkspacePaneClasses.composeFooter}>
+        <div className={mailWorkspacePaneClasses.composeFooterStart}>
+          <IconButton
+            type="button"
+            variant="ghost"
+            size="sm"
+            label={attachFilesLabel}
+            icon={<Paperclip className="size-4" aria-hidden />}
+            onClick={() => fileInputRef.current?.click()}
+            disabled={disableActions}
+          />
+          <IconButton
+            type="button"
+            variant="ghost"
+            size="sm"
+            label={deleteDraftLabel}
+            icon={<Trash2 className="size-4" aria-hidden />}
+            onClick={onDiscard}
+            disabled={disableActions}
+          />
+        </div>
+        <div className={mailWorkspacePaneClasses.composeFooterEnd}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onSaveDraft}
+            disabled={disableActions}
+            label={saving ? "Saving..." : "Save draft"}
+          />
+          <Button
+            type="button"
+            variant="primary"
+            onClick={onSend}
+            disabled={disableActions || !to.trim()}
+            label={sending ? "Sending..." : "Send"}
+          />
+        </div>
+      </DialogFooter>
+    </div>
   );
 }

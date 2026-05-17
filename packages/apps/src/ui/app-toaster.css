@@ -71,6 +71,10 @@
   --callout-border: color-mix(in oklab, var(--color-cream) 22%, transparent);
   --callout-text: var(--color-cream);
   --callout-icon-color: var(--color-cream);
+  --button-outline-color: var(--color-cream);
+  --button-outline-border-color: color-mix(in oklab, var(--color-cream) 38%, transparent);
+  --button-outline-hover-background: color-mix(in oklab, var(--color-cream) 14%, transparent);
+  --button-outline-shadow-color: var(--color-cream);
   background-color: var(--callout-bg);
   border-color: var(--callout-border);
   color: var(--callout-text);

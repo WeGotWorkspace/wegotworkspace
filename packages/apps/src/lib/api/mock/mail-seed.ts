@@ -7,6 +7,29 @@ const MAILBOXES = ["Inbox", "Starred", "Sent", "Drafts", "Spam", "Archive", "Tra
 
 const folderOf = (mailbox: string) => folderTokenFromMailboxLabel(mailbox);
 
+/** Rich HTML body for Storybook / mock detail iframe (links, typography). */
+export const MOCK_MAIL_DETAIL_HTML_BODY = `
+<p>I've attached the second pass — the type sits better now, and we tightened the gutter on the spreads you flagged.</p>
+<p>Please <a href="https://example.com/magic-login?token=demo-storybook">confirm your review</a> before we send to print on Friday. You can also <a href="mailto:hana@studio-meridian.jp">reply by email</a>.</p>
+<p>Best,<br>Hana</p>
+`.trim();
+
+export const MOCK_MAIL_NEWSLETTER_HTML_BODY = `
+<h2 style="margin:0 0 0.75rem;font-size:1.125rem;">Issue 47 — On the architecture of margins</h2>
+<p>This week, we visit a small bindery in Kyoto, examine a forgotten typeface, and ask whether the printed page still has a future in the age of the feed.</p>
+<p><a href="https://paperquarterly.com/issues/47">Read the full issue on the web</a>.</p>
+`.trim();
+
+export const MOCK_MAIL_REPLY_HTML_BODY = `
+<p>Thanks Hana — taking a closer look this morning and will reply by lunch with notes.</p>
+<p><a href="https://example.com/review/annotated-proof">Open annotated proof</a></p>
+`.trim();
+
+/** Mock list rows ship with full bodies; mark detail ready so the pane does not wait on fetch. */
+function mockMailRow<T extends Mail>(row: T): T {
+  return { ...row, detailLoaded: true };
+}
+
 const MORE_MAILBOXES = [
   "Notes",
   "Newsletters",
@@ -17,7 +40,7 @@ const MORE_MAILBOXES = [
 ];
 
 const INITIAL_MAIL: Mail[] = [
-  {
+  mockMailRow({
     id: "m1",
     folder: folderOf("Inbox"),
     uid: 501,
@@ -38,8 +61,13 @@ const INITIAL_MAIL: Mail[] = [
     wordCount: 92,
     mailbox: "Inbox",
     unread: true,
-  },
-  {
+    bodyHtml: MOCK_MAIL_DETAIL_HTML_BODY,
+    attachments: [
+      { id: "a-1", name: "autumn-proof-v2.pdf", type: "application/pdf", size: 1_844_640 },
+      { id: "a-2", name: "cover-options.zip", type: "application/zip", size: 8_612_944 },
+    ],
+  }),
+  mockMailRow({
     id: "m2",
     folder: folderOf("Inbox"),
     uid: 502,
@@ -59,8 +87,8 @@ const INITIAL_MAIL: Mail[] = [
     wordCount: 28,
     mailbox: "Inbox",
     unread: true,
-  },
-  {
+  }),
+  mockMailRow({
     id: "m3",
     folder: folderOf("Inbox"),
     uid: 503,
@@ -81,8 +109,9 @@ const INITIAL_MAIL: Mail[] = [
     mailbox: "Inbox",
     starred: true,
     unread: false,
-  },
-  {
+    bodyHtml: MOCK_MAIL_NEWSLETTER_HTML_BODY,
+  }),
+  mockMailRow({
     id: "m4",
     folder: folderOf("Inbox"),
     uid: 504,
@@ -102,8 +131,8 @@ const INITIAL_MAIL: Mail[] = [
     wordCount: 33,
     mailbox: "Inbox",
     unread: false,
-  },
-  {
+  }),
+  mockMailRow({
     id: "m5",
     folder: folderOf("Sent"),
     uid: 201,
@@ -120,8 +149,9 @@ const INITIAL_MAIL: Mail[] = [
     wordCount: 16,
     mailbox: "Sent",
     unread: false,
-  },
-  {
+    bodyHtml: MOCK_MAIL_REPLY_HTML_BODY,
+  }),
+  mockMailRow({
     id: "m6",
     folder: folderOf("Drafts"),
     uid: 1,
@@ -137,7 +167,7 @@ const INITIAL_MAIL: Mail[] = [
     wordCount: 6,
     mailbox: "Drafts",
     unread: false,
-  },
+  }),
 ];
 
 export function createMockMailSeedData(): MailUIData {

@@ -1,6 +1,9 @@
 import { Pencil } from "lucide-react";
 import "react-swipeable-list/dist/styles.css";
-import "@/mail-core/src/mail-ui.css";
+import { cn } from "@/lib/utils";
+import type { MailComposeMode } from "@/mail-core/src/mail-compose-view";
+import "@/mail-core/src/mail-workspace.css";
+import { mailWorkspacePaneClasses } from "@/mail-core/src/mail-workspace.styles";
 import { MoveToDialog } from "@/dialogs/src/dialogs";
 import { Button } from "@/button/src/button";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
@@ -10,6 +13,7 @@ import { WorkspaceUserFooter } from "@/workspace-shell/src/workspace-app-layout"
 import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
 import { MailDetailView } from "@/mail-core/src/mail-detail-view";
 import { MailComposeView } from "@/mail-core/src/mail-compose-view";
+import { createComposeAttachment } from "@/mail-core/src/mail-compose-utils";
 import { Dialog, DialogContent } from "@/ui/dialog";
 import { MultiSelectionView } from "@/multi-selection-view/src/multi-selection-view";
 import { formatMailDateForDetail } from "@/mail-core/src/mail-date-utils";
@@ -17,8 +21,8 @@ import { MailDetailActionBar } from "@/mail-core/src/mail-detail-action-bar";
 import { MailListPanel } from "@/mail-core/src/mail-list-panel";
 import { useMailSidebarModel } from "@/mail-core/src/use-mail-sidebar-model";
 import { useMailController } from "@/mail-core/src/use-mail-controller";
+import { folderTokenFromMailboxLabel } from "@/lib/api/wgw/mail";
 import type { MailWorkspaceProps } from "@/mail-core/src/mail-workspace-props";
-import type { Mail } from "@/types/mail";
 
 const DEFAULT_SYSTEM_MAILBOXES = [
   "Inbox",
@@ -30,13 +34,6 @@ const DEFAULT_SYSTEM_MAILBOXES = [
   "Trash",
 ] as const;
 
-function defaultEncodeFolderToken(label: string): string {
-  const bytes = new TextEncoder().encode(label);
-  let binary = "";
-  for (let i = 0; i < bytes.length; i += 1) binary += String.fromCharCode(bytes[i]!);
-  return btoa(binary);
-}
-
 export function MailWorkspace({
   messages,
   mailboxes,
@@ -44,10 +41,12 @@ export function MailWorkspace({
   labels,
   listLoading = false,
   systemMailboxes = DEFAULT_SYSTEM_MAILBOXES,
-  encodeFolderToken = defaultEncodeFolderToken,
+  encodeFolderToken = folderTokenFromMailboxLabel,
   mailboxLoader,
   operations,
-  logoutTo = "/logout",
+  onLogout,
+  initialActiveId,
+  className,
 }: MailWorkspaceProps) {
   const closeSidebarOnMobile = (closeSidebar: () => void) => {
     if (typeof window === "undefined") return;
@@ -67,6 +66,8 @@ export function MailWorkspace({
     view,
     viewLabel,
     moveDialog,
+    moveMailboxOptions,
+    moveDialogCurrentMailbox,
     searchQuery,
     searchInputRef,
     listEndRef,
@@ -97,12 +98,12 @@ export function MailWorkspace({
     forward,
     openDraftInComposer,
     composeDialogId,
-    closeComposeDialog,
+    requestCloseComposeDialog,
     composeDrafts,
     updateComposeDraft,
     saveComposeDraft,
     sendComposeDraft,
-    discardComposeDraft,
+    requestDiscardComposeDraft,
     toggleStar,
     moveOne,
     toggleArchiveForMessage,
@@ -112,6 +113,7 @@ export function MailWorkspace({
     markUnread,
     sidebarUnreadBadge,
     downloadAttachment,
+    consumeParentDismissSuppression,
   } = useMailController({
     messages,
     mailboxes,
@@ -122,6 +124,7 @@ export function MailWorkspace({
     encodeFolderToken,
     mailboxLoader,
     operations,
+    initialActiveId,
   });
 
   const { primarySidebarItems, systemSidebarItems, moreSidebarItems } = useMailSidebarModel({
@@ -135,42 +138,6 @@ export function MailWorkspace({
     sidebarDropZoneProps,
     moveToMailbox,
   });
-  const moveNotebookOptions = Array.from(
-    new Set(["Inbox", ...allSystemMailboxes, ...moreMailboxes]),
-  );
-  const resolveNotebookOption = (row: Mail | undefined): string | undefined => {
-    if (!row) return undefined;
-    const byLabel = moveNotebookOptions.find(
-      (option) => option.toLowerCase() === row.mailbox.toLowerCase(),
-    );
-    if (byLabel) return byLabel;
-    const byFolderToken = moveNotebookOptions.find(
-      (option) => encodeFolderToken(option) === row.folder,
-    );
-    return byFolderToken;
-  };
-  const moveDialogCurrentMailbox = (() => {
-    if (!moveDialog || moveDialog.ids.length === 0) return undefined;
-    if (view.startsWith("mb:")) {
-      const currentViewMailbox = view.slice(3).trim();
-      const byView = moveNotebookOptions.find(
-        (option) => option.trim().toLowerCase() === currentViewMailbox.toLowerCase(),
-      );
-      if (byView) return byView;
-    }
-    if (moveDialog.currentMailbox) {
-      const byDialogMailbox = moveNotebookOptions.find(
-        (option) => option.trim().toLowerCase() === moveDialog.currentMailbox?.trim().toLowerCase(),
-      );
-      if (byDialogMailbox) return byDialogMailbox;
-    }
-    const selectedMailboxes = new Set(
-      moveDialog.ids.map((id) => resolveNotebookOption(mail.find((m) => m.id === id))),
-    );
-    selectedMailboxes.delete(undefined);
-    if (selectedMailboxes.size === 1) return Array.from(selectedMailboxes)[0];
-    return undefined;
-  })();
   const composeTarget = composeDialogId
     ? mail.find((row) => row.id === composeDialogId)
     : undefined;
@@ -182,7 +149,7 @@ export function MailWorkspace({
       <WorkspaceApp
         ref={workspaceLayoutRef}
         workspaceRoot={{
-          className: "mail-ui-theme",
+          className: cn("mail-workspace", className),
         }}
         sidebar={(c) => (
           <AppSidebar
@@ -193,10 +160,7 @@ export function MailWorkspace({
                 name={session.user.displayName}
                 initials={workspaceUserInitials(session.user)}
                 detailLine={session.user.username}
-                onLogoutClick={() => {
-                  if (logoutTo) window.location.assign(logoutTo);
-                }}
-                linkHoverClassName="hover:bg-[color-mix(in_oklab,var(--color-ink)_18%,transparent)] hover:text-[var(--color-ink)]"
+                onLogoutClick={onLogout}
               />
             }
             primaryButton={
@@ -210,6 +174,7 @@ export function MailWorkspace({
                 size="lg"
                 pill
                 variant="primary"
+                className="w-full"
               />
             }
           >
@@ -304,40 +269,65 @@ export function MailWorkspace({
       {composeTarget && composeTargetDraft ? (
         <Dialog
           open={!!composeDialogId}
-          onOpenChange={(open) => (!open ? closeComposeDialog() : null)}
+          onOpenChange={(open) => {
+            if (!open && consumeParentDismissSuppression()) return;
+            if (!open && composeDialogId) requestCloseComposeDialog(composeDialogId);
+          }}
         >
-          <DialogContent className="max-w-[980px] w-[min(980px,96vw)] max-h-[96dvh] p-0">
-            <div className="max-h-[96dvh] overflow-y-auto p-4 md:p-6">
-              <MailComposeView
-                mailId={composeTarget.id}
-                mailbox={composeTarget.mailbox}
-                date={formatMailDateForDetail(composeTarget.date)}
-                to={composeTargetDraft.to}
-                cc={composeTargetDraft.cc}
-                bcc={composeTargetDraft.bcc}
-                subject={composeTargetDraft.subject}
-                body={composeTargetDraft.body}
-                onToChange={(value) => updateComposeDraft(composeTarget.id, { to: value })}
-                onCcChange={(value) => updateComposeDraft(composeTarget.id, { cc: value })}
-                onBccChange={(value) => updateComposeDraft(composeTarget.id, { bcc: value })}
-                onSubjectChange={(value) =>
-                  updateComposeDraft(composeTarget.id, { subject: value })
-                }
-                onBodyChange={(value) => updateComposeDraft(composeTarget.id, { body: value })}
-                onSaveDraft={() => void saveComposeDraft(composeTarget.id)}
-                onSend={() => void sendComposeDraft(composeTarget.id)}
-                onDiscard={() => void discardComposeDraft(composeTarget.id)}
-                saving={composeTargetDraft.saving}
-                sending={composeTargetDraft.sending}
-              />
-            </div>
+          <DialogContent
+            className={cn(
+              mailWorkspacePaneClasses.composeDialog,
+              mailWorkspacePaneClasses.composeDialogSurface,
+            )}
+            onPointerDownOutside={(event) => event.preventDefault()}
+            onInteractOutside={(event) => event.preventDefault()}
+          >
+            <MailComposeView
+              composeMode={composeTargetDraft.mode as MailComposeMode}
+              mailbox={composeTarget.mailbox}
+              to={composeTargetDraft.to}
+              cc={composeTargetDraft.cc}
+              bcc={composeTargetDraft.bcc}
+              subject={composeTargetDraft.subject}
+              body={composeTargetDraft.body}
+              onToChange={(value) => updateComposeDraft(composeTarget.id, { to: value })}
+              onCcChange={(value) => updateComposeDraft(composeTarget.id, { cc: value })}
+              onBccChange={(value) => updateComposeDraft(composeTarget.id, { bcc: value })}
+              onSubjectChange={(value) => updateComposeDraft(composeTarget.id, { subject: value })}
+              onBodyChange={(value) => updateComposeDraft(composeTarget.id, { body: value })}
+              onSaveDraft={() => void saveComposeDraft(composeTarget.id)}
+              onSend={() => void sendComposeDraft(composeTarget.id)}
+              attachments={composeTargetDraft.attachments}
+              onAddAttachments={(files) =>
+                updateComposeDraft(composeTarget.id, {
+                  attachments: [
+                    ...composeTargetDraft.attachments,
+                    ...files.map((file) => createComposeAttachment(file)),
+                  ],
+                })
+              }
+              onRemoveAttachment={(attachmentId) =>
+                updateComposeDraft(composeTarget.id, {
+                  attachments: composeTargetDraft.attachments.filter(
+                    (attachment) => attachment.id !== attachmentId,
+                  ),
+                })
+              }
+              attachFilesLabel={L.composeAttachFiles}
+              attachmentsLabel={L.composeAttachmentsLabel}
+              removeAttachmentLabel={L.composeRemoveAttachment}
+              deleteDraftLabel={L.composeDeleteDraft}
+              onDiscard={() => requestDiscardComposeDraft(composeTarget.id)}
+              saving={composeTargetDraft.saving}
+              sending={composeTargetDraft.sending}
+            />
           </DialogContent>
         </Dialog>
       ) : null}
 
       <MoveToDialog
         open={!!moveDialog}
-        notebooks={moveNotebookOptions}
+        notebooks={moveMailboxOptions}
         currentNotebook={moveDialogCurrentMailbox}
         onClose={() => setMoveDialog(null)}
         onConfirm={(mailbox) => {

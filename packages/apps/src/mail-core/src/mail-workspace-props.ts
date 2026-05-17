@@ -22,6 +22,9 @@ export type MailWorkspaceProps = {
   mailboxLoader?: MailMailboxLoader;
   /** Optional async backend operations for mail mutations and compose flows. */
   operations?: MailAPIOperations;
-  /** Logout link target, or `false` to omit navigation (e.g. Storybook). Default `/`. */
-  logoutTo?: string | false;
+  /** Invoked when the user chooses log out; navigation is owned by the app shell. */
+  onLogout?: () => void;
+  /** Storybook / tests: open this message in the detail pane on first render. */
+  initialActiveId?: string;
+  className?: string;
 };

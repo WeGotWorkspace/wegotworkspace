@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { UserAvatar } from "../src/user-avatar";
-import "@/mail-core/src/mail-ui.css";
+import "@/mail-core/src/mail-workspace.css";
 import "@/workspace-shell/src/workspace-app-layout.css";
 
 const meta: Meta<typeof UserAvatar> = {
@@ -60,8 +60,10 @@ export const WithSubtitle: Story = {
 /** Mail detail sender row: larger chip, emerald fill, two-line label. */
 export const MailSenderRow: Story = {
   render: () => (
-    <div className="mail-detail-view__sender-row max-w-[680px]">
-      <UserAvatar displayName="Ops Bot" subtitle="ops@example.com · to you" size="md" />
+    <div className="mail-workspace">
+      <div className="mail-detail-view__sender-row max-w-[680px]">
+        <UserAvatar displayName="Ops Bot" subtitle="ops@example.com · to you" size="md" />
+      </div>
     </div>
   ),
 };
