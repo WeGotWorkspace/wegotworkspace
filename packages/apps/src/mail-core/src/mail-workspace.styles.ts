@@ -36,7 +36,6 @@ export const mailWorkspacePaneClasses = {
   attachmentName: "mail-attachments__name",
   attachmentMeta: "mail-attachments__meta",
   attachmentDownload: "mail-attachments__download",
-  listLoader: "mail-list-panel__loader",
 } as const;
 
 export const mailDetailTagColors = {

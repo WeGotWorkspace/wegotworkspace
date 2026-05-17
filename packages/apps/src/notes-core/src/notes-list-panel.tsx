@@ -6,7 +6,7 @@ import { ViewHeader } from "@/view-header/src/view-header";
 import type { Note } from "@/lib/models/note";
 import { formatNoteDateForList } from "@/notes-core/src/notes-date-utils";
 import type { NotesUILabels } from "@/notes-core/src/notes-labels";
-import { WorkspaceListLoadingState } from "@/workspace-list-state/src/workspace-list-loading-state";
+import { LoadingSpinner } from "@/loading-spinner/src/loading-spinner";
 import { WorkspaceSwipeList } from "@/workspace-swipe-list/src/workspace-swipe-list";
 import "@/notes-core/src/notes-list-panel.css";
 
@@ -139,7 +139,9 @@ export function NotesListPanel({
       />
     ),
     listContent: listLoading ? (
-      <WorkspaceListLoadingState message={L.listLoading} />
+      <div className="notes-list-panel__loading" aria-busy>
+        <LoadingSpinner size="lg" label={L.listLoading} />
+      </div>
     ) : (
       <WorkspaceSwipeList isTouch={isTouch}>
         {visibleNotes.map((note) => {
