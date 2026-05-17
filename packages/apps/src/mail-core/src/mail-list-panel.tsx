@@ -1,10 +1,10 @@
 import type { ReactNode, RefObject } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
-import { Archive, Circle, Loader2, Star } from "lucide-react";
+import { Archive, Circle, Star } from "lucide-react";
 import { ViewHeader } from "@/view-header/src/view-header";
 import { ListItem } from "@/list-item/src/list-item";
 import { WorkspaceSwipeList } from "@/workspace-swipe-list/src/workspace-swipe-list";
-import { WorkspaceListLoadingState } from "@/workspace-list-state/src/workspace-list-loading-state";
+import { LoadingSpinner } from "@/loading-spinner/src/loading-spinner";
 import type { Mail } from "@/types/mail";
 import type { MailUILabels } from "@/mail-core/src/mail-app.stories.fixtures";
 import { formatMailDateForList } from "@/mail-core/src/mail-date-utils";
@@ -77,7 +77,9 @@ export function MailListPanel({
       />
     ),
     listContent: effectiveListLoading ? (
-      <WorkspaceListLoadingState message={L.listLoading} />
+      <div className="mail-list-panel__loading" aria-busy>
+        <LoadingSpinner size="lg" label={L.listLoading} />
+      </div>
     ) : (
       <>
         <WorkspaceSwipeList isTouch={isTouch}>
@@ -142,11 +144,8 @@ export function MailListPanel({
         </WorkspaceSwipeList>
         <div ref={listEndRef} className="h-6" aria-hidden />
         {isLoadingMore ? (
-          <div className="flex items-center justify-center py-3">
-            <Loader2
-              className="mail-list-panel__loader size-5 animate-spin"
-              aria-label={L.listLoading}
-            />
+          <div className="mail-list-panel__load-more">
+            <LoadingSpinner size="sm" label={L.listLoading} />
           </div>
         ) : null}
       </>
