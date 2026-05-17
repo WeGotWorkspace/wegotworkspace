@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Mic, MicOff, PictureInPicture2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/tooltip";
-import { MeetAvatar } from "@/meet-core/src/meet-avatar";
+import { UserAvatar } from "@/user-avatar/src/user-avatar";
 import { meetLabels } from "@/meet-core/src/meet-labels";
 import { cn } from "@/lib/utils";
 
@@ -199,7 +199,7 @@ export function MeetSelfPreviewPiP({
         </div>
       ) : (
         <div className="flex h-full items-center justify-center">
-          <MeetAvatar name={name} size={48} />
+          <UserAvatar displayName={name} compact size="lg" />
         </div>
       )}
       <div className="meet-pip__label">

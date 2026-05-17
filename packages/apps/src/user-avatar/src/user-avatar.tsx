@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import "@/user-avatar/src/user-avatar.css";
 
-export type UserAvatarSize = "sm" | "md";
+export type UserAvatarSize = "sm" | "md" | "lg" | "xl";
 
 export type UserAvatarProps = {
   displayName: string;
@@ -11,7 +11,7 @@ export type UserAvatarProps = {
   subtitle?: ReactNode;
   /** Avatar + label only; no text column. */
   compact?: boolean;
-  /** `sm` = sidebar/footer chip; `md` = mail sender row. */
+  /** `sm` = sidebar/footer chip; `md` = mail sender row; `lg` / `xl` = meet tiles and lobby preview. */
   size?: UserAvatarSize;
   onClick?: () => void;
   className?: string;
@@ -34,7 +34,14 @@ export function UserAvatar({
   className,
 }: UserAvatarProps) {
   const initials = initialsFromDisplayName(displayName) || "?";
-  const sizeClass = size === "md" ? "user-avatar--md" : "user-avatar--sm";
+  const sizeClass =
+    size === "md"
+      ? "user-avatar--md"
+      : size === "lg"
+        ? "user-avatar--lg"
+        : size === "xl"
+          ? "user-avatar--xl"
+          : "user-avatar--sm";
 
   const circle = onClick ? (
     <button

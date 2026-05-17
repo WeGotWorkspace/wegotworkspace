@@ -17,7 +17,8 @@
   --meet-live: #34d399;
   --meet-mic-off: #e5484d;
   --meet-overlay: rgba(8, 9, 18, 0.6);
-  --meet-avatar-bg: rgba(255, 255, 255, 0.1);
+  --user-avatar-bg: rgba(255, 255, 255, 0.1);
+  --user-avatar-fg: var(--meet-text);
   --meet-empty-bg: rgba(255, 255, 255, 0.02);
   --meet-screen-bg: #000000;
   --meet-pip-border: rgba(255, 255, 255, 0.22);
@@ -301,14 +302,14 @@
   --meet-panel-soft: #20223a;
   --meet-text: #ffffff;
   --meet-muted: rgba(255, 255, 255, 0.6);
+  --user-avatar-bg: rgba(255, 255, 255, 0.1);
+  --user-avatar-fg: var(--meet-text);
   --button-primary-background: var(--meet-accent);
   --button-primary-color: var(--meet-text);
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-avatar {
-  @apply flex items-center justify-center rounded-full font-semibold;
-  background-color: var(--meet-avatar-bg);
-  color: var(--meet-text);
+:is(.meet-workspace, .meet-dialog-surface) .user-avatar__mark {
+  font-weight: 600;
 }
 
 :is(.meet-workspace, .meet-dialog-surface) .meet-menu-surface {

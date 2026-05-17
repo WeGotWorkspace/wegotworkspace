@@ -39,6 +39,18 @@ button.user-avatar__mark {
   font-size: 0.75rem;
 }
 
+.user-avatar--lg .user-avatar__mark {
+  width: 3rem;
+  height: 3rem;
+  font-size: 1.0625rem;
+}
+
+.user-avatar--xl .user-avatar__mark {
+  width: 5rem;
+  height: 5rem;
+  font-size: 1.8125rem;
+}
+
 .user-avatar__text {
   display: flex;
   flex-direction: column;

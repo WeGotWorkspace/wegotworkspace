@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { UserAvatar } from "../src/user-avatar";
 import "@/mail-core/src/mail-workspace.css";
+import "@/meet-core/src/meet-workspace.css";
 import "@/workspace-shell/src/workspace-app-layout.css";
 
 const meta: Meta<typeof UserAvatar> = {
@@ -64,6 +65,26 @@ export const MailSenderRow: Story = {
       <div className="mail-detail-view__sender-row max-w-[680px]">
         <UserAvatar displayName="Ops Bot" subtitle="ops@example.com · to you" size="md" />
       </div>
+    </div>
+  ),
+};
+
+/** Meet lobby / peer tile: compact chip on dark workspace tokens. */
+export const MeetLobbyPreview: Story = {
+  render: () => (
+    <div className="meet-workspace flex min-h-48 items-center justify-center p-8" style={{ background: "var(--meet-surface)" }}>
+      <UserAvatar displayName="Demo User" compact size="xl" />
+    </div>
+  ),
+};
+
+/** Meet knock row / compact peer tile sizes. */
+export const MeetCompactSizes: Story = {
+  render: () => (
+    <div className="meet-workspace flex items-center gap-4 p-8" style={{ background: "var(--meet-surface)" }}>
+      <UserAvatar displayName="Alex Morgan" compact size="sm" />
+      <UserAvatar displayName="Jamie Lee" compact size="md" />
+      <UserAvatar displayName="Demo User" compact size="lg" />
     </div>
   ),
 };

@@ -9,7 +9,7 @@ import {
 import { Button } from "@/button/src/button";
 import { Input } from "@/ui/input";
 import { Label } from "@/ui/label";
-import { MeetAvatar } from "@/meet-core/src/meet-avatar";
+import { UserAvatar } from "@/user-avatar/src/user-avatar";
 import { MeetCircleToggle } from "@/meet-core/src/meet-circle-toggle";
 import { MeetDeviceRow } from "@/meet-core/src/meet-device-row";
 import type { MeetControllerState } from "@/meet-core/src/meet-controller-state";
@@ -103,7 +103,7 @@ export function MeetLobbyPane({
           />
         ) : (
           <div className="flex h-full items-center justify-center">
-            <MeetAvatar name={displayName} size={84} />
+            <UserAvatar displayName={displayName} compact size="xl" />
           </div>
         )}
         <div className="meet-workspace__preview-controls">
