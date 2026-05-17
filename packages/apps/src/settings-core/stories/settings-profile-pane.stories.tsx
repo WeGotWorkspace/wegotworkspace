@@ -8,7 +8,7 @@ import {
   type SettingsProfileFormValues,
 } from "@/settings-core/src/settings-profile-form-schema";
 import { getProfileFormDefaults, getProfileStoryUsername } from "./settings-panes.stories.fixtures";
-import { settingsPaneDecorator } from "./settings-panes.stories.decorator";
+import { SettingsStoryScope } from "./settings-story-scope";
 
 type ProfileStoryVariant = "default" | "dirtyIdentity" | "passwordFilled";
 
@@ -39,13 +39,16 @@ function ProfileStoryHarness({ variant = "default" }: { variant?: ProfileStoryVa
     [form],
   );
 
-  return <SettingsProfilePane profile={profile} />;
+  return (
+    <SettingsStoryScope>
+      <SettingsProfilePane profile={profile} />
+    </SettingsStoryScope>
+  );
 }
 
 const meta = {
   title: "Apps/Settings/Panes/Profile",
   component: SettingsProfilePane,
-  decorators: [settingsPaneDecorator],
   parameters: {
     layout: "fullscreen",
   },

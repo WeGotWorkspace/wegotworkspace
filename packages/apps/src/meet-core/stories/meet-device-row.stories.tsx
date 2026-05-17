@@ -5,11 +5,11 @@ import {
   STORY_MEET_DEVICES,
   STORY_MEET_MICROPHONES,
 } from "@/meet-core/stories/meet-pane-stories.fixtures";
-import { meetComponentPaneDecorator } from "@/meet-core/stories/meet-panes.stories.decorator";
 import {
   meetStoryParameters,
   STORY_NOOP,
   storyTextControl,
+  renderInMeetScope,
 } from "@/meet-core/stories/meet-story-shared";
 
 type MeetDeviceRowStoryArgs = {
@@ -36,7 +36,6 @@ const meta = {
   title: "Apps/Meet/Components/MeetDeviceRow",
   component: MeetDeviceRow,
   render: (args) => <MeetDeviceRowStory {...args} />,
-  decorators: [meetComponentPaneDecorator],
   parameters: meetStoryParameters({
     snippet: `<MeetDeviceRow
   icon={<Video />}

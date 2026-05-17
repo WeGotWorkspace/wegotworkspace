@@ -6,17 +6,16 @@ import {
   STORY_MEET_MICROPHONES,
   STORY_MEET_SPEAKERS,
 } from "@/meet-core/stories/meet-pane-stories.fixtures";
-import { meetRoomPaneDecorator } from "@/meet-core/stories/meet-panes.stories.decorator";
 import {
   meetStoryParameters,
   STORY_NOOP,
   storyBooleanControl,
+  renderInMeetScope,
 } from "@/meet-core/stories/meet-story-shared";
 
 const meta = {
   title: "Apps/Meet/Components/MeetCallToolbar",
   component: MeetCallToolbar,
-  decorators: [meetRoomPaneDecorator],
   parameters: meetStoryParameters({
     snippet: `<MeetCallToolbar
   micOn

@@ -2,8 +2,8 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import type { AdminUpdateBackupItem } from "@/admin-core/src/admin-types";
 import type { AdminStoryDataOverride } from "@/admin-core/stories/admin-pane-stories.harness";
 import { AdminBackupsPane } from "@/admin-core/src/admin-backups-pane";
-import { adminPaneStoryDecorator } from "@/admin-core/stories/admin-pane-stories.decorator";
 import { useAdminPaneStoryController } from "@/admin-core/stories/admin-pane-stories.harness";
+import { AdminStoryScope } from "@/admin-core/stories/admin-story-scope";
 
 const SAMPLE_BACKUPS: AdminUpdateBackupItem[] = [
   {
@@ -28,13 +28,16 @@ const SAMPLE_BACKUPS: AdminUpdateBackupItem[] = [
 
 function BackupsPaneHarness({ dataOverride }: { dataOverride?: AdminStoryDataOverride }) {
   const controller = useAdminPaneStoryController(dataOverride);
-  return <AdminBackupsPane controller={controller} />;
+  return (
+    <AdminStoryScope>
+      <AdminBackupsPane controller={controller} />
+    </AdminStoryScope>
+  );
 }
 
 const meta = {
   title: "Apps/Admin/Panes/Backups",
   component: AdminBackupsPane,
-  decorators: [adminPaneStoryDecorator],
   parameters: {
     layout: "fullscreen",
   },

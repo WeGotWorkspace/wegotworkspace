@@ -6,12 +6,12 @@ import {
 } from "lucide-react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { MeetCircleToggle } from "@/meet-core/src/meet-circle-toggle";
-import { meetComponentPaneDecorator } from "@/meet-core/stories/meet-panes.stories.decorator";
 import {
   meetStoryParameters,
   STORY_NOOP,
   storyBooleanControl,
 } from "@/meet-core/stories/meet-story-shared";
+import { MeetStoryScope } from "@/meet-core/stories/meet-story-scope";
 
 type MeetCircleToggleStoryArgs = {
   variant: "mic-on" | "mic-off" | "video-on" | "video-off";
@@ -39,8 +39,11 @@ function MeetCircleToggleStory({ variant, large }: MeetCircleToggleStoryArgs) {
 const meta = {
   title: "Apps/Meet/Components/MeetCircleToggle",
   component: MeetCircleToggle,
-  render: (args) => <MeetCircleToggleStory {...args} />,
-  decorators: [meetComponentPaneDecorator],
+  render: (args) => (
+    <MeetStoryScope>
+      <MeetCircleToggleStory {...args} />
+    </MeetStoryScope>
+  ),
   parameters: meetStoryParameters({
     componentDescription:
       "Circular mic/video control. Stories map a `variant` control to icon and on-state props.",

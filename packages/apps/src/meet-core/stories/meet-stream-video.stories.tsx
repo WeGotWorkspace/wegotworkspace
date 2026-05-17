@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { MeetStreamVideo } from "@/meet-core/src/meet-stream-video";
-import { meetRoomPaneDecorator } from "@/meet-core/stories/meet-panes.stories.decorator";
 import {
   meetStoryParameters,
   storyBooleanControl,
 } from "@/meet-core/stories/meet-story-shared";
+import { MeetStoryScope } from "@/meet-core/stories/meet-story-scope";
 
 type MeetStreamVideoStoryArgs = {
   hasStream: boolean;
@@ -40,9 +40,11 @@ function MeetStreamVideoStory({ hasStream, mirrored }: MeetStreamVideoStoryArgs)
   }, [hasStream]);
 
   return (
-    <div className="meet-workspace__screen-stage h-[min(70dvh,28rem)] w-full max-w-4xl">
-      <MeetStreamVideo stream={stream} className="h-full w-full object-cover" mirrored={mirrored} />
-    </div>
+    <MeetStoryScope variant="in-call">
+      <div className="meet-workspace__screen-stage h-[min(70dvh,28rem)] w-full max-w-4xl">
+        <MeetStreamVideo stream={stream} className="h-full w-full object-cover" mirrored={mirrored} />
+      </div>
+    </MeetStoryScope>
   );
 }
 
@@ -50,7 +52,6 @@ const meta = {
   title: "Apps/Meet/Components/MeetStreamVideo",
   component: MeetStreamVideo,
   render: (args) => <MeetStreamVideoStory {...args} />,
-  decorators: [meetRoomPaneDecorator],
   parameters: {
     layout: "fullscreen",
     ...meetStoryParameters({

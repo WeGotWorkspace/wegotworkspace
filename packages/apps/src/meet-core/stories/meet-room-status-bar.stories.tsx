@@ -4,19 +4,18 @@ import {
   STORY_MEET_CALL_LINK,
   STORY_MEET_KNOCKERS,
 } from "@/meet-core/stories/meet-pane-stories.fixtures";
-import { meetRoomPaneDecorator } from "@/meet-core/stories/meet-panes.stories.decorator";
 import {
   meetStoryParameters,
   STORY_NOOP,
   storyBooleanControl,
   storyNumberControl,
   storyTextControl,
+  renderInMeetScope,
 } from "@/meet-core/stories/meet-story-shared";
 
 const meta = {
   title: "Apps/Meet/Components/MeetRoomStatusBar",
   component: MeetRoomStatusBar,
-  decorators: [meetRoomPaneDecorator],
   parameters: meetStoryParameters(),
   render: (args) => (
     <div className="p-4">

@@ -8,7 +8,7 @@ import {
   type SettingsMailFormValues,
 } from "@/settings-core/src/settings-mail-form-schema";
 import { getMailFormDefaults, getMailStoryMeta } from "./settings-panes.stories.fixtures";
-import { settingsPaneDecorator } from "./settings-panes.stories.decorator";
+import { SettingsStoryScope } from "./settings-story-scope";
 
 type MailStoryVariant = "default" | "credentialsDirty" | "noSavedImapPassword";
 
@@ -39,13 +39,16 @@ function MailStoryHarness({ variant = "default" }: { variant?: MailStoryVariant 
     [form, storyMeta],
   );
 
-  return <SettingsMailPane mail={mail} />;
+  return (
+    <SettingsStoryScope>
+      <SettingsMailPane mail={mail} />
+    </SettingsStoryScope>
+  );
 }
 
 const meta = {
   title: "Apps/Settings/Panes/Mail",
   component: SettingsMailPane,
-  decorators: [settingsPaneDecorator],
   parameters: {
     layout: "fullscreen",
   },

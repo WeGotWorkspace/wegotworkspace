@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { createMailAppBootstrap } from "@/lib/api/mock/mail-bootstrap";
 import { MailDetailActionBar } from "@/mail-core/src/mail-detail-action-bar";
 import { useStarredMap } from "@/hooks/use-starred-map";
-import { mailDetailPaneDecorator } from "./mail-panes.stories.decorator";
+import { MailStoryScope } from "./mail-story-scope";
 
 function MailDetailActionBarHarness({
   preset = "inbox",
@@ -45,14 +45,15 @@ function MailDetailActionBarHarness({
   const message = { ...active, unread };
 
   return (
-    <div
-      className="sticky top-0 z-10 border-b px-2 py-2"
-      style={{
-        borderColor: "color-mix(in oklab, var(--color-ink) 10%, transparent)",
-        backgroundColor: "var(--color-cream, #f5f1e8)",
-      }}
-    >
-      <MailDetailActionBar
+    <MailStoryScope variant="detail">
+      <div
+        className="sticky top-0 z-10 border-b px-2 py-2"
+        style={{
+          borderColor: "color-mix(in oklab, var(--color-ink) 10%, transparent)",
+          backgroundColor: "var(--color-cream, #f5f1e8)",
+        }}
+      >
+        <MailDetailActionBar
         active={message}
         closeMobileDetail={() => {}}
         onReply={() => {}}
@@ -66,15 +67,15 @@ function MailDetailActionBarHarness({
         starred={starred}
         toggleArchiveForMessage={() => {}}
         toggleTrashForMessage={() => {}}
-      />
-    </div>
+        />
+      </div>
+    </MailStoryScope>
   );
 }
 
 const meta = {
   title: "Apps/Mail/Panes/Detail action bar",
   component: MailDetailActionBarHarness,
-  decorators: [mailDetailPaneDecorator],
   parameters: {
     layout: "fullscreen",
   },

@@ -9,18 +9,6 @@ const meta: Meta<typeof SidebarLogo> = {
     layout: "fullscreen",
     routerPath: "/mail",
   },
-  decorators: [
-    (Story) => (
-      <div
-        className="flex h-dvh w-64 shrink-0 flex-col border-r bg-[var(--color-paper)]"
-        style={{
-          borderColor: "color-mix(in oklab, var(--color-ink) 12%, transparent)",
-        }}
-      >
-        <Story />
-      </div>
-    ),
-  ],
 };
 
 export default meta;

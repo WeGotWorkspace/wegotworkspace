@@ -1,13 +1,13 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { createMeetAppBootstrap } from "@/lib/api/mock/meet-bootstrap";
 import { MeetWorkspaceHeader } from "@/meet-core/src/meet-workspace-header";
-import { meetLobbyPaneDecorator } from "@/meet-core/stories/meet-panes.stories.decorator";
 import {
   meetStoryParameters,
   STORY_NOOP,
   storyBooleanControl,
   storyTextControl,
 } from "@/meet-core/stories/meet-story-shared";
+import { MeetStoryScope } from "@/meet-core/stories/meet-story-scope";
 
 const { session: signedInSession } = createMeetAppBootstrap();
 
@@ -22,7 +22,11 @@ const guestSession = {
 const meta = {
   title: "Apps/Meet/Components/MeetWorkspaceHeader",
   component: MeetWorkspaceHeader,
-  decorators: [meetLobbyPaneDecorator],
+  render: (args) => (
+    <MeetStoryScope>
+      <MeetWorkspaceHeader {...args} />
+    </MeetStoryScope>
+  ),
   parameters: {
     layout: "fullscreen",
     ...meetStoryParameters(),

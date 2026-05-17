@@ -1,22 +1,21 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { MeetPeerTile } from "@/meet-core/src/meet-peer-tile";
-import { meetRoomPaneDecorator } from "@/meet-core/stories/meet-panes.stories.decorator";
 import {
   meetStoryParameters,
   STORY_NOOP,
   storyBooleanControl,
   storyTextControl,
 } from "@/meet-core/stories/meet-story-shared";
+import { MeetStoryScope } from "@/meet-core/stories/meet-story-scope";
 
 const meta = {
   title: "Apps/Meet/Components/MeetPeerTile",
   component: MeetPeerTile,
-  decorators: [meetRoomPaneDecorator],
   parameters: meetStoryParameters(),
   render: (args) => (
-    <div className="grid h-[min(70dvh,28rem)] max-w-3xl gap-4 p-6">
+    <MeetStoryScope variant="in-call">
       <MeetPeerTile {...args} />
-    </div>
+    </MeetStoryScope>
   ),
   argTypes: {
     name: storyTextControl,

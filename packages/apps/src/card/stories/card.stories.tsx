@@ -8,16 +8,6 @@ import { FieldLabelRow as FormField } from "@/ui/field-label-row";
 const meta: Meta<typeof Card> = {
   title: "Shared/Card",
   component: Card,
-  decorators: [
-    (Story) => (
-      <div
-        className="max-w-xl p-6 rounded-xl border"
-        style={{ backgroundColor: "var(--color-cream, #f5f1e8)" }}
-      >
-        <Story />
-      </div>
-    ),
-  ],
 };
 
 export default meta;

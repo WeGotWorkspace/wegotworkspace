@@ -1,6 +1,6 @@
 ---
 description: Storybook coverage for workspace apps — one story file per UI component, Controls for simple props, named stories per meaningful state.
-globs: packages/apps/src/**/*-core/stories/**/*.stories.tsx,packages/apps/src/**/*-core/stories/**/*.stories.ts
+globs: packages/apps/src/**/stories/**/*.stories.tsx,packages/apps/src/**/stories/**/*.stories.ts
 alwaysApply: false
 ---
 
@@ -54,11 +54,18 @@ Expose Storybook **Controls** for props that are easy to tune in isolation:
 - Use `satisfies Meta<typeof Component>` and `args` on stories so autodocs infers types.
 
 ```tsx
+import "@/meet-core/src/meet-workspace.css";
+import { MeetStoryScope } from "@/meet-core/stories/meet-story-scope";
+
 const meta = {
   title: "Apps/Meet/Components/MeetAvatar",
   component: MeetAvatar,
   tags: ["autodocs"],
-  decorators: [meetComponentPaneDecorator],
+  render: (args) => (
+    <MeetStoryScope>
+      <MeetAvatar {...args} />
+    </MeetStoryScope>
+  ),
   parameters: meetStoryParameters(),
   argTypes: {
     name: { control: "text" },
@@ -98,12 +105,14 @@ export const WithMessages: Story = { args: { messages: STORY_CHAT_MESSAGES } };
 
 Use a **single** `Default` story only when the component has one stable visual. Avoid one mega-story that encodes every state behind many controls — that is hard to regression-test and review.
 
-## Decorators, layout, and CSS
+## Isolation — no Storybook `decorators`
 
-- Import the product **workspace CSS** in decorators (see `*-panes.stories.decorator.tsx`).
-- Apply the same **root class** as production (e.g. `.meet-workspace`) so parent-scoped tokens match.
-- Use `parameters.layout: "fullscreen"` for workspace and pane stories; narrower decorators are fine for small components.
-- Portaled surfaces: add a decorator variant with the dialog surface class when needed (e.g. `.meet-dialog-surface`).
+- **Do not** use `decorators` on story meta. Show the component under test in isolation via `args`, `render`, or a thin harness — not Storybook wrapper decorators.
+- Global preview wiring (router, tooltip provider, base styles) in `.storybook/preview.ts` is fine; product-specific chrome belongs in **`render`** or harness output, not `decorators`.
+- Import workspace CSS at module scope (`import "@/meet-core/src/meet-workspace.css"`) or inside `*-story-scope.tsx` helpers.
+- When parent-scoped tokens require a workspace root class, wrap **only** in `render` / harness using `MeetStoryScope`, `MailStoryScope`, etc. — minimal scope, no fake app chrome (centering stages, cream cards, max-width frames) unless the component truly needs that DOM context.
+- Use `parameters.layout: "fullscreen"` for workspace and full-pane stories; use default/`padded` for small isolated components.
+- Portaled surfaces: apply the dialog surface class on the portaled root in `render` (e.g. `.mail-compose-dialog-surface`), not via a decorator.
 
 ## Fixtures
 
@@ -124,4 +133,5 @@ Use a **single** `Default` story only when the component has one stable visual. 
 - `component: PaneHarness` with no dedicated file for child components.
 - All state driven by Storybook controls and a single story — no per-state snapshots.
 - Inline mock data duplicated across every story file — use shared fixtures.
-- Decorator missing workspace root class — components look unstyled vs production.
+- Storybook `decorators` for workspace chrome — use `*-story-scope.tsx` in `render` instead.
+- Decorator-only framing (cream cards, `min-h-dvh` centering stages) around atomic components — render the component alone.
