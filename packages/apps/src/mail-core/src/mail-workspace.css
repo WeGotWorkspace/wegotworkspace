@@ -24,7 +24,7 @@
   --mail-detail-tag-muted-fg: color-mix(in oklab, var(--color-ink) 58%, transparent);
   --mail-detail-title-font-family: var(--font-serif);
 
-  --mail-list-loader-color: color-mix(in oklab, var(--color-ink) 45%, transparent);
+  --loading-spinner-color: color-mix(in oklab, var(--color-ink) 45%, transparent);
   --mail-swipe-star-color: var(--color-emerald);
   --mail-swipe-archive-color: var(--color-ink);
 }
@@ -360,6 +360,16 @@
   opacity: 1;
 }
 
-.mail-workspace .mail-list-panel__loader {
-  color: var(--mail-list-loader-color);
+.mail-workspace .mail-list-panel__loading {
+  display: flex;
+  justify-content: center;
+  padding: 5rem 1.5rem;
 }
+
+.mail-workspace .mail-list-panel__load-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-block: 0.75rem;
+}
+

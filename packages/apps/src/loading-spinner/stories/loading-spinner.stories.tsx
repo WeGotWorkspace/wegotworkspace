@@ -1,0 +1,40 @@
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { LoadingSpinner } from "@/loading-spinner/src/loading-spinner";
+
+const surfaceStyle = {
+  ["--loading-spinner-color" as string]: "color-mix(in oklab, var(--color-ink) 45%, transparent)",
+  backgroundColor: "var(--color-cream, #f5f1e8)",
+} as const;
+
+const meta = {
+  title: "Shared/Loading Spinner",
+  component: LoadingSpinner,
+  parameters: { layout: "padded" },
+  decorators: [
+    (Story) => (
+      <div className="flex items-center justify-center rounded-lg p-12" style={surfaceStyle}>
+        <Story />
+      </div>
+    ),
+  ],
+  argTypes: {
+    size: { control: "radio", options: ["sm", "lg"] },
+    label: { control: "text" },
+    className: { control: false },
+  },
+} satisfies Meta<typeof LoadingSpinner>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Small: Story = {
+  args: { size: "sm" },
+};
+
+export const Large: Story = {
+  args: { size: "lg" },
+};
+
+export const WithLabel: Story = {
+  args: { size: "lg", label: "Loading messages…" },
+};
