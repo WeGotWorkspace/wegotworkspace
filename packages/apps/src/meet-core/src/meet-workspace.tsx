@@ -19,13 +19,7 @@ export function MeetWorkspace({
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div
-        className={cn(
-          "meet-workspace",
-          shell.inCall && "meet-workspace--in-call",
-          className,
-        )}
-      >
+      <div className={cn("meet-workspace", shell.inCall && "meet-workspace--in-call", className)}>
         <MeetWorkspaceHeader
           session={shell.session}
           displayName={shell.displayName}
@@ -36,7 +30,11 @@ export function MeetWorkspace({
 
         {!shell.inCall ? (
           <main className="meet-workspace__lobby">
-            <MeetLobbyPane controller={shell.controller} displayName={shell.displayName} {...shell.lobby} />
+            <MeetLobbyPane
+              controller={shell.controller}
+              displayName={shell.displayName}
+              {...shell.lobby}
+            />
           </main>
         ) : (
           <main
