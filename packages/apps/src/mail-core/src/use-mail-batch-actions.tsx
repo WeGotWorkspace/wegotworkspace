@@ -150,16 +150,13 @@ export function useMailBatchActions({
 
   const markUnread = useCallback(
     (ids: string[]) => {
+      if (ids.length === 0) return;
       const beforeById = new Map(
         mail.filter((m) => ids.includes(m.id)).map((m) => [m.id, m.unread] as const),
       );
       const changed = mail.filter((m) => ids.includes(m.id) && !m.unread);
       bumpUnreadBadgeDelta(changed, 1);
       setMail((prev) => prev.map((m) => (ids.includes(m.id) ? { ...m, unread: true } : m)));
-      if (!operations) {
-        show(`Marked ${ids.length} as unread`, { icon: <MailIcon className="size-4" /> });
-        return;
-      }
       const touched = mail.filter((m) => ids.includes(m.id));
       const rollback = () => {
         bumpUnreadBadgeDelta(changed, -1);
@@ -173,33 +170,31 @@ export function useMailBatchActions({
         queueMutation,
         key: `mail:read-unread:${ids.slice().sort().join(",")}`,
         toastMessage: `Marked ${ids.length} as unread`,
-        execute: (_signal) =>
-          Promise.all(
+        icon: <MailIcon className="size-4" />,
+        execute: async (_signal) => {
+          if (!operations) return;
+          await Promise.all(
             touched.map((message) =>
               operations.patchMessage(message, { read: false }, { signal: _signal }),
             ),
-          ).then(() => {}),
-        rollback: () => {
-          rollback();
+          );
         },
+        rollback,
         undoToastMessage: "Read status change undone.",
       });
     },
-    [mail, bumpUnreadBadgeDelta, setMail, operations, show, queueMutation],
+    [mail, bumpUnreadBadgeDelta, setMail, operations, queueMutation],
   );
 
   const markRead = useCallback(
     (ids: string[]) => {
+      if (ids.length === 0) return;
       const beforeById = new Map(
         mail.filter((m) => ids.includes(m.id)).map((m) => [m.id, m.unread] as const),
       );
       const changed = mail.filter((m) => ids.includes(m.id) && m.unread);
       bumpUnreadBadgeDelta(changed, -1);
       setMail((prev) => prev.map((m) => (ids.includes(m.id) ? { ...m, unread: false } : m)));
-      if (!operations) {
-        show(`Marked ${ids.length} as read`, { icon: <MailIcon className="size-4" /> });
-        return;
-      }
       const touched = mail.filter((m) => ids.includes(m.id));
       const rollback = () => {
         bumpUnreadBadgeDelta(changed, 1);
@@ -213,39 +208,37 @@ export function useMailBatchActions({
         queueMutation,
         key: `mail:read-read:${ids.slice().sort().join(",")}`,
         toastMessage: `Marked ${ids.length} as read`,
-        execute: (_signal) =>
-          Promise.all(
+        icon: <MailIcon className="size-4" />,
+        execute: async (_signal) => {
+          if (!operations) return;
+          await Promise.all(
             touched.map((message) =>
               operations.patchMessage(message, { read: true }, { signal: _signal }),
             ),
-          ).then(() => {}),
-        rollback: () => {
-          rollback();
+          );
         },
+        rollback,
         undoToastMessage: "Read status change undone.",
       });
     },
-    [mail, bumpUnreadBadgeDelta, setMail, operations, show, queueMutation],
+    [mail, bumpUnreadBadgeDelta, setMail, operations, queueMutation],
   );
 
   const batchStar = useCallback(() => {
+    if (selectedIds.length === 0) return;
     const beforeStarred = new Map(selectedIds.map((id) => [id, !!starred[id]] as const));
     const result = batchToggleStarForIds(selectedIds);
     if (!result) return;
     const nextStarred = !result.allWereStarred;
+    const toastMessage = `${result.allWereStarred ? "Unstarred" : "Starred"} ${result.count}`;
+    const toastIcon = result.allWereStarred ? (
+      <StarOff className="size-4" />
+    ) : (
+      <Star className="size-4" fill="currentColor" />
+    );
     setMail((prev) =>
       prev.map((m) => (beforeStarred.has(m.id) ? { ...m, starred: nextStarred } : m)),
     );
-    if (!operations) {
-      show(`${result.allWereStarred ? "Unstarred" : "Starred"} ${result.count}`, {
-        icon: result.allWereStarred ? (
-          <StarOff className="size-4" />
-        ) : (
-          <Star className="size-4" fill="currentColor" />
-        ),
-      });
-      return;
-    }
     const changed = mail.filter((m) => beforeStarred.has(m.id));
     const rollback = () => {
       batchToggleStarForIds(selectedIds);
@@ -258,19 +251,20 @@ export function useMailBatchActions({
     runQueuedBatchAction({
       queueMutation,
       key: `mail:batch-star:${selectedIds.slice().sort().join(",")}`,
-      toastMessage: `${result.allWereStarred ? "Unstarred" : "Starred"} ${result.count}`,
-      execute: (_signal) =>
-        Promise.all(
+      toastMessage,
+      icon: toastIcon,
+      execute: async (_signal) => {
+        if (!operations) return;
+        await Promise.all(
           changed.map((message) =>
             operations.patchMessage(message, { starred: nextStarred }, { signal: _signal }),
           ),
-        ).then(() => {}),
-      rollback: () => {
-        rollback();
+        );
       },
+      rollback,
       undoToastMessage: "Star change undone.",
     });
-  }, [selectedIds, starred, batchToggleStarForIds, setMail, operations, show, mail, queueMutation]);
+  }, [selectedIds, starred, batchToggleStarForIds, setMail, operations, mail, queueMutation]);
 
   const moveManyToMailbox = useCallback(
     (ids: string[], targetMailbox: string, toastLabel: string) => {
@@ -287,39 +281,25 @@ export function useMailBatchActions({
           folder: targetFolder,
         }),
       });
-      if (!operations) {
-        show(`${toastLabel} ${ids.length} message${ids.length === 1 ? "" : "s"}`, {
-          icon: <Archive className="size-4" />,
-        });
-        return;
-      }
       runQueuedBatchAction({
         queueMutation,
         key: `mail:move-many:${targetMailbox}:${ids.slice().sort().join(",")}`,
         toastMessage: `${toastLabel} ${ids.length} message${ids.length === 1 ? "" : "s"}`,
-        execute: (_signal) =>
-          operations
-            .moveMessages(toMove, targetMailbox, { signal: _signal })
-            .then(() => {
-              const sourceMailboxes = collectSnapshotValues(beforeById, (row) => row.mailbox);
-              const refreshTargets = new Set<string>([targetMailbox, ...sourceMailboxes]);
-              return Promise.all(
-                Array.from(refreshTargets).map((mailbox) => refreshMailboxCache(mailbox)),
-              );
-            })
-            .then(() => {}),
+        icon: <Archive className="size-4" />,
+        execute: async (_signal) => {
+          if (!operations) return;
+          await operations.moveMessages(toMove, targetMailbox, { signal: _signal });
+          const sourceMailboxes = collectSnapshotValues(beforeById, (row) => row.mailbox);
+          const refreshTargets = new Set<string>([targetMailbox, ...sourceMailboxes]);
+          await Promise.all(
+            Array.from(refreshTargets).map((mailbox) => refreshMailboxCache(mailbox)),
+          );
+        },
         rollback,
         undoToastMessage: "Move undone.",
       });
     },
-    [
-      encodeFolderToken,
-      beginOptimisticUpdate,
-      operations,
-      show,
-      queueMutation,
-      refreshMailboxCache,
-    ],
+    [encodeFolderToken, beginOptimisticUpdate, operations, queueMutation, refreshMailboxCache],
   );
 
   const batchArchive = useCallback(() => {
@@ -340,27 +320,20 @@ export function useMailBatchActions({
         folder: encodeFolderToken("Trash"),
       }),
     });
-    if (!operations) {
-      show(`Moved ${ids.length} message${ids.length === 1 ? "" : "s"} to Trash`, {
-        icon: <Archive className="size-4" />,
-      });
-      return;
-    }
     runQueuedBatchAction({
       queueMutation,
       key: `mail:move-trash:${ids.slice().sort().join(",")}`,
       toastMessage: `Moved ${ids.length} message${ids.length === 1 ? "" : "s"} to Trash`,
-      execute: (_signal) =>
-        operations
-          .moveMessages(toMove, "Trash", { signal: _signal })
-          .then(() => {
-            const sourceMailboxes = collectSnapshotValues(beforeById, (row) => row.mailbox);
-            const refreshTargets = new Set<string>(["Trash", ...sourceMailboxes]);
-            return Promise.all(
-              Array.from(refreshTargets).map((mailbox) => refreshMailboxCache(mailbox)),
-            );
-          })
-          .then(() => {}),
+      icon: <Archive className="size-4" />,
+      execute: async (_signal) => {
+        if (!operations) return;
+        await operations.moveMessages(toMove, "Trash", { signal: _signal });
+        const sourceMailboxes = collectSnapshotValues(beforeById, (row) => row.mailbox);
+        const refreshTargets = new Set<string>(["Trash", ...sourceMailboxes]);
+        await Promise.all(
+          Array.from(refreshTargets).map((mailbox) => refreshMailboxCache(mailbox)),
+        );
+      },
       rollback,
       undoToastMessage: "Trash move undone.",
     });
@@ -369,7 +342,6 @@ export function useMailBatchActions({
     beginOptimisticUpdate,
     encodeFolderToken,
     operations,
-    show,
     queueMutation,
     refreshMailboxCache,
   ]);
@@ -385,37 +357,25 @@ export function useMailBatchActions({
         ids,
         updater: (row) => ({ ...row, mailbox, folder }),
       });
-      if (!operations) {
-        show(`Moved ${ids.length} to ${mailbox}`, { icon: <FolderInput className="size-4" /> });
-        return;
-      }
       runQueuedBatchAction({
         queueMutation,
         key: `mail:move-mailbox:${mailbox}:${ids.slice().sort().join(",")}`,
         toastMessage: `Moved ${ids.length} to ${mailbox}`,
-        execute: (_signal) =>
-          operations
-            .moveMessages(toMove, mailbox, { signal: _signal })
-            .then(() => {
-              const sourceMailboxes = collectSnapshotValues(beforeById, (row) => row.mailbox);
-              const refreshTargets = new Set<string>([mailbox, ...sourceMailboxes]);
-              return Promise.all(
-                Array.from(refreshTargets).map((target) => refreshMailboxCache(target)),
-              );
-            })
-            .then(() => {}),
+        icon: <FolderInput className="size-4" />,
+        execute: async (_signal) => {
+          if (!operations) return;
+          await operations.moveMessages(toMove, mailbox, { signal: _signal });
+          const sourceMailboxes = collectSnapshotValues(beforeById, (row) => row.mailbox);
+          const refreshTargets = new Set<string>([mailbox, ...sourceMailboxes]);
+          await Promise.all(
+            Array.from(refreshTargets).map((target) => refreshMailboxCache(target)),
+          );
+        },
         rollback,
         undoToastMessage: "Move undone.",
       });
     },
-    [
-      encodeFolderToken,
-      beginOptimisticUpdate,
-      operations,
-      show,
-      queueMutation,
-      refreshMailboxCache,
-    ],
+    [encodeFolderToken, beginOptimisticUpdate, operations, queueMutation, refreshMailboxCache],
   );
 
   const permanentlyDeleteMessages = useCallback(
@@ -428,12 +388,6 @@ export function useMailBatchActions({
 
       setMail((prev) => removeItemsByIds(prev, ids));
       if (activeId && ids.includes(activeId)) setActiveId(nextVisibleId);
-      if (!operations) {
-        show(`Deleted ${toDelete.length} message${toDelete.length === 1 ? "" : "s"} permanently`, {
-          icon: <Trash2 className="size-4" />,
-        });
-        return;
-      }
       const rollback = () => {
         setMail((prev) => {
           const merged = new Map(prev.map((m) => [m.id, m] as const));
@@ -445,19 +399,20 @@ export function useMailBatchActions({
       queueMutation({
         key: `mail:delete:${ids.slice().sort().join(",")}`,
         toastMessage: `Deleted ${toDelete.length} message${toDelete.length === 1 ? "" : "s"} permanently`,
-        execute: (_signal) =>
-          operations.deleteMessages(
+        icon: <Trash2 className="size-4" />,
+        execute: async (_signal) => {
+          if (!operations) return;
+          await operations.deleteMessages(
             toDelete.map((m) => ({ folder: m.folder, uid: m.uid })),
-            {
-              signal: _signal,
-            },
-          ),
+            { signal: _signal },
+          );
+        },
         undo: rollback,
         onError: rollback,
         undoToastMessage: "Deletion undone.",
       });
     },
-    [mail, visibleMail, activeId, setMail, setActiveId, operations, show, queueMutation],
+    [mail, visibleMail, activeId, setMail, setActiveId, operations, queueMutation],
   );
 
   const requestDeleteSelected = useCallback(() => {

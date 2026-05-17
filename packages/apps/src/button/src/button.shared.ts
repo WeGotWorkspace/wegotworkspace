@@ -53,9 +53,10 @@ const BUTTON_VARIANT_STYLES: Record<ButtonVariant, ButtonVariantStyle> = {
     color: "white",
   },
   outline: {
-    color: "var(--color-ink)",
+    color: "var(--button-outline-color, var(--color-ink))",
     backgroundColor: "transparent",
-    boxShadow: "0 1px 2px color-mix(in oklab, var(--color-ink) 8%, transparent)",
+    boxShadow:
+      "0 1px 2px color-mix(in oklab, var(--button-outline-shadow-color, var(--color-ink)) 8%, transparent)",
   },
   ghost: {
     backgroundColor: "transparent",

@@ -2,20 +2,15 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Archive, Circle, FolderInput, Star, Trash2 } from "lucide-react";
 import { MailMultiSelectionView } from "../src/mail-multi-selection-view";
 import type { Mail } from "@/types/mail";
+import { mailDetailPaneDecorator } from "./mail-panes.stories.decorator";
 
 const meta: Meta<typeof MailMultiSelectionView> = {
-  title: "Apps/Mail/Mail Multi Selection View",
+  title: "Apps/Mail/Panes/Multi selection",
   component: MailMultiSelectionView,
-  decorators: [
-    (Story) => (
-      <div
-        className="mx-auto max-w-3xl rounded-lg border p-8"
-        style={{ backgroundColor: "var(--color-cream, #f5f1e8)" }}
-      >
-        <Story />
-      </div>
-    ),
-  ],
+  decorators: [mailDetailPaneDecorator],
+  parameters: {
+    layout: "fullscreen",
+  },
 };
 
 export default meta;

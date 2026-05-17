@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { DeferredApiWriteArgs } from "@/hooks/use-queued-mutation";
 
 type QueueMutation = (args: DeferredApiWriteArgs) => void;
@@ -9,6 +10,7 @@ type RunBatchActionArgs = {
   execute: (signal: AbortSignal) => Promise<void>;
   rollback: () => void;
   undoToastMessage: string;
+  icon?: ReactNode;
 };
 
 export function runQueuedBatchAction({
@@ -18,6 +20,7 @@ export function runQueuedBatchAction({
   execute,
   rollback,
   undoToastMessage,
+  icon,
 }: RunBatchActionArgs) {
   queueMutation({
     key,
@@ -26,5 +29,6 @@ export function runQueuedBatchAction({
     undo: rollback,
     onError: rollback,
     undoToastMessage,
+    icon,
   });
 }
