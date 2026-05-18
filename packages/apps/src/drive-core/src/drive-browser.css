@@ -5,8 +5,7 @@
 }
 
 /** Matches sidebar section titles (`field-label-row__label` + `--field-label-color`). */
-.drive-workspace .drive-item-label,
-.drive-workspace .drive-list-head__cell {
+.drive-workspace .drive-item-label {
   @apply flex items-center gap-1.5 text-xs font-normal uppercase tracking-wider truncate min-w-0;
   font-family: var(--field-label-font-family, var(--font-mono, ui-monospace, monospace));
   color: var(--field-label-color, var(--color-muted-foreground));
@@ -195,7 +194,9 @@
 }
 
 .drive-workspace .drive-list-head__cell {
-  @apply py-3 px-3 text-left font-normal;
+  @apply py-3 px-3 text-left font-normal text-xs uppercase tracking-wider truncate;
+  font-family: var(--field-label-font-family, var(--font-mono, ui-monospace, monospace));
+  color: var(--field-label-color, var(--color-muted-foreground));
 }
 
 .drive-workspace .drive-list-row {
