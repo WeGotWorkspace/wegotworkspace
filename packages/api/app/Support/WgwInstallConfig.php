@@ -44,6 +44,11 @@ final class WgwInstallConfig
 
     public function dataDir(): string
     {
+        $configured = config('wgw.data_dir');
+        if (is_string($configured) && $configured !== '') {
+            return rtrim($configured, '/');
+        }
+
         $override = getenv('SABRE_DATA_DIR');
         if (is_string($override) && $override !== '') {
             return $this->resolvePath($override);

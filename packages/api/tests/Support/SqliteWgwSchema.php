@@ -50,6 +50,19 @@ final class SqliteWgwSchema
         );
     }
 
+    public static function applyMailTables(): void
+    {
+        Schema::connection('wgw')->dropIfExists('mail_user_credentials');
+        DB::connection('wgw')->statement(
+            'CREATE TABLE mail_user_credentials (
+                username TEXT PRIMARY KEY,
+                imap_username TEXT NOT NULL,
+                password_enc TEXT NOT NULL,
+                updated_at INTEGER NOT NULL
+            )'
+        );
+    }
+
     public static function applyAuthTables(): void
     {
         Schema::connection('wgw')->dropIfExists('api_revoked_tokens');
