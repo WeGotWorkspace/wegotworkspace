@@ -11,6 +11,7 @@ type RunBatchActionArgs = {
   rollback: () => void;
   undoToastMessage: string;
   icon?: ReactNode;
+  executeImmediately?: boolean;
 };
 
 export function runQueuedBatchAction({
@@ -21,6 +22,7 @@ export function runQueuedBatchAction({
   rollback,
   undoToastMessage,
   icon,
+  executeImmediately = false,
 }: RunBatchActionArgs) {
   queueMutation({
     key,
@@ -30,5 +32,6 @@ export function runQueuedBatchAction({
     onError: rollback,
     undoToastMessage,
     icon,
+    executeImmediately,
   });
 }

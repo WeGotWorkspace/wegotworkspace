@@ -1,4 +1,4 @@
-import { Download, Pencil, Star, Trash2, MoreHorizontal } from "lucide-react";
+import { Download, FolderInput, Pencil, Star, Trash2, MoreHorizontal } from "lucide-react";
 import type { ActionBarAction } from "@/action-bar/src/action-bar";
 import { DropdownMenu } from "@/menu-dropdown/src/dropdown-menu";
 import type { DriveUILabels } from "@/drive-core/src/drive-labels";
@@ -8,6 +8,7 @@ export type DriveFileActionCallbacks = {
   onStar: () => void;
   onDelete: () => void;
   onRename?: () => void;
+  onMove?: () => void;
 };
 
 export function buildDriveFileActions(
@@ -16,6 +17,7 @@ export function buildDriveFileActions(
     isStarred: boolean;
     inTrash: boolean;
     canDownload?: boolean;
+    canMove?: boolean;
   },
   callbacks: DriveFileActionCallbacks,
 ): ActionBarAction[] {
@@ -44,6 +46,15 @@ export function buildDriveFileActions(
       label: labels.detailRename,
       onClick: callbacks.onRename,
       icon: <Pencil />,
+    });
+  }
+
+  if (options.canMove !== false && callbacks.onMove) {
+    actions.push({
+      id: "move",
+      label: labels.detailMove,
+      onClick: callbacks.onMove,
+      icon: <FolderInput />,
     });
   }
 

@@ -28,3 +28,15 @@ export const NestedPath: Story = {
     onNavigate: () => {},
   },
 };
+
+export const Compact: Story = {
+  name: "Compact (sm)",
+  args: {
+    size: "sm",
+    items: [
+      { label: "My Drive", path: "My Drive" },
+      { label: "Projects", path: "My Drive/Projects" },
+    ],
+    onNavigate: () => {},
+  },
+};

@@ -17,6 +17,7 @@ export const driveLabels = {
   listView: "List view",
   selectionDone: "Done",
   selectionStar: "Star",
+  selectionMove: "Move",
   selectionDownload: "Download",
   selectionMoveToTrash: "Move to trash",
   selectionDeletePermanently: "Delete permanently",
@@ -24,7 +25,16 @@ export const driveLabels = {
   detailStar: "Star",
   detailUnstar: "Unstar",
   detailRename: "Rename",
+  detailMove: "Move",
   detailDelete: "Delete",
+  folderPickerDrivesRoot: "Drives",
+  moveDialogTitle: "Move to folder",
+  moveDialogDescription:
+    "Browse folders like in Drive. Click to select a destination, double-click to open a folder.",
+  moveDialogSearchPlaceholder: "Search folders…",
+  moveDialogEmpty: "No folders match your search.",
+  moveDialogCancel: "Cancel",
+  moveDialogConfirm: "Move here",
 } as const;
 
 export type DriveUILabels = typeof driveLabels;
