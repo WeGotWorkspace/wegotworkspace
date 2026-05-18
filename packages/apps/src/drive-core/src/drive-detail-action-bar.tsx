@@ -1,61 +1,19 @@
-import { Download, Share2, Star, Trash2 } from "lucide-react";
-import { ActionBar } from "@/action-bar/src/action-bar";
-import type { DriveUILabels } from "@/drive-core/src/drive-labels";
+import { ActionBar, type ActionBarAction } from "@/action-bar/src/action-bar";
 
 type DriveDetailActionBarProps = {
-  labels: DriveUILabels;
-  isStarred: boolean;
+  actions: ActionBarAction[];
   onClose: () => void;
-  onDownload: () => void;
-  onShare: () => void;
-  onStar: () => void;
-  onDelete: () => void;
   mobile?: boolean;
 };
 
-export function DriveDetailActionBar({
-  labels,
-  isStarred,
-  onClose,
-  onDownload,
-  onShare,
-  onStar,
-  onDelete,
-  mobile,
-}: DriveDetailActionBarProps) {
-  const rightActions = [
-    {
-      id: "download",
-      label: labels.detailDownload,
-      onClick: onDownload,
-      icon: <Download />,
-    },
-    {
-      id: "share",
-      label: labels.detailShare,
-      onClick: onShare,
-      icon: <Share2 />,
-    },
-    {
-      id: "star",
-      label: isStarred ? labels.detailUnstar : labels.detailStar,
-      onClick: onStar,
-      active: isStarred,
-      icon: <Star />,
-    },
-    {
-      id: "delete",
-      label: labels.detailDelete,
-      onClick: onDelete,
-      icon: <Trash2 />,
-    },
-  ];
-
+export function DriveDetailActionBar({ actions, onClose, mobile }: DriveDetailActionBarProps) {
   return (
     <ActionBar
       onBack={onClose}
       backLabel={mobile ? "Back" : "Close"}
-      rightActions={rightActions}
+      backIcon={mobile ? "back" : "close"}
+      collapseActions={false}
+      rightActions={actions}
       className="drive-detail-actions px-4 md:px-6 h-14 md:h-16 border-b shrink-0"
     />
   );

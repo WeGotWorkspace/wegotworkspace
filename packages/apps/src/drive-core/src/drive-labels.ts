@@ -3,7 +3,7 @@ export const driveLabels = {
   sidebarRecent: "Recent",
   sidebarStarred: "Starred",
   sidebarTrash: "Trash",
-  sidebarGroups: "Groups",
+  sidebarSharedDrives: "Shared drives",
   searchPlaceholder: "Search in Drive...",
   emptyFolder: "This folder is empty",
   dropUploadHint: "Drop files to upload to",
@@ -21,9 +21,9 @@ export const driveLabels = {
   selectionMoveToTrash: "Move to trash",
   selectionDeletePermanently: "Delete permanently",
   detailDownload: "Download",
-  detailShare: "Share",
   detailStar: "Star",
   detailUnstar: "Unstar",
+  detailRename: "Rename",
   detailDelete: "Delete",
 } as const;
 

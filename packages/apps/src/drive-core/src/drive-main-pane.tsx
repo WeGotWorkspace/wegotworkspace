@@ -1,9 +1,8 @@
 import { toast } from "sonner";
-import { Cloud } from "lucide-react";
+import { Cloud, Download } from "lucide-react";
 import { CollectionEmptyState } from "@/collection-empty-state/src/collection-empty-state";
 import { FileDropOverlay } from "@/file-drop-overlay/src/file-drop-overlay";
 import { PathBreadcrumb } from "@/path-breadcrumb/src/path-breadcrumb";
-import { ViewModeToggle } from "@/view-mode-toggle/src/view-mode-toggle";
 import { SearchBar } from "@/search-bar/src/search-bar";
 import { DriveDetailPanel, DriveGridView, DriveListView } from "@/drive-core/src/drive-browser";
 import type { DriveFile } from "@/drive-core/src/drive-models";
@@ -29,7 +28,6 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
     selectView,
     visibleItems,
     viewMode,
-    setViewMode,
     imagePreviewUrls,
     selectedIds,
     starred,
@@ -57,11 +55,23 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
     searchInputRef,
   } = controller;
 
+  const handleDownload = (file: DriveFile) => {
+    if (operations && file.apiPath && file.kind !== "folder") {
+      void operations.downloadFile(file.apiPath).catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        toast.error(message);
+      });
+    }
+    toast("Download started", { icon: <Download className="size-4" /> });
+  };
+
   const browserProps = {
     items: visibleItems,
     imagePreviewUrls,
     selectedIds,
     starred,
+    labels,
+    inTrash: inTrashView,
     selectionMode,
     isTouch,
     isItemDragging,
@@ -71,8 +81,9 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
     onOpen: openFile,
     onLongPress: enterSelectionFor,
     onStar: toggleStar,
-    onTrash: requestDeleteItem,
+    onDownload: handleDownload,
     onRename: requestRenameItem,
+    onTrash: requestDeleteItem,
   };
 
   const dropTargetLabel =
@@ -113,12 +124,6 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
           onSearch={setSearchQuery}
           inputRef={searchInputRef}
         />
-        <ViewModeToggle
-          value={viewMode}
-          onChange={setViewMode}
-          gridLabel={labels.gridView}
-          listLabel={labels.listView}
-        />
       </div>
 
       <PathBreadcrumb
@@ -136,7 +141,7 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
           ) : viewMode === "grid" ? (
             <DriveGridView {...browserProps} />
           ) : (
-            <DriveListView {...browserProps} activeId={activeId} inTrash={inTrashView} />
+            <DriveListView {...browserProps} activeId={activeId} />
           )}
         </div>
 
@@ -148,10 +153,11 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
                 file: active,
                 previewSrc: imagePreviewUrls[active.id],
                 isStarred: !!starred[active.id],
+                inTrash: inTrashView,
                 operations,
                 onClose: () => setDetailOpen(false),
                 onStar: () => toggleStar(active.id),
-                onShare: () => void controller.copyShareLink(active),
+                onRename: () => requestRenameItem(active),
                 onDelete: () =>
                   isUnderTrash(active.parent)
                     ? setConfirmDelete({ ids: [active.id], permanent: true })
@@ -170,10 +176,11 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
               file: active,
               previewSrc: imagePreviewUrls[active.id],
               isStarred: !!starred[active.id],
+              inTrash: inTrashView,
               operations,
               onClose: () => setDetailOpen(false),
               onStar: () => toggleStar(active.id),
-              onShare: () => void controller.copyShareLink(active),
+              onRename: () => requestRenameItem(active),
               onDelete: () =>
                 isUnderTrash(active.parent)
                   ? setConfirmDelete({ ids: [active.id], permanent: true })
@@ -194,10 +201,11 @@ function buildDetailPanelProps({
   file,
   previewSrc,
   isStarred,
+  inTrash,
   operations,
   onClose,
   onStar,
-  onShare,
+  onRename,
   onDelete,
   mobile,
 }: {
@@ -205,10 +213,11 @@ function buildDetailPanelProps({
   file: DriveFile;
   previewSrc?: string;
   isStarred: boolean;
+  inTrash: boolean;
   operations?: DriveAPIOperations;
   onClose: () => void;
   onStar: () => void;
-  onShare: () => void;
+  onRename: () => void;
   onDelete: () => void;
   mobile?: boolean;
 }) {
@@ -217,9 +226,10 @@ function buildDetailPanelProps({
     file,
     previewSrc,
     isStarred,
+    inTrash,
     onClose,
     onStar,
-    onShare,
+    onRename,
     onDelete,
     mobile,
     onDownload: () => {
