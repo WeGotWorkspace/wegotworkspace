@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ArrowLeft, MoreHorizontal } from "lucide-react";
+import { ArrowLeft, MoreHorizontal, X } from "lucide-react";
 import { IconButton } from "@/button/src/button";
 import { DropdownMenu } from "@/menu-dropdown/src/dropdown-menu";
 import { cn } from "@/lib/utils";
@@ -17,6 +17,10 @@ export type ActionBarProps = {
   /** Shown only below the `md` breakpoint; typically closes the mobile detail stack. */
   onBack?: () => void;
   backLabel?: string;
+  /** Back arrow for stacked mobile detail; close (X) for side panels and dialogs. */
+  backIcon?: "back" | "close";
+  /** When false, always render inline actions instead of the compact overflow menu. */
+  collapseActions?: boolean;
   /** Preferred API: action descriptors rendered by ActionBar with compact dropdown behavior. */
   leftActions?: ActionBarAction[];
   /** Preferred API: action descriptors rendered by ActionBar with compact dropdown behavior. */
@@ -81,6 +85,8 @@ function renderCompactDropdown(
 export function ActionBar({
   onBack,
   backLabel = "Back",
+  backIcon = "back",
+  collapseActions = true,
   leftActions,
   rightActions,
   leftMenuLabel = "More actions",
@@ -95,12 +101,12 @@ export function ActionBar({
   const hasRightActions = (rightActions?.length ?? 0) > 0;
 
   return (
-    <nav className={cn("action-bar", className)}>
+    <nav className={cn("action-bar", !collapseActions && "action-bar--expanded", className)}>
       {onBack ? (
         <IconButton
           label={backLabel}
           onClick={onBack}
-          icon={<ArrowLeft />}
+          icon={backIcon === "close" ? <X /> : <ArrowLeft />}
           variant="ghost"
           className="action-bar__back"
         />

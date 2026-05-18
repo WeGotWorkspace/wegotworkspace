@@ -7,3 +7,9 @@
 .dropdown-menu__menu-item {
   @apply gap-2.5 px-2.5 py-2 rounded-md;
 }
+
+.dropdown-menu__menu-item .menu-item__icon-slot > svg {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}

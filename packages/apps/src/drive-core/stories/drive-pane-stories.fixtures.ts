@@ -2,6 +2,7 @@ import type { MouseEvent } from "react";
 import { DRIVE_MOCK_FILES } from "@/drive-core/src/drive-mock-files";
 import { driveLabels } from "@/drive-core/src/drive-labels";
 import type { DriveFile, FileKind } from "@/drive-core/src/drive-models";
+import type { DriveUILabels } from "@/drive-core/src/drive-labels";
 import type { MenuItemProps } from "@/menu-item/src/menu-item";
 import { STORY_NOOP } from "@/drive-core/stories/drive-story-shared";
 
@@ -51,9 +52,12 @@ export type DriveBrowserStoryProps = {
   onSelect: (id: string, e: MouseEvent) => void;
   onOpen: (file: DriveFile) => void;
   onLongPress: (id: string) => void;
+  labels: DriveUILabels;
+  inTrash: boolean;
   onStar: (id: string) => void;
-  onTrash: (file: DriveFile) => void;
+  onDownload: (file: DriveFile) => void;
   onRename: (file: DriveFile) => void;
+  onTrash: (file: DriveFile) => void;
 };
 
 export function createDriveBrowserStoryProps(
@@ -72,9 +76,12 @@ export function createDriveBrowserStoryProps(
     onSelect: STORY_NOOP,
     onOpen: STORY_NOOP,
     onLongPress: STORY_NOOP,
+    labels: driveLabels,
+    inTrash: false,
     onStar: STORY_NOOP,
-    onTrash: STORY_NOOP,
+    onDownload: STORY_NOOP,
     onRename: STORY_NOOP,
+    onTrash: STORY_NOOP,
     ...overrides,
   };
 }

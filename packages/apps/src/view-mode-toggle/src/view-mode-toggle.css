@@ -1,5 +1,5 @@
 .view-mode-toggle {
-  display: none;
+  display: flex;
   align-items: center;
   border-radius: 9999px;
   padding: 0.125rem;
@@ -7,12 +7,6 @@
     --view-mode-toggle-bg,
     color-mix(in oklab, var(--color-ink) 6%, transparent)
   );
-}
-
-@media (min-width: 640px) {
-  .view-mode-toggle {
-    display: flex;
-  }
 }
 
 .view-mode-toggle__button {

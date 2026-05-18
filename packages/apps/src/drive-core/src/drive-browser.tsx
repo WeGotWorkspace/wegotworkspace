@@ -1,35 +1,16 @@
 import { useRef } from "react";
 import { toast } from "sonner";
-import {
-  Star,
-  Trash2,
-  X,
-  Download,
-  Share2,
-  Folder,
-  FileText,
-  FileImage,
-  FileVideo,
-  FileAudio,
-  FileArchive,
-  File as FileIcon,
-  ArrowLeft,
-  MoreHorizontal,
-  Pencil,
-} from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/ui/dropdown-menu";
-import { IconButton } from "@/button/src/button";
+import { Star, Download, Folder } from "lucide-react";
 import type { DriveFile, FileKind } from "@/drive-core/src/drive-models";
-import { kindIcon, kindIconLg } from "@/drive-core/src/drive-icons";
+import { kindIcon } from "@/drive-core/src/drive-icons";
 import type { MenuItemProps } from "@/menu-item/src/menu-item";
 import { cn } from "@/lib/utils";
 import { DriveDetailActionBar } from "@/drive-core/src/drive-detail-action-bar";
+import {
+  buildDriveFileActions,
+  DriveFileItemActionsMenu,
+} from "@/drive-core/src/drive-file-actions";
+import { DriveMediaPreview } from "@/drive-core/src/drive-media-preview";
 import type { DriveUILabels } from "@/drive-core/src/drive-labels";
 import "@/drive-core/src/drive-browser.css";
 
@@ -46,6 +27,8 @@ export function DriveGridView({
   imagePreviewUrls,
   selectedIds,
   starred,
+  labels,
+  inTrash,
   selectionMode,
   isTouch,
   isItemDragging,
@@ -55,13 +38,16 @@ export function DriveGridView({
   onOpen,
   onLongPress,
   onStar,
-  onTrash,
+  onDownload,
   onRename,
+  onTrash,
 }: {
   items: DriveFile[];
   imagePreviewUrls: Record<string, string>;
   selectedIds: string[];
   starred: Record<string, boolean>;
+  labels: DriveUILabels;
+  inTrash: boolean;
   selectionMode: boolean;
   isTouch: boolean;
   isItemDragging: (id: string) => boolean;
@@ -71,17 +57,18 @@ export function DriveGridView({
   onOpen: (f: DriveFile) => void;
   onLongPress: (id: string) => void;
   onStar: (id: string) => void;
-  onTrash: (file: DriveFile) => void;
+  onDownload: (file: DriveFile) => void;
   onRename: (file: DriveFile) => void;
+  onTrash: (file: DriveFile) => void;
 }) {
   const folders = items.filter((i) => i.kind === "folder");
   const files = items.filter((i) => i.kind !== "folder");
 
   return (
-    <div className="p-4 md:p-8 space-y-8">
+    <div className="drive-grid-layout">
       {folders.length > 0 && (
         <Section title="Folders">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
+          <div className="drive-grid">
             {folders.map((f) => (
               <FolderTile
                 key={f.id}
@@ -97,9 +84,12 @@ export function DriveGridView({
                 onSelect={(e) => onSelect(f.id, e)}
                 onOpen={() => onOpen(f)}
                 onLongPress={() => onLongPress(f.id)}
+                labels={labels}
+                inTrash={inTrash}
                 onStar={() => onStar(f.id)}
-                onTrash={() => onTrash(f)}
+                onDownload={onDownload}
                 onRename={() => onRename(f)}
+                onTrash={() => onTrash(f)}
               />
             ))}
           </div>
@@ -108,7 +98,7 @@ export function DriveGridView({
 
       {files.length > 0 && (
         <Section title="Files">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
+          <div className="drive-grid">
             {files.map((f) => (
               <FileTile
                 key={f.id}
@@ -122,9 +112,12 @@ export function DriveGridView({
                 onSelect={(e) => onSelect(f.id, e)}
                 onOpen={() => onOpen(f)}
                 onLongPress={() => onLongPress(f.id)}
+                labels={labels}
+                inTrash={inTrash}
                 onStar={() => onStar(f.id)}
-                onTrash={() => onTrash(f)}
+                onDownload={onDownload}
                 onRename={() => onRename(f)}
+                onTrash={() => onTrash(f)}
               />
             ))}
           </div>
@@ -178,9 +171,12 @@ function FolderTile({
   onSelect,
   onOpen,
   onLongPress,
+  labels,
+  inTrash,
   onStar,
-  onTrash,
+  onDownload,
   onRename,
+  onTrash,
 }: {
   file: DriveFile;
   isSelected: boolean;
@@ -192,9 +188,12 @@ function FolderTile({
   onSelect: (e: React.MouseEvent) => void;
   onOpen: () => void;
   onLongPress: () => void;
+  labels: DriveUILabels;
+  inTrash: boolean;
   onStar: () => void;
-  onTrash: () => void;
+  onDownload: (file: DriveFile) => void;
   onRename: () => void;
+  onTrash: () => void;
 }) {
   const lp = useLongPress(onLongPress);
   return (
@@ -233,7 +232,16 @@ function FolderTile({
       <Folder className="drive-folder-tile__icon size-5 shrink-0" fill="currentColor" fillOpacity={0.15} />
       <span className="drive-folder-tile__title">{file.title}</span>
       {isStarred ? <Star className="drive-folder-tile__star" fill="currentColor" /> : null}
-      <ItemActionsMenu isStarred={isStarred} onStar={onStar} onTrash={onTrash} onRename={onRename} />
+      <DriveFileItemActions
+        labels={labels}
+        file={file}
+        isStarred={isStarred}
+        inTrash={inTrash}
+        onDownload={onDownload}
+        onStar={onStar}
+        onRename={onRename}
+        onDelete={onTrash}
+      />
     </button>
   );
 }
@@ -248,9 +256,12 @@ function FileTile({
   onSelect,
   onOpen,
   onLongPress,
+  labels,
+  inTrash,
   onStar,
-  onTrash,
+  onDownload,
   onRename,
+  onTrash,
   itemDragHandlers,
 }: {
   file: DriveFile;
@@ -263,9 +274,12 @@ function FileTile({
   onSelect: (e: React.MouseEvent) => void;
   onOpen: () => void;
   onLongPress: () => void;
+  labels: DriveUILabels;
+  inTrash: boolean;
   onStar: () => void;
-  onTrash: () => void;
+  onDownload: (file: DriveFile) => void;
   onRename: () => void;
+  onTrash: () => void;
 }) {
   const lp = useLongPress(onLongPress);
   return (
@@ -305,101 +319,60 @@ function FileTile({
         </span>
       ) : null}
       <div className="drive-file-tile__preview">
-        {(file.kind === "image" || file.kind === "video") && previewSrc ? (
-          file.kind === "video" ? (
-            <video
-              src={previewSrc}
-              className="h-full w-full object-cover"
-              muted
-              playsInline
-              preload="metadata"
-            />
-          ) : (
-            <img src={previewSrc} alt={file.title} className="h-full w-full object-cover" />
-          )
-        ) : (
-          <span className="[&>svg]:size-12 opacity-80">{kindIconLg[file.kind]}</span>
-        )}
+        <DriveMediaPreview
+          file={file}
+          previewSrc={previewSrc}
+          mediaClassName="h-full w-full object-cover"
+        />
       </div>
       <div className="drive-file-tile__footer">
         <span className="drive-file-tile__kind-icon shrink-0">{kindIcon[file.kind]}</span>
         <span className="drive-file-tile__title">{file.title}</span>
-        <ItemActionsMenu
+        <DriveFileItemActions
+          labels={labels}
+          file={file}
           isStarred={isStarred}
+          inTrash={inTrash}
+          onDownload={onDownload}
           onStar={onStar}
-          onTrash={onTrash}
           onRename={onRename}
+          onDelete={onTrash}
         />
       </div>
     </div>
   );
 }
 
-function ItemActionsMenu({
+function DriveFileItemActions({
+  labels,
+  file,
   isStarred,
+  inTrash,
+  onDownload,
   onStar,
-  onTrash,
   onRename,
+  onDelete,
 }: {
+  labels: DriveUILabels;
+  file: DriveFile;
   isStarred: boolean;
+  inTrash: boolean;
+  onDownload: (file: DriveFile) => void;
   onStar: () => void;
-  onTrash: () => void;
-  onRename: () => void;
+  onRename?: () => void;
+  onDelete: () => void;
 }) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <span
-          role="button"
-          tabIndex={0}
-          aria-label="More actions"
-          title="More actions"
-          onClick={(event) => event.stopPropagation()}
-          className="drive-item-actions-trigger"
-        >
-          <MoreHorizontal className="size-4" />
-        </span>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        sideOffset={6}
-        onClick={(event) => event.stopPropagation()}
-        className="min-w-40"
-      >
-        <DropdownMenuItem
-          onClick={(event) => {
-            event.preventDefault();
-            onStar();
-          }}
-          className="cursor-pointer gap-2.5"
-        >
-          <Star className="size-4" fill={isStarred ? "currentColor" : "none"} />
-          {isStarred ? "Unstar" : "Star"}
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={(event) => {
-            event.preventDefault();
-            onRename();
-          }}
-          className="cursor-pointer gap-2.5"
-        >
-          <Pencil className="size-4" />
-          Rename
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={(event) => {
-            event.preventDefault();
-            onTrash();
-          }}
-          className="cursor-pointer gap-2.5 text-red-600 focus:text-red-600"
-        >
-          <Trash2 className="size-4" />
-          Move to Trash
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+  const actions = buildDriveFileActions(
+    labels,
+    { isStarred, inTrash, canDownload: file.kind !== "folder" },
+    {
+      onDownload: () => onDownload(file),
+      onStar,
+      onRename,
+      onDelete,
+    },
   );
+  return <DriveFileItemActionsMenu actions={actions} />;
 }
 
 /* ---------------- List view (OS-style table) ---------------- */
@@ -419,6 +392,8 @@ export function DriveListView({
   activeId,
   selectedIds,
   starred,
+  labels,
+  inTrash,
   isTouch,
   isItemDragging,
   itemDragHandlers,
@@ -426,8 +401,9 @@ export function DriveListView({
   onSelect,
   onOpen,
   onStar,
-  onTrash,
+  onDownload,
   onRename,
+  onTrash,
   onLongPress,
 }: {
   items: DriveFile[];
@@ -436,6 +412,7 @@ export function DriveListView({
   starred: Record<string, boolean>;
   selectionMode: boolean;
   isTouch: boolean;
+  labels: DriveUILabels;
   inTrash: boolean;
   isItemDragging: (id: string) => boolean;
   itemDragHandlers: (id: string) => { onDragStart: () => void; onDragEnd: () => void };
@@ -443,16 +420,17 @@ export function DriveListView({
   onSelect: (id: string, e: React.MouseEvent) => void;
   onOpen: (f: DriveFile) => void;
   onStar: (id: string) => void;
-  onTrash: (file: DriveFile) => void;
+  onDownload: (file: DriveFile) => void;
   onRename: (file: DriveFile) => void;
+  onTrash: (file: DriveFile) => void;
   onLongPress: (id: string) => void;
 }) {
   return (
-    <div className="px-2 md:px-6 pb-8">
+    <div className="drive-list-view">
       <table className="drive-list-table">
         <thead>
           <tr className="drive-list-head">
-            <th className="font-medium uppercase tracking-[0.14em] text-[10px] py-2.5 px-3 w-[44%]">
+            <th className="drive-list-col-name font-medium uppercase tracking-[0.14em] text-[10px] py-2.5 px-3">
               Name
             </th>
             <th className="font-medium uppercase tracking-[0.14em] text-[10px] py-2.5 px-3 hidden md:table-cell">
@@ -464,7 +442,7 @@ export function DriveListView({
             <th className="font-medium uppercase tracking-[0.14em] text-[10px] py-2.5 px-3 hidden lg:table-cell">
               Kind
             </th>
-            <th className="font-medium uppercase tracking-[0.14em] text-[10px] py-2.5 px-3 text-right">
+            <th className="drive-list-col-size font-medium uppercase tracking-[0.14em] text-[10px] py-2.5 px-3 text-right hidden sm:table-cell">
               Size
             </th>
           </tr>
@@ -522,7 +500,7 @@ export function DriveListView({
                   isActive && !isSelected && "drive-list-row--active",
                 )}
               >
-                <td className="py-2 px-3">
+                <td className="drive-list-col-name py-2 px-3 min-w-0">
                   <div className="flex items-center gap-2.5 min-w-0">
                     <span
                       className={cn(
@@ -536,16 +514,20 @@ export function DriveListView({
                         kindIcon[f.kind]
                       )}
                     </span>
-                    <span className="truncate font-medium">{f.title}</span>
+                    <span className="min-w-0 flex-1 truncate font-medium">{f.title}</span>
                     {starred[f.id] ? (
                       <Star className="size-3 shrink-0 drive-list-folder-icon" fill="currentColor" />
                     ) : null}
-                    <div className="ml-auto">
-                      <ItemActionsMenu
+                    <div className="ml-auto shrink-0">
+                      <DriveFileItemActions
+                        labels={labels}
+                        file={f}
                         isStarred={!!starred[f.id]}
+                        inTrash={inTrash}
+                        onDownload={onDownload}
                         onStar={() => onStar(f.id)}
-                        onTrash={() => onTrash(f)}
                         onRename={() => onRename(f)}
+                        onDelete={() => onTrash(f)}
                       />
                     </div>
                   </div>
@@ -557,7 +539,9 @@ export function DriveListView({
                 <td className="py-2 px-3 hidden lg:table-cell drive-list-muted">
                   {KIND_LABEL[f.kind]}
                 </td>
-                <td className="py-2 px-3 text-right tabular-nums drive-list-muted">{f.size}</td>
+                <td className="drive-list-col-size py-2 px-3 text-right tabular-nums drive-list-muted hidden sm:table-cell">
+                  {f.size}
+                </td>
               </tr>
             );
           })}
@@ -574,10 +558,11 @@ export function DriveDetailPanel({
   file,
   previewSrc,
   isStarred,
+  inTrash,
   onClose,
   onDownload,
-  onShare,
   onStar,
+  onRename,
   onDelete,
   mobile,
 }: {
@@ -585,95 +570,39 @@ export function DriveDetailPanel({
   file: DriveFile;
   previewSrc?: string;
   isStarred: boolean;
+  inTrash: boolean;
   onClose: () => void;
   onDownload: () => void;
-  onShare: () => void;
   onStar: () => void;
+  onRename: () => void;
   onDelete: () => void;
   mobile?: boolean;
 }) {
+  const actions = buildDriveFileActions(
+    labels,
+    { isStarred, inTrash, canDownload: file.kind !== "folder" },
+    {
+      onDownload: () => {
+        onDownload();
+        toast("Download started", { icon: <Download className="size-4" /> });
+      },
+      onStar,
+      onRename,
+      onDelete,
+    },
+  );
+
   return (
-    <>
-      <div
-        className="px-4 md:px-6 h-14 md:h-16 border-b flex items-center justify-between shrink-0"
-        style={{ borderColor: "color-mix(in oklab, var(--color-ink) 10%, transparent)" }}
-      >
-        <button
-          aria-label="Close"
-          title={mobile ? "Back" : "Close"}
-          onClick={onClose}
-          className="size-9 rounded-full flex items-center justify-center"
-          style={{
-            color: "var(--color-ink)",
-            backgroundColor: "color-mix(in oklab, var(--color-ink) 6%, transparent)",
-          }}
-        >
-          {mobile ? <ArrowLeft className="size-4" /> : <X className="size-4" />}
-        </button>
-        <div className="drive-detail-actions flex items-center gap-1.5">
-          <IconButton
-            label="Download"
-            onClick={() => {
-              onDownload();
-              toast("Download started", { icon: <Download className="size-4" /> });
-            }}
-            icon={<Download />}
-            size="sm"
-            variant="subtle"
+    <div className="flex min-h-0 flex-1 flex-col">
+      <DriveDetailActionBar actions={actions} onClose={onClose} mobile={mobile} />
+      <div className="drive-detail-panel__scroll">
+        <div className="drive-detail-panel__preview">
+          <DriveMediaPreview
+            file={file}
+            previewSrc={previewSrc}
+            mediaClassName="drive-detail-panel__preview-media"
+            videoControls
           />
-          <IconButton
-            label="Share"
-            onClick={() => {
-              void onShare();
-            }}
-            icon={<Share2 />}
-            size="sm"
-            variant="subtle"
-          />
-          <IconButton
-            label={isStarred ? "Unstar" : "Star"}
-            onClick={onStar}
-            active={isStarred}
-            icon={<Star />}
-            size="sm"
-            variant="subtle"
-          />
-          <IconButton
-            label="Delete"
-            onClick={onDelete}
-            icon={<Trash2 />}
-            size="sm"
-            variant="subtle"
-          />
-        </div>
-      </div>
-      <div className="flex-1 overflow-y-auto px-5 md:px-6 py-6">
-        <div
-          className="aspect-[4/3] rounded-2xl flex items-center justify-center mb-6"
-          style={{
-            backgroundColor: "color-mix(in oklab, var(--drive-sidebar) 14%, transparent)",
-            color: "var(--drive-sidebar)",
-          }}
-        >
-          {(file.kind === "image" || file.kind === "video") && previewSrc ? (
-            file.kind === "video" ? (
-              <video
-                src={previewSrc}
-                className="h-full w-full rounded-2xl object-cover"
-                controls
-                playsInline
-                preload="metadata"
-              />
-            ) : (
-              <img
-                src={previewSrc}
-                alt={file.title}
-                className="h-full w-full rounded-2xl object-cover"
-              />
-            )
-          ) : (
-            <span className="[&>svg]:size-16">{kindIconLg[file.kind]}</span>
-          )}
         </div>
         <p
           className="text-[10px] uppercase tracking-[0.18em] mb-2"
@@ -703,9 +632,10 @@ export function DriveDetailPanel({
           </p>
         ))}
       </div>
-    </>
+    </div>
   );
 }
+
 
 function Row({ label, value }: { label: string; value: string }) {
   return (

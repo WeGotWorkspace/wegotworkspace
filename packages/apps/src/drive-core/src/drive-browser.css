@@ -5,8 +5,45 @@
   color: color-mix(in oklab, var(--color-ink) 55%, transparent);
 }
 
+.drive-workspace .drive-grid-layout {
+  @apply p-3 sm:p-5 md:p-8 space-y-6 sm:space-y-8;
+}
+
+.drive-workspace .drive-grid {
+  display: grid;
+  gap: 0.875rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 30rem) {
+  .drive-workspace .drive-grid {
+    gap: 1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 48rem) {
+  .drive-workspace .drive-grid {
+    gap: 1.25rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .drive-workspace .drive-grid {
+    gap: 1.5rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 80rem) {
+  .drive-workspace .drive-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 .drive-workspace .drive-folder-tile {
-  @apply relative w-full text-left px-3 h-14 rounded-lg flex items-center gap-3 transition-all outline-none focus-visible:ring-2;
+  @apply relative w-full text-left px-4 h-16 sm:h-[4.25rem] rounded-xl flex items-center gap-3 transition-all outline-none focus-visible:ring-2;
 }
 
 .drive-workspace .drive-folder-tile--dragging {
@@ -69,13 +106,43 @@
 }
 
 .drive-workspace .drive-file-tile__preview {
-  @apply aspect-[4/3] flex items-center justify-center;
+  @apply relative flex items-center justify-center overflow-hidden;
+  aspect-ratio: 16 / 9;
   background-color: color-mix(in oklab, var(--drive-sidebar) 8%, transparent);
   color: var(--drive-sidebar);
 }
 
+.drive-workspace .drive-file-tile__preview > img,
+.drive-workspace .drive-file-tile__preview > video,
+.drive-workspace .drive-file-tile__preview .drive-media-preview__fallback {
+  @apply absolute inset-0 h-full w-full;
+}
+
+.drive-workspace .drive-media-preview__fallback {
+  @apply flex h-full w-full min-h-0 items-center justify-center opacity-80;
+}
+
+.drive-workspace .drive-media-preview__fallback svg {
+  width: 3rem;
+  height: 3rem;
+}
+
+@media (min-width: 30rem) {
+  .drive-workspace .drive-media-preview__fallback svg {
+    width: 3.5rem;
+    height: 3.5rem;
+  }
+}
+
+@media (min-width: 64rem) {
+  .drive-workspace .drive-media-preview__fallback svg {
+    width: 4rem;
+    height: 4rem;
+  }
+}
+
 .drive-workspace .drive-file-tile__footer {
-  @apply px-3 py-2.5 flex items-center gap-2 border-t;
+  @apply px-3.5 py-3 sm:px-4 sm:py-3.5 flex items-center gap-2.5 border-t;
   border-color: color-mix(in oklab, var(--color-ink) 8%, transparent);
   background-color: var(--color-cream, #f5f1e8);
 }
@@ -85,13 +152,31 @@
 }
 
 .drive-workspace .drive-file-tile__title {
-  @apply flex-1 min-w-0 truncate text-[13px] font-medium;
+  @apply flex-1 min-w-0 truncate text-sm sm:text-[0.9375rem] font-medium;
   color: var(--color-ink);
 }
 
+.drive-workspace .drive-list-view {
+  @apply min-w-0 max-w-full px-2 pb-8 md:px-6;
+}
+
 .drive-workspace .drive-list-table {
-  @apply w-full text-sm;
+  @apply w-full min-w-0 table-fixed text-sm;
   color: var(--color-ink);
+}
+
+.drive-workspace .drive-list-col-name {
+  width: 44%;
+}
+
+@media (max-width: 639px) {
+  .drive-workspace .drive-list-col-name {
+    width: 100%;
+  }
+}
+
+.drive-workspace .drive-list-col-size {
+  width: 6rem;
 }
 
 .drive-workspace .drive-list-head {
@@ -135,9 +220,24 @@
 }
 
 .drive-workspace .drive-detail-panel__preview {
-  @apply aspect-[4/3] rounded-2xl flex items-center justify-center mb-6;
+  @apply relative aspect-[4/3] rounded-2xl flex items-center justify-center mb-6 overflow-hidden;
   background-color: color-mix(in oklab, var(--drive-sidebar) 14%, transparent);
   color: var(--drive-sidebar);
+}
+
+.drive-workspace .drive-detail-panel__preview > img,
+.drive-workspace .drive-detail-panel__preview > video,
+.drive-workspace .drive-detail-panel__preview .drive-media-preview__fallback {
+  @apply absolute inset-0 h-full w-full;
+}
+
+.drive-workspace .drive-detail-panel__preview-media {
+  @apply h-full w-full rounded-2xl object-cover;
+}
+
+.drive-workspace .drive-detail-panel__preview .drive-media-preview__fallback svg {
+  width: 4rem;
+  height: 4rem;
 }
 
 .drive-workspace .drive-detail-panel__path {

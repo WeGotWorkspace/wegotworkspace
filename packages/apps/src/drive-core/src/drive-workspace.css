@@ -2,6 +2,7 @@
 @import "./drive-browser.css";
 
 .drive-workspace {
+  @apply min-w-0 overflow-x-hidden;
   --color-emerald: #0c8397;
   --drive-sidebar: #0c8397;
   --app-sidebar-bg: var(--drive-sidebar);
@@ -9,12 +10,25 @@
   --app-sidebar-color: #ffffff;
   --sidebar-logo-close-button-color: var(--app-sidebar-color);
   --sidebar-badge-fg: #0c8397;
+  --workspace-main-content-max-width: none;
   --workspace-sidebar-toggle-color: var(--color-ink);
   --workspace-sidebar-toggle-bg: color-mix(in oklab, var(--color-ink) 6%, transparent);
-  --workspace-user-footer-link-hover-bg: color-mix(in oklab, var(--color-ink) 18%, transparent);
+  --workspace-user-footer-link-hover-bg: color-mix(in oklab, #ffffff 18%, transparent);
   --upload-progress-active-fill: var(--drive-sidebar);
   --upload-progress-done-fill: var(--color-emerald);
   --file-drop-overlay-card-color: var(--drive-sidebar);
+}
+
+.drive-workspace .workspace-app-layout__main-scroll {
+  @apply flex flex-col;
+}
+
+.drive-workspace .workspace-app-layout__main-content {
+  @apply mx-0 flex min-h-full flex-1 flex-col w-full max-w-none px-0 py-0;
+}
+
+.drive-workspace .app-sidebar {
+  --field-label-color: color-mix(in oklab, #ffffff 72%, transparent);
 }
 
 .drive-workspace .app-sidebar__scroll {
@@ -23,23 +37,36 @@
   --button-primary-fg: var(--drive-sidebar);
 }
 
+.drive-workspace .app-sidebar__footer {
+  --workspace-user-footer-text-color: #ffffff;
+  --workspace-user-footer-subtitle-color: color-mix(in oklab, #ffffff 72%, transparent);
+  --workspace-user-footer-border-color: color-mix(in oklab, #ffffff 18%, transparent);
+  --workspace-user-footer-avatar-bg: color-mix(in oklab, #ffffff 22%, transparent);
+  --workspace-user-footer-avatar-color: var(--drive-sidebar);
+  --workspace-user-footer-link-color: #ffffff;
+  --button-subtle-color: #ffffff;
+  --button-subtle-background: color-mix(in oklab, #ffffff 10%, transparent);
+  --button-subtle-hover-background: color-mix(in oklab, #ffffff 18%, transparent);
+}
+
 .drive-workspace .drive-detail-actions {
   --button-subtle-color: color-mix(in oklab, var(--color-ink) 65%, transparent);
   --button-subtle-background: color-mix(in oklab, var(--color-ink) 6%, transparent);
   --button-subtle-hover-background: color-mix(in oklab, var(--color-ink) 18%, transparent);
+  border-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
 }
 
 .drive-workspace .drive-main-pane {
-  @apply flex flex-col min-w-0 relative flex-1;
+  @apply flex min-h-0 flex-1 flex-col min-w-0 relative w-full;
   background-color: var(--color-cream, #f5f1e8);
 }
 
 .drive-workspace .drive-main-toolbar {
-  @apply flex items-center gap-3 px-4 md:px-8 pt-4 md:pt-6 pb-2 shrink-0;
+  @apply px-4 md:px-8 pt-4 md:pt-6 pb-2 shrink-0;
 }
 
 .drive-workspace .drive-main-toolbar .search-bar {
-  @apply flex-1 min-w-0;
+  @apply w-full min-w-0;
 }
 
 .drive-workspace .drive-main-pane__breadcrumbs {
@@ -51,11 +78,11 @@
 }
 
 .drive-workspace .drive-main-pane__scroll {
-  @apply flex-1 overflow-y-auto min-w-0;
+  @apply flex-[2] min-w-0 overflow-x-hidden overflow-y-auto;
 }
 
 .drive-workspace .drive-detail-aside {
-  @apply hidden md:flex w-80 lg:w-96 shrink-0 border-l flex-col;
+  @apply hidden md:flex flex-1 min-w-0 shrink-0 border-l flex-col min-h-0;
   background-color: var(--color-cream, #f5f1e8);
   border-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
 }
