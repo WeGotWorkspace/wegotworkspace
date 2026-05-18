@@ -39,6 +39,7 @@ export function MeetSelfPreviewPiP({
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
   const [dragging, setDragging] = useState(false);
   const [isBrowserPiP, setIsBrowserPiP] = useState(false);
+  const [pipAspectRatio, setPipAspectRatio] = useState<number | null>(null);
 
   const clampPosition = (x: number, y: number) => {
     const root = rootRef.current;
@@ -51,6 +52,30 @@ export function MeetSelfPreviewPiP({
       y: Math.max(0, Math.min(y, maxY)),
     };
   };
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !videoOn) {
+      setPipAspectRatio(null);
+      return;
+    }
+    const update = () => {
+      const w = video.videoWidth;
+      const h = video.videoHeight;
+      setPipAspectRatio(w > 0 && h > 0 ? w / h : null);
+    };
+    update();
+    video.addEventListener("loadedmetadata", update);
+    video.addEventListener("resize", update);
+    return () => {
+      video.removeEventListener("loadedmetadata", update);
+      video.removeEventListener("resize", update);
+    };
+  }, [videoOn, videoRef]);
+
+  useEffect(() => {
+    setPosition((prev) => (prev ? clampPosition(prev.x, prev.y) : prev));
+  }, [pipAspectRatio, isBrowserPiP]);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -255,7 +280,10 @@ export function MeetSelfPreviewPiP({
         isBrowserPiP ? "meet-pip--sm" : "meet-pip--md",
         dragging && "meet-pip--dragging",
       )}
-      style={{ transform: `translate(${x}px, ${y}px)` }}
+      style={{
+        transform: `translate(${x}px, ${y}px)`,
+        ...(pipAspectRatio != null ? { aspectRatio: pipAspectRatio } : {}),
+      }}
     >
       {videoOn ? (
         <>

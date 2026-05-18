@@ -60,7 +60,7 @@ export function MeetPeerTile({
             mirrored={false}
             onPresentationViable={onPresentationViable}
             className={cn(
-              "meet-peer-tile__stream h-full w-full object-cover",
+              "meet-peer-tile__stream h-full w-full",
               !remoteVideoOk && "meet-peer-tile__stream--hidden",
             )}
           />
