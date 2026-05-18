@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit bootstrap="vendor/autoload.php" colors="true" cacheDirectory=".phpunit.cache">
+  <php>
+    <env name="APP_ENV" value="testing"/>
+    <env name="APP_KEY" value="base64:2fl+KtvkdphvQyEfBiXLBA9CcHqYfX2p9lR3zK8j5nE="/>
+    <env name="APP_DEBUG" value="true"/>
+  </php>
   <testsuites>
     <testsuite name="api">
       <directory>tests</directory>
