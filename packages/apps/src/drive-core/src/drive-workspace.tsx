@@ -9,7 +9,6 @@ import { workspaceUserInitials, type WorkspaceSession } from "@/lib/workspace/wo
 import { ViewHeader } from "@/view-header/src/view-header";
 import { DriveSearch } from "@/drive-core/src/drive-search";
 import { ViewModeToggle } from "@/view-mode-toggle/src/view-mode-toggle";
-import { UploadProgress } from "@/upload-progress/src/upload-progress";
 import { cn } from "@/lib/utils";
 import { DriveMainPane } from "@/drive-core/src/drive-main-pane";
 import { DriveNewMenu } from "@/drive-core/src/drive-new-menu";
@@ -35,7 +34,7 @@ export function DriveWorkspace({
     sidebarGroupPaths: controller.sidebarGroupPaths,
     selectView: controller.selectView,
     sidebarDropZoneProps: controller.sidebarDropZoneProps,
-    moveToFolder: controller.moveToFolder,
+    commitMoveToFolder: controller.commitMoveToFolder,
   });
 
   return (
@@ -128,7 +127,6 @@ function DriveMainHeader({ controller }: { controller: DriveController }) {
     visibleItems,
     viewMode,
     setViewMode,
-    uploadProgress,
     searchQuery,
     setSearchQuery,
     searchInputRef,
@@ -163,14 +161,6 @@ function DriveMainHeader({ controller }: { controller: DriveController }) {
           </>
         }
       />
-      {uploadProgress ? (
-        <UploadProgress
-          label={uploadProgress.label}
-          percent={uploadProgress.percent}
-          detail={uploadProgress.detail}
-          done={uploadProgress.done}
-        />
-      ) : null}
     </>
   );
 }

@@ -42,7 +42,7 @@
   --workspace-user-footer-subtitle-color: color-mix(in oklab, #ffffff 72%, transparent);
   --workspace-user-footer-border-color: color-mix(in oklab, #ffffff 18%, transparent);
   --workspace-user-footer-avatar-bg: color-mix(in oklab, #ffffff 22%, transparent);
-  --workspace-user-footer-avatar-color: var(--drive-sidebar);
+  --workspace-user-footer-avatar-color: var(--app-sidebar-color);
   --workspace-user-footer-link-color: #ffffff;
   --button-subtle-color: #ffffff;
   --button-subtle-background: color-mix(in oklab, #ffffff 10%, transparent);
@@ -106,9 +106,60 @@
   background-color: color-mix(in oklab, var(--color-ink) 6%, transparent);
 }
 
+.drive-workspace .drive-floating-upload {
+  position: fixed;
+  left: 1rem;
+  right: 1rem;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  z-index: 36;
+  max-width: 28rem;
+  margin-inline: auto;
+}
+
+.drive-workspace .drive-main-pane:has(.drive-floating-search) .drive-floating-upload {
+  bottom: calc(max(1rem, env(safe-area-inset-bottom)) + 4.25rem);
+}
+
+@media (min-width: 768px) {
+  .drive-workspace .drive-main-pane:has(.drive-floating-search) .drive-floating-upload {
+    bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
+.drive-workspace .drive-main-pane:has(.drive-selection-bar) .drive-floating-upload {
+  bottom: calc(max(1rem, env(safe-area-inset-bottom)) + 3.75rem);
+}
+
+.drive-workspace .drive-floating-upload .upload-progress {
+  margin: 0;
+  border-bottom: none;
+  border-radius: 0.75rem;
+  padding: 0.875rem 1rem;
+  background-color: var(--color-cream, #f5f1e8);
+  box-shadow:
+    0 4px 24px color-mix(in oklab, var(--color-ink) 16%, transparent),
+    0 0 0 1px color-mix(in oklab, var(--color-ink) 8%, transparent);
+}
+
 @media (max-width: 767px) {
   .drive-workspace .drive-main-pane__scroll {
     padding-bottom: 5.5rem;
+  }
+
+  .drive-workspace .drive-main-pane:has(.drive-floating-upload) .drive-main-pane__scroll {
+    padding-bottom: 9.5rem;
+  }
+
+  .drive-workspace
+    .drive-main-pane:has(.drive-floating-upload):has(.drive-floating-search)
+    .drive-main-pane__scroll {
+    padding-bottom: 13.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .drive-workspace .drive-main-pane:has(.drive-floating-upload) .drive-main-pane__scroll {
+    padding-bottom: 6.5rem;
   }
 }
 

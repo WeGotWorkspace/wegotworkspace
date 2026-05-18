@@ -12,8 +12,11 @@ type UseDriveSidebarModelArgs = {
   sidebarDropZoneProps: (
     targetKey: string,
     onDrop: (ids: string[]) => void,
-  ) => Pick<MenuItemProps, "isDropTarget" | "onDragOver" | "onDragLeave" | "onDrop">;
-  moveToFolder: (ids: string[], parent: string) => void;
+  ) => Pick<
+    MenuItemProps,
+    "isDropTarget" | "onDragEnter" | "onDragOver" | "onDragLeave" | "onDrop"
+  >;
+  commitMoveToFolder: (ids: string[], destinationPath: string) => void;
 };
 
 function isMyDriveView(view: ViewKey) {
@@ -34,7 +37,7 @@ export function useDriveSidebarModel({
   sidebarGroupPaths,
   selectView,
   sidebarDropZoneProps,
-  moveToFolder,
+  commitMoveToFolder,
 }: UseDriveSidebarModelArgs) {
   const primarySidebarItems = useMemo<MenuItemProps[]>(
     () => [
@@ -43,7 +46,7 @@ export function useDriveSidebarModel({
         selected: isMyDriveView(view),
         onClick: () => selectView({ type: "folder", path: "My Drive" }),
         icon: <DriveViewIcon view={{ type: "folder", path: "My Drive" }} />,
-        ...sidebarDropZoneProps("My Drive", (ids) => moveToFolder(ids, "My Drive")),
+        ...sidebarDropZoneProps("My Drive", (ids) => commitMoveToFolder(ids, "My Drive")),
       },
       {
         label: labels.sidebarRecent,
@@ -62,10 +65,10 @@ export function useDriveSidebarModel({
         selected: isTrashView(view),
         onClick: () => selectView({ type: "folder", path: "Trash" }),
         icon: <DriveViewIcon view={{ type: "folder", path: "Trash" }} />,
-        ...sidebarDropZoneProps("Trash", (ids) => moveToFolder(ids, "Trash")),
+        ...sidebarDropZoneProps("Trash", (ids) => commitMoveToFolder(ids, "Trash")),
       },
     ],
-    [labels, moveToFolder, selectView, sidebarDropZoneProps, view],
+    [labels, commitMoveToFolder, selectView, sidebarDropZoneProps, view],
   );
 
   const groupSidebarItems = useMemo<MenuItemProps[]>(
@@ -75,9 +78,9 @@ export function useDriveSidebarModel({
         selected: isGroupView(view, groupPath),
         onClick: () => selectView({ type: "folder", path: groupPath }),
         icon: <DriveViewIcon view={{ type: "folder", path: groupPath }} />,
-        ...sidebarDropZoneProps(groupPath, (ids) => moveToFolder(ids, groupPath)),
+        ...sidebarDropZoneProps(groupPath, (ids) => commitMoveToFolder(ids, groupPath)),
       })),
-    [moveToFolder, selectView, sidebarDropZoneProps, sidebarGroupPaths, view],
+    [commitMoveToFolder, selectView, sidebarDropZoneProps, sidebarGroupPaths, view],
   );
 
   return { primarySidebarItems, groupSidebarItems };

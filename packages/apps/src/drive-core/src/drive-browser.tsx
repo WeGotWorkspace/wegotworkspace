@@ -12,6 +12,7 @@ import {
 } from "@/drive-core/src/drive-file-actions";
 import { DriveMediaPreview } from "@/drive-core/src/drive-media-preview";
 import type { DriveUILabels } from "@/drive-core/src/drive-labels";
+import { driveFolderUiPath } from "@/drive-core/src/drive-item-path";
 import "@/drive-core/src/drive-browser.css";
 
 
@@ -19,8 +20,13 @@ import "@/drive-core/src/drive-browser.css";
 
 type FolderDropZoneProps = Pick<
   MenuItemProps,
-  "isDropTarget" | "onDragOver" | "onDragLeave" | "onDrop"
+  "isDropTarget" | "onDragEnter" | "onDragOver" | "onDragLeave" | "onDrop"
 >;
+
+type ItemDragHandlers = {
+  onDragStart: (e: React.DragEvent) => void;
+  onDragEnd: () => void;
+};
 
 export function DriveGridView({
   items,
@@ -51,8 +57,8 @@ export function DriveGridView({
   selectionMode: boolean;
   isTouch: boolean;
   isItemDragging: (id: string) => boolean;
-  itemDragHandlers: (id: string) => { onDragStart: () => void; onDragEnd: () => void };
-  folderDropZoneProps: (parentPath: string) => FolderDropZoneProps;
+  itemDragHandlers: (id: string) => ItemDragHandlers;
+  folderDropZoneProps: (destinationPath: string) => FolderDropZoneProps;
   onSelect: (id: string, e: React.MouseEvent) => void;
   onOpen: (f: DriveFile) => void;
   onLongPress: (id: string) => void;
@@ -77,9 +83,7 @@ export function DriveGridView({
                 isStarred={!!starred[f.id]}
                 isDragging={isItemDragging(f.id)}
                 isTouch={isTouch}
-                folderDropZone={folderDropZoneProps(
-                  f.parent === "" ? f.title : `${f.parent}/${f.title}`,
-                )}
+                folderDropZone={folderDropZoneProps(driveFolderUiPath(f))}
                 itemDragHandlers={itemDragHandlers(f.id)}
                 onSelect={(e) => onSelect(f.id, e)}
                 onOpen={() => onOpen(f)}
@@ -182,7 +186,7 @@ function FolderTile({
   isDragging: boolean;
   isTouch: boolean;
   folderDropZone: FolderDropZoneProps;
-  itemDragHandlers: { onDragStart: () => void; onDragEnd: () => void };
+  itemDragHandlers: ItemDragHandlers;
   onSelect: (e: React.MouseEvent) => void;
   onOpen: () => void;
   onLongPress: () => void;
@@ -212,11 +216,7 @@ function FolderTile({
         }
       }}
       draggable={!isTouch}
-      onDragStart={(e) => {
-        itemDragHandlers.onDragStart();
-        e.dataTransfer.effectAllowed = "move";
-        e.dataTransfer.setData("text/plain", file.id);
-      }}
+      onDragStart={itemDragHandlers.onDragStart}
       onDragEnd={itemDragHandlers.onDragEnd}
       {...folderDropZone}
       className={cn(
@@ -268,7 +268,7 @@ function FileTile({
   isStarred: boolean;
   isDragging: boolean;
   isTouch: boolean;
-  itemDragHandlers: { onDragStart: () => void; onDragEnd: () => void };
+  itemDragHandlers: ItemDragHandlers;
   onSelect: (e: React.MouseEvent) => void;
   onOpen: () => void;
   onLongPress: () => void;
@@ -297,11 +297,7 @@ function FileTile({
         }
       }}
       draggable={!isTouch}
-      onDragStart={(e) => {
-        itemDragHandlers.onDragStart();
-        e.dataTransfer.effectAllowed = "move";
-        e.dataTransfer.setData("text/plain", file.id);
-      }}
+      onDragStart={itemDragHandlers.onDragStart}
       onDragEnd={itemDragHandlers.onDragEnd}
       role="button"
       tabIndex={0}
@@ -413,8 +409,8 @@ export function DriveListView({
   labels: DriveUILabels;
   inTrash: boolean;
   isItemDragging: (id: string) => boolean;
-  itemDragHandlers: (id: string) => { onDragStart: () => void; onDragEnd: () => void };
-  folderDropZoneProps: (parentPath: string) => FolderDropZoneProps;
+  itemDragHandlers: (id: string) => ItemDragHandlers;
+  folderDropZoneProps: (destinationPath: string) => FolderDropZoneProps;
   onSelect: (id: string, e: React.MouseEvent) => void;
   onOpen: (f: DriveFile) => void;
   onStar: (id: string) => void;
@@ -429,7 +425,6 @@ export function DriveListView({
         <thead>
           <tr className="drive-list-head">
             <th className="drive-list-col-name drive-list-head__cell">Name</th>
-            <th className="drive-list-head__cell hidden md:table-cell">Owner</th>
             <th className="drive-list-head__cell hidden sm:table-cell">Modified</th>
             <th className="drive-list-head__cell hidden lg:table-cell">Kind</th>
             <th className="drive-list-col-size drive-list-head__cell text-right hidden sm:table-cell">
@@ -439,11 +434,11 @@ export function DriveListView({
         </thead>
         <tbody>
           {items.map((f) => {
-            const folderPath = f.parent === "" ? f.title : `${f.parent}/${f.title}`;
+            const isFolder = f.kind === "folder";
+            const folderPath = isFolder ? driveFolderUiPath(f) : "";
             const isSelected = selectedIds.includes(f.id);
             const isActive = f.id === activeId;
-            const dropZone =
-              f.kind === "folder" ? folderDropZoneProps(folderPath) : ({} as FolderDropZoneProps);
+            const dropZone = isFolder ? folderDropZoneProps(folderPath) : ({} as FolderDropZoneProps);
             const dragHandlers = itemDragHandlers(f.id);
             const lp = {
               start: undefined as undefined | (() => void),
@@ -475,22 +470,20 @@ export function DriveListView({
                   }
                 }}
                 draggable={!isTouch}
-                onDragStart={(e) => {
-                  dragHandlers.onDragStart();
-                  e.dataTransfer.effectAllowed = "move";
-                  e.dataTransfer.setData("text/plain", f.id);
-                }}
+                onDragStart={dragHandlers.onDragStart}
                 onDragEnd={dragHandlers.onDragEnd}
-                {...(f.kind === "folder" ? dropZone : {})}
                 className={cn(
                   "drive-list-row group cursor-default transition-colors",
                   isItemDragging(f.id) && "drive-list-row--dragging",
-                  f.kind === "folder" && dropZone.isDropTarget && "drive-list-row--drop-target",
+                  isFolder && dropZone.isDropTarget && "drive-list-row--drop-target",
                   isSelected && "drive-list-row--selected",
                   isActive && !isSelected && "drive-list-row--active",
                 )}
               >
-                <td className="drive-list-col-name py-2 px-3 min-w-0">
+                <td
+                  className="drive-list-col-name py-2 px-3 min-w-0"
+                  {...(isFolder ? dropZone : {})}
+                >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <span
                       className={cn(
@@ -522,7 +515,6 @@ export function DriveListView({
                     </div>
                   </div>
                 </td>
-                <td className="py-2 px-3 hidden md:table-cell drive-list-muted">{f.owner}</td>
                 <td className="py-2 px-3 hidden sm:table-cell tabular-nums drive-list-muted">
                   {f.date}
                 </td>
@@ -611,7 +603,6 @@ export function DriveDetailPanel({
         <dl className="space-y-2 text-sm mb-6">
           <Row label="Type" value={file.kind} />
           <Row label="Size" value={file.size} />
-          <Row label="Owner" value={file.owner} />
           <Row label="Modified" value={file.date} />
         </dl>
         {file.body.map((p, i) => (

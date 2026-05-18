@@ -1,9 +1,17 @@
 import { useCallback, useRef, useState } from "react";
 
+export type ListDropZoneProps = {
+  isDropTarget: boolean;
+  onDragEnter: (e: React.DragEvent) => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDragLeave: (e: React.DragEvent) => void;
+  onDrop: (e: React.DragEvent) => void;
+};
+
 /**
- * Desktop list → sidebar drop: tracks which items are being dragged (respecting
- * multi-select) and highlights one sidebar target. Uses a ref for the dragged id
- * set so `drop` always sees the latest payload.
+ * Desktop list → sidebar / folder drop: tracks which items are being dragged (respecting
+ * multi-select) and highlights one drop target. Uses a ref for the dragged id set so `drop`
+ * always sees the latest payload.
  */
 export function useSidebarListDrag(selectedIds: string[]) {
   const [draggingIds, setDraggingIds] = useState<string[] | null>(null);
@@ -11,11 +19,15 @@ export function useSidebarListDrag(selectedIds: string[]) {
   const draggingRef = useRef<string[] | null>(null);
 
   const beginDrag = useCallback(
-    (itemId: string) => {
+    (itemId: string, e?: React.DragEvent) => {
       const ids =
         selectedIds.includes(itemId) && selectedIds.length > 1 ? selectedIds : [itemId];
       draggingRef.current = ids;
       setDraggingIds(ids);
+      if (e?.dataTransfer) {
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", itemId);
+      }
     },
     [selectedIds],
   );
@@ -33,32 +45,45 @@ export function useSidebarListDrag(selectedIds: string[]) {
 
   const itemDragHandlers = useCallback(
     (itemId: string) => ({
-      onDragStart: () => beginDrag(itemId),
+      onDragStart: (e: React.DragEvent) => beginDrag(itemId, e),
       onDragEnd: endDrag,
     }),
     [beginDrag, endDrag],
   );
 
-  const sidebarDropZoneProps = useCallback(
-    (targetKey: string, onCommit: (ids: string[]) => void) => ({
-      isDropTarget: dropTargetKey === targetKey,
-      onDragOver: (e: React.DragEvent) => {
-        if (draggingRef.current) {
-          e.preventDefault();
-          setDropTargetKey(targetKey);
-        }
-      },
-      onDragLeave: () => setDropTargetKey((t) => (t === targetKey ? null : t)),
-      onDrop: (e: React.DragEvent) => {
+  const dropZoneProps = useCallback(
+    (targetKey: string, onCommit: (ids: string[]) => void): ListDropZoneProps => {
+      const highlight = (e: React.DragEvent) => {
+        if (!draggingRef.current?.length) return;
         e.preventDefault();
-        const ids = draggingRef.current;
-        if (!ids?.length) return;
-        onCommit(ids);
-        endDrag();
-      },
-    }),
+        e.stopPropagation();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+        setDropTargetKey(targetKey);
+      };
+
+      return {
+        isDropTarget: dropTargetKey === targetKey,
+        onDragEnter: highlight,
+        onDragOver: highlight,
+        onDragLeave: (e: React.DragEvent) => {
+          const related = e.relatedTarget as Node | null;
+          if (related && e.currentTarget.contains(related)) return;
+          setDropTargetKey((current) => (current === targetKey ? null : current));
+        },
+        onDrop: (e: React.DragEvent) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const ids = draggingRef.current;
+          if (!ids?.length) return;
+          onCommit(ids);
+          endDrag();
+        },
+      };
+    },
     [dropTargetKey, endDrag],
   );
 
-  return { isItemDragging, itemDragHandlers, sidebarDropZoneProps };
+  const sidebarDropZoneProps = dropZoneProps;
+
+  return { isItemDragging, itemDragHandlers, sidebarDropZoneProps, dropZoneProps };
 }
