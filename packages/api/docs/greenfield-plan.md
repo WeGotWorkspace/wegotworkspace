@@ -49,8 +49,8 @@ Each phase ends with **tests green** + **`composer greenfield:guard`**.
 
 ### Phase 4 — Notes
 
-- [ ] `NoteRepository` + markdown codec via `WgwStorage`
-- [ ] Feature tests for notes CRUD / notebooks
+- [x] `NoteRepository` + markdown codec via `WgwStorage`
+- [x] Feature tests for notes CRUD / notebooks
 
 ### Phase 5 — Home, DAV capabilities, installer API
 
