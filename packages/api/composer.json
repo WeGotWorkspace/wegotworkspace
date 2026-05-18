@@ -41,7 +41,8 @@
         }
     },
     "scripts": {
-        "test": "phpunit -c phpunit.xml"
+        "test": "phpunit -c phpunit.xml",
+        "greenfield:guard": "php scripts/greenfield-guard.php"
     },
     "suggest": {
         "ext-imap": "Required for /mail IMAP sync (folders, read, send uses SMTP separately)",
