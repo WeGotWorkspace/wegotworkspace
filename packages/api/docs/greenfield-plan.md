@@ -43,9 +43,9 @@ Each phase ends with **tests green** + **`composer greenfield:guard`**.
 
 ### Phase 3 — System + settings (first REST domains)
 
-- [ ] `GET health`, `GET capabilities`
-- [ ] Settings state/profile/mail credentials
-- [ ] Feature tests per route
+- [x] `GET health`, `GET capabilities`
+- [x] Settings state/profile/mail credentials
+- [x] Feature tests per route
 
 ### Phase 4 — Notes
 
