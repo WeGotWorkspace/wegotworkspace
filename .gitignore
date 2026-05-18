@@ -7,6 +7,10 @@ node_modules/
 /packages/api/vendor/
 /packages/api/.phpunit.cache/
 /packages/api/.phpunit.result.cache
+/packages/api/.env
+/packages/api/bootstrap/cache/*
+!/packages/api/bootstrap/cache/.gitignore
+/packages/api/storage/logs/*.log
 /apps/wegotworkspace/wgw-config.php
 /apps/wegotworkspace/wgw-content/*
 /apps/wegotworkspace/wgw-content/sessions/*
