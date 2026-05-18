@@ -104,14 +104,20 @@ export function MeetCallToolbar({
               <MonitorUp className="size-5" />
             </button>
           </TooltipTrigger>
-          <TooltipContent>{screenOn ? meetLabels.stopSharing : meetLabels.shareScreen}</TooltipContent>
+          <TooltipContent>
+            {screenOn ? meetLabels.stopSharing : meetLabels.shareScreen}
+          </TooltipContent>
         </Tooltip>
         <div className="meet-workspace__toolbar-divider" aria-hidden />
         <AlertDialog>
           <Tooltip>
             <TooltipTrigger asChild>
               <AlertDialogTrigger asChild>
-                <button type="button" className="meet-workspace__hangup-button" aria-label={callExitLabel}>
+                <button
+                  type="button"
+                  className="meet-workspace__hangup-button"
+                  aria-label={callExitLabel}
+                >
                   <PhoneOff className="size-5" />
                 </button>
               </AlertDialogTrigger>
@@ -125,7 +131,10 @@ export function MeetCallToolbar({
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={onConfirmExit} className="meet-workspace__hangup-button">
+              <AlertDialogAction
+                onClick={onConfirmExit}
+                className="meet-dialog-surface__confirm-exit"
+              >
                 {callExitLabel}
               </AlertDialogAction>
             </AlertDialogFooter>

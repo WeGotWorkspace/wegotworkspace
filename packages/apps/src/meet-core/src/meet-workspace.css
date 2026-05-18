@@ -296,224 +296,241 @@
   background-color: var(--meet-accent);
 }
 
-.meet-dialog-surface {
+.meet-dialog-surface,
+.meet-popover-surface {
   --meet-accent: #4f7cff;
   --meet-panel: #171826;
   --meet-panel-soft: #20223a;
   --meet-text: #ffffff;
   --meet-muted: rgba(255, 255, 255, 0.6);
+  --meet-mic-off: #e5484d;
   --user-avatar-bg: rgba(255, 255, 255, 0.1);
   --user-avatar-fg: var(--meet-text);
   --button-primary-background: var(--meet-accent);
   --button-primary-color: var(--meet-text);
+  --button-subtle-background: var(--meet-panel-soft);
+  --button-subtle-color: var(--meet-text);
+  --button-subtle-hover-background: color-mix(in oklab, var(--meet-text) 12%, var(--meet-panel-soft));
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .user-avatar__mark {
+.meet-dialog-surface .meet-dialog-surface__confirm-exit {
+  @apply h-10 rounded-md px-4 shadow-none;
+  background-color: var(--destructive, #dc2626);
+  color: var(--destructive-foreground, #ffffff);
+}
+
+.meet-dialog-surface .meet-dialog-surface__confirm-exit:hover {
+  background-color: color-mix(in oklab, var(--destructive, #dc2626) 92%, #000000);
+}
+
+.meet-popover-surface {
+  /* Portaled content: beat PopoverContent utilities (bg-popover, text-popover-foreground, border). */
+  border-width: 0 !important;
+  border-color: transparent !important;
+  background-color: var(--meet-panel) !important;
+  color: var(--meet-text) !important;
+}
+
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .user-avatar__mark {
   font-weight: 600;
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-menu-surface {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-menu-surface {
   @apply border-0;
   background-color: var(--meet-panel);
   color: var(--meet-text);
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-popover-surface {
-  @apply border-0;
-  background-color: var(--meet-panel);
-  color: var(--meet-text);
-}
-
-:is(.meet-workspace, .meet-dialog-surface) .meet-device-row-icon {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-device-row-icon {
   @apply flex size-9 shrink-0 items-center justify-center rounded-lg;
   background-color: var(--meet-panel-soft);
   color: var(--meet-muted);
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-device-row-label {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-device-row-label {
   @apply text-[10px] uppercase tracking-[0.18em];
   color: var(--meet-muted);
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-device-row-trigger {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-device-row-trigger {
   @apply h-7 border-0 px-0 text-sm hover:opacity-80;
   background-color: transparent;
   color: var(--meet-text);
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-circle-toggle {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-circle-toggle {
   @apply inline-flex items-center justify-center rounded-full transition-colors;
   color: var(--meet-text);
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-circle-toggle--sm {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-circle-toggle--sm {
   @apply size-9;
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-circle-toggle--lg {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-circle-toggle--lg {
   @apply size-11;
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-circle-toggle--on {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-circle-toggle--on {
   background-color: var(--meet-panel-soft);
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-circle-toggle--off {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-circle-toggle--off {
   background-color: var(--meet-mic-off);
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-peer-tile {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-peer-tile {
   @apply relative overflow-hidden rounded-2xl border;
   background-color: var(--meet-panel);
   border-color: var(--meet-border);
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-peer-tile--compact {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-peer-tile--compact {
   @apply aspect-video;
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-peer-tile__name {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-peer-tile__name {
   @apply absolute bottom-2 left-2 flex items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-1 text-[11px] backdrop-blur;
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-peer-tile__menu {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-peer-tile__menu {
   @apply absolute right-2 top-2 inline-flex size-7 items-center justify-center rounded-full bg-black/45 text-white opacity-100 backdrop-blur transition-opacity;
 }
 
 @media (min-width: 768px) {
-  :is(.meet-workspace, .meet-dialog-surface) .meet-peer-tile__menu {
+  :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-peer-tile__menu {
     opacity: 0;
   }
 
-  :is(.meet-workspace, .meet-dialog-surface) .meet-peer-tile:hover .meet-peer-tile__menu,
-  :is(.meet-workspace, .meet-dialog-surface) .meet-peer-tile__menu:focus,
-  :is(.meet-workspace, .meet-dialog-surface) .meet-peer-tile__menu[data-state="open"] {
+  :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-peer-tile:hover .meet-peer-tile__menu,
+  :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-peer-tile__menu:focus,
+  :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-peer-tile__menu[data-state="open"] {
     opacity: 1;
   }
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-pip {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-pip {
   @apply absolute left-0 top-0 aspect-video touch-none select-none overflow-hidden rounded-xl border shadow-xl;
   background-color: var(--meet-panel);
   border-color: var(--meet-pip-border);
   cursor: grab;
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-pip--dragging {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-pip--dragging {
   cursor: grabbing;
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-pip--sm {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-pip--sm {
   @apply w-28 md:w-32;
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-pip--md {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-pip--md {
   @apply w-44 md:w-52;
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-pip__video-wrap {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-pip__video-wrap {
   @apply h-full w-full;
   transform: scaleX(-1);
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-pip__video {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-pip__video {
   @apply h-full w-full object-cover;
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-pip__label {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-pip__label {
   @apply absolute bottom-1.5 left-1.5 flex items-center gap-1 rounded-full bg-black/50 px-2 py-0.5 text-[10px] backdrop-blur;
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-pip__pip-button {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-pip__pip-button {
   @apply absolute right-1.5 top-1.5 inline-flex size-6 items-center justify-center rounded-md bg-black/50 text-white/90 backdrop-blur hover:text-white;
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-share-inline {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-share-inline {
   @apply w-full max-w-2xl rounded-xl px-4 py-3;
   background-color: var(--meet-panel-soft);
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-share-field {
-  @apply flex items-center gap-2 rounded-lg px-3 py-2;
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-share-field {
+  @apply flex min-w-0 items-center gap-2 rounded-lg px-3 py-2;
   background-color: var(--meet-panel-soft);
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-knock-badge {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-knock-badge {
   @apply relative inline-flex size-9 items-center justify-center rounded-lg;
   background-color: var(--meet-panel-soft);
   color: var(--meet-text);
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-knock-badge__count {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-knock-badge__count {
   @apply absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold;
   background-color: var(--meet-accent);
   color: var(--meet-text);
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-knock-row {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-knock-row {
   @apply flex items-center gap-3 rounded-lg p-2;
   background-color: var(--meet-panel-soft);
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-knock-row__deny {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-knock-row__deny {
   @apply inline-flex size-8 items-center justify-center rounded-md;
   background-color: rgba(255, 255, 255, 0.06);
   color: var(--meet-text);
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-knock-row__admit {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-knock-row__admit {
   @apply inline-flex size-8 items-center justify-center rounded-md;
   background-color: var(--meet-accent);
   color: var(--meet-text);
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-chat {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-chat {
   @apply flex min-h-0 flex-col rounded-2xl border;
   background-color: var(--meet-panel);
   border-color: var(--meet-border);
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-chat__header {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-chat__header {
   @apply flex items-center justify-between border-b px-4 py-3;
   border-color: var(--meet-border);
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-chat__close {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-chat__close {
   @apply text-xs;
   color: var(--meet-muted);
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-chat__messages {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-chat__messages {
   @apply flex-1 space-y-3 overflow-y-auto px-4 py-3;
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-chat__empty {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-chat__empty {
   @apply text-center text-xs;
   color: var(--meet-muted);
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-chat__time {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-chat__time {
   @apply text-[10px];
   color: var(--meet-muted);
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-chat__bubble {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-chat__bubble {
   @apply wrap-break-word rounded-lg px-3 py-2 text-sm;
   background-color: var(--meet-panel-soft);
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-chat__composer {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-chat__composer {
   @apply border-t p-3;
   border-color: var(--meet-border);
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-chat__input {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-chat__input {
   @apply border-0 text-sm;
   background-color: var(--meet-panel-soft);
   color: var(--meet-text);
 }
 
-:is(.meet-workspace, .meet-dialog-surface) .meet-chat__link {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-chat__link {
   @apply underline underline-offset-2 hover:opacity-80;
   color: var(--meet-link);
 }
