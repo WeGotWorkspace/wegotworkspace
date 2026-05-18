@@ -24,8 +24,22 @@ export const STORY_MEET_KNOCKERS = [
 ];
 
 export const STORY_MEET_PEERS = [
-  { id: "peer-1", name: "Alex Morgan", stream: null, connectionState: "connected" as const },
-  { id: "peer-2", name: "Jamie Lee", stream: null, connectionState: "connected" as const },
+  {
+    id: "peer-1",
+    name: "Alex Morgan",
+    stream: null,
+    connectionState: "connected" as const,
+    remoteMedia: null,
+    disclosedMedia: null,
+  },
+  {
+    id: "peer-2",
+    name: "Jamie Lee",
+    stream: null,
+    connectionState: "connected" as const,
+    remoteMedia: null,
+    disclosedMedia: null,
+  },
 ];
 
 export const STORY_MEET_CHAT_MESSAGES: MeetChatMessage[] = [

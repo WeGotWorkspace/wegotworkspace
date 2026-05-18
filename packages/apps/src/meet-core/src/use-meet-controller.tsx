@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
+import { meetLabels } from "@/meet-core/src/meet-labels";
+import { readInboundMediaTotals } from "@/meet-core/src/meet-inbound-media-stats";
 import type { MeetAPIOperations, MeetRtcSettings } from "@/meet-core/src/meet-types";
 
 type SignalType = "offer" | "answer" | "ice" | "bye" | "chat";
@@ -12,6 +14,10 @@ type RemotePeer = {
   name: string;
   stream: MediaStream | null;
   connectionState: RTCPeerConnectionState;
+  /** Inbound RTP heuristics; null until a few polls after the peer is connected. */
+  remoteMedia: { camera: boolean; mic: boolean } | null;
+  /** Mic/camera intent from peer (control chat); null until the peer announces. */
+  disclosedMedia: { camera: boolean; mic: boolean } | null;
 };
 
 type ChatLine = {
@@ -37,11 +43,23 @@ type PeerEntry = {
   pendingIce: RTCIceCandidateInit[];
 };
 
+type PeerInboundSample = {
+  t: number;
+  videoBytes: number;
+  audioBytes: number;
+  videoFramesDecoded: number;
+  audioEnergy: number | null;
+  videoStallTicks: number;
+  audioStallTicks: number;
+  pollCount: number;
+};
+
 type ControlMessage =
   | { kind: "knock"; peerId: string; name: string }
   | { kind: "admit"; peerId: string }
   | { kind: "deny"; peerId: string }
-  | { kind: "end"; by: string };
+  | { kind: "end"; by: string }
+  | { kind: "media"; mic: boolean; camera: boolean };
 
 const KNOCK_NAME_PREFIX = "__wgw_knock__:";
 const CONTROL_PREFIX = "__wgw_meet_control__:";
@@ -175,6 +193,13 @@ function parseControlMessage(text: string): ControlMessage | null {
     if (parsed.kind === "end" && typeof parsed.by === "string") {
       return { kind: "end", by: parsed.by };
     }
+    if (
+      parsed.kind === "media" &&
+      typeof parsed.mic === "boolean" &&
+      typeof parsed.camera === "boolean"
+    ) {
+      return { kind: "media", mic: parsed.mic, camera: parsed.camera };
+    }
   } catch {
     return null;
   }
@@ -249,6 +274,7 @@ export function useMeetController({
   const cameraTrackRef = useRef<MediaStreamTrack | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
   const peersRef = useRef<Map<string, PeerEntry>>(new Map());
+  const participantRosterDiffReadyRef = useRef(false);
   const pollTimerRef = useRef<number | null>(null);
   const joinedSessionKeyRef = useRef<string | null>(null);
   const selfIdRef = useRef<string | null>(null);
@@ -257,8 +283,15 @@ export function useMeetController({
   const displayNameRef = useRef(displayName);
   const operationsRef = useRef(operations);
   const waitingForAdmissionRef = useRef(false);
-  const leaveRef = useRef<null | ((opts?: { preserveEndedMessage?: boolean }) => Promise<void>)>(null);
+  const leaveRef = useRef<null | ((opts?: { preserveEndedMessage?: boolean }) => Promise<void>)>(
+    null,
+  );
   const rosterRef = useRef<Map<string, string>>(new Map());
+  const peerInboundSampleRef = useRef<Map<string, PeerInboundSample>>(new Map());
+  const peerMediaHintRef = useRef<Map<string, { camera: boolean; mic: boolean }>>(new Map());
+  const peerDisclosedMediaRef = useRef<Map<string, { mic: boolean; camera: boolean }>>(new Map());
+  const micOnRef = useRef(micOn);
+  const videoOnRef = useRef(videoOn);
 
   operationsRef.current = operations;
   statusRef.current = status;
@@ -266,18 +299,38 @@ export function useMeetController({
   selfIdRef.current = selfId;
   roomCodeRef.current = roomCode;
   waitingForAdmissionRef.current = waitingForAdmission;
+  micOnRef.current = micOn;
+  videoOnRef.current = videoOn;
 
   const refreshPeers = useCallback(() => {
     const next: RemotePeer[] = [];
     peersRef.current.forEach((entry, id) => {
+      const connected = entry.pc.connectionState === "connected";
       next.push({
         id,
         name: entry.name,
         stream: entry.stream,
         connectionState: entry.pc.connectionState,
+        remoteMedia: connected ? (peerMediaHintRef.current.get(id) ?? null) : null,
+        disclosedMedia: peerDisclosedMediaRef.current.get(id) ?? null,
       });
     });
     setPeers(next);
+  }, []);
+
+  const announceMediaPresence = useCallback(async (mic: boolean, camera: boolean) => {
+    if (!operationsRef.current || !roomCodeRef.current || !selfIdRef.current) return;
+    if (statusRef.current !== "in-call") return;
+    try {
+      await operationsRef.current.chat({
+        room: roomCodeRef.current,
+        from: selfIdRef.current,
+        text: buildControlMessage({ kind: "media", mic, camera }),
+        sessionKey: joinedSessionKeyRef.current ?? undefined,
+      });
+    } catch {
+      // Best-effort; peers may still infer from tracks or RTP stats.
+    }
   }, []);
 
   const refreshDeviceList = useCallback(async () => {
@@ -331,13 +384,26 @@ export function useMeetController({
   }, []);
 
   const closePeer = useCallback(
-    (peerId: string) => {
+    (peerId: string, opts?: { announceLeave?: boolean }) => {
       const entry = peersRef.current.get(peerId);
       if (!entry) return;
+      const name = entry.name;
+      const announce = opts?.announceLeave !== false;
       entry.pc.close();
       entry.stream.getTracks().forEach((track) => track.stop());
       peersRef.current.delete(peerId);
+      peerInboundSampleRef.current.delete(peerId);
+      peerMediaHintRef.current.delete(peerId);
+      peerDisclosedMediaRef.current.delete(peerId);
       refreshPeers();
+      if (
+        announce &&
+        statusRef.current === "in-call" &&
+        peerId !== selfIdRef.current &&
+        selfIdRef.current
+      ) {
+        toast.info(meetLabels.participantLeft(name));
+      }
     },
     [refreshPeers],
   );
@@ -400,6 +466,11 @@ export function useMeetController({
       };
 
       pc.onconnectionstatechange = () => {
+        if (pc.connectionState === "connected") {
+          peerInboundSampleRef.current.delete(peerId);
+          peerMediaHintRef.current.delete(peerId);
+          void announceMediaPresence(micOnRef.current, videoOnRef.current);
+        }
         refreshPeers();
         if (pc.connectionState !== "failed") return;
         if (entry.mode === "relay" || entry.relayFallbackTried) {
@@ -432,8 +503,113 @@ export function useMeetController({
 
       return entry;
     },
-    [refreshPeers, rtc],
+    [announceMediaPresence, refreshPeers, rtc],
   );
+
+  useEffect(() => {
+    if (status !== "in-call") {
+      peerInboundSampleRef.current.clear();
+      peerMediaHintRef.current.clear();
+      peerDisclosedMediaRef.current.clear();
+      refreshPeers();
+      return;
+    }
+
+    void announceMediaPresence(micOnRef.current, videoOnRef.current);
+    let cancelled = false;
+
+    const sampleTick = async () => {
+      if (cancelled) return;
+      const entries = [...peersRef.current.entries()];
+      await Promise.all(
+        entries.map(async ([id, entry]) => {
+          if (entry.pc.connectionState !== "connected") {
+            peerInboundSampleRef.current.delete(id);
+            peerMediaHintRef.current.delete(id);
+            return;
+          }
+          try {
+            const totals = await readInboundMediaTotals(entry.pc);
+            const now = Date.now();
+            const prev = peerInboundSampleRef.current.get(id);
+            if (!prev) {
+              peerInboundSampleRef.current.set(id, {
+                t: now,
+                videoBytes: totals.videoBytes,
+                audioBytes: totals.audioBytes,
+                videoFramesDecoded: totals.videoFramesDecoded,
+                audioEnergy: totals.audioEnergy,
+                videoStallTicks: 0,
+                audioStallTicks: 0,
+                pollCount: 1,
+              });
+              peerMediaHintRef.current.delete(id);
+              return;
+            }
+
+            const dt = now - prev.t;
+            if (dt < 400) return;
+
+            const dvb = totals.videoBytes - prev.videoBytes;
+            const dab = totals.audioBytes - prev.audioBytes;
+            const dvf = totals.videoFramesDecoded - prev.videoFramesDecoded;
+            const dEnergy =
+              totals.audioEnergy != null && prev.audioEnergy != null
+                ? totals.audioEnergy - prev.audioEnergy
+                : null;
+
+            let videoStallTicks = prev.videoStallTicks;
+            let audioStallTicks = prev.audioStallTicks;
+
+            if (prev.pollCount >= 2) {
+              const videoFrozen = dvf === 0 && dvb < 260;
+              videoStallTicks = videoFrozen ? prev.videoStallTicks + 1 : 0;
+
+              let audioQuiet = dab < 52;
+              if (dEnergy != null) {
+                audioQuiet = audioQuiet && dEnergy < 1e-7;
+              }
+              audioStallTicks = audioQuiet ? prev.audioStallTicks + 1 : 0;
+            }
+
+            const nextSample: PeerInboundSample = {
+              t: now,
+              videoBytes: totals.videoBytes,
+              audioBytes: totals.audioBytes,
+              videoFramesDecoded: totals.videoFramesDecoded,
+              audioEnergy: totals.audioEnergy,
+              videoStallTicks,
+              audioStallTicks,
+              pollCount: prev.pollCount + 1,
+            };
+            peerInboundSampleRef.current.set(id, nextSample);
+
+            if (nextSample.pollCount >= 3) {
+              peerMediaHintRef.current.set(id, {
+                camera: videoStallTicks < 3,
+                mic: audioStallTicks < 5,
+              });
+            } else {
+              peerMediaHintRef.current.delete(id);
+            }
+          } catch {
+            // Ignore stats read failures.
+          }
+        }),
+      );
+      refreshPeers();
+    };
+
+    const intervalId = window.setInterval(() => {
+      void sampleTick();
+    }, 650);
+    void sampleTick();
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [announceMediaPresence, status, refreshPeers]);
 
   const handleSignal = useCallback(
     async (message: { from: string; type: SignalType; payload: unknown }, peerName: string) => {
@@ -541,16 +717,21 @@ export function useMeetController({
       if (pendingKnockerIds.has(peer.id)) continue;
       activeRoster.set(peer.id, peer.name);
     }
-    const previousRoster = rosterRef.current;
     if (statusRef.current === "in-call") {
-      activeRoster.forEach((name, id) => {
-        if (!previousRoster.has(id)) toast.success(`${name} joined the call`);
-      });
-      previousRoster.forEach((name, id) => {
-        if (!activeRoster.has(id)) toast(`${name} left the call`);
-      });
+      if (!participantRosterDiffReadyRef.current) {
+        participantRosterDiffReadyRef.current = true;
+        rosterRef.current = activeRoster;
+      } else {
+        const prev = rosterRef.current;
+        activeRoster.forEach((name, id) => {
+          if (id === selfPeerId) return;
+          if (!prev.has(id)) toast.success(meetLabels.participantJoined(name));
+        });
+        rosterRef.current = activeRoster;
+      }
+    } else {
+      rosterRef.current = activeRoster;
     }
-    rosterRef.current = activeRoster;
 
     for (const msg of incoming) {
       if (msg.type !== "chat") continue;
@@ -572,6 +753,17 @@ export function useMeetController({
           }
           continue;
         }
+        if (control.kind === "media") {
+          if (msg.from !== selfPeerId) {
+            peerDisclosedMediaRef.current.set(msg.from, {
+              mic: control.mic,
+              camera: control.camera,
+            });
+            refreshPeers();
+          }
+          continue;
+        }
+        if (control.kind !== "admit" && control.kind !== "deny") continue;
         if (control.peerId !== selfPeerId) continue;
         if (control.kind === "admit") {
           if (
@@ -644,7 +836,7 @@ export function useMeetController({
     known.forEach((_entry, id) => {
       if (!rosterIds.has(id)) closePeer(id);
     });
-  }, [closePeer, createPeerConnection, handleSignal, rtc.forceRelay]);
+  }, [closePeer, createPeerConnection, handleSignal, refreshPeers, rtc.forceRelay]);
 
   const stopPolling = useCallback(() => {
     if (pollTimerRef.current !== null) {
@@ -687,6 +879,7 @@ export function useMeetController({
       setKnockers([]);
       setEndedMessage(null);
       rosterRef.current = new Map();
+      participantRosterDiffReadyRef.current = false;
 
       try {
         await ensureLocalMedia();
@@ -712,66 +905,71 @@ export function useMeetController({
     [ensureLocalMedia, startPolling],
   );
 
-  const leave = useCallback(async (opts?: { preserveEndedMessage?: boolean }) => {
-    stopPolling();
-    const currentRoom = roomCodeRef.current;
-    const currentPeerId = selfIdRef.current;
-    if (operationsRef.current && currentRoom && currentPeerId) {
-      const peerIds = [...peersRef.current.keys()];
-      for (const peerId of peerIds) {
+  const leave = useCallback(
+    async (opts?: { preserveEndedMessage?: boolean }) => {
+      stopPolling();
+      const currentRoom = roomCodeRef.current;
+      const currentPeerId = selfIdRef.current;
+      if (operationsRef.current && currentRoom && currentPeerId) {
+        const peerIds = [...peersRef.current.keys()];
+        for (const peerId of peerIds) {
+          try {
+            await operationsRef.current.send({
+              room: currentRoom,
+              from: currentPeerId,
+              to: peerId,
+              type: "bye",
+              payload: null,
+              sessionKey: joinedSessionKeyRef.current ?? undefined,
+            });
+          } catch {
+            // Ignore best-effort bye signal failures while leaving.
+          }
+        }
         try {
-          await operationsRef.current.send({
+          await operationsRef.current.leave({
             room: currentRoom,
-            from: currentPeerId,
-            to: peerId,
-            type: "bye",
-            payload: null,
+            peerId: currentPeerId,
             sessionKey: joinedSessionKeyRef.current ?? undefined,
           });
         } catch {
-          // Ignore best-effort bye signal failures while leaving.
+          // Ignore leave API failures on cleanup.
         }
       }
-      try {
-        await operationsRef.current.leave({
-          room: currentRoom,
-          peerId: currentPeerId,
-          sessionKey: joinedSessionKeyRef.current ?? undefined,
-        });
-      } catch {
-        // Ignore leave API failures on cleanup.
+
+      [...peersRef.current.keys()].forEach((id) => closePeer(id, { announceLeave: false }));
+      localStreamRef.current?.getTracks().forEach((track) => track.stop());
+      screenStreamRef.current?.getTracks().forEach((track) => track.stop());
+      localStreamRef.current = null;
+      screenStreamRef.current = null;
+      setScreenPreviewStream(null);
+      cameraTrackRef.current = null;
+      joinedSessionKeyRef.current = null;
+      if (localVideoRef.current) localVideoRef.current.srcObject = null;
+
+      setStatus("idle");
+      setRoomCode(null);
+      setSelfId(null);
+      setStartedAt(null);
+      setElapsedSeconds(0);
+      setScreenOn(false);
+      setMicOn(true);
+      setVideoOn(true);
+      setPeers([]);
+      setChatMessages([]);
+      setWaitingForAdmission(false);
+      setKnockers([]);
+      if (!opts?.preserveEndedMessage) {
+        setEndedMessage(null);
       }
-    }
-
-    [...peersRef.current.keys()].forEach((id) => closePeer(id));
-    localStreamRef.current?.getTracks().forEach((track) => track.stop());
-    screenStreamRef.current?.getTracks().forEach((track) => track.stop());
-    localStreamRef.current = null;
-    screenStreamRef.current = null;
-    setScreenPreviewStream(null);
-    cameraTrackRef.current = null;
-    joinedSessionKeyRef.current = null;
-    if (localVideoRef.current) localVideoRef.current.srcObject = null;
-
-    setStatus("idle");
-    setRoomCode(null);
-    setSelfId(null);
-    setStartedAt(null);
-    setElapsedSeconds(0);
-    setScreenOn(false);
-    setMicOn(true);
-    setVideoOn(true);
-    setPeers([]);
-    setChatMessages([]);
-    setWaitingForAdmission(false);
-    setKnockers([]);
-    if (!opts?.preserveEndedMessage) {
-      setEndedMessage(null);
-    }
-    rosterRef.current = new Map();
-    roomCodeRef.current = null;
-    selfIdRef.current = null;
-  }, [closePeer, stopPolling]);
+      rosterRef.current = new Map();
+      participantRosterDiffReadyRef.current = false;
+      roomCodeRef.current = null;
+      selfIdRef.current = null;
+      peerDisclosedMediaRef.current.clear();
+    },
+    [closePeer, stopPolling],
+  );
   leaveRef.current = leave;
 
   const sendLeaveBeacon = useCallback(() => {
@@ -820,6 +1018,7 @@ export function useMeetController({
       setKnockers([]);
       setEndedMessage(null);
       rosterRef.current = new Map();
+      participantRosterDiffReadyRef.current = false;
 
       try {
         await ensureLocalMedia();
@@ -942,9 +1141,10 @@ export function useMeetController({
       localStreamRef.current?.getAudioTracks().forEach((track) => {
         track.enabled = next;
       });
+      void announceMediaPresence(next, videoOnRef.current);
       return next;
     });
-  }, []);
+  }, [announceMediaPresence]);
 
   const toggleVideo = useCallback(() => {
     setVideoOn((prev) => {
@@ -952,9 +1152,10 @@ export function useMeetController({
       localStreamRef.current?.getVideoTracks().forEach((track) => {
         track.enabled = next;
       });
+      void announceMediaPresence(micOnRef.current, next);
       return next;
     });
-  }, []);
+  }, [announceMediaPresence]);
 
   const toggleScreenShare = useCallback(async () => {
     if (screenOn) {

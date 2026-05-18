@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Mic, MicOff, PictureInPicture2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/tooltip";
 import { UserAvatar } from "@/user-avatar/src/user-avatar";
@@ -33,6 +33,7 @@ export function MeetSelfPreviewPiP({
   onError,
 }: MeetSelfPreviewPiPProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const pipVideoRef = useRef<HTMLVideoElement | null>(null);
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
   const [dragging, setDragging] = useState(false);
   const [isBrowserPiP, setIsBrowserPiP] = useState(false);
@@ -71,7 +72,7 @@ export function MeetSelfPreviewPiP({
   }, [position]);
 
   const toggleBrowserPiP = async () => {
-    const video = videoRef.current;
+    const video = pipVideoRef.current;
     if (!video) {
       onInfo(meetLabels.pipNotReady);
       return;
@@ -103,7 +104,7 @@ export function MeetSelfPreviewPiP({
   };
 
   useEffect(() => {
-    const video = videoRef.current;
+    const video = pipVideoRef.current;
     if (!video) return;
     const onEnter = () => setIsBrowserPiP(true);
     const onLeave = () => setIsBrowserPiP(false);
@@ -114,11 +115,40 @@ export function MeetSelfPreviewPiP({
       video.removeEventListener("leavepictureinpicture", onLeave);
       setIsBrowserPiP(false);
     };
-  }, [videoRef]);
+  }, [videoOn]);
+
+  useLayoutEffect(() => {
+    const display = videoRef.current;
+    const pip = pipVideoRef.current;
+    if (!videoOn) {
+      if (pip) pip.srcObject = null;
+      return;
+    }
+    if (!display || !pip) return;
+
+    const sync = () => {
+      pip.srcObject = display.srcObject;
+      if (display.srcObject) {
+        void pip.play().catch(() => {
+          // Autoplay may already be active on the visible preview.
+        });
+      } else {
+        pip.srcObject = null;
+      }
+    };
+
+    sync();
+    display.addEventListener("loadeddata", sync);
+    display.addEventListener("loadedmetadata", sync);
+    return () => {
+      display.removeEventListener("loadeddata", sync);
+      display.removeEventListener("loadedmetadata", sync);
+    };
+  }, [videoOn, videoRef]);
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !canRequestBrowserPiP(video)) return;
+    const video = pipVideoRef.current;
+    if (!video || !videoOn || !canRequestBrowserPiP(video)) return;
 
     const doc = document as Document & {
       pictureInPictureElement?: Element | null;
@@ -126,7 +156,7 @@ export function MeetSelfPreviewPiP({
     };
 
     const onVisibilityChange = () => {
-      const currentVideo = videoRef.current;
+      const currentVideo = pipVideoRef.current;
       if (!currentVideo?.srcObject) return;
       const isHidden = document.visibilityState === "hidden";
       if (isHidden) {
@@ -151,7 +181,7 @@ export function MeetSelfPreviewPiP({
 
     document.addEventListener("visibilitychange", onVisibilityChange);
     return () => document.removeEventListener("visibilitychange", onVisibilityChange);
-  }, [videoRef]);
+  }, [videoOn]);
 
   const handlePointerDown = (event: {
     target: EventTarget | null;
@@ -194,9 +224,20 @@ export function MeetSelfPreviewPiP({
       style={{ transform: `translate(${x}px, ${y}px)` }}
     >
       {videoOn ? (
-        <div className="meet-pip__video-wrap">
-          <video ref={videoRef} autoPlay muted playsInline className="meet-pip__video" />
-        </div>
+        <>
+          <div className="meet-pip__video-wrap">
+            <video ref={videoRef} autoPlay muted playsInline className="meet-pip__video" />
+          </div>
+          <video
+            ref={pipVideoRef}
+            autoPlay
+            muted
+            playsInline
+            className="meet-pip__pip-source"
+            style={{ transform: "scaleX(1)" }}
+            aria-hidden
+          />
+        </>
       ) : (
         <div className="flex h-full items-center justify-center">
           <UserAvatar displayName={name} compact size="lg" />
