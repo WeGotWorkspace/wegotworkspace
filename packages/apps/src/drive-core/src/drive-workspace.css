@@ -1,5 +1,5 @@
+@import "../../styles.css" reference;
 @import "../../workspace-shell/src/workspace-split-app.css";
-@import "./drive-browser.css";
 
 .drive-workspace {
   @apply min-w-0 overflow-x-hidden;
@@ -61,16 +61,71 @@
   background-color: var(--color-cream, #f5f1e8);
 }
 
-.drive-workspace .drive-main-toolbar {
-  @apply px-4 md:px-8 pt-4 md:pt-6 pb-2 shrink-0;
+.drive-workspace .drive-header-search {
+  display: none;
 }
 
-.drive-workspace .drive-main-toolbar .search-bar {
-  @apply w-full min-w-0;
+@media (min-width: 768px) {
+  .drive-workspace .drive-header-search {
+    display: block;
+    width: min(20rem, 28vw);
+    min-width: 10rem;
+  }
+
+  .drive-workspace .view-header__actions {
+    gap: 0.75rem;
+  }
+}
+
+.drive-workspace .drive-floating-search {
+  display: block;
+  position: fixed;
+  left: 1rem;
+  right: 1rem;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  z-index: 35;
+  padding: 0.25rem;
+  border-radius: 9999px;
+  background-color: var(--color-cream, #f5f1e8);
+  box-shadow:
+    0 4px 24px color-mix(in oklab, var(--color-ink) 16%, transparent),
+    0 0 0 1px color-mix(in oklab, var(--color-ink) 8%, transparent);
+}
+
+@media (min-width: 768px) {
+  .drive-workspace .drive-floating-search {
+    display: none;
+  }
+}
+
+.drive-workspace .drive-floating-search .search-bar > div {
+  margin-top: 0;
+  height: 2.75rem;
+  border-radius: 9999px;
+  padding-inline: 1rem;
+  background-color: color-mix(in oklab, var(--color-ink) 6%, transparent);
+}
+
+@media (max-width: 767px) {
+  .drive-workspace .drive-main-pane__scroll {
+    padding-bottom: 5.5rem;
+  }
 }
 
 .drive-workspace .drive-main-pane__breadcrumbs {
-  @apply px-4 md:px-8 pb-2 shrink-0;
+  @apply px-4 md:px-8 py-4 md:py-8 shrink-0;
+  --path-breadcrumb-lead-color: var(--drive-sidebar);
+  --path-breadcrumb-lead-bg: color-mix(in oklab, var(--drive-sidebar) 12%, transparent);
+  --path-breadcrumb-link-color: color-mix(in oklab, var(--color-ink) 58%, transparent);
+  --path-breadcrumb-current-color: var(--color-ink);
+  --path-breadcrumb-link-hover-bg: color-mix(in oklab, var(--drive-sidebar) 10%, transparent);
+}
+
+.drive-dialog-surface {
+  --button-primary-bg: var(--drive-sidebar);
+  --button-primary-fg: #ffffff;
+  --primary: var(--drive-sidebar);
+  --primary-foreground: #ffffff;
 }
 
 .drive-workspace .drive-main-pane__body {

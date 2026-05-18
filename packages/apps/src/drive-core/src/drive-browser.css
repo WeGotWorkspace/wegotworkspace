@@ -1,8 +1,19 @@
 @import "../../styles.css" reference;
 
+.drive-workspace .drive-main-pane {
+  --field-label-color: color-mix(in oklab, var(--color-ink) 55%, transparent);
+}
+
+/** Matches sidebar section titles (`field-label-row__label` + `--field-label-color`). */
+.drive-workspace .drive-item-label,
+.drive-workspace .drive-list-head__cell {
+  @apply flex items-center gap-1.5 text-xs font-normal uppercase tracking-wider truncate min-w-0;
+  font-family: var(--field-label-font-family, var(--font-mono, ui-monospace, monospace));
+  color: var(--field-label-color, var(--color-muted-foreground));
+}
+
 .drive-workspace .drive-browser-section-title {
-  @apply text-[10px] uppercase tracking-[0.2em] font-semibold mb-3;
-  color: color-mix(in oklab, var(--color-ink) 55%, transparent);
+  @apply mb-3;
 }
 
 .drive-workspace .drive-grid-layout {
@@ -12,13 +23,12 @@
 .drive-workspace .drive-grid {
   display: grid;
   gap: 0.875rem;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 @media (min-width: 30rem) {
   .drive-workspace .drive-grid {
     gap: 1rem;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -182,7 +192,10 @@
 .drive-workspace .drive-list-head {
   @apply text-left;
   border-bottom: 1px solid color-mix(in oklab, var(--color-ink) 12%, transparent);
-  color: color-mix(in oklab, var(--color-ink) 50%, transparent);
+}
+
+.drive-workspace .drive-list-head__cell {
+  @apply py-3 px-3 text-left font-normal;
 }
 
 .drive-workspace .drive-list-row {

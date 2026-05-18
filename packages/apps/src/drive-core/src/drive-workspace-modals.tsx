@@ -47,7 +47,7 @@ export function DriveWorkspaceModals({ controller }: DriveWorkspaceModalsProps) 
   return (
     <>
       <Dialog open={newFolderDialogOpen} onOpenChange={setNewFolderDialogOpen}>
-        <DialogContent>
+        <DialogContent className="drive-dialog-surface">
           <DialogHeader>
             <DialogTitle>Create new folder</DialogTitle>
             <DialogDescription>Enter a name for the new folder.</DialogDescription>
@@ -68,7 +68,7 @@ export function DriveWorkspaceModals({ controller }: DriveWorkspaceModalsProps) 
             <Button variant="outline" onClick={() => setNewFolderDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={submitCreateFolder} disabled={!newFolderName.trim()}>
+            <Button variant="primary" onClick={submitCreateFolder} disabled={!newFolderName.trim()}>
               Create folder
             </Button>
           </DialogFooter>
@@ -84,7 +84,7 @@ export function DriveWorkspaceModals({ controller }: DriveWorkspaceModalsProps) 
           }
         }}
       >
-        <DialogContent>
+        <DialogContent className="drive-dialog-surface">
           <DialogHeader>
             <DialogTitle>Rename item</DialogTitle>
             <DialogDescription>Enter a new name for this file or folder.</DialogDescription>
@@ -111,7 +111,7 @@ export function DriveWorkspaceModals({ controller }: DriveWorkspaceModalsProps) 
             >
               Cancel
             </Button>
-            <Button onClick={submitRenameItem} disabled={!renameName.trim()}>
+            <Button variant="primary" onClick={submitRenameItem} disabled={!renameName.trim()}>
               Rename
             </Button>
           </DialogFooter>

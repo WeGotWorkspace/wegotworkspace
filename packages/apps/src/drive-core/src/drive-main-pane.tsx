@@ -1,9 +1,10 @@
-import { toast } from "sonner";
 import { Cloud, Download } from "lucide-react";
+import { DriveViewIcon } from "@/drive-core/src/drive-view-icons";
+import { useAppToast } from "@/hooks/use-app-toast";
 import { CollectionEmptyState } from "@/collection-empty-state/src/collection-empty-state";
 import { FileDropOverlay } from "@/file-drop-overlay/src/file-drop-overlay";
 import { PathBreadcrumb } from "@/path-breadcrumb/src/path-breadcrumb";
-import { SearchBar } from "@/search-bar/src/search-bar";
+import { DriveSearch } from "@/drive-core/src/drive-search";
 import { DriveDetailPanel, DriveGridView, DriveListView } from "@/drive-core/src/drive-browser";
 import type { DriveFile } from "@/drive-core/src/drive-models";
 import type { DriveUILabels } from "@/drive-core/src/drive-labels";
@@ -55,14 +56,16 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
     searchInputRef,
   } = controller;
 
+  const { show, showError } = useAppToast();
+
   const handleDownload = (file: DriveFile) => {
     if (operations && file.apiPath && file.kind !== "folder") {
       void operations.downloadFile(file.apiPath).catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
-        toast.error(message);
+        showError(message);
       });
     }
-    toast("Download started", { icon: <Download className="size-4" /> });
+    show("Download started", { icon: <Download className="size-4" /> });
   };
 
   const browserProps = {
@@ -117,20 +120,14 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
         </FileDropOverlay>
       ) : null}
 
-      <div className="drive-main-toolbar">
-        <SearchBar
-          placeholder={labels.searchPlaceholder}
-          value={searchQuery}
-          onSearch={setSearchQuery}
-          inputRef={searchInputRef}
+      {searchQuery.trim() ? null : (
+        <PathBreadcrumb
+          className="drive-main-pane__breadcrumbs"
+          leadingIcon={<DriveViewIcon view={view} className="size-[1.125rem]" />}
+          items={breadcrumbs}
+          onNavigate={(path) => selectView({ type: "folder", path })}
         />
-      </div>
-
-      <PathBreadcrumb
-        className="drive-main-pane__breadcrumbs"
-        items={breadcrumbs}
-        onNavigate={(path) => selectView({ type: "folder", path })}
-      />
+      )}
 
       <div className="drive-main-pane__body">
         <div className="drive-main-pane__scroll">
@@ -155,6 +152,7 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
                 isStarred: !!starred[active.id],
                 inTrash: inTrashView,
                 operations,
+                showError,
                 onClose: () => setDetailOpen(false),
                 onStar: () => toggleStar(active.id),
                 onRename: () => requestRenameItem(active),
@@ -178,6 +176,7 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
               isStarred: !!starred[active.id],
               inTrash: inTrashView,
               operations,
+              showError,
               onClose: () => setDetailOpen(false),
               onStar: () => toggleStar(active.id),
               onRename: () => requestRenameItem(active),
@@ -187,6 +186,17 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
                   : setConfirmDelete({ ids: [active.id], permanent: false }),
               mobile: true,
             })}
+          />
+        </div>
+      ) : null}
+
+      {!selectionMode ? (
+        <div className="drive-floating-search">
+          <DriveSearch
+            placeholder={labels.searchPlaceholder}
+            value={searchQuery}
+            onSearch={setSearchQuery}
+            inputRef={searchInputRef}
           />
         </div>
       ) : null}
@@ -203,6 +213,7 @@ function buildDetailPanelProps({
   isStarred,
   inTrash,
   operations,
+  showError,
   onClose,
   onStar,
   onRename,
@@ -215,6 +226,7 @@ function buildDetailPanelProps({
   isStarred: boolean;
   inTrash: boolean;
   operations?: DriveAPIOperations;
+  showError: (message: string) => void;
   onClose: () => void;
   onStar: () => void;
   onRename: () => void;
@@ -236,7 +248,7 @@ function buildDetailPanelProps({
       if (operations && file.apiPath && file.kind !== "folder") {
         void operations.downloadFile(file.apiPath).catch((error: unknown) => {
           const message = error instanceof Error ? error.message : String(error);
-          toast.error(message);
+          showError(message);
         });
       }
     },
