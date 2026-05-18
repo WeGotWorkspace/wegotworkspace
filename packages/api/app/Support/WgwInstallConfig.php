@@ -62,6 +62,31 @@ final class WgwInstallConfig
         return rtrim($this->dataDir(), '/').'/files';
     }
 
+    public function resolveInstallPath(string $path): string
+    {
+        $path = str_replace('\\', '/', trim($path));
+        if ($path === '') {
+            return rtrim($this->dataDir(), '/').'/db.sqlite';
+        }
+        if ($this->isAbsolutePath($path)) {
+            return rtrim($path, '/');
+        }
+
+        return rtrim($this->installRoot().'/'.ltrim($path, '/'), '/');
+    }
+
+    private function isAbsolutePath(string $path): bool
+    {
+        if ($path !== '' && $path[0] === '/') {
+            return true;
+        }
+
+        return \PHP_OS_FAMILY === 'Windows'
+            && strlen($path) > 2
+            && ctype_alpha($path[0])
+            && $path[1] === ':';
+    }
+
     /**
      * @return array<string, mixed>
      */
