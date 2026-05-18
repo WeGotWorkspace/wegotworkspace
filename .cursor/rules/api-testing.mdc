@@ -1,0 +1,31 @@
+---
+description: Pest tests gate API work — feature parity before domain is done.
+globs: packages/api/tests/**
+alwaysApply: false
+---
+
+# API testing (Pest)
+
+## Gate
+
+A domain is **not done** until feature tests pass for its routes without calling legacy handlers.
+
+## Required
+
+- Feature test per controller/route (status + JSON vs OpenAPI / captured fixtures)
+- Unit tests for services and non-trivial repositories
+- `RefreshDatabase` on feature tests; factories — no hardcoded IDs
+- File features: `Storage::fake('wgw_files')` / `wgw_notes` — no manual `$tmpDir` unless configuring fake disk root
+
+## Architecture tests
+
+```php
+arch('controllers are thin')->expect('App\Http\Controllers')->not->toUse('Illuminate\Database\Eloquent\Model');
+arch('services do not return responses')->expect('App\Services')->not->toUse('Illuminate\Http\Response');
+arch('no legacy kernels in new code')->expect('App\Services')->not->toUse('App\Mail\MailApi');
+arch('services use storage abstraction')->expect('App\Services')->not->toUse('App\Paths');
+```
+
+## Mail
+
+Assert `{ error, message }` shape where contract requires it.

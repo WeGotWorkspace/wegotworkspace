@@ -1,0 +1,26 @@
+---
+description: HTTP contract parity via tests — not legacy code structure.
+globs: packages/api/**
+alwaysApply: false
+---
+
+# Contract parity
+
+## Source of truth
+
+1. `packages/api/openapi/openapi.json`
+2. Pest feature tests (authoritative at merge time)
+3. Legacy runtime — **behavior reference only**, not copy-paste source
+
+## Rules
+
+- Same path, method, status code, JSON keys as contract
+- Do not break `packages/apps` generated types until OpenAPI is intentionally versioned
+- Mail errors keep v1 shape: `{ "error": "imap_connect", "message": "..." }` where documented
+
+## Not required
+
+- Same class names, folders, static methods, or `*Kernel` patterns as legacy
+- `DomainRouteService`-style mega-dispatcher
+
+Implement parity by **tests passing**, not by wrapping old handlers.
