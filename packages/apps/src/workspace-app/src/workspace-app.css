@@ -1,0 +1,27 @@
+@import "../../styles.css" reference;
+
+.workspace-detail-pane {
+  @apply flex min-h-0 flex-col overflow-hidden absolute md:relative inset-0 md:inset-auto z-20 md:z-auto md:flex-1;
+  @apply transition-[translate] duration-300 ease-out md:transition-none;
+  container: workspace-detail / inline-size;
+  background-color: var(--workspace-detail-bg, var(--color-cream, #f5f1e8));
+}
+
+.workspace-detail-pane__scroll {
+  @apply min-h-0 flex-1 overflow-y-auto px-6 md:px-12 py-10 md:py-16;
+}
+
+/* Matches Tailwind `md:` / list+detail split (48rem). Query the workspace row, not the detail pane width. */
+@container workspace-columns (min-width: 48rem) {
+  .workspace-detail-pane .action-bar__back {
+    display: none;
+  }
+}
+
+@supports not (container-type: inline-size) {
+  @media (min-width: 48rem) {
+    .workspace-detail-pane .action-bar__back {
+      display: none;
+    }
+  }
+}

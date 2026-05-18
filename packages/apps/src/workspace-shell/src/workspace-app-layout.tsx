@@ -66,14 +66,7 @@ type WorkspaceSidebarToggleProps = {
 export function WorkspaceAppLayout(props: WorkspaceAppLayoutProps) {
   const { style, className } = props;
   return (
-    <div
-      className={cn("flex h-dvh w-full overflow-hidden relative notes-root", className)}
-      style={{
-        backgroundColor: "var(--workspace-root-bg, var(--color-cream, #f5f1e8))",
-        fontFamily: "var(--font-sans)",
-        ...style,
-      }}
-    >
+    <div className={cn("workspace-columns notes-root", className)} style={style}>
       {isSplitLayout(props) ? (
         <>
           {props.sidebar}
