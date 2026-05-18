@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Cloud, Folder } from "lucide-react";
 import { kindIcon } from "@/drive-core/src/drive-icons";
-import { CollectionEmptyState } from "@/collection-empty-state/src/collection-empty-state";
+import { CollectionState } from "@/collection-state/src/collection-state";
 import {
   buildDriveFolderPickerBreadcrumbs,
   DRIVE_FOLDER_PICKER_ROOT,
@@ -264,6 +264,11 @@ export function DriveFolderPicker({
   const showEmpty =
     !listingLoading && rows.length === 0 && browsePath !== DRIVE_FOLDER_PICKER_ROOT;
 
+  const showListingLoading =
+    listingLoading &&
+    browsePath !== DRIVE_FOLDER_PICKER_ROOT &&
+    browsePath !== GROUPS_ROOT;
+
   return (
     <div className="drive-folder-picker">
       <PathBreadcrumb
@@ -277,10 +282,12 @@ export function DriveFolderPicker({
       />
 
       <div className="drive-folder-picker__body">
-        {showEmpty ? (
-          <CollectionEmptyState icon={<Cloud className="size-12" />}>
+        {showListingLoading ? (
+          <CollectionState variant="loading">{labels.folderListingLoading}</CollectionState>
+        ) : showEmpty ? (
+          <CollectionState icon={<Cloud className="size-12" />}>
             {labels.emptyFolder}
-          </CollectionEmptyState>
+          </CollectionState>
         ) : rows.length === 0 ? null : (
           <div className="drive-folder-picker__scroll">
             <table className="drive-list-table">
