@@ -31,9 +31,9 @@ Each phase ends with **tests green** + **`composer greenfield:guard`**.
 
 ### Phase 1 — Database layer
 
-- [ ] Laravel migration or documented alignment with `resources/sql/*.sql` tables
-- [ ] Eloquent models: `User`, `Principal`, `AppSetting`, … (real Sabre/installer tables, not stock Laravel `users` id/email only)
-- [ ] `DB_CONNECTION` / `wgw` connection from install config
+- [x] Laravel migration or documented alignment with `src/sql/*.sql` tables (`docs/sql-schema.md`)
+- [x] Eloquent models: `User`, `Principal`, `AppSetting`, `GroupMember` (Sabre/installer tables)
+- [x] `wgw` connection from install config (`WgwDatabaseConfig` + `WgwServiceProvider`)
 
 ### Phase 2 — Auth
 
