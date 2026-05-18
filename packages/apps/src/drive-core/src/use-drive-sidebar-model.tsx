@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Clock, HardDrive, Star, Trash2, Users } from "lucide-react";
+import { Clock, HardDrive, Star, Trash2 } from "lucide-react";
 import type { ViewKey } from "@/drive-core/src/drive-models";
 import type { DriveUILabels } from "@/drive-core/src/drive-labels";
 import type { MenuItemProps } from "@/menu-item/src/menu-item";
@@ -74,7 +74,7 @@ export function useDriveSidebarModel({
         label: groupPath.split("/").pop() ?? groupPath,
         selected: isGroupView(view, groupPath),
         onClick: () => selectView({ type: "folder", path: groupPath }),
-        icon: <Users className="size-3.5" />,
+        icon: <HardDrive className="size-3.5" />,
         ...sidebarDropZoneProps(groupPath, (ids) => moveToFolder(ids, groupPath)),
       })),
     [moveToFolder, selectView, sidebarDropZoneProps, sidebarGroupPaths, view],

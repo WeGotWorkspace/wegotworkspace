@@ -46,6 +46,18 @@
   @apply flex-1 min-w-0;
 }
 
+.action-bar--expanded {
+  container-type: normal;
+}
+
+.action-bar--expanded .action-bar__row {
+  display: flex;
+}
+
+.action-bar--expanded .action-bar__menu {
+  display: none;
+}
+
 @container action-bar (max-width: 36rem) {
   .action-bar__row {
     display: none;

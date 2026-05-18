@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Star, StarOff, Trash2, Upload, FolderInput, FolderPlus, Pencil, Share2 } from "lucide-react";
+import { Star, StarOff, Trash2, Upload, FolderInput, FolderPlus, Pencil } from "lucide-react";
 import { useIsTouch } from "@/hooks/use-is-touch";
 import { useSidebarListDrag } from "@/hooks/use-sidebar-list-drag";
 import { driveLabels } from "@/drive-core/src/drive-labels";
@@ -836,20 +836,6 @@ export function useDriveController({ data, session, operations, listLoading = fa
     }
   };
 
-  const copyShareLink = async (file: DriveFile) => {
-    const link =
-      file.apiPath != null
-        ? `${window.location.origin}/drive/#${encodeURIComponent(file.apiPath)}`
-        : `${window.location.origin}/drive/`;
-    try {
-      await navigator.clipboard.writeText(link);
-      toast("Share link copied", { icon: <Share2 className="size-4" /> });
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      toast.error(message || "Could not copy share link");
-    }
-  };
-
   const createBlank = (kind: "doc" | "sheet" | "slides") => {
     const editorKind = kind === "doc" ? "docx" : kind === "sheet" ? "xlsx" : "pptx";
     const qp = new URLSearchParams({ new: editorKind });
@@ -980,7 +966,6 @@ export function useDriveController({ data, session, operations, listLoading = fa
     handleUpload,
     createFolder,
     submitCreateFolder,
-    copyShareLink,
     createBlank,
     selectView,
     listLoading,

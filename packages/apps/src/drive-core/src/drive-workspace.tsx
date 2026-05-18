@@ -7,6 +7,7 @@ import {
 } from "@/workspace-shell/src/workspace-app-layout";
 import { workspaceUserInitials, type WorkspaceSession } from "@/lib/workspace/workspace-session";
 import { ViewHeader } from "@/view-header/src/view-header";
+import { ViewModeToggle } from "@/view-mode-toggle/src/view-mode-toggle";
 import { UploadProgress } from "@/upload-progress/src/upload-progress";
 import { cn } from "@/lib/utils";
 import { DriveMainPane } from "@/drive-core/src/drive-main-pane";
@@ -109,7 +110,7 @@ function DriveSidebar({
     >
       <SidebarSection items={primarySidebarItems} />
       {groupSidebarItems.length > 0 ? (
-        <SidebarSection title={labels.sidebarGroups} items={groupSidebarItems} />
+        <SidebarSection title={labels.sidebarSharedDrives} items={groupSidebarItems} />
       ) : null}
     </AppSidebar>
   );
@@ -117,12 +118,15 @@ function DriveSidebar({
 
 function DriveMainHeader({ controller }: { controller: DriveController }) {
   const {
+    labels,
     sidebarOpen,
     setSidebarOpen,
     viewLabel,
     selectionMode,
     selectedIds,
     visibleItems,
+    viewMode,
+    setViewMode,
     uploadProgress,
   } = controller;
 
@@ -136,6 +140,14 @@ function DriveMainHeader({ controller }: { controller: DriveController }) {
           selectionMode || selectedIds.length > 1
             ? `${selectedIds.length} Selected`
             : `${visibleItems.length} Items`
+        }
+        actions={
+          <ViewModeToggle
+            value={viewMode}
+            onChange={setViewMode}
+            gridLabel={labels.gridView}
+            listLabel={labels.listView}
+          />
         }
       />
       {uploadProgress ? (

@@ -3,6 +3,13 @@ import type { DriveUIData } from "@/drive-core/src/drive-types";
 import type { DriveFile, FileKind } from "@/drive-core/src/drive-models";
 import { uiPathFromApiPath } from "@/drive-core/src/drive-path-utils";
 
+const BROWSER_PREVIEW_IMAGE_EXT = /\.(png|jpe?g|gif|webp|bmp|svg|avif)$/i;
+
+/** Extensions the browser can usually render in `<img>` (excludes HEIC/HEIF/TIFF, etc.). */
+export function canBrowserPreviewImage(fileName: string): boolean {
+  return BROWSER_PREVIEW_IMAGE_EXT.test(fileName.toLowerCase());
+}
+
 export function inferFileKindFromName(name: string): FileKind {
   const lower = name.toLowerCase();
   if (/\.(png|jpe?g|gif|webp|bmp|svg|avif|heic)$/i.test(lower)) return "image";

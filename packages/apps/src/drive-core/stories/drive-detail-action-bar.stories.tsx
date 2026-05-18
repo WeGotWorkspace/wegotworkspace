@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { DriveDetailActionBar } from "@/drive-core/src/drive-detail-action-bar";
+import { buildDriveFileActions } from "@/drive-core/src/drive-file-actions";
 import { driveStoryLabels } from "@/drive-core/stories/drive-pane-stories.fixtures";
 import {
   driveStoryParameters,
@@ -19,45 +20,56 @@ const meta = {
   ),
   parameters: driveStoryParameters({
     snippet: `<DriveDetailActionBar
-  labels={driveLabels}
-  isStarred={false}
+  actions={buildDriveFileActions(driveLabels, { isStarred: false, inTrash: false }, {
+    onDownload: () => {},
+    onStar: () => {},
+    onDelete: () => {},
+  })}
   onClose={() => {}}
-  onDownload={() => {}}
-  onShare={() => {}}
-  onStar={() => {}}
-  onDelete={() => {}}
 />`,
   }),
   argTypes: {
-    isStarred: storyBooleanControl,
     mobile: storyBooleanControl,
   },
 } satisfies Meta<typeof DriveDetailActionBar>;
 
 export default meta;
-type Story = StoryObj<typeof DriveDetailActionBar>;
+type Story = StoryObj<typeof meta>;
 
-const base = {
-  labels: driveStoryLabels,
-  onClose: STORY_NOOP,
-  onDownload: STORY_NOOP,
-  onShare: STORY_NOOP,
-  onStar: STORY_NOOP,
-  onDelete: STORY_NOOP,
-};
+function storyActions(isStarred: boolean, inTrash: boolean) {
+  return buildDriveFileActions(
+    driveStoryLabels,
+    { isStarred, inTrash, canDownload: true },
+    {
+      onDownload: STORY_NOOP,
+      onStar: STORY_NOOP,
+      onRename: STORY_NOOP,
+      onDelete: STORY_NOOP,
+    },
+  );
+}
 
 export const Default: Story = {
   args: {
-    ...base,
-    isStarred: false,
+    actions: storyActions(false, false),
+    onClose: STORY_NOOP,
     mobile: false,
   },
 };
 
 export const Starred: Story = {
   args: {
-    ...base,
-    isStarred: true,
+    actions: storyActions(true, false),
+    onClose: STORY_NOOP,
+    mobile: false,
+  },
+};
+
+export const InTrash: Story = {
+  name: "In trash",
+  args: {
+    actions: storyActions(false, true),
+    onClose: STORY_NOOP,
     mobile: false,
   },
 };
@@ -65,8 +77,8 @@ export const Starred: Story = {
 export const Mobile: Story = {
   name: "Mobile",
   args: {
-    ...base,
-    isStarred: false,
+    actions: storyActions(false, false),
+    onClose: STORY_NOOP,
     mobile: true,
   },
 };
