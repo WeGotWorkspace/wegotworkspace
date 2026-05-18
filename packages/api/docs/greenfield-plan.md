@@ -37,9 +37,9 @@ Each phase ends with **tests green** + **`composer greenfield:guard`**.
 
 ### Phase 2 — Auth
 
-- [ ] JWT RS256 + refresh (OpenAPI wire shape)
-- [ ] Feature tests: `auth/token`, `auth/refresh`, `auth/revoke`, `me`, `jwks`
-- [ ] No `ApiAuth` + `$_SERVER` in domain code
+- [x] JWT RS256 + refresh (OpenAPI wire shape)
+- [x] Feature tests: `auth/token`, `auth/refresh`, `auth/revoke`, `me`, `jwks`
+- [x] No `ApiAuth` + `$_SERVER` in domain code
 
 ### Phase 3 — System + settings (first REST domains)
 

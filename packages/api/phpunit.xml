@@ -4,6 +4,7 @@
     <env name="APP_ENV" value="testing"/>
     <env name="APP_KEY" value="base64:2fl+KtvkdphvQyEfBiXLBA9CcHqYfX2p9lR3zK8j5nE="/>
     <env name="APP_DEBUG" value="true"/>
+    <env name="WGW_DISABLE_LOGIN_THROTTLE" value="1"/>
   </php>
   <testsuites>
     <testsuite name="api">
