@@ -1,0 +1,21 @@
+.file-drop-overlay {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--file-drop-overlay-scrim, rgb(0 0 0 / 0.1));
+}
+
+.file-drop-overlay__card {
+  border-radius: 0.75rem;
+  background-color: var(--file-drop-overlay-card-bg, rgb(255 255 255 / 0.9));
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+  color: var(--file-drop-overlay-card-color, var(--color-emerald));
+}

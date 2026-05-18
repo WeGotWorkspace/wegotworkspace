@@ -1,0 +1,19 @@
+.collection-empty-state {
+  padding: 4rem;
+  text-align: center;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(
+    --collection-empty-state-color,
+    color-mix(in oklab, var(--color-ink) 50%, transparent)
+  );
+}
+
+.collection-empty-state__icon {
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 1rem;
+  width: 3rem;
+  height: 3rem;
+  opacity: 0.3;
+}
