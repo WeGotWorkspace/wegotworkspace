@@ -15,7 +15,11 @@ export function MeetShareButton({ link, onCopy }: MeetShareButtonProps) {
       <Tooltip>
         <TooltipTrigger asChild>
           <PopoverTrigger asChild>
-            <button type="button" className="meet-workspace__icon-button" aria-label={meetLabels.shareLink}>
+            <button
+              type="button"
+              className="meet-workspace__icon-button"
+              aria-label={meetLabels.shareLink}
+            >
               <LinkIcon className="size-4" />
             </button>
           </PopoverTrigger>
@@ -28,11 +32,11 @@ export function MeetShareButton({ link, onCopy }: MeetShareButtonProps) {
             {meetLabels.shareLinkHint}
           </div>
           <div className="meet-share-field">
-            <span className="flex-1 truncate text-sm">
+            <span className="min-w-0 flex-1 truncate text-sm">
               {link || meetLabels.shareLinkPlaceholder}
             </span>
             <IconButton
-              className="size-7"
+              className="size-7 shrink-0"
               disabled={!link}
               onClick={onCopy}
               label={meetLabels.copyLink}
@@ -54,10 +58,12 @@ type MeetShareInlineProps = {
 export function MeetShareInline({ link, onCopy }: MeetShareInlineProps) {
   return (
     <div className="meet-share-inline">
-      <div className="flex items-center gap-3">
-        <span className="flex-1 truncate text-sm">{link || meetLabels.shareLinkWaiting}</span>
+      <div className="flex min-w-0 items-center gap-3">
+        <span className="min-w-0 flex-1 truncate text-sm">
+          {link || meetLabels.shareLinkWaiting}
+        </span>
         <IconButton
-          className="size-8"
+          className="size-8 shrink-0"
           disabled={!link}
           onClick={onCopy}
           label={meetLabels.copyLink}
