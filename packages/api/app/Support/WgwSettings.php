@@ -20,6 +20,10 @@ final class WgwSettings
 
     public const MAIL_SMTP_SECURITY = 'mail_smtp_security';
 
+    public const BASE_URI = 'base_uri';
+
+    public const FILES_ENABLED = 'files_enabled';
+
     /**
      * @return array<string, mixed>
      */
@@ -39,6 +43,8 @@ final class WgwSettings
     private static function defaults(): array
     {
         return [
+            self::BASE_URI => '/',
+            self::FILES_ENABLED => true,
             self::MAIL_IMAP_HOST => '',
             self::MAIL_IMAP_PORT => 993,
             self::MAIL_IMAP_SECURITY => 'ssl',
@@ -61,6 +67,7 @@ final class WgwSettings
             }
             $out[$key] = match ($key) {
                 self::MAIL_IMAP_PORT, self::MAIL_SMTP_PORT => (int) $db[$key],
+                self::FILES_ENABLED => (bool) $db[$key],
                 default => $db[$key],
             };
         }

@@ -21,8 +21,13 @@ final class ApiUrlBuilder
 
     public function logout(): string
     {
+        return $this->appPath('logout');
+    }
+
+    public function appPath(string $path): string
+    {
         $root = rtrim($this->request->getSchemeAndHttpHost().dirname($this->request->getBaseUrl()), '/');
 
-        return $root.'/logout';
+        return $root.'/'.ltrim($path, '/');
     }
 }
