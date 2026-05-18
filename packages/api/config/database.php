@@ -13,7 +13,7 @@ return [
         ],
         'wgw' => [
             'driver' => 'sqlite',
-            'database' => env('WGW_DB_DATABASE', database_path('database.sqlite')),
+            'database' => env('WGW_DB_DATABASE', ':memory:'),
             'prefix' => '',
             'foreign_key_constraints' => true,
         ],
