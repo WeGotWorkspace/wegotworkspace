@@ -46,12 +46,6 @@
   @apply flex-1 min-w-0;
 }
 
-@media (min-width: 768px) {
-  .action-bar__back {
-    display: none;
-  }
-}
-
 @container action-bar (max-width: 36rem) {
   .action-bar__row {
     display: none;
