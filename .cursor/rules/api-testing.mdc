@@ -8,7 +8,7 @@ alwaysApply: false
 
 ## Gate
 
-A domain is **not done** until feature tests pass for its routes without calling legacy handlers.
+A domain is **not done** until feature tests pass for its routes without calling legacy handlers, and **`composer greenfield:guard`** passes.
 
 ## Required
 
