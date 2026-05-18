@@ -1,11 +1,5 @@
-import {
-  Hand,
-  Mic,
-  MicOff,
-  Settings as SettingsIcon,
-  Video,
-  VideoOff,
-} from "lucide-react";
+import { useEffect, useState } from "react";
+import { Hand, Mic, MicOff, Settings as SettingsIcon, Video, VideoOff } from "lucide-react";
 import { Button } from "@/button/src/button";
 import { Input } from "@/ui/input";
 import { Label } from "@/ui/label";
@@ -57,13 +51,31 @@ export function MeetLobbyPane({
   showMissingInviteScreen,
   showInviteCheckingScreen,
 }: MeetLobbyPaneProps) {
+  const [previewAspect, setPreviewAspect] = useState<number | null>(null);
+
+  useEffect(() => {
+    const video = controller.localVideoRef.current;
+    if (!video || !controller.videoOn) {
+      setPreviewAspect(null);
+      return;
+    }
+    const update = () => {
+      const w = video.videoWidth;
+      const h = video.videoHeight;
+      setPreviewAspect(w > 0 && h > 0 ? w / h : null);
+    };
+    update();
+    video.addEventListener("loadedmetadata", update);
+    video.addEventListener("resize", update);
+    return () => {
+      video.removeEventListener("loadedmetadata", update);
+      video.removeEventListener("resize", update);
+    };
+  }, [controller.videoOn, controller.localVideoRef]);
+
   if (endedMessage) {
     return (
-      <MeetLobbyStatusCard
-        title={meetLabels.callEndedTitle}
-        body={endedMessage}
-        titleSize="lg"
-      />
+      <MeetLobbyStatusCard title={meetLabels.callEndedTitle} body={endedMessage} titleSize="lg" />
     );
   }
 
@@ -92,7 +104,12 @@ export function MeetLobbyPane({
         {inJoinFlow ? meetLabels.lobbyJoinTitle : meetLabels.lobbyHostTitle}
       </h1>
 
-      <div className="meet-workspace__preview">
+      <div
+        className="meet-workspace__preview"
+        style={
+          previewAspect != null && controller.videoOn ? { aspectRatio: previewAspect } : undefined
+        }
+      >
         {controller.videoOn ? (
           <video
             ref={controller.localVideoRef}
