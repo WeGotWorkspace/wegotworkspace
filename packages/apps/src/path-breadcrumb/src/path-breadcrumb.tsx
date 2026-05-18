@@ -11,13 +11,30 @@ export type PathBreadcrumbItem = {
 export type PathBreadcrumbProps = {
   items: PathBreadcrumbItem[];
   onNavigate?: (path: string) => void;
+  /** Active location; matching crumbs render as current (non-link). */
+  currentPath?: string | null;
+  /** Paths that stay clickable even when they match {@link currentPath}. */
+  alwaysNavigablePaths?: string[];
   className?: string;
   leadingIcon?: ReactNode;
+  /** Compact density for dialogs and narrow panes. */
+  size?: "default" | "sm";
 };
 
-export function PathBreadcrumb({ items, onNavigate, className, leadingIcon }: PathBreadcrumbProps) {
+export function PathBreadcrumb({
+  items,
+  onNavigate,
+  currentPath,
+  alwaysNavigablePaths,
+  className,
+  leadingIcon,
+  size = "default",
+}: PathBreadcrumbProps) {
   return (
-    <nav className={cn("path-breadcrumb", className)} aria-label="Breadcrumb">
+    <nav
+      className={cn("path-breadcrumb", size === "sm" && "path-breadcrumb--sm", className)}
+      aria-label="Breadcrumb"
+    >
       {leadingIcon ? (
         <span className="path-breadcrumb__lead" aria-hidden="true">
           {leadingIcon}
@@ -26,7 +43,13 @@ export function PathBreadcrumb({ items, onNavigate, className, leadingIcon }: Pa
       <div className="path-breadcrumb__trail">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
-          const isCurrent = isLast || !item.path;
+          const hasPath = item.path != null;
+          const isCurrent =
+            item.path == null ||
+            (currentPath !== undefined
+              ? item.path === currentPath &&
+                !alwaysNavigablePaths?.includes(item.path)
+              : isLast);
 
           return (
             <span key={`${item.label}-${index}`} className="path-breadcrumb__segment">
@@ -36,7 +59,7 @@ export function PathBreadcrumb({ items, onNavigate, className, leadingIcon }: Pa
               ) : (
                 <button
                   type="button"
-                  onClick={() => item.path && onNavigate?.(item.path)}
+                  onClick={() => hasPath && onNavigate?.(item.path!)}
                   className="path-breadcrumb__link"
                 >
                   {item.label}

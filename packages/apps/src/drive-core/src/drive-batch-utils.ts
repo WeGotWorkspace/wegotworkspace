@@ -30,6 +30,37 @@ export function applyDriveListing(
   setView({ type: "folder", path: uiPathFromApiPath(nextData.cwd, username) });
 }
 
+function mapDriveListingEntries(nextData: DriveUIData, username: string): DriveFile[] {
+  return nextData.directory.files.map((entry) => driveFileFromEntry(entry, username));
+}
+
+/** Keep optimistically moved items visible when opening a folder before listing refresh catches up. */
+export function mergeDriveFolderListing(
+  previousFiles: DriveFile[],
+  nextData: DriveUIData,
+  username: string,
+): DriveFile[] {
+  const folderPath = uiPathFromApiPath(nextData.cwd, username);
+  const serverFiles = mapDriveListingEntries(nextData, username);
+  const serverIds = new Set(serverFiles.map((file) => file.id));
+  const staged = previousFiles.filter((file) => file.parent === folderPath && !serverIds.has(file.id));
+  return [...serverFiles, ...staged];
+}
+
+export async function reloadDriveFolderListing(
+  operations: DriveAPIOperations,
+  folderPath: string,
+  username: string,
+  groupRoots: Set<string>,
+  setFiles: Dispatch<SetStateAction<DriveFile[]>>,
+  signal?: AbortSignal,
+) {
+  const nextData = await operations.changeDir(apiPathFromUiPath(folderPath, username, groupRoots), {
+    signal,
+  });
+  setFiles((previous) => mergeDriveFolderListing(previous, nextData, username));
+}
+
 export async function ensureTrashFolder(
   operations: DriveAPIOperations,
   username: string,

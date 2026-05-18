@@ -98,3 +98,38 @@
     font-size: 1rem;
   }
 }
+
+/* Compact variant (dialogs, pickers) */
+.path-breadcrumb--sm {
+  gap: 0.5rem;
+}
+
+.path-breadcrumb--sm .path-breadcrumb__lead {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.5rem;
+}
+
+.path-breadcrumb--sm .path-breadcrumb__lead svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.path-breadcrumb--sm .path-breadcrumb__trail {
+  gap: 0.25rem;
+  padding-block: 0;
+}
+
+.path-breadcrumb--sm .path-breadcrumb__segment {
+  gap: 0.25rem;
+}
+
+.path-breadcrumb--sm .path-breadcrumb__separator {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.path-breadcrumb--sm .path-breadcrumb__current,
+.path-breadcrumb--sm .path-breadcrumb__link {
+  font-size: 0.8125rem;
+}

@@ -18,6 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/ui/alert-dialog";
+import { DriveMoveToDialog } from "@/drive-core/src/drive-move-to-dialog";
 import type { useDriveController } from "@/drive-core/src/use-drive-controller";
 
 type DriveController = ReturnType<typeof useDriveController>;
@@ -42,6 +43,16 @@ export function DriveWorkspaceModals({ controller }: DriveWorkspaceModalsProps) 
     setConfirmDelete,
     reallyDelete,
     moveToTrash,
+    moveDialog,
+    setMoveDialog,
+    files,
+    sidebarGroupPaths,
+    commitMoveToFolder,
+    fileById,
+    view,
+    operations,
+    currentUsername,
+    groupRootNames,
   } = controller;
 
   return (
@@ -150,6 +161,28 @@ export function DriveWorkspaceModals({ controller }: DriveWorkspaceModalsProps) 
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <DriveMoveToDialog
+        open={!!moveDialog}
+        labels={controller.labels}
+        files={files}
+        groupPaths={sidebarGroupPaths}
+        moveIds={moveDialog?.ids ?? []}
+        view={view}
+        singleItemParent={
+          moveDialog?.ids.length === 1
+            ? fileById(moveDialog.ids[0]!)?.parent
+            : undefined
+        }
+        operations={operations}
+        currentUsername={currentUsername}
+        groupRootNames={groupRootNames}
+        onClose={() => setMoveDialog(null)}
+        onConfirm={(destinationPath) => {
+          if (moveDialog) commitMoveToFolder(moveDialog.ids, destinationPath);
+          setMoveDialog(null);
+        }}
+      />
     </>
   );
 }

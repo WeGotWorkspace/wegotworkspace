@@ -11,6 +11,8 @@ export type DeferredApiWriteArgs = {
   onError?: () => void;
   undoToastMessage?: string;
   icon?: ReactNode;
+  /** When true, run `execute` immediately instead of waiting `delayMs`. */
+  executeImmediately?: boolean;
 };
 
 type PendingMutation = {
@@ -69,7 +71,16 @@ export function useQueuedMutation({ delayMs = 2500, onMutationError }: UseQueued
   );
 
   const queueMutation = useCallback(
-    ({ key, toastMessage, execute, undo, onError, undoToastMessage, icon }: DeferredApiWriteArgs) => {
+    ({
+      key,
+      toastMessage,
+      execute,
+      undo,
+      onError,
+      undoToastMessage,
+      icon,
+      executeImmediately = false,
+    }: DeferredApiWriteArgs) => {
       const existing = pendingByKeyRef.current.get(key);
       if (existing) {
         if (existing.timer) clearTimeout(existing.timer);
@@ -88,11 +99,13 @@ export function useQueuedMutation({ delayMs = 2500, onMutationError }: UseQueued
         undoToastMessage,
       };
 
-      entry.timer = setTimeout(() => {
+      const undoWindowMs = delayMs + 3500;
+
+      const startExecute = () => {
         entry.started = true;
         entry.timer = null;
         entry.controller = new AbortController();
-        void execute(entry.controller.signal)
+        void execute(entry.controller!.signal)
           .catch((error: unknown) => {
             if (entry.cancelledByUndo) return;
             if (error instanceof DOMException && error.name === "AbortError") return;
@@ -100,14 +113,27 @@ export function useQueuedMutation({ delayMs = 2500, onMutationError }: UseQueued
             onMutationError();
           })
           .finally(() => {
-            dismiss(entry.toastId);
-            removePending(key);
+            if (executeImmediately) {
+              entry.timer = setTimeout(() => {
+                dismiss(entry.toastId);
+                removePending(key);
+              }, undoWindowMs);
+            } else {
+              dismiss(entry.toastId);
+              removePending(key);
+            }
           });
-      }, delayMs);
+      };
+
+      if (executeImmediately) {
+        startExecute();
+      } else {
+        entry.timer = setTimeout(startExecute, delayMs);
+      }
 
       entry.toastId =
         show(toastMessage, {
-          duration: delayMs + 3500,
+          duration: undoWindowMs,
           severity: "success",
           canUndo: true,
           undoLabel: "Undo",

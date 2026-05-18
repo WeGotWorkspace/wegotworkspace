@@ -41,6 +41,7 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
     toggleStar,
     requestDeleteItem,
     requestRenameItem,
+    requestMoveItem,
     isItemDragging,
     itemDragHandlers,
     folderDropZoneProps,
@@ -88,6 +89,7 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
     onStar: toggleStar,
     onDownload: handleDownload,
     onRename: requestRenameItem,
+    onMove: requestMoveItem,
     onTrash: requestDeleteItem,
   };
 
@@ -127,6 +129,7 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
           className="drive-main-pane__breadcrumbs"
           leadingIcon={<DriveViewIcon view={view} className="size-[1.125rem]" />}
           items={breadcrumbs}
+          currentPath={view.type === "folder" ? view.path : undefined}
           onNavigate={(path) => selectView({ type: "folder", path })}
         />
       )}
@@ -158,6 +161,7 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
                 onClose: () => setDetailOpen(false),
                 onStar: () => toggleStar(active.id),
                 onRename: () => requestRenameItem(active),
+                onMove: () => requestMoveItem(active),
                 onDelete: () =>
                   isUnderTrash(active.parent)
                     ? setConfirmDelete({ ids: [active.id], permanent: true })
@@ -182,6 +186,7 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
               onClose: () => setDetailOpen(false),
               onStar: () => toggleStar(active.id),
               onRename: () => requestRenameItem(active),
+              onMove: () => requestMoveItem(active),
               onDelete: () =>
                 isUnderTrash(active.parent)
                   ? setConfirmDelete({ ids: [active.id], permanent: true })
@@ -230,6 +235,7 @@ function buildDetailPanelProps({
   onClose,
   onStar,
   onRename,
+  onMove,
   onDelete,
   mobile,
 }: {
@@ -243,6 +249,7 @@ function buildDetailPanelProps({
   onClose: () => void;
   onStar: () => void;
   onRename: () => void;
+  onMove: () => void;
   onDelete: () => void;
   mobile?: boolean;
 }) {
@@ -255,6 +262,7 @@ function buildDetailPanelProps({
     onClose,
     onStar,
     onRename,
+    onMove,
     onDelete,
     mobile,
     onDownload: () => {

@@ -15,7 +15,7 @@ import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
 import { DRIVE_MOCK_FILES } from "@/drive-core/src/drive-mock-files";
 import type { DriveFile, FileKind, ViewKey } from "@/drive-core/src/drive-models";
 import { OFFICE_EDITOR_EXTENSIONS } from "@/drive-core/src/drive-models";
-import { resolveDriveFileApiPath } from "@/drive-core/src/drive-batch-utils";
+import { mergeDriveFolderListing, resolveDriveFileApiPath } from "@/drive-core/src/drive-batch-utils";
 import {
   apiPathFromUiPath,
   DRIVE_TRASH_UI_PATH,
@@ -80,6 +80,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
   const [confirmDelete, setConfirmDelete] = useState<null | { ids: string[]; permanent: boolean }>(
     null,
   );
+  const [moveDialog, setMoveDialog] = useState<{ ids: string[] } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [liveSearchResults, setLiveSearchResults] = useState<DriveFile[] | null>(null);
   const [starredItems, setStarredItems] = useState<DriveFile[] | null>(null);
@@ -295,6 +296,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
     beginOptimisticUpdate,
     reloadStarredFromServer,
     setView,
+    view,
     viewType: view.type,
   });
 
@@ -443,9 +445,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
         void operations
           .changeDir(f.apiPath ?? apiPathFromUiPath(next, currentUsername, groupRootNames))
           .then((nextData) => {
-            setFiles(
-              nextData.directory.files.map((entry) => driveFileFromEntry(entry, currentUsername)),
-            );
+            setFiles((previous) => mergeDriveFolderListing(previous, nextData, currentUsername));
             setView({ type: "folder", path: uiPathFromApiPath(nextData.cwd, currentUsername) });
           })
           .catch((error: unknown) => {
@@ -590,6 +590,12 @@ export function useDriveController({ data, session, operations, listLoading = fa
     setRenameDialog({ id: file.id });
     setRenameName(file.title);
   };
+  const openMoveDialog = useCallback((ids: string[]) => {
+    if (ids.length === 0) return;
+    setMoveDialog({ ids });
+  }, []);
+  const requestMoveSelected = () => openMoveDialog(selectedIds);
+  const requestMoveItem = (file: DriveFile) => openMoveDialog([file.id]);
   const submitRenameItem = () => {
     if (!renameDialog) return;
     const file = fileById(renameDialog.id);
@@ -804,9 +810,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
       void operations
         .changeDir(apiPathFromUiPath(v.path, currentUsername, groupRootNames))
         .then((nextData) => {
-          setFiles(
-            nextData.directory.files.map((entry) => driveFileFromEntry(entry, currentUsername)),
-          );
+          setFiles((previous) => mergeDriveFolderListing(previous, nextData, currentUsername));
           setView({ type: "folder", path: uiPathFromApiPath(nextData.cwd, currentUsername) });
         })
         .catch((error: unknown) => {
@@ -859,6 +863,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
     exitSelection,
     batchStar,
     requestDeleteSelected,
+    requestMoveSelected,
   });
 
   return {
@@ -880,6 +885,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
     renameDialog, setRenameDialog,
     renameName, setRenameName,
     confirmDelete, setConfirmDelete,
+    moveDialog, setMoveDialog,
     searchQuery, setSearchQuery,
     liveSearchResults,
     starredItems,
@@ -916,6 +922,9 @@ export function useDriveController({ data, session, operations, listLoading = fa
     selectionBar,
     requestDeleteSelected,
     requestDeleteItem,
+    requestMoveSelected,
+    requestMoveItem,
+    openMoveDialog,
     requestRenameItem,
     submitRenameItem,
     reallyDelete,
@@ -925,5 +934,6 @@ export function useDriveController({ data, session, operations, listLoading = fa
     createBlank,
     selectView,
     listLoading,
+    operations,
   };
 }
