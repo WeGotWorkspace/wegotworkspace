@@ -12,11 +12,29 @@ return Application::configure(basePath: dirname(__DIR__))
         api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        apiPrefix: 'api/v1',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'wgw.auth' => \App\Http\Middleware\AuthenticateWgwApi::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (\App\Exceptions\ApiHttpException $e) {
+            $payload = ['error' => $e->getMessage()];
+            if ($e->errorCode() !== null) {
+                $payload['code'] = $e->errorCode();
+            }
+
+            return response()->json($payload, $e->getStatusCode());
+        });
+        $exceptions->render(function (\Illuminate\Validation\ValidationException $e) {
+            $message = $e->validator->errors()->first() ?? 'Invalid request.';
+
+            return response()->json([
+                'error' => $message,
+                'code' => 'bad_request',
+            ], 400);
+        });
     })
     ->create();
