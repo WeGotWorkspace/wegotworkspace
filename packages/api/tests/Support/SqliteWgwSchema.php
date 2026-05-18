@@ -49,4 +49,28 @@ final class SqliteWgwSchema
             )'
         );
     }
+
+    public static function applyAuthTables(): void
+    {
+        Schema::connection('wgw')->dropIfExists('api_revoked_tokens');
+        Schema::connection('wgw')->dropIfExists('api_refresh_tokens');
+
+        DB::connection('wgw')->statement(
+            'CREATE TABLE api_refresh_tokens (
+                token_hash TEXT PRIMARY KEY,
+                username TEXT NOT NULL,
+                role TEXT NOT NULL,
+                expires_at INTEGER NOT NULL,
+                revoked INTEGER NOT NULL DEFAULT 0,
+                created_at INTEGER NOT NULL
+            )'
+        );
+        DB::connection('wgw')->statement(
+            'CREATE TABLE api_revoked_tokens (
+                jti TEXT PRIMARY KEY,
+                expires_at INTEGER NOT NULL,
+                created_at INTEGER NOT NULL
+            )'
+        );
+    }
 }
