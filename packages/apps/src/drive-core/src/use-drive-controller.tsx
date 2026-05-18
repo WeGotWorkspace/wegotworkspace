@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "sonner";
 import { Star, StarOff, Trash2, Upload, FolderInput, FolderPlus, Pencil } from "lucide-react";
+import { useAppToast } from "@/hooks/use-app-toast";
 import { useIsTouch } from "@/hooks/use-is-touch";
 import { useSidebarListDrag } from "@/hooks/use-sidebar-list-drag";
 import { driveLabels } from "@/drive-core/src/drive-labels";
@@ -16,6 +16,7 @@ import {
   normalizeApiVirtualPath,
   uiPathFromApiPath,
 } from "@/drive-core/src/drive-path-utils";
+import { buildDriveFolderBreadcrumbs } from "@/drive-core/src/drive-breadcrumbs";
 import {
   driveFileFromEntry,
   extensionFromFileName,
@@ -30,6 +31,8 @@ export type UseDriveControllerArgs = {
 };
 
 export function useDriveController({ data, session, operations, listLoading = false }: UseDriveControllerArgs) {
+  const { show, showError } = useAppToast();
+
   const launchOfficeEditor = useCallback((params: URLSearchParams) => {
     const target = `/office/editor?${params.toString()}`;
     void wgwEnsureOfficeSession()
@@ -130,7 +133,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
         .catch((error: unknown) => {
           if (requestVersion !== starredLoadVersionRef.current) return;
           const message = error instanceof Error ? error.message : String(error);
-          toast.error(message);
+          showError(message);
         });
     },
     [operations, currentUsername],
@@ -150,7 +153,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
       })
       .catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
-        toast.error(message);
+        showError(message);
       });
   }, [operations, loadStarredItemsFromPaths]);
 
@@ -175,7 +178,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
         .catch((error: unknown) => {
           if (cancelled) return;
           const message = error instanceof Error ? error.message : String(error);
-          toast.error(message);
+          showError(message);
         });
     }, 180);
 
@@ -259,8 +262,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
         },
       ];
     }
-    const parts = view.path.split("/");
-    return parts.map((p, i) => ({ label: p, path: parts.slice(0, i + 1).join("/") }));
+    return buildDriveFolderBreadcrumbs(view.path, driveLabels);
   }, [view]);
 
   const viewLabel = breadcrumbs[breadcrumbs.length - 1].label;
@@ -398,7 +400,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
           })
           .catch((error: unknown) => {
             const message = error instanceof Error ? error.message : String(error);
-            toast.error(message);
+            showError(message);
           });
       }
     } else {
@@ -474,7 +476,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
     let nextValue = false;
     setStarred((s) => {
       nextValue = !s[id];
-      toast(nextValue ? "Starred" : "Unstarred", {
+      show(nextValue ? "Starred" : "Unstarred", {
         icon: nextValue ? (
           <Star className="size-4" fill="currentColor" />
         ) : (
@@ -493,7 +495,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
         setStarred((s) => ({ ...s, [id]: !nextValue }));
         reloadStarredFromServer();
         const message = error instanceof Error ? error.message : String(error);
-        toast.error(message);
+        showError(message);
       });
   };
   const batchStar = () => {
@@ -501,7 +503,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
     setStarred((s) => {
       const next = { ...s };
       selectedIds.forEach((id) => (next[id] = nextValue));
-      toast(`${nextValue ? "Starred" : "Unstarred"} ${selectedIds.length}`, {
+      show(`${nextValue ? "Starred" : "Unstarred"} ${selectedIds.length}`, {
         icon: nextValue ? (
           <Star className="size-4" fill="currentColor" />
         ) : (
@@ -526,7 +528,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
       }
       if (failed) {
         reloadStarredFromServer();
-        toast.error("Could not sync one or more star changes.");
+        showError("Could not sync one or more star changes.");
       } else if (view.type === "starred") {
         reloadStarredFromServer();
       }
@@ -534,13 +536,13 @@ export function useDriveController({ data, session, operations, listLoading = fa
   };
   const moveToTrash = (ids: string[]) => {
     setFiles((p) => p.map((f) => (ids.includes(f.id) ? { ...f, parent: "Trash" } : f)));
-    toast(`Moved ${ids.length} to Trash`, { icon: <Trash2 className="size-4" /> });
+    show(`Moved ${ids.length} to Trash`, { icon: <Trash2 className="size-4" /> });
   };
   const moveToFolder = useCallback(
     (ids: string[], parent: string) => {
       if (ids.length === 0) return;
       setFiles((p) => p.map((f) => (ids.includes(f.id) ? { ...f, parent } : f)));
-      toast(`Moved ${ids.length} to ${parent.split("/").pop()}`, {
+      show(`Moved ${ids.length} to ${parent.split("/").pop()}`, {
         icon: <FolderInput className="size-4" />,
       });
       if (operations) {
@@ -572,7 +574,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
               }
             } catch (error: unknown) {
               const message = error instanceof Error ? error.message : String(error);
-              toast.error(message);
+              showError(message);
             }
           })();
         }
@@ -618,7 +620,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
     );
     setRenameDialog(null);
     setRenameName("");
-    toast(`Renamed to “${nextName}”`, { icon: <Pencil className="size-4" /> });
+    show(`Renamed to “${nextName}”`, { icon: <Pencil className="size-4" /> });
     if (!operations) return;
     const destination = apiPathFromUiPath(file.parent, currentUsername, groupRootNames);
     const fromPath = file.apiPath ?? normalizeApiVirtualPath(`${destination}/${previousName}`);
@@ -639,7 +641,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
           prev.map((item) => (item.id === file.id ? { ...item, title: previousName } : item)),
         );
         const message = error instanceof Error ? error.message : String(error);
-        toast.error(message);
+        showError(message);
       });
   };
   const reallyDelete = (ids: string[]) => {
@@ -659,7 +661,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
           })
           .catch((error: unknown) => {
             const message = error instanceof Error ? error.message : String(error);
-            toast.error(message);
+            showError(message);
           });
       }
     }
@@ -670,7 +672,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
       setActiveId(null);
       setDetailOpen(false);
     }
-    toast(`Deleted ${ids.length} file${ids.length === 1 ? "" : "s"}`, {
+    show(`Deleted ${ids.length} file${ids.length === 1 ? "" : "s"}`, {
       icon: <Trash2 className="size-4" />,
     });
   };
@@ -729,14 +731,14 @@ export function useDriveController({ data, session, operations, listLoading = fa
             setUploadProgress(null);
             uploadProgressResetTimerRef.current = null;
           }, 1400);
-          toast(`Uploaded ${selected.length} file${selected.length === 1 ? "" : "s"}`, {
+          show(`Uploaded ${selected.length} file${selected.length === 1 ? "" : "s"}`, {
             icon: <Upload className="size-4" />,
           });
         })
         .catch((error: unknown) => {
           setUploadProgress(null);
           const message = error instanceof Error ? error.message : String(error);
-          toast.error(message);
+          showError(message);
         });
       return;
     }
@@ -781,7 +783,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
       setUploadProgress(null);
       uploadProgressResetTimerRef.current = null;
     }, 1200);
-    toast(`Uploaded ${created.length} file${created.length === 1 ? "" : "s"}`, {
+    show(`Uploaded ${created.length} file${created.length === 1 ? "" : "s"}`, {
       icon: <Upload className="size-4" />,
     });
   };
@@ -814,7 +816,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
       },
       ...p,
     ]);
-    toast(`Folder “${v}” created`, { icon: <FolderPlus className="size-4" /> });
+    show(`Folder “${v}” created`, { icon: <FolderPlus className="size-4" /> });
     setNewFolderDialogOpen(false);
     setNewFolderName("");
     if (operations) {
@@ -831,7 +833,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
         })
         .catch((error: unknown) => {
           const message = error instanceof Error ? error.message : String(error);
-          toast.error(message);
+          showError(message);
         });
     }
   };
@@ -856,7 +858,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
         })
         .catch((error: unknown) => {
           const message = error instanceof Error ? error.message : String(error);
-          toast.error(message);
+          showError(message);
         });
     }
     if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
