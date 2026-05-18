@@ -8,7 +8,7 @@ use App\Paths;
 
 final class EnvChecker
 {
-    public const MIN_PHP = '8.1.0';
+    public const MIN_PHP = '8.3.0';
 
     /**
      * @return list<array{ok: bool, label: string, detail: string}>

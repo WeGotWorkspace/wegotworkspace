@@ -1,10 +1,5 @@
 Options -Indexes -MultiViews
 
-# MAMP / PHP-FPM: let PHP see the Authorization header (Apache 2.4.13+).
-<IfModule mod_proxy_fcgi.c>
-    CGIPassAuth On
-</IfModule>
-
 # WebAssembly assets: ensure correct Content-Type when host mime.types omits .wasm.
 <IfModule mod_mime.c>
     AddType application/wasm .wasm

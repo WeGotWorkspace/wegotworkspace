@@ -4,7 +4,7 @@
     "type": "library",
     "license": "MIT",
     "require": {
-        "php": "^8.4",
+        "php": "^8.3",
         "ext-ctype": "*",
         "ext-dom": "*",
         "ext-iconv": "*",
@@ -18,8 +18,8 @@
         "psr/log": "^1.1 || ^2.0 || ^3.0",
         "sabre/dav": "^4.7",
         "swagger-api/swagger-ui": "^5.32",
-        "symfony/cache": "^8.0",
-        "symfony/rate-limiter": "^8.0",
+        "symfony/cache": "^7.0",
+        "symfony/rate-limiter": "^7.0",
         "zbateson/mail-mime-parser": "^4.0"
     },
     "require-dev": {
@@ -35,6 +35,9 @@
         "optimize-autoloader": true,
         "audit": {
             "block-insecure": false
+        },
+        "platform": {
+            "php": "8.3.99"
         }
     },
     "scripts": {
