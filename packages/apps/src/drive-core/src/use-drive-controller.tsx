@@ -22,6 +22,7 @@ import {
   isDriveTrashApiPath,
   isDriveTrashFolderName,
   normalizeApiVirtualPath,
+  normalizeDriveFolderUiPath,
   uiPathFromApiPath,
 } from "@/drive-core/src/drive-path-utils";
 import { buildDriveFolderBreadcrumbs } from "@/drive-core/src/drive-breadcrumbs";
@@ -36,11 +37,20 @@ export type UseDriveControllerArgs = {
   session: WorkspaceSession;
   operations?: DriveAPIOperations;
   listLoading?: boolean;
+  view?: ViewKey;
+  onViewChange?: (view: ViewKey) => void;
 };
 
 const WRITE_QUEUE_DELAY_MS = 2500;
 
-export function useDriveController({ data, session, operations, listLoading = false }: UseDriveControllerArgs) {
+export function useDriveController({
+  data,
+  session,
+  operations,
+  listLoading = false,
+  view: controlledView,
+  onViewChange,
+}: UseDriveControllerArgs) {
   const { show, showError } = useAppToast();
   const showMutationError = useCallback(
     (fallback = "Could not sync this change. Please try again.") => showError(fallback),
@@ -64,7 +74,18 @@ export function useDriveController({ data, session, operations, listLoading = fa
       ? data.directory.files.map((entry) => driveFileFromEntry(entry, currentUsername))
       : DRIVE_MOCK_FILES,
   );
-  const [view, setView] = useState<ViewKey>({ type: "folder", path: "My Drive" });
+  const [internalView, setInternalView] = useState<ViewKey>({ type: "folder", path: "My Drive" });
+  const isViewControlled = onViewChange !== undefined;
+  const view = controlledView ?? internalView;
+  const commitView = useCallback(
+    (next: ViewKey) => {
+      const normalized =
+        next.type === "folder" ? { ...next, path: normalizeDriveFolderUiPath(next.path) } : next;
+      if (isViewControlled) onViewChange!(normalized);
+      else setInternalView(normalized);
+    },
+    [isViewControlled, onViewChange],
+  );
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [lastClickedId, setLastClickedId] = useState<string | null>(null);
@@ -98,6 +119,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
   const starredLoadVersionRef = useRef(0);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const syncedFolderPathRef = useRef<string | null>(null);
 
   useEffect(() => {
     const discovered = new Set<string>();
@@ -121,11 +143,67 @@ export function useDriveController({ data, session, operations, listLoading = fa
     [knownGroupRoots],
   );
 
+  const folderViewPath = view.type === "folder" ? view.path : null;
+
   useEffect(() => {
     if (!operations) return;
+    const cwdPath = uiPathFromApiPath(data.cwd, currentUsername);
+    if (isViewControlled && folderViewPath !== null && folderViewPath !== cwdPath) {
+      return;
+    }
     setFiles(data.directory.files.map((entry) => driveFileFromEntry(entry, currentUsername)));
-    setView({ type: "folder", path: uiPathFromApiPath(data.cwd, currentUsername) });
-  }, [data, operations, currentUsername]);
+    syncedFolderPathRef.current = folderViewPath ?? cwdPath;
+    if (!isViewControlled) {
+      commitView({ type: "folder", path: cwdPath });
+    }
+  }, [commitView, currentUsername, data, folderViewPath, isViewControlled, operations]);
+
+  useEffect(() => {
+    if (!operations || folderViewPath === null) return;
+    if (syncedFolderPathRef.current === folderViewPath) return;
+
+    const controller = new AbortController();
+    void operations
+      .changeDir(apiPathFromUiPath(folderViewPath, currentUsername, groupRootNames), {
+        signal: controller.signal,
+      })
+      .then((nextData) => {
+        const resolvedPath = uiPathFromApiPath(nextData.cwd, currentUsername);
+        syncedFolderPathRef.current = resolvedPath;
+        setFiles((previous) => mergeDriveFolderListing(previous, nextData, currentUsername));
+        if (resolvedPath !== folderViewPath) {
+          commitView({ type: "folder", path: resolvedPath });
+        }
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        const message = error instanceof Error ? error.message : String(error);
+        showError(message);
+      });
+
+    return () => controller.abort();
+  }, [
+    commitView,
+    currentUsername,
+    folderViewPath,
+    groupRootNames,
+    operations,
+    showError,
+  ]);
+
+  const selectView = useCallback(
+    (v: ViewKey) => {
+      if (v.type === "folder") {
+        syncedFolderPathRef.current = null;
+      }
+      commitView(v);
+      setLiveSearchResults(null);
+      if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
+        setSidebarOpen(false);
+      }
+    },
+    [commitView],
+  );
 
   const loadStarredItemsFromPaths = useCallback(
     (paths: string[]) => {
@@ -295,7 +373,6 @@ export function useDriveController({ data, session, operations, listLoading = fa
     queueMutation,
     beginOptimisticUpdate,
     reloadStarredFromServer,
-    setView,
     view,
     viewType: view.type,
   });
@@ -315,7 +392,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
       ];
     }
     return buildDriveFolderBreadcrumbs(view.path, driveLabels);
-  }, [view]);
+  }, [driveLabels, view]);
 
   const viewLabel = breadcrumbs[breadcrumbs.length - 1].label;
   const viewResetKey = view.type === "folder" ? `${view.type}:${view.path}` : view.type;
@@ -440,19 +517,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
   const openFile = (f: DriveFile) => {
     if (f.kind === "folder") {
       const next = f.parent === "" ? f.title : `${f.parent}/${f.title}`;
-      setView({ type: "folder", path: next });
-      if (operations) {
-        void operations
-          .changeDir(f.apiPath ?? apiPathFromUiPath(next, currentUsername, groupRootNames))
-          .then((nextData) => {
-            setFiles((previous) => mergeDriveFolderListing(previous, nextData, currentUsername));
-            setView({ type: "folder", path: uiPathFromApiPath(nextData.cwd, currentUsername) });
-          })
-          .catch((error: unknown) => {
-            const message = error instanceof Error ? error.message : String(error);
-            showError(message);
-          });
-      }
+      selectView({ type: "folder", path: next });
     } else {
       const officeExt = extensionFromFileName(f.title);
       if (f.apiPath && OFFICE_EDITOR_EXTENSIONS.has(officeExt)) {
@@ -628,7 +693,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
         setFiles(
           nextData.directory.files.map((entry) => driveFileFromEntry(entry, currentUsername)),
         );
-        setView({ type: "folder", path: uiPathFromApiPath(nextData.cwd, currentUsername) });
+        commitView({ type: "folder", path: uiPathFromApiPath(nextData.cwd, currentUsername) });
       })
       .catch((error: unknown) => {
         setFiles((prev) =>
@@ -681,7 +746,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
           setFiles(
             nextData.directory.files.map((entry) => driveFileFromEntry(entry, currentUsername)),
           );
-          setView({ type: "folder", path: uiPathFromApiPath(nextData.cwd, currentUsername) });
+          commitView({ type: "folder", path: uiPathFromApiPath(nextData.cwd, currentUsername) });
           setUploadProgress({
             label: `Uploaded ${selected.length} file${selected.length === 1 ? "" : "s"}`,
             percent: 100,
@@ -788,7 +853,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
           setFiles(
             nextData.directory.files.map((entry) => driveFileFromEntry(entry, currentUsername)),
           );
-          setView({ type: "folder", path: uiPathFromApiPath(nextData.cwd, currentUsername) });
+          commitView({ type: "folder", path: uiPathFromApiPath(nextData.cwd, currentUsername) });
         })
         .catch((error: unknown) => {
           const message = error instanceof Error ? error.message : String(error);
@@ -801,26 +866,6 @@ export function useDriveController({ data, session, operations, listLoading = fa
     const editorKind = kind === "doc" ? "docx" : kind === "sheet" ? "xlsx" : "pptx";
     const qp = new URLSearchParams({ new: editorKind });
     launchOfficeEditor(qp);
-  };
-
-  const selectView = (v: ViewKey) => {
-    setView(v);
-    setLiveSearchResults(null);
-    if (operations && v.type === "folder") {
-      void operations
-        .changeDir(apiPathFromUiPath(v.path, currentUsername, groupRootNames))
-        .then((nextData) => {
-          setFiles((previous) => mergeDriveFolderListing(previous, nextData, currentUsername));
-          setView({ type: "folder", path: uiPathFromApiPath(nextData.cwd, currentUsername) });
-        })
-        .catch((error: unknown) => {
-          const message = error instanceof Error ? error.message : String(error);
-          showError(message);
-        });
-    }
-    if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
-      setSidebarOpen(false);
-    }
   };
 
   useEffect(() => {
@@ -871,7 +916,8 @@ export function useDriveController({ data, session, operations, listLoading = fa
     launchOfficeEditor,
     currentUsername,
     files, setFiles,
-    view, setView,
+    view,
+    setView: commitView,
     activeId, setActiveId,
     selectedIds, setSelectedIds,
     lastClickedId, setLastClickedId,

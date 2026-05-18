@@ -186,7 +186,7 @@ export function DriveFolderPicker({
         ? initialBrowsePath
         : null,
     );
-  }, [initialBrowsePath, moveIds, files]);
+  }, [initialBrowsePath, moveIds]);
 
   useEffect(() => {
     if (browsePath === DRIVE_FOLDER_PICKER_ROOT || browsePath === GROUPS_ROOT) {
@@ -207,7 +207,7 @@ export function DriveFolderPicker({
     const controller = new AbortController();
     setListingLoading(true);
     void operations
-      .changeDir(apiPathFromUiPath(browsePath, currentUsername, groupRootNames), {
+      .listDirectory(apiPathFromUiPath(browsePath, currentUsername, groupRootNames), {
         signal: controller.signal,
       })
       .then((data) => {

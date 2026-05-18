@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-router";
 import { AdminApp } from "@/admin-core/src/admin-app";
 import { DriveApp } from "@/drive-core/src/drive-app";
+import { validateDriveRouteSearch } from "@/drive-core/src/drive-route-search";
 import { InstallApp } from "@/install-core/src/install-app";
 import { MailApp } from "@/mail-core/src/mail-app";
 import { MeetApp } from "@/meet-core/src/meet-app";
@@ -174,6 +175,7 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
   const driveRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/drive",
+    validateSearch: validateDriveRouteSearch,
     component: isLive ? withWeGotWorkspaceAuth(DriveApp) : MockDriveRoute,
   });
 
