@@ -75,12 +75,12 @@
   opacity: 0.45;
 }
 
-.drive-dialog-surface .drive-folder-picker__body .collection-empty-state {
+.drive-dialog-surface .drive-folder-picker__body .collection-state {
   @apply flex h-full w-full flex-col items-center justify-center;
   padding: 2rem 1.5rem;
   box-sizing: border-box;
 }
 
-.drive-dialog-surface .drive-folder-picker__body .collection-empty-state__icon {
+.drive-dialog-surface .drive-folder-picker__body .collection-state__icon {
   margin-bottom: 0.75rem;
 }

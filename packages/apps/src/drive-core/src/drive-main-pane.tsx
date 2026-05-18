@@ -1,7 +1,7 @@
 import { Cloud, Download } from "lucide-react";
 import { DriveViewIcon } from "@/drive-core/src/drive-view-icons";
 import { useAppToast } from "@/hooks/use-app-toast";
-import { CollectionEmptyState } from "@/collection-empty-state/src/collection-empty-state";
+import { CollectionState } from "@/collection-state/src/collection-state";
 import { FileDropOverlay } from "@/file-drop-overlay/src/file-drop-overlay";
 import { PathBreadcrumb } from "@/path-breadcrumb/src/path-breadcrumb";
 import { DriveSearch } from "@/drive-core/src/drive-search";
@@ -57,7 +57,14 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
     setSearchQuery,
     searchInputRef,
     uploadProgress,
+    folderListingPending,
+    listLoading,
   } = controller;
+
+  const showFolderListingBusy =
+    view.type === "folder" &&
+    !searchQuery.trim() &&
+    (folderListingPending || listLoading);
 
   const { show, showError } = useAppToast();
 
@@ -136,10 +143,12 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
 
       <div className="drive-main-pane__body">
         <div className="drive-main-pane__scroll">
-          {visibleItems.length === 0 ? (
-            <CollectionEmptyState icon={<Cloud className="size-12" />}>
+          {showFolderListingBusy ? (
+            <CollectionState variant="loading">{labels.folderListingLoading}</CollectionState>
+          ) : visibleItems.length === 0 ? (
+            <CollectionState icon={<Cloud className="size-12" />}>
               {labels.emptyFolder}
-            </CollectionEmptyState>
+            </CollectionState>
           ) : viewMode === "grid" ? (
             <DriveGridView {...browserProps} />
           ) : (
