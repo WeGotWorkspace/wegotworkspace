@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useState } from "react";
 import { Mic, MicOff, MoreVertical } from "lucide-react";
 import {
   DropdownMenu,
@@ -8,27 +9,74 @@ import {
 import { UserAvatar } from "@/user-avatar/src/user-avatar";
 import { MeetStreamVideo } from "@/meet-core/src/meet-stream-video";
 import { meetLabels } from "@/meet-core/src/meet-labels";
+import { usePeerStreamPresence } from "@/meet-core/src/use-peer-stream-presence";
 import { cn } from "@/lib/utils";
 
 type MeetPeerTileProps = {
   name: string;
   stream: MediaStream | null;
   compact?: boolean;
+  /** Inbound RTP heuristics; null = omit override. */
+  remoteMedia?: { camera: boolean; mic: boolean } | null;
+  /** Peer's announced mic/camera (control chat); when set, overrides track/stats for UI. */
+  disclosedMedia?: { camera: boolean; mic: boolean } | null;
   onMuteSoon: (name: string) => void;
 };
 
-export function MeetPeerTile({ name, stream, compact, onMuteSoon }: MeetPeerTileProps) {
+export function MeetPeerTile({
+  name,
+  stream,
+  compact,
+  remoteMedia,
+  disclosedMedia,
+  onMuteSoon,
+}: MeetPeerTileProps) {
+  const { cameraRendering, micLive } = usePeerStreamPresence(stream);
+  const [remoteVideoOk, setRemoteVideoOk] = useState(true);
+
+  const onPresentationViable = useCallback((viable: boolean) => {
+    setRemoteVideoOk(viable);
+  }, []);
+
+  useEffect(() => {
+    setRemoteVideoOk(true);
+  }, [cameraRendering, disclosedMedia?.camera, stream]);
+
+  const statsAllowCamera = remoteMedia?.camera !== false;
+  const statsAllowMic = remoteMedia?.mic !== false;
+  const cameraFromTracks = cameraRendering && statsAllowCamera;
+  const micFromTracks = micLive && statsAllowMic;
+
+  const showRemoteVideo = !!(stream && (disclosedMedia ? disclosedMedia.camera : cameraFromTracks));
+  const micLiveUi = disclosedMedia ? disclosedMedia.mic : micFromTracks;
+  const showAvatarFill = !showRemoteVideo || !remoteVideoOk;
+
   return (
     <div className={cn("meet-peer-tile", compact && "meet-peer-tile--compact")}>
-      {stream ? (
-        <MeetStreamVideo stream={stream} className="h-full w-full object-cover" />
+      {showRemoteVideo ? (
+        <div className="meet-peer-tile__media">
+          <MeetStreamVideo
+            stream={stream}
+            mirrored={false}
+            onPresentationViable={onPresentationViable}
+            className={cn(
+              "meet-peer-tile__stream h-full w-full object-cover",
+              !remoteVideoOk && "meet-peer-tile__stream--hidden",
+            )}
+          />
+          {showAvatarFill ? (
+            <div className="meet-peer-tile__fill">
+              <UserAvatar displayName={name} compact size={compact ? "md" : "lg"} />
+            </div>
+          ) : null}
+        </div>
       ) : (
-        <div className="flex h-full items-center justify-center">
-          <UserAvatar displayName={name} compact size={compact ? "md" : "xl"} />
+        <div className="meet-peer-tile__fill">
+          <UserAvatar displayName={name} compact size={compact ? "md" : "lg"} />
         </div>
       )}
-      <div className="meet-peer-tile__name">
-        <Mic className="size-3" />
+      <div className={cn("meet-peer-tile__name", !micLiveUi && "meet-peer-tile__name--mic-muted")}>
+        {micLiveUi ? <Mic className="size-3" /> : <MicOff className="size-3 text-red-400" />}
         <span>{name}</span>
       </div>
       <DropdownMenu>

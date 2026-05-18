@@ -1,13 +1,23 @@
 import { useEffect, useRef } from "react";
+import { cn } from "@/lib/utils";
 
 type MeetStreamVideoProps = {
   stream: MediaStream | null;
   className?: string;
   mirrored?: boolean;
+  /** When set, detect blank/zero-size frames (remote camera off while track stays "live") and notify. */
+  onPresentationViable?: (viable: boolean) => void;
 };
 
-export function MeetStreamVideo({ stream, className, mirrored }: MeetStreamVideoProps) {
+export function MeetStreamVideo({
+  stream,
+  className,
+  mirrored = false,
+  onPresentationViable,
+}: MeetStreamVideoProps) {
   const ref = useRef<HTMLVideoElement | null>(null);
+  const onPresentationViableRef = useRef(onPresentationViable);
+  onPresentationViableRef.current = onPresentationViable;
 
   useEffect(() => {
     const node = ref.current;
@@ -18,6 +28,54 @@ export function MeetStreamVideo({ stream, className, mirrored }: MeetStreamVideo
     };
   }, [stream]);
 
+  useEffect(() => {
+    const el = ref.current;
+    const notify = onPresentationViableRef.current;
+    if (!el || !stream || !notify) return;
+
+    let badFrames = 0;
+    let rafId = 0;
+    let intervalId = 0;
+
+    const applyMetrics = () => {
+      const w = el.videoWidth;
+      const h = el.videoHeight;
+      if (w > 2 && h > 2) {
+        badFrames = 0;
+        notify(true);
+      } else if (el.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+        badFrames += 1;
+        if (badFrames >= 12) notify(false);
+      }
+    };
+
+    const onLoaded = () => {
+      badFrames = 0;
+      notify(true);
+    };
+
+    el.addEventListener("loadeddata", onLoaded);
+
+    if (typeof el.requestVideoFrameCallback === "function") {
+      const tick: VideoFrameRequestCallback = () => {
+        applyMetrics();
+        rafId = el.requestVideoFrameCallback(tick);
+      };
+      rafId = el.requestVideoFrameCallback(tick);
+    } else {
+      intervalId = window.setInterval(applyMetrics, 350);
+    }
+
+    return () => {
+      el.removeEventListener("loadeddata", onLoaded);
+      if (typeof el.cancelVideoFrameCallback === "function" && rafId) {
+        el.cancelVideoFrameCallback(rafId);
+      }
+      if (intervalId) window.clearInterval(intervalId);
+      notify(true);
+    };
+  }, [stream]);
+
   if (!stream) return null;
 
   return (
@@ -25,8 +83,10 @@ export function MeetStreamVideo({ stream, className, mirrored }: MeetStreamVideo
       ref={ref}
       autoPlay
       playsInline
-      className={className}
-      style={mirrored ? { transform: "scaleX(-1)" } : undefined}
+      className={cn("meet-stream-video", className)}
+      style={{
+        transform: mirrored ? "scaleX(-1)" : "scaleX(1)",
+      }}
     />
   );
 }
