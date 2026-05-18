@@ -132,6 +132,9 @@ export function createWgwDriveOperations(initialCwd = "/"): DriveAPIOperations {
       cwd = normalizePath(changed.data.cwd);
       return fetchState(cwd, opts);
     },
+    async listDirectory(at, opts) {
+      return fetchState(normalizePath(at), opts);
+    },
     async search(query, opts) {
       const res = await wgwFetch("/drive/searchfiles", {
         method: "POST",
