@@ -1,0 +1,49 @@
+---
+description: API work is greenfield Laravel — rewrite, not migrate. Always read before touching packages/api.
+alwaysApply: true
+---
+
+# API greenfield (non-negotiable)
+
+When the user says **greenfield**, **new API**, or work under `packages/api/`:
+
+## Definition
+
+Build a **new Laravel application** that matches the **HTTP contract** (paths, status codes, JSON shapes in `packages/api/openapi/openapi.json`).  
+**Do not** preserve legacy architecture, class names, or call paths.
+
+**Contract parity ≠ code parity.** Read old behavior only to write tests and reimplement logic.
+
+## Required architecture
+
+- **HTTP:** `routes/api.php` → invokable controllers (or small controllers) → Form Requests → API Resources
+- **Logic:** `app/Services/{Domain}/` — constructor injection, instance methods
+- **Persistence:** Eloquent models + migrations for app tables (`users`, `principals`, `app_settings`, …), or `DB::` query builder — **not** raw `\PDO` passed through the stack
+- **Config:** Laravel `config/` + `.env`; bridge `wgw-config.php` once in a service provider — **not** `Config::load()` in domain code
+- **Auth:** Laravel guard or dedicated auth service using the DB layer — **not** `ApiAuth::authenticateBearer($pdo)` with superglobals
+- **Tests:** Pest feature tests per route group **before** calling a domain “done”
+- **Files:** Laravel **Flysystem** via `WgwStorage` / `Storage` disks — shared by REST (drive, notes, office) and WebDAV file tree (see `api-storage-flysystem.mdc`)
+
+## Forbidden (migration theater)
+
+Do **not** do these and call it greenfield:
+
+- Rename/move folders (`wgw-src` → `app/`) and keep the same static classes
+- `*ApiService` that only forwards to `MailApi`, `DriveKernel`, `*Kernel`, `*Static`
+- Monolithic `DomainRouteService` routing all domains
+- `WgwRuntime` / `$_SERVER` shims so legacy code can run unchanged
+- `ApiResultReady` or exception-based “fake returns” instead of real service return types
+- New `*Kernel` / `*Static` classes
+- `public static function …(\PDO $pdo)` domain APIs
+- Stock `App\Models\User` (Laravel scaffold) while real users live in Sabre tables without a model
+- “Thin wrapper” PRs without deleting the legacy entry point they wrap
+- Direct filesystem I/O in domain code (`Paths::data()`, `file_put_contents`, `readfile`) instead of Flysystem
+
+## Sabre / DAV exception
+
+WebDAV may keep a **thin** `dav.php` + Sabre PDO backends for Cal/Card. **File** WebDAV must use the **same Flysystem disks** as REST — not `Paths::data().'/files'` in `SabreApp` only. Plugins call Laravel **services** backed by storage, not duplicate path logic.
+
+## When unsure
+
+Stop and ask: *“Should I reimplement this operation in a new Service, or is there an approved legacy boundary?”*  
+Default answer for REST: **reimplement.**
