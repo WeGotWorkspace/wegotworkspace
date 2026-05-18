@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Star, StarOff, Upload, FolderPlus, Pencil } from "lucide-react";
 import { useAppToast } from "@/hooks/use-app-toast";
 import { useEntityBatchActions } from "@/hooks/use-entity-batch-actions";
@@ -120,6 +120,25 @@ export function useDriveController({
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const syncedFolderPathRef = useRef<string | null>(null);
+  const [hydratedFolderPath, setHydratedFolderPath] = useState<string | null>(null);
+
+  const folderViewPath = view.type === "folder" ? view.path : null;
+
+  useLayoutEffect(() => {
+    if (
+      !operations ||
+      folderViewPath === null ||
+      listLoading ||
+      !currentUsername.trim()
+    ) {
+      return;
+    }
+    const cwdUi = uiPathFromApiPath(data.cwd, currentUsername);
+    if (folderViewPath === cwdUi) {
+      syncedFolderPathRef.current = folderViewPath;
+      setHydratedFolderPath(folderViewPath);
+    }
+  }, [currentUsername, data.cwd, folderViewPath, listLoading, operations]);
 
   useEffect(() => {
     const discovered = new Set<string>();
@@ -138,45 +157,58 @@ export function useDriveController({
   }, [files]);
 
   const groupRootNames = useMemo(() => new Set(knownGroupRoots), [knownGroupRoots]);
+  const groupRootNamesRef = useRef(groupRootNames);
+  groupRootNamesRef.current = groupRootNames;
   const sidebarGroupPaths = useMemo(
     () => knownGroupRoots.map((root) => `Groups/${root}`),
     [knownGroupRoots],
   );
 
-  const folderViewPath = view.type === "folder" ? view.path : null;
-
   useEffect(() => {
-    if (!operations) return;
+    if (!operations || listLoading || !currentUsername.trim()) return;
     const cwdPath = uiPathFromApiPath(data.cwd, currentUsername);
     if (isViewControlled && folderViewPath !== null && folderViewPath !== cwdPath) {
       return;
     }
     setFiles(data.directory.files.map((entry) => driveFileFromEntry(entry, currentUsername)));
     syncedFolderPathRef.current = folderViewPath ?? cwdPath;
+    setHydratedFolderPath(cwdPath);
     if (!isViewControlled) {
       commitView({ type: "folder", path: cwdPath });
     }
-  }, [commitView, currentUsername, data, folderViewPath, isViewControlled, operations]);
+  }, [commitView, currentUsername, data, folderViewPath, isViewControlled, listLoading, operations]);
 
   useEffect(() => {
-    if (!operations || folderViewPath === null) return;
-    if (syncedFolderPathRef.current === folderViewPath) return;
+    if (
+      !operations ||
+      folderViewPath === null ||
+      listLoading ||
+      !currentUsername.trim()
+    ) {
+      return;
+    }
+    if (syncedFolderPathRef.current === folderViewPath) {
+      setHydratedFolderPath(folderViewPath);
+      return;
+    }
 
     const controller = new AbortController();
     void operations
-      .changeDir(apiPathFromUiPath(folderViewPath, currentUsername, groupRootNames), {
+      .changeDir(apiPathFromUiPath(folderViewPath, currentUsername, groupRootNamesRef.current), {
         signal: controller.signal,
       })
       .then((nextData) => {
         const resolvedPath = uiPathFromApiPath(nextData.cwd, currentUsername);
         syncedFolderPathRef.current = resolvedPath;
         setFiles((previous) => mergeDriveFolderListing(previous, nextData, currentUsername));
+        setHydratedFolderPath(resolvedPath);
         if (resolvedPath !== folderViewPath) {
           commitView({ type: "folder", path: resolvedPath });
         }
       })
       .catch((error: unknown) => {
         if (controller.signal.aborted) return;
+        setHydratedFolderPath(folderViewPath);
         const message = error instanceof Error ? error.message : String(error);
         showError(message);
       });
@@ -186,7 +218,7 @@ export function useDriveController({
     commitView,
     currentUsername,
     folderViewPath,
-    groupRootNames,
+    listLoading,
     operations,
     showError,
   ]);
@@ -195,6 +227,7 @@ export function useDriveController({
     (v: ViewKey) => {
       if (v.type === "folder") {
         syncedFolderPathRef.current = null;
+        setHydratedFolderPath(null);
       }
       commitView(v);
       setLiveSearchResults(null);
@@ -343,6 +376,12 @@ export function useDriveController({
       return 0;
     });
   }, [files, liveSearchResults, operations, searchQuery, starred, starredItems, view]);
+
+  const folderListingPending = useMemo(() => {
+    if (!operations || view.type !== "folder") return false;
+    if (listLoading || !currentUsername.trim()) return true;
+    return hydratedFolderPath !== view.path;
+  }, [currentUsername, hydratedFolderPath, listLoading, operations, view]);
 
   const { beginOptimisticUpdate } = useEntityBatchActions<DriveFile>({
     items: files,
@@ -945,6 +984,7 @@ export function useDriveController({
     inTrashView,
     isUnderTrash,
     visibleItems,
+    folderListingPending,
     breadcrumbs,
     viewLabel,
     viewResetKey,

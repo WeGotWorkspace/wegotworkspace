@@ -1,0 +1,40 @@
+.collection-state {
+  padding: 4rem;
+  text-align: center;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(
+    --collection-state-color,
+    color-mix(in oklab, var(--color-ink) 50%, transparent)
+  );
+}
+
+.collection-state__icon {
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 1rem;
+  width: 3rem;
+  height: 3rem;
+  opacity: 0.3;
+}
+
+.collection-state__icon--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+}
+
+.collection-state--loading .collection-state__loading-label {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(
+    --collection-state-color,
+    color-mix(in oklab, var(--color-ink) 50%, transparent)
+  );
+}
+
+.collection-state__body {
+  margin: 0;
+}
