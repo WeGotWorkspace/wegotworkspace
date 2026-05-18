@@ -1,0 +1,65 @@
+.path-breadcrumb {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.25rem;
+  overflow-x: auto;
+}
+
+.path-breadcrumb__segment {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.path-breadcrumb__separator {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  color: var(
+    --path-breadcrumb-separator-color,
+    color-mix(in oklab, var(--color-ink) 35%, transparent)
+  );
+}
+
+.path-breadcrumb__current {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  line-height: 1;
+  color: var(
+    --path-breadcrumb-current-color,
+    color-mix(in oklab, var(--color-ink) 72%, transparent)
+  );
+}
+
+@media (min-width: 768px) {
+  .path-breadcrumb__current {
+    font-size: 1rem;
+  }
+}
+
+.path-breadcrumb__link {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  line-height: 1;
+  color: var(
+    --path-breadcrumb-link-color,
+    color-mix(in oklab, var(--color-ink) 55%, transparent)
+  );
+}
+
+.path-breadcrumb__link:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+@media (min-width: 768px) {
+  .path-breadcrumb__link {
+    font-size: 1rem;
+  }
+}

@@ -1,0 +1,35 @@
+.view-mode-toggle {
+  display: none;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 0.125rem;
+  background-color: var(
+    --view-mode-toggle-bg,
+    color-mix(in oklab, var(--color-ink) 6%, transparent)
+  );
+}
+
+@media (min-width: 640px) {
+  .view-mode-toggle {
+    display: flex;
+  }
+}
+
+.view-mode-toggle__button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  color: var(--view-mode-toggle-color, var(--color-ink));
+  transition: color 150ms, background-color 150ms, box-shadow 150ms;
+}
+
+.view-mode-toggle__button--active {
+  background-color: var(--view-mode-toggle-active-bg, var(--color-cream, #f5f1e8));
+  box-shadow: var(
+    --view-mode-toggle-active-shadow,
+    0 1px 2px color-mix(in oklab, var(--color-ink) 20%, transparent)
+  );
+}
