@@ -6,6 +6,10 @@ declare(strict_types=1);
  * Resolve runtime root from optional SABRE_BUILD_DIR.
  */
 $appRoot = __DIR__;
+if (!is_string(getenv('WGW_APP_ROOT')) || trim((string) getenv('WGW_APP_ROOT')) === '') {
+    putenv('WGW_APP_ROOT='.$appRoot);
+    $_ENV['WGW_APP_ROOT'] = $appRoot;
+}
 $buildDir = getenv('SABRE_BUILD_DIR');
 if (is_string($buildDir) && trim($buildDir) !== '') {
     $buildDir = trim(str_replace('\\', '/', $buildDir));
@@ -46,6 +50,11 @@ if ($autoload === null) {
 
 require $autoload;
 
+// Apache + mod_rewrite: Authorization may arrive as REDIRECT_HTTP_AUTHORIZATION.
+if (empty($_SERVER['HTTP_AUTHORIZATION']) && !empty($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+    $_SERVER['HTTP_AUTHORIZATION'] = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+}
+
 /**
  * Composer keeps loading third-party dependencies; this loader resolves only our own App classes.
  */
@@ -77,8 +86,12 @@ spl_autoload_register(static function (string $class) use ($runtimeRoot, $appRoo
 use App\AppShell\AppShellStatic;
 use App\Api\ApiKernel;
 use App\Config;
+use App\Drive\DriveKernel;
+use App\Home\HomeKernel;
 use App\Installer\InstallerKernel;
 use App\Installer\WebBase;
+use App\Mail\MailKernel;
+use App\Notes\NotesKernel;
 use App\Paths;
 use App\Server\SabreApp;
 use App\Office\OfficeEntry;
@@ -96,7 +109,17 @@ $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 if (!TrustedHostGate::isAllowed($_SERVER, getenv('WGW_TRUSTED_HOSTS'))) {
     http_response_code(400);
     header('Content-Type: text/plain; charset=utf-8');
-    echo "Bad Request\n";
+    $requestHost = isset($_SERVER['HTTP_HOST']) && is_string($_SERVER['HTTP_HOST']) ? trim($_SERVER['HTTP_HOST']) : '';
+    echo "Bad Request: Host not allowed.\n";
+    if ($requestHost !== '') {
+        echo 'Received Host: '.$requestHost."\n";
+    }
+    $trustedHosts = getenv('WGW_TRUSTED_HOSTS');
+    if (is_string($trustedHosts) && trim($trustedHosts) !== '') {
+        echo 'Configured WGW_TRUSTED_HOSTS: '.trim($trustedHosts)."\n";
+    } else {
+        echo "WGW_TRUSTED_HOSTS is not set. For production, set it to your public hostname (e.g. cloud.example.com).\n";
+    }
     exit;
 }
 
@@ -214,6 +237,22 @@ if ($path === $legacyTalk || $path === $legacyTalk.'/' || str_starts_with($path,
 $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
 $isShellMethod = $method === 'GET' || $method === 'HEAD';
 if ($isShellMethod && AppShellStatic::tryServe($webBase, $path)) {
+    exit;
+}
+
+if (MailKernel::tryRespond($webBase, $path)) {
+    exit;
+}
+
+if (NotesKernel::tryRespond($webBase, $path)) {
+    exit;
+}
+
+if (DriveKernel::tryRespond($webBase, $path)) {
+    exit;
+}
+
+if (HomeKernel::tryRespond($webBase, $path)) {
     exit;
 }
 
