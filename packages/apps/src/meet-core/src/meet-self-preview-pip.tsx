@@ -34,6 +34,8 @@ export function MeetSelfPreviewPiP({
 }: MeetSelfPreviewPiPProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const pipVideoRef = useRef<HTMLVideoElement | null>(null);
+  const mirrorCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const mirrorRafRef = useRef<number | null>(null);
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
   const [dragging, setDragging] = useState(false);
   const [isBrowserPiP, setIsBrowserPiP] = useState(false);
@@ -117,32 +119,64 @@ export function MeetSelfPreviewPiP({
     };
   }, [videoOn]);
 
+  /**
+   * Browser Picture-in-Picture uses raw decoded frames; CSS `scaleX(-1)` on the page video does
+   * not flip system PiP. Mirror by drawing the visible preview into a canvas stream for PiP only.
+   */
   useLayoutEffect(() => {
-    const display = videoRef.current;
-    const pip = pipVideoRef.current;
-    if (!videoOn) {
-      if (pip) pip.srcObject = null;
-      return;
-    }
-    if (!display || !pip) return;
-
-    const sync = () => {
-      pip.srcObject = display.srcObject;
-      if (display.srcObject) {
-        void pip.play().catch(() => {
-          // Autoplay may already be active on the visible preview.
-        });
-      } else {
-        pip.srcObject = null;
+    const stopMirrorLoop = () => {
+      if (mirrorRafRef.current != null) {
+        cancelAnimationFrame(mirrorRafRef.current);
+        mirrorRafRef.current = null;
       }
+      const pip = pipVideoRef.current;
+      if (pip) pip.srcObject = null;
     };
 
-    sync();
-    display.addEventListener("loadeddata", sync);
-    display.addEventListener("loadedmetadata", sync);
+    if (!videoOn) {
+      stopMirrorLoop();
+      return;
+    }
+
+    const display = videoRef.current;
+    const pip = pipVideoRef.current;
+    const canvas = mirrorCanvasRef.current;
+    if (!display || !pip || !canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      stopMirrorLoop();
+      return;
+    }
+
+    const stream = canvas.captureStream(30);
+    pip.srcObject = stream;
+    void pip.play().catch(() => {
+      // Autoplay may already be active once frames reach the canvas stream.
+    });
+
+    const tick = () => {
+      mirrorRafRef.current = requestAnimationFrame(tick);
+      const w = display.videoWidth;
+      const h = display.videoHeight;
+      if (!w || !h) return;
+
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w;
+        canvas.height = h;
+      }
+
+      ctx.save();
+      ctx.translate(w, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(display, 0, 0, w, h);
+      ctx.restore();
+    };
+
+    mirrorRafRef.current = requestAnimationFrame(tick);
+
     return () => {
-      display.removeEventListener("loadeddata", sync);
-      display.removeEventListener("loadedmetadata", sync);
+      stopMirrorLoop();
     };
   }, [videoOn, videoRef]);
 
@@ -228,13 +262,13 @@ export function MeetSelfPreviewPiP({
           <div className="meet-pip__video-wrap">
             <video ref={videoRef} autoPlay muted playsInline className="meet-pip__video" />
           </div>
+          <canvas ref={mirrorCanvasRef} className="meet-pip__mirror-canvas" aria-hidden />
           <video
             ref={pipVideoRef}
             autoPlay
             muted
             playsInline
             className="meet-pip__pip-source"
-            style={{ transform: "scaleX(1)" }}
             aria-hidden
           />
         </>

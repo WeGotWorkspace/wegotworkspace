@@ -477,7 +477,21 @@
   clip-path: inset(50%);
   opacity: 0;
   border: 0;
-  transform: scaleX(1) !important;
+}
+
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-pip__mirror-canvas {
+  @apply pointer-events-none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  opacity: 0;
+  border: 0;
 }
 
 :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-pip__label {
