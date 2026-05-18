@@ -16,6 +16,7 @@ export type MenuItemProps = {
   isDropTarget?: boolean;
   to?: string;
   className?: string;
+  onDragEnter?: (e: React.DragEvent) => void;
   onDragOver?: (e: React.DragEvent) => void;
   onDragLeave?: (e: React.DragEvent) => void;
   onDrop?: (e: React.DragEvent) => void;
@@ -36,6 +37,7 @@ export const MenuItem = React.forwardRef<
     isDropTarget,
     to,
     className,
+    onDragEnter,
     onDragOver,
     onDragLeave,
     onDrop,
@@ -43,7 +45,9 @@ export const MenuItem = React.forwardRef<
   ref,
 ) {
   const hasDescription = Boolean(description);
-  const interactive = Boolean(to || onClick || onDragOver || onDragLeave || onDrop);
+  const interactive = Boolean(
+    to || onClick || onDragEnter || onDragOver || onDragLeave || onDrop,
+  );
 
   const surfaceClass = isDropTarget
     ? "menu-item--surface-drop"
@@ -100,6 +104,7 @@ export const MenuItem = React.forwardRef<
       ref={ref as React.ForwardedRef<HTMLButtonElement>}
       type="button"
       onClick={onClick}
+      onDragEnter={onDragEnter}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}

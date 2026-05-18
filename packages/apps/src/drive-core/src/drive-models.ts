@@ -9,7 +9,6 @@ export type DriveFile = Note & {
   parent: string;
   kind: FileKind;
   size: string;
-  owner: string;
   apiPath?: string;
 };
 

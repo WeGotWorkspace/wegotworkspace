@@ -14,7 +14,6 @@ export const DRIVE_MOCK_FILES: DriveFile[] = [
     parent: "My Drive",
     kind: "folder",
     size: "84 MB",
-    owner: "You",
   },
   {
     id: "f-archives",
@@ -29,7 +28,6 @@ export const DRIVE_MOCK_FILES: DriveFile[] = [
     parent: "My Drive",
     kind: "folder",
     size: "22 MB",
-    owner: "You",
   },
   {
     id: "f1",
@@ -44,7 +42,6 @@ export const DRIVE_MOCK_FILES: DriveFile[] = [
     parent: "My Drive",
     kind: "doc",
     size: "240 KB",
-    owner: "Hana Ito",
   },
   {
     id: "f2",
@@ -59,7 +56,6 @@ export const DRIVE_MOCK_FILES: DriveFile[] = [
     parent: "My Drive",
     kind: "image",
     size: "4.2 MB",
-    owner: "You",
   },
   {
     id: "f6",
@@ -74,7 +70,6 @@ export const DRIVE_MOCK_FILES: DriveFile[] = [
     parent: "My Drive",
     kind: "audio",
     size: "8 MB",
-    owner: "You",
   },
   {
     id: "f-logo",
@@ -89,7 +84,6 @@ export const DRIVE_MOCK_FILES: DriveFile[] = [
     parent: "My Drive/Studio Assets",
     kind: "image",
     size: "1.1 MB",
-    owner: "You",
   },
   {
     id: "f-guide",
@@ -104,7 +98,6 @@ export const DRIVE_MOCK_FILES: DriveFile[] = [
     parent: "My Drive/Studio Assets",
     kind: "doc",
     size: "3.4 MB",
-    owner: "You",
   },
   {
     id: "f4",
@@ -119,7 +112,6 @@ export const DRIVE_MOCK_FILES: DriveFile[] = [
     parent: "Shared with me",
     kind: "video",
     size: "128 MB",
-    owner: "Marcus Whitfield",
   },
   {
     id: "f5",
@@ -134,6 +126,5 @@ export const DRIVE_MOCK_FILES: DriveFile[] = [
     parent: "My Drive/Archives",
     kind: "archive",
     size: "12 MB",
-    owner: "You",
   },
 ];

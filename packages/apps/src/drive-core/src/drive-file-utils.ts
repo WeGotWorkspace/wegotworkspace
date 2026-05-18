@@ -67,7 +67,6 @@ export function driveFileFromEntry(
     parent,
     kind,
     size,
-    owner: "You",
     apiPath,
   };
 }
