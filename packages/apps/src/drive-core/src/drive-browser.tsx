@@ -46,6 +46,7 @@ export function DriveGridView({
   onStar,
   onDownload,
   onRename,
+  onMove,
   onTrash,
 }: {
   items: DriveFile[];
@@ -65,6 +66,7 @@ export function DriveGridView({
   onStar: (id: string) => void;
   onDownload: (file: DriveFile) => void;
   onRename: (file: DriveFile) => void;
+  onMove: (file: DriveFile) => void;
   onTrash: (file: DriveFile) => void;
 }) {
   const folders = items.filter((i) => i.kind === "folder");
@@ -93,6 +95,7 @@ export function DriveGridView({
                 onStar={() => onStar(f.id)}
                 onDownload={onDownload}
                 onRename={() => onRename(f)}
+                onMove={() => onMove(f)}
                 onTrash={() => onTrash(f)}
               />
             ))}
@@ -121,6 +124,7 @@ export function DriveGridView({
                 onStar={() => onStar(f.id)}
                 onDownload={onDownload}
                 onRename={() => onRename(f)}
+                onMove={() => onMove(f)}
                 onTrash={() => onTrash(f)}
               />
             ))}
@@ -178,6 +182,7 @@ function FolderTile({
   onStar,
   onDownload,
   onRename,
+  onMove,
   onTrash,
 }: {
   file: DriveFile;
@@ -195,6 +200,7 @@ function FolderTile({
   onStar: () => void;
   onDownload: (file: DriveFile) => void;
   onRename: () => void;
+  onMove: () => void;
   onTrash: () => void;
 }) {
   const lp = useLongPress(onLongPress);
@@ -238,6 +244,7 @@ function FolderTile({
         onDownload={onDownload}
         onStar={onStar}
         onRename={onRename}
+        onMove={onMove}
         onDelete={onTrash}
       />
     </button>
@@ -259,6 +266,7 @@ function FileTile({
   onStar,
   onDownload,
   onRename,
+  onMove,
   onTrash,
   itemDragHandlers,
 }: {
@@ -277,6 +285,7 @@ function FileTile({
   onStar: () => void;
   onDownload: (file: DriveFile) => void;
   onRename: () => void;
+  onMove: () => void;
   onTrash: () => void;
 }) {
   const lp = useLongPress(onLongPress);
@@ -330,6 +339,7 @@ function FileTile({
           onDownload={onDownload}
           onStar={onStar}
           onRename={onRename}
+          onMove={onMove}
           onDelete={onTrash}
         />
       </div>
@@ -345,6 +355,7 @@ function DriveFileItemActions({
   onDownload,
   onStar,
   onRename,
+  onMove,
   onDelete,
 }: {
   labels: DriveUILabels;
@@ -354,6 +365,7 @@ function DriveFileItemActions({
   onDownload: (file: DriveFile) => void;
   onStar: () => void;
   onRename?: () => void;
+  onMove?: () => void;
   onDelete: () => void;
 }) {
   const actions = buildDriveFileActions(
@@ -363,6 +375,7 @@ function DriveFileItemActions({
       onDownload: () => onDownload(file),
       onStar,
       onRename,
+      onMove,
       onDelete,
     },
   );
@@ -397,6 +410,7 @@ export function DriveListView({
   onStar,
   onDownload,
   onRename,
+  onMove,
   onTrash,
   onLongPress,
 }: {
@@ -416,6 +430,7 @@ export function DriveListView({
   onStar: (id: string) => void;
   onDownload: (file: DriveFile) => void;
   onRename: (file: DriveFile) => void;
+  onMove: (file: DriveFile) => void;
   onTrash: (file: DriveFile) => void;
   onLongPress: (id: string) => void;
 }) {
@@ -510,6 +525,7 @@ export function DriveListView({
                         onDownload={onDownload}
                         onStar={() => onStar(f.id)}
                         onRename={() => onRename(f)}
+                        onMove={() => onMove(f)}
                         onDelete={() => onTrash(f)}
                       />
                     </div>
@@ -545,6 +561,7 @@ export function DriveDetailPanel({
   onDownload,
   onStar,
   onRename,
+  onMove,
   onDelete,
   mobile,
 }: {
@@ -557,6 +574,7 @@ export function DriveDetailPanel({
   onDownload: () => void;
   onStar: () => void;
   onRename: () => void;
+  onMove: () => void;
   onDelete: () => void;
   mobile?: boolean;
 }) {
@@ -572,6 +590,7 @@ export function DriveDetailPanel({
       },
       onStar,
       onRename,
+      onMove,
       onDelete,
     },
   );

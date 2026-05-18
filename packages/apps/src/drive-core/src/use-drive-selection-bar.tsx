@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Download, Star, Trash2 } from "lucide-react";
+import { Download, FolderInput, Star, Trash2 } from "lucide-react";
 import { useAppToast } from "@/hooks/use-app-toast";
 import { useWorkspaceSelectionPresentation } from "@/hooks/use-workspace-list-controller";
 import type { WorkspaceActionButton } from "@/hooks/workspace-list-controller-types";
@@ -18,6 +18,7 @@ type UseDriveSelectionBarArgs = {
   exitSelection: () => void;
   batchStar: () => void;
   requestDeleteSelected: () => void;
+  requestMoveSelected: () => void;
 };
 
 export function useDriveSelectionBar({
@@ -31,6 +32,7 @@ export function useDriveSelectionBar({
   exitSelection,
   batchStar,
   requestDeleteSelected,
+  requestMoveSelected,
 }: UseDriveSelectionBarArgs) {
   const { show, showError } = useAppToast();
 
@@ -46,6 +48,11 @@ export function useDriveSelectionBar({
         label: labels.selectionStar,
         icon: <Star className="size-4" />,
         onClick: batchStar,
+      },
+      {
+        label: labels.selectionMove,
+        icon: <FolderInput className="size-4" />,
+        onClick: requestMoveSelected,
       },
       ...(canDownload
         ? [
@@ -76,10 +83,12 @@ export function useDriveSelectionBar({
     inTrashView,
     labels.selectionDeletePermanently,
     labels.selectionDownload,
+    labels.selectionMove,
     labels.selectionMoveToTrash,
     labels.selectionStar,
     operations,
     requestDeleteSelected,
+    requestMoveSelected,
     selectedIds,
     show,
     showError,
