@@ -55,4 +55,6 @@ export const meetLabels = {
   openSystemPip: "Open system Picture-in-Picture",
   youLabel: "You",
   selfPreview: (name: string) => `${name} (you)`,
+  participantJoined: (name: string) => `${name} joined the call`,
+  participantLeft: (name: string) => `${name} left the call`,
 } as const;

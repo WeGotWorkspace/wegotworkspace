@@ -37,8 +37,8 @@ export function useMeetWorkspaceShell({ data, session, operations }: MeetWorkspa
   }, []);
   const inJoinFlow = Boolean(invitedRoom);
 
-  const [guestInviteState, setGuestInviteState] = useState<"checking" | "active" | "missing">(
-    () => (inJoinFlow && !hasSignedInIdentity ? "checking" : "active"),
+  const [guestInviteState, setGuestInviteState] = useState<"checking" | "active" | "missing">(() =>
+    inJoinFlow && !hasSignedInIdentity ? "checking" : "active",
   );
   const showUserAccount = hasSignedInIdentity && !inJoinFlow;
   const waitingForAdmission = controller.waitingForAdmission && inJoinFlow;
@@ -91,6 +91,19 @@ export function useMeetWorkspaceShell({ data, session, operations }: MeetWorkspa
         setGuestInviteState("missing");
       });
   }, [invitedRoom, isGuestInviteFlow, operations]);
+
+  /** Host may join after the guest tab opened; keep polling until the room becomes active. */
+  useEffect(() => {
+    if (!isGuestInviteFlow || !invitedRoom || !operations || guestInviteState !== "missing") {
+      return;
+    }
+    const id = window.setInterval(() => {
+      void operations.roomStatus({ room: invitedRoom }).then((result) => {
+        if (result.active) setGuestInviteState("active");
+      });
+    }, 2500);
+    return () => window.clearInterval(id);
+  }, [guestInviteState, invitedRoom, isGuestInviteFlow, operations]);
 
   useEffect(() => {
     if (showMissingInviteScreen || showInviteCheckingScreen) return;

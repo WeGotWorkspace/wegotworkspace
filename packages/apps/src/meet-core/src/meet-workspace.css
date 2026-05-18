@@ -389,6 +389,33 @@
   @apply aspect-video;
 }
 
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-peer-tile__media {
+  @apply relative h-full w-full;
+}
+
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-peer-tile__fill {
+  @apply absolute inset-0 z-[1] flex items-center justify-center;
+  background-color: var(--meet-panel);
+}
+
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-peer-tile__stream {
+  @apply absolute inset-0;
+}
+
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-peer-tile__stream--hidden {
+  @apply pointer-events-none opacity-0;
+}
+
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-peer-tile .meet-stream-video {
+  transform: scaleX(-1) !important;
+}
+
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-peer-tile__name--mic-muted {
+  outline: 1px solid rgba(248, 113, 113, 0.95);
+  outline-offset: 0;
+  background-color: color-mix(in oklab, rgb(127 29 29) 55%, rgb(0 0 0));
+}
+
 :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-peer-tile__name {
   @apply absolute bottom-2 left-2 flex items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-1 text-[11px] backdrop-blur;
 }
@@ -430,11 +457,27 @@
 
 :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-pip__video-wrap {
   @apply h-full w-full;
-  transform: scaleX(-1);
 }
 
 :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-pip__video {
   @apply h-full w-full object-cover;
+  transform: scaleX(-1);
+}
+
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-pip__pip-source {
+  @apply pointer-events-none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  opacity: 0;
+  border: 0;
+  transform: scaleX(1) !important;
 }
 
 :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-pip__label {

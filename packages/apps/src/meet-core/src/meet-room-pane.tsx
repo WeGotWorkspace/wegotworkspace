@@ -104,6 +104,8 @@ export function MeetRoomPane({
                       name={peer.name}
                       stream={peer.stream}
                       compact
+                      remoteMedia={peer.remoteMedia}
+                      disclosedMedia={peer.disclosedMedia}
                       onMuteSoon={onMuteSoon}
                     />
                   ))}
@@ -116,12 +118,16 @@ export function MeetRoomPane({
               )}
             </div>
           ) : controller.peers.length > 0 ? (
-            <div className={cn("meet-workspace__peer-grid", peerGridClass(controller.peers.length))}>
+            <div
+              className={cn("meet-workspace__peer-grid", peerGridClass(controller.peers.length))}
+            >
               {controller.peers.map((peer) => (
                 <MeetPeerTile
                   key={peer.id}
                   name={peer.name}
                   stream={peer.stream}
+                  remoteMedia={peer.remoteMedia}
+                  disclosedMedia={peer.disclosedMedia}
                   onMuteSoon={onMuteSoon}
                 />
               ))}
