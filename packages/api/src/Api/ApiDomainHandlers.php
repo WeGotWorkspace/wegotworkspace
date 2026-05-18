@@ -1272,7 +1272,7 @@ final class ApiDomainHandlers
                     continue;
                 }
                 foreach ($files as $file) {
-                    if (!str_ends_with(strtolower($file), '.md')) {
+                    if (!self::isNoteMarkdownFilename($file)) {
                         continue;
                     }
                     $id = substr($file, 0, -3);
@@ -1496,6 +1496,19 @@ final class ApiDomainHandlers
         return null;
     }
 
+    private static function isNoteMarkdownFilename(string $filename): bool
+    {
+        if (!str_ends_with(strtolower($filename), '.md')) {
+            return false;
+        }
+        // macOS AppleDouble/resource-fork sidecars (e.g. "._note.md") are not notes.
+        if (str_starts_with($filename, '._')) {
+            return false;
+        }
+
+        return true;
+    }
+
     private static function moveMarkdownFiles(string $sourceDir, string $targetDir): void
     {
         $entries = scandir($sourceDir);
@@ -1507,7 +1520,7 @@ final class ApiDomainHandlers
                 continue;
             }
             $from = $sourceDir.'/'.$entry;
-            if (!is_file($from) || !str_ends_with(strtolower($entry), '.md')) {
+            if (!is_file($from) || !self::isNoteMarkdownFilename($entry)) {
                 continue;
             }
             $to = $targetDir.'/'.$entry;
@@ -1555,7 +1568,7 @@ final class ApiDomainHandlers
                 continue;
             }
             $path = $dir.'/'.$entry;
-            if (is_file($path) && str_ends_with(strtolower($entry), '.md')) {
+            if (is_file($path) && self::isNoteMarkdownFilename($entry)) {
                 @unlink($path);
             }
         }
