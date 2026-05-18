@@ -29,6 +29,8 @@ export type DriveUploadProgress = {
 export type DriveAPIOperations = {
   refreshState: (opts?: { signal?: AbortSignal }) => Promise<DriveUIData>;
   changeDir: (to: string, opts?: { signal?: AbortSignal }) => Promise<DriveUIData>;
+  /** List a directory without updating the session working directory. */
+  listDirectory: (at: string, opts?: { signal?: AbortSignal }) => Promise<DriveUIData>;
   search: (
     query: string,
     opts?: { limit?: number; signal?: AbortSignal },

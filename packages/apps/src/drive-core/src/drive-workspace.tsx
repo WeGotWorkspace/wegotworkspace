@@ -24,10 +24,19 @@ export function DriveWorkspace({
   session,
   operations,
   listLoading = false,
+  view,
+  onViewChange,
   onLogout,
   className,
 }: DriveWorkspaceProps) {
-  const controller = useDriveController({ data, session, operations, listLoading });
+  const controller = useDriveController({
+    data,
+    session,
+    operations,
+    listLoading,
+    view,
+    onViewChange,
+  });
   const { primarySidebarItems, groupSidebarItems } = useDriveSidebarModel({
     labels: controller.labels,
     view: controller.view,

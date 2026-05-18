@@ -12,7 +12,7 @@ export function isDriveSharedGroupPath(path: string): boolean {
 
 export function buildDriveFolderBreadcrumbs(
   viewPath: string,
-  labels: Pick<DriveUILabels, "sidebarSharedDrives">,
+  labels: Pick<DriveUILabels, "sidebarMyDrive" | "sidebarSharedDrives">,
 ): PathBreadcrumbItem[] {
   if (viewPath === GROUPS_ROOT) {
     return [{ label: labels.sidebarSharedDrives, path: null }];
@@ -20,16 +20,28 @@ export function buildDriveFolderBreadcrumbs(
 
   if (viewPath.startsWith(`${GROUPS_ROOT}/`)) {
     const relativeParts = viewPath.slice(`${GROUPS_ROOT}/`.length).split("/").filter(Boolean);
+    return relativeParts.map((segment, index) => ({
+      label: segment,
+      path: `${GROUPS_ROOT}/${relativeParts.slice(0, index + 1).join("/")}`,
+    }));
+  }
+
+  if (viewPath === "My Drive") {
+    return [{ label: labels.sidebarMyDrive, path: "My Drive" }];
+  }
+
+  if (viewPath.startsWith("My Drive/")) {
+    const relativeParts = viewPath.slice("My Drive/".length).split("/").filter(Boolean);
     return [
-      { label: labels.sidebarSharedDrives, path: GROUPS_ROOT },
+      { label: labels.sidebarMyDrive, path: "My Drive" },
       ...relativeParts.map((segment, index) => ({
         label: segment,
-        path: `${GROUPS_ROOT}/${relativeParts.slice(0, index + 1).join("/")}`,
+        path: `My Drive/${relativeParts.slice(0, index + 1).join("/")}`,
       })),
     ];
   }
 
-  const parts = viewPath.split("/");
+  const parts = viewPath.split("/").filter(Boolean);
   return parts.map((segment, index) => ({
     label: segment,
     path: parts.slice(0, index + 1).join("/"),

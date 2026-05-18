@@ -1,6 +1,29 @@
 /** Sidebar / UI virtual path for the user trash location. */
 export const DRIVE_TRASH_UI_PATH = "Trash";
 
+const GROUPS_UI_ROOT = "Groups";
+const MY_DRIVE_UI_ROOT = "My Drive";
+const SHARED_WITH_ME_UI_ROOT = "Shared with me";
+
+/** Ensure folder UI paths use a known top-level prefix (relative paths default to My Drive). */
+export function normalizeDriveFolderUiPath(path: string): string {
+  const trimmed = path.trim().replace(/\/+$/, "");
+  if (!trimmed) return MY_DRIVE_UI_ROOT;
+  if (
+    trimmed === MY_DRIVE_UI_ROOT ||
+    trimmed.startsWith(`${MY_DRIVE_UI_ROOT}/`) ||
+    trimmed === GROUPS_UI_ROOT ||
+    trimmed.startsWith(`${GROUPS_UI_ROOT}/`) ||
+    trimmed === DRIVE_TRASH_UI_PATH ||
+    trimmed.startsWith(`${DRIVE_TRASH_UI_PATH}/`) ||
+    trimmed === SHARED_WITH_ME_UI_ROOT ||
+    trimmed.startsWith(`${SHARED_WITH_ME_UI_ROOT}/`)
+  ) {
+    return trimmed;
+  }
+  return `${MY_DRIVE_UI_ROOT}/${trimmed}`;
+}
+
 /** Hidden directory name under the user drive root (filtered from normal listings). */
 export const DRIVE_TRASH_DIR_NAME = ".Trash";
 
