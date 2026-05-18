@@ -7,6 +7,8 @@ alwaysApply: true
 
 When the user says **greenfield**, **new API**, or work under `packages/api/`:
 
+**Plan:** `packages/api/docs/greenfield-plan.md` · **Guard:** `composer --working-dir packages/api greenfield:guard`
+
 ## Definition
 
 Build a **new Laravel application** that matches the **HTTP contract** (paths, status codes, JSON shapes in `packages/api/openapi/openapi.json`).  
