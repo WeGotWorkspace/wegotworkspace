@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'wgw.auth' => \App\Http\Middleware\AuthenticateWgwApi::class,
+            'wgw.role' => \App\Http\Middleware\RequireWgwRole::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

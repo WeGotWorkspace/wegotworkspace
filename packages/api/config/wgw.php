@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 return [
+    'data_dir' => env('WGW_DATA_DIR_OVERRIDE'),
     'auth_realm' => env('WGW_AUTH_REALM', 'SabreDAV'),
 
     'jwt' => [
