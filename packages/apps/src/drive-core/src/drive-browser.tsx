@@ -1,6 +1,6 @@
 import { useRef } from "react";
-import { toast } from "sonner";
 import { Star, Download, Folder } from "lucide-react";
+import { useAppToast } from "@/hooks/use-app-toast";
 import type { DriveFile, FileKind } from "@/drive-core/src/drive-models";
 import { kindIcon } from "@/drive-core/src/drive-icons";
 import type { MenuItemProps } from "@/menu-item/src/menu-item";
@@ -130,9 +130,7 @@ export function DriveGridView({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h3
-        className="drive-browser-section-title"
-      >
+      <h3 className="drive-item-label drive-browser-section-title">
         {title}
       </h3>
       {children}
@@ -430,19 +428,11 @@ export function DriveListView({
       <table className="drive-list-table">
         <thead>
           <tr className="drive-list-head">
-            <th className="drive-list-col-name font-medium uppercase tracking-[0.14em] text-[10px] py-2.5 px-3">
-              Name
-            </th>
-            <th className="font-medium uppercase tracking-[0.14em] text-[10px] py-2.5 px-3 hidden md:table-cell">
-              Owner
-            </th>
-            <th className="font-medium uppercase tracking-[0.14em] text-[10px] py-2.5 px-3 hidden sm:table-cell">
-              Modified
-            </th>
-            <th className="font-medium uppercase tracking-[0.14em] text-[10px] py-2.5 px-3 hidden lg:table-cell">
-              Kind
-            </th>
-            <th className="drive-list-col-size font-medium uppercase tracking-[0.14em] text-[10px] py-2.5 px-3 text-right hidden sm:table-cell">
+            <th className="drive-list-col-name drive-list-head__cell">Name</th>
+            <th className="drive-list-head__cell hidden md:table-cell">Owner</th>
+            <th className="drive-list-head__cell hidden sm:table-cell">Modified</th>
+            <th className="drive-list-head__cell hidden lg:table-cell">Kind</th>
+            <th className="drive-list-col-size drive-list-head__cell text-right hidden sm:table-cell">
               Size
             </th>
           </tr>
@@ -578,13 +568,15 @@ export function DriveDetailPanel({
   onDelete: () => void;
   mobile?: boolean;
 }) {
+  const { show } = useAppToast();
+
   const actions = buildDriveFileActions(
     labels,
     { isStarred, inTrash, canDownload: file.kind !== "folder" },
     {
       onDownload: () => {
         onDownload();
-        toast("Download started", { icon: <Download className="size-4" /> });
+        show("Download started", { icon: <Download className="size-4" /> });
       },
       onStar,
       onRename,

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Download, Star, Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import { useAppToast } from "@/hooks/use-app-toast";
 import { useWorkspaceSelectionPresentation } from "@/hooks/use-workspace-list-controller";
 import type { WorkspaceActionButton } from "@/hooks/workspace-list-controller-types";
 import type { DriveUILabels } from "@/drive-core/src/drive-labels";
@@ -32,6 +32,8 @@ export function useDriveSelectionBar({
   batchStar,
   requestDeleteSelected,
 }: UseDriveSelectionBarArgs) {
+  const { show, showError } = useAppToast();
+
   const selectionActionButtons = useMemo<WorkspaceActionButton[]>(
     () => [
       {
@@ -49,10 +51,10 @@ export function useDriveSelectionBar({
           if (operations && first?.apiPath) {
             void operations.downloadFile(first.apiPath).catch((error: unknown) => {
               const message = error instanceof Error ? error.message : String(error);
-              toast.error(message);
+              showError(message);
             });
           }
-          toast("Download started", { icon: <Download className="size-4" /> });
+          show("Download started", { icon: <Download className="size-4" /> });
         },
       },
       {
@@ -72,6 +74,8 @@ export function useDriveSelectionBar({
       operations,
       requestDeleteSelected,
       selectedIds,
+      show,
+      showError,
     ],
   );
 

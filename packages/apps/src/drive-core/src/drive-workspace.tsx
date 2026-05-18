@@ -7,6 +7,7 @@ import {
 } from "@/workspace-shell/src/workspace-app-layout";
 import { workspaceUserInitials, type WorkspaceSession } from "@/lib/workspace/workspace-session";
 import { ViewHeader } from "@/view-header/src/view-header";
+import { DriveSearch } from "@/drive-core/src/drive-search";
 import { ViewModeToggle } from "@/view-mode-toggle/src/view-mode-toggle";
 import { UploadProgress } from "@/upload-progress/src/upload-progress";
 import { cn } from "@/lib/utils";
@@ -128,6 +129,9 @@ function DriveMainHeader({ controller }: { controller: DriveController }) {
     viewMode,
     setViewMode,
     uploadProgress,
+    searchQuery,
+    setSearchQuery,
+    searchInputRef,
   } = controller;
 
   return (
@@ -142,12 +146,21 @@ function DriveMainHeader({ controller }: { controller: DriveController }) {
             : `${visibleItems.length} Items`
         }
         actions={
-          <ViewModeToggle
-            value={viewMode}
-            onChange={setViewMode}
-            gridLabel={labels.gridView}
-            listLabel={labels.listView}
-          />
+          <>
+            <DriveSearch
+              className="drive-header-search"
+              placeholder={labels.searchPlaceholder}
+              value={searchQuery}
+              onSearch={setSearchQuery}
+              inputRef={searchInputRef}
+            />
+            <ViewModeToggle
+              value={viewMode}
+              onChange={setViewMode}
+              gridLabel={labels.gridView}
+              listLabel={labels.listView}
+            />
+          </>
         }
       />
       {uploadProgress ? (
