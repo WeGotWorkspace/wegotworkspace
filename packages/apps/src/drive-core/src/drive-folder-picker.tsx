@@ -95,17 +95,24 @@ function rowsAtBrowsePath(
 ): PickerRow[] {
   if (browsePath === DRIVE_FOLDER_PICKER_ROOT) {
     const roots: PickerRow[] = [
-      { kind: "root", path: "My Drive", title: labels.sidebarMyDrive, selectable: true },
+      {
+        kind: "root",
+        path: "My Drive",
+        title: labels.sidebarMyDrive,
+        selectable:
+          canMoveDriveItemsToFolder(moveContextFiles, moveIds, "My Drive").length > 0,
+      },
       ...groupPaths.map((path) => ({
         kind: "root" as const,
         path,
         title: sharedDriveRootLabel(path, labels),
-        selectable: true,
+        selectable:
+          canMoveDriveItemsToFolder(moveContextFiles, moveIds, path).length > 0,
       })),
     ];
-    return roots.filter(
-      (row) => canMoveDriveItemsToFolder(moveContextFiles, moveIds, row.path).length > 0,
-    );
+    // Always list roots so users can open "My Drive" or shared drives to pick a subfolder,
+    // even when the root itself is not a valid destination (e.g. items already in My Drive).
+    return roots;
   }
 
   if (browsePath === GROUPS_ROOT) {
@@ -114,11 +121,9 @@ function rowsAtBrowsePath(
         kind: "root" as const,
         path,
         title: sharedDriveRootLabel(path, labels),
-        selectable: true,
+        selectable:
+          canMoveDriveItemsToFolder(moveContextFiles, moveIds, path).length > 0,
       }))
-      .filter(
-        (row) => canMoveDriveItemsToFolder(moveContextFiles, moveIds, row.path).length > 0,
-      )
       .sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: "base" }));
   }
 
