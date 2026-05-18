@@ -1,0 +1,75 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Storage;
+
+/**
+ * Virtual drive paths (/users/…, /groups/…) mapped to Flysystem keys under wgw_files.
+ */
+final class StoragePaths
+{
+    public function normalizeVirtualPath(string $path): string
+    {
+        $path = str_replace('\\', '/', trim($path));
+        if ($path === '') {
+            return '/';
+        }
+        if ($path[0] !== '/') {
+            $path = '/'.$path;
+        }
+        $parts = [];
+        foreach (explode('/', $path) as $part) {
+            if ($part === '' || $part === '.') {
+                continue;
+            }
+            if ($part === '..') {
+                return '/';
+            }
+            $parts[] = $part;
+        }
+
+        return $parts === [] ? '/' : '/'.implode('/', $parts);
+    }
+
+    public function virtualToStorageKey(string $virtualPath): string
+    {
+        return ltrim($this->normalizeVirtualPath($virtualPath), '/');
+    }
+
+    public function noteStorageKey(string $username, string $relativePath): string
+    {
+        $relativePath = ltrim(str_replace('\\', '/', $relativePath), '/');
+
+        return 'users/'.$username.'/.notes/'.$relativePath;
+    }
+
+    public function isPathAllowed(string $path, string $username, array $groupSlugs, bool $forWrite): bool
+    {
+        $normalized = $this->normalizeVirtualPath($path);
+        if ($normalized === '/') {
+            return true;
+        }
+
+        $segments = explode('/', ltrim($normalized, '/'));
+        $first = $segments[0] ?? '';
+        if ($first === 'users') {
+            if (count($segments) === 1) {
+                return ! $forWrite;
+            }
+
+            return strcasecmp((string) ($segments[1] ?? ''), $username) === 0;
+        }
+
+        if ($first === 'groups') {
+            if (count($segments) === 1) {
+                return ! $forWrite;
+            }
+            $slug = (string) ($segments[1] ?? '');
+
+            return in_array($slug, $groupSlugs, true);
+        }
+
+        return false;
+    }
+}

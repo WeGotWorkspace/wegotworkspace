@@ -21,13 +21,13 @@ Each phase ends with **tests green** + **`composer greenfield:guard`**.
 
 ### Phase 0 — Scaffold
 
-- [ ] Fresh Laravel app in `packages/api` (`artisan`, `bootstrap/`, `app/`, `routes/api.php`, `config/`)
-- [ ] Keep `openapi/`, `resources/sql/` (installer schema reference), `docs/`
+- [x] Fresh Laravel app in `packages/api` (`artisan`, `bootstrap/`, `app/`, `routes/api.php`, `config/`)
+- [x] Keep `openapi/`, `src/sql/` (installer schema reference), `docs/`
 - [ ] Do **not** copy `src/Api`, `MailApi`, `*Kernel` into `app/`
-- [ ] `config/filesystems.php`: disks `wgw_data`, `wgw_files`, `wgw_notes`
-- [ ] `app/Storage/WgwStorage.php` + path/ACL helper (`StoragePaths` or `DrivePathPolicy`)
-- [ ] Service provider: map `wgw-config.php` → Laravel config + disk roots
-- [ ] `tests/` with `Storage::fake()` smoke test
+- [x] `config/filesystems.php`: disks `wgw_data`, `wgw_files`, `wgw_notes`
+- [x] `app/Storage/WgwStorage.php` + path/ACL helper (`StoragePaths`)
+- [x] Service provider: map `wgw-config.php` → Laravel config + disk roots
+- [x] `tests/` with `Storage::fake()` smoke test
 
 ### Phase 1 — Database layer
 
