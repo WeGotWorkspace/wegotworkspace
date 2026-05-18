@@ -19,7 +19,6 @@ const FALLBACK_FILE: DriveFile = {
   parent: "My Drive",
   kind: "doc",
   size: "1 KB",
-  owner: "You",
 };
 
 export function getDriveStoryFilesInMyDrive(): DriveFile[] {
@@ -47,7 +46,10 @@ export type DriveBrowserStoryProps = {
   selectionMode: boolean;
   isTouch: boolean;
   isItemDragging: (id: string) => boolean;
-  itemDragHandlers: (id: string) => { onDragStart: () => void; onDragEnd: () => void };
+  itemDragHandlers: (id: string) => {
+    onDragStart: (e: React.DragEvent) => void;
+    onDragEnd: () => void;
+  };
   folderDropZoneProps: (parentPath: string) => FolderDropZoneProps;
   onSelect: (id: string, e: MouseEvent) => void;
   onOpen: (file: DriveFile) => void;

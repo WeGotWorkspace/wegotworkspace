@@ -5,6 +5,7 @@ import { CollectionEmptyState } from "@/collection-empty-state/src/collection-em
 import { FileDropOverlay } from "@/file-drop-overlay/src/file-drop-overlay";
 import { PathBreadcrumb } from "@/path-breadcrumb/src/path-breadcrumb";
 import { DriveSearch } from "@/drive-core/src/drive-search";
+import { UploadProgress } from "@/upload-progress/src/upload-progress";
 import { DriveDetailPanel, DriveGridView, DriveListView } from "@/drive-core/src/drive-browser";
 import type { DriveFile } from "@/drive-core/src/drive-models";
 import type { DriveUILabels } from "@/drive-core/src/drive-labels";
@@ -54,6 +55,7 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
     searchQuery,
     setSearchQuery,
     searchInputRef,
+    uploadProgress,
   } = controller;
 
   const { show, showError } = useAppToast();
@@ -197,6 +199,17 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
             value={searchQuery}
             onSearch={setSearchQuery}
             inputRef={searchInputRef}
+          />
+        </div>
+      ) : null}
+
+      {uploadProgress ? (
+        <div className="drive-floating-upload">
+          <UploadProgress
+            label={uploadProgress.label}
+            percent={uploadProgress.percent}
+            detail={uploadProgress.detail}
+            done={uploadProgress.done}
           />
         </div>
       ) : null}

@@ -1,3 +1,29 @@
+/** Sidebar / UI virtual path for the user trash location. */
+export const DRIVE_TRASH_UI_PATH = "Trash";
+
+/** Hidden directory name under the user drive root (filtered from normal listings). */
+export const DRIVE_TRASH_DIR_NAME = ".Trash";
+
+export function driveUserTrashApiPath(username: string): string {
+  return normalizeApiVirtualPath(`/users/${username}/${DRIVE_TRASH_DIR_NAME}`);
+}
+
+export function isDriveTrashApiPath(path: string, username: string): boolean {
+  const normalized = normalizeApiVirtualPath(path);
+  const trashRoot = driveUserTrashApiPath(username);
+  const legacyTrashRoot = normalizeApiVirtualPath(`/users/${username}/Trash`);
+  return (
+    normalized === trashRoot ||
+    normalized.startsWith(`${trashRoot}/`) ||
+    normalized === legacyTrashRoot ||
+    normalized.startsWith(`${legacyTrashRoot}/`)
+  );
+}
+
+export function isDriveTrashFolderName(name: string): boolean {
+  return name === DRIVE_TRASH_DIR_NAME || name === "Trash";
+}
+
 export function normalizeApiVirtualPath(path: string): string {
   const trimmed = path.trim();
   if (!trimmed || trimmed === "/") return "/";
@@ -16,6 +42,17 @@ export function uiPathFromApiPath(path: string, username: string): string {
   }
   if (normalized === userRoot) {
     return "My Drive";
+  }
+  const trashRoot = driveUserTrashApiPath(username);
+  const legacyTrashRoot = `${userRoot}/Trash`;
+  if (normalized === trashRoot || normalized === legacyTrashRoot) {
+    return DRIVE_TRASH_UI_PATH;
+  }
+  if (normalized.startsWith(`${trashRoot}/`)) {
+    return `${DRIVE_TRASH_UI_PATH}${normalized.slice(trashRoot.length)}`;
+  }
+  if (normalized.startsWith(`${legacyTrashRoot}/`)) {
+    return `${DRIVE_TRASH_UI_PATH}${normalized.slice(legacyTrashRoot.length)}`;
   }
   if (normalized.startsWith(`${userRoot}/`)) {
     return `My Drive${normalized.slice(userRoot.length)}`;
@@ -44,8 +81,11 @@ export function apiPathFromUiPath(path: string, username: string, groupRoots: Se
     }
     return `${userRoot}/${relative}`;
   }
-  if (normalized === "Trash" || normalized.startsWith("Trash/")) {
-    return userRoot;
+  if (normalized === DRIVE_TRASH_UI_PATH) {
+    return driveUserTrashApiPath(username);
+  }
+  if (normalized.startsWith(`${DRIVE_TRASH_UI_PATH}/`)) {
+    return `${driveUserTrashApiPath(username)}/${normalized.slice(`${DRIVE_TRASH_UI_PATH}/`.length)}`;
   }
   return userRoot;
 }

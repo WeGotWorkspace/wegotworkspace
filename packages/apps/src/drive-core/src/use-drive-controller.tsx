@@ -1,8 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Star, StarOff, Trash2, Upload, FolderInput, FolderPlus, Pencil } from "lucide-react";
+import { Star, StarOff, Upload, FolderPlus, Pencil } from "lucide-react";
 import { useAppToast } from "@/hooks/use-app-toast";
+import { useEntityBatchActions } from "@/hooks/use-entity-batch-actions";
 import { useIsTouch } from "@/hooks/use-is-touch";
+import { useQueuedMutation } from "@/hooks/use-queued-mutation";
 import { useSidebarListDrag } from "@/hooks/use-sidebar-list-drag";
+import { canMoveDriveItemsToFolder } from "@/drive-core/src/drive-item-path";
+import { useDriveBatchActions } from "@/drive-core/src/use-drive-batch-actions";
 import { driveLabels } from "@/drive-core/src/drive-labels";
 import { useDriveSelectionBar } from "@/drive-core/src/use-drive-selection-bar";
 import { wgwEnsureOfficeSession } from "@/lib/api/wgw/http";
@@ -11,8 +15,12 @@ import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
 import { DRIVE_MOCK_FILES } from "@/drive-core/src/drive-mock-files";
 import type { DriveFile, FileKind, ViewKey } from "@/drive-core/src/drive-models";
 import { OFFICE_EDITOR_EXTENSIONS } from "@/drive-core/src/drive-models";
+import { resolveDriveFileApiPath } from "@/drive-core/src/drive-batch-utils";
 import {
   apiPathFromUiPath,
+  DRIVE_TRASH_UI_PATH,
+  isDriveTrashApiPath,
+  isDriveTrashFolderName,
   normalizeApiVirtualPath,
   uiPathFromApiPath,
 } from "@/drive-core/src/drive-path-utils";
@@ -30,8 +38,14 @@ export type UseDriveControllerArgs = {
   listLoading?: boolean;
 };
 
+const WRITE_QUEUE_DELAY_MS = 2500;
+
 export function useDriveController({ data, session, operations, listLoading = false }: UseDriveControllerArgs) {
   const { show, showError } = useAppToast();
+  const showMutationError = useCallback(
+    (fallback = "Could not sync this change. Please try again.") => showError(fallback),
+    [showError],
+  );
 
   const launchOfficeEditor = useCallback((params: URLSearchParams) => {
     const target = `/office/editor?${params.toString()}`;
@@ -199,9 +213,10 @@ export function useDriveController({ data, session, operations, listLoading = fa
     reloadStarredFromServer();
   }, [operations, currentUsername, reloadStarredFromServer]);
 
-  const inTrashView = view.type === "folder" && view.path === "Trash";
+  const inTrashView = view.type === "folder" && view.path === DRIVE_TRASH_UI_PATH;
 
-  const isUnderTrash = (parent: string) => parent === "Trash" || parent.startsWith("Trash/");
+  const isUnderTrash = (parent: string) =>
+    parent === DRIVE_TRASH_UI_PATH || parent.startsWith(`${DRIVE_TRASH_UI_PATH}/`);
 
   const visibleItems = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -216,8 +231,10 @@ export function useDriveController({ data, session, operations, listLoading = fa
           !(
             view.path === "My Drive" &&
             f.kind === "folder" &&
-            typeof f.apiPath === "string" &&
-            f.apiPath.startsWith("/groups/")
+            (isDriveTrashFolderName(f.title) ||
+              (typeof f.apiPath === "string" &&
+                (isDriveTrashApiPath(f.apiPath, currentUsername) ||
+                  f.apiPath.startsWith("/groups/"))))
           );
       else if (view.type === "recent") inView = !isUnderTrash(f.parent) && f.kind !== "folder";
       else if (view.type === "starred") {
@@ -227,7 +244,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
         inView = f.parent === "Shared with me" || f.parent.startsWith("Shared with me/");
       if (!inView) return false;
       if (!q) return true;
-      const hay = `${f.title} ${f.excerpt} ${f.owner}`.toLowerCase();
+      const hay = `${f.title} ${f.excerpt}`.toLowerCase();
       return hay.includes(q);
     });
     const starredFiltered =
@@ -235,7 +252,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
         ? starredSourceFiles.filter((f) => {
             if (!starred[f.id] || isUnderTrash(f.parent)) return false;
             if (!q) return true;
-            const hay = `${f.title} ${f.excerpt} ${f.owner}`.toLowerCase();
+            const hay = `${f.title} ${f.excerpt}`.toLowerCase();
             return hay.includes(q);
           })
         : null;
@@ -247,6 +264,39 @@ export function useDriveController({ data, session, operations, listLoading = fa
       return 0;
     });
   }, [files, liveSearchResults, operations, searchQuery, starred, starredItems, view]);
+
+  const { beginOptimisticUpdate } = useEntityBatchActions<DriveFile>({
+    items: files,
+    setItems: setFiles,
+    visibleIds: visibleItems.map((file) => file.id),
+    activeId: activeId ?? "",
+    setActiveId,
+  });
+  const { queueMutation } = useQueuedMutation({
+    delayMs: WRITE_QUEUE_DELAY_MS,
+    onMutationError: showMutationError,
+  });
+  const { moveToTrash, reallyDelete, batchStar, moveToFolder } = useDriveBatchActions({
+    files,
+    setFiles,
+    selectedIds,
+    setSelectedIds,
+    selectionMode,
+    setSelectionMode,
+    activeId,
+    setActiveId,
+    setDetailOpen,
+    starred,
+    setStarred,
+    currentUsername,
+    groupRootNames,
+    operations,
+    queueMutation,
+    beginOptimisticUpdate,
+    reloadStarredFromServer,
+    setView,
+    viewType: view.type,
+  });
 
   const breadcrumbs = useMemo(() => {
     if (view.type !== "folder") {
@@ -473,9 +523,11 @@ export function useDriveController({ data, session, operations, listLoading = fa
 
   const toggleStar = (id: string) => {
     const target = fileById(id);
-    let nextValue = false;
-    setStarred((s) => {
-      nextValue = !s[id];
+    if (!target) return;
+    const beforeStarred = !!starred[id];
+    const nextValue = !beforeStarred;
+    setStarred((s) => ({ ...s, [id]: nextValue }));
+    if (!operations) {
       show(nextValue ? "Starred" : "Unstarred", {
         icon: nextValue ? (
           <Star className="size-4" fill="currentColor" />
@@ -483,112 +535,48 @@ export function useDriveController({ data, session, operations, listLoading = fa
           <StarOff className="size-4" />
         ),
       });
-      return { ...s, [id]: nextValue };
-    });
-    if (!operations || !target?.apiPath) return;
-    void operations
-      .setStar({ path: target.apiPath, starred: nextValue })
-      .then(() => {
+      return;
+    }
+    const apiPath = resolveDriveFileApiPath(target, currentUsername, groupRootNames);
+    queueMutation({
+      key: `drive:star:${id}`,
+      toastMessage: nextValue ? "Starred" : "Unstarred",
+      icon: nextValue ? (
+        <Star className="size-4" fill="currentColor" />
+      ) : (
+        <StarOff className="size-4" />
+      ),
+      execute: async (signal) => {
+        await operations.setStar({ path: apiPath, starred: nextValue }, { signal });
         if (view.type === "starred") reloadStarredFromServer();
-      })
-      .catch((error: unknown) => {
-        setStarred((s) => ({ ...s, [id]: !nextValue }));
-        reloadStarredFromServer();
-        const message = error instanceof Error ? error.message : String(error);
-        showError(message);
-      });
-  };
-  const batchStar = () => {
-    const nextValue = !selectedIds.every((id) => starred[id]);
-    setStarred((s) => {
-      const next = { ...s };
-      selectedIds.forEach((id) => (next[id] = nextValue));
-      show(`${nextValue ? "Starred" : "Unstarred"} ${selectedIds.length}`, {
-        icon: nextValue ? (
-          <Star className="size-4" fill="currentColor" />
-        ) : (
-          <StarOff className="size-4" />
-        ),
-      });
-      return next;
+      },
+      undo: () => {
+        setStarred((s) => ({ ...s, [id]: beforeStarred }));
+        if (view.type === "starred") reloadStarredFromServer();
+      },
+      onError: () => {
+        setStarred((s) => ({ ...s, [id]: beforeStarred }));
+        if (view.type === "starred") reloadStarredFromServer();
+      },
+      undoToastMessage: "Star change undone.",
     });
-    if (!operations) return;
-    const targets = selectedIds
-      .map((id) => fileById(id))
-      .filter((file): file is DriveFile => !!file?.apiPath);
-    if (targets.length === 0) return;
-    void (async () => {
-      let failed = false;
-      for (const file of targets) {
-        try {
-          await operations.setStar({ path: file.apiPath!, starred: nextValue });
-        } catch {
-          failed = true;
-        }
-      }
-      if (failed) {
-        reloadStarredFromServer();
-        showError("Could not sync one or more star changes.");
-      } else if (view.type === "starred") {
-        reloadStarredFromServer();
-      }
-    })();
   };
-  const moveToTrash = (ids: string[]) => {
-    setFiles((p) => p.map((f) => (ids.includes(f.id) ? { ...f, parent: "Trash" } : f)));
-    show(`Moved ${ids.length} to Trash`, { icon: <Trash2 className="size-4" /> });
-  };
-  const moveToFolder = useCallback(
-    (ids: string[], parent: string) => {
-      if (ids.length === 0) return;
-      setFiles((p) => p.map((f) => (ids.includes(f.id) ? { ...f, parent } : f)));
-      show(`Moved ${ids.length} to ${parent.split("/").pop()}`, {
-        icon: <FolderInput className="size-4" />,
-      });
-      if (operations) {
-        const destination = apiPathFromUiPath(parent, currentUsername, groupRootNames);
-        const items = files.filter((file) => ids.includes(file.id));
-        if (items.length > 0) {
-          void (async () => {
-            try {
-              let nextData: DriveUIData | null = null;
-              for (const file of items) {
-                const sourcePath =
-                  file.apiPath ??
-                  normalizeApiVirtualPath(
-                    `${apiPathFromUiPath(file.parent, currentUsername, groupRootNames)}/${file.title}`,
-                  );
-                nextData = await operations.renameItem({
-                  destination,
-                  from: sourcePath,
-                  to: file.title,
-                });
-              }
-              if (nextData) {
-                setFiles(
-                  nextData.directory.files.map((entry) =>
-                    driveFileFromEntry(entry, currentUsername),
-                  ),
-                );
-                setView({ type: "folder", path: uiPathFromApiPath(nextData.cwd, currentUsername) });
-              }
-            } catch (error: unknown) {
-              const message = error instanceof Error ? error.message : String(error);
-              showError(message);
-            }
-          })();
-        }
-      }
+
+  const { isItemDragging, itemDragHandlers, sidebarDropZoneProps, dropZoneProps } =
+    useSidebarListDrag(selectedIds);
+
+  const commitMoveToFolder = useCallback(
+    (ids: string[], destinationPath: string) => {
+      const movable = canMoveDriveItemsToFolder(files, ids, destinationPath);
+      if (movable.length > 0) moveToFolder(movable, destinationPath);
     },
-    [currentUsername, files, groupRootNames, operations],
+    [files, moveToFolder],
   );
 
-  const { isItemDragging, itemDragHandlers, sidebarDropZoneProps } = useSidebarListDrag(selectedIds);
-
   const folderDropZoneProps = useCallback(
-    (parentPath: string) =>
-      sidebarDropZoneProps(parentPath, (ids) => moveToFolder(ids, parentPath)),
-    [moveToFolder, sidebarDropZoneProps],
+    (destinationPath: string) =>
+      dropZoneProps(destinationPath, (ids) => commitMoveToFolder(ids, destinationPath)),
+    [commitMoveToFolder, dropZoneProps],
   );
 
   const requestDeleteSelected = () => {
@@ -644,39 +632,6 @@ export function useDriveController({ data, session, operations, listLoading = fa
         showError(message);
       });
   };
-  const reallyDelete = (ids: string[]) => {
-    if (operations) {
-      const apiPaths = files
-        .filter((file) => ids.includes(file.id))
-        .map((file) => file.apiPath)
-        .filter((path): path is string => typeof path === "string");
-      if (apiPaths.length > 0) {
-        void operations
-          .deleteItems(apiPaths)
-          .then((nextData) => {
-            setFiles(
-              nextData.directory.files.map((entry) => driveFileFromEntry(entry, currentUsername)),
-            );
-            setView({ type: "folder", path: uiPathFromApiPath(nextData.cwd, currentUsername) });
-          })
-          .catch((error: unknown) => {
-            const message = error instanceof Error ? error.message : String(error);
-            showError(message);
-          });
-      }
-    }
-    setFiles((p) => p.filter((f) => !ids.includes(f.id)));
-    setSelectedIds((p) => p.filter((id) => !ids.includes(id)));
-    setSelectionMode(false);
-    if (activeId && ids.includes(activeId)) {
-      setActiveId(null);
-      setDetailOpen(false);
-    }
-    show(`Deleted ${ids.length} file${ids.length === 1 ? "" : "s"}`, {
-      icon: <Trash2 className="size-4" />,
-    });
-  };
-
   const handleUpload = (fileList: FileList | null) => {
     if (!fileList || fileList.length === 0) return;
     const selected = Array.from(fileList);
@@ -769,7 +724,6 @@ export function useDriveController({ data, session, operations, listLoading = fa
         parent: targetParent,
         kind,
         size,
-        owner: "You",
       };
     });
     setFiles((p) => [...created, ...p]);
@@ -812,7 +766,6 @@ export function useDriveController({ data, session, operations, listLoading = fa
         parent: targetParent,
         kind: "folder",
         size: "—",
-        owner: "You",
       },
       ...p,
     ]);
@@ -847,7 +800,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
   const selectView = (v: ViewKey) => {
     setView(v);
     setLiveSearchResults(null);
-    if (operations && v.type === "folder" && v.path !== "Trash") {
+    if (operations && v.type === "folder") {
       void operations
         .changeDir(apiPathFromUiPath(v.path, currentUsername, groupRootNames))
         .then((nextData) => {
@@ -955,6 +908,7 @@ export function useDriveController({ data, session, operations, listLoading = fa
     batchStar,
     moveToTrash,
     moveToFolder,
+    commitMoveToFolder,
     isItemDragging,
     itemDragHandlers,
     sidebarDropZoneProps,
