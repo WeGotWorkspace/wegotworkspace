@@ -56,6 +56,31 @@
   border-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
 }
 
+/* Viewport-based ⋯ menu on mobile (Tailwind md); disable action-bar width container queries here */
+.drive-workspace .drive-detail-actions.action-bar {
+  container-type: normal;
+}
+
+@media (min-width: 768px) {
+  .drive-workspace .drive-detail-actions .action-bar__row {
+    display: flex;
+  }
+
+  .drive-workspace .drive-detail-actions .action-bar__menu {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .drive-workspace .drive-detail-actions .action-bar__row {
+    display: none;
+  }
+
+  .drive-workspace .drive-detail-actions .action-bar__menu {
+    display: inline-flex;
+  }
+}
+
 .drive-workspace .drive-main-pane {
   @apply flex min-h-0 flex-1 flex-col min-w-0 relative w-full;
   background-color: var(--color-cream, #f5f1e8);
@@ -190,6 +215,16 @@
   @apply flex flex-1 min-h-0;
 }
 
+@media (max-width: 767px) {
+  .drive-workspace .drive-main-pane__body {
+    transition: transform 300ms ease-out;
+  }
+
+  .drive-workspace .drive-main-pane--mobile-detail-open .drive-main-pane__body {
+    transform: translateX(-25%);
+  }
+}
+
 .drive-workspace .drive-main-pane__scroll {
   @apply flex-[2] min-w-0 overflow-x-hidden overflow-y-auto;
 }
@@ -201,7 +236,7 @@
 }
 
 .drive-workspace .drive-detail-overlay {
-  @apply md:hidden fixed inset-0 z-50 flex flex-col;
+  @apply md:hidden fixed inset-0 z-50 flex flex-col transition-transform duration-300 ease-out;
   background-color: var(--color-cream, #f5f1e8);
 }
 

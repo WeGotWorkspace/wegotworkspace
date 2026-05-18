@@ -1,3 +1,4 @@
+import { useEffect, useState, type TransitionEvent } from "react";
 import { Cloud, Download } from "lucide-react";
 import { DriveViewIcon } from "@/drive-core/src/drive-view-icons";
 import { useAppToast } from "@/hooks/use-app-toast";
@@ -6,6 +7,7 @@ import { FileDropOverlay } from "@/file-drop-overlay/src/file-drop-overlay";
 import { PathBreadcrumb } from "@/path-breadcrumb/src/path-breadcrumb";
 import { DriveSearch } from "@/drive-core/src/drive-search";
 import { UploadProgress } from "@/upload-progress/src/upload-progress";
+import { cn } from "@/lib/utils";
 import { DriveDetailPanel, DriveGridView, DriveListView } from "@/drive-core/src/drive-browser";
 import type { DriveFile } from "@/drive-core/src/drive-models";
 import type { DriveUILabels } from "@/drive-core/src/drive-labels";
@@ -62,9 +64,7 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
   } = controller;
 
   const showFolderListingBusy =
-    view.type === "folder" &&
-    !searchQuery.trim() &&
-    (folderListingPending || listLoading);
+    view.type === "folder" && !searchQuery.trim() && (folderListingPending || listLoading);
 
   const { show, showError } = useAppToast();
 
@@ -105,9 +105,45 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
       ? view.path.split("/").pop() || labels.sidebarMyDrive
       : labels.sidebarMyDrive;
 
+  const showMobileDetail = Boolean(detailOpen && active);
+  const [mobileOverlayMount, setMobileOverlayMount] = useState(false);
+  const [mobileOverlayVisible, setMobileOverlayVisible] = useState(false);
+
+  useEffect(() => {
+    if (!active) {
+      setMobileOverlayMount(false);
+      setMobileOverlayVisible(false);
+      return;
+    }
+    if (!showMobileDetail) {
+      setMobileOverlayVisible(false);
+      return;
+    }
+    setMobileOverlayMount(true);
+    let innerFrame: number | undefined;
+    const outerFrame = requestAnimationFrame(() => {
+      innerFrame = requestAnimationFrame(() => setMobileOverlayVisible(true));
+    });
+    return () => {
+      cancelAnimationFrame(outerFrame);
+      if (innerFrame !== undefined) cancelAnimationFrame(innerFrame);
+    };
+  }, [showMobileDetail, active]);
+
+  const handleMobileOverlayTransitionEnd = (event: TransitionEvent<HTMLDivElement>) => {
+    if (event.target !== event.currentTarget) return;
+    if (event.propertyName !== "transform") return;
+    if (!mobileOverlayVisible) {
+      setMobileOverlayMount(false);
+    }
+  };
+
   return (
     <section
-      className="drive-main-pane"
+      className={cn(
+        "drive-main-pane",
+        mobileOverlayVisible && "drive-main-pane--mobile-detail-open",
+      )}
       onDragOver={(event) => {
         if (!event.dataTransfer.types.includes("Files")) return;
         event.preventDefault();
@@ -181,8 +217,14 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
         ) : null}
       </div>
 
-      {detailOpen && active ? (
-        <div className="drive-detail-overlay">
+      {mobileOverlayMount && active ? (
+        <div
+          className={cn(
+            "drive-detail-overlay",
+            mobileOverlayVisible ? "translate-x-0" : "translate-x-full",
+          )}
+          onTransitionEnd={handleMobileOverlayTransitionEnd}
+        >
           <DriveDetailPanel
             {...buildDetailPanelProps({
               labels,
