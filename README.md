@@ -21,7 +21,7 @@ That guide is intentionally short and covers:
 ## Local development
 
 Requirements:
-- PHP 8.1+
+- PHP 8.3+
 - Node.js 20+
 - pnpm 9+
 
