@@ -30,6 +30,7 @@ use App\Http\Controllers\Api\V1\Installer\BootstrapController as InstallerBootst
 use App\Http\Controllers\Api\V1\Installer\StateController as InstallerStateController;
 use App\Http\Controllers\Api\V1\System\CapabilitiesController;
 use App\Http\Controllers\Api\V1\System\HealthController;
+use App\Http\Controllers\Api\V1\Voice\VoiceController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -46,6 +47,13 @@ Route::get('.well-known/jwks.json', JwksController::class);
 Route::post('auth/token', TokenController::class);
 Route::post('auth/refresh', RefreshController::class);
 Route::post('auth/revoke', RevokeController::class);
+
+Route::post('voice/room', [VoiceController::class, 'room']);
+Route::post('voice/join', [VoiceController::class, 'join']);
+Route::post('voice/poll', [VoiceController::class, 'poll']);
+Route::post('voice/send', [VoiceController::class, 'send']);
+Route::post('voice/leave', [VoiceController::class, 'leave']);
+Route::post('voice/chat', [VoiceController::class, 'chat']);
 
 Route::middleware([
     \Illuminate\Cookie\Middleware\EncryptCookies::class,

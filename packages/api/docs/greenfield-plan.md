@@ -85,9 +85,15 @@ Checkpoint: `composer test` green; no legacy `src/` in tree.
 - [x] IMAP via `MailImapClient` + SMTP via PHPMailer; `{ error, message }` on failures
 - [x] Feature tests (status + error shapes without live IMAP)
 
-## Phase 10+ — Remaining domains
+## Phase 10 — Voice
 
-10. **Voice**
+- [x] `POST /voice/join`, `poll`, `send`, `leave`, `chat` (guest sessionKey or JWT)
+- [x] `POST /voice/room` (apps room probe; not yet in OpenAPI spec)
+- [x] SQLite/MySQL `voice_peers` / `voice_messages` signaling store
+- [x] Feature tests (guest join/poll/leave + error shapes)
+
+## Phase 11+ — Remaining domains
+
 11. **Sabre** — Cal/Card may keep PDO backends; **files** WebDAV must use the same Flysystem disk as REST
 
 Each phase: routes → Form Requests → Resources → Services → tests → delete any temporary stubs.

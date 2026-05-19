@@ -79,6 +79,40 @@ final class SqliteWgwSchema
         );
     }
 
+    public static function applyVoiceTables(): void
+    {
+        Schema::connection('wgw')->dropIfExists('voice_messages');
+        Schema::connection('wgw')->dropIfExists('voice_peers');
+
+        DB::connection('wgw')->statement(
+            'CREATE TABLE voice_peers (
+                room TEXT NOT NULL,
+                peer_id TEXT NOT NULL,
+                name TEXT NOT NULL DEFAULT "",
+                owner_user TEXT NOT NULL DEFAULT "",
+                seen_at INTEGER NOT NULL,
+                PRIMARY KEY(room, peer_id)
+            )'
+        );
+        DB::connection('wgw')->statement(
+            'CREATE TABLE voice_messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                room TEXT NOT NULL,
+                from_peer TEXT NOT NULL,
+                to_peer TEXT NOT NULL,
+                type TEXT NOT NULL,
+                payload TEXT NOT NULL,
+                created_at INTEGER NOT NULL
+            )'
+        );
+        DB::connection('wgw')->statement(
+            'CREATE INDEX idx_voice_msg_target ON voice_messages(room, to_peer, id)'
+        );
+        DB::connection('wgw')->statement(
+            'CREATE INDEX idx_voice_peers_room ON voice_peers(room)'
+        );
+    }
+
     public static function applyAuthTables(): void
     {
         Schema::connection('wgw')->dropIfExists('api_revoked_tokens');
