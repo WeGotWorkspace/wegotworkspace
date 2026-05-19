@@ -3,283 +3,64 @@
 declare(strict_types=1);
 
 /**
- * Resolve runtime root from optional SABRE_BUILD_DIR.
+ * Contract-only reset: packages/api no longer ships a PHP runtime.
+ * UI bundles under packages/apps/*/dist may still be built; API and installer
+ * routes return 503 until Laravel is scaffolded per packages/api/docs/greenfield-plan.md.
  */
-$appRoot = __DIR__;
-if (!is_string(getenv('WGW_APP_ROOT')) || trim((string) getenv('WGW_APP_ROOT')) === '') {
-    putenv('WGW_APP_ROOT='.$appRoot);
-    $_ENV['WGW_APP_ROOT'] = $appRoot;
-}
-$buildDir = getenv('SABRE_BUILD_DIR');
-if (is_string($buildDir) && trim($buildDir) !== '') {
-    $buildDir = trim(str_replace('\\', '/', $buildDir));
-    if ($buildDir[0] === '/') {
-        $runtimeRoot = rtrim($buildDir, '/');
-    } else {
-        if (str_contains($buildDir, '..')) {
-            header('Content-Type: text/plain; charset=utf-8');
-            http_response_code(500);
-            echo "Invalid SABRE_BUILD_DIR (must not contain '..').\n";
-            exit;
-        }
-        $runtimeRoot = rtrim($appRoot, '/').'/'.ltrim($buildDir, '/');
-    }
-} else {
-    $runtimeRoot = $appRoot;
-}
-
-$vendorCandidates = [
-    $runtimeRoot.'/vendor/autoload.php',
-    $appRoot.'/vendor/autoload.php',
-    $runtimeRoot.'/packages/api/vendor/autoload.php',
-    $appRoot.'/packages/api/vendor/autoload.php',
-];
-$autoload = null;
-foreach ($vendorCandidates as $candidate) {
-    if (is_readable($candidate)) {
-        $autoload = $candidate;
-        break;
-    }
-}
-if ($autoload === null) {
-    header('Content-Type: text/plain; charset=utf-8');
-    http_response_code(503);
-    echo "Composer dependencies are missing. Run `composer --working-dir packages/api install` (and optionally set COMPOSER_VENDOR_DIR for custom runtime layouts).\n";
-    exit;
-}
-
-require $autoload;
-
-// Apache + mod_rewrite: Authorization may arrive as REDIRECT_HTTP_AUTHORIZATION.
-if (empty($_SERVER['HTTP_AUTHORIZATION']) && !empty($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
-    $_SERVER['HTTP_AUTHORIZATION'] = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
-}
-
-/**
- * Composer keeps loading third-party dependencies; this loader resolves only our own App classes.
- */
-spl_autoload_register(static function (string $class) use ($runtimeRoot, $appRoot): void {
-    $prefix = 'App\\';
-    if (!str_starts_with($class, $prefix)) {
-        return;
-    }
-    $relative = str_replace('\\', '/', substr($class, strlen($prefix)));
-    if ($relative === false || $relative === '') {
-        return;
-    }
-    $candidates = [
-        $runtimeRoot.'/wgw-src/'.$relative.'.php',
-        $appRoot.'/wgw-src/'.$relative.'.php',
-        // Legacy layout fallback.
-        $runtimeRoot.'/src/'.$relative.'.php',
-        $appRoot.'/src/'.$relative.'.php',
-    ];
-    foreach ($candidates as $path) {
-        if (is_readable($path)) {
-            require $path;
-
-            return;
-        }
-    }
-}, true, true);
-
-use App\AppShell\AppShellStatic;
-use App\Api\ApiKernel;
-use App\Config;
-use App\Drive\DriveKernel;
-use App\Home\HomeKernel;
-use App\Installer\InstallerKernel;
-use App\Installer\WebBase;
-use App\Mail\MailKernel;
-use App\Notes\NotesKernel;
-use App\Paths;
-use App\Server\SabreApp;
-use App\Office\OfficeEntry;
-use App\Office\OfficeStatic;
-use App\Pwa\PwaSupport;
-use App\Security\TrustedHostGate;
-use App\Update\UpdateManager;
-use App\Voice\VoiceKernel;
-
-$https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-    || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
-$webBase = WebBase::detect();
-$path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
-
-if (!TrustedHostGate::isAllowed($_SERVER, getenv('WGW_TRUSTED_HOSTS'))) {
-    http_response_code(400);
-    header('Content-Type: text/plain; charset=utf-8');
-    $requestHost = isset($_SERVER['HTTP_HOST']) && is_string($_SERVER['HTTP_HOST']) ? trim($_SERVER['HTTP_HOST']) : '';
-    echo "Bad Request: Host not allowed.\n";
-    if ($requestHost !== '') {
-        echo 'Received Host: '.$requestHost."\n";
-    }
-    $trustedHosts = getenv('WGW_TRUSTED_HOSTS');
-    if (is_string($trustedHosts) && trim($trustedHosts) !== '') {
-        echo 'Configured WGW_TRUSTED_HOSTS: '.trim($trustedHosts)."\n";
-    } else {
-        echo "WGW_TRUSTED_HOSTS is not set. For production, set it to your public hostname (e.g. cloud.example.com).\n";
-    }
-    exit;
-}
 
 header_remove('X-Powered-By');
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: SAMEORIGIN');
 header('Referrer-Policy: strict-origin-when-cross-origin');
-$officePrefix = WebBase::url($webBase, '/office');
-$isOfficeRequest = $path === $officePrefix || str_starts_with($path, $officePrefix.'/');
-$scriptSrc = "'self' 'unsafe-inline'";
-$styleSrc = "'self' 'unsafe-inline' https://fonts.googleapis.com";
-$fontSrc = "'self' data: https://fonts.gstatic.com";
-$connectSrc = "'self' https: wss:";
-if ($isOfficeRequest) {
-    // ONLYOFFICE web-apps uses dynamic template evaluation and blob workers in editor runtime.
-    $scriptSrc .= " 'unsafe-eval' blob:";
-    $connectSrc .= " blob:";
-}
-header(
-    "Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; "
-    ."frame-ancestors 'self'; script-src ".$scriptSrc."; style-src ".$styleSrc."; font-src ".$fontSrc."; "
-    ."img-src 'self' data: blob: https:; connect-src ".$connectSrc."; worker-src 'self' blob:"
-);
-if ($https) {
-    header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
-}
 
-$installPrefix = WebBase::url($webBase, '/install');
-$adminApiUpdatesPrefix = WebBase::url($webBase, '/admin/api/updates');
-$apiV1UpdatesPrefix = WebBase::url($webBase, '/api/v1/admin/updates');
-
-if (PwaSupport::tryRespond($webBase, $path)) {
-    exit;
-}
-
-$installed = is_file(Paths::lockFile());
-
-if ($installed && UpdateManager::inMaintenanceMode()) {
-    $allowUpdateApi =
-        $path === $adminApiUpdatesPrefix
-        || str_starts_with($path, $adminApiUpdatesPrefix.'/')
-        || $path === $apiV1UpdatesPrefix
-        || str_starts_with($path, $apiV1UpdatesPrefix.'/');
-    if (!$allowUpdateApi) {
-        http_response_code(503);
-        header('Content-Type: text/html; charset=utf-8');
-        header('Retry-After: 120');
-        echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Maintenance</title></head><body>';
-        echo '<h1>WeGotWorkspace is updating</h1>';
-        echo '<p>The update process is currently running. Please refresh this page in a minute.</p>';
-        echo '</body></html>';
-        exit;
-    }
-}
-
-if (!$installed) {
-    // Allow installer bootstrap/action API routes before lock file exists.
-    if (ApiKernel::tryRespond($webBase, $path)) {
-        exit;
-    }
-    $underInstall = $path === $installPrefix || str_starts_with($path, $installPrefix.'/');
-    if (!$underInstall) {
-        header('Location: '.$installPrefix.'/', true, 302);
-        exit;
-    }
-    InstallerKernel::respond();
-    exit;
-}
-
-$underInstall = $path === $installPrefix || str_starts_with($path, $installPrefix.'/');
-if ($underInstall) {
-    InstallerKernel::respond();
-    exit;
-}
-
-if (ApiKernel::tryRespond($webBase, $path)) {
-    exit;
-}
-
-$legacySheets = WebBase::url($webBase, '/sheets');
-if ($path === $legacySheets || str_starts_with($path, $legacySheets.'/')) {
-    header('Location: '.WebBase::url($webBase, '/office/'), true, 301);
-    exit;
-}
-
-$legacyDocs = WebBase::url($webBase, '/docs');
-if ($path === $legacyDocs || str_starts_with($path, $legacyDocs.'/')) {
-    header('Location: '.WebBase::url($webBase, '/office/'), true, 301);
-    exit;
-}
-
-if (OfficeEntry::tryRespondInjectedHtml($webBase, $path)) {
-    exit;
-}
-
-if (OfficeStatic::tryServe($webBase, $path)) {
-    exit;
-}
-
-// Legacy “Talk” URLs (/talk/…) → /voice/… (308; preserves method for signaling POSTs and bookmarks).
-$legacyTalk = WebBase::url($webBase, '/talk');
-if ($path === $legacyTalk || $path === $legacyTalk.'/' || str_starts_with($path, $legacyTalk.'/')) {
-    $suffix = substr($path, strlen($legacyTalk));
-    if ($suffix === '') {
-        $suffix = '/';
-    }
-    $targetPath = WebBase::url($webBase, '/voice'.$suffix);
-    $qs = isset($_SERVER['QUERY_STRING']) && is_string($_SERVER['QUERY_STRING']) && $_SERVER['QUERY_STRING'] !== ''
-        ? '?'.$_SERVER['QUERY_STRING']
-        : '';
-    header('Location: '.$targetPath.$qs, true, 308);
-    exit;
-}
-
+$path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
-$isShellMethod = $method === 'GET' || $method === 'HEAD';
-if ($isShellMethod && AppShellStatic::tryServe($webBase, $path)) {
+
+$isApi = str_starts_with($path, '/api/v1') || str_starts_with($path, '/api/');
+$isInstall = $path === '/install' || str_starts_with($path, '/install/');
+$isDav = preg_match('#^/(?:\.well-known/(?:caldav|carddav)|principals/|calendars/|addressbooks/)#', $path) === 1;
+
+if ($isApi) {
+    header('Content-Type: application/json; charset=utf-8');
+    http_response_code(503);
+    echo json_encode([
+        'error' => 'api_unavailable',
+        'message' => 'REST API runtime removed for greenfield rebuild. Contract: packages/api/openapi/openapi.json',
+    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     exit;
 }
 
-if (MailKernel::tryRespond($webBase, $path)) {
+if ($isInstall || $isDav || in_array($path, ['/mail', '/notes', '/drive', '/home', '/voice', '/office'], true)
+    || str_starts_with($path, '/mail/')
+    || str_starts_with($path, '/notes/')
+    || str_starts_with($path, '/drive/')
+    || str_starts_with($path, '/home/')
+    || str_starts_with($path, '/voice/')
+    || str_starts_with($path, '/office/')
+) {
+    header('Content-Type: text/html; charset=utf-8');
+    http_response_code(503);
+    echo '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>WeGotWorkspace</title></head><body>';
+    echo '<h1>Backend not available</h1>';
+    echo '<p>The PHP runtime was removed from <code>packages/api</code> for a greenfield Laravel rebuild.</p>';
+    echo '<p>See <code>packages/api/docs/greenfield-plan.md</code> and <code>packages/api/openapi/openapi.json</code>.</p>';
+    echo '</body></html>';
     exit;
 }
 
-if (NotesKernel::tryRespond($webBase, $path)) {
-    exit;
-}
-
-if (DriveKernel::tryRespond($webBase, $path)) {
-    exit;
-}
-
-if (HomeKernel::tryRespond($webBase, $path)) {
-    exit;
-}
-
-if (VoiceKernel::tryRespond($webBase, $path)) {
-    exit;
-}
-
-// RFC 6764: Calendar / Contacts "automatic" setup probes /.well-known/caldav and /.well-known/carddav.
-if (preg_match('#/\\.well-known/(caldav|carddav)/?$#', $path, $wk)) {
-    $cfg = Config::load();
-    if (($wk[1] ?? '') === 'caldav' && !($cfg['calendar_enabled'] ?? true)) {
-        http_response_code(404);
-        header('Content-Type: text/plain; charset=utf-8');
-        exit;
+// Allow direct static file hits when using php -S (built UI assets under packages/apps/*/dist).
+$appRoot = __DIR__;
+$relative = ltrim($path, '/');
+if ($relative !== '' && $method === 'GET') {
+    $candidate = $appRoot.'/'.$relative;
+    if (is_file($candidate) && !str_contains($relative, '..')) {
+        return false;
     }
-    if (($wk[1] ?? '') === 'carddav' && !($cfg['contacts_enabled'] ?? true)) {
-        http_response_code(404);
-        header('Content-Type: text/plain; charset=utf-8');
-        exit;
-    }
-    $basePath = (string) ($cfg['base_uri'] ?? '/');
-    if ($basePath === '' || $basePath[0] !== '/') {
-        $basePath = '/'.$basePath;
-    }
-    $basePath = rtrim($basePath, '/').'/';
-    header('Location: '.$basePath, true, 307);
-    exit;
 }
 
-SabreApp::run();
+header('Content-Type: text/html; charset=utf-8');
+http_response_code(503);
+echo '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>WeGotWorkspace</title></head><body>';
+echo '<h1>WeGotWorkspace</h1>';
+echo '<p>Application shell is unavailable until the API is reimplemented. Build UI with <code>pnpm run build</code>; implement API per <code>packages/api/docs/greenfield-plan.md</code>.</p>';
+echo '</body></html>';

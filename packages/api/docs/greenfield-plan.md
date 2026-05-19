@@ -1,119 +1,62 @@
 # API greenfield plan
 
-Authoritative process for replacing the legacy `packages/api/src/` REST runtime with a **Laravel** application under `packages/api/app/`.  
-HTTP contract: **`openapi/openapi.json`** + Pest/PHPUnit feature tests.
+`packages/api` is **contract-only**: `openapi/openapi.json` + generated TypeScript types.  
+There is **no** legacy `src/`, no dual autoload, and no cohabiting partial Laravel tree to copy from.
 
 ## Principles
 
 | Do | Don't |
 |----|--------|
-| Reimplement behavior in Services, Models, Form Requests, Resources | Rename or wrap `MailApi`, `DriveKernel`, `*Kernel` |
-| Eloquent / `DB::connection('wgw')` for app tables | Pass `\PDO` through controllers and services |
-| `WgwStorage` (Flysystem) for all file data | `Paths::data()`, `file_put_contents`, `readfile` in domain code |
-| One controller (or invokable) per route group | `DomainRouteService` mega-dispatcher |
-| Delete legacy entry points when a domain is ported | “Thin wrapper” PRs that call old code |
+| Match `openapi/openapi.json` (paths, status codes, JSON shapes) | Read or restore deleted `packages/api/src/` |
+| Scaffold a **fresh** Laravel app when starting implementation | Move/rename legacy folders and keep static `*Kernel` / `MailApi` |
+| Pest/PHPUnit feature tests per route group before calling a domain done | “Thin wrapper” services that delegate to old code |
+| Eloquent + Flysystem in new `app/` | `\PDO` passed through controllers; `Paths::data()` in domain code |
 
-Sabre **Cal/Card** stay on PDO backends. Sabre **files** WebDAV use the **same** Flysystem disk as REST (`wgw_files`).
+**Contract parity ≠ code parity.** Old behavior lives only in git history and production tags — not in this workspace.
 
-## Bootstrap order (merge one phase at a time)
+## Phase 0 — Scaffold (not started)
 
-Each phase ends with **tests green** + **`composer greenfield:guard`**.
+When you begin implementation:
 
-### Phase 0 — Scaffold
+1. From repo root, create a new Laravel 11 project **in place** under `packages/api/`:
+   - `composer create-project laravel/laravel packages/api-laravel-tmp` then merge **only** Laravel skeleton files into `packages/api/` **without** overwriting `openapi/`, `scripts/`, `docs/`, `package.json`, `README.md`.
+   - Or use `laravel new` into a temp dir and copy `app/`, `bootstrap/`, `config/`, `routes/`, `artisan`, `composer.json` (merge dependencies), `public/`, etc.
+2. **Single** PSR-4 root: `"App\\": "app/"` only — no `src/` autoload entry.
+3. `routes/api.php` with prefix `api/v1` (see OpenAPI `servers`).
+4. Wire `apps/wegotworkspace/index.php` to Laravel `public/index.php` (or front controller) **early** — not as a final “Phase 11” surprise.
+5. Add `config/filesystems.php` disks (`wgw_data`, `wgw_files`, `wgw_notes`) and `app/Storage/WgwStorage.php` per `.cursor/rules/api-storage-flysystem.mdc`.
+6. Installer DB schema: derive migrations from a tagged release’s SQL or document tables in `docs/sql-schema.md` — do not vendor legacy PHP.
 
-- [x] Fresh Laravel app in `packages/api` (`artisan`, `bootstrap/`, `app/`, `routes/api.php`, `config/`)
-- [x] Keep `openapi/`, `src/sql/` (installer schema reference), `docs/`
-- [ ] Do **not** copy `src/Api`, `MailApi`, `*Kernel` into `app/`
-- [x] `config/filesystems.php`: disks `wgw_data`, `wgw_files`, `wgw_notes`
-- [x] `app/Storage/WgwStorage.php` + path/ACL helper (`StoragePaths`)
-- [x] Service provider: map `wgw-config.php` → Laravel config + disk roots
-- [x] `tests/` with `Storage::fake()` smoke test
+Checkpoint: `composer test` green for storage smoke + `php artisan route:list` shows scaffold only.
 
-### Phase 1 — Database layer
+## Phase 1+ — Domains (OpenAPI order)
 
-- [x] Laravel migration or documented alignment with `src/sql/*.sql` tables (`docs/sql-schema.md`)
-- [x] Eloquent models: `User`, `Principal`, `AppSetting`, `GroupMember` (Sabre/installer tables)
-- [x] `wgw` connection from install config (`WgwDatabaseConfig` + `WgwServiceProvider`)
+Implement route groups with feature tests before moving on. Suggested order:
 
-### Phase 2 — Auth
+1. **Auth** — `POST /auth/token`, refresh, revoke, `GET /me`, `GET /.well-known/jwks.json`
+2. **System** — `GET /health`, `GET /capabilities`
+3. **Settings** — state, profile, mail credentials
+4. **Notes** — CRUD + notebooks (Flysystem `wgw_notes`)
+5. **Home**, installer API (if still required)
+6. **Drive** + office (Flysystem `wgw_files`)
+7. **Admin** + updates
+8. **Mail** (IMAP/SMTP services; preserve `{ error, message }` shape)
+9. **Voice**
+10. **Sabre** — Cal/Card may keep PDO backends; **files** WebDAV must use the same Flysystem disk as REST
 
-- [x] JWT RS256 + refresh (OpenAPI wire shape)
-- [x] Feature tests: `auth/token`, `auth/refresh`, `auth/revoke`, `me`, `jwks`
-- [x] No `ApiAuth` + `$_SERVER` in domain code
+Each phase: routes → Form Requests → Resources → Services → tests → delete any temporary stubs.
 
-### Phase 3 — System + settings (first REST domains)
+## Definition of done (whole API)
 
-- [x] `GET health`, `GET capabilities`
-- [x] Settings state/profile/mail credentials
-- [x] Feature tests per route
+- Every path in `openapi/openapi.json` implemented or explicitly marked deprecated in spec
+- Feature tests cover happy path + main error shapes per tag
+- No imports from deleted legacy namespaces
+- `apps/wegotworkspace` serves UI + API through Laravel only
+- Release zip includes Composer `vendor/` for the new runtime
 
-### Phase 4 — Notes
+## Agent checklist
 
-- [x] `NoteRepository` + markdown codec via `WgwStorage`
-- [x] Feature tests for notes CRUD / notebooks
-
-### Phase 5 — Home, DAV capabilities, installer API
-
-- [ ] Small read-only endpoints
-- [ ] Installer API if still required before UI move
-
-### Phase 6 — Drive + office
-
-- [ ] Path policy + Flysystem only
-- [ ] Feature tests; binary upload/download via storage/stream
-
-### Phase 7 — Admin + updates
-
-- [ ] Eloquent for settings/users/groups
-- [ ] Update manager integration (may keep dedicated services)
-
-### Phase 8 — Mail (last)
-
-- [ ] IMAP/SMTP services (not 1500-line static class)
-- [ ] Preserve mail error JSON shape `{ error, message }`
-
-### Phase 9 — Voice
-
-- [ ] Signaling services + DB tables via Eloquent/DB
-
-### Phase 10 — Sabre file WebDAV
-
-- [ ] `app/DAV/Storage/*` nodes on `wgw_files` disk
-- [ ] Plugins call Laravel services only
-
-### Phase 11 — Front controller
-
-- [ ] Route `/api/*` only through Laravel (`bootstrap/api-front.php`)
-- [ ] Retire REST paths from `apps/wegotworkspace/index.php` kernel chain (UI kernels separate project)
-
-## Definition of done (per domain PR)
-
-- [ ] Feature tests added/updated; **`composer test`** passes
-- [ ] **`composer greenfield:guard`** passes
-- [ ] No new references to `MailApi`, `DriveKernel`, `ApiKernel`, `DomainRouteService`, `WgwRuntime`, `Config::load` in `app/`
-- [ ] No `\PDO` parameters in new `app/Services` or `app/Repositories` public APIs
-- [ ] File persistence uses `WgwStorage` / `Storage::disk()` only
-- [ ] OpenAPI unchanged unless intentional (run `pnpm check:api-types` if types change)
-- [ ] PR template checklist completed
-
-## Enforcement
-
-| Tool | Command |
-|------|---------|
-| Cursor rules | `.cursor/rules/api-*.mdc` |
-| Guard script | `composer --working-dir packages/api greenfield:guard` |
-| Architecture test | `tests/Architecture/GreenfieldArchitectureTest.php` (when `app/` exists) |
-| CI | `.github/workflows/ci.yml` runs guard on every PR |
-
-## Git strategy
-
-- Branch from **`main`** with cursor rules merged (`chore/api-greenfield-rules` or later).
-- Do **not** merge `feat/laravel-api` wholesale.
-- Cherry-pick only isolated commits (e.g. rules, OpenAPI fixes) if needed.
-
-## First agent message template
-
-```
-Greenfield packages/api only. Follow AGENTS.md and packages/api/docs/greenfield-plan.md.
-Start Phase N only. No legacy wrappers. Run greenfield:guard when done.
-```
+1. Read `.cursor/rules/api-greenfield.mdc`
+2. Open `openapi/openapi.json` for the route you are implementing
+3. Write the test first, then Service + Controller
+4. Never add files under `packages/api/src/`

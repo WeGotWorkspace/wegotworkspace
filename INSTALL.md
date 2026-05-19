@@ -7,8 +7,7 @@ This is the quickest way to install on a normal Apache/PHP host.
 Upload the deploy package contents to your website folder so these files are in place:
 - `index.php`
 - `.htaccess`
-- `packages/api/`
-- `packages/api/vendor/`
+- `packages/api/` (OpenAPI contract; production releases will again include a Composer `vendor/` once the Laravel API is restored)
 - `packages/apps/` (includes built web app bundles, for example `packages/apps/drive/dist/`)
 - `wgw-config.sample.php`
 

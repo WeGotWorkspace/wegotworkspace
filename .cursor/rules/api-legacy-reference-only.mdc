@@ -1,25 +1,23 @@
 ---
-description: Legacy API code is read-only reference for behavior — never extend or wrap for new features.
+description: No legacy API code in tree — use OpenAPI and git history only.
 globs: packages/api/**
 alwaysApply: false
 ---
 
-# Legacy API (reference only)
+# No legacy API in workspace
 
-Applies when old PHP API code exists (e.g. on `main`, a tag, or `legacy/` snapshot).
+`packages/api/src/` and related PHP runtime were **removed**. This package is **contract-only** until Laravel Phase 0.
 
 ## Allowed
 
-- Read old handlers to learn **behavior** for Pest parity tests
-- Copy **test fixtures** and OpenAPI examples
-- One-line comments pointing to old route for auditors
+- `openapi/openapi.json` and generated types
+- Git history / release tags on `main` to learn behavior (outside the workspace)
+- Feature tests that encode expected behavior
 
 ## Forbidden
 
-- New endpoints or features in legacy `MailApi`, `*Kernel`, `ApiDomainHandlers`, etc.
-- “Delegate to legacy” in new Laravel services
-- Moving legacy files into `app/` without rewriting them
-- Extracting “shared” static PDO helpers for new code to call
-- Copying `Paths::data().'/files'` or Sabre `FS\Directory` patterns into new code instead of Flysystem
+- Restoring `src/`, `*Kernel`, `MailApi`, or dual `App\` autoload
+- “Delegate to legacy” in new Laravel code
+- Copying legacy files into `app/` without a full rewrite
 
-New work lives only in greenfield structure (`Http/Controllers`, `Services`, `Models`, `Storage`, Form Requests). Delete reference code from the new branch as each domain is ported and tests pass.
+New work starts with a **fresh Laravel scaffold** per `packages/api/docs/greenfield-plan.md`.
