@@ -26,14 +26,27 @@ There is **no** legacy `src/`, no dual autoload, and no cohabiting partial Larav
 
 Checkpoint: `composer test` green; no legacy `src/` in tree.
 
-## Phase 1+ — Domains (OpenAPI order)
+## Phase 1 — Database layer
 
-Implement route groups with feature tests before moving on. Suggested order:
+- [x] Eloquent models on `wgw` connection (`User`, `Principal`, `GroupMember`, `AppSetting`, …)
+- [x] `WgwDatabaseConfig` maps install `wgw-config.php` PDO settings
 
-1. **Auth** — `POST /auth/token`, refresh, revoke, `GET /me`, `GET /.well-known/jwks.json`
-2. **System** — `GET /health`, `GET /capabilities`
-3. **Settings** — state, profile, mail credentials
-4. **Notes** — CRUD + notebooks (Flysystem `wgw_notes`)
+## Phase 2 — Auth
+
+- [x] JWT RS256 + refresh (`JwtCodec`, not legacy `ApiToken`)
+- [x] Feature tests: token, refresh, revoke, me, jwks
+
+## Phase 3 — System + settings
+
+- [x] `GET /health`, `GET /capabilities`
+- [x] Settings state / profile / mail credentials
+
+## Phase 4 — Notes
+
+- [x] Notes CRUD + notebooks via `NoteRepository` + Flysystem
+- [x] Feature tests
+
+## Phase 5+ — Remaining domains (OpenAPI order)
 5. **Home**, installer API (if still required)
 6. **Drive** + office (Flysystem `wgw_files`)
 7. **Admin** + updates
