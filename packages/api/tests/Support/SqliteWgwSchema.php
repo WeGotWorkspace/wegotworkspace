@@ -63,6 +63,22 @@ final class SqliteWgwSchema
         );
     }
 
+    public static function applyDriveTables(): void
+    {
+        Schema::connection('wgw')->dropIfExists('drive_starred_items');
+        DB::connection('wgw')->statement(
+            'CREATE TABLE drive_starred_items (
+                username TEXT NOT NULL,
+                path TEXT NOT NULL,
+                created_at INTEGER NOT NULL,
+                PRIMARY KEY(username, path)
+            )'
+        );
+        DB::connection('wgw')->statement(
+            'CREATE INDEX idx_drive_starred_user ON drive_starred_items(username)'
+        );
+    }
+
     public static function applyAuthTables(): void
     {
         Schema::connection('wgw')->dropIfExists('api_revoked_tokens');

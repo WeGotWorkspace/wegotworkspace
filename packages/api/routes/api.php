@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\V1\Notes\CapabilitiesController as NotesCapabilitie
 use App\Http\Controllers\Api\V1\Notes\ItemsController as NotesItemsController;
 use App\Http\Controllers\Api\V1\Notes\NotebooksController;
 use App\Http\Controllers\Api\V1\Notes\StateController as NotesStateController;
+use App\Http\Controllers\Api\V1\Drive\DriveController;
 use App\Http\Controllers\Api\V1\Dav\CapabilitiesController as DavCapabilitiesController;
 use App\Http\Controllers\Api\V1\Home\StateController as HomeStateController;
 use App\Http\Controllers\Api\V1\Installer\ActionController as InstallerActionController;
@@ -48,10 +49,31 @@ Route::middleware([
     Route::post('installer/action', InstallerActionController::class);
 });
 
-Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function (): void {
+$driveSession = [
+    \Illuminate\Cookie\Middleware\EncryptCookies::class,
+    \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+    \Illuminate\Session\Middleware\StartSession::class,
+];
+
+Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($driveSession): void {
     Route::get('me', MeController::class);
     Route::get('home/state', HomeStateController::class);
     Route::get('dav/capabilities', DavCapabilitiesController::class);
+
+    Route::middleware($driveSession)->group(function (): void {
+        Route::get('drive/user', [DriveController::class, 'user']);
+        Route::post('drive/getdir', [DriveController::class, 'getDir']);
+        Route::post('drive/searchfiles', [DriveController::class, 'searchFiles']);
+        Route::post('drive/changedir', [DriveController::class, 'changeDir']);
+        Route::post('drive/createnew', [DriveController::class, 'createNew']);
+        Route::post('drive/renameitem', [DriveController::class, 'renameItem']);
+        Route::post('drive/deleteitems', [DriveController::class, 'deleteItems']);
+        Route::get('drive/download', [DriveController::class, 'download']);
+        Route::get('drive/upload', [DriveController::class, 'uploadProbe']);
+        Route::post('drive/upload', [DriveController::class, 'upload']);
+        Route::get('drive/stars', [DriveController::class, 'starsIndex']);
+        Route::post('drive/stars', [DriveController::class, 'starsUpdate']);
+    });
     Route::get('settings/state', SettingsStateController::class);
     Route::put('settings/profile', SettingsProfileController::class);
     Route::put('settings/mail', SettingsMailController::class);
