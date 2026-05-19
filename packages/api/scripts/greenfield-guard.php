@@ -24,6 +24,7 @@ $scanRoots = [
     $appRoot.'/Repositories',
     $appRoot.'/Storage',
     $appRoot.'/Dav',
+    $appRoot.'/Ui',
     $appRoot.'/Models',
 ];
 
@@ -125,6 +126,12 @@ function scanDirectory(string $dir, array $forbidden, array &$errors): void
                         || str_contains($rule['message'], 'Flysystem')
                         || str_contains($rule['message'], 'raw PHP file')
                     )
+                ) {
+                    continue;
+                }
+                if (
+                    preg_match('#/Ui/#i', str_replace('\\', '/', $path))
+                    && str_contains($rule['message'], 'raw PHP file')
                 ) {
                     continue;
                 }

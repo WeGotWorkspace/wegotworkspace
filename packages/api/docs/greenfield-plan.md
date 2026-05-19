@@ -100,9 +100,17 @@ Checkpoint: `composer test` green; no legacy `src/` in tree.
 - [x] Feature test: server factory builds when install lock present
 - [ ] Flysystem-native DAV nodes (files still use Sabre FS collections on the same disk root as REST)
 
-## Phase 12+ — Remaining
+## Phase 12 — UI static shells
 
-- UI static shells (home, drive, mail, meet HTML) via front controller
+- [x] `UiStaticServer` + `UiFrontKernel` (shell SPA routes + `/install` dist)
+- [x] `packages/api/public/ui.php` + `apps/wegotworkspace/index.php` tries UI before Sabre
+- [x] `AppPaths::moduleDistRoot()` resolves `packages/apps/{module}/dist`
+- [ ] Per-app dedicated dist fallbacks when built separately (drive, mail, …)
+- [ ] Office editor static entry (`/office/*`)
+
+## Phase 13+ — Remaining
+
+- Flysystem-native DAV file nodes
 - Optional: admin update mutations beyond OpenAPI
 
 Each phase: routes → Form Requests → Resources → Services → tests → delete any temporary stubs.

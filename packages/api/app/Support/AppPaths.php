@@ -77,15 +77,46 @@ final class AppPaths
 
     public function appDistIndex(string $app): ?string
     {
-        $relative = $app.'/dist/index.html';
-        foreach ($this->privateDirCandidates() as $base) {
-            $path = $base.'/'.$relative;
-            if (is_file($path)) {
-                return $path;
+        $root = $this->moduleDistRoot($app);
+
+        return $root !== null ? $root.'/index.html' : null;
+    }
+
+    public function moduleDistRoot(string $module): ?string
+    {
+        foreach ($this->moduleDistCandidates($module) as $candidate) {
+            if (is_file($candidate.'/index.html')) {
+                return $candidate;
             }
         }
 
         return null;
+    }
+
+    public function shellDistRoot(): ?string
+    {
+        return $this->moduleDistRoot('shell');
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function moduleDistCandidates(string $module): array
+    {
+        $root = $this->installRoot();
+        $repo = dirname($root, 2);
+
+        $candidates = [
+            $root.'/packages/apps/'.$module.'/dist',
+            $repo.'/packages/apps/'.$module.'/dist',
+        ];
+
+        if ($module === 'shell') {
+            $candidates[] = $root.'/packages/apps/dist';
+            $candidates[] = $repo.'/packages/apps/dist';
+        }
+
+        return array_values(array_unique($candidates));
     }
 
     public function officeIndex(): ?string
