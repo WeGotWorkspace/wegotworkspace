@@ -20,13 +20,12 @@ final class UiStaticServerTest extends TestCase
         $this->assertTrue($server->distReady($dist));
         $this->assertTrue($server->matchesShellPath('', '/drive/'));
 
-        $_SERVER['REQUEST_METHOD'] = 'GET';
-
-        ob_start();
-        $served = $server->tryServe($dist, '', '/assets/app.js', false);
-        $body = ob_get_clean();
-
-        $this->assertTrue($served);
-        $this->assertStringContainsString('console.log', $body);
+        $response = $server->tryServe($dist, '', '/assets/app.js', false);
+        $this->assertNotNull($response);
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertInstanceOf(\Symfony\Component\HttpFoundation\BinaryFileResponse::class, $response);
+        $file = $response->getFile();
+        $this->assertNotNull($file);
+        $this->assertStringContainsString('console.log', (string) file_get_contents($file->getPathname()));
     }
 }

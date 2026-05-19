@@ -18,6 +18,12 @@ When working on **`packages/api`** REST or a new Laravel API:
 
 PHP tests and `composer.json` appear only **after** Phase 0 scaffold in the greenfield plan.
 
+## HTTP routing
+
+- **REST:** `routes/api.php` (`/api/v1/*`)
+- **UI + WebDAV:** `routes/web.php` → `WgwFrontController` (`UiFrontKernel` then `SabreKernel`)
+- **Install front door:** `apps/wegotworkspace/index.php` → `packages/api/public/index.php` only
+
 ## Storage (when implementing)
 
 File I/O for drive, notes, office, and WebDAV **files** uses Laravel **Flysystem** (`WgwStorage`). See `.cursor/rules/api-storage-flysystem.mdc`.
