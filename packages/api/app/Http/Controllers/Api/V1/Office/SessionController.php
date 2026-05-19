@@ -24,12 +24,12 @@ final class SessionController
         $cfg = WgwSettings::normalized();
         $realm = (string) ($cfg[WgwSettings::AUTH_REALM] ?? 'SabreDAV');
 
-        $this->uiSession->establish(
+        $cookie = $this->uiSession->establish(
             $principal['username'],
             $realm,
             InstallerWebBase::detect(),
         );
 
-        return response()->json(['ok' => true]);
+        return response()->json(['ok' => true])->withCookie($cookie);
     }
 }

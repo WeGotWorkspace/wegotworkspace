@@ -6,11 +6,12 @@ namespace App\Http\Sabre;
 
 use Illuminate\Http\Response;
 use Sabre\HTTP\ResponseInterface;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class SabreHttpResponseConverter
 {
-    public function toIlluminate(ResponseInterface $sabre): Response
+    public function toIlluminate(ResponseInterface $sabre): SymfonyResponse
     {
         $status = (int) ($sabre->getStatus() ?? 200);
         $headers = $this->flattenHeaders($sabre->getHeaders());

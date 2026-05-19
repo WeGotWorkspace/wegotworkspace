@@ -26,6 +26,34 @@ abstract class FlysystemNode implements INode
         return basename($this->key);
     }
 
+    public function setName($name): void
+    {
+        $name = trim(str_replace('\\', '/', (string) $name), '/');
+        if ($name === '' || str_contains($name, '/')) {
+            throw new \InvalidArgumentException('Invalid node name.');
+        }
+        $parent = dirname($this->key);
+        $newKey = $parent === '.' || $parent === '' ? $name : $parent.'/'.$name;
+        if ($newKey === $this->key) {
+            return;
+        }
+        $this->filesystem->move($this->key, $newKey);
+        $this->key = $newKey;
+    }
+
+    public function getLastModified(): ?int
+    {
+        if (! $this->filesystem->exists($this->key)) {
+            return null;
+        }
+
+        try {
+            return $this->filesystem->lastModified($this->key);
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
     protected function childKey(string $name): string
     {
         return $this->key === '' ? $name : $this->key.'/'.$name;

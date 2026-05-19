@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services\Auth;
 
+use App\Dav\Auth\UiAuthSecret;
 use App\Services\Installer\InstallerWebBase;
 use App\Support\WgwInstallConfig;
-use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\Cookie;
 
 /**
  * Signed HttpOnly browser session cookie for UI shells (office, drive HTML).
@@ -23,36 +24,35 @@ final class UiSessionService
     {
     }
 
-    public function establish(string $username, string $realm, string $webBase): void
+    public function establish(string $username, string $realm, string $webBase): Cookie
     {
         $this->ensureSecretFile();
-        $this->issueCookie(strtolower(trim($username)), $realm, $this->cookiePath($webBase));
+
+        return $this->buildCookie(strtolower(trim($username)), $realm, $this->cookiePath($webBase));
     }
 
     private function ensureSecretFile(): void
     {
-        $disk = Storage::disk('wgw_data');
-        if ($disk->exists('.ui-auth-secret')) {
-            return;
-        }
-        $disk->put('.ui-auth-secret', random_bytes(32));
+        UiAuthSecret::ensure($this->install);
     }
 
     /**
      * @param non-empty-string $username
      */
-    private function issueCookie(string $username, string $realm, string $path): void
+    public function buildCookie(string $username, string $realm, string $path): Cookie
     {
-        $secret = $this->readSecret();
+        $secret = UiAuthSecret::read();
         if ($secret === null) {
             throw new \RuntimeException('UI auth secret is not available.');
         }
 
+        $exp = time() + self::TTL_SEC;
         $payload = json_encode([
             'v' => self::COOKIE_VERSION,
             'u' => $username,
             'r' => $realm,
-            'exp' => time() + self::TTL_SEC,
+            'e' => $exp,
+            'exp' => $exp,
         ], JSON_THROW_ON_ERROR);
 
         $b64Payload = $this->base64UrlEncode($payload);
@@ -62,13 +62,17 @@ final class UiSessionService
         $secure = (! empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
             || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
 
-        setcookie(self::COOKIE, $value, [
-            'expires' => time() + self::TTL_SEC,
-            'path' => $path === '' ? '/' : $path,
-            'secure' => $secure,
-            'httponly' => true,
-            'samesite' => 'Lax',
-        ]);
+        return Cookie::create(
+            self::COOKIE,
+            $value,
+            time() + self::TTL_SEC,
+            $path === '' ? '/' : $path,
+            null,
+            $secure,
+            true,
+            false,
+            Cookie::SAMESITE_LAX,
+        );
     }
 
     private function cookiePath(string $webBase): string
@@ -76,17 +80,6 @@ final class UiSessionService
         $path = rtrim(InstallerWebBase::url($webBase, '/'), '/');
 
         return $path === '' ? '/' : $path;
-    }
-
-    private function readSecret(): ?string
-    {
-        $disk = Storage::disk('wgw_data');
-        if (! $disk->exists('.ui-auth-secret')) {
-            return null;
-        }
-        $raw = $disk->get('.ui-auth-secret');
-
-        return $raw !== '' ? $raw : null;
     }
 
     private function base64UrlEncode(string $data): string

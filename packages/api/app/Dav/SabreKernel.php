@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Dav;
 
+use App\Http\Sabre\SabreHttpRequestFactory;
 use App\Http\Sabre\SabreHttpResponseConverter;
 use App\Support\AppPaths;
 use Illuminate\Http\Request;
@@ -17,6 +18,7 @@ final class SabreKernel
     public function __construct(
         private SabreServerFactory $factory,
         private AppPaths $paths,
+        private SabreHttpRequestFactory $requestFactory,
         private SabreHttpResponseConverter $converter,
     ) {
     }
@@ -48,7 +50,7 @@ final class SabreKernel
         }
 
         $server = $this->factory->create();
-        $httpRequest = HTTP\Sapi::getRequest();
+        $httpRequest = $this->requestFactory->fromLaravelRequest($request);
         $httpRequest->setBaseUrl($server->getBaseUri());
         $httpResponse = new HTTP\Response();
         $httpResponse->setHTTPVersion($httpRequest->getHTTPVersion());

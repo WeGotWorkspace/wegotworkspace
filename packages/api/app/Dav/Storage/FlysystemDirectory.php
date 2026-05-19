@@ -6,7 +6,7 @@ namespace App\Dav\Storage;
 
 use Sabre\DAV;
 
-final class FlysystemDirectory extends FlysystemNode implements DAV\ICollection, DAV\IQuota, DAV\IMoveTarget
+class FlysystemDirectory extends FlysystemNode implements DAV\ICollection, DAV\IQuota, DAV\IMoveTarget
 {
     /**
      * @param resource|string|null $data
