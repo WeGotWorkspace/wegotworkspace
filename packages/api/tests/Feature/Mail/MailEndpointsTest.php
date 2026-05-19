@@ -104,6 +104,17 @@ final class MailEndpointsTest extends TestCase
         $response->assertJson(['error' => 'mailbox_required']);
     }
 
+    public function test_mail_message_delete_requires_folder_and_uid(): void
+    {
+        $token = $this->tokenForAlice();
+
+        $this->deleteJson('/api/v1/mail/message', [], [
+            'Authorization' => 'Bearer '.$token,
+        ])
+            ->assertStatus(400)
+            ->assertJson(['error' => 'bad_params']);
+    }
+
     private function seedMailServers(): void
     {
         AppSetting::setValue(SettingKeys::MAIL_IMAP_HOST, 'imap.example.test');

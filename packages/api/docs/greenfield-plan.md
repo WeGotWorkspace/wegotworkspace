@@ -81,7 +81,7 @@ Checkpoint: `composer test` green; no legacy `src/` in tree.
 - [x] `GET /mail/status`
 - [x] `GET` / `POST` / `PATCH` / `DELETE` `/mail/folders`
 - [x] `GET /mail/messages`, `GET /mail/messages/attachments`
-- [x] `GET` / `PATCH /mail/message`, `GET /mail/message/attachment`
+- [x] `GET` / `PATCH` / `DELETE /mail/message`, `GET /mail/message/attachment`
 - [x] `POST /mail/move`, `POST /mail/send`, `POST /mail/draft`
 - [x] IMAP via `MailImapClient` + SMTP via PHPMailer; `{ error, message }` on failures
 - [x] Feature tests (status + error shapes without live IMAP)
@@ -106,12 +106,13 @@ Checkpoint: `composer test` green; no legacy `src/` in tree.
 - [x] `UiStaticServer` + `UiFrontKernel` (shell SPA routes + `/install` dist)
 - [x] `packages/api/public/ui.php` + `apps/wegotworkspace/index.php` tries UI before Sabre
 - [x] `AppPaths::moduleDistRoot()` resolves `packages/apps/{module}/dist`
-- [ ] Per-app dedicated dist fallbacks when built separately (drive, mail, …)
+- [x] Per-app dedicated dist fallbacks when built separately (drive, mail, …)
 - [x] Office editor static entry (`/office/*` via `OfficeStaticServer` + config-injected HTML shells)
 
-## Phase 13+ — Remaining
+## Phase 13+ — Apps contract gaps
 
-- Per-app dedicated dist fallbacks when built separately (drive, mail, …)
+- [x] `DELETE /mail/message` (permanent delete; used by mail app, not in OpenAPI yet)
+- [x] Per-app module `dist/` preferred over shell for `/drive`, `/mail`, etc.
 
 Each phase: routes → Form Requests → Resources → Services → tests → delete any temporary stubs.
 
