@@ -14,20 +14,17 @@ There is **no** legacy `src/`, no dual autoload, and no cohabiting partial Larav
 
 **Contract parity ≠ code parity.** Old behavior lives only in git history and production tags — not in this workspace.
 
-## Phase 0 — Scaffold (not started)
+## Phase 0 — Scaffold
 
-When you begin implementation:
+- [x] Fresh Laravel 11 app under `packages/api/` (single `App\` PSR-4, no `src/`)
+- [x] Keep `openapi/`, typegen `scripts/`, `docs/`
+- [x] `apiPrefix: api/v1` in `bootstrap/app.php`
+- [x] `apps/wegotworkspace/index.php` forwards `/api/*` to Laravel `public/index.php`
+- [x] Flysystem disks + `WgwStorage` + `Storage::fake()` tests
+- [x] `GET /api/v1/health` smoke route + feature test
+- [x] `composer greenfield:guard` in CI
 
-1. From repo root, create a new Laravel 11 project **in place** under `packages/api/`:
-   - `composer create-project laravel/laravel packages/api-laravel-tmp` then merge **only** Laravel skeleton files into `packages/api/` **without** overwriting `openapi/`, `scripts/`, `docs/`, `package.json`, `README.md`.
-   - Or use `laravel new` into a temp dir and copy `app/`, `bootstrap/`, `config/`, `routes/`, `artisan`, `composer.json` (merge dependencies), `public/`, etc.
-2. **Single** PSR-4 root: `"App\\": "app/"` only — no `src/` autoload entry.
-3. `routes/api.php` with prefix `api/v1` (see OpenAPI `servers`).
-4. Wire `apps/wegotworkspace/index.php` to Laravel `public/index.php` (or front controller) **early** — not as a final “Phase 11” surprise.
-5. Add `config/filesystems.php` disks (`wgw_data`, `wgw_files`, `wgw_notes`) and `app/Storage/WgwStorage.php` per `.cursor/rules/api-storage-flysystem.mdc`.
-6. Installer DB schema: derive migrations from a tagged release’s SQL or document tables in `docs/sql-schema.md` — do not vendor legacy PHP.
-
-Checkpoint: `composer test` green for storage smoke + `php artisan route:list` shows scaffold only.
+Checkpoint: `composer test` green; no legacy `src/` in tree.
 
 ## Phase 1+ — Domains (OpenAPI order)
 

@@ -9,8 +9,8 @@ const packageRoot = resolve(__dirname, "..");
 const repoRoot = resolve(packageRoot, "..", "..");
 const runtimeApiRoot = resolve(repoRoot, "apps", "wegotworkspace", "packages", "api");
 
-const baseFiles = ["package.json", "README.md"];
-const baseDirs = ["openapi", "scripts", "docs"];
+const baseFiles = ["composer.json", "composer.lock", "package.json", "README.md", "phpunit.xml", "artisan"];
+const baseDirs = ["app", "bootstrap", "config", "openapi", "public", "routes", "scripts", "docs", "storage", "tests"];
 
 export function syncRuntimeApiPackage() {
   mkdirSync(runtimeApiRoot, { recursive: true });
