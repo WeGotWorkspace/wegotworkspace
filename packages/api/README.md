@@ -1,8 +1,6 @@
-# @wgw/api — HTTP contract only
+# @wgw/api — OpenAPI contract + Laravel REST API
 
-This package holds the **OpenAPI contract** and generated TypeScript types for the WeGotWorkspace REST API (`/api/v1/*`).
-
-There is **no PHP runtime** here. Legacy `src/` and the partial Laravel scaffold were removed so greenfield work matches the contract without copying legacy code.
+Greenfield Laravel app for `/api/v1/*`, plus the **OpenAPI contract** and generated TypeScript types for the UI. Legacy `packages/api/src/` is gone — implement against `openapi/openapi.json` only.
 
 ## Layout
 
@@ -16,9 +14,13 @@ There is **no PHP runtime** here. Legacy `src/` and the partial Laravel scaffold
 ## Commands
 
 ```bash
-pnpm --filter @wgw/api typegen          # regenerate TS types from openapi/generated/openapi.built.json
-pnpm --filter @wgw/api typegen:check    # fail if generated files are stale
+composer --working-dir packages/api test      # PHPUnit (phases 0–4)
+pnpm --filter @wgw/api test:e2e               # Playwright API smoke (starts php -S unless already on :8080)
+pnpm --filter @wgw/api typegen                # regenerate TS types from openapi/generated/openapi.built.json
+pnpm --filter @wgw/api typegen:check          # fail if generated files are stale
 ```
+
+**PHP:** `^8.3` (CI uses 8.3). PHP 8.5 is fine locally; API responses suppress deprecation display so `/api/v1/*` stays clean JSON.
 
 `openapi/openapi.json` is the hand-edited spec. `openapi/generated/openapi.built.json` is the enriched document used for typegen (committed). After editing `openapi.json`, update the built file in the same change (PHP enrichment was removed with the legacy runtime).
 

@@ -2,6 +2,10 @@
 
 use Illuminate\Http\Request;
 
+// Keep JSON API responses clean when display_errors=On (e.g. php -S on PHP 8.5).
+ini_set('display_errors', '0');
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
+
 define('LARAVEL_START', microtime(true));
 
 // Determine if the application is in maintenance mode...

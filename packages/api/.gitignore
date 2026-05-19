@@ -3,6 +3,8 @@
 .env
 .env.backup
 .phpunit.cache
+/test-results/
+/playwright-report/
 storage/*.key
 storage/logs/*
 storage/framework/cache/*
