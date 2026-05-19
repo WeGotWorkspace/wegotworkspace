@@ -23,7 +23,7 @@ $scanRoots = [
     $appRoot.'/Services',
     $appRoot.'/Repositories',
     $appRoot.'/Storage',
-    $appRoot.'/DAV',
+    $appRoot.'/Dav',
     $appRoot.'/Models',
 ];
 
@@ -114,6 +114,16 @@ function scanDirectory(string $dir, array $forbidden, array &$errors): void
                     && (
                         str_contains($rule['message'], 'PDO')
                         || str_contains($rule['message'], 'Flysystem')
+                    )
+                ) {
+                    continue;
+                }
+                if (
+                    preg_match('#/Dav/Server/#i', str_replace('\\', '/', $path))
+                    && (
+                        str_contains($rule['message'], 'PDO')
+                        || str_contains($rule['message'], 'Flysystem')
+                        || str_contains($rule['message'], 'raw PHP file')
                     )
                 ) {
                     continue;

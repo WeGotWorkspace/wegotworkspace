@@ -38,31 +38,30 @@ header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: SAMEORIGIN');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 
+$apiCandidates = [
+    $runtimeRoot.'/packages/api',
+    $appRoot.'/packages/api',
+    dirname($appRoot, 2).'/packages/api',
+];
+
+$apiPackageRoot = null;
+$apiPackageWithoutVendor = null;
+foreach ($apiCandidates as $candidate) {
+    if (! is_file($candidate.'/public/index.php')) {
+        continue;
+    }
+    if (is_file($candidate.'/vendor/autoload.php')) {
+        $apiPackageRoot = $candidate;
+        break;
+    }
+    if ($apiPackageWithoutVendor === null) {
+        $apiPackageWithoutVendor = $candidate;
+    }
+}
+
 $isApiRequest = $path === '/api' || str_starts_with($path, '/api/');
 
 if ($isApiRequest) {
-    $apiCandidates = [
-        $runtimeRoot.'/packages/api',
-        $appRoot.'/packages/api',
-        dirname($appRoot, 2).'/packages/api',
-    ];
-
-    $apiPackageRoot = null;
-    $apiPackageWithoutVendor = null;
-    foreach ($apiCandidates as $candidate) {
-        if (! is_file($candidate.'/public/index.php')) {
-            continue;
-        }
-        if (is_file($candidate.'/vendor/autoload.php')) {
-            $apiPackageRoot = $candidate;
-            break;
-        }
-        if ($apiPackageWithoutVendor === null) {
-            $apiPackageWithoutVendor = $candidate;
-        }
-    }
-
-    // Keep /api/v1/* JSON clean on php -S (PHP 8.5 deprecations, APP_DEBUG, etc.).
     ini_set('display_errors', '0');
     error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
 
@@ -88,10 +87,25 @@ if ($isApiRequest) {
     exit;
 }
 
+$installPrefix = '/install';
+if ($path === $installPrefix || str_starts_with($path, $installPrefix.'/')) {
+    header('Content-Type: text/html; charset=utf-8');
+    http_response_code(503);
+    echo '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>WeGotWorkspace</title></head><body>';
+    echo '<h1>Installer UI pending</h1>';
+    echo '<p>Use the REST installer API: <code>/api/v1/installer/state</code>.</p>';
+    echo '</body></html>';
+    exit;
+}
+
+if ($apiPackageRoot !== null) {
+    require $apiPackageRoot.'/public/sabre.php';
+    exit;
+}
+
 header('Content-Type: text/html; charset=utf-8');
 http_response_code(503);
 echo '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>WeGotWorkspace</title></head><body>';
-echo '<h1>Application shell unavailable</h1>';
-echo '<p>UI and installer runtimes are not bundled in this greenfield branch yet.</p>';
-echo '<p>REST API: <code>/api/v1/health</code> (Laravel in <code>packages/api</code>).</p>';
+echo '<h1>Application unavailable</h1>';
+echo '<p>Composer vendor/ is missing for the API package.</p>';
 echo '</body></html>';

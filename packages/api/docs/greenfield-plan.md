@@ -92,9 +92,18 @@ Checkpoint: `composer test` green; no legacy `src/` in tree.
 - [x] SQLite/MySQL `voice_peers` / `voice_messages` signaling store
 - [x] Feature tests (guest join/poll/leave + error shapes)
 
-## Phase 11+ — Remaining domains
+## Phase 11 — Sabre / WebDAV
 
-11. **Sabre** — Cal/Card may keep PDO backends; **files** WebDAV must use the same Flysystem disk as REST
+- [x] `SabreServerFactory` + `SabreKernel` (Cal/Card PDO backends, files on `wgw_files` root)
+- [x] Port `app/Dav/Server/*` tree + cookie/basic auth (`SabrePdoBasicAndCookieAuth`)
+- [x] `packages/api/public/sabre.php` + `apps/wegotworkspace/index.php` forwards non-API traffic
+- [x] Feature test: server factory builds when install lock present
+- [ ] Flysystem-native DAV nodes (files still use Sabre FS collections on the same disk root as REST)
+
+## Phase 12+ — Remaining
+
+- UI static shells (home, drive, mail, meet HTML) via front controller
+- Optional: admin update mutations beyond OpenAPI
 
 Each phase: routes → Form Requests → Resources → Services → tests → delete any temporary stubs.
 
