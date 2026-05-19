@@ -38,7 +38,6 @@ final class UiStaticServer
             '/notes',
             '/settings',
             '/voice',
-            '/office',
         ];
 
         foreach (self::GLOBAL_PREFIXES as $prefix) {

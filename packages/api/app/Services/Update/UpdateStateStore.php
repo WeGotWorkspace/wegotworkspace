@@ -87,6 +87,79 @@ final class UpdateStateStore
         return $this->disk()->exists($this->maintenancePath());
     }
 
+    public function cancelKey(): string
+    {
+        return self::BASE.'/cancel.requested';
+    }
+
+    public function packageKey(): string
+    {
+        return self::BASE.'/tmp/release.zip';
+    }
+
+    public function stagingKey(): string
+    {
+        return self::BASE.'/tmp/staging';
+    }
+
+    public function tmpKey(): string
+    {
+        return self::BASE.'/tmp';
+    }
+
+    public function absolutePath(string $key): string
+    {
+        return $this->disk()->path($key);
+    }
+
+    public function appendLog(string $message): void
+    {
+        $path = self::BASE.'/process.log';
+        $disk = $this->disk();
+        $existing = $disk->exists($path) ? $disk->get($path) : '';
+        $disk->put($path, $existing.'['.date('c').'] '.$message."\n");
+    }
+
+    public function requestCancel(): void
+    {
+        $this->disk()->put($this->cancelKey(), date('c')."\n");
+    }
+
+    public function clearCancelRequest(): void
+    {
+        $key = $this->cancelKey();
+        if ($this->disk()->exists($key)) {
+            $this->disk()->delete($key);
+        }
+    }
+
+    public function isCancelRequested(): bool
+    {
+        return $this->disk()->exists($this->cancelKey());
+    }
+
+    public function cleanupTemporaryData(): void
+    {
+        $disk = $this->disk();
+        if ($disk->directoryExists($this->tmpKey())) {
+            $disk->deleteDirectory($this->tmpKey());
+        }
+        if ($disk->exists($this->packageKey())) {
+            $disk->delete($this->packageKey());
+        }
+        $this->clearCancelRequest();
+    }
+
+    public function ensureDirs(): void
+    {
+        $disk = $this->disk();
+        foreach ([self::BASE, $this->tmpKey(), $this->backupDir()] as $dir) {
+            if (! $disk->directoryExists($dir)) {
+                $disk->makeDirectory($dir);
+            }
+        }
+    }
+
     private function disk(): Filesystem
     {
         return $this->storage->data();

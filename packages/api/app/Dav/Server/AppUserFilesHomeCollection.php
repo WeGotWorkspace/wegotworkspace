@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Dav\Server;
 
+use App\Dav\Storage\FlysystemAclCollection;
+use App\Storage\WgwStorage;
 use Sabre\DAV;
 use Sabre\DAV\Auth\Plugin as AuthPlugin;
-use Sabre\DAVACL\FS\Collection as DavAclFsCollection;
 use Sabre\DAVACL\FS\HomeCollection;
 use Sabre\DAVACL\PrincipalBackend\BackendInterface;
 use Sabre\Uri;
@@ -43,13 +44,13 @@ final class AppUserFilesHomeCollection extends HomeCollection
         ];
 
         [, $principalBaseName] = Uri\split($owner);
-        $path = $this->storagePath.'/'.$principalBaseName;
-
-        if (!is_dir($path)) {
-            mkdir($path, 0775, true);
+        $key = trim($this->storagePath, '/').'/'.$principalBaseName;
+        $filesystem = app(WgwStorage::class)->files();
+        if (! $filesystem->directoryExists($key)) {
+            $filesystem->makeDirectory($key);
         }
 
-        return new DavAclFsCollection($path, $acl, $owner);
+        return new FlysystemAclCollection($filesystem, $key, $acl, $owner);
     }
 
     /**
