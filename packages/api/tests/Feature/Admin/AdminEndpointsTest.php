@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Admin;
 
+use App\Models\AppSetting;
 use App\Models\Principal;
 use App\Models\User;
 use App\Services\Auth\AdminRoleResolver;
+use App\Support\WgwSettings;
 use App\Storage\WgwStorage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -116,6 +118,29 @@ final class AdminEndpointsTest extends TestCase
             ->assertJsonFragment(['saved' => ['timezone']]);
 
         $this->withHeader('Authorization', 'Bearer '.$token)
+            ->putJson('/api/v1/admin/settings', [
+                'values' => [
+                    'voice_signaling_url' => 'https://signal.example.test/voice',
+                    'voice_turn_url' => "stun:stun.example.test:3478\nturn:turn.example.test:3478?transport=udp",
+                    'voice_turn_username' => 'meet-user',
+                    'voice_turn_credential' => 'meet-secret',
+                    'voice_force_relay' => true,
+                ],
+            ])
+            ->assertOk()
+            ->assertJsonPath('ok', true);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/v1/admin/state')
+            ->assertOk()
+            ->assertJsonPath('voice.signalingUrl', 'https://signal.example.test/voice')
+            ->assertJsonPath('voice.turnUsername', 'meet-user')
+            ->assertJsonPath('voice.turnPassword', 'meet-secret')
+            ->assertJsonPath('voice.forceRelay', true)
+            ->assertJsonPath('voice.stunUrls', 'stun:stun.example.test:3478')
+            ->assertJsonPath('voice.turnUrls', 'turn:turn.example.test:3478?transport=udp');
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
             ->putJson('/api/v1/admin/groups/administrators/members/bob')
             ->assertOk()
             ->assertJsonPath('ok', true);
@@ -125,6 +150,65 @@ final class AdminEndpointsTest extends TestCase
             ->getJson('/api/v1/admin/state')
             ->assertOk()
             ->assertJsonFragment(['username' => 'bob']);
+    }
+
+    public function test_admin_users_and_groups_crud(): void
+    {
+        AppSetting::setValue(WgwSettings::CALENDAR_ENABLED, false);
+        AppSetting::setValue(WgwSettings::CONTACTS_ENABLED, false);
+
+        $token = $this->adminToken();
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/api/v1/admin/users', [
+                'username' => 'carol',
+                'password' => 'carol-secret',
+                'displayName' => 'Carol',
+                'email' => 'carol@example.test',
+                'groups' => [],
+            ])
+            ->assertOk()
+            ->assertJsonPath('ok', true);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->patchJson('/api/v1/admin/users/carol', [
+                'displayName' => 'Carol Updated',
+                'email' => 'carol.updated@example.test',
+            ])
+            ->assertOk()
+            ->assertJsonPath('ok', true);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/api/v1/admin/groups', [
+                'name' => 'Support Team',
+                'displayName' => 'Support Team',
+            ])
+            ->assertOk()
+            ->assertJsonPath('ok', true);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->patchJson('/api/v1/admin/groups/support-team', [
+                'displayName' => 'Support',
+                'members' => ['bob', 'carol'],
+            ])
+            ->assertOk()
+            ->assertJsonPath('ok', true);
+
+        $state = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/v1/admin/state');
+        $state->assertOk();
+        $usernames = array_column($state->json('users'), 'username');
+        $this->assertContains('carol', $usernames);
+        $groupIds = array_column($state->json('groups'), 'id');
+        $this->assertContains('principals/groups/support-team', $groupIds);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->deleteJson('/api/v1/admin/users/carol')
+            ->assertOk();
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->deleteJson('/api/v1/admin/groups/support-team')
+            ->assertOk();
     }
 
     public function test_non_admin_cannot_access_admin_routes(): void

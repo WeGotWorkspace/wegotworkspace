@@ -88,15 +88,35 @@ final class SettingsEndpointsTest extends TestCase
         $profile->assertJsonPath('user.email', 'alice.updated@example.test');
 
         $mail = $this->putJson('/api/v1/settings/mail', [
-            'imapUsername' => 'alice@imap.example.test',
+            'imapUsername' => 'ignored@imap.example.test',
             'imapPassword' => 'mail-secret',
         ], [
             'Authorization' => 'Bearer '.$token,
         ]);
         $mail->assertOk();
-        $mail->assertJsonPath('mail.imapUsername', 'alice@imap.example.test');
+        $mail->assertJsonPath('mail.imapUsername', 'ignored@imap.example.test');
         $mail->assertJsonPath('mail.imapHasPassword', true);
         $mail->assertJsonPath('mailServer.imapPort', 993);
+    }
+
+    public function test_settings_mail_save_persists_password_and_syncs_profile_email(): void
+    {
+        $token = $this->issueToken();
+
+        $this->putJson('/api/v1/settings/mail', [
+            'imapUsername' => 'alice@imap.example.test',
+            'imapPassword' => 'mail-secret',
+        ], [
+            'Authorization' => 'Bearer '.$token,
+        ])
+            ->assertOk()
+            ->assertJsonPath('user.email', 'alice@imap.example.test')
+            ->assertJsonPath('mail.imapUsername', 'alice@imap.example.test')
+            ->assertJsonPath('mail.imapHasPassword', true);
+
+        $this->getJson('/api/v1/settings/state', ['Authorization' => 'Bearer '.$token])
+            ->assertOk()
+            ->assertJsonPath('mail.imapHasPassword', true);
     }
 
     public function test_settings_state_includes_group_membership(): void

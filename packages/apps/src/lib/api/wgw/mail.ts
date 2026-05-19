@@ -114,9 +114,21 @@ async function postOrPatchMail(
       const json = text ? (JSON.parse(text) as Record<string, unknown>) : null;
       const candidate =
         json && typeof json === "object"
-          ? (json.error ?? json.message ?? json.detail ?? json.reason)
+          ? (json.message ?? json.error ?? json.detail ?? json.reason)
           : undefined;
-      if (typeof candidate === "string" && candidate.trim()) detail = candidate.trim();
+      if (typeof candidate === "string" && candidate.trim()) {
+        detail = candidate.trim();
+        if (
+          json &&
+          typeof json === "object" &&
+          typeof json.error === "string" &&
+          json.error === "invalid_from_address" &&
+          detail === "invalid_from_address"
+        ) {
+          detail =
+            "No valid From address. Set your account email in Settings or use a full email as your mail login.";
+        }
+      }
     } catch {
       // Keep raw text if parsing fails.
     }

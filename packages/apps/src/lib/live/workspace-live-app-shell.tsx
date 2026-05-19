@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import type { ReactElement } from "react";
 import { clearWgwSession } from "@/lib/api/wgw/http";
 import { LiveBootstrapErrorPanel } from "@/lib/live/live-bootstrap-error-panel";
+import { LoadingSpinner } from "@/loading-spinner/src/loading-spinner";
 
 type WorkspaceLiveAppShellProps = {
   phase: "loading" | "ready" | "error";
@@ -46,6 +47,14 @@ export function WorkspaceLiveAppShell({
       return null;
     }
     return <LiveBootstrapErrorPanel title={errorTitle} error={message || null} onRetry={retry} />;
+  }
+
+  if (phase === "loading") {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center p-8">
+        <LoadingSpinner size="lg" label="Loading workspace…" />
+      </div>
+    );
   }
 
   return render(successVersion);

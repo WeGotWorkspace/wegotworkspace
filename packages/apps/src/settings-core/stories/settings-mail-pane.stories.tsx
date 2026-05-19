@@ -26,7 +26,8 @@ function MailStoryHarness({ variant = "default" }: { variant?: MailStoryVariant 
 
   useEffect(() => {
     if (variant === "credentialsDirty") {
-      form.setValue("imapUsername", "other@example.test", { shouldDirty: true });
+      form.setValue("imapUsername", "alice.updated@example.test", { shouldDirty: true });
+      form.setValue("imapPassword", "new-secret", { shouldDirty: true });
     }
   }, [variant, form]);
 

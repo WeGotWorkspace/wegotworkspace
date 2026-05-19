@@ -22,11 +22,17 @@ final class SettingKeys
 
     public const MAIL_ENABLED = 'mail_enabled';
 
+    /** Optional absolute URL to Aura Voice signaling base endpoint. Empty = built-in /api/v1/voice path. */
+    public const VOICE_SIGNALING_URL = 'voice_signaling_url';
+
     public const VOICE_TURN_URL = 'voice_turn_url';
 
     public const VOICE_TURN_USERNAME = 'voice_turn_username';
 
     public const VOICE_TURN_CREDENTIAL = 'voice_turn_credential';
+
+    /** When enabled, Meet clients use TURN relay-only mode from the start. */
+    public const VOICE_FORCE_RELAY = 'voice_force_relay';
 
     public const MAIL_IMAP_HOST = 'mail_imap_host';
 
@@ -54,9 +60,11 @@ final class SettingKeys
             self::CALENDAR_ENABLED,
             self::CONTACTS_ENABLED,
             self::MAIL_ENABLED,
+            self::VOICE_SIGNALING_URL,
             self::VOICE_TURN_URL,
             self::VOICE_TURN_USERNAME,
             self::VOICE_TURN_CREDENTIAL,
+            self::VOICE_FORCE_RELAY,
             self::MAIL_IMAP_HOST,
             self::MAIL_IMAP_PORT,
             self::MAIL_IMAP_SECURITY,

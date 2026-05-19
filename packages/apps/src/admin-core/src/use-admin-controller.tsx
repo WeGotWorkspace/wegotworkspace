@@ -54,6 +54,14 @@ function buildSettingsFormState(data: AdminWorkspaceProps["data"]): SettingsForm
   };
 }
 
+function combineVoiceIceUrls(stunUrls: string, turnUrls: string): string {
+  const parts = [...stunUrls.split(/[\r\n,]+/), ...turnUrls.split(/[\r\n,]+/)]
+    .map((piece) => piece.trim())
+    .filter((piece) => piece !== "");
+
+  return parts.join("\n");
+}
+
 function toSettingsMap(state: SettingsFormState): Record<string, string | number | boolean> {
   return {
     mail_imap_host: state.imapHost,
@@ -63,7 +71,7 @@ function toSettingsMap(state: SettingsFormState): Record<string, string | number
     mail_smtp_port: state.smtpPort,
     mail_smtp_security: state.smtpSecurity,
     voice_signaling_url: state.signalingUrl,
-    voice_turn_url: state.turnUrls,
+    voice_turn_url: combineVoiceIceUrls(state.stunUrls, state.turnUrls),
     voice_turn_username: state.turnUsername,
     voice_turn_credential: state.turnPassword,
     voice_force_relay: state.forceRelay,
@@ -95,6 +103,14 @@ export function useAdminController({
   const [refreshingServerChecks, setRefreshingServerChecks] = useState(false);
   const applyRequestPendingRef = useRef(false);
   const sections = useAdminSidebarModel();
+
+  useEffect(() => {
+    setUsers(data.users);
+    setGroups(data.groups);
+    setUpdates(data.updates);
+    setUpdateLogLines(data.updateLogLines);
+  }, [data]);
+
   const applyAdminData = (next: AdminWorkspaceProps["data"]) => {
     setUsers(next.users);
     setGroups(next.groups);
@@ -189,13 +205,15 @@ export function useAdminController({
   };
 
   const saveSettings = async () => {
+    if (!operations?.saveSettings) {
+      showError("Admin API is not ready yet");
+      return;
+    }
     try {
-      const next = await operations?.saveSettings(toSettingsMap(settingsForm));
-      if (next) {
-        setSettingsForm(buildSettingsFormState(next));
-        setUpdates(next.updates);
-        setUpdateLogLines(next.updateLogLines);
-      }
+      const next = await operations.saveSettings(toSettingsMap(settingsForm));
+      setSettingsForm(buildSettingsFormState(next));
+      setUpdates(next.updates);
+      setUpdateLogLines(next.updateLogLines);
       showSuccess("Admin settings saved");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not save admin settings";

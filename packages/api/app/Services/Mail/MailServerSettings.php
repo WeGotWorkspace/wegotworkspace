@@ -34,7 +34,7 @@ final class MailServerSettings
             ],
             'smtp' => [
                 'host' => trim((string) ($cfg[SettingKeys::MAIL_SMTP_HOST] ?? '')),
-                'port' => self::port($cfg, SettingKeys::MAIL_SMTP_PORT, 465),
+                'port' => self::port($cfg, SettingKeys::MAIL_SMTP_PORT, 587),
                 'security' => self::security($cfg, SettingKeys::MAIL_SMTP_SECURITY),
             ],
         ];
