@@ -3465,10 +3465,10 @@ export interface components {
             id?: string;
             notebook: string;
             title: string;
-            body: string;
-            tags: components["schemas"]["NoteTagList"];
-            starred: boolean;
-            archived: boolean;
+            body?: string;
+            tags?: components["schemas"]["NoteTagList"];
+            starred?: boolean;
+            archived?: boolean;
         };
         /**
          * @example {
