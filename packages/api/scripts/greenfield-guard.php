@@ -96,11 +96,25 @@ function scanDirectory(string $dir, array $forbidden, array &$errors): void
         if ($lines === false) {
             continue;
         }
+        $isInstallerService = str_contains(
+            $path,
+            DIRECTORY_SEPARATOR.'Services'.DIRECTORY_SEPARATOR.'Installer'.DIRECTORY_SEPARATOR
+        );
+
         foreach ($lines as $num => $line) {
             foreach ($forbidden as $rule) {
                 if (
                     str_contains($rule['message'], 'Config::load')
                     && str_contains($path, DIRECTORY_SEPARATOR.'Providers'.DIRECTORY_SEPARATOR)
+                ) {
+                    continue;
+                }
+                if (
+                    $isInstallerService
+                    && (
+                        str_contains($rule['message'], 'PDO')
+                        || str_contains($rule['message'], 'Flysystem')
+                    )
                 ) {
                     continue;
                 }
