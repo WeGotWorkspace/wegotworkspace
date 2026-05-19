@@ -22,11 +22,11 @@ final class NoteUpsertRequest extends FormRequest
             'id' => ['sometimes', 'string', 'max:120'],
             'notebook' => ['required', 'string', 'max:255'],
             'title' => ['required', 'string', 'max:4096'],
-            'body' => ['required', 'string'],
-            'tags' => ['required', 'array'],
+            'body' => ['sometimes', 'nullable', 'string'],
+            'tags' => ['sometimes', 'nullable', 'array'],
             'tags.*' => ['string', 'max:120'],
             'starred' => ['sometimes', 'boolean'],
-            'archived' => ['required', 'boolean'],
+            'archived' => ['sometimes', 'boolean'],
         ];
     }
 }
