@@ -99,6 +99,33 @@ final class AppPaths
         return null;
     }
 
+    public function officeEditorReady(): bool
+    {
+        foreach ($this->officeBuildRoots() as $root) {
+            if (is_readable($root.'/editor.html')) {
+                return true;
+            }
+            if (is_readable($root.'/editor/index.html')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function officeBuildRoots(): array
+    {
+        $roots = [];
+        foreach ($this->officeIndexCandidates() as $index) {
+            $roots[] = dirname($index);
+        }
+
+        return array_values(array_unique($roots));
+    }
+
     /**
      * @return list<string>
      */
