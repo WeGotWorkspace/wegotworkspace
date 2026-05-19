@@ -60,10 +60,16 @@ Checkpoint: `composer test` green; no legacy `src/` in tree.
 - [x] Flysystem via `WgwStorage` + `StoragePaths` ACL
 - [x] Feature tests
 
-## Phase 7+ — Remaining domains (OpenAPI order)
+## Phase 7 — Office
 
-7. **Office** (Flysystem `wgw_files`)
-7. **Admin** + updates
+- [x] `GET /office/capabilities`
+- [x] `POST` / `PUT /office/documents` (Flysystem, drive ACL)
+- [x] `POST /office/session` (UI cookie for ONLYOFFICE; used by apps, not yet in OpenAPI)
+- [x] Feature tests
+
+## Phase 8+ — Remaining domains (OpenAPI order)
+
+8. **Admin** + updates
 8. **Mail** (IMAP/SMTP services; preserve `{ error, message }` shape)
 9. **Voice**
 10. **Sabre** — Cal/Card may keep PDO backends; **files** WebDAV must use the same Flysystem disk as REST

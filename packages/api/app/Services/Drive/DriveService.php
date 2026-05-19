@@ -123,15 +123,15 @@ final class DriveService
 
         $disk = $this->disk();
         $key = $this->paths->virtualToStorageKey($newPath);
-        if ($disk->exists($key)) {
-            throw new \InvalidArgumentException('Item already exists.');
-        }
-
         if ($type === 'dir') {
-            if (! $disk->makeDirectory($key)) {
-                throw new \RuntimeException('Could not create folder.');
+            if ($disk->directoryExists($key)) {
+                throw new \InvalidArgumentException('Item already exists.');
             }
+            $disk->makeDirectory($key);
         } else {
+            if ($disk->fileExists($key)) {
+                throw new \InvalidArgumentException('Item already exists.');
+            }
             $disk->put($key, '');
         }
 

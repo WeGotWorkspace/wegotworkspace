@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature\Drive;
+namespace Tests\Feature\Office;
 
 use App\Models\Principal;
 use App\Models\User;
@@ -14,7 +14,7 @@ use Tests\Support\SqliteWgwSchema;
 use Tests\Support\WgwTestDisks;
 use Tests\TestCase;
 
-final class DriveEndpointsTest extends TestCase
+final class OfficeEndpointsTest extends TestCase
 {
     private string $dataDir = '';
 
@@ -25,7 +25,7 @@ final class DriveEndpointsTest extends TestCase
         putenv('WGW_DISABLE_LOGIN_THROTTLE=1');
         $_ENV['WGW_DISABLE_LOGIN_THROTTLE'] = '1';
 
-        $this->dataDir = storage_path('framework/testing/wgw-drive-'.uniqid('', true));
+        $this->dataDir = storage_path('framework/testing/wgw-office-'.uniqid('', true));
         File::ensureDirectoryExists($this->dataDir.'/files/users/alice');
         WgwTestDisks::refresh($this->dataDir);
 
@@ -50,7 +50,6 @@ final class DriveEndpointsTest extends TestCase
 
         SqliteWgwSchema::applyCoreTables();
         SqliteWgwSchema::applyAuthTables();
-        SqliteWgwSchema::applyDriveTables();
 
         User::query()->create([
             'username' => 'alice',
@@ -62,8 +61,6 @@ final class DriveEndpointsTest extends TestCase
             'email' => 'alice@example.test',
             'displayname' => 'Alice',
         ]);
-
-        app(WgwStorage::class)->files()->put('users/alice/welcome.txt', 'hello');
     }
 
     protected function tearDown(): void
@@ -75,51 +72,46 @@ final class DriveEndpointsTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_drive_user_listing_create_and_star_flow(): void
+    public function test_office_capabilities_session_and_document_mutations(): void
     {
-        $token = $this->issueToken();
-
-        $user = $this->withBearer($token)->getJson('/api/v1/drive/user');
-        $user->assertOk()
-            ->assertJsonPath('data.username', 'alice')
-            ->assertJsonPath('data.name', 'Alice')
-            ->assertJsonPath('data.roots', ['/users', '/groups']);
-
-        $listing = $this->withBearer($token)->postJson('/api/v1/drive/getdir', [
-            'dir' => '/users/alice',
-        ]);
-        $listing->assertOk()
-            ->assertJsonPath('data.location', '/users/alice/')
-            ->assertJsonFragment(['name' => 'welcome.txt', 'type' => 'file']);
-
-        $create = $this->withBearer($token)->postJson('/api/v1/drive/createnew', [
-            'cwd' => '/users/alice',
-            'name' => 'Projects',
-            'type' => 'dir',
-        ]);
-        $create->assertOk()->assertJsonPath('data', 'Created');
-
-        $star = $this->withBearer($token)->postJson('/api/v1/drive/stars', [
-            'path' => '/users/alice/welcome.txt',
-            'starred' => true,
-        ]);
-        $star->assertOk()->assertJsonPath('data', 'Updated');
-
-        $stars = $this->withBearer($token)->getJson('/api/v1/drive/stars');
-        $stars->assertOk()
-            ->assertJsonPath('data.paths', ['/users/alice/welcome.txt']);
-    }
-
-    private function issueToken(): string
-    {
-        return (string) $this->postJson('/api/v1/auth/token', [
+        $token = (string) $this->postJson('/api/v1/auth/token', [
             'username' => 'alice',
             'password' => 'secret',
         ])->json('access_token');
-    }
 
-    private function withBearer(string $token): static
-    {
-        return $this->withHeader('Authorization', 'Bearer '.$token);
+        $headers = ['Authorization' => 'Bearer '.$token];
+
+        $this->getJson('/api/v1/office/capabilities', $headers)
+            ->assertOk()
+            ->assertJsonPath('enabled', true)
+            ->assertJsonStructure(['enabled', 'indexReady', 'editorReady']);
+
+        $this->postJson('/api/v1/office/session', [], $headers)
+            ->assertOk()
+            ->assertJsonPath('ok', true);
+
+        $path = '/users/alice/Report.docx';
+        $content = base64_encode('fake-docx-bytes');
+
+        $this->postJson('/api/v1/office/documents', [
+            'path' => $path,
+            'content_base64' => $content,
+        ], $headers)
+            ->assertOk()
+            ->assertJsonPath('ok', true)
+            ->assertJsonPath('path', $path);
+
+        $storage = app(WgwStorage::class);
+        $this->assertSame('fake-docx-bytes', $storage->files()->get('users/alice/Report.docx'));
+
+        $updated = base64_encode('updated');
+        $this->putJson('/api/v1/office/documents', [
+            'path' => $path,
+            'content_base64' => $updated,
+        ], $headers)
+            ->assertOk()
+            ->assertJsonPath('bytes', 7);
+
+        $this->assertSame('updated', $storage->files()->get('users/alice/Report.docx'));
     }
 }
