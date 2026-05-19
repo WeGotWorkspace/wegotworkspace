@@ -1,0 +1,127 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Dav\Server;
+
+use App\Admin\AdminConstants;
+use Sabre\CalDAV\Principal\Collection as CalDAVPrincipalCollection;
+use Sabre\DAV;
+use Sabre\DAV\Auth\Plugin as AuthPlugin;
+use Sabre\DAVACL\PrincipalBackend\BackendInterface;
+use Sabre\Uri;
+
+/**
+ * Uses {@see GroupPrincipalContainer} for the {@see AdminConstants::GROUP_CONTAINER_URI} branch
+ * so nested group principals appear in the DAV tree (stock CalDAV {@code User} only exposes proxies).
+ * Listing under {@code principals/} is limited to the signed-in account plus the {@code groups} container.
+ */
+final class AppCalDAVPrincipalCollection extends CalDAVPrincipalCollection
+{
+    public function __construct(
+        BackendInterface $principalBackend,
+        private readonly \PDO $pdo,
+        private readonly AuthPlugin $authPlugin,
+        string $principalPrefix = 'principals',
+    ) {
+        parent::__construct($principalBackend, $principalPrefix);
+    }
+
+    /**
+     * @return list<DAV\INode>
+     */
+    public function getChildren(): array
+    {
+        if ($this->disableListing) {
+            throw new DAV\Exception\MethodNotAllowed('Listing members of this collection is disabled');
+        }
+        $current = $this->authPlugin->getCurrentPrincipal();
+        if ($current === null || $current === '') {
+            return [];
+        }
+        $children = [];
+        $ownInfo = $this->principalBackend->getPrincipalByPath($current);
+        if ($ownInfo && AccountPrincipalFilter::isAccountPrincipal($this->pdo, $ownInfo)) {
+            $children[] = $this->getChildForPrincipal($ownInfo);
+        }
+        $groupsInfo = $this->principalBackend->getPrincipalByPath(AdminConstants::GROUP_CONTAINER_URI);
+        if ($groupsInfo) {
+            $children[] = $this->getChildForPrincipal($groupsInfo);
+        }
+
+        return $children;
+    }
+
+    public function getChild($name): DAV\INode
+    {
+        if ($name === $this->groupsDirectoryName()) {
+            $principalInfo = $this->principalBackend->getPrincipalByPath(AdminConstants::GROUP_CONTAINER_URI);
+            if (!$principalInfo) {
+                throw new DAV\Exception\NotFound('Node with name '.$name.' was not found');
+            }
+
+            return $this->getChildForPrincipal($principalInfo);
+        }
+
+        $current = $this->authPlugin->getCurrentPrincipal();
+        if ($current === null || $current === '') {
+            throw new DAV\Exception\NotFound('Node with name '.$name.' was not found');
+        }
+        $principalInfo = $this->principalBackend->getPrincipalByPath($this->principalPrefix.'/'.$name);
+        if (!$principalInfo || !AccountPrincipalFilter::isAccountPrincipal($this->pdo, $principalInfo)) {
+            throw new DAV\Exception\NotFound('Node with name '.$name.' was not found');
+        }
+        if (($principalInfo['uri'] ?? '') !== $current) {
+            throw new DAV\Exception\NotFound('Node with name '.$name.' was not found');
+        }
+
+        return $this->getChildForPrincipal($principalInfo);
+    }
+
+    public function childExists($name): bool
+    {
+        if ($name === $this->groupsDirectoryName()) {
+            return (bool) $this->principalBackend->getPrincipalByPath(AdminConstants::GROUP_CONTAINER_URI);
+        }
+        $current = $this->authPlugin->getCurrentPrincipal();
+        if ($current === null || $current === '') {
+            return false;
+        }
+        $principalInfo = $this->principalBackend->getPrincipalByPath($this->principalPrefix.'/'.$name);
+        if (!$principalInfo) {
+            return false;
+        }
+
+        return AccountPrincipalFilter::isAccountPrincipal($this->pdo, $principalInfo)
+            && ($principalInfo['uri'] ?? '') === $current;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function searchPrincipals(array $searchProperties, $test = 'allof')
+    {
+        $names = parent::searchPrincipals($searchProperties, $test);
+
+        return array_values(array_filter($names, fn (string $n): bool => $this->childExists($n)));
+    }
+
+    /**
+     * @return \Sabre\CalDAV\Principal\User|GroupPrincipalContainer
+     */
+    public function getChildForPrincipal(array $principalInfo)
+    {
+        if (($principalInfo['uri'] ?? '') === AdminConstants::GROUP_CONTAINER_URI) {
+            return new GroupPrincipalContainer($this->principalBackend, $principalInfo);
+        }
+
+        return parent::getChildForPrincipal($principalInfo);
+    }
+
+    private function groupsDirectoryName(): string
+    {
+        [, $name] = Uri\split(AdminConstants::GROUP_CONTAINER_URI);
+
+        return $name ?? 'groups';
+    }
+}
