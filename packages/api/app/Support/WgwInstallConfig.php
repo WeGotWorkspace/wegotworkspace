@@ -44,6 +44,11 @@ final class WgwInstallConfig
 
     public function dataDir(): string
     {
+        $configured = config('wgw.data_dir');
+        if (is_string($configured) && $configured !== '') {
+            return rtrim($configured, '/');
+        }
+
         $override = getenv('SABRE_DATA_DIR');
         if (is_string($override) && $override !== '') {
             return $this->resolvePath($override);
@@ -60,6 +65,31 @@ final class WgwInstallConfig
     public function filesDir(): string
     {
         return rtrim($this->dataDir(), '/').'/files';
+    }
+
+    public function resolveInstallPath(string $path): string
+    {
+        $path = str_replace('\\', '/', trim($path));
+        if ($path === '') {
+            return rtrim($this->dataDir(), '/').'/db.sqlite';
+        }
+        if ($this->isAbsolutePath($path)) {
+            return rtrim($path, '/');
+        }
+
+        return rtrim($this->installRoot().'/'.ltrim($path, '/'), '/');
+    }
+
+    private function isAbsolutePath(string $path): bool
+    {
+        if ($path !== '' && $path[0] === '/') {
+            return true;
+        }
+
+        return \PHP_OS_FAMILY === 'Windows'
+            && strlen($path) > 2
+            && ctype_alpha($path[0])
+            && $path[1] === ':';
     }
 
     /**
