@@ -67,12 +67,28 @@ Checkpoint: `composer test` green; no legacy `src/` in tree.
 - [x] `POST /office/session` (UI cookie for ONLYOFFICE; used by apps, not yet in OpenAPI)
 - [x] Feature tests
 
-## Phase 8+ — Remaining domains (OpenAPI order)
+## Phase 8 — Admin
 
-8. **Admin** + updates
-8. **Mail** (IMAP/SMTP services; preserve `{ error, message }` shape)
-9. **Voice**
-10. **Sabre** — Cal/Card may keep PDO backends; **files** WebDAV must use the same Flysystem disk as REST
+- [x] `GET /admin/state` (users, groups, settings slices, embedded updates)
+- [x] `GET` / `DELETE /admin/updates/log`
+- [x] `GET` / `DELETE /admin/updates/backups/{name}`
+- [x] `PUT` / `DELETE /admin/groups/{group}/members/{username}`
+- [x] Feature tests
+
+## Phase 9 — Mail
+
+- [x] `GET /mail/status`
+- [x] `GET` / `POST` / `PATCH` / `DELETE` `/mail/folders`
+- [x] `GET /mail/messages`, `GET /mail/messages/attachments`
+- [x] `GET` / `PATCH /mail/message`, `GET /mail/message/attachment`
+- [x] `POST /mail/move`, `POST /mail/send`, `POST /mail/draft`
+- [x] IMAP via `MailImapClient` + SMTP via PHPMailer; `{ error, message }` on failures
+- [x] Feature tests (status + error shapes without live IMAP)
+
+## Phase 10+ — Remaining domains
+
+10. **Voice**
+11. **Sabre** — Cal/Card may keep PDO backends; **files** WebDAV must use the same Flysystem disk as REST
 
 Each phase: routes → Form Requests → Resources → Services → tests → delete any temporary stubs.
 

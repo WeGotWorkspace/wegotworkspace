@@ -14,6 +14,18 @@ final class MailCredentialService
     }
 
     /**
+     * @param array{imapUsername: string, imapPassword: string}|null $account
+     */
+    public static function isAccountConfigured(?array $account): bool
+    {
+        if ($account === null) {
+            return false;
+        }
+
+        return trim($account['imapUsername']) !== '' && ($account['imapPassword'] ?? '') !== '';
+    }
+
+    /**
      * @return array{imapUsername: string, imapPassword: string}|null
      */
     public function loadAccount(string $username): ?array
