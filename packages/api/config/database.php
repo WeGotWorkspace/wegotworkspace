@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Str;
 
+require __DIR__.'/support/mysql-pdo-options.php';
+
 return [
 
     /*
@@ -57,9 +59,7 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
+            'options' => wgw_mysql_pdo_options(),
         ],
 
         'mariadb' => [
@@ -77,9 +77,7 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
+            'options' => wgw_mysql_pdo_options(),
         ],
 
         'pgsql' => [

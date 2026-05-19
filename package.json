@@ -10,6 +10,7 @@
     "build": "sh -c 'if [ -f .env ]; then set -a; . ./.env; set +a; fi; turbo run typegen build'",
     "check:api-types": "sh -c 'if [ -f .env ]; then set -a; . ./.env; set +a; fi; turbo run typegen:check --filter=@wgw/api'",
     "test": "sh -c 'if [ -f .env ]; then set -a; . ./.env; set +a; fi; turbo run test --filter=@wgw/api'",
+    "test:api-e2e": "sh -c 'if [ -f .env ]; then set -a; . ./.env; set +a; fi; pnpm --filter @wgw/api test:e2e'",
     "setup:macos": "sh -c 'if [ -f .env ]; then set -a; . ./.env; set +a; fi; pnpm --filter @wgw/api setup:macos'",
     "preview:macos": "sh -c 'if [ -f .env ]; then set -a; . ./.env; set +a; fi; pnpm --filter @wgw/api preview:macos'",
     "update:onlyoffice-web": "bash tools/update-onlyoffice-web-subtree.sh",

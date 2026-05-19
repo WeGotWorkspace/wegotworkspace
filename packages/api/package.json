@@ -19,9 +19,12 @@
     "typegen:mail": "pnpm run typegen:openapi",
     "typegen:mail:watch": "pnpm run typegen:openapi:watch",
     "typegen:mail:check": "pnpm run typegen:openapi:check",
-    "test": "composer test"
+    "test": "composer test",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "chokidar": "^5.0.0",
     "openapi-typescript": "^7.13.0",
     "zod": "^3.24.2"
