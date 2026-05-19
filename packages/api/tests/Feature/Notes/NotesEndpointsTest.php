@@ -128,6 +128,30 @@ final class NotesEndpointsTest extends TestCase
         $this->assertNotContains('Projects', $names);
     }
 
+    public function test_notes_upsert_allows_empty_body_and_no_tags(): void
+    {
+        $token = $this->token();
+
+        $create = $this->postJson('/api/v1/notes/items', [
+            'notebook' => 'Drafts',
+            'title' => 'Blank',
+        ], ['Authorization' => 'Bearer '.$token]);
+        $create->assertCreated();
+        $noteId = (string) $create->json('item.id');
+        $this->assertSame('', $create->json('item.body'));
+        $this->assertSame([], $create->json('item.tags'));
+
+        $update = $this->putJson('/api/v1/notes/items/'.$noteId, [
+            'notebook' => 'Drafts',
+            'title' => 'Still blank',
+            'body' => '',
+            'tags' => [],
+        ], ['Authorization' => 'Bearer '.$token]);
+        $update->assertOk();
+        $this->assertSame('', $update->json('item.body'));
+        $this->assertSame([], $update->json('item.tags'));
+    }
+
     public function test_notes_list_skips_apple_double_sidecar_files(): void
     {
         $drafts = $this->dataDir.'/files/users/alice/.notes/Drafts';

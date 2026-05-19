@@ -2420,11 +2420,7 @@
                 },
                 "required": [
                     "notebook",
-                    "title",
-                    "body",
-                    "tags",
-                    "starred",
-                    "archived"
+                    "title"
                 ],
                 "example": {
                     "id": "n123",
