@@ -47,11 +47,23 @@ final class MailCredentialService
 
     public function save(string $username, string $imapUsername, string $imapPassword): void
     {
-        $existing = $this->loadAccount($username) ?? ['imapUsername' => '', 'imapPassword' => ''];
-        $mergedUsername = $imapUsername !== '' ? $imapUsername : $existing['imapUsername'];
-        $mergedPassword = $imapPassword !== '' ? $imapPassword : $existing['imapPassword'];
-
         $this->secrets->ensureSecretFile();
+
+        $existing = $this->loadAccount($username);
+        $existingUsername = is_array($existing) ? $existing['imapUsername'] : '';
+        $existingPassword = is_array($existing) ? $existing['imapPassword'] : '';
+
+        $mergedUsername = $this->resolveImapUsername($username, $imapUsername, $existingUsername);
+        $incomingPassword = trim($imapPassword);
+        $mergedPassword = $incomingPassword !== '' ? $incomingPassword : $existingPassword;
+
+        if ($mergedUsername === '') {
+            throw new ApiHttpException(400, 'Mail username is required.', 'bad_request');
+        }
+        if ($mergedPassword === '') {
+            throw new ApiHttpException(400, 'Mail password is required.', 'bad_request');
+        }
+
         $secret = $this->secrets->readBinary();
         if ($secret === null) {
             throw new ApiHttpException(500, 'Could not initialize mail credential encryption secret.', 'server_error');
@@ -61,11 +73,44 @@ final class MailCredentialService
         MailUserCredential::query()->updateOrInsert(
             ['username' => $normalizedUser],
             [
+                'username' => $normalizedUser,
                 'imap_username' => $mergedUsername,
                 'password_enc' => $this->encryptField($mergedPassword, $normalizedUser, $secret),
                 'updated_at' => time(),
             ]
         );
+    }
+
+    /**
+     * Resolve the mailbox login to store or use for IMAP/SMTP.
+     * Submitted and stored values win over the profile email so mail login can differ from Settings profile.
+     */
+    public function resolveImapUsername(string $username, string $submitted = '', string $stored = ''): string
+    {
+        $submitted = trim($submitted);
+        if ($submitted !== '') {
+            return $submitted;
+        }
+
+        $stored = trim($stored);
+        if ($stored !== '') {
+            return $stored;
+        }
+
+        return trim(MailPrincipalIdentityService::fetch($username)['emailAddress']);
+    }
+
+    /**
+     * @param array{imapUsername: string, imapPassword: string}|null $account
+     */
+    public function effectiveImapUsername(string $username, ?array $account): string
+    {
+        $stored = trim((string) ($account['imapUsername'] ?? ''));
+        if ($stored !== '') {
+            return $stored;
+        }
+
+        return trim(MailPrincipalIdentityService::fetch($username)['emailAddress']);
     }
 
     private function key(string $username, string $secret): string

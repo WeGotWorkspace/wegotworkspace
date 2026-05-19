@@ -1,4 +1,3 @@
-import { Input } from "@/ui/input";
 import { Card } from "@/card/src/card";
 import { formatMailTransportSecurityLabel } from "@/settings-core/src/settings-mail-display";
 import { settingsWorkspacePaneClasses } from "@/settings-core/src/settings-workspace.styles";
@@ -7,6 +6,7 @@ import { Form } from "@/ui/form";
 import { FieldLabelRow } from "@/ui/field-label-row";
 import { FormSaveActionRow } from "@/ui/form-save-action-row";
 import { FormTextField } from "@/ui/form-text-field";
+import { Input } from "@/ui/input";
 
 export type SettingsMailPaneProps = {
   mail: SettingsControllerState["mail"];
@@ -14,9 +14,11 @@ export type SettingsMailPaneProps = {
 
 export function SettingsMailPane({ mail }: SettingsMailPaneProps) {
   const { form, saveMail, imapHasPassword, server, savedImapUsername } = mail;
-  const [imapUsernameWatch, imapPasswordWatch] = form.watch(["imapUsername", "imapPassword"]);
+  const imapUsernameWatch = form.watch("imapUsername");
+  const imapPasswordWatch = form.watch("imapPassword");
 
-  const credentialsDirty = imapUsernameWatch !== savedImapUsername || imapPasswordWatch.length > 0;
+  const credentialsDirty =
+    imapPasswordWatch.length > 0 || imapUsernameWatch.trim() !== savedImapUsername.trim();
 
   return (
     <>
@@ -25,7 +27,9 @@ export function SettingsMailPane({ mail }: SettingsMailPaneProps) {
           <FormTextField
             {...settingsWorkspacePaneClasses.formTextField}
             name="imapUsername"
-            label="Username"
+            label="Username (IMAP/SMTP login)"
+            type="email"
+            placeholder="mailbox@example.com"
           />
           <FormTextField
             {...settingsWorkspacePaneClasses.formTextField}

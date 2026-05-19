@@ -30,6 +30,7 @@ export function useSettingsController({
 
   const profile = useSettingsProfileForm({ user: data.user, operations });
   const mail = useSettingsMailForm({
+    profileEmail: data.user.email,
     mail: data.mail,
     mailServer: data.mailServer,
     operations,

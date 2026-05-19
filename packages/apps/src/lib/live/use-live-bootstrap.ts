@@ -28,5 +28,9 @@ export function useLiveBootstrap<T>(loadBootstrap: () => Promise<T>) {
     load();
   }, [load]);
 
-  return { phase, error, data, load, successVersion };
+  const patchBootstrap = useCallback((updater: (prev: T | null) => T | null) => {
+    setData(updater);
+  }, []);
+
+  return { phase, error, data, load, successVersion, patchBootstrap };
 }

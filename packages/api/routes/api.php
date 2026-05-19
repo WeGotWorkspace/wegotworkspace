@@ -14,7 +14,9 @@ use App\Http\Controllers\Api\V1\Notes\CapabilitiesController as NotesCapabilitie
 use App\Http\Controllers\Api\V1\Notes\ItemsController as NotesItemsController;
 use App\Http\Controllers\Api\V1\Notes\NotebooksController;
 use App\Http\Controllers\Api\V1\Notes\StateController as NotesStateController;
+use App\Http\Controllers\Api\V1\Admin\GroupsController as AdminGroupsController;
 use App\Http\Controllers\Api\V1\Admin\GroupMemberController as AdminGroupMemberController;
+use App\Http\Controllers\Api\V1\Admin\UsersController as AdminUsersController;
 use App\Http\Controllers\Api\V1\Admin\SettingsController as AdminSettingsController;
 use App\Http\Controllers\Api\V1\Admin\StateController as AdminStateController;
 use App\Http\Controllers\Api\V1\Admin\UpdateApplyController as AdminUpdateApplyController;
@@ -135,6 +137,16 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($driveS
 
 Route::middleware(['wgw.auth', 'wgw.role:admin'])->prefix('admin')->group(function (): void {
     Route::get('state', AdminStateController::class);
+    Route::post('users', [AdminUsersController::class, 'store']);
+    Route::patch('users/{username}', [AdminUsersController::class, 'update'])
+        ->where('username', '[a-z0-9_-]+');
+    Route::delete('users/{username}', [AdminUsersController::class, 'destroy'])
+        ->where('username', '[a-z0-9_-]+');
+    Route::post('groups', [AdminGroupsController::class, 'store']);
+    Route::patch('groups/{group}', [AdminGroupsController::class, 'update'])
+        ->where('group', '[a-z0-9_-]+');
+    Route::delete('groups/{group}', [AdminGroupsController::class, 'destroy'])
+        ->where('group', '[a-z0-9_-]+');
     Route::put('settings', AdminSettingsController::class);
     Route::get('updates/state', AdminUpdateStateController::class);
     Route::get('updates/log', [AdminUpdateLogController::class, 'show']);

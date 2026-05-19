@@ -15,19 +15,22 @@ import type {
 } from "@/settings-core/src/settings-types";
 
 export function useSettingsMailForm({
+  profileEmail,
   mail,
   mailServer,
   operations,
 }: {
+  profileEmail: string;
   mail: SettingsMailCredentials;
   mailServer: SettingsMailServer;
   operations?: SettingsAPIOperations;
 }) {
   const runWithAppToast = useRunWithAppToast();
+  const defaultImapUsername = mail.imapUsername.trim() || profileEmail.trim();
   const mailForm = useForm<SettingsMailFormValues>({
     resolver: zodResolver(settingsMailFormSchema),
     defaultValues: {
-      imapUsername: mail.imapUsername,
+      imapUsername: defaultImapUsername,
       imapPassword: "",
     },
     mode: "onSubmit",
@@ -37,10 +40,10 @@ export function useSettingsMailForm({
 
   useEffect(() => {
     reset({
-      imapUsername: mail.imapUsername,
+      imapUsername: mail.imapUsername.trim() || profileEmail.trim(),
       imapPassword: "",
     });
-  }, [mail.imapUsername, reset]);
+  }, [mail.imapUsername, profileEmail, reset]);
 
   const saveMail = mailForm.handleSubmit(async (values) => {
     const requestBody = settingsMailFormToRequest(values);

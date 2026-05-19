@@ -35,7 +35,7 @@ export function useWorkspaceApi<TSource, TData, TOperations, TExtra extends obje
     () => loadBootstrap(resolvedSource),
     [loadBootstrap, resolvedSource],
   );
-  const { phase, error, data, load, successVersion } = useLiveBootstrap(runBootstrap);
+  const { phase, error, data, load, successVersion, patchBootstrap } = useLiveBootstrap(runBootstrap);
   const operations = useMemo(
     () => createOperations(resolvedSource, data ?? undefined),
     [createOperations, resolvedSource, data],
@@ -51,6 +51,7 @@ export function useWorkspaceApi<TSource, TData, TOperations, TExtra extends obje
     data: data?.data ?? placeholderData,
     operations,
     bootstrap: data,
+    patchBootstrap,
     source: resolvedSource,
   };
 }

@@ -106,12 +106,20 @@ final class MailOperationService
         $ext = extension_loaded('imap');
         $serversConfigured = MailServerSettings::serversConfigured($cfg);
         $accountConfigured = MailCredentialService::isAccountConfigured($account);
+        $smtp = MailSmtpTransportConfig::normalize(MailServerSettings::endpoints($cfg)['smtp']);
+
         return [
             'extImap' => $ext,
             'serversConfigured' => $serversConfigured,
             'accountConfigured' => $accountConfigured,
             'ready' => $ext && MailUserRuntime::isReady($cfg, $account),
             'configured' => $accountConfigured,
+            'smtp' => [
+                'host' => $smtp['host'],
+                'port' => $smtp['port'],
+                'security' => $smtp['security'],
+                'tcpReachable' => MailSmtpTransportConfig::canReachTcp($smtp['host'], $smtp['port']),
+            ],
         ];
     }
 
@@ -1275,36 +1283,36 @@ final class MailOperationService
      */
     private function configureMailerSmtp(PHPMailer $mail, array $cred, int $smtpTimeout = 30): string
     {
+        $transport = MailSmtpTransportConfig::normalize($cred['smtp']);
         $mail->CharSet = PHPMailer::CHARSET_UTF8;
         $mail->isSMTP();
         // Defaults are 300s each — wrong host/firewall makes POST hang until the browser gives up.
         $mail->Timeout = $smtpTimeout;
         $mail->getSMTPInstance()->Timelimit = $smtpTimeout;
-        $mail->Host = $cred['smtp']['host'];
-        $mail->Port = (int) $cred['smtp']['port'];
-        $sec = $cred['smtp']['security'] ?? 'ssl';
-        if ($sec === 'ssl') {
+        $mail->Host = $transport['host'];
+        $mail->Port = $transport['port'];
+        if ($transport['security'] === 'ssl') {
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-        } elseif ($sec === 'starttls') {
+        } elseif ($transport['security'] === 'starttls') {
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         } else {
             $mail->SMTPAutoTLS = false;
+            $mail->SMTPSecure = '';
         }
-        $mail->SMTPAuth = true;
+        $mail->SMTPAuth = $transport['smtpAuth'];
         $mail->SMTPKeepAlive = false;
         $mail->Username = $cred['smtp']['username'];
         $mail->Password = $cred['smtp']['password'];
-        $candidateIdentity = trim((string) ($cred['emailAddress'] ?? ''));
-        $candidateAccount = trim((string) ($cred['imap']['username'] ?? ''));
-        $fromAddr = '';
-        if ($candidateAccount !== '' && PHPMailer::validateAddress($candidateAccount)) {
-            $fromAddr = $candidateAccount;
-        } elseif ($candidateIdentity !== '' && PHPMailer::validateAddress($candidateIdentity)) {
-            $fromAddr = $candidateIdentity;
+        if (! config('wgw.mail.smtp_verify_tls', true)) {
+            $mail->SMTPOptions = [
+                'ssl' => [
+                    'verify_peer' => false,
+                    'verify_peer_name' => false,
+                    'allow_self_signed' => true,
+                ],
+            ];
         }
-        if ($fromAddr === '') {
-            throw new \RuntimeException('invalid_from_address');
-        }
+        $fromAddr = MailFromAddressResolver::resolve($cred);
         $mail->setFrom($fromAddr, $cred['displayName'] ?: '');
 
         return $fromAddr;
@@ -1326,9 +1334,16 @@ final class MailOperationService
             throw new MailResponseException(400, ['error' => 'to_required']);
         }
         $smtpTimeout = 30;
+        $transport = MailSmtpTransportConfig::normalize($cred['smtp']);
         $appendErr = null;
         $attachReport = null;
         try {
+            if (! MailSmtpTransportConfig::canReachTcp($transport['host'], $transport['port'], 5.0)) {
+                throw new \RuntimeException(
+                    'Cannot reach SMTP server at '.MailSmtpTransportConfig::describe($transport)
+                    .'. Check Admin mail settings (host, port, security) and that PHP can reach the host.'
+                );
+            }
             @set_time_limit($smtpTimeout + 30);
             $mail = new PHPMailer(true);
             self::configureMailerSmtp($mail, $cred, $smtpTimeout);
@@ -1367,7 +1382,7 @@ final class MailOperationService
             }
             self::tryAppendSentCopy($cred, $sentMime, $appendErr);
         } catch (\Throwable $e) {
-            throw new MailResponseException(400, ['error' => 'send_failed', 'message' => $e->getMessage()]);
+            throw $this->mailSendException($e, $transport);
         }
         $payload = ['ok' => true];
         if ($attachReport !== null) {
@@ -1376,6 +1391,7 @@ final class MailOperationService
         if ($appendErr !== null) {
             $payload['sent_copy_failed'] = $appendErr;
         }
+
         return $payload;
     }
 
@@ -1483,5 +1499,43 @@ final class MailOperationService
         $raw = base64_decode($b64, true);
 
         return is_string($raw) ? $raw : '';
+    }
+
+    /**
+     * @param array{host: string, port: int, security: string, smtpAuth: bool}|null $transport
+     */
+    private function mailSendException(\Throwable $e, ?array $transport = null): MailResponseException
+    {
+        $message = trim($e->getMessage());
+        if ($message === 'invalid_from_address') {
+            return new MailResponseException(400, [
+                'error' => 'invalid_from_address',
+                'message' => 'Set a valid email on your account (Settings or Admin) or use a full email address as your mail login.',
+            ]);
+        }
+
+        $endpoint = $transport !== null ? MailSmtpTransportConfig::describe($transport) : '';
+        $connectFailed = stripos($message, 'Could not connect') !== false
+            || stripos($message, 'Failed to connect') !== false
+            || stripos($message, 'Cannot reach SMTP') !== false;
+
+        if ($connectFailed && $endpoint !== '') {
+            return new MailResponseException(400, [
+                'error' => 'smtp_connect',
+                'message' => $message !== ''
+                    ? $message.' (configured: '.$endpoint.')'
+                    : 'Could not connect to SMTP server at '.$endpoint.'.',
+                'smtp' => [
+                    'host' => $transport['host'],
+                    'port' => $transport['port'],
+                    'security' => $transport['security'],
+                ],
+            ]);
+        }
+
+        return new MailResponseException(400, [
+            'error' => 'send_failed',
+            'message' => $message !== '' ? $message : 'SMTP send failed.',
+        ]);
     }
 }

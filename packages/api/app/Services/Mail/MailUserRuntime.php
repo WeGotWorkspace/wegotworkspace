@@ -36,7 +36,7 @@ final class MailUserRuntime
 
         $identity = MailPrincipalIdentityService::fetch($username);
         $end = MailServerSettings::endpoints($cfg);
-        $u = $account['imapUsername'];
+        $u = $credentials->effectiveImapUsername($username, $account);
         $p = $account['imapPassword'];
 
         return [

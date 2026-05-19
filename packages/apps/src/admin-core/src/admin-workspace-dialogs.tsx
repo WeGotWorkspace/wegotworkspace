@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/button/src/button";
 import {
   Dialog,
@@ -25,12 +25,18 @@ export function UserDialog({ open, title, initial, onOpenChange, onSubmit }: Use
   const [username, setUsername] = useState(initial?.username ?? "");
   const [displayName, setDisplayName] = useState(initial?.displayName ?? "");
   const [email, setEmail] = useState(initial?.email ?? "");
+  const wasOpenRef = useRef(false);
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      wasOpenRef.current = false;
+      return;
+    }
+    if (wasOpenRef.current) return;
+    wasOpenRef.current = true;
     setUsername(initial?.username ?? "");
     setDisplayName(initial?.displayName ?? "");
     setEmail(initial?.email ?? "");
-  }, [open, initial]);
+  }, [open, initial?.username, initial?.displayName, initial?.email]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -92,8 +98,14 @@ type PasswordDialogProps = {
 export function PasswordDialog({ open, user, onOpenChange, onSubmit }: PasswordDialogProps) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const wasOpenRef = useRef(false);
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      wasOpenRef.current = false;
+      return;
+    }
+    if (wasOpenRef.current) return;
+    wasOpenRef.current = true;
     setPassword("");
     setConfirmPassword("");
   }, [open, user?.displayName]);
@@ -162,15 +174,21 @@ export function GroupDialog({
   const [memberUserIds, setMemberUserIds] = useState<string[]>(
     initial ? users.filter((user) => user.groups.includes(initial.id)).map((user) => user.id) : [],
   );
+  const wasOpenRef = useRef(false);
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      wasOpenRef.current = false;
+      return;
+    }
+    if (wasOpenRef.current) return;
+    wasOpenRef.current = true;
     setName(initial?.displayName ?? "");
     setMemberUserIds(
       initial
         ? users.filter((user) => user.groups.includes(initial.id)).map((user) => user.id)
         : [],
     );
-  }, [open, initial, users]);
+  }, [open, initial?.id, initial?.displayName, users]);
   const toggleMember = (userId: string) =>
     setMemberUserIds((prev) =>
       prev.includes(userId) ? prev.filter((candidate) => candidate !== userId) : [...prev, userId],
