@@ -6,6 +6,7 @@ namespace App\Services\Admin;
 
 use App\Models\AppSetting;
 use App\Settings\SettingKeys;
+use App\Support\TimezoneNormalizer;
 
 final class AdminSettingsService
 {
@@ -21,6 +22,9 @@ final class AdminSettingsService
         foreach ($values as $key => $value) {
             if (! is_string($key) || ! isset($allowed[$key])) {
                 continue;
+            }
+            if ($key === SettingKeys::TIMEZONE) {
+                $value = TimezoneNormalizer::normalize($value);
             }
             AppSetting::setValue($key, $value);
             $saved[] = $key;
