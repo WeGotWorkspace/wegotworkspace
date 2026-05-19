@@ -24,6 +24,12 @@ final class WgwSettings
 
     public const FILES_ENABLED = 'files_enabled';
 
+    public const CALENDAR_ENABLED = 'calendar_enabled';
+
+    public const CONTACTS_ENABLED = 'contacts_enabled';
+
+    public const AUTH_REALM = 'auth_realm';
+
     /**
      * @return array<string, mixed>
      */
@@ -45,6 +51,9 @@ final class WgwSettings
         return [
             self::BASE_URI => '/',
             self::FILES_ENABLED => true,
+            self::CALENDAR_ENABLED => true,
+            self::CONTACTS_ENABLED => true,
+            self::AUTH_REALM => 'SabreDAV',
             self::MAIL_IMAP_HOST => '',
             self::MAIL_IMAP_PORT => 993,
             self::MAIL_IMAP_SECURITY => 'ssl',
@@ -67,7 +76,7 @@ final class WgwSettings
             }
             $out[$key] = match ($key) {
                 self::MAIL_IMAP_PORT, self::MAIL_SMTP_PORT => (int) $db[$key],
-                self::FILES_ENABLED => (bool) $db[$key],
+                self::FILES_ENABLED, self::CALENDAR_ENABLED, self::CONTACTS_ENABLED => (bool) $db[$key],
                 default => $db[$key],
             };
         }

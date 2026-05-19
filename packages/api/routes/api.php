@@ -14,6 +14,11 @@ use App\Http\Controllers\Api\V1\Notes\CapabilitiesController as NotesCapabilitie
 use App\Http\Controllers\Api\V1\Notes\ItemsController as NotesItemsController;
 use App\Http\Controllers\Api\V1\Notes\NotebooksController;
 use App\Http\Controllers\Api\V1\Notes\StateController as NotesStateController;
+use App\Http\Controllers\Api\V1\Dav\CapabilitiesController as DavCapabilitiesController;
+use App\Http\Controllers\Api\V1\Home\StateController as HomeStateController;
+use App\Http\Controllers\Api\V1\Installer\ActionController as InstallerActionController;
+use App\Http\Controllers\Api\V1\Installer\BootstrapController as InstallerBootstrapController;
+use App\Http\Controllers\Api\V1\Installer\StateController as InstallerStateController;
 use App\Http\Controllers\Api\V1\System\CapabilitiesController;
 use App\Http\Controllers\Api\V1\System\HealthController;
 use Illuminate\Support\Facades\Route;
@@ -33,8 +38,20 @@ Route::post('auth/token', TokenController::class);
 Route::post('auth/refresh', RefreshController::class);
 Route::post('auth/revoke', RevokeController::class);
 
+Route::middleware([
+    \Illuminate\Cookie\Middleware\EncryptCookies::class,
+    \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+    \Illuminate\Session\Middleware\StartSession::class,
+])->group(function (): void {
+    Route::get('installer/state', InstallerStateController::class);
+    Route::get('installer/bootstrap', InstallerBootstrapController::class);
+    Route::post('installer/action', InstallerActionController::class);
+});
+
 Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function (): void {
     Route::get('me', MeController::class);
+    Route::get('home/state', HomeStateController::class);
+    Route::get('dav/capabilities', DavCapabilitiesController::class);
     Route::get('settings/state', SettingsStateController::class);
     Route::put('settings/profile', SettingsProfileController::class);
     Route::put('settings/mail', SettingsMailController::class);
