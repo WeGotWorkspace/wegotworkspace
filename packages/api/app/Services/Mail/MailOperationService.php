@@ -74,6 +74,12 @@ final class MailOperationService
         return $this->handleMessagePatch($username, $body);
     }
 
+    /** @param array<string, mixed> $query @return array<string, mixed> */
+    public function deleteMessage(string $username, array $query): array
+    {
+        return $this->handleMessageDelete($username, $query);
+    }
+
     /** @param array<string, mixed> $body @return array<string, mixed> */
     public function moveMessage(string $username, array $body): array
     {
@@ -1097,6 +1103,43 @@ final class MailOperationService
                     MailImapClient::setFlags($conn, $uid, $seen, $flagged);
                     $resp = [200, ['ok' => true]];
                 }
+            }
+        } finally {
+            @imap_close($conn);
+        }
+        if ($resp === null) {
+            throw new MailResponseException(500, ['error' => 'server_error']);
+        }
+        if ($resp[0] !== 200) {
+            throw new MailResponseException($resp[0], $resp[1]);
+        }
+
+        return $resp[1];
+    }
+
+    private function handleMessageDelete(string $username, array $query): array
+    {
+        $folderEnc = isset($query['folder']) && is_string($query['folder']) ? $query['folder'] : '';
+        $uid = isset($query['uid']) && is_numeric($query['uid']) ? (int) $query['uid'] : 0;
+        $mb = self::folderIdDecode($folderEnc);
+        if ($mb === '' || $uid <= 0) {
+            throw new MailResponseException(400, ['error' => 'bad_params']);
+        }
+        $cred = $this->requireImap($username);
+        $err = null;
+        $conn = MailImapClient::connect($cred['imap'], $err);
+        if ($conn === null) {
+            throw new MailResponseException(503, ['error' => 'imap_connect', 'message' => $err ?? '']);
+        }
+        $resp = null;
+        try {
+            $ref = MailImapClient::mailboxRef($cred['imap']);
+            if (! MailImapClient::reopenMailbox($conn, $ref, $mb)) {
+                $resp = [404, ['error' => 'mailbox']];
+            } elseif (! MailImapClient::deleteUid($conn, $uid)) {
+                $resp = [400, ['error' => 'delete_failed', 'message' => imap_last_error() ?: '']];
+            } else {
+                $resp = [200, ['ok' => true]];
             }
         } finally {
             @imap_close($conn);

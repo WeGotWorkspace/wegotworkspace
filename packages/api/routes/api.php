@@ -113,6 +113,7 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($driveS
     Route::get('mail/messages/attachments', [MailController::class, 'messageAttachments']);
     Route::get('mail/message', [MailController::class, 'messageShow']);
     Route::patch('mail/message', [MailController::class, 'messageUpdate']);
+    Route::delete('mail/message', [MailController::class, 'messageDestroy']);
     Route::get('mail/message/attachment', [MailController::class, 'messageAttachment']);
     Route::post('mail/move', [MailController::class, 'move']);
     Route::post('mail/send', [MailController::class, 'send']);

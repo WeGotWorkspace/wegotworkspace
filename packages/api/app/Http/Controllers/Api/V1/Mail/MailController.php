@@ -61,6 +61,11 @@ final class MailController
         return $this->json(fn () => $this->mail->patchMessage($this->username($request), $request->json()->all()));
     }
 
+    public function messageDestroy(Request $request): JsonResponse
+    {
+        return $this->json(fn () => $this->mail->deleteMessage($this->username($request), $request->query()));
+    }
+
     public function messageAttachment(Request $request): Response
     {
         $download = $this->mail->downloadAttachment($this->username($request), $request->query());
