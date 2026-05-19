@@ -87,18 +87,15 @@ if ($isApiRequest) {
     exit;
 }
 
-$installPrefix = '/install';
-if ($path === $installPrefix || str_starts_with($path, $installPrefix.'/')) {
-    header('Content-Type: text/html; charset=utf-8');
-    http_response_code(503);
-    echo '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>WeGotWorkspace</title></head><body>';
-    echo '<h1>Installer UI pending</h1>';
-    echo '<p>Use the REST installer API: <code>/api/v1/installer/state</code>.</p>';
-    echo '</body></html>';
-    exit;
-}
-
 if ($apiPackageRoot !== null) {
+    if (is_file($apiPackageRoot.'/public/ui.php')) {
+        /** @var false|null $uiHandled */
+        $uiHandled = include $apiPackageRoot.'/public/ui.php';
+        if ($uiHandled !== false) {
+            exit;
+        }
+    }
+
     require $apiPackageRoot.'/public/sabre.php';
     exit;
 }
