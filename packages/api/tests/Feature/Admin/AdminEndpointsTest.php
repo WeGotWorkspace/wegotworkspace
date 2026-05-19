@@ -97,6 +97,17 @@ final class AdminEndpointsTest extends TestCase
             ->assertJsonPath('lines', []);
 
         $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/v1/admin/updates/state')
+            ->assertOk()
+            ->assertJsonStructure([
+                'installedVersion',
+                'schemaVersion',
+                'backups',
+                'compatible',
+                'updateAvailable',
+            ]);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
             ->putJson('/api/v1/admin/groups/administrators/members/bob')
             ->assertOk()
             ->assertJsonPath('ok', true);

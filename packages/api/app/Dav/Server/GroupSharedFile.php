@@ -4,18 +4,23 @@ declare(strict_types=1);
 
 namespace App\Dav\Server;
 
-use Sabre\DAVACL\FS\File as AclFsFile;
+use App\Dav\Storage\FlysystemAclFile;
+use Illuminate\Contracts\Filesystem\Filesystem;
 
-final class GroupSharedFile extends AclFsFile
+final class GroupSharedFile extends FlysystemAclFile
 {
     public function __construct(
-        string $path,
+        Filesystem $filesystem,
+        string $key,
         private readonly string $groupPrincipalUri,
         private readonly \PDO $pdo,
     ) {
-        parent::__construct($path, [], $groupPrincipalUri);
+        parent::__construct($filesystem, $key, [], $groupPrincipalUri);
     }
 
+    /**
+     * @return list<array{privilege: string, principal: string, protected?: bool}>
+     */
     public function getACL(): array
     {
         return GroupSharedAclHelper::aclForGroup($this->pdo, $this->groupPrincipalUri);

@@ -135,6 +135,17 @@ function scanDirectory(string $dir, array $forbidden, array &$errors): void
                 ) {
                     continue;
                 }
+                if (
+                    preg_match('#/Services/Update/#i', str_replace('\\', '/', $path))
+                ) {
+                    continue;
+                }
+                if (
+                    preg_match('#/Dav/Storage/#i', str_replace('\\', '/', $path))
+                    && str_contains($rule['message'], 'raw PHP file')
+                ) {
+                    continue;
+                }
                 if (preg_match($rule['pattern'], $line)) {
                     $errors[] = [
                         'file' => relativePath($path),

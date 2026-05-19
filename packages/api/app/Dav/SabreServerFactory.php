@@ -62,17 +62,9 @@ final class SabreServerFactory
             $nodes[] = new AppAddressBookRoot($principalBackend, $carddavBackend, $pdo, $authPlugin);
         }
         if ($files) {
-            $filesBase = rtrim($this->install->filesDir(), '/');
-            $userFilesPath = $filesBase.'/users';
-            $groupFilesPath = $filesBase.'/groups';
-            foreach ([$filesBase, $userFilesPath, $groupFilesPath] as $dir) {
-                if (! is_dir($dir)) {
-                    @mkdir($dir, 0775, true);
-                }
-            }
             $nodes[] = new AppFilesRootCollection([
-                new AppUserFilesHomeCollection($principalBackend, $userFilesPath, $pdo, $authPlugin),
-                new GroupFilesPrincipalCollection($principalBackend, $groupFilesPath, $pdo, $authPlugin),
+                new AppUserFilesHomeCollection($principalBackend, 'users', $pdo, $authPlugin),
+                new GroupFilesPrincipalCollection($principalBackend, 'groups', $pdo, $authPlugin),
             ]);
         }
 
