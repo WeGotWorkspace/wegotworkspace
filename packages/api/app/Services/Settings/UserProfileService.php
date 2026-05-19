@@ -7,7 +7,6 @@ namespace App\Services\Settings;
 use App\Exceptions\ApiHttpException;
 use App\Models\Principal;
 use App\Models\User;
-
 final class UserProfileService
 {
     public function updateProfile(string $username, string $displayName, ?string $email): void

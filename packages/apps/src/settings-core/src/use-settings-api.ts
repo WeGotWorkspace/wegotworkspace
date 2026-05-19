@@ -35,15 +35,64 @@ export function useSettingsAPI(source?: SettingsApiSource) {
     [],
   );
 
-  const { phase, error, retry, successVersion, listLoading, session, data, operations } =
-    useWorkspaceApi({
-      source: resolvedSource,
-      createDefaultSource: createDefaultSettingsApiSource,
-      placeholderData,
-      loadBootstrap: loadBootstrapFromSource,
-      createOperations: createOperationsFromSource,
-      fallbackSession: mockWorkspaceSession,
-    });
+  const {
+    phase,
+    error,
+    retry,
+    successVersion,
+    listLoading,
+    session,
+    data,
+    operations: baseOperations,
+    patchBootstrap,
+  } = useWorkspaceApi({
+    source: resolvedSource,
+    createDefaultSource: createDefaultSettingsApiSource,
+    placeholderData,
+    loadBootstrap: loadBootstrapFromSource,
+    createOperations: createOperationsFromSource,
+    fallbackSession: mockWorkspaceSession,
+  });
+
+  const operations = useMemo(() => {
+    if (!baseOperations) {
+      return undefined;
+    }
+
+    const applySettingsState = (next: SettingsUIData) => {
+      patchBootstrap((prev) => {
+        if (!prev) {
+          return prev;
+        }
+
+        return {
+          ...prev,
+          data: next,
+          session: {
+            ...prev.session,
+            user: {
+              ...prev.session.user,
+              displayName: next.user.displayName,
+              email: next.user.email,
+            },
+          },
+        };
+      });
+    };
+
+    return {
+      saveProfile: async (input, opts) => {
+        const next = await baseOperations.saveProfile(input, opts);
+        applySettingsState(next);
+        return next;
+      },
+      saveMail: async (input, opts) => {
+        const next = await baseOperations.saveMail(input, opts);
+        applySettingsState(next);
+        return next;
+      },
+    };
+  }, [baseOperations, patchBootstrap]);
 
   return { phase, error, retry, successVersion, listLoading, session, data, operations };
 }

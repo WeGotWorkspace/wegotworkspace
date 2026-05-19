@@ -15,7 +15,7 @@ export type SettingsMailFormValues = z.infer<typeof settingsMailFormSchema>;
 
 export function settingsMailFormToRequest(values: SettingsMailFormValues): SettingsMailRequest {
   return settingsMailRequestOpenapiSchema.parse({
-    imapUsername: values.imapUsername,
+    imapUsername: values.imapUsername.trim(),
     imapPassword: values.imapPassword,
   }) as SettingsMailRequest;
 }

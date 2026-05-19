@@ -37,6 +37,37 @@ final class GroupDirectoryService
         return $this->memberUris($groupUri);
     }
 
+    /**
+     * @param list<string> $memberUsernames Principal URIs or bare usernames
+     */
+    public function replaceMembers(string $groupUri, array $memberUsernames, string $actingAdmin): void
+    {
+        if ($groupUri === AdminConstants::ADMIN_GROUP_URI) {
+            $actingPrincipal = 'principals/'.$actingAdmin;
+            $hasActing = false;
+            foreach ($memberUsernames as $entry) {
+                $uri = $this->toMemberPrincipalUri((string) $entry);
+                if ($uri === $actingPrincipal) {
+                    $hasActing = true;
+                    break;
+                }
+            }
+            if (! $hasActing) {
+                throw new \InvalidArgumentException('You cannot remove your own administrator access.');
+            }
+        }
+
+        $uris = [];
+        foreach ($memberUsernames as $entry) {
+            $uri = $this->toMemberPrincipalUri((string) $entry);
+            if ($uri !== '') {
+                $uris[$uri] = true;
+            }
+        }
+
+        $this->writeMembers($groupUri, array_keys($uris));
+    }
+
     public function setMembership(string $groupUri, string $username, bool $enabled, string $actingAdmin): void
     {
         if ($groupUri === AdminConstants::ADMIN_GROUP_URI && $username === $actingAdmin && ! $enabled) {
@@ -122,5 +153,18 @@ final class GroupDirectoryService
     {
         $backend = new PrincipalBackend(DB::connection('wgw')->getPdo());
         $backend->setGroupMemberSet($groupUri, $members);
+    }
+
+    private function toMemberPrincipalUri(string $entry): string
+    {
+        $entry = trim($entry);
+        if ($entry === '') {
+            return '';
+        }
+        if (str_starts_with($entry, 'principals/')) {
+            return $entry;
+        }
+
+        return 'principals/'.strtolower($entry);
     }
 }

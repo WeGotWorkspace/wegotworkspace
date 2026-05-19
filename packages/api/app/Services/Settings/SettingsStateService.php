@@ -38,7 +38,7 @@ final class SettingsStateService
             ],
             'groups' => $this->groups->groupsForUser($username),
             'mail' => [
-                'imapUsername' => (string) ($mail['imapUsername'] ?? ''),
+                'imapUsername' => $this->mailCredentials->effectiveImapUsername($username, $mail),
                 'imapHasPassword' => ((string) ($mail['imapPassword'] ?? '')) !== '',
             ],
             'mailServer' => [
@@ -46,8 +46,8 @@ final class SettingsStateService
                 'imapPort' => (int) ($cfg[WgwSettings::MAIL_IMAP_PORT] ?? 993),
                 'imapSecurity' => (string) ($cfg[WgwSettings::MAIL_IMAP_SECURITY] ?? 'ssl'),
                 'smtpHost' => (string) ($cfg[WgwSettings::MAIL_SMTP_HOST] ?? ''),
-                'smtpPort' => (int) ($cfg[WgwSettings::MAIL_SMTP_PORT] ?? 465),
-                'smtpSecurity' => (string) ($cfg[WgwSettings::MAIL_SMTP_SECURITY] ?? 'ssl'),
+                'smtpPort' => (int) ($cfg[WgwSettings::MAIL_SMTP_PORT] ?? 587),
+                'smtpSecurity' => (string) ($cfg[WgwSettings::MAIL_SMTP_SECURITY] ?? 'starttls'),
             ],
             'logoutUrl' => $this->urls->logout(),
         ];

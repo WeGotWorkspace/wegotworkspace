@@ -25,7 +25,7 @@ export function getMailFormDefaults(
 ): SettingsMailFormValues {
   const { data } = createSettingsAppBootstrap();
   return {
-    imapUsername: data.mail.imapUsername,
+    imapUsername: data.mail.imapUsername || data.user.email,
     imapPassword: "",
     ...overrides,
   };
