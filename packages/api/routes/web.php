@@ -22,5 +22,5 @@ $wgwFrontMethods = [
 ];
 
 Route::match($wgwFrontMethods, '/{path?}', WgwFrontController::class)
-    ->where('path', '.*')
+    ->where('path', '(?!api(?:/|$)).*')
     ->name('wgw.front');
