@@ -6,7 +6,6 @@
     "require": {
         "php": "^8.3",
         "laravel/framework": "^11.44",
-        "laravel/tinker": "^2.9",
         "lcobucci/jwt": "^5.5",
         "phpmailer/phpmailer": "^6.9",
         "sabre/dav": "^4.7",
@@ -34,7 +33,10 @@
             "@php artisan package:discover --ansi"
         ],
         "test": "phpunit -c phpunit.xml",
-        "greenfield:guard": "php scripts/greenfield-guard.php"
+        "greenfield:guard": "php scripts/greenfield-guard.php",
+        "prune": [
+            "@composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction"
+        ]
     },
     "config": {
         "sort-packages": true,
