@@ -54,9 +54,15 @@ Checkpoint: `composer test` green; no legacy `src/` in tree.
 - [x] Installer schema SQL + fresh DB seed (Sabre Cal/Card PDO backends during install only)
 - [x] Feature tests
 
-## Phase 6+ — Remaining domains (OpenAPI order)
+## Phase 6 — Drive
 
-6. **Drive** + office (Flysystem `wgw_files`)
+- [x] `GET /drive/user`, listing, search, cwd, CRUD, upload/download, stars
+- [x] Flysystem via `WgwStorage` + `StoragePaths` ACL
+- [x] Feature tests
+
+## Phase 7+ — Remaining domains (OpenAPI order)
+
+7. **Office** (Flysystem `wgw_files`)
 7. **Admin** + updates
 8. **Mail** (IMAP/SMTP services; preserve `{ error, message }` shape)
 9. **Voice**
