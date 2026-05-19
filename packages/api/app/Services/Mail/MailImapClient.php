@@ -933,6 +933,11 @@ final class MailImapClient
         }
     }
 
+    public static function deleteUid(\IMAP\Connection $conn, int $uid): bool
+    {
+        return @imap_delete($conn, (string) $uid, \FT_UID) && @imap_expunge($conn);
+    }
+
     public static function moveUid(\IMAP\Connection $conn, string $ref, int $uid, string $targetMailbox): bool
     {
         // imap_mail_move expects a mailbox name (not the full "{host}…" ref).

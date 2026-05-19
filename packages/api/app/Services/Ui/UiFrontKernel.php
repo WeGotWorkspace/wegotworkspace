@@ -126,16 +126,16 @@ final class UiFrontKernel
             return true;
         }
 
-        if ($this->static->tryServe($dist, $webBase, $path, true)) {
-            return true;
-        }
-
         $module = $this->moduleForPath($webBase, $path);
-        if ($module !== null && $module !== 'shell') {
+        if ($module !== null) {
             $moduleDist = $this->paths->moduleDistRoot($module);
             if ($moduleDist !== null && $this->static->tryServe($moduleDist, $webBase, $path, true)) {
                 return true;
             }
+        }
+
+        if ($this->static->tryServe($dist, $webBase, $path, true)) {
+            return true;
         }
 
         $this->respondNotFound();
