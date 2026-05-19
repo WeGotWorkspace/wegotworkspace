@@ -30,6 +30,10 @@ final class WgwSettings
 
     public const AUTH_REALM = 'auth_realm';
 
+    public const BROWSER_PLUGIN = 'browser_plugin';
+
+    public const TIMEZONE = 'timezone';
+
     /**
      * @return array<string, mixed>
      */
@@ -54,6 +58,8 @@ final class WgwSettings
             self::CALENDAR_ENABLED => true,
             self::CONTACTS_ENABLED => true,
             self::AUTH_REALM => 'SabreDAV',
+            self::BROWSER_PLUGIN => true,
+            self::TIMEZONE => 'UTC',
             self::MAIL_IMAP_HOST => '',
             self::MAIL_IMAP_PORT => 993,
             self::MAIL_IMAP_SECURITY => 'ssl',
@@ -76,7 +82,7 @@ final class WgwSettings
             }
             $out[$key] = match ($key) {
                 self::MAIL_IMAP_PORT, self::MAIL_SMTP_PORT => (int) $db[$key],
-                self::FILES_ENABLED, self::CALENDAR_ENABLED, self::CONTACTS_ENABLED => (bool) $db[$key],
+                self::FILES_ENABLED, self::CALENDAR_ENABLED, self::CONTACTS_ENABLED, self::BROWSER_PLUGIN => (bool) $db[$key],
                 default => $db[$key],
             };
         }
