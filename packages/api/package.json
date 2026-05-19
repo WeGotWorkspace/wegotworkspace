@@ -3,7 +3,7 @@
   "private": true,
   "packageManager": "pnpm@9.15.4",
   "scripts": {
-    "build": "node scripts/sync-runtime-api-package.mjs",
+    "build": "composer install --no-interaction --prefer-dist && node scripts/sync-runtime-api-package.mjs",
     "watch": "node scripts/watch-runtime-api-package.mjs",
     "sync:runtime": "node scripts/sync-runtime-api-package.mjs",
     "setup:macos": "echo \"@wgw/api: macOS Apache helpers removed with legacy runtime; see repo INSTALL.md after API is restored\"",
@@ -19,7 +19,7 @@
     "typegen:mail": "pnpm run typegen:openapi",
     "typegen:mail:watch": "pnpm run typegen:openapi:watch",
     "typegen:mail:check": "pnpm run typegen:openapi:check",
-    "test": "echo \"@wgw/api: no PHP tests until Laravel runtime is scaffolded\""
+    "test": "composer test"
   },
   "devDependencies": {
     "chokidar": "^5.0.0",
