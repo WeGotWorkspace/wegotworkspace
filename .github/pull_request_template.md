@@ -6,12 +6,11 @@
 
 - [ ] This PR does **not** touch `packages/api` REST / Laravel API
 - [ ] Or: follows `packages/api/docs/greenfield-plan.md` and `.cursor/rules/api-greenfield.mdc`
-- [ ] No delegation to legacy `MailApi`, `*Kernel`, `ApiKernel`, or `DomainRouteService`
-- [ ] `composer --working-dir packages/api greenfield:guard` passes (or N/A — no `app/` yet)
-- [ ] Feature tests added/updated for changed API routes
+- [ ] Does **not** restore `packages/api/src/` or legacy `*Kernel` / `MailApi`
+- [ ] Feature tests added/updated for changed API routes (when runtime exists)
 - [ ] OpenAPI / `pnpm check:api-types` unchanged unless intentionally updated
 
 ## Test plan
 
-- [ ] `composer --working-dir packages/api test`
-- [ ] `pnpm check:api-types` (if API types affected)
+- [ ] `pnpm check:api-types` (if OpenAPI or generated types changed)
+- [ ] `composer --working-dir packages/api test` (after Laravel scaffold exists)

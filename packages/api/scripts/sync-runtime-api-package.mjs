@@ -9,16 +9,10 @@ const packageRoot = resolve(__dirname, "..");
 const repoRoot = resolve(packageRoot, "..", "..");
 const runtimeApiRoot = resolve(repoRoot, "apps", "wegotworkspace", "packages", "api");
 
-const baseFiles = ["composer.json", "composer.lock", "package.json", "phpunit.xml"];
-const baseDirs = ["src", "openapi", "scripts", "docs", "tests"];
+const baseFiles = ["package.json", "README.md"];
+const baseDirs = ["openapi", "scripts", "docs"];
 
-function hasWithVendorFlag(argv) {
-  return argv.includes("--with-vendor");
-}
-
-export function syncRuntimeApiPackage(options = {}) {
-  const includeVendor = Boolean(options.includeVendor);
-
+export function syncRuntimeApiPackage() {
   mkdirSync(runtimeApiRoot, { recursive: true });
 
   for (const file of baseFiles) {
@@ -36,20 +30,9 @@ export function syncRuntimeApiPackage(options = {}) {
     cpSync(from, to, { recursive: true });
   }
 
-  if (includeVendor) {
-    const fromVendor = resolve(packageRoot, "vendor");
-    const toVendor = resolve(runtimeApiRoot, "vendor");
-    if (existsSync(fromVendor)) {
-      rmSync(toVendor, { recursive: true, force: true });
-      cpSync(fromVendor, toVendor, { recursive: true });
-    }
-  }
-
-  console.log(
-    `[sync-runtime-api-package] Synced @wgw/api to ${runtimeApiRoot}${includeVendor ? " (including vendor)" : ""}.`,
-  );
+  console.log(`[sync-runtime-api-package] Synced OpenAPI contract to ${runtimeApiRoot}.`);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  syncRuntimeApiPackage({ includeVendor: hasWithVendorFlag(process.argv.slice(2)) });
+  syncRuntimeApiPackage();
 }

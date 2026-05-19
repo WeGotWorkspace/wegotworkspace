@@ -1,9 +1,0 @@
-compiled.php
-config.php
-routes.php
-schedule-*
-services.json
-cache/
-sessions/
-testing/
-views/
