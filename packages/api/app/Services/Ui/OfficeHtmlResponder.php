@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Ui;
 
 use App\Dav\Auth\SabreUiAuthGate;
+use App\Services\Auth\UiSessionService;
 use App\Services\Installer\InstallerWebBase;
 use App\Support\AppPaths;
 use App\Support\WgwSettings;
@@ -12,8 +13,10 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class OfficeHtmlResponder
 {
-    public function __construct(private AppPaths $paths)
-    {
+    public function __construct(
+        private AppPaths $paths,
+        private UiSessionService $uiSession,
+    ) {
     }
 
     public function isInjectedHtmlPath(string $webBase, string $path): bool
@@ -94,10 +97,12 @@ final class OfficeHtmlResponder
             $html = $inject."\n".$html;
         }
 
+        $cookie = $this->uiSession->buildCookie($username, $realm, InstallerWebBase::url($webBase, '/'));
+
         return response($html, 200, [
             'Content-Type' => 'text/html; charset=utf-8',
             'Cache-Control' => 'no-store, no-cache, must-revalidate',
-        ]);
+        ])->withCookie($cookie);
     }
 
     private function resolveHtmlFile(string $webBase, string $path, ?string $indexPath): ?string
