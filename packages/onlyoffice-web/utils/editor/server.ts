@@ -14,6 +14,7 @@ import {
   readSabreOfficeConfig,
   webdavPutOfficeFile,
 } from "@/lib/sabre-office-dav";
+import { saveOfficeDocumentViaApi } from "@/lib/sabre-office-save";
 
 function mergeBuffers(buffers: Uint8Array[]) {
   const totalLength = buffers.reduce((acc, buffer) => acc + buffer.length, 0);
@@ -519,11 +520,23 @@ export class EditorServer {
               cfg.base_uri,
               `users/${cfg.username.replace(/[/\\]+/g, "_")}/${filenameForWebDavSave(cmdTitle, this.title, this.fileType)}`,
             );
+          const bytes = new Uint8Array(output);
+
+          try {
+            await saveOfficeDocumentViaApi(putPathname, bytes);
+            if (!this.webdavResourcePath) {
+              this.webdavResourcePath = putPathname;
+            }
+            return { status: "ok", dataUrl };
+          } catch (apiErr) {
+            console.warn("API save failed, trying WebDAV", apiErr);
+          }
+
           try {
             await webdavPutOfficeFile(
               cfg.base_uri,
               putPathname,
-              new Uint8Array(output),
+              bytes,
               cmdTitle || this.title,
             );
             if (!this.webdavResourcePath) {

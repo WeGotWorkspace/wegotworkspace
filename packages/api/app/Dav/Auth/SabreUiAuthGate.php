@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Dav\Auth;
 
-use Illuminate\Support\Facades\Storage;
-
 /**
  * Validates the signed {@code sabre_ui_auth} cookie issued after browser sign-in.
  */
@@ -30,19 +28,20 @@ final class SabreUiAuthGate
             return null;
         }
 
-        $secret = self::readSecret();
+        [$b64Payload, $b64Sig] = $parts;
+        $payloadJson = self::base64UrlDecode($b64Payload);
+        if ($payloadJson === null) {
+            return null;
+        }
+
+        $secret = UiAuthSecret::read();
         if ($secret === null) {
             return null;
         }
 
-        [$b64Payload, $b64Sig] = $parts;
-        $expected = self::base64UrlEncode(hash_hmac('sha256', $b64Payload, $secret, true));
-        if (! hash_equals($expected, $b64Sig)) {
-            return null;
-        }
-
-        $payloadJson = base64_decode(strtr($b64Payload, '-_', '+/'), true);
-        if ($payloadJson === false) {
+        $expected = hash_hmac('sha256', $b64Payload, $secret, true);
+        $sig = self::base64UrlDecode($b64Sig);
+        if ($sig === null || $sig === '' || ! hash_equals($expected, $sig)) {
             return null;
         }
 
@@ -62,8 +61,8 @@ final class SabreUiAuthGate
         if (($payload['r'] ?? '') !== $realm) {
             return null;
         }
-        $exp = $payload['exp'] ?? 0;
-        if (! is_int($exp) || $exp < time()) {
+        $exp = self::expiryFromPayload($payload);
+        if ($exp === null || $exp < time()) {
             return null;
         }
         $username = $payload['u'] ?? '';
@@ -74,19 +73,36 @@ final class SabreUiAuthGate
         return strtolower(trim($username));
     }
 
-    private static function readSecret(): ?string
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private static function expiryFromPayload(array $payload): ?int
     {
-        $disk = Storage::disk('wgw_data');
-        if (! $disk->exists('.ui-auth-secret')) {
-            return null;
+        foreach (['exp', 'e'] as $key) {
+            if (! array_key_exists($key, $payload)) {
+                continue;
+            }
+            $value = $payload[$key];
+            if (is_int($value)) {
+                return $value;
+            }
+            if (is_numeric($value)) {
+                return (int) $value;
+            }
         }
-        $raw = $disk->get('.ui-auth-secret');
 
-        return $raw !== '' ? $raw : null;
+        return null;
     }
 
-    private static function base64UrlEncode(string $data): string
+    private static function base64UrlDecode(string $data): ?string
     {
-        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+        $b64 = strtr($data, '-_', '+/');
+        $pad = strlen($b64) % 4;
+        if ($pad > 0) {
+            $b64 .= str_repeat('=', 4 - $pad);
+        }
+        $raw = base64_decode($b64, true);
+
+        return $raw === false ? null : $raw;
     }
 }

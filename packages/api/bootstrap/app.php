@@ -18,6 +18,9 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->encryptCookies(except: [
+            'sabre_ui_auth',
+        ]);
         $middleware->alias([
             'wgw.auth' => \App\Http\Middleware\AuthenticateWgwApi::class,
             'wgw.role' => \App\Http\Middleware\RequireWgwRole::class,

@@ -84,10 +84,25 @@ final class WgwSettings
                 self::MAIL_IMAP_PORT, self::MAIL_SMTP_PORT => (int) $db[$key],
                 self::FILES_ENABLED, self::CALENDAR_ENABLED, self::CONTACTS_ENABLED, self::BROWSER_PLUGIN => (bool) $db[$key],
                 self::TIMEZONE => TimezoneNormalizer::normalize($db[$key]),
+                self::BASE_URI => self::normalizeBaseUri((string) $db[$key]),
                 default => $db[$key],
             };
         }
 
         return $out;
+    }
+
+    private static function normalizeBaseUri(string $raw): string
+    {
+        $uri = html_entity_decode(trim($raw), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $uri = trim($uri, " \t\n\r\0\x0B\"'");
+        if ($uri === '' || $uri === '/') {
+            return '/';
+        }
+        if ($uri[0] !== '/') {
+            $uri = '/'.$uri;
+        }
+
+        return rtrim($uri, '/').'/';
     }
 }
