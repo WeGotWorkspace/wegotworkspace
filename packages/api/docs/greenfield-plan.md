@@ -64,15 +64,15 @@ Checkpoint: `composer test` green; no legacy `src/` in tree.
 
 - [x] `GET /office/capabilities`
 - [x] `POST` / `PUT /office/documents` (Flysystem, drive ACL)
-- [x] `POST /office/session` (UI cookie for ONLYOFFICE; used by apps, not yet in OpenAPI)
+- [x] `POST /office/session` (UI cookie for ONLYOFFICE)
 - [x] Feature tests
 
 ## Phase 8 — Admin
 
 - [x] `GET /admin/state` (users, groups, settings slices, embedded updates)
 - [x] `GET` / `DELETE /admin/updates/log`
-- [x] `GET /admin/updates/state`, `POST /admin/updates/check|apply|cancel` (apps; not all in OpenAPI)
-- [x] `GET` / `DELETE /admin/updates/backups/{name}`; `POST /admin/updates/backups` → 404 (manual backup N/A)
+- [x] `PUT /admin/settings`, `GET /admin/updates/state`, `POST /admin/updates/check|apply|cancel`
+- [x] `GET` / `DELETE /admin/updates/backups/{name}`
 - [x] `PUT` / `DELETE /admin/groups/{group}/members/{username}`
 - [x] Feature tests
 
@@ -89,7 +89,7 @@ Checkpoint: `composer test` green; no legacy `src/` in tree.
 ## Phase 10 — Voice
 
 - [x] `POST /voice/join`, `poll`, `send`, `leave`, `chat` (guest sessionKey or JWT)
-- [x] `POST /voice/room` (apps room probe; not yet in OpenAPI spec)
+- [x] `POST /voice/room` (room probe)
 - [x] SQLite/MySQL `voice_peers` / `voice_messages` signaling store
 - [x] Feature tests (guest join/poll/leave + error shapes)
 
@@ -97,28 +97,30 @@ Checkpoint: `composer test` green; no legacy `src/` in tree.
 
 - [x] `SabreServerFactory` + `SabreKernel` (Cal/Card PDO backends, files on `wgw_files` root)
 - [x] Port `app/Dav/Server/*` tree + cookie/basic auth (`SabrePdoBasicAndCookieAuth`)
-- [x] `packages/api/public/sabre.php` + `apps/wegotworkspace/index.php` forwards non-API traffic
+- [x] WebDAV via `SabreKernel::serve()` on Laravel web routes (no standalone `sabre.php` dispatch)
 - [x] Feature test: server factory builds when install lock present
 - [x] Flysystem-native DAV nodes (`app/Dav/Storage/*` on `wgw_files` keys `users/`, `groups/`)
 
 ## Phase 12 — UI static shells
 
 - [x] `UiStaticServer` + `UiFrontKernel` (shell SPA routes + `/install` dist)
-- [x] `packages/api/public/ui.php` + `apps/wegotworkspace/index.php` tries UI before Sabre
+- [x] UI + WebDAV via Laravel `routes/web.php` (`WgwFrontController` → `UiFrontKernel` / `SabreKernel`)
+- [x] `apps/wegotworkspace/index.php` boots Laravel `public/index.php` for all HTTP
 - [x] `AppPaths::moduleDistRoot()` resolves `packages/apps/{module}/dist`
-- [x] Per-app dedicated dist fallbacks when built separately (drive, mail, …)
+- [x] Shell SPA dist only (`pnpm --filter @wgw/apps build` → unified `shell/dist`)
 - [x] Office editor static entry (`/office/*` via `OfficeStaticServer` + config-injected HTML shells)
 
-## Phase 13+ — Apps contract gaps
+## Phase 13 — Contract parity
 
-- [x] `DELETE /mail/message` (permanent delete; used by mail app, not in OpenAPI yet)
-- [x] Per-app module `dist/` preferred over shell for `/drive`, `/mail`, etc.
+- [x] All Laravel `routes/api.php` endpoints declared in `openapi/openapi.json` (`OpenApiRouteContractTest`)
+- [x] `DELETE /mail/message`, `PUT /admin/settings`, admin update routes, `POST /office/session`, `POST /voice/room` in OpenAPI
+- [x] No stub routes outside the spec (removed `POST /admin/updates/backups` 404 shim)
 
 Each phase: routes → Form Requests → Resources → Services → tests → delete any temporary stubs.
 
 ## Definition of done (whole API)
 
-- Every path in `openapi/openapi.json` implemented or explicitly marked deprecated in spec
+- Every path in `openapi/openapi.json` implemented; every `routes/api.php` route appears in the spec
 - Feature tests cover happy path + main error shapes per tag
 - No imports from deleted legacy namespaces
 - `apps/wegotworkspace` serves UI + API through Laravel only

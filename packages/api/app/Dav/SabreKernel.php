@@ -4,29 +4,102 @@ declare(strict_types=1);
 
 namespace App\Dav;
 
+use App\Http\Sabre\SabreHttpResponseConverter;
 use App\Support\AppPaths;
+use Illuminate\Http\Request;
+use Sabre\DAV;
+use Sabre\DAV\Server;
+use Sabre\HTTP;
+use Symfony\Component\HttpFoundation\Response;
 
 final class SabreKernel
 {
     public function __construct(
         private SabreServerFactory $factory,
         private AppPaths $paths,
+        private SabreHttpResponseConverter $converter,
     ) {
     }
 
+    /**
+     * @deprecated Use {@see serve()} via Laravel routes.
+     */
     public function handle(): void
     {
+        $response = $this->serve(Request::capture());
+        $response->send();
+    }
+
+    public function serve(Request $request): Response
+    {
         if (! $this->paths->isInstalled()) {
-            http_response_code(503);
-            header('Content-Type: text/plain; charset=utf-8');
-            echo "WeGotWorkspace is not installed. Open /install/ to finish setup.\n";
-            exit;
+            return response(
+                "WeGotWorkspace is not installed. Open /install/ to finish setup.\n",
+                503,
+                ['Content-Type' => 'text/plain; charset=utf-8']
+            );
         }
 
+        if ($request->headers->has('Authorization') && empty($_SERVER['HTTP_AUTHORIZATION'])) {
+            $_SERVER['HTTP_AUTHORIZATION'] = (string) $request->headers->get('Authorization');
+        }
         if (empty($_SERVER['HTTP_AUTHORIZATION']) && ! empty($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
             $_SERVER['HTTP_AUTHORIZATION'] = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
         }
 
-        $this->factory->create()->start();
+        $server = $this->factory->create();
+        $httpRequest = HTTP\Sapi::getRequest();
+        $httpRequest->setBaseUrl($server->getBaseUri());
+        $httpResponse = new HTTP\Response();
+        $httpResponse->setHTTPVersion($httpRequest->getHTTPVersion());
+
+        try {
+            $server->invokeMethod($httpRequest, $httpResponse, false);
+        } catch (\Throwable $e) {
+            return $this->converter->toIlluminate($this->exceptionResponse($server, $e));
+        }
+
+        if ($httpResponse->getStatus() === null) {
+            return response('WebDAV request was not handled.', 500, ['Content-Type' => 'text/plain; charset=utf-8']);
+        }
+
+        return $this->converter->toIlluminate($httpResponse);
+    }
+
+    private function exceptionResponse(Server $server, \Throwable $e): HTTP\Response
+    {
+        try {
+            $server->emit('exception', [$e]);
+        } catch (\Exception) {
+        }
+
+        $dom = new \DOMDocument('1.0', 'utf-8');
+        $dom->formatOutput = true;
+        $error = $dom->createElementNS('DAV:', 'd:error');
+        $error->setAttribute('xmlns:s', DAV\Server::NS_SABREDAV);
+        $dom->appendChild($error);
+
+        $h = static fn (mixed $v): string => htmlspecialchars((string) $v, ENT_NOQUOTES, 'UTF-8');
+        if (DAV\Server::$exposeVersion) {
+            $error->appendChild($dom->createElement('s:sabredav-version', $h(DAV\Version::VERSION)));
+        }
+        $error->appendChild($dom->createElement('s:exception', $h($e::class)));
+        $error->appendChild($dom->createElement('s:message', $h($e->getMessage())));
+
+        if ($e instanceof DAV\Exception) {
+            $httpCode = $e->getHTTPCode();
+            $headers = $e->getHTTPHeaders($server);
+        } else {
+            $httpCode = 500;
+            $headers = [];
+        }
+        $headers['Content-Type'] = 'application/xml; charset=utf-8';
+
+        $response = new HTTP\Response();
+        $response->setStatus($httpCode);
+        $response->setHeaders($headers);
+        $response->setBody($dom->saveXML());
+
+        return $response;
     }
 }

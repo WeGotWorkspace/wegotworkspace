@@ -305,6 +305,24 @@
         }
       }
     },
+    "/admin/settings": {
+      "put": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Save admin-managed app settings",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Settings saved"
+          }
+        }
+      }
+    },
     "/admin/updates/log": {
       "get": {
         "tags": [
@@ -335,6 +353,78 @@
         "responses": {
           "200": {
             "description": "Log cleared"
+          }
+        }
+      }
+    },
+    "/admin/updates/state": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Update subsystem state snapshot",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Update state"
+          }
+        }
+      }
+    },
+    "/admin/updates/check": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Check release feed for updates",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Update state after check"
+          }
+        }
+      }
+    },
+    "/admin/updates/apply": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Apply checked release update",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Apply result"
+          }
+        }
+      }
+    },
+    "/admin/updates/cancel": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Request cancellation of in-progress update",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cancel acknowledged"
           }
         }
       }
@@ -667,6 +757,22 @@
         "responses": {
           "200": {
             "description": "Message updated"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "Permanently delete a message",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message deleted"
           }
         }
       }
@@ -1241,6 +1347,24 @@
         }
       }
     },
+    "/office/session": {
+      "post": {
+        "tags": [
+          "Office"
+        ],
+        "summary": "Establish browser UI session cookie for ONLYOFFICE",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session established"
+          }
+        }
+      }
+    },
     "/office/documents": {
       "post": {
         "tags": [
@@ -1271,6 +1395,19 @@
         "responses": {
           "200": {
             "description": "Updated Office document"
+          }
+        }
+      }
+    },
+    "/voice/room": {
+      "post": {
+        "tags": [
+          "Voice"
+        ],
+        "summary": "Probe or resolve voice room metadata",
+        "responses": {
+          "200": {
+            "description": "Room metadata"
           }
         }
       }

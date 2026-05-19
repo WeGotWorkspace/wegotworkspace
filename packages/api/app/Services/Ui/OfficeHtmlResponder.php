@@ -8,6 +8,7 @@ use App\Dav\Auth\SabreUiAuthGate;
 use App\Services\Installer\InstallerWebBase;
 use App\Support\AppPaths;
 use App\Support\WgwSettings;
+use Symfony\Component\HttpFoundation\Response;
 
 final class OfficeHtmlResponder
 {
@@ -33,19 +34,17 @@ final class OfficeHtmlResponder
         return false;
     }
 
-    public function tryRespond(string $webBase, string $path): bool
+    public function tryRespond(string $webBase, string $path): ?Response
     {
         if (! $this->isInjectedHtmlPath($webBase, $path)) {
-            return false;
+            return null;
         }
 
         $cfg = WgwSettings::normalized();
         if (! ($cfg[WgwSettings::FILES_ENABLED] ?? true)) {
-            http_response_code(404);
-            header('Content-Type: text/plain; charset=utf-8');
-            echo 'WebDAV files are disabled for this site.';
-
-            return true;
+            return response('WebDAV files are disabled for this site.', 404, [
+                'Content-Type' => 'text/plain; charset=utf-8',
+            ]);
         }
 
         $realm = (string) ($cfg[WgwSettings::AUTH_REALM] ?? 'SabreDAV');
@@ -53,22 +52,21 @@ final class OfficeHtmlResponder
         if ($username === null) {
             $return = rawurlencode($path);
             $login = InstallerWebBase::url($webBase, '/login?return='.$return);
-            header('Location: '.$login, true, 302);
 
-            return true;
+            return redirect($login);
         }
 
         $index = $this->paths->officeIndex();
         $distFile = $this->resolveHtmlFile($webBase, $path, $index);
         if ($distFile === null || ! is_readable($distFile)) {
-            http_response_code(503);
-            header('Content-Type: text/html; charset=utf-8');
-            echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Office unavailable</title></head><body>';
-            echo '<h1>Office UI is not built</h1>';
-            echo '<p>Run <code>pnpm --filter @wgw/onlyoffice-web build</code>, then reload.</p>';
-            echo '</body></html>';
-
-            return true;
+            return response(
+                '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Office unavailable</title></head><body>'
+                .'<h1>Office UI is not built</h1>'
+                .'<p>Run <code>pnpm --filter @wgw/onlyoffice-web build</code>, then reload.</p>'
+                .'</body></html>',
+                503,
+                ['Content-Type' => 'text/html; charset=utf-8']
+            );
         }
 
         $html = (string) file_get_contents($distFile);
@@ -96,11 +94,10 @@ final class OfficeHtmlResponder
             $html = $inject."\n".$html;
         }
 
-        header('Content-Type: text/html; charset=utf-8');
-        header('Cache-Control: no-store, no-cache, must-revalidate');
-        echo $html;
-
-        return true;
+        return response($html, 200, [
+            'Content-Type' => 'text/html; charset=utf-8',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate',
+        ]);
     }
 
     private function resolveHtmlFile(string $webBase, string $path, ?string $indexPath): ?string

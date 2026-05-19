@@ -19,6 +19,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'wgw.auth' => \App\Http\Middleware\AuthenticateWgwApi::class,
             'wgw.role' => \App\Http\Middleware\RequireWgwRole::class,
         ]);
+        $middleware->appendToGroup('web', [
+            \App\Http\Middleware\WgwSecurityHeaders::class,
+        ]);
+        $middleware->validateCsrfTokens(except: [
+            '*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (\App\Services\Mail\MailResponseException $e) {
