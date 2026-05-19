@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Ui;
 
 use App\Services\Installer\InstallerWebBase;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Serves the ONLYOFFICE Web static export at {@code /office/}.
@@ -18,40 +20,34 @@ final class OfficeStaticServer
         return $path === $prefix || str_starts_with($path, $prefix.'/');
     }
 
-    public function tryServe(string $buildRoot, string $webBase, string $path): bool
+    public function tryServe(string $buildRoot, string $webBase, string $path): ?Response
     {
         $prefix = InstallerWebBase::url($webBase, '/office');
         if ($path !== $prefix && ! str_starts_with($path, $prefix.'/')) {
-            return false;
+            return null;
         }
 
         $root = rtrim($buildRoot, '/');
         if (! is_file($root.'/index.html')) {
-            return false;
+            return null;
         }
 
         $rel = $path === $prefix || $path === $prefix.'/' ? '' : substr($path, strlen($prefix) + 1);
         $rel = str_replace('\\', '/', (string) $rel);
         $rel = rawurldecode($rel);
         if ($rel !== '' && (str_contains($rel, "\0") || str_contains($rel, '..'))) {
-            $this->respondNotFound();
-
-            return true;
+            return $this->notFound();
         }
 
         $fs = $this->mapUrlToFilesystem($root, $rel);
         if ($fs === null) {
-            $this->respondNotFound();
-
-            return true;
+            return $this->notFound();
         }
 
         $realRoot = realpath($root);
         $realFile = is_readable($fs) ? realpath($fs) : false;
         if ($realRoot === false || $realFile === false || ! str_starts_with($realFile, $realRoot)) {
-            $this->respondNotFound();
-
-            return true;
+            return $this->notFound();
         }
 
         $ext = strtolower(pathinfo($realFile, PATHINFO_EXTENSION));
@@ -75,19 +71,17 @@ final class OfficeStaticServer
             default => 'application/octet-stream',
         };
 
-        header('Content-Type: '.$mime);
+        $headers = [
+            'Content-Type' => $mime,
+            'Cache-Control' => in_array($ext, ['html', 'htm', 'js', 'mjs', 'css', 'json', 'map'], true)
+                ? 'no-store, no-cache, must-revalidate'
+                : 'public, max-age=86400',
+        ];
         if ($ext === 'wasm' && $this->wasmOnDiskIsBrotliCompressed($realFile)) {
-            header('Content-Encoding: br');
-        }
-        if (in_array($ext, ['html', 'htm', 'js', 'mjs', 'css', 'json', 'map'], true)) {
-            header('Cache-Control: no-store, no-cache, must-revalidate');
-        } else {
-            header('Cache-Control: public, max-age=86400');
+            $headers['Content-Encoding'] = 'br';
         }
 
-        readfile($realFile);
-
-        return true;
+        return response()->file($realFile, $headers);
     }
 
     private function mapUrlToFilesystem(string $root, string $rel): ?string
@@ -156,10 +150,8 @@ final class OfficeStaticServer
             && $h !== "\0asm";
     }
 
-    private function respondNotFound(): void
+    private function notFound(): Response
     {
-        http_response_code(404);
-        header('Content-Type: text/plain; charset=utf-8');
-        echo 'Not found';
+        return new Response('Not found', 404, ['Content-Type' => 'text/plain; charset=utf-8']);
     }
 }

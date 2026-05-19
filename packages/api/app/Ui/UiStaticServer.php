@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Ui;
 
 use App\Services\Installer\InstallerWebBase;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Serves built SPA assets from a module dist directory (shell, drive, install, …).
@@ -64,11 +66,11 @@ final class UiStaticServer
         return $path === $prefix || $path === $prefix.'/' || str_starts_with($path, $prefix.'/');
     }
 
-    public function tryServe(string $distRoot, string $webBase, string $path, bool $spaFallback): bool
+    public function tryServe(string $distRoot, string $webBase, string $path, bool $spaFallback): ?Response
     {
         $root = rtrim($distRoot, '/');
         if (! $this->distReady($root)) {
-            return false;
+            return null;
         }
 
         foreach (self::GLOBAL_PREFIXES as $prefix) {
@@ -85,7 +87,7 @@ final class UiStaticServer
 
         $routePrefix = $this->matchedRoutePrefix($webBase, $path);
         if ($routePrefix === null) {
-            return false;
+            return null;
         }
 
         $rel = $this->relativePath($path, $routePrefix);
@@ -107,7 +109,6 @@ final class UiStaticServer
             '/notes',
             '/settings',
             '/voice',
-            '/office',
             '/install',
         ];
 
@@ -131,41 +132,33 @@ final class UiStaticServer
         return is_string($relative) ? str_replace('\\', '/', rawurldecode($relative)) : '';
     }
 
-    private function serveResolvedPath(string $root, string $rel, bool $allowSpaFallback): bool
+    private function serveResolvedPath(string $root, string $rel, bool $allowSpaFallback): ?Response
     {
         if ($rel !== '' && (str_contains($rel, "\0") || str_contains($rel, '..'))) {
-            $this->respondNotFound();
-
-            return true;
+            return $this->notFound();
         }
 
         $fs = $this->mapUrlToFilesystem($root, $rel);
         if ($fs === null) {
             if ($rel !== '' && preg_match('#^(css|js|img|fonts|assets|icons|manifests)/#', $rel) === 1) {
-                $this->respondNotFound();
-
-                return true;
+                return $this->notFound();
             }
             if (! $allowSpaFallback) {
-                $this->respondNotFound();
-
-                return true;
+                return $this->notFound();
             }
             $index = $root.'/index.html';
             $looksLikeAsset = $rel !== '' && preg_match('/\.[A-Za-z0-9]{1,8}$/', $rel) === 1;
             if (is_file($index) && ! str_starts_with($rel, 'assets/') && ! $looksLikeAsset) {
                 $fs = $index;
             } else {
-                return false;
+                return null;
             }
         }
 
         $realRoot = realpath($root);
         $realFile = is_readable($fs) ? realpath($fs) : false;
         if ($realRoot === false || $realFile === false || ! str_starts_with($realFile, $realRoot)) {
-            $this->respondNotFound();
-
-            return true;
+            return $this->notFound();
         }
 
         $ext = strtolower(pathinfo($realFile, PATHINFO_EXTENSION));
@@ -190,16 +183,14 @@ final class UiStaticServer
             default => 'application/octet-stream',
         };
 
-        header('Content-Type: '.$mime);
-        if ($ext === 'html' || $ext === 'htm') {
-            header('Cache-Control: no-store, no-cache, must-revalidate');
-        } else {
-            header('Cache-Control: public, max-age=86400');
-        }
+        $cacheControl = ($ext === 'html' || $ext === 'htm')
+            ? 'no-store, no-cache, must-revalidate'
+            : 'public, max-age=86400';
 
-        readfile($realFile);
-
-        return true;
+        return new BinaryFileResponse($realFile, 200, [
+            'Content-Type' => $mime,
+            'Cache-Control' => $cacheControl,
+        ]);
     }
 
     private function mapUrlToFilesystem(string $root, string $rel): ?string
@@ -213,10 +204,8 @@ final class UiStaticServer
         return is_file($direct) ? $direct : null;
     }
 
-    private function respondNotFound(): void
+    private function notFound(): Response
     {
-        http_response_code(404);
-        header('Content-Type: text/plain; charset=utf-8');
-        echo 'Not found';
+        return new Response('Not found', 404, ['Content-Type' => 'text/plain; charset=utf-8']);
     }
 }

@@ -108,6 +108,14 @@ final class AdminEndpointsTest extends TestCase
             ]);
 
         $this->withHeader('Authorization', 'Bearer '.$token)
+            ->putJson('/api/v1/admin/settings', [
+                'values' => ['timezone' => 'Europe/Amsterdam'],
+            ])
+            ->assertOk()
+            ->assertJsonPath('ok', true)
+            ->assertJsonFragment(['saved' => ['timezone']]);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
             ->putJson('/api/v1/admin/groups/administrators/members/bob')
             ->assertOk()
             ->assertJsonPath('ok', true);
