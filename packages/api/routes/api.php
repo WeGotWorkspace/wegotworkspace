@@ -14,12 +14,17 @@ use App\Http\Controllers\Api\V1\Notes\CapabilitiesController as NotesCapabilitie
 use App\Http\Controllers\Api\V1\Notes\ItemsController as NotesItemsController;
 use App\Http\Controllers\Api\V1\Notes\NotebooksController;
 use App\Http\Controllers\Api\V1\Notes\StateController as NotesStateController;
+use App\Http\Controllers\Api\V1\Admin\GroupMemberController as AdminGroupMemberController;
+use App\Http\Controllers\Api\V1\Admin\StateController as AdminStateController;
+use App\Http\Controllers\Api\V1\Admin\UpdateBackupController as AdminUpdateBackupController;
+use App\Http\Controllers\Api\V1\Admin\UpdateLogController as AdminUpdateLogController;
 use App\Http\Controllers\Api\V1\Drive\DriveController;
 use App\Http\Controllers\Api\V1\Office\CapabilitiesController as OfficeCapabilitiesController;
 use App\Http\Controllers\Api\V1\Office\DocumentsController as OfficeDocumentsController;
 use App\Http\Controllers\Api\V1\Office\SessionController as OfficeSessionController;
 use App\Http\Controllers\Api\V1\Dav\CapabilitiesController as DavCapabilitiesController;
 use App\Http\Controllers\Api\V1\Home\StateController as HomeStateController;
+use App\Http\Controllers\Api\V1\Mail\MailController;
 use App\Http\Controllers\Api\V1\Installer\ActionController as InstallerActionController;
 use App\Http\Controllers\Api\V1\Installer\BootstrapController as InstallerBootstrapController;
 use App\Http\Controllers\Api\V1\Installer\StateController as InstallerStateController;
@@ -86,6 +91,20 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($driveS
     Route::put('settings/profile', SettingsProfileController::class);
     Route::put('settings/mail', SettingsMailController::class);
 
+    Route::get('mail/status', [MailController::class, 'status']);
+    Route::get('mail/folders', [MailController::class, 'foldersIndex']);
+    Route::post('mail/folders', [MailController::class, 'foldersStore']);
+    Route::patch('mail/folders', [MailController::class, 'foldersUpdate']);
+    Route::delete('mail/folders', [MailController::class, 'foldersDestroy']);
+    Route::get('mail/messages', [MailController::class, 'messagesIndex']);
+    Route::get('mail/messages/attachments', [MailController::class, 'messageAttachments']);
+    Route::get('mail/message', [MailController::class, 'messageShow']);
+    Route::patch('mail/message', [MailController::class, 'messageUpdate']);
+    Route::get('mail/message/attachment', [MailController::class, 'messageAttachment']);
+    Route::post('mail/move', [MailController::class, 'move']);
+    Route::post('mail/send', [MailController::class, 'send']);
+    Route::post('mail/draft', [MailController::class, 'draft']);
+
     Route::get('notes/capabilities', NotesCapabilitiesController::class);
     Route::get('notes/state', NotesStateController::class);
     Route::get('notes/items', [NotesItemsController::class, 'index']);
@@ -98,4 +117,14 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($driveS
     Route::post('notes/notebooks', [NotebooksController::class, 'store']);
     Route::patch('notes/notebooks/{name}', [NotebooksController::class, 'update']);
     Route::delete('notes/notebooks/{name}', [NotebooksController::class, 'destroy']);
+});
+
+Route::middleware(['wgw.auth', 'wgw.role:admin'])->prefix('admin')->group(function (): void {
+    Route::get('state', AdminStateController::class);
+    Route::get('updates/log', [AdminUpdateLogController::class, 'show']);
+    Route::delete('updates/log', [AdminUpdateLogController::class, 'destroy']);
+    Route::get('updates/backups/{name}', [AdminUpdateBackupController::class, 'show']);
+    Route::delete('updates/backups/{name}', [AdminUpdateBackupController::class, 'destroy']);
+    Route::put('groups/{group}/members/{username}', [AdminGroupMemberController::class, 'store']);
+    Route::delete('groups/{group}/members/{username}', [AdminGroupMemberController::class, 'destroy']);
 });
