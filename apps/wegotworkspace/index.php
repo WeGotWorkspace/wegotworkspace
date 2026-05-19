@@ -41,35 +41,46 @@ header('Referrer-Policy: strict-origin-when-cross-origin');
 $isApiRequest = $path === '/api' || str_starts_with($path, '/api/');
 
 if ($isApiRequest) {
-    $apiPackageRoot = null;
-    foreach ([
+    $apiCandidates = [
         $runtimeRoot.'/packages/api',
         $appRoot.'/packages/api',
         dirname($appRoot, 2).'/packages/api',
-    ] as $candidate) {
-        if (is_file($candidate.'/public/index.php')) {
+    ];
+
+    $apiPackageRoot = null;
+    $apiPackageWithoutVendor = null;
+    foreach ($apiCandidates as $candidate) {
+        if (! is_file($candidate.'/public/index.php')) {
+            continue;
+        }
+        if (is_file($candidate.'/vendor/autoload.php')) {
             $apiPackageRoot = $candidate;
             break;
         }
+        if ($apiPackageWithoutVendor === null) {
+            $apiPackageWithoutVendor = $candidate;
+        }
     }
+
+    // Keep /api/v1/* JSON clean on php -S (PHP 8.5 deprecations, APP_DEBUG, etc.).
+    ini_set('display_errors', '0');
+    error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
 
     if ($apiPackageRoot === null) {
         header('Content-Type: application/json; charset=utf-8');
         http_response_code(503);
-        echo json_encode([
-            'error' => 'api_unavailable',
-            'message' => 'packages/api Laravel runtime is missing.',
-        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        exit;
-    }
-
-    if (! is_file($apiPackageRoot.'/vendor/autoload.php')) {
-        header('Content-Type: application/json; charset=utf-8');
-        http_response_code(503);
-        echo json_encode([
-            'error' => 'api_unavailable',
-            'message' => 'Run composer --working-dir packages/api install',
-        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        if ($apiPackageWithoutVendor !== null) {
+            echo json_encode([
+                'error' => 'api_unavailable',
+                'message' => 'Composer vendor/ is missing for the API package. Run `composer --working-dir packages/api install` from the repo root (monorepo dev), or `pnpm --filter @wgw/api build` to sync a runtime copy with vendor.',
+                'path' => $apiPackageWithoutVendor,
+            ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        } else {
+            echo json_encode([
+                'error' => 'api_unavailable',
+                'message' => 'packages/api Laravel runtime is missing.',
+            ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        }
         exit;
     }
 
