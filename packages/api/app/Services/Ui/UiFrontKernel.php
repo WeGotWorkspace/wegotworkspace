@@ -6,6 +6,7 @@ namespace App\Services\Ui;
 
 use App\Services\Installer\InstallerWebBase;
 use App\Support\AppPaths;
+use App\Ui\OfficeStaticServer;
 use App\Ui\UiStaticServer;
 
 final class UiFrontKernel
@@ -13,6 +14,8 @@ final class UiFrontKernel
     public function __construct(
         private AppPaths $paths,
         private UiStaticServer $static,
+        private OfficeStaticServer $officeStatic,
+        private OfficeHtmlResponder $officeHtml,
     ) {
     }
 
@@ -31,6 +34,10 @@ final class UiFrontKernel
 
         if (! $this->paths->isInstalled()) {
             return false;
+        }
+
+        if ($this->officeStatic->matchesOfficePath($webBase, $path)) {
+            return $this->handleOffice($webBase, $path, $method);
         }
 
         if ($this->static->matchesShellPath($webBase, $path)) {
@@ -67,6 +74,35 @@ final class UiFrontKernel
         }
 
         if ($this->static->tryServe($dist, $webBase, $path, true)) {
+            return true;
+        }
+
+        $this->respondNotFound();
+
+        return true;
+    }
+
+    private function handleOffice(string $webBase, string $path, string $method): bool
+    {
+        if ($method === 'HEAD') {
+            http_response_code(200);
+
+            return true;
+        }
+
+        if ($this->officeHtml->tryRespond($webBase, $path)) {
+            return true;
+        }
+
+        $index = $this->paths->officeIndex();
+        if ($index === null) {
+            $this->respondDistMissing('office');
+
+            return true;
+        }
+
+        $buildRoot = dirname($index);
+        if ($this->officeStatic->tryServe($buildRoot, $webBase, $path)) {
             return true;
         }
 

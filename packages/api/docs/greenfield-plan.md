@@ -71,7 +71,8 @@ Checkpoint: `composer test` green; no legacy `src/` in tree.
 
 - [x] `GET /admin/state` (users, groups, settings slices, embedded updates)
 - [x] `GET` / `DELETE /admin/updates/log`
-- [x] `GET` / `DELETE /admin/updates/backups/{name}`
+- [x] `GET /admin/updates/state`, `POST /admin/updates/check|apply|cancel` (apps; not all in OpenAPI)
+- [x] `GET` / `DELETE /admin/updates/backups/{name}`; `POST /admin/updates/backups` → 404 (manual backup N/A)
 - [x] `PUT` / `DELETE /admin/groups/{group}/members/{username}`
 - [x] Feature tests
 
@@ -98,7 +99,7 @@ Checkpoint: `composer test` green; no legacy `src/` in tree.
 - [x] Port `app/Dav/Server/*` tree + cookie/basic auth (`SabrePdoBasicAndCookieAuth`)
 - [x] `packages/api/public/sabre.php` + `apps/wegotworkspace/index.php` forwards non-API traffic
 - [x] Feature test: server factory builds when install lock present
-- [ ] Flysystem-native DAV nodes (files still use Sabre FS collections on the same disk root as REST)
+- [x] Flysystem-native DAV nodes (`app/Dav/Storage/*` on `wgw_files` keys `users/`, `groups/`)
 
 ## Phase 12 — UI static shells
 
@@ -106,12 +107,11 @@ Checkpoint: `composer test` green; no legacy `src/` in tree.
 - [x] `packages/api/public/ui.php` + `apps/wegotworkspace/index.php` tries UI before Sabre
 - [x] `AppPaths::moduleDistRoot()` resolves `packages/apps/{module}/dist`
 - [ ] Per-app dedicated dist fallbacks when built separately (drive, mail, …)
-- [ ] Office editor static entry (`/office/*`)
+- [x] Office editor static entry (`/office/*` via `OfficeStaticServer` + config-injected HTML shells)
 
 ## Phase 13+ — Remaining
 
-- Flysystem-native DAV file nodes
-- Optional: admin update mutations beyond OpenAPI
+- Per-app dedicated dist fallbacks when built separately (drive, mail, …)
 
 Each phase: routes → Form Requests → Resources → Services → tests → delete any temporary stubs.
 

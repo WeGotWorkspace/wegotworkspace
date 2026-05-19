@@ -16,8 +16,13 @@ use App\Http\Controllers\Api\V1\Notes\NotebooksController;
 use App\Http\Controllers\Api\V1\Notes\StateController as NotesStateController;
 use App\Http\Controllers\Api\V1\Admin\GroupMemberController as AdminGroupMemberController;
 use App\Http\Controllers\Api\V1\Admin\StateController as AdminStateController;
+use App\Http\Controllers\Api\V1\Admin\UpdateApplyController as AdminUpdateApplyController;
 use App\Http\Controllers\Api\V1\Admin\UpdateBackupController as AdminUpdateBackupController;
+use App\Http\Controllers\Api\V1\Admin\UpdateBackupStoreController as AdminUpdateBackupStoreController;
+use App\Http\Controllers\Api\V1\Admin\UpdateCancelController as AdminUpdateCancelController;
+use App\Http\Controllers\Api\V1\Admin\UpdateCheckController as AdminUpdateCheckController;
 use App\Http\Controllers\Api\V1\Admin\UpdateLogController as AdminUpdateLogController;
+use App\Http\Controllers\Api\V1\Admin\UpdateStateController as AdminUpdateStateController;
 use App\Http\Controllers\Api\V1\Drive\DriveController;
 use App\Http\Controllers\Api\V1\Office\CapabilitiesController as OfficeCapabilitiesController;
 use App\Http\Controllers\Api\V1\Office\DocumentsController as OfficeDocumentsController;
@@ -129,8 +134,13 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($driveS
 
 Route::middleware(['wgw.auth', 'wgw.role:admin'])->prefix('admin')->group(function (): void {
     Route::get('state', AdminStateController::class);
+    Route::get('updates/state', AdminUpdateStateController::class);
     Route::get('updates/log', [AdminUpdateLogController::class, 'show']);
     Route::delete('updates/log', [AdminUpdateLogController::class, 'destroy']);
+    Route::post('updates/check', AdminUpdateCheckController::class);
+    Route::post('updates/apply', AdminUpdateApplyController::class);
+    Route::post('updates/cancel', AdminUpdateCancelController::class);
+    Route::post('updates/backups', AdminUpdateBackupStoreController::class);
     Route::get('updates/backups/{name}', [AdminUpdateBackupController::class, 'show']);
     Route::delete('updates/backups/{name}', [AdminUpdateBackupController::class, 'destroy']);
     Route::put('groups/{group}/members/{username}', [AdminGroupMemberController::class, 'store']);

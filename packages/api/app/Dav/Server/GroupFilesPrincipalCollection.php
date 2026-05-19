@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Dav\Server;
 
+use App\Storage\WgwStorage;
 use Sabre\DAV;
 use Sabre\DAV\Auth\Plugin as AuthPlugin;
 use Sabre\DAVACL\AbstractPrincipalCollection;
@@ -97,12 +98,13 @@ final class GroupFilesPrincipalCollection extends AbstractPrincipalCollection im
         if ($slug === null || $slug === '') {
             throw new DAV\Exception\NotFound('Invalid group principal');
         }
-        $path = $this->storagePath.'/'.$slug;
-        if (!is_dir($path)) {
-            mkdir($path, 0775, true);
+        $key = trim($this->storagePath, '/').'/'.$slug;
+        $filesystem = app(WgwStorage::class)->files();
+        if (! $filesystem->directoryExists($key)) {
+            $filesystem->makeDirectory($key);
         }
 
-        return new GroupSharedCollection($path, $uri, $this->pdo);
+        return new GroupSharedCollection($filesystem, $key, $uri, $this->pdo);
     }
 
     private function principalIsMemberOfGroup(string $memberPrincipalUri, string $groupPrincipalUri): bool
