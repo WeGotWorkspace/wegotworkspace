@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace App\Services\Auth;
 
-use App\Support\WgwInstallConfig;
-use Symfony\Component\Cache\Adapter\FilesystemAdapter;
-use Symfony\Component\RateLimiter\RateLimiterFactory;
-use Symfony\Component\RateLimiter\Storage\CacheStorage;
+use Illuminate\Cache\RateLimiter;
 
 final class LoginRateLimiter
 {
-    public function __construct(private WgwInstallConfig $install)
+    private const int IP_LIMIT = 40;
+
+    private const int USER_IP_LIMIT = 8;
+
+    /** @var int Sliding window equivalent: 10 minutes */
+    private const int DECAY_SECONDS = 600;
+
+    public function __construct(private RateLimiter $rateLimiter)
     {
     }
 
@@ -21,13 +25,22 @@ final class LoginRateLimiter
             return true;
         }
 
-        $user = $this->normalizeUser($username);
         $ipNorm = $this->normalizeIp($ip);
+        $user = $this->normalizeUser($username);
+        $ipKey = $this->ipKey($ipNorm);
+        $userIpKey = $this->userIpKey($user, $ipNorm);
 
-        $ipLimiter = $this->factory(40, '10 minutes')->create('api-login-ip-'.$ipNorm);
-        $userIpLimiter = $this->factory(8, '10 minutes')->create('api-login-user-'.$user.'-ip-'.$ipNorm);
+        if ($this->rateLimiter->tooManyAttempts($ipKey, self::IP_LIMIT)) {
+            return false;
+        }
+        if ($this->rateLimiter->tooManyAttempts($userIpKey, self::USER_IP_LIMIT)) {
+            return false;
+        }
 
-        return $ipLimiter->consume(1)->isAccepted() && $userIpLimiter->consume(1)->isAccepted();
+        $this->rateLimiter->hit($ipKey, self::DECAY_SECONDS);
+        $this->rateLimiter->hit($userIpKey, self::DECAY_SECONDS);
+
+        return true;
     }
 
     public function reset(string $username, string $ip): void
@@ -36,9 +49,9 @@ final class LoginRateLimiter
             return;
         }
 
-        $user = $this->normalizeUser($username);
-        $ipNorm = $this->normalizeIp($ip);
-        $this->factory(8, '10 minutes')->create('api-login-user-'.$user.'-ip-'.$ipNorm)->reset();
+        $this->rateLimiter->clear(
+            $this->userIpKey($this->normalizeUser($username), $this->normalizeIp($ip))
+        );
     }
 
     private function isDisabled(): bool
@@ -48,23 +61,14 @@ final class LoginRateLimiter
         return in_array($raw, ['1', 'true', 'yes', 'on'], true);
     }
 
-    private function factory(int $limit, string $interval): RateLimiterFactory
+    private function ipKey(string $ipNorm): string
     {
-        $cache = new FilesystemAdapter(
-            'api_rate_limiter',
-            0,
-            $this->install->dataDir().'/api/rate-limiter-cache'
-        );
+        return 'api-login-ip:'.$ipNorm;
+    }
 
-        return new RateLimiterFactory(
-            [
-                'id' => 'api_login',
-                'policy' => 'sliding_window',
-                'limit' => $limit,
-                'interval' => $interval,
-            ],
-            new CacheStorage($cache)
-        );
+    private function userIpKey(string $user, string $ipNorm): string
+    {
+        return 'api-login-user:'.$user.':ip:'.$ipNorm;
     }
 
     private function normalizeIp(string $ip): string
