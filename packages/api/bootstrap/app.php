@@ -13,6 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
         apiPrefix: 'api/v1',
+        then: function (): void {
+            require __DIR__.'/../routes/docs.php';
+        },
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([

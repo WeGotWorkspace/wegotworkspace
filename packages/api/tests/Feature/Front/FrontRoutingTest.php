@@ -27,4 +27,29 @@ final class FrontRoutingTest extends TestCase
             ->assertOk()
             ->assertJsonPath('status', 'ok');
     }
+
+    public function test_api_docs_not_handled_by_webdav_catch_all(): void
+    {
+        $this->get('/api/docs')
+            ->assertOk()
+            ->assertHeader('Content-Type', 'text/html; charset=utf-8');
+
+        $this->get('/api/docs/')
+            ->assertOk()
+            ->assertHeader('Content-Type', 'text/html; charset=utf-8');
+    }
+
+    public function test_openapi_json_is_served(): void
+    {
+        $this->getJson('/api/openapi.json')
+            ->assertOk()
+            ->assertJsonPath('openapi', '3.1.0');
+    }
+
+    public function test_swagger_css_has_stylesheet_mime_type(): void
+    {
+        $this->get('/api/docs/swagger-ui.css')
+            ->assertOk()
+            ->assertHeader('Content-Type', 'text/css; charset=utf-8');
+    }
 }

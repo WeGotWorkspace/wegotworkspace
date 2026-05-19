@@ -10,6 +10,7 @@
         "lcobucci/jwt": "^5.5",
         "phpmailer/phpmailer": "^6.9",
         "sabre/dav": "^4.7",
+        "swagger-api/swagger-ui": "^5.32",
         "zbateson/mail-mime-parser": "^4.0"
     },
     "require-dev": {

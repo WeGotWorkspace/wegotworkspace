@@ -83,6 +83,7 @@ final class WgwSettings
             $out[$key] = match ($key) {
                 self::MAIL_IMAP_PORT, self::MAIL_SMTP_PORT => (int) $db[$key],
                 self::FILES_ENABLED, self::CALENDAR_ENABLED, self::CONTACTS_ENABLED, self::BROWSER_PLUGIN => (bool) $db[$key],
+                self::TIMEZONE => TimezoneNormalizer::normalize($db[$key]),
                 default => $db[$key],
             };
         }
