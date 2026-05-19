@@ -1,43 +1,38 @@
-import { execFileSync } from "node:child_process";
+import { copyFileSync, existsSync, mkdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { mkdirSync } from "node:fs";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const packageRoot = path.resolve(scriptDir, "..");
-const autoloadPath = path.resolve(packageRoot, "vendor/autoload.php");
+const sourcePath = path.resolve(packageRoot, "openapi/openapi.json");
 const outputPath = path.resolve(packageRoot, "openapi/generated/openapi.built.json");
 
 /**
- * Build the runtime OpenAPI document (with schema enrichment) to disk.
+ * Resolve the OpenAPI document used for TypeScript typegen.
+ *
+ * Contract-only mode: the enriched `openapi.built.json` is committed. The legacy
+ * PHP `OpenApiDocument::build()` path was removed with the runtime.
+ *
+ * When `openapi.json` changes, update `openapi.built.json` in the same PR (or add a
+ * Node-based enrich step later). We do not overwrite an existing built file from the
+ * slim source spec automatically — that would drop committed schema detail.
  */
 export function buildOpenApiBuiltJson() {
   mkdirSync(path.dirname(outputPath), { recursive: true });
 
-  const phpSnippet = [
-    "require getenv('WGW_AUTOLOAD');",
-    "$doc = App\\Api\\OpenApiDocument::build('');",
-    "$json = json_encode($doc, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);",
-    "if (!is_string($json)) {",
-    "  throw new RuntimeException('Could not encode OpenAPI document to JSON.');",
-    "}",
-    "file_put_contents(getenv('WGW_OUT'), $json . PHP_EOL);",
-  ].join(" ");
+  if (existsSync(outputPath)) {
+    return outputPath;
+  }
 
-  execFileSync("php", ["-r", phpSnippet], {
-    cwd: packageRoot,
-    stdio: "inherit",
-    env: {
-      ...process.env,
-      WGW_AUTOLOAD: autoloadPath,
-      WGW_OUT: outputPath,
-    },
-  });
+  if (!existsSync(sourcePath)) {
+    throw new Error(`Missing OpenAPI source: ${sourcePath}`);
+  }
 
+  copyFileSync(sourcePath, outputPath);
   return outputPath;
 }
 
 if (import.meta.url === new URL(process.argv[1], "file://").href) {
   const filePath = buildOpenApiBuiltJson();
-  process.stdout.write(`Wrote ${filePath}\n`);
+  process.stdout.write(`Using ${filePath}\n`);
 }

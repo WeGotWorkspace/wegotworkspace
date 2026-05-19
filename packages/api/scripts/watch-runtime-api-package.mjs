@@ -3,17 +3,7 @@
 import chokidar from "chokidar";
 import { syncRuntimeApiPackage } from "./sync-runtime-api-package.mjs";
 
-const watchPaths = [
-  "src/**/*",
-  "openapi/**/*",
-  "scripts/**/*",
-  "docs/**/*",
-  "tests/**/*",
-  "composer.json",
-  "composer.lock",
-  "package.json",
-  "phpunit.xml",
-];
+const watchPaths = ["openapi/**/*", "scripts/**/*", "docs/**/*", "package.json", "README.md"];
 
 let syncing = false;
 let queued = false;
@@ -27,7 +17,7 @@ async function runSync(reason) {
   syncing = true;
   const startedAt = Date.now();
   try {
-    syncRuntimeApiPackage({ includeVendor: false });
+    syncRuntimeApiPackage();
     syncCount += 1;
     process.stdout.write(
       `[watch-runtime-api-package] Sync #${syncCount} done in ${Date.now() - startedAt}ms (${reason}).\n`,
@@ -63,4 +53,3 @@ process.on("SIGINT", async () => {
   await watcher.close();
   process.exit(0);
 });
-
