@@ -24,6 +24,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (\App\Services\Mail\MailResponseException $e) {
             return response()->json($e->payload, $e->status);
         });
+        $exceptions->render(function (\App\Services\Voice\VoiceResponseException $e) {
+            return response()->json($e->payload, $e->status);
+        });
         $exceptions->render(function (\App\Exceptions\ApiHttpException $e) {
             $payload = ['error' => $e->getMessage()];
             if ($e->errorCode() !== null) {
