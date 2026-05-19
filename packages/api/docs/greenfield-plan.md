@@ -46,8 +46,16 @@ Checkpoint: `composer test` green; no legacy `src/` in tree.
 - [x] Notes CRUD + notebooks via `NoteRepository` + Flysystem
 - [x] Feature tests
 
-## Phase 5+ — Remaining domains (OpenAPI order)
-5. **Home**, installer API (if still required)
+## Phase 5 — Home, installer, DAV
+
+- [x] `GET /home/state` (auth)
+- [x] `GET /dav/capabilities` (auth)
+- [x] `GET /installer/state`, `GET /installer/bootstrap`, `POST /installer/action` (session-backed wizard)
+- [x] Installer schema SQL + fresh DB seed (Sabre Cal/Card PDO backends during install only)
+- [x] Feature tests
+
+## Phase 6+ — Remaining domains (OpenAPI order)
+
 6. **Drive** + office (Flysystem `wgw_files`)
 7. **Admin** + updates
 8. **Mail** (IMAP/SMTP services; preserve `{ error, message }` shape)
