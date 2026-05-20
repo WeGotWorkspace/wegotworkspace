@@ -28,6 +28,11 @@ final class UiFrontKernel
             return null;
         }
 
+        // Sabre Browser plugin serves HTML/CSS at ?sabreAction=… on the DAV base URI (often "/").
+        if ($request->query->has('sabreAction')) {
+            return null;
+        }
+
         $path = $request->getPathInfo() ?: '/';
         $webBase = InstallerWebBase::detect();
 

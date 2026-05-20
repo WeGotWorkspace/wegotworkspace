@@ -55,6 +55,10 @@ final class SabreKernel
         $httpResponse = new HTTP\Response();
         $httpResponse->setHTTPVersion($httpRequest->getHTTPVersion());
 
+        // Browser plugin writes to $server->httpResponse (not only the invokeMethod argument).
+        $server->httpRequest = $httpRequest;
+        $server->httpResponse = $httpResponse;
+
         try {
             $server->invokeMethod($httpRequest, $httpResponse, false);
         } catch (\Throwable $e) {
