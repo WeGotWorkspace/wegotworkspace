@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import type { ReactElement } from "react";
 import { clearWgwSession } from "@/lib/api/wgw/http";
+import { buildWgwLoginHref, isWgwAuthRoutePathname, sanitizeWgwReturnPath } from "@/lib/api/wgw/route-guard";
 import { LiveBootstrapErrorPanel } from "@/lib/live/live-bootstrap-error-panel";
 import { LoadingSpinner } from "@/loading-spinner/src/loading-spinner";
 
@@ -35,11 +36,12 @@ export function WorkspaceLiveAppShell({
     // Storybook and local Vite dev: stay on the page and show the error panel instead of a blank
     // iframe / broken `/login` navigation. Production keeps the redirect to the real login route.
     if (import.meta.env.DEV) return;
+    if (isWgwAuthRoutePathname(window.location.pathname)) return;
     clearWgwSession();
-    const returnPath = encodeURIComponent(
+    const returnPath = sanitizeWgwReturnPath(
       `${window.location.pathname}${window.location.search}${window.location.hash}`,
     );
-    window.location.assign(`/login?return=${returnPath}`);
+    window.location.assign(buildWgwLoginHref(returnPath));
   }, [isAuthError, phase]);
 
   if (phase === "error") {

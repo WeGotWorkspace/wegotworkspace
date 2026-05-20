@@ -1,3 +1,4 @@
+import { buildWgwLoginHref } from "@/lib/api/wgw/route-guard";
 import { WorkspaceLiveAppShell } from "@/lib/live/workspace-live-app-shell";
 import { InstallWorkspace } from "@/install-core/src/install-workspace";
 import { useInstallAPI } from "@/install-core/src/use-install-api";
@@ -23,7 +24,7 @@ export function InstallApp() {
           }}
           onOpenAdmin={() => {
             if (typeof window !== "undefined") {
-              window.location.assign("/login?return=%2Fadmin%2F");
+              window.location.assign(buildWgwLoginHref("/admin"));
             }
           }}
         />
