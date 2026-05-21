@@ -17,18 +17,19 @@ Repo scripts use `tools/with-root-env.sh` to load the root `.env` (optional). Th
 ## Default dev (`pnpm dev`)
 
 1. **`dev:bootstrap`** — one Vite build into `packages/apps/dist` (no copy into `apps/wegotworkspace`).
-2. **Watch** — rebuild `packages/apps/dist` on change; OpenAPI typegen watch on `@wgw/api`.
+2. **Turbo (parallel)** — `@wgw/api`: OpenAPI typegen watch + PHP on `http://127.0.0.1:9080`; `@wgw/apps`: Vite watch + Storybook `:6006`.
 3. **No API file sync** — PHP loads `packages/api` directly (`WgwAppBootstrap` prefers the monorepo path when `vendor/` exists).
 
-Serve the backend in a second terminal:
+The API uses `apps/wegotworkspace` as docroot (`index.php` router) but boots Laravel from **`packages/api`**. UI static files are read from **`packages/apps/*/dist`** in the repo (`AppPaths` checks monorepo paths first).
 
-```bash
-pnpm dev:api
-```
+Storybook proxies `/api/v1` to `http://127.0.0.1:9080` by default.
 
-Uses `apps/wegotworkspace` as docroot (`index.php` router) but boots Laravel from **`packages/api`**. UI static files are read from **`packages/apps/*/dist`** in the repo (`AppPaths` checks monorepo paths first).
-
-Storybook (port 6006) proxies `/api/v1` to `http://127.0.0.1:9080` by default.
+| Command | Runs |
+|---------|------|
+| `pnpm dev` | Full stack (API + UI watch + Storybook + typegen) |
+| `pnpm dev:api` | PHP `:9080` only |
+| `pnpm dev:ui` | UI watch + Storybook only (start API separately if needed) |
+| `pnpm dev:storybook` | Storybook only |
 
 ## Production-like install tree (`pnpm dev:preview`)
 
@@ -36,7 +37,7 @@ Copies `packages/api` and UI `dist/` into `apps/wegotworkspace/packages/` and wa
 
 ## macOS Apache (`pnpm preview:macos`)
 
-Optional; still supported. Prefer `pnpm dev:api` + Storybook/Vite for daily work.
+Optional; still supported. Prefer `pnpm dev` (PHP + Storybook) for daily work.
 
 ## Mental model
 
