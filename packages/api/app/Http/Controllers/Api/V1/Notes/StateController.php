@@ -11,9 +11,7 @@ use Illuminate\Http\Request;
 
 final class StateController
 {
-    public function __construct(private NotesStateService $state)
-    {
-    }
+    public function __construct(private NotesStateService $state) {}
 
     public function __invoke(Request $request): JsonResponse
     {

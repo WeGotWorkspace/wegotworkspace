@@ -8,7 +8,6 @@ use Sabre\CalDAV\Principal\ProxyRead;
 use Sabre\CalDAV\Principal\ProxyWrite;
 use Sabre\CalDAV\Principal\User;
 use Sabre\DAV;
-use Sabre\DAVACL;
 
 /**
  * CalDAV {@see User} only lists calendar-proxy children. Group principals live under
@@ -20,13 +19,13 @@ final class GroupPrincipalContainer extends User
     {
         $path = $this->getPrincipalURL().'/'.$name;
         $principal = $this->principalBackend->getPrincipalByPath($path);
-        if (!$principal) {
+        if (! $principal) {
             throw new DAV\Exception\NotFound('Node with name '.$name.' was not found');
         }
-        if ('calendar-proxy-read' === $name) {
+        if ($name === 'calendar-proxy-read') {
             return new ProxyRead($this->principalBackend, $this->principalProperties);
         }
-        if ('calendar-proxy-write' === $name) {
+        if ($name === 'calendar-proxy-write') {
             return new ProxyWrite($this->principalBackend, $this->principalProperties);
         }
 

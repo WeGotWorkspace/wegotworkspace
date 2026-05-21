@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Services\Admin;
 
 use App\Models\AppSetting;
-use App\Settings\SettingKeys;
 use App\Services\Settings\GroupDirectoryService;
 use App\Services\Update\UpdateStateService;
+use App\Settings\SettingKeys;
 use App\Support\ApiUrlBuilder;
 use App\Support\WgwSettings;
 
@@ -18,8 +18,7 @@ final class AdminStateService
         private GroupDirectoryService $groups,
         private UpdateStateService $updates,
         private ApiUrlBuilder $urls,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<string, mixed>

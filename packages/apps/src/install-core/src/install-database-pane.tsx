@@ -21,16 +21,8 @@ export function InstallDatabasePane({
     | "setMysqlTest"
   >;
 }) {
-  const {
-    dbType,
-    setDbType,
-    sqlitePath,
-    setSqlitePath,
-    mysql,
-    setMysql,
-    mysqlTest,
-    setMysqlTest,
-  } = controller;
+  const { dbType, setDbType, sqlitePath, setSqlitePath, mysql, setMysql, mysqlTest, setMysqlTest } =
+    controller;
 
   return (
     <>

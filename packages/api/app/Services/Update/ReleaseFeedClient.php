@@ -113,8 +113,7 @@ final class ReleaseFeedClient
     }
 
     /**
-     * @param array<string, mixed> $manifest
-     *
+     * @param  array<string, mixed>  $manifest
      * @return array<string, mixed>
      */
     private function normalizeManifestMetadata(array $manifest, string $manifestUrl): array

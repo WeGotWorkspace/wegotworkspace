@@ -9,12 +9,10 @@ use App\Support\AppPaths;
 
 final class InstallerConfigWriter
 {
-    public function __construct(private AppPaths $paths)
-    {
-    }
+    public function __construct(private AppPaths $paths) {}
 
     /**
-     * @param array{pdo: array<string, mixed>, data_dir?: string} $config
+     * @param  array{pdo: array<string, mixed>, data_dir?: string}  $config
      */
     public function writeBootstrap(array $config): void
     {
@@ -58,8 +56,7 @@ PHP;
     }
 
     /**
-     * @param array<string, mixed> $pdo
-     *
+     * @param  array<string, mixed>  $pdo
      * @return array<string, mixed>
      */
     private function normalizePdo(array $pdo): array

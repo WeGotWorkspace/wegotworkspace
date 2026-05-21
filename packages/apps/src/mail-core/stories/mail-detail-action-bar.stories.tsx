@@ -54,19 +54,19 @@ function MailDetailActionBarHarness({
         }}
       >
         <MailDetailActionBar
-        active={message}
-        closeMobileDetail={() => {}}
-        onReply={() => {}}
-        onReplyAll={() => {}}
-        onForward={() => {}}
-        onEditDraft={() => {}}
-        setMoveDialog={() => {}}
-        markRead={() => setUnread(false)}
-        markUnread={() => setUnread(true)}
-        toggleStar={toggleStar}
-        starred={starred}
-        toggleArchiveForMessage={() => {}}
-        toggleTrashForMessage={() => {}}
+          active={message}
+          closeMobileDetail={() => {}}
+          onReply={() => {}}
+          onReplyAll={() => {}}
+          onForward={() => {}}
+          onEditDraft={() => {}}
+          setMoveDialog={() => {}}
+          markRead={() => setUnread(false)}
+          markUnread={() => setUnread(true)}
+          toggleStar={toggleStar}
+          starred={starred}
+          toggleArchiveForMessage={() => {}}
+          toggleTrashForMessage={() => {}}
         />
       </div>
     </MailStoryScope>

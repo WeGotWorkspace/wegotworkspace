@@ -13,9 +13,7 @@ use Illuminate\Http\Request;
 
 final class GroupMemberController
 {
-    public function __construct(private GroupDirectoryService $groups)
-    {
-    }
+    public function __construct(private GroupDirectoryService $groups) {}
 
     public function store(Request $request, string $group, string $username): JsonResponse
     {

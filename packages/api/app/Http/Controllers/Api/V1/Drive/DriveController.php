@@ -17,6 +17,7 @@ use App\Services\Drive\DriveGroupResolver;
 use App\Services\Drive\DriveService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Symfony\Component\HttpFoundation\Response;
 
 final class DriveController
@@ -24,8 +25,7 @@ final class DriveController
     public function __construct(
         private DriveService $drive,
         private DriveGroupResolver $groups,
-    ) {
-    }
+    ) {}
 
     public function user(Request $request): JsonResponse
     {
@@ -122,7 +122,7 @@ final class DriveController
     {
         try {
             $file = $request->file('file');
-            if (! $file instanceof \Illuminate\Http\UploadedFile) {
+            if (! $file instanceof UploadedFile) {
                 throw new \InvalidArgumentException('Missing upload file.');
             }
 
@@ -166,7 +166,7 @@ final class DriveController
     }
 
     /**
-     * @param callable(): mixed $callback
+     * @param  callable(): mixed  $callback
      */
     private function jsonData(callable $callback): JsonResponse
     {

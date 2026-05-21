@@ -70,7 +70,10 @@
   pointer-events: none;
 }
 
-.drive-dialog-surface .drive-folder-picker__scroll .drive-list-row--disabled .drive-list-folder-icon,
+.drive-dialog-surface
+  .drive-folder-picker__scroll
+  .drive-list-row--disabled
+  .drive-list-folder-icon,
 .drive-dialog-surface .drive-folder-picker__scroll .drive-list-row--disabled .drive-list-file-icon {
   opacity: 0.45;
 }

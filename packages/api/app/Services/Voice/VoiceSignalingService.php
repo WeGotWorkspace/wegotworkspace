@@ -15,13 +15,10 @@ final class VoiceSignalingService
 
     private const KNOCK_NAME_PREFIX = '__wgw_knock__:';
 
-    public function __construct(private VoiceActorResolver $actors)
-    {
-    }
+    public function __construct(private VoiceActorResolver $actors) {}
 
     /**
-     * @param array<string, mixed> $body
-     *
+     * @param  array<string, mixed>  $body
      * @return array{active: bool}
      */
     public function roomStatus(array $body): array
@@ -33,8 +30,7 @@ final class VoiceSignalingService
     }
 
     /**
-     * @param array<string, mixed> $body
-     *
+     * @param  array<string, mixed>  $body
      * @return array{peers: list<array{id: string, name: string}>, sessionKey: string|null}
      */
     public function join(Request $request, array $body): array
@@ -86,8 +82,7 @@ final class VoiceSignalingService
     }
 
     /**
-     * @param array<string, mixed> $body
-     *
+     * @param  array<string, mixed>  $body
      * @return array{peers: list<array{id: string, name: string}>, messages: list<array<string, mixed>>}
      */
     public function poll(Request $request, array $body): array
@@ -140,8 +135,7 @@ final class VoiceSignalingService
     }
 
     /**
-     * @param array<string, mixed> $body
-     *
+     * @param  array<string, mixed>  $body
      * @return array{ok: true}
      */
     public function send(Request $request, array $body): array
@@ -178,8 +172,7 @@ final class VoiceSignalingService
     }
 
     /**
-     * @param array<string, mixed> $body
-     *
+     * @param  array<string, mixed>  $body
      * @return array{ok: true}
      */
     public function leave(Request $request, array $body): array
@@ -201,8 +194,7 @@ final class VoiceSignalingService
     }
 
     /**
-     * @param array<string, mixed> $body
-     *
+     * @param  array<string, mixed>  $body
      * @return array{ok: true, delivered: int}
      */
     public function chat(Request $request, array $body): array
@@ -304,7 +296,7 @@ final class VoiceSignalingService
             );
         } else {
             DB::connection('wgw')->statement(
-                "ALTER TABLE ".self::T_PEERS." ADD COLUMN owner_user TEXT NOT NULL DEFAULT ''"
+                'ALTER TABLE '.self::T_PEERS." ADD COLUMN owner_user TEXT NOT NULL DEFAULT ''"
             );
         }
     }
@@ -360,7 +352,7 @@ final class VoiceSignalingService
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     private function fail(string $error, int $status = 400, ?string $message = null): never
     {

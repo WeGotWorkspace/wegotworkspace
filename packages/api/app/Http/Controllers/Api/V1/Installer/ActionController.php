@@ -11,9 +11,7 @@ use Illuminate\Http\JsonResponse;
 
 final class ActionController
 {
-    public function __construct(private InstallerWizardService $wizard)
-    {
-    }
+    public function __construct(private InstallerWizardService $wizard) {}
 
     public function __invoke(InstallerActionRequest $request): JsonResponse
     {

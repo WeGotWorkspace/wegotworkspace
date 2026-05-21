@@ -13,9 +13,7 @@ use Illuminate\Http\Request;
 
 final class SessionController
 {
-    public function __construct(private UiSessionService $uiSession)
-    {
-    }
+    public function __construct(private UiSessionService $uiSession) {}
 
     public function __invoke(Request $request): JsonResponse
     {

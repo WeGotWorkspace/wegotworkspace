@@ -14,8 +14,7 @@ final class WgwFrontController
     public function __construct(
         private UiFrontKernel $ui,
         private SabreKernel $sabre,
-    ) {
-    }
+    ) {}
 
     public function __invoke(Request $request): Response
     {

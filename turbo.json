@@ -25,15 +25,25 @@
       "outputs": ["openapi/generated/**"]
     },
     "typegen:check": {
-      "dependsOn": ["typegen", "^typegen:check"],
+      "dependsOn": ["typegen"],
       "cache": false
     },
     "typegen:watch": {
       "cache": false,
       "persistent": true
     },
+    "lint": {
+      "cache": false
+    },
+    "format:check": {
+      "cache": false
+    },
+    "typecheck": {
+      "dependsOn": ["typegen"],
+      "cache": false
+    },
     "test": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["lint", "format:check", "typecheck"],
       "cache": false
     },
     "dev": {

@@ -45,9 +45,7 @@ export const MenuItem = React.forwardRef<
   ref,
 ) {
   const hasDescription = Boolean(description);
-  const interactive = Boolean(
-    to || onClick || onDragEnter || onDragOver || onDragLeave || onDrop,
-  );
+  const interactive = Boolean(to || onClick || onDragEnter || onDragOver || onDragLeave || onDrop);
 
   const surfaceClass = isDropTarget
     ? "menu-item--surface-drop"

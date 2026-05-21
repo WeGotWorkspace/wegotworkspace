@@ -242,8 +242,7 @@ export function useMailController({
   const pendingDetailIdsRef = useRef<Set<string>>(new Set());
 
   const { show, showError } = useAppToast();
-  const { confirmDialog, requestConfirm, consumeParentDismissSuppression } =
-    useConfirmDialog();
+  const { confirmDialog, requestConfirm, consumeParentDismissSuppression } = useConfirmDialog();
   const isTouch = useIsTouch();
   const showMutationError = useCallback(
     (fallback = "Could not sync this change. Please try again.") => showError(fallback),
@@ -550,7 +549,8 @@ export function useMailController({
     if (operations || !active) return;
     if (active.detailLoaded) return;
     const hasSeededDetail =
-      Boolean(active.bodyHtml?.trim()) || active.body.some((paragraph) => paragraph.trim().length > 0);
+      Boolean(active.bodyHtml?.trim()) ||
+      active.body.some((paragraph) => paragraph.trim().length > 0);
     if (!hasSeededDetail) return;
     setMail((prev) =>
       prev.map((message) =>

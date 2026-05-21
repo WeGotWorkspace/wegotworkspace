@@ -15,8 +15,7 @@ final class OfficeDocumentService
         private WgwStorage $storage,
         private StoragePaths $paths,
         private DriveGroupResolver $groups,
-    ) {
-    }
+    ) {}
 
     public function assertFilesEnabled(): void
     {
@@ -27,8 +26,7 @@ final class OfficeDocumentService
     }
 
     /**
-     * @param array<string, mixed> $body
-     *
+     * @param  array<string, mixed>  $body
      * @return array{ok: bool, path: string, bytes: int}
      */
     public function create(string $username, array $body): array
@@ -37,8 +35,7 @@ final class OfficeDocumentService
     }
 
     /**
-     * @param array<string, mixed> $body
-     *
+     * @param  array<string, mixed>  $body
      * @return array{ok: bool, path: string, bytes: int}
      */
     public function update(string $username, array $body): array
@@ -47,8 +44,7 @@ final class OfficeDocumentService
     }
 
     /**
-     * @param array<string, mixed> $body
-     *
+     * @param  array<string, mixed>  $body
      * @return array{ok: bool, path: string, bytes: int}
      */
     private function upsert(string $username, array $body, bool $create): array

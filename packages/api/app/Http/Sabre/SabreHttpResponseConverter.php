@@ -32,8 +32,7 @@ final class SabreHttpResponseConverter
     }
 
     /**
-     * @param array<string, string|list<string>> $headers
-     *
+     * @param  array<string, string|list<string>>  $headers
      * @return array<string, string>
      */
     private function flattenHeaders(array $headers): array

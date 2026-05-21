@@ -18,7 +18,10 @@
     "typegen:mail": "pnpm run typegen:openapi",
     "typegen:mail:watch": "pnpm run typegen:openapi:watch",
     "typegen:mail:check": "pnpm run typegen:openapi:check",
-    "test": "composer test",
+    "lint": "composer lint",
+    "format": "composer format",
+    "format:check": "composer format:check",
+    "test": "composer run-script done-gate",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },

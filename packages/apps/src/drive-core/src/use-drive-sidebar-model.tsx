@@ -28,7 +28,9 @@ function isTrashView(view: ViewKey) {
 }
 
 function isGroupView(view: ViewKey, groupPath: string) {
-  return view.type === "folder" && (view.path === groupPath || view.path.startsWith(`${groupPath}/`));
+  return (
+    view.type === "folder" && (view.path === groupPath || view.path.startsWith(`${groupPath}/`))
+  );
 }
 
 export function useDriveSidebarModel({

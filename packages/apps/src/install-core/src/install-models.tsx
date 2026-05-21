@@ -52,7 +52,9 @@ export function installStepIndex(step: InstallStepId): number {
   );
 }
 
-export function toInstallServerChecks(state: WgwInstallerRuntimeState | null): InstallServerCheck[] {
+export function toInstallServerChecks(
+  state: WgwInstallerRuntimeState | null,
+): InstallServerCheck[] {
   const rows = state?.checks ?? [];
   return rows.map((row, index) => ({
     id: String(index),

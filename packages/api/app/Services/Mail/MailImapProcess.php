@@ -34,13 +34,12 @@ final class MailImapProcess
     }
 
     /**
-     * @param array<string, mixed> $params
-     *
+     * @param  array<string, mixed>  $params
      * @return array<string, mixed>
      */
     public static function runJson(string $operation, string $username, array $params, callable $inline): array
     {
-        if (!self::shouldIsolate()) {
+        if (! self::shouldIsolate()) {
             return $inline();
         }
 
@@ -54,7 +53,7 @@ final class MailImapProcess
         }
 
         $result = $decoded['result'] ?? null;
-        if (!is_array($result)) {
+        if (! is_array($result)) {
             throw new \RuntimeException('Mail IMAP subprocess returned invalid JSON.');
         }
 
@@ -62,11 +61,11 @@ final class MailImapProcess
     }
 
     /**
-     * @param array<string, mixed> $params
+     * @param  array<string, mixed>  $params
      */
     public static function runBinary(string $operation, string $username, array $params, callable $inline): MailBinaryDownload
     {
-        if (!self::shouldIsolate()) {
+        if (! self::shouldIsolate()) {
             return $inline();
         }
 
@@ -80,7 +79,7 @@ final class MailImapProcess
         }
 
         $result = $decoded['result'] ?? null;
-        if (!is_array($result) || ($result['__binary'] ?? false) !== true) {
+        if (! is_array($result) || ($result['__binary'] ?? false) !== true) {
             throw new \RuntimeException('Mail IMAP subprocess returned invalid binary payload.');
         }
 
@@ -97,14 +96,13 @@ final class MailImapProcess
     }
 
     /**
-     * @param array<string, mixed> $params
-     *
+     * @param  array<string, mixed>  $params
      * @return array<string, mixed>
      */
     private static function invoke(string $operation, string $username, array $params): array
     {
         $script = base_path('scripts/mail-imap-cli.php');
-        if (!is_file($script)) {
+        if (! is_file($script)) {
             throw new \RuntimeException('Mail IMAP CLI script is missing: '.$script);
         }
 
@@ -118,7 +116,7 @@ final class MailImapProcess
         );
         $process->run();
 
-        if (!$process->isSuccessful()) {
+        if (! $process->isSuccessful()) {
             $stderr = trim($process->getErrorOutput());
             throw new \RuntimeException(
                 $stderr !== '' ? $stderr : 'Mail IMAP subprocess failed with exit code '.$process->getExitCode(),
@@ -157,7 +155,7 @@ final class MailImapProcess
      */
     private static function decodeEnvelope(mixed $decoded): array
     {
-        if (!is_array($decoded) || !array_key_exists('ok', $decoded)) {
+        if (! is_array($decoded) || ! array_key_exists('ok', $decoded)) {
             throw new \RuntimeException('Mail IMAP subprocess returned an unexpected envelope.');
         }
 
@@ -203,7 +201,7 @@ final class MailImapProcess
     {
         $env = [];
         foreach ($_SERVER as $key => $value) {
-            if (!is_string($key) || !is_string($value)) {
+            if (! is_string($key) || ! is_string($value)) {
                 continue;
             }
             if (str_starts_with($key, 'WGW_') || str_starts_with($key, 'SABRE_') || $key === 'PATH') {
@@ -216,7 +214,7 @@ final class MailImapProcess
             }
         }
         $env[self::SUBPROCESS_ENV] = '1';
-        if (!isset($env['WGW_APP_ROOT'])) {
+        if (! isset($env['WGW_APP_ROOT'])) {
             $root = getenv('WGW_APP_ROOT');
             if (is_string($root) && $root !== '') {
                 $env['WGW_APP_ROOT'] = $root;

@@ -11,9 +11,7 @@ use Illuminate\Http\JsonResponse;
 
 final class RefreshController
 {
-    public function __construct(private AuthTokenService $authTokens)
-    {
-    }
+    public function __construct(private AuthTokenService $authTokens) {}
 
     public function __invoke(AuthRefreshRequest $request): JsonResponse
     {

@@ -8,6 +8,7 @@ use App\Models\AppSetting;
 use App\Models\GroupMember;
 use App\Models\Principal;
 use App\Models\User;
+use App\Support\WgwDatabaseConfig;
 use Illuminate\Support\Facades\DB;
 use Tests\Support\SqliteWgwSchema;
 use Tests\TestCase;
@@ -81,7 +82,7 @@ final class WgwModelsTest extends TestCase
 
     public function test_wgw_connection_uses_install_config_when_present(): void
     {
-        $config = $this->app->make(\App\Support\WgwDatabaseConfig::class)->connectionConfig();
+        $config = $this->app->make(WgwDatabaseConfig::class)->connectionConfig();
         $this->assertSame('sqlite', $config['driver']);
         $this->assertArrayHasKey('database', $config);
     }

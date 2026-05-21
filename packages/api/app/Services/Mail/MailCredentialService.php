@@ -9,12 +9,10 @@ use App\Models\MailUserCredential;
 
 final class MailCredentialService
 {
-    public function __construct(private MailSecretService $secrets)
-    {
-    }
+    public function __construct(private MailSecretService $secrets) {}
 
     /**
-     * @param array{imapUsername: string, imapPassword: string}|null $account
+     * @param  array{imapUsername: string, imapPassword: string}|null  $account
      */
     public static function isAccountConfigured(?array $account): bool
     {
@@ -101,7 +99,7 @@ final class MailCredentialService
     }
 
     /**
-     * @param array{imapUsername: string, imapPassword: string}|null $account
+     * @param  array{imapUsername: string, imapPassword: string}|null  $account
      */
     public function effectiveImapUsername(string $username, ?array $account): string
     {

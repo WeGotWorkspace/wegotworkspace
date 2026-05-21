@@ -62,6 +62,8 @@ Then use **https://wegotworkspace.local/** (see [`docker/README.md`](docker/READ
 
 Environment variables: [`docs/env.md`](docs/env.md).
 
+CI-quality checks locally: `pnpm run ci:quality` (typegen, lint, format, typecheck, API done gate).
+
 ## Updating ONLYOFFICE Web
 
 `packages/onlyoffice-web` is tracked as a git-subtree style vendored dependency.

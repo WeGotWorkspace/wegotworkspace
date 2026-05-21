@@ -4,10 +4,7 @@ import {
   shouldMirrorMeetStream,
 } from "@/meet-core/src/meet-stream-mirror";
 
-function fakeVideoTrack(overrides: {
-  label?: string;
-  displaySurface?: string;
-}): MediaStreamTrack {
+function fakeVideoTrack(overrides: { label?: string; displaySurface?: string }): MediaStreamTrack {
   const settings: MediaTrackSettings = {};
   if (overrides.displaySurface) {
     (settings as MediaTrackSettings & { displaySurface?: string }).displaySurface =

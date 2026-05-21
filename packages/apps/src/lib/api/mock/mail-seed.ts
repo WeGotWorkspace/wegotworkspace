@@ -77,8 +77,7 @@ const INITIAL_MAIL: Mail[] = [
     category: "Inbox",
     date: "Yesterday",
     title: "Re: dinner Thursday?",
-    excerpt:
-      "Eight works. There's a new place near the canal - I'll send the address tomorrow…",
+    excerpt: "Eight works. There's a new place near the canal - I'll send the address tomorrow…",
     body: [
       "Eight works. There's a new place near the canal - I'll send the address tomorrow morning once I confirm with the others.",
       "Looking forward to it.",
@@ -142,8 +141,7 @@ const INITIAL_MAIL: Mail[] = [
     category: "Sent",
     date: "08:12",
     title: "Re: Revised proofs for the autumn issue",
-    excerpt:
-      "Thanks Hana - taking a closer look this morning and will reply by lunch with notes…",
+    excerpt: "Thanks Hana - taking a closer look this morning and will reply by lunch with notes…",
     body: ["Thanks Hana - taking a closer look this morning and will reply by lunch with notes."],
     tags: [],
     wordCount: 16,

@@ -2,9 +2,16 @@
 
 declare(strict_types=1);
 
+use App\Exceptions\ApiHttpException;
+use App\Http\Middleware\AuthenticateWgwApi;
+use App\Http\Middleware\RequireWgwRole;
+use App\Http\Middleware\WgwSecurityHeaders;
+use App\Services\Mail\MailResponseException;
+use App\Services\Voice\VoiceResponseException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Validation\ValidationException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -22,24 +29,24 @@ return Application::configure(basePath: dirname(__DIR__))
             'sabre_ui_auth',
         ]);
         $middleware->alias([
-            'wgw.auth' => \App\Http\Middleware\AuthenticateWgwApi::class,
-            'wgw.role' => \App\Http\Middleware\RequireWgwRole::class,
+            'wgw.auth' => AuthenticateWgwApi::class,
+            'wgw.role' => RequireWgwRole::class,
         ]);
         $middleware->appendToGroup('web', [
-            \App\Http\Middleware\WgwSecurityHeaders::class,
+            WgwSecurityHeaders::class,
         ]);
         $middleware->validateCsrfTokens(except: [
             '*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->render(function (\App\Services\Mail\MailResponseException $e) {
+        $exceptions->render(function (MailResponseException $e) {
             return response()->json($e->payload, $e->status);
         });
-        $exceptions->render(function (\App\Services\Voice\VoiceResponseException $e) {
+        $exceptions->render(function (VoiceResponseException $e) {
             return response()->json($e->payload, $e->status);
         });
-        $exceptions->render(function (\App\Exceptions\ApiHttpException $e) {
+        $exceptions->render(function (ApiHttpException $e) {
             $payload = ['error' => $e->getMessage()];
             if ($e->errorCode() !== null) {
                 $payload['code'] = $e->errorCode();
@@ -47,7 +54,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
             return response()->json($payload, $e->getStatusCode());
         });
-        $exceptions->render(function (\Illuminate\Validation\ValidationException $e) {
+        $exceptions->render(function (ValidationException $e) {
             $message = $e->validator->errors()->first() ?? 'Invalid request.';
 
             return response()->json([

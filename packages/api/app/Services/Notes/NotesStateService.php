@@ -14,8 +14,7 @@ final class NotesStateService
     public function __construct(
         private ApiUrlBuilder $urls,
         private AppPaths $paths,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<string, mixed>

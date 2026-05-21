@@ -47,8 +47,7 @@ export function PathBreadcrumb({
           const isCurrent =
             item.path == null ||
             (currentPath !== undefined
-              ? item.path === currentPath &&
-                !alwaysNavigablePaths?.includes(item.path)
+              ? item.path === currentPath && !alwaysNavigablePaths?.includes(item.path)
               : isLast);
 
           return (

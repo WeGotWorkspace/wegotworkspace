@@ -89,5 +89,4 @@ final class OpenApiContract
 
         return $operations;
     }
-
 }

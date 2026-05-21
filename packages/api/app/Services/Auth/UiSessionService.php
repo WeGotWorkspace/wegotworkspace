@@ -20,9 +20,7 @@ final class UiSessionService
 
     private const TTL_SEC = 2592000;
 
-    public function __construct(private WgwInstallConfig $install)
-    {
-    }
+    public function __construct(private WgwInstallConfig $install) {}
 
     public function establish(string $username, string $realm, string $webBase): Cookie
     {
@@ -37,7 +35,7 @@ final class UiSessionService
     }
 
     /**
-     * @param non-empty-string $username
+     * @param  non-empty-string  $username
      */
     public function buildCookie(string $username, string $realm, string $path): Cookie
     {

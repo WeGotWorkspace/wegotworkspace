@@ -10,6 +10,5 @@ final class MailBinaryDownload
         public readonly string $mime,
         public readonly string $filename,
         public readonly string $bytes,
-    ) {
-    }
+    ) {}
 }

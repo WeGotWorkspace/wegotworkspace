@@ -6,10 +6,7 @@ import type { InstallUIData } from "@/install-core/src/install-types";
 export function useInstallAPI() {
   const loadBootstrap = useCallback(() => fetchInstallerBootstrap(), []);
   const { phase, error, data, load, successVersion } = useLiveBootstrap(loadBootstrap);
-  const installData = useMemo<InstallUIData>(
-    () => ({ state: data?.state ?? null }),
-    [data?.state],
-  );
+  const installData = useMemo<InstallUIData>(() => ({ state: data?.state ?? null }), [data?.state]);
 
   return {
     phase,

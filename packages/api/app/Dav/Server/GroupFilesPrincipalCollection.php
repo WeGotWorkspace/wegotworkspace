@@ -51,7 +51,7 @@ final class GroupFilesPrincipalCollection extends AbstractPrincipalCollection im
         }
         $children = [];
         foreach ($this->principalBackend->getGroupMembership($current) as $groupUri) {
-            if (!str_starts_with($groupUri, $this->principalPrefix.'/')) {
+            if (! str_starts_with($groupUri, $this->principalPrefix.'/')) {
                 continue;
             }
             $principalInfo = $this->principalBackend->getPrincipalByPath($groupUri);
@@ -66,11 +66,11 @@ final class GroupFilesPrincipalCollection extends AbstractPrincipalCollection im
     public function getChild($name): DAV\INode
     {
         $principalInfo = $this->principalBackend->getPrincipalByPath($this->principalPrefix.'/'.$name);
-        if (!$principalInfo) {
+        if (! $principalInfo) {
             throw new DAV\Exception\NotFound('Principal with name '.$name.' not found');
         }
         $current = $this->authPlugin->getCurrentPrincipal();
-        if ($current === null || $current === '' || !$this->principalIsMemberOfGroup($current, $principalInfo['uri'])) {
+        if ($current === null || $current === '' || ! $this->principalIsMemberOfGroup($current, $principalInfo['uri'])) {
             throw new DAV\Exception\NotFound('Principal with name '.$name.' not found');
         }
 
@@ -84,7 +84,7 @@ final class GroupFilesPrincipalCollection extends AbstractPrincipalCollection im
             return false;
         }
         $principalInfo = $this->principalBackend->getPrincipalByPath($this->principalPrefix.'/'.$name);
-        if (!$principalInfo) {
+        if (! $principalInfo) {
             return false;
         }
 

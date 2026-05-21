@@ -11,9 +11,7 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 final class UpdateBackupController
 {
-    public function __construct(private UpdateStateService $updates)
-    {
-    }
+    public function __construct(private UpdateStateService $updates) {}
 
     public function show(string $name): BinaryFileResponse
     {
