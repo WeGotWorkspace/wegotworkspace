@@ -15,8 +15,7 @@ final class SettingsStateService
         private GroupDirectoryService $groups,
         private MailCredentialService $mailCredentials,
         private ApiUrlBuilder $urls,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<string, mixed>

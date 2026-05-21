@@ -70,7 +70,7 @@ final class WgwSettings
     }
 
     /**
-     * @param array<string, mixed> $db
+     * @param  array<string, mixed>  $db
      * @return array<string, mixed>
      */
     private static function coerce(array $db): array

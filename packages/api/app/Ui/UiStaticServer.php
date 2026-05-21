@@ -89,7 +89,7 @@ final class UiStaticServer
     }
 
     /**
-     * @param list<string> $prefixes
+     * @param  list<string>  $prefixes
      */
     public function resolveRoutePrefix(string $webBase, string $path, array $prefixes): ?string
     {

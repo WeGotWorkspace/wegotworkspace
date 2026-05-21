@@ -15,9 +15,7 @@ final class LoginRateLimiter
     /** @var int Sliding window equivalent: 10 minutes */
     private const int DECAY_SECONDS = 600;
 
-    public function __construct(private RateLimiter $rateLimiter)
-    {
-    }
+    public function __construct(private RateLimiter $rateLimiter) {}
 
     public function allow(string $username, string $ip): bool
     {

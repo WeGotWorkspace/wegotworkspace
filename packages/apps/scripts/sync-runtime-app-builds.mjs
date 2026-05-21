@@ -65,7 +65,8 @@ ${renderFontPreloadTags(assetBase)}
 export function syncRuntimeAppBuilds() {
   const files = readdirSync(assetsDir);
   const mainJs = pickLargestFile(files, /^index-.*\.js$/);
-  const mainCss = pickLargestFile(files, /^index-.*\.css$/) ?? pickLargestFile(files, /^styles-.*\.css$/);
+  const mainCss =
+    pickLargestFile(files, /^index-.*\.css$/) ?? pickLargestFile(files, /^styles-.*\.css$/);
 
   if (!mainJs || !mainCss) {
     throw new Error(

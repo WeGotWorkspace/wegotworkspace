@@ -10,9 +10,7 @@ use Illuminate\Http\JsonResponse;
 
 final class BootstrapController
 {
-    public function __construct(private InstallerWizardService $wizard)
-    {
-    }
+    public function __construct(private InstallerWizardService $wizard) {}
 
     public function __invoke(): JsonResponse
     {

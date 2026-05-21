@@ -11,9 +11,7 @@ final class UpdateStateStore
 {
     private const BASE = 'updates';
 
-    public function __construct(private WgwStorage $storage)
-    {
-    }
+    public function __construct(private WgwStorage $storage) {}
 
     /**
      * @return array<string, mixed>
@@ -31,7 +29,7 @@ final class UpdateStateStore
     }
 
     /**
-     * @param array<string, mixed> $state
+     * @param  array<string, mixed>  $state
      */
     public function write(array $state): void
     {

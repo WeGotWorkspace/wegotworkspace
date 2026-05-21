@@ -12,9 +12,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class MailController
 {
-    public function __construct(private MailOperationService $mail)
-    {
-    }
+    public function __construct(private MailOperationService $mail) {}
 
     public function status(Request $request): JsonResponse
     {
@@ -96,8 +94,8 @@ final class MailController
         return $this->json(fn () => $this->mail->saveDraft($this->username($request), $request->json()->all()));
     }
 
-  /**
-     * @param callable(): array<string, mixed> $callback
+    /**
+     * @param  callable(): array<string, mixed>  $callback
      */
     private function json(callable $callback): JsonResponse
     {

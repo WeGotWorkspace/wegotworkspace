@@ -16,7 +16,8 @@ export function isAllowedMailBodyLinkHref(href: string): boolean {
 export function prepareMailBodyHtmlLinks(html: string): string {
   if (typeof DOMParser === "undefined") return html;
   const parsed = new DOMParser().parseFromString(html, "text/html");
-  for (const anchor of parsed.querySelectorAll("a[href]")) {
+  for (const el of parsed.querySelectorAll("a[href]")) {
+    const anchor = el as HTMLAnchorElement;
     const href = anchor.getAttribute("href")?.trim() ?? "";
     if (!href || href.startsWith("#")) continue;
     if (!isAllowedMailBodyLinkHref(anchor.href)) {

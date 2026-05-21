@@ -10,8 +10,7 @@ namespace App\Services\Mail;
 final class MailSmtpTransportConfig
 {
     /**
-     * @param array{host?: string, port?: int|string, security?: string} $smtp
-     *
+     * @param  array{host?: string, port?: int|string, security?: string}  $smtp
      * @return array{host: string, port: int, security: string, smtpAuth: bool}
      */
     public static function normalize(array $smtp): array
@@ -52,7 +51,7 @@ final class MailSmtpTransportConfig
     }
 
     /**
-     * @param array{host: string, port: int, security: string, smtpAuth: bool} $transport
+     * @param  array{host: string, port: int, security: string, smtpAuth: bool}  $transport
      */
     public static function describe(array $transport): string
     {

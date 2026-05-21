@@ -6,6 +6,7 @@ namespace Tests\Unit\Ui;
 
 use App\Ui\UiStaticServer;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 final class UiStaticServerTest extends TestCase
 {
@@ -16,14 +17,14 @@ final class UiStaticServerTest extends TestCase
         file_put_contents($dist.'/index.html', '<!doctype html><title>App</title>');
         file_put_contents($dist.'/assets/app.js', 'console.log(1);');
 
-        $server = new UiStaticServer();
+        $server = new UiStaticServer;
         $this->assertTrue($server->distReady($dist));
         $this->assertTrue($server->matchesShellPath('', '/drive/'));
 
         $response = $server->tryServe($dist, '', '/assets/app.js', false);
         $this->assertNotNull($response);
         $this->assertSame(200, $response->getStatusCode());
-        $this->assertInstanceOf(\Symfony\Component\HttpFoundation\BinaryFileResponse::class, $response);
+        $this->assertInstanceOf(BinaryFileResponse::class, $response);
         $file = $response->getFile();
         $this->assertNotNull($file);
         $this->assertStringContainsString('console.log', (string) file_get_contents($file->getPathname()));
@@ -31,7 +32,7 @@ final class UiStaticServerTest extends TestCase
 
     public function test_resolve_route_prefix_prefers_install_over_root(): void
     {
-        $server = new UiStaticServer();
+        $server = new UiStaticServer;
         $prefixes = [
             '/',
             '/install',
@@ -49,7 +50,7 @@ final class UiStaticServerTest extends TestCase
         file_put_contents($dist.'/index.html', '<!doctype html><title>Install</title>');
         file_put_contents($dist.'/assets/app.js', 'window.__install = true;');
 
-        $server = new UiStaticServer();
+        $server = new UiStaticServer;
         $response = $server->tryServe($dist, '', '/install/assets/app.js', false);
 
         $this->assertNotNull($response);

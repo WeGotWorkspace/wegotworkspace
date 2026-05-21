@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Services\Update;
 
 use App\Services\Installer\InstallerEnvChecker;
-use App\Support\WgwInstallConfig;
-use App\Support\AppVersion;
 use App\Services\Installer\InstallerSchemaMigrationRunner;
+use App\Support\AppVersion;
+use App\Support\WgwInstallConfig;
 
 final class UpdateRunner
 {
@@ -17,9 +17,7 @@ final class UpdateRunner
         private AppVersion $appVersion,
         private InstallerEnvChecker $envChecker,
         private ReleaseFeedClient $releaseFeed,
-    ) {
-    }
-
+    ) {}
 
     /**
      * @return array<string, mixed>
@@ -68,7 +66,7 @@ final class UpdateRunner
         $lockPath = $this->store->absolutePath($this->store->lockPath());
         $maintenancePath = $this->store->absolutePath($this->store->maintenancePath());
 
-        if (!is_file($lockPath)) {
+        if (! is_file($lockPath)) {
             if (is_file($maintenancePath)) {
                 @unlink($maintenancePath);
                 $this->store->clearCancelRequest();
@@ -89,7 +87,7 @@ final class UpdateRunner
             return;
         }
         $lock = @fopen($lockPath, 'c+');
-        if (!is_resource($lock)) {
+        if (! is_resource($lock)) {
             return;
         }
         $acquired = @flock($lock, LOCK_EX | LOCK_NB);
@@ -134,7 +132,7 @@ final class UpdateRunner
             }
             self::assertHttpsUrl($feedUrl, 'Update feed URL');
             $latest = $this->releaseFeed->fetchLatest($feedUrl);
-            if (!is_array($latest)) {
+            if (! is_array($latest)) {
                 throw new \InvalidArgumentException('No valid release metadata found. Point WGW_UPDATE_FEED_URL to manifest.json or GitHub releases/latest API URL.');
             }
             $state['latest'] = self::normalizeRequiredReleaseMetadata($latest);
@@ -151,25 +149,24 @@ final class UpdateRunner
     }
 
     /**
-     * @param array<string, mixed> $input
-     *
+     * @param  array<string, mixed>  $input
      * @return array<string, mixed>
      */
     public function apply(\PDO $pdo, array $input): array
     {
         self::ensureRateLimit('apply', 30);
         $lock = @fopen($this->store->absolutePath($this->store->lockPath()), 'c+');
-        if (!is_resource($lock)) {
+        if (! is_resource($lock)) {
             throw new \RuntimeException('Could not create update lock file.');
         }
-        if (!flock($lock, LOCK_EX | LOCK_NB)) {
+        if (! flock($lock, LOCK_EX | LOCK_NB)) {
             throw new \RuntimeException('Another update process is already running.');
         }
 
         $beforeVersion = $this->appVersion->current();
         $release = self::latestFromState();
         $requestedVersion = trim((string) ($input['version'] ?? ''));
-        if ($requestedVersion !== '' && !hash_equals($release['version'], $requestedVersion)) {
+        if ($requestedVersion !== '' && ! hash_equals($release['version'], $requestedVersion)) {
             throw new \InvalidArgumentException('Checked release does not match the requested version. Check for updates again.');
         }
         $targetVersion = $release['version'];
@@ -271,23 +268,22 @@ final class UpdateRunner
     }
 
     /**
-     * @param array<string, mixed> $input
-     *
+     * @param  array<string, mixed>  $input
      * @return array<string, mixed>
      */
     public function deleteBackup(\PDO $pdo, array $input): array
     {
         $name = isset($input['name']) && is_string($input['name']) ? trim($input['name']) : '';
-        if ($name === '' || !preg_match('/^[A-Za-z0-9._-]+$/', $name)) {
+        if ($name === '' || ! preg_match('/^[A-Za-z0-9._-]+$/', $name)) {
             throw new \InvalidArgumentException('Invalid backup file name.');
         }
         $path = $this->store->absolutePath($this->store->backupDir()).'/'.$name;
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             throw new \InvalidArgumentException('Backup not found.');
         }
         if (is_dir($path)) {
             self::rmRecursive($path);
-        } elseif (!@unlink($path)) {
+        } elseif (! @unlink($path)) {
             throw new \RuntimeException('Could not delete backup.');
         }
 
@@ -305,11 +301,11 @@ final class UpdateRunner
     public function cancel(\PDO $pdo): array
     {
         $state = $this->store->read();
-        if (!is_file($this->store->absolutePath($this->store->lockPath()))) {
+        if (! is_file($this->store->absolutePath($this->store->lockPath()))) {
             throw new \InvalidArgumentException('No update is currently running.');
         }
         $phase = is_string($state['phase'] ?? null) ? $state['phase'] : '';
-        if (!self::isCancellablePhase($phase)) {
+        if (! self::isCancellablePhase($phase)) {
             throw new \InvalidArgumentException('Cancellation is no longer available for this update stage.');
         }
         $this->store->requestCancel();
@@ -342,12 +338,12 @@ final class UpdateRunner
             ],
         ]);
         $input = @fopen($url, 'rb', false, $ctx);
-        if (!is_resource($input)) {
+        if (! is_resource($input)) {
             throw new \RuntimeException('Could not download release package.');
         }
         $tmpTarget = $target.'.part';
         $output = @fopen($tmpTarget, 'wb');
-        if (!is_resource($output)) {
+        if (! is_resource($output)) {
             fclose($input);
             throw new \RuntimeException('Could not write downloaded package.');
         }
@@ -358,7 +354,7 @@ final class UpdateRunner
         self::writeDownloadProgress($fromVersion, $toVersion, $downloadedBytes, $totalBytes);
 
         try {
-            while (!feof($input)) {
+            while (! feof($input)) {
                 self::throwIfCancelRequested();
                 $chunk = fread($input, 1024 * 1024);
                 if ($chunk === false) {
@@ -392,7 +388,7 @@ final class UpdateRunner
             throw new \RuntimeException('Downloaded package is incomplete.');
         }
         self::throwIfCancelRequested();
-        if (!@rename($tmpTarget, $target)) {
+        if (! @rename($tmpTarget, $target)) {
             @unlink($tmpTarget);
             throw new \RuntimeException('Could not write downloaded package.');
         }
@@ -402,18 +398,18 @@ final class UpdateRunner
     private function verifyChecksum(string $path, string $expected): void
     {
         $actual = hash_file('sha256', $path);
-        if (!is_string($actual) || !hash_equals(strtolower($expected), strtolower($actual))) {
+        if (! is_string($actual) || ! hash_equals(strtolower($expected), strtolower($actual))) {
             throw new \RuntimeException('Release checksum verification failed.');
         }
     }
 
     private function verifyChecksumSignature(string $checksum, string $signature): void
     {
-        if (!function_exists('openssl_verify')) {
+        if (! function_exists('openssl_verify')) {
             throw new \RuntimeException('OpenSSL extension is required for signature verification.');
         }
         $publicKeyPath = dirname(__DIR__, 3).'/resources/update/update-public-key.pem';
-        if (!is_readable($publicKeyPath)) {
+        if (! is_readable($publicKeyPath)) {
             throw new \RuntimeException('Missing update public key for signature verification.');
         }
         $publicKey = trim((string) file_get_contents($publicKeyPath));
@@ -448,7 +444,7 @@ final class UpdateRunner
     {
         self::rmRecursive($targetDir);
         @mkdir($targetDir, 0775, true);
-        $zip = new \ZipArchive();
+        $zip = new \ZipArchive;
         if ($zip->open($zipPath) !== true) {
             throw new \RuntimeException('Could not open release ZIP.');
         }
@@ -462,10 +458,10 @@ final class UpdateRunner
         for ($i = 0; $i < $total; $i++) {
             self::throwIfCancelRequested();
             $name = $zip->getNameIndex($i);
-            if (!is_string($name) || $name === '') {
+            if (! is_string($name) || $name === '') {
                 continue;
             }
-            if (!$zip->extractTo($targetDir, [$name])) {
+            if (! $zip->extractTo($targetDir, [$name])) {
                 $zip->close();
                 throw new \RuntimeException('Could not extract release ZIP.');
             }
@@ -478,7 +474,7 @@ final class UpdateRunner
     private function resolveReleaseRoot(string $stagingDir): string
     {
         $items = scandir($stagingDir);
-        if (!is_array($items)) {
+        if (! is_array($items)) {
             return $stagingDir;
         }
         $entries = array_values(array_filter($items, static fn (string $v): bool => $v !== '.' && $v !== '..'));
@@ -493,7 +489,7 @@ final class UpdateRunner
     }
 
     /**
-     * @param list<string> $paths
+     * @param  list<string>  $paths
      */
     private function backupPaths(
         string $sourceRoot,
@@ -526,11 +522,11 @@ final class UpdateRunner
         $driver = (string) $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
         if ($driver === 'sqlite') {
             $sqlitePath = self::resolveSqlitePathFromPdo($pdo);
-            if ($sqlitePath === null || !is_file($sqlitePath)) {
+            if ($sqlitePath === null || ! is_file($sqlitePath)) {
                 throw new \RuntimeException('Could not locate SQLite database file for backup.');
             }
             $dest = $backupRoot.'/database.sqlite';
-            if (!@copy($sqlitePath, $dest)) {
+            if (! @copy($sqlitePath, $dest)) {
                 $reason = self::lastFilesystemError();
                 throw new \RuntimeException(
                     'Could not create SQLite backup: '.$sqlitePath.' -> '.$dest.($reason !== '' ? ' ('.$reason.')' : '')
@@ -553,7 +549,7 @@ final class UpdateRunner
     private function resolveSqlitePathFromPdo(\PDO $pdo): ?string
     {
         $stmt = $pdo->query('PRAGMA database_list');
-        if (!$stmt instanceof \PDOStatement) {
+        if (! $stmt instanceof \PDOStatement) {
             return null;
         }
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -576,7 +572,7 @@ final class UpdateRunner
             throw new \RuntimeException('Could not determine current MySQL database name for backup.');
         }
         $out = @fopen($destPath, 'wb');
-        if (!is_resource($out)) {
+        if (! is_resource($out)) {
             $reason = self::lastFilesystemError();
             throw new \RuntimeException(
                 'Could not create MySQL backup file: '.$destPath.($reason !== '' ? ' ('.$reason.')' : '')
@@ -589,7 +585,7 @@ final class UpdateRunner
             fwrite($out, "SET FOREIGN_KEY_CHECKS=0;\n\n");
 
             $tablesStmt = $pdo->query('SHOW FULL TABLES WHERE Table_type = "BASE TABLE"');
-            if (!$tablesStmt instanceof \PDOStatement) {
+            if (! $tablesStmt instanceof \PDOStatement) {
                 throw new \RuntimeException('Could not enumerate MySQL tables for backup.');
             }
             $tables = $tablesStmt->fetchAll(\PDO::FETCH_NUM);
@@ -600,7 +596,7 @@ final class UpdateRunner
                 }
                 $tableIdent = self::quoteMysqlIdentifier($table);
                 $createStmt = $pdo->query('SHOW CREATE TABLE '.$tableIdent);
-                if (!$createStmt instanceof \PDOStatement) {
+                if (! $createStmt instanceof \PDOStatement) {
                     throw new \RuntimeException('Could not read CREATE TABLE for '.$table);
                 }
                 $createRow = $createStmt->fetch(\PDO::FETCH_NUM);
@@ -613,7 +609,7 @@ final class UpdateRunner
                 fwrite($out, $createSql.";\n\n");
 
                 $rowsStmt = $pdo->query('SELECT * FROM '.$tableIdent);
-                if (!$rowsStmt instanceof \PDOStatement) {
+                if (! $rowsStmt instanceof \PDOStatement) {
                     throw new \RuntimeException('Could not read rows from '.$table.' for backup.');
                 }
                 while (($row = $rowsStmt->fetch(\PDO::FETCH_ASSOC)) !== false) {
@@ -664,13 +660,13 @@ final class UpdateRunner
     }
 
     /**
-     * @param list<string> $paths
+     * @param  list<string>  $paths
      */
     private function applyPaths(string $sourceRoot, string $targetRoot, array $paths): void
     {
         foreach ($paths as $relative) {
             $src = $sourceRoot.'/'.$relative;
-            if (!file_exists($src)) {
+            if (! file_exists($src)) {
                 continue;
             }
             $dest = $targetRoot.'/'.$relative;
@@ -680,16 +676,16 @@ final class UpdateRunner
     }
 
     /**
-     * @param list<string> $paths
+     * @param  list<string>  $paths
      */
     private function restorePaths(string $backupRoot, string $targetRoot, array $paths): void
     {
-        if (!is_dir($backupRoot)) {
+        if (! is_dir($backupRoot)) {
             return;
         }
         foreach ($paths as $relative) {
             $src = $backupRoot.'/'.$relative;
-            if (!file_exists($src)) {
+            if (! file_exists($src)) {
                 continue;
             }
             $dest = $targetRoot.'/'.$relative;
@@ -704,14 +700,14 @@ final class UpdateRunner
             self::throwIfCancelRequested();
         }
         if (is_dir($source)) {
-            if (!is_dir($dest) && !@mkdir($dest, 0775, true)) {
+            if (! is_dir($dest) && ! @mkdir($dest, 0775, true)) {
                 $reason = self::lastFilesystemError();
                 throw new \RuntimeException(
                     'Could not create destination directory: '.$dest.($reason !== '' ? ' ('.$reason.')' : '')
                 );
             }
             $items = scandir($source);
-            if (!is_array($items)) {
+            if (! is_array($items)) {
                 throw new \RuntimeException('Could not read directory: '.$source);
             }
             foreach ($items as $item) {
@@ -724,16 +720,16 @@ final class UpdateRunner
             return;
         }
         $destDir = dirname($dest);
-        if (!is_dir($destDir) && !@mkdir($destDir, 0775, true)) {
+        if (! is_dir($destDir) && ! @mkdir($destDir, 0775, true)) {
             $reason = self::lastFilesystemError();
             throw new \RuntimeException(
                 'Could not create destination directory: '.$destDir.($reason !== '' ? ' ('.$reason.')' : '')
             );
         }
-        if (!is_writable($destDir)) {
+        if (! is_writable($destDir)) {
             throw new \RuntimeException('Destination directory is not writable: '.$destDir);
         }
-        if (!@copy($source, $dest)) {
+        if (! @copy($source, $dest)) {
             $reason = self::lastFilesystemError();
             throw new \RuntimeException(
                 'Could not copy file: '.$source.' -> '.$dest.($reason !== '' ? ' ('.$reason.')' : '')
@@ -745,7 +741,7 @@ final class UpdateRunner
     {
         foreach (['wgw-src', 'src', 'resources', 'composer.json', 'composer.lock', 'vendor'] as $relative) {
             $path = $appRoot.'/'.$relative;
-            if (!file_exists($path)) {
+            if (! file_exists($path)) {
                 continue;
             }
             self::rmRecursive($path);
@@ -753,7 +749,7 @@ final class UpdateRunner
     }
 
     /**
-     * @param list<string> $paths
+     * @param  list<string>  $paths
      */
     private function assertApplyCapacity(string $sourceRoot, string $targetRoot, array $paths): void
     {
@@ -804,8 +800,7 @@ final class UpdateRunner
     }
 
     /**
-     * @param list<string> $paths
-     *
+     * @param  list<string>  $paths
      * @return array{bytes: int, inodes: int}
      */
     private function collectPathStats(string $root, array $paths): array
@@ -814,7 +809,7 @@ final class UpdateRunner
         $inodes = 0;
         foreach ($paths as $relative) {
             $full = $root.'/'.$relative;
-            if (!file_exists($full) && !is_link($full)) {
+            if (! file_exists($full) && ! is_link($full)) {
                 continue;
             }
             $stats = self::pathStats($full);
@@ -846,11 +841,11 @@ final class UpdateRunner
                 'inodes' => 1,
             ];
         }
-        if (!is_dir($path)) {
+        if (! is_dir($path)) {
             return ['bytes' => 0, 'inodes' => 0];
         }
         $items = scandir($path);
-        if (!is_array($items)) {
+        if (! is_array($items)) {
             return ['bytes' => 0, 'inodes' => 1];
         }
         $bytes = 0;
@@ -903,13 +898,13 @@ final class UpdateRunner
         }
 
         $diskKnown = is_int($freeBytes);
-        $diskOk = !$diskKnown || $freeBytes >= 512 * 1024 * 1024;
+        $diskOk = ! $diskKnown || $freeBytes >= 512 * 1024 * 1024;
         $diskDetail = is_int($freeBytes)
             ? (self::formatByteCount($freeBytes).($diskOk ? '' : ' (low free disk)'))
             : 'Unknown (not detectable on this host)';
 
         $inodeKnown = is_int($freeInodes);
-        $inodeOk = !$inodeKnown || $freeInodes >= 10000;
+        $inodeOk = ! $inodeKnown || $freeInodes >= 10000;
         $inodeDetail = is_int($freeInodes)
             ? (number_format($freeInodes).($inodeOk ? '' : ' (low free inodes)'))
             : 'Unknown (not detectable on this host)';
@@ -922,7 +917,7 @@ final class UpdateRunner
                 'status' => $diskKnown ? ($diskOk ? 'ok' : 'fail') : 'unknown',
             ],
             [
-                'ok' => !is_int($quotaFreeBytes) || $quotaFreeBytes >= 512 * 1024 * 1024,
+                'ok' => ! is_int($quotaFreeBytes) || $quotaFreeBytes >= 512 * 1024 * 1024,
                 'label' => 'Hosting quota free space',
                 'detail' => is_int($quotaFreeBytes)
                     ? self::formatByteCount($quotaFreeBytes).($quotaFreeBytes >= 512 * 1024 * 1024 ? '' : ' (low quota free space)')
@@ -943,7 +938,7 @@ final class UpdateRunner
     private function readFilesystemFreeBytes(string $path): ?int
     {
         $freeBytesRaw = @disk_free_space($path);
-        if (!is_int($freeBytesRaw) && !is_float($freeBytesRaw)) {
+        if (! is_int($freeBytesRaw) && ! is_float($freeBytesRaw)) {
             return null;
         }
 
@@ -967,11 +962,11 @@ final class UpdateRunner
 
     private function detectQuotaFreeBytes(): ?int
     {
-        if (!function_exists('shell_exec')) {
+        if (! function_exists('shell_exec')) {
             return null;
         }
         $output = @shell_exec('quota -s 2>/dev/null');
-        if (!is_string($output) || trim($output) === '') {
+        if (! is_string($output) || trim($output) === '') {
             return null;
         }
         $lines = preg_split('/\R/', $output) ?: [];
@@ -987,7 +982,7 @@ final class UpdateRunner
             $used = self::parseQuotaSizeToken($parts[1]);
             $quota = self::parseQuotaSizeToken($parts[2]);
             $limit = self::parseQuotaSizeToken($parts[3]);
-            if (!is_int($used)) {
+            if (! is_int($used)) {
                 continue;
             }
             $cap = max((int) ($limit ?? 0), (int) ($quota ?? 0));
@@ -1046,11 +1041,11 @@ final class UpdateRunner
 
             return;
         }
-        if (!is_dir($path)) {
+        if (! is_dir($path)) {
             return;
         }
         $items = scandir($path);
-        if (!is_array($items)) {
+        if (! is_array($items)) {
             return;
         }
         foreach ($items as $item) {
@@ -1063,7 +1058,7 @@ final class UpdateRunner
     }
 
     /**
-     * @param array<string, mixed>|null $latest
+     * @param  array<string, mixed>|null  $latest
      */
     private function isUpdateAvailable(string $installed, ?array $latest): bool
     {
@@ -1089,7 +1084,7 @@ final class UpdateRunner
     }
 
     /**
-     * @param array<string, mixed>|null $latest
+     * @param  array<string, mixed>|null  $latest
      */
     private function hasRequiredReleaseMetadata(?array $latest): bool
     {
@@ -1106,8 +1101,7 @@ final class UpdateRunner
     }
 
     /**
-     * @param array<string, mixed> $latest
-     *
+     * @param  array<string, mixed>  $latest
      * @return array{version: string, package_url: string, checksum_sha256: string, checksum_signature: string}
      */
     private function normalizeRequiredReleaseMetadata(array $latest): array
@@ -1127,7 +1121,7 @@ final class UpdateRunner
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     private function requiredNonEmptyString(array $data, string $field): string
     {
@@ -1231,7 +1225,7 @@ final class UpdateRunner
 
     private function throwIfCancelRequested(): void
     {
-        if (!$this->store->isCancelRequested()) {
+        if (! $this->store->isCancelRequested()) {
             return;
         }
         throw new \RuntimeException('Update cancelled by user.');
@@ -1245,16 +1239,13 @@ final class UpdateRunner
         return $phase === 'applying_files' || $phase === 'running_migrations';
     }
 
-    /**
-     * @param mixed $headers
-     */
     private function parseContentLength(mixed $headers): ?int
     {
-        if (!is_array($headers)) {
+        if (! is_array($headers)) {
             return null;
         }
         foreach ($headers as $header) {
-            if (!is_string($header)) {
+            if (! is_string($header)) {
                 continue;
             }
             if (preg_match('/^Content-Length:\s*(\d+)/i', $header, $m) !== 1) {
@@ -1308,11 +1299,11 @@ final class UpdateRunner
     private function listBackups(): array
     {
         $dir = $this->store->absolutePath($this->store->backupDir());
-        if (!is_dir($dir)) {
+        if (! is_dir($dir)) {
             return [];
         }
         $items = scandir($dir);
-        if (!is_array($items)) {
+        if (! is_array($items)) {
             return [];
         }
         $rows = [];
@@ -1323,7 +1314,7 @@ final class UpdateRunner
             $path = $dir.'/'.$item;
             $isZip = is_file($path) && str_ends_with($item, '.zip');
             $isLegacyDir = is_dir($path) && str_starts_with($item, 'backup-');
-            if (!$isZip && !$isLegacyDir) {
+            if (! $isZip && ! $isLegacyDir) {
                 continue;
             }
             $meta = $isZip ? self::readBackupMetadata($path) : self::readMetadataFromName($item);
@@ -1365,12 +1356,12 @@ final class UpdateRunner
 
     private function directorySizeBytes(string $path): int
     {
-        if (!is_dir($path)) {
+        if (! is_dir($path)) {
             return 0;
         }
         $size = 0;
         $items = scandir($path);
-        if (!is_array($items)) {
+        if (! is_array($items)) {
             return 0;
         }
         foreach ($items as $item) {
@@ -1380,6 +1371,7 @@ final class UpdateRunner
             $full = $path.'/'.$item;
             if (is_dir($full)) {
                 $size += self::directorySizeBytes($full);
+
                 continue;
             }
             $size += max(0, (int) (@filesize($full) ?: 0));
@@ -1416,11 +1408,11 @@ final class UpdateRunner
     }
 
     /**
-     * @param array<string, mixed> $metadata
+     * @param  array<string, mixed>  $metadata
      */
     private function createZipFromDirectory(string $sourceDir, string $archivePath, array $metadata): void
     {
-        $zip = new \ZipArchive();
+        $zip = new \ZipArchive;
         if ($zip->open($archivePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
             throw new \RuntimeException('Could not create backup ZIP archive.');
         }
@@ -1436,7 +1428,7 @@ final class UpdateRunner
     {
         if (is_dir($sourcePath)) {
             $items = scandir($sourcePath);
-            if (!is_array($items)) {
+            if (! is_array($items)) {
                 return;
             }
             foreach ($items as $item) {
@@ -1450,7 +1442,7 @@ final class UpdateRunner
 
             return;
         }
-        if (!is_file($sourcePath)) {
+        if (! is_file($sourcePath)) {
             return;
         }
         $zip->addFile($sourcePath, $relativePath);
@@ -1461,13 +1453,13 @@ final class UpdateRunner
      */
     private function readBackupMetadata(string $archivePath): array
     {
-        $zip = new \ZipArchive();
+        $zip = new \ZipArchive;
         if ($zip->open($archivePath) !== true) {
             return [];
         }
         $raw = $zip->getFromName('.backup-meta.json');
         $zip->close();
-        if (!is_string($raw) || trim($raw) === '') {
+        if (! is_string($raw) || trim($raw) === '') {
             return [];
         }
         $decoded = json_decode($raw, true);

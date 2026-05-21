@@ -10,6 +10,12 @@ From the repo root:
 pnpm test:api-done-gate
 ```
 
+Full CI-quality stack (typegen drift, ESLint, Prettier/Pint, `tsc`, API done gate):
+
+```bash
+pnpm run ci:quality
+```
+
 Or inside `packages/api`:
 
 ```bash

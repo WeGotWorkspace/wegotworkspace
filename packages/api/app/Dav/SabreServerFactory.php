@@ -24,9 +24,7 @@ use Sabre\DAVACL;
 
 final class SabreServerFactory
 {
-    public function __construct(private WgwInstallConfig $install)
-    {
-    }
+    public function __construct(private WgwInstallConfig $install) {}
 
     public function create(): DAV\Server
     {
@@ -76,34 +74,34 @@ final class SabreServerFactory
 
         $server = new DAV\Server($nodes);
         $server->setBaseUri((string) ($cfg[WgwSettings::BASE_URI] ?? '/'));
-        $server->setLogger(new NullLogger());
+        $server->setLogger(new NullLogger);
 
         $server->addPlugin($authPlugin);
-        $server->addPlugin(new WebdavWriteGuardPlugin());
+        $server->addPlugin(new WebdavWriteGuardPlugin);
         $locksPath = rtrim($this->install->dataDir(), '/').'/webdav-locks.dat';
         $server->addPlugin(new Locks\Plugin(new Locks\Backend\File($locksPath)));
         if ((bool) ($cfg[WgwSettings::BROWSER_PLUGIN] ?? true)) {
-            $server->addPlugin(new DAV\Browser\Plugin());
+            $server->addPlugin(new DAV\Browser\Plugin);
         }
-        $server->addPlugin(new DAV\Sync\Plugin());
+        $server->addPlugin(new DAV\Sync\Plugin);
 
         if ($cal || $card) {
-            $server->addPlugin(new DAV\Sharing\Plugin());
+            $server->addPlugin(new DAV\Sharing\Plugin);
         }
         if ($cal || $card || $files) {
-            $server->addPlugin(new DAVACL\Plugin());
+            $server->addPlugin(new DAVACL\Plugin);
         }
 
         if ($cal) {
-            $server->addPlugin(new CalDAV\Plugin());
-            $server->addPlugin(new CalDAV\Schedule\Plugin());
-            $server->addPlugin(new CalDAV\SharingPlugin());
-            $server->addPlugin(new CalDAV\ICSExportPlugin());
+            $server->addPlugin(new CalDAV\Plugin);
+            $server->addPlugin(new CalDAV\Schedule\Plugin);
+            $server->addPlugin(new CalDAV\SharingPlugin);
+            $server->addPlugin(new CalDAV\ICSExportPlugin);
         }
 
         if ($card) {
-            $server->addPlugin(new CardDAV\Plugin());
-            $server->addPlugin(new CardDAV\VCFExportPlugin());
+            $server->addPlugin(new CardDAV\Plugin);
+            $server->addPlugin(new CardDAV\VCFExportPlugin);
         }
 
         return $server;

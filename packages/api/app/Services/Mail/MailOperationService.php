@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace App\Services\Mail;
 
-use App\Settings\SettingKeys;
 use App\Support\WgwSettings;
+use IMAP\Connection;
 use PHPMailer\PHPMailer\PHPMailer;
 
 final class MailOperationService
 {
     public function __construct(
         private MailCredentialService $credentials,
-    ) {
-    }
+    ) {}
 
     /** @return array<string, mixed> */
     public function status(string $username): array
@@ -108,7 +107,6 @@ final class MailOperationService
         return MailImapProcess::runJson('saveDraft', $username, $body, fn () => $this->handleSaveDraft($username, $body));
     }
 
-
     private function handleStatus(string $username): array
     {
         $cfg = WgwSettings::normalized();
@@ -156,11 +154,12 @@ final class MailOperationService
         if ($listError !== null) {
             throw new MailResponseException(503, ['error' => 'imap_mailboxes_failed', 'message' => $listError]);
         }
+
         return ['folders' => $folders];
     }
 
     /**
-     * @param list<array{name: string, mailbox: string, delimiter: string, noSelect?: bool}> $raw
+     * @param  list<array{name: string, mailbox: string, delimiter: string, noSelect?: bool}>  $raw
      * @return list<array<string, mixed>>
      */
     private function buildFolderTree(array $raw): array
@@ -196,12 +195,11 @@ final class MailOperationService
     }
 
     /**
-     * @param list<array<string, mixed>> $folders
-     * @param list<array{name: string, mailbox: string, delimiter: string, noSelect?: bool}> $raw
-     *
+     * @param  list<array<string, mixed>>  $folders
+     * @param  list<array{name: string, mailbox: string, delimiter: string, noSelect?: bool}>  $raw
      * @return list<array<string, mixed>>
      */
-    private function foldersWithUnreadCounts(\IMAP\Connection $conn, string $ref, array $folders, array $raw): array
+    private function foldersWithUnreadCounts(Connection $conn, string $ref, array $folders, array $raw): array
     {
         $noSelect = [];
         foreach ($raw as $row) {
@@ -214,7 +212,7 @@ final class MailOperationService
                 continue;
             }
             $id = $f['id'] ?? '';
-            if (!is_string($id) || $id === '') {
+            if (! is_string($id) || $id === '') {
                 continue;
             }
             $mb = self::folderIdDecode($id);
@@ -233,7 +231,7 @@ final class MailOperationService
     }
 
     /**
-     * @param array{name: string, mailbox: string, delimiter: string} $row
+     * @param  array{name: string, mailbox: string, delimiter: string}  $row
      */
     private function folderDisplayName(array $row): string
     {
@@ -290,7 +288,7 @@ final class MailOperationService
      * Prefer the longest listed mailbox that is a strict case-insensitive prefix of {@code $mailbox}
      * and is followed by {@code /} or {@code .} (hierarchy boundary). Does not depend on delimiter metadata.
      *
-     * @param list<array{name: string, mailbox: string, delimiter: string}> $raw
+     * @param  list<array{name: string, mailbox: string, delimiter: string}>  $raw
      */
     private function resolveParentByLongestListedPrefix(string $mailbox, array $raw): ?string
     {
@@ -299,7 +297,7 @@ final class MailOperationService
         $bestLen = -1;
         foreach ($raw as $row) {
             $k = $row['mailbox'];
-            if (!is_string($k) || $k === '') {
+            if (! is_string($k) || $k === '') {
                 continue;
             }
             $lk = strlen($k);
@@ -323,8 +321,7 @@ final class MailOperationService
     }
 
     /**
-     * @param list<array{name: string, mailbox: string, delimiter: string}> $raw
-     *
+     * @param  list<array{name: string, mailbox: string, delimiter: string}>  $raw
      * @return array<string, string> lower(mailbox) => mailbox string as returned by IMAP (first occurrence wins)
      */
     private function mailboxCanonicalIndex(array $raw): array
@@ -332,11 +329,11 @@ final class MailOperationService
         $m = [];
         foreach ($raw as $row) {
             $mb = $row['mailbox'];
-            if (!is_string($mb) || $mb === '') {
+            if (! is_string($mb) || $mb === '') {
                 continue;
             }
             $k = strtolower($mb);
-            if (!isset($m[$k])) {
+            if (! isset($m[$k])) {
                 $m[$k] = $mb;
             }
         }
@@ -347,7 +344,7 @@ final class MailOperationService
     /**
      * Walk up from {@code $startPath} using {@code $delimiter} until a mailbox exists in {@code $canonicalByLower}.
      *
-     * @param array<string, string> $canonicalByLower
+     * @param  array<string, string>  $canonicalByLower
      */
     private function nearestListedAncestor(string $startPath, string $delimiter, array $canonicalByLower): ?string
     {
@@ -376,7 +373,7 @@ final class MailOperationService
      * skipping missing intermediates. Tries the row delimiter first, then {@code /} and {@code .} so a wrong
      * delimiter from the server does not orphan nested folders or mis-attach them in the UI.
      *
-     * @param array<string, string> $canonicalByLower
+     * @param  array<string, string>  $canonicalByLower
      */
     private function resolveParentMailboxForTree(string $mailbox, string $rowDelimiter, array $canonicalByLower): ?string
     {
@@ -402,7 +399,7 @@ final class MailOperationService
     }
 
     /**
-     * @param list<array{name: string, mailbox: string, delimiter: string}> $raw
+     * @param  list<array{name: string, mailbox: string, delimiter: string}>  $raw
      */
     private function findInbox(array $raw): string
     {
@@ -416,7 +413,7 @@ final class MailOperationService
     }
 
     /**
-     * @param list<array{name: string, mailbox: string, delimiter: string}> $raw
+     * @param  list<array{name: string, mailbox: string, delimiter: string}>  $raw
      */
     private function delimiterForMailbox(array $raw, string $mailbox): string
     {
@@ -478,7 +475,7 @@ final class MailOperationService
         return null;
     }
 
-    private function resolveSystemMailbox(\IMAP\Connection $conn, string $ref, string $sys): ?string
+    private function resolveSystemMailbox(Connection $conn, string $ref, string $sys): ?string
     {
         $raw = MailImapClient::listMailboxes($conn, $ref);
         $inboxMb = self::findInbox($raw);
@@ -494,8 +491,8 @@ final class MailOperationService
     /**
      * Append an RFC822 message to a detected system mailbox (Sent, Drafts, …).
      *
-     * @param array{displayName: string, emailAddress: string, imap: array, smtp: array} $cred
-     * @param 'drafts'|'sent' $system
+     * @param  array{displayName: string, emailAddress: string, imap: array, smtp: array}  $cred
+     * @param  'drafts'|'sent'  $system
      */
     private function tryAppendRfc822ToSystemFolder(
         array $cred,
@@ -505,7 +502,7 @@ final class MailOperationService
         ?string &$outErr,
     ): void {
         $outErr = null;
-        if (!extension_loaded('imap') || !function_exists('imap_append')) {
+        if (! extension_loaded('imap') || ! function_exists('imap_append')) {
             $outErr = 'imap_extension_required';
 
             return;
@@ -540,7 +537,7 @@ final class MailOperationService
                 return;
             }
             $path = $ref.$targetMb;
-            if (!@imap_append($conn, $path, $rfc822, $imapFlags)) {
+            if (! @imap_append($conn, $path, $rfc822, $imapFlags)) {
                 $outErr = imap_last_error() ?: 'imap_append_failed';
             }
         } finally {
@@ -551,7 +548,7 @@ final class MailOperationService
     /**
      * After SMTP send, append the same RFC822 message to the account’s Sent mailbox (best-effort).
      *
-     * @param array{displayName: string, emailAddress: string, imap: array, smtp: array} $cred
+     * @param  array{displayName: string, emailAddress: string, imap: array, smtp: array}  $cred
      */
     private function tryAppendSentCopy(array $cred, string $rfc822, ?string &$outErr): void
     {
@@ -560,7 +557,7 @@ final class MailOperationService
 
     private function handleFolderCreate(string $username, array $j): array
     {
-        
+
         $name = trim((string) ($j['name'] ?? ''));
         if ($name === '') {
             throw new MailResponseException(400, ['error' => 'name_required']);
@@ -583,7 +580,7 @@ final class MailOperationService
             } else {
                 $full = $name;
             }
-            if (!MailImapClient::createMailbox($conn, $ref, $full)) {
+            if (! MailImapClient::createMailbox($conn, $ref, $full)) {
                 $resp = [400, ['error' => 'create_failed', 'message' => imap_last_error() ?: '']];
             } else {
                 $resp = [200, ['ok' => true, 'mailbox' => $full, 'id' => self::folderIdEncode($full)]];
@@ -594,12 +591,13 @@ final class MailOperationService
         if ($resp[0] !== 200) {
             throw new MailResponseException($resp[0], $resp[1]);
         }
+
         return $resp[1];
     }
 
     private function handleFolderMove(string $username, array $j): array
     {
-        
+
         $folderEnc = isset($j['folder']) && is_string($j['folder']) ? $j['folder'] : '';
         $fromMb = self::folderIdDecode($folderEnc);
         if ($fromMb === '' || strtoupper($fromMb) === 'INBOX' || $fromMb === '__starred__') {
@@ -629,7 +627,7 @@ final class MailOperationService
                         break;
                     }
                 }
-                if (!$known) {
+                if (! $known) {
                     throw new MailResponseException(400, ['error' => 'parent_unknown']);
                 }
             }
@@ -647,7 +645,7 @@ final class MailOperationService
                     throw new MailResponseException(400, ['error' => 'invalid_parent']);
                 }
             }
-            if (!MailImapClient::renameMailbox($conn, $ref, $fromMb, $newMb)) {
+            if (! MailImapClient::renameMailbox($conn, $ref, $fromMb, $newMb)) {
                 $resp = [400, ['error' => 'rename_failed', 'message' => imap_last_error() ?: '']];
             } else {
                 $resp = [200, ['ok' => true, 'mailbox' => $newMb, 'id' => self::folderIdEncode($newMb)]];
@@ -658,6 +656,7 @@ final class MailOperationService
         if ($resp[0] !== 200) {
             throw new MailResponseException($resp[0], $resp[1]);
         }
+
         return $resp[1];
     }
 
@@ -682,7 +681,7 @@ final class MailOperationService
             if (self::detectSystem($mb, $inboxMb) !== null) {
                 throw new MailResponseException(400, ['error' => 'cannot_delete_system']);
             }
-            if (!MailImapClient::deleteMailbox($conn, $ref, $mb)) {
+            if (! MailImapClient::deleteMailbox($conn, $ref, $mb)) {
                 $resp = [400, ['error' => 'delete_failed', 'message' => imap_last_error() ?: '']];
             } else {
                 $resp = [200, ['ok' => true]];
@@ -693,6 +692,7 @@ final class MailOperationService
         if ($resp[0] !== 200) {
             throw new MailResponseException($resp[0], $resp[1]);
         }
+
         return $resp[1];
     }
 
@@ -724,7 +724,7 @@ final class MailOperationService
         try {
             $ref = MailImapClient::mailboxRef($cred['imap']);
             $inbox = 'INBOX';
-            if (!MailImapClient::reopenMailbox($conn, $ref, $folder === '__starred__' ? $inbox : $folder)) {
+            if (! MailImapClient::reopenMailbox($conn, $ref, $folder === '__starred__' ? $inbox : $folder)) {
                 $resp = [400, ['error' => 'mailbox_open']];
             } else {
                 if ($qRaw !== '') {
@@ -755,7 +755,7 @@ final class MailOperationService
                 $ov = MailImapClient::fetchOverviews($conn, $uidsForOverview);
                 $messages = [];
                 foreach ($ov as $o) {
-                    if (!is_object($o)) {
+                    if (! is_object($o)) {
                         continue;
                     }
                     $uid = (int) ($o->uid ?? 0);
@@ -809,7 +809,7 @@ final class MailOperationService
         try {
             $ref = MailImapClient::mailboxRef($cred['imap']);
             $inbox = 'INBOX';
-            if (!MailImapClient::reopenMailbox($conn, $ref, $folder === '__starred__' ? $inbox : $folder)) {
+            if (! MailImapClient::reopenMailbox($conn, $ref, $folder === '__starred__' ? $inbox : $folder)) {
                 $resp = [400, ['error' => 'mailbox_open']];
             } else {
                 $mbForMsg = $folder === '__starred__' ? $inbox : $folder;
@@ -846,7 +846,7 @@ final class MailOperationService
         $seen = [];
         foreach (explode(',', $uidsRaw) as $piece) {
             $piece = trim($piece);
-            if ($piece === '' || !ctype_digit($piece)) {
+            if ($piece === '' || ! ctype_digit($piece)) {
                 continue;
             }
             $u = (int) $piece;
@@ -863,7 +863,7 @@ final class MailOperationService
     }
 
     /**
-     * @param list<array{id: string, name: string, size: int, type: string, part: string}> $attachments
+     * @param  list<array{id: string, name: string, size: int, type: string, part: string}>  $attachments
      */
     private function overviewToMessage(object $o, string $realMailbox, string $folderIdForUi, array $attachments = []): array
     {
@@ -875,8 +875,8 @@ final class MailOperationService
         $cc = MailImapClient::parseAddressListHeader(self::decodeMimeHeader($ccRaw));
         $subject = isset($o->subject) ? self::decodeMimeHeader((string) $o->subject) : '(no subject)';
         $date = isset($o->date) ? date('c', strtotime((string) $o->date) ?: time()) : date('c');
-        $seen = !empty($o->seen);
-        $flagged = !empty($o->flagged);
+        $seen = ! empty($o->seen);
+        $flagged = ! empty($o->flagged);
         $uid = (int) ($o->uid ?? 0);
         $preview = isset($o->preview) ? (string) $o->preview : '';
         $subjectSnippet = mb_substr($subject, 0, 140);
@@ -901,14 +901,14 @@ final class MailOperationService
     /**
      * @return list<array{id: string, name: string, size: int, type: string, part: string}>
      */
-    private function attachmentSummariesForUid(\IMAP\Connection $conn, int $uid): array
+    private function attachmentSummariesForUid(Connection $conn, int $uid): array
     {
         $msgno = MailImapClient::msgnoFromUid($conn, $uid);
         if ($msgno <= 0) {
             return [];
         }
         $st = @imap_fetchstructure($conn, $msgno);
-        if ($st === false || !is_object($st)) {
+        if ($st === false || ! is_object($st)) {
             return [];
         }
 
@@ -936,7 +936,7 @@ final class MailOperationService
             return $s;
         }
         $t = preg_replace(['/<style[\s\S]*?<\/style>/i', '/<script[\s\S]*?<\/script>/i', '/<[^>]+>/'], [' ', ' ', ' '], $s);
-        if (!is_string($t)) {
+        if (! is_string($t)) {
             return mb_substr(trim(html_entity_decode(strip_tags($s), ENT_QUOTES | ENT_HTML5, 'UTF-8')), 0, 220);
         }
         $t = preg_replace('/\s+/u', ' ', trim($t));
@@ -966,11 +966,11 @@ final class MailOperationService
         $resp = null;
         try {
             $ref = MailImapClient::mailboxRef($cred['imap']);
-            if (!MailImapClient::reopenMailbox($conn, $ref, $mb)) {
+            if (! MailImapClient::reopenMailbox($conn, $ref, $mb)) {
                 $resp = [404, ['error' => 'mailbox']];
             } else {
                 $ov = imap_fetch_overview($conn, (string) $uid, \FT_UID);
-                if ($ov === false || !isset($ov[0]) || !is_object($ov[0])) {
+                if ($ov === false || ! isset($ov[0]) || ! is_object($ov[0])) {
                     $resp = [404, ['error' => 'message']];
                 } else {
                     $msg = self::overviewToMessage(
@@ -1041,7 +1041,7 @@ final class MailOperationService
         $resp = null;
         try {
             $ref = MailImapClient::mailboxRef($cred['imap']);
-            if (!MailImapClient::reopenMailbox($conn, $ref, $mb)) {
+            if (! MailImapClient::reopenMailbox($conn, $ref, $mb)) {
                 $resp = [404, ['error' => 'mailbox']];
             } else {
                 $msgno = MailImapClient::msgnoFromUid($conn, $uid);
@@ -1087,7 +1087,7 @@ final class MailOperationService
 
     private function handleMessagePatch(string $username, array $j): array
     {
-        
+
         $folderEnc = isset($j['folder']) && is_string($j['folder']) ? $j['folder'] : '';
         $uid = isset($j['uid']) && is_numeric($j['uid']) ? (int) $j['uid'] : 0;
         $mb = self::folderIdDecode($folderEnc);
@@ -1103,15 +1103,15 @@ final class MailOperationService
         $resp = null;
         try {
             $ref = MailImapClient::mailboxRef($cred['imap']);
-            if (!MailImapClient::reopenMailbox($conn, $ref, $mb)) {
+            if (! MailImapClient::reopenMailbox($conn, $ref, $mb)) {
                 $resp = [404, ['error' => 'mailbox']];
             } else {
                 $ov = imap_fetch_overview($conn, (string) $uid, \FT_UID);
-                if ($ov === false || !isset($ov[0]) || !is_object($ov[0])) {
+                if ($ov === false || ! isset($ov[0]) || ! is_object($ov[0])) {
                     $resp = [404, ['error' => 'message']];
                 } else {
-                    $flagged = !empty($ov[0]->flagged);
-                    $seen = !empty($ov[0]->seen);
+                    $flagged = ! empty($ov[0]->flagged);
+                    $seen = ! empty($ov[0]->seen);
                     if (array_key_exists('read', $j)) {
                         $seen = (bool) $j['read'];
                     }
@@ -1174,7 +1174,7 @@ final class MailOperationService
 
     private function handleMove(string $username, array $j): array
     {
-        
+
         $fromEnc = isset($j['fromFolder']) && is_string($j['fromFolder']) ? $j['fromFolder'] : '';
         $toEnc = isset($j['toFolder']) && is_string($j['toFolder']) ? $j['toFolder'] : '';
         $uid = isset($j['uid']) && is_numeric($j['uid']) ? (int) $j['uid'] : 0;
@@ -1199,7 +1199,7 @@ final class MailOperationService
         $resp = null;
         try {
             $ref = MailImapClient::mailboxRef($cred['imap']);
-            if (!MailImapClient::reopenMailbox($conn, $ref, $from)) {
+            if (! MailImapClient::reopenMailbox($conn, $ref, $from)) {
                 $resp = [400, ['error' => 'mailbox']];
             } else {
                 $target = $to;
@@ -1211,7 +1211,7 @@ final class MailOperationService
                         $target = $resolved;
                     }
                 }
-                if ($resp === null && !MailImapClient::moveUid($conn, $ref, $uid, $target)) {
+                if ($resp === null && ! MailImapClient::moveUid($conn, $ref, $uid, $target)) {
                     $resp = [400, ['error' => 'move_failed', 'message' => imap_last_error() ?: '']];
                 } elseif ($resp === null) {
                     $resp = [200, ['ok' => true]];
@@ -1231,11 +1231,11 @@ final class MailOperationService
     }
 
     /**
-     * @param mixed $attachments JSON {@code attachments}: list of {@code { filename, mimeType, contentBase64 }}
+     * @param  mixed  $attachments  JSON {@code attachments}: list of {@code { filename, mimeType, contentBase64 }}
      */
     private function attachDecodedUploads(PHPMailer $mail, mixed $attachments): array
     {
-        if (!is_array($attachments)) {
+        if (! is_array($attachments)) {
             return ['attached' => 0, 'skipped' => 0, 'totalBytes' => 0];
         }
         $maxFiles = 24;
@@ -1248,8 +1248,9 @@ final class MailOperationService
             if ($n >= $maxFiles) {
                 break;
             }
-            if (!is_array($a)) {
-                ++$skipped;
+            if (! is_array($a)) {
+                $skipped++;
+
                 continue;
             }
             $name = isset($a['filename']) && is_string($a['filename']) ? $a['filename'] : 'attachment';
@@ -1263,32 +1264,35 @@ final class MailOperationService
             $b64 = isset($a['contentBase64']) && is_string($a['contentBase64'])
                 ? preg_replace('/\s+/', '', $a['contentBase64'])
                 : '';
-            if (!is_string($b64) || $b64 === '') {
-                ++$skipped;
+            if (! is_string($b64) || $b64 === '') {
+                $skipped++;
+
                 continue;
             }
             $raw = base64_decode($b64, true);
             if ($raw === false || $raw === '') {
-                ++$skipped;
+                $skipped++;
+
                 continue;
             }
             $len = strlen($raw);
             if ($len > $maxPerFile || $total + $len > $maxTotal) {
-                ++$skipped;
+                $skipped++;
+
                 continue;
             }
             $total += $len;
             $mail->addStringAttachment($raw, $name, PHPMailer::ENCODING_BASE64, $mime);
-            ++$n;
+            $n++;
         }
+
         return ['attached' => $n, 'skipped' => $skipped, 'totalBytes' => $total];
     }
 
     /**
      * Shared SMTP client configuration for building RFC822 via {@see PHPMailer::preSend()} (and for sending).
      *
-     * @param array{displayName: string, emailAddress: string, imap: array, smtp: array} $cred
-     *
+     * @param  array{displayName: string, emailAddress: string, imap: array, smtp: array}  $cred
      * @return string Envelope From address used in {@see PHPMailer::setFrom()}
      */
     private function configureMailerSmtp(PHPMailer $mail, array $cred, int $smtpTimeout = 30): string
@@ -1334,7 +1338,7 @@ final class MailOperationService
         if ($cred === null) {
             throw new MailResponseException(400, ['error' => 'smtp_not_configured']);
         }
-        
+
         $to = trim((string) ($j['to'] ?? ''));
         $subject = trim((string) ($j['subject'] ?? ''));
         $body = (string) ($j['body'] ?? '');
@@ -1383,11 +1387,11 @@ final class MailOperationService
             $mail->Body = $body;
             $mail->isHTML(false);
             $attachReport = self::attachDecodedUploads($mail, $j['attachments'] ?? null);
-            if (!$mail->preSend()) {
+            if (! $mail->preSend()) {
                 throw new \RuntimeException($mail->ErrorInfo);
             }
             $sentMime = $mail->getSentMIMEMessage();
-            if (!$mail->postSend()) {
+            if (! $mail->postSend()) {
                 throw new \RuntimeException($mail->ErrorInfo);
             }
             self::tryAppendSentCopy($cred, $sentMime, $appendErr);
@@ -1411,7 +1415,7 @@ final class MailOperationService
     private function handleSaveDraft(string $username, array $j): array
     {
         $cred = $this->requireImap($username);
-        
+
         $to = trim((string) ($j['to'] ?? ''));
         $subject = trim((string) ($j['subject'] ?? ''));
         $body = (string) ($j['body'] ?? '');
@@ -1457,7 +1461,7 @@ final class MailOperationService
             $mail->Body = $body;
             $mail->isHTML(false);
             $attachReport = self::attachDecodedUploads($mail, $j['attachments'] ?? null);
-            if (!$mail->preSend()) {
+            if (! $mail->preSend()) {
                 throw new \RuntimeException($mail->ErrorInfo);
             }
             $mime = $mail->getSentMIMEMessage();
@@ -1472,6 +1476,7 @@ final class MailOperationService
         if ($attachReport !== null) {
             $payload['attachment_report'] = $attachReport;
         }
+
         return $payload;
     }
 
@@ -1512,7 +1517,7 @@ final class MailOperationService
     }
 
     /**
-     * @param array{host: string, port: int, security: string, smtpAuth: bool}|null $transport
+     * @param  array{host: string, port: int, security: string, smtpAuth: bool}|null  $transport
      */
     private function mailSendException(\Throwable $e, ?array $transport = null): MailResponseException
     {

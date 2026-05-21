@@ -9,9 +9,7 @@ use Illuminate\Http\JsonResponse;
 
 final class UpdateStateController
 {
-    public function __construct(private UpdateStateService $updates)
-    {
-    }
+    public function __construct(private UpdateStateService $updates) {}
 
     public function __invoke(): JsonResponse
     {

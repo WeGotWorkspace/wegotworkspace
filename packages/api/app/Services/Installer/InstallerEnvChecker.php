@@ -10,9 +10,7 @@ final class InstallerEnvChecker
 {
     public const MIN_PHP = '8.3.0';
 
-    public function __construct(private AppPaths $paths)
-    {
-    }
+    public function __construct(private AppPaths $paths) {}
 
     /**
      * @return list<array{ok: bool, label: string, detail: string}>
@@ -31,7 +29,7 @@ final class InstallerEnvChecker
     }
 
     /**
-     * @param list<array{ok: bool, label: string, detail: string}> $checks
+     * @param  list<array{ok: bool, label: string, detail: string}>  $checks
      */
     public function allPassed(array $checks): bool
     {

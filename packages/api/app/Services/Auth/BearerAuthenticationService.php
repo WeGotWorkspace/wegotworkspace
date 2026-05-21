@@ -10,8 +10,7 @@ final class BearerAuthenticationService
         private JwtConfigService $jwtConfig,
         private JwtTokenService $jwtTokens,
         private RevokedTokenRepository $revokedTokens,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{username: string, role: 'guest'|'user'|'admin'}|null

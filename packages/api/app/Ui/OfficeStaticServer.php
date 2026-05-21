@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Ui;
 
 use App\Services\Installer\InstallerWebBase;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Response;
 
 /**

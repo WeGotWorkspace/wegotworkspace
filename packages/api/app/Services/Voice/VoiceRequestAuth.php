@@ -18,8 +18,7 @@ final class VoiceRequestAuth
     public function __construct(
         private BearerAuthenticationService $bearer,
         private SabreCredentialValidator $credentials,
-    ) {
-    }
+    ) {}
 
     /**
      * @return non-empty-string|null

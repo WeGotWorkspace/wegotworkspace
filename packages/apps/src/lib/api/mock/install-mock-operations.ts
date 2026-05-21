@@ -5,19 +5,14 @@ import type {
   InstallerSitePayload,
 } from "@/lib/api/wgw/installer";
 import type { WgwInstallerActionResponse, WgwInstallerRuntimeState } from "@/lib/api/wgw";
-import type {
-  InstallAPIOperations,
-  InstallerBackendStep,
-} from "@/install-core/src/install-types";
+import type { InstallAPIOperations, InstallerBackendStep } from "@/install-core/src/install-types";
 
 function cloneState(state: WgwInstallerRuntimeState): WgwInstallerRuntimeState {
   return structuredClone(state);
 }
 
 /** Client-side installer actions for Storybook and offline demos. */
-export function createMockInstallOperations(
-  seed: WgwInstallerRuntimeState,
-): InstallAPIOperations {
+export function createMockInstallOperations(seed: WgwInstallerRuntimeState): InstallAPIOperations {
   let state = cloneState(seed);
 
   const respond = (

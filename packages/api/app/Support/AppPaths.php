@@ -6,9 +6,7 @@ namespace App\Support;
 
 final class AppPaths
 {
-    public function __construct(private WgwInstallConfig $install)
-    {
-    }
+    public function __construct(private WgwInstallConfig $install) {}
 
     public function installRoot(): string
     {

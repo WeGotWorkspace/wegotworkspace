@@ -22,8 +22,7 @@ final class DriveService
         private DriveSessionStore $session,
         private DriveStarService $stars,
         private AdminRoleResolver $adminRoles,
-    ) {
-    }
+    ) {}
 
     public function assertFilesEnabled(): void
     {
@@ -173,7 +172,7 @@ final class DriveService
     }
 
     /**
-     * @param list<array{path?: string, type?: string}> $items
+     * @param  list<array{path?: string, type?: string}>  $items
      */
     public function deleteItems(string $username, array $items): string
     {
@@ -199,8 +198,7 @@ final class DriveService
     }
 
     /**
-     * @param list<string> $groupSlugs
-     *
+     * @param  list<string>  $groupSlugs
      * @return list<string>
      */
     public function listStarredPaths(string $username, array $groupSlugs): array
@@ -309,8 +307,7 @@ final class DriveService
     }
 
     /**
-     * @param list<string> $groupSlugs
-     *
+     * @param  list<string>  $groupSlugs
      * @return list<array{type: string, path: string, name: string, size: int, time: int, permissions: int}>
      */
     private function listEntries(
@@ -380,8 +377,7 @@ final class DriveService
     }
 
     /**
-     * @param list<string> $groupSlugs
-     *
+     * @param  list<string>  $groupSlugs
      * @return list<array{type: string, path: string, name: string, size: int, time: int, permissions: int}>
      */
     private function searchRecursive(
@@ -455,8 +451,7 @@ final class DriveService
     }
 
     /**
-     * @param list<array{type: string, path: string, name: string, size: int, time: int, permissions: int}> $entries
-     *
+     * @param  list<array{type: string, path: string, name: string, size: int, time: int, permissions: int}>  $entries
      * @return list<array{type: string, path: string, name: string, size: int, time: int, permissions: int}>
      */
     private function sortEntries(array $entries): array
@@ -493,7 +488,7 @@ final class DriveService
     }
 
     /**
-     * @param list<string> $groupSlugs
+     * @param  list<string>  $groupSlugs
      */
     private function assertAllowed(string $virtualPath, string $username, array $groupSlugs, bool $forWrite): void
     {

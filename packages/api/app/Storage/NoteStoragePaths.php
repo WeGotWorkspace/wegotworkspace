@@ -6,9 +6,7 @@ namespace App\Storage;
 
 final class NoteStoragePaths
 {
-    public function __construct(private StoragePaths $paths)
-    {
-    }
+    public function __construct(private StoragePaths $paths) {}
 
     public function baseKey(string $username, bool $archived): string
     {

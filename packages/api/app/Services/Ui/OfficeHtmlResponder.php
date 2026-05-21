@@ -16,8 +16,7 @@ final class OfficeHtmlResponder
     public function __construct(
         private AppPaths $paths,
         private UiSessionService $uiSession,
-    ) {
-    }
+    ) {}
 
     public function isInjectedHtmlPath(string $webBase, string $path): bool
     {

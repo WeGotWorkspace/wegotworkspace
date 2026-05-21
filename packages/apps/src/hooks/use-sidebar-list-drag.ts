@@ -20,8 +20,7 @@ export function useSidebarListDrag(selectedIds: string[]) {
 
   const beginDrag = useCallback(
     (itemId: string, e?: React.DragEvent) => {
-      const ids =
-        selectedIds.includes(itemId) && selectedIds.length > 1 ? selectedIds : [itemId];
+      const ids = selectedIds.includes(itemId) && selectedIds.length > 1 ? selectedIds : [itemId];
       draggingRef.current = ids;
       setDraggingIds(ids);
       if (e?.dataTransfer) {

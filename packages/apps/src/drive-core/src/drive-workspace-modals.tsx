@@ -170,9 +170,7 @@ export function DriveWorkspaceModals({ controller }: DriveWorkspaceModalsProps) 
         moveIds={moveDialog?.ids ?? []}
         view={view}
         singleItemParent={
-          moveDialog?.ids.length === 1
-            ? fileById(moveDialog.ids[0]!)?.parent
-            : undefined
+          moveDialog?.ids.length === 1 ? fileById(moveDialog.ids[0]!)?.parent : undefined
         }
         operations={operations}
         currentUsername={currentUsername}

@@ -2,21 +2,8 @@
 
 declare(strict_types=1);
 
-use App\Http\Controllers\Api\V1\Auth\JwksController;
-use App\Http\Controllers\Api\V1\Auth\MeController;
-use App\Http\Controllers\Api\V1\Auth\RefreshController;
-use App\Http\Controllers\Api\V1\Auth\RevokeController;
-use App\Http\Controllers\Api\V1\Auth\TokenController;
-use App\Http\Controllers\Api\V1\Settings\MailController as SettingsMailController;
-use App\Http\Controllers\Api\V1\Settings\ProfileController as SettingsProfileController;
-use App\Http\Controllers\Api\V1\Settings\StateController as SettingsStateController;
-use App\Http\Controllers\Api\V1\Notes\CapabilitiesController as NotesCapabilitiesController;
-use App\Http\Controllers\Api\V1\Notes\ItemsController as NotesItemsController;
-use App\Http\Controllers\Api\V1\Notes\NotebooksController;
-use App\Http\Controllers\Api\V1\Notes\StateController as NotesStateController;
-use App\Http\Controllers\Api\V1\Admin\GroupsController as AdminGroupsController;
 use App\Http\Controllers\Api\V1\Admin\GroupMemberController as AdminGroupMemberController;
-use App\Http\Controllers\Api\V1\Admin\UsersController as AdminUsersController;
+use App\Http\Controllers\Api\V1\Admin\GroupsController as AdminGroupsController;
 use App\Http\Controllers\Api\V1\Admin\SettingsController as AdminSettingsController;
 use App\Http\Controllers\Api\V1\Admin\StateController as AdminStateController;
 use App\Http\Controllers\Api\V1\Admin\UpdateApplyController as AdminUpdateApplyController;
@@ -25,19 +12,35 @@ use App\Http\Controllers\Api\V1\Admin\UpdateCancelController as AdminUpdateCance
 use App\Http\Controllers\Api\V1\Admin\UpdateCheckController as AdminUpdateCheckController;
 use App\Http\Controllers\Api\V1\Admin\UpdateLogController as AdminUpdateLogController;
 use App\Http\Controllers\Api\V1\Admin\UpdateStateController as AdminUpdateStateController;
-use App\Http\Controllers\Api\V1\Drive\DriveController;
-use App\Http\Controllers\Api\V1\Office\CapabilitiesController as OfficeCapabilitiesController;
-use App\Http\Controllers\Api\V1\Office\DocumentsController as OfficeDocumentsController;
-use App\Http\Controllers\Api\V1\Office\SessionController as OfficeSessionController;
+use App\Http\Controllers\Api\V1\Admin\UsersController as AdminUsersController;
+use App\Http\Controllers\Api\V1\Auth\JwksController;
+use App\Http\Controllers\Api\V1\Auth\MeController;
+use App\Http\Controllers\Api\V1\Auth\RefreshController;
+use App\Http\Controllers\Api\V1\Auth\RevokeController;
+use App\Http\Controllers\Api\V1\Auth\TokenController;
 use App\Http\Controllers\Api\V1\Dav\CapabilitiesController as DavCapabilitiesController;
+use App\Http\Controllers\Api\V1\Drive\DriveController;
 use App\Http\Controllers\Api\V1\Home\StateController as HomeStateController;
-use App\Http\Controllers\Api\V1\Mail\MailController;
 use App\Http\Controllers\Api\V1\Installer\ActionController as InstallerActionController;
 use App\Http\Controllers\Api\V1\Installer\BootstrapController as InstallerBootstrapController;
 use App\Http\Controllers\Api\V1\Installer\StateController as InstallerStateController;
+use App\Http\Controllers\Api\V1\Mail\MailController;
+use App\Http\Controllers\Api\V1\Notes\CapabilitiesController as NotesCapabilitiesController;
+use App\Http\Controllers\Api\V1\Notes\ItemsController as NotesItemsController;
+use App\Http\Controllers\Api\V1\Notes\NotebooksController;
+use App\Http\Controllers\Api\V1\Notes\StateController as NotesStateController;
+use App\Http\Controllers\Api\V1\Office\CapabilitiesController as OfficeCapabilitiesController;
+use App\Http\Controllers\Api\V1\Office\DocumentsController as OfficeDocumentsController;
+use App\Http\Controllers\Api\V1\Office\SessionController as OfficeSessionController;
+use App\Http\Controllers\Api\V1\Settings\MailController as SettingsMailController;
+use App\Http\Controllers\Api\V1\Settings\ProfileController as SettingsProfileController;
+use App\Http\Controllers\Api\V1\Settings\StateController as SettingsStateController;
 use App\Http\Controllers\Api\V1\System\CapabilitiesController;
 use App\Http\Controllers\Api\V1\System\HealthController;
 use App\Http\Controllers\Api\V1\Voice\VoiceController;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -63,9 +66,9 @@ Route::post('voice/leave', [VoiceController::class, 'leave']);
 Route::post('voice/chat', [VoiceController::class, 'chat']);
 
 Route::middleware([
-    \Illuminate\Cookie\Middleware\EncryptCookies::class,
-    \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
-    \Illuminate\Session\Middleware\StartSession::class,
+    EncryptCookies::class,
+    AddQueuedCookiesToResponse::class,
+    StartSession::class,
 ])->group(function (): void {
     Route::get('installer/state', InstallerStateController::class);
     Route::get('installer/bootstrap', InstallerBootstrapController::class);
@@ -73,9 +76,9 @@ Route::middleware([
 });
 
 $driveSession = [
-    \Illuminate\Cookie\Middleware\EncryptCookies::class,
-    \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
-    \Illuminate\Session\Middleware\StartSession::class,
+    EncryptCookies::class,
+    AddQueuedCookiesToResponse::class,
+    StartSession::class,
 ];
 
 Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($driveSession): void {

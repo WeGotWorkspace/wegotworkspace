@@ -26,11 +26,7 @@ export const Default: Story = {
           >
             12 Files
           </p>
-          <CollectionSearchInput
-            value=""
-            onChange={() => {}}
-            placeholder="Search..."
-          />
+          <CollectionSearchInput value="" onChange={() => {}} placeholder="Search..." />
         </CollectionHeader>
         <div className="p-4 space-y-2">
           <div className="rounded-md p-3 bg-black/5">List row one</div>

@@ -1,5 +1,5 @@
 import { useEffect, type ComponentType, type ReactNode } from "react";
-import { useNavigate, useRouterState } from "@tanstack/react-router";
+import { useNavigate, useRouterState, type RouteComponent } from "@tanstack/react-router";
 import { wgwLiveApiEnabled, wgwSessionAvailable } from "@/lib/api/wgw/http";
 import { isWgwAuthRoutePathname, sanitizeWgwReturnPath } from "@/lib/api/wgw/route-guard";
 
@@ -29,7 +29,7 @@ function WeGotWorkspaceRequireAuth({ children }: WeGotWorkspaceRequireAuthProps)
 
 export function withWeGotWorkspaceAuth<Props extends object>(
   Component: ComponentType<Props>,
-): ComponentType<Props> {
+): RouteComponent {
   function AuthenticatedRoute(props: Props) {
     return (
       <WeGotWorkspaceRequireAuth>
@@ -38,5 +38,5 @@ export function withWeGotWorkspaceAuth<Props extends object>(
     );
   }
   AuthenticatedRoute.displayName = `WithWeGotWorkspaceAuth(${Component.displayName ?? Component.name ?? "Route"})`;
-  return AuthenticatedRoute;
+  return AuthenticatedRoute as unknown as RouteComponent;
 }

@@ -48,7 +48,7 @@ async function readApiError(res: Response, fallback: string): Promise<string> {
 }
 
 async function postVoiceJson<T>(
-  action: "join" | "poll" | "send" | "leave" | "chat",
+  action: "room" | "join" | "poll" | "send" | "leave" | "chat",
   body: object,
   opts?: MeetRequestOptions,
 ): Promise<T> {
@@ -66,7 +66,7 @@ async function postVoiceJson<T>(
 }
 
 async function postVoiceJsonGuest<T>(
-  action: "join" | "poll" | "send" | "leave" | "chat",
+  action: "room" | "join" | "poll" | "send" | "leave" | "chat",
   body: object,
   opts?: MeetRequestOptions,
 ): Promise<T> {

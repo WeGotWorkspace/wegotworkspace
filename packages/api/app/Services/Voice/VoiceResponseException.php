@@ -9,7 +9,7 @@ use RuntimeException;
 final class VoiceResponseException extends RuntimeException
 {
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     public function __construct(
         public readonly int $status,

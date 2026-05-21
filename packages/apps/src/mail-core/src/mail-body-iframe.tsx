@@ -1,8 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import {
-  openMailBodyLink,
-  prepareMailBodyHtmlLinks,
-} from "@/mail-core/src/mail-body-iframe-links";
+import { openMailBodyLink, prepareMailBodyHtmlLinks } from "@/mail-core/src/mail-body-iframe-links";
 import { mailWorkspacePaneClasses } from "@/mail-core/src/mail-workspace.styles";
 
 type MailBodyIframeProps = {
