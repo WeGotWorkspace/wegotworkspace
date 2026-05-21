@@ -12,6 +12,7 @@ use App\Support\WgwInstallConfig;
 use App\Support\WgwSettings;
 use Illuminate\Support\Facades\Storage;
 use Tests\Support\SqliteWgwSchema;
+use Tests\Support\WgwInstallFixture;
 use Tests\TestCase;
 
 final class SabreWebdavGetTest extends TestCase
@@ -45,14 +46,26 @@ final class SabreWebdavGetTest extends TestCase
             'displayname' => 'Alice',
         ]);
 
-        $this->dataDir = sys_get_temp_dir().'/wgw-get-'.uniqid('', true);
-        mkdir($this->dataDir, 0775, true);
+        $installRoot = sys_get_temp_dir().'/wgw-get-root-'.uniqid('', true);
+        mkdir($installRoot, 0775, true);
+        file_put_contents($installRoot.'/index.php', "<?php\n");
+        $this->dataDir = $installRoot.'/wgw-content';
         mkdir($this->dataDir.'/files/users/alice', 0775, true);
-        file_put_contents($this->dataDir.'/.installed', date('c')."\n");
+        putenv('WGW_APP_ROOT='.$installRoot);
+        $_ENV['WGW_APP_ROOT'] = $installRoot;
+        WgwInstallFixture::markInstalled($installRoot, $this->dataDir, 'alice');
 
         config(['wgw.data_dir' => $this->dataDir]);
-        $this->app->forgetInstance(WgwInstallConfig::class);
-        $this->app->forgetInstance(AppPaths::class);
+        WgwInstallFixture::forgetInstallBindings();
+    }
+
+    public function test_unauthenticated_files_request_includes_www_authenticate(): void
+    {
+        $response = $this->call('GET', '/files');
+
+        $response->assertStatus(401);
+        $challenge = (string) $response->headers->get('WWW-Authenticate');
+        $this->assertStringContainsString('Basic realm="SabreDAV"', $challenge);
     }
 
     public function test_get_returns_file_body_with_basic_auth(): void

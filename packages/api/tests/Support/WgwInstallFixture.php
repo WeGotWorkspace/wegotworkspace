@@ -1,0 +1,77 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Support;
+
+use App\Support\AppPaths;
+
+final class WgwInstallFixture
+{
+    public static function markInstalled(string $installRoot, string $dataDir, string $username = 'admin'): void
+    {
+        $installRoot = rtrim(str_replace('\\', '/', $installRoot), '/');
+        $dataDir = rtrim(str_replace('\\', '/', $dataDir), '/');
+
+        mkdir($dataDir.'/keys', 0700, true);
+        $keys = AuthTestKeys::rsaPair();
+        file_put_contents($dataDir.'/keys/api-jwt-private.pem', $keys['private_key']);
+        file_put_contents($dataDir.'/keys/api-jwt-public.pem', $keys['public_key']);
+
+        $relData = self::relativeToInstallRoot($installRoot, $dataDir) ?? './wgw-content';
+        $relDb = self::relativeToInstallRoot($installRoot, $dataDir.'/db.sqlite') ?? $relData.'/db.sqlite';
+
+        $written = [
+            'data_dir' => $relData,
+            'update_feed_url' => 'https://github.com/woutervroege/wegotworkspace/releases/latest/download/manifest.json',
+            'pdo' => ['sqlite_file' => $relDb],
+        ];
+        $config = "<?php\n\ndeclare(strict_types=1);\n\nreturn ".var_export($written, true).";\n";
+        file_put_contents($installRoot.'/wgw-config.php', $config);
+        \App\LocalConfigFile::clearCache();
+
+        self::seedSqliteDatabase($dataDir.'/db.sqlite', $username);
+        file_put_contents($dataDir.'/.installed', date('c')."\n");
+    }
+
+    public static function forgetInstallBindings(): void
+    {
+        if (! function_exists('app')) {
+            return;
+        }
+        app()->forgetInstance(\App\Support\WgwInstallConfig::class);
+        app()->forgetInstance(AppPaths::class);
+    }
+
+    private static function seedSqliteDatabase(string $path, string $username): void
+    {
+        if (is_file($path)) {
+            @unlink($path);
+        }
+        $pdo = new \PDO('sqlite:'.$path, null, null, [
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+        ]);
+        $pdo->exec(
+            'CREATE TABLE users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                username TEXT NOT NULL,
+                digesta1 TEXT NOT NULL DEFAULT "",
+                digest TEXT NOT NULL,
+                UNIQUE(username)
+            )'
+        );
+        $stmt = $pdo->prepare('INSERT INTO users (username, digesta1, digest) VALUES (?, ?, ?)');
+        $stmt->execute([$username, '', password_hash('secret', PASSWORD_DEFAULT)]);
+    }
+
+    private static function relativeToInstallRoot(string $installRoot, string $absolute): ?string
+    {
+        $absolute = rtrim(str_replace('\\', '/', $absolute), '/');
+        $prefix = $installRoot.'/';
+        if (! str_starts_with($absolute, $prefix)) {
+            return null;
+        }
+
+        return './'.ltrim(substr($absolute, strlen($prefix)), '/');
+    }
+}

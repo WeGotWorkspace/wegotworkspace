@@ -32,7 +32,79 @@ final class AppPaths
 
     public function isInstalled(): bool
     {
-        return is_file($this->lockFile());
+        if (! is_file($this->lockFile())) {
+            return false;
+        }
+
+        if (! is_readable($this->install->configFilePath())) {
+            return false;
+        }
+
+        return $this->jwtKeysReady() && $this->databaseReady();
+    }
+
+    public function jwtPrivateKeyPath(): string
+    {
+        return rtrim($this->dataDir(), '/').'/keys/api-jwt-private.pem';
+    }
+
+    public function jwtPublicKeyPath(): string
+    {
+        return rtrim($this->dataDir(), '/').'/keys/api-jwt-public.pem';
+    }
+
+    public function jwtKeysReady(): bool
+    {
+        foreach ([$this->jwtPrivateKeyPath(), $this->jwtPublicKeyPath()] as $path) {
+            if (! is_readable($path) || ! is_file($path) || filesize($path) < 32) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public function databaseReady(): bool
+    {
+        $path = $this->configuredSqlitePath();
+        if ($path === null || ! is_file($path) || filesize($path) < 1) {
+            return false;
+        }
+
+        try {
+            $pdo = new \PDO('sqlite:'.$path, null, null, [
+                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            ]);
+            $users = $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn();
+
+            return (int) $users > 0;
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    public function clearStaleInstallLock(): void
+    {
+        if (is_file($this->lockFile()) && ! $this->isInstalled()) {
+            @unlink($this->lockFile());
+        }
+    }
+
+    private function configuredSqlitePath(): ?string
+    {
+        $cfg = $this->install->readInstallFileConfig();
+        $pdo = $cfg['pdo'] ?? null;
+        if (! is_array($pdo)) {
+            return rtrim($this->dataDir(), '/').'/db.sqlite';
+        }
+        if (isset($pdo['sqlite_file']) && is_string($pdo['sqlite_file']) && trim($pdo['sqlite_file']) !== '') {
+            return $this->install->resolveInstallPath(trim($pdo['sqlite_file']));
+        }
+        if (isset($pdo['dsn']) && is_string($pdo['dsn']) && str_starts_with(trim($pdo['dsn']), 'sqlite:')) {
+            return substr(trim($pdo['dsn']), 7);
+        }
+
+        return rtrim($this->dataDir(), '/').'/db.sqlite';
     }
 
     public function isMaintenance(): bool

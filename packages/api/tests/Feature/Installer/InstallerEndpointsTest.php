@@ -37,6 +37,8 @@ final class InstallerEndpointsTest extends TestCase
             @unlink($this->installRoot.'/wgw-config.php');
         }
 
+        \App\LocalConfigFile::clearCache();
+
         parent::tearDown();
     }
 
@@ -52,6 +54,17 @@ final class InstallerEndpointsTest extends TestCase
         $bootstrap = $this->getJson('/api/v1/installer/bootstrap');
         $bootstrap->assertOk()
             ->assertJsonPath('state.step', 'welcome');
+    }
+
+    public function test_stale_lock_without_keys_allows_installer(): void
+    {
+        file_put_contents($this->installRoot.'/wgw-content/.installed', date('c')."\n");
+
+        $this->getJson('/api/v1/installer/bootstrap')
+            ->assertOk()
+            ->assertJsonPath('state.step', 'welcome');
+
+        $this->assertFileDoesNotExist($this->installRoot.'/wgw-content/.installed');
     }
 
     public function test_wizard_advances_through_sqlite_install(): void
@@ -108,6 +121,14 @@ final class InstallerEndpointsTest extends TestCase
         $this->assertFileExists($this->installRoot.'/wgw-content/.installed');
         $this->assertFileExists($this->installRoot.'/wgw-config.php');
         $this->assertFileExists($this->installRoot.'/wgw-content/install-test.sqlite');
+        $this->assertFileExists($this->installRoot.'/wgw-content/keys/api-jwt-private.pem');
+        $this->assertFileExists($this->installRoot.'/wgw-content/keys/api-jwt-public.pem');
+
+        $db = new \PDO('sqlite:'.$this->installRoot.'/wgw-content/install-test.sqlite');
+        $stmt = $db->query("SELECT value FROM app_settings WHERE name = 'auth_realm'");
+        $this->assertSame('SabreDAV', $stmt->fetchColumn());
+        $stmt = $db->query("SELECT value FROM app_settings WHERE name = 'base_uri'");
+        $this->assertSame('/', $stmt->fetchColumn());
 
         $this->getJson('/api/v1/installer/state')
             ->assertOk()

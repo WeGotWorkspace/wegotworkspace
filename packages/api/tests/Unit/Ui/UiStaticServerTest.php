@@ -28,4 +28,32 @@ final class UiStaticServerTest extends TestCase
         $this->assertNotNull($file);
         $this->assertStringContainsString('console.log', (string) file_get_contents($file->getPathname()));
     }
+
+    public function test_resolve_route_prefix_prefers_install_over_root(): void
+    {
+        $server = new UiStaticServer();
+        $prefixes = [
+            '/',
+            '/install',
+        ];
+
+        $this->assertSame('/install', $server->resolveRoutePrefix('', '/install/assets/app.js', $prefixes));
+        $this->assertSame('/', $server->resolveRoutePrefix('', '/', $prefixes));
+        $this->assertNull($server->resolveRoutePrefix('', '/mail/inbox', $prefixes));
+    }
+
+    public function test_serves_install_scoped_assets(): void
+    {
+        $dist = sys_get_temp_dir().'/wgw-static-install-'.uniqid('', true);
+        mkdir($dist.'/assets', 0775, true);
+        file_put_contents($dist.'/index.html', '<!doctype html><title>Install</title>');
+        file_put_contents($dist.'/assets/app.js', 'window.__install = true;');
+
+        $server = new UiStaticServer();
+        $response = $server->tryServe($dist, '', '/install/assets/app.js', false);
+
+        $this->assertNotNull($response);
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('application/javascript; charset=utf-8', $response->headers->get('Content-Type'));
+    }
 }

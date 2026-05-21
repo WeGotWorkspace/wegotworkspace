@@ -6,6 +6,7 @@ namespace App\Dav;
 
 use App\Http\Sabre\SabreHttpRequestFactory;
 use App\Http\Sabre\SabreHttpResponseConverter;
+use App\Services\Installer\InstallerWebBase;
 use App\Support\AppPaths;
 use Illuminate\Http\Request;
 use Sabre\DAV;
@@ -35,11 +36,7 @@ final class SabreKernel
     public function serve(Request $request): Response
     {
         if (! $this->paths->isInstalled()) {
-            return response(
-                "WeGotWorkspace is not installed. Open /install/ to finish setup.\n",
-                503,
-                ['Content-Type' => 'text/plain; charset=utf-8']
-            );
+            return $this->uninstalledResponse($request);
         }
 
         if ($request->headers->has('Authorization') && empty($_SERVER['HTTP_AUTHORIZATION'])) {
@@ -72,6 +69,20 @@ final class SabreKernel
         return $this->converter->toIlluminate($httpResponse);
     }
 
+    private function uninstalledResponse(Request $request): Response
+    {
+        $method = strtoupper($request->method());
+        if (in_array($method, ['GET', 'HEAD'], true) && ! $request->query->has('sabreAction')) {
+            return InstallerWebBase::redirectToInstallWizard();
+        }
+
+        return response(
+            "WeGotWorkspace is not installed. Open /install/ to finish setup.\n",
+            503,
+            ['Content-Type' => 'text/plain; charset=utf-8']
+        );
+    }
+
     private function exceptionResponse(Server $server, \Throwable $e): HTTP\Response
     {
         try {
@@ -102,10 +113,20 @@ final class SabreKernel
         $headers['Content-Type'] = 'application/xml; charset=utf-8';
 
         $response = new HTTP\Response();
+        $this->copyResponseHeaders($server->httpResponse, $response);
         $response->setStatus($httpCode);
-        $response->setHeaders($headers);
+        foreach ($headers as $name => $value) {
+            $response->setHeader($name, $value);
+        }
         $response->setBody($dom->saveXML());
 
         return $response;
+    }
+
+    private function copyResponseHeaders(HTTP\Response $from, HTTP\Response $to): void
+    {
+        foreach ($from->getHeaders() as $name => $value) {
+            $to->setHeader($name, $value);
+        }
     }
 }
