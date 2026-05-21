@@ -120,9 +120,13 @@ Each phase: routes → Form Requests → Resources → Services → tests → de
 
 ## Definition of done (whole API)
 
-- Every path in `openapi/openapi.json` implemented; every `routes/api.php` route appears in the spec
-- Feature tests cover happy path + main error shapes per tag
-- No imports from deleted legacy namespaces
+Run **`composer done-gate`** (`pnpm test:api-done-gate` from repo root). See **`docs/api-done-gate.md`**.
+
+- Bidirectional OpenAPI ↔ `routes/api.php` parity (`OpenApiRouteContractTest`)
+- `greenfield:guard` green
+- Full PHPUnit green
+- Feature tests cover happy path + main error shapes per tag (ongoing per domain)
+- No imports from deleted legacy namespaces; no `src/` or `legacy/` directories
 - `apps/wegotworkspace` serves UI + API through Laravel only
 - Release zip includes Composer `vendor/` for the new runtime
 
