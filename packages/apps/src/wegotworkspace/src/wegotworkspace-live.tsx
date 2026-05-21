@@ -16,7 +16,10 @@ export type WeGotWorkspaceLiveProps = WeGotWorkspaceProps & {
  * Live API shell for Storybook manual testing (memory history + configurable base URL).
  * Production uses {@link WeGotWorkspaceApp} with browser history instead.
  */
-export function WeGotWorkspaceLive({ apiBaseUrl, initialPath = "/login" }: WeGotWorkspaceLiveProps) {
+export function WeGotWorkspaceLive({
+  apiBaseUrl,
+  initialPath = "/login",
+}: WeGotWorkspaceLiveProps) {
   const history = useMemo(
     () =>
       createMemoryHistory({

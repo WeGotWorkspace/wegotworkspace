@@ -66,7 +66,7 @@ final class AppUserFilesHomeCollection extends HomeCollection
             return [];
         }
         $principalInfo = $this->principalBackend->getPrincipalByPath($current);
-        if (!$principalInfo || !AccountPrincipalFilter::isAccountPrincipal($this->pdo, $principalInfo)) {
+        if (! $principalInfo || ! AccountPrincipalFilter::isAccountPrincipal($this->pdo, $principalInfo)) {
             return [];
         }
 
@@ -76,7 +76,7 @@ final class AppUserFilesHomeCollection extends HomeCollection
     public function getChild($name): DAV\INode
     {
         $principalInfo = $this->principalBackend->getPrincipalByPath($this->principalPrefix.'/'.$name);
-        if (!$principalInfo || !AccountPrincipalFilter::isAccountPrincipal($this->pdo, $principalInfo)) {
+        if (! $principalInfo || ! AccountPrincipalFilter::isAccountPrincipal($this->pdo, $principalInfo)) {
             throw new DAV\Exception\NotFound('Principal with name '.$name.' not found');
         }
         $current = $this->authPlugin->getCurrentPrincipal();
@@ -94,7 +94,7 @@ final class AppUserFilesHomeCollection extends HomeCollection
             return false;
         }
         $principalInfo = $this->principalBackend->getPrincipalByPath($this->principalPrefix.'/'.$name);
-        if (!$principalInfo) {
+        if (! $principalInfo) {
             return false;
         }
 

@@ -25,8 +25,7 @@ export function DriveMediaPreview({
     setFailed(false);
   }, [previewSrc, file.id]);
 
-  const supportsInlineImage =
-    file.kind !== "image" || canBrowserPreviewImage(file.title);
+  const supportsInlineImage = file.kind !== "image" || canBrowserPreviewImage(file.title);
 
   const canPreview =
     (file.kind === "image" || file.kind === "video") &&

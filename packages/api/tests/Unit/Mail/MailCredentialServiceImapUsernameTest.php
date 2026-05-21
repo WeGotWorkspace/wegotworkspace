@@ -52,7 +52,7 @@ final class MailCredentialServiceImapUsernameTest extends TestCase
     public function test_save_stores_submitted_imap_username_independent_of_profile_email(): void
     {
         $service = new MailCredentialService(new MailSecretService(
-            $this->app->make(\App\Support\WgwInstallConfig::class)
+            $this->app->make(WgwInstallConfig::class)
         ));
         $service->save('alice', 'mailbox@provider.test', 'mail-secret');
 
@@ -66,7 +66,7 @@ final class MailCredentialServiceImapUsernameTest extends TestCase
     public function test_effective_imap_username_falls_back_to_profile_email_when_unset(): void
     {
         $service = new MailCredentialService(new MailSecretService(
-            $this->app->make(\App\Support\WgwInstallConfig::class)
+            $this->app->make(WgwInstallConfig::class)
         ));
 
         $this->assertSame('alice@example.test', $service->effectiveImapUsername('alice', null));

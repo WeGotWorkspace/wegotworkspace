@@ -14,9 +14,7 @@ use Illuminate\Http\Request;
 
 final class NotebooksController
 {
-    public function __construct(private NoteRepository $notes)
-    {
-    }
+    public function __construct(private NoteRepository $notes) {}
 
     public function index(Request $request): JsonResponse
     {

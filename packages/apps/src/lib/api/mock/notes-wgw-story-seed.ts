@@ -7,8 +7,7 @@ const SAMPLE_ITEMS: WgwNoteItem[] = [
     id: "wgw-note-1",
     notebook: "General",
     title: "Note from GET /notes/items",
-    body:
-      "Paragraph one from a WgwNoteItem.\n\nSecond block exercises splitBodyParagraphs the same way the REST body string would.",
+    body: "Paragraph one from a WgwNoteItem.\n\nSecond block exercises splitBodyParagraphs the same way the REST body string would.",
     tags: ["openapi", "storybook"],
     starred: true,
     archived: false,

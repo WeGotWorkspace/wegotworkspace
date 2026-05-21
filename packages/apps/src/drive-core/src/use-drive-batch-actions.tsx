@@ -165,7 +165,11 @@ export function useDriveBatchActions({
         execute: async (signal) => {
           if (!operations) return;
           await ensureTrashFolder(operations, currentUsername, groupRootNames, signal);
-          const destination = apiPathFromUiPath(DRIVE_TRASH_UI_PATH, currentUsername, groupRootNames);
+          const destination = apiPathFromUiPath(
+            DRIVE_TRASH_UI_PATH,
+            currentUsername,
+            groupRootNames,
+          );
           for (const file of rows) {
             const from = resolveDriveFileApiPath(file, currentUsername, groupRootNames);
             await operations.renameItem({ destination, from, to: file.title }, { signal });
@@ -287,7 +291,10 @@ export function useDriveBatchActions({
         await Promise.all(
           rows.map((file) =>
             operations.setStar(
-              { path: resolveDriveFileApiPath(file, currentUsername, groupRootNames), starred: nextValue },
+              {
+                path: resolveDriveFileApiPath(file, currentUsername, groupRootNames),
+                starred: nextValue,
+              },
               { signal },
             ),
           ),

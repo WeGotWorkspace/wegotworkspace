@@ -10,9 +10,7 @@ use Illuminate\Http\JsonResponse;
 
 final class UpdateCheckController
 {
-    public function __construct(private UpdateOperationsService $updates)
-    {
-    }
+    public function __construct(private UpdateOperationsService $updates) {}
 
     public function __invoke(): JsonResponse
     {

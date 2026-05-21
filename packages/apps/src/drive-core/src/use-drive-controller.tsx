@@ -10,12 +10,19 @@ import { useDriveBatchActions } from "@/drive-core/src/use-drive-batch-actions";
 import { driveLabels } from "@/drive-core/src/drive-labels";
 import { useDriveSelectionBar } from "@/drive-core/src/use-drive-selection-bar";
 import { wgwEnsureOfficeSession } from "@/lib/api/wgw/http";
-import type { DriveAPIOperations, DriveUIData, DriveUploadProgress } from "@/drive-core/src/drive-types";
+import type {
+  DriveAPIOperations,
+  DriveUIData,
+  DriveUploadProgress,
+} from "@/drive-core/src/drive-types";
 import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
 import { DRIVE_MOCK_FILES } from "@/drive-core/src/drive-mock-files";
 import type { DriveFile, FileKind, ViewKey } from "@/drive-core/src/drive-models";
 import { OFFICE_EDITOR_EXTENSIONS } from "@/drive-core/src/drive-models";
-import { mergeDriveFolderListing, resolveDriveFileApiPath } from "@/drive-core/src/drive-batch-utils";
+import {
+  mergeDriveFolderListing,
+  resolveDriveFileApiPath,
+} from "@/drive-core/src/drive-batch-utils";
 import {
   apiPathFromUiPath,
   DRIVE_TRASH_UI_PATH,
@@ -125,12 +132,7 @@ export function useDriveController({
   const folderViewPath = view.type === "folder" ? view.path : null;
 
   useLayoutEffect(() => {
-    if (
-      !operations ||
-      folderViewPath === null ||
-      listLoading ||
-      !currentUsername.trim()
-    ) {
+    if (!operations || folderViewPath === null || listLoading || !currentUsername.trim()) {
       return;
     }
     const cwdUi = uiPathFromApiPath(data.cwd, currentUsername);
@@ -176,15 +178,18 @@ export function useDriveController({
     if (!isViewControlled) {
       commitView({ type: "folder", path: cwdPath });
     }
-  }, [commitView, currentUsername, data, folderViewPath, isViewControlled, listLoading, operations]);
+  }, [
+    commitView,
+    currentUsername,
+    data,
+    folderViewPath,
+    isViewControlled,
+    listLoading,
+    operations,
+  ]);
 
   useEffect(() => {
-    if (
-      !operations ||
-      folderViewPath === null ||
-      listLoading ||
-      !currentUsername.trim()
-    ) {
+    if (!operations || folderViewPath === null || listLoading || !currentUsername.trim()) {
       return;
     }
     if (syncedFolderPathRef.current === folderViewPath) {
@@ -214,14 +219,7 @@ export function useDriveController({
       });
 
     return () => controller.abort();
-  }, [
-    commitView,
-    currentUsername,
-    folderViewPath,
-    listLoading,
-    operations,
-    showError,
-  ]);
+  }, [commitView, currentUsername, folderViewPath, listLoading, operations, showError]);
 
   const selectView = useCallback(
     (v: ViewKey) => {
@@ -954,29 +952,46 @@ export function useDriveController({
     labels: driveLabels,
     launchOfficeEditor,
     currentUsername,
-    files, setFiles,
+    files,
+    setFiles,
     view,
     setView: commitView,
-    activeId, setActiveId,
-    selectedIds, setSelectedIds,
-    lastClickedId, setLastClickedId,
-    starred, setStarred,
-    sidebarOpen, setSidebarOpen,
-    detailOpen, setDetailOpen,
-    selectionMode, setSelectionMode,
-    viewMode, setViewMode,
-    newFolderDialogOpen, setNewFolderDialogOpen,
-    newFolderName, setNewFolderName,
-    renameDialog, setRenameDialog,
-    renameName, setRenameName,
-    confirmDelete, setConfirmDelete,
-    moveDialog, setMoveDialog,
-    searchQuery, setSearchQuery,
+    activeId,
+    setActiveId,
+    selectedIds,
+    setSelectedIds,
+    lastClickedId,
+    setLastClickedId,
+    starred,
+    setStarred,
+    sidebarOpen,
+    setSidebarOpen,
+    detailOpen,
+    setDetailOpen,
+    selectionMode,
+    setSelectionMode,
+    viewMode,
+    setViewMode,
+    newFolderDialogOpen,
+    setNewFolderDialogOpen,
+    newFolderName,
+    setNewFolderName,
+    renameDialog,
+    setRenameDialog,
+    renameName,
+    setRenameName,
+    confirmDelete,
+    setConfirmDelete,
+    moveDialog,
+    setMoveDialog,
+    searchQuery,
+    setSearchQuery,
     liveSearchResults,
     starredItems,
     knownGroupRoots,
     imagePreviewUrls,
-    dropUploadActive, setDropUploadActive,
+    dropUploadActive,
+    setDropUploadActive,
     uploadProgress,
     fileInputRef,
     searchInputRef,

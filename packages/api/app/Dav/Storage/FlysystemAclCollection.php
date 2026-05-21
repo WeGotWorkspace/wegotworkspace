@@ -13,7 +13,7 @@ class FlysystemAclCollection extends FlysystemDirectory implements IACL
     use ACLTrait;
 
     /**
-     * @param list<array{privilege: string, principal: string, protected?: bool}> $acl
+     * @param  list<array{privilege: string, principal: string, protected?: bool}>  $acl
      */
     public function __construct(
         Filesystem $filesystem,

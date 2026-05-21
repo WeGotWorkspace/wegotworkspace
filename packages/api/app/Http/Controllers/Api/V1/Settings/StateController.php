@@ -12,9 +12,7 @@ use Illuminate\Http\Request;
 
 final class StateController
 {
-    public function __construct(private SettingsStateService $settings)
-    {
-    }
+    public function __construct(private SettingsStateService $settings) {}
 
     public function __invoke(Request $request): JsonResponse
     {

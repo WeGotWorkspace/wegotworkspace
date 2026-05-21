@@ -9,9 +9,7 @@ use Illuminate\Http\JsonResponse;
 
 final class CapabilitiesController
 {
-    public function __construct(private DavCapabilitiesService $dav)
-    {
-    }
+    public function __construct(private DavCapabilitiesService $dav) {}
 
     public function __invoke(): JsonResponse
     {

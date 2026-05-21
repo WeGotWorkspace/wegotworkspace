@@ -9,9 +9,7 @@ use App\Support\WgwSettings;
 
 final class OfficeCapabilitiesService
 {
-    public function __construct(private AppPaths $paths)
-    {
-    }
+    public function __construct(private AppPaths $paths) {}
 
     /**
      * @return array{enabled: bool, indexReady: bool, editorReady: bool}

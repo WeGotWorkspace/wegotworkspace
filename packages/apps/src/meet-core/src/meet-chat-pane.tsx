@@ -20,14 +20,25 @@ type MeetChatPaneProps = {
   onClose: () => void;
 };
 
-export function MeetChatPane({ messages, draft, onDraftChange, onSend, onClose }: MeetChatPaneProps) {
+export function MeetChatPane({
+  messages,
+  draft,
+  onDraftChange,
+  onSend,
+  onClose,
+}: MeetChatPaneProps) {
   return (
     <aside className="meet-chat">
       <div className="meet-chat__header">
         <div className="flex items-center gap-2 text-sm font-medium">
           <MessageSquare className="size-4" /> {meetLabels.chatTitle}
         </div>
-        <button type="button" onClick={onClose} className="meet-chat__close" aria-label="Close chat">
+        <button
+          type="button"
+          onClick={onClose}
+          className="meet-chat__close"
+          aria-label="Close chat"
+        >
           <X className="size-4" />
         </button>
       </div>

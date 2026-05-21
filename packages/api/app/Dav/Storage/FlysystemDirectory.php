@@ -6,10 +6,10 @@ namespace App\Dav\Storage;
 
 use Sabre\DAV;
 
-class FlysystemDirectory extends FlysystemNode implements DAV\ICollection, DAV\IQuota, DAV\IMoveTarget
+class FlysystemDirectory extends FlysystemNode implements DAV\ICollection, DAV\IMoveTarget, DAV\IQuota
 {
     /**
-     * @param resource|string|null $data
+     * @param  resource|string|null  $data
      */
     public function createFile($name, $data = null): ?string
     {

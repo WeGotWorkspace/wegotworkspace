@@ -1,8 +1,5 @@
 import { useEffect, useMemo, type ReactNode } from "react";
-import {
-  normalizeWgwApiBaseUrl,
-  pushWgwApiRuntime,
-} from "@/lib/api/wgw/wgw-api-runtime";
+import { normalizeWgwApiBaseUrl, pushWgwApiRuntime } from "@/lib/api/wgw/wgw-api-runtime";
 
 type WgwApiRuntimeProviderProps = {
   /** REST API root (with or without trailing `/api/v1`). */

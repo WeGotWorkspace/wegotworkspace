@@ -9,9 +9,7 @@ use Illuminate\Support\Facades\File;
 
 final class MailSecretService
 {
-    public function __construct(private WgwInstallConfig $install)
-    {
-    }
+    public function __construct(private WgwInstallConfig $install) {}
 
     public function ensureSecretFile(): void
     {

@@ -105,7 +105,9 @@ async function requestInstallerAction(
   return (await wgwReadJson(res)) as WgwInstallerActionResponse;
 }
 
-export async function fetchInstallerState(opts?: RequestOptions): Promise<WgwInstallerStateResponse> {
+export async function fetchInstallerState(
+  opts?: RequestOptions,
+): Promise<WgwInstallerStateResponse> {
   const res = await installerRequest("/state", { signal: opts?.signal });
   if (!res.ok) throw new Error(`GET /installer/state failed (${res.status})`);
   return (await wgwReadJson(res)) as WgwInstallerStateResponse;
@@ -119,7 +121,9 @@ export async function fetchInstallerBootstrap(
   return (await wgwReadJson(res)) as WgwInstallerBootstrapResponse;
 }
 
-export async function installerWelcomeNext(opts?: RequestOptions): Promise<WgwInstallerActionResponse> {
+export async function installerWelcomeNext(
+  opts?: RequestOptions,
+): Promise<WgwInstallerActionResponse> {
   return requestInstallerAction("welcome_next", {}, opts);
 }
 

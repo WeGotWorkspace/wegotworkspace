@@ -9,9 +9,7 @@ namespace App\Support;
  */
 final class WgwDatabaseConfig
 {
-    public function __construct(private WgwInstallConfig $install)
-    {
-    }
+    public function __construct(private WgwInstallConfig $install) {}
 
     /**
      * @return array{

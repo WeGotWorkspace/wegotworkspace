@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Voice;
 
+use Illuminate\Support\Facades\DB;
 use Tests\Support\AuthTestKeys;
 use Tests\Support\SqliteWgwSchema;
 use Tests\TestCase;
@@ -22,7 +23,7 @@ final class VoiceEndpointsTest extends TestCase
                 'foreign_key_constraints' => true,
             ],
         ]);
-        \Illuminate\Support\Facades\DB::purge('wgw');
+        DB::purge('wgw');
 
         $keys = AuthTestKeys::rsaPair();
         config([

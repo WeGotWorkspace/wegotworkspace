@@ -5,7 +5,7 @@ import {
   createDefaultSettingsApiSource,
   type SettingsApiSource,
 } from "@/settings-core/src/settings-api-source";
-import type { SettingsUIData } from "@/settings-core/src/settings-types";
+import type { SettingsAPIOperations, SettingsUIData } from "@/settings-core/src/settings-types";
 
 export function useSettingsAPI(source?: SettingsApiSource) {
   const resolvedSource = useMemo(() => source ?? createDefaultSettingsApiSource(), [source]);
@@ -80,7 +80,7 @@ export function useSettingsAPI(source?: SettingsApiSource) {
       });
     };
 
-    return {
+    const operations: SettingsAPIOperations = {
       saveProfile: async (input, opts) => {
         const next = await baseOperations.saveProfile(input, opts);
         applySettingsState(next);
@@ -92,6 +92,7 @@ export function useSettingsAPI(source?: SettingsApiSource) {
         return next;
       },
     };
+    return operations;
   }, [baseOperations, patchBootstrap]);
 
   return { phase, error, retry, successVersion, listLoading, session, data, operations };

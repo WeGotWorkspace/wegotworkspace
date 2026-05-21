@@ -9,9 +9,7 @@ use App\Support\WgwSettings;
 
 final class NotesCapabilitiesService
 {
-    public function __construct(private AppPaths $paths)
-    {
-    }
+    public function __construct(private AppPaths $paths) {}
 
     /**
      * @return array{enabled: bool, distReady: bool, baseUri: string}
@@ -26,5 +24,4 @@ final class NotesCapabilitiesService
             'baseUri' => (string) ($cfg[WgwSettings::BASE_URI] ?? '/'),
         ];
     }
-
 }

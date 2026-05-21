@@ -2,7 +2,10 @@ import { Input } from "@/ui/input";
 import { Card } from "@/card/src/card";
 import { FieldLabelRow } from "@/ui/field-label-row";
 import type { InstallControllerState } from "@/install-core/src/use-install-controller";
-import { InstallFeatureRow, InstallPasswordInput } from "@/install-core/src/install-workspace-widgets";
+import {
+  InstallFeatureRow,
+  InstallPasswordInput,
+} from "@/install-core/src/install-workspace-widgets";
 import { installWorkspacePaneClasses as c } from "@/install-core/src/install-workspace.styles";
 
 export function InstallMeetPane({
@@ -27,9 +30,7 @@ export function InstallMeetPane({
           <FieldLabelRow label="TURN URL">
             <Input
               value={meet.turn}
-              onChange={(event) =>
-                setMeet((current) => ({ ...current, turn: event.target.value }))
-              }
+              onChange={(event) => setMeet((current) => ({ ...current, turn: event.target.value }))}
               placeholder="turn:turn.example.com:3478"
             />
           </FieldLabelRow>

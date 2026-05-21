@@ -1,6 +1,9 @@
 <?php
 
+use App\Providers\AppServiceProvider;
+use App\Providers\WgwServiceProvider;
+
 return [
-    App\Providers\AppServiceProvider::class,
-    App\Providers\WgwServiceProvider::class,
+    AppServiceProvider::class,
+    WgwServiceProvider::class,
 ];

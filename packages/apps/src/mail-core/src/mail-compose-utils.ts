@@ -53,11 +53,11 @@ export function isComposeDraftDirty(
 export function composeDraftHasContent(draft: MailComposeDraftFields): boolean {
   return Boolean(
     draft.to.trim() ||
-      draft.cc.trim() ||
-      draft.bcc.trim() ||
-      draft.subject.trim() ||
-      draft.body.trim() ||
-      draft.attachments.length > 0,
+    draft.cc.trim() ||
+    draft.bcc.trim() ||
+    draft.subject.trim() ||
+    draft.body.trim() ||
+    draft.attachments.length > 0,
   );
 }
 
@@ -91,7 +91,9 @@ export async function composeDraftToApiPayload(
   normalizeSubject: (subject: string) => string | undefined,
 ): Promise<Pick<WgwMailDraftRequest, "to" | "cc" | "bcc" | "subject" | "body" | "attachments">> {
   const attachments =
-    draft.attachments.length > 0 ? await encodeComposeAttachmentsForApi(draft.attachments) : undefined;
+    draft.attachments.length > 0
+      ? await encodeComposeAttachmentsForApi(draft.attachments)
+      : undefined;
   return {
     to: draft.to || undefined,
     cc: draft.cc || undefined,

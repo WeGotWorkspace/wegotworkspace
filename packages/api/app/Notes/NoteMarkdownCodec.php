@@ -57,7 +57,7 @@ final class NoteMarkdownCodec
     }
 
     /**
-     * @param list<string> $tags
+     * @param  list<string>  $tags
      */
     public function serialize(string $title, array $tags, ?bool $starred, string $body): string
     {

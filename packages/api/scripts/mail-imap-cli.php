@@ -13,6 +13,7 @@ use App\Services\Mail\MailBinaryDownload;
 use App\Services\Mail\MailOperationService;
 use App\Services\Mail\MailResponseException;
 use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Foundation\Application;
 
 if ($argc < 3) {
     fwrite(STDERR, "usage: mail-imap-cli.php <operation> <username> [base64-json-params]\n");
@@ -29,7 +30,7 @@ define('LARAVEL_START', microtime(true));
 
 require __DIR__.'/../vendor/autoload.php';
 
-/** @var \Illuminate\Foundation\Application $app */
+/** @var Application $app */
 $app = require __DIR__.'/../bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
 
@@ -98,7 +99,7 @@ function serialize_mail_imap_result(mixed $result): array
         ];
     }
 
-    if (!is_array($result)) {
+    if (! is_array($result)) {
         throw new RuntimeException('Mail operation returned unexpected type.');
     }
 

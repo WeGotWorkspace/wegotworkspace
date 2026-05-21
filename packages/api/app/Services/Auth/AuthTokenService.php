@@ -17,8 +17,7 @@ final class AuthTokenService
         private LoginRateLimiter $rateLimiter,
         private SabreCredentialValidator $credentials,
         private AdminRoleResolver $adminRoles,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{
@@ -85,7 +84,7 @@ final class AuthTokenService
     }
 
     /**
-     * @param array{username: string, role: 'guest'|'user'|'admin'} $principal
+     * @param  array{username: string, role: 'guest'|'user'|'admin'}  $principal
      */
     public function revoke(?array $principal, ?string $bearerToken, ?string $refreshToken): void
     {
@@ -123,7 +122,7 @@ final class AuthTokenService
     }
 
     /**
-     * @param array{username: string, role: 'guest'|'user'|'admin'} $principal
+     * @param  array{username: string, role: 'guest'|'user'|'admin'}  $principal
      */
     private function revokeAccessToken(string $token, array $principal): void
     {
@@ -139,7 +138,7 @@ final class AuthTokenService
     }
 
     /**
-     * @param 'guest'|'user'|'admin' $role
+     * @param  'guest'|'user'|'admin'  $role
      * @return array{
      *   access_token: string,
      *   refresh_token: string,

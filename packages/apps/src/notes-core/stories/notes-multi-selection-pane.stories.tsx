@@ -10,35 +10,35 @@ function NotesMultiSelectionPaneHarness({ count = 3 }: { count?: number }) {
   return (
     <NotesStoryScope variant="detail">
       <MultiSelectionView
-      count={count}
-      label="Multiple selection"
-      title={(n) => `${n} ${n === 1 ? "note" : "notes"} selected`}
-      actions={[
-        {
-          id: "star",
-          label: L.selectionStar,
-          icon: <Star className="size-4" />,
-          onClick: () => {},
-        },
-        {
-          id: "archive",
-          label: L.selectionArchive,
-          icon: <Archive className="size-4" />,
-          onClick: () => {},
-        },
-        {
-          id: "move",
-          label: L.selectionMoveToNotebook,
-          icon: <BookOpen className="size-4" />,
-          onClick: () => {},
-        },
-        {
-          id: "delete",
-          label: L.selectionDeletePermanently,
-          icon: <Trash2 className="size-4" />,
-          onClick: () => {},
-        },
-      ]}
+        count={count}
+        label="Multiple selection"
+        title={(n) => `${n} ${n === 1 ? "note" : "notes"} selected`}
+        actions={[
+          {
+            id: "star",
+            label: L.selectionStar,
+            icon: <Star className="size-4" />,
+            onClick: () => {},
+          },
+          {
+            id: "archive",
+            label: L.selectionArchive,
+            icon: <Archive className="size-4" />,
+            onClick: () => {},
+          },
+          {
+            id: "move",
+            label: L.selectionMoveToNotebook,
+            icon: <BookOpen className="size-4" />,
+            onClick: () => {},
+          },
+          {
+            id: "delete",
+            label: L.selectionDeletePermanently,
+            icon: <Trash2 className="size-4" />,
+            onClick: () => {},
+          },
+        ]}
       />
     </NotesStoryScope>
   );

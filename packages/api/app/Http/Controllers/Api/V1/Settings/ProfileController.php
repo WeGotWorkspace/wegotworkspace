@@ -10,15 +10,13 @@ use App\Http\Resources\Api\V1\SettingsStateResource;
 use App\Services\Settings\SettingsStateService;
 use App\Services\Settings\UserProfileService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 final class ProfileController
 {
     public function __construct(
         private UserProfileService $profiles,
         private SettingsStateService $settings,
-    ) {
-    }
+    ) {}
 
     public function __invoke(SettingsProfileRequest $request): JsonResponse
     {

@@ -9,9 +9,7 @@ use Illuminate\Support\Facades\Storage;
 
 final class WgwStorage
 {
-    public function __construct(private StoragePaths $paths)
-    {
-    }
+    public function __construct(private StoragePaths $paths) {}
 
     public function paths(): StoragePaths
     {

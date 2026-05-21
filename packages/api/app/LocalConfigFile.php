@@ -78,12 +78,12 @@ final class LocalConfigFile
 
     private static function definedString(string $name): ?string
     {
-        if (!defined($name)) {
+        if (! defined($name)) {
             return null;
         }
 
         $value = constant($name);
-        if (!is_string($value)) {
+        if (! is_string($value)) {
             return null;
         }
 
@@ -94,7 +94,7 @@ final class LocalConfigFile
 
     private static function definedNullableString(string $name): ?string
     {
-        if (!defined($name)) {
+        if (! defined($name)) {
             return null;
         }
 
@@ -102,7 +102,7 @@ final class LocalConfigFile
         if ($value === null) {
             return null;
         }
-        if (!is_string($value)) {
+        if (! is_string($value)) {
             return null;
         }
 

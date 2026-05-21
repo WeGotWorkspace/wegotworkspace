@@ -10,7 +10,7 @@ use Sabre\DAV\PartialUpdate\IPatchSupport;
 final class FlysystemFile extends FlysystemNode implements DAV\IFile, IPatchSupport
 {
     /**
-     * @param resource|string $data
+     * @param  resource|string  $data
      */
     public function put($data): string
     {
@@ -20,7 +20,7 @@ final class FlysystemFile extends FlysystemNode implements DAV\IFile, IPatchSupp
     }
 
     /**
-     * @param resource|string $data
+     * @param  resource|string  $data
      */
     public function patch($data, $rangeType, $offset = null): ?string
     {

@@ -18,8 +18,7 @@ final class UiFrontKernel
         private UiStaticServer $static,
         private OfficeStaticServer $officeStatic,
         private OfficeHtmlResponder $officeHtml,
-    ) {
-    }
+    ) {}
 
     public function handle(Request $request): ?Response
     {

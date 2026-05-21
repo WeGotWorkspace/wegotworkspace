@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Dav\Server;
 
-use Sabre\DAV;
 use Sabre\DAV\Exception\Forbidden;
 use Sabre\DAV\Server;
 use Sabre\DAV\ServerPlugin;
@@ -37,7 +36,7 @@ final class WebdavWriteGuardPlugin extends ServerPlugin
     /**
      * Blocks creating any resource under {@code principals/} or outside allowed {@code files/…} areas.
      *
-     * @param string $uri path relative to the server base (no leading slash), same as {@see Tree} paths
+     * @param  string  $uri  path relative to the server base (no leading slash), same as {@see Tree} paths
      */
     public function beforeBind(string $uri): void
     {
@@ -54,7 +53,7 @@ final class WebdavWriteGuardPlugin extends ServerPlugin
      * Blocks removing principal resources, calendar/address book folder nodes, and stray {@code files/…} paths.
      * Covers internal {@see Tree::delete} paths that must not succeed even if HTTP {@see beforeMethod} differed.
      *
-     * @param string $path path relative to the server base
+     * @param  string  $path  path relative to the server base
      */
     public function beforeUnbind(string $path): void
     {
@@ -76,7 +75,7 @@ final class WebdavWriteGuardPlugin extends ServerPlugin
     public function beforeMethod(RequestInterface $request, ResponseInterface $response): void
     {
         $method = $request->getMethod();
-        if (!in_array($method, ['DELETE', 'MKCOL', 'PUT', 'MOVE', 'COPY', 'PROPPATCH', 'PATCH'], true)) {
+        if (! in_array($method, ['DELETE', 'MKCOL', 'PUT', 'MOVE', 'COPY', 'PROPPATCH', 'PATCH'], true)) {
             return;
         }
 
@@ -156,7 +155,7 @@ final class WebdavWriteGuardPlugin extends ServerPlugin
         if ($p === 'files' || $p === 'files/users' || $p === 'files/groups') {
             return true;
         }
-        if (!str_starts_with($p, 'files/')) {
+        if (! str_starts_with($p, 'files/')) {
             return false;
         }
         if (preg_match('#^files/users/[^/]+(/|$)#', $p) === 1) {
@@ -180,7 +179,7 @@ final class WebdavWriteGuardPlugin extends ServerPlugin
     private static function isCalendarFolderPath(string $path): bool
     {
         $p = self::normalizePath($path);
-        if (!str_starts_with($p, 'calendars/')) {
+        if (! str_starts_with($p, 'calendars/')) {
             return false;
         }
         $n = substr_count($p, '/') + 1;
@@ -194,7 +193,7 @@ final class WebdavWriteGuardPlugin extends ServerPlugin
     private static function isAddressbookFolderPath(string $path): bool
     {
         $p = self::normalizePath($path);
-        if (!str_starts_with($p, 'addressbooks/')) {
+        if (! str_starts_with($p, 'addressbooks/')) {
             return false;
         }
         $n = substr_count($p, '/') + 1;

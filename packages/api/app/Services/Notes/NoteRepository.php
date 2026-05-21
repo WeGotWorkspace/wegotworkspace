@@ -16,11 +16,10 @@ final class NoteRepository
         private WgwStorage $storage,
         private NoteStoragePaths $notePaths,
         private NoteMarkdownCodec $codec,
-    ) {
-    }
+    ) {}
 
     /**
-     * @param array<string, mixed> $params
+     * @param  array<string, mixed>  $params
      * @return array{items: list<array<string, mixed>>}
      */
     public function list(string $username, array $params): array
@@ -59,7 +58,7 @@ final class NoteRepository
     }
 
     /**
-     * @param array<string, mixed> $body
+     * @param  array<string, mixed>  $body
      * @return array{ok: true, item: array<string, mixed>}
      */
     public function upsert(string $username, ?string $pathId, array $body): array
@@ -88,7 +87,7 @@ final class NoteRepository
     }
 
     /**
-     * @param array<string, mixed> $body
+     * @param  array<string, mixed>  $body
      * @return array{ok: true}
      */
     public function delete(string $username, string $id, array $body): array
@@ -161,7 +160,7 @@ final class NoteRepository
     }
 
     /**
-     * @param array<string, mixed> $body
+     * @param  array<string, mixed>  $body
      * @return array{ok: true, name: string}
      */
     public function createNotebook(string $username, array $body): array
@@ -179,7 +178,7 @@ final class NoteRepository
     }
 
     /**
-     * @param array<string, mixed> $body
+     * @param  array<string, mixed>  $body
      * @return array{ok: true, from: string, to: string}
      */
     public function renameNotebook(string $username, string $name, array $body): array
@@ -208,7 +207,7 @@ final class NoteRepository
     }
 
     /**
-     * @param array<string, mixed> $body
+     * @param  array<string, mixed>  $body
      * @return array<string, mixed>
      */
     public function deleteNotebook(string $username, string $name, array $body): array

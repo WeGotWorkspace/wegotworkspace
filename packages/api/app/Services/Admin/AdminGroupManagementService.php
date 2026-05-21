@@ -18,8 +18,7 @@ final class AdminGroupManagementService
         private GroupDirectoryService $groups,
         private InstallerSeeder $installerSeeder,
         private AppPaths $paths,
-    ) {
-    }
+    ) {}
 
     public function create(string $slug, string $displayName): string
     {
@@ -44,7 +43,7 @@ final class AdminGroupManagementService
     }
 
     /**
-     * @param list<string>|null $members Usernames or principal URIs
+     * @param  list<string>|null  $members  Usernames or principal URIs
      */
     public function update(string $groupSlug, ?string $displayName, ?array $members, string $actingAdmin): void
     {
