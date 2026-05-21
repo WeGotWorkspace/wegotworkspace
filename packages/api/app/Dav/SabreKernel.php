@@ -10,6 +10,7 @@ use App\Services\Installer\InstallerWebBase;
 use App\Support\AppPaths;
 use Illuminate\Http\Request;
 use Sabre\DAV;
+use Sabre\DAV\Exception\NotAuthenticated;
 use Sabre\DAV\Server;
 use Sabre\HTTP;
 use Symfony\Component\HttpFoundation\Response;
@@ -58,6 +59,12 @@ final class SabreKernel
 
         try {
             $server->invokeMethod($httpRequest, $httpResponse, false);
+        } catch (NotAuthenticated) {
+            if ($httpResponse->getStatus() === null) {
+                $httpResponse->setStatus(401);
+            }
+
+            return $this->converter->toIlluminate($httpResponse);
         } catch (\Throwable $e) {
             return $this->converter->toIlluminate($this->exceptionResponse($server, $e));
         }

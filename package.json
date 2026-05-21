@@ -14,6 +14,7 @@
     "build": "tools/with-root-env.sh -- turbo run typegen build",
     "check:api-types": "tools/with-root-env.sh -- turbo run typegen:check --filter=@wgw/api",
     "test": "tools/with-root-env.sh -- turbo run test --filter=@wgw/api",
+    "test:api-done-gate": "composer --working-dir packages/api run-script done-gate",
     "test:api-e2e": "tools/with-root-env.sh -- pnpm --filter @wgw/api test:e2e",
     "test:api-e2e:docker": "tools/with-root-env.sh -- bash tools/test-api-e2e-docker.sh",
     "docker:up": "docker compose -f compose.dev.yml up -d --build",

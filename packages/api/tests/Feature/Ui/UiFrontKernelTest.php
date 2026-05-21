@@ -6,16 +6,26 @@ namespace Tests\Feature\Ui;
 
 use App\Support\AppPaths;
 use App\Support\WgwInstallConfig;
+use Tests\Support\UiDistFixture;
 use Tests\TestCase;
 
 final class UiFrontKernelTest extends TestCase
 {
+    private ?string $repoRoot = null;
+
+    protected function tearDown(): void
+    {
+        if ($this->repoRoot !== null) {
+            UiDistFixture::removeTree($this->repoRoot);
+            $this->repoRoot = null;
+        }
+        parent::tearDown();
+    }
+
     public function test_uninstalled_shell_path_redirects_to_install(): void
     {
         $data = sys_get_temp_dir().'/wgw-ui-kernel-'.uniqid('', true);
-        mkdir($data, 0775, true);
-        config(['wgw.data_dir' => $data]);
-        $this->app->forgetInstance(AppPaths::class);
+        $this->repoRoot = UiDistFixture::bootstrapMonorepoLayout($data);
 
         $this->get('/mail')
             ->assertRedirect('/install/');
@@ -24,9 +34,7 @@ final class UiFrontKernelTest extends TestCase
     public function test_uninstalled_root_assets_served_from_install_dist_when_built(): void
     {
         $data = sys_get_temp_dir().'/wgw-ui-kernel-'.uniqid('', true);
-        mkdir($data, 0775, true);
-        config(['wgw.data_dir' => $data]);
-        $this->app->forgetInstance(AppPaths::class);
+        $this->repoRoot = UiDistFixture::bootstrapMonorepoLayout($data);
 
         $this->get('/assets/index-DBoOAm4k.css')
             ->assertOk()

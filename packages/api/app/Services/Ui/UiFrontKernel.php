@@ -42,9 +42,12 @@ final class UiFrontKernel
 
         if (! $this->paths->isInstalled()) {
             if ($this->isPublicAssetPath($webBase, $path)) {
-                $installDist = $this->paths->moduleDistRoot('install');
-                if ($installDist !== null) {
-                    $asset = $this->static->tryServe($installDist, $webBase, $path, false);
+                foreach (['install', 'shell'] as $module) {
+                    $dist = $this->paths->moduleDistRoot($module);
+                    if ($dist === null) {
+                        continue;
+                    }
+                    $asset = $this->static->tryServe($dist, $webBase, $path, false);
                     if ($asset !== null) {
                         return $asset;
                     }

@@ -159,7 +159,7 @@ final class UiStaticServer
         $fs = $this->mapUrlToFilesystem($root, $rel);
         if ($fs === null) {
             if ($rel !== '' && preg_match('#^(css|js|img|fonts|assets|icons|manifests)/#', $rel) === 1) {
-                return $this->notFound();
+                return null;
             }
             if (! $allowSpaFallback) {
                 return $this->notFound();
