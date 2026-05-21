@@ -9,7 +9,7 @@
     "setup:macos": "bash scripts/macos/install-homebrew-apache-ssl.sh",
     "preview:macos": "bash scripts/macos/setup-homebrew-apache-ssl.sh",
     "enable-php-imap": "bash scripts/macos/enable-php-imap.sh",
-    "dev:php": "sh -c 'app_root=\"../../apps/wegotworkspace\"; env -u SABRE_BUILD_DIR php -S 127.0.0.1:8080 -t \"$app_root\" \"$app_root/index.php\"'",
+    "dev:php": "sh -c 'app_root=\"../../apps/wegotworkspace\"; env -u SABRE_BUILD_DIR php -S 127.0.0.1:9080 -t \"$app_root\" \"$app_root/index.php\"'",
     "openapi:build-json": "node scripts/build-openapi-built-json.mjs",
     "typegen": "pnpm run typegen:openapi",
     "typegen:check": "pnpm run typegen:openapi:check",

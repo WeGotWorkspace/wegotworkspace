@@ -4,7 +4,7 @@
   "license": "AGPL-3.0-or-later",
   "packageManager": "pnpm@9.15.4",
   "scripts": {
-    "dev": "sh -c 'if [ -f .env ]; then set -a; . ./.env; set +a; fi; pnpm run dev:bootstrap && turbo run typegen:watch watch --filter=@wgw/api --filter=@wgw/apps --concurrency=20'",
+    "dev": "sh -c 'if [ -f .env ]; then set -a; . ./.env; set +a; fi; pnpm run dev:bootstrap && turbo run typegen:watch dev watch --filter=@wgw/api --filter=@wgw/apps --concurrency=20'",
     "dev:bootstrap": "pnpm --filter @wgw/apps run build:dev && pnpm --filter @wgw/api run sync:runtime",
     "dev:php": "sh -c 'if [ -f .env ]; then set -a; . ./.env; set +a; fi; turbo run dev:php --filter=@wgw/api'",
     "dev:ui:watch": "pnpm run dev",
