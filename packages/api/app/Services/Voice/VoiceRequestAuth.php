@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Wgw\Legacy\Voice;
+namespace App\Services\Voice;
 
 use App\Dav\Auth\SabreUiAuthGate;
 use App\Services\Auth\BearerAuthenticationService;
@@ -10,9 +10,10 @@ use App\Services\Auth\SabreCredentialValidator;
 use Illuminate\Http\Request;
 
 /**
- * Main-branch Voice auth parity: JWT bearer, {@code sabre_ui_auth} cookie, HTTP Basic.
+ * Resolves the authenticated username for voice endpoints: JWT bearer,
+ * {@code sabre_ui_auth} cookie, or HTTP Basic.
  */
-final class LegacyVoiceAuth
+final class VoiceRequestAuth
 {
     public function __construct(
         private BearerAuthenticationService $bearer,
