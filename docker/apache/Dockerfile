@@ -48,6 +48,9 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-av
     && sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
 COPY docker/apache/vhost.conf /etc/apache2/conf-available/wgw-vhost.conf
+COPY docker/apache/http-vhost.conf /etc/apache2/conf-available/wgw-http-vhost.conf
+COPY docker/apache/http-redirect.conf /etc/apache2/conf-available/wgw-http-redirect.conf
+COPY docker/apache/ssl-vhost.conf /etc/apache2/conf-available/wgw-ssl-vhost.conf
 RUN a2enconf wgw-vhost
 
 COPY docker/apache/docker-entrypoint.sh /usr/local/bin/wgw-apache-entrypoint
