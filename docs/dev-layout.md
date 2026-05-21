@@ -46,12 +46,15 @@ pnpm docker:up          # http://127.0.0.1:9080
 pnpm dev:ui             # Storybook on host; proxy /api/v1 → :9080
 ```
 
-See [`docker/README.md`](../docker/README.md). Playwright in CI: `pnpm test:api-e2e:docker`.
+**WebDAV / CalDAV (HTTPS):** `pnpm docker:ssl:setup`, add `127.0.0.1 wegotworkspace.local` to `/etc/hosts`, stop host Apache if it owns 80/443, then `pnpm docker:up` → **https://wegotworkspace.local/**. Details: [`docker/README.md`](../docker/README.md).
+
+Playwright in CI: `pnpm test:api-e2e:docker`.
 
 | Command | Runs |
 |---------|------|
 | `pnpm docker:up` | Start API stack in Docker |
 | `pnpm docker:down` | Stop stack |
+| `pnpm docker:ssl:setup` | mkcert certs for `wegotworkspace.local` |
 | `pnpm test:api-e2e:docker` | Compose + Playwright |
 
 ## Mental model
