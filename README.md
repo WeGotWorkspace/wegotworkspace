@@ -29,18 +29,32 @@ From the repository root:
 
 ```bash
 pnpm install
+composer --working-dir packages/api install
 pnpm dev
 ```
 
-`pnpm dev` bootstraps `packages/apps` and `packages/api` into `apps/wegotworkspace`, starts Storybook on port 6006, and keeps watching both packages and re-syncing on change (Vite rebuild + runtime copy for UI, file sync for API).
+In a **second terminal**, start the API (PHP built-in server on the install docroot, Laravel from `packages/api`):
 
-For **Live API** stories (and mail/notes against a real backend), copy `packages/apps/.env.example` to **`.env.local` at the repo root**, set `VITE_WGW_DEV_USERNAME` / `VITE_WGW_DEV_PASSWORD`, then run **`pnpm dev:php`** in a second terminal (`http://127.0.0.1:9080`). Storybook proxies `/api/v1` there by default (not Apache `:8443`, which can crash on IMAP and show Vite `socket hang up`).
+```bash
+pnpm dev:api
+```
 
-Optional: `pnpm dev:storybook` (Storybook only), `pnpm dev:onlyoffice` (ONLYOFFICE web package). Use `pnpm build` for a full production build (CI/release).
+`pnpm dev` builds and watches UI into **`packages/apps/dist`**, runs Storybook on port 6006, and watches OpenAPI typegen. It does **not** copy the API or UI into `apps/wegotworkspace` on every change — see [`docs/dev-layout.md`](docs/dev-layout.md).
 
-Open `http://127.0.0.1:8080/install/`.
+For **Live API** stories, copy `packages/apps/.env.example` to **`.env.local` at the repo root**, set `VITE_WGW_DEV_USERNAME` / `VITE_WGW_DEV_PASSWORD`. Storybook proxies `/api/v1` to `http://127.0.0.1:9080` by default.
 
-Frontend note: all first-party web apps (`/admin`, `/drive`, `/mail`, `/notes`, `/voice`, `/settings`, `/home`, `/install`) are built from `packages/apps` and emitted into `apps/wegotworkspace/packages/apps/*/dist/`.
+| Command | Use |
+|---------|-----|
+| `pnpm dev:api` | PHP backend (`127.0.0.1:9080`) — daily driver |
+| `pnpm dev:preview` | Sync into `apps/wegotworkspace/packages/` (release-like tree) |
+| `pnpm preview:macos` | Homebrew Apache + SSL (optional) |
+| `pnpm build` | Full production build + runtime sync (CI/release) |
+
+Optional: `pnpm dev:storybook`, `pnpm dev:onlyoffice`.
+
+Open `http://127.0.0.1:9080/install/` (with `pnpm dev:api` running).
+
+UI source: `packages/apps` → `packages/apps/dist/`. The install shell `apps/wegotworkspace` holds config (`wgw-config.php`) and data (`wgw-content/`) only during normal dev.
 
 ## Updating ONLYOFFICE Web
 

@@ -7,12 +7,7 @@
     "SABRE_DATA_DIR_NAME",
     "SABRE_DATA_DIR"
   ],
-  "globalDependencies": [
-    "packages/api/package.json",
-    "packages/api/composer.json",
-    "packages/api/composer.lock",
-    "packages/api/openapi/openapi.json"
-  ],
+  "globalDependencies": ["packages/api/composer.json", "packages/api/composer.lock"],
   "tasks": {
     "preview:macos": {
       "dependsOn": ["^build"],
@@ -56,19 +51,14 @@
       "persistent": true
     },
     "watch": {
+      "dependsOn": ["^build"],
       "cache": false,
       "persistent": true
     },
-    "build:dev": {
-      "dependsOn": ["typegen"],
+    "watch:runtime": {
+      "dependsOn": ["^build"],
       "cache": false,
-      "outputs": [
-        "../../apps/wegotworkspace/packages/apps/*/dist/**"
-      ]
-    },
-    "sync:runtime": {
-      "cache": false,
-      "outputs": ["../../apps/wegotworkspace/packages/api/**"]
+      "persistent": true
     }
   }
 }

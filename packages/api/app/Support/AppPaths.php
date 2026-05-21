@@ -179,13 +179,13 @@ final class AppPaths
         $repo = dirname($root, 2);
 
         $candidates = [
-            $root.'/packages/apps/'.$module.'/dist',
             $repo.'/packages/apps/'.$module.'/dist',
+            $root.'/packages/apps/'.$module.'/dist',
         ];
 
         if ($module === 'shell') {
-            $candidates[] = $root.'/packages/apps/dist';
             $candidates[] = $repo.'/packages/apps/dist';
+            $candidates[] = $root.'/packages/apps/dist';
         }
 
         return array_values(array_unique($candidates));
@@ -238,8 +238,8 @@ final class AppPaths
         $repo = dirname($root, 2);
 
         return array_values(array_unique([
-            $root.'/packages/apps',
             $repo.'/packages/apps',
+            $root.'/packages/apps',
         ]));
     }
 
@@ -252,8 +252,8 @@ final class AppPaths
         $repo = dirname($root, 2);
 
         return [
-            $root.'/packages/apps/office/build/index.html',
             $repo.'/packages/apps/office/build/index.html',
+            $root.'/packages/apps/office/build/index.html',
         ];
     }
 }

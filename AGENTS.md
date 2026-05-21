@@ -20,6 +20,12 @@ When working on **`packages/api`** REST or a new Laravel API:
 
 PHP tests and `composer.json` appear only **after** Phase 0 scaffold in the greenfield plan.
 
+## Dev layout
+
+- **Edit:** `packages/api` (Laravel app), `packages/apps` (UI → `dist/`)
+- **Install shell:** `apps/wegotworkspace` (config, data, `index.php`) — not a second API codebase; see `docs/dev-layout.md`
+- **`pnpm dev`** does not sync into `apps/wegotworkspace/packages/`; use **`pnpm dev:preview`** for release-like copies
+
 ## HTTP routing
 
 - **REST:** `routes/api.php` (`/api/v1/*`)
