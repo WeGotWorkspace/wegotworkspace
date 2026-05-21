@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Voice;
 
-use App\Services\Voice\VoiceSignalingService;
+use App\Services\Voice\VoiceSignalingRouter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 final class VoiceController
 {
-    public function __construct(private VoiceSignalingService $voice)
+    public function __construct(private VoiceSignalingRouter $voice)
     {
     }
 
     public function room(Request $request): JsonResponse
     {
-        return response()->json($this->voice->roomStatus($request->json()->all()));
+        return response()->json($this->voice->room($request->json()->all()));
     }
 
     public function join(Request $request): JsonResponse

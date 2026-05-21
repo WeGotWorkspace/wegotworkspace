@@ -19,7 +19,16 @@ final class SabreUiAuthGate
     public static function validatedUsername(string $realm): ?string
     {
         $raw = $_COOKIE[self::COOKIE] ?? null;
-        if (! is_string($raw) || $raw === '') {
+
+        return self::validatedUsernameFromRaw(is_string($raw) ? $raw : null, $realm);
+    }
+
+    /**
+     * @return non-empty-string|null
+     */
+    public static function validatedUsernameFromRaw(?string $raw, string $realm): ?string
+    {
+        if ($raw === null || $raw === '') {
             return null;
         }
 
