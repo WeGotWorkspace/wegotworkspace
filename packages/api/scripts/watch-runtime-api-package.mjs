@@ -10,7 +10,6 @@ const watchPaths = [
   "bootstrap/**/*",
   "config/**/*",
   "database/**/*",
-  "legacy/**/*",
   "routes/**/*",
   "public/**/*",
   "resources/**/*",

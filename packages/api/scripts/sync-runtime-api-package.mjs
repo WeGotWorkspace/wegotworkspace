@@ -23,7 +23,6 @@ const baseDirs = [
   "bootstrap",
   "config",
   "database",
-  "legacy",
   "openapi",
   "public",
   "resources",
