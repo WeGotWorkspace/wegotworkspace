@@ -18,7 +18,7 @@ type RemotePeer = {
   /** Inbound RTP heuristics; null until a few polls after the peer is connected. */
   remoteMedia: { camera: boolean; mic: boolean } | null;
   /** Mic/camera intent from peer (control chat); null until the peer announces. */
-  disclosedMedia: { camera: boolean; mic: boolean } | null;
+  disclosedMedia: { camera: boolean; mic: boolean; screen?: boolean } | null;
 };
 
 type ChatLine = {
@@ -60,7 +60,7 @@ type ControlMessage =
   | { kind: "admit"; peerId: string }
   | { kind: "deny"; peerId: string }
   | { kind: "end"; by: string }
-  | { kind: "media"; mic: boolean; camera: boolean };
+  | { kind: "media"; mic: boolean; camera: boolean; screen?: boolean };
 
 const KNOCK_NAME_PREFIX = "__wgw_knock__:";
 const CONTROL_PREFIX = "__wgw_meet_control__:";
@@ -199,7 +199,12 @@ function parseControlMessage(text: string): ControlMessage | null {
       typeof parsed.mic === "boolean" &&
       typeof parsed.camera === "boolean"
     ) {
-      return { kind: "media", mic: parsed.mic, camera: parsed.camera };
+      return {
+        kind: "media",
+        mic: parsed.mic,
+        camera: parsed.camera,
+        ...(typeof parsed.screen === "boolean" ? { screen: parsed.screen } : {}),
+      };
     }
   } catch {
     return null;
@@ -319,6 +324,7 @@ export function useMeetController({
   const wasKnockerPeerIdsRef = useRef<Set<string>>(new Set());
   const micOnRef = useRef(micOn);
   const videoOnRef = useRef(videoOn);
+  const screenOnRef = useRef(screenOn);
 
   operationsRef.current = operations;
   statusRef.current = status;
@@ -328,6 +334,7 @@ export function useMeetController({
   waitingForAdmissionRef.current = waitingForAdmission;
   micOnRef.current = micOn;
   videoOnRef.current = videoOn;
+  screenOnRef.current = screenOn;
 
   const refreshPeers = useCallback(() => {
     const next: RemotePeer[] = [];
@@ -345,20 +352,29 @@ export function useMeetController({
     setPeers(next);
   }, []);
 
-  const announceMediaPresence = useCallback(async (mic: boolean, camera: boolean) => {
-    if (!operationsRef.current || !roomCodeRef.current || !selfIdRef.current) return;
-    if (statusRef.current !== "in-call") return;
-    try {
-      await operationsRef.current.chat({
-        room: roomCodeRef.current,
-        from: selfIdRef.current,
-        text: buildControlMessage({ kind: "media", mic, camera }),
-        sessionKey: joinedSessionKeyRef.current ?? undefined,
-      });
-    } catch {
-      // Best-effort; peers may still infer from tracks or RTP stats.
-    }
-  }, []);
+  const announceMediaPresence = useCallback(
+    async (mic: boolean, camera: boolean, screen?: boolean) => {
+      if (!operationsRef.current || !roomCodeRef.current || !selfIdRef.current) return;
+      if (statusRef.current !== "in-call") return;
+      const screenOnNow = screen ?? screenOnRef.current;
+      try {
+        await operationsRef.current.chat({
+          room: roomCodeRef.current,
+          from: selfIdRef.current,
+          text: buildControlMessage({
+            kind: "media",
+            mic,
+            camera,
+            screen: screenOnNow,
+          }),
+          sessionKey: joinedSessionKeyRef.current ?? undefined,
+        });
+      } catch {
+        // Best-effort; peers may still infer from tracks or RTP stats.
+      }
+    },
+    [],
+  );
 
   const refreshDeviceList = useCallback(async () => {
     if (!navigator.mediaDevices?.enumerateDevices) return;
@@ -790,6 +806,7 @@ export function useMeetController({
             peerDisclosedMediaRef.current.set(msg.from, {
               mic: control.mic,
               camera: control.camera,
+              screen: control.screen,
             });
             refreshPeers();
           }
@@ -1197,6 +1214,7 @@ export function useMeetController({
       const cameraTrack = cameraTrackRef.current;
       if (cameraTrack) await replaceVideoTrackOnAllPeers(cameraTrack);
       setScreenOn(false);
+      void announceMediaPresence(micOnRef.current, videoOnRef.current, false);
       return;
     }
 
@@ -1216,13 +1234,15 @@ export function useMeetController({
           const cameraTrack = cameraTrackRef.current;
           if (cameraTrack) await replaceVideoTrackOnAllPeers(cameraTrack);
           setScreenOn(false);
+          void announceMediaPresence(micOnRef.current, videoOnRef.current, false);
         })();
       };
       setScreenOn(true);
+      void announceMediaPresence(micOnRef.current, videoOnRef.current, true);
     } catch {
       // User canceled picker.
     }
-  }, [replaceVideoTrackOnAllPeers, screenOn]);
+  }, [announceMediaPresence, replaceVideoTrackOnAllPeers, screenOn]);
 
   const switchMic = useCallback(
     async (deviceId: string) => {
