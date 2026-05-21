@@ -4,28 +4,20 @@ declare(strict_types=1);
 
 namespace App\Services\Voice;
 
-use App\Services\Auth\BearerAuthenticationService;
 use Illuminate\Http\Request;
+use Wgw\Legacy\Voice\LegacyVoiceAuth;
 
 final class VoiceActorResolver
 {
-    public function __construct(private BearerAuthenticationService $bearer)
+    public function __construct(private LegacyVoiceAuth $auth)
     {
     }
 
     public function tryAuthenticatedUsername(Request $request): ?string
     {
-        $principal = $this->bearer->authenticate($request->header('Authorization'));
-        if ($principal === null) {
-            return null;
-        }
+        $realm = (string) config('wgw.auth_realm', 'SabreDAV');
 
-        $username = strtolower(trim($principal['username']));
-        if ($username === '') {
-            return null;
-        }
-
-        return $username;
+        return $this->auth->tryAuthenticatedUsername($request, $realm);
     }
 
     /**
