@@ -32,7 +32,9 @@ pnpm install
 pnpm dev
 ```
 
-`pnpm dev` runs the required build dependencies automatically. Use `pnpm build` when you want a standalone production build (for CI/release verification).
+`pnpm dev` bootstraps `packages/apps` and `packages/api` into `apps/wegotworkspace`, then keeps watching both packages and re-syncing on change (Vite rebuild + runtime copy for UI, file sync for API). Use `pnpm dev:php` in another terminal for the built-in PHP server, or your Apache vhost.
+
+Optional: `pnpm dev:storybook` (component docs), `pnpm dev:onlyoffice` (ONLYOFFICE web package). Use `pnpm build` for a full production build (CI/release).
 
 Open `http://127.0.0.1:8080/install/`.
 

@@ -56,9 +56,19 @@
       "persistent": true
     },
     "watch": {
-      "dependsOn": ["^build"],
       "cache": false,
       "persistent": true
+    },
+    "build:dev": {
+      "dependsOn": ["typegen"],
+      "cache": false,
+      "outputs": [
+        "../../apps/wegotworkspace/packages/apps/*/dist/**"
+      ]
+    },
+    "sync:runtime": {
+      "cache": false,
+      "outputs": ["../../apps/wegotworkspace/packages/api/**"]
     }
   }
 }
