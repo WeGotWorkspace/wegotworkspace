@@ -64,6 +64,13 @@ Environment variables: [`docs/env.md`](docs/env.md).
 
 CI-quality checks locally: `pnpm run ci:quality` (typegen, lint, format, typecheck, API done gate).
 
+Git hooks (installed on `pnpm install` via Husky):
+
+- **pre-commit** — Prettier + ESLint fix on staged `@wgw/apps` files; Pint on staged `packages/api` PHP
+- **commit-msg** — [Conventional Commits](https://www.conventionalcommits.org/) via Commitlint (`feat(scope): subject`)
+
+Use `HUSKY=0 git commit` to skip hooks once. Full gate before push: `pnpm run ci:quality`.
+
 ## Updating ONLYOFFICE Web
 
 `packages/onlyoffice-web` is tracked as a git-subtree style vendored dependency.
