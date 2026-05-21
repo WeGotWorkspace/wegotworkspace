@@ -33,26 +33,22 @@ composer --working-dir packages/api install
 pnpm dev
 ```
 
-In a **second terminal**, start the API (PHP built-in server on the install docroot, Laravel from `packages/api`):
-
-```bash
-pnpm dev:api
-```
-
-`pnpm dev` builds and watches UI into **`packages/apps/dist`**, runs Storybook on port 6006, and watches OpenAPI typegen. It does **not** copy the API or UI into `apps/wegotworkspace` on every change — see [`docs/dev-layout.md`](docs/dev-layout.md).
+`pnpm dev` builds and watches UI into **`packages/apps/dist`**, runs Storybook on port 6006, watches OpenAPI typegen, and starts the PHP API on **`http://127.0.0.1:9080`**. It does **not** copy the API or UI into `apps/wegotworkspace` on every change — see [`docs/dev-layout.md`](docs/dev-layout.md).
 
 For **Live API** stories, copy `packages/apps/.env.example` to **`.env.local` at the repo root**, set `VITE_WGW_DEV_USERNAME` / `VITE_WGW_DEV_PASSWORD`. Storybook proxies `/api/v1` to `http://127.0.0.1:9080` by default.
 
 | Command | Use |
 |---------|-----|
-| `pnpm dev:api` | PHP backend (`127.0.0.1:9080`) — daily driver |
+| `pnpm dev` | Full stack (API + UI + Storybook) |
+| `pnpm dev:api` | PHP backend only (`127.0.0.1:9080`) |
+| `pnpm dev:ui` | Storybook + UI watch only |
 | `pnpm dev:preview` | Sync into `apps/wegotworkspace/packages/` (release-like tree) |
 | `pnpm preview:macos` | Homebrew Apache + SSL (optional) |
 | `pnpm build` | Full production build + runtime sync (CI/release) |
 
 Optional: `pnpm dev:storybook`, `pnpm dev:onlyoffice`.
 
-Open `http://127.0.0.1:9080/install/` (with `pnpm dev:api` running).
+Open `http://127.0.0.1:9080/install/` or Storybook at `http://127.0.0.1:6006` (after `pnpm dev`).
 
 UI source: `packages/apps` → `packages/apps/dist/`. The install shell `apps/wegotworkspace` holds config (`wgw-config.php`) and data (`wgw-content/`) only during normal dev.
 
