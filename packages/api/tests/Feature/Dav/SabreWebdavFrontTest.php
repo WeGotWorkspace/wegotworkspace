@@ -11,7 +11,7 @@ use Tests\Support\SqliteWgwSchema;
 use Tests\Support\WgwInstallFixture;
 use Tests\TestCase;
 
-final class SabreKernelTest extends TestCase
+final class SabreWebdavFrontTest extends TestCase
 {
     public function test_sabre_server_factory_builds_when_installed(): void
     {

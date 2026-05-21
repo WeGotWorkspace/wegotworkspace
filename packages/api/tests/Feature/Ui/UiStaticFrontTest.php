@@ -9,7 +9,7 @@ use App\Support\WgwInstallConfig;
 use Tests\Support\UiDistFixture;
 use Tests\TestCase;
 
-final class UiFrontKernelTest extends TestCase
+final class UiStaticFrontTest extends TestCase
 {
     private ?string $repoRoot = null;
 

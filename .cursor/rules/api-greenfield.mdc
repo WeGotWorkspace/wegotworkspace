@@ -7,7 +7,7 @@ alwaysApply: true
 
 When the user says **greenfield**, **new API**, or work under `packages/api/`:
 
-**Plan:** `packages/api/docs/greenfield-plan.md` · **Contract:** `packages/api/openapi/openapi.json`
+**Done gate:** `packages/api/docs/api-done-gate.md` · **Contract:** `packages/api/openapi/openapi.json`
 
 ## Definition
 
