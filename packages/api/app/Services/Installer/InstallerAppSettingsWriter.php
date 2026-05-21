@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Installer;
 
+use App\Models\AppSetting;
 use App\Settings\SettingKeys;
 
 final class InstallerAppSettingsWriter
@@ -50,6 +51,6 @@ final class InstallerAppSettingsWriter
 
     private function encode(mixed $value): string
     {
-        return json_encode($value, JSON_THROW_ON_ERROR);
+        return AppSetting::encodeValue($value);
     }
 }

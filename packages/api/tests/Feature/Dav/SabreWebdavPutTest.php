@@ -10,6 +10,7 @@ use App\Support\AppPaths;
 use App\Support\WgwInstallConfig;
 use Illuminate\Support\Facades\Storage;
 use Tests\Support\SqliteWgwSchema;
+use Tests\Support\WgwInstallFixture;
 use Tests\TestCase;
 
 final class SabreWebdavPutTest extends TestCase
@@ -43,14 +44,17 @@ final class SabreWebdavPutTest extends TestCase
             'displayname' => 'Alice',
         ]);
 
-        $this->dataDir = sys_get_temp_dir().'/wgw-put-'.uniqid('', true);
-        mkdir($this->dataDir, 0775, true);
+        $installRoot = sys_get_temp_dir().'/wgw-put-root-'.uniqid('', true);
+        mkdir($installRoot, 0775, true);
+        file_put_contents($installRoot.'/index.php', "<?php\n");
+        $this->dataDir = $installRoot.'/wgw-content';
         mkdir($this->dataDir.'/files/users/alice', 0775, true);
-        file_put_contents($this->dataDir.'/.installed', date('c')."\n");
+        putenv('WGW_APP_ROOT='.$installRoot);
+        $_ENV['WGW_APP_ROOT'] = $installRoot;
+        WgwInstallFixture::markInstalled($installRoot, $this->dataDir, 'alice');
 
         config(['wgw.data_dir' => $this->dataDir]);
-        $this->app->forgetInstance(WgwInstallConfig::class);
-        $this->app->forgetInstance(AppPaths::class);
+        WgwInstallFixture::forgetInstallBindings();
     }
 
     public function test_put_persists_file_body_through_laravel_front(): void

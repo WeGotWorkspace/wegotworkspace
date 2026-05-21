@@ -17,6 +17,7 @@ final class InstallerWizardService
         private InstallerEnvChecker $env,
         private InstallerDatabaseInstaller $database,
         private InstallerConfigWriter $configWriter,
+        private InstallerJwtKeyGenerator $jwtKeys,
     ) {
     }
 
@@ -25,6 +26,8 @@ final class InstallerWizardService
      */
     public function summary(string $webBase): array
     {
+        $this->paths->clearStaleInstallLock();
+
         return [
             'installed' => $this->paths->isInstalled(),
             'maintenance' => $this->paths->isMaintenance(),
@@ -37,6 +40,8 @@ final class InstallerWizardService
      */
     public function bootstrap(string $webBase): array
     {
+        $this->paths->clearStaleInstallLock();
+
         return [
             'state' => $this->runtimeState($webBase),
         ];
@@ -316,8 +321,14 @@ final class InstallerWizardService
             @mkdir(rtrim($this->paths->dataDir(), '/').'/files', 0775, true);
         }
 
+        $this->paths->clearStaleInstallLock();
+        $this->removeEmptySqliteDatabase($db);
+
         try {
-            $this->database->installFresh(
+            if ($this->databaseHasUsers($db)) {
+                $this->jwtKeys->ensureKeys();
+            } else {
+                $this->database->installFresh(
                 $db,
                 $username,
                 $pass,
@@ -344,7 +355,9 @@ final class InstallerWizardService
                     SettingKeys::VOICE_TURN_USERNAME => $voiceEnabled ? trim((string) ($payload['voice_turn_username'] ?? '')) : '',
                     SettingKeys::VOICE_TURN_CREDENTIAL => $voiceEnabled ? (string) ($payload['voice_turn_credential'] ?? '') : '',
                 ],
-            );
+                );
+                $this->jwtKeys->ensureKeys();
+            }
         } catch (\Throwable $e) {
             throw new \RuntimeException('Installation failed: '.$e->getMessage(), 0, $e);
         }
@@ -436,6 +449,17 @@ final class InstallerWizardService
         if (! is_array($state)) {
             $state = ['step' => 'welcome'];
             session([self::SESSION_KEY => $state]);
+
+            return $state;
+        }
+
+        if (! $this->paths->isInstalled()) {
+            $step = (string) ($state['step'] ?? 'welcome');
+            if (in_array($step, ['done', 'installed'], true)) {
+                $state['step'] = 'welcome';
+                unset($state['_flash'], $state['installed_base_uri']);
+                session([self::SESSION_KEY => $state]);
+            }
         }
 
         return $state;
@@ -545,6 +569,35 @@ final class InstallerWizardService
         $normalized = strtolower(trim($value));
 
         return in_array($normalized, ['ssl', 'starttls', 'none'], true) ? $normalized : $fallback;
+    }
+
+    /**
+     * @param array<string, mixed> $db
+     */
+    private function databaseHasUsers(array $db): bool
+    {
+        try {
+            $pdo = $this->database->connect($db);
+
+            return (int) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn() > 0;
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $db
+     */
+    private function removeEmptySqliteDatabase(array $db): void
+    {
+        if (($db['driver'] ?? '') !== 'sqlite') {
+            return;
+        }
+
+        $path = $this->paths->resolveProjectPath((string) ($db['sqlite_path'] ?? $this->paths->defaultSqliteRelativePath()));
+        if (is_file($path) && filesize($path) < 1) {
+            @unlink($path);
+        }
     }
 
     private function allowInstallAttempt(): bool

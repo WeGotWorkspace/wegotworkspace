@@ -2,20 +2,25 @@
 
 The `/api/v1` endpoints use bearer JWT tokens signed with RS256.
 
-## 1) Generate signing keys (local/dev)
+## 1) Signing keys
 
-From `apps/wegotworkspace`:
+The web installer creates RSA keys under `{data_dir}/keys/` on first install:
+
+- `api-jwt-private.pem`
+- `api-jwt-public.pem`
+
+By default, the API reads those files from your install data directory (typically `wgw-content/keys/`).
+
+If an install finished before keys were generated, create them from your install root:
 
 ```bash
-pnpm run generate:api-jwt-keys
+mkdir -p wgw-content/keys
+openssl genrsa -out wgw-content/keys/api-jwt-private.pem 2048
+openssl rsa -in wgw-content/keys/api-jwt-private.pem -pubout -out wgw-content/keys/api-jwt-public.pem
+chmod 600 wgw-content/keys/api-jwt-private.pem
 ```
 
-This creates:
-
-- `wgw-content/keys/api-jwt-private.pem`
-- `wgw-content/keys/api-jwt-public.pem`
-
-By default, the API reads those paths automatically. You can override with env/config constants:
+You can override paths or inline PEM with env/config constants:
 
 - `WGW_API_JWT_PRIVATE_KEY` or `WGW_API_JWT_PRIVATE_KEY_PATH`
 - `WGW_API_JWT_PUBLIC_KEY` or `WGW_API_JWT_PUBLIC_KEY_PATH`

@@ -9,6 +9,29 @@ use Tests\TestCase;
 
 final class FrontRoutingTest extends TestCase
 {
+    public function test_install_without_trailing_slash_serves_wizard(): void
+    {
+        $data = sys_get_temp_dir().'/wgw-front-'.uniqid('', true);
+        mkdir($data, 0775, true);
+        config(['wgw.data_dir' => $data]);
+        $this->app->forgetInstance(AppPaths::class);
+
+        $this->get('/install')
+            ->assertOk()
+            ->assertHeader('Content-Type', 'text/html; charset=utf-8');
+    }
+
+    public function test_uninstalled_root_redirects_to_install(): void
+    {
+        $data = sys_get_temp_dir().'/wgw-front-'.uniqid('', true);
+        mkdir($data, 0775, true);
+        config(['wgw.data_dir' => $data]);
+        $this->app->forgetInstance(AppPaths::class);
+
+        $this->get('/')
+            ->assertRedirect('/install/');
+    }
+
     public function test_uninstalled_webdav_returns_503_from_laravel_route(): void
     {
         $data = sys_get_temp_dir().'/wgw-front-'.uniqid('', true);

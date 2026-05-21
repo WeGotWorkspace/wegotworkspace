@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Support\AppPaths;
 use App\Support\WgwInstallConfig;
 use Tests\Support\SqliteWgwSchema;
+use Tests\Support\WgwInstallFixture;
 use Tests\TestCase;
 
 final class SabreBrowserAssetTest extends TestCase
@@ -34,15 +35,18 @@ final class SabreBrowserAssetTest extends TestCase
             'digest' => password_hash('secret', PASSWORD_DEFAULT),
         ]);
 
-        $data = sys_get_temp_dir().'/wgw-browser-asset-'.uniqid('', true);
-        mkdir($data, 0775, true);
+        $installRoot = sys_get_temp_dir().'/wgw-browser-root-'.uniqid('', true);
+        mkdir($installRoot, 0775, true);
+        file_put_contents($installRoot.'/index.php', "<?php\n");
+        $data = $installRoot.'/wgw-content';
         mkdir($data.'/files/users', 0775, true);
         mkdir($data.'/files/groups', 0775, true);
-        file_put_contents($data.'/.installed', date('c')."\n");
+        putenv('WGW_APP_ROOT='.$installRoot);
+        $_ENV['WGW_APP_ROOT'] = $installRoot;
+        WgwInstallFixture::markInstalled($installRoot, $data, 'alice');
 
         config(['wgw.data_dir' => $data]);
-        $this->app->forgetInstance(WgwInstallConfig::class);
-        $this->app->forgetInstance(AppPaths::class);
+        WgwInstallFixture::forgetInstallBindings();
     }
 
     public function test_sabre_browser_css_is_not_served_by_ui_shell(): void

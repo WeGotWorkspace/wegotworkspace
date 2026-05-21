@@ -37,21 +37,21 @@ const RUNTIME_FONT_PRELOADS = [
   "JetBrainsMono-Variable.woff2",
 ];
 
-function renderFontPreloadTags() {
+function renderFontPreloadTags(assetBase) {
   return RUNTIME_FONT_PRELOADS.map(
     (file) =>
-      `    <link rel="preload" href="./fonts/${file}" as="font" type="font/woff2" crossorigin>`,
+      `    <link rel="preload" href="${assetBase}/fonts/${file}" as="font" type="font/woff2" crossorigin>`,
   ).join("\n");
 }
 
-function renderIndexHtml({ title, scriptPath, cssPath }) {
+function renderIndexHtml({ title, scriptPath, cssPath, assetBase = "" }) {
   return `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${title}</title>
-${renderFontPreloadTags()}
+${renderFontPreloadTags(assetBase)}
     <script type="module" crossorigin src="${scriptPath}"></script>
     <link rel="stylesheet" crossorigin href="${cssPath}">
   </head>
@@ -98,10 +98,12 @@ export function syncRuntimeAppBuilds() {
       }
     }
 
+    const assetBase = module.name === "install" ? "/install" : ".";
     const html = renderIndexHtml({
       title: module.title,
-      scriptPath: `./assets/${mainJs}`,
-      cssPath: `./assets/${mainCss}`,
+      scriptPath: `${assetBase}/assets/${mainJs}`,
+      cssPath: `${assetBase}/assets/${mainCss}`,
+      assetBase,
     });
     writeFileSync(resolve(targetDist, "index.html"), html, "utf8");
   }
