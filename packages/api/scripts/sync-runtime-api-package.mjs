@@ -33,8 +33,19 @@ const baseDirs = [
   "tests",
 ];
 
+/** Never ship removed greenfield paths (e.g. deleted packages/api/legacy/). */
+const syncExcludeDirNames = new Set(["legacy"]);
+
 function hasWithVendorFlag(argv) {
   return argv.includes("--with-vendor");
+}
+
+function pathHasExcludedDir(absolutePath, copyRoot) {
+  const rel = absolutePath.slice(copyRoot.length).replace(/^[/\\]+/, "");
+  if (rel === "") {
+    return false;
+  }
+  return rel.split(/[/\\]/).some((segment) => syncExcludeDirNames.has(segment));
 }
 
 export function syncRuntimeApiPackage(options = {}) {
@@ -54,7 +65,10 @@ export function syncRuntimeApiPackage(options = {}) {
     const to = resolve(runtimeApiRoot, dir);
     if (!existsSync(from)) continue;
     rmSync(to, { recursive: true, force: true });
-    cpSync(from, to, { recursive: true });
+    cpSync(from, to, {
+      recursive: true,
+      filter: (src) => !pathHasExcludedDir(src, from),
+    });
   }
 
   const envFrom = resolve(packageRoot, ".env");
