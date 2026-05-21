@@ -10,54 +10,36 @@
 
 Production releases still assemble a self-contained tree under `apps/wegotworkspace/packages/*` via `pnpm build` / `pnpm release`. That sync is for shipping, not for editing.
 
-## Root `.env`
+## Default dev (Docker + UI)
 
-Repo scripts use `tools/with-root-env.sh` to load the root `.env` (optional). That supports shell-style values (for example `$(cat ~/.ssh/key.pem)`), which plain dotenv loaders do not expand.
+```bash
+pnpm docker:up
+pnpm dev:ui
+```
 
-## Default dev (`pnpm dev`)
+- API: Apache in Docker → **http://127.0.0.1:9080** (health, Storybook proxy target)
+- UI: Storybook **http://127.0.0.1:6006** with Vite watch into `packages/apps/dist`
+- PHP loads **`packages/api`** directly; static UI from **`packages/apps/*/dist`** (`WgwAppBootstrap` / `AppPaths`)
 
-1. **`dev:bootstrap`** — one Vite build into `packages/apps/dist` (no copy into `apps/wegotworkspace`).
-2. **Turbo (parallel)** — `@wgw/api`: OpenAPI typegen watch + PHP on `http://127.0.0.1:9080`; `@wgw/apps`: Vite watch + Storybook `:6006`.
-3. **No API file sync** — PHP loads `packages/api` directly (`WgwAppBootstrap` prefers the monorepo path when `vendor/` exists).
+HTTPS / WebDAV hostname: [`docker/README.md`](../docker/README.md).
 
-The API uses `apps/wegotworkspace` as docroot (`index.php` router) but boots Laravel from **`packages/api`**. UI static files are read from **`packages/apps/*/dist`** in the repo (`AppPaths` checks monorepo paths first).
+## Host PHP instead of Docker
 
-Storybook proxies `/api/v1` to `http://127.0.0.1:9080` by default.
+```bash
+pnpm dev          # API :9080 + UI + Storybook + OpenAPI typegen watch
+pnpm dev:api      # API only
+pnpm dev:ui       # UI only (start API separately)
+```
 
-| Command | Runs |
-|---------|------|
-| `pnpm dev` | Full stack (API + UI watch + Storybook + typegen) |
-| `pnpm dev:api` | PHP `:9080` only |
-| `pnpm dev:ui` | UI watch + Storybook only (start API separately if needed) |
-| `pnpm dev:storybook` | Storybook only |
+## Environment files
+
+See [`env.md`](env.md) — root `.env` (tooling), `packages/api/.env` (Laravel), `.env.local` (Storybook).
 
 ## Production-like install tree (`pnpm dev:preview`)
 
-Copies `packages/api` and UI `dist/` into `apps/wegotworkspace/packages/` and watches with runtime sync — same layout as a release ZIP. Use when testing Apache/macOS preview or install-path edge cases.
-
-## Docker API (`compose.dev.yml`)
-
-Preferred for onboarding and CI parity (Apache + mod_php, same monorepo mounts as host dev).
-
-```bash
-composer --working-dir packages/api install
-pnpm --filter @wgw/apps run build:dev
-pnpm docker:up          # http://127.0.0.1:9080
-pnpm dev:ui             # Storybook on host; proxy /api/v1 → :9080
-```
-
-**WebDAV / CalDAV (HTTPS):** `pnpm docker:ssl:setup`, add `127.0.0.1 wegotworkspace.local` to `/etc/hosts`, stop host Apache if it owns 80/443, then `pnpm docker:up` → **https://wegotworkspace.local/**. Details: [`docker/README.md`](../docker/README.md).
-
-Playwright in CI: `pnpm test:api-e2e:docker`.
-
-| Command | Runs |
-|---------|------|
-| `pnpm docker:up` | Start API stack in Docker |
-| `pnpm docker:down` | Stop stack |
-| `pnpm docker:ssl:setup` | mkcert certs for `wegotworkspace.local` |
-| `pnpm test:api-e2e:docker` | Compose + Playwright |
+Copies `packages/api` and UI `dist/` into `apps/wegotworkspace/packages/` and watches with runtime sync — same layout as a release ZIP. Use when testing install-path or Apache edge cases only.
 
 ## Mental model
 
 - **`packages/*`** = where you edit.
-- **`apps/wegotworkspace`** = where the product is *installed* (config + data + front door), not a second API codebase.
+- **`apps/wegotworkspace`** = install shell (config + data + front door), not a second API codebase.
