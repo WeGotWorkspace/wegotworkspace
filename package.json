@@ -19,6 +19,7 @@
     "docker:up": "docker compose -f compose.dev.yml up -d --build",
     "docker:down": "docker compose -f compose.dev.yml down",
     "docker:logs": "docker compose -f compose.dev.yml logs -f",
+    "docker:ssl:setup": "bash tools/docker-ssl-setup.sh",
     "update:onlyoffice-web": "bash tools/update-onlyoffice-web-subtree.sh",
     "release": "node tools/build-wegotworkspace-release.mjs",
     "release:wegotworkspace": "pnpm release"

@@ -1,6 +1,7 @@
 node_modules/
 .turbo/
 .env
+/docker/apache/certs/*.pem
 
 /apps/wegotworkspace/vendor/
 /apps/wegotworkspace/.phpunit.cache/
