@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
 import { meetLabels } from "@/meet-core/src/meet-labels";
+import { sanitizeRtcSdp } from "@/meet-core/src/meet-rtc-sdp";
 import { readInboundMediaTotals } from "@/meet-core/src/meet-inbound-media-stats";
 import type { MeetAPIOperations, MeetRtcSettings } from "@/meet-core/src/meet-types";
 
@@ -103,8 +104,8 @@ function parseUrlList(raw: string): string[] {
 }
 
 function toRtcConfig(settings: MeetRtcSettings, mode: IceMode): RTCConfiguration {
-  const forceRelay = settings.forceRelay || mode === "relay";
   const turnUrls = parseUrlList(settings.turnUrls);
+  const forceRelay = (settings.forceRelay || mode === "relay") && turnUrls.length > 0;
   const stunUrls = parseUrlList(settings.stunUrls);
 
   const iceServers: RTCIceServer[] = [];
@@ -217,7 +218,32 @@ function toSessionDescription(
     type === "offer" || type === "answer" || type === "pranswer" || type === "rollback"
       ? type
       : fallbackType;
-  return { type: normalizedType, sdp: raw.sdp };
+  return { type: normalizedType, sdp: sanitizeRtcSdp(raw.sdp) };
+}
+
+function localDescriptionPayload(
+  description: RTCSessionDescription,
+): { sdp: string; type: RTCSdpType } {
+  return {
+    type: description.type,
+    sdp: sanitizeRtcSdp(description.sdp ?? ""),
+  };
+}
+
+async function applyLocalDescription(
+  pc: RTCPeerConnection,
+  description: RTCSessionDescriptionInit,
+): Promise<void> {
+  if (description.type === "rollback") {
+    await pc.setLocalDescription(description);
+    return;
+  }
+  const normalized = toSessionDescription(description, description.type as RTCSdpType);
+  if (!normalized) {
+    await pc.setLocalDescription(description);
+    return;
+  }
+  await pc.setLocalDescription(normalized);
 }
 
 async function flushPendingIce(entry: PeerEntry): Promise<void> {
@@ -290,6 +316,7 @@ export function useMeetController({
   const peerInboundSampleRef = useRef<Map<string, PeerInboundSample>>(new Map());
   const peerMediaHintRef = useRef<Map<string, { camera: boolean; mic: boolean }>>(new Map());
   const peerDisclosedMediaRef = useRef<Map<string, { mic: boolean; camera: boolean }>>(new Map());
+  const wasKnockerPeerIdsRef = useRef<Set<string>>(new Set());
   const micOnRef = useRef(micOn);
   const videoOnRef = useRef(videoOn);
 
@@ -430,9 +457,13 @@ export function useMeetController({
       }
 
       pc.ontrack = (event) => {
-        event.streams[0]?.getTracks().forEach((track) => {
-          if (!remoteStream.getTracks().includes(track)) {
-            remoteStream.addTrack(track);
+        const track = event.track;
+        if (track && !remoteStream.getTracks().includes(track)) {
+          remoteStream.addTrack(track);
+        }
+        event.streams[0]?.getTracks().forEach((t) => {
+          if (!remoteStream.getTracks().includes(t)) {
+            remoteStream.addTrack(t);
           }
         });
         refreshPeers();
@@ -473,7 +504,8 @@ export function useMeetController({
         }
         refreshPeers();
         if (pc.connectionState !== "failed") return;
-        if (entry.mode === "relay" || entry.relayFallbackTried) {
+        const turnConfigured = parseUrlList(rtc.turnUrls).length > 0;
+        if (entry.mode === "relay" || entry.relayFallbackTried || !turnConfigured) {
           setError(`Connection to ${peerName} failed.`);
           return;
         }
