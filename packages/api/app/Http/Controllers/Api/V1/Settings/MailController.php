@@ -51,10 +51,6 @@ final class MailController
             return;
         }
 
-        if (trim((string) ($principal->email ?? '')) !== '') {
-            return;
-        }
-
         $principal->email = $submittedLogin;
         $principal->save();
     }

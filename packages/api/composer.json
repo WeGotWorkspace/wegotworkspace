@@ -33,7 +33,16 @@
             "@php artisan package:discover --ansi"
         ],
         "test": "phpunit -c phpunit.xml",
+        "test:architecture": "phpunit -c phpunit.xml --testsuite Architecture",
         "greenfield:guard": "php scripts/greenfield-guard.php",
+        "done-gate:contract": [
+            "@greenfield:guard",
+            "@test:architecture"
+        ],
+        "done-gate": [
+            "@done-gate:contract",
+            "@test"
+        ],
         "prune": [
             "@composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction"
         ]
