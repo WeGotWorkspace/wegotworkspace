@@ -24,78 +24,88 @@ final class MailOperationService
     /** @return array<string, mixed> */
     public function listFolders(string $username): array
     {
-        return $this->handleFolders($username);
+        return MailImapProcess::runJson('listFolders', $username, [], fn () => $this->handleFolders($username));
     }
 
     /** @param array<string, mixed> $body @return array<string, mixed> */
     public function createFolder(string $username, array $body): array
     {
-        return $this->handleFolderCreate($username, $body);
+        return MailImapProcess::runJson('createFolder', $username, $body, fn () => $this->handleFolderCreate($username, $body));
     }
 
     /** @param array<string, mixed> $body @return array<string, mixed> */
     public function moveFolder(string $username, array $body): array
     {
-        return $this->handleFolderMove($username, $body);
+        return MailImapProcess::runJson('moveFolder', $username, $body, fn () => $this->handleFolderMove($username, $body));
     }
 
     /** @param array<string, mixed> $body @return array<string, mixed> */
     public function deleteFolder(string $username, array $body): array
     {
-        return $this->handleFolderDelete($username, $body);
+        return MailImapProcess::runJson('deleteFolder', $username, $body, fn () => $this->handleFolderDelete($username, $body));
     }
 
     /** @return array<string, mixed> */
     public function listMessages(string $username, array $query): array
     {
-        return $this->handleMessages($username, $query);
+        return MailImapProcess::runJson('listMessages', $username, $query, fn () => $this->handleMessages($username, $query));
     }
 
     /** @return array<string, mixed> */
     public function listMessageAttachments(string $username, array $query): array
     {
-        return $this->handleMessageAttachments($username, $query);
+        return MailImapProcess::runJson(
+            'listMessageAttachments',
+            $username,
+            $query,
+            fn () => $this->handleMessageAttachments($username, $query),
+        );
     }
 
     /** @return array<string, mixed> */
     public function getMessage(string $username, array $query): array
     {
-        return $this->handleMessageGet($username, $query);
+        return MailImapProcess::runJson('getMessage', $username, $query, fn () => $this->handleMessageGet($username, $query));
     }
 
     public function downloadAttachment(string $username, array $query): MailBinaryDownload
     {
-        return $this->handleMessageAttachmentDownload($username, $query);
+        return MailImapProcess::runBinary(
+            'downloadAttachment',
+            $username,
+            $query,
+            fn () => $this->handleMessageAttachmentDownload($username, $query),
+        );
     }
 
     /** @param array<string, mixed> $body @return array<string, mixed> */
     public function patchMessage(string $username, array $body): array
     {
-        return $this->handleMessagePatch($username, $body);
+        return MailImapProcess::runJson('patchMessage', $username, $body, fn () => $this->handleMessagePatch($username, $body));
     }
 
     /** @param array<string, mixed> $query @return array<string, mixed> */
     public function deleteMessage(string $username, array $query): array
     {
-        return $this->handleMessageDelete($username, $query);
+        return MailImapProcess::runJson('deleteMessage', $username, $query, fn () => $this->handleMessageDelete($username, $query));
     }
 
     /** @param array<string, mixed> $body @return array<string, mixed> */
     public function moveMessage(string $username, array $body): array
     {
-        return $this->handleMove($username, $body);
+        return MailImapProcess::runJson('moveMessage', $username, $body, fn () => $this->handleMove($username, $body));
     }
 
     /** @param array<string, mixed> $body @return array<string, mixed> */
     public function send(string $username, array $body): array
     {
-        return $this->handleSend($username, $body);
+        return MailImapProcess::runJson('send', $username, $body, fn () => $this->handleSend($username, $body));
     }
 
     /** @param array<string, mixed> $body @return array<string, mixed> */
     public function saveDraft(string $username, array $body): array
     {
-        return $this->handleSaveDraft($username, $body);
+        return MailImapProcess::runJson('saveDraft', $username, $body, fn () => $this->handleSaveDraft($username, $body));
     }
 
 
@@ -694,11 +704,11 @@ final class MailOperationService
             throw new MailResponseException(400, ['error' => 'mailbox_required']);
         }
         $cred = $this->requireImap($username);
-        $limit = isset($query['limit']) ? (int) $_GET['limit'] : 40;
-        $offset = isset($query['offset']) ? (int) $_GET['offset'] : 0;
+        $limit = isset($query['limit']) ? (int) $query['limit'] : 40;
+        $offset = isset($query['offset']) ? (int) $query['offset'] : 0;
         $limit = max(1, min(80, $limit));
         $offset = max(0, min(50000, $offset));
-        $qRaw = isset($query['q']) && is_string($_GET['q']) ? trim($_GET['q']) : '';
+        $qRaw = isset($query['q']) && is_string($query['q']) ? trim($query['q']) : '';
         if (function_exists('mb_substr')) {
             $qRaw = mb_substr($qRaw, 0, 200);
         } elseif (strlen($qRaw) > 200) {

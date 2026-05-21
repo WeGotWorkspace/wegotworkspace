@@ -4,10 +4,11 @@ import tailwindcss from "@tailwindcss/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { resolveWgwProxyTarget } from "./scripts/wgw-proxy-target.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.join(__dirname, "..", "..");
-const wgwProxyTarget = process.env.WGW_PROXY_TARGET ?? "https://wegotworkspace.local:8443";
+const wgwProxyTarget = resolveWgwProxyTarget();
 
 export default defineConfig({
   base: "./",

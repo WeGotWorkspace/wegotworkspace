@@ -32,9 +32,11 @@ pnpm install
 pnpm dev
 ```
 
-`pnpm dev` bootstraps `packages/apps` and `packages/api` into `apps/wegotworkspace`, then keeps watching both packages and re-syncing on change (Vite rebuild + runtime copy for UI, file sync for API). Use `pnpm dev:php` in another terminal for the built-in PHP server, or your Apache vhost.
+`pnpm dev` bootstraps `packages/apps` and `packages/api` into `apps/wegotworkspace`, starts Storybook on port 6006, and keeps watching both packages and re-syncing on change (Vite rebuild + runtime copy for UI, file sync for API).
 
-Optional: `pnpm dev:storybook` (component docs), `pnpm dev:onlyoffice` (ONLYOFFICE web package). Use `pnpm build` for a full production build (CI/release).
+For **Live API** stories (and mail/notes against a real backend), copy `packages/apps/.env.example` to **`.env.local` at the repo root**, set `VITE_WGW_DEV_USERNAME` / `VITE_WGW_DEV_PASSWORD`, then run **`pnpm dev:php`** in a second terminal (`http://127.0.0.1:9080`). Storybook proxies `/api/v1` there by default (not Apache `:8443`, which can crash on IMAP and show Vite `socket hang up`).
+
+Optional: `pnpm dev:storybook` (Storybook only), `pnpm dev:onlyoffice` (ONLYOFFICE web package). Use `pnpm build` for a full production build (CI/release).
 
 Open `http://127.0.0.1:8080/install/`.
 

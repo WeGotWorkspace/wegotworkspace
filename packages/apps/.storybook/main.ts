@@ -1,10 +1,12 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { StorybookConfig } from "@storybook/react-vite";
+import { resolveWgwProxyTarget } from "../scripts/wgw-proxy-target.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.join(__dirname, "..");
-const wgwProxyTarget = process.env.WGW_PROXY_TARGET ?? "https://wegotworkspace.local:8443";
+const appsRoot = path.join(__dirname, "..");
+const monorepoRoot = path.join(__dirname, "..", "..");
+const wgwProxyTarget = resolveWgwProxyTarget();
 
 const config: StorybookConfig = {
   stories: ["../src/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
@@ -36,8 +38,8 @@ const config: StorybookConfig = {
   async viteFinal(baseConfig) {
     return {
       ...baseConfig,
-      /** Load `VITE_*` from repo root `.env.local` (same as `vite dev`). */
-      envDir: repoRoot,
+      /** Load `VITE_*` / `WGW_*` from monorepo root `.env.local` (see `packages/apps/.env.example`). */
+      envDir: monorepoRoot,
       server: {
         ...baseConfig.server,
         proxy: {
@@ -55,7 +57,7 @@ const config: StorybookConfig = {
           ...(baseConfig.resolve && "alias" in baseConfig.resolve && baseConfig.resolve.alias
             ? baseConfig.resolve.alias
             : {}),
-          "@": path.join(repoRoot, "src"),
+          "@": path.join(appsRoot, "src"),
         },
       },
     };
