@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 const installBaseURL =
-  process.env.WGW_INSTALL_BASE_URL ?? "https://wegotworkspace.local:8443";
+  process.env.WGW_INSTALL_BASE_URL ?? "http://127.0.0.1:9080";
 
 test.describe("Install wizard", () => {
   test.use({

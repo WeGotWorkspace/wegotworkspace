@@ -25,6 +25,7 @@ PHP tests and `composer.json` appear only **after** Phase 0 scaffold in the gree
 - **Edit:** `packages/api` (Laravel app), `packages/apps` (UI → `dist/`)
 - **Install shell:** `apps/wegotworkspace` (config, data, `index.php`) — not a second API codebase; see `docs/dev-layout.md`
 - **`pnpm dev`** does not sync into `apps/wegotworkspace/packages/`; use **`pnpm dev:preview`** for release-like copies
+- **Docker API:** `compose.dev.yml` / `pnpm docker:up` — see `docker/README.md`; CI e2e uses `pnpm test:api-e2e:docker`
 
 ## HTTP routing
 

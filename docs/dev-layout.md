@@ -35,9 +35,24 @@ Storybook proxies `/api/v1` to `http://127.0.0.1:9080` by default.
 
 Copies `packages/api` and UI `dist/` into `apps/wegotworkspace/packages/` and watches with runtime sync — same layout as a release ZIP. Use when testing Apache/macOS preview or install-path edge cases.
 
-## macOS Apache (`pnpm preview:macos`)
+## Docker API (`compose.dev.yml`)
 
-Optional; still supported. Prefer `pnpm dev` (PHP + Storybook) for daily work.
+Preferred for onboarding and CI parity (Apache + mod_php, same monorepo mounts as host dev).
+
+```bash
+composer --working-dir packages/api install
+pnpm --filter @wgw/apps run build:dev
+pnpm docker:up          # http://127.0.0.1:9080
+pnpm dev:ui             # Storybook on host; proxy /api/v1 → :9080
+```
+
+See [`docker/README.md`](../docker/README.md). Playwright in CI: `pnpm test:api-e2e:docker`.
+
+| Command | Runs |
+|---------|------|
+| `pnpm docker:up` | Start API stack in Docker |
+| `pnpm docker:down` | Stop stack |
+| `pnpm test:api-e2e:docker` | Compose + Playwright |
 
 ## Mental model
 
