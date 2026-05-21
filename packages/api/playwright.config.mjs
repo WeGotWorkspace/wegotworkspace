@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const packageRoot = path.dirname(fileURLToPath(import.meta.url));
-const baseURL = process.env.WGW_API_BASE_URL ?? "http://127.0.0.1:8080";
+const baseURL = process.env.WGW_API_BASE_URL ?? "http://127.0.0.1:9080";
 
 export default defineConfig({
   testDir: "./e2e",
@@ -18,7 +18,7 @@ export default defineConfig({
     ? undefined
     : {
         command:
-          'php -S 127.0.0.1:8080 -t "../../apps/wegotworkspace" "../../apps/wegotworkspace/index.php"',
+          'php -S 127.0.0.1:9080 -t "../../apps/wegotworkspace" "../../apps/wegotworkspace/index.php"',
         url: `${baseURL}/api/v1/health`,
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,

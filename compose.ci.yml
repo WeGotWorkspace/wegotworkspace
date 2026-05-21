@@ -1,0 +1,3 @@
+# CI / Playwright: same stack as compose.dev.yml (health-gated web on :9080).
+include:
+  - path: compose.dev.yml

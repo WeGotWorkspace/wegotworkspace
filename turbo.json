@@ -9,11 +9,6 @@
   ],
   "globalDependencies": ["packages/api/composer.json", "packages/api/composer.lock"],
   "tasks": {
-    "preview:macos": {
-      "dependsOn": ["^build"],
-      "cache": false,
-      "persistent": true
-    },
     "build": {
       "dependsOn": ["^build", "typegen"],
       "cache": false,

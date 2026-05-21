@@ -15,7 +15,8 @@ Greenfield Laravel app for `/api/v1/*`, plus the **OpenAPI contract** and genera
 
 ```bash
 composer --working-dir packages/api test      # PHPUnit (phases 0–4)
-pnpm --filter @wgw/api test:e2e               # Playwright API smoke (starts php -S unless already on :8080)
+pnpm --filter @wgw/api test:e2e               # Playwright API smoke (starts php -S unless already on :9080)
+pnpm test:api-e2e:docker                      # same tests against Docker (compose.ci.yml)
 pnpm --filter @wgw/api typegen                # regenerate TS types from openapi/generated/openapi.built.json
 pnpm --filter @wgw/api typegen:check          # fail if generated files are stale
 ```
