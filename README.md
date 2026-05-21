@@ -21,9 +21,10 @@ That guide is intentionally short and covers:
 ## Local development
 
 Requirements:
-- PHP 8.3+
+- PHP 8.3+ (host) **or** Docker for the API only
 - Node.js 20+
 - pnpm 9+
+- Docker (optional, recommended for API parity with CI)
 
 From the repository root:
 
@@ -43,8 +44,9 @@ For **Live API** stories, copy `packages/apps/.env.example` to **`.env.local` at
 | `pnpm dev:api` | PHP backend only (`127.0.0.1:9080`) |
 | `pnpm dev:ui` | Storybook + UI watch only |
 | `pnpm dev:preview` | Sync into `apps/wegotworkspace/packages/` (release-like tree) |
-| `pnpm preview:macos` | Homebrew Apache + SSL (optional) |
+| `pnpm docker:up` | API in Docker (`127.0.0.1:9080`) — use with `pnpm dev:ui` |
 | `pnpm build` | Full production build + runtime sync (CI/release) |
+| `pnpm test:api-e2e:docker` | Playwright against Docker stack |
 
 Optional: `pnpm dev:storybook`, `pnpm dev:onlyoffice`.
 

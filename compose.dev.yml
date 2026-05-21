@@ -1,0 +1,36 @@
+# Local API runtime: Apache + mod_php (shared-hosting style), monorepo bind mounts.
+# UI: Vite/Storybook on the host; proxy /api/v1 → http://127.0.0.1:9080
+#
+#   docker compose -f compose.dev.yml up -d --build
+#   pnpm dev:ui
+
+name: wgw-dev
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: docker/apache/Dockerfile
+    ports:
+      - "${WGW_DOCKER_HTTP_PORT:-9080}:80"
+    environment:
+      WGW_APP_ROOT: /var/www/install
+    volumes:
+      - ./apps/wegotworkspace:/var/www/install
+      - ./packages/api:/var/www/packages/api
+      - ./packages/apps:/var/www/packages/apps:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1/api/v1/health | grep -q '\"status\":\"ok\"'"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  mailhog:
+    profiles: ["mail"]
+    image: mailhog/mailhog:v1.0.1
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+volumes: {}
