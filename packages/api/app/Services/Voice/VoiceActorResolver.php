@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace App\Services\Voice;
 
 use Illuminate\Http\Request;
-use Wgw\Legacy\Voice\LegacyVoiceAuth;
 
 final class VoiceActorResolver
 {
-    public function __construct(private LegacyVoiceAuth $auth)
+    public function __construct(private VoiceRequestAuth $auth)
     {
     }
 
