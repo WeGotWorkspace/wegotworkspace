@@ -7,6 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@/ui/dropdown-menu";
 import { UserAvatar } from "@/user-avatar/src/user-avatar";
+import { shouldMirrorMeetStream } from "@/meet-core/src/meet-stream-mirror";
 import { MeetStreamVideo } from "@/meet-core/src/meet-stream-video";
 import { meetLabels } from "@/meet-core/src/meet-labels";
 import { usePeerStreamPresence } from "@/meet-core/src/use-peer-stream-presence";
@@ -19,7 +20,7 @@ type MeetPeerTileProps = {
   /** Inbound RTP heuristics; null = omit override. */
   remoteMedia?: { camera: boolean; mic: boolean } | null;
   /** Peer's announced mic/camera (control chat); when set, overrides track/stats for UI. */
-  disclosedMedia?: { camera: boolean; mic: boolean } | null;
+  disclosedMedia?: { camera: boolean; mic: boolean; screen?: boolean } | null;
   onMuteSoon: (name: string) => void;
 };
 
@@ -50,6 +51,7 @@ export function MeetPeerTile({
   const showRemoteVideo = !!(stream && (disclosedMedia ? disclosedMedia.camera : cameraFromTracks));
   const micLiveUi = disclosedMedia ? disclosedMedia.mic : micFromTracks;
   const showAvatarFill = !showRemoteVideo || !remoteVideoOk;
+  const mirrored = shouldMirrorMeetStream(stream, disclosedMedia?.screen);
 
   return (
     <div className={cn("meet-peer-tile", compact && "meet-peer-tile--compact")}>
@@ -57,7 +59,7 @@ export function MeetPeerTile({
         <div className="meet-peer-tile__media">
           <MeetStreamVideo
             stream={stream}
-            mirrored={false}
+            mirrored={mirrored}
             onPresentationViable={onPresentationViable}
             className={cn(
               "meet-peer-tile__stream h-full w-full",
