@@ -1,21 +1,30 @@
 #!/usr/bin/env node
 
 import chokidar from "chokidar";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { syncRuntimeApiPackage } from "./sync-runtime-api-package.mjs";
 
 const watchPaths = [
   "app/**/*",
   "bootstrap/**/*",
   "config/**/*",
+  "database/**/*",
   "legacy/**/*",
   "routes/**/*",
   "public/**/*",
+  "resources/**/*",
   "openapi/**/*",
   "scripts/**/*",
   "docs/**/*",
+  "storage/**/*",
+  "tests/**/*",
+  ".env",
   "package.json",
   "composer.json",
   "composer.lock",
+  "phpunit.xml",
+  "artisan",
   "README.md",
 ];
 

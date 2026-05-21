@@ -19,7 +19,9 @@ await build({
         buildCounter += 1;
         try {
           syncRuntimeAppBuilds();
-          console.log(`[watch-runtime-app-builds] Synced runtime output after build #${buildCounter}.`);
+          console.log(
+            `[watch-runtime-app-builds] Synced apps/wegotworkspace/packages/apps/*/dist after build #${buildCounter}.`,
+          );
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
           console.error(`[watch-runtime-app-builds] Sync failed after build #${buildCounter}: ${message}`);
