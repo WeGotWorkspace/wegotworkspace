@@ -15,7 +15,7 @@ use Sabre\DAV\Server;
 use Sabre\HTTP;
 use Symfony\Component\HttpFoundation\Response;
 
-final class SabreKernel
+final class SabreWebdavFront
 {
     public function __construct(
         private SabreServerFactory $factory,

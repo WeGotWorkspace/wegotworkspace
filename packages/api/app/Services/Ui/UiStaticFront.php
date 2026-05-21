@@ -11,7 +11,7 @@ use App\Ui\UiStaticServer;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-final class UiFrontKernel
+final class UiStaticFront
 {
     public function __construct(
         private AppPaths $paths,

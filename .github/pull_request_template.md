@@ -5,7 +5,7 @@
 ## API greenfield (check all that apply)
 
 - [ ] This PR does **not** touch `packages/api` REST / Laravel API
-- [ ] Or: follows `packages/api/docs/greenfield-plan.md` and `.cursor/rules/api-greenfield.mdc`
+- [ ] Or: follows `.cursor/rules/api-greenfield.mdc` and `packages/api/docs/api-done-gate.md` when applicable
 - [ ] Does **not** restore `packages/api/src/` or legacy `*Kernel` / `MailApi`
 - [ ] Feature tests added/updated for changed API routes (when runtime exists)
 - [ ] OpenAPI / `pnpm check:api-types` unchanged unless intentionally updated
