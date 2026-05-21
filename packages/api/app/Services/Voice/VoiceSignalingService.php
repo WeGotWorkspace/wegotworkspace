@@ -53,7 +53,7 @@ final class VoiceSignalingService
             if ($isKnockRequest && ! $this->roomHasJoinablePeer($room)) {
                 $this->fail('room_not_active', 404);
             }
-            $guestSessionKey = $this->actors->newGuestSessionKey();
+            $guestSessionKey = $this->actors->readGuestSessionKey($body) ?? $this->actors->newGuestSessionKey();
             $ownerMarker = $this->actors->ownerMarkerForGuestSession($guestSessionKey);
         }
 
