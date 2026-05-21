@@ -3,7 +3,21 @@
 import chokidar from "chokidar";
 import { syncRuntimeApiPackage } from "./sync-runtime-api-package.mjs";
 
-const watchPaths = ["openapi/**/*", "scripts/**/*", "docs/**/*", "package.json", "README.md"];
+const watchPaths = [
+  "app/**/*",
+  "bootstrap/**/*",
+  "config/**/*",
+  "legacy/**/*",
+  "routes/**/*",
+  "public/**/*",
+  "openapi/**/*",
+  "scripts/**/*",
+  "docs/**/*",
+  "package.json",
+  "composer.json",
+  "composer.lock",
+  "README.md",
+];
 
 let syncing = false;
 let queued = false;
@@ -17,7 +31,7 @@ async function runSync(reason) {
   syncing = true;
   const startedAt = Date.now();
   try {
-    syncRuntimeApiPackage();
+    syncRuntimeApiPackage({ includeVendor: false });
     syncCount += 1;
     process.stdout.write(
       `[watch-runtime-api-package] Sync #${syncCount} done in ${Date.now() - startedAt}ms (${reason}).\n`,
@@ -38,6 +52,7 @@ async function runSync(reason) {
 await runSync("startup");
 
 const watcher = chokidar.watch(watchPaths, {
+  cwd: packageRootFromHere(),
   ignoreInitial: true,
   awaitWriteFinish: {
     stabilityThreshold: 120,
@@ -53,3 +68,7 @@ process.on("SIGINT", async () => {
   await watcher.close();
   process.exit(0);
 });
+
+function packageRootFromHere() {
+  return resolve(dirname(fileURLToPath(import.meta.url)), "..");
+}

@@ -1,0 +1,41 @@
+import { describe, expect, it } from "vitest";
+import { sanitizeRtcSdp } from "@/meet-core/src/meet-rtc-sdp";
+
+const SAMPLE = [
+  "v=0",
+  "o=- 1 2 IN IP4 127.0.0.1",
+  "s=-",
+  "t=0 0",
+  "m=audio 9 UDP/TLS/RTP/SAVPF 111 63",
+  "c=IN IP4 0.0.0.0",
+  "a=rtpmap:111 opus/48000/2",
+  "a=rtpmap:63 red/48000/2",
+  "m=video 9 UDP/TLS/RTP/SAVPF 96 97 98 49 45",
+  "c=IN IP4 0.0.0.0",
+  "a=rtpmap:96 VP8/90000",
+  "a=rtpmap:97 rtx/90000",
+  "a=fmtp:97 apt=96",
+  "a=rtpmap:98 H264/90000",
+  "a=fmtp:98 level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=64001f",
+  "a=rtpmap:49 H265/90000",
+  "a=fmtp:49 level-id=180;profile-id=1;tier-flag=0;tx-mode=SRST",
+  "a=rtpmap:45 AV1/90000",
+  "a=fmtp:45 level-idx=5;profile=0;tier=0",
+  "a=ssrc:1047663390 msid:abc def",
+  "a=rtcp-rsize",
+  "a=extmap-allow-mixed",
+].join("\n");
+
+describe("sanitizeRtcSdp", () => {
+  it("keeps opus and VP8/H264 while stripping rejected lines", () => {
+    const out = sanitizeRtcSdp(SAMPLE);
+    expect(out).toContain("a=rtpmap:111 opus/48000/2");
+    expect(out).toContain("a=rtpmap:96 VP8/90000");
+    expect(out).toContain("a=fmtp:98 packetization-mode=1;profile-level-id=64001f");
+    expect(out).not.toContain("H265");
+    expect(out).not.toContain("AV1");
+    expect(out).not.toContain("a=ssrc:");
+    expect(out).not.toContain("a=rtcp-rsize");
+    expect(out).not.toContain("extmap-allow-mixed");
+  });
+});

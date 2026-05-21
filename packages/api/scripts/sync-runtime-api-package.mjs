@@ -9,10 +9,38 @@ const packageRoot = resolve(__dirname, "..");
 const repoRoot = resolve(packageRoot, "..", "..");
 const runtimeApiRoot = resolve(repoRoot, "apps", "wegotworkspace", "packages", "api");
 
-const baseFiles = ["composer.json", "composer.lock", "package.json", "README.md", "phpunit.xml", "artisan"];
-const baseDirs = ["app", "bootstrap", "config", "openapi", "public", "routes", "scripts", "docs", "storage", "tests"];
+const baseFiles = [
+  "composer.json",
+  "composer.lock",
+  "package.json",
+  "README.md",
+  "phpunit.xml",
+  "artisan",
+];
 
-export function syncRuntimeApiPackage() {
+const baseDirs = [
+  "app",
+  "bootstrap",
+  "config",
+  "database",
+  "legacy",
+  "openapi",
+  "public",
+  "resources",
+  "routes",
+  "scripts",
+  "docs",
+  "storage",
+  "tests",
+];
+
+function hasWithVendorFlag(argv) {
+  return argv.includes("--with-vendor");
+}
+
+export function syncRuntimeApiPackage(options = {}) {
+  const includeVendor = Boolean(options.includeVendor);
+
   mkdirSync(runtimeApiRoot, { recursive: true });
 
   for (const file of baseFiles) {
@@ -30,9 +58,30 @@ export function syncRuntimeApiPackage() {
     cpSync(from, to, { recursive: true });
   }
 
-  console.log(`[sync-runtime-api-package] Synced OpenAPI contract to ${runtimeApiRoot}.`);
+  const envFrom = resolve(packageRoot, ".env");
+  const envTo = resolve(runtimeApiRoot, ".env");
+  if (existsSync(envFrom)) {
+    cpSync(envFrom, envTo);
+  }
+
+  if (includeVendor) {
+    const fromVendor = resolve(packageRoot, "vendor");
+    const toVendor = resolve(runtimeApiRoot, "vendor");
+    if (existsSync(fromVendor)) {
+      rmSync(toVendor, { recursive: true, force: true });
+      cpSync(fromVendor, toVendor, { recursive: true });
+    } else {
+      console.warn(
+        "[sync-runtime-api-package] --with-vendor set but vendor/ is missing; run composer install in packages/api first.",
+      );
+    }
+  }
+
+  console.log(
+    `[sync-runtime-api-package] Synced @wgw/api to ${runtimeApiRoot}${includeVendor ? " (including vendor and .env)" : " (.env when present)"}.`,
+  );
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  syncRuntimeApiPackage();
+  syncRuntimeApiPackage({ includeVendor: hasWithVendorFlag(process.argv.slice(2)) });
 }
