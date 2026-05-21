@@ -109,6 +109,16 @@ final class LocalConfigFile
         return $value;
     }
 
+    public static function clearCacheForPath(string $path): void
+    {
+        unset(self::$cache[self::cacheKey($path)]);
+    }
+
+    public static function clearCache(): void
+    {
+        self::$cache = [];
+    }
+
     private static function cacheKey(string $path): string
     {
         $real = realpath($path);

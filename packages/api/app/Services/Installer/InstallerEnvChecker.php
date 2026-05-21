@@ -20,7 +20,7 @@ final class InstallerEnvChecker
     public function checkAll(string $dbDriver): array
     {
         $checks = [$this->phpVersion()];
-        foreach (['pdo', 'dom', 'mbstring', 'json', 'ctype', 'iconv', 'simplexml'] as $ext) {
+        foreach (['pdo', 'dom', 'mbstring', 'json', 'ctype', 'iconv', 'simplexml', 'openssl'] as $ext) {
             $checks[] = $this->extension($ext);
         }
         $checks[] = $this->extension($dbDriver === 'mysql' ? 'pdo_mysql' : 'pdo_sqlite');

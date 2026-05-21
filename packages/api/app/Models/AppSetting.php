@@ -69,7 +69,7 @@ final class AppSetting extends Model
             return str_contains($raw, '.') ? (float) $raw : (int) $raw;
         }
         $decoded = json_decode($raw, true);
-        if (json_last_error() === JSON_ERROR_NONE && (is_array($decoded) || is_object($decoded))) {
+        if (json_last_error() === JSON_ERROR_NONE) {
             return $decoded;
         }
 

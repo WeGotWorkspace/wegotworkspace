@@ -8,6 +8,7 @@ use App\Dav\SabreServerFactory;
 use App\Support\AppPaths;
 use App\Support\WgwInstallConfig;
 use Tests\Support\SqliteWgwSchema;
+use Tests\Support\WgwInstallFixture;
 use Tests\TestCase;
 
 final class SabreKernelTest extends TestCase
@@ -26,16 +27,18 @@ final class SabreKernelTest extends TestCase
         SqliteWgwSchema::applyCoreTables();
         SqliteWgwSchema::applySabreTables();
 
-        $install = $this->app->make(WgwInstallConfig::class);
-        $data = sys_get_temp_dir().'/wgw-sabre-test-'.uniqid('', true);
-        mkdir($data, 0775, true);
+        $installRoot = sys_get_temp_dir().'/wgw-sabre-root-'.uniqid('', true);
+        mkdir($installRoot, 0775, true);
+        file_put_contents($installRoot.'/index.php', "<?php\n");
+        $data = $installRoot.'/wgw-content';
         mkdir($data.'/files/users', 0775, true);
         mkdir($data.'/files/groups', 0775, true);
-        file_put_contents($data.'/.installed', date('c')."\n");
+        putenv('WGW_APP_ROOT='.$installRoot);
+        $_ENV['WGW_APP_ROOT'] = $installRoot;
+        WgwInstallFixture::markInstalled($installRoot, $data);
 
         config(['wgw.data_dir' => $data]);
-        $this->app->forgetInstance(WgwInstallConfig::class);
-        $this->app->forgetInstance(AppPaths::class);
+        WgwInstallFixture::forgetInstallBindings();
 
         $factory = $this->app->make(SabreServerFactory::class);
         $server = $factory->create();

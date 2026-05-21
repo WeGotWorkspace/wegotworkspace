@@ -9,8 +9,9 @@ use Illuminate\Support\Facades\File;
 
 final class JwtConfigService
 {
-    private const DEFAULT_PRIVATE_KEY_PATH = 'wgw-content/keys/api-jwt-private.pem';
-    private const DEFAULT_PUBLIC_KEY_PATH = 'wgw-content/keys/api-jwt-public.pem';
+    private const KEY_DIR = 'keys';
+    private const PRIVATE_KEY_FILE = 'api-jwt-private.pem';
+    private const PUBLIC_KEY_FILE = 'api-jwt-public.pem';
 
     public function __construct(private WgwInstallConfig $install)
     {
@@ -27,8 +28,8 @@ final class JwtConfigService
      */
     public function signingConfig(): ?array
     {
-        $privateKey = $this->keyMaterial('private_key', 'private_key_path', self::DEFAULT_PRIVATE_KEY_PATH);
-        $publicKey = $this->keyMaterial('public_key', 'public_key_path', self::DEFAULT_PUBLIC_KEY_PATH);
+        $privateKey = $this->keyMaterial('private_key', 'private_key_path', $this->defaultPrivateKeyPath());
+        $publicKey = $this->keyMaterial('public_key', 'public_key_path', $this->defaultPublicKeyPath());
         if ($privateKey === null || $publicKey === null) {
             return null;
         }
@@ -137,7 +138,17 @@ final class JwtConfigService
         return $kid !== '' ? $kid : null;
     }
 
-    private function keyMaterial(string $rawKey, string $pathKey, string $defaultRelativePath): ?string
+    private function defaultPrivateKeyPath(): string
+    {
+        return rtrim($this->install->dataDir(), '/').'/'.self::KEY_DIR.'/'.self::PRIVATE_KEY_FILE;
+    }
+
+    private function defaultPublicKeyPath(): string
+    {
+        return rtrim($this->install->dataDir(), '/').'/'.self::KEY_DIR.'/'.self::PUBLIC_KEY_FILE;
+    }
+
+    private function keyMaterial(string $rawKey, string $pathKey, string $defaultPath): ?string
     {
         $raw = trim((string) config('wgw.jwt.'.$rawKey));
         if ($raw !== '') {
@@ -145,8 +156,8 @@ final class JwtConfigService
         }
 
         $path = trim((string) config('wgw.jwt.'.$pathKey));
-        if ($path === '' && $defaultRelativePath !== '') {
-            $path = $defaultRelativePath;
+        if ($path === '' && $defaultPath !== '') {
+            $path = $defaultPath;
         }
         if ($path === '') {
             return null;

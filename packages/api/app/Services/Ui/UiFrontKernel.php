@@ -41,7 +41,17 @@ final class UiFrontKernel
         }
 
         if (! $this->paths->isInstalled()) {
-            return null;
+            if ($this->isPublicAssetPath($webBase, $path)) {
+                $installDist = $this->paths->moduleDistRoot('install');
+                if ($installDist !== null) {
+                    $asset = $this->static->tryServe($installDist, $webBase, $path, false);
+                    if ($asset !== null) {
+                        return $asset;
+                    }
+                }
+            }
+
+            return InstallerWebBase::redirectToInstallWizard();
         }
 
         if ($this->officeStatic->matchesOfficePath($webBase, $path)) {
@@ -57,6 +67,12 @@ final class UiFrontKernel
 
     private function handleInstall(string $webBase, string $path, string $method): Response
     {
+        $installPrefix = InstallerWebBase::url($webBase, '/install');
+        if ($path === $installPrefix) {
+            // Serve the wizard directly; a 301 to "/install/" is normalized back to "/install" by Apache.
+            $path = $installPrefix.'/';
+        }
+
         if ($this->paths->isInstalled()) {
             if ($method === 'HEAD') {
                 return response('', 200);
@@ -68,10 +84,6 @@ final class UiFrontKernel
         $dist = $this->paths->moduleDistRoot('install');
         if ($dist === null) {
             return $this->distMissing('install');
-        }
-
-        if ($method === 'HEAD') {
-            return response('', 200);
         }
 
         $served = $this->static->tryServe($dist, $webBase, $path, true);
@@ -115,6 +127,18 @@ final class UiFrontKernel
         $served = $this->static->tryServe($dist, $webBase, $path, true);
 
         return $served ?? $this->notFound();
+    }
+
+    private function isPublicAssetPath(string $webBase, string $path): bool
+    {
+        foreach (['/assets', '/fonts', '/icons', '/manifests'] as $prefix) {
+            $full = InstallerWebBase::url($webBase, $prefix);
+            if ($path === $full || str_starts_with($path, $full.'/')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function alreadyInstalled(string $webBase): Response

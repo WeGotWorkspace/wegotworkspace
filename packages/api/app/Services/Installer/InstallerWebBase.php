@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Installer;
 
+use Symfony\Component\HttpFoundation\Response;
+
 final class InstallerWebBase
 {
     public static function detect(): string
@@ -43,5 +45,12 @@ final class InstallerWebBase
         }
 
         return $webBase.$path;
+    }
+
+    public static function redirectToInstallWizard(): Response
+    {
+        $target = self::url(self::detect(), '/install/');
+
+        return redirect($target, 302)->setContent('');
     }
 }

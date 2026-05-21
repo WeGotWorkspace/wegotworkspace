@@ -49,14 +49,7 @@ final class UiStaticServer
             }
         }
 
-        foreach ($routePrefixes as $prefix) {
-            $full = InstallerWebBase::url($webBase, $prefix);
-            if ($path === $full || $path === $full.'/' || str_starts_with($path, $full.'/')) {
-                return true;
-            }
-        }
-
-        return false;
+        return $this->resolveRoutePrefix($webBase, $path, $routePrefixes) !== null;
     }
 
     public function matchesInstallPath(string $webBase, string $path): bool
@@ -85,7 +78,7 @@ final class UiStaticServer
             return $this->serveResolvedPath($root, $rel, false);
         }
 
-        $routePrefix = $this->matchedRoutePrefix($webBase, $path);
+        $routePrefix = $this->resolveRoutePrefix($webBase, $path, self::routePrefixes());
         if ($routePrefix === null) {
             return null;
         }
@@ -95,10 +88,35 @@ final class UiStaticServer
         return $this->serveResolvedPath($root, $rel, $spaFallback);
     }
 
-    private function matchedRoutePrefix(string $webBase, string $path): ?string
+    /**
+     * @param list<string> $prefixes
+     */
+    public function resolveRoutePrefix(string $webBase, string $path, array $prefixes): ?string
     {
-        /** @var list<string> */
-        $routePrefixes = [
+        $best = null;
+        $bestLength = -1;
+
+        foreach ($prefixes as $prefix) {
+            $full = InstallerWebBase::url($webBase, $prefix);
+            if (! $this->pathMatchesRoutePrefix($path, $full, $prefix)) {
+                continue;
+            }
+            $length = strlen($full);
+            if ($length > $bestLength) {
+                $best = $full;
+                $bestLength = $length;
+            }
+        }
+
+        return $best;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function routePrefixes(): array
+    {
+        return [
             '/',
             '/admin',
             '/drive',
@@ -111,15 +129,15 @@ final class UiStaticServer
             '/voice',
             '/install',
         ];
+    }
 
-        foreach ($routePrefixes as $prefix) {
-            $full = InstallerWebBase::url($webBase, $prefix);
-            if ($path === $full || $path === $full.'/' || str_starts_with($path, $full.'/')) {
-                return $full;
-            }
+    private function pathMatchesRoutePrefix(string $path, string $full, string $prefix): bool
+    {
+        if ($prefix === '/') {
+            return $path === '/' || $path === '';
         }
 
-        return null;
+        return $path === $full || $path === $full.'/' || str_starts_with($path, $full.'/');
     }
 
     private function relativePath(string $path, string $prefix): string
