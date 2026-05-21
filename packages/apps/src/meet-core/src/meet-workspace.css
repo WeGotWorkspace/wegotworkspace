@@ -406,10 +406,6 @@
   @apply pointer-events-none opacity-0;
 }
 
-:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-peer-tile .meet-stream-video {
-  transform: scaleX(-1) !important;
-}
-
 :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-peer-tile__name--mic-muted {
   outline: 1px solid rgba(248, 113, 113, 0.95);
   outline-offset: 0;
