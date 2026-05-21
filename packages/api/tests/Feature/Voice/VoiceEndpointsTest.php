@@ -110,4 +110,36 @@ final class VoiceEndpointsTest extends TestCase
         $room->assertOk();
         $room->assertJson(['active' => true]);
     }
+
+    public function test_guest_rejoin_reuses_session_key(): void
+    {
+        $first = $this->postJson('/api/v1/voice/join', [
+            'room' => 'daily-room',
+            'peerId' => 'peer-one',
+            'name' => 'Guest',
+        ]);
+        $first->assertOk();
+        $sessionKey = (string) $first->json('sessionKey');
+
+        $this->postJson('/api/v1/voice/leave', [
+            'room' => 'daily-room',
+            'peerId' => 'peer-one',
+            'sessionKey' => $sessionKey,
+        ])->assertOk();
+
+        $second = $this->postJson('/api/v1/voice/join', [
+            'room' => 'daily-room',
+            'peerId' => 'peer-two',
+            'name' => 'Guest',
+            'sessionKey' => $sessionKey,
+        ]);
+        $second->assertOk();
+        $this->assertSame($sessionKey, $second->json('sessionKey'));
+
+        $this->postJson('/api/v1/voice/poll', [
+            'room' => 'daily-room',
+            'peerId' => 'peer-two',
+            'sessionKey' => $sessionKey,
+        ])->assertOk();
+    }
 }

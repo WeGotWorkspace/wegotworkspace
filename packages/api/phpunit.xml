@@ -35,6 +35,5 @@
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
-        <env name="WGW_VOICE_SIGNALING" value="legacy"/>
     </php>
 </phpunit>

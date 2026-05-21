@@ -10,13 +10,13 @@ When working on **`packages/api`** REST or a new Laravel API:
 
 **Contract parity ≠ code parity.** Match OpenAPI via feature tests; implement logic in new Laravel layers. Legacy `packages/api/src/` was removed from the workspace on purpose.
 
-**Meet signaling (temporary):** On the greenfield branch, `packages/api/legacy/Voice/` holds main-branch PDO signaling beside `VoiceSignalingService`. Set `WGW_VOICE_SIGNALING=legacy|laravel` (see `packages/api/docs/voice-migration.md`). Do not restore full `packages/api/src/`.
+**Meet signaling:** Laravel `VoiceSignalingService` only — see `packages/api/docs/voice-migration.md`. Do not restore full `packages/api/src/` or `legacy/Voice/`.
 
 ## `packages/api` layout
 
 | Present | Absent (do not restore) |
 |---------|-------------------------|
-| `openapi/`, `scripts/` (typegen), `docs/greenfield-plan.md`, `legacy/Voice/` (signaling only) | `src/`, `*Kernel`, `MailApi`, `ApiKernel`, dual `App\` autoload |
+| `openapi/`, `scripts/` (typegen), `docs/greenfield-plan.md`, `app/Services/Voice/` | `src/`, `legacy/`, `*Kernel`, `MailApi`, `ApiKernel`, dual `App\` autoload |
 
 PHP tests and `composer.json` appear only **after** Phase 0 scaffold in the greenfield plan.
 

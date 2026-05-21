@@ -25,13 +25,4 @@ return [
         /** Set {@code WGW_MAIL_SMTP_VERIFY_TLS=false} for local/dev SMTP with self-signed certs. */
         'smtp_verify_tls' => filter_var(env('WGW_MAIL_SMTP_VERIFY_TLS', true), FILTER_VALIDATE_BOOL),
     ],
-
-    /**
-     * Meet / voice signaling backend for {@code POST /api/v1/voice/*}.
-     * - {@code legacy}: main-branch PDO signaling ({@see packages/api/legacy/Voice/})
-     * - {@code laravel}: greenfield {@see VoiceSignalingService}
-     */
-    'voice' => [
-        'signaling' => env('WGW_VOICE_SIGNALING', 'legacy'),
-    ],
 ];
