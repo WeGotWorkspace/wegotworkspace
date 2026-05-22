@@ -5,6 +5,7 @@ import {
   type TextEditorContentFormat,
 } from "@/text-editor-core/src/text-editor-content";
 import { textEditorDemoContent } from "@/text-editor-core/src/text-editor-fixtures";
+import { TEXT_EDITOR_FORMAT_BAR_MAIL } from "@/text-editor-core/src/text-editor-format-bar-config";
 
 const meta = {
   title: "Shared/TextEditor/TextEditor",
@@ -70,5 +71,15 @@ export const EmptyMarkdown: Story = {
     editable: true,
     placeholder: "Start writing, or type / for blocks…",
     showPrint: false,
+  },
+};
+
+export const MailHtml: Story = {
+  name: "Mail HTML toolbar",
+  args: {
+    format: "html",
+    content: "<p>Hello — use the mail toolbar preset.</p>",
+    editable: true,
+    formatBar: { groups: TEXT_EDITOR_FORMAT_BAR_MAIL, showPrint: false },
   },
 };
