@@ -522,13 +522,15 @@ export function DriveListView({
                         kindIcon[f.kind]
                       )}
                     </span>
-                    <span className="min-w-0 flex-1 truncate font-medium">{f.title}</span>
-                    {starred[f.id] ? (
-                      <Star
-                        className="size-3 shrink-0 drive-list-folder-icon"
-                        fill="currentColor"
-                      />
-                    ) : null}
+                    <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                      <span className="min-w-0 truncate font-medium">{f.title}</span>
+                      {starred[f.id] ? (
+                        <Star
+                          className="size-3 shrink-0 drive-list-folder-icon"
+                          fill="currentColor"
+                        />
+                      ) : null}
+                    </div>
                   </div>
                 </td>
                 <td className="py-2 hidden sm:table-cell tabular-nums drive-list-muted">
