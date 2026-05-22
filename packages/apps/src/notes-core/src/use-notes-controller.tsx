@@ -117,7 +117,9 @@ export function useNotesController({
   });
 
   const { show, showError } = useAppToast();
-  const { confirmDialog, requestConfirm } = useConfirmDialog();
+  const { confirmDialog, requestConfirm } = useConfirmDialog({
+    contentClassName: "notes-dialog-surface",
+  });
   const isTouch = useIsTouch();
   const showMutationError = useCallback(
     (fallback = "Could not sync this change. Please try again.") => showError(fallback),

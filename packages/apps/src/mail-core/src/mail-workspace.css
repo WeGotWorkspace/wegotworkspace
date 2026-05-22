@@ -8,6 +8,7 @@
   --workspace-root-bg: var(--color-cream, #ffffff);
   --color-emerald: oklch(0.858745 0.15558 94.085);
   --mail-sidebar: oklch(0.858745 0.15558 94.085);
+  --workspace-accent: var(--mail-sidebar);
   --app-sidebar-bg: var(--mail-sidebar);
   --mail-state-accent: var(--color-emerald);
 

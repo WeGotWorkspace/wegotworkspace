@@ -36,7 +36,7 @@ export function WeGotWorkspaceLiveHome() {
       id: "notes",
       label: "Notes",
       icon: <NotebookPen className="size-4" />,
-      accent: "var(--color-paper)",
+      accent: "var(--notes-sidebar, #fde047)",
       fg: "var(--color-ink)",
       onSelect: () => void navigate({ to: "/notes" }),
     },
