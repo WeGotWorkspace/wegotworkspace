@@ -46,11 +46,11 @@
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
   --font-app: "Bebas Neue", "General Sans", system-ui, sans-serif;
   --color-forest: #042318;
-  --color-emerald: #22c95c;
+  --color-emerald: #34d399;
   --color-ink: #042a22;
-  --color-paper: #23b572;
+  --color-paper: #34d399;
   --color-slate-muted: #0a3a2a;
-  --color-ghost: #1ea566;
+  --color-ghost: #22c55e;
   /* Workspace pane / shell background (white for now; tweak here to re-tint). */
   --color-cream: #ffffff;
 }

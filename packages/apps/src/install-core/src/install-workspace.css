@@ -5,7 +5,7 @@
 /* Pane class fragments: `install-workspace.styles.ts` (must stay in sync). */
 
 .install-workspace {
-  --install-accent: #23b572;
+  --install-accent: var(--color-paper, #34d399);
   --install-sidebar-fg: #042318;
   --app-sidebar-bg: var(--install-accent);
   --app-sidebar-color: var(--install-sidebar-fg);
@@ -26,7 +26,7 @@
   --install-sidebar-footer-fg: color-mix(in oklab, var(--install-sidebar-fg) 75%, transparent);
   --install-sidebar-progress-track: color-mix(in oklab, var(--install-sidebar-fg) 28%, transparent);
   --install-sidebar-progress-fill: var(--install-sidebar-fg);
-  --install-status-ok: #3a8f5a;
+  --install-status-ok: #16a34a;
   --install-status-error: #b14242;
   --install-status-pending: #7a7a78;
   --install-status-warn: #c98a1f;
