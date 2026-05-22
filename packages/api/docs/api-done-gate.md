@@ -63,7 +63,7 @@ pnpm --filter @wgw/api run typegen
 ## Out of scope for this gate
 
 - **WebDAV / UI** (`routes/web.php`, Sabre, static shells) — separate smoke/e2e paths.
-- **Playwright API e2e** — `pnpm test:api-e2e:docker` in CI after the gate.
+- **Playwright API e2e** — `pnpm test:api-e2e:docker` locally after the gate (not run in CI).
 - **OpenAPI TypeScript drift** — `pnpm check:api-types` in CI.
 
 ## Definition of done (whole REST API)
