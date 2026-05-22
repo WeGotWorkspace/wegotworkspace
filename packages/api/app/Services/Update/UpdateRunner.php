@@ -179,6 +179,7 @@ final class UpdateRunner
         $backupArchivePath = $this->store->absolutePath($this->store->backupDir()).'/'.$backupBaseName.'.zip';
         $replacePaths = [
             'index.php',
+            'bootstrap',
             'VERSION',
             'wgw-config.sample.php',
             'packages/api',
