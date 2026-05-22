@@ -450,8 +450,11 @@ export function DriveListView({
             </th>
             <th className="drive-list-head__cell hidden sm:table-cell">Modified</th>
             <th className="drive-list-head__cell hidden lg:table-cell">Kind</th>
-            <th className="drive-list-col-size drive-list-head__cell text-right hidden sm:table-cell">
+            <th className="drive-list-col-size drive-list-head__cell drive-list-head__cell--align-end hidden sm:table-cell">
               Size
+            </th>
+            <th className="drive-list-col-actions drive-list-head__cell drive-list-head__cell--align-end">
+              {labels.listColumnActions}
             </th>
           </tr>
         </thead>
@@ -526,19 +529,6 @@ export function DriveListView({
                         fill="currentColor"
                       />
                     ) : null}
-                    <div className="ml-auto shrink-0">
-                      <DriveFileItemActions
-                        labels={labels}
-                        file={f}
-                        isStarred={!!starred[f.id]}
-                        inTrash={inTrash}
-                        onDownload={onDownload}
-                        onStar={() => onStar(f.id)}
-                        onRename={() => onRename(f)}
-                        onMove={() => onMove(f)}
-                        onDelete={() => onTrash(f)}
-                      />
-                    </div>
                   </div>
                 </td>
                 <td className="py-2 hidden sm:table-cell tabular-nums drive-list-muted">
@@ -547,6 +537,24 @@ export function DriveListView({
                 <td className="py-2 hidden lg:table-cell drive-list-muted">{KIND_LABEL[f.kind]}</td>
                 <td className="drive-list-col-size py-2 text-right tabular-nums drive-list-muted hidden sm:table-cell">
                   {f.size}
+                </td>
+                <td
+                  className="drive-list-col-actions py-2"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <div className="flex justify-end">
+                    <DriveFileItemActions
+                      labels={labels}
+                      file={f}
+                      isStarred={!!starred[f.id]}
+                      inTrash={inTrash}
+                      onDownload={onDownload}
+                      onStar={() => onStar(f.id)}
+                      onRename={() => onRename(f)}
+                      onMove={() => onMove(f)}
+                      onDelete={() => onTrash(f)}
+                    />
+                  </div>
                 </td>
               </tr>
             );

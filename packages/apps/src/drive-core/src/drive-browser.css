@@ -15,8 +15,12 @@
   @apply mb-3;
 }
 
+.drive-workspace :is(.drive-grid-layout, .drive-list-view) {
+  @apply px-4 md:px-6 py-3 sm:py-5 md:py-8;
+}
+
 .drive-workspace .drive-grid-layout {
-  @apply px-4 md:px-6 py-3 sm:py-5 md:py-8 space-y-6 sm:space-y-8;
+  @apply space-y-6 sm:space-y-8;
 }
 
 .drive-workspace .drive-grid {
@@ -159,7 +163,7 @@
 }
 
 .drive-workspace .drive-list-view {
-  @apply min-w-0 max-w-full px-4 pb-8 md:px-6;
+  @apply min-w-0 max-w-full;
 }
 
 .drive-workspace .drive-list-table {
@@ -168,17 +172,15 @@
 }
 
 .drive-workspace .drive-list-col-name {
-  width: 44%;
-}
-
-@media (max-width: 639px) {
-  .drive-workspace .drive-list-col-name {
-    width: 100%;
-  }
+  width: auto;
 }
 
 .drive-workspace .drive-list-col-size {
   width: 6rem;
+}
+
+.drive-workspace .drive-list-col-actions {
+  width: 4.5rem;
 }
 
 .drive-workspace .drive-list-head {
@@ -187,9 +189,13 @@
 }
 
 .drive-workspace .drive-list-head__cell {
-  @apply py-3 text-left font-normal text-xs uppercase tracking-wider truncate;
+  @apply pb-2 pt-0 text-left font-normal text-xs uppercase tracking-wider truncate;
   font-family: var(--field-label-font-family, var(--font-mono, ui-monospace, monospace));
   color: var(--field-label-color, var(--color-muted-foreground));
+}
+
+.drive-workspace .drive-list-head__cell--align-end {
+  text-align: right;
 }
 
 .drive-workspace .drive-list-row {
@@ -277,14 +283,4 @@
 .drive-workspace .drive-detail-panel__meta-value {
   @apply capitalize;
   color: var(--color-ink);
-}
-
-.drive-workspace .drive-item-actions-trigger {
-  @apply size-7 flex items-center justify-center transition-colors;
-  border-radius: var(--control-radius-pill);
-  color: color-mix(in oklab, var(--color-ink) 70%, transparent);
-}
-
-.drive-workspace .drive-item-actions-trigger:hover {
-  background-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
 }
