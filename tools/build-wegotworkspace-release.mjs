@@ -22,6 +22,7 @@ const appReleaseEntries = [
   ".htaccess",
   "example.htaccess",
   "index.php",
+  "bootstrap",
   "VERSION",
   "wgw-config.sample.php",
   "packages/apps/admin/dist",
