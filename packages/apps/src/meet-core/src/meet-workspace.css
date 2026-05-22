@@ -42,6 +42,7 @@
   --workspace-user-footer-link-color: var(--meet-text);
   --workspace-user-footer-link-bg: var(--meet-panel-soft);
   --field-label-color: var(--meet-muted);
+  --foreground: var(--meet-text);
   --color-foreground: var(--meet-text);
   --input-background: var(--meet-panel-soft);
   --input-background-focus: var(--meet-panel-soft);
@@ -131,23 +132,49 @@
   @apply space-y-6;
 }
 
+.meet-workspace__form-identity + .meet-workspace__form-devices {
+  @apply mt-10;
+}
+
+.meet-workspace__form-devices {
+  @apply flex flex-col gap-6;
+}
+
 .meet-workspace__form .field-label-row {
   @apply mb-0;
 }
 
-.meet-device-row__control {
-  @apply flex items-center gap-3;
+.meet-workspace__form .field-label-row__label svg {
+  @apply size-3 shrink-0 opacity-80;
 }
 
 :is(.meet-workspace, .meet-popover-surface) .meet-device-row__trigger {
   color: var(--meet-text);
+  min-width: 0;
+  overflow: hidden;
 }
 
-.meet-workspace__display-name-input {
+:is(.meet-workspace, .meet-popover-surface) .meet-device-row__trigger > span:first-child {
+  @apply min-w-0 flex-1 truncate text-left;
+}
+
+.meet-workspace__form .meet-device-row {
+  min-width: 0;
+}
+
+.meet-workspace__form .meet-workspace__display-name-input {
   --input-background: transparent;
   --input-background-focus: transparent;
+  --foreground: var(--meet-text);
+  --color-foreground: var(--meet-text);
   color: var(--meet-text);
   box-shadow: none;
+}
+
+.meet-workspace__form .meet-workspace__display-name-input:focus,
+.meet-workspace__form .meet-workspace__display-name-input:focus-visible {
+  color: var(--meet-text);
+  background-color: transparent;
 }
 
 .meet-workspace__form .meet-device-row__trigger {
@@ -357,12 +384,6 @@
   @apply border-0;
   background-color: var(--meet-panel);
   color: var(--meet-text);
-}
-
-:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-device-row-icon {
-  @apply flex size-9 shrink-0 items-center justify-center rounded-lg;
-  background-color: var(--meet-panel-soft);
-  color: var(--meet-muted);
 }
 
 :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-peer-tile {
