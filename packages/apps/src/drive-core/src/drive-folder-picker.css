@@ -1,8 +1,9 @@
 @import "../../styles.css" reference;
 
 .drive-dialog-surface {
-  --color-emerald: #0c8397;
-  --drive-sidebar: #0c8397;
+  --drive-accent: #2563eb;
+  --color-emerald: var(--drive-accent);
+  --drive-sidebar: var(--drive-accent);
   --field-label-color: color-mix(in oklab, var(--color-ink) 55%, transparent);
   --drive-folder-picker-body-height: 16.5rem;
 }

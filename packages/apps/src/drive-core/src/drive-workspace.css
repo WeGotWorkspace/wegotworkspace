@@ -3,13 +3,14 @@
 
 .drive-workspace {
   @apply min-w-0 overflow-x-hidden;
-  --color-emerald: #0c8397;
-  --drive-sidebar: #0c8397;
+  --drive-accent: #2563eb;
+  --color-emerald: var(--drive-accent);
+  --drive-sidebar: var(--drive-accent);
   --app-sidebar-bg: var(--drive-sidebar);
   --app-sidebar-border-color: color-mix(in oklab, #ffffff 18%, transparent);
   --app-sidebar-color: #ffffff;
   --sidebar-logo-close-button-color: var(--app-sidebar-color);
-  --sidebar-badge-fg: #0c8397;
+  --sidebar-badge-fg: var(--drive-accent);
   --workspace-main-content-max-width: none;
   --workspace-sidebar-toggle-color: var(--color-ink);
   --workspace-sidebar-toggle-bg: color-mix(in oklab, var(--color-ink) 6%, transparent);

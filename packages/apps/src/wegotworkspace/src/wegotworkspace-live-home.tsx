@@ -52,7 +52,7 @@ export function WeGotWorkspaceLiveHome() {
       id: "drive",
       label: "Drive",
       icon: <HardDrive className="size-4" />,
-      accent: "var(--drive-sidebar, #0c8397)",
+      accent: "var(--drive-sidebar, #2563eb)",
       fg: "#ffffff",
       onSelect: () => void navigate({ to: "/drive" }),
     },
