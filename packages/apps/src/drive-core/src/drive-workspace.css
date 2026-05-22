@@ -88,51 +88,6 @@
   background-color: var(--color-cream, #ffffff);
 }
 
-.drive-workspace .drive-header-search {
-  display: none;
-}
-
-@media (min-width: 768px) {
-  .drive-workspace .drive-header-search {
-    display: block;
-    width: min(20rem, 28vw);
-    min-width: 10rem;
-  }
-
-  .drive-workspace .view-header__actions {
-    gap: 0.75rem;
-  }
-}
-
-.drive-workspace .drive-floating-search {
-  display: block;
-  position: fixed;
-  left: 1rem;
-  right: 1rem;
-  bottom: max(1rem, env(safe-area-inset-bottom));
-  z-index: 35;
-  padding: 0.25rem;
-  border-radius: var(--control-radius-pill);
-  background-color: var(--color-cream, #ffffff);
-  box-shadow:
-    0 4px 24px color-mix(in oklab, var(--color-ink) 16%, transparent),
-    0 0 0 1px color-mix(in oklab, var(--color-ink) 8%, transparent);
-}
-
-@media (min-width: 768px) {
-  .drive-workspace .drive-floating-search {
-    display: none;
-  }
-}
-
-.drive-workspace .drive-floating-search .search-bar > div {
-  margin-top: 0;
-  height: 2.75rem;
-  border-radius: var(--control-radius-pill);
-  padding-inline: 1rem;
-  background-color: color-mix(in oklab, var(--color-ink) 6%, transparent);
-}
-
 .drive-workspace .drive-floating-upload {
   position: fixed;
   left: 1rem;
@@ -141,16 +96,6 @@
   z-index: 36;
   max-width: 28rem;
   margin-inline: auto;
-}
-
-.drive-workspace .drive-main-pane:has(.drive-floating-search) .drive-floating-upload {
-  bottom: calc(max(1rem, env(safe-area-inset-bottom)) + 4.25rem);
-}
-
-@media (min-width: 768px) {
-  .drive-workspace .drive-main-pane:has(.drive-floating-search) .drive-floating-upload {
-    bottom: max(1rem, env(safe-area-inset-bottom));
-  }
 }
 
 .drive-workspace .drive-main-pane:has(.drive-selection-bar) .drive-floating-upload {
@@ -169,18 +114,18 @@
 }
 
 @media (max-width: 767px) {
-  .drive-workspace .drive-main-pane__scroll {
+  .drive-workspace .drive-main-pane:has(.drive-selection-bar) .drive-main-pane__scroll {
     padding-bottom: 5.5rem;
   }
 
   .drive-workspace .drive-main-pane:has(.drive-floating-upload) .drive-main-pane__scroll {
-    padding-bottom: 9.5rem;
+    padding-bottom: 6.5rem;
   }
 
   .drive-workspace
-    .drive-main-pane:has(.drive-floating-upload):has(.drive-floating-search)
+    .drive-main-pane:has(.drive-floating-upload):has(.drive-selection-bar)
     .drive-main-pane__scroll {
-    padding-bottom: 13.5rem;
+    padding-bottom: 10.5rem;
   }
 }
 
