@@ -109,7 +109,7 @@
 
 .drive-workspace .drive-file-tile__star-badge {
   @apply absolute top-2 right-2 z-10 rounded-full p-1.5 pointer-events-none;
-  background-color: color-mix(in oklab, var(--color-cream, #f5f1e8) 90%, transparent);
+  background-color: color-mix(in oklab, var(--color-cream, #ffffff) 90%, transparent);
   color: var(--color-emerald);
   box-shadow: 0 2px 8px color-mix(in oklab, var(--color-ink) 20%, transparent);
 }
@@ -153,7 +153,7 @@
 .drive-workspace .drive-file-tile__footer {
   @apply px-3.5 py-3 sm:px-4 sm:py-3.5 flex items-center gap-2.5 border-t;
   border-color: color-mix(in oklab, var(--color-ink) 8%, transparent);
-  background-color: var(--color-cream, #f5f1e8);
+  background-color: var(--color-cream, #ffffff);
 }
 
 .drive-workspace .drive-file-tile__kind-icon {
