@@ -36,11 +36,10 @@ export function MeetChatPane({
         <IconButton
           onClick={onClose}
           icon={<X />}
-          label="Close chat"
+          label={meetLabels.toggleChatHide}
           size="sm"
-          variant="ghost"
+          variant="subtle"
           showTooltip={false}
-          className="meet-chat__close"
         />
       </div>
       <div className="meet-chat__messages">
