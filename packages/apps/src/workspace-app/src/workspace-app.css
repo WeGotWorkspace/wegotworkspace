@@ -4,7 +4,10 @@
   @apply flex min-h-0 flex-col overflow-hidden absolute md:relative inset-0 md:inset-auto z-20 md:z-auto md:flex-1;
   @apply transition-[translate] duration-300 ease-out md:transition-none;
   container: workspace-detail / inline-size;
-  background-color: var(--workspace-detail-bg, var(--color-cream, #ffffff));
+  background-color: var(
+    --workspace-detail-bg,
+    color-mix(in oklab, var(--workspace-accent, transparent) 6%, var(--color-cream, #ffffff))
+  );
 }
 
 .workspace-detail-pane__scroll {

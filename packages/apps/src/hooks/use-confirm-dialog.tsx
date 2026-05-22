@@ -27,7 +27,7 @@ export type ConfirmDialogRequest = {
  * Controlled confirm pattern (title, description, labels, destructive styling).
  * Render `confirmDialog` once near the root of your screen; call `requestConfirm` to open.
  */
-export function useConfirmDialog() {
+export function useConfirmDialog(options?: { contentClassName?: string }) {
   const [request, setRequest] = useState<ConfirmDialogRequest | null>(null);
   const suppressParentDismissRef = useRef(false);
 
@@ -60,7 +60,7 @@ export function useConfirmDialog() {
   const confirmDialog = (
     <AlertDialog open={request !== null} onOpenChange={handleOpenChange}>
       {request ? (
-        <AlertDialogContent>
+        <AlertDialogContent className={options?.contentClassName}>
           <AlertDialogHeader>
             <AlertDialogTitle>{request.title}</AlertDialogTitle>
             <AlertDialogDescription>{request.description}</AlertDialogDescription>

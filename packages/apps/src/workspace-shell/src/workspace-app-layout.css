@@ -13,7 +13,7 @@
 }
 
 .workspace-app-layout__main-header {
-  @apply shrink-0 border-b px-4 pb-3 pt-4 md:px-8 md:pt-6;
+  @apply shrink-0 border-b px-6 pb-3 pt-6;
   border-color: var(
     --workspace-main-header-border-color,
     color-mix(in oklab, var(--color-ink) 10%, transparent)
