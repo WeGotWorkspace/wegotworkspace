@@ -5,8 +5,8 @@
   "scope": "/notes",
   "id": "/notes",
   "display": "standalone",
-  "background_color": "#23b572",
-  "theme_color": "#23b572",
+  "background_color": "#fde047",
+  "theme_color": "#fde047",
   "icons": [
     {
       "src": "/icons/notes-192.png",

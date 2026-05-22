@@ -27,6 +27,7 @@ export function MoveToDialog({
   selectPlaceholder = "Select a notebook",
   createPlaceholder = "New notebook name",
   duplicateCreateMessage = "A notebook with this name already exists.",
+  contentClassName,
 }: {
   open: boolean;
   notebooks: string[];
@@ -40,6 +41,7 @@ export function MoveToDialog({
   selectPlaceholder?: string;
   createPlaceholder?: string;
   duplicateCreateMessage?: string;
+  contentClassName?: string;
 }) {
   const CREATE_NEW_VALUE = "__create_new_notebook__";
   const [picked, setPicked] = useState<string | null>(null);
@@ -61,7 +63,7 @@ export function MoveToDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent>
+      <DialogContent className={contentClassName}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
@@ -128,11 +130,13 @@ export function AddDialog({
   existing,
   onClose,
   onConfirm,
+  contentClassName,
 }: {
   kind: null | "notebook" | "tag";
   existing: string[];
   onClose: () => void;
   onConfirm: (name: string) => void;
+  contentClassName?: string;
 }) {
   const [value, setValue] = useState("");
   useEffect(() => {
@@ -142,7 +146,7 @@ export function AddDialog({
   const dup = !!v && existing.includes(v);
   return (
     <Dialog open={!!kind} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent>
+      <DialogContent className={contentClassName}>
         <DialogHeader>
           <DialogTitle>New {kind === "notebook" ? "notebook" : "tag"}</DialogTitle>
           <DialogDescription>
@@ -184,10 +188,12 @@ export function EditDialog({
   item,
   onClose,
   onConfirm,
+  contentClassName,
 }: {
   item: null | { kind: "notebook" | "tag"; name: string };
   onClose: () => void;
   onConfirm: (newName: string) => void;
+  contentClassName?: string;
 }) {
   const [value, setValue] = useState("");
   useEffect(() => {
@@ -196,7 +202,7 @@ export function EditDialog({
   const v = value.trim();
   return (
     <Dialog open={!!item} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent>
+      <DialogContent className={contentClassName}>
         <DialogHeader>
           <DialogTitle>Rename {item?.kind}</DialogTitle>
           <DialogDescription>
@@ -230,12 +236,14 @@ export function DeleteDialog({
   affectedCount,
   onClose,
   onConfirm,
+  contentClassName,
 }: {
   item: null | { kind: "notebook" | "tag"; name: string };
   notebooks: string[];
   affectedCount: number;
   onClose: () => void;
   onConfirm: (opts: { transferTo?: string; archive?: boolean }) => void;
+  contentClassName?: string;
 }) {
   const [mode, setMode] = useState<"transfer" | "archive">("transfer");
   const others = notebooks.filter((n) => n !== item?.name);
@@ -251,7 +259,7 @@ export function DeleteDialog({
   const isNb = item?.kind === "notebook";
   return (
     <Dialog open={!!item} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent>
+      <DialogContent className={contentClassName}>
         <DialogHeader>
           <DialogTitle>
             Delete {item?.kind} “{item?.name}”?
@@ -332,6 +340,7 @@ export function TagPickerDialog({
   onClose,
   onToggle,
   onCreate,
+  contentClassName,
 }: {
   open: boolean;
   allTags: string[];
@@ -339,6 +348,7 @@ export function TagPickerDialog({
   onClose: () => void;
   onToggle: (t: string) => void;
   onCreate: (t: string) => void;
+  contentClassName?: string;
 }) {
   const [query, setQuery] = useState("");
   useEffect(() => {
@@ -350,7 +360,7 @@ export function TagPickerDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent>
+      <DialogContent className={contentClassName}>
         <DialogHeader>
           <DialogTitle>Tags</DialogTitle>
           <DialogDescription>Add or remove tags for this note.</DialogDescription>
@@ -372,7 +382,7 @@ export function TagPickerDialog({
               >
                 <TagIcon className="size-3.5 text-muted-foreground" />
                 <span className="flex-1">{t}</span>
-                {on && <Check className="size-4 text-emerald-600" />}
+                {on && <Check className="size-4 text-[color:var(--color-emerald)]" />}
               </button>
             );
           })}
