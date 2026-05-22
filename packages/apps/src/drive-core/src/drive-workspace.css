@@ -138,12 +138,8 @@
 .drive-workspace .drive-main-pane__breadcrumbs {
   @apply px-4 md:px-6 shrink-0;
   padding-block: 1rem;
-  background-color: color-mix(in oklab, var(--color-ink) 5%, transparent);
-  border-bottom: 1px solid
-    var(
-      --workspace-main-header-border-color,
-      color-mix(in oklab, var(--color-ink) 10%, transparent)
-    );
+  background-color: color-mix(in oklab, var(--drive-accent) 7%, var(--color-cream, #ffffff));
+  border-bottom: 1px solid color-mix(in oklab, var(--drive-accent) 12%, transparent);
   --path-breadcrumb-lead-color: var(--drive-sidebar);
   --path-breadcrumb-lead-bg: color-mix(in oklab, var(--drive-sidebar) 12%, transparent);
   --path-breadcrumb-link-color: color-mix(in oklab, var(--color-ink) 58%, transparent);
