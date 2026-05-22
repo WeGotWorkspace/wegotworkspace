@@ -528,8 +528,8 @@
 }
 
 .text-editor-slash-menu {
-  position: absolute;
-  z-index: 40;
+  position: fixed;
+  z-index: 50;
   width: 18rem;
   overflow: hidden;
   border-radius: var(--radius-lg);
