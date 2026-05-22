@@ -4,6 +4,8 @@ export const docsLabels = {
   emptyDescription: "Open a Markdown file from Drive to start editing.",
   loadError: "Could not load this document.",
   saveError: "Could not save this document.",
+  statsWords: (count: number) => `${count.toLocaleString()} words`,
+  statsCharacters: (count: number) => `${count.toLocaleString()} characters`,
 } as const;
 
 export type DocsUILabels = typeof docsLabels;

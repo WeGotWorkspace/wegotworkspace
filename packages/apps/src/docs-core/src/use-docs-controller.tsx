@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check } from "lucide-react";
 import { useAppToast } from "@/hooks/use-app-toast";
 import { parentAndName } from "@/lib/api/wgw/drive";
+import { markdownToPlainText } from "@/lib/models/note-body-markdown";
 import { mergeDocsLabels, type DocsUILabels } from "@/docs-core/src/docs-labels";
 import type { DocsAPIOperations, DocsDocument } from "@/docs-core/src/docs-types";
 
@@ -164,10 +165,20 @@ export function useDocsController({
 
   const title = document?.fileName ?? (filePath ? fileNameFromApiPath(filePath) : "");
 
+  const { wordCount, characterCount } = useMemo(() => {
+    const plain = markdownToPlainText(content);
+    return {
+      wordCount: plain ? plain.split(/\s+/).filter(Boolean).length : 0,
+      characterCount: plain.length,
+    };
+  }, [content]);
+
   return {
     labels: L,
     title,
     content,
+    wordCount,
+    characterCount,
     loading,
     loadError,
     hasFile: !!filePath || !!initialDocument,
