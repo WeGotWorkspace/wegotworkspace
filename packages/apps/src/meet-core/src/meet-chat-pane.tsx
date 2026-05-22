@@ -33,14 +33,15 @@ export function MeetChatPane({
         <div className="flex items-center gap-2 text-sm font-medium">
           <MessageSquare className="size-4" /> {meetLabels.chatTitle}
         </div>
-        <button
-          type="button"
+        <IconButton
           onClick={onClose}
+          icon={<X />}
+          label="Close chat"
+          size="sm"
+          variant="ghost"
+          showTooltip={false}
           className="meet-chat__close"
-          aria-label="Close chat"
-        >
-          <X className="size-4" />
-        </button>
+        />
       </div>
       <div className="meet-chat__messages">
         {messages.length === 0 && <div className="meet-chat__empty">{meetLabels.chatEmpty}</div>}

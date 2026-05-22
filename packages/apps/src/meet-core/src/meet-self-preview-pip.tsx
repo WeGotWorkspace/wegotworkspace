@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Mic, MicOff, PictureInPicture2 } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/tooltip";
+import { IconButton } from "@/button/src/button";
 import { UserAvatar } from "@/user-avatar/src/user-avatar";
 import { meetLabels } from "@/meet-core/src/meet-labels";
 import { cn } from "@/lib/utils";
@@ -309,20 +309,14 @@ export function MeetSelfPreviewPiP({
         {micOn ? <Mic className="size-3" /> : <MicOff className="size-3 text-red-400" />}
         <span className="max-w-24 truncate">{meetLabels.selfPreview(name)}</span>
       </div>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            type="button"
-            onClick={() => void toggleBrowserPiP()}
-            className="meet-pip__pip-button"
-            aria-label={meetLabels.openPip}
-            title={meetLabels.openPip}
-          >
-            <PictureInPicture2 className="size-3.5" />
-          </button>
-        </TooltipTrigger>
-        <TooltipContent>{meetLabels.openSystemPip}</TooltipContent>
-      </Tooltip>
+      <IconButton
+        onClick={() => void toggleBrowserPiP()}
+        icon={<PictureInPicture2 />}
+        label={meetLabels.openSystemPip}
+        size="sm"
+        variant="ghost"
+        className="meet-pip__pip-button"
+      />
     </div>
   );
 }
