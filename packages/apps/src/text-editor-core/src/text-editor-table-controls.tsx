@@ -133,11 +133,11 @@ function moveCol(editor: Editor, tableEl: HTMLTableElement, from: number, toGap:
   editor.view.dispatch(editor.state.tr.replaceWith(pos, pos + table.nodeSize, newTable));
 }
 
-export type MarkdownEditorTableControlsProps = {
+export type TextEditorTableControlsProps = {
   editor: Editor | null;
 };
 
-export function MarkdownEditorTableControls({ editor }: MarkdownEditorTableControlsProps) {
+export function TextEditorTableControls({ editor }: TextEditorTableControlsProps) {
   const state = useEditorState({
     editor,
     selector: ({ editor: ed }) =>
@@ -207,7 +207,7 @@ export function MarkdownEditorTableControls({ editor }: MarkdownEditorTableContr
       }
     };
     update();
-    const scroller = editor.view.dom.closest(".markdown-editor-scroll");
+    const scroller = editor.view.dom.closest(".text-editor-scroll");
     window.addEventListener("scroll", update, true);
     window.addEventListener("resize", update);
     scroller?.addEventListener("scroll", update);
@@ -357,11 +357,11 @@ export function MarkdownEditorTableControls({ editor }: MarkdownEditorTableContr
   };
 
   const btn =
-    "markdown-editor-table-controls__btn pointer-events-auto inline-flex items-center justify-center";
+    "text-editor-table-controls__btn pointer-events-auto inline-flex items-center justify-center";
 
   return createPortal(
     <div
-      className="markdown-editor-table-controls no-print pointer-events-none absolute z-40"
+      className="text-editor-table-controls no-print pointer-events-none absolute z-40"
       style={{ top: rect.top, left: rect.left, width: rect.width, height: rect.height }}
     >
       {!drag && rows.length > 0 ? (
