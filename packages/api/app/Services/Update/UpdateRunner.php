@@ -432,7 +432,7 @@ final class UpdateRunner
     private function writeMaintenanceMode(bool $enabled): void
     {
         if ($enabled) {
-            @mkdir($this->store->baseDir(), 0775, true);
+            $this->store->ensureDirs();
             file_put_contents($this->store->absolutePath($this->store->maintenancePath()), date('c')."\n", LOCK_EX);
 
             return;
