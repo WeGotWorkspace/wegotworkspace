@@ -7,6 +7,7 @@ export const driveLabels = {
   searchPlaceholder: "Search in Drive...",
   searchViewTitle: "Search",
   listColumnName: "Name",
+  listColumnActions: "Actions",
   emptyFolder: "This folder is empty",
   folderListingLoading: "Loading folder…",
   dropUploadHint: "Drop files to upload to",
