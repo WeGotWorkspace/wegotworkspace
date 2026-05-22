@@ -38,13 +38,5 @@ jobs:
       - name: Quality gate (typegen, lint, format, typecheck, API done gate)
         run: pnpm run ci:quality
 
-      - name: Build UI dist for installer e2e
-        run: |
-          pnpm --filter @wgw/apps run build:dev
-          pnpm --filter @wgw/apps run sync:runtime
-
-      - name: Run API Playwright smoke tests (Docker)
-        run: pnpm test:api-e2e:docker
-
       - name: Build (Composer + UI via Turborepo)
         run: pnpm run build

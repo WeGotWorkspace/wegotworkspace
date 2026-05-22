@@ -26,7 +26,7 @@ When working on **`packages/api`** REST or a new Laravel API:
 - **Edit:** `packages/api` (Laravel), `packages/apps` (UI → `dist/`); install shell `apps/wegotworkspace` is config/data only
 - **Env:** root `.env` (tooling), `packages/api/.env` (Laravel) — `docs/env.md`
 - **Release-like tree:** `pnpm dev:preview` or `pnpm build` syncs into `apps/wegotworkspace/packages/`
-- **Docker / HTTPS / WebDAV:** `docker/README.md`; CI e2e: `pnpm test:api-e2e:docker`
+- **Docker / HTTPS / WebDAV:** `docker/README.md`; API e2e (local): `pnpm test:api-e2e:docker`
 
 ## HTTP routing
 
