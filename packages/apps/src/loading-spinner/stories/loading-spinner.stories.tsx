@@ -3,7 +3,7 @@ import { LoadingSpinner } from "@/loading-spinner/src/loading-spinner";
 
 const surfaceStyle = {
   ["--loading-spinner-color" as string]: "color-mix(in oklab, var(--color-ink) 45%, transparent)",
-  backgroundColor: "var(--color-cream, #f5f1e8)",
+  backgroundColor: "var(--color-cream, #ffffff)",
 } as const;
 
 const meta = {

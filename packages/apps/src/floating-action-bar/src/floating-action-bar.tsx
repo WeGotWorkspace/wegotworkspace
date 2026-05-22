@@ -22,7 +22,7 @@ export function FloatingActionBar({ items, buttons, children, className }: Float
         "absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1 px-2 py-2 rounded-full shadow-lg whitespace-nowrap",
         className,
       )}
-      style={{ backgroundColor: "var(--color-ink)", color: "var(--color-cream, #f5f1e8)" }}
+      style={{ backgroundColor: "var(--color-ink)", color: "var(--color-cream, #ffffff)" }}
     >
       <span className="text-xs px-3 font-medium tabular-nums leading-9 inline-flex items-center">
         {items} selected

@@ -7,7 +7,7 @@ export function SettingsStoryScope({ children }: { children: ReactNode }) {
       className="settings-workspace p-6 md:p-10"
       style={{
         minHeight: "100dvh",
-        backgroundColor: "var(--color-cream, #f5f1e8)",
+        backgroundColor: "var(--color-cream, #ffffff)",
       }}
     >
       <div className="mx-auto max-w-2xl">{children}</div>

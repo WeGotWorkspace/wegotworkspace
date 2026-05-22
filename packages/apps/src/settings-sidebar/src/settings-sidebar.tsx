@@ -113,7 +113,7 @@ export function SidebarLink({
                 ? "var(--color-ink)"
                 : "color-mix(in oklab, var(--color-ink) 14%, transparent)",
               color: active
-                ? "var(--sidebar-badge-fg, var(--color-cream, #f5f1e8))"
+                ? "var(--sidebar-badge-fg, var(--color-cream, #ffffff))"
                 : "color-mix(in oklab, var(--color-ink) 80%, transparent)",
             }}
           >
