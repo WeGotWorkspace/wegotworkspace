@@ -54,26 +54,6 @@
   overflow-y: auto;
 }
 
-.meet-workspace__header {
-  @apply flex shrink-0 items-center justify-between p-6 md:p-8;
-}
-
-.meet-workspace__header-start {
-  @apply flex min-w-0 items-center;
-}
-
-.meet-workspace__header-account {
-  @apply shrink-0;
-}
-
-.meet-workspace__header-account .workspace-app-layout__user-footer {
-  @apply gap-2 border-0 p-0;
-}
-
-.meet-workspace__header-spacer {
-  @apply size-9 shrink-0;
-}
-
 .meet-workspace__lobby {
   @apply flex flex-1 items-center justify-center px-6 py-12;
 }
