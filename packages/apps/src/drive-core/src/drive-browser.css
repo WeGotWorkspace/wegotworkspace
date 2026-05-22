@@ -168,11 +168,14 @@
 
 .drive-workspace .drive-list-table {
   @apply w-full min-w-0 table-fixed text-sm;
+  border-collapse: separate;
+  border-spacing: 0;
   color: var(--color-ink);
 }
 
 .drive-workspace .drive-list-col-name {
   width: auto;
+  padding-inline-start: 0.5rem;
 }
 
 .drive-workspace .drive-list-col-size {
@@ -181,10 +184,14 @@
 
 .drive-workspace .drive-list-col-actions {
   width: 4.5rem;
+  padding-inline-end: 0.5rem;
 }
 
 .drive-workspace .drive-list-head {
   @apply text-left;
+}
+
+.drive-workspace .drive-list-head > th {
   border-bottom: 1px solid color-mix(in oklab, var(--color-ink) 12%, transparent);
 }
 
@@ -200,6 +207,9 @@
 
 .drive-workspace .drive-list-row {
   @apply cursor-default transition-colors;
+}
+
+.drive-workspace .drive-list-row > td {
   border-bottom: 1px solid color-mix(in oklab, var(--color-ink) 6%, transparent);
 }
 
@@ -208,8 +218,18 @@
   box-shadow: inset 0 0 0 1.5px var(--color-emerald);
 }
 
-.drive-workspace .drive-list-row--selected {
+.drive-workspace .drive-list-row--selected > td {
   background-color: color-mix(in oklab, var(--color-emerald) 16%, transparent);
+}
+
+.drive-workspace .drive-list-row--selected > td:first-child {
+  border-start-start-radius: var(--control-radius);
+  border-end-start-radius: var(--control-radius);
+}
+
+.drive-workspace .drive-list-row--selected > td:last-child {
+  border-start-end-radius: var(--control-radius);
+  border-end-end-radius: var(--control-radius);
 }
 
 .drive-workspace .drive-list-row--active {
