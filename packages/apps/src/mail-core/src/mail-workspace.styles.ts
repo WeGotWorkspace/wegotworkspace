@@ -22,9 +22,6 @@ export const mailWorkspacePaneClasses = {
   composeAttachmentsSection: "mail-compose-view__attachments",
   composeAttachmentsInput: "mail-compose-view__attachments-input",
   composeAttachmentsList: "mail-compose-view__attachments-list",
-  composeAttachmentItem: "mail-compose-view__attachment-item",
-  composeAttachmentName: "mail-compose-view__attachment-name",
-  composeAttachmentMeta: "mail-compose-view__attachment-meta",
   composeFooter: "mail-compose-dialog__footer",
   composeFooterStart: "mail-compose-dialog__footer-start",
   composeFooterEnd: "mail-compose-dialog__footer-end",
@@ -33,11 +30,6 @@ export const mailWorkspacePaneClasses = {
   attachments: "mail-attachments",
   attachmentsLabel: "mail-attachments__label",
   attachmentsGrid: "mail-attachments__grid",
-  attachmentItem: "mail-attachments__item",
-  attachmentIcon: "mail-attachments__icon",
-  attachmentName: "mail-attachments__name",
-  attachmentMeta: "mail-attachments__meta",
-  attachmentDownload: "mail-attachments__download",
 } as const;
 
 export const mailDetailTagColors = {

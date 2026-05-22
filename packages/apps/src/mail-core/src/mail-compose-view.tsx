@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
-import { Paperclip, Trash2, X } from "lucide-react";
+import { Paperclip, Trash2 } from "lucide-react";
 import { Button, IconButton } from "@/button/src/button";
 import { ViewHeader } from "@/view-header/src/view-header";
 import { FieldLabelRow } from "@/ui/field-label-row";
@@ -7,10 +7,10 @@ import { Input } from "@/ui/input";
 import { DialogFooter } from "@/ui/dialog";
 import { cn } from "@/lib/utils";
 import { TextEditor, TEXT_EDITOR_FORMAT_BAR_MAIL } from "@/text-editor-core/src";
+import { MailAttachmentChip } from "@/mail-core/src/mail-attachment-chip";
 import { mailWorkspacePaneClasses } from "@/mail-core/src/mail-workspace.styles";
 import {
   composeBodyToEditorHtml,
-  formatComposeAttachmentSize,
   type MailComposeAttachment,
 } from "@/mail-core/src/mail-compose-utils";
 
@@ -169,25 +169,14 @@ export function MailComposeView({
                 aria-label={attachmentsLabel}
               >
                 {attachments.map((attachment) => (
-                  <li
-                    key={attachment.id}
-                    className={mailWorkspacePaneClasses.composeAttachmentItem}
-                  >
-                    <span className={mailWorkspacePaneClasses.composeAttachmentName}>
-                      {attachment.filename}
-                    </span>
-                    <span className={mailWorkspacePaneClasses.composeAttachmentMeta}>
-                      {formatComposeAttachmentSize(attachment.size)}
-                    </span>
-                    <IconButton
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      label={`${removeAttachmentLabel}: ${attachment.filename}`}
-                      icon={<X className="size-4" aria-hidden />}
-                      showTooltip={false}
-                      onClick={() => onRemoveAttachment(attachment.id)}
+                  <li key={attachment.id}>
+                    <MailAttachmentChip
+                      name={attachment.filename}
+                      mimeType={attachment.mimeType}
+                      sizeBytes={attachment.size}
+                      removeLabel={`${removeAttachmentLabel}: ${attachment.filename}`}
                       disabled={disableActions}
+                      onRemove={() => onRemoveAttachment(attachment.id)}
                     />
                   </li>
                 ))}
