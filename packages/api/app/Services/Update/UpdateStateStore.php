@@ -75,6 +75,13 @@ final class UpdateStateStore
         return self::BASE.'/backup';
     }
 
+    public function baseDir(): string
+    {
+        $this->ensureDirs();
+
+        return $this->absolutePath(self::BASE);
+    }
+
     public function isLocked(): bool
     {
         return $this->disk()->exists($this->lockPath());
