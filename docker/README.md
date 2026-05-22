@@ -81,7 +81,9 @@ SMTP `localhost:1025`, UI http://127.0.0.1:8025.
 pnpm test:api-e2e:docker
 ```
 
-Uses `compose.ci.yml` (includes this file). CI keeps HTTP on `:9080` — no mkcert step.
+Uses `compose.ci.yml` (includes `compose.dev.yml` without `compose.local.yml` / mkcert certs). CI keeps HTTP on `:9080` — no mkcert step.
+
+For local HTTPS, add `compose.local.yml`: `docker compose -f compose.dev.yml -f compose.local.yml up -d --build`.
 
 ## Layout inside the container
 

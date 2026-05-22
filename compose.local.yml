@@ -1,0 +1,7 @@
+# Optional local overlay: mkcert certs for HTTPS (wegotworkspace.local).
+# Not used on CI. After pnpm docker:ssl:setup:
+#   docker compose -f compose.dev.yml -f compose.local.yml up -d --build
+services:
+  web:
+    volumes:
+      - ./docker/apache/certs:/etc/apache2/certs:ro
