@@ -105,7 +105,14 @@ Release ZIP files are built in CI from **signed annotated** tag pushes (`v*`) vi
 | `pnpm release:publish 1.2.3 --yes` | Same with an explicit version and no confirmation prompt |
 | `pnpm release:publish patch --verify` | Run a local `pnpm release` before commit (catch build errors early) |
 
-Publish requires a clean git tree and [git tag signing](https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work) configured (`user.signingkey`). Set `WGW_RELEASE_SIGNING_PRIVATE_KEY` in repo-root `.env` (see `.env.example`) for local signed manifests; CI uses the `WGW_RELEASE_SIGNING_PRIVATE_KEY` repository secret.
+Publish requires a clean git tree and a **signed annotated** git tag. That uses a separate key from release ZIP signing:
+
+| `.env` variable | Purpose |
+|-----------------|--------|
+| `WGW_RELEASE_SIGNING_PRIVATE_KEY` | RSA PEM → `manifest.sig` on deploy ZIPs |
+| `WGW_GIT_SIGNING_PUBLIC_KEY` | SSH `.pub` path → `git tag -s` (or set `user.signingkey` globally) |
+
+CI uses the `WGW_RELEASE_SIGNING_PRIVATE_KEY` repository secret for artifacts; the pushed tag must still be signed locally.
 
 The deploy artifact includes `INSTALL.md` so people downloading a release get the install steps directly in the package.
 
