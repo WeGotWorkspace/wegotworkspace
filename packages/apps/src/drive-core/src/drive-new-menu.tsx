@@ -1,4 +1,12 @@
-import { Upload, FolderPlus, Plus, FileText, FileSpreadsheet, Presentation } from "lucide-react";
+import {
+  Upload,
+  FolderPlus,
+  Plus,
+  FileText,
+  FileSpreadsheet,
+  Presentation,
+  ScrollText,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +23,7 @@ export type DriveNewMenuProps = {
   labels: DriveUILabels;
   onCreateFolder: () => void;
   onUploadFiles: () => void;
+  onCreateMarkdown?: () => void;
   onCreateBlank: (kind: DriveBlankKind) => void;
 };
 
@@ -22,6 +31,7 @@ export function DriveNewMenu({
   labels,
   onCreateFolder,
   onUploadFiles,
+  onCreateMarkdown,
   onCreateBlank,
 }: DriveNewMenuProps) {
   return (
@@ -46,6 +56,12 @@ export function DriveNewMenu({
           <span>{labels.uploadFiles}</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
+        {onCreateMarkdown ? (
+          <DropdownMenuItem onClick={onCreateMarkdown} className="cursor-pointer gap-2.5 py-2">
+            <ScrollText className="size-4 opacity-70" />
+            <span>{labels.newMarkdown}</span>
+          </DropdownMenuItem>
+        ) : null}
         <DropdownMenuItem
           onClick={() => onCreateBlank("doc")}
           className="cursor-pointer gap-2.5 py-2"

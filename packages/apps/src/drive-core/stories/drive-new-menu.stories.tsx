@@ -23,6 +23,7 @@ export const Default: Story = {
     labels: driveStoryLabels,
     onCreateFolder: STORY_NOOP,
     onUploadFiles: STORY_NOOP,
+    onCreateMarkdown: STORY_NOOP,
     onCreateBlank: STORY_NOOP,
   },
 };
