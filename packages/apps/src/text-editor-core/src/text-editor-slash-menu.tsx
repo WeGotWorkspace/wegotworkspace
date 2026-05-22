@@ -13,7 +13,6 @@ import {
   Table as TableIcon,
   Text,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 type SlashCommand = {
   title: string;
@@ -194,30 +193,31 @@ export function TextEditorSlashMenu({ editor }: TextEditorSlashMenuProps) {
       className="text-editor-slash-menu no-print"
     >
       <div className="text-editor-slash-menu__label">Basic blocks</div>
-      <ul className="text-editor-slash-menu__list">
+      <ul className="text-editor-slash-menu__list" role="listbox">
         {filtered.map((c, i) => (
-          <li key={c.title}>
-            <button
-              type="button"
-              onMouseDown={(e) => {
-                e.preventDefault();
-                c.run(editor);
-                setOpen(false);
-              }}
-              onMouseEnter={() => setActive(i)}
-              className={cn(
-                "text-editor-slash-menu__item",
-                i === active && "text-editor-slash-menu__item--active",
-              )}
-            >
-              <span className="text-editor-slash-menu__icon">
-                <c.icon className="h-4 w-4" />
-              </span>
-              <span className="text-editor-slash-menu__copy">
-                <span className="text-editor-slash-menu__title">{c.title}</span>
-                <span className="text-editor-slash-menu__desc">{c.desc}</span>
-              </span>
-            </button>
+          <li
+            key={c.title}
+            role="option"
+            aria-selected={i === active}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              c.run(editor);
+              setOpen(false);
+            }}
+            onMouseEnter={() => setActive(i)}
+            className={
+              i === active
+                ? "text-editor-slash-menu__item text-editor-slash-menu__item--active"
+                : "text-editor-slash-menu__item"
+            }
+          >
+            <span className="text-editor-slash-menu__icon" aria-hidden>
+              <c.icon className="h-4 w-4" />
+            </span>
+            <span className="text-editor-slash-menu__copy">
+              <span className="text-editor-slash-menu__title">{c.title}</span>
+              <span className="text-editor-slash-menu__desc">{c.desc}</span>
+            </span>
           </li>
         ))}
       </ul>

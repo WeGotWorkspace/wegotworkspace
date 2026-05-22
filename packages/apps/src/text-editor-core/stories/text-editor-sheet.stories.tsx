@@ -6,7 +6,8 @@ import {
 } from "@/text-editor-core/src/text-editor-content";
 import { textEditorDemoContent } from "@/text-editor-core/src/text-editor-fixtures";
 import { useTextEditor } from "@/text-editor-core/src/use-text-editor";
-import { TextEditorStoryScope } from "@/text-editor-core/stories/text-editor-story-scope";
+
+import "@/text-editor-core/src/text-editor.css";
 
 type SheetStoryArgs = {
   format: TextEditorContentFormat;
@@ -23,7 +24,11 @@ function TextEditorSheetDemo({ format, editable, placeholder, content }: SheetSt
     content: content ?? textEditorDemoContent(format),
   });
 
-  return <TextEditorSheet editor={editor} className="flex-1" />;
+  return (
+    <div className="text-editor flex h-[min(900px,90dvh)] w-full">
+      <TextEditorSheet editor={editor} className="flex-1" />
+    </div>
+  );
 }
 
 const meta = {
@@ -39,11 +44,7 @@ const meta = {
       },
     },
   },
-  render: (args: SheetStoryArgs) => (
-    <TextEditorStoryScope>
-      <TextEditorSheetDemo {...args} />
-    </TextEditorStoryScope>
-  ),
+  render: (args: SheetStoryArgs) => <TextEditorSheetDemo {...args} />,
   argTypes: {
     format: {
       control: "select",

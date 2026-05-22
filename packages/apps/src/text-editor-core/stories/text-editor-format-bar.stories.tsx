@@ -7,7 +7,8 @@ import {
 } from "@/text-editor-core/src/text-editor-content";
 import { textEditorDemoContent } from "@/text-editor-core/src/text-editor-fixtures";
 import { useTextEditor } from "@/text-editor-core/src/use-text-editor";
-import { TextEditorStoryScope } from "@/text-editor-core/stories/text-editor-story-scope";
+
+import "@/text-editor-core/src/text-editor.css";
 
 type FormatBarStoryArgs = {
   format: TextEditorContentFormat;
@@ -23,12 +24,12 @@ function TextEditorFormatBarDemo({ format, showPrint, editable }: FormatBarStory
   });
 
   return (
-    <>
+    <div className="text-editor text-editor--format-bar-story flex h-[min(420px,70dvh)] w-full flex-col">
       <TextEditorFormatBar editor={editor} showPrint={showPrint} />
       <div className="text-editor-format-bar-story__body">
         <EditorContent editor={editor} />
       </div>
-    </>
+    </div>
   );
 }
 
@@ -45,11 +46,7 @@ const meta = {
       },
     },
   },
-  render: (args: FormatBarStoryArgs) => (
-    <TextEditorStoryScope variant="format-bar">
-      <TextEditorFormatBarDemo {...args} />
-    </TextEditorStoryScope>
-  ),
+  render: (args: FormatBarStoryArgs) => <TextEditorFormatBarDemo {...args} />,
   argTypes: {
     format: {
       control: "select",
