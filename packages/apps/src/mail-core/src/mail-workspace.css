@@ -1,16 +1,25 @@
 @import "../../workspace-shell/src/workspace-split-app.css";
 
 /**
- * Mail product shell: cream root + emerald sidebar accent.
+ * Mail product shell: cream root + bright neutral slate sidebar accent.
  * Import only from {@link MailWorkspace}.
  */
 .mail-workspace {
+  --mail-accent: #94a3b8;
+  --mail-sidebar: var(--mail-accent);
+  --workspace-accent: var(--mail-accent);
+  --color-emerald: var(--mail-accent);
   --workspace-root-bg: var(--color-cream, #ffffff);
-  --color-emerald: oklch(0.858745 0.15558 94.085);
-  --mail-sidebar: oklch(0.858745 0.15558 94.085);
-  --workspace-accent: var(--mail-sidebar);
   --app-sidebar-bg: var(--mail-sidebar);
-  --mail-state-accent: var(--color-emerald);
+  --app-sidebar-border-color: color-mix(in oklab, var(--color-ink) 12%, transparent);
+  --app-sidebar-color: var(--color-ink);
+  --sidebar-logo-brand-fill: var(--color-ink);
+  --sidebar-logo-close-button-color: var(--color-ink);
+  --sidebar-badge-fg: var(--mail-accent);
+  --workspace-sidebar-toggle-color: var(--color-ink);
+  --workspace-sidebar-toggle-bg: color-mix(in oklab, var(--color-ink) 8%, transparent);
+  --workspace-user-footer-link-hover-bg: color-mix(in oklab, var(--color-ink) 10%, transparent);
+  --mail-state-accent: var(--mail-accent);
 
   --workspace-user-footer-text-color: color-mix(in oklab, var(--color-ink) 70%, transparent);
   --workspace-user-footer-border-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
@@ -28,6 +37,14 @@
   --loading-spinner-color: color-mix(in oklab, var(--color-ink) 45%, transparent);
   --mail-swipe-star-color: var(--color-emerald);
   --mail-swipe-archive-color: var(--color-ink);
+}
+
+.mail-workspace .app-sidebar__scroll {
+  --button-primary-bg: var(--color-ink);
+  --button-primary-fg: var(--mail-accent);
+  --button-subtle-color: var(--color-ink);
+  --button-subtle-background: color-mix(in oklab, var(--color-ink) 10%, transparent);
+  --button-subtle-hover-background: color-mix(in oklab, var(--color-ink) 16%, transparent);
 }
 
 .mail-workspace .mail-state-accent {
@@ -93,12 +110,18 @@
  * Portaled compose dialog — not under `.mail-workspace` in the DOM.
  * {@link Button} and field labels read tokens from {@link mailWorkspacePaneClasses.composeDialogSurface}.
  */
-.mail-compose-dialog-surface {
-  --button-primary-bg: #2f302c;
-  --button-primary-fg: #ffffff;
-  --primary: #2f302c;
-  --primary-foreground: #ffffff;
+:is(.mail-compose-dialog-surface, .mail-dialog-surface) {
+  --mail-accent: #94a3b8;
+  --color-emerald: var(--mail-accent);
+  --button-primary-bg: var(--mail-accent);
+  --button-primary-fg: var(--color-ink);
+  --primary: var(--mail-accent);
+  --primary-foreground: var(--color-ink);
   --field-label-color: color-mix(in oklab, var(--color-ink) 60%, transparent);
+  --segmented-control-track-active-bg: var(--color-ink);
+}
+
+.mail-compose-dialog-surface {
   background: var(--color-cream, #ffffff);
 }
 

@@ -242,7 +242,9 @@ export function useMailController({
   const pendingDetailIdsRef = useRef<Set<string>>(new Set());
 
   const { show, showError } = useAppToast();
-  const { confirmDialog, requestConfirm, consumeParentDismissSuppression } = useConfirmDialog();
+  const { confirmDialog, requestConfirm, consumeParentDismissSuppression } = useConfirmDialog({
+    contentClassName: "mail-dialog-surface",
+  });
   const isTouch = useIsTouch();
   const showMutationError = useCallback(
     (fallback = "Could not sync this change. Please try again.") => showError(fallback),

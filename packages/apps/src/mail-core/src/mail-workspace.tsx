@@ -329,12 +329,13 @@ export function MailWorkspace({
       <MoveToDialog
         open={!!moveDialog}
         notebooks={moveMailboxOptions}
-        currentNotebook={moveDialogCurrentMailbox}
+        currentMailbox={moveDialogCurrentMailbox}
         onClose={() => setMoveDialog(null)}
         onConfirm={(mailbox) => {
           if (moveDialog) moveToMailbox(moveDialog.ids, mailbox);
           setMoveDialog(null);
         }}
+        contentClassName="mail-dialog-surface"
       />
 
       {confirmDialog}
