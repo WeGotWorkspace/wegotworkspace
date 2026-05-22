@@ -16,6 +16,14 @@ if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php'))
 // Register the Composer autoloader...
 require __DIR__.'/../vendor/autoload.php';
 
+// Apache Alias "/api" sets SCRIPT_NAME to "/api/index.php", which makes Laravel treat "/api"
+// as the app base and match routes on "v1/health" instead of "api/v1/health".
+$scriptName = (string) ($_SERVER['SCRIPT_NAME'] ?? '');
+if (str_starts_with($scriptName, '/api/')) {
+    unset($_SERVER['PATH_INFO'], $_SERVER['ORIG_PATH_INFO']);
+    $_SERVER['SCRIPT_NAME'] = '/index.php';
+}
+
 // Bootstrap Laravel and handle the request...
 (require_once __DIR__.'/../bootstrap/app.php')
     ->handleRequest(Request::capture());

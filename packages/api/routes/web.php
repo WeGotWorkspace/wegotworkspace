@@ -21,6 +21,8 @@ $wgwFrontMethods = [
     'PROPFIND', 'PROPPATCH', 'MKCOL', 'COPY', 'MOVE', 'LOCK', 'UNLOCK', 'REPORT', 'SEARCH',
 ];
 
+// When Apache serves Laravel via Alias /api → public/index.php, PATH_INFO is relative
+// to that script (e.g. /v1/health), not /api/v1/health — exclude versioned API segments too.
 Route::match($wgwFrontMethods, '/{path?}', WgwFrontController::class)
-    ->where('path', '(?!api(?:/|$)).*')
+    ->where('path', '(?!api(?:/|$)|v\d+(?:/|$)).*')
     ->name('wgw.front');

@@ -15,6 +15,13 @@ if [ -f "${API_ROOT}/composer.json" ] && [ ! -f "${API_ROOT}/vendor/autoload.php
   composer install --working-dir="${API_ROOT}" --no-interaction --prefer-dist
 fi
 
+if [ -f "${API_ROOT}/.env.example" ] && [ ! -f "${API_ROOT}/.env" ]; then
+  cp "${API_ROOT}/.env.example" "${API_ROOT}/.env"
+fi
+if [ -f "${API_ROOT}/artisan" ] && [ -f "${API_ROOT}/.env" ]; then
+  php "${API_ROOT}/artisan" key:generate --force --no-interaction >/dev/null 2>&1 || true
+fi
+
 mkdir -p "${INSTALL_ROOT}/wgw-content" "${API_ROOT}/storage/framework/cache" "${API_ROOT}/storage/logs"
 chown -R www-data:www-data "${INSTALL_ROOT}/wgw-content" "${API_ROOT}/storage" 2>/dev/null || true
 
@@ -26,7 +33,7 @@ if [ -f "${CERT_PEM}" ] && [ -f "${CERT_KEY}" ]; then
 else
   a2enconf wgw-http-vhost 2>/dev/null || true
   a2disconf wgw-ssl-vhost wgw-http-redirect 2>/dev/null || true
-  echo "[wgw-apache] No TLS certs at ${CERT_PEM} — HTTP only. Run: pnpm docker:ssl:setup"
+  echo "[wgw-apache] No TLS certs at ${CERT_PEM} — HTTP only (wgw-http-vhost). Run: pnpm docker:ssl:setup"
 fi
 
 exec docker-php-entrypoint "$@"

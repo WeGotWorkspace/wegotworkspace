@@ -2,7 +2,7 @@
 # UI: Vite/Storybook on the host; proxy /api/v1 → http://127.0.0.1:9080
 #
 #   pnpm docker:ssl:setup   # mkcert → docker/apache/certs (once)
-#   docker compose -f compose.dev.yml up -d --build
+#   docker compose -f compose.dev.yml -f compose.local.yml up -d --build
 #   https://wegotworkspace.local/   (add 127.0.0.1 wegotworkspace.local to /etc/hosts)
 #
 #   pnpm dev:ui
@@ -25,9 +25,13 @@ services:
       - ./apps/wegotworkspace:/var/www/install
       - ./packages/api:/var/www/packages/api
       - ./packages/apps:/var/www/packages/apps:ro
-      - ./docker/apache/certs:/etc/apache2/certs:ro
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1/api/v1/health | grep -q '\"status\":\"ok\"'"]
+      # With compose.local.yml + mkcert, :80 redirects to HTTPS; probe both.
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://127.0.0.1/api/v1/health | grep -q '\"status\":\"ok\"' || curl -fsSk https://127.0.0.1/api/v1/health | grep -q '\"status\":\"ok\"'",
+        ]
       interval: 5s
       timeout: 5s
       retries: 12
