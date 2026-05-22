@@ -27,7 +27,7 @@ export function NotesStoryScope({
         className="notes-workspace"
         style={{
           minHeight: "100dvh",
-          backgroundColor: "var(--color-cream, #f5f1e8)",
+          backgroundColor: "var(--color-cream, #ffffff)",
         }}
       >
         <div className="mx-auto max-w-3xl px-6 py-10 md:px-12 md:py-16">{children}</div>

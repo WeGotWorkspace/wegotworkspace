@@ -2,7 +2,7 @@
 
 /**
  * Text field primitives. Optional overrides: `--input-height`, `--input-background`,
- * `--input-placeholder-color`.
+ * `--input-background-focus`, `--input-placeholder-color`.
  */
 .input,
 .textarea,
@@ -45,6 +45,15 @@
   @apply focus:outline-none focus:ring-1 focus:ring-ring;
   @apply disabled:cursor-not-allowed disabled:opacity-50;
   @apply [&>span]:line-clamp-1;
+}
+
+.input:focus:not(:read-only),
+.input:focus-visible:not(:read-only),
+.textarea:focus:not(:read-only),
+.textarea:focus-visible:not(:read-only),
+.select-trigger:focus:not(:disabled),
+.select-trigger[data-state="open"]:not(:disabled) {
+  background-color: var(--input-background-focus, #ffffff);
 }
 
 .input::placeholder,

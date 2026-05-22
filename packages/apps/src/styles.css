@@ -51,7 +51,8 @@
   --color-paper: #23b572;
   --color-slate-muted: #0a3a2a;
   --color-ghost: #1ea566;
-  --color-cream: #f5f1e8;
+  /* Workspace pane / shell background (white for now; tweak here to re-tint). */
+  --color-cream: #ffffff;
 }
 
 @custom-variant dark (&:is(.dark *));

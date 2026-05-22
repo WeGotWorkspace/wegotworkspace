@@ -5,7 +5,7 @@
  * Import only from {@link MailWorkspace}.
  */
 .mail-workspace {
-  --workspace-root-bg: var(--color-cream, #f5f1e8);
+  --workspace-root-bg: var(--color-cream, #ffffff);
   --color-emerald: oklch(0.858745 0.15558 94.085);
   --mail-sidebar: oklch(0.858745 0.15558 94.085);
   --app-sidebar-bg: var(--mail-sidebar);
@@ -18,7 +18,7 @@
   --workspace-user-footer-link-color: color-mix(in oklab, var(--color-ink) 65%, transparent);
   --workspace-user-footer-link-bg: color-mix(in oklab, var(--color-ink) 6%, transparent);
 
-  --mail-detail-tag-primary-fg: var(--color-cream, #f5f1e8);
+  --mail-detail-tag-primary-fg: var(--color-cream, #ffffff);
   --mail-detail-tag-primary-bg: color-mix(in oklab, var(--color-ink) 88%, transparent);
   --mail-detail-tag-muted-bg: color-mix(in oklab, var(--color-ink) 6%, transparent);
   --mail-detail-tag-muted-fg: color-mix(in oklab, var(--color-ink) 58%, transparent);
@@ -98,7 +98,7 @@
   --primary: #2f302c;
   --primary-foreground: #ffffff;
   --field-label-color: color-mix(in oklab, var(--color-ink) 60%, transparent);
-  background: var(--color-cream, #f5f1e8);
+  background: var(--color-cream, #ffffff);
 }
 
 .mail-compose-dialog.mail-compose-dialog-surface {
@@ -227,7 +227,7 @@
   z-index: 10;
   flex-shrink: 0;
   border-bottom: 1px solid color-mix(in oklab, var(--color-ink) 10%, transparent);
-  background: var(--color-cream, #f5f1e8);
+  background: var(--color-cream, #ffffff);
   backdrop-filter: none;
 }
 
@@ -297,7 +297,7 @@
   margin: 0;
   padding: 1rem 1.5rem 1.25rem;
   border-top: 1px solid color-mix(in oklab, var(--color-ink) 10%, transparent);
-  background: var(--color-cream, #f5f1e8);
+  background: var(--color-cream, #ffffff);
 }
 
 .mail-compose-dialog__footer-start,
