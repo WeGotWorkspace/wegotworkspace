@@ -81,7 +81,7 @@ SMTP `localhost:1025`, UI http://127.0.0.1:8025.
 pnpm test:api-e2e:docker
 ```
 
-Uses `compose.ci.yml` (includes `compose.dev.yml` — HTTP on `:9080` only). CI does not use `compose.local.yml` (mkcert, host `80`/`443`).
+Builds `@wgw/apps` (`build:dev` + `sync:runtime` for per-module installer dist), installs Playwright Chromium, then runs tests. Uses `compose.ci.yml` (HTTP on `:9080` only; no `compose.local.yml`).
 
 For local HTTPS: `docker compose -f compose.dev.yml -f compose.local.yml up -d --build`.
 

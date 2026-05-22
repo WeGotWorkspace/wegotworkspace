@@ -39,7 +39,9 @@ jobs:
         run: pnpm run ci:quality
 
       - name: Build UI dist for installer e2e
-        run: pnpm --filter @wgw/apps run build:dev
+        run: |
+          pnpm --filter @wgw/apps run build:dev
+          pnpm --filter @wgw/apps run sync:runtime
 
       - name: Run API Playwright smoke tests (Docker)
         run: pnpm test:api-e2e:docker

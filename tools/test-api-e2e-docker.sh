@@ -19,23 +19,25 @@ if [ ! -f packages/api/vendor/autoload.php ]; then
   composer --working-dir packages/api install --no-interaction --prefer-dist
 fi
 
-echo "==> Building UI dist (installer shell)"
-pnpm --filter @wgw/apps run build:dev
-
 INSTALL_ROOT="${ROOT}/apps/wegotworkspace"
+INSTALL_DIST="${INSTALL_ROOT}/packages/apps/install/dist/index.html"
+if [ ! -f "${INSTALL_DIST}" ]; then
+  echo "==> Building UI dist (installer + runtime module shells)"
+  pnpm --filter @wgw/apps run build:dev
+  pnpm --filter @wgw/apps run sync:runtime
+fi
+
 STASH_DIR=""
 stash_install_state() {
-  if [ ! -f "${INSTALL_ROOT}/wgw-config.php" ] \
-    && [ ! -f "${INSTALL_ROOT}/wgw-content/.installed" ]; then
-    return 0
+  if [ -f "${INSTALL_ROOT}/wgw-config.php" ] || [ -e "${INSTALL_ROOT}/wgw-content" ]; then
+    STASH_DIR="$(mktemp -d)"
+    echo "==> Stashing local install tree for installer e2e (${STASH_DIR})"
+    for name in wgw-config.php wgw-content; do
+      if [ -e "${INSTALL_ROOT}/${name}" ]; then
+        mv "${INSTALL_ROOT}/${name}" "${STASH_DIR}/"
+      fi
+    done
   fi
-  STASH_DIR="$(mktemp -d)"
-  echo "==> Stashing local install tree for installer e2e (${STASH_DIR})"
-  for name in wgw-config.php wgw-content; do
-    if [ -e "${INSTALL_ROOT}/${name}" ]; then
-      mv "${INSTALL_ROOT}/${name}" "${STASH_DIR}/"
-    fi
-  done
   mkdir -p "${INSTALL_ROOT}/wgw-content"
 }
 
@@ -68,6 +70,9 @@ trap 'restore_install_state; cleanup' EXIT
 export WGW_API_E2E_NO_SERVER=1
 export WGW_API_BASE_URL="${BASE}"
 export WGW_INSTALL_BASE_URL="${BASE}"
+
+echo "==> Installing Playwright browser (Chromium)"
+pnpm --filter @wgw/api exec playwright install --with-deps chromium
 
 echo "==> Playwright API e2e against ${BASE}"
 pnpm --filter @wgw/api test:e2e
