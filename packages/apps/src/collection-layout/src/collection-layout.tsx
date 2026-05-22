@@ -10,7 +10,7 @@ export function CollectionListPane({ children, detailOpenMobile }: CollectionPan
         detailOpenMobile ? "-translate-x-1/4 md:translate-x-0" : "translate-x-0"
       }`}
       style={{
-        backgroundColor: "var(--color-cream, #f5f1e8)",
+        backgroundColor: "var(--color-cream, #ffffff)",
         borderColor: "color-mix(in oklab, var(--color-ink) 8%, transparent)",
       }}
     >

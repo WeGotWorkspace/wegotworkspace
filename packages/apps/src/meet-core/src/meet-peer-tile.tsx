@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Mic, MicOff, MoreVertical } from "lucide-react";
+import { IconButton } from "@/button/src/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -83,9 +84,14 @@ export function MeetPeerTile({
       </div>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button type="button" className="meet-peer-tile__menu" aria-label={`Actions for ${name}`}>
-            <MoreVertical className="size-3.5" />
-          </button>
+          <IconButton
+            icon={<MoreVertical />}
+            label={`Actions for ${name}`}
+            size="sm"
+            variant="ghost"
+            showTooltip={false}
+            className="meet-peer-tile__menu"
+          />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="meet-menu-surface">
           <DropdownMenuItem className="cursor-pointer" onClick={() => onMuteSoon(name)}>

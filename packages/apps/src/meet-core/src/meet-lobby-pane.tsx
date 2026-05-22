@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
-import { Hand, Mic, MicOff, Settings as SettingsIcon, Video, VideoOff } from "lucide-react";
+import { Hand, Mic, MicOff, Video, VideoOff } from "lucide-react";
 import { Button } from "@/button/src/button";
-import { Input } from "@/ui/input";
-import { Label } from "@/ui/label";
 import { UserAvatar } from "@/user-avatar/src/user-avatar";
 import { MeetCircleToggle } from "@/meet-core/src/meet-circle-toggle";
-import { MeetDeviceRow } from "@/meet-core/src/meet-device-row";
+import { MeetDeviceForm } from "@/meet-core/src/meet-device-form";
 import type { MeetControllerState } from "@/meet-core/src/meet-controller-state";
 import type { MeetDeviceOption } from "@/meet-core/src/meet-device-utils";
 import { meetDeviceIdForOption } from "@/meet-core/src/meet-device-utils";
@@ -155,48 +153,33 @@ export function MeetLobbyPane({
         ) : null}
       </div>
 
-      <div className="meet-workspace__form">
-        <div className="meet-workspace__field">
-          <Label className="meet-workspace__field-label">{meetLabels.displayNameLabel}</Label>
-          <Input
-            value={controller.displayName}
-            onChange={(event) => controller.setDisplayName(event.target.value)}
-            className="meet-workspace__name-input"
-          />
-        </div>
-
-        <MeetDeviceRow
-          icon={<Video />}
-          label={meetLabels.cameraLabel}
-          value={activeCamera}
-          onChange={(id) => {
-            const deviceId = meetDeviceIdForOption(cameras, id);
-            if (!deviceId) return;
-            void controller.switchCamera(deviceId);
-          }}
-          options={cameras}
-        />
-        <MeetDeviceRow
-          icon={<Mic />}
-          label={meetLabels.microphoneLabel}
-          value={activeMic}
-          onChange={(id) => {
-            const deviceId = meetDeviceIdForOption(microphones, id);
-            if (!deviceId) return;
-            void controller.switchMic(deviceId);
-          }}
-          options={microphones}
-        />
-        <MeetDeviceRow
-          icon={<SettingsIcon />}
-          label={meetLabels.speakerLabel}
-          value={activeSpeaker}
-          onChange={onSpeakerChange}
-          options={speakers}
-        />
-
+      <MeetDeviceForm
+        displayName={{
+          value: controller.displayName,
+          onChange: controller.setDisplayName,
+        }}
+        cameras={cameras}
+        microphones={microphones}
+        speakers={speakers}
+        camera={activeCamera}
+        microphone={activeMic}
+        speaker={activeSpeaker}
+        onCameraChange={(id) => {
+          const deviceId = meetDeviceIdForOption(cameras, id);
+          if (!deviceId) return;
+          void controller.switchCamera(deviceId);
+        }}
+        onMicrophoneChange={(id) => {
+          const deviceId = meetDeviceIdForOption(microphones, id);
+          if (!deviceId) return;
+          void controller.switchMic(deviceId);
+        }}
+        onSpeakerChange={onSpeakerChange}
+      >
         {!waitingForAdmission ? (
           <Button
+            variant="primary"
+            pill
             onClick={() => {
               if (invitedRoom) {
                 void (hasSignedInIdentity
@@ -222,13 +205,14 @@ export function MeetLobbyPane({
           <Button
             onClick={() => void controller.leave()}
             variant="outline"
+            pill
             className="meet-workspace__secondary-button"
           >
             {meetLabels.cancelRequest}
           </Button>
         )}
         {controller.error ? <p className="meet-workspace__error">{controller.error}</p> : null}
-      </div>
+      </MeetDeviceForm>
     </div>
   );
 }

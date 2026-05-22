@@ -20,7 +20,8 @@ import type { DriveFile, ViewKey } from "@/drive-core/src/drive-models";
 import type { DriveUILabels } from "@/drive-core/src/drive-labels";
 import type { DriveAPIOperations } from "@/drive-core/src/drive-types";
 import { PathBreadcrumb } from "@/path-breadcrumb/src/path-breadcrumb";
-import { cn } from "@/lib/utils";
+import { DestinationPickerFrame } from "@/destination-picker/src/destination-picker-frame";
+import { DestinationPickerList } from "@/destination-picker/src/destination-picker-list";
 import "@/drive-core/src/drive-folder-picker.css";
 
 const GROUPS_ROOT = "Groups";
@@ -267,70 +268,47 @@ export function DriveFolderPicker({
     listingLoading && browsePath !== DRIVE_FOLDER_PICKER_ROOT && browsePath !== GROUPS_ROOT;
 
   return (
-    <div className="drive-folder-picker">
-      <PathBreadcrumb
-        size="sm"
-        className="drive-folder-picker__breadcrumbs"
-        leadingIcon={<DriveViewIcon view={breadcrumbView} className="size-3.5" />}
-        items={breadcrumbItems}
-        currentPath={browsePath}
-        alwaysNavigablePaths={[DRIVE_FOLDER_PICKER_ROOT]}
-        onNavigate={(path) => openRow(path)}
-      />
+    <DestinationPickerFrame
+      breadcrumbs={
+        <PathBreadcrumb
+          size="sm"
+          className="destination-picker__breadcrumbs"
+          leadingIcon={<DriveViewIcon view={breadcrumbView} className="size-3.5" />}
+          items={breadcrumbItems}
+          currentPath={browsePath}
+          alwaysNavigablePaths={[DRIVE_FOLDER_PICKER_ROOT]}
+          onNavigate={(path) => openRow(path)}
+        />
+      }
+    >
+      {showListingLoading ? (
+        <CollectionState variant="loading">{labels.folderListingLoading}</CollectionState>
+      ) : showEmpty ? (
+        <CollectionState icon={<Cloud className="size-12" />}>{labels.emptyFolder}</CollectionState>
+      ) : rows.length === 0 ? null : (
+        <DestinationPickerList
+          items={rows.map((row) => {
+            const navigable = row.kind === "folder" || row.kind === "root";
+            const icon =
+              row.kind === "folder" || row.kind === "root" ? (
+                <Folder fill="currentColor" fillOpacity={0.18} />
+              ) : (
+                <span className="[&>svg]:size-4">{row.file ? kindIcon[row.file.kind] : null}</span>
+              );
 
-      <div className="drive-folder-picker__body">
-        {showListingLoading ? (
-          <CollectionState variant="loading">{labels.folderListingLoading}</CollectionState>
-        ) : showEmpty ? (
-          <CollectionState icon={<Cloud className="size-12" />}>
-            {labels.emptyFolder}
-          </CollectionState>
-        ) : rows.length === 0 ? null : (
-          <div className="drive-folder-picker__scroll">
-            <table className="drive-list-table">
-              <tbody>
-                {rows.map((row) => {
-                  const isSelected = row.selectable && highlightedPath === row.path;
-                  const navigable = row.kind === "folder" || row.kind === "root";
-                  const icon =
-                    row.kind === "folder" || row.kind === "root" ? (
-                      <Folder
-                        className="size-4 shrink-0 drive-list-folder-icon"
-                        fill="currentColor"
-                        fillOpacity={0.18}
-                      />
-                    ) : (
-                      <span className="shrink-0 [&>svg]:size-4 drive-list-file-icon">
-                        {row.file ? kindIcon[row.file.kind] : null}
-                      </span>
-                    );
-
-                  return (
-                    <tr
-                      key={row.path}
-                      aria-disabled={!row.selectable}
-                      onClick={row.selectable ? () => setHighlightedPath(row.path) : undefined}
-                      onDoubleClick={navigable ? () => openRow(row.path) : undefined}
-                      className={cn(
-                        "drive-list-row",
-                        row.selectable || navigable ? "cursor-pointer" : "drive-list-row--disabled",
-                        isSelected && "drive-list-row--selected",
-                      )}
-                    >
-                      <td className="drive-list-col-name py-2 min-w-0">
-                        <div className="flex w-full min-w-0 items-center gap-2.5">
-                          {icon}
-                          <span className="min-w-0 flex-1 truncate font-medium">{row.title}</span>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    </div>
+            return {
+              id: row.path,
+              title: row.title,
+              icon,
+              selectable: row.selectable,
+              navigable,
+            };
+          })}
+          selectedId={highlightedPath}
+          onSelect={setHighlightedPath}
+          onOpen={openRow}
+        />
+      )}
+    </DestinationPickerFrame>
   );
 }

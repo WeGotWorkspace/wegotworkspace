@@ -104,8 +104,24 @@ export async function composeDraftToApiPayload(
   };
 }
 
-export function formatComposeAttachmentSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+function escapeHtml(text: string): string {
+  return text
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+/** Plain-text drafts become paragraphs; existing HTML is passed through. */
+export function composeBodyToEditorHtml(body: string): string {
+  const trimmed = body.trim();
+  if (!trimmed) return "";
+  if (/<[a-z][\s\S]*>/i.test(trimmed)) return trimmed;
+  return trimmed
+    .split(/\n\n+/)
+    .map((paragraph) => {
+      const lines = escapeHtml(paragraph).replaceAll("\n", "<br>");
+      return `<p>${lines}</p>`;
+    })
+    .join("");
 }

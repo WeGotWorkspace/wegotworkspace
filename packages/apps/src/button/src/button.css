@@ -2,6 +2,7 @@
 
 .button {
   @apply inline-flex items-center justify-center gap-2 transition-colors;
+  border-radius: var(--control-radius);
   --button-icon-size: 1rem;
 }
 
@@ -10,22 +11,31 @@
 }
 
 .button--size-sm {
-  @apply h-8 px-3 rounded-md text-xs font-medium;
+  @apply px-3 text-xs font-medium;
+  min-height: calc(var(--input-height, 2.25rem) - 0.25rem);
+  height: calc(var(--input-height, 2.25rem) - 0.25rem);
+  font-size: calc(var(--input-font-size, 0.875rem) - 0.0625rem);
   --button-icon-size: 0.875rem;
 }
 
 .button--size-md {
-  @apply h-9 px-3 rounded-md text-sm font-medium;
+  @apply px-3 font-medium;
+  min-height: var(--input-height, 2.25rem);
+  height: var(--input-height, 2.25rem);
+  font-size: var(--input-font-size, 0.875rem);
   --button-icon-size: 1rem;
 }
 
 .button--size-lg {
-  @apply h-10 px-8 rounded-md text-sm font-medium;
+  @apply px-8 font-medium;
+  min-height: calc(var(--input-height, 2.25rem) + 0.25rem);
+  height: calc(var(--input-height, 2.25rem) + 0.25rem);
+  font-size: var(--input-font-size, 0.875rem);
   --button-icon-size: 1rem;
 }
 
-.button--pill {
-  @apply rounded-full;
+.button.button--pill {
+  border-radius: var(--control-radius-button-pill);
 }
 
 .button__icon > svg {

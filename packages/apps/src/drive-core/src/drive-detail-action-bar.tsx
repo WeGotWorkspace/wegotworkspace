@@ -16,7 +16,7 @@ export function DriveDetailActionBar({ actions, onClose, mobile }: DriveDetailAc
       rightActions={actions}
       rightMenuLabel="More actions"
       rightMenuIcon={<MoreHorizontal />}
-      className="drive-detail-actions px-4 md:px-6 h-14 md:h-16 border-b shrink-0"
+      className="drive-detail-actions h-14 md:h-16 border-b shrink-0"
     />
   );
 }

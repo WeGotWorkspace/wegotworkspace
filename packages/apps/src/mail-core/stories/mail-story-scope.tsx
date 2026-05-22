@@ -27,7 +27,7 @@ export function MailStoryScope({
         className="mail-workspace"
         style={{
           minHeight: "100dvh",
-          backgroundColor: "var(--color-cream, #f5f1e8)",
+          backgroundColor: "var(--color-cream, #ffffff)",
         }}
       >
         <div className="mx-auto max-w-3xl px-6 py-10 md:px-12 md:py-16">{children}</div>
@@ -41,7 +41,7 @@ export function MailStoryScope({
         className="mail-compose-dialog-surface flex min-h-dvh items-center justify-center p-6"
         style={{ backgroundColor: "color-mix(in oklab, var(--color-ink) 20%, transparent)" }}
       >
-        <div className="mail-compose-dialog mail-compose-dialog-surface flex max-h-[min(92dvh,56rem)] w-full max-w-[72rem] flex-col overflow-hidden rounded-lg border shadow-lg">
+        <div className="mail-compose-dialog mail-compose-dialog-surface flex max-h-[min(92dvh,56rem)] w-full max-w-[72rem] flex-col overflow-hidden border shadow-lg rounded-[length:var(--control-radius)]">
           {children}
         </div>
       </div>

@@ -14,7 +14,7 @@ const INITIAL_NOTES: Note[] = [
     excerpt:
       "The silence of a library is not the absence of sound, but rather the presence of intense focus. We must consider...",
     body: [
-      "We must consider how space dictates thought. A high ceiling invites abstraction; a narrow corridor forces momentum. In designing digital workspaces, we have too often favored the momentum of the corridor - the endless scroll - over the contemplation of the high-ceilinged room.",
+      "<h1>Endless scroll</h1> We must consider how space dictates thought. A high ceiling invites abstraction; a narrow corridor forces momentum. In designing digital workspaces, we have too often favored the momentum of the corridor - the endless scroll - over the contemplation of the high-ceilinged room.",
       "Consider the library at Oxford. The wood-paneled walls don't just insulate sound; they create an atmosphere of permanence. When you sit there, you are not merely a user of data, but a participant in a lineage of inquiry. Digital tools should strive for this same sense of gravitas.",
       "Every sentence we commit to paper - or to screen - should feel as though it is being carved into a physical medium. The ease with which we can delete digital text has led to a degradation of intent.",
     ],

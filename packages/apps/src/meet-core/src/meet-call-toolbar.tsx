@@ -1,4 +1,5 @@
 import { Mic, MicOff, MonitorUp, PhoneOff, Video, VideoOff } from "lucide-react";
+import { Button, IconButton } from "@/button/src/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,12 +11,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/ui/alert-dialog";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/tooltip";
 import { MeetCircleToggle } from "@/meet-core/src/meet-circle-toggle";
 import { MeetDevicePopover } from "@/meet-core/src/meet-device-popover";
 import type { MeetDeviceOption } from "@/meet-core/src/meet-device-utils";
 import { meetLabels } from "@/meet-core/src/meet-labels";
-import { cn } from "@/lib/utils";
 
 type MeetCallToolbarProps = {
   micOn: boolean;
@@ -90,52 +89,32 @@ export function MeetCallToolbar({
           onMicrophone={onMicrophoneChange}
           onSpeaker={onSpeakerChange}
         />
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              onClick={onToggleScreenShare}
-              className={cn(
-                "meet-workspace__screen-share-button",
-                screenOn && "meet-workspace__screen-share-button--active",
-              )}
-              aria-label={meetLabels.shareScreen}
-            >
-              <MonitorUp className="size-5" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>
-            {screenOn ? meetLabels.stopSharing : meetLabels.shareScreen}
-          </TooltipContent>
-        </Tooltip>
+        <IconButton
+          onClick={onToggleScreenShare}
+          icon={<MonitorUp />}
+          label={screenOn ? meetLabels.stopSharing : meetLabels.shareScreen}
+          size="lg"
+          variant="subtle"
+          active={screenOn}
+        />
         <div className="meet-workspace__toolbar-divider" aria-hidden />
         <AlertDialog>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <AlertDialogTrigger asChild>
-                <button
-                  type="button"
-                  className="meet-workspace__hangup-button"
-                  aria-label={callExitLabel}
-                >
-                  <PhoneOff className="size-5" />
-                </button>
-              </AlertDialogTrigger>
-            </TooltipTrigger>
-            <TooltipContent>{callExitLabel}</TooltipContent>
-          </Tooltip>
+          <AlertDialogTrigger asChild>
+            <IconButton icon={<PhoneOff />} label={callExitLabel} size="lg" variant="destructive" />
+          </AlertDialogTrigger>
           <AlertDialogContent className="meet-dialog-surface">
             <AlertDialogHeader>
               <AlertDialogTitle>{callExitTitle}</AlertDialogTitle>
               <AlertDialogDescription>{callExitDescription}</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={onConfirmExit}
-                className="meet-dialog-surface__confirm-exit"
-              >
-                {callExitLabel}
+              <AlertDialogCancel asChild>
+                <Button variant="outline">Cancel</Button>
+              </AlertDialogCancel>
+              <AlertDialogAction asChild>
+                <Button variant="destructive" onClick={onConfirmExit}>
+                  {callExitLabel}
+                </Button>
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

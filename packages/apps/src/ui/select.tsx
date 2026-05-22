@@ -6,6 +6,8 @@ import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
+import "./input.css";
+
 const Select = SelectPrimitive.Root;
 
 const SelectGroup = SelectPrimitive.Group;
@@ -16,17 +18,7 @@ const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
 >(({ className, children, ...props }, ref) => (
-  <SelectPrimitive.Trigger
-    ref={ref}
-    className={cn(
-      "flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-input px-3 py-2 text-sm text-foreground shadow-sm ring-offset-background",
-      /* Match {@link Input} fill so selects are not visually “washed out” on tinted shells (e.g. admin cards). */
-      "bg-[var(--input-background,color-mix(in_oklab,var(--color-background)_90%,var(--color-muted)_10%)))]",
-      "data-[placeholder]:text-muted-foreground data-[state=open]:text-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
-      className,
-    )}
-    {...props}
-  >
+  <SelectPrimitive.Trigger ref={ref} className={cn("select-trigger", className)} {...props}>
     {children}
     <SelectPrimitive.Icon asChild>
       <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground opacity-90" />
