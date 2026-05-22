@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Star, StarOff, Upload, FolderPlus, Pencil } from "lucide-react";
+import { Star, StarOff, Upload, FolderPlus, Pencil, ScrollText } from "lucide-react";
 import { useAppToast } from "@/hooks/use-app-toast";
 import { useEntityBatchActions } from "@/hooks/use-entity-batch-actions";
 import { useIsTouch } from "@/hooks/use-is-touch";
@@ -37,6 +37,7 @@ import {
   driveFileFromEntry,
   extensionFromFileName,
   formatBytesCompact,
+  suggestNewMarkdownFileName,
 } from "@/drive-core/src/drive-file-utils";
 
 export type UseDriveControllerArgs = {
@@ -911,6 +912,63 @@ export function useDriveController({
     launchOfficeEditor(qp);
   };
 
+  const createMarkdown = useCallback(() => {
+    if (!onOpenDocsFile) return;
+    const targetParent = view.type === "folder" ? view.path : "My Drive";
+    const name = suggestNewMarkdownFileName(files);
+    const cwd = apiPathFromUiPath(targetParent, currentUsername, groupRootNames);
+    const apiPath = normalizeApiVirtualPath(`${cwd}/${name}`);
+
+    if (operations) {
+      void operations
+        .createFile({ cwd, name })
+        .then((nextData) => {
+          setFiles(
+            nextData.directory.files.map((entry) => driveFileFromEntry(entry, currentUsername)),
+          );
+          commitView({ type: "folder", path: uiPathFromApiPath(nextData.cwd, currentUsername) });
+          onOpenDocsFile(apiPath);
+        })
+        .catch((error: unknown) => {
+          const message = error instanceof Error ? error.message : String(error);
+          showError(message);
+        });
+      return;
+    }
+
+    const id = `f-${Date.now()}`;
+    setFiles((previous) => [
+      {
+        id,
+        notebook: "File · 0 KB",
+        category: "File",
+        date: "Now",
+        title: name,
+        excerpt: apiPath,
+        body: [],
+        tags: [],
+        wordCount: 0,
+        parent: targetParent,
+        kind: "doc",
+        size: "0 KB",
+        apiPath,
+      },
+      ...previous,
+    ]);
+    show(`Created “${name}”`, { icon: <ScrollText className="size-4" /> });
+    onOpenDocsFile(apiPath);
+  }, [
+    commitView,
+    currentUsername,
+    files,
+    groupRootNames,
+    onOpenDocsFile,
+    operations,
+    show,
+    showError,
+    view,
+  ]);
+
   useEffect(() => {
     const isMac =
       typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.platform);
@@ -1038,6 +1096,7 @@ export function useDriveController({
     handleUpload,
     createFolder,
     submitCreateFolder,
+    createMarkdown,
     createBlank,
     selectView,
     listLoading,
