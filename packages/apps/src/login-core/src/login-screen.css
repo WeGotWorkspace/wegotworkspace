@@ -1,0 +1,33 @@
+@import "../../styles.css" reference;
+
+.login-screen {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  --field-label-color: var(--color-slate-muted);
+  --button-primary-bg: var(--color-forest);
+  --button-primary-fg: var(--color-paper);
+  --primary: var(--color-forest);
+  --primary-foreground: var(--color-paper);
+}
+
+.login-screen__brand-wordmark {
+  font-family: var(--font-app);
+  color: var(--color-forest);
+}
+
+.login-screen__hero {
+  font-family: var(--font-serif);
+  color: var(--color-forest);
+}
+
+.login-screen__footer {
+  color: var(--color-slate-muted);
+}
+
+.login-screen__error {
+  color: var(--destructive, #b14242);
+}
+
+.login-screen__submit {
+  width: 100%;
+}
