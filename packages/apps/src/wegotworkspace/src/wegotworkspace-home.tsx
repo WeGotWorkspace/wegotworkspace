@@ -1,5 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import {
+  FileText,
   HardDrive,
   Mail as MailIcon,
   NotebookPen,
@@ -38,6 +39,14 @@ export function WeGotWorkspaceHome() {
       accent: "var(--drive-sidebar, #2563eb)",
       fg: "#ffffff",
       onSelect: () => void navigate({ to: "/drive" }),
+    },
+    {
+      id: "docs",
+      label: "Docs",
+      icon: <FileText className="size-4" />,
+      accent: "#0d9488",
+      fg: "#ffffff",
+      onSelect: () => void navigate({ to: "/docs" }),
     },
     {
       id: "settings",

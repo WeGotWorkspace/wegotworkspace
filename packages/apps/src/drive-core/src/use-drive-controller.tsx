@@ -18,7 +18,7 @@ import type {
 import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
 import { DRIVE_MOCK_FILES } from "@/drive-core/src/drive-mock-files";
 import type { DriveFile, FileKind, ViewKey } from "@/drive-core/src/drive-models";
-import { OFFICE_EDITOR_EXTENSIONS } from "@/drive-core/src/drive-models";
+import { DOCS_EDITOR_EXTENSIONS, OFFICE_EDITOR_EXTENSIONS } from "@/drive-core/src/drive-models";
 import {
   mergeDriveFolderListing,
   resolveDriveFileApiPath,
@@ -46,6 +46,7 @@ export type UseDriveControllerArgs = {
   listLoading?: boolean;
   view?: ViewKey;
   onViewChange?: (view: ViewKey) => void;
+  onOpenDocsFile?: (apiPath: string) => void;
 };
 
 const WRITE_QUEUE_DELAY_MS = 2500;
@@ -57,6 +58,7 @@ export function useDriveController({
   listLoading = false,
   view: controlledView,
   onViewChange,
+  onOpenDocsFile,
 }: UseDriveControllerArgs) {
   const { show, showError } = useAppToast();
   const showMutationError = useCallback(
@@ -556,8 +558,12 @@ export function useDriveController({
       const next = f.parent === "" ? f.title : `${f.parent}/${f.title}`;
       selectView({ type: "folder", path: next });
     } else {
-      const officeExt = extensionFromFileName(f.title);
-      if (f.apiPath && OFFICE_EDITOR_EXTENSIONS.has(officeExt)) {
+      const ext = extensionFromFileName(f.title);
+      if (f.apiPath && DOCS_EDITOR_EXTENSIONS.has(ext) && onOpenDocsFile) {
+        onOpenDocsFile(f.apiPath);
+        return;
+      }
+      if (f.apiPath && OFFICE_EDITOR_EXTENSIONS.has(ext)) {
         const rel = f.apiPath.replace(/^\/+/, "");
         const qp = new URLSearchParams({ file: rel });
         launchOfficeEditor(qp);
