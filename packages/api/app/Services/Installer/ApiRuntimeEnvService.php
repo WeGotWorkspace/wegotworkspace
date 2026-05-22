@@ -1,0 +1,131 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services\Installer;
+
+/**
+ * Ensures packages/api runtime files exist on install and after in-place updates.
+ */
+final class ApiRuntimeEnvService
+{
+    /** @var list<string> */
+    private const STORAGE_DIRS = [
+        'storage/framework/cache',
+        'storage/framework/sessions',
+        'storage/framework/views',
+        'storage/logs',
+        'bootstrap/cache',
+    ];
+
+    public function apiPackageRoot(string $installRoot): ?string
+    {
+        $root = rtrim(str_replace('\\', '/', $installRoot), '/').'/packages/api';
+        if (is_file($root.'/vendor/autoload.php')) {
+            return $root;
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array{createdEnv: bool, generatedKey: bool, patchedUrl: bool}
+     */
+    public function ensure(string $installRoot, ?string $appUrl = null): array
+    {
+        $apiRoot = $this->apiPackageRoot($installRoot);
+        if ($apiRoot === null) {
+            return ['createdEnv' => false, 'generatedKey' => false, 'patchedUrl' => false];
+        }
+
+        $this->ensureStorageDirectories($apiRoot);
+
+        $createdEnv = $this->seedEnvFromExampleIfMissing($apiRoot);
+        $envPath = $apiRoot.'/.env';
+        $generatedKey = is_file($envPath) && $this->ensureAppKey($envPath);
+        $patchedUrl = is_file($envPath) && $this->patchAppUrlIfUnset($envPath, $appUrl);
+
+        return [
+            'createdEnv' => $createdEnv,
+            'generatedKey' => $generatedKey,
+            'patchedUrl' => $patchedUrl,
+        ];
+    }
+
+    public function seedEnvFromExampleIfMissing(string $apiRoot): bool
+    {
+        $env = $apiRoot.'/.env';
+        if (is_file($env)) {
+            return false;
+        }
+        $example = $apiRoot.'/.env.example';
+        if (! is_file($example)) {
+            return false;
+        }
+
+        return @copy($example, $env);
+    }
+
+    public function ensureStorageDirectories(string $apiRoot): void
+    {
+        foreach (self::STORAGE_DIRS as $relative) {
+            $path = $apiRoot.'/'.$relative;
+            if (! is_dir($path)) {
+                @mkdir($path, 0775, true);
+            }
+        }
+    }
+
+    public function ensureAppKey(string $envPath): bool
+    {
+        $content = is_readable($envPath) ? (string) file_get_contents($envPath) : '';
+        if ($content !== '' && preg_match('/^APP_KEY=base64:[A-Za-z0-9+\/=]+/m', $content) === 1) {
+            return false;
+        }
+
+        $key = 'base64:'.base64_encode(random_bytes(32));
+        if ($content === '' || ! str_contains($content, 'APP_KEY=')) {
+            $content = rtrim($content)."\nAPP_KEY={$key}\n";
+        } else {
+            $content = (string) preg_replace('/^APP_KEY=.*$/m', 'APP_KEY='.$key, $content);
+        }
+
+        return file_put_contents($envPath, $content, LOCK_EX) !== false;
+    }
+
+    public function patchAppUrlIfUnset(string $envPath, ?string $appUrl): bool
+    {
+        if (! is_string($appUrl) || trim($appUrl) === '') {
+            return false;
+        }
+        $appUrl = rtrim(trim($appUrl), '/');
+        $content = (string) file_get_contents($envPath);
+        if (preg_match('/^APP_URL=(.+)$/m', $content, $match) === 1) {
+            $current = trim($match[1], " \t\"'");
+            if ($current !== '' && $current !== 'http://localhost' && ! str_starts_with($current, 'http://127.0.0.1')) {
+                return false;
+            }
+        }
+        if (! str_contains($content, 'APP_URL=')) {
+            $content = rtrim($content)."\nAPP_URL={$appUrl}\n";
+        } else {
+            $content = (string) preg_replace('/^APP_URL=.*$/m', 'APP_URL='.$appUrl, $content);
+        }
+
+        return file_put_contents($envPath, $content, LOCK_EX) !== false;
+    }
+
+    public static function guessRequestAppUrl(): ?string
+    {
+        $host = $_SERVER['HTTP_HOST'] ?? null;
+        if (! is_string($host) || trim($host) === '') {
+            return null;
+        }
+        $https = (! empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+            || (isset($_SERVER['SERVER_PORT']) && (string) $_SERVER['SERVER_PORT'] === '443')
+            || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower((string) $_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https');
+        $scheme = $https ? 'https' : 'http';
+
+        return $scheme.'://'.trim($host);
+    }
+}
