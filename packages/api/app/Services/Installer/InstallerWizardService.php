@@ -18,6 +18,7 @@ final class InstallerWizardService
         private InstallerDatabaseInstaller $database,
         private InstallerConfigWriter $configWriter,
         private InstallerJwtKeyGenerator $jwtKeys,
+        private ApiRuntimeEnvService $apiEnv,
     ) {}
 
     /**
@@ -368,6 +369,8 @@ final class InstallerWizardService
         if (file_put_contents($this->paths->lockFile(), date('c')."\n", LOCK_EX) === false) {
             throw new \RuntimeException('Database was set up but the install lock file could not be written.');
         }
+
+        $this->apiEnv->ensure($this->paths->installRoot(), ApiRuntimeEnvService::guessRequestAppUrl());
         @chmod($this->paths->lockFile(), 0600);
 
         $this->saveWizardState([

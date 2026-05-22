@@ -24,6 +24,48 @@ final class InstallerEnvChecker
         $checks[] = $this->extension($dbDriver === 'mysql' ? 'pdo_mysql' : 'pdo_sqlite');
         $checks[] = $this->writable($this->paths->dataDir());
         $checks[] = $this->writable($this->paths->configDir());
+        foreach ($this->apiRuntimeChecks($this->paths->installRoot()) as $check) {
+            $checks[] = $check;
+        }
+
+        return $checks;
+    }
+
+    /**
+     * @return list<array{ok: bool, label: string, detail: string}>
+     */
+    private function apiRuntimeChecks(string $installRoot): array
+    {
+        $apiRoot = rtrim(str_replace('\\', '/', $installRoot), '/').'/packages/api';
+        if (! is_file($apiRoot.'/vendor/autoload.php')) {
+            return [];
+        }
+
+        $checks = [];
+        $env = $apiRoot.'/.env';
+        $example = $apiRoot.'/.env.example';
+        if (is_file($env)) {
+            $checks[] = [
+                'ok' => is_readable($env),
+                'label' => 'Laravel API environment',
+                'detail' => is_readable($env) ? 'packages/api/.env present' : 'packages/api/.env is not readable',
+            ];
+        } elseif (is_file($example)) {
+            $checks[] = [
+                'ok' => is_writable($apiRoot),
+                'label' => 'Laravel API environment',
+                'detail' => 'Will create packages/api/.env on install (from .env.example)',
+            ];
+        } else {
+            $checks[] = [
+                'ok' => false,
+                'label' => 'Laravel API environment',
+                'detail' => 'Missing packages/api/.env.example in the deploy package',
+            ];
+        }
+
+        $checks[] = $this->writable($apiRoot.'/storage');
+        $checks[] = $this->writable($apiRoot.'/bootstrap/cache');
 
         return $checks;
     }
