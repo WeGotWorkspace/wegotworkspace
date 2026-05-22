@@ -1,5 +1,11 @@
 @import "../../styles.css" reference;
 
+.icon-button--size-xs {
+  width: var(--tag-height, 1.5rem);
+  height: var(--tag-height, 1.5rem);
+  --button-icon-size: 0.75rem;
+}
+
 .icon-button--size-sm {
   width: calc(var(--input-height, 2.25rem) - 0.25rem);
   height: calc(var(--input-height, 2.25rem) - 0.25rem);

@@ -7,6 +7,22 @@ export function buildMoveMailboxOptions(
   return Array.from(new Set(["Inbox", ...allSystemMailboxes, ...moreMailboxes]));
 }
 
+export function canMoveMailItemsToMailbox(
+  mail: readonly Mail[],
+  moveIds: readonly string[],
+  mailbox: string,
+  encodeFolderToken: (label: string) => string,
+): boolean {
+  const targetFolder = encodeFolderToken(mailbox);
+  return moveIds.some((id) => {
+    const row = mail.find((message) => message.id === id);
+    if (!row) return false;
+    if (row.mailbox.trim().toLowerCase() === mailbox.trim().toLowerCase()) return false;
+    if (row.folder === targetFolder) return false;
+    return true;
+  });
+}
+
 export function resolveMoveMailboxOption(
   row: Mail | undefined,
   moveMailboxOptions: readonly string[],
