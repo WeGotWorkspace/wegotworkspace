@@ -6,6 +6,7 @@ export {
 export {
   TextEditorSheet,
   type TextEditorSheetProps,
+  type TextEditorSheetVariant,
 } from "@/text-editor-core/src/text-editor-sheet";
 export { TextEditorSlashMenu } from "@/text-editor-core/src/text-editor-slash-menu";
 export { TextEditorTableControls } from "@/text-editor-core/src/text-editor-table-controls";

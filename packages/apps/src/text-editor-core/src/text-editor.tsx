@@ -43,9 +43,7 @@ export function TextEditor({
   return (
     <div className={cn("text-editor flex h-full w-full flex-col", className)}>
       <TextEditorFormatBar editor={editor} showPrint={showPrint} />
-      <div className="flex min-h-0 flex-1">
-        <TextEditorSheet editor={editor} className="flex-1" />
-      </div>
+      <TextEditorSheet editor={editor} className="min-h-0 flex-1" />
     </div>
   );
 }
