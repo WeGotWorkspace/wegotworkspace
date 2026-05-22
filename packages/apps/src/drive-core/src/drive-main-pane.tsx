@@ -75,12 +75,15 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
     show("Download started", { icon: <Download className="size-4" /> });
   };
 
+  const searchActive = Boolean(searchQuery.trim());
+
   const browserProps = {
     items: visibleItems,
     imagePreviewUrls,
     selectedIds,
     starred,
     labels,
+    searchActive,
     inTrash: inTrashView,
     selectionMode,
     isTouch,
