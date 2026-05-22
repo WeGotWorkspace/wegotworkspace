@@ -499,10 +499,7 @@ export function DriveListView({
                   isActive && !isSelected && "drive-list-row--active",
                 )}
               >
-                <td
-                  className="drive-list-col-name py-2 px-3 min-w-0"
-                  {...(isFolder ? dropZone : {})}
-                >
+                <td className="drive-list-col-name py-2 min-w-0" {...(isFolder ? dropZone : {})}>
                   <div className="flex items-center gap-2.5 min-w-0">
                     <span
                       className={cn(
@@ -538,13 +535,11 @@ export function DriveListView({
                     </div>
                   </div>
                 </td>
-                <td className="py-2 px-3 hidden sm:table-cell tabular-nums drive-list-muted">
+                <td className="py-2 hidden sm:table-cell tabular-nums drive-list-muted">
                   {f.date}
                 </td>
-                <td className="py-2 px-3 hidden lg:table-cell drive-list-muted">
-                  {KIND_LABEL[f.kind]}
-                </td>
-                <td className="drive-list-col-size py-2 px-3 text-right tabular-nums drive-list-muted hidden sm:table-cell">
+                <td className="py-2 hidden lg:table-cell drive-list-muted">{KIND_LABEL[f.kind]}</td>
+                <td className="drive-list-col-size py-2 text-right tabular-nums drive-list-muted hidden sm:table-cell">
                   {f.size}
                 </td>
               </tr>

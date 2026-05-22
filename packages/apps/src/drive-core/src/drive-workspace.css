@@ -191,7 +191,7 @@
 }
 
 .drive-workspace .drive-main-pane__breadcrumbs {
-  @apply px-2 md:px-6 shrink-0;
+  @apply px-4 md:px-6 shrink-0;
   padding-block: 1rem;
   background-color: color-mix(in oklab, var(--color-ink) 5%, transparent);
   border-bottom: 1px solid
