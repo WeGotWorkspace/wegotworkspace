@@ -143,7 +143,7 @@ function DriveMainHeader({ controller }: { controller: DriveController }) {
     <ViewHeader
       sidebarOpen={sidebarOpen}
       onToggleSidebar={() => setSidebarOpen((v) => !v)}
-      title={viewLabel}
+      title={searchQuery.trim() ? labels.searchViewTitle : viewLabel}
       subtitle={
         selectionMode || selectedIds.length > 1 ? `${selectedIds.length} Selected` : undefined
       }
