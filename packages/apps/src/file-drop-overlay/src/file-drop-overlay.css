@@ -10,7 +10,7 @@
 }
 
 .file-drop-overlay__card {
-  border-radius: 0.75rem;
+  border-radius: var(--control-radius);
   background-color: var(--file-drop-overlay-card-bg, rgb(255 255 255 / 0.9));
   padding: 0.5rem 1rem;
   font-size: 0.875rem;

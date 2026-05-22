@@ -282,7 +282,7 @@ export function DeleteDialog({
                       value={target}
                       onChange={(e) => setTarget(e.target.value)}
                       disabled={mode !== "transfer" || others.length === 0}
-                      className="w-full h-9 rounded-md border bg-transparent px-2 text-sm disabled:opacity-50"
+                      className="input w-full disabled:opacity-50"
                     >
                       {others.map((n) => (
                         <option key={n} value={n}>
