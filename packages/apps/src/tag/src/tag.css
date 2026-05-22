@@ -1,6 +1,8 @@
 @import "../../styles.css" reference;
 
 .tag {
-  @apply font-sans text-[13px] normal-case tracking-normal px-3 py-1.5 font-medium inline-flex items-center gap-1 min-w-0;
-  border-radius: var(--control-radius-pill);
+  @apply font-sans text-sm normal-case tracking-normal px-3 font-medium inline-flex items-center gap-1.5 min-w-0;
+  min-height: var(--input-height, 2.25rem);
+  height: var(--input-height, 2.25rem);
+  border-radius: var(--control-radius-button-pill);
 }
