@@ -1,0 +1,686 @@
+/* Parent-scoped tokens for the text editor workspace */
+.text-editor {
+  --text-editor-sheet: oklch(1 0 0);
+  --text-editor-sheet-padding: 0.75in;
+  --text-editor-sheet-margin-block: 1.5rem;
+  --text-editor-highlight: oklch(0.95 0.15 95);
+  --text-editor-comment: oklch(0.9 0.12 80);
+  --text-editor-suggestion: oklch(0.85 0.15 145);
+  --text-editor-shadow-sheet:
+    0 0 0 1px rgba(15, 23, 42, 0.045), 0 0 48px -16px rgba(15, 23, 42, 0.08),
+    0 -1px 1px rgba(15, 23, 42, 0.03), 0 -10px 24px -16px rgba(15, 23, 42, 0.1),
+    0 -24px 48px -32px rgba(15, 23, 42, 0.06), 0 1px 1px rgba(15, 23, 42, 0.03),
+    0 12px 28px -18px rgba(15, 23, 42, 0.12), 0 28px 56px -36px rgba(15, 23, 42, 0.08),
+    -1px 0 1px rgba(15, 23, 42, 0.03), -10px 0 24px -16px rgba(15, 23, 42, 0.1),
+    -24px 0 48px -32px rgba(15, 23, 42, 0.06), 1px 0 1px rgba(15, 23, 42, 0.03),
+    10px 0 24px -16px rgba(15, 23, 42, 0.1), 24px 0 48px -32px rgba(15, 23, 42, 0.06);
+  --text-editor-format-btn-color: color-mix(in oklab, var(--foreground) 70%, transparent);
+  --text-editor-format-btn-hover-bg: var(--accent);
+  --text-editor-format-btn-hover-color: var(--accent-foreground);
+  --text-editor-format-btn-active-bg: var(--accent);
+  --text-editor-format-btn-active-color: var(--accent-foreground);
+}
+
+.text-editor-format-bar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.125rem;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in oklab, var(--background) 80%, transparent);
+  padding: 0.375rem 0.5rem;
+  backdrop-filter: blur(8px);
+}
+
+/* Unlayered so width/height survive active state (layered rules lose to Tailwind unlayered CSS). */
+.text-editor-format-bar__btn,
+.text-editor-format-bar__btn--active,
+.text-editor-format-bar__btn--active:hover:not(:disabled),
+.text-editor-format-bar__heading-trigger {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  padding: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 0;
+  color: var(--text-editor-format-btn-color);
+  background: transparent;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+
+.text-editor-format-bar__btn,
+.text-editor-format-bar__btn--active,
+.text-editor-format-bar__btn--active:hover:not(:disabled) {
+  width: 2rem;
+  min-width: 2rem;
+  max-width: 2rem;
+}
+
+.text-editor-format-bar__btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.text-editor-format-bar__btn-icon svg {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  stroke-width: 2;
+}
+
+.text-editor-format-bar__heading-trigger {
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  gap: 0.375rem;
+  min-width: 4.25rem;
+  padding-inline: 0.625rem;
+  white-space: nowrap;
+}
+
+.text-editor-format-bar__heading-trigger-label {
+  display: inline-block;
+  flex: 0 1 auto;
+  min-width: 2ch;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.text-editor-format-bar__heading-trigger-chevron {
+  display: block;
+  flex: 0 0 0.75rem;
+  width: 0.75rem;
+  height: 0.75rem;
+  stroke-width: 2;
+  opacity: 0.6;
+}
+
+.text-editor-format-bar__btn:hover:not(:disabled),
+.text-editor-format-bar__heading-trigger:hover:not(:disabled) {
+  background: var(--text-editor-format-btn-hover-bg);
+  color: var(--text-editor-format-btn-hover-color);
+}
+
+.text-editor-format-bar__btn:disabled {
+  opacity: 0.4;
+}
+
+.text-editor-format-bar__btn:disabled:hover {
+  background: transparent;
+}
+
+.text-editor-format-bar__btn--active,
+.text-editor-format-bar__btn--active:hover:not(:disabled),
+.text-editor-format-bar__heading-trigger.text-editor-format-bar__btn--active,
+.text-editor-format-bar__heading-trigger.text-editor-format-bar__btn--active:hover:not(:disabled) {
+  font-weight: 500;
+  color: var(--text-editor-format-btn-color);
+  background: color-mix(in oklab, var(--text-editor-format-btn-active-bg) 18%, transparent);
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.text-editor-format-bar__sep {
+  margin: 0 0.25rem;
+  height: 1.25rem;
+  width: 1px;
+  background: var(--border);
+}
+
+.text-editor-format-bar__print {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.text-editor-format-bar__print-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--background);
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: color-mix(in oklab, var(--foreground) 80%, transparent);
+  transition: background-color 0.15s;
+}
+
+.text-editor-format-bar__print-btn:hover {
+  background: var(--accent);
+}
+
+.text-editor-format-bar__heading-menu {
+  min-width: 12rem;
+}
+
+.text-editor-format-bar__heading-option {
+  min-height: 2rem;
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+}
+
+.text-editor-format-bar__heading-option--selected,
+.text-editor-format-bar__heading-option--selected:focus {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.text-editor-format-bar__heading-option-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.text-editor-sheet {
+  position: relative;
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+}
+
+.text-editor-sheet:not(.text-editor-sheet--inline):not(.text-editor-sheet--fill) {
+  --text-editor-sheet-shadow-gutter: 1.25rem;
+  padding-inline: var(--text-editor-sheet-shadow-gutter);
+  margin-inline: calc(-1 * var(--text-editor-sheet-shadow-gutter));
+  width: calc(100% + 2 * var(--text-editor-sheet-shadow-gutter));
+}
+
+.text-editor-sheet--inline {
+  flex: none;
+  align-items: stretch;
+}
+
+.text-editor-sheet--inline .text-editor-sheet__surface {
+  max-width: none;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.text-editor-sheet--fill {
+  --text-editor-sheet-margin-block: 0;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.text-editor-sheet--fill .text-editor-sheet__surface {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 100%;
+  max-width: none;
+  min-height: 100%;
+  margin-block: 0;
+}
+
+.text-editor-sheet--fill .text-editor-sheet__surface .ProseMirror {
+  flex: none;
+  min-height: 0;
+}
+
+.text-editor-sheet__surface {
+  position: relative;
+  width: 100%;
+  max-width: 8.5in;
+  flex-shrink: 0;
+  margin-block: var(--text-editor-sheet-margin-block);
+  margin-inline: auto;
+  border-radius: 0;
+  background: var(--text-editor-sheet);
+  padding: var(--text-editor-sheet-padding);
+  box-shadow: var(--text-editor-shadow-sheet);
+}
+
+.text-editor-sheet__surface .ProseMirror {
+  min-height: 0;
+}
+
+.text-editor-prose {
+  font-family: var(--font-sans);
+  color: var(--foreground);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.text-editor-prose :is(strong, b) {
+  font-weight: 600;
+}
+
+.text-editor-prose:focus {
+  outline: none;
+}
+
+.text-editor-prose h1 {
+  font-size: 2.1rem;
+  font-weight: 600;
+  margin: 1.6rem 0 0.8rem;
+  letter-spacing: -0.02em;
+}
+
+.text-editor-prose h2 {
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin: 1.4rem 0 0.6rem;
+  letter-spacing: -0.015em;
+}
+
+.text-editor-prose h3 {
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin: 1.2rem 0 0.5rem;
+}
+
+.text-editor-prose :is(h4, h5, h6) {
+  font-weight: 500;
+}
+
+.text-editor-prose p {
+  margin: 0.6rem 0;
+}
+
+.text-editor-prose ul,
+.text-editor-prose ol {
+  padding-left: 1.4rem;
+  margin: 0.6rem 0;
+}
+
+.text-editor-prose ul {
+  list-style: disc;
+}
+
+.text-editor-prose ol {
+  list-style: decimal;
+}
+
+.text-editor-prose blockquote {
+  border-left: 3px solid var(--primary);
+  padding-left: 1rem;
+  color: var(--muted-foreground);
+  font-style: italic;
+  margin: 1rem 0;
+}
+
+.text-editor-prose code {
+  background: var(--muted);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.9em;
+  font-family: var(--font-mono, ui-monospace, monospace);
+}
+
+.text-editor-prose pre {
+  background: oklch(0.18 0.02 260);
+  color: oklch(0.95 0 0);
+  padding: 1rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.85em;
+  margin: 1rem 0;
+}
+
+.text-editor-prose pre code {
+  background: transparent;
+  padding: 0;
+  color: inherit;
+}
+
+.text-editor-prose a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.text-editor-prose mark {
+  background: var(--text-editor-highlight);
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+.text-editor-prose hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.5rem 0;
+}
+
+.text-editor-prose ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0.25rem;
+}
+
+.text-editor-prose ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+}
+
+.text-editor-prose ul[data-type="taskList"] li + li {
+  margin-top: 0.2rem;
+}
+
+.text-editor-prose ul[data-type="taskList"] li > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.text-editor-prose ul[data-type="taskList"] li > div > :first-child {
+  margin-top: 0;
+}
+
+.text-editor-prose ul[data-type="taskList"] li > div > :last-child {
+  margin-bottom: 0;
+}
+
+.text-editor-prose ul[data-type="taskList"] li > label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 1.125rem;
+  width: 1.125rem;
+  height: 1.7em;
+  margin: 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.text-editor-prose ul[data-type="taskList"] li > label input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.text-editor-prose ul[data-type="taskList"] li > label input:focus-visible + span {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.text-editor-prose ul[data-type="taskList"] li > label span {
+  position: relative;
+  display: block;
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+  border: 1.5px solid color-mix(in oklab, var(--foreground) 28%, var(--border));
+  border-radius: 0.3rem;
+  background: var(--background);
+  box-shadow: inset 0 1px 1px color-mix(in oklab, var(--foreground) 6%, transparent);
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.text-editor-prose ul[data-type="taskList"] li > label:hover span {
+  border-color: color-mix(in oklab, var(--primary) 45%, var(--border));
+  background: color-mix(in oklab, var(--primary) 6%, var(--background));
+}
+
+.text-editor-prose ul[data-type="taskList"] li > label input:checked + span,
+.text-editor-prose ul[data-type="taskList"] li[data-checked="true"] > label span {
+  border-color: var(--primary);
+  background: var(--primary);
+  box-shadow: none;
+}
+
+.text-editor-prose ul[data-type="taskList"] li > label input:checked + span::after,
+.text-editor-prose ul[data-type="taskList"] li[data-checked="true"] > label span::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 0.3125rem;
+  height: 0.5625rem;
+  border: solid var(--primary-foreground);
+  border-width: 0 2px 2px 0;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.text-editor-prose .is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--muted-foreground);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.text-editor-prose .comment-mark {
+  background: color-mix(in oklab, var(--text-editor-comment) 60%, transparent);
+  border-bottom: 2px solid var(--text-editor-comment);
+  cursor: pointer;
+}
+
+.text-editor-prose .suggestion-mark {
+  background: color-mix(in oklab, var(--text-editor-suggestion) 40%, transparent);
+  border-bottom: 2px dashed var(--text-editor-suggestion);
+}
+
+.text-editor-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+.text-editor-prose th,
+.text-editor-prose td {
+  border: 1px solid var(--border);
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+  vertical-align: top;
+  position: relative;
+}
+
+.text-editor-prose th {
+  background: var(--muted);
+  font-weight: 600;
+}
+
+.text-editor-prose td p,
+.text-editor-prose th p {
+  margin: 0;
+}
+
+.text-editor-prose .selectedCell {
+  background: color-mix(in oklab, var(--primary) 14%, transparent);
+}
+
+.text-editor-prose .selectedCell:after {
+  z-index: 2;
+  position: absolute;
+  content: "";
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: color-mix(in oklab, var(--primary) 10%, transparent);
+  box-shadow: inset 0 0 0 2px var(--primary);
+  pointer-events: none;
+}
+
+.text-editor-slash-menu {
+  position: absolute;
+  z-index: 40;
+  width: 18rem;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--popover);
+  box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.2);
+}
+
+.text-editor-slash-menu__label {
+  border-bottom: 1px solid var(--border);
+  padding: 0.375rem 0.75rem;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted-foreground);
+}
+
+.text-editor-slash-menu__list {
+  max-height: 18rem;
+  overflow-y: auto;
+  padding: 0.25rem;
+  list-style: none;
+  margin: 0;
+}
+
+.text-editor-slash-menu__item {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 2.75rem;
+  box-sizing: border-box;
+  padding: 0.375rem 0.5rem;
+  border-radius: var(--radius-md);
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  color: var(--foreground);
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease;
+}
+
+.text-editor-slash-menu__item:hover,
+.text-editor-slash-menu__item.text-editor-slash-menu__item--active {
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.text-editor-slash-menu__icon {
+  display: flex;
+  flex: 0 0 2.25rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--background);
+}
+
+.text-editor-slash-menu__item:hover .text-editor-slash-menu__icon,
+.text-editor-slash-menu__item.text-editor-slash-menu__item--active .text-editor-slash-menu__icon {
+  border-color: color-mix(in oklab, var(--accent-foreground) 25%, var(--border));
+  background: color-mix(in oklab, var(--background) 88%, var(--accent));
+}
+
+.text-editor-slash-menu__copy {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.125rem;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.text-editor-slash-menu__title {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.text-editor-slash-menu__desc {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.6875rem;
+  line-height: 1.2;
+  color: var(--muted-foreground);
+}
+
+.text-editor-slash-menu__item:hover .text-editor-slash-menu__desc,
+.text-editor-slash-menu__item.text-editor-slash-menu__item--active .text-editor-slash-menu__desc {
+  color: color-mix(in oklab, var(--accent-foreground) 72%, transparent);
+}
+
+.text-editor-table-controls__btn {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--background);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  color: color-mix(in oklab, var(--foreground) 70%, transparent);
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+
+.text-editor-table-controls__btn:hover {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+@media (max-width: 768px) {
+  .text-editor-sheet__surface {
+    margin-block: 1rem;
+    padding: 1rem;
+  }
+}
+
+@media print {
+  .text-editor-sheet__surface {
+    padding: 1in;
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Compact body for format-bar-only Storybook previews */
+.text-editor--format-bar-story {
+  display: flex;
+  flex-direction: column;
+  min-height: 12rem;
+}
+
+.text-editor-format-bar-story__body {
+  flex: 1;
+  overflow-y: auto;
+  border-top: 1px solid var(--border);
+  background: var(--background);
+  padding: 1rem 1.25rem;
+}
+
+.text-editor-format-bar-story__body .ProseMirror {
+  min-height: 6rem;
+}

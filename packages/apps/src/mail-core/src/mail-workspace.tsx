@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils";
 import type { MailComposeMode } from "@/mail-core/src/mail-compose-view";
 import "@/mail-core/src/mail-workspace.css";
 import { mailWorkspacePaneClasses } from "@/mail-core/src/mail-workspace.styles";
-import { MoveToDialog } from "@/dialogs/src/dialogs";
 import { Button } from "@/button/src/button";
+import { MailMoveToDialog } from "@/mail-core/src/mail-move-to-dialog";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
 import { WorkspaceApp } from "@/workspace-app/src/workspace-app";
@@ -283,6 +283,7 @@ export function MailWorkspace({
             onInteractOutside={(event) => event.preventDefault()}
           >
             <MailComposeView
+              editorKey={composeTarget.id}
               composeMode={composeTargetDraft.mode as MailComposeMode}
               mailbox={composeTarget.mailbox}
               to={composeTargetDraft.to}
@@ -325,10 +326,14 @@ export function MailWorkspace({
         </Dialog>
       ) : null}
 
-      <MoveToDialog
+      <MailMoveToDialog
         open={!!moveDialog}
-        notebooks={moveMailboxOptions}
-        currentNotebook={moveDialogCurrentMailbox}
+        labels={L}
+        mailboxes={moveMailboxOptions}
+        mail={mail}
+        moveIds={moveDialog?.ids ?? []}
+        currentMailbox={moveDialogCurrentMailbox}
+        encodeFolderToken={encodeFolderToken}
         onClose={() => setMoveDialog(null)}
         onConfirm={(mailbox) => {
           if (moveDialog) moveToMailbox(moveDialog.ids, mailbox);

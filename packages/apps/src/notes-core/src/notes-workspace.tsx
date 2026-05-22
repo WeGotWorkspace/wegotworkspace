@@ -238,6 +238,7 @@ export function NotesWorkspace({
           if (moveDialog) moveToNotebook(moveDialog.ids, notebook);
           setMoveDialog(null);
         }}
+        contentClassName="notes-dialog-surface"
       />
 
       <EditDialog
@@ -249,6 +250,7 @@ export function NotesWorkspace({
           else renameTag(editDialog.name, newName);
           setEditDialog(null);
         }}
+        contentClassName="notes-dialog-surface"
       />
 
       <DeleteDialog
@@ -268,6 +270,7 @@ export function NotesWorkspace({
           else deleteTag(deleteDialog.name);
           setDeleteDialog(null);
         }}
+        contentClassName="notes-dialog-surface"
       />
 
       <TagPickerDialog
@@ -281,6 +284,7 @@ export function NotesWorkspace({
         onCreate={(tag) => {
           if (tagDialog) toggleNoteTag(tagDialog.noteId, tag);
         }}
+        contentClassName="notes-dialog-surface"
       />
 
       {confirmDialog}

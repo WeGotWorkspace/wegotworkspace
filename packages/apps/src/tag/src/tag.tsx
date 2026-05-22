@@ -5,6 +5,8 @@ import { IconButton } from "@/button/src/button";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/tooltip";
 
+import "./tag.css";
+
 export type TagProps = {
   label: string;
   icon?: ReactNode;
@@ -27,14 +29,14 @@ export function Tag({
 }: TagProps) {
   return (
     <span
-      className="font-sans text-[13px] normal-case tracking-normal px-3 py-1.5 rounded-full font-medium inline-flex items-center gap-1 group min-w-0"
+      className="tag group"
       style={{
         backgroundColor:
           colors?.backgroundColor ?? "color-mix(in oklab, var(--color-ink) 8%, transparent)",
         color: colors?.color ?? "var(--color-ink)",
       }}
     >
-      {icon}
+      {icon ? <span className="tag__icon">{icon}</span> : null}
       <span className="truncate">{label}</span>
       {removable && onRemove ? (
         <Tooltip>
@@ -43,9 +45,9 @@ export function Tag({
               type="button"
               onClick={onRemove}
               aria-label={removeAriaLabel ?? `Remove ${label}`}
-              className="opacity-50 hover:opacity-100 transition-opacity"
+              className="tag__remove"
             >
-              <X className="size-3" />
+              <X />
             </button>
           </TooltipTrigger>
           <TooltipContent>{removeAriaLabel ?? `Remove ${label}`}</TooltipContent>
@@ -77,12 +79,12 @@ export function TagGroup({
   style,
 }: TagGroupProps) {
   return (
-    <div className={cn("flex flex-wrap items-center gap-2", className)} style={style}>
+    <div className={cn("tag-group flex flex-wrap items-center gap-1.5", className)} style={style}>
       {tags.map((t) => (
         <Tag
           key={t}
           label={t}
-          icon={<TagIcon className="size-3.5 opacity-70" />}
+          icon={<TagIcon />}
           colors={tagColors}
           removable={!readonly}
           onRemove={readonly || !onRemoveTag ? undefined : () => onRemoveTag(t)}
@@ -90,7 +92,7 @@ export function TagGroup({
         />
       ))}
       {!readonly && onAdd ? (
-        <IconButton label="Add tag" icon={<Plus />} onClick={onAdd} size="md" variant="subtle" />
+        <IconButton label="Add tag" icon={<Plus />} onClick={onAdd} size="xs" variant="subtle" />
       ) : null}
     </div>
   );

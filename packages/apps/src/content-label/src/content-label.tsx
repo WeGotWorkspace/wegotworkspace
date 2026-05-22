@@ -1,5 +1,7 @@
 import { cn } from "@/lib/utils";
 
+import "./content-label.css";
+
 export type ContentLabelProps = {
   text: string;
   icon?: React.ReactNode;
@@ -13,11 +15,7 @@ export type ContentLabelProps = {
 export function ContentLabel({ text, icon, className, style }: ContentLabelProps) {
   return (
     <span
-      className={cn(
-        "inline-flex max-w-full items-center gap-1.5 rounded-full px-2.5 py-1",
-        "text-[11px] uppercase tracking-[0.2em] font-medium",
-        className,
-      )}
+      className={cn("content-label", className)}
       style={{
         color: "var(--color-ink)",
         backgroundColor: "color-mix(in oklab, var(--color-ink) 8%, transparent)",

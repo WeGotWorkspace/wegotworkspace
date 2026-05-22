@@ -1,5 +1,6 @@
 import { Download, FolderInput, Pencil, Star, Trash2, MoreHorizontal } from "lucide-react";
 import type { ActionBarAction } from "@/action-bar/src/action-bar";
+import { IconButton } from "@/button/src/button";
 import { DropdownMenu } from "@/menu-dropdown/src/dropdown-menu";
 import type { DriveUILabels } from "@/drive-core/src/drive-labels";
 
@@ -86,16 +87,14 @@ export function DriveFileItemActionsMenu({ actions }: { actions: ActionBarAction
             : "cursor-pointer gap-2.5",
       }))}
       trigger={
-        <span
-          role="button"
-          tabIndex={0}
-          aria-label="More actions"
-          title="More actions"
+        <IconButton
+          label="More actions"
+          icon={<MoreHorizontal />}
+          size="sm"
+          variant="subtle"
+          showTooltip={false}
           onClick={(event) => event.stopPropagation()}
-          className="drive-item-actions-trigger"
-        >
-          <MoreHorizontal className="size-4" />
-        </span>
+        />
       }
     />
   );

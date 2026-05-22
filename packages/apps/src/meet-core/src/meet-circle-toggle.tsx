@@ -1,6 +1,5 @@
 import type { ComponentType } from "react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/tooltip";
-import { cn } from "@/lib/utils";
+import { IconButton } from "@/button/src/button";
 
 type MeetCircleToggleProps = {
   on: boolean;
@@ -22,22 +21,12 @@ export function MeetCircleToggle({
   const Icon = on ? OnIcon : OffIcon;
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          onClick={onClick}
-          className={cn(
-            "meet-circle-toggle",
-            large ? "meet-circle-toggle--lg" : "meet-circle-toggle--sm",
-            on ? "meet-circle-toggle--on" : "meet-circle-toggle--off",
-          )}
-          aria-label={label}
-        >
-          <Icon className={large ? "size-5" : "size-4"} />
-        </button>
-      </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
+    <IconButton
+      onClick={onClick}
+      label={label}
+      icon={<Icon />}
+      size={large ? "lg" : "md"}
+      variant={on ? "subtle" : "destructive"}
+    />
   );
 }

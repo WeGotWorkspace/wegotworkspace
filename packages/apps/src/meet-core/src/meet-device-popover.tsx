@@ -1,7 +1,7 @@
-import { Mic, Settings as SettingsIcon, Video } from "lucide-react";
+import { Settings as SettingsIcon } from "lucide-react";
+import { IconButton } from "@/button/src/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/ui/popover";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/tooltip";
-import { MeetDeviceRow } from "@/meet-core/src/meet-device-row";
+import { MeetDeviceForm } from "@/meet-core/src/meet-device-form";
 import { meetLabels } from "@/meet-core/src/meet-labels";
 import type { MeetDeviceOption } from "@/meet-core/src/meet-device-utils";
 
@@ -33,44 +33,21 @@ export function MeetDevicePopover({
 }: MeetDevicePopoverProps) {
   return (
     <Popover defaultOpen={defaultOpen}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              className="meet-circle-toggle meet-circle-toggle--lg meet-circle-toggle--on"
-              aria-label={meetLabels.devices}
-            >
-              <SettingsIcon className="size-5" />
-            </button>
-          </PopoverTrigger>
-        </TooltipTrigger>
-        <TooltipContent>{meetLabels.devices}</TooltipContent>
-      </Tooltip>
+      <PopoverTrigger asChild>
+        <IconButton icon={<SettingsIcon />} label={meetLabels.devices} size="lg" variant="subtle" />
+      </PopoverTrigger>
       <PopoverContent side="top" align="center" className="meet-popover-surface w-80 p-3">
-        <div className="space-y-3">
-          <MeetDeviceRow
-            icon={<Video />}
-            label={meetLabels.cameraLabel}
-            value={camera}
-            onChange={onCamera}
-            options={cameras}
-          />
-          <MeetDeviceRow
-            icon={<Mic />}
-            label={meetLabels.microphoneLabel}
-            value={microphone}
-            onChange={onMicrophone}
-            options={microphones}
-          />
-          <MeetDeviceRow
-            icon={<SettingsIcon />}
-            label={meetLabels.speakerLabel}
-            value={speaker}
-            onChange={onSpeaker}
-            options={speakers}
-          />
-        </div>
+        <MeetDeviceForm
+          cameras={cameras}
+          microphones={microphones}
+          speakers={speakers}
+          camera={camera}
+          microphone={microphone}
+          speaker={speaker}
+          onCameraChange={onCamera}
+          onMicrophoneChange={onMicrophone}
+          onSpeakerChange={onSpeaker}
+        />
       </PopoverContent>
     </Popover>
   );

@@ -1,6 +1,6 @@
 import { LayoutGrid, List as ListIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-import "@/view-mode-toggle/src/view-mode-toggle.css";
+
+import { SegmentedControl } from "@/segmented-control/src/segmented-control";
 
 export type ViewMode = "grid" | "list";
 
@@ -10,6 +10,7 @@ export type ViewModeToggleProps = {
   gridLabel: string;
   listLabel: string;
   className?: string;
+  size?: "sm" | "md";
 };
 
 export function ViewModeToggle({
@@ -18,33 +19,19 @@ export function ViewModeToggle({
   gridLabel,
   listLabel,
   className,
+  size = "sm",
 }: ViewModeToggleProps) {
   return (
-    <div className={cn("view-mode-toggle", className)} role="group" aria-label="View mode">
-      <button
-        type="button"
-        aria-label={gridLabel}
-        title={gridLabel}
-        onClick={() => onChange("grid")}
-        className={cn(
-          "view-mode-toggle__button",
-          value === "grid" && "view-mode-toggle__button--active",
-        )}
-      >
-        <LayoutGrid className="size-4" />
-      </button>
-      <button
-        type="button"
-        aria-label={listLabel}
-        title={listLabel}
-        onClick={() => onChange("list")}
-        className={cn(
-          "view-mode-toggle__button",
-          value === "list" && "view-mode-toggle__button--active",
-        )}
-      >
-        <ListIcon className="size-4" />
-      </button>
-    </div>
+    <SegmentedControl
+      value={value}
+      onChange={onChange}
+      size={size}
+      className={className}
+      aria-label="View mode"
+      options={[
+        { value: "grid", label: gridLabel, icon: <LayoutGrid className="size-4" /> },
+        { value: "list", label: listLabel, icon: <ListIcon className="size-4" /> },
+      ]}
+    />
   );
 }

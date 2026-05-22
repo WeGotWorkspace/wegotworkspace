@@ -9,7 +9,7 @@ export function SidebarAddButton({ label, onClick }: { label: string; onClick: (
           type="button"
           aria-label={label}
           onClick={onClick}
-          className="size-6 rounded-full flex items-center justify-center transition-colors opacity-60 hover:opacity-100 hover:bg-[color-mix(in_oklab,var(--color-ink)_10%,transparent)]"
+          className="size-6 flex items-center justify-center transition-colors opacity-60 hover:opacity-100 hover:bg-[color-mix(in_oklab,var(--color-ink)_10%,transparent)] rounded-[length:var(--control-radius-pill)]"
           style={{ color: "var(--color-ink)" }}
         >
           <Plus className="size-3.5" />
@@ -107,13 +107,13 @@ export function SidebarLink({
         </span>
         {badge != null && badge !== false && (
           <span
-            className="shrink-0 inline-flex items-center justify-center min-w-5 h-5 px-1.5 text-[10px] font-semibold tabular-nums rounded-full"
+            className="shrink-0 inline-flex items-center justify-center min-w-5 h-5 px-1.5 text-[10px] font-semibold tabular-nums rounded-[length:var(--control-radius-pill)]"
             style={{
               backgroundColor: active
                 ? "var(--color-ink)"
                 : "color-mix(in oklab, var(--color-ink) 14%, transparent)",
               color: active
-                ? "var(--sidebar-badge-fg, var(--color-cream, #f5f1e8))"
+                ? "var(--sidebar-badge-fg, var(--color-cream, #ffffff))"
                 : "color-mix(in oklab, var(--color-ink) 80%, transparent)",
             }}
           >

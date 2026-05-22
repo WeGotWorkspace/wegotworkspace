@@ -3,12 +3,12 @@ import { DetailViewHeader } from "@/detail-view-header/src/detail-view-header";
 import { TagGroup } from "@/tag/src/tag";
 import { cn } from "@/lib/utils";
 import { noteBodyToMarkdown } from "@/lib/models/note-body-markdown";
-import { NoteMilkdownBody } from "@/note-milkdown-body/src/note-milkdown-body";
+import { NoteTextEditorBody } from "@/note-detail-view/src/note-text-editor-body";
 
 const noteDetailTagColors = {
   backgroundColor:
-    "var(--note-detail-tag-bg, color-mix(in oklab, var(--color-ink) 14%, transparent))",
-  color: "var(--note-detail-tag-fg, color-mix(in oklab, var(--color-ink) 80%, transparent))",
+    "var(--note-detail-tag-bg, color-mix(in oklab, var(--notes-accent, #fcd34d) 62%, transparent))",
+  color: "var(--note-detail-tag-fg, var(--color-ink))",
 };
 
 export type NoteDetailViewProps = {
@@ -115,7 +115,7 @@ export function NoteDetailView({
         </p>
       ) : null}
 
-      <NoteMilkdownBody
+      <NoteTextEditorBody
         noteId={noteId}
         initialMarkdown={markdown}
         readOnly={readOnly || !onBodyMarkdownChange}

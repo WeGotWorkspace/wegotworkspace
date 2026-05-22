@@ -3,7 +3,7 @@ import { Button } from "@/button/src/button";
 import { Card } from "@/card/src/card";
 import { FieldLabelRow as FormField } from "@/ui/field-label-row";
 import { Input } from "@/ui/input";
-import { Switch } from "@/ui/switch";
+import { FeatureRow } from "@/admin-core/src/admin-workspace-widgets";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -84,18 +84,12 @@ export function AdminMeetPane({ controller }: AdminMeetPaneProps) {
       </Card>
 
       <Card title="Routing">
-        <div className="admin-feature-row">
-          <div className="min-w-0">
-            <div className="admin-feature-row__title">Force TURN relay for all calls</div>
-            <div className="admin-feature-row__desc">
-              Routes every call through the TURN server. Off by default.
-            </div>
-          </div>
-          <Switch
-            checked={controller.settingsForm.forceRelay}
-            onCheckedChange={onForceRelayChange}
-          />
-        </div>
+        <FeatureRow
+          label="Force TURN relay for all calls"
+          desc="Routes every call through the TURN server. Off by default."
+          value={controller.settingsForm.forceRelay}
+          onChange={onForceRelayChange}
+        />
       </Card>
       <div className="flex justify-end">
         <Button label="Save changes" variant="primary" onClick={controller.actions.saveSettings} />
