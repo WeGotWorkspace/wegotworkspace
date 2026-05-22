@@ -25,6 +25,7 @@ export function DriveWorkspace({
   listLoading = false,
   view,
   onViewChange,
+  onOpenDocsFile,
   onLogout,
   className,
 }: DriveWorkspaceProps) {
@@ -35,6 +36,7 @@ export function DriveWorkspace({
     listLoading,
     view,
     onViewChange,
+    onOpenDocsFile,
   });
   const { primarySidebarItems, groupSidebarItems } = useDriveSidebarModel({
     labels: controller.labels,

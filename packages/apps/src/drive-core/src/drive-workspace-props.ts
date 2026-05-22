@@ -11,6 +11,8 @@ export type DriveWorkspaceProps = {
   view?: ViewKey;
   /** Emitted when the user navigates; host should update routing. */
   onViewChange?: (view: ViewKey) => void;
+  /** Opens a Markdown file in the Docs app (host implements routing). */
+  onOpenDocsFile?: (apiPath: string) => void;
   onLogout?: () => void;
   className?: string;
 };

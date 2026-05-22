@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ComponentType } from "react";
+import { createPortal } from "react-dom";
 import { Editor } from "@tiptap/react";
 import { subscribeEditorLayoutUpdates } from "@/text-editor-core/src/text-editor-overlay-utils";
 import {
@@ -121,17 +122,13 @@ export type TextEditorSlashMenuProps = {
   editor: Editor | null;
 };
 
-function slashMenuPosition(editor: Editor): { top: number; left: number } | null {
-  const anchor = editor.view.dom.closest(".text-editor-sheet") as HTMLElement | null;
-  if (!anchor) return null;
-
+/** Viewport coordinates for `position: fixed` (portaled to `document.body`). */
+function slashMenuPosition(editor: Editor): { top: number; left: number } {
   const { from } = editor.state.selection;
   const coords = editor.view.coordsAtPos(from);
-  const anchorRect = anchor.getBoundingClientRect();
-
   return {
-    top: coords.bottom - anchorRect.top + 6,
-    left: coords.left - anchorRect.left,
+    top: coords.bottom + 6,
+    left: coords.left,
   };
 }
 
@@ -157,10 +154,6 @@ export function TextEditorSlashMenu({ editor }: TextEditorSlashMenuProps) {
       return;
     }
     const nextPos = slashMenuPosition(editor);
-    if (!nextPos) {
-      setOpen(false);
-      return;
-    }
     setQuery((previous) => {
       if (previous !== query) setActive(0);
       return query;
@@ -214,7 +207,7 @@ export function TextEditorSlashMenu({ editor }: TextEditorSlashMenuProps) {
 
   if (!open || !pos || !editor || filtered.length === 0) return null;
 
-  return (
+  return createPortal(
     <div
       ref={containerRef}
       style={{ top: pos.top, left: pos.left }}
@@ -249,6 +242,7 @@ export function TextEditorSlashMenu({ editor }: TextEditorSlashMenuProps) {
           </li>
         ))}
       </ul>
-    </div>
+    </div>,
+    document.body,
   );
 }
