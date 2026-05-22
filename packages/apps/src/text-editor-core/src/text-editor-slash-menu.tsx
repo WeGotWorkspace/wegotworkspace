@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState, type ComponentType } from "react";
+import { useCallback, useEffect, useRef, useState, type ComponentType } from "react";
 import { Editor } from "@tiptap/react";
+import { subscribeEditorLayoutUpdates } from "@/text-editor-core/src/text-editor-overlay-utils";
 import {
   Code2,
   Heading1,
@@ -120,6 +121,27 @@ export type TextEditorSlashMenuProps = {
   editor: Editor | null;
 };
 
+function slashMenuPosition(editor: Editor): { top: number; left: number } | null {
+  const anchor = editor.view.dom.closest(".text-editor-sheet") as HTMLElement | null;
+  if (!anchor) return null;
+
+  const { from } = editor.state.selection;
+  const coords = editor.view.coordsAtPos(from);
+  const anchorRect = anchor.getBoundingClientRect();
+
+  return {
+    top: coords.bottom - anchorRect.top + 6,
+    left: coords.left - anchorRect.left,
+  };
+}
+
+function readSlashQuery(editor: Editor): string | null {
+  const { from } = editor.state.selection;
+  const text = editor.state.doc.textBetween(Math.max(0, from - 50), from, "\n", "\0");
+  const match = text.match(/(?:^|\s)\/([\w]*)$/);
+  return match ? match[1] : null;
+}
+
 export function TextEditorSlashMenu({ editor }: TextEditorSlashMenuProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -127,34 +149,40 @@ export function TextEditorSlashMenu({ editor }: TextEditorSlashMenuProps) {
   const [active, setActive] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const syncSlashMenu = useCallback(() => {
+    if (!editor) return;
+    const query = readSlashQuery(editor);
+    if (query == null) {
+      setOpen(false);
+      return;
+    }
+    const nextPos = slashMenuPosition(editor);
+    if (!nextPos) {
+      setOpen(false);
+      return;
+    }
+    setQuery((previous) => {
+      if (previous !== query) setActive(0);
+      return query;
+    });
+    setPos(nextPos);
+    setOpen(true);
+  }, [editor]);
+
   useEffect(() => {
     if (!editor) return;
-    const update = () => {
-      const { from } = editor.state.selection;
-      const text = editor.state.doc.textBetween(Math.max(0, from - 50), from, "\n", "\0");
-      const m = text.match(/(?:^|\s)\/([\w]*)$/);
-      if (m) {
-        setQuery(m[1]);
-        setActive(0);
-        const coords = editor.view.coordsAtPos(from);
-        const wrap = editor.view.dom.closest(".text-editor-scroll") as HTMLElement | null;
-        const rect = wrap?.getBoundingClientRect();
-        setPos({
-          top: coords.bottom - (rect?.top ?? 0) + (wrap?.scrollTop ?? 0) + 6,
-          left: coords.left - (rect?.left ?? 0) + (wrap?.scrollLeft ?? 0),
-        });
-        setOpen(true);
-      } else {
-        setOpen(false);
-      }
-    };
-    editor.on("selectionUpdate", update);
-    editor.on("update", update);
+    editor.on("selectionUpdate", syncSlashMenu);
+    editor.on("update", syncSlashMenu);
     return () => {
-      editor.off("selectionUpdate", update);
-      editor.off("update", update);
+      editor.off("selectionUpdate", syncSlashMenu);
+      editor.off("update", syncSlashMenu);
     };
-  }, [editor]);
+  }, [editor, syncSlashMenu]);
+
+  useEffect(() => {
+    if (!open || !editor) return;
+    return subscribeEditorLayoutUpdates(editor.view.dom, syncSlashMenu);
+  }, [editor, open, syncSlashMenu]);
 
   const filtered = SLASH_COMMANDS.filter((c) =>
     (c.title + " " + c.keywords).toLowerCase().includes(query.toLowerCase()),
