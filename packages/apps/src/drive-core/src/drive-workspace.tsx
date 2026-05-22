@@ -7,7 +7,6 @@ import {
 } from "@/workspace-shell/src/workspace-app-layout";
 import { workspaceUserInitials, type WorkspaceSession } from "@/lib/workspace/workspace-session";
 import { ViewHeader } from "@/view-header/src/view-header";
-import { DriveSearch } from "@/drive-core/src/drive-search";
 import { ViewModeToggle } from "@/view-mode-toggle/src/view-mode-toggle";
 import { cn } from "@/lib/utils";
 import { DriveMainPane } from "@/drive-core/src/drive-main-pane";
@@ -133,7 +132,6 @@ function DriveMainHeader({ controller }: { controller: DriveController }) {
     viewLabel,
     selectionMode,
     selectedIds,
-    visibleItems,
     viewMode,
     setViewMode,
     searchQuery,
@@ -142,34 +140,25 @@ function DriveMainHeader({ controller }: { controller: DriveController }) {
   } = controller;
 
   return (
-    <>
-      <ViewHeader
-        sidebarOpen={sidebarOpen}
-        onToggleSidebar={() => setSidebarOpen((v) => !v)}
-        title={viewLabel}
-        subtitle={
-          selectionMode || selectedIds.length > 1
-            ? `${selectedIds.length} Selected`
-            : `${visibleItems.length} Items`
-        }
-        actions={
-          <>
-            <DriveSearch
-              className="drive-header-search"
-              placeholder={labels.searchPlaceholder}
-              value={searchQuery}
-              onSearch={setSearchQuery}
-              inputRef={searchInputRef}
-            />
-            <ViewModeToggle
-              value={viewMode}
-              onChange={setViewMode}
-              gridLabel={labels.gridView}
-              listLabel={labels.listView}
-            />
-          </>
-        }
-      />
-    </>
+    <ViewHeader
+      sidebarOpen={sidebarOpen}
+      onToggleSidebar={() => setSidebarOpen((v) => !v)}
+      title={viewLabel}
+      subtitle={
+        selectionMode || selectedIds.length > 1 ? `${selectedIds.length} Selected` : undefined
+      }
+      searchPlaceholder={labels.searchPlaceholder}
+      searchValue={searchQuery}
+      onSearchInput={setSearchQuery}
+      searchInputRef={searchInputRef}
+      actions={
+        <ViewModeToggle
+          value={viewMode}
+          onChange={setViewMode}
+          gridLabel={labels.gridView}
+          listLabel={labels.listView}
+        />
+      }
+    />
   );
 }
