@@ -7,7 +7,7 @@ export function AdminStoryScope({ children }: { children: ReactNode }) {
       className="admin-workspace"
       style={{
         minHeight: "100dvh",
-        backgroundColor: "var(--workspace-root-bg, var(--color-cream, #f5f1e8))",
+        backgroundColor: "var(--workspace-root-bg, var(--color-cream, #ffffff))",
       }}
     >
       <div className="mx-auto max-w-2xl p-6 md:p-10">{children}</div>

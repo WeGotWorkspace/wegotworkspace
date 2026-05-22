@@ -15,5 +15,7 @@ export { MailApp } from "./mail-app.tsx";
 export { useMailAPI } from "./use-mail-api.ts";
 export { MailDetailView } from "./mail-detail-view.tsx";
 export { MailAttachments } from "./mail-attachments.tsx";
+export { MailAttachmentChip } from "./mail-attachment-chip.tsx";
+export type { MailAttachmentChipProps } from "./mail-attachment-chip.tsx";
 export { MailMultiSelectionView } from "./mail-multi-selection-view.tsx";
 export { MultiSelectionView } from "@/multi-selection-view/src/multi-selection-view";

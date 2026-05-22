@@ -1,17 +1,26 @@
 @import "../../styles.css" reference;
 
+.icon-button--size-xs {
+  width: var(--tag-height, 1.5rem);
+  height: var(--tag-height, 1.5rem);
+  --button-icon-size: 0.75rem;
+}
+
 .icon-button--size-sm {
-  @apply size-8 rounded-full;
+  width: calc(var(--input-height, 2.25rem) - 0.25rem);
+  height: calc(var(--input-height, 2.25rem) - 0.25rem);
   --button-icon-size: 0.875rem;
 }
 
 .icon-button--size-md {
-  @apply size-9 rounded-full;
+  width: var(--input-height, 2.25rem);
+  height: var(--input-height, 2.25rem);
   --button-icon-size: 1rem;
 }
 
 .icon-button--size-lg {
-  @apply size-11 rounded-full;
+  width: calc(var(--input-height, 2.25rem) + 0.25rem);
+  height: calc(var(--input-height, 2.25rem) + 0.25rem);
   --button-icon-size: 1.25rem;
 }
 

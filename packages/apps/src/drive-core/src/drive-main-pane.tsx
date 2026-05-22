@@ -5,7 +5,6 @@ import { useAppToast } from "@/hooks/use-app-toast";
 import { CollectionState } from "@/collection-state/src/collection-state";
 import { FileDropOverlay } from "@/file-drop-overlay/src/file-drop-overlay";
 import { PathBreadcrumb } from "@/path-breadcrumb/src/path-breadcrumb";
-import { DriveSearch } from "@/drive-core/src/drive-search";
 import { UploadProgress } from "@/upload-progress/src/upload-progress";
 import { cn } from "@/lib/utils";
 import { DriveDetailPanel, DriveGridView, DriveListView } from "@/drive-core/src/drive-browser";
@@ -56,8 +55,6 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
     setConfirmDelete,
     selectionBar,
     searchQuery,
-    setSearchQuery,
-    searchInputRef,
     uploadProgress,
     folderListingPending,
     listLoading,
@@ -78,12 +75,15 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
     show("Download started", { icon: <Download className="size-4" /> });
   };
 
+  const searchActive = Boolean(searchQuery.trim());
+
   const browserProps = {
     items: visibleItems,
     imagePreviewUrls,
     selectedIds,
     starred,
     labels,
+    searchActive,
     inTrash: inTrashView,
     selectionMode,
     isTouch,
@@ -244,17 +244,6 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
                   : setConfirmDelete({ ids: [active.id], permanent: false }),
               mobile: true,
             })}
-          />
-        </div>
-      ) : null}
-
-      {!selectionMode ? (
-        <div className="drive-floating-search">
-          <DriveSearch
-            placeholder={labels.searchPlaceholder}
-            value={searchQuery}
-            onSearch={setSearchQuery}
-            inputRef={searchInputRef}
           />
         </div>
       ) : null}

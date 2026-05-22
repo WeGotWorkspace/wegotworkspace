@@ -72,7 +72,8 @@
 }
 
 :is(.admin-workspace, .admin-dialog-surface) .admin-backup-version-pill {
-  @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium;
+  @apply inline-flex items-center px-2 py-0.5 text-xs font-medium;
+  border-radius: var(--control-radius-pill);
   background-color: color-mix(in oklab, var(--color-ink) 8%, transparent);
   color: var(--color-ink);
 }
@@ -107,7 +108,8 @@
 }
 
 :is(.admin-workspace, .admin-dialog-surface) .admin-updates-progress-card {
-  @apply mt-5 rounded-lg border p-4;
+  @apply mt-5 border p-4;
+  border-radius: var(--control-radius);
   background-color: color-mix(in oklab, var(--color-ink) 4%, transparent);
   border-color: color-mix(in oklab, var(--color-ink) 12%, transparent);
 }
@@ -146,7 +148,7 @@
 :is(.admin-workspace, .admin-dialog-surface) .admin-updates-step-dot[data-step-state="done"],
 :is(.admin-workspace, .admin-dialog-surface) .admin-updates-step-dot[data-step-state="active"] {
   background-color: var(--color-ink);
-  color: var(--color-cream, #f5f1e8);
+  color: var(--color-cream, #ffffff);
 }
 
 :is(.admin-workspace, .admin-dialog-surface) .admin-updates-step-dot[data-step-state="pending"] {

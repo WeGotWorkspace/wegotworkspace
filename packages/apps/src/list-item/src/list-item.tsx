@@ -51,7 +51,7 @@ type ListItemProps = {
 };
 
 const defaultTheme: ListItemTheme = {
-  baseBackground: "var(--color-cream, #f5f1e8)",
+  baseBackground: "var(--color-cream, #ffffff)",
   activeBackground: "color-mix(in oklab, var(--color-emerald) 10%, transparent)",
   selectedBackground: "color-mix(in oklab, var(--color-emerald) 18%, transparent)",
   borderColor: "color-mix(in oklab, var(--color-ink) 10%, transparent)",

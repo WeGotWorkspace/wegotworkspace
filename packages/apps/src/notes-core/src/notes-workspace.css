@@ -1,16 +1,24 @@
 @import "../../workspace-shell/src/workspace-split-app.css";
 
 /**
- * Notes product shell: paper-toned root + sidebar; footer/list affordances use shared split tokens.
+ * Notes product shell: cream main pane + warm gold sidebar accent.
  * Import only from {@link NotesWorkspace}.
  */
 .notes-workspace {
-  --workspace-root-bg: var(--color-paper);
-  --app-sidebar-bg: var(--color-paper);
-  --app-sidebar-border-color: color-mix(in oklab, var(--color-ink) 15%, transparent);
+  --notes-accent: #fcd34d;
+  --notes-sidebar: var(--notes-accent);
+  --workspace-accent: var(--notes-accent);
+  --color-emerald: var(--notes-accent);
+  --workspace-root-bg: var(--color-cream, #ffffff);
+  --app-sidebar-bg: var(--notes-sidebar);
+  --app-sidebar-border-color: color-mix(in oklab, var(--color-ink) 12%, transparent);
   --app-sidebar-color: var(--color-ink);
   --sidebar-logo-brand-fill: var(--color-ink);
   --sidebar-logo-close-button-color: var(--color-ink);
+  --sidebar-badge-fg: var(--notes-accent);
+  --workspace-sidebar-toggle-color: var(--color-ink);
+  --workspace-sidebar-toggle-bg: color-mix(in oklab, var(--color-ink) 8%, transparent);
+  --workspace-user-footer-link-hover-bg: color-mix(in oklab, var(--color-ink) 10%, transparent);
 
   --workspace-user-footer-text-color: color-mix(in oklab, var(--color-ink) 70%, transparent);
   --workspace-user-footer-border-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
@@ -19,10 +27,33 @@
   --workspace-user-footer-link-color: color-mix(in oklab, var(--color-ink) 65%, transparent);
   --workspace-user-footer-link-bg: color-mix(in oklab, var(--color-ink) 6%, transparent);
 
-  /* Detail tags/notebook chip — same ink-on-paper contrast as sidebar section badges */
-  --note-detail-tag-bg: color-mix(in oklab, var(--color-ink) 14%, transparent);
-  --note-detail-tag-fg: color-mix(in oklab, var(--color-ink) 80%, transparent);
+  --notes-list-star-color: var(--notes-accent);
+  --note-detail-tag-bg: color-mix(in oklab, var(--notes-accent) 62%, transparent);
+  --note-detail-tag-fg: var(--color-ink);
   --note-detail-title-font-family: var(--font-serif);
+}
+
+.notes-workspace .app-sidebar__scroll {
+  --button-primary-bg: var(--color-ink);
+  --button-primary-fg: var(--notes-accent);
+  --button-subtle-color: var(--color-ink);
+  --button-subtle-background: color-mix(in oklab, var(--color-ink) 10%, transparent);
+  --button-subtle-hover-background: color-mix(in oklab, var(--color-ink) 16%, transparent);
+}
+
+/**
+ * Portaled notes dialogs/alerts sit outside `.notes-workspace`; repeat accent tokens so
+ * {@link Button} and shadcn `buttonVariants` match the notes shell.
+ */
+.notes-dialog-surface {
+  --notes-accent: #fcd34d;
+  --color-emerald: var(--notes-accent);
+  --button-primary-bg: var(--notes-accent);
+  --button-primary-fg: var(--color-ink);
+  --primary: var(--notes-accent);
+  --primary-foreground: var(--color-ink);
+  --field-label-color: color-mix(in oklab, var(--color-ink) 60%, transparent);
+  --segmented-control-track-active-bg: var(--color-ink);
 }
 
 .notes-workspace .note-detail-view__title {

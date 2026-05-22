@@ -1,5 +1,6 @@
 import { useRef } from "react";
-import { Star, Download, Folder } from "lucide-react";
+import { Star, Download, Folder, HardDrive } from "lucide-react";
+import { Tag } from "@/tag/src/tag";
 import { useAppToast } from "@/hooks/use-app-toast";
 import type { DriveFile, FileKind } from "@/drive-core/src/drive-models";
 import { kindIcon } from "@/drive-core/src/drive-icons";
@@ -47,12 +48,14 @@ export function DriveGridView({
   onRename,
   onMove,
   onTrash,
+  searchActive = false,
 }: {
   items: DriveFile[];
   imagePreviewUrls: Record<string, string>;
   selectedIds: string[];
   starred: Record<string, boolean>;
   labels: DriveUILabels;
+  searchActive?: boolean;
   inTrash: boolean;
   selectionMode: boolean;
   isTouch: boolean;
@@ -414,6 +417,7 @@ export function DriveListView({
   onMove,
   onTrash,
   onLongPress,
+  searchActive = false,
 }: {
   items: DriveFile[];
   activeId: string | null;
@@ -422,6 +426,7 @@ export function DriveListView({
   selectionMode: boolean;
   isTouch: boolean;
   labels: DriveUILabels;
+  searchActive?: boolean;
   inTrash: boolean;
   isItemDragging: (id: string) => boolean;
   itemDragHandlers: (id: string) => ItemDragHandlers;
@@ -440,11 +445,16 @@ export function DriveListView({
       <table className="drive-list-table">
         <thead>
           <tr className="drive-list-head">
-            <th className="drive-list-col-name drive-list-head__cell">Name</th>
+            <th className="drive-list-col-name drive-list-head__cell">
+              {searchActive ? labels.searchViewTitle : labels.listColumnName}
+            </th>
             <th className="drive-list-head__cell hidden sm:table-cell">Modified</th>
             <th className="drive-list-head__cell hidden lg:table-cell">Kind</th>
-            <th className="drive-list-col-size drive-list-head__cell text-right hidden sm:table-cell">
+            <th className="drive-list-col-size drive-list-head__cell drive-list-head__cell--align-end hidden sm:table-cell">
               Size
+            </th>
+            <th className="drive-list-col-actions drive-list-head__cell drive-list-head__cell--align-end">
+              {labels.listColumnActions}
             </th>
           </tr>
         </thead>
@@ -498,10 +508,7 @@ export function DriveListView({
                   isActive && !isSelected && "drive-list-row--active",
                 )}
               >
-                <td
-                  className="drive-list-col-name py-2 px-3 min-w-0"
-                  {...(isFolder ? dropZone : {})}
-                >
+                <td className="drive-list-col-name py-2 min-w-0" {...(isFolder ? dropZone : {})}>
                   <div className="flex items-center gap-2.5 min-w-0">
                     <span
                       className={cn(
@@ -515,36 +522,41 @@ export function DriveListView({
                         kindIcon[f.kind]
                       )}
                     </span>
-                    <span className="min-w-0 flex-1 truncate font-medium">{f.title}</span>
-                    {starred[f.id] ? (
-                      <Star
-                        className="size-3 shrink-0 drive-list-folder-icon"
-                        fill="currentColor"
-                      />
-                    ) : null}
-                    <div className="ml-auto shrink-0">
-                      <DriveFileItemActions
-                        labels={labels}
-                        file={f}
-                        isStarred={!!starred[f.id]}
-                        inTrash={inTrash}
-                        onDownload={onDownload}
-                        onStar={() => onStar(f.id)}
-                        onRename={() => onRename(f)}
-                        onMove={() => onMove(f)}
-                        onDelete={() => onTrash(f)}
-                      />
+                    <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                      <span className="min-w-0 truncate font-medium">{f.title}</span>
+                      {starred[f.id] ? (
+                        <Star
+                          className="size-3 shrink-0 drive-list-folder-icon"
+                          fill="currentColor"
+                        />
+                      ) : null}
                     </div>
                   </div>
                 </td>
-                <td className="py-2 px-3 hidden sm:table-cell tabular-nums drive-list-muted">
+                <td className="py-2 hidden sm:table-cell tabular-nums drive-list-muted">
                   {f.date}
                 </td>
-                <td className="py-2 px-3 hidden lg:table-cell drive-list-muted">
-                  {KIND_LABEL[f.kind]}
-                </td>
-                <td className="drive-list-col-size py-2 px-3 text-right tabular-nums drive-list-muted hidden sm:table-cell">
+                <td className="py-2 hidden lg:table-cell drive-list-muted">{KIND_LABEL[f.kind]}</td>
+                <td className="drive-list-col-size py-2 text-right tabular-nums drive-list-muted hidden sm:table-cell">
                   {f.size}
+                </td>
+                <td
+                  className="drive-list-col-actions py-2"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <div className="flex justify-end">
+                    <DriveFileItemActions
+                      labels={labels}
+                      file={f}
+                      isStarred={!!starred[f.id]}
+                      inTrash={inTrash}
+                      onDownload={onDownload}
+                      onStar={() => onStar(f.id)}
+                      onRename={() => onRename(f)}
+                      onMove={() => onMove(f)}
+                      onDelete={() => onTrash(f)}
+                    />
+                  </div>
                 </td>
               </tr>
             );
@@ -613,18 +625,17 @@ export function DriveDetailPanel({
             videoControls
           />
         </div>
-        <p
-          className="text-[10px] uppercase tracking-[0.18em] mb-2"
-          style={{ color: "var(--drive-sidebar)" }}
-        >
-          {file.parent}
-        </p>
-        <h1
-          className="text-2xl md:text-3xl leading-tight mb-4 tracking-tight break-words font-semibold"
-          style={{ fontFamily: "var(--font-sans)", color: "var(--color-ink)" }}
-        >
-          {file.title}
-        </h1>
+        <div className="drive-detail-panel__path">
+          <Tag
+            label={file.parent}
+            icon={<HardDrive className="size-3.5 opacity-70" />}
+            colors={{
+              backgroundColor: "color-mix(in oklab, var(--drive-sidebar) 12%, transparent)",
+              color: "var(--drive-sidebar)",
+            }}
+          />
+        </div>
+        <h1 className="drive-detail-panel__title">{file.title}</h1>
         <dl className="space-y-2 text-sm mb-6">
           <Row label="Type" value={file.kind} />
           <Row label="Size" value={file.size} />

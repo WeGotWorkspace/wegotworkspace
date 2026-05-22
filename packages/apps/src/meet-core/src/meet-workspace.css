@@ -23,8 +23,8 @@
   --meet-screen-bg: #000000;
   --meet-pip-border: rgba(255, 255, 255, 0.22);
 
-  --button-primary-background: var(--meet-accent);
-  --button-primary-color: var(--meet-text);
+  --button-primary-bg: var(--meet-accent);
+  --button-primary-fg: var(--meet-text);
   --button-subtle-background: var(--meet-panel-soft);
   --button-subtle-color: var(--meet-text);
   --button-subtle-hover-background: color-mix(
@@ -32,6 +32,7 @@
     var(--meet-text) 12%,
     var(--meet-panel-soft)
   );
+  --button-active-color: var(--meet-text);
 
   --workspace-user-footer-text-color: var(--meet-text);
   --workspace-user-footer-subtitle-color: var(--meet-muted);
@@ -40,6 +41,13 @@
   --workspace-user-footer-avatar-color: var(--meet-text);
   --workspace-user-footer-link-color: var(--meet-text);
   --workspace-user-footer-link-bg: var(--meet-panel-soft);
+  --field-label-color: var(--meet-muted);
+  --foreground: var(--meet-text);
+  --color-foreground: var(--meet-text);
+  --input-background: var(--meet-panel-soft);
+  --input-background-focus: var(--meet-panel-soft);
+  --accent: var(--meet-panel-soft);
+  --accent-foreground: var(--meet-text);
 
   background-color: var(--meet-surface);
   color: var(--meet-text);
@@ -54,32 +62,13 @@
   overflow-y: auto;
 }
 
-.meet-workspace__header {
-  @apply flex shrink-0 items-center justify-between p-6 md:p-8;
-}
-
-.meet-workspace__header-start {
-  @apply flex min-w-0 items-center;
-}
-
-.meet-workspace__header-account {
-  @apply shrink-0;
-}
-
-.meet-workspace__header-account .workspace-app-layout__user-footer {
-  @apply gap-2 border-0 p-0;
-}
-
-.meet-workspace__header-spacer {
-  @apply size-9 shrink-0;
-}
-
 .meet-workspace__lobby {
   @apply flex flex-1 items-center justify-center px-6 py-12;
 }
 
 .meet-workspace__card {
-  @apply w-full max-w-md rounded-2xl border p-8 text-center;
+  @apply w-full max-w-md border p-8 text-center;
+  border-radius: var(--control-radius);
   background-color: var(--meet-panel);
   border-color: var(--meet-border-strong);
 }
@@ -115,7 +104,7 @@
 }
 
 .meet-workspace__preview {
-  @apply relative mb-8 aspect-video w-full overflow-hidden rounded-2xl border;
+  @apply relative mb-8 aspect-video w-full overflow-hidden rounded-sm border;
   background-color: var(--meet-panel);
   border-color: var(--meet-border);
 }
@@ -143,19 +132,71 @@
   @apply space-y-6;
 }
 
-.meet-workspace__field {
-  @apply space-y-1.5;
+.meet-workspace__form-identity + .meet-workspace__form-devices {
+  @apply mt-10;
 }
 
-.meet-workspace__field-label {
-  @apply text-[11px] uppercase tracking-[0.18em];
-  color: var(--meet-muted);
+.meet-workspace__form-devices {
+  @apply flex flex-col gap-6;
 }
 
-.meet-workspace__name-input {
-  @apply rounded-none border-0 border-b-2 bg-transparent px-0 text-lg focus-visible:ring-0;
-  border-color: var(--meet-border-input);
+.meet-workspace__form .field-label-row {
+  @apply mb-0;
+}
+
+.meet-workspace__form .field-label-row__label svg {
+  @apply size-3 shrink-0 opacity-80;
+}
+
+:is(.meet-workspace, .meet-popover-surface) .meet-device-row__trigger {
   color: var(--meet-text);
+  min-width: 0;
+  overflow: hidden;
+}
+
+:is(.meet-workspace, .meet-popover-surface) .meet-device-row__trigger > span:first-child {
+  @apply min-w-0 flex-1 truncate text-left;
+}
+
+.meet-workspace__form .meet-device-row {
+  min-width: 0;
+}
+
+.meet-workspace__form .meet-workspace__display-name-input {
+  --input-background: transparent;
+  --input-background-focus: transparent;
+  --foreground: var(--meet-text);
+  --color-foreground: var(--meet-text);
+  color: var(--meet-text);
+  box-shadow: none;
+}
+
+.meet-workspace__form .meet-workspace__display-name-input:focus,
+.meet-workspace__form .meet-workspace__display-name-input:focus-visible {
+  color: var(--meet-text);
+  background-color: transparent;
+}
+
+.meet-workspace__form .meet-device-row__trigger {
+  --input-background: transparent;
+  --input-background-focus: transparent;
+  background-color: transparent;
+  color: var(--meet-text);
+  box-shadow: none;
+  border: 0;
+  height: auto;
+  min-height: 1.75rem;
+  padding-inline: 0;
+}
+
+.meet-workspace__form .meet-device-row__trigger:focus,
+.meet-workspace__form .meet-device-row__trigger[data-state="open"] {
+  background-color: transparent;
+  color: var(--meet-text);
+}
+
+.meet-workspace__form .meet-device-row__trigger svg {
+  color: var(--meet-muted);
 }
 
 .meet-workspace__primary-button {
@@ -174,15 +215,30 @@
 }
 
 .meet-workspace__room {
-  @apply grid min-h-0 flex-1 gap-3 overflow-hidden px-3 py-3 md:gap-4 md:px-4 md:pb-4 md:pt-4;
-}
-
-.meet-workspace__room--chat-open {
-  grid-template-columns: minmax(0, 1fr) 340px;
-}
-
-.meet-workspace__room--chat-closed {
+  @apply relative grid min-h-0 flex-1 gap-3 overflow-hidden px-3 py-3 md:gap-4 md:px-4 md:pb-4 md:pt-4;
   grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 1024px) and (orientation: landscape) {
+  .meet-workspace__room--chat-open {
+    grid-template-columns: minmax(0, 1fr) 340px;
+  }
+}
+
+.meet-workspace__chat-scrim {
+  display: none;
+}
+
+@media (max-width: 1023px), (orientation: portrait) {
+  .meet-workspace__room--chat-open .meet-chat {
+    @apply absolute inset-y-0 right-0 z-20 min-h-0 w-[min(340px,100%)] max-w-full;
+    box-shadow: -12px 0 32px rgba(8, 9, 18, 0.45);
+  }
+
+  .meet-workspace__room--chat-open .meet-workspace__chat-scrim {
+    @apply absolute inset-0 z-10 block cursor-default border-0 p-0;
+    background-color: var(--meet-overlay);
+  }
 }
 
 .meet-workspace__room-main {
@@ -190,7 +246,7 @@
 }
 
 .meet-workspace__status-bar {
-  @apply flex items-center justify-between rounded-2xl border px-4 py-2.5;
+  @apply flex items-center justify-between rounded-sm border px-4 py-2.5;
   background-color: var(--meet-panel);
   border-color: var(--meet-border);
 }
@@ -209,14 +265,9 @@
   @apply flex items-center gap-2;
 }
 
-.meet-workspace__icon-button {
-  @apply inline-flex size-9 items-center justify-center rounded-lg transition-colors;
-  background-color: var(--meet-panel-soft);
-  color: var(--meet-text);
-}
-
-.meet-workspace__icon-button--active {
+.meet-workspace .button--variant-subtle.icon-button--active {
   background-color: var(--meet-accent);
+  color: var(--meet-text);
 }
 
 .meet-workspace__stage {
@@ -285,21 +336,6 @@
   background-color: var(--meet-border-strong);
 }
 
-.meet-workspace__hangup-button {
-  @apply inline-flex size-11 items-center justify-center rounded-full text-white transition-colors;
-  background-color: var(--destructive, #dc2626);
-}
-
-.meet-workspace__screen-share-button {
-  @apply inline-flex size-11 items-center justify-center rounded-full transition-colors;
-  background-color: var(--meet-panel-soft);
-  color: var(--meet-text);
-}
-
-.meet-workspace__screen-share-button--active {
-  background-color: var(--meet-accent);
-}
-
 .meet-dialog-surface,
 .meet-popover-surface {
   --meet-accent: #4f7cff;
@@ -307,11 +343,13 @@
   --meet-panel-soft: #20223a;
   --meet-text: #ffffff;
   --meet-muted: rgba(255, 255, 255, 0.6);
+  --meet-border-strong: rgba(255, 255, 255, 0.08);
   --meet-mic-off: #e5484d;
+  --field-label-color: var(--meet-muted);
   --user-avatar-bg: rgba(255, 255, 255, 0.1);
   --user-avatar-fg: var(--meet-text);
-  --button-primary-background: var(--meet-accent);
-  --button-primary-color: var(--meet-text);
+  --button-primary-bg: var(--meet-accent);
+  --button-primary-fg: var(--meet-text);
   --button-subtle-background: var(--meet-panel-soft);
   --button-subtle-color: var(--meet-text);
   --button-subtle-hover-background: color-mix(
@@ -319,16 +357,30 @@
     var(--meet-text) 12%,
     var(--meet-panel-soft)
   );
+  --button-outline-color: var(--meet-text);
+  --button-outline-border-color: var(--meet-border-strong);
+  --button-outline-hover-background: color-mix(in oklab, var(--meet-text) 8%, transparent);
+  --color-foreground: var(--meet-text);
+  --input-background: var(--meet-panel-soft);
+  --input-background-focus: var(--meet-panel-soft);
+  --accent: var(--meet-panel-soft);
+  --accent-foreground: var(--meet-text);
+  --popover: var(--meet-panel);
+  --popover-foreground: var(--meet-text);
+  --foreground: var(--meet-text);
 }
 
-.meet-dialog-surface .meet-dialog-surface__confirm-exit {
-  @apply h-10 rounded-md px-4 shadow-none;
-  background-color: var(--destructive, #dc2626);
-  color: var(--destructive-foreground, #ffffff);
+.meet-dialog-surface {
+  background-color: var(--meet-panel) !important;
+  color: var(--meet-text) !important;
+  border-color: var(--meet-border-strong) !important;
+  --background: var(--meet-panel);
+  --foreground: var(--meet-text);
+  --muted-foreground: var(--meet-muted);
 }
 
-.meet-dialog-surface .meet-dialog-surface__confirm-exit:hover {
-  background-color: color-mix(in oklab, var(--destructive, #dc2626) 92%, #000000);
+.meet-dialog-surface .ui-modal-title {
+  color: var(--meet-text);
 }
 
 .meet-popover-surface {
@@ -347,44 +399,6 @@
   @apply border-0;
   background-color: var(--meet-panel);
   color: var(--meet-text);
-}
-
-:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-device-row-icon {
-  @apply flex size-9 shrink-0 items-center justify-center rounded-lg;
-  background-color: var(--meet-panel-soft);
-  color: var(--meet-muted);
-}
-
-:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-device-row-label {
-  @apply text-[10px] uppercase tracking-[0.18em];
-  color: var(--meet-muted);
-}
-
-:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-device-row-trigger {
-  @apply h-7 border-0 px-0 text-sm hover:opacity-80;
-  background-color: transparent;
-  color: var(--meet-text);
-}
-
-:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-circle-toggle {
-  @apply inline-flex items-center justify-center rounded-full transition-colors;
-  color: var(--meet-text);
-}
-
-:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-circle-toggle--sm {
-  @apply size-9;
-}
-
-:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-circle-toggle--lg {
-  @apply size-11;
-}
-
-:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-circle-toggle--on {
-  background-color: var(--meet-panel-soft);
-}
-
-:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-circle-toggle--off {
-  background-color: var(--meet-mic-off);
 }
 
 :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-peer-tile {
@@ -444,7 +458,7 @@
 }
 
 :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-pip {
-  @apply absolute left-0 top-0 touch-none select-none overflow-hidden rounded-xl border shadow-xl;
+  @apply absolute left-0 top-0 touch-none select-none overflow-hidden rounded-sm border shadow-xl;
   aspect-ratio: 16 / 9;
   background-color: var(--meet-panel);
   border-color: var(--meet-pip-border);
@@ -503,7 +517,7 @@
 }
 
 :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-pip__label {
-  @apply absolute bottom-1.5 left-1.5 flex items-center gap-1 rounded-full bg-black/50 px-2 py-0.5 text-[10px] backdrop-blur;
+  @apply absolute bottom-1.5 left-1.5 flex items-center gap-1 rounded-sm bg-black/50 px-2 py-0.5 text-[10px] backdrop-blur;
 }
 
 :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-pip__pip-button {
@@ -511,7 +525,7 @@
 }
 
 :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-share-inline {
-  @apply w-full max-w-2xl rounded-xl px-4 py-3;
+  @apply w-full max-w-2xl rounded-sm px-4 py-3;
   background-color: var(--meet-panel-soft);
 }
 
@@ -524,9 +538,14 @@
   @apply relative inline-flex size-9 items-center justify-center rounded-lg;
   background-color: var(--meet-panel-soft);
   color: var(--meet-text);
+  min-height: unset;
+  height: 2.25rem;
+  width: 2.25rem;
+  padding: 0;
 }
 
-:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-knock-badge__count {
+:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-knock-badge::after {
+  content: attr(data-count);
   @apply absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold;
   background-color: var(--meet-accent);
   color: var(--meet-text);
@@ -541,16 +560,25 @@
   @apply inline-flex size-8 items-center justify-center rounded-md;
   background-color: rgba(255, 255, 255, 0.06);
   color: var(--meet-text);
+  min-height: unset;
+  height: 2rem;
+  width: 2rem;
+  padding: 0;
 }
 
 :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-knock-row__admit {
   @apply inline-flex size-8 items-center justify-center rounded-md;
   background-color: var(--meet-accent);
   color: var(--meet-text);
+  min-height: unset;
+  height: 2rem;
+  width: 2rem;
+  padding: 0;
 }
 
 :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-chat {
-  @apply flex min-h-0 flex-col rounded-2xl border;
+  @apply flex min-h-0 flex-col border;
+  border-radius: var(--control-radius);
   background-color: var(--meet-panel);
   border-color: var(--meet-border);
 }
@@ -558,11 +586,6 @@
 :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-chat__header {
   @apply flex items-center justify-between border-b px-4 py-3;
   border-color: var(--meet-border);
-}
-
-:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-chat__close {
-  @apply text-xs;
-  color: var(--meet-muted);
 }
 
 :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-chat__messages {

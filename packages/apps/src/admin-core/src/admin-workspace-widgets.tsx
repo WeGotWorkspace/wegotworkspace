@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { IconButton } from "@/button/src/button";
-import { Switch } from "@/ui/switch";
+import { BooleanSegmentedControl } from "@/segmented-control/src/segmented-control";
 
 export function IconActionButton({
   label,
@@ -43,7 +43,7 @@ export function FeatureRow({
         <div className="admin-feature-row__title">{label}</div>
         <div className="admin-feature-row__desc">{desc}</div>
       </div>
-      <Switch checked={value} onCheckedChange={onChange} />
+      <BooleanSegmentedControl value={value} onChange={onChange} aria-label={`${label} enabled`} />
     </div>
   );
 }

@@ -9,7 +9,7 @@
  * content and {@link Card} stacks share the same measure across products.
  */
 :is(.admin-workspace, .settings-workspace, .notes-workspace, .mail-workspace, .install-workspace) {
-  --workspace-root-bg: var(--color-cream, #f5f1e8);
+  --workspace-root-bg: var(--color-cream, #ffffff);
   --app-sidebar-border-color: color-mix(in oklab, var(--color-ink) 15%, transparent);
   --app-sidebar-color: var(--color-ink);
   --workspace-sidebar-toggle-color: var(--color-ink);

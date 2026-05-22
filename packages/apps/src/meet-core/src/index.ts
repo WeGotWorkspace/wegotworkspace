@@ -20,6 +20,10 @@ export { MeetCallToolbar } from "@/meet-core/src/meet-call-toolbar";
 export { MeetRoomStatusBar } from "@/meet-core/src/meet-room-status-bar";
 export { MeetLobbyStatusCard } from "@/meet-core/src/meet-lobby-status-card";
 export { MeetWorkspaceHeader } from "@/meet-core/src/meet-workspace-header";
+export {
+  WorkspaceShellHeader,
+  type WorkspaceShellHeaderProps,
+} from "@/workspace-shell/src/workspace-shell-header";
 export { useMeetWorkspaceShell } from "@/meet-core/src/use-meet-workspace-shell";
 export type {
   MeetWorkspaceShellController,

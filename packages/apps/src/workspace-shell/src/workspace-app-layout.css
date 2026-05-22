@@ -3,17 +3,17 @@
 .workspace-columns {
   @apply flex h-dvh w-full overflow-hidden relative;
   font-family: var(--font-sans);
-  background-color: var(--workspace-root-bg, var(--color-cream, #f5f1e8));
+  background-color: var(--workspace-root-bg, var(--color-cream, #ffffff));
   container: workspace-columns / inline-size;
 }
 
 .workspace-app-layout__main {
   @apply relative flex min-w-0 flex-1 flex-col;
-  background-color: var(--workspace-main-bg, var(--color-cream, #f5f1e8));
+  background-color: var(--workspace-main-bg, var(--color-cream, #ffffff));
 }
 
 .workspace-app-layout__main-header {
-  @apply shrink-0 border-b px-4 pb-3 pt-4 md:px-8 md:pt-6;
+  @apply shrink-0 border-b p-4 md:p-6;
   border-color: var(
     --workspace-main-header-border-color,
     color-mix(in oklab, var(--color-ink) 10%, transparent)

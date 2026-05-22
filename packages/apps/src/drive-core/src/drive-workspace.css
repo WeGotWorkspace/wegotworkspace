@@ -3,13 +3,14 @@
 
 .drive-workspace {
   @apply min-w-0 overflow-x-hidden;
-  --color-emerald: #0c8397;
-  --drive-sidebar: #0c8397;
+  --drive-accent: #2563eb;
+  --color-emerald: var(--drive-accent);
+  --drive-sidebar: var(--drive-accent);
   --app-sidebar-bg: var(--drive-sidebar);
   --app-sidebar-border-color: color-mix(in oklab, #ffffff 18%, transparent);
   --app-sidebar-color: #ffffff;
   --sidebar-logo-close-button-color: var(--app-sidebar-color);
-  --sidebar-badge-fg: #0c8397;
+  --sidebar-badge-fg: var(--drive-accent);
   --workspace-main-content-max-width: none;
   --workspace-sidebar-toggle-color: var(--color-ink);
   --workspace-sidebar-toggle-bg: color-mix(in oklab, var(--color-ink) 6%, transparent);
@@ -50,6 +51,7 @@
 }
 
 .drive-workspace .drive-detail-actions {
+  @apply px-5 md:px-6;
   --button-subtle-color: color-mix(in oklab, var(--color-ink) 65%, transparent);
   --button-subtle-background: color-mix(in oklab, var(--color-ink) 6%, transparent);
   --button-subtle-hover-background: color-mix(in oklab, var(--color-ink) 18%, transparent);
@@ -83,52 +85,7 @@
 
 .drive-workspace .drive-main-pane {
   @apply flex min-h-0 flex-1 flex-col min-w-0 relative w-full;
-  background-color: var(--color-cream, #f5f1e8);
-}
-
-.drive-workspace .drive-header-search {
-  display: none;
-}
-
-@media (min-width: 768px) {
-  .drive-workspace .drive-header-search {
-    display: block;
-    width: min(20rem, 28vw);
-    min-width: 10rem;
-  }
-
-  .drive-workspace .view-header__actions {
-    gap: 0.75rem;
-  }
-}
-
-.drive-workspace .drive-floating-search {
-  display: block;
-  position: fixed;
-  left: 1rem;
-  right: 1rem;
-  bottom: max(1rem, env(safe-area-inset-bottom));
-  z-index: 35;
-  padding: 0.25rem;
-  border-radius: 9999px;
-  background-color: var(--color-cream, #f5f1e8);
-  box-shadow:
-    0 4px 24px color-mix(in oklab, var(--color-ink) 16%, transparent),
-    0 0 0 1px color-mix(in oklab, var(--color-ink) 8%, transparent);
-}
-
-@media (min-width: 768px) {
-  .drive-workspace .drive-floating-search {
-    display: none;
-  }
-}
-
-.drive-workspace .drive-floating-search .search-bar > div {
-  margin-top: 0;
-  height: 2.75rem;
-  border-radius: 9999px;
-  padding-inline: 1rem;
-  background-color: color-mix(in oklab, var(--color-ink) 6%, transparent);
+  background-color: var(--color-cream, #ffffff);
 }
 
 .drive-workspace .drive-floating-upload {
@@ -141,16 +98,6 @@
   margin-inline: auto;
 }
 
-.drive-workspace .drive-main-pane:has(.drive-floating-search) .drive-floating-upload {
-  bottom: calc(max(1rem, env(safe-area-inset-bottom)) + 4.25rem);
-}
-
-@media (min-width: 768px) {
-  .drive-workspace .drive-main-pane:has(.drive-floating-search) .drive-floating-upload {
-    bottom: max(1rem, env(safe-area-inset-bottom));
-  }
-}
-
 .drive-workspace .drive-main-pane:has(.drive-selection-bar) .drive-floating-upload {
   bottom: calc(max(1rem, env(safe-area-inset-bottom)) + 3.75rem);
 }
@@ -158,27 +105,27 @@
 .drive-workspace .drive-floating-upload .upload-progress {
   margin: 0;
   border-bottom: none;
-  border-radius: 0.75rem;
+  border-radius: var(--control-radius);
   padding: 0.875rem 1rem;
-  background-color: var(--color-cream, #f5f1e8);
+  background-color: var(--color-cream, #ffffff);
   box-shadow:
     0 4px 24px color-mix(in oklab, var(--color-ink) 16%, transparent),
     0 0 0 1px color-mix(in oklab, var(--color-ink) 8%, transparent);
 }
 
 @media (max-width: 767px) {
-  .drive-workspace .drive-main-pane__scroll {
+  .drive-workspace .drive-main-pane:has(.drive-selection-bar) .drive-main-pane__scroll {
     padding-bottom: 5.5rem;
   }
 
   .drive-workspace .drive-main-pane:has(.drive-floating-upload) .drive-main-pane__scroll {
-    padding-bottom: 9.5rem;
+    padding-bottom: 6.5rem;
   }
 
   .drive-workspace
-    .drive-main-pane:has(.drive-floating-upload):has(.drive-floating-search)
+    .drive-main-pane:has(.drive-floating-upload):has(.drive-selection-bar)
     .drive-main-pane__scroll {
-    padding-bottom: 13.5rem;
+    padding-bottom: 10.5rem;
   }
 }
 
@@ -189,14 +136,10 @@
 }
 
 .drive-workspace .drive-main-pane__breadcrumbs {
-  @apply px-4 md:px-8 shrink-0;
+  @apply px-4 md:px-6 shrink-0;
   padding-block: 1rem;
-  background-color: color-mix(in oklab, var(--color-ink) 5%, transparent);
-  border-bottom: 1px solid
-    var(
-      --workspace-main-header-border-color,
-      color-mix(in oklab, var(--color-ink) 10%, transparent)
-    );
+  background-color: color-mix(in oklab, var(--drive-accent) 7%, var(--color-cream, #ffffff));
+  border-bottom: 1px solid color-mix(in oklab, var(--drive-accent) 12%, transparent);
   --path-breadcrumb-lead-color: var(--drive-sidebar);
   --path-breadcrumb-lead-bg: color-mix(in oklab, var(--drive-sidebar) 12%, transparent);
   --path-breadcrumb-link-color: color-mix(in oklab, var(--color-ink) 58%, transparent);
@@ -231,20 +174,20 @@
 
 .drive-workspace .drive-detail-aside {
   @apply hidden md:flex flex-1 min-w-0 shrink-0 border-l flex-col min-h-0;
-  background-color: var(--color-cream, #f5f1e8);
+  background-color: var(--color-cream, #ffffff);
   border-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
 }
 
 .drive-workspace .drive-detail-overlay {
   @apply md:hidden fixed inset-0 z-50 flex flex-col transition-transform duration-300 ease-out;
-  background-color: var(--color-cream, #f5f1e8);
+  background-color: var(--color-cream, #ffffff);
 }
 
 .drive-workspace .drive-selection-bar {
   --button-ghost-color: inherit;
   --button-ghost-hover-background: color-mix(in oklab, white 10%, transparent);
   background-color: var(--color-ink) !important;
-  color: var(--color-cream, #f5f1e8) !important;
+  color: var(--color-cream, #ffffff) !important;
 }
 
 .drive-workspace .drive-detail-panel__scroll {

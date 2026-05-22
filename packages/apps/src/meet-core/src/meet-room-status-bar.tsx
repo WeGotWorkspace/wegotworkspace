@@ -1,9 +1,9 @@
 import { MessageSquare, Users } from "lucide-react";
+import { IconButton } from "@/button/src/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/tooltip";
 import { MeetKnockBadge } from "@/meet-core/src/meet-knock-badge";
 import { MeetShareButton } from "@/meet-core/src/meet-share";
 import { meetLabels } from "@/meet-core/src/meet-labels";
-import { cn } from "@/lib/utils";
 
 type MeetKnocker = { id: string; name: string };
 
@@ -52,24 +52,14 @@ export function MeetRoomStatusBar({
           <MeetKnockBadge knockers={knockers} onAdmit={onAdmitKnocker} onDeny={onDenyKnocker} />
         ) : null}
         <MeetShareButton link={callLink} onCopy={onCopyLink} />
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              onClick={onToggleChat}
-              className={cn(
-                "meet-workspace__icon-button hidden lg:inline-flex",
-                chatOpen && "meet-workspace__icon-button--active",
-              )}
-              aria-label={chatOpen ? meetLabels.toggleChatHide : meetLabels.toggleChatShow}
-            >
-              <MessageSquare className="size-4" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>
-            {chatOpen ? meetLabels.toggleChatHide : meetLabels.toggleChatShow}
-          </TooltipContent>
-        </Tooltip>
+        <IconButton
+          onClick={onToggleChat}
+          icon={<MessageSquare />}
+          label={chatOpen ? meetLabels.toggleChatHide : meetLabels.toggleChatShow}
+          variant="subtle"
+          active={chatOpen}
+          className="hidden lg:inline-flex"
+        />
       </div>
     </div>
   );

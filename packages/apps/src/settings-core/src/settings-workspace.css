@@ -2,9 +2,44 @@
 
 /* Pane class fragments: `settings-workspace.styles.ts` (must stay in sync). */
 
+/**
+ * Settings product shell: cream main pane + light gray sidebar (admin accent tint).
+ * Import only from {@link SettingsWorkspace}.
+ */
 .settings-workspace {
-  --settings-accent-bg: #da9fb8;
-  --app-sidebar-bg: var(--settings-accent-bg);
+  --settings-accent: color-mix(in oklab, #4a5059 50%, #ffffff);
+  --settings-sidebar: var(--settings-accent);
+  --settings-accent-bg: var(--settings-accent);
+  --workspace-accent: var(--settings-accent);
+  --workspace-root-bg: var(--color-cream, #ffffff);
+  --workspace-main-bg: color-mix(in oklab, var(--settings-accent) 6%, var(--color-cream, #ffffff));
+  --app-sidebar-bg: var(--settings-sidebar);
+  --app-sidebar-border-color: color-mix(in oklab, var(--color-ink) 12%, transparent);
+  --app-sidebar-color: var(--color-ink);
+  --sidebar-logo-brand-fill: var(--color-ink);
+  --sidebar-logo-close-button-color: var(--color-ink);
+  --sidebar-badge-fg: var(--settings-accent);
+  --workspace-sidebar-toggle-color: var(--color-ink);
+  --workspace-sidebar-toggle-bg: color-mix(in oklab, var(--color-ink) 8%, transparent);
+  --workspace-user-footer-link-hover-bg: color-mix(in oklab, var(--color-ink) 10%, transparent);
+
+  --workspace-user-footer-text-color: color-mix(in oklab, var(--color-ink) 70%, transparent);
+  --workspace-user-footer-border-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
+  --workspace-user-footer-avatar-bg: color-mix(in oklab, var(--color-ink) 12%, transparent);
+  --workspace-user-footer-avatar-color: var(--color-ink);
+  --workspace-user-footer-link-color: color-mix(in oklab, var(--color-ink) 65%, transparent);
+  --workspace-user-footer-link-bg: color-mix(in oklab, var(--color-ink) 6%, transparent);
+
+  --button-primary-bg: var(--settings-accent);
+  --button-primary-fg: var(--color-ink);
+  --primary: var(--settings-accent);
+  --primary-foreground: var(--color-ink);
+}
+
+.settings-workspace .app-sidebar__scroll {
+  --button-subtle-color: var(--color-ink);
+  --button-subtle-background: color-mix(in oklab, var(--color-ink) 10%, transparent);
+  --button-subtle-hover-background: color-mix(in oklab, var(--color-ink) 16%, transparent);
 }
 
 /* Descendant classes — only use inside `SettingsWorkspace` (`.settings-workspace`). */
@@ -39,7 +74,7 @@
 }
 
 .settings-workspace .settings-group-avatar {
-  --user-avatar-bg: var(--settings-accent-bg);
+  --user-avatar-bg: var(--settings-accent);
   --user-avatar-fg: var(--color-ink);
 }
 

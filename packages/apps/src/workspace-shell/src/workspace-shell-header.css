@@ -1,0 +1,21 @@
+@import "../../styles.css" reference;
+
+.workspace-shell-header {
+  @apply flex shrink-0 items-center justify-between p-6;
+}
+
+.workspace-shell-header__start {
+  @apply flex min-w-0 items-center;
+}
+
+.workspace-shell-header__account {
+  @apply shrink-0;
+}
+
+.workspace-shell-header__account .workspace-app-layout__user-footer {
+  @apply gap-2 border-0 p-0;
+}
+
+.workspace-shell-header__spacer {
+  @apply size-9 shrink-0;
+}
