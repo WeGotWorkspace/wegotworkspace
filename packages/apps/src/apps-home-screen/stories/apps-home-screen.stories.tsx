@@ -31,7 +31,7 @@ export const Default: Story = {
         id: "notes",
         label: "Notes",
         icon: <NotebookPen className="size-4" />,
-        accent: "var(--notes-sidebar, #fde047)",
+        accent: "var(--notes-sidebar, #fcd34d)",
         fg: "var(--color-ink)",
       },
       {
@@ -52,7 +52,7 @@ export const Default: Story = {
         id: "settings",
         label: "Settings",
         icon: <SettingsIcon className="size-4" />,
-        accent: "var(--settings-sidebar, #94a3b8)",
+        accent: "var(--settings-sidebar, #949dad)",
         fg: "var(--color-ink)",
       },
       {
@@ -66,7 +66,7 @@ export const Default: Story = {
         id: "admin",
         label: "Admin",
         icon: <Shield className="size-4" />,
-        accent: "#2f302c",
+        accent: "var(--admin-sidebar, #4a5059)",
         fg: "#ffffff",
       },
     ],

@@ -105,7 +105,9 @@
 
 .mail-workspace .mail-detail-view__sender-row .user-avatar {
   --user-avatar-bg: var(--color-emerald);
-  --user-avatar-fg: var(--color-ink);
+  --user-avatar-fg: #ffffff;
+  --user-avatar-label-color: var(--color-ink);
+  --user-avatar-subtitle-color: color-mix(in oklab, var(--color-ink) 55%, transparent);
   --user-avatar-gap: 0.75rem;
   width: 100%;
 }

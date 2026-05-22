@@ -5,8 +5,8 @@
   "scope": "/settings",
   "id": "/settings",
   "display": "standalone",
-  "background_color": "#94a3b8",
-  "theme_color": "#94a3b8",
+  "background_color": "#949dad",
+  "theme_color": "#949dad",
   "icons": [
     {
       "src": "/icons/settings-192.png",
