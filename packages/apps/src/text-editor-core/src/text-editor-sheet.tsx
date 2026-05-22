@@ -9,18 +9,26 @@ export type TextEditorSheetProps = {
   editor: Editor | null;
   /** `sheet` = letter layout; `inline` = flush body without page chrome (e.g. notes). */
   variant?: TextEditorSheetVariant;
+  /** Grow the sheet to fill a flex parent (e.g. mail compose). Shadow and radius stay on the surface. */
+  fill?: boolean;
   className?: string;
 };
 
 /**
  * Letter-sized sheet with inline ProseMirror editing, slash menu, and table controls.
  */
-export function TextEditorSheet({ editor, variant = "sheet", className }: TextEditorSheetProps) {
+export function TextEditorSheet({
+  editor,
+  variant = "sheet",
+  fill = false,
+  className,
+}: TextEditorSheetProps) {
   return (
     <div
       className={cn(
         "text-editor-sheet",
         variant === "inline" && "text-editor-sheet--inline",
+        fill && variant === "sheet" && "text-editor-sheet--fill",
         className,
       )}
     >

@@ -283,6 +283,7 @@ export function MailWorkspace({
             onInteractOutside={(event) => event.preventDefault()}
           >
             <MailComposeView
+              editorKey={composeTarget.id}
               composeMode={composeTargetDraft.mode as MailComposeMode}
               mailbox={composeTarget.mailbox}
               to={composeTargetDraft.to}
