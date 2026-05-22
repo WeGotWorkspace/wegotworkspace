@@ -128,7 +128,8 @@
 }
 
 .install-workspace .install-db-type-option {
-  @apply rounded-lg border p-4 text-left transition-colors;
+  @apply border p-4 text-left transition-colors;
+  border-radius: var(--control-radius);
   border-color: color-mix(in oklab, var(--color-ink) 12%, transparent);
 }
 

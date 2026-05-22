@@ -79,7 +79,8 @@
 }
 
 .meet-workspace__card {
-  @apply w-full max-w-md rounded-2xl border p-8 text-center;
+  @apply w-full max-w-md border p-8 text-center;
+  border-radius: var(--control-radius);
   background-color: var(--meet-panel);
   border-color: var(--meet-border-strong);
 }
