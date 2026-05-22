@@ -1,6 +1,5 @@
 /* Parent-scoped tokens for the text editor workspace */
 .text-editor {
-  --text-editor-canvas: oklch(0.95 0.006 100);
   --text-editor-sheet: oklch(1 0 0);
   --text-editor-highlight: oklch(0.95 0.15 95);
   --text-editor-comment: oklch(0.9 0.12 80);
@@ -12,7 +11,6 @@
   --text-editor-format-btn-hover-color: var(--accent-foreground);
   --text-editor-format-btn-active-bg: var(--accent);
   --text-editor-format-btn-active-color: var(--accent-foreground);
-  background: var(--text-editor-canvas);
 }
 
 .text-editor-format-bar {
@@ -154,41 +152,49 @@
   min-height: 0;
   flex: 1;
   flex-direction: column;
+  overflow-y: auto;
+  /* Inset so the sheet drop shadow is not clipped by overflow. */
+  padding: 1.5rem 1rem;
+}
+
+.text-editor-sheet--inline {
+  flex: none;
+  overflow: visible;
+  padding: 0;
+}
+
+.text-editor-sheet--inline .text-editor-scroll {
+  padding: 0;
+}
+
+.text-editor-sheet--inline .text-editor-sheet__surface {
+  max-width: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .text-editor-scroll {
   position: relative;
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
   display: flex;
+  width: 100%;
+  flex: 1;
   flex-direction: column;
   align-items: center;
-  padding: 1.5rem 1rem;
 }
 
-@media (min-width: 1024px) {
-  .text-editor-scroll {
-    padding: 2.5rem 1rem;
-  }
-}
-
-.text-editor-sheet__stack {
+.text-editor-sheet__surface {
   position: relative;
   width: 100%;
   max-width: 8.5in;
   flex-shrink: 0;
+  margin: 0 auto;
   border-radius: 4px;
   background: var(--text-editor-sheet);
+  padding: 1in;
   box-shadow: var(--text-editor-shadow-sheet);
 }
 
-.text-editor-sheet__content {
-  position: relative;
-  padding: 1in;
-}
-
-.text-editor-sheet__content .ProseMirror {
+.text-editor-sheet__surface .ProseMirror {
   min-height: 0;
 }
 
@@ -497,24 +503,21 @@
 }
 
 @media (max-width: 768px) {
-  .text-editor-sheet__content {
-    padding: 1.25rem;
+  .text-editor-sheet:not(.text-editor-sheet--inline) {
+    padding: 1rem;
   }
 
-  .text-editor-sheet__stack {
-    box-shadow: none;
+  .text-editor-sheet__surface {
+    padding: 1.25rem;
     border-radius: 0;
   }
 }
 
 @media print {
-  .text-editor-sheet__stack {
+  .text-editor-sheet__surface {
+    padding: 1in;
     box-shadow: none;
     border-radius: 0;
-  }
-
-  .text-editor-sheet__content {
-    padding: 1in;
   }
 
   .no-print {
