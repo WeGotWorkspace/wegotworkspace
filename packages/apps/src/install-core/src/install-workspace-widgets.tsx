@@ -1,7 +1,7 @@
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
+import { BooleanSegmentedControl } from "@/segmented-control/src/segmented-control";
 import { Input } from "@/ui/input";
-import { Switch } from "@/ui/switch";
 import { installWorkspacePaneClasses as c } from "@/install-core/src/install-workspace.styles";
 
 export function InstallFeatureRow({
@@ -21,7 +21,7 @@ export function InstallFeatureRow({
         <div className={c.featureRowTitle}>{label}</div>
         <div className={c.featureRowDesc}>{desc}</div>
       </div>
-      <Switch checked={value} onCheckedChange={onChange} />
+      <BooleanSegmentedControl value={value} onChange={onChange} aria-label={`${label} enabled`} />
     </div>
   );
 }

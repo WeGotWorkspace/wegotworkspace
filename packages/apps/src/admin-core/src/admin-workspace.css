@@ -3,6 +3,7 @@
 
 .admin-workspace {
   --app-sidebar-bg: #9bb6cc;
+  --segmented-control-track-active-bg: var(--button-primary-bg, #2f302c);
 }
 
 /**
@@ -14,4 +15,5 @@
   --button-primary-fg: #ffffff;
   --primary: #2f302c;
   --primary-foreground: #ffffff;
+  --segmented-control-track-active-bg: var(--button-primary-bg);
 }

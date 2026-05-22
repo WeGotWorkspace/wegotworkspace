@@ -1,0 +1,7 @@
+@import "../../styles.css" reference;
+
+.content-label {
+  @apply inline-flex max-w-full items-center gap-1.5 px-2.5 py-1;
+  @apply text-[11px] uppercase tracking-[0.2em] font-medium;
+  border-radius: var(--control-radius-pill);
+}
