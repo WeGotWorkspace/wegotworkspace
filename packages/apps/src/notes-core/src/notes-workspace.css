@@ -1,11 +1,11 @@
 @import "../../workspace-shell/src/workspace-split-app.css";
 
 /**
- * Notes product shell: cream main pane + bright yellow sidebar accent.
+ * Notes product shell: cream main pane + warm gold sidebar accent.
  * Import only from {@link NotesWorkspace}.
  */
 .notes-workspace {
-  --notes-accent: #fde047;
+  --notes-accent: #fcd34d;
   --notes-sidebar: var(--notes-accent);
   --workspace-accent: var(--notes-accent);
   --color-emerald: var(--notes-accent);
@@ -46,7 +46,7 @@
  * {@link Button} and shadcn `buttonVariants` match the notes shell.
  */
 .notes-dialog-surface {
-  --notes-accent: #fde047;
+  --notes-accent: #fcd34d;
   --color-emerald: var(--notes-accent);
   --button-primary-bg: var(--notes-accent);
   --button-primary-fg: var(--color-ink);
