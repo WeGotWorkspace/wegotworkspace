@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Dav\Server;
 
 use App\Dav\Storage\FlysystemAclCollection;
-use App\Dav\Storage\FlysystemAclFile;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Sabre\DAV;
 

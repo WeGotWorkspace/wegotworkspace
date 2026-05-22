@@ -130,14 +130,18 @@ function MainContent({
   return (
     <>
       {!alreadyInstalled && step.id === "welcome" ? <InstallWelcomePane /> : null}
-      {!alreadyInstalled && step.id === "server" ? <InstallServerPane controller={controller} /> : null}
+      {!alreadyInstalled && step.id === "server" ? (
+        <InstallServerPane controller={controller} />
+      ) : null}
       {!alreadyInstalled && step.id === "database" ? (
         <InstallDatabasePane controller={controller} />
       ) : null}
       {!alreadyInstalled && step.id === "dav" ? <InstallDavPane controller={controller} /> : null}
       {!alreadyInstalled && step.id === "mail" ? <InstallMailPane controller={controller} /> : null}
       {!alreadyInstalled && step.id === "meet" ? <InstallMeetPane controller={controller} /> : null}
-      {!alreadyInstalled && step.id === "admin" ? <InstallAdminPane controller={controller} /> : null}
+      {!alreadyInstalled && step.id === "admin" ? (
+        <InstallAdminPane controller={controller} />
+      ) : null}
       {step.id === "done" ? <InstallDonePane onOpenAdmin={onOpenAdmin} /> : null}
 
       {!alreadyInstalled && step.id !== "done" ? (

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Support;
 
+use App\Services\Installer\InstallerSchemaRunner;
+use App\Support\AppPaths;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -115,10 +117,10 @@ final class SqliteWgwSchema
 
     public static function applySabreTables(): void
     {
-        $runner = app(\App\Services\Installer\InstallerSchemaRunner::class);
+        $runner = app(InstallerSchemaRunner::class);
         $pdo = DB::connection('wgw')->getPdo();
         foreach (['calendars.sql', 'addressbooks.sql', 'locks.sql', 'propertystorage.sql', 'settings.sql'] as $file) {
-            $path = app(\App\Support\AppPaths::class)->installerSqlDir('sqlite').'/'.$file;
+            $path = app(AppPaths::class)->installerSqlDir('sqlite').'/'.$file;
             $sql = trim((string) file_get_contents($path));
             if ($sql !== '') {
                 $pdo->exec($sql);

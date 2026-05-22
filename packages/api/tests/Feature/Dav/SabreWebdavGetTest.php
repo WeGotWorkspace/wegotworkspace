@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Dav;
 
+use App\Models\AppSetting;
 use App\Models\Principal;
 use App\Models\User;
 use App\Services\Auth\UiSessionService;
-use App\Support\AppPaths;
-use App\Support\WgwInstallConfig;
 use App\Support\WgwSettings;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Tests\Support\SqliteWgwSchema;
 use Tests\Support\WgwInstallFixture;
+use Tests\Support\WgwTestDisks;
 use Tests\TestCase;
 
 final class SabreWebdavGetTest extends TestCase
@@ -31,7 +32,7 @@ final class SabreWebdavGetTest extends TestCase
                 'foreign_key_constraints' => true,
             ],
         ]);
-        \Illuminate\Support\Facades\DB::purge('wgw');
+        DB::purge('wgw');
         SqliteWgwSchema::applyCoreTables();
         SqliteWgwSchema::applySabreTables();
 
@@ -54,14 +55,24 @@ final class SabreWebdavGetTest extends TestCase
         putenv('WGW_APP_ROOT='.$installRoot);
         $_ENV['WGW_APP_ROOT'] = $installRoot;
         WgwInstallFixture::markInstalled($installRoot, $this->dataDir, 'alice');
+        AppSetting::setValue(WgwSettings::BROWSER_PLUGIN, false);
 
         config(['wgw.data_dir' => $this->dataDir]);
+        WgwTestDisks::refresh($this->dataDir);
         WgwInstallFixture::forgetInstallBindings();
+        unset($_COOKIE['sabre_ui_auth']);
     }
 
     public function test_unauthenticated_files_request_includes_www_authenticate(): void
     {
-        $response = $this->call('GET', '/files');
+        unset($_COOKIE['sabre_ui_auth']);
+        $_SERVER['HTTP_AUTHORIZATION'] = '';
+        unset($_SERVER['REDIRECT_HTTP_AUTHORIZATION']);
+
+        $response = $this->call('PROPFIND', '/files', [], [], [], [
+            'HTTP_DEPTH' => '0',
+            'HTTP_ACCEPT' => '*/*',
+        ]);
 
         $response->assertStatus(401);
         $challenge = (string) $response->headers->get('WWW-Authenticate');

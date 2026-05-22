@@ -14,9 +14,7 @@ use Illuminate\Http\Request;
 
 final class UsersController
 {
-    public function __construct(private AdminUserProvisionerService $users)
-    {
-    }
+    public function __construct(private AdminUserProvisionerService $users) {}
 
     public function store(AdminUserCreateRequest $request): JsonResponse
     {

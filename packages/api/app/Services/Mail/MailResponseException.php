@@ -10,7 +10,7 @@ use RuntimeException;
 final class MailResponseException extends RuntimeException
 {
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     public function __construct(
         public readonly int $status,

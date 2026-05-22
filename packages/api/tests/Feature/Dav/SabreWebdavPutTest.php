@@ -6,8 +6,7 @@ namespace Tests\Feature\Dav;
 
 use App\Models\Principal;
 use App\Models\User;
-use App\Support\AppPaths;
-use App\Support\WgwInstallConfig;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Tests\Support\SqliteWgwSchema;
 use Tests\Support\WgwInstallFixture;
@@ -29,7 +28,7 @@ final class SabreWebdavPutTest extends TestCase
                 'foreign_key_constraints' => true,
             ],
         ]);
-        \Illuminate\Support\Facades\DB::purge('wgw');
+        DB::purge('wgw');
         SqliteWgwSchema::applyCoreTables();
         SqliteWgwSchema::applySabreTables();
 

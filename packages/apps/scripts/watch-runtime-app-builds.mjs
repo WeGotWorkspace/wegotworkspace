@@ -24,7 +24,9 @@ await build({
           );
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
-          console.error(`[watch-runtime-app-builds] Sync failed after build #${buildCounter}: ${message}`);
+          console.error(
+            `[watch-runtime-app-builds] Sync failed after build #${buildCounter}: ${message}`,
+          );
         }
       },
     },

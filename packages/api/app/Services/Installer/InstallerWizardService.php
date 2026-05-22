@@ -18,8 +18,7 @@ final class InstallerWizardService
         private InstallerDatabaseInstaller $database,
         private InstallerConfigWriter $configWriter,
         private InstallerJwtKeyGenerator $jwtKeys,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{installed: bool, maintenance: bool, state: array<string, mixed>}
@@ -48,8 +47,7 @@ final class InstallerWizardService
     }
 
     /**
-     * @param array<string, mixed> $payload
-     *
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
     public function applyAction(string $webBase, string $action, array $payload): array
@@ -89,8 +87,7 @@ final class InstallerWizardService
     }
 
     /**
-     * @param array<string, mixed> $payload
-     *
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
     private function actionRequirementsCheck(string $webBase, array $payload): array
@@ -106,8 +103,7 @@ final class InstallerWizardService
     }
 
     /**
-     * @param array<string, mixed> $payload
-     *
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
     private function actionRequirementsNext(string $webBase, array $payload): array
@@ -138,8 +134,7 @@ final class InstallerWizardService
     }
 
     /**
-     * @param array<string, mixed> $payload
-     *
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
     private function actionDatabaseTest(string $webBase, array $payload): array
@@ -166,8 +161,7 @@ final class InstallerWizardService
     }
 
     /**
-     * @param array<string, mixed> $payload
-     *
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
     private function actionDatabaseNext(string $webBase, array $payload): array
@@ -199,8 +193,7 @@ final class InstallerWizardService
     }
 
     /**
-     * @param array<string, mixed> $payload
-     *
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
     private function actionSiteNext(string $webBase, array $payload): array
@@ -244,8 +237,7 @@ final class InstallerWizardService
     }
 
     /**
-     * @param array<string, mixed> $payload
-     *
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
     private function actionInstall(string $webBase, array $payload): array
@@ -284,8 +276,8 @@ final class InstallerWizardService
     }
 
     /**
-     * @param array<string, mixed> $state
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $state
+     * @param  array<string, mixed>  $payload
      */
     private function runInstall(string $webBase, array $state, array $payload): string
     {
@@ -329,32 +321,32 @@ final class InstallerWizardService
                 $this->jwtKeys->ensureKeys();
             } else {
                 $this->database->installFresh(
-                $db,
-                $username,
-                $pass,
-                $display,
-                $email !== '' ? $email : null,
-                $enableCalendars,
-                $enableContacts,
-                [
-                    SettingKeys::TIMEZONE => (string) ($state['timezone'] ?? 'UTC'),
-                    SettingKeys::BASE_URI => (string) ($state['base_uri'] ?? '/'),
-                    SettingKeys::AUTH_REALM => 'SabreDAV',
-                    SettingKeys::BROWSER_PLUGIN => (bool) ($state['show_browser_ui'] ?? true),
-                    SettingKeys::FILES_ENABLED => $enableFiles,
-                    SettingKeys::CALENDAR_ENABLED => $enableCalendars,
-                    SettingKeys::CONTACTS_ENABLED => $enableContacts,
-                    SettingKeys::MAIL_ENABLED => $mailEnabled,
-                    SettingKeys::MAIL_IMAP_HOST => $mailEnabled ? trim((string) ($payload['mail_imap_host'] ?? '')) : '',
-                    SettingKeys::MAIL_IMAP_PORT => $mailEnabled ? (int) ($payload['mail_imap_port'] ?? 993) : 993,
-                    SettingKeys::MAIL_IMAP_SECURITY => $mailEnabled ? $this->normalizeMailSecurity((string) ($payload['mail_imap_security'] ?? 'ssl'), 'ssl') : '',
-                    SettingKeys::MAIL_SMTP_HOST => $mailEnabled ? trim((string) ($payload['mail_smtp_host'] ?? '')) : '',
-                    SettingKeys::MAIL_SMTP_PORT => $mailEnabled ? (int) ($payload['mail_smtp_port'] ?? 587) : 587,
-                    SettingKeys::MAIL_SMTP_SECURITY => $mailEnabled ? $this->normalizeMailSecurity((string) ($payload['mail_smtp_security'] ?? 'starttls'), 'starttls') : '',
-                    SettingKeys::VOICE_TURN_URL => $voiceEnabled ? trim((string) ($payload['voice_turn_url'] ?? '')) : '',
-                    SettingKeys::VOICE_TURN_USERNAME => $voiceEnabled ? trim((string) ($payload['voice_turn_username'] ?? '')) : '',
-                    SettingKeys::VOICE_TURN_CREDENTIAL => $voiceEnabled ? (string) ($payload['voice_turn_credential'] ?? '') : '',
-                ],
+                    $db,
+                    $username,
+                    $pass,
+                    $display,
+                    $email !== '' ? $email : null,
+                    $enableCalendars,
+                    $enableContacts,
+                    [
+                        SettingKeys::TIMEZONE => (string) ($state['timezone'] ?? 'UTC'),
+                        SettingKeys::BASE_URI => (string) ($state['base_uri'] ?? '/'),
+                        SettingKeys::AUTH_REALM => 'SabreDAV',
+                        SettingKeys::BROWSER_PLUGIN => (bool) ($state['show_browser_ui'] ?? true),
+                        SettingKeys::FILES_ENABLED => $enableFiles,
+                        SettingKeys::CALENDAR_ENABLED => $enableCalendars,
+                        SettingKeys::CONTACTS_ENABLED => $enableContacts,
+                        SettingKeys::MAIL_ENABLED => $mailEnabled,
+                        SettingKeys::MAIL_IMAP_HOST => $mailEnabled ? trim((string) ($payload['mail_imap_host'] ?? '')) : '',
+                        SettingKeys::MAIL_IMAP_PORT => $mailEnabled ? (int) ($payload['mail_imap_port'] ?? 993) : 993,
+                        SettingKeys::MAIL_IMAP_SECURITY => $mailEnabled ? $this->normalizeMailSecurity((string) ($payload['mail_imap_security'] ?? 'ssl'), 'ssl') : '',
+                        SettingKeys::MAIL_SMTP_HOST => $mailEnabled ? trim((string) ($payload['mail_smtp_host'] ?? '')) : '',
+                        SettingKeys::MAIL_SMTP_PORT => $mailEnabled ? (int) ($payload['mail_smtp_port'] ?? 587) : 587,
+                        SettingKeys::MAIL_SMTP_SECURITY => $mailEnabled ? $this->normalizeMailSecurity((string) ($payload['mail_smtp_security'] ?? 'starttls'), 'starttls') : '',
+                        SettingKeys::VOICE_TURN_URL => $voiceEnabled ? trim((string) ($payload['voice_turn_url'] ?? '')) : '',
+                        SettingKeys::VOICE_TURN_USERNAME => $voiceEnabled ? trim((string) ($payload['voice_turn_username'] ?? '')) : '',
+                        SettingKeys::VOICE_TURN_CREDENTIAL => $voiceEnabled ? (string) ($payload['voice_turn_credential'] ?? '') : '',
+                    ],
                 );
                 $this->jwtKeys->ensureKeys();
             }
@@ -466,7 +458,7 @@ final class InstallerWizardService
     }
 
     /**
-     * @param array<string, mixed> $state
+     * @param  array<string, mixed>  $state
      */
     private function saveWizardState(array $state): void
     {
@@ -474,8 +466,7 @@ final class InstallerWizardService
     }
 
     /**
-     * @param array<string, mixed> $db
-     *
+     * @param  array<string, mixed>  $db
      * @return array<string, mixed>
      */
     private function publicDbState(array $db): array
@@ -497,8 +488,7 @@ final class InstallerWizardService
     }
 
     /**
-     * @param array<string, mixed> $payload
-     *
+     * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
     private function readDbFromPayload(array $payload): array
@@ -527,8 +517,7 @@ final class InstallerWizardService
     }
 
     /**
-     * @param array<string, mixed> $db
-     *
+     * @param  array<string, mixed>  $db
      * @return array<string, mixed>
      */
     private function pdoConfigForWrite(array $db): array
@@ -572,7 +561,7 @@ final class InstallerWizardService
     }
 
     /**
-     * @param array<string, mixed> $db
+     * @param  array<string, mixed>  $db
      */
     private function databaseHasUsers(array $db): bool
     {
@@ -586,7 +575,7 @@ final class InstallerWizardService
     }
 
     /**
-     * @param array<string, mixed> $db
+     * @param  array<string, mixed>  $db
      */
     private function removeEmptySqliteDatabase(array $db): void
     {

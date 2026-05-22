@@ -1,0 +1,4 @@
+# CI / Playwright: dev stack on :9080 only (no compose.local.yml / mkcert / host 80|443).
+# Do not redefine `web` here — `include` forbids overriding imported services.
+include:
+  - path: compose.dev.yml

@@ -11,8 +11,7 @@ use App\Support\TimezoneNormalizer;
 final class AdminSettingsService
 {
     /**
-     * @param array<string, mixed> $values
-     *
+     * @param  array<string, mixed>  $values
      * @return array{ok: true, saved: list<string>}
      */
     public function save(array $values): array

@@ -6,7 +6,7 @@ alwaysApply: false
 
 # No legacy API in workspace
 
-`packages/api/src/` and related PHP runtime were **removed**. This package is **contract-only** until Laravel Phase 0.
+`packages/api/src/` and related legacy PHP were **removed**. The greenfield Laravel app lives under `packages/api/app/`.
 
 ## Allowed
 
@@ -20,4 +20,4 @@ alwaysApply: false
 - “Delegate to legacy” in new Laravel code
 - Copying legacy files into `app/` without a full rewrite
 
-New work starts with a **fresh Laravel scaffold** per `packages/api/docs/greenfield-plan.md`.
+New work extends the existing Laravel layers per `packages/api/docs/api-done-gate.md` and `openapi/openapi.json`.

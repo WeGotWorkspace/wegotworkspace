@@ -14,12 +14,10 @@ final class AuthenticateWgwApi
 {
     public const PRINCIPAL_ATTRIBUTE = 'wgw.principal';
 
-    public function __construct(private BearerAuthenticationService $bearerAuth)
-    {
-    }
+    public function __construct(private BearerAuthenticationService $bearerAuth) {}
 
     /**
-     * @param Closure(Request): Response $next
+     * @param  Closure(Request): Response  $next
      */
     public function handle(Request $request, Closure $next): Response
     {

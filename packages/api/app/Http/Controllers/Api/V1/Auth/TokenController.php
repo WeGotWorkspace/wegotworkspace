@@ -11,9 +11,7 @@ use Illuminate\Http\JsonResponse;
 
 final class TokenController
 {
-    public function __construct(private AuthTokenService $authTokens)
-    {
-    }
+    public function __construct(private AuthTokenService $authTokens) {}
 
     public function __invoke(AuthTokenRequest $request): JsonResponse
     {

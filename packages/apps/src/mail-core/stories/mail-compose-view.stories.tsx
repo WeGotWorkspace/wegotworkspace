@@ -27,40 +27,40 @@ function MailComposeViewHarness({ mode = "new" as const }: { mode?: "new" | "rep
   return (
     <MailStoryScope variant="compose-dialog">
       <MailComposeView
-      composeMode={mode}
-      mailbox="Drafts"
-      to={to}
-      cc={cc}
-      bcc={bcc}
-      subject={subject}
-      body={body}
-      attachments={attachments}
-      onToChange={setTo}
-      onCcChange={setCc}
-      onBccChange={setBcc}
-      onSubjectChange={setSubject}
-      onBodyChange={setBody}
-      onAddAttachments={(files) =>
-        setAttachments((prev) => [...prev, ...files.map((file) => createComposeAttachment(file))])
-      }
-      onRemoveAttachment={(id) =>
-        setAttachments((prev) => prev.filter((attachment) => attachment.id !== id))
-      }
-      attachFilesLabel={L.composeAttachFiles}
-      attachmentsLabel={L.composeAttachmentsLabel}
-      removeAttachmentLabel={L.composeRemoveAttachment}
-      deleteDraftLabel={L.composeDeleteDraft}
-      onSaveDraft={() => {
-        setSaving(true);
-        window.setTimeout(() => setSaving(false), 600);
-      }}
-      onSend={() => {
-        setSending(true);
-        window.setTimeout(() => setSending(false), 600);
-      }}
-      onDiscard={() => {}}
-      saving={saving}
-      sending={sending}
+        composeMode={mode}
+        mailbox="Drafts"
+        to={to}
+        cc={cc}
+        bcc={bcc}
+        subject={subject}
+        body={body}
+        attachments={attachments}
+        onToChange={setTo}
+        onCcChange={setCc}
+        onBccChange={setBcc}
+        onSubjectChange={setSubject}
+        onBodyChange={setBody}
+        onAddAttachments={(files) =>
+          setAttachments((prev) => [...prev, ...files.map((file) => createComposeAttachment(file))])
+        }
+        onRemoveAttachment={(id) =>
+          setAttachments((prev) => prev.filter((attachment) => attachment.id !== id))
+        }
+        attachFilesLabel={L.composeAttachFiles}
+        attachmentsLabel={L.composeAttachmentsLabel}
+        removeAttachmentLabel={L.composeRemoveAttachment}
+        deleteDraftLabel={L.composeDeleteDraft}
+        onSaveDraft={() => {
+          setSaving(true);
+          window.setTimeout(() => setSaving(false), 600);
+        }}
+        onSend={() => {
+          setSending(true);
+          window.setTimeout(() => setSending(false), 600);
+        }}
+        onDiscard={() => {}}
+        saving={saving}
+        sending={sending}
       />
     </MailStoryScope>
   );

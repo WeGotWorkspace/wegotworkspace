@@ -4,7 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { resolveWgwProxyTarget } from "./scripts/wgw-proxy-target.mjs";
+import { resolveWgwProxyTarget } from "./scripts/wgw-proxy-target";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.join(__dirname, "..", "..");

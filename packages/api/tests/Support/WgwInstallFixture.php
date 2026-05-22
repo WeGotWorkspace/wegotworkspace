@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Support;
 
+use App\LocalConfigFile;
 use App\Support\AppPaths;
+use App\Support\WgwInstallConfig;
 
 final class WgwInstallFixture
 {
@@ -28,7 +30,7 @@ final class WgwInstallFixture
         ];
         $config = "<?php\n\ndeclare(strict_types=1);\n\nreturn ".var_export($written, true).";\n";
         file_put_contents($installRoot.'/wgw-config.php', $config);
-        \App\LocalConfigFile::clearCache();
+        LocalConfigFile::clearCache();
 
         self::seedSqliteDatabase($dataDir.'/db.sqlite', $username);
         file_put_contents($dataDir.'/.installed', date('c')."\n");
@@ -39,7 +41,7 @@ final class WgwInstallFixture
         if (! function_exists('app')) {
             return;
         }
-        app()->forgetInstance(\App\Support\WgwInstallConfig::class);
+        app()->forgetInstance(WgwInstallConfig::class);
         app()->forgetInstance(AppPaths::class);
     }
 

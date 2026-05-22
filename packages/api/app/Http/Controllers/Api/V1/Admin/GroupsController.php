@@ -14,9 +14,7 @@ use Illuminate\Http\Request;
 
 final class GroupsController
 {
-    public function __construct(private AdminGroupManagementService $groups)
-    {
-    }
+    public function __construct(private AdminGroupManagementService $groups) {}
 
     public function store(AdminGroupCreateRequest $request): JsonResponse
     {

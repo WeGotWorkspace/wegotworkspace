@@ -13,9 +13,7 @@ use Illuminate\Support\Facades\File;
 
 final class ApiDocsController
 {
-    public function __construct(private OpenApiDocumentService $openApiDocument)
-    {
-    }
+    public function __construct(private OpenApiDocumentService $openApiDocument) {}
 
     public function ui(Request $request): Response
     {

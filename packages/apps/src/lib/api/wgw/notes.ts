@@ -21,9 +21,11 @@ export function coerceNoteItem(raw: unknown): WgwNoteItem | null {
   if (id == null || notebook == null) return null;
   const tagsRaw = r.tags;
   const tags = Array.isArray(tagsRaw) ? tagsRaw.map((t) => String(t)) : undefined;
+  const username = r.username;
   return {
     id: String(id),
     notebook: String(notebook),
+    username: username != null ? String(username) : undefined,
     title: r.title != null ? String(r.title) : undefined,
     body: r.body != null ? String(r.body) : undefined,
     tags,

@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace App\Services\Update;
 
+use App\Storage\WgwStorage;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 final class UpdateStateService
 {
     public function __construct(
         private UpdateStateStore $store,
         private UpdateRunner $runner,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<string, mixed>
@@ -30,7 +29,7 @@ final class UpdateStateService
         $name = $this->ensureBackupName($name);
         $disk = $this->store->backupDir();
         $path = $disk.'/'.$name;
-        $storage = app(\App\Storage\WgwStorage::class)->data();
+        $storage = app(WgwStorage::class)->data();
         if (! $storage->exists($path) && ! $storage->directoryExists($path)) {
             throw new \InvalidArgumentException('Backup not found.');
         }
@@ -46,7 +45,7 @@ final class UpdateStateService
     public function backupAbsolutePath(string $name): string
     {
         $name = $this->ensureBackupName($name);
-        $storage = app(\App\Storage\WgwStorage::class)->data();
+        $storage = app(WgwStorage::class)->data();
         $key = $this->store->backupDir().'/'.$name;
         if ($storage->directoryExists($key)) {
             throw new \InvalidArgumentException('Legacy backup folders are not directly downloadable. Use ZIP backups.');

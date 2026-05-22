@@ -17,7 +17,7 @@ use Psr\Clock\ClockInterface;
 final class JwtCodec
 {
     /**
-     * @param array{sub: string, role: 'guest'|'user'|'admin', exp: int, iat?: int} $claims
+     * @param  array{sub: string, role: 'guest'|'user'|'admin', exp: int, iat?: int}  $claims
      * @param array{
      *   privateKey: string,
      *   publicKey: string,
@@ -33,8 +33,8 @@ final class JwtCodec
         $exp = (int) ($claims['exp'] ?? ($now + 3600));
         $sub = (string) ($claims['sub'] ?? '');
         $role = (string) ($claims['role'] ?? '');
-        $issuedAt = (new \DateTimeImmutable())->setTimestamp($iat);
-        $expiresAt = (new \DateTimeImmutable())->setTimestamp($exp);
+        $issuedAt = (new \DateTimeImmutable)->setTimestamp($iat);
+        $expiresAt = (new \DateTimeImmutable)->setTimestamp($exp);
 
         $config = self::configuration($cfg);
         $token = $config->builder()
@@ -60,7 +60,6 @@ final class JwtCodec
      *   audience: string,
      *   kid: string
      * } $cfg
-     *
      * @return array{sub: string, role: 'guest'|'user'|'admin', iat: int, exp: int, iss: string, aud: string, jti: string}|null
      */
     public static function validate(string $token, array $cfg): ?array
@@ -68,10 +67,10 @@ final class JwtCodec
         try {
             $config = self::configuration($cfg);
             $parsed = $config->parser()->parse($token);
-            if (!$parsed instanceof Token\Plain) {
+            if (! $parsed instanceof Token\Plain) {
                 return null;
             }
-            if (!$parsed->headers()->has('kid') || $parsed->headers()->get('kid') !== $cfg['kid']) {
+            if (! $parsed->headers()->has('kid') || $parsed->headers()->get('kid') !== $cfg['kid']) {
                 return null;
             }
             $constraints = [
@@ -80,7 +79,7 @@ final class JwtCodec
                 new IssuedBy($cfg['issuer']),
                 new PermittedFor($cfg['audience']),
             ];
-            if (!$config->validator()->validate($parsed, ...$constraints)) {
+            if (! $config->validator()->validate($parsed, ...$constraints)) {
                 return null;
             }
         } catch (\Throwable) {
@@ -103,7 +102,7 @@ final class JwtCodec
         $iat = $iatClaim instanceof \DateTimeImmutable ? $iatClaim->getTimestamp() : 0;
         $exp = $expClaim instanceof \DateTimeImmutable ? $expClaim->getTimestamp() : 0;
 
-        if ($sub === '' || !in_array($role, ['guest', 'user', 'admin'], true) || $iat <= 0 || $exp <= 0 || $jti === '') {
+        if ($sub === '' || ! in_array($role, ['guest', 'user', 'admin'], true) || $iat <= 0 || $exp <= 0 || $jti === '') {
             return null;
         }
         if ($iss !== $cfg['issuer']) {
@@ -136,7 +135,7 @@ final class JwtCodec
     private static function configuration(array $cfg): Configuration
     {
         return Configuration::forAsymmetricSigner(
-            new Sha256(),
+            new Sha256,
             InMemory::plainText($cfg['privateKey']),
             InMemory::plainText($cfg['publicKey'])
         );
@@ -144,7 +143,8 @@ final class JwtCodec
 
     private static function clock(): ClockInterface
     {
-        return new class implements ClockInterface {
+        return new class implements ClockInterface
+        {
             public function now(): \DateTimeImmutable
             {
                 return new \DateTimeImmutable('now', new \DateTimeZone('UTC'));

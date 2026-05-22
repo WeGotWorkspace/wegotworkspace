@@ -43,19 +43,19 @@ function NotesDetailActionBarHarness({
         }}
       >
         <NotesDetailActionBar
-        active={active}
-        labels={defaultNotesLabels}
-        archived={archivedMap}
-        starred={starredMap}
-        closeMobileDetail={() => {}}
-        openMoveDialog={() => {}}
-        toggleStar={toggleStar}
-        toggleArchive={(id) => {
-          setArchivedMap((prev) => ({
-            ...prev,
-            [id]: !prev[id],
-          }));
-        }}
+          active={active}
+          labels={defaultNotesLabels}
+          archived={archivedMap}
+          starred={starredMap}
+          closeMobileDetail={() => {}}
+          openMoveDialog={() => {}}
+          toggleStar={toggleStar}
+          toggleArchive={(id) => {
+            setArchivedMap((prev) => ({
+              ...prev,
+              [id]: !prev[id],
+            }));
+          }}
         />
       </div>
     </NotesStoryScope>

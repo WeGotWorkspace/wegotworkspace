@@ -17,7 +17,7 @@ final class AppFilesRootCollection extends SimpleCollection implements IACL
     use ACLTrait;
 
     /**
-     * @param list<DAV\INode> $children
+     * @param  list<DAV\INode>  $children
      */
     public function __construct(array $children)
     {

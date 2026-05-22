@@ -12,9 +12,7 @@ use Illuminate\Http\Request;
 
 final class ItemsController
 {
-    public function __construct(private NoteRepository $notes)
-    {
-    }
+    public function __construct(private NoteRepository $notes) {}
 
     public function index(Request $request): JsonResponse
     {

@@ -13,8 +13,7 @@ final class HomeStateService
     public function __construct(
         private AppPaths $paths,
         private AdminRoleResolver $adminRoles,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{

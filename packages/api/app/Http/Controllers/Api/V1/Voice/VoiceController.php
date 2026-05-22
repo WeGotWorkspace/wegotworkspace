@@ -10,9 +10,7 @@ use Illuminate\Http\Request;
 
 final class VoiceController
 {
-    public function __construct(private VoiceSignalingService $voice)
-    {
-    }
+    public function __construct(private VoiceSignalingService $voice) {}
 
     public function room(Request $request): JsonResponse
     {

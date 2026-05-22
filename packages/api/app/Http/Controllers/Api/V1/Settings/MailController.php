@@ -17,8 +17,7 @@ final class MailController
     public function __construct(
         private MailCredentialService $mailCredentials,
         private SettingsStateService $settings,
-    ) {
-    }
+    ) {}
 
     public function __invoke(SettingsMailRequest $request): JsonResponse
     {
@@ -48,10 +47,6 @@ final class MailController
 
         $principal = Principal::forUsername($username);
         if ($principal === null) {
-            return;
-        }
-
-        if (trim((string) ($principal->email ?? '')) !== '') {
             return;
         }
 

@@ -12,9 +12,7 @@ use Sabre\CardDAV\Backend\PDO as CardPDO;
 
 final class InstallerSeeder
 {
-    public function __construct(private AppPaths $paths)
-    {
-    }
+    public function __construct(private AppPaths $paths) {}
 
     public function seed(
         \PDO $pdo,

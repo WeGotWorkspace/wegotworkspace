@@ -181,7 +181,7 @@ final class InstallerSchemaMigrationRunner
         } catch (\PDOException $e) {
             $msg = strtolower($e->getMessage());
             $duplicate = str_contains($msg, 'duplicate column') || str_contains($msg, 'already exists');
-            if (!$duplicate) {
+            if (! $duplicate) {
                 throw $e;
             }
         }

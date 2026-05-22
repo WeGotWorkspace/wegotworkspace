@@ -14,8 +14,7 @@ final class UpdateCancelController
     public function __construct(
         private UpdateOperationsService $updates,
         private UpdateStateService $state,
-    ) {
-    }
+    ) {}
 
     public function __invoke(): JsonResponse
     {

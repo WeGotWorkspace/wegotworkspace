@@ -7,7 +7,6 @@ declare(strict_types=1);
  * CI/local guard: fail if greenfield Laravel app/ code uses legacy patterns.
  * Exit 0 when packages/api/app/ does not exist yet (scaffold not started).
  */
-
 $apiRoot = dirname(__DIR__);
 $appRoot = $apiRoot.'/app';
 
@@ -79,8 +78,8 @@ fwrite(STDOUT, "greenfield-guard: OK\n");
 exit(0);
 
 /**
- * @param list<array{pattern: string, message: string}> $forbidden
- * @param list<array{file: string, line: int, message: string}> $errors
+ * @param  list<array{pattern: string, message: string}>  $forbidden
+ * @param  list<array{file: string, line: int, message: string}>  $errors
  */
 function scanDirectory(string $dir, array $forbidden, array &$errors): void
 {

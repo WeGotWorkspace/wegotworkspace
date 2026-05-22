@@ -13,6 +13,7 @@
         "zbateson/mail-mime-parser": "^4.0"
     },
     "require-dev": {
+        "laravel/pint": "^1.18",
         "phpunit/phpunit": "^11.0"
     },
     "autoload": {
@@ -32,8 +33,20 @@
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"
         ],
+        "lint": "php scripts/greenfield-guard.php",
+        "format": "vendor/bin/pint",
+        "format:check": "vendor/bin/pint --test",
         "test": "phpunit -c phpunit.xml",
-        "greenfield:guard": "php scripts/greenfield-guard.php",
+        "test:architecture": "phpunit -c phpunit.xml --testsuite Architecture",
+        "greenfield:guard": "@lint",
+        "done-gate:contract": [
+            "@greenfield:guard",
+            "@test:architecture"
+        ],
+        "done-gate": [
+            "@done-gate:contract",
+            "@test"
+        ],
         "prune": [
             "@composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction"
         ]

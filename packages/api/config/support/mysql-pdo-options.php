@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+use Pdo\Mysql;
 
 /**
  * MySQL PDO driver options compatible with PHP 8.3–8.5.
@@ -19,8 +20,8 @@ if (! function_exists('wgw_mysql_pdo_options')) {
             return [];
         }
 
-        if (class_exists(\Pdo\Mysql::class)) {
-            $attribute = \Pdo\Mysql::ATTR_SSL_CA;
+        if (class_exists(Mysql::class)) {
+            $attribute = Mysql::ATTR_SSL_CA;
         } else {
             $attribute = PDO::MYSQL_ATTR_SSL_CA;
         }

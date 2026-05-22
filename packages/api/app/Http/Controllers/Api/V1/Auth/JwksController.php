@@ -9,9 +9,7 @@ use Illuminate\Http\JsonResponse;
 
 final class JwksController
 {
-    public function __construct(private JwtConfigService $jwtConfig)
-    {
-    }
+    public function __construct(private JwtConfigService $jwtConfig) {}
 
     public function __invoke(): JsonResponse
     {

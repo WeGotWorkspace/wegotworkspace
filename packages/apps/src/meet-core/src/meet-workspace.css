@@ -27,7 +27,11 @@
   --button-primary-color: var(--meet-text);
   --button-subtle-background: var(--meet-panel-soft);
   --button-subtle-color: var(--meet-text);
-  --button-subtle-hover-background: color-mix(in oklab, var(--meet-text) 12%, var(--meet-panel-soft));
+  --button-subtle-hover-background: color-mix(
+    in oklab,
+    var(--meet-text) 12%,
+    var(--meet-panel-soft)
+  );
 
   --workspace-user-footer-text-color: var(--meet-text);
   --workspace-user-footer-subtitle-color: var(--meet-muted);
@@ -310,7 +314,11 @@
   --button-primary-color: var(--meet-text);
   --button-subtle-background: var(--meet-panel-soft);
   --button-subtle-color: var(--meet-text);
-  --button-subtle-hover-background: color-mix(in oklab, var(--meet-text) 12%, var(--meet-panel-soft));
+  --button-subtle-hover-background: color-mix(
+    in oklab,
+    var(--meet-text) 12%,
+    var(--meet-panel-soft)
+  );
 }
 
 .meet-dialog-surface .meet-dialog-surface__confirm-exit {
@@ -425,9 +433,12 @@
     opacity: 0;
   }
 
-  :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-peer-tile:hover .meet-peer-tile__menu,
+  :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface)
+    .meet-peer-tile:hover
+    .meet-peer-tile__menu,
   :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-peer-tile__menu:focus,
-  :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-peer-tile__menu[data-state="open"] {
+  :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface)
+    .meet-peer-tile__menu[data-state="open"] {
     opacity: 1;
   }
 }
