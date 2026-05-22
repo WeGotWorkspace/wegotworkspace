@@ -5,6 +5,8 @@ import { IconButton } from "@/button/src/button";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/tooltip";
 
+import "./tag.css";
+
 export type TagProps = {
   label: string;
   icon?: ReactNode;
@@ -27,7 +29,7 @@ export function Tag({
 }: TagProps) {
   return (
     <span
-      className="font-sans text-[13px] normal-case tracking-normal px-3 py-1.5 rounded-full font-medium inline-flex items-center gap-1 group min-w-0"
+      className="tag group"
       style={{
         backgroundColor:
           colors?.backgroundColor ?? "color-mix(in oklab, var(--color-ink) 8%, transparent)",
