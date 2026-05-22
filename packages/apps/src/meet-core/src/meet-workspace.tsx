@@ -4,7 +4,7 @@ import { MeetChatPane } from "@/meet-core/src/meet-chat-pane";
 import { MeetLobbyPane } from "@/meet-core/src/meet-lobby-pane";
 import { MeetRoomPane } from "@/meet-core/src/meet-room-pane";
 import type { MeetWorkspaceProps } from "@/meet-core/src/meet-workspace-props";
-import { MeetWorkspaceHeader } from "@/meet-core/src/meet-workspace-header";
+import { WorkspaceShellHeader } from "@/workspace-shell/src/workspace-shell-header";
 import { useMeetWorkspaceShell } from "@/meet-core/src/use-meet-workspace-shell";
 import "@/meet-core/src/meet-workspace.css";
 
@@ -20,10 +20,10 @@ export function MeetWorkspace({
   return (
     <TooltipProvider delayDuration={200}>
       <div className={cn("meet-workspace", shell.inCall && "meet-workspace--in-call", className)}>
-        <MeetWorkspaceHeader
+        <WorkspaceShellHeader
           session={shell.session}
           displayName={shell.displayName}
-          disableAppSwitcher={shell.header.disableAppSwitcher}
+          appSwitchDisabled={shell.header.disableAppSwitcher}
           showUserAccount={shell.header.showUserAccount}
           onLogout={onLogout}
         />
