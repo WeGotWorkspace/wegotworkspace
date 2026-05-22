@@ -28,8 +28,8 @@
   --workspace-user-footer-link-bg: color-mix(in oklab, var(--color-ink) 6%, transparent);
 
   --notes-list-star-color: var(--notes-accent);
-  --note-detail-tag-bg: color-mix(in oklab, var(--notes-accent) 28%, transparent);
-  --note-detail-tag-fg: color-mix(in oklab, var(--color-ink) 80%, transparent);
+  --note-detail-tag-bg: color-mix(in oklab, var(--notes-accent) 62%, transparent);
+  --note-detail-tag-fg: var(--color-ink);
   --note-detail-title-font-family: var(--font-serif);
 }
 

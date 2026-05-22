@@ -7,8 +7,8 @@ import { NoteTextEditorBody } from "@/note-detail-view/src/note-text-editor-body
 
 const noteDetailTagColors = {
   backgroundColor:
-    "var(--note-detail-tag-bg, color-mix(in oklab, var(--color-ink) 14%, transparent))",
-  color: "var(--note-detail-tag-fg, color-mix(in oklab, var(--color-ink) 80%, transparent))",
+    "var(--note-detail-tag-bg, color-mix(in oklab, var(--notes-accent, #fcd34d) 62%, transparent))",
+  color: "var(--note-detail-tag-fg, var(--color-ink))",
 };
 
 export type NoteDetailViewProps = {
