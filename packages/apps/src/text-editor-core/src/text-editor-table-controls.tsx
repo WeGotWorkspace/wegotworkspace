@@ -4,6 +4,7 @@ import { Editor, useEditorState } from "@tiptap/react";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { CellSelection } from "@tiptap/pm/tables";
 import { GripHorizontal, GripVertical, Heading, Plus, X } from "lucide-react";
+import { subscribeEditorLayoutUpdates } from "@/text-editor-core/src/text-editor-overlay-utils";
 import { cn } from "@/lib/utils";
 
 type Rect = { top: number; left: number; width: number; height: number };
@@ -207,15 +208,8 @@ export function TextEditorTableControls({ editor }: TextEditorTableControlsProps
       }
     };
     update();
-    const scroller = editor.view.dom.closest(".text-editor-scroll");
-    window.addEventListener("scroll", update, true);
-    window.addEventListener("resize", update);
-    scroller?.addEventListener("scroll", update);
-    return () => {
-      window.removeEventListener("scroll", update, true);
-      window.removeEventListener("resize", update);
-      scroller?.removeEventListener("scroll", update);
-    };
+    const unsubscribeLayout = subscribeEditorLayoutUpdates(editor.view.dom, update);
+    return unsubscribeLayout;
   }, [editor, state.inTable, state.tick]);
 
   useEffect(() => {

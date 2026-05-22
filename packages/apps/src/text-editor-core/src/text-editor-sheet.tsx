@@ -32,13 +32,11 @@ export function TextEditorSheet({
         className,
       )}
     >
-      <div className="text-editor-scroll">
-        <EditorContent
-          editor={editor}
-          className={variant === "sheet" ? "text-editor-sheet__surface" : undefined}
-        />
-        <TextEditorSlashMenu editor={editor} />
-      </div>
+      <EditorContent
+        editor={editor}
+        className={variant === "sheet" ? "text-editor-sheet__surface" : undefined}
+      />
+      <TextEditorSlashMenu editor={editor} />
       <TextEditorTableControls editor={editor} />
     </div>
   );

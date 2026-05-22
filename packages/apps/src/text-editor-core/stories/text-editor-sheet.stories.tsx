@@ -25,7 +25,7 @@ function TextEditorSheetDemo({ format, editable, placeholder, content }: SheetSt
   });
 
   return (
-    <div className="text-editor flex h-[min(900px,90dvh)] w-full">
+    <div className="text-editor flex min-h-[min(900px,90dvh)] w-full">
       <TextEditorSheet editor={editor} className="flex-1" />
     </div>
   );

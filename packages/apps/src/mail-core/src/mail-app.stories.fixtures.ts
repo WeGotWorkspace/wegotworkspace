@@ -40,6 +40,11 @@ export type MailUILabels = {
   toolbarStar: string;
   toolbarArchive: string;
   toolbarRestore: string;
+  moveDialogTitle: string;
+  moveDialogDescription: string;
+  moveDialogBreadcrumb: string;
+  moveDialogCancel: string;
+  moveDialogConfirm: string;
   dialogCancel: string;
   dialogDelete: string;
   dialogEmptyTrashTitle: string;
@@ -95,6 +100,11 @@ export const mailStoryLabels: MailUILabels = {
   toolbarStar: "Star",
   toolbarArchive: "Archive",
   toolbarRestore: "Restore",
+  moveDialogTitle: "Move to mailbox",
+  moveDialogDescription: "Choose a mailbox for the selected messages.",
+  moveDialogBreadcrumb: "Mailboxes",
+  moveDialogCancel: "Cancel",
+  moveDialogConfirm: "Move here",
   dialogCancel: workspaceDestructiveDialogLabels.dialogCancel,
   dialogDelete: workspaceDestructiveDialogLabels.dialogDelete,
   dialogEmptyTrashTitle: "Empty trash?",

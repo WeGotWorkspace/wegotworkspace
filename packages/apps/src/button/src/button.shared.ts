@@ -5,7 +5,7 @@ type ButtonVariantStyle = {
 };
 
 export const BUTTON_SIZE_OPTIONS = ["sm", "md", "lg"] as const;
-export const ICON_BUTTON_SIZE_OPTIONS = ["sm", "md", "lg"] as const;
+export const ICON_BUTTON_SIZE_OPTIONS = ["xs", "sm", "md", "lg"] as const;
 export const BUTTON_VARIANT_OPTIONS = [
   "primary",
   "destructive",
@@ -29,6 +29,7 @@ export const BUTTON_SIZE_CLASSNAMES: Record<ButtonSize, string> = {
   lg: "button--size-lg",
 };
 export const ICON_BUTTON_SIZE_CLASSNAMES: Record<IconButtonSize, string> = {
+  xs: "icon-button--size-xs",
   sm: "icon-button--size-sm",
   md: "icon-button--size-md",
   lg: "icon-button--size-lg",

@@ -135,6 +135,7 @@
  */
 :is(.mail-compose-dialog-surface, .mail-dialog-surface) {
   --mail-accent: #d9254f;
+  --destination-picker-accent: var(--mail-accent);
   --color-emerald: var(--mail-accent);
   --button-primary-bg: var(--mail-accent);
   --button-primary-fg: var(--color-cream, #ffffff);
@@ -249,7 +250,6 @@
 
 .mail-compose-dialog-surface .mail-compose-view__message-editor.text-editor {
   --text-editor-sheet-padding: 1rem;
-  --text-editor-scroll-inset: 0;
   --text-editor-sheet-margin-block: 0;
   --foreground: var(--color-ink);
   display: flex;
@@ -259,11 +259,7 @@
   width: 100%;
 }
 
-.mail-compose-dialog-surface .mail-compose-view__message-editor .text-editor-sheet--fill,
-.mail-compose-dialog-surface
-  .mail-compose-view__message-editor
-  .text-editor-sheet--fill
-  .text-editor-scroll {
+.mail-compose-dialog-surface .mail-compose-view__message-editor .text-editor-sheet--fill {
   flex: none;
   min-height: 100%;
 }

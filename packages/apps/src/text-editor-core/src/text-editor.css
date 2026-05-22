@@ -3,7 +3,6 @@
   --text-editor-sheet: oklch(1 0 0);
   --text-editor-sheet-padding: 0.75in;
   --text-editor-sheet-margin-block: 1.5rem;
-  --text-editor-scroll-inset: 0;
   --text-editor-highlight: oklch(0.95 0.15 95);
   --text-editor-comment: oklch(0.9 0.12 80);
   --text-editor-suggestion: oklch(0.85 0.15 145);
@@ -193,25 +192,24 @@
 }
 
 .text-editor-sheet {
+  position: relative;
   display: flex;
   min-height: 0;
   flex: 1;
   flex-direction: column;
+  align-items: center;
 }
 
 .text-editor-sheet:not(.text-editor-sheet--inline):not(.text-editor-sheet--fill) {
-  --text-editor-scroll-shadow-gutter: 1.25rem;
-  --text-editor-scroll-inset: 0 var(--text-editor-scroll-shadow-gutter);
-  margin-inline: calc(-1 * var(--text-editor-scroll-shadow-gutter));
-  width: calc(100% + 2 * var(--text-editor-scroll-shadow-gutter));
+  --text-editor-sheet-shadow-gutter: 1.25rem;
+  padding-inline: var(--text-editor-sheet-shadow-gutter);
+  margin-inline: calc(-1 * var(--text-editor-sheet-shadow-gutter));
+  width: calc(100% + 2 * var(--text-editor-sheet-shadow-gutter));
 }
 
 .text-editor-sheet--inline {
   flex: none;
-}
-
-.text-editor-sheet--inline .text-editor-scroll {
-  overflow: visible;
+  align-items: stretch;
 }
 
 .text-editor-sheet--inline .text-editor-sheet__surface {
@@ -223,18 +221,11 @@
 
 .text-editor-sheet--fill {
   --text-editor-sheet-margin-block: 0;
-  --text-editor-scroll-inset: 0;
   display: flex;
   flex: 1;
   min-height: 0;
   flex-direction: column;
-}
-
-.text-editor-sheet--fill .text-editor-scroll {
-  flex: 1;
-  min-height: 0;
   align-items: stretch;
-  overflow: visible;
 }
 
 .text-editor-sheet--fill .text-editor-sheet__surface {
@@ -250,18 +241,6 @@
 .text-editor-sheet--fill .text-editor-sheet__surface .ProseMirror {
   flex: none;
   min-height: 0;
-}
-
-.text-editor-scroll {
-  position: relative;
-  display: flex;
-  width: 100%;
-  flex: 1;
-  min-height: 0;
-  flex-direction: column;
-  align-items: center;
-  overflow-y: auto;
-  padding: var(--text-editor-scroll-inset);
 }
 
 .text-editor-sheet__surface {
