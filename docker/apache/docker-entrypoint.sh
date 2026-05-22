@@ -22,7 +22,13 @@ if [ -f "${API_ROOT}/artisan" ] && [ -f "${API_ROOT}/.env" ]; then
   php "${API_ROOT}/artisan" key:generate --force --no-interaction >/dev/null 2>&1 || true
 fi
 
-mkdir -p "${INSTALL_ROOT}/wgw-content" "${API_ROOT}/storage/framework/cache" "${API_ROOT}/storage/logs"
+mkdir -p \
+  "${INSTALL_ROOT}/wgw-content" \
+  "${API_ROOT}/storage/framework/cache" \
+  "${API_ROOT}/storage/framework/sessions" \
+  "${API_ROOT}/storage/framework/views" \
+  "${API_ROOT}/storage/logs" \
+  "${API_ROOT}/bootstrap/cache"
 chown -R www-data:www-data "${INSTALL_ROOT}/wgw-content" "${API_ROOT}/storage" 2>/dev/null || true
 
 # TLS: mkcert leaf certs mounted at /etc/apache2/certs (see tools/docker-ssl-setup.sh).

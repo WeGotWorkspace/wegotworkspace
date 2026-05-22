@@ -15,6 +15,7 @@ Use the step-by-step guide in `INSTALL.md`.
 
 That guide is intentionally short and covers:
 - Uploading files to your host
+- Creating `packages/api/.env` (Laravel runtime; preserved across in-place updates)
 - Copying `example.htaccess` to `.htaccess`
 - Running the web installer
 

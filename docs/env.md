@@ -22,7 +22,26 @@ cp packages/api/.env.example packages/api/.env
 php artisan key:generate --working-dir packages/api   # or set APP_KEY manually
 ```
 
-Tune `DB_*` / `WGW_*` in that file only.
+Tune `APP_URL`, `APP_ENV`, and `APP_DEBUG` for production.  
+`DB_*` in this file is for **Laravel framework** storage (sessions/cache when using database drivers).  
+WeGotWorkspace data uses `wgw-config.php` and `wgw-content/` (see `WgwServiceProvider` / `wgw` DB connection).
+
+### Apache / shared hosting
+
+`.env.example` defaults to `SESSION_DRIVER=file`, `CACHE_STORE=file`, and `QUEUE_CONNECTION=sync` so a host does not need `packages/api/database/database.sqlite`.  
+In-place updates **preserve** an existing `packages/api/.env`, session files, and logs. Each update backup also includes `packages-api.env` when present. Keep a host-level backup anyway.
+
+### Database-backed Laravel drivers (optional)
+
+To use `SESSION_DRIVER=database` or `CACHE_STORE=database`, create the framework DB and migrate:
+
+```bash
+mkdir -p packages/api/database
+touch packages/api/database/database.sqlite
+php artisan migrate --working-dir packages/api
+```
+
+That database is separate from `wgw-content/db.sqlite`.
 
 ## Storybook Live API
 

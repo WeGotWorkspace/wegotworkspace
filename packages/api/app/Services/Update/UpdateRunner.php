@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Update;
 
+use App\Services\Installer\ApiRuntimeEnvService;
 use App\Services\Installer\InstallerEnvChecker;
 use App\Services\Installer\InstallerSchemaMigrationRunner;
 use App\Support\AppVersion;
@@ -20,6 +21,7 @@ final class UpdateRunner
         private AppVersion $appVersion,
         private InstallerEnvChecker $envChecker,
         private ReleaseFeedClient $releaseFeed,
+        private ApiRuntimeEnvService $apiEnv,
     ) {}
 
     /**
@@ -282,6 +284,7 @@ final class UpdateRunner
             self::writeStatus('backing_up', $beforeVersion, $targetVersion);
             @mkdir($backupDir, 0775, true);
             self::backupDatabase($pdo, $backupDir, $beforeVersion, $targetVersion);
+            $this->backupApiEnvFile($backupDir);
             self::throwIfCancelRequested();
             self::assertApplyCapacity($releaseRoot, $this->install->installRoot(), $replacePaths);
 
@@ -774,14 +777,53 @@ final class UpdateRunner
      */
     private function applyPaths(string $sourceRoot, string $targetRoot, array $paths): void
     {
+        $preservation = new ApiPackageLocalPreservation;
+
         foreach ($paths as $relative) {
             $src = $sourceRoot.'/'.$relative;
             if (! file_exists($src)) {
                 continue;
             }
             $dest = $targetRoot.'/'.$relative;
+            $preserved = $relative === 'packages/api'
+                ? $preservation->snapshot($dest)
+                : ['files' => [], 'dirs' => [], 'tempBase' => null];
+            $hadLocalState = $preserved['files'] !== [] || $preserved['dirs'] !== [];
             self::rmRecursive($dest);
             self::copyRecursive($src, $dest);
+            if ($relative === 'packages/api') {
+                if ($hadLocalState) {
+                    $preservation->restore($dest, $preserved);
+                    $this->store->appendLog('Preserved install-local packages/api state (.env, logs, sessions).');
+                } else {
+                    $preservation->cleanupSnapshot($preserved);
+                }
+                $envResult = $this->apiEnv->ensure($targetRoot, ApiRuntimeEnvService::guessRequestAppUrl());
+                if ($envResult['createdEnv']) {
+                    $this->store->appendLog('Created packages/api/.env from .env.example.');
+                }
+                if ($envResult['generatedKey']) {
+                    $this->store->appendLog('Generated APP_KEY in packages/api/.env.');
+                }
+                if ($envResult['patchedUrl']) {
+                    $this->store->appendLog('Set APP_URL in packages/api/.env from the update request.');
+                }
+            }
+        }
+    }
+
+    private function backupApiEnvFile(string $backupDir): void
+    {
+        $apiRoot = $this->apiEnv->apiPackageRoot($this->install->installRoot());
+        if ($apiRoot === null) {
+            return;
+        }
+        $env = $apiRoot.'/.env';
+        if (! is_file($env)) {
+            return;
+        }
+        if (@copy($env, $backupDir.'/packages-api.env')) {
+            $this->store->appendLog('Backed up packages/api/.env into the update backup folder.');
         }
     }
 
