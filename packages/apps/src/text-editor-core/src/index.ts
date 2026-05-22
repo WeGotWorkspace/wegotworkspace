@@ -2,6 +2,12 @@ export { TextEditor, type TextEditorProps } from "@/text-editor-core/src/text-ed
 export {
   TextEditorFormatBar,
   type TextEditorFormatBarProps,
+  type TextEditorFormatBarConfig,
+  type TextEditorFormatBarGroup,
+  TEXT_EDITOR_FORMAT_BAR_FULL,
+  TEXT_EDITOR_FORMAT_BAR_GROUPS,
+  TEXT_EDITOR_FORMAT_BAR_MAIL,
+  resolveTextEditorFormatBarConfig,
 } from "@/text-editor-core/src/text-editor-format-bar";
 export {
   TextEditorSheet,

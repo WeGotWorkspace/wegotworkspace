@@ -2,6 +2,8 @@
 .text-editor {
   --text-editor-sheet: oklch(1 0 0);
   --text-editor-sheet-padding: 0.75in;
+  --text-editor-sheet-margin-block: 1.5rem;
+  --text-editor-scroll-inset: 0;
   --text-editor-highlight: oklch(0.95 0.15 95);
   --text-editor-comment: oklch(0.9 0.12 80);
   --text-editor-suggestion: oklch(0.85 0.15 145);
@@ -28,39 +30,69 @@
   backdrop-filter: blur(8px);
 }
 
+/* Unlayered so width/height survive active state (layered rules lose to Tailwind unlayered CSS). */
 .text-editor-format-bar__btn,
+.text-editor-format-bar__btn--active,
+.text-editor-format-bar__btn--active:hover:not(:disabled),
 .text-editor-format-bar__heading-trigger {
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   height: 2rem;
+  border: 1px solid transparent;
   border-radius: var(--radius-md);
+  padding: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 0;
   color: var(--text-editor-format-btn-color);
+  background: transparent;
   transition:
     background-color 0.15s,
     color 0.15s;
 }
 
-.text-editor-format-bar__btn {
+.text-editor-format-bar__btn,
+.text-editor-format-bar__btn--active,
+.text-editor-format-bar__btn--active:hover:not(:disabled) {
   width: 2rem;
+  min-width: 2rem;
+  max-width: 2rem;
+}
+
+.text-editor-format-bar__btn-icon {
+  display: flex;
+  align-items: center;
   justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.text-editor-format-bar__btn-icon svg {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  stroke-width: 2;
 }
 
 .text-editor-format-bar__heading-trigger {
   flex-direction: row;
   flex-wrap: nowrap;
-  align-items: center;
   justify-content: flex-start;
   gap: 0.375rem;
-  padding: 0 0.625rem;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  line-height: 1;
+  min-width: 4.25rem;
+  padding-inline: 0.625rem;
   white-space: nowrap;
 }
 
 .text-editor-format-bar__heading-trigger-label {
   display: inline-block;
   flex: 0 1 auto;
+  min-width: 2ch;
   line-height: 1;
   white-space: nowrap;
 }
@@ -70,11 +102,12 @@
   flex: 0 0 0.75rem;
   width: 0.75rem;
   height: 0.75rem;
+  stroke-width: 2;
   opacity: 0.6;
 }
 
 .text-editor-format-bar__btn:hover:not(:disabled),
-.text-editor-format-bar__heading-trigger:hover {
+.text-editor-format-bar__heading-trigger:hover:not(:disabled) {
   background: var(--text-editor-format-btn-hover-bg);
   color: var(--text-editor-format-btn-hover-color);
 }
@@ -88,9 +121,14 @@
 }
 
 .text-editor-format-bar__btn--active,
-.text-editor-format-bar__heading-trigger.text-editor-format-bar__btn--active {
-  background: var(--text-editor-format-btn-active-bg);
-  color: var(--text-editor-format-btn-active-color);
+.text-editor-format-bar__btn--active:hover:not(:disabled),
+.text-editor-format-bar__heading-trigger.text-editor-format-bar__btn--active,
+.text-editor-format-bar__heading-trigger.text-editor-format-bar__btn--active:hover:not(:disabled) {
+  font-weight: 500;
+  color: var(--text-editor-format-btn-color);
+  background: color-mix(in oklab, var(--text-editor-format-btn-active-bg) 18%, transparent);
+  border-color: transparent;
+  box-shadow: none;
 }
 
 .text-editor-format-bar__sep {
@@ -170,6 +208,37 @@
   box-shadow: none;
 }
 
+.text-editor-sheet--fill {
+  --text-editor-sheet-margin-block: 0;
+  --text-editor-scroll-inset: 0;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.text-editor-sheet--fill .text-editor-scroll {
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+  overflow: visible;
+}
+
+.text-editor-sheet--fill .text-editor-sheet__surface {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 100%;
+  max-width: none;
+  min-height: 100%;
+  margin-block: 0;
+}
+
+.text-editor-sheet--fill .text-editor-sheet__surface .ProseMirror {
+  flex: none;
+  min-height: 0;
+}
+
 .text-editor-scroll {
   position: relative;
   display: flex;
@@ -179,6 +248,7 @@
   flex-direction: column;
   align-items: center;
   overflow-y: auto;
+  padding: var(--text-editor-scroll-inset);
 }
 
 .text-editor-sheet__surface {
@@ -186,7 +256,8 @@
   width: 100%;
   max-width: 8.5in;
   flex-shrink: 0;
-  margin: 1.5rem auto;
+  margin-block: var(--text-editor-sheet-margin-block);
+  margin-inline: auto;
   border-radius: 4px;
   background: var(--text-editor-sheet);
   padding: var(--text-editor-sheet-padding);

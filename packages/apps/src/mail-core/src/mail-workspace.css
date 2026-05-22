@@ -138,9 +138,28 @@
   display: flex;
   flex: 1;
   flex-direction: column;
+  gap: 1rem;
   min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
   padding: 1.25rem 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .mail-compose-view__body {
+    padding: 1.25rem 1rem;
+  }
+}
+
+.mail-compose-view__fields {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.mail-compose-view__fields .field-label-row {
+  margin-bottom: 0;
 }
 
 .mail-compose-view__field {
@@ -160,15 +179,16 @@
 
 .mail-compose-view__message-shell {
   display: flex;
-  flex: 1 1 auto;
+  flex: 1;
   flex-direction: column;
-  min-height: max(12rem, 22dvh);
+  min-height: 0;
 }
 
 .mail-compose-view__message-field {
   display: flex;
   flex: 1;
   flex-direction: column;
+  gap: 0.5rem;
   min-height: 0;
   margin-bottom: 0 !important;
 }
@@ -180,14 +200,35 @@
   min-height: 0;
 }
 
-.mail-compose-dialog-surface .mail-compose-view__message-input {
+.mail-compose-dialog-surface .mail-compose-view__message-editor.text-editor {
+  --text-editor-sheet-padding: 1rem;
+  --text-editor-scroll-inset: 0;
+  --text-editor-sheet-margin-block: 0;
+  --foreground: var(--color-ink);
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: min(22rem, 42dvh);
   width: 100%;
-  min-height: max(12rem, 22dvh);
-  resize: none;
-  background-color: var(
-    --input-background,
-    color-mix(in oklab, var(--color-background) 90%, var(--color-muted) 10%)
-  );
+}
+
+.mail-compose-dialog-surface .mail-compose-view__message-editor .text-editor-sheet--fill,
+.mail-compose-dialog-surface
+  .mail-compose-view__message-editor
+  .text-editor-sheet--fill
+  .text-editor-scroll {
+  flex: none;
+  min-height: 100%;
+}
+
+.mail-compose-dialog-surface .mail-compose-view__message-editor .text-editor-format-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  flex-shrink: 0;
+  border-bottom: 1px solid color-mix(in oklab, var(--color-ink) 10%, transparent);
+  background: var(--color-cream, #f5f1e8);
+  backdrop-filter: none;
 }
 
 .mail-compose-view__attachments {
