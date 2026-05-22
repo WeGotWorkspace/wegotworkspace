@@ -17,12 +17,10 @@ export function TextEditorSheet({ editor, className }: TextEditorSheetProps) {
 
   return (
     <div className={cn("text-editor-sheet", className)}>
-      <div className="text-editor-scroll relative flex-1 overflow-y-auto">
-        <div className="text-editor-sheet__viewport">
-          <div className="text-editor-sheet__stack">
-            <div ref={contentRef} className="text-editor-sheet__content">
-              <EditorContent editor={editor} />
-            </div>
+      <div className="text-editor-scroll">
+        <div className="text-editor-sheet__stack">
+          <div ref={contentRef} className="text-editor-sheet__content">
+            <EditorContent editor={editor} />
           </div>
         </div>
         <TextEditorSlashMenu editor={editor} />

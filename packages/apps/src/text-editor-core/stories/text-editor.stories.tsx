@@ -5,7 +5,6 @@ import {
   type TextEditorContentFormat,
 } from "@/text-editor-core/src/text-editor-content";
 import { textEditorDemoContent } from "@/text-editor-core/src/text-editor-fixtures";
-import { TextEditorStoryScope } from "@/text-editor-core/stories/text-editor-story-scope";
 
 const meta = {
   title: "Shared/TextEditor/TextEditor",
@@ -20,11 +19,7 @@ const meta = {
       },
     },
   },
-  render: (args) => (
-    <TextEditorStoryScope>
-      <TextEditor {...args} />
-    </TextEditorStoryScope>
-  ),
+  render: (args) => <TextEditor {...args} />,
   argTypes: {
     format: {
       control: "select",

@@ -137,31 +137,34 @@ export function TextEditorFormatBar({
           <button
             type="button"
             title="Heading level"
-            className={cn(
-              "text-editor-format-bar__heading-trigger",
-              state.headingLevel > 0 && "text-editor-format-bar__btn--active",
-            )}
+            className="text-editor-format-bar__heading-trigger"
           >
-            <span>{state.headingLevel > 0 ? `H${state.headingLevel}` : "Text"}</span>
-            <ChevronDown className="h-3 w-3 opacity-60" />
+            <span className="text-editor-format-bar__heading-trigger-label">
+              {state.headingLevel > 0 ? `H${state.headingLevel}` : "Text"}
+            </span>
+            <ChevronDown className="text-editor-format-bar__heading-trigger-chevron" />
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="min-w-[160px]">
+        <DropdownMenuContent align="start" className="text-editor-format-bar__heading-menu">
           <DropdownMenuItem
             onClick={() => chain().setParagraph().run()}
-            className={cn(state.headingLevel === 0 && "bg-accent text-accent-foreground")}
+            className={cn(
+              "text-editor-format-bar__heading-option",
+              state.headingLevel === 0 && "text-editor-format-bar__heading-option--selected",
+            )}
           >
-            <span className="text-sm">Text</span>
+            <span className="text-editor-format-bar__heading-option-label">Text</span>
           </DropdownMenuItem>
           {([1, 2, 3, 4, 5, 6] as const).map((lvl) => (
             <DropdownMenuItem
               key={lvl}
               onClick={() => chain().toggleHeading({ level: lvl }).run()}
-              className={cn(state.headingLevel === lvl && "bg-accent text-accent-foreground")}
+              className={cn(
+                "text-editor-format-bar__heading-option",
+                state.headingLevel === lvl && "text-editor-format-bar__heading-option--selected",
+              )}
             >
-              <span className="font-semibold" style={{ fontSize: `${1.3 - (lvl - 1) * 0.08}rem` }}>
-                Heading {lvl}
-              </span>
+              <span className="text-editor-format-bar__heading-option-label">Heading {lvl}</span>
             </DropdownMenuItem>
           ))}
         </DropdownMenuContent>
