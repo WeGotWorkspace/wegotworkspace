@@ -44,7 +44,7 @@ export function WeGotWorkspaceLiveHome() {
       id: "mail",
       label: "Mail",
       icon: <MailIcon className="size-4" />,
-      accent: "var(--mail-sidebar, #f2ce42)",
+      accent: "var(--mail-sidebar, #94a3b8)",
       fg: "var(--color-ink)",
       onSelect: () => void navigate({ to: "/mail" }),
     },
