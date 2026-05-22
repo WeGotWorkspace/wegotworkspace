@@ -22,13 +22,48 @@ fi
 echo "==> Building UI dist (installer shell)"
 pnpm --filter @wgw/apps run build:dev
 
+INSTALL_ROOT="${ROOT}/apps/wegotworkspace"
+STASH_DIR=""
+stash_install_state() {
+  if [ ! -f "${INSTALL_ROOT}/wgw-config.php" ] \
+    && [ ! -f "${INSTALL_ROOT}/wgw-content/.installed" ]; then
+    return 0
+  fi
+  STASH_DIR="$(mktemp -d)"
+  echo "==> Stashing local install tree for installer e2e (${STASH_DIR})"
+  for name in wgw-config.php wgw-content; do
+    if [ -e "${INSTALL_ROOT}/${name}" ]; then
+      mv "${INSTALL_ROOT}/${name}" "${STASH_DIR}/"
+    fi
+  done
+  mkdir -p "${INSTALL_ROOT}/wgw-content"
+}
+
+restore_install_state() {
+  if [ -z "${STASH_DIR}" ] || [ ! -d "${STASH_DIR}" ]; then
+    return 0
+  fi
+  echo "==> Restoring local install tree"
+  rm -rf "${INSTALL_ROOT}/wgw-content"
+  for name in wgw-content wgw-config.php; do
+    if [ -e "${STASH_DIR}/${name}" ]; then
+      mv "${STASH_DIR}/${name}" "${INSTALL_ROOT}/"
+    fi
+  done
+  rmdir "${STASH_DIR}" 2>/dev/null || true
+}
+
+stash_install_state
+
+COMPOSE_FILES=(-f compose.ci.yml)
+
 echo "==> Starting Docker stack (compose.ci.yml)"
-docker compose -f compose.ci.yml up -d --build --wait
+docker compose "${COMPOSE_FILES[@]}" up -d --build --wait
 
 cleanup() {
-  docker compose -f compose.ci.yml down -v
+  docker compose "${COMPOSE_FILES[@]}" down -v
 }
-trap cleanup EXIT
+trap 'restore_install_state; cleanup' EXIT
 
 export WGW_API_E2E_NO_SERVER=1
 export WGW_API_BASE_URL="${BASE}"

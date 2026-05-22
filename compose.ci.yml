@@ -1,3 +1,9 @@
-# CI / Playwright: same stack as compose.dev.yml (health-gated web on :9080).
+# CI / Playwright: compose.dev.yml without mkcert certs (no compose.local.yml on runners).
+# Publish only :9080 so act/local CI does not require host ports 80/443 to be free.
 include:
   - path: compose.dev.yml
+
+services:
+  web:
+    ports:
+      - "${WGW_DOCKER_HTTP_PORT:-9080}:80"
