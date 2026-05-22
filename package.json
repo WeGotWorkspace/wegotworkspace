@@ -26,7 +26,8 @@
     "docker:logs": "docker compose -f compose.dev.yml logs -f",
     "docker:ssl:setup": "bash tools/docker-ssl-setup.sh",
     "update:onlyoffice-web": "bash tools/update-onlyoffice-web-subtree.sh",
-    "release": "node tools/build-wegotworkspace-release.mjs",
+    "release": "tools/with-root-env.sh -- bash tools/release-wegotworkspace.sh package",
+    "release:publish": "tools/with-root-env.sh -- bash tools/release-wegotworkspace.sh publish",
     "release:wegotworkspace": "pnpm release",
     "prepare": "husky"
   },
