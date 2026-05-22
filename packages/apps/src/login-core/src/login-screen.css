@@ -3,6 +3,7 @@
 .login-screen {
   background-color: var(--color-paper);
   color: var(--color-ink);
+  --brand-mark-fill: var(--color-forest);
   --field-label-color: var(--color-slate-muted);
   --button-primary-bg: var(--color-forest);
   --button-primary-fg: var(--color-paper);
@@ -10,8 +11,7 @@
   --primary-foreground: var(--color-paper);
 }
 
-.login-screen__brand-wordmark {
-  font-family: var(--font-app);
+.login-screen .workspace-shell-header {
   color: var(--color-forest);
 }
 
