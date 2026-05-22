@@ -20,14 +20,16 @@ type MeetDeviceRowStoryArgs = {
 function MeetDeviceRowStory({ kind, value }: MeetDeviceRowStoryArgs) {
   const options = kind === "camera" ? STORY_MEET_DEVICES : STORY_MEET_MICROPHONES;
   return (
-    <div className="w-full max-w-md">
-      <MeetDeviceRow
-        icon={kind === "camera" ? <Video /> : <Mic />}
-        label={kind === "camera" ? "Camera" : "Microphone"}
-        value={value}
-        onChange={STORY_NOOP}
-        options={options}
-      />
+    <div className="meet-workspace__form w-full max-w-md">
+      <div className="meet-workspace__form-devices">
+        <MeetDeviceRow
+          icon={kind === "camera" ? <Video /> : <Mic />}
+          label={kind === "camera" ? "Camera" : "Microphone"}
+          value={value}
+          onChange={STORY_NOOP}
+          options={options}
+        />
+      </div>
     </div>
   );
 }
