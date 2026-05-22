@@ -5,6 +5,8 @@ export const driveLabels = {
   sidebarTrash: "Trash",
   sidebarSharedDrives: "Shared drives",
   searchPlaceholder: "Search in Drive...",
+  searchViewTitle: "Search",
+  listColumnName: "Name",
   emptyFolder: "This folder is empty",
   folderListingLoading: "Loading folder…",
   dropUploadHint: "Drop files to upload to",

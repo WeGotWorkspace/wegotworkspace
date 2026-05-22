@@ -48,12 +48,14 @@ export function DriveGridView({
   onRename,
   onMove,
   onTrash,
+  searchActive = false,
 }: {
   items: DriveFile[];
   imagePreviewUrls: Record<string, string>;
   selectedIds: string[];
   starred: Record<string, boolean>;
   labels: DriveUILabels;
+  searchActive?: boolean;
   inTrash: boolean;
   selectionMode: boolean;
   isTouch: boolean;
@@ -415,6 +417,7 @@ export function DriveListView({
   onMove,
   onTrash,
   onLongPress,
+  searchActive = false,
 }: {
   items: DriveFile[];
   activeId: string | null;
@@ -423,6 +426,7 @@ export function DriveListView({
   selectionMode: boolean;
   isTouch: boolean;
   labels: DriveUILabels;
+  searchActive?: boolean;
   inTrash: boolean;
   isItemDragging: (id: string) => boolean;
   itemDragHandlers: (id: string) => ItemDragHandlers;
@@ -441,7 +445,9 @@ export function DriveListView({
       <table className="drive-list-table">
         <thead>
           <tr className="drive-list-head">
-            <th className="drive-list-col-name drive-list-head__cell">Name</th>
+            <th className="drive-list-col-name drive-list-head__cell">
+              {searchActive ? labels.searchViewTitle : labels.listColumnName}
+            </th>
             <th className="drive-list-head__cell hidden sm:table-cell">Modified</th>
             <th className="drive-list-head__cell hidden lg:table-cell">Kind</th>
             <th className="drive-list-col-size drive-list-head__cell text-right hidden sm:table-cell">
