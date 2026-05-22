@@ -87,7 +87,7 @@ export function MeetRoomPane({
                 {controller.screenPreviewStream ? (
                   <MeetStreamVideo
                     stream={controller.screenPreviewStream}
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-contain"
                   />
                 ) : (
                   <div className="meet-workspace__muted flex h-full items-center justify-center text-sm">

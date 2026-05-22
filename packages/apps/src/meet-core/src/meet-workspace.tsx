@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { MeetChatPane } from "@/meet-core/src/meet-chat-pane";
 import { MeetLobbyPane } from "@/meet-core/src/meet-lobby-pane";
 import { MeetRoomPane } from "@/meet-core/src/meet-room-pane";
+import { meetLabels } from "@/meet-core/src/meet-labels";
 import type { MeetWorkspaceProps } from "@/meet-core/src/meet-workspace-props";
 import { WorkspaceShellHeader } from "@/workspace-shell/src/workspace-shell-header";
 import { useMeetWorkspaceShell } from "@/meet-core/src/use-meet-workspace-shell";
@@ -51,13 +52,21 @@ export function MeetWorkspace({
               {...shell.room}
             />
             {shell.chat.chatOpen ? (
-              <MeetChatPane
-                messages={shell.controller.chatMessages}
-                draft={shell.chat.draft}
-                onDraftChange={shell.chat.onDraftChange}
-                onSend={shell.chat.onSend}
-                onClose={shell.chat.onClose}
-              />
+              <>
+                <button
+                  type="button"
+                  className="meet-workspace__chat-scrim"
+                  aria-label={meetLabels.toggleChatHide}
+                  onClick={shell.chat.onClose}
+                />
+                <MeetChatPane
+                  messages={shell.controller.chatMessages}
+                  draft={shell.chat.draft}
+                  onDraftChange={shell.chat.onDraftChange}
+                  onSend={shell.chat.onSend}
+                  onClose={shell.chat.onClose}
+                />
+              </>
             ) : null}
           </main>
         )}

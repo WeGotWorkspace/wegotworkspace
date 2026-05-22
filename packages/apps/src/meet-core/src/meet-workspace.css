@@ -215,15 +215,30 @@
 }
 
 .meet-workspace__room {
-  @apply grid min-h-0 flex-1 gap-3 overflow-hidden px-3 py-3 md:gap-4 md:px-4 md:pb-4 md:pt-4;
-}
-
-.meet-workspace__room--chat-open {
-  grid-template-columns: minmax(0, 1fr) 340px;
-}
-
-.meet-workspace__room--chat-closed {
+  @apply relative grid min-h-0 flex-1 gap-3 overflow-hidden px-3 py-3 md:gap-4 md:px-4 md:pb-4 md:pt-4;
   grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 1024px) and (orientation: landscape) {
+  .meet-workspace__room--chat-open {
+    grid-template-columns: minmax(0, 1fr) 340px;
+  }
+}
+
+.meet-workspace__chat-scrim {
+  display: none;
+}
+
+@media (max-width: 1023px), (orientation: portrait) {
+  .meet-workspace__room--chat-open .meet-chat {
+    @apply absolute inset-y-0 right-0 z-20 min-h-0 w-[min(340px,100%)] max-w-full;
+    box-shadow: -12px 0 32px rgba(8, 9, 18, 0.45);
+  }
+
+  .meet-workspace__room--chat-open .meet-workspace__chat-scrim {
+    @apply absolute inset-0 z-10 block cursor-default border-0 p-0;
+    background-color: var(--meet-overlay);
+  }
 }
 
 .meet-workspace__room-main {
@@ -571,11 +586,6 @@
 :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-chat__header {
   @apply flex items-center justify-between border-b px-4 py-3;
   border-color: var(--meet-border);
-}
-
-:is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-chat__close {
-  @apply text-xs;
-  color: var(--meet-muted);
 }
 
 :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-chat__messages {
