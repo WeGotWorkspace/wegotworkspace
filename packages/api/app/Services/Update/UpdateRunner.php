@@ -11,6 +11,9 @@ use App\Support\WgwInstallConfig;
 
 final class UpdateRunner
 {
+    /** Orphan progress in state.json without a lock is cleared after this many seconds. */
+    private const STALE_PROGRESS_SECONDS = 120;
+
     public function __construct(
         private UpdateStateStore $store,
         private WgwInstallConfig $install,
@@ -24,7 +27,7 @@ final class UpdateRunner
      */
     public function getState(\PDO $pdo): array
     {
-        self::recoverStaleLockState();
+        $this->recoverStaleLockState();
         $state = $this->store->read();
         $latest = isset($state['latest']) && is_array($state['latest']) ? $state['latest'] : null;
         $hasRequiredMetadata = self::hasRequiredReleaseMetadata($latest);
@@ -32,8 +35,9 @@ final class UpdateRunner
         $checks = $this->envChecker->checkAll($driver === 'mysql' ? 'mysql' : 'sqlite');
         $compatible = $this->envChecker->allPassed($checks);
         $checks = array_merge($checks, self::capacityChecks($this->install->installRoot()));
-        $inProgress = is_file($this->store->absolutePath($this->store->lockPath()));
-        $phase = $inProgress && is_string($state['phase'] ?? null) ? $state['phase'] : null;
+        $lockHeld = is_file($this->store->absolutePath($this->store->lockPath()));
+        $phase = self::phaseFromState($state);
+        $inProgress = $lockHeld || $phase !== null;
         $current = $inProgress && is_array($state['current'] ?? null) ? $state['current'] : null;
         $installedVersion = $this->appVersion->current();
         if ($inProgress && is_array($current) && is_string($current['from'] ?? null) && trim((string) $current['from']) !== '') {
@@ -71,17 +75,16 @@ final class UpdateRunner
                 @unlink($maintenancePath);
                 $this->store->clearCancelRequest();
                 $state = $this->store->read();
-                if (
-                    isset($state['phase'])
-                    || isset($state['current'])
-                    || isset($state['download'])
-                    || isset($state['phase_progress'])
-                    || isset($state['cancel_requested'])
-                ) {
-                    unset($state['phase'], $state['current'], $state['download'], $state['phase_progress'], $state['cancel_requested']);
-                    $this->store->write($state);
-                }
+                self::clearProgressFields($state);
+                $this->store->write($state);
                 $this->store->appendLog('Recovered stale maintenance mode marker without active update lock.');
+            } else {
+                $state = $this->store->read();
+                if (self::phaseFromState($state) !== null && self::isStaleProgressState($state)) {
+                    self::clearProgressFields($state);
+                    $this->store->write($state);
+                    $this->store->appendLog('Cleared orphaned update progress (no active lock).');
+                }
             }
 
             return;
@@ -104,17 +107,70 @@ final class UpdateRunner
         $this->store->clearCancelRequest();
 
         $state = $this->store->read();
-        if (
-            isset($state['phase'])
-            || isset($state['current'])
-            || isset($state['download'])
-            || isset($state['phase_progress'])
-            || isset($state['cancel_requested'])
-        ) {
-            unset($state['phase'], $state['current'], $state['download'], $state['phase_progress'], $state['cancel_requested']);
-            $this->store->write($state);
-        }
+        self::clearProgressFields($state);
+        $this->store->write($state);
         $this->store->appendLog('Recovered stale update lock state.');
+    }
+
+    /**
+     * @param  array<string, mixed>  $state
+     */
+    private static function clearProgressFields(array &$state): void
+    {
+        unset(
+            $state['phase'],
+            $state['current'],
+            $state['download'],
+            $state['phase_progress'],
+            $state['cancel_requested'],
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $state
+     */
+    private static function phaseFromState(array $state): ?string
+    {
+        if (! is_string($state['phase'] ?? null)) {
+            return null;
+        }
+        $phase = trim((string) $state['phase']);
+
+        return $phase !== '' ? $phase : null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $state
+     */
+    private static function isStaleProgressState(array $state): bool
+    {
+        if (self::phaseFromState($state) === null) {
+            return false;
+        }
+
+        $candidates = [];
+        if (is_array($state['phase_progress'] ?? null) && is_string($state['phase_progress']['updatedAt'] ?? null)) {
+            $candidates[] = strtotime((string) $state['phase_progress']['updatedAt']);
+        }
+        if (is_array($state['download'] ?? null) && is_string($state['download']['updatedAt'] ?? null)) {
+            $candidates[] = strtotime((string) $state['download']['updatedAt']);
+        }
+        if (is_array($state['current'] ?? null) && is_string($state['current']['at'] ?? null)) {
+            $candidates[] = strtotime((string) $state['current']['at']);
+        }
+
+        $latest = false;
+        foreach ($candidates as $timestamp) {
+            if (is_int($timestamp) && $timestamp > 0) {
+                $latest = $latest === false ? $timestamp : max($latest, $timestamp);
+            }
+        }
+
+        if ($latest === false) {
+            return true;
+        }
+
+        return (time() - $latest) >= self::STALE_PROGRESS_SECONDS;
     }
 
     /**
@@ -193,6 +249,22 @@ final class UpdateRunner
             'finishedAt' => null,
         ];
 
+        $applyFinished = false;
+        $runner = $this;
+        register_shutdown_function(static function () use (
+            $runner,
+            &$applyFinished,
+            &$result,
+            &$lock,
+            $beforeVersion,
+            $targetVersion,
+        ): void {
+            if ($applyFinished) {
+                return;
+            }
+            $runner->finalizeAbortedApply($result, $lock, $beforeVersion, $targetVersion);
+        });
+
         try {
             $this->store->appendLog('Update started: '.$beforeVersion.' -> '.$targetVersion);
             $this->store->clearCancelRequest();
@@ -257,15 +329,52 @@ final class UpdateRunner
             $result['finishedAt'] = date('c');
             $state = $this->store->read();
             $state['last_result'] = $result;
-            unset($state['phase'], $state['current'], $state['download'], $state['phase_progress'], $state['cancel_requested']);
+            self::clearProgressFields($state);
             $this->store->write($state);
             @unlink($this->store->absolutePath($this->store->lockPath()));
-            flock($lock, LOCK_UN);
-            fclose($lock);
+            if (is_resource($lock)) {
+                flock($lock, LOCK_UN);
+                fclose($lock);
+            }
             $this->store->cleanupTemporaryData();
+            $applyFinished = true;
         }
 
         return $result;
+    }
+
+    /**
+     * @param  array<string, mixed>  $result
+     */
+    private function finalizeAbortedApply(
+        array &$result,
+        mixed $lock,
+        string $beforeVersion,
+        string $targetVersion,
+    ): void {
+        $lockPath = $this->store->absolutePath($this->store->lockPath());
+        if (! is_file($lockPath)) {
+            return;
+        }
+
+        $message = 'Update aborted before completion (request or process ended).';
+        $this->store->appendLog($message);
+        $result['message'] = $message;
+        $result['finishedAt'] = date('c');
+
+        $state = $this->store->read();
+        $state['last_result'] = $result;
+        self::clearProgressFields($state);
+        $this->store->write($state);
+
+        if (is_resource($lock)) {
+            flock($lock, LOCK_UN);
+            fclose($lock);
+        }
+        @unlink($lockPath);
+        @unlink($this->store->absolutePath($this->store->maintenancePath()));
+        $this->store->clearCancelRequest();
+        $this->store->cleanupTemporaryData();
     }
 
     /**
