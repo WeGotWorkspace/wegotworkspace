@@ -5,6 +5,18 @@
 }
 
 .workspace-shell-header__start {
+  @apply flex min-w-0 items-center gap-3;
+}
+
+.workspace-shell-header__accessory {
+  @apply flex min-w-0 items-center;
+}
+
+.workspace-shell-header__end {
+  @apply flex min-w-0 shrink-0 items-center gap-3;
+}
+
+.workspace-shell-header__end-accessory {
   @apply flex min-w-0 items-center;
 }
 

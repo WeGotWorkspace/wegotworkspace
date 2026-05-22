@@ -45,3 +45,20 @@
   @apply min-w-48 p-1.5;
   border-color: color-mix(in oklab, currentColor 25%, transparent);
 }
+
+.app-switch-button__trigger--compact {
+  @apply items-center gap-1.5 py-0.5 pl-0.5 pr-1.5;
+}
+
+.app-switch-button__brand--compact {
+  --brand-mark-height: 1.75rem;
+  --brand-mark-offset-y: -2px;
+}
+
+.app-switch-button__trigger--compact .app-switch-button__chevron-stack {
+  @apply grid-rows-1;
+}
+
+.app-switch-button__trigger--compact .app-switch-button__chevron-stack > span:first-child {
+  display: none;
+}
