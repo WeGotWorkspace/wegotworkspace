@@ -10,6 +10,8 @@ import Typography from "@tiptap/extension-typography";
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { Mark, mergeAttributes, type Extensions } from "@tiptap/react";
+import { Markdown } from "tiptap-markdown";
+import type { TextEditorContentFormat } from "@/text-editor-core/src/text-editor-content";
 
 export const CommentMark = Mark.create({
   name: "comment",
@@ -51,16 +53,18 @@ export const SuggestionMark = Mark.create({
   },
 });
 
-export type CreateMarkdownEditorExtensionsOptions = {
+export type CreateTextEditorExtensionsOptions = {
   placeholder?: string;
+  format?: TextEditorContentFormat;
 };
 
-export function createMarkdownEditorExtensions(
-  options: CreateMarkdownEditorExtensionsOptions = {},
+export function createTextEditorExtensions(
+  options: CreateTextEditorExtensionsOptions = {},
 ): Extensions {
   const placeholder = options.placeholder ?? "Press '/' for commands…";
+  const format = options.format ?? "html";
 
-  return [
+  const extensions: Extensions = [
     StarterKit,
     Underline,
     Link.configure({ openOnClick: false }),
@@ -78,4 +82,16 @@ export function createMarkdownEditorExtensions(
     CommentMark,
     SuggestionMark,
   ];
+
+  if (format === "markdown") {
+    extensions.push(
+      Markdown.configure({
+        html: true,
+        transformPastedText: true,
+        transformCopiedText: true,
+      }),
+    );
+  }
+
+  return extensions;
 }
