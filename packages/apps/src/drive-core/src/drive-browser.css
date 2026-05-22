@@ -16,7 +16,7 @@
 }
 
 .drive-workspace .drive-grid-layout {
-  @apply px-2 md:px-6 py-3 sm:py-5 md:py-8 space-y-6 sm:space-y-8;
+  @apply px-4 md:px-6 py-3 sm:py-5 md:py-8 space-y-6 sm:space-y-8;
 }
 
 .drive-workspace .drive-grid {
@@ -159,7 +159,7 @@
 }
 
 .drive-workspace .drive-list-view {
-  @apply min-w-0 max-w-full px-2 pb-8 md:px-6;
+  @apply min-w-0 max-w-full px-4 pb-8 md:px-6;
 }
 
 .drive-workspace .drive-list-table {
@@ -187,7 +187,7 @@
 }
 
 .drive-workspace .drive-list-head__cell {
-  @apply py-3 px-3 text-left font-normal text-xs uppercase tracking-wider truncate;
+  @apply py-3 text-left font-normal text-xs uppercase tracking-wider truncate;
   font-family: var(--field-label-font-family, var(--font-mono, ui-monospace, monospace));
   color: var(--field-label-color, var(--color-muted-foreground));
 }
