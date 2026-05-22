@@ -7,8 +7,7 @@
   --text-editor-highlight: oklch(0.95 0.15 95);
   --text-editor-comment: oklch(0.9 0.12 80);
   --text-editor-suggestion: oklch(0.85 0.15 145);
-  --text-editor-shadow-sheet:
-    0 1px 2px rgba(0, 0, 0, 0.04), 0 10px 30px -10px rgba(15, 23, 42, 0.12);
+  --text-editor-shadow-sheet: var(--control-shadow);
   --text-editor-format-btn-color: color-mix(in oklab, var(--foreground) 70%, transparent);
   --text-editor-format-btn-hover-bg: var(--accent);
   --text-editor-format-btn-hover-color: var(--accent-foreground);
@@ -384,11 +383,94 @@
 .text-editor-prose ul[data-type="taskList"] li {
   display: flex;
   align-items: flex-start;
-  gap: 0.5rem;
+  gap: 0.625rem;
+}
+
+.text-editor-prose ul[data-type="taskList"] li + li {
+  margin-top: 0.2rem;
+}
+
+.text-editor-prose ul[data-type="taskList"] li > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.text-editor-prose ul[data-type="taskList"] li > div > :first-child {
+  margin-top: 0;
+}
+
+.text-editor-prose ul[data-type="taskList"] li > div > :last-child {
+  margin-bottom: 0;
 }
 
 .text-editor-prose ul[data-type="taskList"] li > label {
-  margin-top: 0.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 1.125rem;
+  width: 1.125rem;
+  height: 1.7em;
+  margin: 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.text-editor-prose ul[data-type="taskList"] li > label input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.text-editor-prose ul[data-type="taskList"] li > label input:focus-visible + span {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.text-editor-prose ul[data-type="taskList"] li > label span {
+  position: relative;
+  display: block;
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+  border: 1.5px solid color-mix(in oklab, var(--foreground) 28%, var(--border));
+  border-radius: 0.3rem;
+  background: var(--background);
+  box-shadow: inset 0 1px 1px color-mix(in oklab, var(--foreground) 6%, transparent);
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.text-editor-prose ul[data-type="taskList"] li > label:hover span {
+  border-color: color-mix(in oklab, var(--primary) 45%, var(--border));
+  background: color-mix(in oklab, var(--primary) 6%, var(--background));
+}
+
+.text-editor-prose ul[data-type="taskList"] li > label input:checked + span,
+.text-editor-prose ul[data-type="taskList"] li[data-checked="true"] > label span {
+  border-color: var(--primary);
+  background: var(--primary);
+  box-shadow: none;
+}
+
+.text-editor-prose ul[data-type="taskList"] li > label input:checked + span::after,
+.text-editor-prose ul[data-type="taskList"] li[data-checked="true"] > label span::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 0.3125rem;
+  height: 0.5625rem;
+  border: solid var(--primary-foreground);
+  border-width: 0 2px 2px 0;
+  transform: translate(-50%, -50%) rotate(45deg);
 }
 
 .text-editor-prose .is-editor-empty:first-child::before {
