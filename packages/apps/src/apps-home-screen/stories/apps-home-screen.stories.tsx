@@ -38,7 +38,7 @@ export const Default: Story = {
         id: "mail",
         label: "Mail",
         icon: <MailIcon className="size-4" />,
-        accent: "var(--mail-sidebar, #94a3b8)",
+        accent: "var(--mail-sidebar, #d9254f)",
         fg: "var(--color-ink)",
       },
       {
@@ -52,7 +52,7 @@ export const Default: Story = {
         id: "settings",
         label: "Settings",
         icon: <SettingsIcon className="size-4" />,
-        accent: "var(--settings-sidebar, #da9fb8)",
+        accent: "var(--settings-sidebar, #94a3b8)",
         fg: "var(--color-ink)",
       },
       {

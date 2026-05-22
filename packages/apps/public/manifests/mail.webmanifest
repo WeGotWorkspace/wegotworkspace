@@ -5,8 +5,8 @@
   "scope": "/mail",
   "id": "/mail",
   "display": "standalone",
-  "background_color": "#94a3b8",
-  "theme_color": "#94a3b8",
+  "background_color": "#d9254f",
+  "theme_color": "#d9254f",
   "icons": [
     {
       "src": "/icons/mail-192.png",
