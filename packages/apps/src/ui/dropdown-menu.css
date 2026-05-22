@@ -1,7 +1,8 @@
 @import "../styles.css" reference;
 
 .dropdown-menu-ui__sub-trigger {
-  @apply flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none;
+  @apply flex cursor-default select-none items-center gap-2 px-2 py-1.5 text-sm outline-none;
+  border-radius: var(--control-radius);
 }
 
 .dropdown-menu-ui__sub-trigger:focus,
@@ -22,12 +23,14 @@
 }
 
 .dropdown-menu-ui__sub-content {
-  @apply z-50 min-w-[8rem] overflow-hidden rounded-md bg-popover p-1 text-popover-foreground shadow-lg;
+  @apply z-50 min-w-[8rem] overflow-hidden bg-popover p-1 text-popover-foreground shadow-lg;
+  border-radius: var(--control-radius);
   transform-origin: var(--radix-dropdown-menu-content-transform-origin);
 }
 
 .dropdown-menu-ui__content {
-  @apply z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-[8rem] overflow-y-auto overflow-x-hidden rounded-md bg-popover p-1 text-popover-foreground shadow-md;
+  @apply z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-[8rem] overflow-y-auto overflow-x-hidden bg-popover p-1 text-popover-foreground shadow-md;
+  border-radius: var(--control-radius);
   transform-origin: var(--radix-dropdown-menu-content-transform-origin);
 }
 
@@ -62,7 +65,8 @@
 }
 
 .dropdown-menu-ui__item {
-  @apply relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors;
+  @apply relative flex cursor-default select-none items-center gap-2 px-2 py-1.5 text-sm outline-none transition-colors;
+  border-radius: var(--control-radius);
 }
 
 .dropdown-menu-ui__item:focus {
@@ -83,7 +87,8 @@
 
 .dropdown-menu-ui__checkbox-item,
 .dropdown-menu-ui__radio-item {
-  @apply relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors;
+  @apply relative flex cursor-default select-none items-center py-1.5 pl-8 pr-2 text-sm outline-none transition-colors;
+  border-radius: var(--control-radius);
 }
 
 .dropdown-menu-ui__checkbox-item:focus,

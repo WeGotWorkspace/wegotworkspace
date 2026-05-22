@@ -5,7 +5,8 @@
 }
 
 .dropdown-menu__menu-item {
-  @apply gap-2.5 px-2.5 py-2 rounded-md;
+  @apply gap-2.5 px-2.5 py-2;
+  border-radius: var(--control-radius);
 }
 
 .dropdown-menu__menu-item .menu-item__icon-slot > svg {
