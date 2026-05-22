@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import type { Editor } from "@tiptap/react";
 import { cn } from "@/lib/utils";
 import type { TextEditorContentFormat } from "@/text-editor-core/src/text-editor-content";
@@ -29,6 +30,8 @@ export type TextEditorProps = {
   sheetFill?: boolean;
   className?: string;
   onUpdate?: (payload: { editor: Editor; content: string }) => void;
+  /** Called when the TipTap instance is created or destroyed (e.g. document outline). */
+  onEditorReady?: (editor: Editor | null) => void;
 };
 
 /**
@@ -45,6 +48,7 @@ export function TextEditor({
   sheetFill = false,
   className,
   onUpdate,
+  onEditorReady,
 }: TextEditorProps) {
   const editor = useTextEditor({
     format,
@@ -53,6 +57,11 @@ export function TextEditor({
     placeholder,
     onUpdate,
   });
+
+  useEffect(() => {
+    onEditorReady?.(editor);
+    return () => onEditorReady?.(null);
+  }, [editor, onEditorReady]);
 
   const formatBarConfig = (() => {
     if (formatBar === false) return null;

@@ -40,6 +40,7 @@ export function useDocsController({
   const autoSaveToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastAutoSaveToastAtRef = useRef(0);
   const latestPathRef = useRef(filePath);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const queueAutoSaveToast = useCallback(() => {
     if (autoSaveToastTimerRef.current) clearTimeout(autoSaveToastTimerRef.current);
@@ -182,6 +183,8 @@ export function useDocsController({
     loading,
     loadError,
     hasFile: !!filePath || !!initialDocument,
+    sidebarOpen,
+    setSidebarOpen,
     onContentChange: handleContentChange,
   };
 }

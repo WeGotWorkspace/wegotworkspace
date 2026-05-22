@@ -1,10 +1,23 @@
+import { useCallback, useMemo, useState } from "react";
+import type { Editor } from "@tiptap/react";
 import { TooltipProvider } from "@/ui/tooltip";
+import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
+import {
+  WorkspaceAppLayout,
+  WorkspaceUserFooter,
+} from "@/workspace-shell/src/workspace-app-layout";
+import { workspaceUserInitials, type WorkspaceSession } from "@/lib/workspace/workspace-session";
+import { ViewHeader } from "@/view-header/src/view-header";
+import { Tag } from "@/tag/src/tag";
 import { cn } from "@/lib/utils";
-import { TextEditor, TEXT_EDITOR_FORMAT_BAR_FULL } from "@/text-editor-core/src";
-import { WorkspaceShellHeader } from "@/workspace-shell/src/workspace-shell-header";
+import { DocsMainPane } from "@/docs-core/src/docs-main-pane";
+import { DocsOutlineSidebar } from "@/docs-core/src/docs-outline-sidebar";
+import { focusOutlineHeading, parseMarkdownOutline } from "@/docs-core/src/docs-outline";
 import { useDocsController } from "@/docs-core/src/use-docs-controller";
 import type { DocsWorkspaceProps } from "@/docs-core/src/docs-workspace-props";
 import "@/docs-core/src/docs-workspace.css";
+
+type DocsController = ReturnType<typeof useDocsController>;
 
 export function DocsWorkspace({
   data,
@@ -22,62 +35,136 @@ export function DocsWorkspace({
     initialDocument: data.document,
   });
 
+  const fileKey = filePath ?? data.document?.apiPath ?? "mock";
+
   return (
     <TooltipProvider delayDuration={200}>
-      <div className={cn("docs-workspace", className)}>
-        <WorkspaceShellHeader
-          className="docs-workspace__header"
+      <DocsWorkspaceShell
+        className={className}
+        controller={controller}
+        fileKey={fileKey}
+        session={session}
+        onLogout={onLogout}
+      />
+    </TooltipProvider>
+  );
+}
+
+function DocsWorkspaceShell({
+  className,
+  controller,
+  fileKey,
+  session,
+  onLogout,
+}: {
+  className?: string;
+  controller: DocsController;
+  fileKey: string;
+  session: WorkspaceSession;
+  onLogout?: () => void;
+}) {
+  const [editor, setEditor] = useState<Editor | null>(null);
+  const [activeOutlineIndex, setActiveOutlineIndex] = useState<number | null>(null);
+
+  const outline = useMemo(() => parseMarkdownOutline(controller.content), [controller.content]);
+
+  const handleOutlineSelect = useCallback(
+    (index: number) => {
+      setActiveOutlineIndex(index);
+      if (editor) focusOutlineHeading(editor, index);
+      if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
+        controller.setSidebarOpen(false);
+      }
+    },
+    [controller, editor],
+  );
+
+  return (
+    <WorkspaceAppLayout
+      className={cn("docs-workspace", className)}
+      sidebar={
+        <DocsSidebar
+          controller={controller}
           session={session}
-          displayName={session.user.displayName}
-          appSwitchVariant="compact"
-          showAccountDetail={false}
-          startAccessory={
-            controller.title ? (
-              <span className="docs-workspace__document-name">{controller.title}</span>
-            ) : null
-          }
-          endAccessory={
-            controller.hasFile ? (
-              <span className="docs-workspace__stats">
-                <span>{controller.labels.statsWords(controller.wordCount)}</span>
-                <span className="docs-workspace__stats-sep" aria-hidden>
-                  ·
-                </span>
-                <span>{controller.labels.statsCharacters(controller.characterCount)}</span>
-              </span>
-            ) : null
-          }
+          outline={outline}
+          activeOutlineIndex={activeOutlineIndex}
+          onOutlineSelect={handleOutlineSelect}
           onLogout={onLogout}
         />
+      }
+      mainHeader={<DocsMainHeader controller={controller} />}
+      main={<DocsMainPane controller={controller} fileKey={fileKey} onEditorReady={setEditor} />}
+    />
+  );
+}
 
-        <main className="docs-workspace__main">
-          {controller.loading ? (
-            <p className="docs-workspace__loading">Loading…</p>
-          ) : controller.loadError ? (
-            <div className="docs-workspace__error">
-              <p>{controller.labels.loadError}</p>
-            </div>
-          ) : !controller.hasFile ? (
-            <div className="docs-workspace__empty">
-              <p className="docs-workspace__empty-title">{controller.labels.emptyTitle}</p>
-              <p className="docs-workspace__empty-description">
-                {controller.labels.emptyDescription}
-              </p>
-            </div>
-          ) : (
-            <div className="docs-workspace__editor">
-              <TextEditor
-                key={filePath ?? data.document?.apiPath ?? "mock"}
-                format="markdown"
-                content={controller.content}
-                sheetFill
-                formatBar={{ groups: TEXT_EDITOR_FORMAT_BAR_FULL, showPrint: true }}
-                onUpdate={({ content }) => controller.onContentChange(content)}
-              />
-            </div>
-          )}
-        </main>
-      </div>
-    </TooltipProvider>
+function DocsSidebar({
+  controller,
+  session,
+  outline,
+  activeOutlineIndex,
+  onOutlineSelect,
+  onLogout,
+}: {
+  controller: DocsController;
+  session: WorkspaceSession;
+  outline: ReturnType<typeof parseMarkdownOutline>;
+  activeOutlineIndex: number | null;
+  onOutlineSelect: (index: number) => void;
+  onLogout?: () => void;
+}) {
+  return (
+    <AppSidebar
+      open={controller.sidebarOpen}
+      onCloseMobile={() => controller.setSidebarOpen(false)}
+      appSwitchSubtitle="Docs"
+      footer={
+        <WorkspaceUserFooter
+          name={session.user.displayName}
+          initials={workspaceUserInitials(session.user)}
+          detailLine={session.user.username}
+          onLogoutClick={onLogout}
+        />
+      }
+    >
+      <DocsOutlineSidebar
+        labels={controller.labels}
+        items={outline}
+        activeIndex={activeOutlineIndex}
+        onSelect={onOutlineSelect}
+      />
+    </AppSidebar>
+  );
+}
+
+function DocsMainHeader({ controller }: { controller: DocsController }) {
+  const title = controller.title || controller.labels.emptyTitle;
+
+  return (
+    <ViewHeader
+      title={title}
+      sidebarOpen={controller.sidebarOpen}
+      onToggleSidebar={() => controller.setSidebarOpen((open) => !open)}
+      actions={
+        controller.hasFile ? (
+          <div className="docs-workspace__stats">
+            <Tag
+              label={controller.labels.statsWords(controller.wordCount)}
+              colors={{
+                backgroundColor: "var(--docs-stat-tag-bg)",
+                color: "var(--docs-stat-tag-color)",
+              }}
+            />
+            <Tag
+              label={controller.labels.statsCharacters(controller.characterCount)}
+              colors={{
+                backgroundColor: "var(--docs-stat-tag-bg)",
+                color: "var(--docs-stat-tag-color)",
+              }}
+            />
+          </div>
+        ) : null
+      }
+    />
   );
 }
