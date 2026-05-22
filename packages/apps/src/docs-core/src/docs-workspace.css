@@ -3,12 +3,17 @@
 .docs-workspace {
   @apply flex h-dvh w-full flex-col;
 
-  --docs-accent: #0d9488;
+  --docs-accent: oklch(52% 0.24 302);
   --docs-surface: var(--color-cream, #ffffff);
   --background: oklch(98.5% 0.005 100);
+  --docs-header-bg: color-mix(in oklab, var(--docs-accent) 22%, var(--background));
+  --docs-header-border: color-mix(in oklab, var(--docs-accent) 32%, var(--docs-border));
   --docs-canvas: oklch(95% 0.006 100);
   --docs-sheet-width: 210mm;
   --docs-sheet-min-height: 297mm;
+  --docs-sheet-canvas-padding-block: 2.5rem;
+  --docs-toolbar-height: calc(0.5rem * 2 + 2.25rem);
+  --docs-stats-color: color-mix(in oklab, var(--color-ink) 78%, transparent);
   --docs-panel: color-mix(in oklab, var(--color-ink) 4%, var(--docs-surface));
   --docs-text: var(--color-ink);
   --docs-muted: color-mix(in oklab, var(--color-ink) 55%, transparent);
@@ -24,7 +29,7 @@
   --workspace-user-footer-text-color: var(--docs-text);
   --workspace-user-footer-subtitle-color: var(--docs-muted);
   --workspace-user-footer-border-color: var(--docs-border);
-  --workspace-user-footer-avatar-bg: color-mix(in oklab, var(--docs-accent) 18%, transparent);
+  --workspace-user-footer-avatar-bg: color-mix(in oklab, var(--docs-accent) 22%, transparent);
   --workspace-user-footer-avatar-color: var(--docs-text);
   --workspace-user-footer-link-color: var(--docs-text);
   --workspace-user-footer-link-bg: color-mix(in oklab, var(--color-ink) 6%, transparent);
@@ -41,30 +46,119 @@
   @apply flex min-h-0 flex-1 flex-col;
 }
 
-.docs-workspace__title-bar {
-  @apply shrink-0 border-b px-6 py-3;
-  border-color: var(--docs-border);
-  background-color: var(--docs-panel);
+.docs-workspace__header.workspace-shell-header {
+  min-height: var(--docs-toolbar-height);
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--docs-header-border);
+  background-color: var(--docs-header-bg);
 }
 
-.docs-workspace__title {
-  @apply truncate text-sm font-medium;
+.docs-workspace__header .workspace-shell-header__account .workspace-app-layout__user-footer {
+  @apply gap-1.5;
+}
+
+.docs-workspace__header .user-avatar--md .user-avatar__mark {
+  width: 2rem;
+  height: 2rem;
+}
+
+.docs-workspace__header .workspace-app-layout__user-footer .icon-button {
+  width: 2rem;
+  height: 2rem;
+  min-width: 2rem;
+}
+
+.docs-workspace__document-name {
+  @apply truncate text-sm font-semibold normal-case tracking-normal;
+  font-family: var(--font-sans);
   color: var(--docs-text);
+  max-width: min(24rem, 40vw);
+}
+
+.docs-workspace__stats {
+  @apply flex shrink-0 items-center gap-1.5 text-xs tabular-nums;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  color: var(--docs-stats-color);
+}
+
+.docs-workspace__stats-sep {
+  font-weight: 400;
+  color: color-mix(in oklab, var(--docs-stats-color) 55%, transparent);
 }
 
 .docs-workspace__editor {
   @apply flex min-h-0 flex-1 flex-col overflow-hidden;
 }
 
-.docs-workspace__editor .text-editor {
+.docs-workspace .text-editor {
   @apply min-h-0 flex-1;
   --text-editor-shadow-sheet: 0 1px 2px #0000000a, 0 10px 30px -10px #0f172a1f;
+  --text-editor-format-btn-color: color-mix(in oklab, var(--docs-text) 70%, transparent);
+  --text-editor-format-btn-hover-bg: color-mix(in oklab, var(--docs-accent) 10%, transparent);
+  --text-editor-format-btn-hover-color: var(--docs-accent);
+  --text-editor-format-btn-active-bg: color-mix(in oklab, var(--docs-accent) 24%, transparent);
+  --text-editor-format-btn-active-color: var(--docs-accent);
 }
 
 .docs-workspace__editor .text-editor-format-bar {
   flex-shrink: 0;
-  padding-inline: 1rem;
+  box-sizing: border-box;
+  min-height: var(--docs-toolbar-height);
+  padding: 0.5rem 0.5rem;
   border-bottom: 1px solid var(--docs-border);
+}
+
+.docs-workspace
+  .text-editor-format-bar
+  .text-editor-format-bar__btn.text-editor-format-bar__btn--active:not(:disabled),
+.docs-workspace
+  .text-editor-format-bar
+  .text-editor-format-bar__btn[aria-pressed="true"]:not(:disabled),
+.docs-workspace
+  .text-editor-format-bar
+  .text-editor-format-bar__heading-trigger.text-editor-format-bar__btn--active:not(:disabled),
+.docs-workspace
+  .text-editor-format-bar
+  .text-editor-format-bar__heading-trigger[aria-pressed="true"]:not(:disabled) {
+  color: var(--docs-accent);
+  background: var(--text-editor-format-btn-active-bg);
+  border-color: color-mix(in oklab, var(--docs-accent) 32%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--docs-accent) 28%, transparent);
+}
+
+.docs-workspace
+  .text-editor-format-bar
+  .text-editor-format-bar__btn.text-editor-format-bar__btn--active:hover:not(:disabled),
+.docs-workspace
+  .text-editor-format-bar
+  .text-editor-format-bar__btn[aria-pressed="true"]:hover:not(:disabled),
+.docs-workspace
+  .text-editor-format-bar
+  .text-editor-format-bar__heading-trigger.text-editor-format-bar__btn--active:hover:not(:disabled),
+.docs-workspace
+  .text-editor-format-bar
+  .text-editor-format-bar__heading-trigger[aria-pressed="true"]:hover:not(:disabled) {
+  color: var(--docs-accent);
+  background: color-mix(in oklab, var(--docs-accent) 30%, transparent);
+}
+
+.docs-workspace
+  .text-editor-format-bar
+  .text-editor-format-bar__btn:hover:not(:disabled):not(.text-editor-format-bar__btn--active):not(
+    [aria-pressed="true"]
+  ),
+.docs-workspace
+  .text-editor-format-bar
+  .text-editor-format-bar__heading-trigger:hover:not(:disabled):not(
+    .text-editor-format-bar__btn--active
+  ):not([aria-pressed="true"]) {
+  color: var(--text-editor-format-btn-hover-color);
+  background: var(--text-editor-format-btn-hover-bg);
+}
+
+.docs-workspace .text-editor-format-bar .text-editor-format-bar__btn-icon svg {
+  stroke: currentColor;
 }
 
 /* Canvas behind the A4 sheet; sheetFill drops sizing — restore it here */
@@ -73,7 +167,7 @@
   min-height: 0;
   align-items: flex-start;
   overflow-y: auto;
-  padding-block: 1.75rem;
+  padding-block: var(--docs-sheet-canvas-padding-block);
   padding-inline: 1.25rem;
   background-color: var(--docs-canvas);
 }

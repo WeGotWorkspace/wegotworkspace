@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
-import { Editor, useEditorState } from "@tiptap/react";
+import { Editor } from "@tiptap/react";
+import { useTextEditorFormatBarState } from "@/text-editor-core/src/use-text-editor-format-bar-state";
 import {
   Bold,
   ChevronDown,
@@ -18,6 +19,7 @@ import {
   Underline as UnderlineIcon,
   Undo2,
 } from "lucide-react";
+import { printTextEditorSheet } from "@/text-editor-core/src/text-editor-print";
 import { Button } from "@/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/ui/dialog";
 import {
@@ -56,6 +58,7 @@ function FormatBarButton({
       onClick={onClick}
       disabled={disabled}
       title={title}
+      aria-pressed={active ? true : undefined}
       className={cn("text-editor-format-bar__btn", active && "text-editor-format-bar__btn--active")}
     >
       <span className="text-editor-format-bar__btn-icon">{children}</span>
@@ -84,30 +87,7 @@ export function TextEditorFormatBar({
   const [linkUrl, setLinkUrl] = useState("");
   const enabled = new Set(groups);
 
-  const state = useEditorState({
-    editor,
-    selector: ({ editor: ed }) =>
-      ed
-        ? {
-            bold: ed.isActive("bold"),
-            italic: ed.isActive("italic"),
-            underline: ed.isActive("underline"),
-            strike: ed.isActive("strike"),
-            code: ed.isActive("code"),
-            highlight: ed.isActive("highlight"),
-            headingLevel:
-              ([1, 2, 3, 4, 5, 6] as const).find((l) => ed.isActive("heading", { level: l })) ?? 0,
-            bulletList: ed.isActive("bulletList"),
-            orderedList: ed.isActive("orderedList"),
-            taskList: ed.isActive("taskList"),
-            blockquote: ed.isActive("blockquote"),
-            link: ed.isActive("link"),
-            canUndo: ed.can().undo(),
-            canRedo: ed.can().redo(),
-            currentHref: (ed.getAttributes("link") as { href?: string }).href ?? "",
-          }
-        : null,
-  });
+  const state = useTextEditorFormatBarState(editor);
 
   if (!editor || !state) return null;
 
@@ -176,7 +156,11 @@ export function TextEditorFormatBar({
             <button
               type="button"
               title="Heading level"
-              className="text-editor-format-bar__heading-trigger"
+              aria-pressed={state.headingLevel > 0 ? true : undefined}
+              className={cn(
+                "text-editor-format-bar__heading-trigger",
+                state.headingLevel > 0 && "text-editor-format-bar__btn--active",
+              )}
             >
               <span className="text-editor-format-bar__heading-trigger-label">
                 {state.headingLevel > 0 ? `H${state.headingLevel}` : "Text"}
@@ -310,7 +294,7 @@ export function TextEditorFormatBar({
         <div className="text-editor-format-bar__print">
           <button
             type="button"
-            onClick={() => window.print()}
+            onClick={() => printTextEditorSheet(editor)}
             className="text-editor-format-bar__print-btn"
           >
             <Printer className="h-3.5 w-3.5" /> Print
