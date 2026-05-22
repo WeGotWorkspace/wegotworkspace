@@ -32,6 +32,7 @@
     var(--meet-text) 12%,
     var(--meet-panel-soft)
   );
+  --button-active-color: var(--meet-text);
 
   --workspace-user-footer-text-color: var(--meet-text);
   --workspace-user-footer-subtitle-color: var(--meet-muted);
@@ -102,7 +103,7 @@
 }
 
 .meet-workspace__preview {
-  @apply relative mb-8 aspect-video w-full overflow-hidden rounded-2xl border;
+  @apply relative mb-8 aspect-video w-full overflow-hidden rounded-sm border;
   background-color: var(--meet-panel);
   border-color: var(--meet-border);
 }
@@ -132,6 +133,14 @@
 
 .meet-workspace__form .field-label-row {
   @apply mb-0;
+}
+
+.meet-device-row__control {
+  @apply flex items-center gap-3;
+}
+
+:is(.meet-workspace, .meet-popover-surface) .meet-device-row__trigger {
+  color: var(--meet-text);
 }
 
 .meet-workspace__display-name-input {
@@ -294,6 +303,7 @@
   --meet-muted: rgba(255, 255, 255, 0.6);
   --meet-border-strong: rgba(255, 255, 255, 0.08);
   --meet-mic-off: #e5484d;
+  --field-label-color: var(--meet-muted);
   --user-avatar-bg: rgba(255, 255, 255, 0.1);
   --user-avatar-fg: var(--meet-text);
   --button-primary-bg: var(--meet-accent);
@@ -315,6 +325,7 @@
   --accent-foreground: var(--meet-text);
   --popover: var(--meet-panel);
   --popover-foreground: var(--meet-text);
+  --foreground: var(--meet-text);
 }
 
 .meet-dialog-surface {
@@ -411,7 +422,7 @@
 }
 
 :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-pip {
-  @apply absolute left-0 top-0 touch-none select-none overflow-hidden rounded-xl border shadow-xl;
+  @apply absolute left-0 top-0 touch-none select-none overflow-hidden rounded-sm border shadow-xl;
   aspect-ratio: 16 / 9;
   background-color: var(--meet-panel);
   border-color: var(--meet-pip-border);
@@ -470,7 +481,7 @@
 }
 
 :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-pip__label {
-  @apply absolute bottom-1.5 left-1.5 flex items-center gap-1 rounded-full bg-black/50 px-2 py-0.5 text-[10px] backdrop-blur;
+  @apply absolute bottom-1.5 left-1.5 flex items-center gap-1 rounded-sm bg-black/50 px-2 py-0.5 text-[10px] backdrop-blur;
 }
 
 :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-pip__pip-button {
@@ -530,7 +541,8 @@
 }
 
 :is(.meet-workspace, .meet-dialog-surface, .meet-popover-surface) .meet-chat {
-  @apply flex min-h-0 flex-col rounded-2xl border;
+  @apply flex min-h-0 flex-col border;
+  border-radius: var(--control-radius);
   background-color: var(--meet-panel);
   border-color: var(--meet-border);
 }
