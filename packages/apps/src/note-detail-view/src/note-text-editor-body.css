@@ -1,0 +1,7 @@
+.note-text-editor-body .text-editor-prose {
+  color: var(--color-ink);
+}
+
+.note-text-editor-body .text-editor-slash-menu {
+  z-index: 50;
+}

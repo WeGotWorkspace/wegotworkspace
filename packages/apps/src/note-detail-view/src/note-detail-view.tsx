@@ -3,7 +3,7 @@ import { DetailViewHeader } from "@/detail-view-header/src/detail-view-header";
 import { TagGroup } from "@/tag/src/tag";
 import { cn } from "@/lib/utils";
 import { noteBodyToMarkdown } from "@/lib/models/note-body-markdown";
-import { NoteMilkdownBody } from "@/note-milkdown-body/src/note-milkdown-body";
+import { NoteTextEditorBody } from "@/note-detail-view/src/note-text-editor-body";
 
 const noteDetailTagColors = {
   backgroundColor:
@@ -115,7 +115,7 @@ export function NoteDetailView({
         </p>
       ) : null}
 
-      <NoteMilkdownBody
+      <NoteTextEditorBody
         noteId={noteId}
         initialMarkdown={markdown}
         readOnly={readOnly || !onBodyMarkdownChange}

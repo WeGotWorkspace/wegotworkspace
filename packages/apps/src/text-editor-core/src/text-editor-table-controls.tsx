@@ -207,7 +207,7 @@ export function TextEditorTableControls({ editor }: TextEditorTableControlsProps
       }
     };
     update();
-    const scroller = editor.view.dom.closest(".text-editor-scroll");
+    const scroller = editor.view.dom.closest(".text-editor-sheet");
     window.addEventListener("scroll", update, true);
     window.addEventListener("resize", update);
     scroller?.addEventListener("scroll", update);
