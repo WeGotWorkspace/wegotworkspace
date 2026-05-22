@@ -1,0 +1,144 @@
+@import "../../styles.css" reference;
+
+.segmented-control {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--control-radius-button-pill);
+  padding: 0.125rem;
+  background-color: var(
+    --segmented-control-track-bg,
+    color-mix(in oklab, var(--color-ink) 6%, transparent)
+  );
+}
+
+.segmented-control__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: var(--control-radius-button-pill);
+  color: color-mix(in oklab, var(--segmented-control-color, var(--color-ink)) 55%, transparent);
+  background: transparent;
+  transition:
+    color 150ms,
+    background-color 150ms,
+    box-shadow 150ms;
+}
+
+.segmented-control__button--text {
+  width: auto;
+  min-width: 2.75rem;
+  padding-inline: 0.625rem;
+}
+
+.segmented-control__button--active {
+  background-color: var(--segmented-control-active-bg, var(--color-cream, #ffffff));
+  color: var(--segmented-control-active-fg, var(--color-ink));
+  box-shadow: var(
+    --segmented-control-active-shadow,
+    0 1px 2px color-mix(in oklab, var(--color-ink) 20%, transparent)
+  );
+}
+
+.segmented-control__label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.segmented-control--size-md .segmented-control__button {
+  height: var(--input-height, 2.25rem);
+}
+
+.segmented-control--size-md .segmented-control__button:not(.segmented-control__button--text) {
+  width: var(--input-height, 2.25rem);
+}
+
+.segmented-control--size-md .segmented-control__button--text {
+  min-width: 3.25rem;
+  padding-inline: 0.75rem;
+}
+
+.segmented-control--size-md .segmented-control__label {
+  font-size: var(--input-font-size, 0.875rem);
+}
+
+/* Boolean on/off (compact, switch-sized) */
+
+.segmented-control--boolean {
+  --segmented-boolean-padding: 0.125rem;
+  --segmented-boolean-segment: 1rem;
+  --segmented-boolean-track-radius: var(--control-radius-button-pill);
+  --segmented-boolean-thumb-radius: calc(
+    var(--segmented-boolean-track-radius) - var(--segmented-boolean-padding)
+  );
+  position: relative;
+  padding: var(--segmented-boolean-padding);
+  border-radius: var(--segmented-boolean-track-radius);
+  color: var(--segmented-control-color, var(--color-ink));
+  overflow: hidden;
+  transition: background-color 150ms ease;
+}
+
+.segmented-control--boolean[data-state="on"] {
+  background-color: var(--segmented-control-track-active-bg, currentColor);
+}
+
+.segmented-control--boolean[data-disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.segmented-control--boolean .segmented-control__thumb {
+  position: absolute;
+  top: var(--segmented-boolean-padding);
+  left: var(--segmented-boolean-padding);
+  z-index: 2;
+  width: var(--segmented-boolean-segment);
+  height: var(--segmented-boolean-segment);
+  padding: 0;
+  border: 0;
+  border-radius: var(--segmented-control-thumb-radius, var(--segmented-boolean-thumb-radius));
+  background-color: var(--segmented-control-thumb-bg, var(--color-cream, #ffffff));
+  box-shadow: none;
+  cursor: pointer;
+  transition: transform 150ms ease;
+}
+
+.segmented-control--boolean .segmented-control__thumb:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--background, #ffffff),
+    0 0 0 4px var(--ring, var(--color-ink));
+}
+
+.segmented-control--boolean .segmented-control__thumb[data-state="on"] {
+  transform: translateX(var(--segmented-boolean-segment));
+}
+
+.segmented-control--boolean .segmented-control__thumb:disabled {
+  cursor: not-allowed;
+}
+
+.segmented-control__button--boolean {
+  position: relative;
+  z-index: 1;
+  width: var(--segmented-boolean-segment);
+  height: var(--segmented-boolean-segment);
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.segmented-control__button--boolean:disabled {
+  cursor: not-allowed;
+}
+
+.segmented-control__button--boolean.segmented-control__button--active,
+.segmented-control__button--boolean:hover,
+.segmented-control__button--boolean:focus-visible {
+  background: transparent;
+  box-shadow: none;
+}

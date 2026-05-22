@@ -30,6 +30,7 @@
   --install-status-error: #b14242;
   --install-status-pending: #7a7a78;
   --install-status-warn: #c98a1f;
+  --segmented-control-track-active-bg: var(--color-ink);
 }
 
 .install-workspace .install-sidebar-step-footer {

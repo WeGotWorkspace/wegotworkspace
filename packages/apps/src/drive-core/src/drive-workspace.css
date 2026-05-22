@@ -110,7 +110,7 @@
   bottom: max(1rem, env(safe-area-inset-bottom));
   z-index: 35;
   padding: 0.25rem;
-  border-radius: 9999px;
+  border-radius: var(--control-radius-pill);
   background-color: var(--color-cream, #ffffff);
   box-shadow:
     0 4px 24px color-mix(in oklab, var(--color-ink) 16%, transparent),
@@ -126,7 +126,7 @@
 .drive-workspace .drive-floating-search .search-bar > div {
   margin-top: 0;
   height: 2.75rem;
-  border-radius: 9999px;
+  border-radius: var(--control-radius-pill);
   padding-inline: 1rem;
   background-color: color-mix(in oklab, var(--color-ink) 6%, transparent);
 }
@@ -158,7 +158,7 @@
 .drive-workspace .drive-floating-upload .upload-progress {
   margin: 0;
   border-bottom: none;
-  border-radius: 0.75rem;
+  border-radius: var(--control-radius);
   padding: 0.875rem 1rem;
   background-color: var(--color-cream, #ffffff);
   box-shadow:

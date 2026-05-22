@@ -225,6 +225,7 @@ export function GroupDialog({
                         user.username === currentUsername
                       }
                       onCheckedChange={() => toggleMember(user.id)}
+                      aria-label={`${user.displayName} group member`}
                     />
                   </li>
                 ))}

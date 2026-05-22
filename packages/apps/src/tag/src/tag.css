@@ -1,0 +1,6 @@
+@import "../../styles.css" reference;
+
+.tag {
+  @apply font-sans text-[13px] normal-case tracking-normal px-3 py-1.5 font-medium inline-flex items-center gap-1 min-w-0;
+  border-radius: var(--control-radius-pill);
+}

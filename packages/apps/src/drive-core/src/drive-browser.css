@@ -52,7 +52,8 @@
 }
 
 .drive-workspace .drive-folder-tile {
-  @apply relative w-full text-left px-4 h-16 sm:h-[4.25rem] rounded-xl flex items-center gap-3 transition-all outline-none focus-visible:ring-2;
+  @apply relative w-full text-left px-4 h-16 sm:h-[4.25rem] flex items-center gap-3 transition-all outline-none focus-visible:ring-2;
+  border-radius: var(--control-radius);
 }
 
 .drive-workspace .drive-folder-tile--dragging {
@@ -90,7 +91,8 @@
 }
 
 .drive-workspace .drive-file-tile {
-  @apply relative rounded-xl overflow-hidden transition-all cursor-pointer outline-none;
+  @apply relative overflow-hidden transition-all cursor-pointer outline-none;
+  border-radius: var(--control-radius);
   background-color: color-mix(in oklab, var(--color-ink) 5%, transparent);
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-ink) 8%, transparent);
 }
@@ -108,7 +110,8 @@
 }
 
 .drive-workspace .drive-file-tile__star-badge {
-  @apply absolute top-2 right-2 z-10 rounded-full p-1.5 pointer-events-none;
+  @apply absolute top-2 right-2 z-10 p-1.5 pointer-events-none;
+  border-radius: var(--control-radius-pill);
   background-color: color-mix(in oklab, var(--color-cream, #ffffff) 90%, transparent);
   color: var(--color-emerald);
   box-shadow: 0 2px 8px color-mix(in oklab, var(--color-ink) 20%, transparent);
@@ -234,7 +237,8 @@
 }
 
 .drive-workspace .drive-detail-panel__preview {
-  @apply relative aspect-[4/3] rounded-2xl flex items-center justify-center mb-6 overflow-hidden;
+  @apply relative aspect-[4/3] flex items-center justify-center mb-6 overflow-hidden;
+  border-radius: var(--control-radius);
   background-color: color-mix(in oklab, var(--drive-sidebar) 14%, transparent);
   color: var(--drive-sidebar);
 }
@@ -246,7 +250,8 @@
 }
 
 .drive-workspace .drive-detail-panel__preview-media {
-  @apply h-full w-full rounded-2xl object-cover;
+  @apply h-full w-full object-cover;
+  border-radius: var(--control-radius);
 }
 
 .drive-workspace .drive-detail-panel__preview .drive-media-preview__fallback svg {
@@ -286,7 +291,8 @@
 }
 
 .drive-workspace .drive-item-actions-trigger {
-  @apply size-7 rounded-full flex items-center justify-center transition-colors;
+  @apply size-7 flex items-center justify-center transition-colors;
+  border-radius: var(--control-radius-pill);
   color: color-mix(in oklab, var(--color-ink) 70%, transparent);
 }
 

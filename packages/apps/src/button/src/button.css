@@ -34,8 +34,8 @@
   --button-icon-size: 1rem;
 }
 
-.button--pill {
-  border-radius: 9999px;
+.button.button--pill {
+  border-radius: var(--control-radius-button-pill);
 }
 
 .button__icon > svg {

@@ -72,7 +72,8 @@
 }
 
 :is(.admin-workspace, .admin-dialog-surface) .admin-backup-version-pill {
-  @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium;
+  @apply inline-flex items-center px-2 py-0.5 text-xs font-medium;
+  border-radius: var(--control-radius-pill);
   background-color: color-mix(in oklab, var(--color-ink) 8%, transparent);
   color: var(--color-ink);
 }
