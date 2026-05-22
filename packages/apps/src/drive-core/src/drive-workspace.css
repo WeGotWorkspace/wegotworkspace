@@ -51,6 +51,7 @@
 }
 
 .drive-workspace .drive-detail-actions {
+  @apply px-5 md:px-6;
   --button-subtle-color: color-mix(in oklab, var(--color-ink) 65%, transparent);
   --button-subtle-background: color-mix(in oklab, var(--color-ink) 6%, transparent);
   --button-subtle-hover-background: color-mix(in oklab, var(--color-ink) 18%, transparent);
@@ -190,7 +191,7 @@
 }
 
 .drive-workspace .drive-main-pane__breadcrumbs {
-  @apply px-4 md:px-8 shrink-0;
+  @apply px-2 md:px-6 shrink-0;
   padding-block: 1rem;
   background-color: color-mix(in oklab, var(--color-ink) 5%, transparent);
   border-bottom: 1px solid

@@ -1,5 +1,6 @@
 import { useRef } from "react";
-import { Star, Download, Folder } from "lucide-react";
+import { Star, Download, Folder, HardDrive } from "lucide-react";
+import { Tag } from "@/tag/src/tag";
 import { useAppToast } from "@/hooks/use-app-toast";
 import type { DriveFile, FileKind } from "@/drive-core/src/drive-models";
 import { kindIcon } from "@/drive-core/src/drive-icons";
@@ -613,18 +614,17 @@ export function DriveDetailPanel({
             videoControls
           />
         </div>
-        <p
-          className="text-[10px] uppercase tracking-[0.18em] mb-2"
-          style={{ color: "var(--drive-sidebar)" }}
-        >
-          {file.parent}
-        </p>
-        <h1
-          className="text-2xl md:text-3xl leading-tight mb-4 tracking-tight break-words font-semibold"
-          style={{ fontFamily: "var(--font-sans)", color: "var(--color-ink)" }}
-        >
-          {file.title}
-        </h1>
+        <div className="drive-detail-panel__path">
+          <Tag
+            label={file.parent}
+            icon={<HardDrive className="size-3.5 opacity-70" />}
+            colors={{
+              backgroundColor: "color-mix(in oklab, var(--drive-sidebar) 12%, transparent)",
+              color: "var(--drive-sidebar)",
+            }}
+          />
+        </div>
+        <h1 className="drive-detail-panel__title">{file.title}</h1>
         <dl className="space-y-2 text-sm mb-6">
           <Row label="Type" value={file.kind} />
           <Row label="Size" value={file.size} />

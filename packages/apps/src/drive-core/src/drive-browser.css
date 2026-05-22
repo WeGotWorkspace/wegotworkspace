@@ -16,7 +16,7 @@
 }
 
 .drive-workspace .drive-grid-layout {
-  @apply p-3 sm:p-5 md:p-8 space-y-6 sm:space-y-8;
+  @apply px-2 md:px-6 py-3 sm:py-5 md:py-8 space-y-6 sm:space-y-8;
 }
 
 .drive-workspace .drive-grid {
@@ -67,9 +67,7 @@
 
 .drive-workspace .drive-folder-tile--selected {
   background-color: color-mix(in oklab, var(--color-emerald) 18%, transparent);
-  box-shadow:
-    inset 0 0 0 3px var(--color-emerald),
-    0 0 0 1px color-mix(in oklab, var(--color-emerald) 35%, transparent);
+  box-shadow: 0 0 0 2px var(--color-emerald);
 }
 
 .drive-workspace .drive-folder-tile--idle {
@@ -102,19 +100,12 @@
 }
 
 .drive-workspace .drive-file-tile--selected {
-  box-shadow:
-    inset 0 0 0 3px var(--color-emerald),
-    0 0 0 1px color-mix(in oklab, var(--color-emerald) 35%, transparent);
-  outline: 2px solid var(--color-emerald);
-  outline-offset: -2px;
+  box-shadow: 0 0 0 2px var(--color-emerald);
 }
 
 .drive-workspace .drive-file-tile__star-badge {
-  @apply absolute top-2 right-2 z-10 p-1.5 pointer-events-none;
-  border-radius: var(--control-radius-pill);
-  background-color: color-mix(in oklab, var(--color-cream, #ffffff) 90%, transparent);
+  @apply absolute top-2 right-2 z-10 pointer-events-none;
   color: var(--color-emerald);
-  box-shadow: 0 2px 8px color-mix(in oklab, var(--color-ink) 20%, transparent);
 }
 
 .drive-workspace .drive-file-tile__preview {
@@ -156,7 +147,6 @@
 .drive-workspace .drive-file-tile__footer {
   @apply px-3.5 py-3 sm:px-4 sm:py-3.5 flex items-center gap-2.5 border-t;
   border-color: color-mix(in oklab, var(--color-ink) 8%, transparent);
-  background-color: var(--color-cream, #ffffff);
 }
 
 .drive-workspace .drive-file-tile__kind-icon {
@@ -260,13 +250,12 @@
 }
 
 .drive-workspace .drive-detail-panel__path {
-  @apply text-[10px] uppercase tracking-[0.18em] mb-2;
-  color: var(--drive-sidebar);
+  @apply mb-3;
 }
 
 .drive-workspace .drive-detail-panel__title {
   @apply text-2xl md:text-3xl leading-tight mb-4 tracking-tight break-words font-semibold;
-  font-family: var(--font-sans);
+  font-family: var(--font-serif);
   color: var(--color-ink);
 }
 

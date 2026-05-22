@@ -12,7 +12,7 @@
   justify-content: center;
   width: 2.25rem;
   height: 2.25rem;
-  border-radius: 0.75rem;
+  border-radius: var(--control-radius);
   color: var(--path-breadcrumb-lead-color, var(--path-breadcrumb-current-color, var(--color-ink)));
   background-color: var(
     --path-breadcrumb-lead-bg,
@@ -107,7 +107,7 @@
 .path-breadcrumb--sm .path-breadcrumb__lead {
   width: 1.75rem;
   height: 1.75rem;
-  border-radius: 0.5rem;
+  border-radius: var(--control-radius);
 }
 
 .path-breadcrumb--sm .path-breadcrumb__lead svg {
