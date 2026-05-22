@@ -1,6 +1,6 @@
 import { Check, Hand, X } from "lucide-react";
+import { IconButton } from "@/button/src/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/ui/popover";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/tooltip";
 import { UserAvatar } from "@/user-avatar/src/user-avatar";
 import { meetLabels } from "@/meet-core/src/meet-labels";
 
@@ -15,21 +15,15 @@ type MeetKnockBadgeProps = {
 export function MeetKnockBadge({ knockers, onAdmit, onDeny }: MeetKnockBadgeProps) {
   return (
     <Popover>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              className="meet-knock-badge"
-              aria-label={meetLabels.waitingToJoin(knockers.length)}
-            >
-              <Hand className="size-4" />
-              <span className="meet-knock-badge__count">{knockers.length}</span>
-            </button>
-          </PopoverTrigger>
-        </TooltipTrigger>
-        <TooltipContent>{meetLabels.waitingToJoin(knockers.length)}</TooltipContent>
-      </Tooltip>
+      <PopoverTrigger asChild>
+        <IconButton
+          icon={<Hand />}
+          label={meetLabels.waitingToJoin(knockers.length)}
+          variant="subtle"
+          className="meet-knock-badge"
+          data-count={knockers.length}
+        />
+      </PopoverTrigger>
       <PopoverContent align="end" className="meet-popover-surface w-80 p-2">
         <div className="space-y-1">
           {knockers.map((knocker) => (
@@ -41,22 +35,24 @@ export function MeetKnockBadge({ knockers, onAdmit, onDeny }: MeetKnockBadgeProp
                   {meetLabels.wantsToJoin}
                 </div>
               </div>
-              <button
-                type="button"
+              <IconButton
                 onClick={() => onDeny(knocker.id)}
+                icon={<X />}
+                label={`Deny ${knocker.name}`}
+                variant="ghost"
+                size="sm"
+                showTooltip={false}
                 className="meet-knock-row__deny"
-                aria-label={`Deny ${knocker.name}`}
-              >
-                <X className="size-4" />
-              </button>
-              <button
-                type="button"
+              />
+              <IconButton
                 onClick={() => onAdmit(knocker.id)}
+                icon={<Check />}
+                label={`Admit ${knocker.name}`}
+                variant="primary"
+                size="sm"
+                showTooltip={false}
                 className="meet-knock-row__admit"
-                aria-label={`Admit ${knocker.name}`}
-              >
-                <Check className="size-4" />
-              </button>
+              />
             </div>
           ))}
         </div>

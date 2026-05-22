@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Hand, Mic, MicOff, Settings as SettingsIcon, Video, VideoOff } from "lucide-react";
 import { Button } from "@/button/src/button";
+import { FieldLabelRow } from "@/ui/field-label-row";
 import { Input } from "@/ui/input";
-import { Label } from "@/ui/label";
 import { UserAvatar } from "@/user-avatar/src/user-avatar";
 import { MeetCircleToggle } from "@/meet-core/src/meet-circle-toggle";
 import { MeetDeviceRow } from "@/meet-core/src/meet-device-row";
@@ -156,14 +156,13 @@ export function MeetLobbyPane({
       </div>
 
       <div className="meet-workspace__form">
-        <div className="meet-workspace__field">
-          <Label className="meet-workspace__field-label">{meetLabels.displayNameLabel}</Label>
+        <FieldLabelRow label={meetLabels.displayNameLabel}>
           <Input
             value={controller.displayName}
             onChange={(event) => controller.setDisplayName(event.target.value)}
-            className="meet-workspace__name-input"
+            className="meet-workspace__display-name-input"
           />
-        </div>
+        </FieldLabelRow>
 
         <MeetDeviceRow
           icon={<Video />}
@@ -197,6 +196,8 @@ export function MeetLobbyPane({
 
         {!waitingForAdmission ? (
           <Button
+            variant="primary"
+            pill
             onClick={() => {
               if (invitedRoom) {
                 void (hasSignedInIdentity
@@ -222,6 +223,7 @@ export function MeetLobbyPane({
           <Button
             onClick={() => void controller.leave()}
             variant="outline"
+            pill
             className="meet-workspace__secondary-button"
           >
             {meetLabels.cancelRequest}
