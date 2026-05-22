@@ -95,13 +95,17 @@ pnpm --filter @wgw/onlyoffice-web build
 
 ## Release artifacts
 
-Release ZIP files are built in CI from signed tag pushes (`v*`) via `.github/workflows/release.yml`.
+Release ZIP files are built in CI from **signed annotated** tag pushes (`v*`) via `.github/workflows/release.yml`.
 
-Local build command:
+| Command | What it does |
+|---------|----------------|
+| `pnpm release` | `pnpm build` + package to `dist/releases/` (loads signing key from repo-root `.env`) |
+| `pnpm release -- --skip-build` | Package only (when `pnpm build` already ran) |
+| `pnpm release:publish patch` | Bump `apps/wegotworkspace/VERSION`, commit, **signed** tag, push → CI publishes the GitHub Release |
+| `pnpm release:publish 1.2.3 --yes` | Same with an explicit version and no confirmation prompt |
+| `pnpm release:publish patch --verify` | Run a local `pnpm release` before commit (catch build errors early) |
 
-```bash
-pnpm release
-```
+Publish requires a clean git tree and [git tag signing](https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work) configured (`user.signingkey`). Set `WGW_RELEASE_SIGNING_PRIVATE_KEY` in repo-root `.env` (see `.env.example`) for local signed manifests; CI uses the `WGW_RELEASE_SIGNING_PRIVATE_KEY` repository secret.
 
 The deploy artifact includes `INSTALL.md` so people downloading a release get the install steps directly in the package.
 

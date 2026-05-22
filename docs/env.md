@@ -12,7 +12,7 @@ Three layers — keep secrets in one place per runtime.
 
 1. **Do not copy `APP_KEY` or DB credentials into the repo root** — Laravel reads `packages/api/.env` only.
 2. **Do not copy Laravel secrets into `.env.local`** — the browser bundle must not see them; use `VITE_WGW_DEV_USERNAME` / `VITE_WGW_DEV_PASSWORD` for Storybook login only.
-3. **`pnpm dev` / `pnpm dev:ui`** load root `.env` for scripts; the PHP API still uses `packages/api/.env` whether it runs on the host (`pnpm dev:api`) or in Docker (mount + entrypoint copy on release sync only).
+3. **`pnpm dev` / `pnpm dev:ui` / `pnpm release` / `pnpm release:publish`** load root `.env` via `tools/with-root-env.sh`; the PHP API still uses `packages/api/.env` whether it runs on the host (`pnpm dev:api`) or in Docker (mount + entrypoint copy on release sync only).
 4. After changing **`packages/api/.env`**, restart PHP (or `pnpm docker:up` again) so Laravel picks up changes.
 
 ## First-time API env
