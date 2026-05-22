@@ -1,8 +1,23 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAppToast } from "@/hooks/use-app-toast";
-import type { AdminSection } from "@/admin-core/src/admin-types";
+import type { AdminSection, AdminUpdateState } from "@/admin-core/src/admin-types";
 import type { AdminWorkspaceProps } from "@/admin-core/src/admin-workspace-props";
 import { useAdminSidebarModel } from "@/admin-core/src/use-admin-sidebar-model";
+
+/** Keep the progress card visible during POST /apply while merging poll snapshots. */
+function mergePendingApplyPoll(prev: AdminUpdateState, next: AdminUpdateState): AdminUpdateState {
+  return {
+    ...prev,
+    ...next,
+    inProgress: true,
+    phase: next.phase ?? prev.phase ?? "downloading",
+    current: next.current ?? prev.current,
+    download: next.download ?? prev.download,
+    phaseProgress: next.phaseProgress ?? prev.phaseProgress,
+    cancelRequested: next.cancelRequested,
+    cancelAllowed: next.cancelAllowed,
+  };
+}
 
 type SettingsFormState = {
   imapHost: string;
@@ -133,14 +148,7 @@ export function useAdminController({
           if (!cancelled) {
             setUpdates((prev) => {
               if (applyRequestPendingRef.current && !nextUpdates.inProgress) {
-                return {
-                  ...prev,
-                  inProgress: true,
-                  phase: prev.phase ?? "downloading",
-                  current: prev.current,
-                  cancelRequested: false,
-                  lastResult: null,
-                };
+                return mergePendingApplyPoll(prev, nextUpdates);
               }
               return nextUpdates;
             });
@@ -150,14 +158,7 @@ export function useAdminController({
           if (!cancelled) {
             setUpdates((prev) => {
               if (applyRequestPendingRef.current && !next.updates.inProgress) {
-                return {
-                  ...prev,
-                  inProgress: true,
-                  phase: prev.phase ?? "downloading",
-                  current: prev.current,
-                  cancelRequested: false,
-                  lastResult: null,
-                };
+                return mergePendingApplyPoll(prev, next.updates);
               }
               return next.updates;
             });
