@@ -102,12 +102,65 @@ ensure_signing_key() {
   fi
 }
 
-ensure_tag_signing() {
-  if ! git -C "$ROOT" config --get user.signingkey &>/dev/null; then
-    echo "error: git user.signingkey is not configured (required for signed tags)." >&2
-    echo "       Set GPG or SSH commit signing, then retry." >&2
-    exit 1
+# Git -c args for signed tags (set by resolve_git_tag_signing).
+GIT_TAG_SIGN_ARGS=()
+
+expand_home() {
+  local path="$1"
+  if [[ "$path" == "~/"* ]]; then
+    printf '%s/%s' "$HOME" "${path:2}"
+  elif [[ "$path" == "~" ]]; then
+    printf '%s' "$HOME"
+  else
+    printf '%s' "$path"
   fi
+}
+
+resolve_git_tag_signing() {
+  GIT_TAG_SIGN_ARGS=()
+
+  local from_env="${WGW_GIT_SIGNING_PUBLIC_KEY:-}"
+  if [[ -n "$from_env" ]]; then
+    from_env="$(expand_home "$from_env")"
+    if [[ ! -f "$from_env" ]]; then
+      echo "error: WGW_GIT_SIGNING_PUBLIC_KEY is set but not a file: ${from_env}" >&2
+      exit 1
+    fi
+    GIT_TAG_SIGN_ARGS=(-c gpg.format=ssh -c "user.signingkey=${from_env}")
+    return 0
+  fi
+
+  local from_git
+  from_git="$(git -C "$ROOT" config --get user.signingkey 2>/dev/null || true)"
+  if [[ -n "$from_git" ]]; then
+    local format="gpg"
+    format="$(git -C "$ROOT" config --get gpg.format 2>/dev/null || echo gpg)"
+    GIT_TAG_SIGN_ARGS=(-c "gpg.format=${format}" -c "user.signingkey=${from_git}")
+    return 0
+  fi
+
+  cat >&2 <<'EOF'
+error: Git tag signing is not configured (CI requires signed annotated tags).
+
+Release ZIP signing and Git tag signing use different keys:
+  • WGW_RELEASE_SIGNING_PRIVATE_KEY — RSA PEM for manifest.sig (release artifacts)
+  • WGW_GIT_SIGNING_PUBLIC_KEY       — SSH public key for git tag -s
+
+Option A — add to repo-root .env (loaded by pnpm release:publish):
+  WGW_GIT_SIGNING_PUBLIC_KEY=$HOME/.ssh/id_ed25519.pub
+
+Option B — configure git globally (SSH):
+  git config --global gpg.format ssh
+  git config --global user.signingkey ~/.ssh/id_ed25519.pub
+
+Option B — GPG:
+  git config --global user.signingkey <key-id>
+EOF
+  exit 1
+}
+
+git_tag_sign() {
+  git -C "$ROOT" "${GIT_TAG_SIGN_ARGS[@]}" "$@"
 }
 
 cmd_package() {
@@ -146,7 +199,7 @@ cmd_publish() {
   [[ $# -eq 0 ]] || usage
 
   require_clean_tree
-  ensure_tag_signing
+  resolve_git_tag_signing
 
   local current new tag
   current="$(read_version)"
@@ -177,7 +230,7 @@ cmd_publish() {
 
   git -C "$ROOT" add "$VERSION_FILE"
   git -C "$ROOT" commit -m "chore(release): ${tag}"
-  git -C "$ROOT" tag -s "$tag" -m "chore(release): ${tag}"
+  git_tag_sign tag -s "$tag" -m "chore(release): ${tag}"
 
   echo "→ Created commit and signed tag ${tag}"
   if [[ "$no_push" -eq 1 ]]; then
