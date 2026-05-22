@@ -117,11 +117,11 @@ const SLASH_COMMANDS: SlashCommand[] = [
   },
 ];
 
-export type MarkdownEditorSlashMenuProps = {
+export type TextEditorSlashMenuProps = {
   editor: Editor | null;
 };
 
-export function MarkdownEditorSlashMenu({ editor }: MarkdownEditorSlashMenuProps) {
+export function TextEditorSlashMenu({ editor }: TextEditorSlashMenuProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
@@ -138,7 +138,7 @@ export function MarkdownEditorSlashMenu({ editor }: MarkdownEditorSlashMenuProps
         setQuery(m[1]);
         setActive(0);
         const coords = editor.view.coordsAtPos(from);
-        const wrap = editor.view.dom.closest(".markdown-editor-scroll") as HTMLElement | null;
+        const wrap = editor.view.dom.closest(".text-editor-scroll") as HTMLElement | null;
         const rect = wrap?.getBoundingClientRect();
         setPos({
           top: coords.bottom - (rect?.top ?? 0) + (wrap?.scrollTop ?? 0) + 6,
@@ -191,10 +191,10 @@ export function MarkdownEditorSlashMenu({ editor }: MarkdownEditorSlashMenuProps
     <div
       ref={containerRef}
       style={{ top: pos.top, left: pos.left }}
-      className="markdown-editor-slash-menu no-print"
+      className="text-editor-slash-menu no-print"
     >
-      <div className="markdown-editor-slash-menu__label">Basic blocks</div>
-      <ul className="markdown-editor-slash-menu__list">
+      <div className="text-editor-slash-menu__label">Basic blocks</div>
+      <ul className="text-editor-slash-menu__list">
         {filtered.map((c, i) => (
           <li key={c.title}>
             <button
@@ -206,16 +206,16 @@ export function MarkdownEditorSlashMenu({ editor }: MarkdownEditorSlashMenuProps
               }}
               onMouseEnter={() => setActive(i)}
               className={cn(
-                "markdown-editor-slash-menu__item",
-                i === active && "markdown-editor-slash-menu__item--active",
+                "text-editor-slash-menu__item",
+                i === active && "text-editor-slash-menu__item--active",
               )}
             >
-              <span className="markdown-editor-slash-menu__icon">
+              <span className="text-editor-slash-menu__icon">
                 <c.icon className="h-4 w-4" />
               </span>
-              <span className="markdown-editor-slash-menu__copy">
-                <span className="markdown-editor-slash-menu__title">{c.title}</span>
-                <span className="markdown-editor-slash-menu__desc">{c.desc}</span>
+              <span className="text-editor-slash-menu__copy">
+                <span className="text-editor-slash-menu__title">{c.title}</span>
+                <span className="text-editor-slash-menu__desc">{c.desc}</span>
               </span>
             </button>
           </li>

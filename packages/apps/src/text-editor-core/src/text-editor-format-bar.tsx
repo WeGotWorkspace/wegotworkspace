@@ -50,30 +50,27 @@ function FormatBarButton({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={cn(
-        "markdown-editor-format-bar__btn",
-        active && "markdown-editor-format-bar__btn--active",
-      )}
+      className={cn("text-editor-format-bar__btn", active && "text-editor-format-bar__btn--active")}
     >
       {children}
     </button>
   );
 }
 
-const FormatBarSeparator = () => <div className="markdown-editor-format-bar__sep" />;
+const FormatBarSeparator = () => <div className="text-editor-format-bar__sep" />;
 
-export type MarkdownEditorFormatBarProps = {
+export type TextEditorFormatBarProps = {
   editor: Editor | null;
   /** Show a print action that calls `window.print()`. */
   showPrint?: boolean;
   className?: string;
 };
 
-export function MarkdownEditorFormatBar({
+export function TextEditorFormatBar({
   editor,
   showPrint = true,
   className,
-}: MarkdownEditorFormatBarProps) {
+}: TextEditorFormatBarProps) {
   const [linkOpen, setLinkOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
 
@@ -127,7 +124,7 @@ export function MarkdownEditorFormatBar({
   };
 
   return (
-    <div className={cn("markdown-editor-format-bar no-print", className)}>
+    <div className={cn("text-editor-format-bar no-print", className)}>
       <FormatBarButton title="Undo" disabled={!state.canUndo} onClick={() => chain().undo().run()}>
         <Undo2 className="h-4 w-4" />
       </FormatBarButton>
@@ -141,8 +138,8 @@ export function MarkdownEditorFormatBar({
             type="button"
             title="Heading level"
             className={cn(
-              "markdown-editor-format-bar__heading-trigger",
-              state.headingLevel > 0 && "markdown-editor-format-bar__btn--active",
+              "text-editor-format-bar__heading-trigger",
+              state.headingLevel > 0 && "text-editor-format-bar__btn--active",
             )}
           >
             <span>{state.headingLevel > 0 ? `H${state.headingLevel}` : "Text"}</span>
@@ -244,11 +241,11 @@ export function MarkdownEditorFormatBar({
         <Link2 className="h-4 w-4" />
       </FormatBarButton>
       {showPrint ? (
-        <div className="markdown-editor-format-bar__print">
+        <div className="text-editor-format-bar__print">
           <button
             type="button"
             onClick={() => window.print()}
-            className="markdown-editor-format-bar__print-btn"
+            className="text-editor-format-bar__print-btn"
           >
             <Printer className="h-3.5 w-3.5" /> Print
           </button>
