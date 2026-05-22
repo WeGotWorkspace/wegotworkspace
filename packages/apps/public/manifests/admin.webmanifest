@@ -5,8 +5,8 @@
   "scope": "/admin",
   "id": "/admin",
   "display": "standalone",
-  "background_color": "#2f302c",
-  "theme_color": "#2f302c",
+  "background_color": "#4a5059",
+  "theme_color": "#4a5059",
   "icons": [
     {
       "src": "/icons/admin-192.png",

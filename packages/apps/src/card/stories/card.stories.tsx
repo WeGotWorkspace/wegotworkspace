@@ -39,7 +39,7 @@ export const EditableFormLike: Story = {
         <Button
           label="Save"
           variant="subtle"
-          style={{ backgroundColor: "#94a3b8", color: "var(--color-ink)" }}
+          style={{ backgroundColor: "#949dad", color: "var(--color-ink)" }}
         />
       </div>
     </Card>

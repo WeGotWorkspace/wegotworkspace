@@ -3,11 +3,11 @@
 /* Pane class fragments: `settings-workspace.styles.ts` (must stay in sync). */
 
 /**
- * Settings product shell: cream main pane + neutral slate sidebar accent.
+ * Settings product shell: cream main pane + light gray sidebar (admin accent tint).
  * Import only from {@link SettingsWorkspace}.
  */
 .settings-workspace {
-  --settings-accent: #94a3b8;
+  --settings-accent: color-mix(in oklab, #4a5059 50%, #ffffff);
   --settings-sidebar: var(--settings-accent);
   --settings-accent-bg: var(--settings-accent);
   --workspace-accent: var(--settings-accent);
