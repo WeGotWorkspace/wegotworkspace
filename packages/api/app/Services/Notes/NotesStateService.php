@@ -6,17 +6,15 @@ namespace App\Services\Notes;
 
 use App\Models\Principal;
 use App\Support\ApiUrlBuilder;
-use App\Support\WgwInstallConfig;
+use App\Support\AppPaths;
 use App\Support\WgwSettings;
-use Illuminate\Support\Facades\File;
 
 final class NotesStateService
 {
     public function __construct(
         private ApiUrlBuilder $urls,
-        private WgwInstallConfig $install,
-    ) {
-    }
+        private AppPaths $paths,
+    ) {}
 
     /**
      * @return array<string, mixed>
@@ -34,7 +32,7 @@ final class NotesStateService
             'logoutUrl' => $this->urls->logout(),
             'notesPath' => $this->urls->appPath('notes/'),
             'filesEnabled' => (bool) ($cfg[WgwSettings::FILES_ENABLED] ?? true),
-            'distReady' => File::isFile($this->install->installRoot().'/packages/apps/notes/dist/index.html'),
+            'distReady' => $this->paths->appDistIndex('notes') !== null,
         ];
     }
 }

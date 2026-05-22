@@ -6,9 +6,7 @@ namespace App\Support;
 
 final class AppVersion
 {
-    public function __construct(private WgwInstallConfig $install)
-    {
-    }
+    public function __construct(private WgwInstallConfig $install) {}
 
     public function current(): string
     {

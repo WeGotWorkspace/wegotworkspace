@@ -1,6 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { MeetChatPane } from "@/meet-core/src/meet-chat-pane";
-import { MeetChatPaneStory, type MeetChatPaneStoryArgs } from "@/meet-core/stories/meet-story-renders";
+import {
+  MeetChatPaneStory,
+  type MeetChatPaneStoryArgs,
+} from "@/meet-core/stories/meet-story-renders";
 import {
   meetStoryParameters,
   storyBooleanControl,

@@ -8,9 +8,7 @@ use Illuminate\Http\Request;
 
 final class ApiUrlBuilder
 {
-    public function __construct(private Request $request)
-    {
-    }
+    public function __construct(private Request $request) {}
 
     public function v1(string $path): string
     {

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Support\WgwDatabaseConfig;
-use App\Support\WgwInstallConfig;
 use App\Storage\NoteStoragePaths;
 use App\Storage\StoragePaths;
 use App\Storage\WgwStorage;
+use App\Support\WgwDatabaseConfig;
+use App\Support\WgwInstallConfig;
 use Illuminate\Support\ServiceProvider;
 
 final class WgwServiceProvider extends ServiceProvider

@@ -43,7 +43,9 @@ export function mergeDriveFolderListing(
   const folderPath = uiPathFromApiPath(nextData.cwd, username);
   const serverFiles = mapDriveListingEntries(nextData, username);
   const serverIds = new Set(serverFiles.map((file) => file.id));
-  const staged = previousFiles.filter((file) => file.parent === folderPath && !serverIds.has(file.id));
+  const staged = previousFiles.filter(
+    (file) => file.parent === folderPath && !serverIds.has(file.id),
+  );
   return [...serverFiles, ...staged];
 }
 

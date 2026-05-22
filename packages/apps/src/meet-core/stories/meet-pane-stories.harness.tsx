@@ -51,23 +51,23 @@ export function MeetLobbyPaneHarness(
     <MeetStoryScope>
       <div className="meet-workspace__lobby flex-1 min-h-dvh">
         <MeetLobbyPane
-        controller={controller}
-        displayName={props.displayName ?? controller.displayName}
-        inJoinFlow={props.inJoinFlow ?? false}
-        hasSignedInIdentity={props.hasSignedInIdentity ?? true}
-        invitedRoom={props.invitedRoom ?? null}
-        waitingForAdmission={props.waitingForAdmission ?? false}
-        knockDots={knockDots}
-        cameras={props.cameras ?? devices.cameras}
-        microphones={props.microphones ?? devices.microphones}
-        speakers={props.speakers ?? devices.speakers}
-        activeCamera={props.activeCamera ?? devices.activeCamera}
-        activeMic={props.activeMic ?? devices.activeMic}
-        activeSpeaker={props.activeSpeaker ?? devices.activeSpeaker}
-        onSpeakerChange={props.onSpeakerChange ?? devices.setActiveSpeaker}
-        endedMessage={props.endedMessage ?? null}
-        showMissingInviteScreen={props.showMissingInviteScreen ?? false}
-        showInviteCheckingScreen={props.showInviteCheckingScreen ?? false}
+          controller={controller}
+          displayName={props.displayName ?? controller.displayName}
+          inJoinFlow={props.inJoinFlow ?? false}
+          hasSignedInIdentity={props.hasSignedInIdentity ?? true}
+          invitedRoom={props.invitedRoom ?? null}
+          waitingForAdmission={props.waitingForAdmission ?? false}
+          knockDots={knockDots}
+          cameras={props.cameras ?? devices.cameras}
+          microphones={props.microphones ?? devices.microphones}
+          speakers={props.speakers ?? devices.speakers}
+          activeCamera={props.activeCamera ?? devices.activeCamera}
+          activeMic={props.activeMic ?? devices.activeMic}
+          activeSpeaker={props.activeSpeaker ?? devices.activeSpeaker}
+          onSpeakerChange={props.onSpeakerChange ?? devices.setActiveSpeaker}
+          endedMessage={props.endedMessage ?? null}
+          showMissingInviteScreen={props.showMissingInviteScreen ?? false}
+          showInviteCheckingScreen={props.showInviteCheckingScreen ?? false}
         />
       </div>
     </MeetStoryScope>
@@ -94,26 +94,26 @@ export function MeetRoomPaneHarness(
         }
       >
         <MeetRoomPane
-        controller={controller}
-        displayName={props.displayName ?? controller.displayName}
-        hasSignedInIdentity={props.hasSignedInIdentity ?? true}
-        participantCount={props.participantCount ?? controller.peers.length + 1}
-        chatOpen={chatOpen}
-        onToggleChat={props.onToggleChat ?? (() => setChatOpen((open) => !open))}
-        callExitLabel={props.callExitLabel ?? meetLabels.endCall}
-        callExitTitle={props.callExitTitle ?? meetLabels.endCallTitle}
-        callExitDescription={props.callExitDescription ?? meetLabels.endCallDescription}
-        cameras={props.cameras ?? devices.cameras}
-        microphones={props.microphones ?? devices.microphones}
-        speakers={props.speakers ?? devices.speakers}
-        activeCamera={props.activeCamera ?? devices.activeCamera}
-        activeMic={props.activeMic ?? devices.activeMic}
-        activeSpeaker={props.activeSpeaker ?? devices.activeSpeaker}
-        onSpeakerChange={props.onSpeakerChange ?? devices.setActiveSpeaker}
-        onCopyLink={props.onCopyLink ?? (() => {})}
-        onMuteSoon={props.onMuteSoon ?? (() => {})}
-        onToastInfo={props.onToastInfo ?? (() => {})}
-        onToastError={props.onToastError ?? (() => {})}
+          controller={controller}
+          displayName={props.displayName ?? controller.displayName}
+          hasSignedInIdentity={props.hasSignedInIdentity ?? true}
+          participantCount={props.participantCount ?? controller.peers.length + 1}
+          chatOpen={chatOpen}
+          onToggleChat={props.onToggleChat ?? (() => setChatOpen((open) => !open))}
+          callExitLabel={props.callExitLabel ?? meetLabels.endCall}
+          callExitTitle={props.callExitTitle ?? meetLabels.endCallTitle}
+          callExitDescription={props.callExitDescription ?? meetLabels.endCallDescription}
+          cameras={props.cameras ?? devices.cameras}
+          microphones={props.microphones ?? devices.microphones}
+          speakers={props.speakers ?? devices.speakers}
+          activeCamera={props.activeCamera ?? devices.activeCamera}
+          activeMic={props.activeMic ?? devices.activeMic}
+          activeSpeaker={props.activeSpeaker ?? devices.activeSpeaker}
+          onSpeakerChange={props.onSpeakerChange ?? devices.setActiveSpeaker}
+          onCopyLink={props.onCopyLink ?? (() => {})}
+          onMuteSoon={props.onMuteSoon ?? (() => {})}
+          onToastInfo={props.onToastInfo ?? (() => {})}
+          onToastError={props.onToastError ?? (() => {})}
         />
       </div>
     </MeetStoryScope>

@@ -20,27 +20,56 @@ That guide is intentionally short and covers:
 
 ## Local development
 
-Requirements:
-- PHP 8.3+
-- Node.js 20+
-- pnpm 9+
-
-From the repository root:
+**Once:** install dependencies and API env (see [`docs/env.md`](docs/env.md)).
 
 ```bash
 pnpm install
-pnpm dev
+composer --working-dir packages/api install
+cp packages/api/.env.example packages/api/.env   # then edit / key:generate
 ```
 
-`pnpm dev` bootstraps `packages/apps` and `packages/api` into `apps/wegotworkspace`, starts Storybook on port 6006, and keeps watching both packages and re-syncing on change (Vite rebuild + runtime copy for UI, file sync for API).
+**Every day** (Docker API + UI on the host):
 
-For **Live API** stories (and mail/notes against a real backend), copy `packages/apps/.env.example` to **`.env.local` at the repo root**, set `VITE_WGW_DEV_USERNAME` / `VITE_WGW_DEV_PASSWORD`, then run **`pnpm dev:php`** in a second terminal (`http://127.0.0.1:9080`). Storybook proxies `/api/v1` there by default (not Apache `:8443`, which can crash on IMAP and show Vite `socket hang up`).
+```bash
+pnpm docker:up
+pnpm dev:ui
+```
 
-Optional: `pnpm dev:storybook` (Storybook only), `pnpm dev:onlyoffice` (ONLYOFFICE web package). Use `pnpm build` for a full production build (CI/release).
+Open **http://127.0.0.1:6006** (Storybook). The UI proxies `/api/v1` to the API on **http://127.0.0.1:9080**.
 
-Open `http://127.0.0.1:8080/install/`.
+Edit code in **`packages/api`** and **`packages/apps`** — nothing is copied into `apps/wegotworkspace` during normal dev. Details: [`docs/dev-layout.md`](docs/dev-layout.md).
 
-Frontend note: all first-party web apps (`/admin`, `/drive`, `/mail`, `/notes`, `/voice`, `/settings`, `/home`, `/install`) are built from `packages/apps` and emitted into `apps/wegotworkspace/packages/apps/*/dist/`.
+### WebDAV / HTTPS
+
+For CalDAV/CardDAV/WebDAV clients that need TLS and a stable hostname:
+
+```bash
+pnpm docker:ssl:setup    # once: mkcert + /etc/hosts → 127.0.0.1 wegotworkspace.local
+pnpm docker:up
+```
+
+Then use **https://wegotworkspace.local/** (see [`docker/README.md`](docker/README.md)).
+
+### Other commands
+
+| Command | Use |
+|---------|-----|
+| `pnpm dev` | Host PHP API + UI + Storybook (no Docker) |
+| `pnpm dev:api` | PHP API only on `:9080` |
+| `pnpm dev:preview` | Release-like sync into `apps/wegotworkspace/packages/` |
+| `pnpm build` | Production build + runtime sync (CI/release) |
+| `pnpm test:api-e2e:docker` | Playwright against Docker stack |
+
+Environment variables: [`docs/env.md`](docs/env.md).
+
+CI-quality checks locally: `pnpm run ci:quality` (typegen, lint, format, typecheck, API done gate).
+
+Git hooks (installed on `pnpm install` via Husky):
+
+- **pre-commit** — Prettier + ESLint fix on staged `@wgw/apps` files; Pint on staged `packages/api` PHP
+- **commit-msg** — [Conventional Commits](https://www.conventionalcommits.org/) via Commitlint (`feat(scope): subject`)
+
+Use `HUSKY=0 git commit` to skip hooks once. Full gate before push: `pnpm run ci:quality`.
 
 ## Updating ONLYOFFICE Web
 

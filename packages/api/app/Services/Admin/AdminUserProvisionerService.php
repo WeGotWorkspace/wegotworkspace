@@ -14,7 +14,6 @@ use App\Support\WgwSettings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Sabre\CalDAV\Backend\PDO as CalPDO;
-use Sabre\CalDAV\Xml\Property\SupportedCalendarComponentSet;
 use Sabre\CardDAV\Backend\PDO as CardPDO;
 
 final class AdminUserProvisionerService
@@ -23,11 +22,10 @@ final class AdminUserProvisionerService
         private GroupDirectoryService $groups,
         private InstallerSeeder $installerSeeder,
         private AppPaths $paths,
-    ) {
-    }
+    ) {}
 
     /**
-     * @param list<string> $groupUris
+     * @param  list<string>  $groupUris
      */
     public function create(
         string $username,
@@ -64,7 +62,7 @@ final class AdminUserProvisionerService
     }
 
     /**
-     * @param array{displayName?: string, email?: string, password?: string, groups?: list<string>} $input
+     * @param  array{displayName?: string, email?: string, password?: string, groups?: list<string>}  $input
      */
     public function update(string $username, array $input, string $actingAdmin): void
     {
@@ -155,7 +153,7 @@ final class AdminUserProvisionerService
     }
 
     /**
-     * @param list<string> $groupUris
+     * @param  list<string>  $groupUris
      */
     private function syncGroupMemberships(
         string $username,

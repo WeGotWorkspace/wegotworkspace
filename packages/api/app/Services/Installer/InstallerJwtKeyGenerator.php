@@ -9,11 +9,10 @@ use App\Support\AppPaths;
 final class InstallerJwtKeyGenerator
 {
     private const PRIVATE_KEY_FILE = 'api-jwt-private.pem';
+
     private const PUBLIC_KEY_FILE = 'api-jwt-public.pem';
 
-    public function __construct(private AppPaths $paths)
-    {
-    }
+    public function __construct(private AppPaths $paths) {}
 
     public function ensureKeys(): void
     {

@@ -6,7 +6,11 @@ import {
   MeetLobbyPaneHarness,
   MeetRoomPaneHarness,
 } from "@/meet-core/stories/meet-pane-stories.harness";
-import { STORY_MEET_CHAT_MESSAGES, STORY_MEET_KNOCKERS, STORY_MEET_PEERS } from "@/meet-core/stories/meet-pane-stories.fixtures";
+import {
+  STORY_MEET_CHAT_MESSAGES,
+  STORY_MEET_KNOCKERS,
+  STORY_MEET_PEERS,
+} from "@/meet-core/stories/meet-pane-stories.fixtures";
 import { STORY_NOOP } from "@/meet-core/stories/meet-story-shared";
 import { MeetStoryScope } from "@/meet-core/stories/meet-story-scope";
 
@@ -60,7 +64,10 @@ export type MeetRoomPaneStoryArgs = {
 };
 
 export function MeetRoomPaneStory(args: MeetRoomPaneStoryArgs) {
-  const peers = STORY_MEET_PEERS.slice(0, Math.max(0, Math.min(args.peerCount, STORY_MEET_PEERS.length)));
+  const peers = STORY_MEET_PEERS.slice(
+    0,
+    Math.max(0, Math.min(args.peerCount, STORY_MEET_PEERS.length)),
+  );
   const callExitLabel = args.callExitMode === "leave" ? meetLabels.leaveCall : meetLabels.endCall;
   const callExitTitle =
     args.callExitMode === "leave" ? meetLabels.leaveCallTitle : meetLabels.endCallTitle;

@@ -9,9 +9,7 @@ use Illuminate\Http\JsonResponse;
 
 final class HealthController
 {
-    public function __construct(private HealthService $health)
-    {
-    }
+    public function __construct(private HealthService $health) {}
 
     public function __invoke(): JsonResponse
     {

@@ -9,7 +9,9 @@ Greenfield Laravel code uses Eloquent on the **`wgw`** connection. Schema is **n
 | SQLite | `src/sql/sqlite/*.sql` |
 | MySQL | `src/sql/mysql/*.sql` |
 
-Applied by the web installer via `App\Installer\SchemaRunner` (legacy). New API work must stay compatible with these tables.
+Applied by the web installer via `InstallerSchemaRunner`. New API work must stay compatible with these tables.
+
+Incremental upgrades use `InstallerSchemaMigrationRunner` (`app_migrations` versions 1–5). PHPUnit covers stepping from legacy versions 0–4 in `tests/Unit/Installer/InstallerSchemaMigrationRunnerTest.php`.
 
 ## Core product tables (Phase 1 models)
 

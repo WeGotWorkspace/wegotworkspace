@@ -14,9 +14,7 @@ use Illuminate\Http\Request;
 
 final class DocumentsController
 {
-    public function __construct(private OfficeDocumentService $documents)
-    {
-    }
+    public function __construct(private OfficeDocumentService $documents) {}
 
     public function store(OfficeDocumentCreateRequest $request): JsonResponse
     {
@@ -35,7 +33,7 @@ final class DocumentsController
     }
 
     /**
-     * @param callable(): array{ok: bool, path: string, bytes: int} $callback
+     * @param  callable(): array{ok: bool, path: string, bytes: int}  $callback
      */
     private function respond(callable $callback): JsonResponse
     {

@@ -10,9 +10,7 @@ use Illuminate\Http\JsonResponse;
 
 final class SettingsController
 {
-    public function __construct(private AdminSettingsService $settings)
-    {
-    }
+    public function __construct(private AdminSettingsService $settings) {}
 
     public function __invoke(AdminSettingsSaveRequest $request): JsonResponse
     {

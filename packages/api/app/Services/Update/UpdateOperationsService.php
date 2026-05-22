@@ -12,8 +12,7 @@ final class UpdateOperationsService
     public function __construct(
         private UpdateRunner $runner,
         private WgwInstallConfig $install,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<string, mixed>
@@ -24,8 +23,7 @@ final class UpdateOperationsService
     }
 
     /**
-     * @param array<string, mixed> $input
-     *
+     * @param  array<string, mixed>  $input
      * @return array<string, mixed>
      */
     public function apply(array $input): array

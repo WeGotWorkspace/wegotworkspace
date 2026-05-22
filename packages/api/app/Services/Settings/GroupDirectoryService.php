@@ -38,7 +38,7 @@ final class GroupDirectoryService
     }
 
     /**
-     * @param list<string> $memberUsernames Principal URIs or bare usernames
+     * @param  list<string>  $memberUsernames  Principal URIs or bare usernames
      */
     public function replaceMembers(string $groupUri, array $memberUsernames, string $actingAdmin): void
     {
@@ -147,7 +147,7 @@ final class GroupDirectoryService
     }
 
     /**
-     * @param list<string> $members
+     * @param  list<string>  $members
      */
     private function writeMembers(string $groupUri, array $members): void
     {

@@ -1,10 +1,6 @@
 import type { Preview } from "@storybook/react-vite";
 import { Fragment, createElement } from "react";
-import {
-  DEFAULT_VIEWPORT,
-  MINIMAL_VIEWPORTS,
-  responsiveViewport,
-} from "storybook/viewport";
+import { DEFAULT_VIEWPORT, MINIMAL_VIEWPORTS, responsiveViewport } from "storybook/viewport";
 import {
   createMemoryHistory,
   createRootRoute,
@@ -22,12 +18,7 @@ const preview: Preview = {
   decorators: [
     (Story, context) => {
       if (context.parameters.wegotworkspaceRouter) {
-        return createElement(
-          Fragment,
-          null,
-          createElement(Story),
-          createElement(AppToaster),
-        );
+        return createElement(Fragment, null, createElement(Story), createElement(AppToaster));
       }
 
       const initialPath = (context.parameters.routerPath as string) ?? "/notes";

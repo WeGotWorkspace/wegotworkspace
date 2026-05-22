@@ -10,9 +10,7 @@ final class DriveSessionStore
 {
     private const SESSION_KEY = 'drive_cwd';
 
-    public function __construct(private StoragePaths $paths)
-    {
-    }
+    public function __construct(private StoragePaths $paths) {}
 
     public function getCwd(): ?string
     {
@@ -27,7 +25,7 @@ final class DriveSessionStore
     }
 
     /**
-     * @param list<string> $groupSlugs
+     * @param  list<string>  $groupSlugs
      */
     public function resolveCwd(?string $requested, string $username, array $groupSlugs): string
     {

@@ -8,9 +8,7 @@ use App\Support\AppPaths;
 
 final class InstallerSchemaRunner
 {
-    public function __construct(private AppPaths $paths)
-    {
-    }
+    public function __construct(private AppPaths $paths) {}
 
     /**
      * @return list<string>

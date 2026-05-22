@@ -8,12 +8,10 @@ use App\Models\ApiRefreshToken;
 
 final class RefreshTokenRepository
 {
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
-     * @param 'guest'|'user'|'admin' $role
+     * @param  'guest'|'user'|'admin'  $role
      */
     public function issue(string $username, string $role): string
     {

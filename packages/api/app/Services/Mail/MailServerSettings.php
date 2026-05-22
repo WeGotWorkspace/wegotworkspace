@@ -9,7 +9,7 @@ use App\Settings\SettingKeys;
 final class MailServerSettings
 {
     /**
-     * @param array<string, mixed> $cfg
+     * @param  array<string, mixed>  $cfg
      */
     public static function serversConfigured(array $cfg): bool
     {
@@ -20,8 +20,7 @@ final class MailServerSettings
     }
 
     /**
-     * @param array<string, mixed> $cfg
-     *
+     * @param  array<string, mixed>  $cfg
      * @return array{imap: array{host: string, port: int, security: string}, smtp: array{host: string, port: int, security: string}}
      */
     public static function endpoints(array $cfg): array
@@ -41,7 +40,7 @@ final class MailServerSettings
     }
 
     /**
-     * @param array<string, mixed> $cfg
+     * @param  array<string, mixed>  $cfg
      */
     private static function port(array $cfg, string $key, int $fallback): int
     {
@@ -54,7 +53,7 @@ final class MailServerSettings
     }
 
     /**
-     * @param array<string, mixed> $cfg
+     * @param  array<string, mixed>  $cfg
      */
     private static function security(array $cfg, string $key): string
     {

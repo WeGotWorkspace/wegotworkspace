@@ -4,18 +4,17 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Front;
 
-use App\Dav\SabreKernel;
-use App\Services\Ui\UiFrontKernel;
+use App\Dav\SabreWebdavFront;
+use App\Services\Ui\UiStaticFront;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 final class WgwFrontController
 {
     public function __construct(
-        private UiFrontKernel $ui,
-        private SabreKernel $sabre,
-    ) {
-    }
+        private UiStaticFront $ui,
+        private SabreWebdavFront $sabre,
+    ) {}
 
     public function __invoke(Request $request): Response
     {

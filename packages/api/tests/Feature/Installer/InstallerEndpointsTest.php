@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Installer;
 
+use App\LocalConfigFile;
 use Tests\TestCase;
 
 final class InstallerEndpointsTest extends TestCase
@@ -37,7 +38,7 @@ final class InstallerEndpointsTest extends TestCase
             @unlink($this->installRoot.'/wgw-config.php');
         }
 
-        \App\LocalConfigFile::clearCache();
+        LocalConfigFile::clearCache();
 
         parent::tearDown();
     }

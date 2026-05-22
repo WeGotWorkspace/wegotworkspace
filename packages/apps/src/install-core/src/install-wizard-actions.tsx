@@ -18,7 +18,8 @@ export function InstallWizardActions({
     | "setUiStep"
   >;
 }) {
-  const { step, stepIdx, goBack, goNext, canNext, actionPending, mysqlTest, setUiStep } = controller;
+  const { step, stepIdx, goBack, goNext, canNext, actionPending, mysqlTest, setUiStep } =
+    controller;
 
   if (step.id === "done") return null;
 

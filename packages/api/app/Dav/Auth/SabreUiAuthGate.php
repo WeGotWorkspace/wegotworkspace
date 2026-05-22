@@ -83,7 +83,7 @@ final class SabreUiAuthGate
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     private static function expiryFromPayload(array $payload): ?int
     {

@@ -13,7 +13,7 @@ final class WgwStorageTest extends TestCase
 {
     public function test_virtual_path_maps_to_storage_key(): void
     {
-        $paths = new StoragePaths();
+        $paths = new StoragePaths;
         $this->assertSame('users/alice/doc.txt', $paths->virtualToStorageKey('/users/alice/doc.txt'));
         $this->assertSame(
             'users/alice/.notes/note.md',

@@ -10,12 +10,12 @@ use Illuminate\Support\Facades\File;
 final class JwtConfigService
 {
     private const KEY_DIR = 'keys';
+
     private const PRIVATE_KEY_FILE = 'api-jwt-private.pem';
+
     private const PUBLIC_KEY_FILE = 'api-jwt-public.pem';
 
-    public function __construct(private WgwInstallConfig $install)
-    {
-    }
+    public function __construct(private WgwInstallConfig $install) {}
 
     /**
      * @return array{

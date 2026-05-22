@@ -23,9 +23,7 @@ function isUnsupportedNegotiationCodec(codec: string): boolean {
 
 /** H.265/HEVC fmtp; do not match H.264 `profile-level-id`. */
 function isH265FmtpParams(params: string): boolean {
-  return (
-    /(?:^|;)level-id=\d+\b/.test(params) && /(?:^|;)profile-id=\d+\b/.test(params)
-  );
+  return /(?:^|;)level-id=\d+\b/.test(params) && /(?:^|;)profile-id=\d+\b/.test(params);
 }
 
 function isAv1FmtpParams(params: string): boolean {

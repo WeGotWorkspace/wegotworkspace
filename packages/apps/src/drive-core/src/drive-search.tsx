@@ -10,7 +10,13 @@ export type DriveSearchProps = {
   className?: string;
 };
 
-export function DriveSearch({ placeholder, value, onSearch, inputRef, className }: DriveSearchProps) {
+export function DriveSearch({
+  placeholder,
+  value,
+  onSearch,
+  inputRef,
+  className,
+}: DriveSearchProps) {
   return (
     <SearchBar
       className={cn("drive-search", className)}

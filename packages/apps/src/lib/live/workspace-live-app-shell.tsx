@@ -1,7 +1,11 @@
 import { useEffect } from "react";
 import type { ReactElement } from "react";
 import { clearWgwSession } from "@/lib/api/wgw/http";
-import { buildWgwLoginHref, isWgwAuthRoutePathname, sanitizeWgwReturnPath } from "@/lib/api/wgw/route-guard";
+import {
+  buildWgwLoginHref,
+  isWgwAuthRoutePathname,
+  sanitizeWgwReturnPath,
+} from "@/lib/api/wgw/route-guard";
 import { LiveBootstrapErrorPanel } from "@/lib/live/live-bootstrap-error-panel";
 import { LoadingSpinner } from "@/loading-spinner/src/loading-spinner";
 

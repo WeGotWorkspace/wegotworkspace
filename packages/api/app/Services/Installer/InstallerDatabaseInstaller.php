@@ -13,11 +13,10 @@ final class InstallerDatabaseInstaller
         private InstallerSchemaRunner $schema,
         private InstallerSeeder $seeder,
         private InstallerAppSettingsWriter $settings,
-    ) {
-    }
+    ) {}
 
     /**
-     * @param array<string, mixed> $db
+     * @param  array<string, mixed>  $db
      */
     public function connect(array $db): \PDO
     {
@@ -46,8 +45,8 @@ final class InstallerDatabaseInstaller
     }
 
     /**
-     * @param array<string, mixed>   $db
-     * @param array<string, mixed> $initialSettings
+     * @param  array<string, mixed>  $db
+     * @param  array<string, mixed>  $initialSettings
      */
     public function installFresh(
         array $db,
@@ -79,7 +78,7 @@ final class InstallerDatabaseInstaller
     }
 
     /**
-     * @param array<string, mixed> $db
+     * @param  array<string, mixed>  $db
      */
     public function testConnection(array $db): void
     {

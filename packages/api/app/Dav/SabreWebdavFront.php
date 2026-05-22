@@ -10,19 +10,19 @@ use App\Services\Installer\InstallerWebBase;
 use App\Support\AppPaths;
 use Illuminate\Http\Request;
 use Sabre\DAV;
+use Sabre\DAV\Exception\NotAuthenticated;
 use Sabre\DAV\Server;
 use Sabre\HTTP;
 use Symfony\Component\HttpFoundation\Response;
 
-final class SabreKernel
+final class SabreWebdavFront
 {
     public function __construct(
         private SabreServerFactory $factory,
         private AppPaths $paths,
         private SabreHttpRequestFactory $requestFactory,
         private SabreHttpResponseConverter $converter,
-    ) {
-    }
+    ) {}
 
     /**
      * @deprecated Use {@see serve()} via Laravel routes.
@@ -49,7 +49,7 @@ final class SabreKernel
         $server = $this->factory->create();
         $httpRequest = $this->requestFactory->fromLaravelRequest($request);
         $httpRequest->setBaseUrl($server->getBaseUri());
-        $httpResponse = new HTTP\Response();
+        $httpResponse = new HTTP\Response;
         $httpResponse->setHTTPVersion($httpRequest->getHTTPVersion());
 
         // Browser plugin writes to $server->httpResponse (not only the invokeMethod argument).
@@ -58,6 +58,12 @@ final class SabreKernel
 
         try {
             $server->invokeMethod($httpRequest, $httpResponse, false);
+        } catch (NotAuthenticated) {
+            if ($httpResponse->getStatus() === null) {
+                $httpResponse->setStatus(401);
+            }
+
+            return $this->converter->toIlluminate($httpResponse);
         } catch (\Throwable $e) {
             return $this->converter->toIlluminate($this->exceptionResponse($server, $e));
         }
@@ -93,11 +99,11 @@ final class SabreKernel
         $dom = new \DOMDocument('1.0', 'utf-8');
         $dom->formatOutput = true;
         $error = $dom->createElementNS('DAV:', 'd:error');
-        $error->setAttribute('xmlns:s', DAV\Server::NS_SABREDAV);
+        $error->setAttribute('xmlns:s', Server::NS_SABREDAV);
         $dom->appendChild($error);
 
         $h = static fn (mixed $v): string => htmlspecialchars((string) $v, ENT_NOQUOTES, 'UTF-8');
-        if (DAV\Server::$exposeVersion) {
+        if (Server::$exposeVersion) {
             $error->appendChild($dom->createElement('s:sabredav-version', $h(DAV\Version::VERSION)));
         }
         $error->appendChild($dom->createElement('s:exception', $h($e::class)));
@@ -112,7 +118,7 @@ final class SabreKernel
         }
         $headers['Content-Type'] = 'application/xml; charset=utf-8';
 
-        $response = new HTTP\Response();
+        $response = new HTTP\Response;
         $this->copyResponseHeaders($server->httpResponse, $response);
         $response->setStatus($httpCode);
         foreach ($headers as $name => $value) {
