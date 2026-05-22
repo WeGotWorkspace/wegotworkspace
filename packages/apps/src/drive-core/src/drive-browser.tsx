@@ -15,7 +15,6 @@ import type { DriveUILabels } from "@/drive-core/src/drive-labels";
 import { driveFolderUiPath } from "@/drive-core/src/drive-item-path";
 import "@/drive-core/src/drive-browser.css";
 
-
 /* ---------------- Grid view ---------------- */
 
 type FolderDropZoneProps = Pick<
@@ -138,9 +137,7 @@ export function DriveGridView({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h3 className="drive-item-label drive-browser-section-title">
-        {title}
-      </h3>
+      <h3 className="drive-item-label drive-browser-section-title">{title}</h3>
       {children}
     </div>
   );
@@ -233,7 +230,11 @@ function FolderTile({
         !isSelected && !folderDropZone.isDropTarget && "drive-folder-tile--idle",
       )}
     >
-      <Folder className="drive-folder-tile__icon size-5 shrink-0" fill="currentColor" fillOpacity={0.15} />
+      <Folder
+        className="drive-folder-tile__icon size-5 shrink-0"
+        fill="currentColor"
+        fillOpacity={0.15}
+      />
       <span className="drive-folder-tile__title">{file.title}</span>
       {isStarred ? <Star className="drive-folder-tile__star" fill="currentColor" /> : null}
       <DriveFileItemActions
@@ -453,7 +454,9 @@ export function DriveListView({
             const folderPath = isFolder ? driveFolderUiPath(f) : "";
             const isSelected = selectedIds.includes(f.id);
             const isActive = f.id === activeId;
-            const dropZone = isFolder ? folderDropZoneProps(folderPath) : ({} as FolderDropZoneProps);
+            const dropZone = isFolder
+              ? folderDropZoneProps(folderPath)
+              : ({} as FolderDropZoneProps);
             const dragHandlers = itemDragHandlers(f.id);
             const lp = {
               start: undefined as undefined | (() => void),
@@ -514,7 +517,10 @@ export function DriveListView({
                     </span>
                     <span className="min-w-0 flex-1 truncate font-medium">{f.title}</span>
                     {starred[f.id] ? (
-                      <Star className="size-3 shrink-0 drive-list-folder-icon" fill="currentColor" />
+                      <Star
+                        className="size-3 shrink-0 drive-list-folder-icon"
+                        fill="currentColor"
+                      />
                     ) : null}
                     <div className="ml-auto shrink-0">
                       <DriveFileItemActions
@@ -637,7 +643,6 @@ export function DriveDetailPanel({
     </div>
   );
 }
-
 
 function Row({ label, value }: { label: string; value: string }) {
   return (

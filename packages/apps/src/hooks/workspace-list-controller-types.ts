@@ -1,5 +1,6 @@
 import type { Dispatch, ReactNode, SetStateAction } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
+import type { IdentifiableItem } from "@/hooks/collection-controller-utils";
 import type { DeferredApiWriteArgs } from "@/hooks/use-queued-mutation";
 
 export type WorkspaceActionButton = {
@@ -9,7 +10,7 @@ export type WorkspaceActionButton = {
   active?: boolean;
 };
 
-export type UseWorkspaceListControllerArgs<TItem> = {
+export type UseWorkspaceListControllerArgs<TItem extends IdentifiableItem> = {
   items: TItem[];
   setItems: Dispatch<SetStateAction<TItem[]>>;
   visibleIds: string[];

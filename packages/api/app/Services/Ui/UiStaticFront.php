@@ -11,15 +11,14 @@ use App\Ui\UiStaticServer;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-final class UiFrontKernel
+final class UiStaticFront
 {
     public function __construct(
         private AppPaths $paths,
         private UiStaticServer $static,
         private OfficeStaticServer $officeStatic,
         private OfficeHtmlResponder $officeHtml,
-    ) {
-    }
+    ) {}
 
     public function handle(Request $request): ?Response
     {
@@ -42,9 +41,12 @@ final class UiFrontKernel
 
         if (! $this->paths->isInstalled()) {
             if ($this->isPublicAssetPath($webBase, $path)) {
-                $installDist = $this->paths->moduleDistRoot('install');
-                if ($installDist !== null) {
-                    $asset = $this->static->tryServe($installDist, $webBase, $path, false);
+                foreach (['install', 'shell'] as $module) {
+                    $dist = $this->paths->moduleDistRoot($module);
+                    if ($dist === null) {
+                        continue;
+                    }
+                    $asset = $this->static->tryServe($dist, $webBase, $path, false);
                     if ($asset !== null) {
                         return $asset;
                     }

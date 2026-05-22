@@ -8,9 +8,7 @@ use App\Support\ApiUrlBuilder;
 
 final class CapabilitiesService
 {
-    public function __construct(private ApiUrlBuilder $urls)
-    {
-    }
+    public function __construct(private ApiUrlBuilder $urls) {}
 
     /**
      * @return array{

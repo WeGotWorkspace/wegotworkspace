@@ -17,7 +17,10 @@
   height: 2rem;
   border-radius: 9999px;
   color: var(--view-mode-toggle-color, var(--color-ink));
-  transition: color 150ms, background-color 150ms, box-shadow 150ms;
+  transition:
+    color 150ms,
+    background-color 150ms,
+    box-shadow 150ms;
 }
 
 .view-mode-toggle__button--active {

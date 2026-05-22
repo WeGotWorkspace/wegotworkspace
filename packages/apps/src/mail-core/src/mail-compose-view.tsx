@@ -104,11 +104,7 @@ export function MailComposeView({
   return (
     <div className={cn(mailWorkspacePaneClasses.composeView, className)}>
       <header className={mailWorkspacePaneClasses.composeHeader}>
-        <ViewHeader
-          hideSidebarToggle
-          title={composeHeaderTitle(composeMode)}
-          subtitle={mailbox}
-        />
+        <ViewHeader hideSidebarToggle title={composeHeaderTitle(composeMode)} subtitle={mailbox} />
       </header>
 
       <div className={mailWorkspacePaneClasses.composeBody}>

@@ -1,8 +1,4 @@
-import {
-  CircleAlert,
-  CircleCheck,
-  CircleDashed,
-} from "lucide-react";
+import { CircleAlert, CircleCheck, CircleDashed } from "lucide-react";
 import type { InstallCheckStatus } from "@/install-core/src/install-types";
 
 export function InstallStatusDot({ status }: { status: InstallCheckStatus }) {

@@ -226,9 +226,10 @@ function toSessionDescription(
   return { type: normalizedType, sdp: sanitizeRtcSdp(raw.sdp) };
 }
 
-function localDescriptionPayload(
-  description: RTCSessionDescription,
-): { sdp: string; type: RTCSdpType } {
+function localDescriptionPayload(description: RTCSessionDescription): {
+  sdp: string;
+  type: RTCSdpType;
+} {
   return {
     type: description.type,
     sdp: sanitizeRtcSdp(description.sdp ?? ""),
@@ -320,7 +321,9 @@ export function useMeetController({
   const rosterRef = useRef<Map<string, string>>(new Map());
   const peerInboundSampleRef = useRef<Map<string, PeerInboundSample>>(new Map());
   const peerMediaHintRef = useRef<Map<string, { camera: boolean; mic: boolean }>>(new Map());
-  const peerDisclosedMediaRef = useRef<Map<string, { mic: boolean; camera: boolean }>>(new Map());
+  const peerDisclosedMediaRef = useRef<
+    Map<string, { mic: boolean; camera: boolean; screen?: boolean }>
+  >(new Map());
   const wasKnockerPeerIdsRef = useRef<Set<string>>(new Set());
   const micOnRef = useRef(micOn);
   const videoOnRef = useRef(videoOn);

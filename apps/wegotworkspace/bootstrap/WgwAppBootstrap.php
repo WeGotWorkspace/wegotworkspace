@@ -63,11 +63,14 @@ final class WgwAppBootstrap
      */
     private static function apiPackageCandidates(string $appRoot, string $runtimeRoot): array
     {
-        return [
-            $runtimeRoot.'/packages/api',
+        $repoApi = dirname($appRoot, 2).'/packages/api';
+
+        // Monorepo source first; synced copies under the install tree are release/preview only.
+        return array_values(array_unique([
+            $repoApi,
             $appRoot.'/packages/api',
-            dirname($appRoot, 2).'/packages/api',
-        ];
+            $runtimeRoot.'/packages/api',
+        ]));
     }
 
     private static function resolveApiPackageRoot(string $appRoot, string $runtimeRoot): ?string
@@ -103,7 +106,7 @@ final class WgwAppBootstrap
         if ($apiPackageWithoutVendor !== null) {
             echo json_encode([
                 'error' => 'api_unavailable',
-                'message' => 'Composer vendor/ is missing for the API package. Run `composer --working-dir packages/api install` from the repo root (monorepo dev), or `pnpm --filter @wgw/api build` to sync a runtime copy with vendor.',
+                'message' => 'Composer vendor/ is missing for the API app. Run `composer --working-dir packages/api install` from the repo root (monorepo dev), or `pnpm dev:preview` / `pnpm --filter @wgw/api build` for a self-contained install tree.',
                 'path' => $apiPackageWithoutVendor,
             ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         } else {

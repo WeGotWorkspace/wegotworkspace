@@ -41,12 +41,7 @@ export function useDrivePaneStoryController(options?: DrivePaneStoryHarnessOptio
 
 export function useDriveModalStoryController(preset: DriveModalStoryPreset) {
   const controller = useDrivePaneStoryController();
-  const {
-    setNewFolderDialogOpen,
-    setRenameDialog,
-    setRenameName,
-    setConfirmDelete,
-  } = controller;
+  const { setNewFolderDialogOpen, setRenameDialog, setRenameName, setConfirmDelete } = controller;
 
   useEffect(() => {
     setNewFolderDialogOpen(false);
@@ -74,13 +69,7 @@ export function useDriveModalStoryController(preset: DriveModalStoryPreset) {
         });
         break;
     }
-  }, [
-    preset,
-    setConfirmDelete,
-    setNewFolderDialogOpen,
-    setRenameDialog,
-    setRenameName,
-  ]);
+  }, [preset, setConfirmDelete, setNewFolderDialogOpen, setRenameDialog, setRenameName]);
 
   return controller;
 }

@@ -99,15 +99,13 @@ function rowsAtBrowsePath(
         kind: "root",
         path: "My Drive",
         title: labels.sidebarMyDrive,
-        selectable:
-          canMoveDriveItemsToFolder(moveContextFiles, moveIds, "My Drive").length > 0,
+        selectable: canMoveDriveItemsToFolder(moveContextFiles, moveIds, "My Drive").length > 0,
       },
       ...groupPaths.map((path) => ({
         kind: "root" as const,
         path,
         title: sharedDriveRootLabel(path, labels),
-        selectable:
-          canMoveDriveItemsToFolder(moveContextFiles, moveIds, path).length > 0,
+        selectable: canMoveDriveItemsToFolder(moveContextFiles, moveIds, path).length > 0,
       })),
     ];
     // Always list roots so users can open "My Drive" or shared drives to pick a subfolder,
@@ -121,8 +119,7 @@ function rowsAtBrowsePath(
         kind: "root" as const,
         path,
         title: sharedDriveRootLabel(path, labels),
-        selectable:
-          canMoveDriveItemsToFolder(moveContextFiles, moveIds, path).length > 0,
+        selectable: canMoveDriveItemsToFolder(moveContextFiles, moveIds, path).length > 0,
       }))
       .sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: "base" }));
   }
@@ -261,18 +258,13 @@ export function DriveFolderPicker({
   const openRow = (path: string) => {
     if (isTrashPickerPath(path)) return;
     setBrowsePath(path);
-    setHighlightedPath(
-      canMoveDriveItemsToFolder(files, moveIds, path).length > 0 ? path : null,
-    );
+    setHighlightedPath(canMoveDriveItemsToFolder(files, moveIds, path).length > 0 ? path : null);
   };
 
-  const showEmpty =
-    !listingLoading && rows.length === 0 && browsePath !== DRIVE_FOLDER_PICKER_ROOT;
+  const showEmpty = !listingLoading && rows.length === 0 && browsePath !== DRIVE_FOLDER_PICKER_ROOT;
 
   const showListingLoading =
-    listingLoading &&
-    browsePath !== DRIVE_FOLDER_PICKER_ROOT &&
-    browsePath !== GROUPS_ROOT;
+    listingLoading && browsePath !== DRIVE_FOLDER_PICKER_ROOT && browsePath !== GROUPS_ROOT;
 
   return (
     <div className="drive-folder-picker">
@@ -297,49 +289,43 @@ export function DriveFolderPicker({
           <div className="drive-folder-picker__scroll">
             <table className="drive-list-table">
               <tbody>
-              {rows.map((row) => {
-                const isSelected = row.selectable && highlightedPath === row.path;
-                const navigable = row.kind === "folder" || row.kind === "root";
-                const icon =
-                  row.kind === "folder" || row.kind === "root" ? (
-                    <Folder
-                      className="size-4 shrink-0 drive-list-folder-icon"
-                      fill="currentColor"
-                      fillOpacity={0.18}
-                    />
-                  ) : (
-                    <span className="shrink-0 [&>svg]:size-4 drive-list-file-icon">
-                      {row.file ? kindIcon[row.file.kind] : null}
-                    </span>
-                  );
+                {rows.map((row) => {
+                  const isSelected = row.selectable && highlightedPath === row.path;
+                  const navigable = row.kind === "folder" || row.kind === "root";
+                  const icon =
+                    row.kind === "folder" || row.kind === "root" ? (
+                      <Folder
+                        className="size-4 shrink-0 drive-list-folder-icon"
+                        fill="currentColor"
+                        fillOpacity={0.18}
+                      />
+                    ) : (
+                      <span className="shrink-0 [&>svg]:size-4 drive-list-file-icon">
+                        {row.file ? kindIcon[row.file.kind] : null}
+                      </span>
+                    );
 
-                return (
-                  <tr
-                    key={row.path}
-                    aria-disabled={!row.selectable}
-                    onClick={
-                      row.selectable
-                        ? () => setHighlightedPath(row.path)
-                        : undefined
-                    }
-                    onDoubleClick={navigable ? () => openRow(row.path) : undefined}
-                    className={cn(
-                      "drive-list-row",
-                      row.selectable || navigable
-                        ? "cursor-pointer"
-                        : "drive-list-row--disabled",
-                      isSelected && "drive-list-row--selected",
-                    )}
-                  >
-                    <td className="drive-list-col-name py-2 min-w-0">
-                      <div className="flex w-full min-w-0 items-center gap-2.5">
-                        {icon}
-                        <span className="min-w-0 flex-1 truncate font-medium">{row.title}</span>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
+                  return (
+                    <tr
+                      key={row.path}
+                      aria-disabled={!row.selectable}
+                      onClick={row.selectable ? () => setHighlightedPath(row.path) : undefined}
+                      onDoubleClick={navigable ? () => openRow(row.path) : undefined}
+                      className={cn(
+                        "drive-list-row",
+                        row.selectable || navigable ? "cursor-pointer" : "drive-list-row--disabled",
+                        isSelected && "drive-list-row--selected",
+                      )}
+                    >
+                      <td className="drive-list-col-name py-2 min-w-0">
+                        <div className="flex w-full min-w-0 items-center gap-2.5">
+                          {icon}
+                          <span className="min-w-0 flex-1 truncate font-medium">{row.title}</span>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

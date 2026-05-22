@@ -1,11 +1,4 @@
-import {
-  Upload,
-  FolderPlus,
-  Plus,
-  FileText,
-  FileSpreadsheet,
-  Presentation,
-} from "lucide-react";
+import { Upload, FolderPlus, Plus, FileText, FileSpreadsheet, Presentation } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,7 +18,12 @@ export type DriveNewMenuProps = {
   onCreateBlank: (kind: DriveBlankKind) => void;
 };
 
-export function DriveNewMenu({ labels, onCreateFolder, onUploadFiles, onCreateBlank }: DriveNewMenuProps) {
+export function DriveNewMenu({
+  labels,
+  onCreateFolder,
+  onUploadFiles,
+  onCreateBlank,
+}: DriveNewMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

@@ -6,12 +6,12 @@ namespace Tests\Feature\Dav;
 
 use App\Dav\SabreServerFactory;
 use App\Support\AppPaths;
-use App\Support\WgwInstallConfig;
+use Illuminate\Support\Facades\DB;
 use Tests\Support\SqliteWgwSchema;
 use Tests\Support\WgwInstallFixture;
 use Tests\TestCase;
 
-final class SabreKernelTest extends TestCase
+final class SabreWebdavFrontTest extends TestCase
 {
     public function test_sabre_server_factory_builds_when_installed(): void
     {
@@ -23,7 +23,7 @@ final class SabreKernelTest extends TestCase
                 'foreign_key_constraints' => true,
             ],
         ]);
-        \Illuminate\Support\Facades\DB::purge('wgw');
+        DB::purge('wgw');
         SqliteWgwSchema::applyCoreTables();
         SqliteWgwSchema::applySabreTables();
 

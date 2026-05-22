@@ -29,14 +29,20 @@ export function getDriveStoryFile(id?: string): DriveFile {
   if (id) {
     return DRIVE_MOCK_FILES.find((file) => file.id === id) ?? FALLBACK_FILE;
   }
-  return DRIVE_MOCK_FILES.find((file) => file.kind === "doc" && file.parent === "My Drive") ?? FALLBACK_FILE;
+  return (
+    DRIVE_MOCK_FILES.find((file) => file.kind === "doc" && file.parent === "My Drive") ??
+    FALLBACK_FILE
+  );
 }
 
 export function getDriveStoryFileByKind(kind: FileKind): DriveFile {
   return DRIVE_MOCK_FILES.find((file) => file.kind === kind) ?? FALLBACK_FILE;
 }
 
-type FolderDropZoneProps = Pick<MenuItemProps, "isDropTarget" | "onDragOver" | "onDragLeave" | "onDrop">;
+type FolderDropZoneProps = Pick<
+  MenuItemProps,
+  "isDropTarget" | "onDragOver" | "onDragLeave" | "onDrop"
+>;
 
 export type DriveBrowserStoryProps = {
   items: DriveFile[];

@@ -11,9 +11,7 @@ use Illuminate\Http\Request;
 
 final class UpdateApplyController
 {
-    public function __construct(private UpdateOperationsService $updates)
-    {
-    }
+    public function __construct(private UpdateOperationsService $updates) {}
 
     public function __invoke(Request $request): JsonResponse
     {

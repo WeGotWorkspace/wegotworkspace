@@ -10,9 +10,7 @@ use App\Services\Settings\GroupDirectoryService;
 
 final class AdminUserDirectoryService
 {
-    public function __construct(private GroupDirectoryService $groups)
-    {
-    }
+    public function __construct(private GroupDirectoryService $groups) {}
 
     /**
      * @return list<array{id: string, username: string, email: string, displayName: string, groups: list<string>, createdAt: string}>

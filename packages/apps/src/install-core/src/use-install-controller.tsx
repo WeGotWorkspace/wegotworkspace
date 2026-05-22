@@ -35,9 +35,7 @@ export function useInstallController({
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [stepIdx, setStepIdx] = useState(0);
   const [actionPending, setActionPending] = useState(false);
-  const [installerState, setInstallerState] = useState<WgwInstallerRuntimeState | null>(
-    data.state,
-  );
+  const [installerState, setInstallerState] = useState<WgwInstallerRuntimeState | null>(data.state);
 
   const [dbType, setDbType] = useState<"sqlite" | "mysql">("sqlite");
   const [sqlitePath, setSqlitePath] = useState("wgw-content/db.sqlite");
@@ -107,7 +105,9 @@ export function useInstallController({
   useEffect(() => {
     if (!data.state) return;
     hydrateFromState(data.state);
-    setStepIdx(installStepIndex(installBackendStepToUiStep(data.state.step as InstallerBackendStep)));
+    setStepIdx(
+      installStepIndex(installBackendStepToUiStep(data.state.step as InstallerBackendStep)),
+    );
     if (data.state.flash) toast(data.state.flash);
   }, [data.state, hydrateFromState]);
 
@@ -190,9 +190,9 @@ export function useInstallController({
           ? sqlitePath.trim().length > 0
           : Boolean(
               mysql.host.trim() &&
-                mysql.database.trim() &&
-                mysql.username.trim() &&
-                mysqlTest.state !== "testing",
+              mysql.database.trim() &&
+              mysql.username.trim() &&
+              mysqlTest.state !== "testing",
             );
       case "admin":
         return (

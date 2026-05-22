@@ -8,9 +8,7 @@ use Illuminate\Http\Request;
 
 final class VoiceActorResolver
 {
-    public function __construct(private VoiceRequestAuth $auth)
-    {
-    }
+    public function __construct(private VoiceRequestAuth $auth) {}
 
     public function tryAuthenticatedUsername(Request $request): ?string
     {
@@ -20,7 +18,7 @@ final class VoiceActorResolver
     }
 
     /**
-     * @param array<string, mixed> $body
+     * @param  array<string, mixed>  $body
      */
     public function requireActorMarker(Request $request, array $body): string
     {
@@ -69,8 +67,7 @@ final class VoiceActorResolver
     }
 
     /**
-     * @param array<string, mixed> $body
-     *
+     * @param  array<string, mixed>  $body
      * @return non-empty-string|null
      */
     public function readGuestSessionKey(array $body): ?string

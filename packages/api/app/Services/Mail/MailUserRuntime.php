@@ -9,8 +9,8 @@ use App\Support\WgwSettings;
 final class MailUserRuntime
 {
     /**
-     * @param array<string, mixed> $cfg
-     * @param array{imapUsername: string, imapPassword: string}|null $account
+     * @param  array<string, mixed>  $cfg
+     * @param  array{imapUsername: string, imapPassword: string}|null  $account
      */
     public static function isReady(array $cfg, ?array $account): bool
     {

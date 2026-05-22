@@ -35,8 +35,7 @@ final class OpenApiDocumentService
     }
 
     /**
-     * @param array<string, mixed> $spec
-     *
+     * @param  array<string, mixed>  $spec
      * @return array<string, mixed>
      */
     private function withServerUrl(array $spec, string $serverUrl): array

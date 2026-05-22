@@ -9,9 +9,7 @@ use Illuminate\Http\JsonResponse;
 
 final class UpdateLogController
 {
-    public function __construct(private UpdateStateStore $store)
-    {
-    }
+    public function __construct(private UpdateStateStore $store) {}
 
     public function show(): JsonResponse
     {

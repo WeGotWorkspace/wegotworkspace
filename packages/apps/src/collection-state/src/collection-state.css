@@ -3,10 +3,7 @@
   text-align: center;
   font-size: 0.875rem;
   line-height: 1.25rem;
-  color: var(
-    --collection-state-color,
-    color-mix(in oklab, var(--color-ink) 50%, transparent)
-  );
+  color: var(--collection-state-color, color-mix(in oklab, var(--color-ink) 50%, transparent));
 }
 
 .collection-state__icon {
@@ -29,10 +26,7 @@
   margin: 0;
   font-size: 0.875rem;
   line-height: 1.25rem;
-  color: var(
-    --collection-state-color,
-    color-mix(in oklab, var(--color-ink) 50%, transparent)
-  );
+  color: var(--collection-state-color, color-mix(in oklab, var(--color-ink) 50%, transparent));
 }
 
 .collection-state__body {

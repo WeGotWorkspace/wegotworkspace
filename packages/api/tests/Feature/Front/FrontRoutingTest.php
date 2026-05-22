@@ -4,17 +4,26 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Front;
 
-use App\Support\AppPaths;
+use Tests\Support\UiDistFixture;
 use Tests\TestCase;
 
 final class FrontRoutingTest extends TestCase
 {
+    private ?string $repoRoot = null;
+
+    protected function tearDown(): void
+    {
+        if ($this->repoRoot !== null) {
+            UiDistFixture::removeTree($this->repoRoot);
+            $this->repoRoot = null;
+        }
+        parent::tearDown();
+    }
+
     public function test_install_without_trailing_slash_serves_wizard(): void
     {
         $data = sys_get_temp_dir().'/wgw-front-'.uniqid('', true);
-        mkdir($data, 0775, true);
-        config(['wgw.data_dir' => $data]);
-        $this->app->forgetInstance(AppPaths::class);
+        $this->repoRoot = UiDistFixture::bootstrapMonorepoLayout($data);
 
         $this->get('/install')
             ->assertOk()
@@ -24,9 +33,7 @@ final class FrontRoutingTest extends TestCase
     public function test_uninstalled_root_redirects_to_install(): void
     {
         $data = sys_get_temp_dir().'/wgw-front-'.uniqid('', true);
-        mkdir($data, 0775, true);
-        config(['wgw.data_dir' => $data]);
-        $this->app->forgetInstance(AppPaths::class);
+        $this->repoRoot = UiDistFixture::bootstrapMonorepoLayout($data);
 
         $this->get('/')
             ->assertRedirect('/install/');
@@ -35,9 +42,7 @@ final class FrontRoutingTest extends TestCase
     public function test_uninstalled_webdav_returns_503_from_laravel_route(): void
     {
         $data = sys_get_temp_dir().'/wgw-front-'.uniqid('', true);
-        mkdir($data, 0775, true);
-        config(['wgw.data_dir' => $data]);
-        $this->app->forgetInstance(AppPaths::class);
+        $this->repoRoot = UiDistFixture::bootstrapMonorepoLayout($data);
 
         $this->call('PROPFIND', '/', [], [], [], ['HTTP_ACCEPT' => '*/*'])
             ->assertStatus(503)

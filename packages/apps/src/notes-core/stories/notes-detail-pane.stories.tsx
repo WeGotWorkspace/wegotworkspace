@@ -23,17 +23,17 @@ function NotesDetailPaneHarness({
   return (
     <NotesStoryScope variant="detail">
       <NoteDetailView
-      noteId={base.noteId}
-      notebook={base.notebook}
-      lastEdited={base.lastEdited}
-      editedLabel={base.editedLabel}
-      title={title}
-      onTitleChange={readOnly ? undefined : setTitle}
-      tags={base.tags}
-      readOnly={readOnly}
-      pullQuote={base.pullQuote}
-      body={body}
-      onBodyMarkdownChange={readOnly ? undefined : (markdown) => setBody([markdown])}
+        noteId={base.noteId}
+        notebook={base.notebook}
+        lastEdited={base.lastEdited}
+        editedLabel={base.editedLabel}
+        title={title}
+        onTitleChange={readOnly ? undefined : setTitle}
+        tags={base.tags}
+        readOnly={readOnly}
+        pullQuote={base.pullQuote}
+        body={body}
+        onBodyMarkdownChange={readOnly ? undefined : (markdown) => setBody([markdown])}
       />
     </NotesStoryScope>
   );

@@ -10,7 +10,7 @@ use App\Settings\SettingKeys;
 final class InstallerAppSettingsWriter
 {
     /**
-     * @param array<string, mixed> $values
+     * @param  array<string, mixed>  $values
      */
     public function replaceMany(\PDO $pdo, array $values): void
     {
@@ -39,7 +39,7 @@ final class InstallerAppSettingsWriter
     }
 
     /**
-     * @param array<string, mixed> $values
+     * @param  array<string, mixed>  $values
      */
     private function replaceManyMysql(\PDO $pdo, array $values): void
     {

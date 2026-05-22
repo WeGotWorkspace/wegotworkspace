@@ -6,13 +6,14 @@ import { useListKeyboardNavigation } from "@/hooks/use-list-keyboard-navigation"
 import { useQueuedMutation } from "@/hooks/use-queued-mutation";
 import { useSelectableListState } from "@/hooks/use-selectable-list-state";
 import { useSidebarListDrag } from "@/hooks/use-sidebar-list-drag";
+import type { IdentifiableItem } from "@/hooks/collection-controller-utils";
 import type {
   UseWorkspaceListControllerArgs,
   WorkspaceActionButton,
   WorkspaceListControllerResult,
 } from "./workspace-list-controller-types";
 
-export function useWorkspaceListController<TItem>({
+export function useWorkspaceListController<TItem extends IdentifiableItem>({
   items,
   setItems,
   visibleIds,
@@ -39,7 +40,8 @@ export function useWorkspaceListController<TItem>({
     onPrimarySelect,
   });
 
-  const { isItemDragging, itemDragHandlers, sidebarDropZoneProps } = useSidebarListDrag(selectedIds);
+  const { isItemDragging, itemDragHandlers, sidebarDropZoneProps } =
+    useSidebarListDrag(selectedIds);
   const { beginOptimisticUpdate } = useEntityBatchActions<TItem>({
     items,
     setItems,
@@ -124,4 +126,3 @@ export function useWorkspaceSelectionPresentation({
     multiSelectionActions: selectionBarButtons,
   };
 }
-

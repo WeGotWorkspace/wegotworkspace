@@ -61,7 +61,11 @@ export function coerceMailListRow(
 ): WgwMailMessageListItem {
   const row = raw as WgwMailMessageWire;
   const uid = parseUidFromRow(row);
-  const folder = row.folder?.trim() ? row.folder : row.folderId?.trim() ? row.folderId : defaultFolder;
+  const folder = row.folder?.trim()
+    ? row.folder
+    : row.folderId?.trim()
+      ? row.folderId
+      : defaultFolder;
   return {
     ...row,
     folder,

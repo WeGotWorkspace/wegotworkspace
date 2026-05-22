@@ -11,10 +11,7 @@ type WeGotWorkspaceRouterProps = {
 };
 
 export function WeGotWorkspaceRouter({ mode, history }: WeGotWorkspaceRouterProps) {
-  const router = useMemo(
-    () => createWeGotWorkspaceRouter({ mode, history }),
-    [history, mode],
-  );
+  const router = useMemo(() => createWeGotWorkspaceRouter({ mode, history }), [history, mode]);
 
   return <RouterProvider router={router} />;
 }

@@ -9,13 +9,10 @@ use Illuminate\Support\Facades\DB;
 
 final class DriveStarService
 {
-    public function __construct(private StoragePaths $paths)
-    {
-    }
+    public function __construct(private StoragePaths $paths) {}
 
     /**
-     * @param list<string> $groupSlugs
-     *
+     * @param  list<string>  $groupSlugs
      * @return list<string>
      */
     public function listPaths(string $username, array $groupSlugs): array

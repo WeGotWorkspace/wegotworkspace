@@ -6,6 +6,7 @@ namespace App\Dav\Server;
 
 use App\Admin\AdminConstants;
 use Sabre\CalDAV\Principal\Collection as CalDAVPrincipalCollection;
+use Sabre\CalDAV\Principal\User;
 use Sabre\DAV;
 use Sabre\DAV\Auth\Plugin as AuthPlugin;
 use Sabre\DAVACL\PrincipalBackend\BackendInterface;
@@ -56,7 +57,7 @@ final class AppCalDAVPrincipalCollection extends CalDAVPrincipalCollection
     {
         if ($name === $this->groupsDirectoryName()) {
             $principalInfo = $this->principalBackend->getPrincipalByPath(AdminConstants::GROUP_CONTAINER_URI);
-            if (!$principalInfo) {
+            if (! $principalInfo) {
                 throw new DAV\Exception\NotFound('Node with name '.$name.' was not found');
             }
 
@@ -68,7 +69,7 @@ final class AppCalDAVPrincipalCollection extends CalDAVPrincipalCollection
             throw new DAV\Exception\NotFound('Node with name '.$name.' was not found');
         }
         $principalInfo = $this->principalBackend->getPrincipalByPath($this->principalPrefix.'/'.$name);
-        if (!$principalInfo || !AccountPrincipalFilter::isAccountPrincipal($this->pdo, $principalInfo)) {
+        if (! $principalInfo || ! AccountPrincipalFilter::isAccountPrincipal($this->pdo, $principalInfo)) {
             throw new DAV\Exception\NotFound('Node with name '.$name.' was not found');
         }
         if (($principalInfo['uri'] ?? '') !== $current) {
@@ -88,7 +89,7 @@ final class AppCalDAVPrincipalCollection extends CalDAVPrincipalCollection
             return false;
         }
         $principalInfo = $this->principalBackend->getPrincipalByPath($this->principalPrefix.'/'.$name);
-        if (!$principalInfo) {
+        if (! $principalInfo) {
             return false;
         }
 
@@ -107,7 +108,7 @@ final class AppCalDAVPrincipalCollection extends CalDAVPrincipalCollection
     }
 
     /**
-     * @return \Sabre\CalDAV\Principal\User|GroupPrincipalContainer
+     * @return User|GroupPrincipalContainer
      */
     public function getChildForPrincipal(array $principalInfo)
     {

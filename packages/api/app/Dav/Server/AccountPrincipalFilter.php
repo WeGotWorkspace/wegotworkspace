@@ -17,7 +17,7 @@ final class AccountPrincipalFilter
         if ($uri === AdminConstants::GROUP_CONTAINER_URI) {
             return false;
         }
-        if (!str_starts_with($uri, 'principals/')) {
+        if (! str_starts_with($uri, 'principals/')) {
             return false;
         }
         $rest = substr($uri, strlen('principals/'));
@@ -32,7 +32,7 @@ final class AccountPrincipalFilter
     }
 
     /**
-     * @param array{uri?: string, ...} $principalInfo
+     * @param  array{uri?: string, ...}  $principalInfo
      */
     public static function isAccountPrincipal(\PDO $pdo, array $principalInfo): bool
     {

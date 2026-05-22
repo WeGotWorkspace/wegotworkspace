@@ -6,12 +6,10 @@ namespace App\Services\Auth;
 
 final class JwtTokenService
 {
-    public function __construct(private JwtConfigService $jwtConfig)
-    {
-    }
+    public function __construct(private JwtConfigService $jwtConfig) {}
 
     /**
-     * @param array{sub: string, role: 'guest'|'user'|'admin', exp?: int, iat?: int} $claims
+     * @param  array{sub: string, role: 'guest'|'user'|'admin', exp?: int, iat?: int}  $claims
      */
     public function issue(array $claims): string
     {
