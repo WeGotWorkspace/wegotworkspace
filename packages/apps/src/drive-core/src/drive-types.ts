@@ -39,6 +39,10 @@ export type DriveAPIOperations = {
     input: { cwd: string; name: string },
     opts?: { signal?: AbortSignal },
   ) => Promise<DriveUIData>;
+  createFile: (
+    input: { cwd: string; name: string },
+    opts?: { signal?: AbortSignal },
+  ) => Promise<DriveUIData>;
   renameItem: (
     input: { destination: string; from: string; to: string },
     opts?: { signal?: AbortSignal },
