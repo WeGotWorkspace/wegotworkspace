@@ -28,8 +28,11 @@
 }
 
 .admin-workspace .app-sidebar {
-  color: #ffffff;
+  color: var(--app-sidebar-color);
+  --color-ink: var(--app-sidebar-color);
   --field-label-color: color-mix(in oklab, #ffffff 78%, transparent);
+  --app-switch-label-color: var(--app-sidebar-color);
+  --app-switch-label-tagline-color: color-mix(in oklab, var(--app-sidebar-color) 72%, transparent);
 }
 
 .admin-workspace .app-sidebar__scroll {
@@ -40,11 +43,12 @@
 }
 
 .admin-workspace .app-sidebar__footer {
+  --color-ink: var(--app-sidebar-color);
   --workspace-user-footer-text-color: #ffffff;
   --workspace-user-footer-subtitle-color: color-mix(in oklab, #ffffff 72%, transparent);
   --workspace-user-footer-border-color: color-mix(in oklab, #ffffff 16%, transparent);
   --workspace-user-footer-avatar-bg: color-mix(in oklab, #ffffff 20%, transparent);
-  --workspace-user-footer-avatar-color: var(--app-sidebar-color);
+  --workspace-user-footer-avatar-color: var(--workspace-user-footer-text-color);
   --workspace-user-footer-link-color: #ffffff;
 }
 
