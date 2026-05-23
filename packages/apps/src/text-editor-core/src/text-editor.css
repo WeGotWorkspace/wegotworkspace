@@ -660,6 +660,74 @@
 }
 
 @media print {
+  html.text-editor-print-active,
+  body.text-editor-print-active {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  body.text-editor-print-active * {
+    visibility: hidden;
+  }
+
+  body.text-editor-print-active .text-editor-sheet__surface--print,
+  body.text-editor-print-active .text-editor-sheet__surface--print * {
+    visibility: visible;
+  }
+
+  /* Let long documents paginate — avoid viewport-height clipping from flex/scroll shells */
+  body.text-editor-print-active
+    :is(
+      .workspace-columns,
+      .workspace-detail-pane,
+      .workspace-detail-pane__scroll,
+      .workspace-app-layout__main,
+      .workspace-app-layout__main-scroll,
+      .workspace-app-layout__main-content,
+      .docs-workspace__editor,
+      .text-editor,
+      .text-editor__body,
+      .text-editor__formatted,
+      .text-editor-sheet,
+      .text-editor-sheet--fill
+    ) {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    flex: none !important;
+    position: static !important;
+  }
+
+  body.text-editor-print-active .text-editor-sheet__surface--print {
+    position: static;
+    display: block !important;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 1in;
+    box-shadow: none;
+    border-radius: 0;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    flex: none !important;
+  }
+
+  body.text-editor-print-active .text-editor-sheet__surface--print .ProseMirror {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    flex: none !important;
+  }
+
+  body.text-editor-print-active
+    :is(.text-editor__source, .text-editor-source, .text-editor-format-bar, .no-print) {
+    display: none !important;
+  }
+
   .text-editor-sheet__surface {
     padding: 1in;
     box-shadow: none;
