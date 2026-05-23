@@ -664,12 +664,12 @@
     visibility: hidden;
   }
 
-  body.text-editor-print-active .text-editor-sheet__surface,
-  body.text-editor-print-active .text-editor-sheet__surface * {
+  body.text-editor-print-active .text-editor-sheet__surface--print,
+  body.text-editor-print-active .text-editor-sheet__surface--print * {
     visibility: visible;
   }
 
-  body.text-editor-print-active .text-editor-sheet__surface {
+  body.text-editor-print-active .text-editor-sheet__surface--print {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -678,6 +678,11 @@
     padding: 1in;
     box-shadow: none;
     border-radius: 0;
+  }
+
+  body.text-editor-print-active .text-editor__source,
+  body.text-editor-print-active .text-editor-source {
+    display: none !important;
   }
 
   .text-editor-sheet__surface {
