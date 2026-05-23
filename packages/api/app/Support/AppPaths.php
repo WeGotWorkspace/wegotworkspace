@@ -64,15 +64,26 @@ final class AppPaths
 
     public function databaseReady(): bool
     {
-        $path = $this->configuredSqlitePath();
-        if ($path === null || ! is_file($path) || filesize($path) < 1) {
+        $credentials = (new WgwDatabaseConfig($this->install))->pdoCredentials();
+        $dsn = trim($credentials['dsn']);
+        if ($dsn === '' || $dsn === 'sqlite::memory:') {
             return false;
         }
 
+        if (str_starts_with($dsn, 'sqlite:')) {
+            $sqlitePath = substr($dsn, 7);
+            if ($sqlitePath === '' || ! is_file($sqlitePath) || filesize($sqlitePath) < 1) {
+                return false;
+            }
+        }
+
         try {
-            $pdo = new \PDO('sqlite:'.$path, null, null, [
-                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-            ]);
+            $pdo = new \PDO(
+                $dsn,
+                $credentials['user'],
+                $credentials['password'],
+                [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION],
+            );
             $users = $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn();
 
             return (int) $users > 0;
@@ -86,23 +97,6 @@ final class AppPaths
         if (is_file($this->lockFile()) && ! $this->isInstalled()) {
             @unlink($this->lockFile());
         }
-    }
-
-    private function configuredSqlitePath(): ?string
-    {
-        $cfg = $this->install->readInstallFileConfig();
-        $pdo = $cfg['pdo'] ?? null;
-        if (! is_array($pdo)) {
-            return rtrim($this->dataDir(), '/').'/db.sqlite';
-        }
-        if (isset($pdo['sqlite_file']) && is_string($pdo['sqlite_file']) && trim($pdo['sqlite_file']) !== '') {
-            return $this->install->resolveInstallPath(trim($pdo['sqlite_file']));
-        }
-        if (isset($pdo['dsn']) && is_string($pdo['dsn']) && str_starts_with(trim($pdo['dsn']), 'sqlite:')) {
-            return substr(trim($pdo['dsn']), 7);
-        }
-
-        return rtrim($this->dataDir(), '/').'/db.sqlite';
     }
 
     public function isMaintenance(): bool
