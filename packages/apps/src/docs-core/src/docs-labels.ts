@@ -10,7 +10,7 @@ export const docsLabels = {
   hideSource: "Hide source",
   rename: "Rename",
   renameDialogTitle: "Rename document",
-  renameDialogDescription: "Enter a new name for this file.",
+  renameDialogDescription: "Change the name; the file extension cannot be edited.",
   renameAction: "Rename",
   cancel: "Cancel",
   sidebarOutline: "Outline",

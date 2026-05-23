@@ -1,5 +1,5 @@
 import { Button } from "@/button/src/button";
-import { Input } from "@/ui/input";
+import { RenameFilenameField } from "@/dialogs/src/rename-filename-field";
 import {
   Dialog,
   DialogContent,
@@ -22,10 +22,13 @@ export function DocsWorkspaceModals({ controller }: DocsWorkspaceModalsProps) {
     renameDialogOpen,
     renameName,
     setRenameName,
+    renameExtension,
     renamePending,
     closeRenameDialog,
     submitRename,
   } = controller;
+
+  const canSubmitRename = renameName.trim().length > 0;
 
   return (
     <Dialog
@@ -39,18 +42,14 @@ export function DocsWorkspaceModals({ controller }: DocsWorkspaceModalsProps) {
           <DialogTitle>{labels.renameDialogTitle}</DialogTitle>
           <DialogDescription>{labels.renameDialogDescription}</DialogDescription>
         </DialogHeader>
-        <Input
+        <RenameFilenameField
           autoFocus
           placeholder={labels.rename}
-          value={renameName}
+          baseName={renameName}
+          extension={renameExtension || undefined}
           disabled={renamePending}
-          onChange={(event) => setRenameName(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              void submitRename();
-            }
-          }}
+          onBaseNameChange={setRenameName}
+          onEnter={() => void submitRename()}
         />
         <DialogFooter>
           <Button variant="outline" onClick={closeRenameDialog} disabled={renamePending}>
@@ -59,7 +58,7 @@ export function DocsWorkspaceModals({ controller }: DocsWorkspaceModalsProps) {
           <Button
             variant="primary"
             onClick={() => void submitRename()}
-            disabled={renamePending || !renameName.trim()}
+            disabled={renamePending || !canSubmitRename}
           >
             {labels.renameAction}
           </Button>
