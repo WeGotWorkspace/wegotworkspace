@@ -660,10 +660,16 @@
 }
 
 @media print {
+  @page {
+    margin: 1in;
+  }
+
   html.text-editor-print-active,
   body.text-editor-print-active {
     height: auto !important;
     overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   body.text-editor-print-active * {
@@ -673,6 +679,18 @@
   body.text-editor-print-active .text-editor-sheet__surface--print,
   body.text-editor-print-active .text-editor-sheet__surface--print * {
     visibility: visible;
+  }
+
+  /* Chrome/safari: hidden ancestors still reserve padding — drop chrome from the layout */
+  body.text-editor-print-active
+    :is(
+      .app-sidebar,
+      .workspace-app-layout__main-header,
+      .view-header,
+      .action-bar,
+      .docs-workspace__stats-footer
+    ) {
+    display: none !important;
   }
 
   /* Let long documents paginate — avoid viewport-height clipping from flex/scroll shells */
@@ -697,6 +715,9 @@
     min-height: 0 !important;
     flex: none !important;
     position: static !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
   }
 
   body.text-editor-print-active .text-editor-sheet__surface--print {
@@ -704,8 +725,8 @@
     display: block !important;
     width: 100%;
     max-width: none;
-    margin: 0;
-    padding: 1in;
+    margin: 0 !important;
+    padding: 0 !important;
     box-shadow: none;
     border-radius: 0;
     height: auto !important;
@@ -721,6 +742,8 @@
     max-height: none !important;
     overflow: visible !important;
     flex: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
 
   body.text-editor-print-active
@@ -729,7 +752,6 @@
   }
 
   .text-editor-sheet__surface {
-    padding: 1in;
     box-shadow: none;
     border-radius: 0;
   }
