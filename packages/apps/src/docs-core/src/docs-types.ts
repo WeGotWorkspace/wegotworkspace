@@ -18,4 +18,9 @@ export type DocsAppBootstrap = {
 export type DocsAPIOperations = {
   loadFile: (apiPath: string, opts?: { signal?: AbortSignal }) => Promise<string>;
   saveFile: (apiPath: string, content: string, opts?: { signal?: AbortSignal }) => Promise<void>;
+  renameFile: (
+    apiPath: string,
+    newName: string,
+    opts?: { signal?: AbortSignal },
+  ) => Promise<string>;
 };

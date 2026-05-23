@@ -13,6 +13,7 @@ export type MenuItemProps = {
   onClick?: () => void;
   selected?: boolean;
   checked?: boolean;
+  disabled?: boolean;
   isDropTarget?: boolean;
   to?: string;
   className?: string;
@@ -34,6 +35,7 @@ export const MenuItem = React.forwardRef<
     onClick,
     selected,
     checked,
+    disabled = false,
     isDropTarget,
     to,
     className,
@@ -45,7 +47,8 @@ export const MenuItem = React.forwardRef<
   ref,
 ) {
   const hasDescription = Boolean(description);
-  const interactive = Boolean(to || onClick || onDragEnter || onDragOver || onDragLeave || onDrop);
+  const interactive =
+    !disabled && Boolean(to || onClick || onDragEnter || onDragOver || onDragLeave || onDrop);
 
   const surfaceClass = isDropTarget
     ? "menu-item--surface-drop"
@@ -79,6 +82,7 @@ export const MenuItem = React.forwardRef<
   const sharedClass = cn(
     "menu-item",
     selected && "menu-item--selected",
+    disabled && "menu-item--disabled",
     interactive && "menu-item--interactive",
     hasDescription ? "menu-item--align-start" : "menu-item--align-center",
     surfaceClass,
@@ -101,6 +105,7 @@ export const MenuItem = React.forwardRef<
     <button
       ref={ref as React.ForwardedRef<HTMLButtonElement>}
       type="button"
+      disabled={disabled}
       onClick={onClick}
       onDragEnter={onDragEnter}
       onDragOver={onDragOver}

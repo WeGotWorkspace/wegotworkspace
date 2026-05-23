@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check } from "lucide-react";
+import { Check, Pencil } from "lucide-react";
 import { useAppToast } from "@/hooks/use-app-toast";
 import { parentAndName } from "@/lib/api/wgw/drive";
 import { markdownToPlainText } from "@/lib/models/note-body-markdown";
@@ -12,6 +12,7 @@ type UseDocsControllerArgs = {
   operations?: DocsAPIOperations;
   /** Mock bootstrap document when no `filePath` (Storybook). */
   initialDocument?: DocsDocument | null;
+  onFileRenamed?: (apiPath: string) => void;
 };
 
 const SAVE_DEBOUNCE_MS = 2500;
@@ -22,11 +23,20 @@ function fileNameFromApiPath(apiPath: string): string {
   return parentAndName(apiPath).from;
 }
 
+function resolveActiveApiPath(
+  filePath: string | null,
+  document: DocsDocument | null,
+  initialDocument: DocsDocument | null,
+): string | null {
+  return filePath ?? document?.apiPath ?? initialDocument?.apiPath ?? null;
+}
+
 export function useDocsController({
   filePath,
   labels,
   operations,
   initialDocument = null,
+  onFileRenamed,
 }: UseDocsControllerArgs) {
   const L = useMemo(() => mergeDocsLabels(labels), [labels]);
   const { show, showError } = useAppToast();
@@ -39,8 +49,13 @@ export function useDocsController({
   const pendingContentRef = useRef<string | null>(null);
   const autoSaveToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastAutoSaveToastAtRef = useRef(0);
-  const latestPathRef = useRef(filePath);
+  const latestPathRef = useRef<string | null>(
+    resolveActiveApiPath(filePath, null, initialDocument),
+  );
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [renameName, setRenameName] = useState("");
+  const [renamePending, setRenamePending] = useState(false);
 
   const queueAutoSaveToast = useCallback(() => {
     if (autoSaveToastTimerRef.current) clearTimeout(autoSaveToastTimerRef.current);
@@ -90,7 +105,10 @@ export function useDocsController({
   );
 
   useEffect(() => {
-    latestPathRef.current = filePath;
+    latestPathRef.current = resolveActiveApiPath(filePath, document, initialDocument);
+  }, [document, filePath, initialDocument]);
+
+  useEffect(() => {
     if (saveTimerRef.current) {
       clearTimeout(saveTimerRef.current);
       saveTimerRef.current = null;
@@ -166,6 +184,56 @@ export function useDocsController({
 
   const title = document?.fileName ?? (filePath ? fileNameFromApiPath(filePath) : "");
 
+  const openRenameDialog = useCallback(() => {
+    setRenameName(title);
+    setRenameDialogOpen(true);
+  }, [title]);
+
+  const closeRenameDialog = useCallback(() => {
+    if (renamePending) return;
+    setRenameDialogOpen(false);
+    setRenameName("");
+  }, [renamePending]);
+
+  const submitRename = useCallback(async () => {
+    const path = latestPathRef.current;
+    const nextName = renameName.trim();
+    if (!path || !nextName || nextName === title) {
+      closeRenameDialog();
+      return;
+    }
+    if (!operations?.renameFile) {
+      closeRenameDialog();
+      return;
+    }
+
+    setRenamePending(true);
+    try {
+      const nextPath = await operations.renameFile(path, nextName);
+      setDocument((current) =>
+        current ? { ...current, apiPath: nextPath, fileName: nextName } : current,
+      );
+      latestPathRef.current = nextPath;
+      onFileRenamed?.(nextPath);
+      show(`Renamed to “${nextName}”`, { icon: <Pencil className="size-4" /> });
+      setRenameDialogOpen(false);
+      setRenameName("");
+    } catch {
+      showError(L.renameError);
+    } finally {
+      setRenamePending(false);
+    }
+  }, [
+    closeRenameDialog,
+    L.renameError,
+    onFileRenamed,
+    operations,
+    renameName,
+    show,
+    showError,
+    title,
+  ]);
+
   const { wordCount, characterCount } = useMemo(() => {
     const plain = markdownToPlainText(content);
     return {
@@ -183,8 +251,18 @@ export function useDocsController({
     loading,
     loadError,
     hasFile: !!filePath || !!initialDocument,
+    canRename: Boolean(
+      resolveActiveApiPath(filePath, document, initialDocument) && operations?.renameFile,
+    ),
     sidebarOpen,
     setSidebarOpen,
+    renameDialogOpen,
+    renameName,
+    setRenameName,
+    renamePending,
+    openRenameDialog,
+    closeRenameDialog,
+    submitRename,
     onContentChange: handleContentChange,
   };
 }

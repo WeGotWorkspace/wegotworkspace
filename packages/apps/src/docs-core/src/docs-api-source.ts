@@ -26,6 +26,11 @@ function createWgwDocsOperations(): DocsAPIOperations {
       await drive.checkUploadReady(opts);
       await drive.uploadFiles({ cwd: destination, files: [file] }, opts);
     },
+    async renameFile(apiPath, newName, opts) {
+      const { destination } = parentAndName(apiPath);
+      await drive.renameItem({ destination, from: apiPath, to: newName }, opts);
+      return destination === "/" ? `/${newName}` : `${destination}/${newName}`;
+    },
   };
 }
 

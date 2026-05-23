@@ -1,6 +1,8 @@
 import { useCallback, useMemo, useState } from "react";
 import type { Editor } from "@tiptap/react";
+import { Pencil, Printer } from "lucide-react";
 import { TooltipProvider } from "@/ui/tooltip";
+import { IconButton } from "@/button/src/button";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import {
   WorkspaceAppLayout,
@@ -8,10 +10,11 @@ import {
 } from "@/workspace-shell/src/workspace-app-layout";
 import { workspaceUserInitials, type WorkspaceSession } from "@/lib/workspace/workspace-session";
 import { ViewHeader } from "@/view-header/src/view-header";
-import { Tag } from "@/tag/src/tag";
+import { printTextEditorSheet } from "@/text-editor-core/src/text-editor-print";
 import { cn } from "@/lib/utils";
 import { DocsMainPane } from "@/docs-core/src/docs-main-pane";
 import { DocsOutlineSidebar } from "@/docs-core/src/docs-outline-sidebar";
+import { DocsWorkspaceModals } from "@/docs-core/src/docs-workspace-modals";
 import { focusOutlineHeading, parseMarkdownOutline } from "@/docs-core/src/docs-outline";
 import { useDocsController } from "@/docs-core/src/use-docs-controller";
 import type { DocsWorkspaceProps } from "@/docs-core/src/docs-workspace-props";
@@ -26,6 +29,7 @@ export function DocsWorkspace({
   filePath = null,
   labels,
   onLogout,
+  onFileRenamed,
   className,
 }: DocsWorkspaceProps) {
   const controller = useDocsController({
@@ -33,6 +37,7 @@ export function DocsWorkspace({
     labels,
     operations,
     initialDocument: data.document,
+    onFileRenamed,
   });
 
   const fileKey = filePath ?? data.document?.apiPath ?? "mock";
@@ -46,6 +51,7 @@ export function DocsWorkspace({
         session={session}
         onLogout={onLogout}
       />
+      <DocsWorkspaceModals controller={controller} />
     </TooltipProvider>
   );
 }
@@ -92,7 +98,7 @@ function DocsWorkspaceShell({
           onLogout={onLogout}
         />
       }
-      mainHeader={<DocsMainHeader controller={controller} />}
+      mainHeader={<DocsMainHeader controller={controller} editor={editor} />}
       main={<DocsMainPane controller={controller} fileKey={fileKey} onEditorReady={setEditor} />}
     />
   );
@@ -137,7 +143,13 @@ function DocsSidebar({
   );
 }
 
-function DocsMainHeader({ controller }: { controller: DocsController }) {
+function DocsMainHeader({
+  controller,
+  editor,
+}: {
+  controller: DocsController;
+  editor: Editor | null;
+}) {
   const title = controller.title || controller.labels.emptyTitle;
 
   return (
@@ -147,20 +159,22 @@ function DocsMainHeader({ controller }: { controller: DocsController }) {
       onToggleSidebar={() => controller.setSidebarOpen((open) => !open)}
       actions={
         controller.hasFile ? (
-          <div className="docs-workspace__stats">
-            <Tag
-              label={controller.labels.statsWords(controller.wordCount)}
-              colors={{
-                backgroundColor: "var(--docs-stat-tag-bg)",
-                color: "var(--docs-stat-tag-color)",
-              }}
+          <div className="docs-workspace__header-actions">
+            <IconButton
+              label={controller.labels.print}
+              icon={<Printer />}
+              size="sm"
+              variant="subtle"
+              disabled={!editor}
+              onClick={() => printTextEditorSheet(editor)}
             />
-            <Tag
-              label={controller.labels.statsCharacters(controller.characterCount)}
-              colors={{
-                backgroundColor: "var(--docs-stat-tag-bg)",
-                color: "var(--docs-stat-tag-color)",
-              }}
+            <IconButton
+              label={controller.labels.rename}
+              icon={<Pencil />}
+              size="sm"
+              variant="subtle"
+              disabled={!controller.canRename}
+              onClick={controller.openRenameDialog}
             />
           </div>
         ) : null
