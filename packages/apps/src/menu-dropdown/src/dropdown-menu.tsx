@@ -43,6 +43,7 @@ export function DropdownMenu({
           <DropdownMenuItem
             key={item.id ?? `${index}-${String(item.label)}`}
             asChild
+            disabled={item.disabled}
             className="dropdown-menu__item"
           >
             <MenuItem {...item} className={cn("dropdown-menu__menu-item", item.className)} />
