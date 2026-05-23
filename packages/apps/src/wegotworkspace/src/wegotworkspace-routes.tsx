@@ -6,6 +6,8 @@ import {
   type RouterHistory,
 } from "@tanstack/react-router";
 import { AdminApp } from "@/admin-core/src/admin-app";
+import { DocsApp } from "@/docs-core/src/docs-app";
+import { validateDocsRouteSearch } from "@/docs-core/src/docs-route-search";
 import { DriveApp } from "@/drive-core/src/drive-app";
 import { validateDriveRouteSearch } from "@/drive-core/src/drive-route-search";
 import { InstallApp } from "@/install-core/src/install-app";
@@ -19,6 +21,7 @@ import { createDriveAppBootstrap } from "@/lib/api/mock/drive-bootstrap";
 import { createInstallAppBootstrap } from "@/lib/api/mock/install-bootstrap";
 import { createMailAppBootstrap } from "@/lib/api/mock/mail-bootstrap";
 import { createMeetAppBootstrap } from "@/lib/api/mock/meet-bootstrap";
+import { createDocsAppBootstrap } from "@/lib/api/mock/docs-bootstrap";
 import { createNotesAppBootstrap } from "@/lib/api/mock/notes-bootstrap";
 import { createSettingsAppBootstrap } from "@/lib/api/mock/settings-bootstrap";
 import { folderTokenFromMailboxLabel } from "@/lib/api/wgw/mail";
@@ -28,6 +31,7 @@ import { InstallWorkspace } from "@/install-core/src/install-workspace";
 import { MailWorkspace } from "@/mail-core/src/mail-workspace";
 import { mailStoryLabels } from "@/mail-core/src/mail-app.stories.fixtures";
 import { MeetWorkspace } from "@/meet-core/src/meet-workspace";
+import { DocsWorkspace } from "@/docs-core/src/docs-workspace";
 import { NotesWorkspace } from "@/notes-core/src/notes-workspace";
 import { SettingsWorkspace } from "@/settings-core/src/settings-workspace";
 import { WeGotWorkspaceHome } from "@/wegotworkspace/src/wegotworkspace-home";
@@ -72,6 +76,12 @@ function MockMailRoute() {
       onLogout={onLogout}
     />
   );
+}
+
+function MockDocsRoute() {
+  const onLogout = useWeGotWorkspaceLogout();
+  const bootstrap = useMemo(() => createDocsAppBootstrap(), []);
+  return <DocsWorkspace data={bootstrap.data} session={bootstrap.session} onLogout={onLogout} />;
 }
 
 function MockNotesRoute() {
@@ -179,6 +189,13 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
     component: isLive ? withWeGotWorkspaceAuth(DriveApp) : MockDriveRoute,
   });
 
+  const docsRoute = createRoute({
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/docs",
+    validateSearch: validateDocsRouteSearch,
+    component: isLive ? withWeGotWorkspaceAuth(DocsApp) : MockDocsRoute,
+  });
+
   const settingsRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/settings",
@@ -228,6 +245,7 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
     mailRoute,
     notesRoute,
     driveRoute,
+    docsRoute,
     settingsRoute,
     meetRoute,
     voiceRoute,

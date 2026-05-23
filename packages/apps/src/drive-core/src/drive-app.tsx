@@ -6,6 +6,7 @@ import {
   driveViewFromSearch,
   parseDriveRouteSearch,
 } from "@/drive-core/src/drive-route-search";
+import { docsSearchFromApiPath } from "@/docs-core/src/docs-route-search";
 import type { ViewKey } from "@/drive-core/src/drive-models";
 import { useDriveAPI } from "@/drive-core/src/use-drive-api";
 import { DriveWorkspace } from "@/drive-core/src/drive-workspace";
@@ -32,6 +33,16 @@ export function DriveApp({ apiSource }: DriveAppProps = {}) {
     [navigate],
   );
 
+  const handleOpenDocsFile = useCallback(
+    (apiPath: string) => {
+      void navigate({
+        to: "/docs",
+        search: docsSearchFromApiPath(apiPath),
+      });
+    },
+    [navigate],
+  );
+
   return (
     <WorkspaceLiveAppShell
       phase={phase}
@@ -48,6 +59,7 @@ export function DriveApp({ apiSource }: DriveAppProps = {}) {
           listLoading={listLoading}
           view={routeView}
           onViewChange={handleViewChange}
+          onOpenDocsFile={handleOpenDocsFile}
           onLogout={() => {
             window.location.assign("/logout");
           }}

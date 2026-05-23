@@ -1,6 +1,7 @@
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   ChevronDown,
+  FileText,
   HardDrive,
   Mail as MailIcon,
   NotebookPen,
@@ -8,6 +9,7 @@ import {
   Shield,
   Video,
 } from "lucide-react";
+import { docsApiPathFromSearch, parseDocsRouteSearch } from "@/docs-core/src/docs-route-search";
 import { DropdownMenu } from "@/menu-dropdown/src/dropdown-menu";
 import type { DropdownMenuItemProps } from "@/menu-dropdown/src/dropdown-menu";
 import { BrandMark } from "@/brand-mark/src/brand-mark";
@@ -36,6 +38,12 @@ const WORKSPACE_APPS = [
     to: "/drive",
   },
   {
+    id: "docs",
+    label: "Docs",
+    icon: FileText,
+    to: "/docs",
+  },
+  {
     id: "settings",
     label: "Settings",
     icon: SettingsIcon,
@@ -55,19 +63,29 @@ const WORKSPACE_APPS = [
   },
 ] as const;
 
+export type AppSwitchButtonVariant = "default" | "compact";
+
 export type AppSwitchButtonProps = {
   disabled?: boolean;
   /** When set (e.g. `Workspace` on home/install), overrides the subtitle inferred from the route. */
   subtitle?: string;
+  /** `compact` drops the “we got” tagline and scales the mark to a single app line. */
+  variant?: AppSwitchButtonVariant;
   onSelect?: (app: (typeof WORKSPACE_APPS)[number]) => void;
 };
 
 export function AppSwitchButton({
   disabled = false,
   subtitle: subtitleProp,
+  variant = "default",
   onSelect: onSelectProp,
 }: AppSwitchButtonProps) {
-  const path = useRouterState({ select: (r) => r.location.pathname });
+  const compact = variant === "compact";
+  const location = useRouterState({ select: (r) => r.location });
+  const path = location.pathname;
+  const docsFileOpen =
+    docsApiPathFromSearch(parseDocsRouteSearch(location.search as Record<string, unknown>).file) !=
+    null;
   const navigate = useNavigate();
   const current =
     WORKSPACE_APPS.find((a) => path === a.to || path.startsWith(`${a.to}/`)) ?? WORKSPACE_APPS[0];
@@ -81,13 +99,15 @@ export function AppSwitchButton({
 
   const menuItems: DropdownMenuItemProps[] = WORKSPACE_APPS.map((app) => {
     const Icon = app.icon;
+    const itemDisabled = app.id === "docs" && !docsFileOpen;
     return {
       id: app.id,
       label: app.label,
       icon: <Icon className="size-4" />,
       checked: app.id === current.id,
+      disabled: itemDisabled,
       onClick: () => {
-        if (disabled) return;
+        if (disabled || itemDisabled || app.id === current.id) return;
         onSelect?.(app);
       },
     };
@@ -96,10 +116,22 @@ export function AppSwitchButton({
   return (
     <DropdownMenu
       trigger={
-        <button type="button" disabled={disabled} className="app-switch-button__trigger">
-          <BrandMark className="app-switch-button__brand" />
+        <button
+          type="button"
+          disabled={disabled}
+          className={cn(
+            "app-switch-button__trigger",
+            compact && "app-switch-button__trigger--compact",
+          )}
+        >
+          <BrandMark
+            className={cn(
+              "app-switch-button__brand",
+              compact && "app-switch-button__brand--compact",
+            )}
+          />
           <span className="app-switch-button__label">
-            <span className="app-switch-button__label-top">{TAGLINE}</span>
+            {!compact ? <span className="app-switch-button__label-top">{TAGLINE}</span> : null}
             <span>{subtitle}</span>
           </span>
           {!disabled ? (

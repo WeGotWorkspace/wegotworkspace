@@ -125,15 +125,20 @@
   background: transparent;
 }
 
-.text-editor-format-bar__btn--active,
-.text-editor-format-bar__btn--active:hover:not(:disabled),
+.text-editor-format-bar__btn.text-editor-format-bar__btn--active,
+.text-editor-format-bar__btn.text-editor-format-bar__btn--active:hover:not(:disabled),
+.text-editor-format-bar__btn[aria-pressed="true"],
+.text-editor-format-bar__btn[aria-pressed="true"]:hover:not(:disabled),
 .text-editor-format-bar__heading-trigger.text-editor-format-bar__btn--active,
-.text-editor-format-bar__heading-trigger.text-editor-format-bar__btn--active:hover:not(:disabled) {
-  font-weight: 500;
-  color: var(--text-editor-format-btn-color);
-  background: color-mix(in oklab, var(--text-editor-format-btn-active-bg) 18%, transparent);
-  border-color: transparent;
-  box-shadow: none;
+.text-editor-format-bar__heading-trigger.text-editor-format-bar__btn--active:hover:not(:disabled),
+.text-editor-format-bar__heading-trigger[aria-pressed="true"],
+.text-editor-format-bar__heading-trigger[aria-pressed="true"]:hover:not(:disabled) {
+  font-weight: 600;
+  color: var(--text-editor-format-btn-active-color);
+  background: var(--text-editor-format-btn-active-bg);
+  border-color: color-mix(in oklab, var(--text-editor-format-btn-active-color) 28%, transparent);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in oklab, var(--text-editor-format-btn-active-color) 22%, transparent);
 }
 
 .text-editor-format-bar__sep {
@@ -528,8 +533,8 @@
 }
 
 .text-editor-slash-menu {
-  position: absolute;
-  z-index: 40;
+  position: fixed;
+  z-index: 50;
   width: 18rem;
   overflow: hidden;
   border-radius: var(--radius-lg);
@@ -655,6 +660,26 @@
 }
 
 @media print {
+  body.text-editor-print-active * {
+    visibility: hidden;
+  }
+
+  body.text-editor-print-active .text-editor-sheet__surface,
+  body.text-editor-print-active .text-editor-sheet__surface * {
+    visibility: visible;
+  }
+
+  body.text-editor-print-active .text-editor-sheet__surface {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 1in;
+    box-shadow: none;
+    border-radius: 0;
+  }
+
   .text-editor-sheet__surface {
     padding: 1in;
     box-shadow: none;
@@ -664,6 +689,21 @@
   .no-print {
     display: none !important;
   }
+}
+
+/**
+ * Light workspace surfaces (mail compose, docs): ink foreground + accent mixes
+ * so format-bar hover/active states stay visible on cream/oklch backgrounds.
+ */
+:is(.mail-compose-dialog-surface .mail-compose-view__message-editor.text-editor) {
+  --foreground: var(--color-ink);
+  --accent: color-mix(in oklab, var(--color-ink) 10%, transparent);
+  --accent-foreground: var(--color-ink);
+  --border: color-mix(in oklab, var(--color-ink) 12%, transparent);
+  --text-editor-format-btn-hover-bg: color-mix(in oklab, var(--color-ink) 8%, transparent);
+  --text-editor-format-btn-hover-color: var(--color-ink);
+  --text-editor-format-btn-active-bg: color-mix(in oklab, var(--color-ink) 16%, transparent);
+  --text-editor-format-btn-active-color: var(--color-ink);
 }
 
 /* Compact body for format-bar-only Storybook previews */

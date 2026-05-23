@@ -15,6 +15,7 @@ export {
   type TextEditorSheetVariant,
 } from "@/text-editor-core/src/text-editor-sheet";
 export { TextEditorSlashMenu } from "@/text-editor-core/src/text-editor-slash-menu";
+export { printTextEditorSheet } from "@/text-editor-core/src/text-editor-print";
 export { TextEditorTableControls } from "@/text-editor-core/src/text-editor-table-controls";
 export {
   createTextEditorExtensions,

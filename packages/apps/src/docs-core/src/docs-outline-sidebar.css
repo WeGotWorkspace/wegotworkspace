@@ -1,0 +1,7 @@
+@import "../../styles.css" reference;
+
+/** Prefix slot for hierarchical outline numbers (e.g. 1.1, 2.1.2). */
+.docs-outline-sidebar__number {
+  @apply block min-w-[2.75ch] text-xs tabular-nums;
+  font-family: var(--font-mono);
+}
