@@ -1,6 +1,6 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Editor } from "@tiptap/react";
-import { Pencil, Printer } from "lucide-react";
+import { Code2, Pencil, Printer } from "lucide-react";
 import { TooltipProvider } from "@/ui/tooltip";
 import { IconButton } from "@/button/src/button";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
@@ -70,7 +70,12 @@ function DocsWorkspaceShell({
   onLogout?: () => void;
 }) {
   const [editor, setEditor] = useState<Editor | null>(null);
+  const [viewSource, setViewSource] = useState(false);
   const [activeOutlineIndex, setActiveOutlineIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    setViewSource(false);
+  }, [fileKey]);
 
   const outline = useMemo(() => parseMarkdownOutline(controller.content), [controller.content]);
 
@@ -98,8 +103,22 @@ function DocsWorkspaceShell({
           onLogout={onLogout}
         />
       }
-      mainHeader={<DocsMainHeader controller={controller} editor={editor} />}
-      main={<DocsMainPane controller={controller} fileKey={fileKey} onEditorReady={setEditor} />}
+      mainHeader={
+        <DocsMainHeader
+          controller={controller}
+          editor={editor}
+          viewSource={viewSource}
+          onToggleViewSource={() => setViewSource((on) => !on)}
+        />
+      }
+      main={
+        <DocsMainPane
+          controller={controller}
+          fileKey={fileKey}
+          viewSource={viewSource}
+          onEditorReady={setEditor}
+        />
+      }
     />
   );
 }
@@ -146,9 +165,13 @@ function DocsSidebar({
 function DocsMainHeader({
   controller,
   editor,
+  viewSource,
+  onToggleViewSource,
 }: {
   controller: DocsController;
   editor: Editor | null;
+  viewSource: boolean;
+  onToggleViewSource: () => void;
 }) {
   const title = controller.title || controller.labels.emptyTitle;
 
@@ -160,6 +183,17 @@ function DocsMainHeader({
       actions={
         controller.hasFile ? (
           <div className="docs-workspace__header-actions">
+            <IconButton
+              label={viewSource ? controller.labels.hideSource : controller.labels.viewSource}
+              icon={<Code2 />}
+              size="sm"
+              variant="subtle"
+              active={viewSource}
+              aria-pressed={viewSource}
+              disabled={!editor}
+              className={viewSource ? "docs-workspace__source-toggle--active" : undefined}
+              onClick={onToggleViewSource}
+            />
             <IconButton
               label={controller.labels.print}
               icon={<Printer />}
