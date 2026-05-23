@@ -155,6 +155,15 @@ export function createWgwDriveOperations(initialCwd = "/"): DriveAPIOperations {
       await postJson("/drive/createnew", payload, opts);
       return fetchState(cwd, opts);
     },
+    async createFile(input, opts) {
+      const payload: WgwDriveCreateRequest = {
+        cwd: normalizePath(input.cwd),
+        name: input.name.trim(),
+        type: "file",
+      };
+      await postJson("/drive/createnew", payload, opts);
+      return fetchState(cwd, opts);
+    },
     async renameItem(input, opts) {
       const payload: WgwDriveRenameRequest = {
         destination: normalizePath(input.destination),

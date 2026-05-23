@@ -251,7 +251,6 @@
 .mail-compose-dialog-surface .mail-compose-view__message-editor.text-editor {
   --text-editor-sheet-padding: 1rem;
   --text-editor-sheet-margin-block: 0;
-  --foreground: var(--color-ink);
   display: flex;
   flex: 1;
   flex-direction: column;

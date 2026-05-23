@@ -25,6 +25,7 @@ export function DriveWorkspace({
   listLoading = false,
   view,
   onViewChange,
+  onOpenDocsFile,
   onLogout,
   className,
 }: DriveWorkspaceProps) {
@@ -35,6 +36,7 @@ export function DriveWorkspace({
     listLoading,
     view,
     onViewChange,
+    onOpenDocsFile,
   });
   const { primarySidebarItems, groupSidebarItems } = useDriveSidebarModel({
     labels: controller.labels,
@@ -54,6 +56,7 @@ export function DriveWorkspace({
             controller={controller}
             session={session}
             onLogout={onLogout}
+            onOpenDocsFile={onOpenDocsFile}
             primarySidebarItems={primarySidebarItems}
             groupSidebarItems={groupSidebarItems}
           />
@@ -82,17 +85,26 @@ function DriveSidebar({
   controller,
   session,
   onLogout,
+  onOpenDocsFile,
   primarySidebarItems,
   groupSidebarItems,
 }: {
   controller: DriveController;
   session: WorkspaceSession;
   onLogout?: () => void;
+  onOpenDocsFile?: (apiPath: string) => void;
   primarySidebarItems: ReturnType<typeof useDriveSidebarModel>["primarySidebarItems"];
   groupSidebarItems: ReturnType<typeof useDriveSidebarModel>["groupSidebarItems"];
 }) {
-  const { labels, sidebarOpen, setSidebarOpen, createFolder, createBlank, fileInputRef } =
-    controller;
+  const {
+    labels,
+    sidebarOpen,
+    setSidebarOpen,
+    createFolder,
+    createMarkdown,
+    createBlank,
+    fileInputRef,
+  } = controller;
 
   return (
     <AppSidebar
@@ -112,6 +124,7 @@ function DriveSidebar({
           labels={labels}
           onCreateFolder={createFolder}
           onUploadFiles={() => fileInputRef.current?.click()}
+          onCreateMarkdown={onOpenDocsFile ? createMarkdown : undefined}
           onCreateBlank={createBlank}
         />
       }

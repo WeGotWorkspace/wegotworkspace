@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Star, StarOff, Upload, FolderPlus, Pencil } from "lucide-react";
+import { Star, StarOff, Upload, FolderPlus, Pencil, ScrollText } from "lucide-react";
 import { useAppToast } from "@/hooks/use-app-toast";
 import { useEntityBatchActions } from "@/hooks/use-entity-batch-actions";
 import { useIsTouch } from "@/hooks/use-is-touch";
@@ -18,7 +18,7 @@ import type {
 import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
 import { DRIVE_MOCK_FILES } from "@/drive-core/src/drive-mock-files";
 import type { DriveFile, FileKind, ViewKey } from "@/drive-core/src/drive-models";
-import { OFFICE_EDITOR_EXTENSIONS } from "@/drive-core/src/drive-models";
+import { DOCS_EDITOR_EXTENSIONS, OFFICE_EDITOR_EXTENSIONS } from "@/drive-core/src/drive-models";
 import {
   mergeDriveFolderListing,
   resolveDriveFileApiPath,
@@ -37,6 +37,7 @@ import {
   driveFileFromEntry,
   extensionFromFileName,
   formatBytesCompact,
+  suggestNewMarkdownFileName,
 } from "@/drive-core/src/drive-file-utils";
 
 export type UseDriveControllerArgs = {
@@ -46,6 +47,7 @@ export type UseDriveControllerArgs = {
   listLoading?: boolean;
   view?: ViewKey;
   onViewChange?: (view: ViewKey) => void;
+  onOpenDocsFile?: (apiPath: string) => void;
 };
 
 const WRITE_QUEUE_DELAY_MS = 2500;
@@ -57,6 +59,7 @@ export function useDriveController({
   listLoading = false,
   view: controlledView,
   onViewChange,
+  onOpenDocsFile,
 }: UseDriveControllerArgs) {
   const { show, showError } = useAppToast();
   const showMutationError = useCallback(
@@ -556,8 +559,12 @@ export function useDriveController({
       const next = f.parent === "" ? f.title : `${f.parent}/${f.title}`;
       selectView({ type: "folder", path: next });
     } else {
-      const officeExt = extensionFromFileName(f.title);
-      if (f.apiPath && OFFICE_EDITOR_EXTENSIONS.has(officeExt)) {
+      const ext = extensionFromFileName(f.title);
+      if (f.apiPath && DOCS_EDITOR_EXTENSIONS.has(ext) && onOpenDocsFile) {
+        onOpenDocsFile(f.apiPath);
+        return;
+      }
+      if (f.apiPath && OFFICE_EDITOR_EXTENSIONS.has(ext)) {
         const rel = f.apiPath.replace(/^\/+/, "");
         const qp = new URLSearchParams({ file: rel });
         launchOfficeEditor(qp);
@@ -905,6 +912,63 @@ export function useDriveController({
     launchOfficeEditor(qp);
   };
 
+  const createMarkdown = useCallback(() => {
+    if (!onOpenDocsFile) return;
+    const targetParent = view.type === "folder" ? view.path : "My Drive";
+    const name = suggestNewMarkdownFileName(files);
+    const cwd = apiPathFromUiPath(targetParent, currentUsername, groupRootNames);
+    const apiPath = normalizeApiVirtualPath(`${cwd}/${name}`);
+
+    if (operations) {
+      void operations
+        .createFile({ cwd, name })
+        .then((nextData) => {
+          setFiles(
+            nextData.directory.files.map((entry) => driveFileFromEntry(entry, currentUsername)),
+          );
+          commitView({ type: "folder", path: uiPathFromApiPath(nextData.cwd, currentUsername) });
+          onOpenDocsFile(apiPath);
+        })
+        .catch((error: unknown) => {
+          const message = error instanceof Error ? error.message : String(error);
+          showError(message);
+        });
+      return;
+    }
+
+    const id = `f-${Date.now()}`;
+    setFiles((previous) => [
+      {
+        id,
+        notebook: "File · 0 KB",
+        category: "File",
+        date: "Now",
+        title: name,
+        excerpt: apiPath,
+        body: [],
+        tags: [],
+        wordCount: 0,
+        parent: targetParent,
+        kind: "doc",
+        size: "0 KB",
+        apiPath,
+      },
+      ...previous,
+    ]);
+    show(`Created “${name}”`, { icon: <ScrollText className="size-4" /> });
+    onOpenDocsFile(apiPath);
+  }, [
+    commitView,
+    currentUsername,
+    files,
+    groupRootNames,
+    onOpenDocsFile,
+    operations,
+    show,
+    showError,
+    view,
+  ]);
+
   useEffect(() => {
     const isMac =
       typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.platform);
@@ -1032,6 +1096,7 @@ export function useDriveController({
     handleUpload,
     createFolder,
     submitCreateFolder,
+    createMarkdown,
     createBlank,
     selectView,
     listLoading,

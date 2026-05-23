@@ -23,6 +23,13 @@ export const Default: Story = {
   },
 };
 
+export const Compact: Story = {
+  args: {
+    variant: "compact",
+    subtitle: "Docs",
+  },
+};
+
 export const Disabled: Story = {
   args: {
     ...Default.args,

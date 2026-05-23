@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Front;
 
 use Tests\Support\UiDistFixture;
+use Tests\Support\WgwInstallFixture;
 use Tests\TestCase;
 
 final class FrontRoutingTest extends TestCase
@@ -54,6 +55,24 @@ final class FrontRoutingTest extends TestCase
         $this->getJson('/api/v1/health')
             ->assertOk()
             ->assertJsonPath('status', 'ok');
+    }
+
+    public function test_docs_app_path_serves_shell_not_webdav(): void
+    {
+        $this->repoRoot = UiDistFixture::bootstrapMonorepoLayout();
+        $installRoot = $this->repoRoot.'/apps/wegotworkspace';
+        $data = $installRoot.'/wgw-content';
+        WgwInstallFixture::markInstalled($installRoot, $data);
+        WgwInstallFixture::forgetInstallBindings();
+
+        $docs = $this->get('/docs');
+        $docs->assertOk()
+            ->assertHeader('Content-Type', 'text/html; charset=utf-8');
+        $this->assertStringNotContainsString('Sabre\\DAV\\Exception\\NotFound', (string) $docs->getContent());
+
+        $this->get('/docs/')
+            ->assertOk()
+            ->assertHeader('Content-Type', 'text/html; charset=utf-8');
     }
 
     public function test_api_docs_not_handled_by_webdav_catch_all(): void

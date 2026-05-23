@@ -1,0 +1,224 @@
+@import "../../styles.css" reference;
+@import "../../workspace-shell/src/workspace-split-app.css";
+
+.docs-workspace {
+  @apply min-w-0 overflow-x-hidden;
+
+  /* Slightly lighter than Drive (#2563eb) — same blue family, distinct app chrome */
+  --docs-accent: #3b82f6;
+  --docs-sidebar: var(--docs-accent);
+  --color-emerald: var(--docs-accent);
+  --docs-surface: var(--color-cream, #ffffff);
+  --background: oklch(98.5% 0.005 100);
+  --docs-canvas: oklch(95% 0.006 100);
+  --docs-sheet-width: 210mm;
+  --docs-sheet-min-height: 297mm;
+  --docs-sheet-canvas-padding-block: 2.5rem;
+  --docs-stat-tag-bg: color-mix(in oklab, var(--docs-accent) 10%, transparent);
+  --docs-stat-tag-color: color-mix(in oklab, var(--docs-accent) 88%, var(--color-ink));
+  --docs-text: var(--color-ink);
+  --docs-muted: color-mix(in oklab, var(--color-ink) 55%, transparent);
+  --docs-border: color-mix(in oklab, var(--color-ink) 12%, transparent);
+  --docs-format-chrome-padding-x: 1rem;
+  --docs-format-chrome-padding-y: 0.5rem;
+
+  --app-sidebar-bg: var(--docs-sidebar);
+  --app-sidebar-border-color: color-mix(in oklab, #ffffff 18%, transparent);
+  --app-sidebar-color: #ffffff;
+  --sidebar-logo-close-button-color: var(--app-sidebar-color);
+  --sidebar-badge-fg: var(--docs-accent);
+  --workspace-main-content-max-width: none;
+  --workspace-sidebar-toggle-color: var(--color-ink);
+  --workspace-sidebar-toggle-bg: color-mix(in oklab, var(--color-ink) 6%, transparent);
+  --workspace-user-footer-link-hover-bg: color-mix(in oklab, #ffffff 18%, transparent);
+
+  --button-primary-bg: var(--docs-accent);
+  --button-primary-fg: #ffffff;
+  --foreground: var(--docs-text);
+  --color-foreground: var(--docs-text);
+
+  background-color: var(--docs-surface);
+  color: var(--docs-text);
+  font-family: var(--font-sans);
+}
+
+@media (min-width: 768px) {
+  .docs-workspace {
+    --docs-format-chrome-padding-x: 1.5rem;
+  }
+}
+
+.docs-workspace .workspace-app-layout__main-scroll {
+  @apply flex flex-col;
+}
+
+.docs-workspace .workspace-app-layout__main-content {
+  @apply mx-0 flex min-h-full w-full max-w-none flex-1 flex-col px-0 py-0;
+}
+
+.docs-workspace .app-sidebar {
+  --field-label-color: color-mix(in oklab, #ffffff 72%, transparent);
+}
+
+.docs-workspace .app-sidebar__scroll {
+  --color-ink: #ffffff;
+  --button-subtle-color: #ffffff;
+  --button-subtle-background: color-mix(in oklab, #ffffff 12%, transparent);
+  --button-subtle-hover-background: color-mix(in oklab, #ffffff 20%, transparent);
+}
+
+.docs-workspace .app-sidebar__footer {
+  --workspace-user-footer-text-color: #ffffff;
+  --workspace-user-footer-subtitle-color: color-mix(in oklab, #ffffff 72%, transparent);
+  --workspace-user-footer-border-color: color-mix(in oklab, #ffffff 18%, transparent);
+  --workspace-user-footer-avatar-bg: color-mix(in oklab, #ffffff 22%, transparent);
+  --workspace-user-footer-avatar-color: var(--app-sidebar-color);
+  --workspace-user-footer-link-color: #ffffff;
+}
+
+.docs-workspace__header-actions {
+  @apply flex shrink-0 flex-wrap items-center justify-end gap-1.5;
+}
+
+.docs-workspace__stats-footer {
+  @apply flex shrink-0 flex-wrap items-center justify-start gap-1.5;
+  box-sizing: border-box;
+  padding-block: var(--docs-format-chrome-padding-y);
+  padding-inline: var(--docs-format-chrome-padding-x);
+  min-height: 3rem;
+  background-color: color-mix(in oklab, #ffffff 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--docs-border);
+}
+
+.docs-dialog-surface {
+  --docs-accent: #3b82f6;
+  --button-primary-bg: var(--docs-accent);
+  --button-primary-fg: #ffffff;
+  --primary: var(--docs-accent);
+  --primary-foreground: #ffffff;
+}
+
+.docs-workspace__stats-footer .tag {
+  font-variant-numeric: tabular-nums;
+}
+
+.docs-workspace__editor {
+  @apply flex min-h-0 flex-1 flex-col overflow-hidden;
+}
+
+.docs-workspace .text-editor {
+  @apply min-h-0 flex-1;
+  --text-editor-shadow-sheet: 0 1px 2px #0000000a, 0 10px 30px -10px #0f172a1f;
+  --text-editor-format-btn-color: color-mix(in oklab, var(--docs-text) 70%, transparent);
+  --text-editor-format-btn-hover-bg: color-mix(in oklab, var(--docs-accent) 10%, transparent);
+  --text-editor-format-btn-hover-color: var(--docs-accent);
+  --text-editor-format-btn-active-bg: color-mix(in oklab, var(--docs-accent) 24%, transparent);
+  --text-editor-format-btn-active-color: var(--docs-accent);
+}
+
+.docs-workspace__editor .text-editor-format-bar {
+  flex-shrink: 0;
+  box-sizing: border-box;
+  padding-block: var(--docs-format-chrome-padding-y);
+  padding-inline: var(--docs-format-chrome-padding-x);
+  border-bottom: 1px solid var(--docs-border);
+}
+
+.docs-workspace
+  .text-editor-format-bar
+  .text-editor-format-bar__btn.text-editor-format-bar__btn--active:not(:disabled),
+.docs-workspace
+  .text-editor-format-bar
+  .text-editor-format-bar__btn[aria-pressed="true"]:not(:disabled),
+.docs-workspace
+  .text-editor-format-bar
+  .text-editor-format-bar__heading-trigger.text-editor-format-bar__btn--active:not(:disabled),
+.docs-workspace
+  .text-editor-format-bar
+  .text-editor-format-bar__heading-trigger[aria-pressed="true"]:not(:disabled) {
+  color: var(--docs-accent);
+  background: var(--text-editor-format-btn-active-bg);
+  border-color: color-mix(in oklab, var(--docs-accent) 32%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--docs-accent) 28%, transparent);
+}
+
+.docs-workspace
+  .text-editor-format-bar
+  .text-editor-format-bar__btn.text-editor-format-bar__btn--active:hover:not(:disabled),
+.docs-workspace
+  .text-editor-format-bar
+  .text-editor-format-bar__btn[aria-pressed="true"]:hover:not(:disabled),
+.docs-workspace
+  .text-editor-format-bar
+  .text-editor-format-bar__heading-trigger.text-editor-format-bar__btn--active:hover:not(:disabled),
+.docs-workspace
+  .text-editor-format-bar
+  .text-editor-format-bar__heading-trigger[aria-pressed="true"]:hover:not(:disabled) {
+  color: var(--docs-accent);
+  background: color-mix(in oklab, var(--docs-accent) 30%, transparent);
+}
+
+.docs-workspace
+  .text-editor-format-bar
+  .text-editor-format-bar__btn:hover:not(:disabled):not(.text-editor-format-bar__btn--active):not(
+    [aria-pressed="true"]
+  ),
+.docs-workspace
+  .text-editor-format-bar
+  .text-editor-format-bar__heading-trigger:hover:not(:disabled):not(
+    .text-editor-format-bar__btn--active
+  ):not([aria-pressed="true"]) {
+  color: var(--text-editor-format-btn-hover-color);
+  background: var(--text-editor-format-btn-hover-bg);
+}
+
+.docs-workspace .text-editor-format-bar .text-editor-format-bar__btn-icon svg {
+  stroke: currentColor;
+}
+
+.docs-workspace__editor .text-editor-sheet--fill {
+  flex: 1;
+  min-height: 0;
+  align-items: flex-start;
+  overflow-y: auto;
+  padding-block: var(--docs-sheet-canvas-padding-block);
+  padding-inline: 1.25rem;
+  background-color: var(--docs-canvas);
+}
+
+.docs-workspace__editor .text-editor-sheet--fill .text-editor-sheet__surface {
+  display: block;
+  flex: none;
+  width: min(100%, var(--docs-sheet-width));
+  max-width: var(--docs-sheet-width);
+  height: auto;
+  min-height: var(--docs-sheet-min-height);
+  margin-inline: auto;
+  margin-block: 0;
+}
+
+.docs-workspace__editor .text-editor-sheet--fill .text-editor-sheet__surface .ProseMirror {
+  min-height: 0;
+  height: auto;
+}
+
+.docs-workspace__empty,
+.docs-workspace__error {
+  @apply flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center;
+}
+
+.docs-workspace__empty-title {
+  @apply text-base font-medium;
+}
+
+.docs-workspace__empty-description,
+.docs-workspace__error {
+  @apply text-sm;
+  color: var(--docs-muted);
+}
+
+.docs-workspace__loading {
+  @apply flex flex-1 items-center justify-center text-sm;
+  color: var(--docs-muted);
+}
