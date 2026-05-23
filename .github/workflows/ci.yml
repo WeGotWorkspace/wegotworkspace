@@ -39,6 +39,9 @@ jobs:
           cp packages/api/.env.example packages/api/.env
           php packages/api/artisan key:generate --force --no-interaction
 
+      - name: License policy (production dependencies)
+        run: pnpm run check:licenses
+
       - name: Quality gate (typegen, lint, format, typecheck, API done gate)
         run: pnpm run ci:quality
 
