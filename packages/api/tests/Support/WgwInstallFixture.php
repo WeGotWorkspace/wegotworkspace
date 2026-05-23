@@ -15,7 +15,10 @@ final class WgwInstallFixture
         $installRoot = rtrim(str_replace('\\', '/', $installRoot), '/');
         $dataDir = rtrim(str_replace('\\', '/', $dataDir), '/');
 
-        mkdir($dataDir.'/keys', 0700, true);
+        $keysDir = $dataDir.'/keys';
+        if (! is_dir($keysDir) && ! @mkdir($keysDir, 0700, true) && ! is_dir($keysDir)) {
+            throw new \RuntimeException('Failed to create keys directory: '.$keysDir);
+        }
         $keys = AuthTestKeys::rsaPair();
         file_put_contents($dataDir.'/keys/api-jwt-private.pem', $keys['private_key']);
         file_put_contents($dataDir.'/keys/api-jwt-public.pem', $keys['public_key']);
