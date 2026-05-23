@@ -6,6 +6,8 @@ export const docsLabels = {
   saveError: "Could not save this document.",
   renameError: "Could not rename this document.",
   print: "Print",
+  viewSource: "Edit source",
+  hideSource: "Hide source",
   rename: "Rename",
   renameDialogTitle: "Rename document",
   renameDialogDescription: "Enter a new name for this file.",

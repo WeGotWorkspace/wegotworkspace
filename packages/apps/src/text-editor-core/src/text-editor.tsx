@@ -10,7 +10,9 @@ import {
 } from "@/text-editor-core/src/text-editor-format-bar";
 import { TextEditorSheet } from "@/text-editor-core/src/text-editor-sheet";
 import type { TextEditorSheetVariant } from "@/text-editor-core/src/text-editor-sheet";
+import { TextEditorSource } from "@/text-editor-core/src/text-editor-source";
 import { useTextEditor } from "@/text-editor-core/src/use-text-editor";
+import { useTextEditorSourceSync } from "@/text-editor-core/src/use-text-editor-source-sync";
 
 import "@/text-editor-core/src/text-editor.css";
 
@@ -28,6 +30,12 @@ export type TextEditorProps = {
   sheetVariant?: TextEditorSheetVariant;
   /** Grow the letter sheet to fill a flex parent (e.g. mail compose). */
   sheetFill?: boolean;
+  /**
+   * When true, shows a source editor. Wide landscape viewports use a split
+   * (rich text + source); narrow or portrait viewports show source only.
+   * Toggle externally — no built-in control.
+   */
+  viewSource?: boolean;
   className?: string;
   onUpdate?: (payload: { editor: Editor; content: string }) => void;
   /** Called when the TipTap instance is created or destroyed (e.g. document outline). */
@@ -46,6 +54,7 @@ export function TextEditor({
   showPrint,
   sheetVariant = "sheet",
   sheetFill = false,
+  viewSource = false,
   className,
   onUpdate,
   onEditorReady,
@@ -55,6 +64,13 @@ export function TextEditor({
     content: content ?? textEditorDemoContent(format),
     editable,
     placeholder,
+    onUpdate,
+  });
+
+  const { sourceValue, onSourceChange, onSourceFocus, onSourceBlur } = useTextEditorSourceSync({
+    editor,
+    format,
+    viewSource,
     onUpdate,
   });
 
@@ -70,28 +86,57 @@ export function TextEditor({
     return resolveTextEditorFormatBarConfig(config);
   })();
 
+  const formatLabel = format === "markdown" ? "Markdown" : "HTML";
+
+  const formatBarElement = formatBarConfig ? (
+    <TextEditorFormatBar
+      editor={editor}
+      groups={[...formatBarConfig.groups]}
+      showPrint={formatBarConfig.showPrint}
+      className={formatBarConfig.className}
+    />
+  ) : null;
+
+  const sheetElement = (
+    <TextEditorSheet
+      editor={editor}
+      variant={sheetVariant}
+      fill={sheetFill}
+      className="min-h-0 flex-1"
+    />
+  );
+
   return (
     <div
       className={cn(
         "text-editor flex w-full flex-col",
         sheetFill ? "h-full min-h-0 flex-1" : "h-full w-full",
+        viewSource && "text-editor--view-source",
         className,
       )}
     >
-      {formatBarConfig ? (
-        <TextEditorFormatBar
-          editor={editor}
-          groups={[...formatBarConfig.groups]}
-          showPrint={formatBarConfig.showPrint}
-          className={formatBarConfig.className}
-        />
-      ) : null}
-      <TextEditorSheet
-        editor={editor}
-        variant={sheetVariant}
-        fill={sheetFill}
-        className="min-h-0 flex-1"
-      />
+      {viewSource ? (
+        <div className="text-editor__body min-h-0 flex-1">
+          <TextEditorSource
+            value={sourceValue}
+            onChange={onSourceChange}
+            onFocus={onSourceFocus}
+            onBlur={onSourceBlur}
+            editable={editable}
+            formatLabel={formatLabel}
+            className="text-editor__source min-h-0"
+          />
+          <div className="text-editor__formatted flex min-h-0 flex-1 flex-col">
+            {formatBarElement}
+            {sheetElement}
+          </div>
+        </div>
+      ) : (
+        <>
+          {formatBarElement}
+          {sheetElement}
+        </>
+      )}
     </div>
   );
 }
