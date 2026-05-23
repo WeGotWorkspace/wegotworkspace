@@ -10,5 +10,7 @@ export type DocsWorkspaceProps = {
   filePath?: string | null;
   labels?: Partial<DocsUILabels>;
   onLogout?: () => void;
+  /** Called after a successful rename with the new drive API path. */
+  onFileRenamed?: (apiPath: string) => void;
   className?: string;
 };

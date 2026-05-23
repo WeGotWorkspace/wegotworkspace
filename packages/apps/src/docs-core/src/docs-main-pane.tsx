@@ -1,5 +1,6 @@
 import type { Editor } from "@tiptap/react";
 import { TextEditor, TEXT_EDITOR_FORMAT_BAR_FULL } from "@/text-editor-core/src";
+import { DocsStatsFooter } from "@/docs-core/src/docs-stats-footer";
 import type { useDocsController } from "@/docs-core/src/use-docs-controller";
 
 type DocsController = ReturnType<typeof useDocsController>;
@@ -39,10 +40,11 @@ export function DocsMainPane({ controller, fileKey, onEditorReady }: DocsMainPan
         format="markdown"
         content={controller.content}
         sheetFill
-        formatBar={{ groups: TEXT_EDITOR_FORMAT_BAR_FULL, showPrint: true }}
+        formatBar={{ groups: TEXT_EDITOR_FORMAT_BAR_FULL, showPrint: false }}
         onUpdate={({ content }) => controller.onContentChange(content)}
         onEditorReady={onEditorReady}
       />
+      <DocsStatsFooter controller={controller} />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import {
   Shield,
   Video,
 } from "lucide-react";
+import { docsApiPathFromSearch, parseDocsRouteSearch } from "@/docs-core/src/docs-route-search";
 import { DropdownMenu } from "@/menu-dropdown/src/dropdown-menu";
 import type { DropdownMenuItemProps } from "@/menu-dropdown/src/dropdown-menu";
 import { BrandMark } from "@/brand-mark/src/brand-mark";
@@ -80,7 +81,11 @@ export function AppSwitchButton({
   onSelect: onSelectProp,
 }: AppSwitchButtonProps) {
   const compact = variant === "compact";
-  const path = useRouterState({ select: (r) => r.location.pathname });
+  const location = useRouterState({ select: (r) => r.location });
+  const path = location.pathname;
+  const docsFileOpen =
+    docsApiPathFromSearch(parseDocsRouteSearch(location.search as Record<string, unknown>).file) !=
+    null;
   const navigate = useNavigate();
   const current =
     WORKSPACE_APPS.find((a) => path === a.to || path.startsWith(`${a.to}/`)) ?? WORKSPACE_APPS[0];
@@ -94,13 +99,15 @@ export function AppSwitchButton({
 
   const menuItems: DropdownMenuItemProps[] = WORKSPACE_APPS.map((app) => {
     const Icon = app.icon;
+    const itemDisabled = app.id === "docs" && !docsFileOpen;
     return {
       id: app.id,
       label: app.label,
       icon: <Icon className="size-4" />,
       checked: app.id === current.id,
+      disabled: itemDisabled,
       onClick: () => {
-        if (disabled) return;
+        if (disabled || itemDisabled || app.id === current.id) return;
         onSelect?.(app);
       },
     };
