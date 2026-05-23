@@ -32,6 +32,7 @@ final class UiStaticServer
         $routePrefixes = [
             '/',
             '/admin',
+            '/docs',
             '/drive',
             '/login',
             '/logout',
@@ -119,6 +120,7 @@ final class UiStaticServer
         return [
             '/',
             '/admin',
+            '/docs',
             '/drive',
             '/login',
             '/logout',

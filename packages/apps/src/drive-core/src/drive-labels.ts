@@ -14,6 +14,7 @@ export const driveLabels = {
   newButton: "New",
   newFolder: "New folder",
   uploadFiles: "Upload files",
+  newMarkdown: "New Markdown",
   newDocument: "New document",
   newSpreadsheet: "New spreadsheet",
   newPresentation: "New presentation",

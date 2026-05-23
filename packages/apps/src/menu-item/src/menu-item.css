@@ -10,6 +10,10 @@
   background-color: color-mix(in oklab, currentColor 12%, transparent);
 }
 
+.menu-item--disabled {
+  @apply cursor-not-allowed opacity-45;
+}
+
 .menu-item--interactive:focus-visible {
   @apply outline-none ring-2 ring-offset-1 ring-offset-transparent;
   --tw-ring-color: color-mix(in oklab, currentColor 35%, transparent);
