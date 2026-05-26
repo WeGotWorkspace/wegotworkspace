@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
 /**
  * Markdown + Yjs sidecar persistence on the drive files disk.
  *
- * Sidecar convention: {documentPath}.yjs next to {documentPath} (.md or .txt).
+ * Sidecar convention: /.{filename}.yjs next to the document (.md or .txt).
  */
 final class DocCollabDocumentService
 {
@@ -111,7 +111,13 @@ final class DocCollabDocumentService
 
     private function yjsSidecarPath(string $documentVirtualPath): string
     {
-        return $this->paths->normalizeVirtualPath($documentVirtualPath.'.yjs');
+        $normalized = $this->paths->normalizeVirtualPath($documentVirtualPath);
+        $dir = (string) dirname($normalized);
+        $name = (string) basename($normalized);
+        $hidden = '.'.$name.'.yjs';
+        $prefix = $dir === '/' ? '' : $dir;
+
+        return $this->paths->normalizeVirtualPath($prefix.'/'.$hidden);
     }
 
     private function resolveReadablePath(Request $request, mixed $room): string
