@@ -103,6 +103,7 @@ export function TextEditor({
       editor={editor}
       variant={sheetVariant}
       fill={sheetFill}
+      slashMenu={format !== "text"}
       className="min-h-0 flex-1"
     />
   );
