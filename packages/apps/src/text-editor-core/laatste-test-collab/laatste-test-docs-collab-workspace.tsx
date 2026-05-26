@@ -12,6 +12,15 @@ import { mockWorkspaceSession } from "@/lib/api/mock/workspace-session-mock";
 import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/ui/alert-dialog";
 import { ViewHeader } from "@/view-header/src/view-header";
 import { getTextEditorContent } from "@/text-editor-core/src/text-editor-content";
 import { TEXT_EDITOR_FORMAT_BAR_FULL } from "@/text-editor-core/src/text-editor-format-bar-config";
@@ -132,6 +141,7 @@ function LaatsteTestDocsCollabWorkspaceInner({
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [viewSource, setViewSource] = useState(false);
+  const [sourceClosedDialogOpen, setSourceClosedDialogOpen] = useState(false);
   const [editor, setEditor] = useState<Editor | null>(null);
   const [markdown, setMarkdown] = useState("");
   const [activeOutlineIndex, setActiveOutlineIndex] = useState<number | null>(null);
@@ -185,122 +195,147 @@ function LaatsteTestDocsCollabWorkspaceInner({
 
   const wordCount = useMemo(() => countWords(markdown), [markdown]);
   const characterCount = markdown.length;
+  const sourceLockedByCollab = Boolean(collabSession) && peers.length > 0;
+
+  useEffect(() => {
+    if (!sourceLockedByCollab || !viewSource) return;
+    setViewSource(false);
+    setSourceClosedDialogOpen(true);
+  }, [sourceLockedByCollab, viewSource]);
 
   return (
     <TooltipProvider delayDuration={200}>
-      <WorkspaceAppLayout
-        className={cn("docs-workspace", "min-h-screen")}
-        sidebar={
-          <AppSidebar
-            open={sidebarOpen}
-            onCloseMobile={() => setSidebarOpen(false)}
-            appSwitchSubtitle="Docs"
-            footer={
-              <WorkspaceUserFooter
-                name={session.user.displayName}
-                initials={workspaceUserInitials(session.user)}
-                detailLine={session.user.username}
+      <>
+        <WorkspaceAppLayout
+          className={cn("docs-workspace", "min-h-screen")}
+          sidebar={
+            <AppSidebar
+              open={sidebarOpen}
+              onCloseMobile={() => setSidebarOpen(false)}
+              appSwitchSubtitle="Docs"
+              footer={
+                <WorkspaceUserFooter
+                  name={session.user.displayName}
+                  initials={workspaceUserInitials(session.user)}
+                  detailLine={session.user.username}
+                />
+              }
+            >
+              <DocsOutlineSidebar
+                labels={labels}
+                items={outline}
+                activeIndex={activeOutlineIndex}
+                onSelect={handleOutlineSelect}
               />
-            }
-          >
-            <DocsOutlineSidebar
-              labels={labels}
-              items={outline}
-              activeIndex={activeOutlineIndex}
-              onSelect={handleOutlineSelect}
-            />
-          </AppSidebar>
-        }
-        mainHeader={
-          <ViewHeader
-            title={resolvedDocumentTitle}
-            sidebarOpen={sidebarOpen}
-            onToggleSidebar={() => setSidebarOpen((open) => !open)}
-            actions={
-              <div className="docs-workspace__header-actions">
-                {collabSession ? (
-                  <LaatsteTestCollabPresence
-                    localUser={{
-                      displayName: session.user.displayName,
-                    }}
-                    peers={peers}
-                    className="mr-1"
+            </AppSidebar>
+          }
+          mainHeader={
+            <ViewHeader
+              title={resolvedDocumentTitle}
+              sidebarOpen={sidebarOpen}
+              onToggleSidebar={() => setSidebarOpen((open) => !open)}
+              actions={
+                <div className="docs-workspace__header-actions">
+                  {collabSession ? (
+                    <LaatsteTestCollabPresence
+                      localUser={{
+                        displayName: session.user.displayName,
+                      }}
+                      peers={peers}
+                      className="mr-1"
+                    />
+                  ) : null}
+                  <IconButton
+                    label={
+                      sourceLockedByCollab
+                        ? "Source view is disabled while collaborating"
+                        : viewSource
+                          ? labels.hideSource
+                          : labels.viewSource
+                    }
+                    icon={<Code2 />}
+                    size="sm"
+                    variant="subtle"
+                    active={viewSource}
+                    aria-pressed={viewSource}
+                    disabled={!editor || sourceLockedByCollab}
+                    className={cn(viewSource && "docs-workspace__source-toggle--active")}
+                    onClick={() => setViewSource((on) => !on)}
                   />
-                ) : null}
-                <IconButton
-                  label={
-                    collabSession
-                      ? "Source view is disabled while collaborating"
-                      : viewSource
-                        ? labels.hideSource
-                        : labels.viewSource
+                  <IconButton
+                    label={labels.print}
+                    icon={<Printer />}
+                    size="sm"
+                    variant="subtle"
+                    disabled={!editor}
+                    onClick={() => printTextEditorSheet(editor)}
+                  />
+                </div>
+              }
+            />
+          }
+          main={
+            <div className="docs-workspace__editor">
+              {collabSession ? (
+                <LaatsteTestCollabEditor
+                  ydoc={collabSession.ydoc}
+                  awareness={collabSession.awareness}
+                  user={collabSession.user}
+                  format={editorFormat}
+                  sheetFill
+                  viewSource={viewSource}
+                  formatBar={
+                    editorFormat === "text"
+                      ? false
+                      : { groups: TEXT_EDITOR_FORMAT_BAR_FULL, showPrint: false }
                   }
-                  icon={<Code2 />}
-                  size="sm"
-                  variant="subtle"
-                  active={viewSource}
-                  aria-pressed={viewSource}
-                  disabled={!editor || Boolean(collabSession)}
-                  className={cn(viewSource && "docs-workspace__source-toggle--active")}
-                  onClick={() => setViewSource((on) => !on)}
+                  onContentChange={handleMarkdownChange}
+                  onEditorReady={handleEditorReady}
                 />
-                <IconButton
-                  label={labels.print}
-                  icon={<Printer />}
-                  size="sm"
-                  variant="subtle"
-                  disabled={!editor}
-                  onClick={() => printTextEditorSheet(editor)}
+              ) : (
+                <div className="p-8">
+                  <p className="docs-workspace__loading">Joining collaboration mesh…</p>
+                  {docStatus ? (
+                    <p className="docs-workspace__loading mt-2 text-sm">{docStatus}</p>
+                  ) : null}
+                </div>
+              )}
+              <footer className="docs-workspace__stats-footer" aria-live="polite">
+                <Tag
+                  label={labels.statsWords(wordCount)}
+                  colors={{
+                    backgroundColor: "var(--docs-stat-tag-bg)",
+                    color: "var(--docs-stat-tag-color)",
+                  }}
                 />
-              </div>
-            }
-          />
-        }
-        main={
-          <div className="docs-workspace__editor">
-            {collabSession ? (
-              <LaatsteTestCollabEditor
-                ydoc={collabSession.ydoc}
-                awareness={collabSession.awareness}
-                user={collabSession.user}
-                format={editorFormat}
-                sheetFill
-                viewSource={viewSource}
-                formatBar={
-                  editorFormat === "text"
-                    ? false
-                    : { groups: TEXT_EDITOR_FORMAT_BAR_FULL, showPrint: false }
-                }
-                onContentChange={handleMarkdownChange}
-                onEditorReady={handleEditorReady}
-              />
-            ) : (
-              <div className="p-8">
-                <p className="docs-workspace__loading">Joining collaboration mesh…</p>
-                {docStatus ? (
-                  <p className="docs-workspace__loading mt-2 text-sm">{docStatus}</p>
-                ) : null}
-              </div>
-            )}
-            <footer className="docs-workspace__stats-footer" aria-live="polite">
-              <Tag
-                label={labels.statsWords(wordCount)}
-                colors={{
-                  backgroundColor: "var(--docs-stat-tag-bg)",
-                  color: "var(--docs-stat-tag-color)",
-                }}
-              />
-              <Tag
-                label={labels.statsCharacters(characterCount)}
-                colors={{
-                  backgroundColor: "var(--docs-stat-tag-bg)",
-                  color: "var(--docs-stat-tag-color)",
-                }}
-              />
-            </footer>
-          </div>
-        }
-      />
+                <Tag
+                  label={labels.statsCharacters(characterCount)}
+                  colors={{
+                    backgroundColor: "var(--docs-stat-tag-bg)",
+                    color: "var(--docs-stat-tag-color)",
+                  }}
+                />
+              </footer>
+            </div>
+          }
+        />
+        <AlertDialog open={sourceClosedDialogOpen} onOpenChange={setSourceClosedDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Source view closed</AlertDialogTitle>
+              <AlertDialogDescription>
+                Another collaborator connected to this document, so source view was turned off.
+                Source view is only available when you are the only editor in the room.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction onClick={() => setSourceClosedDialogOpen(false)}>
+                Got it
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
     </TooltipProvider>
   );
 }
