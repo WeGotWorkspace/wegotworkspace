@@ -59,6 +59,12 @@ export function DocsApp({ apiSource }: DocsAppProps = {}) {
     };
   }, [filePath, showCollab]);
   const collabUserName = session.user.displayName || session.user.username || "User";
+  const collabDocumentTitle = useMemo(() => {
+    if (!filePath) return undefined;
+    const normalized = filePath.replace(/\/+$/, "");
+    const slash = normalized.lastIndexOf("/");
+    return slash >= 0 ? normalized.slice(slash + 1) : normalized;
+  }, [filePath]);
 
   return (
     <WorkspaceLiveAppShell
@@ -70,7 +76,11 @@ export function DocsApp({ apiSource }: DocsAppProps = {}) {
       render={(key) => (
         <div key={key}>
           {showCollab && collabUrls ? (
-            <LaatsteTestDocsCollabWorkspace userName={collabUserName} urls={collabUrls} />
+            <LaatsteTestDocsCollabWorkspace
+              userName={collabUserName}
+              documentTitle={collabDocumentTitle}
+              urls={collabUrls}
+            />
           ) : (
             <DocsWorkspace
               data={data}
