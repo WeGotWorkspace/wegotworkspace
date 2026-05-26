@@ -1,11 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { Editor } from "@tiptap/react";
 import Collaboration, { isChangeOrigin } from "@tiptap/extension-collaboration";
-import CollaborationCaret from "@tiptap/extension-collaboration-caret";
-import Placeholder from "@tiptap/extension-placeholder";
-import StarterKit from "@tiptap/starter-kit";
 import { useEditor } from "@tiptap/react";
-import { Markdown } from "tiptap-markdown";
 import type { Awareness } from "y-protocols/awareness";
 import type * as Y from "yjs";
 import { cn } from "@/lib/utils";
@@ -18,9 +14,12 @@ import {
   type TextEditorFormatBarConfig,
   resolveTextEditorFormatBarConfig,
 } from "@/text-editor-core/src/text-editor-format-bar";
+import { createCollaborativeTextEditorExtensions } from "@/text-editor-core/src/text-editor-extensions";
 import { TextEditorSheet } from "@/text-editor-core/src/text-editor-sheet";
 import { TextEditorSource } from "@/text-editor-core/src/text-editor-source";
 import { useTextEditorSourceSync } from "@/text-editor-core/src/use-text-editor-source-sync";
+
+import "@/text-editor-core/src/text-editor.css";
 
 export type LaatsteTestCollabEditorProps = {
   ydoc: Y.Doc;
@@ -45,32 +44,34 @@ export function LaatsteTestCollabEditor({
   onMarkdownChange,
   onEditorReady,
 }: LaatsteTestCollabEditorProps) {
+  const onMarkdownChangeRef = useRef(onMarkdownChange);
+  onMarkdownChangeRef.current = onMarkdownChange;
+
   const editor = useEditor(
     {
       editable: true,
       enableContentCheck: false,
       autofocus: "end",
-      extensions: [
-        StarterKit.configure({ undoRedo: false }),
-        Collaboration.configure({ document: ydoc }),
-        CollaborationCaret.configure({
-          provider: { awareness },
-          user,
-        }),
-        Markdown,
-        Placeholder.configure({
-          placeholder: "Press '/' for commands…",
-        }),
-      ],
+      immediatelyRender: false,
+      extensions: createCollaborativeTextEditorExtensions({
+        format: "markdown",
+        placeholder: "Press '/' for commands…",
+        document: ydoc,
+        awareness,
+        user,
+      }),
+      editorProps: {
+        attributes: { class: "text-editor-prose focus:outline-none" },
+      },
       onUpdate: ({ transaction, editor: ed }) => {
         if (isChangeOrigin(transaction)) return;
-        onMarkdownChange?.(() => getTextEditorContent(ed, "markdown"));
+        onMarkdownChangeRef.current?.(() => getTextEditorContent(ed, "markdown"));
       },
       onSelectionUpdate: ({ editor: ed }) => {
         ed.commands.updateUser(user);
       },
     },
-    [ydoc, awareness, user.color, user.name, onMarkdownChange],
+    [ydoc, awareness, user.color, user.name],
   );
 
   const format: TextEditorContentFormat = "markdown";
