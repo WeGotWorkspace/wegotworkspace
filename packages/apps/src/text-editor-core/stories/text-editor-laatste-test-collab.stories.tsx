@@ -3,6 +3,10 @@ import { LaatsteTestDocsCollabWorkspace } from "@/text-editor-core/laatste-test-
 
 import "@/text-editor-core/src/text-editor.css";
 
+const devUser = (import.meta.env.VITE_WGW_DEV_USERNAME as string | undefined) ?? "admin";
+const devPassword =
+  (import.meta.env.VITE_WGW_DEV_PASSWORD as string | undefined) ?? "storybook-dev";
+
 const storyDescription = `
 Anonymous collaborative markdown editing using the **laatste-test** prototype stack:
 
@@ -37,15 +41,12 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Collab: Story = {
-  name: "Collab",
-};
+export const Collab: Story = {};
 
 export const CollabLaravelSignalParity: Story = {
-  name: "Collab (Laravel signal parity)",
   args: {
     urls: {
-      signalUrl: "https://wegotworkspace.local/api/v1/collab/parity-signal",
+      signalUrl: "/api/v1/collab/parity-signal",
       documentUrl: "/laatste-test/document.php",
       yjsUrl: "/laatste-test/document.php?format=yjs",
       room: "docs/parity-audit-room.md",
@@ -57,6 +58,29 @@ export const CollabLaravelSignalParity: Story = {
         story:
           "Step 2.1 bridge: keeps the same editor + Yjs + document.php stack, but routes signaling " +
           "through Laravel `/api/v1/collab/parity-signal` using the legacy `action` protocol.",
+      },
+    },
+  },
+};
+
+export const CollabLaravelSignalParityAuth: Story = {
+  args: {
+    urls: {
+      signalUrl: "https://wegotworkspace.local/api/v1/collab/parity-signal-auth",
+      authTokenUrl: "https://wegotworkspace.local/api/v1/auth/token",
+      authUser: devUser,
+      authPassword: devPassword,
+      documentUrl: "/laatste-test/document.php",
+      yjsUrl: "/laatste-test/document.php?format=yjs",
+      room: "docs/parity-auth-room.md",
+    },
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Step 2.2 auth gate: same parity `action` protocol, but endpoint requires JWT and the story " +
+          "fetches a token via `/api/v1/auth/token` using `VITE_WGW_DEV_USERNAME/PASSWORD`.",
       },
     },
   },
