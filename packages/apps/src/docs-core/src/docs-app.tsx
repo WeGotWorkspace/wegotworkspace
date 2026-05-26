@@ -17,7 +17,10 @@ function docsCollabEnabled(): boolean {
   return raw === "1" || raw === "true" || raw === "yes" || raw === "on";
 }
 
-function isMyDriveDocPath(filePath: string | undefined, username: string | undefined): boolean {
+function isMyDriveDocPath(
+  filePath: string | null | undefined,
+  username: string | null | undefined,
+): boolean {
   const trimmedPath = filePath?.trim();
   const trimmedUsername = username?.trim();
   if (!trimmedPath || !trimmedUsername) return false;
