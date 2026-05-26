@@ -80,6 +80,13 @@
   @apply flex shrink-0 flex-wrap items-center justify-end gap-1.5;
 }
 
+.docs-workspace .docs-collab-presence__avatar--self {
+  background-color: var(--docs-accent);
+  box-shadow:
+    0 0 0 2px var(--background),
+    0 0 0 3px color-mix(in oklab, var(--docs-accent) 42%, transparent);
+}
+
 .docs-workspace__header-actions .button.docs-workspace__source-toggle--active {
   color: var(--docs-accent);
   background-color: color-mix(in oklab, var(--docs-accent) 16%, transparent);

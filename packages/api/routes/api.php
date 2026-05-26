@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\V1\Auth\MeController;
 use App\Http\Controllers\Api\V1\Auth\RefreshController;
 use App\Http\Controllers\Api\V1\Auth\RevokeController;
 use App\Http\Controllers\Api\V1\Auth\TokenController;
+use App\Http\Controllers\Api\V1\Collab\CollabController;
 use App\Http\Controllers\Api\V1\Dav\CapabilitiesController as DavCapabilitiesController;
 use App\Http\Controllers\Api\V1\Drive\DriveController;
 use App\Http\Controllers\Api\V1\Home\StateController as HomeStateController;
@@ -136,6 +137,13 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($driveS
     Route::post('notes/notebooks', [NotebooksController::class, 'store']);
     Route::patch('notes/notebooks/{name}', [NotebooksController::class, 'update']);
     Route::delete('notes/notebooks/{name}', [NotebooksController::class, 'destroy']);
+
+    Route::post('collab/join', [CollabController::class, 'join']);
+    Route::post('collab/poll', [CollabController::class, 'poll']);
+    Route::post('collab/send', [CollabController::class, 'send']);
+    Route::post('collab/leave', [CollabController::class, 'leave']);
+    Route::get('collab/document', [CollabController::class, 'getDocument']);
+    Route::put('collab/document', [CollabController::class, 'putDocument']);
 });
 
 Route::middleware(['wgw.auth', 'wgw.role:admin'])->prefix('admin')->group(function (): void {

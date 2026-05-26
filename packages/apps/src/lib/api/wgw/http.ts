@@ -146,6 +146,12 @@ export function wgwHasAuthenticatedSession(): boolean {
   return Boolean(accessToken && refreshToken);
 }
 
+/** Current in-memory/storage access token, if available. */
+export function wgwCurrentAccessToken(): string | null {
+  hydrateTokensFromStorage();
+  return accessToken;
+}
+
 /** True when the UI may skip the login form (stored session or dev auto-login). */
 export function wgwSessionAvailable(): boolean {
   if (wgwHasAuthenticatedSession()) return true;
