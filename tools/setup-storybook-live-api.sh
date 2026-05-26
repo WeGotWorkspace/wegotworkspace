@@ -7,7 +7,7 @@ ENV_LOCAL="$ROOT/.env.local"
 DB="$ROOT/apps/wegotworkspace/wgw-content/db.sqlite"
 USERNAME="${STORYBOOK_DEV_USERNAME:-admin}"
 PASSWORD="${STORYBOOK_DEV_PASSWORD:-storybook-dev}"
-PROXY_TARGET="${WGW_PROXY_TARGET:-http://127.0.0.1:9080}"
+PROXY_TARGET="${WGW_PROXY_TARGET:-https://wegotworkspace.dev}"
 SET_PASSWORD=0
 
 for arg in "$@"; do
@@ -42,6 +42,7 @@ cat >"$ENV_LOCAL" <<EOF
 
 VITE_WGW_USE_LIVE_API=1
 VITE_WGW_API_BASE_URL=/api/v1
+VITE_WGW_LIVE_ORIGIN=${PROXY_TARGET}
 VITE_WGW_DEV_USERNAME=${USERNAME}
 VITE_WGW_DEV_PASSWORD=${PASSWORD}
 
