@@ -239,6 +239,74 @@ final class CollabEndpointsTest extends TestCase
         $afterLeave->assertJsonPath('peers', []);
     }
 
+    public function test_legacy_parity_signal_auth_requires_token(): void
+    {
+        $this->postJson('/api/v1/collab/parity-signal-auth', [
+            'action' => 'join',
+            'room' => self::ROOM,
+            'name' => 'Alice',
+        ])->assertUnauthorized();
+    }
+
+    public function test_legacy_parity_signal_auth_actions_work_with_token(): void
+    {
+        $aliceToken = $this->issueToken('alice');
+        User::query()->insert([
+            'id' => 2,
+            'username' => 'bob',
+            'digest' => password_hash('secret', PASSWORD_DEFAULT),
+            'digesta1' => '',
+        ]);
+        Principal::query()->insert([
+            'id' => 2,
+            'uri' => 'principals/bob',
+            'email' => 'bob@example.test',
+            'displayname' => 'Bob',
+        ]);
+        $bobToken = $this->issueToken('bob');
+
+        $aliceJoin = $this->withHeader('Authorization', 'Bearer '.$aliceToken)
+            ->postJson('/api/v1/collab/parity-signal-auth', [
+                'action' => 'join',
+                'room' => self::ROOM,
+                'name' => 'Alice',
+            ]);
+        $aliceJoin->assertOk();
+        $alicePeerId = (string) $aliceJoin->json('peerId');
+
+        $bobJoin = $this->withHeader('Authorization', 'Bearer '.$bobToken)
+            ->postJson('/api/v1/collab/parity-signal-auth', [
+                'action' => 'join',
+                'room' => self::ROOM,
+                'name' => 'Bob',
+            ]);
+        $bobJoin->assertOk();
+        $bobPeerId = (string) $bobJoin->json('peerId');
+
+        $this->withHeader('Authorization', 'Bearer '.$aliceToken)
+            ->postJson('/api/v1/collab/parity-signal-auth', [
+                'action' => 'signal',
+                'room' => self::ROOM,
+                'peerId' => $alicePeerId,
+                'to' => $bobPeerId,
+                'type' => 'offer',
+                'payload' => ['type' => 'offer', 'sdp' => 'v=0'],
+            ])->assertOk()->assertJson(['ok' => true]);
+
+        $poll = $this->withHeader('Authorization', 'Bearer '.$bobToken)
+            ->postJson('/api/v1/collab/parity-signal-auth', [
+                'action' => 'poll',
+                'room' => self::ROOM,
+                'peerId' => $bobPeerId,
+                'since' => 0,
+            ]);
+        $poll->assertOk();
+        $messages = $poll->json('messages');
+        $this->assertIsArray($messages);
+        $this->assertCount(1, $messages);
+        $this->assertSame('offer', $messages[0]['type']);
+    }
+
     private function issueToken(string $username): string
     {
         $response = $this->postJson('/api/v1/auth/token', [

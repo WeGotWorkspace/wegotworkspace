@@ -101,6 +101,7 @@ function LaatsteTestDocsCollabWorkspaceInner({
   const {
     session: collabSession,
     peers,
+    docStatus,
     onMarkdownChange,
   } = useLaatsteTestCollab({
     userName,
@@ -214,7 +215,12 @@ function LaatsteTestDocsCollabWorkspaceInner({
                 onEditorReady={setEditor}
               />
             ) : (
-              <p className="docs-workspace__loading p-8">Joining collaboration mesh…</p>
+              <div className="p-8">
+                <p className="docs-workspace__loading">Joining collaboration mesh…</p>
+                {docStatus ? (
+                  <p className="docs-workspace__loading mt-2 text-sm">{docStatus}</p>
+                ) : null}
+              </div>
             )}
             <footer className="docs-workspace__stats-footer" aria-live="polite">
               <span className="tag rounded-md px-2 py-1 text-xs font-medium">

@@ -41,13 +41,23 @@ final class CollabController
 
     public function paritySignal(Request $request): JsonResponse
     {
+        return response()->json($this->handleParitySignalRequest($request));
+    }
+
+    public function paritySignalAuth(Request $request): JsonResponse
+    {
+        return response()->json($this->handleParitySignalRequest($request));
+    }
+
+    private function handleParitySignalRequest(Request $request): array
+    {
         $body = $request->json()->all();
         $action = $request->query('action');
         if (is_string($action) && $action !== '' && ! array_key_exists('action', $body)) {
             $body['action'] = $action;
         }
 
-        return response()->json($this->legacySignal->handle($body));
+        return $this->legacySignal->handle($body);
     }
 
     public function getDocument(Request $request): Response

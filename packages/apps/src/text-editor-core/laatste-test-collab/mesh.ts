@@ -1,6 +1,6 @@
 /**
  * WebRTC mesh + HTTP signaling (parity with laatste-test/mesh.js).
- * Anonymous peers via laatste-test/signal.php — no WGW auth.
+ * Supports anonymous or bearer-authenticated signaling endpoints.
  */
 
 const ICE: RTCConfiguration = {
@@ -39,6 +39,8 @@ export type LaatsteTestMeshOptions = {
   signalUrl: string;
   /** Signaling room id (for parity endpoint isolation). */
   room?: string;
+  /** Optional bearer token used for authenticated Laravel parity endpoint. */
+  authToken?: string;
 };
 
 export class LaatsteTestMesh {
@@ -59,6 +61,7 @@ export class LaatsteTestMesh {
   constructor(
     private readonly signalUrl: string,
     private readonly room = "docs/test-together.md",
+    private readonly authToken?: string,
   ) {}
 
   onMessage(listener: MeshListener): () => void {
@@ -114,9 +117,11 @@ export class LaatsteTestMesh {
   }
 
   private async api(action: string, body: Record<string, unknown> = {}): Promise<unknown> {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (this.authToken) headers.Authorization = `Bearer ${this.authToken}`;
     const res = await fetch(this.signalUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ action, ...body }),
     });
     const text = await res.text();
