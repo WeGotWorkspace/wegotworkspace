@@ -21,7 +21,7 @@ import { useTextEditorSourceSync } from "@/text-editor-core/src/use-text-editor-
 
 import "@/text-editor-core/src/text-editor.css";
 
-export type LaatsteTestCollabEditorProps = {
+export type DocsCollabEditorProps = {
   ydoc: Y.Doc;
   awareness: Awareness;
   user: { name: string; color: string };
@@ -36,7 +36,7 @@ export type LaatsteTestCollabEditorProps = {
   onEditorReady?: (editor: Editor | null) => void;
 };
 
-export function LaatsteTestCollabEditor({
+export function DocsCollabEditor({
   ydoc,
   awareness,
   user,
@@ -48,7 +48,7 @@ export function LaatsteTestCollabEditor({
   onMarkdownChange,
   onContentChange,
   onEditorReady,
-}: LaatsteTestCollabEditorProps) {
+}: DocsCollabEditorProps) {
   const effectiveOnContentChange = onContentChange ?? onMarkdownChange;
   const onContentChangeRef = useRef(effectiveOnContentChange);
   onContentChangeRef.current = effectiveOnContentChange;

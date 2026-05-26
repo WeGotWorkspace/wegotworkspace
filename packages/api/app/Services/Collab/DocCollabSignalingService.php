@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 /**
- * HTTP signaling for docs WebRTC mesh (parity with laatste-test/signal.php).
+ * HTTP signaling for docs WebRTC mesh.
  */
 final class DocCollabSignalingService
 {

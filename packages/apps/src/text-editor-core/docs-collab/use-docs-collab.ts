@@ -5,13 +5,9 @@ import * as awarenessProtocol from "y-protocols/awareness";
 import * as syncProtocol from "y-protocols/sync";
 import * as Y from "yjs";
 import { fetchWgwAuthToken } from "@/lib/api/wgw/auth-token";
-import { applyContentSeedToYDoc } from "@/text-editor-core/laatste-test-collab/laatste-test-collab-editor-surface";
+import { applyContentSeedToYDoc } from "./docs-collab-editor-surface";
 import type { TextEditorContentFormat } from "@/text-editor-core/src/text-editor-content";
-import {
-  LaatsteTestMesh,
-  type LaatsteTestMeshMessage,
-  type LaatsteTestMeshPeer,
-} from "@/text-editor-core/laatste-test-collab/mesh";
+import { DocsCollabMesh, type DocsCollabMeshMessage, type DocsCollabMeshPeer } from "./mesh";
 
 const MESH_ORIGIN = "mesh";
 const SEED_ORIGIN = "seed";
@@ -28,7 +24,7 @@ const COLORS = [
   "#ea580c",
 ];
 
-export type LaatsteTestCollabUrls = {
+export type DocsCollabUrls = {
   signalUrl: string;
   collabApiBaseUrl?: string;
   documentUrl: string;
@@ -41,14 +37,16 @@ export type LaatsteTestCollabUrls = {
   documentSaveMethod?: "POST" | "PUT";
 };
 
-export const DEFAULT_LAATSTE_TEST_COLLAB_URLS: LaatsteTestCollabUrls = {
-  signalUrl: "/laatste-test/signal.php",
-  documentUrl: "/laatste-test/document.php",
-  yjsUrl: "/laatste-test/document.php?format=yjs",
+export const DEFAULT_DOCS_COLLAB_URLS: DocsCollabUrls = {
+  signalUrl: "/api/v1/collab/send",
+  collabApiBaseUrl: "/api/v1/collab",
+  documentUrl: "/api/v1/collab/document",
+  yjsUrl: "/api/v1/collab/document?format=yjs",
+  documentSaveMethod: "PUT",
   room: "docs/test-together.md",
 };
 
-export type LaatsteTestCollabSession = {
+export type DocsCollabSession = {
   ydoc: Y.Doc;
   awareness: awarenessProtocol.Awareness;
   user: { name: string; color: string };
@@ -130,19 +128,19 @@ async function saveDocument(
   }
 }
 
-export type UseLaatsteTestCollabOptions = {
+export type UseDocsCollabOptions = {
   userName: string;
   autoJoin?: boolean;
-  urls?: LaatsteTestCollabUrls;
+  urls?: DocsCollabUrls;
 };
 
-export function useLaatsteTestCollab({
+export function useDocsCollab({
   userName,
   autoJoin = true,
-  urls = DEFAULT_LAATSTE_TEST_COLLAB_URLS,
-}: UseLaatsteTestCollabOptions) {
+  urls = DEFAULT_DOCS_COLLAB_URLS,
+}: UseDocsCollabOptions) {
   const documentFormat = collabDocumentFormat(urls.room);
-  const meshRef = useRef<LaatsteTestMesh | null>(null);
+  const meshRef = useRef<DocsCollabMesh | null>(null);
   const ydocRef = useRef<Y.Doc | null>(null);
   const awarenessRef = useRef<awarenessProtocol.Awareness | null>(null);
   const pendingMarkdownRef = useRef("");
@@ -153,11 +151,11 @@ export function useLaatsteTestCollab({
   const joinGenerationRef = useRef(0);
   const authTokenRef = useRef<string | undefined>(undefined);
 
-  const [session, setSession] = useState<LaatsteTestCollabSession | null>(null);
+  const [session, setSession] = useState<DocsCollabSession | null>(null);
   const [joined, setJoined] = useState(false);
   const [status, setStatus] = useState("Disconnected");
   const [docStatus, setDocStatus] = useState("");
-  const [peers, setPeers] = useState<LaatsteTestMeshPeer[]>([]);
+  const [peers, setPeers] = useState<DocsCollabMeshPeer[]>([]);
   const [linkCount, setLinkCount] = useState(0);
 
   const refreshMeshUi = useCallback(() => {
@@ -235,7 +233,7 @@ export function useLaatsteTestCollab({
   }, []);
 
   const handleMeshMessage = useCallback(
-    (msg: LaatsteTestMeshMessage) => {
+    (msg: DocsCollabMeshMessage) => {
       const ydoc = ydocRef.current;
       const awareness = awarenessRef.current;
       if (!ydoc || !awareness) return;
@@ -340,7 +338,7 @@ export function useLaatsteTestCollab({
       },
     );
 
-    const mesh = new LaatsteTestMesh(
+    const mesh = new DocsCollabMesh(
       urls.signalUrl,
       urls.room ?? "docs/test-together.md",
       authToken,
@@ -435,7 +433,7 @@ export function useLaatsteTestCollab({
   useEffect(() => {
     if (autoJoin && userName.trim()) {
       void join().catch((error) => {
-        console.warn("[laatste-test-collab] join failed", error);
+        console.warn("[docs-collab] join failed", error);
         setDocStatus(error instanceof Error ? error.message : String(error));
       });
     }
