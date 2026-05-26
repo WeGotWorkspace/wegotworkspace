@@ -3,7 +3,10 @@ import Collaboration from "@tiptap/extension-collaboration";
 import StarterKit from "@tiptap/starter-kit";
 import type { Awareness } from "y-protocols/awareness";
 import * as Y from "yjs";
-import { setTextEditorContent } from "@/text-editor-core/src/text-editor-content";
+import {
+  setTextEditorContent,
+  type TextEditorContentFormat,
+} from "@/text-editor-core/src/text-editor-content";
 import { createTextEditorExtensions } from "@/text-editor-core/src/text-editor-extensions";
 import { LaatsteTestCollabEditor } from "@/text-editor-core/laatste-test-collab/laatste-test-collab-editor";
 
@@ -24,21 +27,23 @@ export function LaatsteTestCollabEditorSurface(props: LaatsteTestCollabEditorSur
 }
 
 /** Seed helper (yjs-demos#16) — used before mounting the collab editor surface */
-export function applyMarkdownSeedToYDoc(target: Y.Doc, markdown: string): void {
+export function applyContentSeedToYDoc(
+  target: Y.Doc,
+  content: string,
+  format: TextEditorContentFormat = "markdown",
+): void {
   const temp = new Y.Doc();
   const tempEditor = new Editor({
     extensions: [
       StarterKit.configure({ undoRedo: false }),
       Collaboration.configure({ document: temp }),
-      ...createTextEditorExtensions({ format: "markdown" }).filter(
-        (ext) => ext.name !== "starterKit",
-      ),
+      ...createTextEditorExtensions({ format }).filter((ext) => ext.name !== "starterKit"),
     ],
     editorProps: {
       attributes: { class: "text-editor-prose focus:outline-none" },
     },
   });
-  setTextEditorContent(tempEditor, markdown, "markdown");
+  setTextEditorContent(tempEditor, content, format);
   Y.applyUpdate(target, Y.encodeStateAsUpdate(temp), SEED_ORIGIN);
   tempEditor.destroy();
 }

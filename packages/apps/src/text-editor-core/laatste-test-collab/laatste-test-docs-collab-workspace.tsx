@@ -4,6 +4,7 @@ import { Code2, Printer } from "lucide-react";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import { IconButton } from "@/button/src/button";
 import { docsLabels } from "@/docs-core/src/docs-labels";
+import { docsEditorFormatFromFileName } from "@/docs-core/src/docs-editor-format";
 import { DocsOutlineSidebar } from "@/docs-core/src/docs-outline-sidebar";
 import { Tag } from "@/tag/src/tag";
 import { focusOutlineHeading, parseMarkdownOutline } from "@/docs-core/src/docs-outline";
@@ -134,13 +135,15 @@ function LaatsteTestDocsCollabWorkspaceInner({
   const [editor, setEditor] = useState<Editor | null>(null);
   const [markdown, setMarkdown] = useState("");
   const [activeOutlineIndex, setActiveOutlineIndex] = useState<number | null>(null);
+  const resolvedDocumentTitle = documentTitle?.trim() || defaultTitleFromRoom(urls?.room);
+  const editorFormat = docsEditorFormatFromFileName(resolvedDocumentTitle);
 
   const outline = useMemo(() => parseMarkdownOutline(markdown), [markdown]);
 
   const handleMarkdownChange = useCallback(
-    (getMarkdown: () => string) => {
-      onMarkdownChange(getMarkdown);
-      setMarkdown(getMarkdown());
+    (getContent: () => string) => {
+      onMarkdownChange(getContent);
+      setMarkdown(getContent());
     },
     [onMarkdownChange],
   );
@@ -149,7 +152,7 @@ function LaatsteTestDocsCollabWorkspaceInner({
     if (!editor) return;
 
     const updateFromEditor = () => {
-      setMarkdown(getTextEditorContent(editor, "markdown"));
+      setMarkdown(getTextEditorContent(editor, editorFormat));
     };
 
     updateFromEditor();
@@ -157,14 +160,17 @@ function LaatsteTestDocsCollabWorkspaceInner({
     return () => {
       editor.off("transaction", updateFromEditor);
     };
-  }, [editor]);
+  }, [editor, editorFormat]);
 
-  const handleEditorReady = useCallback((nextEditor: Editor | null) => {
-    setEditor(nextEditor);
-    if (nextEditor) {
-      setMarkdown(getTextEditorContent(nextEditor, "markdown"));
-    }
-  }, []);
+  const handleEditorReady = useCallback(
+    (nextEditor: Editor | null) => {
+      setEditor(nextEditor);
+      if (nextEditor) {
+        setMarkdown(getTextEditorContent(nextEditor, editorFormat));
+      }
+    },
+    [editorFormat],
+  );
 
   const handleOutlineSelect = useCallback(
     (index: number) => {
@@ -179,7 +185,6 @@ function LaatsteTestDocsCollabWorkspaceInner({
 
   const wordCount = useMemo(() => countWords(markdown), [markdown]);
   const characterCount = markdown.length;
-  const resolvedDocumentTitle = documentTitle?.trim() || defaultTitleFromRoom(urls?.room);
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -256,10 +261,15 @@ function LaatsteTestDocsCollabWorkspaceInner({
                 ydoc={collabSession.ydoc}
                 awareness={collabSession.awareness}
                 user={collabSession.user}
+                format={editorFormat}
                 sheetFill
                 viewSource={viewSource}
-                formatBar={{ groups: TEXT_EDITOR_FORMAT_BAR_FULL, showPrint: false }}
-                onMarkdownChange={handleMarkdownChange}
+                formatBar={
+                  editorFormat === "text"
+                    ? false
+                    : { groups: TEXT_EDITOR_FORMAT_BAR_FULL, showPrint: false }
+                }
+                onContentChange={handleMarkdownChange}
                 onEditorReady={handleEditorReady}
               />
             ) : (
