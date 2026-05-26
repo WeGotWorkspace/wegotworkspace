@@ -882,20 +882,27 @@
   user-select: none;
 }
 
-.text-editor-source__gutter-lines {
-  margin: 0;
-  font: inherit;
-  line-height: inherit;
-  white-space: pre;
+.text-editor-source__gutter-line {
+  display: block;
+  box-sizing: border-box;
+  line-height: var(--text-editor-source-line-height, 1.55);
 }
 
-.text-editor-source__input {
-  box-sizing: border-box;
+.text-editor-source__input-wrap {
+  position: relative;
   flex: 1 1 0;
   width: 0;
   min-width: 0;
   min-height: 0;
   align-self: stretch;
+}
+
+.text-editor-source__input {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
   resize: none;
   border: 0;
   background: transparent;
@@ -905,12 +912,33 @@
   font-size: var(--text-editor-source-font-size, 0.875rem);
   line-height: var(--text-editor-source-line-height, 1.55);
   color: var(--foreground);
-  white-space: pre;
-  overflow-wrap: normal;
-  word-break: normal;
-  overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  overflow-x: hidden;
+  overflow-y: auto;
   tab-size: 2;
   appearance: none;
+}
+
+.text-editor-source__mirror {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+  box-sizing: border-box;
+  padding: 0.75rem 1rem;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--text-editor-source-font-size, 0.875rem);
+  line-height: var(--text-editor-source-line-height, 1.55);
+}
+
+.text-editor-source__mirror-line {
+  display: block;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .text-editor-source__input:focus {
