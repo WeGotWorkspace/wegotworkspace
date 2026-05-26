@@ -11,6 +11,7 @@
     "dev:preview": "tools/with-root-env.sh run 'composer --working-dir packages/api install --no-interaction --prefer-dist && pnpm --filter @wgw/apps run build:dev && pnpm --filter @wgw/apps run sync:runtime && pnpm --filter @wgw/api run sync:runtime && turbo run watch:runtime --filter=@wgw/api --filter=@wgw/apps --concurrency=20'",
     "dev:storybook": "tools/with-root-env.sh -- turbo run dev --filter=@wgw/apps",
     "setup:storybook-live-api": "bash tools/setup-storybook-live-api.sh --set-password",
+    "test:collab-api": "bash tools/test-collab-api.sh",
     "dev:onlyoffice": "tools/with-root-env.sh -- turbo run dev --filter=@wgw/onlyoffice-web",
     "build": "tools/with-root-env.sh -- turbo run typegen build",
     "ci:quality": "tools/with-root-env.sh -- turbo run typegen typegen:check lint format:check typecheck test --filter=@wgw/api --filter=@wgw/apps",

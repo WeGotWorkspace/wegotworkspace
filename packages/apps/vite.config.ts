@@ -7,12 +7,12 @@ import { fileURLToPath } from "node:url";
 import { resolveWgwProxyTarget } from "./scripts/wgw-proxy-target";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.join(__dirname, "..", "..");
+const wgwMonorepoRoot = path.join(__dirname, "..", "..", "..");
 const wgwProxyTarget = resolveWgwProxyTarget();
 
 export default defineConfig({
   base: "./",
-  envDir: repoRoot,
+  envDir: wgwMonorepoRoot,
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),

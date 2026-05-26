@@ -67,7 +67,7 @@ final class InstallerSchemaMigrationRunnerTest extends TestCase
     public static function legacySchemaVersionsProvider(): array
     {
         $cases = [];
-        for ($version = 0; $version <= 4; $version++) {
+        for ($version = 0; $version <= 5; $version++) {
             $cases['legacy_v'.$version] = [$version];
         }
 
@@ -84,6 +84,8 @@ final class InstallerSchemaMigrationRunnerTest extends TestCase
             'api_refresh_tokens',
             'api_revoked_tokens',
             'drive_starred_items',
+            'collab_peers',
+            'collab_messages',
         ] as $table) {
             $this->assertTrue(self::tableExists($pdo, $table), "Expected table {$table} to exist.");
         }
@@ -104,6 +106,7 @@ final class InstallerSchemaMigrationRunnerTest extends TestCase
             3 => 'add_voice_peer_owner',
             4 => 'create_api_token_tables',
             5 => 'create_drive_starred_items',
+            6 => 'create_collab_signaling_tables',
         ];
 
         foreach ($rows as $row) {

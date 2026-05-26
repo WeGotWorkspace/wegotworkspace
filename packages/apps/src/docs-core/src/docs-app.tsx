@@ -6,9 +6,27 @@ import {
   docsSearchFromApiPath,
   parseDocsRouteSearch,
 } from "@/docs-core/src/docs-route-search";
+import { wgwApiBaseUrl, wgwCurrentAccessToken } from "@/lib/api/wgw/http";
 import type { DocsAppProps } from "@/docs-core/src/docs-app-props";
 import { DocsWorkspace } from "@/docs-core/src/docs-workspace";
+import { DocsCollabWorkspace } from "@/text-editor-core/docs-collab";
 import { useDocsAPI } from "@/docs-core/src/use-docs-api";
+
+function docsCollabEnabled(): boolean {
+  const raw = (import.meta.env.VITE_WGW_DOCS_COLLAB as string | undefined)?.trim().toLowerCase();
+  return raw === "1" || raw === "true" || raw === "yes" || raw === "on";
+}
+
+function isMyDriveDocPath(
+  filePath: string | null | undefined,
+  username: string | null | undefined,
+): boolean {
+  const trimmedPath = filePath?.trim();
+  const trimmedUsername = username?.trim();
+  if (!trimmedPath || !trimmedUsername) return false;
+  const myRoot = `/users/${trimmedUsername}`;
+  return trimmedPath === myRoot || trimmedPath.startsWith(`${myRoot}/`);
+}
 
 export function DocsApp({ apiSource }: DocsAppProps = {}) {
   const navigate = useNavigate();
@@ -34,6 +52,35 @@ export function DocsApp({ apiSource }: DocsAppProps = {}) {
     [navigate],
   );
 
+  const fileIsMyDriveDoc = isMyDriveDocPath(filePath, session.user.username);
+  const showCollab =
+    docsCollabEnabled() &&
+    typeof filePath === "string" &&
+    /\.(md|txt)$/i.test(filePath) &&
+    !fileIsMyDriveDoc;
+  const collabUrls = useMemo(() => {
+    if (!showCollab || !filePath) return undefined;
+    const baseUrl = wgwApiBaseUrl();
+    const room = filePath;
+    const encodedRoom = encodeURIComponent(room);
+    return {
+      signalUrl: `${baseUrl}/collab/send`,
+      collabApiBaseUrl: `${baseUrl}/collab`,
+      authToken: wgwCurrentAccessToken() ?? undefined,
+      documentUrl: `${baseUrl}/collab/document?room=${encodedRoom}`,
+      yjsUrl: `${baseUrl}/collab/document?room=${encodedRoom}&format=yjs`,
+      documentSaveMethod: "PUT" as const,
+      room,
+    };
+  }, [filePath, showCollab]);
+  const collabUserName = session.user.displayName || session.user.username || "User";
+  const collabDocumentTitle = useMemo(() => {
+    if (!filePath) return undefined;
+    const normalized = filePath.replace(/\/+$/, "");
+    const slash = normalized.lastIndexOf("/");
+    return slash >= 0 ? normalized.slice(slash + 1) : normalized;
+  }, [filePath]);
+
   return (
     <WorkspaceLiveAppShell
       phase={phase}
@@ -42,15 +89,24 @@ export function DocsApp({ apiSource }: DocsAppProps = {}) {
       errorTitle="Could not load docs"
       successVersion={successVersion}
       render={(key) => (
-        <DocsWorkspace
-          key={key}
-          data={data}
-          session={session}
-          operations={operations}
-          filePath={filePath}
-          onLogout={handleLogout}
-          onFileRenamed={handleFileRenamed}
-        />
+        <div key={key}>
+          {showCollab && collabUrls ? (
+            <DocsCollabWorkspace
+              userName={collabUserName}
+              documentTitle={collabDocumentTitle}
+              urls={collabUrls}
+            />
+          ) : (
+            <DocsWorkspace
+              data={data}
+              session={session}
+              operations={operations}
+              filePath={filePath}
+              onLogout={handleLogout}
+              onFileRenamed={handleFileRenamed}
+            />
+          )}
+        </div>
       )}
     />
   );
