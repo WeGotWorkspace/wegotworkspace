@@ -98,16 +98,20 @@ async function saveDocument(
   documentUrl: string,
   markdown: string,
   ydoc: Y.Doc,
+  room: string | undefined,
   authToken?: string,
   method: "POST" | "PUT" = "POST",
 ): Promise<void> {
+  const body: { markdown: string; yjs: number[]; room?: string } = {
+    markdown,
+    yjs: Array.from(Y.encodeStateAsUpdate(ydoc)),
+  };
+  if (room) body.room = room;
+
   const res = await fetch(documentUrl, {
     method,
     headers: withBearerAuth({ "Content-Type": "application/json" }, authToken),
-    body: JSON.stringify({
-      markdown,
-      yjs: Array.from(Y.encodeStateAsUpdate(ydoc)),
-    }),
+    body: JSON.stringify(body),
   });
   const text = await res.text();
   if (!res.ok) {
@@ -175,6 +179,7 @@ export function useLaatsteTestCollab({
         urls.documentUrl,
         getMd(),
         ydoc,
+        urls.room,
         authTokenRef.current,
         urls.documentSaveMethod ?? "POST",
       )
@@ -183,7 +188,7 @@ export function useLaatsteTestCollab({
           setDocStatus(`Save failed: ${err instanceof Error ? err.message : String(err)}`),
         );
     }, SAVE_DELAY_MS);
-  }, [urls.documentSaveMethod, urls.documentUrl]);
+  }, [urls.documentSaveMethod, urls.documentUrl, urls.room]);
 
   const trySeedFromFile = useCallback(() => {
     const ydoc = ydocRef.current;
@@ -384,6 +389,7 @@ export function useLaatsteTestCollab({
           urls.documentUrl,
           getMd(),
           ydoc,
+          urls.room,
           authTokenRef.current,
           urls.documentSaveMethod ?? "POST",
         );
@@ -392,7 +398,7 @@ export function useLaatsteTestCollab({
       }
     }
     await teardown();
-  }, [teardown, urls.documentSaveMethod, urls.documentUrl]);
+  }, [teardown, urls.documentSaveMethod, urls.documentUrl, urls.room]);
 
   const saveNow = useCallback(async () => {
     const getMd = getMarkdownRef.current;
@@ -403,11 +409,12 @@ export function useLaatsteTestCollab({
       urls.documentUrl,
       getMd(),
       ydoc,
+      urls.room,
       authTokenRef.current,
       urls.documentSaveMethod ?? "POST",
     );
     setDocStatus(`Saved · ${new Date().toLocaleTimeString()}`);
-  }, [urls.documentSaveMethod, urls.documentUrl]);
+  }, [urls.documentSaveMethod, urls.documentUrl, urls.room]);
 
   const onMarkdownChange = useCallback(
     (getMarkdown: () => string) => {

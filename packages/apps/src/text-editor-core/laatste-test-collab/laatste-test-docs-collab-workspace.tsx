@@ -1,16 +1,18 @@
-import { useCallback, useLayoutEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import type { Editor } from "@tiptap/react";
 import { Code2, Printer } from "lucide-react";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import { IconButton } from "@/button/src/button";
 import { docsLabels } from "@/docs-core/src/docs-labels";
 import { DocsOutlineSidebar } from "@/docs-core/src/docs-outline-sidebar";
+import { Tag } from "@/tag/src/tag";
 import { focusOutlineHeading, parseMarkdownOutline } from "@/docs-core/src/docs-outline";
 import { mockWorkspaceSession } from "@/lib/api/mock/workspace-session-mock";
 import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/ui/tooltip";
 import { ViewHeader } from "@/view-header/src/view-header";
+import { getTextEditorContent } from "@/text-editor-core/src/text-editor-content";
 import { TEXT_EDITOR_FORMAT_BAR_FULL } from "@/text-editor-core/src/text-editor-format-bar-config";
 import { printTextEditorSheet } from "@/text-editor-core/src/text-editor-print";
 import { LaatsteTestCollabEditor } from "@/text-editor-core/laatste-test-collab/laatste-test-collab-editor";
@@ -125,6 +127,27 @@ function LaatsteTestDocsCollabWorkspaceInner({
     [onMarkdownChange],
   );
 
+  useEffect(() => {
+    if (!editor) return;
+
+    const updateFromEditor = () => {
+      setMarkdown(getTextEditorContent(editor, "markdown"));
+    };
+
+    updateFromEditor();
+    editor.on("transaction", updateFromEditor);
+    return () => {
+      editor.off("transaction", updateFromEditor);
+    };
+  }, [editor]);
+
+  const handleEditorReady = useCallback((nextEditor: Editor | null) => {
+    setEditor(nextEditor);
+    if (nextEditor) {
+      setMarkdown(getTextEditorContent(nextEditor, "markdown"));
+    }
+  }, []);
+
   const handleOutlineSelect = useCallback(
     (index: number) => {
       setActiveOutlineIndex(index);
@@ -179,13 +202,19 @@ function LaatsteTestDocsCollabWorkspaceInner({
                   />
                 ) : null}
                 <IconButton
-                  label={viewSource ? labels.hideSource : labels.viewSource}
+                  label={
+                    collabSession
+                      ? "Source view is disabled while collaborating"
+                      : viewSource
+                        ? labels.hideSource
+                        : labels.viewSource
+                  }
                   icon={<Code2 />}
                   size="sm"
                   variant="subtle"
                   active={viewSource}
                   aria-pressed={viewSource}
-                  disabled={!editor}
+                  disabled={!editor || Boolean(collabSession)}
                   className={cn(viewSource && "docs-workspace__source-toggle--active")}
                   onClick={() => setViewSource((on) => !on)}
                 />
@@ -212,7 +241,7 @@ function LaatsteTestDocsCollabWorkspaceInner({
                 viewSource={viewSource}
                 formatBar={{ groups: TEXT_EDITOR_FORMAT_BAR_FULL, showPrint: false }}
                 onMarkdownChange={handleMarkdownChange}
-                onEditorReady={setEditor}
+                onEditorReady={handleEditorReady}
               />
             ) : (
               <div className="p-8">
@@ -223,12 +252,20 @@ function LaatsteTestDocsCollabWorkspaceInner({
               </div>
             )}
             <footer className="docs-workspace__stats-footer" aria-live="polite">
-              <span className="tag rounded-md px-2 py-1 text-xs font-medium">
-                {labels.statsWords(wordCount)}
-              </span>
-              <span className="tag rounded-md px-2 py-1 text-xs font-medium">
-                {labels.statsCharacters(characterCount)}
-              </span>
+              <Tag
+                label={labels.statsWords(wordCount)}
+                colors={{
+                  backgroundColor: "var(--docs-stat-tag-bg)",
+                  color: "var(--docs-stat-tag-color)",
+                }}
+              />
+              <Tag
+                label={labels.statsCharacters(characterCount)}
+                colors={{
+                  backgroundColor: "var(--docs-stat-tag-bg)",
+                  color: "var(--docs-stat-tag-color)",
+                }}
+              />
             </footer>
           </div>
         }
