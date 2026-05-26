@@ -22,7 +22,10 @@ final class DocCollabSignalingService
 
     private const MAX_PEERS_PER_ROOM = 20;
 
-    public function __construct(private CollabActorResolver $actors) {}
+    public function __construct(
+        private CollabActorResolver $actors,
+        private CollabRoomPolicy $rooms,
+    ) {}
 
     /**
      * @param  array<string, mixed>  $body
@@ -33,7 +36,7 @@ final class DocCollabSignalingService
         $this->pruneOldRows();
 
         $ownerMarker = $this->actors->ownerMarker($this->actors->requireUsername($request));
-        $room = $this->cleanRoom($body['room'] ?? null);
+        $room = $this->rooms->cleanRoom($body['room'] ?? null);
         $name = mb_substr(trim((string) ($body['name'] ?? '')), 0, 64);
         if ($name === '') {
             $this->fail('name_required');
@@ -74,7 +77,7 @@ final class DocCollabSignalingService
         $this->pruneOldRows();
 
         $ownerMarker = $this->actors->ownerMarker($this->actors->requireUsername($request));
-        $room = $this->cleanRoom($body['room'] ?? null);
+        $room = $this->rooms->cleanRoom($body['room'] ?? null);
         $peerId = $this->cleanPeer($body['peerId'] ?? null);
         $this->assertPeerOwnedByActor($room, $peerId, $ownerMarker);
 
@@ -119,7 +122,7 @@ final class DocCollabSignalingService
         $this->pruneOldRows();
 
         $ownerMarker = $this->actors->ownerMarker($this->actors->requireUsername($request));
-        $room = $this->cleanRoom($body['room'] ?? null);
+        $room = $this->rooms->cleanRoom($body['room'] ?? null);
         $from = $this->cleanPeer($body['peerId'] ?? null);
         $to = $this->cleanPeer($body['to'] ?? null);
         $this->assertPeerOwnedByActor($room, $from, $ownerMarker);
@@ -174,7 +177,7 @@ final class DocCollabSignalingService
         $this->pruneOldRows();
 
         $ownerMarker = $this->actors->ownerMarker($this->actors->requireUsername($request));
-        $room = $this->cleanRoom($body['room'] ?? null);
+        $room = $this->rooms->cleanRoom($body['room'] ?? null);
         $peerId = $this->cleanPeer($body['peerId'] ?? null);
         $this->assertPeerOwnedByActor($room, $peerId, $ownerMarker);
 
@@ -286,15 +289,6 @@ final class DocCollabSignalingService
         if ($owner === '' || ! hash_equals($owner, $ownerMarker)) {
             $this->fail('forbidden', 403);
         }
-    }
-
-    private function cleanRoom(mixed $room): string
-    {
-        if (! is_string($room) || ! preg_match('/^[A-Za-z0-9._~\/-]{4,190}$/', $room)) {
-            $this->fail('invalid_room');
-        }
-
-        return $room;
     }
 
     private function cleanPeer(mixed $peer): string
