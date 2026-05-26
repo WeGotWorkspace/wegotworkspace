@@ -17,6 +17,14 @@ function docsCollabEnabled(): boolean {
   return raw === "1" || raw === "true" || raw === "yes" || raw === "on";
 }
 
+function isMyDriveDocPath(filePath: string | undefined, username: string | undefined): boolean {
+  const trimmedPath = filePath?.trim();
+  const trimmedUsername = username?.trim();
+  if (!trimmedPath || !trimmedUsername) return false;
+  const myRoot = `/users/${trimmedUsername}`;
+  return trimmedPath === myRoot || trimmedPath.startsWith(`${myRoot}/`);
+}
+
 export function DocsApp({ apiSource }: DocsAppProps = {}) {
   const navigate = useNavigate();
   const search = useSearch({ strict: false });
@@ -41,8 +49,12 @@ export function DocsApp({ apiSource }: DocsAppProps = {}) {
     [navigate],
   );
 
+  const fileIsMyDriveDoc = isMyDriveDocPath(filePath, session.user.username);
   const showCollab =
-    docsCollabEnabled() && typeof filePath === "string" && /\.(md|txt)$/i.test(filePath);
+    docsCollabEnabled() &&
+    typeof filePath === "string" &&
+    /\.(md|txt)$/i.test(filePath) &&
+    !fileIsMyDriveDoc;
   const collabUrls = useMemo(() => {
     if (!showCollab || !filePath) return undefined;
     const baseUrl = wgwApiBaseUrl();
