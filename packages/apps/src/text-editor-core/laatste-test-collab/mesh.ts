@@ -41,25 +41,6 @@ export type LaatsteTestMeshOptions = {
   room?: string;
 };
 
-export type LaatsteTestMeshDebugStats = {
-  joinCalls: number;
-  pollCalls: number;
-  pollMessages: number;
-  offersSent: number;
-  offersReceived: number;
-  answersSent: number;
-  answersReceived: number;
-  iceSent: number;
-  iceReceived: number;
-  connectAttempts: number;
-  initiatorAttempts: number;
-  responderAttempts: number;
-  dcOpen: number;
-  apiErrors: number;
-  rtcErrors: number;
-  lastRtcError: string;
-};
-
 export class LaatsteTestMesh {
   private myId: string | null = null;
 
@@ -74,25 +55,6 @@ export class LaatsteTestMesh {
   private readonly mesh = new Map<string, MeshPeerEntry>();
 
   private readonly listeners = new Set<MeshListener>();
-
-  private readonly debug: LaatsteTestMeshDebugStats = {
-    joinCalls: 0,
-    pollCalls: 0,
-    pollMessages: 0,
-    offersSent: 0,
-    offersReceived: 0,
-    answersSent: 0,
-    answersReceived: 0,
-    iceSent: 0,
-    iceReceived: 0,
-    connectAttempts: 0,
-    initiatorAttempts: 0,
-    responderAttempts: 0,
-    dcOpen: 0,
-    apiErrors: 0,
-    rtcErrors: 0,
-    lastRtcError: "",
-  };
 
   constructor(
     private readonly signalUrl: string,
@@ -118,10 +80,6 @@ export class LaatsteTestMesh {
 
   getRoomPeers(): LaatsteTestMeshPeer[] {
     return this.lastRoomPeers;
-  }
-
-  getDebugStats(): LaatsteTestMeshDebugStats {
-    return { ...this.debug };
   }
 
   linkCount(): number {
@@ -156,30 +114,25 @@ export class LaatsteTestMesh {
   }
 
   private async api(action: string, body: Record<string, unknown> = {}): Promise<unknown> {
-    try {
-      const res = await fetch(this.signalUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, ...body }),
-      });
-      const text = await res.text();
-      if (text.startsWith("<?php") || text.trimStart().startsWith("<!")) {
-        throw new Error(
-          "Signaling not running. Start `pnpm dev:laatste-test-signal` or Storybook (starts PHP on :8081).",
-        );
-      }
-      let data: { error?: string };
-      try {
-        data = JSON.parse(text) as { error?: string };
-      } catch {
-        throw new Error(`Invalid response from signal.php (${res.status}): ${text.slice(0, 80)}`);
-      }
-      if (!res.ok) throw new Error(data.error || `${res.status} ${res.statusText}`);
-      return data;
-    } catch (error) {
-      this.debug.apiErrors += 1;
-      throw error;
+    const res = await fetch(this.signalUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, ...body }),
+    });
+    const text = await res.text();
+    if (text.startsWith("<?php") || text.trimStart().startsWith("<!")) {
+      throw new Error(
+        "Signaling not running. Start `pnpm dev:laatste-test-signal` or Storybook (starts PHP on :8081).",
+      );
     }
+    let data: { error?: string };
+    try {
+      data = JSON.parse(text) as { error?: string };
+    } catch {
+      throw new Error(`Invalid response from signal.php (${res.status}): ${text.slice(0, 80)}`);
+    }
+    if (!res.ok) throw new Error(data.error || `${res.status} ${res.statusText}`);
+    return data;
   }
 
   private linkState(pc: RTCPeerConnection): string {
@@ -197,9 +150,6 @@ export class LaatsteTestMesh {
   }
 
   private sendSignal(to: string, type: string, payload: unknown): Promise<unknown> {
-    if (type === "offer") this.debug.offersSent += 1;
-    else if (type === "answer") this.debug.answersSent += 1;
-    else if (type === "ice") this.debug.iceSent += 1;
     return this.api("signal", { room: this.room, peerId: this.myId, to, type, payload });
   }
 
@@ -224,7 +174,6 @@ export class LaatsteTestMesh {
     entry.dc = dc;
     dc.onopen = () => {
       entry.link = "connected";
-      this.debug.dcOpen += 1;
       this.emit({ type: "dc-open", from: remoteId });
     };
     dc.onclose = () => {
@@ -260,9 +209,6 @@ export class LaatsteTestMesh {
 
     const initiator = this.myId < remoteId;
     if (this.shouldReusePeerEntry(remoteId, initiator)) return;
-    this.debug.connectAttempts += 1;
-    if (initiator) this.debug.initiatorAttempts += 1;
-    else this.debug.responderAttempts += 1;
 
     if (this.mesh.has(remoteId)) this.removePeer(remoteId);
 
@@ -387,8 +333,6 @@ export class LaatsteTestMesh {
     try {
       await applyOffer();
     } catch (error) {
-      this.debug.rtcErrors += 1;
-      this.debug.lastRtcError = error instanceof Error ? error.message : String(error);
       this.removePeer(from);
       const pc = this.makePc(from);
       entry = { name: from.slice(0, 8), pc, dc: null, link: "connecting", signalSent: false };
@@ -396,15 +340,8 @@ export class LaatsteTestMesh {
       pc.ondatachannel = (e) => {
         if (e.channel.label === DC_LABEL) this.attachDataChannel(e.channel, from);
       };
-      try {
-        await applyOffer();
-        console.warn("[laatste-test-collab] recovered handleOffer after rebuild", error);
-      } catch (retryError) {
-        this.debug.rtcErrors += 1;
-        this.debug.lastRtcError =
-          retryError instanceof Error ? retryError.message : String(retryError);
-        throw retryError;
-      }
+      await applyOffer();
+      console.warn("[laatste-test-collab] recovered handleOffer after rebuild", error);
     }
   }
 
@@ -435,7 +372,6 @@ export class LaatsteTestMesh {
 
     for (const p of peers) {
       void this.connectTo(p.id, p.name).catch((err) => {
-        this.debug.rtcErrors += 1;
         console.warn("[laatste-test-collab] connectTo failed", p.id, err);
       });
     }
@@ -457,18 +393,13 @@ export class LaatsteTestMesh {
 
       try {
         if (m.type === "offer") {
-          this.debug.offersReceived += 1;
           await this.handleOffer(m.from, m.payload as RTCSessionDescriptionInit);
         } else if (m.type === "answer") {
-          this.debug.answersReceived += 1;
           await this.handleAnswer(m.from, m.payload as RTCSessionDescriptionInit);
         } else if (m.type === "ice") {
-          this.debug.iceReceived += 1;
           await this.handleIce(m.from, m.payload as RTCIceCandidateInit);
         }
       } catch (error) {
-        this.debug.rtcErrors += 1;
-        this.debug.lastRtcError = error instanceof Error ? error.message : String(error);
         console.warn("[laatste-test-collab] onPoll message handling failed", m.type, error);
       }
     }
@@ -476,13 +407,11 @@ export class LaatsteTestMesh {
 
   private async pollOnce(): Promise<void> {
     if (!this.myId) return;
-    this.debug.pollCalls += 1;
     const data = (await this.api("poll", {
       room: this.room,
       peerId: this.myId,
       since: this.lastMsgId,
     })) as { peers: LaatsteTestMeshPeer[]; messages: PollMessage[] };
-    this.debug.pollMessages += Array.isArray(data.messages) ? data.messages.length : 0;
     await this.onPoll(data);
   }
 
@@ -501,7 +430,6 @@ export class LaatsteTestMesh {
   async join(name: string): Promise<{ peerId: string; peers: LaatsteTestMeshPeer[] }> {
     this.myName = name.trim();
     if (!this.myName) throw new Error("Enter a display name");
-    this.debug.joinCalls += 1;
     const data = (await this.api("join", { room: this.room, name: this.myName })) as {
       peerId: string;
       peers: LaatsteTestMeshPeer[];
@@ -509,7 +437,6 @@ export class LaatsteTestMesh {
     this.myId = data.peerId;
     this.schedulePoll();
     void this.onPoll({ peers: data.peers, messages: [] }).catch((err) => {
-      this.debug.rtcErrors += 1;
       console.warn("[laatste-test-collab] initial onPoll failed", err);
     });
     return { peerId: data.peerId, peers: data.peers };
