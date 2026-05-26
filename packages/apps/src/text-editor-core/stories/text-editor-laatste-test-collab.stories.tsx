@@ -14,7 +14,7 @@ Anonymous collaborative markdown editing using the **laatste-test** prototype st
 
 1. Storybook starts PHP on **http://127.0.0.1:8081** automatically, or run \`pnpm dev:laatste-test-signal\` in another terminal.
 2. \`pnpm dev:ui\` (Storybook on :6006)
-3. Open this story twice (two windows) with different **userName** values (e.g. Alex / Sam).
+3. Open this story — you will be prompted for a display name. Open a second window with a different name to test collab.
 4. Type in one window — edits and carets should appear in the other.
 
 No Laravel / JWT / \`collab/*\` API involved.
@@ -32,35 +32,11 @@ const meta = {
       },
     },
   },
-  argTypes: {
-    userName: { control: "text" },
-    autoJoin: { control: "boolean" },
-  },
 } satisfies Meta<typeof LaatsteTestDocsCollabWorkspace>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Alex: Story = {
-  name: "User Alex",
-  args: {
-    userName: "Alex",
-    autoJoin: true,
-  },
-};
-
-export const Sam: Story = {
-  name: "User Sam",
-  args: {
-    userName: "Sam",
-    autoJoin: true,
-  },
-};
-
-export const ManualJoin: Story = {
-  name: "Manual join",
-  args: {
-    userName: "Guest",
-    autoJoin: false,
-  },
+export const Collab: Story = {
+  name: "Collab",
 };
