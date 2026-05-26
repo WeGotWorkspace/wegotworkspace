@@ -1,10 +1,10 @@
 import { Editor } from "@tiptap/react";
 import Collaboration from "@tiptap/extension-collaboration";
 import StarterKit from "@tiptap/starter-kit";
-import { Markdown } from "tiptap-markdown";
 import type { Awareness } from "y-protocols/awareness";
 import * as Y from "yjs";
 import { setTextEditorContent } from "@/text-editor-core/src/text-editor-content";
+import { createTextEditorExtensions } from "@/text-editor-core/src/text-editor-extensions";
 import { LaatsteTestCollabEditor } from "@/text-editor-core/laatste-test-collab/laatste-test-collab-editor";
 
 const SEED_ORIGIN = "seed";
@@ -30,8 +30,13 @@ export function applyMarkdownSeedToYDoc(target: Y.Doc, markdown: string): void {
     extensions: [
       StarterKit.configure({ undoRedo: false }),
       Collaboration.configure({ document: temp }),
-      Markdown,
+      ...createTextEditorExtensions({ format: "markdown" }).filter(
+        (ext) => ext.name !== "starterKit",
+      ),
     ],
+    editorProps: {
+      attributes: { class: "text-editor-prose focus:outline-none" },
+    },
   });
   setTextEditorContent(tempEditor, markdown, "markdown");
   Y.applyUpdate(target, Y.encodeStateAsUpdate(temp), SEED_ORIGIN);

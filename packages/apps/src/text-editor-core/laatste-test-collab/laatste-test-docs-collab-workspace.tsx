@@ -97,8 +97,8 @@ export function LaatsteTestDocsCollabWorkspace({
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="docs-workspace flex min-h-screen flex-col">
-        <div className="border-b bg-amber-50 px-4 py-2 text-xs text-amber-950 dark:bg-amber-950/40 dark:text-amber-100">
+      <div className="flex min-h-screen flex-col">
+        <div className="shrink-0 border-b bg-amber-50 px-4 py-2 text-xs text-amber-950 dark:bg-amber-950/40 dark:text-amber-100">
           <strong>Laatste-test collab demo</strong> — open this story twice with different names
           (Alex / Sam). Signaling: <code>laatste-test/signal.php</code> on :8081.{" "}
           <span className="text-amber-900/80 dark:text-amber-200/90">
@@ -129,7 +129,7 @@ export function LaatsteTestDocsCollabWorkspace({
         </div>
 
         <WorkspaceAppLayout
-          className="min-h-0 flex-1"
+          className={cn("docs-workspace", "min-h-0 flex-1")}
           sidebar={
             <AppSidebar
               open={sidebarOpen}
