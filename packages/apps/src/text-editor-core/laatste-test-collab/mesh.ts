@@ -37,6 +37,8 @@ type MeshListener = (msg: LaatsteTestMeshMessage) => void;
 export type LaatsteTestMeshOptions = {
   /** e.g. `/laatste-test/signal.php` (Storybook proxy → PHP on :8081) */
   signalUrl: string;
+  /** Optional final API base (`/api/v1/collab`) using join/poll/send/leave endpoints. */
+  collabApiBaseUrl?: string;
   /** Signaling room id (for parity endpoint isolation). */
   room?: string;
   /** Optional bearer token used for authenticated Laravel parity endpoint. */
@@ -62,6 +64,7 @@ export class LaatsteTestMesh {
     private readonly signalUrl: string,
     private readonly room = "docs/test-together.md",
     private readonly authToken?: string,
+    private readonly collabApiBaseUrl?: string,
   ) {}
 
   onMessage(listener: MeshListener): () => void {
@@ -119,10 +122,26 @@ export class LaatsteTestMesh {
   private async api(action: string, body: Record<string, unknown> = {}): Promise<unknown> {
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     if (this.authToken) headers.Authorization = `Bearer ${this.authToken}`;
-    const res = await fetch(this.signalUrl, {
+    const endpointActionMap: Record<string, string> = {
+      join: "join",
+      poll: "poll",
+      signal: "send",
+      leave: "leave",
+    };
+    const hasEndpointMode = Boolean(this.collabApiBaseUrl);
+    const endpointAction = endpointActionMap[action];
+    const collabBase = this.collabApiBaseUrl?.replace(/\/$/, "");
+    const requestUrl =
+      hasEndpointMode && endpointAction ? `${collabBase}/${endpointAction}` : this.signalUrl;
+    const requestBody =
+      hasEndpointMode && endpointAction
+        ? JSON.stringify(body)
+        : JSON.stringify({ action, ...body });
+
+    const res = await fetch(requestUrl, {
       method: "POST",
       headers,
-      body: JSON.stringify({ action, ...body }),
+      body: requestBody,
     });
     const text = await res.text();
     if (text.startsWith("<?php") || text.trimStart().startsWith("<!")) {
