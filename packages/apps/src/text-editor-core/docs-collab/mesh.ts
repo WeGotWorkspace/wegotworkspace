@@ -1,5 +1,5 @@
 /**
- * WebRTC mesh + HTTP signaling (parity with laatste-test/mesh.js).
+ * WebRTC mesh + HTTP signaling for docs collaboration.
  * Supports anonymous or bearer-authenticated signaling endpoints.
  */
 
@@ -9,9 +9,9 @@ const ICE: RTCConfiguration = {
 const DC_LABEL = "collab";
 const POLL_MS = 2000;
 
-export type LaatsteTestMeshPeer = { id: string; name: string };
+export type DocsCollabMeshPeer = { id: string; name: string };
 
-export type LaatsteTestMeshMessage =
+export type DocsCollabMeshMessage =
   | { type: "sync"; u: number[]; from?: string }
   | { type: "awareness"; u: number[]; from?: string }
   | { type: "dc-open"; from: string }
@@ -32,10 +32,10 @@ type PollMessage = {
   payload: unknown;
 };
 
-type MeshListener = (msg: LaatsteTestMeshMessage) => void;
+type MeshListener = (msg: DocsCollabMeshMessage) => void;
 
-export type LaatsteTestMeshOptions = {
-  /** e.g. `/laatste-test/signal.php` (Storybook proxy → PHP on :8081) */
+export type DocsCollabMeshOptions = {
+  /** e.g. `/api/v1/collab/send` */
   signalUrl: string;
   /** Optional final API base (`/api/v1/collab`) using join/poll/send/leave endpoints. */
   collabApiBaseUrl?: string;
@@ -45,7 +45,7 @@ export type LaatsteTestMeshOptions = {
   authToken?: string;
 };
 
-export class LaatsteTestMesh {
+export class DocsCollabMesh {
   private myId: string | null = null;
 
   private myName = "";
@@ -54,7 +54,7 @@ export class LaatsteTestMesh {
 
   private lastMsgId = 0;
 
-  private lastRoomPeers: LaatsteTestMeshPeer[] = [];
+  private lastRoomPeers: DocsCollabMeshPeer[] = [];
 
   private readonly mesh = new Map<string, MeshPeerEntry>();
 
@@ -84,7 +84,7 @@ export class LaatsteTestMesh {
     return Array.from(this.mesh.keys());
   }
 
-  getRoomPeers(): LaatsteTestMeshPeer[] {
+  getRoomPeers(): DocsCollabMeshPeer[] {
     return this.lastRoomPeers;
   }
 
@@ -96,7 +96,7 @@ export class LaatsteTestMesh {
     return n;
   }
 
-  broadcast(msg: LaatsteTestMeshMessage): void {
+  broadcast(msg: DocsCollabMeshMessage): void {
     const raw = JSON.stringify(msg);
     for (const entry of this.mesh.values()) {
       if (entry.dc?.readyState === "open") {
@@ -109,7 +109,7 @@ export class LaatsteTestMesh {
     }
   }
 
-  sendTo(remoteId: string, msg: LaatsteTestMeshMessage): void {
+  sendTo(remoteId: string, msg: DocsCollabMeshMessage): void {
     const entry = this.mesh.get(remoteId);
     if (entry?.dc?.readyState !== "open") return;
     try {
@@ -146,7 +146,7 @@ export class LaatsteTestMesh {
     const text = await res.text();
     if (text.startsWith("<?php") || text.trimStart().startsWith("<!")) {
       throw new Error(
-        "Signaling not running. Start `pnpm dev:laatste-test-signal` or Storybook (starts PHP on :8081).",
+        "Signaling not running. Verify the docs collab signaling endpoint is available.",
       );
     }
     let data: { error?: string };
@@ -169,7 +169,7 @@ export class LaatsteTestMesh {
     return s;
   }
 
-  private emit(msg: LaatsteTestMeshMessage): void {
+  private emit(msg: DocsCollabMeshMessage): void {
     for (const fn of this.listeners) fn(msg);
   }
 
@@ -205,9 +205,9 @@ export class LaatsteTestMesh {
     };
     dc.onmessage = (e) => {
       try {
-        const msg = JSON.parse(String(e.data)) as LaatsteTestMeshMessage;
+        const msg = JSON.parse(String(e.data)) as DocsCollabMeshMessage;
         if (msg && typeof msg === "object") {
-          this.emit({ ...msg, from: remoteId } as LaatsteTestMeshMessage);
+          this.emit({ ...msg, from: remoteId } as DocsCollabMeshMessage);
         }
       } catch {
         // ignore
@@ -365,7 +365,7 @@ export class LaatsteTestMesh {
         if (e.channel.label === DC_LABEL) this.attachDataChannel(e.channel, from);
       };
       await applyOffer();
-      console.warn("[laatste-test-collab] recovered handleOffer after rebuild", error);
+      console.warn("[docs-collab] recovered handleOffer after rebuild", error);
     }
   }
 
@@ -389,14 +389,14 @@ export class LaatsteTestMesh {
     peers,
     messages,
   }: {
-    peers: LaatsteTestMeshPeer[];
+    peers: DocsCollabMeshPeer[];
     messages: PollMessage[];
   }): Promise<void> {
     const roomIds = new Set(peers.map((p) => p.id));
 
     for (const p of peers) {
       void this.connectTo(p.id, p.name).catch((err) => {
-        console.warn("[laatste-test-collab] connectTo failed", p.id, err);
+        console.warn("[docs-collab] connectTo failed", p.id, err);
       });
     }
 
@@ -424,7 +424,7 @@ export class LaatsteTestMesh {
           await this.handleIce(m.from, m.payload as RTCIceCandidateInit);
         }
       } catch (error) {
-        console.warn("[laatste-test-collab] onPoll message handling failed", m.type, error);
+        console.warn("[docs-collab] onPoll message handling failed", m.type, error);
       }
     }
   }
@@ -435,7 +435,7 @@ export class LaatsteTestMesh {
       room: this.room,
       peerId: this.myId,
       since: this.lastMsgId,
-    })) as { peers: LaatsteTestMeshPeer[]; messages: PollMessage[] };
+    })) as { peers: DocsCollabMeshPeer[]; messages: PollMessage[] };
     await this.onPoll(data);
   }
 
@@ -445,23 +445,23 @@ export class LaatsteTestMesh {
       void this.pollOnce()
         .catch((err) => {
           this.emit({ type: "link" });
-          console.warn("[laatste-test-collab] poll failed", err);
+          console.warn("[docs-collab] poll failed", err);
         })
         .finally(() => this.schedulePoll());
     }, POLL_MS);
   }
 
-  async join(name: string): Promise<{ peerId: string; peers: LaatsteTestMeshPeer[] }> {
+  async join(name: string): Promise<{ peerId: string; peers: DocsCollabMeshPeer[] }> {
     this.myName = name.trim();
     if (!this.myName) throw new Error("Enter a display name");
     const data = (await this.api("join", { room: this.room, name: this.myName })) as {
       peerId: string;
-      peers: LaatsteTestMeshPeer[];
+      peers: DocsCollabMeshPeer[];
     };
     this.myId = data.peerId;
     this.schedulePoll();
     void this.onPoll({ peers: data.peers, messages: [] }).catch((err) => {
-      console.warn("[laatste-test-collab] initial onPoll failed", err);
+      console.warn("[docs-collab] initial onPoll failed", err);
     });
     return { peerId: data.peerId, peers: data.peers };
   }

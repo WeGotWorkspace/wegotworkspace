@@ -9,7 +9,7 @@ import {
 import { wgwApiBaseUrl, wgwCurrentAccessToken } from "@/lib/api/wgw/http";
 import type { DocsAppProps } from "@/docs-core/src/docs-app-props";
 import { DocsWorkspace } from "@/docs-core/src/docs-workspace";
-import { LaatsteTestDocsCollabWorkspace } from "@/text-editor-core/laatste-test-collab/laatste-test-docs-collab-workspace";
+import { DocsCollabWorkspace } from "@/text-editor-core/docs-collab";
 import { useDocsAPI } from "@/docs-core/src/use-docs-api";
 
 function docsCollabEnabled(): boolean {
@@ -88,7 +88,7 @@ export function DocsApp({ apiSource }: DocsAppProps = {}) {
       render={(key) => (
         <div key={key}>
           {showCollab && collabUrls ? (
-            <LaatsteTestDocsCollabWorkspace
+            <DocsCollabWorkspace
               userName={collabUserName}
               documentTitle={collabDocumentTitle}
               urls={collabUrls}

@@ -28,7 +28,6 @@
     "docker:down": "docker compose -f compose.dev.yml down",
     "docker:logs": "docker compose -f compose.dev.yml logs -f",
     "docker:ssl:setup": "bash tools/docker-ssl-setup.sh",
-    "dev:laatste-test-signal": "bash tools/dev-laatste-test-signal.sh",
     "update:onlyoffice-web": "bash tools/update-onlyoffice-web-subtree.sh",
     "release": "tools/with-root-env.sh -- bash tools/release-wegotworkspace.sh package",
     "release:publish": "tools/with-root-env.sh -- bash tools/release-wegotworkspace.sh publish",

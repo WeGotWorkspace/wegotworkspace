@@ -1,15 +1,12 @@
-import { LaatsteTestCollabEditorSurface } from "@/text-editor-core/laatste-test-collab/laatste-test-collab-editor-surface";
-import { useLaatsteTestCollab } from "@/text-editor-core/laatste-test-collab/use-laatste-test-collab";
+import { DocsCollabEditorSurface } from "./docs-collab-editor-surface";
+import { useDocsCollab } from "./use-docs-collab";
 
-export type LaatsteTestCollabWorkspaceProps = {
+export type DocsCollabWorkspaceProps = {
   userName: string;
   autoJoin?: boolean;
 };
 
-export function LaatsteTestCollabWorkspace({
-  userName,
-  autoJoin = true,
-}: LaatsteTestCollabWorkspaceProps) {
+export function DocsCollabWorkspace({ userName, autoJoin = true }: DocsCollabWorkspaceProps) {
   const {
     session,
     joined,
@@ -21,7 +18,7 @@ export function LaatsteTestCollabWorkspace({
     leave,
     saveNow,
     onMarkdownChange,
-  } = useLaatsteTestCollab({ userName, autoJoin });
+  } = useDocsCollab({ userName, autoJoin });
 
   return (
     <div className="flex min-h-screen flex-col bg-muted/30">
@@ -71,14 +68,14 @@ export function LaatsteTestCollabWorkspace({
 
       <div className="border-b bg-amber-50 px-4 py-2 text-sm text-amber-950 dark:bg-amber-950/40 dark:text-amber-100">
         Open this story in <strong>two browser windows</strong> (or Storybook + iframe) with
-        different <strong>userName</strong> controls — e.g. Alex and Sam. Uses{" "}
-        <code className="rounded bg-black/10 px-1">laatste-test/signal.php</code> on port{" "}
-        <strong>8081</strong> (started by Storybook or <code>pnpm dev:laatste-test-signal</code>).
+        different <strong>userName</strong> controls — e.g. Alex and Sam. Uses a local signaling
+        service on <strong>8081</strong> (started by Storybook or{" "}
+        <code>pnpm dev:docs-collab-signal</code>).
       </div>
 
       <main className="flex-1 p-4">
         {session ? (
-          <LaatsteTestCollabEditorSurface
+          <DocsCollabEditorSurface
             ydoc={session.ydoc}
             awareness={session.awareness}
             user={session.user}

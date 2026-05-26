@@ -8,7 +8,8 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Step 2.1 bridge endpoint:
- * Laravel-hosted signaling with the same action protocol as `laatste-test/signal.php`.
+ * Laravel-hosted signaling with the same action protocol as the legacy
+ * parity signal endpoint.
  *
  * Intentionally keeps anonymous peer behavior for parity auditing.
  *
