@@ -17,7 +17,7 @@ import { useTextEditorSourceSync } from "@/text-editor-core/src/use-text-editor-
 import "@/text-editor-core/src/text-editor.css";
 
 export type TextEditorProps = {
-  /** Document serialization: HTML (e.g. mail) or Markdown (e.g. notes). */
+  /** Document serialization: HTML (e.g. mail), Markdown (e.g. notes), or plain text (e.g. `.txt`). */
   format?: TextEditorContentFormat;
   /** Initial content in the configured `format`. */
   content?: string;
@@ -81,12 +81,13 @@ export function TextEditor({
 
   const formatBarConfig = (() => {
     if (formatBar === false) return null;
+    if (format === "text" && formatBar === true) return null;
     const config: TextEditorFormatBarConfig = typeof formatBar === "object" ? { ...formatBar } : {};
     if (showPrint !== undefined) config.showPrint = showPrint;
     return resolveTextEditorFormatBarConfig(config);
   })();
 
-  const formatLabel = format === "markdown" ? "Markdown" : "HTML";
+  const formatLabel = format === "markdown" ? "Markdown" : format === "text" ? "Text" : "HTML";
 
   const formatBarElement = formatBarConfig ? (
     <TextEditorFormatBar

@@ -26,6 +26,7 @@ export {
 export {
   TEXT_EDITOR_CONTENT_FORMATS,
   getTextEditorContent,
+  initialTextEditorContent,
   setTextEditorContent,
   type TextEditorContentFormat,
 } from "@/text-editor-core/src/text-editor-content";

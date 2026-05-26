@@ -49,3 +49,17 @@ export function wordCount(text: string): number {
 
 *Print this sheet to see letter-sized output without chrome.*
 `.trim();
+
+/** Plain-text fixture for `.txt` files in Docs Storybook. */
+export const DOCS_DEMO_TEXT = `Meeting notes — 12 May
+
+Attendees: Hana, Marco, Ada
+
+Summary
+We agreed to ship plain-text editing with the same sheet as markdown.
+Line breaks in the file should round-trip through save.
+
+Next steps
+- Finalize copy for the release notes
+- Add .txt files to the Drive listing
+`.trim();

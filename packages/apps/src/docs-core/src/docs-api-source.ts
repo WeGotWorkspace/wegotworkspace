@@ -18,9 +18,11 @@ function createWgwDocsOperations(): DocsAPIOperations {
     },
     async saveFile(apiPath, content, opts) {
       const { destination, from } = parentAndName(apiPath);
-      const blob = new Blob([content], { type: "text/markdown;charset=utf-8" });
+      const isPlainText = from.toLowerCase().endsWith(".txt");
+      const mime = isPlainText ? "text/plain;charset=utf-8" : "text/markdown;charset=utf-8";
+      const blob = new Blob([content], { type: mime });
       const file = new File([blob], from, {
-        type: "text/markdown",
+        type: isPlainText ? "text/plain" : "text/markdown",
         lastModified: Date.now(),
       });
       await drive.checkUploadReady(opts);
