@@ -65,7 +65,6 @@ Route::post('voice/poll', [VoiceController::class, 'poll']);
 Route::post('voice/send', [VoiceController::class, 'send']);
 Route::post('voice/leave', [VoiceController::class, 'leave']);
 Route::post('voice/chat', [VoiceController::class, 'chat']);
-Route::post('collab/parity-signal', [CollabController::class, 'paritySignal']);
 
 Route::middleware([
     EncryptCookies::class,
@@ -143,7 +142,6 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($driveS
     Route::post('collab/poll', [CollabController::class, 'poll']);
     Route::post('collab/send', [CollabController::class, 'send']);
     Route::post('collab/leave', [CollabController::class, 'leave']);
-    Route::post('collab/parity-signal-auth', [CollabController::class, 'paritySignalAuth']);
     Route::get('collab/document', [CollabController::class, 'getDocument']);
     Route::put('collab/document', [CollabController::class, 'putDocument']);
 });
