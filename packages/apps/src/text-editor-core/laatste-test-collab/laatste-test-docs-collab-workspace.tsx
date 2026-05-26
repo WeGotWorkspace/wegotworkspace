@@ -220,7 +220,9 @@ function LaatsteTestDocsCollabWorkspaceInner({
               <div className="docs-workspace__header-actions">
                 {collabSession ? (
                   <LaatsteTestCollabPresence
-                    localUser={collabSession.user}
+                    localUser={{
+                      displayName: session.user.displayName,
+                    }}
                     peers={peers}
                     className="mr-1"
                   />

@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import type { LaatsteTestMeshPeer } from "@/text-editor-core/laatste-test-collab/mesh";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/tooltip";
 
 const COLORS = [
   "#2563eb",
@@ -19,7 +20,7 @@ function colorForName(name: string): string {
 }
 
 export type LaatsteTestCollabPresenceProps = {
-  localUser: { name: string; color?: string };
+  localUser: { displayName: string };
   peers: LaatsteTestMeshPeer[];
   className?: string;
 };
@@ -29,29 +30,31 @@ export function LaatsteTestCollabPresence({
   peers,
   className,
 }: LaatsteTestCollabPresenceProps) {
-  const localColor = localUser.color ?? colorForName(localUser.name);
-
   return (
     <div
       className={cn("docs-collab-presence flex items-center gap-1", className)}
       aria-label="Connected editors"
     >
-      <span
-        className="docs-collab-presence__avatar inline-flex size-7 items-center justify-center rounded-full text-[10px] font-semibold text-white ring-2 ring-background"
-        style={{ backgroundColor: localColor }}
-        title={`${localUser.name} (you)`}
-      >
-        {initials(localUser.name)}
-      </span>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="docs-collab-presence__avatar docs-collab-presence__avatar--self inline-flex size-7 items-center justify-center rounded-full text-[10px] font-semibold text-white ring-2 ring-background">
+            {sidebarAvatarInitials(localUser.displayName)}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>{`${localUser.displayName} (you)`}</TooltipContent>
+      </Tooltip>
       {peers.map((peer) => (
-        <span
-          key={peer.id}
-          className="docs-collab-presence__avatar -ml-2 inline-flex size-7 items-center justify-center rounded-full text-[10px] font-semibold text-white ring-2 ring-background"
-          style={{ backgroundColor: colorForName(peer.name) }}
-          title={peer.name}
-        >
-          {initials(peer.name)}
-        </span>
+        <Tooltip key={peer.id}>
+          <TooltipTrigger asChild>
+            <span
+              className="docs-collab-presence__avatar -ml-2 inline-flex size-7 items-center justify-center rounded-full text-[10px] font-semibold text-white ring-2 ring-background"
+              style={{ backgroundColor: colorForName(peer.name) }}
+            >
+              {initials(peer.name)}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>{peer.name}</TooltipContent>
+        </Tooltip>
       ))}
     </div>
   );
@@ -62,4 +65,13 @@ function initials(name: string): string {
   if (parts.length === 0) return "?";
   if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
   return `${parts[0]![0] ?? ""}${parts[1]![0] ?? ""}`.toUpperCase();
+}
+
+function sidebarAvatarInitials(displayName: string): string {
+  const initialsValue = displayName
+    .split(/\s+/)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .slice(0, 2)
+    .join("");
+  return initialsValue || "?";
 }
