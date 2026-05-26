@@ -6,7 +6,6 @@ namespace App\Http\Controllers\Api\V1\Collab;
 
 use App\Services\Collab\DocCollabDocumentService;
 use App\Services\Collab\DocCollabSignalingService;
-use App\Services\Collab\LegacySignalParityService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -16,7 +15,6 @@ final class CollabController
     public function __construct(
         private DocCollabSignalingService $collab,
         private DocCollabDocumentService $documents,
-        private LegacySignalParityService $legacySignal,
     ) {}
 
     public function join(Request $request): JsonResponse
@@ -37,27 +35,6 @@ final class CollabController
     public function leave(Request $request): JsonResponse
     {
         return response()->json($this->collab->leave($request, $request->json()->all()));
-    }
-
-    public function paritySignal(Request $request): JsonResponse
-    {
-        return response()->json($this->handleParitySignalRequest($request));
-    }
-
-    public function paritySignalAuth(Request $request): JsonResponse
-    {
-        return response()->json($this->handleParitySignalRequest($request));
-    }
-
-    private function handleParitySignalRequest(Request $request): array
-    {
-        $body = $request->json()->all();
-        $action = $request->query('action');
-        if (is_string($action) && $action !== '' && ! array_key_exists('action', $body)) {
-            $body['action'] = $action;
-        }
-
-        return $this->legacySignal->handle($body);
     }
 
     public function getDocument(Request $request): Response
