@@ -1,4 +1,5 @@
 export type WgwAuthTokenOptions = {
+  authToken?: string;
   authTokenUrl?: string;
   authUser?: string;
   authPassword?: string;
@@ -9,10 +10,12 @@ export type WgwAuthTokenOptions = {
  * Returns undefined when no token URL is configured.
  */
 export async function fetchWgwAuthToken({
+  authToken,
   authTokenUrl,
   authUser,
   authPassword,
 }: WgwAuthTokenOptions): Promise<string | undefined> {
+  if (authToken?.trim()) return authToken.trim();
   if (!authTokenUrl) return undefined;
   if (!authUser || !authPassword) {
     throw new Error("Missing auth credentials for authenticated parity story");

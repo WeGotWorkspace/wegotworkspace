@@ -9,6 +9,11 @@ afterEach(() => {
 });
 
 describe("fetchWgwAuthToken", () => {
+  it("returns provided auth token without fetching", async () => {
+    await expect(fetchWgwAuthToken({ authToken: "inline-token" })).resolves.toBe("inline-token");
+    expect(globalThis.fetch).toBe(originalFetch);
+  });
+
   it("returns undefined when authTokenUrl is not configured", async () => {
     await expect(fetchWgwAuthToken({})).resolves.toBeUndefined();
   });
