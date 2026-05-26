@@ -29,12 +29,14 @@ const COLORS = [
 
 export type LaatsteTestCollabUrls = {
   signalUrl: string;
+  collabApiBaseUrl?: string;
   documentUrl: string;
   yjsUrl: string;
   room?: string;
   authTokenUrl?: string;
   authUser?: string;
   authPassword?: string;
+  documentSaveMethod?: "POST" | "PUT";
 };
 
 export const DEFAULT_LAATSTE_TEST_COLLAB_URLS: LaatsteTestCollabUrls = {
@@ -60,14 +62,30 @@ function isYDocEmpty(doc: Y.Doc): boolean {
   return doc.getXmlFragment("default").length === 0;
 }
 
-async function loadMarkdown(documentUrl: string): Promise<string> {
-  const res = await fetch(documentUrl);
+function withBearerAuth(
+  headers: Record<string, string>,
+  authToken?: string,
+): Record<string, string> {
+  if (authToken) headers.Authorization = `Bearer ${authToken}`;
+  return headers;
+}
+
+async function loadMarkdown(documentUrl: string, authToken?: string): Promise<string> {
+  const res = await fetch(documentUrl, {
+    headers: withBearerAuth({}, authToken),
+  });
   if (!res.ok) throw new Error(`Could not load document (${res.status})`);
   return res.text();
 }
 
-async function loadYjsSnapshot(yjsUrl: string, target: Y.Doc): Promise<boolean> {
-  const res = await fetch(yjsUrl);
+async function loadYjsSnapshot(
+  yjsUrl: string,
+  target: Y.Doc,
+  authToken?: string,
+): Promise<boolean> {
+  const res = await fetch(yjsUrl, {
+    headers: withBearerAuth({}, authToken),
+  });
   if (res.status === 204 || !res.ok) return false;
   const buf = new Uint8Array(await res.arrayBuffer());
   if (buf.length === 0) return false;
@@ -75,10 +93,16 @@ async function loadYjsSnapshot(yjsUrl: string, target: Y.Doc): Promise<boolean> 
   return true;
 }
 
-async function saveDocument(documentUrl: string, markdown: string, ydoc: Y.Doc): Promise<void> {
+async function saveDocument(
+  documentUrl: string,
+  markdown: string,
+  ydoc: Y.Doc,
+  authToken?: string,
+  method: "POST" | "PUT" = "POST",
+): Promise<void> {
   const res = await fetch(documentUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method,
+    headers: withBearerAuth({ "Content-Type": "application/json" }, authToken),
     body: JSON.stringify({
       markdown,
       yjs: Array.from(Y.encodeStateAsUpdate(ydoc)),
@@ -116,6 +140,7 @@ export function useLaatsteTestCollab({
   const seedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const getMarkdownRef = useRef<(() => string) | null>(null);
   const joinGenerationRef = useRef(0);
+  const authTokenRef = useRef<string | undefined>(undefined);
 
   const [session, setSession] = useState<LaatsteTestCollabSession | null>(null);
   const [joined, setJoined] = useState(false);
@@ -145,13 +170,19 @@ export function useLaatsteTestCollab({
       const ydoc = ydocRef.current;
       const getMd = getMarkdownRef.current;
       if (!ydoc || !getMd) return;
-      void saveDocument(urls.documentUrl, getMd(), ydoc)
+      void saveDocument(
+        urls.documentUrl,
+        getMd(),
+        ydoc,
+        authTokenRef.current,
+        urls.documentSaveMethod ?? "POST",
+      )
         .then(() => setDocStatus(`Saved · ${new Date().toLocaleTimeString()}`))
         .catch((err) =>
           setDocStatus(`Save failed: ${err instanceof Error ? err.message : String(err)}`),
         );
     }, SAVE_DELAY_MS);
-  }, [urls.documentUrl]);
+  }, [urls.documentSaveMethod, urls.documentUrl]);
 
   const trySeedFromFile = useCallback(() => {
     const ydoc = ydocRef.current;
@@ -228,6 +259,7 @@ export function useLaatsteTestCollab({
     void mesh?.leave();
     ydocRef.current = null;
     awarenessRef.current = null;
+    authTokenRef.current = undefined;
     seedDoneRef.current = false;
     setSession(null);
     setJoined(false);
@@ -247,14 +279,22 @@ export function useLaatsteTestCollab({
 
     teardown();
 
+    const authToken = await fetchWgwAuthToken({
+      authTokenUrl: urls.authTokenUrl,
+      authUser: urls.authUser,
+      authPassword: urls.authPassword,
+    });
+    if (generation !== joinGenerationRef.current) return;
+    authTokenRef.current = authToken;
+
     setDocStatus("Loading document…");
-    pendingMarkdownRef.current = await loadMarkdown(urls.documentUrl);
+    pendingMarkdownRef.current = await loadMarkdown(urls.documentUrl, authToken);
     if (generation !== joinGenerationRef.current) return;
     seedDoneRef.current = false;
 
     const ydoc = new Y.Doc();
     ydocRef.current = ydoc;
-    const hadSnapshot = await loadYjsSnapshot(urls.yjsUrl, ydoc);
+    const hadSnapshot = await loadYjsSnapshot(urls.yjsUrl, ydoc, authToken);
     if (generation !== joinGenerationRef.current) return;
     if (hadSnapshot) seedDoneRef.current = true;
 
@@ -286,17 +326,11 @@ export function useLaatsteTestCollab({
       },
     );
 
-    const authToken = await fetchWgwAuthToken({
-      authTokenUrl: urls.authTokenUrl,
-      authUser: urls.authUser,
-      authPassword: urls.authPassword,
-    });
-    if (generation !== joinGenerationRef.current) return;
-
     const mesh = new LaatsteTestMesh(
       urls.signalUrl,
       urls.room ?? "docs/test-together.md",
       authToken,
+      urls.collabApiBaseUrl,
     );
     meshRef.current = mesh;
     mesh.onMessage(handleMeshMessage);
@@ -327,6 +361,7 @@ export function useLaatsteTestCollab({
     refreshMeshUi,
     teardown,
     trySeedFromFile,
+    urls.collabApiBaseUrl,
     urls.documentUrl,
     urls.authPassword,
     urls.authTokenUrl,
@@ -342,22 +377,34 @@ export function useLaatsteTestCollab({
     const ydoc = ydocRef.current;
     if (getMd && ydoc) {
       try {
-        await saveDocument(urls.documentUrl, getMd(), ydoc);
+        await saveDocument(
+          urls.documentUrl,
+          getMd(),
+          ydoc,
+          authTokenRef.current,
+          urls.documentSaveMethod ?? "POST",
+        );
       } catch {
         // ignore
       }
     }
     await teardown();
-  }, [teardown, urls.documentUrl]);
+  }, [teardown, urls.documentSaveMethod, urls.documentUrl]);
 
   const saveNow = useCallback(async () => {
     const getMd = getMarkdownRef.current;
     const ydoc = ydocRef.current;
     if (!getMd || !ydoc) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    await saveDocument(urls.documentUrl, getMd(), ydoc);
+    await saveDocument(
+      urls.documentUrl,
+      getMd(),
+      ydoc,
+      authTokenRef.current,
+      urls.documentSaveMethod ?? "POST",
+    );
     setDocStatus(`Saved · ${new Date().toLocaleTimeString()}`);
-  }, [urls.documentUrl]);
+  }, [urls.documentSaveMethod, urls.documentUrl]);
 
   const onMarkdownChange = useCallback(
     (getMarkdown: () => string) => {

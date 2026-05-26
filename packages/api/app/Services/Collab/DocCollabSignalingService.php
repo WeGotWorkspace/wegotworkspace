@@ -42,11 +42,6 @@ final class DocCollabSignalingService
             $this->fail('name_required');
         }
 
-        DB::connection('wgw')->table(self::T_PEERS)
-            ->where('room', $room)
-            ->where('owner_user', $ownerMarker)
-            ->delete();
-
         $peerId = bin2hex(random_bytes(8));
         $now = time();
         $this->insertPeer($room, $peerId, $name, $ownerMarker, $now);
