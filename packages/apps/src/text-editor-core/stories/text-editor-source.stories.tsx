@@ -87,3 +87,15 @@ export const LongDocument: Story = {
     formatLabel: "HTML",
   },
 };
+
+const LONG_LINE =
+  "This is one logical line without line breaks — the gutter should still show a single line number beside it, not wrap to multiple numbers.";
+
+export const LongLine: Story = {
+  name: "Long line (no wrap)",
+  args: {
+    value: `${LONG_LINE}\nSecond line`,
+    editable: true,
+    formatLabel: "Markdown",
+  },
+};

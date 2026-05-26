@@ -12,9 +12,11 @@ export type TextEditorSourceProps = {
   className?: string;
 };
 
-function lineCount(text: string): number {
+/** Logical line count for source gutter (one number per newline in the buffer). */
+export function textEditorSourceLineCount(text: string): number {
   if (text.length === 0) return 1;
-  return text.split("\n").length;
+  const normalized = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  return normalized.split("\n").length;
 }
 
 /**
@@ -31,7 +33,7 @@ export function TextEditorSource({
 }: TextEditorSourceProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const gutterRef = useRef<HTMLDivElement>(null);
-  const lines = useMemo(() => lineCount(value), [value]);
+  const lineCount = useMemo(() => textEditorSourceLineCount(value), [value]);
 
   const syncGutterScroll = useCallback(() => {
     const textarea = textareaRef.current;
@@ -40,20 +42,16 @@ export function TextEditorSource({
     gutter.scrollTop = textarea.scrollTop;
   }, []);
 
-  const lineNumbers = useMemo(
-    () => Array.from({ length: lines }, (_, index) => String(index + 1)),
-    [lines],
+  const gutterLabels = useMemo(
+    () => Array.from({ length: lineCount }, (_, index) => String(index + 1)).join("\n"),
+    [lineCount],
   );
 
   return (
     <div className={cn("text-editor-source", className)}>
       <div className="text-editor-source__layout">
         <div ref={gutterRef} className="text-editor-source__gutter" aria-hidden>
-          {lineNumbers.map((label, index) => (
-            <div key={index} className="text-editor-source__line-number">
-              {label}
-            </div>
-          ))}
+          <pre className="text-editor-source__gutter-lines">{gutterLabels}</pre>
         </div>
         <textarea
           ref={textareaRef}
