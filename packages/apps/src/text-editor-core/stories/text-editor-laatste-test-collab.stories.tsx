@@ -48,53 +48,10 @@ type Story = StoryObj<typeof meta>;
 
 export const Collab: Story = {};
 
-export const CollabLaravelSignalParity: Story = {
-  args: {
-    urls: {
-      signalUrl: "/api/v1/collab/parity-signal",
-      documentUrl: "/laatste-test/document.php",
-      yjsUrl: "/laatste-test/document.php?format=yjs",
-      room: "docs/parity-audit-room.md",
-    },
-  },
-  parameters: {
-    docs: {
-      description: {
-        story:
-          "Step 2.1 bridge: keeps the same editor + Yjs + document.php stack, but routes signaling " +
-          "through Laravel `/api/v1/collab/parity-signal` using the legacy `action` protocol.",
-      },
-    },
-  },
-};
-
-export const CollabLaravelSignalParityAuth: Story = {
-  args: {
-    urls: {
-      signalUrl: `${liveApiOrigin}/api/v1/collab/parity-signal-auth`,
-      authTokenUrl: `${liveApiOrigin}/api/v1/auth/token`,
-      authUser: devUser,
-      authPassword: devPassword,
-      documentUrl: "/laatste-test/document.php",
-      yjsUrl: "/laatste-test/document.php?format=yjs",
-      room: "docs/parity-auth-room.md",
-    },
-  },
-  parameters: {
-    docs: {
-      description: {
-        story:
-          "Step 2.2 auth gate: same parity `action` protocol, but endpoint requires JWT and the story " +
-          "fetches a token via `/api/v1/auth/token` using `VITE_WGW_DEV_USERNAME/PASSWORD`.",
-      },
-    },
-  },
-};
-
 export const CollabLaravelFinalApiAuth: Story = {
   args: {
     urls: {
-      signalUrl: `${liveApiOrigin}/api/v1/collab/parity-signal-auth`,
+      signalUrl: `${liveApiOrigin}/api/v1/collab/send`,
       collabApiBaseUrl: `${liveApiOrigin}/api/v1/collab`,
       authTokenUrl: `${liveApiOrigin}/api/v1/auth/token`,
       authUser: devUser,
@@ -121,7 +78,7 @@ const isolatedRoom = "/users/admin/final-collab-room-isolated.md";
 export const CollabLaravelFinalApiAuthIsolatedRoom: Story = {
   args: {
     urls: {
-      signalUrl: `${liveApiOrigin}/api/v1/collab/parity-signal-auth`,
+      signalUrl: `${liveApiOrigin}/api/v1/collab/send`,
       collabApiBaseUrl: `${liveApiOrigin}/api/v1/collab`,
       authTokenUrl: `${liveApiOrigin}/api/v1/auth/token`,
       authUser: devUser,
