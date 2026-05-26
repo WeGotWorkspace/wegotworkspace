@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import * as awarenessProtocol from "y-protocols/awareness";
 import * as syncProtocol from "y-protocols/sync";
 import * as Y from "yjs";
+import { fetchWgwAuthToken } from "@/lib/api/wgw/auth-token";
 import { applyMarkdownSeedToYDoc } from "@/text-editor-core/laatste-test-collab/laatste-test-collab-editor-surface";
 import {
   LaatsteTestMesh,
@@ -93,34 +94,6 @@ async function saveDocument(documentUrl: string, markdown: string, ydoc: Y.Doc):
     }
     throw new Error(err || res.statusText);
   }
-}
-
-async function fetchAuthToken(
-  authTokenUrl?: string,
-  authUser?: string,
-  authPassword?: string,
-): Promise<string | undefined> {
-  if (!authTokenUrl) return undefined;
-  if (!authUser || !authPassword) {
-    throw new Error("Missing auth credentials for authenticated parity story");
-  }
-
-  const res = await fetch(authTokenUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username: authUser, password: authPassword }),
-  });
-  const text = await res.text();
-  let data: { access_token?: string; error?: string } = {};
-  try {
-    data = JSON.parse(text) as { access_token?: string; error?: string };
-  } catch {
-    // ignore; handled below
-  }
-  if (!res.ok || !data.access_token) {
-    throw new Error(data.error || `Auth token request failed (${res.status})`);
-  }
-  return data.access_token;
 }
 
 export type UseLaatsteTestCollabOptions = {
@@ -313,7 +286,11 @@ export function useLaatsteTestCollab({
       },
     );
 
-    const authToken = await fetchAuthToken(urls.authTokenUrl, urls.authUser, urls.authPassword);
+    const authToken = await fetchWgwAuthToken({
+      authTokenUrl: urls.authTokenUrl,
+      authUser: urls.authUser,
+      authPassword: urls.authPassword,
+    });
     if (generation !== joinGenerationRef.current) return;
 
     const mesh = new LaatsteTestMesh(
