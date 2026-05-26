@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { createDocsAppBootstrap } from "@/lib/api/mock/docs-bootstrap";
+import { createDocsAppBootstrap, createDocsTxtBootstrap } from "@/lib/api/mock/docs-bootstrap";
 import { createMockDocsOperations } from "@/docs-core/src/docs-mock-operations";
 import { DocsWorkspace } from "@/docs-core/src/docs-workspace";
 import "@/docs-core/src/docs-workspace.css";
@@ -35,6 +35,27 @@ export const Empty: Story = {
   args: {
     ...bootstrap,
     data: { document: null },
+    onLogout: () => {},
+  },
+};
+
+const txtBootstrap = createDocsTxtBootstrap();
+
+export const PlainText: Story = {
+  name: "Plain text (.txt)",
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Plain `.txt` files use the same Docs layout as markdown; only the formatting toolbar is hidden.",
+      },
+    },
+  },
+  args: {
+    ...txtBootstrap,
+    filePath: txtBootstrap.data.document!.apiPath,
+    operations: createMockDocsOperations(),
+    onFileRenamed: () => {},
     onLogout: () => {},
   },
 };

@@ -20,4 +20,12 @@ export const Default: Story = {
     onLogout: () => {},
     onOpenDocsFile: STORY_NOOP,
   },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Mock listing includes **Project Brief.md** and **Meeting Notes.txt** (Docs editor). Double-click to trigger `onOpenDocsFile`.",
+      },
+    },
+  },
 };

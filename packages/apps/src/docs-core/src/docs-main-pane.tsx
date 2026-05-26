@@ -39,15 +39,17 @@ export function DocsMainPane({
     );
   }
 
+  const isPlainText = controller.isPlainTextDocument;
+
   return (
     <div className="docs-workspace__editor">
       <TextEditor
         key={fileKey}
-        format="markdown"
+        format={controller.editorFormat}
         content={controller.content}
         sheetFill
         viewSource={viewSource}
-        formatBar={{ groups: TEXT_EDITOR_FORMAT_BAR_FULL, showPrint: false }}
+        formatBar={isPlainText ? false : { groups: TEXT_EDITOR_FORMAT_BAR_FULL, showPrint: false }}
         onUpdate={({ content }) => controller.onContentChange(content)}
         onEditorReady={onEditorReady}
       />

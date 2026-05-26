@@ -61,8 +61,8 @@ export type CreateTextEditorExtensionsOptions = {
 export function createTextEditorExtensions(
   options: CreateTextEditorExtensionsOptions = {},
 ): Extensions {
-  const placeholder = options.placeholder ?? "Press '/' for commands…";
   const format = options.format ?? "html";
+  const placeholder = options.placeholder ?? "Press '/' for commands…";
 
   const extensions: Extensions = [
     StarterKit,
@@ -83,7 +83,7 @@ export function createTextEditorExtensions(
     SuggestionMark,
   ];
 
-  if (format === "markdown") {
+  if (format === "markdown" || format === "text") {
     extensions.push(
       Markdown.configure({
         html: true,
