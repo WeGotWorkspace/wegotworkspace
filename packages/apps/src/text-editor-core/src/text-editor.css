@@ -882,11 +882,11 @@
   user-select: none;
 }
 
-.text-editor-source__line-number {
-  display: block;
-  height: 1.55em;
-  min-height: 1.55em;
-  line-height: var(--text-editor-source-line-height, 1.55);
+.text-editor-source__gutter-lines {
+  margin: 0;
+  font: inherit;
+  line-height: inherit;
+  white-space: pre;
 }
 
 .text-editor-source__input {
@@ -905,6 +905,10 @@
   font-size: var(--text-editor-source-font-size, 0.875rem);
   line-height: var(--text-editor-source-line-height, 1.55);
   color: var(--foreground);
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+  overflow-x: auto;
   tab-size: 2;
   appearance: none;
 }
