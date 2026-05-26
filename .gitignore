@@ -42,3 +42,4 @@ node_modules/
 wgw-content/
 .DS_Store
 .playwright-mcp/
+.env.local

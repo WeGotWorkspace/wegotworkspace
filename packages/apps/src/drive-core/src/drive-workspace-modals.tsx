@@ -1,5 +1,6 @@
 import { Button } from "@/button/src/button";
 import { Input } from "@/ui/input";
+import { RenameFilenameField } from "@/dialogs/src/rename-filename-field";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +30,7 @@ type DriveWorkspaceModalsProps = {
 
 export function DriveWorkspaceModals({ controller }: DriveWorkspaceModalsProps) {
   const {
+    labels,
     newFolderDialogOpen,
     setNewFolderDialogOpen,
     newFolderName,
@@ -39,6 +41,7 @@ export function DriveWorkspaceModals({ controller }: DriveWorkspaceModalsProps) 
     renameName,
     setRenameName,
     submitRenameItem,
+    fileById,
     confirmDelete,
     setConfirmDelete,
     reallyDelete,
@@ -48,12 +51,15 @@ export function DriveWorkspaceModals({ controller }: DriveWorkspaceModalsProps) 
     files,
     sidebarGroupPaths,
     commitMoveToFolder,
-    fileById,
     view,
     operations,
     currentUsername,
     groupRootNames,
   } = controller;
+
+  const renameTarget = renameDialog ? fileById(renameDialog.id) : null;
+  const renameExtension = renameDialog?.extension || undefined;
+  const canSubmitRename = renameName.trim().length > 0;
 
   return (
     <>
@@ -97,20 +103,20 @@ export function DriveWorkspaceModals({ controller }: DriveWorkspaceModalsProps) 
       >
         <DialogContent className="drive-dialog-surface">
           <DialogHeader>
-            <DialogTitle>Rename item</DialogTitle>
-            <DialogDescription>Enter a new name for this file or folder.</DialogDescription>
+            <DialogTitle>{labels.renameDialogTitle}</DialogTitle>
+            <DialogDescription>
+              {renameTarget?.kind === "folder"
+                ? labels.renameDialogDescriptionFolder
+                : labels.renameDialogDescription}
+            </DialogDescription>
           </DialogHeader>
-          <Input
+          <RenameFilenameField
             autoFocus
             placeholder="Name"
-            value={renameName}
-            onChange={(event) => setRenameName(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                submitRenameItem();
-              }
-            }}
+            baseName={renameName}
+            extension={renameExtension}
+            onBaseNameChange={setRenameName}
+            onEnter={submitRenameItem}
           />
           <DialogFooter>
             <Button
@@ -120,10 +126,10 @@ export function DriveWorkspaceModals({ controller }: DriveWorkspaceModalsProps) 
                 setRenameName("");
               }}
             >
-              Cancel
+              {labels.cancel}
             </Button>
-            <Button variant="primary" onClick={submitRenameItem} disabled={!renameName.trim()}>
-              Rename
+            <Button variant="primary" onClick={submitRenameItem} disabled={!canSubmitRename}>
+              {labels.renameAction}
             </Button>
           </DialogFooter>
         </DialogContent>

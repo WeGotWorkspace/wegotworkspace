@@ -8,10 +8,16 @@ type DocsController = ReturnType<typeof useDocsController>;
 export type DocsMainPaneProps = {
   controller: DocsController;
   fileKey: string;
+  viewSource: boolean;
   onEditorReady: (editor: Editor | null) => void;
 };
 
-export function DocsMainPane({ controller, fileKey, onEditorReady }: DocsMainPaneProps) {
+export function DocsMainPane({
+  controller,
+  fileKey,
+  viewSource,
+  onEditorReady,
+}: DocsMainPaneProps) {
   if (controller.loading) {
     return <p className="docs-workspace__loading">Loading…</p>;
   }
@@ -33,14 +39,17 @@ export function DocsMainPane({ controller, fileKey, onEditorReady }: DocsMainPan
     );
   }
 
+  const isPlainText = controller.isPlainTextDocument;
+
   return (
     <div className="docs-workspace__editor">
       <TextEditor
         key={fileKey}
-        format="markdown"
+        format={controller.editorFormat}
         content={controller.content}
         sheetFill
-        formatBar={{ groups: TEXT_EDITOR_FORMAT_BAR_FULL, showPrint: false }}
+        viewSource={viewSource}
+        formatBar={isPlainText ? false : { groups: TEXT_EDITOR_FORMAT_BAR_FULL, showPrint: false }}
         onUpdate={({ content }) => controller.onContentChange(content)}
         onEditorReady={onEditorReady}
       />

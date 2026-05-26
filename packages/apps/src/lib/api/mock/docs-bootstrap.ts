@@ -1,4 +1,4 @@
-import { DOCS_DEMO_MARKDOWN } from "@/docs-core/src/docs-demo-content";
+import { DOCS_DEMO_MARKDOWN, DOCS_DEMO_TEXT } from "@/docs-core/src/docs-demo-content";
 import type { DocsAppBootstrap } from "@/docs-core/src/docs-types";
 import { mockWorkspaceSession } from "./workspace-session-mock";
 
@@ -13,4 +13,17 @@ export function createDocsAppBootstrap(overrides?: Partial<DocsAppBootstrap>): D
       },
     },
   };
+}
+
+export function createDocsTxtBootstrap(overrides?: Partial<DocsAppBootstrap>): DocsAppBootstrap {
+  return createDocsAppBootstrap({
+    ...overrides,
+    data: {
+      document: {
+        apiPath: "/users/demo/meeting-notes.txt",
+        fileName: "meeting-notes.txt",
+        content: DOCS_DEMO_TEXT,
+      },
+    },
+  });
 }

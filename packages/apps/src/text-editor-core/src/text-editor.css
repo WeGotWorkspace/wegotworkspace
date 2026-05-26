@@ -660,28 +660,98 @@
 }
 
 @media print {
+  @page {
+    margin: 1in;
+  }
+
+  html.text-editor-print-active,
+  body.text-editor-print-active {
+    height: auto !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
   body.text-editor-print-active * {
     visibility: hidden;
   }
 
-  body.text-editor-print-active .text-editor-sheet__surface,
-  body.text-editor-print-active .text-editor-sheet__surface * {
+  body.text-editor-print-active .text-editor-sheet__surface--print,
+  body.text-editor-print-active .text-editor-sheet__surface--print * {
     visibility: visible;
   }
 
-  body.text-editor-print-active .text-editor-sheet__surface {
-    position: absolute;
-    inset: 0;
+  /* Chrome/safari: hidden ancestors still reserve padding — drop chrome from the layout */
+  body.text-editor-print-active
+    :is(
+      .app-sidebar,
+      .workspace-app-layout__main-header,
+      .view-header,
+      .action-bar,
+      .docs-workspace__stats-footer
+    ) {
+    display: none !important;
+  }
+
+  /* Let long documents paginate — avoid viewport-height clipping from flex/scroll shells */
+  body.text-editor-print-active
+    :is(
+      .workspace-columns,
+      .workspace-detail-pane,
+      .workspace-detail-pane__scroll,
+      .workspace-app-layout__main,
+      .workspace-app-layout__main-scroll,
+      .workspace-app-layout__main-content,
+      .docs-workspace__editor,
+      .text-editor,
+      .text-editor__body,
+      .text-editor__formatted,
+      .text-editor-sheet,
+      .text-editor-sheet--fill
+    ) {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    flex: none !important;
+    position: static !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+  }
+
+  body.text-editor-print-active .text-editor-sheet__surface--print {
+    position: static;
+    display: block !important;
     width: 100%;
     max-width: none;
-    margin: 0;
-    padding: 1in;
+    margin: 0 !important;
+    padding: 0 !important;
     box-shadow: none;
     border-radius: 0;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    flex: none !important;
+  }
+
+  body.text-editor-print-active .text-editor-sheet__surface--print .ProseMirror {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    flex: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  body.text-editor-print-active
+    :is(.text-editor__source, .text-editor-source, .text-editor-format-bar, .no-print) {
+    display: none !important;
   }
 
   .text-editor-sheet__surface {
-    padding: 1in;
     box-shadow: none;
     border-radius: 0;
   }
@@ -723,4 +793,181 @@
 
 .text-editor-format-bar-story__body .ProseMirror {
   min-height: 6rem;
+}
+
+/* Source view: split on wide landscape; source-only on narrow or portrait */
+.text-editor--view-source .text-editor__body {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.text-editor--view-source .text-editor__formatted {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.text-editor--view-source .text-editor__source {
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+  border-top: 1px solid var(--border);
+}
+
+/* Split view: white flat WYSIWYG pane (no letter sheet / shadow) */
+.text-editor--view-source .text-editor__formatted .text-editor-sheet--fill {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  align-items: stretch;
+  padding-block: 1rem;
+  padding-inline: 1.25rem;
+  background-color: var(--text-editor-sheet, oklch(1 0 0));
+}
+
+.text-editor--view-source
+  .text-editor__formatted
+  .text-editor-sheet--fill
+  .text-editor-sheet__surface {
+  display: block;
+  flex: none;
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  height: auto;
+  margin: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.text-editor-source {
+  --text-editor-source-font-size: 0.875rem;
+  --text-editor-source-line-height: 1.55;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--text-editor-sheet, oklch(1 0 0));
+}
+
+.text-editor-source__layout {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.text-editor-source__gutter {
+  flex: 0 0 auto;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+  padding: 0.75rem 0.625rem 0.75rem 0.75rem;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--text-editor-source-font-size, 0.875rem);
+  line-height: var(--text-editor-source-line-height, 1.55);
+  color: var(--muted-foreground);
+  text-align: left;
+  user-select: none;
+}
+
+.text-editor-source__gutter-line {
+  display: block;
+  box-sizing: border-box;
+  line-height: var(--text-editor-source-line-height, 1.55);
+}
+
+.text-editor-source__input-wrap {
+  position: relative;
+  flex: 1 1 0;
+  width: 0;
+  min-width: 0;
+  min-height: 0;
+  align-self: stretch;
+}
+
+.text-editor-source__input {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  resize: none;
+  border: 0;
+  background: transparent;
+  padding: 0.75rem 1rem;
+  margin: 0;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--text-editor-source-font-size, 0.875rem);
+  line-height: var(--text-editor-source-line-height, 1.55);
+  color: var(--foreground);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  overflow-x: hidden;
+  overflow-y: auto;
+  tab-size: 2;
+  appearance: none;
+}
+
+.text-editor-source__mirror {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+  box-sizing: border-box;
+  padding: 0.75rem 1rem;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--text-editor-source-font-size, 0.875rem);
+  line-height: var(--text-editor-source-line-height, 1.55);
+}
+
+.text-editor-source__mirror-line {
+  display: block;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.text-editor-source__input:focus {
+  outline: none;
+}
+
+.text-editor-source__input:read-only {
+  cursor: default;
+  opacity: 0.85;
+}
+
+@media (min-width: 48rem) and (orientation: landscape) {
+  .text-editor--view-source .text-editor__body {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .text-editor--view-source .text-editor__source {
+    border-top: 0;
+    border-right: 1px solid var(--border);
+  }
+}
+
+@media (max-width: 47.99rem), (orientation: portrait) {
+  .text-editor--view-source .text-editor__formatted {
+    display: none;
+  }
+
+  .text-editor--view-source .text-editor__source {
+    border-top: 0;
+  }
 }

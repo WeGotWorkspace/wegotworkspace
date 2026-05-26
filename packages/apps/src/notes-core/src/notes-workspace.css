@@ -10,6 +10,7 @@
   --workspace-accent: var(--notes-accent);
   --color-emerald: var(--notes-accent);
   --workspace-root-bg: var(--color-cream, #ffffff);
+  --workspace-detail-bg: var(--color-cream, #ffffff);
   --app-sidebar-bg: var(--notes-sidebar);
   --app-sidebar-border-color: color-mix(in oklab, var(--color-ink) 12%, transparent);
   --app-sidebar-color: var(--color-ink);

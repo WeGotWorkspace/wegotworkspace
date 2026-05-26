@@ -39,6 +39,7 @@ import {
   formatBytesCompact,
   suggestNewMarkdownFileName,
 } from "@/drive-core/src/drive-file-utils";
+import { joinFileNameForRename, splitFileNameForRename } from "@/lib/files/filename-rename";
 
 export type UseDriveControllerArgs = {
   data: DriveUIData;
@@ -106,7 +107,7 @@ export function useDriveController({
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [newFolderDialogOpen, setNewFolderDialogOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
-  const [renameDialog, setRenameDialog] = useState<null | { id: string }>(null);
+  const [renameDialog, setRenameDialog] = useState<null | { id: string; extension: string }>(null);
   const [renameName, setRenameName] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<null | { ids: string[]; permanent: boolean }>(
     null,
@@ -696,8 +697,13 @@ export function useDriveController({
     setConfirmDelete({ ids: [file.id], permanent: isUnderTrash(file.parent) });
   };
   const requestRenameItem = (file: DriveFile) => {
-    setRenameDialog({ id: file.id });
-    setRenameName(file.title);
+    const isFolder = file.kind === "folder";
+    const { baseName, extension, hasExtension } = splitFileNameForRename(file.title);
+    setRenameDialog({
+      id: file.id,
+      extension: isFolder || !hasExtension ? "" : extension,
+    });
+    setRenameName(isFolder ? file.title : baseName);
   };
   const openMoveDialog = useCallback((ids: string[]) => {
     if (ids.length === 0) return;
@@ -712,7 +718,10 @@ export function useDriveController({
       setRenameDialog(null);
       return;
     }
-    const nextName = renameName.trim();
+    const lockedExtension = renameDialog.extension;
+    const nextName = lockedExtension
+      ? joinFileNameForRename(renameName, lockedExtension)
+      : renameName.trim();
     if (!nextName || nextName === file.title) {
       setRenameDialog(null);
       return;

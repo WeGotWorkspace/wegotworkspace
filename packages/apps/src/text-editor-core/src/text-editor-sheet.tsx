@@ -11,6 +11,8 @@ export type TextEditorSheetProps = {
   variant?: TextEditorSheetVariant;
   /** Grow the sheet to fill a flex parent (e.g. mail compose). Shadow and radius stay on the surface. */
   fill?: boolean;
+  /** Slash command menu (off for plain `.txt` mode). */
+  slashMenu?: boolean;
   className?: string;
 };
 
@@ -21,6 +23,7 @@ export function TextEditorSheet({
   editor,
   variant = "sheet",
   fill = false,
+  slashMenu = true,
   className,
 }: TextEditorSheetProps) {
   return (
@@ -36,7 +39,7 @@ export function TextEditorSheet({
         editor={editor}
         className={variant === "sheet" ? "text-editor-sheet__surface" : undefined}
       />
-      <TextEditorSlashMenu editor={editor} />
+      {slashMenu ? <TextEditorSlashMenu editor={editor} /> : null}
       <TextEditorTableControls editor={editor} />
     </div>
   );

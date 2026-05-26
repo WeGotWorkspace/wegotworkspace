@@ -1,11 +1,26 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { DRIVE_DOCS_EDITOR_STORY_FILES } from "@/drive-core/src/drive-docs-story-files";
 import { DriveMainPane } from "@/drive-core/src/drive-main-pane";
+import { getDriveStoryFilesInMyDrive } from "@/drive-core/stories/drive-pane-stories.fixtures";
 import { useDrivePaneStoryController } from "@/drive-core/stories/drive-pane-stories.harness";
 import { DriveStoryScope } from "@/drive-core/stories/drive-story-scope";
 
-function DriveMainPaneHarness({ preset = "default" }: { preset?: "default" | "empty" }) {
+function DriveMainPaneHarness({
+  preset = "default",
+}: {
+  preset?: "default" | "empty" | "docsEditor";
+}) {
   const controller = useDrivePaneStoryController(
-    preset === "empty" ? { filesOverride: [] } : undefined,
+    preset === "empty"
+      ? { filesOverride: [] }
+      : preset === "docsEditor"
+        ? {
+            filesOverride: [
+              ...getDriveStoryFilesInMyDrive().filter((file) => file.kind === "folder"),
+              ...DRIVE_DOCS_EDITOR_STORY_FILES,
+            ],
+          }
+        : undefined,
   );
 
   return (
@@ -24,7 +39,7 @@ const meta = {
   argTypes: {
     preset: {
       control: "select",
-      options: ["default", "empty"],
+      options: ["default", "empty", "docsEditor"],
     },
   },
 } satisfies Meta<typeof DriveMainPaneHarness>;
@@ -38,4 +53,9 @@ export const Default: Story = {
 
 export const Empty: Story = {
   args: { preset: "empty" },
+};
+
+export const DocsEditorFiles: Story = {
+  name: "Docs editor files (.md + .txt)",
+  args: { preset: "docsEditor" },
 };

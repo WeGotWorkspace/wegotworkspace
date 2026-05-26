@@ -80,6 +80,17 @@
   @apply flex shrink-0 flex-wrap items-center justify-end gap-1.5;
 }
 
+.docs-workspace__header-actions .button.docs-workspace__source-toggle--active {
+  color: var(--docs-accent);
+  background-color: color-mix(in oklab, var(--docs-accent) 16%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--docs-accent) 28%, transparent);
+}
+
+.docs-workspace__header-actions .button.docs-workspace__source-toggle--active:hover:not(:disabled) {
+  color: var(--docs-accent);
+  background-color: color-mix(in oklab, var(--docs-accent) 24%, transparent);
+}
+
 .docs-workspace__stats-footer {
   @apply flex shrink-0 flex-wrap items-center justify-start gap-1.5;
   box-sizing: border-box;
@@ -177,7 +188,7 @@
   stroke: currentColor;
 }
 
-.docs-workspace__editor .text-editor-sheet--fill {
+.docs-workspace__editor .text-editor:not(.text-editor--view-source) .text-editor-sheet--fill {
   flex: 1;
   min-height: 0;
   align-items: flex-start;
@@ -187,7 +198,10 @@
   background-color: var(--docs-canvas);
 }
 
-.docs-workspace__editor .text-editor-sheet--fill .text-editor-sheet__surface {
+.docs-workspace__editor
+  .text-editor:not(.text-editor--view-source)
+  .text-editor-sheet--fill
+  .text-editor-sheet__surface {
   display: block;
   flex: none;
   width: min(100%, var(--docs-sheet-width));
@@ -198,9 +212,41 @@
   margin-block: 0;
 }
 
-.docs-workspace__editor .text-editor-sheet--fill .text-editor-sheet__surface .ProseMirror {
+.docs-workspace__editor
+  .text-editor:not(.text-editor--view-source)
+  .text-editor-sheet--fill
+  .text-editor-sheet__surface
+  .ProseMirror {
   min-height: 0;
   height: auto;
+}
+
+.docs-workspace__editor .text-editor--view-source .text-editor__source {
+  background-color: var(--docs-surface);
+}
+
+.docs-workspace__editor .text-editor--view-source .text-editor__formatted .text-editor-sheet--fill {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  background-color: var(--docs-surface);
+}
+
+.docs-workspace__editor
+  .text-editor--view-source
+  .text-editor__formatted
+  .text-editor-sheet--fill
+  .text-editor-sheet__surface {
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  margin: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.docs-workspace__editor .text-editor--view-source .text-editor__formatted .text-editor-format-bar {
+  flex-shrink: 0;
 }
 
 .docs-workspace__empty,
