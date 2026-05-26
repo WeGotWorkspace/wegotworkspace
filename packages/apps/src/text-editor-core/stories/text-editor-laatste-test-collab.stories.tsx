@@ -6,6 +6,8 @@ import "@/text-editor-core/src/text-editor.css";
 const devUser = (import.meta.env.VITE_WGW_DEV_USERNAME as string | undefined) ?? "admin";
 const devPassword =
   (import.meta.env.VITE_WGW_DEV_PASSWORD as string | undefined) ?? "storybook-dev";
+const finalCollabRoom = "/users/admin/final-collab-room.md";
+const finalDocumentBase = "https://wegotworkspace.local/api/v1/collab/document";
 
 const storyDescription = `
 Anonymous collaborative markdown editing using the **laatste-test** prototype stack:
@@ -81,6 +83,58 @@ export const CollabLaravelSignalParityAuth: Story = {
         story:
           "Step 2.2 auth gate: same parity `action` protocol, but endpoint requires JWT and the story " +
           "fetches a token via `/api/v1/auth/token` using `VITE_WGW_DEV_USERNAME/PASSWORD`.",
+      },
+    },
+  },
+};
+
+export const CollabLaravelFinalApiAuth: Story = {
+  args: {
+    urls: {
+      signalUrl: "https://wegotworkspace.local/api/v1/collab/parity-signal-auth",
+      collabApiBaseUrl: "https://wegotworkspace.local/api/v1/collab",
+      authTokenUrl: "https://wegotworkspace.local/api/v1/auth/token",
+      authUser: devUser,
+      authPassword: devPassword,
+      documentUrl: `${finalDocumentBase}?room=${encodeURIComponent(finalCollabRoom)}`,
+      yjsUrl: `${finalDocumentBase}?room=${encodeURIComponent(finalCollabRoom)}&format=yjs`,
+      documentSaveMethod: "PUT",
+      room: finalCollabRoom,
+    },
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Steps 2.5+2.6 cutover: signaling uses final `/collab/join|poll|send|leave` endpoints " +
+          "and document persistence uses `/collab/document` (GET/PUT) with JWT auth.",
+      },
+    },
+  },
+};
+
+const isolatedRoom = "/users/admin/final-collab-room-isolated.md";
+
+export const CollabLaravelFinalApiAuthIsolatedRoom: Story = {
+  args: {
+    urls: {
+      signalUrl: "https://wegotworkspace.local/api/v1/collab/parity-signal-auth",
+      collabApiBaseUrl: "https://wegotworkspace.local/api/v1/collab",
+      authTokenUrl: "https://wegotworkspace.local/api/v1/auth/token",
+      authUser: devUser,
+      authPassword: devPassword,
+      documentUrl: `${finalDocumentBase}?room=${encodeURIComponent(isolatedRoom)}`,
+      yjsUrl: `${finalDocumentBase}?room=${encodeURIComponent(isolatedRoom)}&format=yjs`,
+      documentSaveMethod: "PUT",
+      room: isolatedRoom,
+    },
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Step 2.4 room isolation audit: this story uses the final APIs with a different room. " +
+          "Tabs opened on this story should sync with each other but stay isolated from `final-collab-room.md`.",
       },
     },
   },

@@ -149,7 +149,7 @@ final class CollabEndpointsTest extends TestCase
         $afterLeave->assertJsonPath('peers', []);
     }
 
-    public function test_rejoin_same_user_evicts_previous_peer(): void
+    public function test_same_user_can_join_multiple_peers_in_same_room(): void
     {
         $token = $this->issueToken('alice');
 
@@ -176,7 +176,7 @@ final class CollabEndpointsTest extends TestCase
                 'peerId' => $firstPeerId,
                 'since' => 0,
             ])
-            ->assertNotFound();
+            ->assertOk();
     }
 
     public function test_legacy_parity_signal_actions_work(): void
