@@ -16,7 +16,7 @@ export function inferFileKindFromName(name: string): FileKind {
   if (/\.(mp4|mov|m4v|mkv|webm|avi)$/i.test(lower)) return "video";
   if (/\.(mp3|wav|ogg|flac|m4a|aac)$/i.test(lower)) return "audio";
   if (/\.(zip|tar|gz|bz2|xz|rar|7z)$/i.test(lower)) return "archive";
-  if (/\.(pdf|docx?|xlsx?|pptx?|txt|rtf|md)$/i.test(lower)) return "doc";
+  if (/\.(pdf|docx?|xlsx?|pptx?|txt|rtf|md|markdown)$/i.test(lower)) return "doc";
   return "file";
 }
 

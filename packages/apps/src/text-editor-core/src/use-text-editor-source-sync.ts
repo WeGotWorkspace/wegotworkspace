@@ -53,7 +53,7 @@ export function useTextEditorSourceSync({
       if (!editor) return;
 
       applyingFromSourceRef.current = true;
-      setTextEditorContent(editor, value);
+      setTextEditorContent(editor, value, format);
       applyingFromSourceRef.current = false;
       onUpdate?.({ editor, content: value });
     },

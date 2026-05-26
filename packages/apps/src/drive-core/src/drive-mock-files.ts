@@ -1,4 +1,5 @@
 import type { DriveFile } from "@/drive-core/src/drive-models";
+import { DRIVE_DOCS_EDITOR_STORY_FILES } from "@/drive-core/src/drive-docs-story-files";
 
 export const DRIVE_MOCK_FILES: DriveFile[] = [
   {
@@ -43,6 +44,7 @@ export const DRIVE_MOCK_FILES: DriveFile[] = [
     kind: "doc",
     size: "240 KB",
   },
+  ...DRIVE_DOCS_EDITOR_STORY_FILES,
   {
     id: "f2",
     notebook: "Image · 4.2 MB",

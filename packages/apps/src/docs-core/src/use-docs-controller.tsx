@@ -5,7 +5,9 @@ import { parentAndName } from "@/lib/api/wgw/drive";
 import { markdownToPlainText } from "@/lib/models/note-body-markdown";
 import { mergeDocsLabels, type DocsUILabels } from "@/docs-core/src/docs-labels";
 import type { DocsAPIOperations, DocsDocument } from "@/docs-core/src/docs-types";
+import { docsEditorFormatFromFileName } from "@/docs-core/src/docs-editor-format";
 import { joinFileNameForRename, splitFileNameForRename } from "@/lib/files/filename-rename";
+import type { TextEditorContentFormat } from "@/text-editor-core/src/text-editor-content";
 
 type UseDocsControllerArgs = {
   filePath: string | null;
@@ -185,6 +187,8 @@ export function useDocsController({
   );
 
   const title = document?.fileName ?? (filePath ? fileNameFromApiPath(filePath) : "");
+  const editorFormat: TextEditorContentFormat = docsEditorFormatFromFileName(title);
+  const isPlainTextDocument = editorFormat === "text";
 
   const openRenameDialog = useCallback(() => {
     const { baseName, extension, hasExtension } = splitFileNameForRename(title);
@@ -244,16 +248,18 @@ export function useDocsController({
   ]);
 
   const { wordCount, characterCount } = useMemo(() => {
-    const plain = markdownToPlainText(content);
+    const plain = isPlainTextDocument ? content : markdownToPlainText(content);
     return {
       wordCount: plain ? plain.split(/\s+/).filter(Boolean).length : 0,
       characterCount: plain.length,
     };
-  }, [content]);
+  }, [content, isPlainTextDocument]);
 
   return {
     labels: L,
     title,
+    editorFormat,
+    isPlainTextDocument,
     content,
     wordCount,
     characterCount,

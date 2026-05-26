@@ -1,6 +1,10 @@
 import type { Editor } from "@tiptap/react";
+import {
+  plainTextFromEditor,
+  plainTextToTiptapContent,
+} from "@/text-editor-core/src/text-editor-plain-content";
 
-export const TEXT_EDITOR_CONTENT_FORMATS = ["html", "markdown"] as const;
+export const TEXT_EDITOR_CONTENT_FORMATS = ["html", "markdown", "text"] as const;
 export type TextEditorContentFormat = (typeof TEXT_EDITOR_CONTENT_FORMATS)[number];
 
 type TextEditorMarkdownStorage = {
@@ -11,6 +15,9 @@ type TextEditorMarkdownStorage = {
 
 /** Read editor document in the configured serialization format. */
 export function getTextEditorContent(editor: Editor, format: TextEditorContentFormat): string {
+  if (format === "text") {
+    return plainTextFromEditor(editor);
+  }
   if (format === "markdown") {
     const markdown = (editor.storage as TextEditorMarkdownStorage).markdown?.getMarkdown();
     if (markdown != null) return markdown;
@@ -18,7 +25,23 @@ export function getTextEditorContent(editor: Editor, format: TextEditorContentFo
   return editor.getHTML();
 }
 
-/** Replace the full document from HTML or Markdown. */
-export function setTextEditorContent(editor: Editor, content: string): void {
+/** Replace the full document from HTML, Markdown, or plain text. */
+export function setTextEditorContent(
+  editor: Editor,
+  content: string,
+  format: TextEditorContentFormat = "html",
+): void {
+  if (format === "text") {
+    editor.commands.setContent(plainTextToTiptapContent(content), { emitUpdate: false });
+    return;
+  }
   editor.commands.setContent(content, { emitUpdate: false });
+}
+
+/** Initial `useEditor` content for the configured format. */
+export function initialTextEditorContent(content: string, format: TextEditorContentFormat) {
+  if (format === "text") {
+    return plainTextToTiptapContent(content);
+  }
+  return content;
 }
