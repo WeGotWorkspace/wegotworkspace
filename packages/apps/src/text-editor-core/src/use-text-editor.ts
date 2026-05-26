@@ -1,6 +1,7 @@
 import { useEditor, type Editor, type UseEditorOptions } from "@tiptap/react";
 import {
   getTextEditorContent,
+  initialTextEditorContent,
   type TextEditorContentFormat,
 } from "@/text-editor-core/src/text-editor-content";
 import {
@@ -32,7 +33,7 @@ export function useTextEditor(options: UseTextEditorOptions = {}) {
   return useEditor(
     {
       extensions: createTextEditorExtensions(extensionOptions),
-      content,
+      content: initialTextEditorContent(content, format),
       editable,
       autofocus,
       editorProps: {

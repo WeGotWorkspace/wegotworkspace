@@ -59,6 +59,12 @@ Welcome to the text editor. Type \`/\` on a new line for the block menu, or sele
 | Q2      | $148k   | Ahead    |
 `.trim();
 
-export function textEditorDemoContent(format: "html" | "markdown"): string {
+const TEXT_EDITOR_DEMO_TEXT = `Plain text document
+
+Same editor chrome as markdown — only the formatting toolbar is hidden.
+Saved as plain text on disk.`;
+
+export function textEditorDemoContent(format: "html" | "markdown" | "text"): string {
+  if (format === "text") return TEXT_EDITOR_DEMO_TEXT;
   return format === "markdown" ? TEXT_EDITOR_DEMO_MARKDOWN : TEXT_EDITOR_DEMO_HTML;
 }

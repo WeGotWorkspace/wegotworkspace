@@ -26,10 +26,16 @@ export {
 export {
   TEXT_EDITOR_CONTENT_FORMATS,
   getTextEditorContent,
+  initialTextEditorContent,
   setTextEditorContent,
   type TextEditorContentFormat,
 } from "@/text-editor-core/src/text-editor-content";
 export { useTextEditor, type UseTextEditorOptions } from "@/text-editor-core/src/use-text-editor";
+export {
+  TextEditorSource,
+  type TextEditorSourceProps,
+} from "@/text-editor-core/src/text-editor-source";
+export { useTextEditorSourceSync } from "@/text-editor-core/src/use-text-editor-source-sync";
 export {
   TEXT_EDITOR_DEMO_HTML,
   TEXT_EDITOR_DEMO_MARKDOWN,
