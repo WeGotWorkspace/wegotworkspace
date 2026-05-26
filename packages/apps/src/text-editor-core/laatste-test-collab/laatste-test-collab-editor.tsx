@@ -25,11 +25,14 @@ export type LaatsteTestCollabEditorProps = {
   ydoc: Y.Doc;
   awareness: Awareness;
   user: { name: string; color: string };
+  format?: TextEditorContentFormat;
   formatBar?: boolean | TextEditorFormatBarConfig;
   sheetFill?: boolean;
   viewSource?: boolean;
   className?: string;
+  /** @deprecated Prefer `onContentChange`; kept for compatibility paths. */
   onMarkdownChange?: (getMarkdown: () => string) => void;
+  onContentChange?: (getContent: () => string) => void;
   onEditorReady?: (editor: Editor | null) => void;
 };
 
@@ -37,15 +40,18 @@ export function LaatsteTestCollabEditor({
   ydoc,
   awareness,
   user,
+  format = "markdown",
   formatBar = true,
   sheetFill = false,
   viewSource = false,
   className,
   onMarkdownChange,
+  onContentChange,
   onEditorReady,
 }: LaatsteTestCollabEditorProps) {
-  const onMarkdownChangeRef = useRef(onMarkdownChange);
-  onMarkdownChangeRef.current = onMarkdownChange;
+  const effectiveOnContentChange = onContentChange ?? onMarkdownChange;
+  const onContentChangeRef = useRef(effectiveOnContentChange);
+  onContentChangeRef.current = effectiveOnContentChange;
 
   const editor = useEditor(
     {
@@ -54,7 +60,7 @@ export function LaatsteTestCollabEditor({
       autofocus: "end",
       immediatelyRender: false,
       extensions: createCollaborativeTextEditorExtensions({
-        format: "markdown",
+        format,
         placeholder: "Press '/' for commands…",
         document: ydoc,
         awareness,
@@ -65,24 +71,22 @@ export function LaatsteTestCollabEditor({
       },
       onUpdate: ({ transaction, editor: ed }) => {
         if (isChangeOrigin(transaction)) return;
-        onMarkdownChangeRef.current?.(() => getTextEditorContent(ed, "markdown"));
+        onContentChangeRef.current?.(() => getTextEditorContent(ed, format));
       },
       onSelectionUpdate: ({ editor: ed }) => {
         ed.commands.updateUser(user);
       },
     },
-    [ydoc, awareness, user.color, user.name],
+    [ydoc, awareness, format, user.color, user.name],
   );
-
-  const format: TextEditorContentFormat = "markdown";
 
   const { sourceValue, onSourceChange, onSourceFocus, onSourceBlur } = useTextEditorSourceSync({
     editor,
     format,
     viewSource,
-    onUpdate: onMarkdownChange
+    onUpdate: onContentChange
       ? ({ content }) => {
-          onMarkdownChange(() => content);
+          onContentChange(() => content);
         }
       : undefined,
   });
@@ -117,10 +121,12 @@ export function LaatsteTestCollabEditor({
       editor={editor}
       variant="sheet"
       fill={sheetFill}
-      slashMenu
+      slashMenu={format !== "text"}
       className="min-h-0 flex-1"
     />
   );
+
+  const formatLabel = format === "markdown" ? "Markdown" : format === "text" ? "Text" : "HTML";
 
   return (
     <div
@@ -139,7 +145,7 @@ export function LaatsteTestCollabEditor({
             onFocus={onSourceFocus}
             onBlur={onSourceBlur}
             editable
-            formatLabel="Markdown"
+            formatLabel={formatLabel}
             className="text-editor__source min-h-0"
           />
           <div className="text-editor__formatted flex min-h-0 flex-1 flex-col">

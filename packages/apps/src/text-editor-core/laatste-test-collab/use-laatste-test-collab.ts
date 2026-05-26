@@ -5,7 +5,8 @@ import * as awarenessProtocol from "y-protocols/awareness";
 import * as syncProtocol from "y-protocols/sync";
 import * as Y from "yjs";
 import { fetchWgwAuthToken } from "@/lib/api/wgw/auth-token";
-import { applyMarkdownSeedToYDoc } from "@/text-editor-core/laatste-test-collab/laatste-test-collab-editor-surface";
+import { applyContentSeedToYDoc } from "@/text-editor-core/laatste-test-collab/laatste-test-collab-editor-surface";
+import type { TextEditorContentFormat } from "@/text-editor-core/src/text-editor-content";
 import {
   LaatsteTestMesh,
   type LaatsteTestMeshMessage,
@@ -61,6 +62,10 @@ function colorForName(name: string): string {
 
 function isYDocEmpty(doc: Y.Doc): boolean {
   return doc.getXmlFragment("default").length === 0;
+}
+
+function collabDocumentFormat(room: string | undefined): TextEditorContentFormat {
+  return room?.toLowerCase().endsWith(".txt") ? "text" : "markdown";
 }
 
 function withBearerAuth(
@@ -136,6 +141,7 @@ export function useLaatsteTestCollab({
   autoJoin = true,
   urls = DEFAULT_LAATSTE_TEST_COLLAB_URLS,
 }: UseLaatsteTestCollabOptions) {
+  const documentFormat = collabDocumentFormat(urls.room);
   const meshRef = useRef<LaatsteTestMesh | null>(null);
   const ydocRef = useRef<Y.Doc | null>(null);
   const awarenessRef = useRef<awarenessProtocol.Awareness | null>(null);
@@ -212,10 +218,10 @@ export function useLaatsteTestCollab({
       if (mesh.linkCount() === 0) return;
     }
 
-    applyMarkdownSeedToYDoc(ydoc, markdown);
+    applyContentSeedToYDoc(ydoc, markdown, documentFormat);
     markDocReady();
-    setDocStatus("Loaded shared document.md");
-  }, [markDocReady]);
+    setDocStatus("Loaded shared document");
+  }, [documentFormat, markDocReady]);
 
   const sendSyncStep1 = useCallback((toPeerId?: string) => {
     const ydoc = ydocRef.current;
@@ -301,7 +307,8 @@ export function useLaatsteTestCollab({
 
     const ydoc = new Y.Doc();
     ydocRef.current = ydoc;
-    const hadSnapshot = await loadYjsSnapshot(urls.yjsUrl, ydoc, authToken);
+    const hadSnapshot =
+      documentFormat === "text" ? false : await loadYjsSnapshot(urls.yjsUrl, ydoc, authToken);
     if (generation !== joinGenerationRef.current) return;
     if (hadSnapshot) seedDoneRef.current = true;
 
@@ -351,9 +358,9 @@ export function useLaatsteTestCollab({
 
     if (!seedDoneRef.current && isYDocEmpty(ydoc)) {
       if (mesh.getPeerIds().length === 0) {
-        applyMarkdownSeedToYDoc(ydoc, pendingMarkdownRef.current);
+        applyContentSeedToYDoc(ydoc, pendingMarkdownRef.current, documentFormat);
         markDocReady();
-        setDocStatus("Loaded shared document.md");
+        setDocStatus("Loaded shared document");
       } else {
         const tick = () => trySeedFromFile();
         seedTimerRef.current = setTimeout(tick, 1000);
@@ -368,6 +375,7 @@ export function useLaatsteTestCollab({
     refreshMeshUi,
     teardown,
     trySeedFromFile,
+    documentFormat,
     urls.collabApiBaseUrl,
     urls.documentUrl,
     urls.authToken,
