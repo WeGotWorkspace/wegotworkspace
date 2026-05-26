@@ -26,12 +26,13 @@ import {
 
 import "@/docs-core/src/docs-workspace.css";
 
-const DOCUMENT_TITLE = "together.md";
 const USERNAME_PROMPT = "Your display name";
 
 export type LaatsteTestDocsCollabWorkspaceProps = {
   /** When set (e.g. tests), skips the on-load `window.prompt`. */
   userName?: string;
+  /** Optional document title shown in the header (defaults to together.md). */
+  documentTitle?: string;
   /** Optional transport/doc endpoints for step-by-step backend migration testing. */
   urls?: LaatsteTestCollabUrls;
 };
@@ -49,8 +50,17 @@ function promptForUserName(): string | null {
   return trimmed || null;
 }
 
+function defaultTitleFromRoom(room: string | undefined): string {
+  const normalized = room?.trim().replace(/\/+$/, "");
+  if (!normalized) return "document.md";
+  const slash = normalized.lastIndexOf("/");
+  const name = slash >= 0 ? normalized.slice(slash + 1) : normalized;
+  return name || "document.md";
+}
+
 export function LaatsteTestDocsCollabWorkspace({
   userName: userNameProp,
+  documentTitle,
   urls,
 }: LaatsteTestDocsCollabWorkspaceProps = {}) {
   const [userName, setUserName] = useState<string | null>(() => userNameProp?.trim() || null);
@@ -77,14 +87,22 @@ export function LaatsteTestDocsCollabWorkspace({
     );
   }
 
-  return <LaatsteTestDocsCollabWorkspaceInner userName={userName} urls={urls} />;
+  return (
+    <LaatsteTestDocsCollabWorkspaceInner
+      userName={userName}
+      documentTitle={documentTitle}
+      urls={urls}
+    />
+  );
 }
 
 function LaatsteTestDocsCollabWorkspaceInner({
   userName,
+  documentTitle,
   urls,
 }: {
   userName: string;
+  documentTitle?: string;
   urls?: LaatsteTestCollabUrls;
 }) {
   const labels = docsLabels;
@@ -161,6 +179,7 @@ function LaatsteTestDocsCollabWorkspaceInner({
 
   const wordCount = useMemo(() => countWords(markdown), [markdown]);
   const characterCount = markdown.length;
+  const resolvedDocumentTitle = documentTitle?.trim() || defaultTitleFromRoom(urls?.room);
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -189,7 +208,7 @@ function LaatsteTestDocsCollabWorkspaceInner({
         }
         mainHeader={
           <ViewHeader
-            title={DOCUMENT_TITLE}
+            title={resolvedDocumentTitle}
             sidebarOpen={sidebarOpen}
             onToggleSidebar={() => setSidebarOpen((open) => !open)}
             actions={
