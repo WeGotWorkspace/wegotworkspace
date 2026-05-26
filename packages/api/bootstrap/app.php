@@ -6,6 +6,7 @@ use App\Exceptions\ApiHttpException;
 use App\Http\Middleware\AuthenticateWgwApi;
 use App\Http\Middleware\RequireWgwRole;
 use App\Http\Middleware\WgwSecurityHeaders;
+use App\Services\Collab\CollabResponseException;
 use App\Services\Mail\MailResponseException;
 use App\Services\Voice\VoiceResponseException;
 use Illuminate\Foundation\Application;
@@ -44,6 +45,9 @@ return Application::configure(basePath: dirname(__DIR__))
             return response()->json($e->payload, $e->status);
         });
         $exceptions->render(function (VoiceResponseException $e) {
+            return response()->json($e->payload, $e->status);
+        });
+        $exceptions->render(function (CollabResponseException $e) {
             return response()->json($e->payload, $e->status);
         });
         $exceptions->render(function (ApiHttpException $e) {

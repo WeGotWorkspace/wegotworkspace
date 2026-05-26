@@ -17,12 +17,12 @@ final class LegacySchemaFixture
     }
 
     /**
-     * @param  int<0, 4>  $version  Schema version already applied (0 = empty database).
+     * @param  int<0, 5>  $version  Schema version already applied (0 = empty database).
      */
     public static function seedAtVersion(\PDO $pdo, int $version): void
     {
-        if ($version < 0 || $version > 4) {
-            throw new \InvalidArgumentException('Fixture version must be 0..4, got '.$version);
+        if ($version < 0 || $version > 5) {
+            throw new \InvalidArgumentException('Fixture version must be 0..5, got '.$version);
         }
 
         if ($version === 0) {
@@ -49,6 +49,11 @@ final class LegacySchemaFixture
         if ($version >= 4) {
             self::createV4State($pdo);
             self::recordMigration($pdo, 4, 'create_api_token_tables');
+        }
+
+        if ($version >= 5) {
+            self::createV5State($pdo);
+            self::recordMigration($pdo, 5, 'create_drive_starred_items');
         }
     }
 
@@ -129,6 +134,19 @@ final class LegacySchemaFixture
         );
         $pdo->exec('CREATE INDEX IF NOT EXISTS idx_api_refresh_expires ON api_refresh_tokens(expires_at)');
         $pdo->exec('CREATE INDEX IF NOT EXISTS idx_api_revoked_expires ON api_revoked_tokens(expires_at)');
+    }
+
+    private static function createV5State(\PDO $pdo): void
+    {
+        $pdo->exec(
+            'CREATE TABLE IF NOT EXISTS drive_starred_items (
+                username TEXT NOT NULL,
+                path TEXT NOT NULL,
+                created_at INTEGER NOT NULL,
+                PRIMARY KEY(username, path)
+            )'
+        );
+        $pdo->exec('CREATE INDEX IF NOT EXISTS idx_drive_starred_user ON drive_starred_items(username)');
     }
 
     private static function recordMigration(\PDO $pdo, int $version, string $name): void

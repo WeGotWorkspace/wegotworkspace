@@ -1663,6 +1663,78 @@
         }
       }
     },
+    "/collab/join": {
+      "post": {
+        "tags": [
+          "Collab"
+        ],
+        "summary": "Join document collab room",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Join response with peerId and peers"
+          }
+        }
+      }
+    },
+    "/collab/poll": {
+      "post": {
+        "tags": [
+          "Collab"
+        ],
+        "summary": "Poll document collab signaling messages",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Poll response with peers and messages"
+          }
+        }
+      }
+    },
+    "/collab/send": {
+      "post": {
+        "tags": [
+          "Collab"
+        ],
+        "summary": "Send WebRTC signaling message for document collab",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Send response"
+          }
+        }
+      }
+    },
+    "/collab/leave": {
+      "post": {
+        "tags": [
+          "Collab"
+        ],
+        "summary": "Leave document collab room",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Leave response"
+          }
+        }
+      }
+    },
     "/installer/state": {
       "get": {
         "tags": [
