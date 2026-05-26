@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { StorybookConfig } from "@storybook/react-vite";
+import { laatsteTestPhpDevPlugin, LAATSTE_TEST_PHP_URL } from "./laatste-test-php-dev-plugin";
 import { resolveWgwProxyTarget } from "../scripts/wgw-proxy-target";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -37,6 +38,7 @@ const config: StorybookConfig = {
   async viteFinal(baseConfig) {
     return {
       ...baseConfig,
+      plugins: [...(baseConfig.plugins ?? []), laatsteTestPhpDevPlugin()],
       /** Load `VITE_*` / `WGW_*` from monorepo root `.env.local` (see `packages/apps/.env.example`). */
       envDir: monorepoRoot,
       server: {
@@ -47,6 +49,11 @@ const config: StorybookConfig = {
             target: wgwProxyTarget,
             changeOrigin: true,
             secure: false,
+          },
+          "/laatste-test": {
+            target: LAATSTE_TEST_PHP_URL,
+            changeOrigin: true,
+            rewrite: (path) => path.replace(/^\/laatste-test/, ""),
           },
         },
       },

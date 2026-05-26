@@ -1,0 +1,29 @@
+{
+  "name": "laatste-test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite --open",
+    "build": "vite build",
+    "preview": "php -S localhost:8080 -t dist",
+    "dev:php": "php -S localhost:8080 -t .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.26.0",
+  "dependencies": {
+    "@tiptap/core": "^3.23.5",
+    "@tiptap/extension-collaboration": "^3.23.5",
+    "@tiptap/extension-collaboration-caret": "^3.23.5",
+    "@tiptap/extension-placeholder": "^3.23.5",
+    "@tiptap/markdown": "^3.23.5",
+    "@tiptap/starter-kit": "^3.23.5",
+    "lib0": "^0.2.117",
+    "vite": "^8.0.14",
+    "y-protocols": "^1.0.6",
+    "yjs": "^13.6.30"
+  }
+}
