@@ -1,5 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { textEditorSourceLineCount } from "@/text-editor-core/src/text-editor-source";
+import {
+  textEditorSourceLineCount,
+  textEditorSourceLines,
+} from "@/text-editor-core/src/text-editor-source-lines";
+
+describe("textEditorSourceLines", () => {
+  it("returns a single empty line for empty buffer", () => {
+    expect(textEditorSourceLines("")).toEqual([""]);
+  });
+
+  it("normalizes CRLF", () => {
+    expect(textEditorSourceLines("a\r\nb")).toEqual(["a", "b"]);
+  });
+});
 
 describe("textEditorSourceLineCount", () => {
   it("returns 1 for empty buffer", () => {
