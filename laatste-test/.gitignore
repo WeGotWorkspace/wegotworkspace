@@ -1,6 +1,0 @@
-node_modules
-.DS_Store
-.signaling-state.json
-/document.md
-/document.yjs
-dist/
