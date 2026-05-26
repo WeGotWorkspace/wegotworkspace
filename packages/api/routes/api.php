@@ -65,6 +65,7 @@ Route::post('voice/poll', [VoiceController::class, 'poll']);
 Route::post('voice/send', [VoiceController::class, 'send']);
 Route::post('voice/leave', [VoiceController::class, 'leave']);
 Route::post('voice/chat', [VoiceController::class, 'chat']);
+Route::post('collab/parity-signal', [CollabController::class, 'paritySignal']);
 
 Route::middleware([
     EncryptCookies::class,

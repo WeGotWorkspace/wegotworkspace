@@ -16,6 +16,7 @@ import { printTextEditorSheet } from "@/text-editor-core/src/text-editor-print";
 import { LaatsteTestCollabEditor } from "@/text-editor-core/laatste-test-collab/laatste-test-collab-editor";
 import { LaatsteTestCollabPresence } from "@/text-editor-core/laatste-test-collab/laatste-test-collab-presence";
 import { useLaatsteTestCollab } from "@/text-editor-core/laatste-test-collab/use-laatste-test-collab";
+import type { LaatsteTestCollabUrls } from "@/text-editor-core/laatste-test-collab/use-laatste-test-collab";
 import {
   WorkspaceAppLayout,
   WorkspaceUserFooter,
@@ -29,6 +30,8 @@ const USERNAME_PROMPT = "Your display name";
 export type LaatsteTestDocsCollabWorkspaceProps = {
   /** When set (e.g. tests), skips the on-load `window.prompt`. */
   userName?: string;
+  /** Optional transport/doc endpoints for step-by-step backend migration testing. */
+  urls?: LaatsteTestCollabUrls;
 };
 
 function countWords(text: string): number {
@@ -46,6 +49,7 @@ function promptForUserName(): string | null {
 
 export function LaatsteTestDocsCollabWorkspace({
   userName: userNameProp,
+  urls,
 }: LaatsteTestDocsCollabWorkspaceProps = {}) {
   const [userName, setUserName] = useState<string | null>(() => userNameProp?.trim() || null);
   const [promptDismissed, setPromptDismissed] = useState(false);
@@ -71,10 +75,16 @@ export function LaatsteTestDocsCollabWorkspace({
     );
   }
 
-  return <LaatsteTestDocsCollabWorkspaceInner userName={userName} />;
+  return <LaatsteTestDocsCollabWorkspaceInner userName={userName} urls={urls} />;
 }
 
-function LaatsteTestDocsCollabWorkspaceInner({ userName }: { userName: string }) {
+function LaatsteTestDocsCollabWorkspaceInner({
+  userName,
+  urls,
+}: {
+  userName: string;
+  urls?: LaatsteTestCollabUrls;
+}) {
   const labels = docsLabels;
   const session = useMemo(
     () => ({
@@ -91,10 +101,14 @@ function LaatsteTestDocsCollabWorkspaceInner({ userName }: { userName: string })
   const {
     session: collabSession,
     peers,
+    status,
+    debug,
+    yjsDebug,
     onMarkdownChange,
   } = useLaatsteTestCollab({
     userName,
     autoJoin: true,
+    urls,
   });
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -206,6 +220,26 @@ function LaatsteTestDocsCollabWorkspaceInner({ userName }: { userName: string })
               <p className="docs-workspace__loading p-8">Joining collaboration mesh…</p>
             )}
             <footer className="docs-workspace__stats-footer" aria-live="polite">
+              <span className="tag rounded-md px-2 py-1 text-xs font-medium">{status}</span>
+              <span className="tag rounded-md px-2 py-1 text-xs font-medium">
+                sig o/a/i s:{debug.offersSent}/{debug.answersSent}/{debug.iceSent} r:
+                {debug.offersReceived}/{debug.answersReceived}/{debug.iceReceived}
+              </span>
+              <span className="tag rounded-md px-2 py-1 text-xs font-medium">
+                conn:{debug.connectAttempts} dc:{debug.dcOpen} poll:{debug.pollCalls}/
+                {debug.pollMessages} err api/rtc:
+                {debug.apiErrors}/{debug.rtcErrors}
+              </span>
+              {debug.lastRtcError ? (
+                <span className="tag rounded-md px-2 py-1 text-xs font-medium">
+                  rtc: {debug.lastRtcError}
+                </span>
+              ) : null}
+              <span className="tag rounded-md px-2 py-1 text-xs font-medium">
+                yjs upd:{yjsDebug.localUpdates} sync s/r:{yjsDebug.syncSent}/{yjsDebug.syncReceived}{" "}
+                aw s/r:
+                {yjsDebug.awarenessSent}/{yjsDebug.awarenessReceived}
+              </span>
               <span className="tag rounded-md px-2 py-1 text-xs font-medium">
                 {labels.statsWords(wordCount)}
               </span>
