@@ -6,8 +6,11 @@ import "@/text-editor-core/src/text-editor.css";
 const devUser = (import.meta.env.VITE_WGW_DEV_USERNAME as string | undefined) ?? "admin";
 const devPassword =
   (import.meta.env.VITE_WGW_DEV_PASSWORD as string | undefined) ?? "storybook-dev";
+const liveApiOrigin =
+  (import.meta.env.VITE_WGW_LIVE_ORIGIN as string | undefined)?.trim() ||
+  "https://wegotworkspace.dev";
 const finalCollabRoom = "/users/admin/final-collab-room.md";
-const finalDocumentBase = "https://wegotworkspace.local/api/v1/collab/document";
+const finalDocumentBase = `${liveApiOrigin}/api/v1/collab/document`;
 
 const storyDescription = `
 Anonymous collaborative markdown editing using the **laatste-test** prototype stack:
@@ -68,8 +71,8 @@ export const CollabLaravelSignalParity: Story = {
 export const CollabLaravelSignalParityAuth: Story = {
   args: {
     urls: {
-      signalUrl: "https://wegotworkspace.local/api/v1/collab/parity-signal-auth",
-      authTokenUrl: "https://wegotworkspace.local/api/v1/auth/token",
+      signalUrl: `${liveApiOrigin}/api/v1/collab/parity-signal-auth`,
+      authTokenUrl: `${liveApiOrigin}/api/v1/auth/token`,
       authUser: devUser,
       authPassword: devPassword,
       documentUrl: "/laatste-test/document.php",
@@ -91,9 +94,9 @@ export const CollabLaravelSignalParityAuth: Story = {
 export const CollabLaravelFinalApiAuth: Story = {
   args: {
     urls: {
-      signalUrl: "https://wegotworkspace.local/api/v1/collab/parity-signal-auth",
-      collabApiBaseUrl: "https://wegotworkspace.local/api/v1/collab",
-      authTokenUrl: "https://wegotworkspace.local/api/v1/auth/token",
+      signalUrl: `${liveApiOrigin}/api/v1/collab/parity-signal-auth`,
+      collabApiBaseUrl: `${liveApiOrigin}/api/v1/collab`,
+      authTokenUrl: `${liveApiOrigin}/api/v1/auth/token`,
       authUser: devUser,
       authPassword: devPassword,
       documentUrl: `${finalDocumentBase}?room=${encodeURIComponent(finalCollabRoom)}`,
@@ -118,9 +121,9 @@ const isolatedRoom = "/users/admin/final-collab-room-isolated.md";
 export const CollabLaravelFinalApiAuthIsolatedRoom: Story = {
   args: {
     urls: {
-      signalUrl: "https://wegotworkspace.local/api/v1/collab/parity-signal-auth",
-      collabApiBaseUrl: "https://wegotworkspace.local/api/v1/collab",
-      authTokenUrl: "https://wegotworkspace.local/api/v1/auth/token",
+      signalUrl: `${liveApiOrigin}/api/v1/collab/parity-signal-auth`,
+      collabApiBaseUrl: `${liveApiOrigin}/api/v1/collab`,
+      authTokenUrl: `${liveApiOrigin}/api/v1/auth/token`,
       authUser: devUser,
       authPassword: devPassword,
       documentUrl: `${finalDocumentBase}?room=${encodeURIComponent(isolatedRoom)}`,

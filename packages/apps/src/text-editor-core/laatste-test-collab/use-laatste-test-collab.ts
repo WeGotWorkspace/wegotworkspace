@@ -33,6 +33,7 @@ export type LaatsteTestCollabUrls = {
   documentUrl: string;
   yjsUrl: string;
   room?: string;
+  authToken?: string;
   authTokenUrl?: string;
   authUser?: string;
   authPassword?: string;
@@ -280,6 +281,7 @@ export function useLaatsteTestCollab({
     teardown();
 
     const authToken = await fetchWgwAuthToken({
+      authToken: urls.authToken,
       authTokenUrl: urls.authTokenUrl,
       authUser: urls.authUser,
       authPassword: urls.authPassword,
@@ -363,6 +365,7 @@ export function useLaatsteTestCollab({
     trySeedFromFile,
     urls.collabApiBaseUrl,
     urls.documentUrl,
+    urls.authToken,
     urls.authPassword,
     urls.authTokenUrl,
     urls.authUser,

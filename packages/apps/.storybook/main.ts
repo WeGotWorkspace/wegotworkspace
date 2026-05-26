@@ -6,7 +6,7 @@ import { resolveWgwProxyTarget } from "../scripts/wgw-proxy-target";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const appsRoot = path.join(__dirname, "..");
-const monorepoRoot = path.join(__dirname, "..", "..");
+const wgwMonorepoRoot = path.join(__dirname, "..", "..", "..");
 const wgwProxyTarget = resolveWgwProxyTarget();
 
 const config: StorybookConfig = {
@@ -40,7 +40,7 @@ const config: StorybookConfig = {
       ...baseConfig,
       plugins: [...(baseConfig.plugins ?? []), laatsteTestPhpDevPlugin()],
       /** Load `VITE_*` / `WGW_*` from monorepo root `.env.local` (see `packages/apps/.env.example`). */
-      envDir: monorepoRoot,
+      envDir: wgwMonorepoRoot,
       server: {
         ...baseConfig.server,
         proxy: {
