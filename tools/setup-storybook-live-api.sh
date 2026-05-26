@@ -95,6 +95,9 @@ else
 fi
 
 echo ""
+echo "Smoke-test collab API (signaling + document sidecar):"
+echo "  pnpm test:collab-api"
+echo ""
 echo "Open Storybook Live API:"
 echo "  http://127.0.0.1:6006/?path=/story/apps-wegotworkspace--live-api"
 echo "  http://127.0.0.1:6006/?path=/story/apps-wegotworkspace--live-docs"
