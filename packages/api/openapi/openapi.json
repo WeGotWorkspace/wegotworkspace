@@ -1735,6 +1735,66 @@
         }
       }
     },
+    "/collab/document": {
+      "get": {
+        "tags": [
+          "Collab"
+        ],
+        "summary": "Load collaborative document markdown or Yjs sidecar",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "room",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Drive virtual path to the .md or .txt document"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "yjs"
+              ]
+            },
+            "description": "When yjs, returns application/octet-stream or 204 if missing"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Markdown body or Yjs binary"
+          },
+          "204": {
+            "description": "No Yjs sidecar yet"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Collab"
+        ],
+        "summary": "Save collaborative document markdown and/or Yjs sidecar",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Save acknowledged"
+          }
+        }
+      }
+    },
     "/installer/state": {
       "get": {
         "tags": [
