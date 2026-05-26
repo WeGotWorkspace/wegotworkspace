@@ -101,9 +101,6 @@ function LaatsteTestDocsCollabWorkspaceInner({
   const {
     session: collabSession,
     peers,
-    status,
-    debug,
-    yjsDebug,
     onMarkdownChange,
   } = useLaatsteTestCollab({
     userName,
@@ -220,26 +217,6 @@ function LaatsteTestDocsCollabWorkspaceInner({
               <p className="docs-workspace__loading p-8">Joining collaboration mesh…</p>
             )}
             <footer className="docs-workspace__stats-footer" aria-live="polite">
-              <span className="tag rounded-md px-2 py-1 text-xs font-medium">{status}</span>
-              <span className="tag rounded-md px-2 py-1 text-xs font-medium">
-                sig o/a/i s:{debug.offersSent}/{debug.answersSent}/{debug.iceSent} r:
-                {debug.offersReceived}/{debug.answersReceived}/{debug.iceReceived}
-              </span>
-              <span className="tag rounded-md px-2 py-1 text-xs font-medium">
-                conn:{debug.connectAttempts} dc:{debug.dcOpen} poll:{debug.pollCalls}/
-                {debug.pollMessages} err api/rtc:
-                {debug.apiErrors}/{debug.rtcErrors}
-              </span>
-              {debug.lastRtcError ? (
-                <span className="tag rounded-md px-2 py-1 text-xs font-medium">
-                  rtc: {debug.lastRtcError}
-                </span>
-              ) : null}
-              <span className="tag rounded-md px-2 py-1 text-xs font-medium">
-                yjs upd:{yjsDebug.localUpdates} sync s/r:{yjsDebug.syncSent}/{yjsDebug.syncReceived}{" "}
-                aw s/r:
-                {yjsDebug.awarenessSent}/{yjsDebug.awarenessReceived}
-              </span>
               <span className="tag rounded-md px-2 py-1 text-xs font-medium">
                 {labels.statsWords(wordCount)}
               </span>
