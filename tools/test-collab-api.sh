@@ -272,7 +272,9 @@ if [[ "$RUN_DOCUMENT" -eq 1 ]]; then
   fi
 
   DISK_MD="${ROOT}/apps/wegotworkspace/wgw-content/files/${DOC_ROOM#/}"
-  DISK_YJS="${DISK_MD}.yjs"
+  DISK_DIR="$(dirname "$DISK_MD")"
+  DISK_FILE="$(basename "$DISK_MD")"
+  DISK_YJS="${DISK_DIR}/.${DISK_FILE}.yjs"
   echo "  markdown on disk: ${DISK_MD}"
   echo "  yjs sidecar:      ${DISK_YJS}"
 fi

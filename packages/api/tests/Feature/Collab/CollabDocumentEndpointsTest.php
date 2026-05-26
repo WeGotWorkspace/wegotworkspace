@@ -112,7 +112,7 @@ final class CollabDocumentEndpointsTest extends TestCase
         $this->assertStringContainsString('Hello collab.', $storedMarkdown);
         $this->assertSame(
             "\x01\x02\x03\xff",
-            $storage->get('users/alice/docs/together.md.yjs')
+            $storage->get('users/alice/docs/.together.md.yjs')
         );
 
         $this->withHeader('Authorization', 'Bearer '.$token)
