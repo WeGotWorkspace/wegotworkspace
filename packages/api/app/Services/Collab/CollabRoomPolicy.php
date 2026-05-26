@@ -11,7 +11,7 @@ final class CollabRoomPolicy
 {
     public function cleanRoom(mixed $room): string
     {
-        if (! is_string($room) || ! preg_match('/^[A-Za-z0-9._~\/-]{4,190}$/', $room)) {
+        if (! is_string($room) || ! preg_match('/^[A-Za-z0-9._~\/ -]{4,190}$/', $room)) {
             $this->fail('invalid_room');
         }
 
