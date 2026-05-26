@@ -7,7 +7,6 @@ import * as Y from "yjs";
 import { applyMarkdownSeedToYDoc } from "@/text-editor-core/laatste-test-collab/laatste-test-collab-editor-surface";
 import {
   LaatsteTestMesh,
-  type LaatsteTestMeshDebugStats,
   type LaatsteTestMeshMessage,
   type LaatsteTestMeshPeer,
 } from "@/text-editor-core/laatste-test-collab/mesh";
@@ -27,25 +26,6 @@ const COLORS = [
   "#ea580c",
 ];
 
-const EMPTY_DEBUG: LaatsteTestMeshDebugStats = {
-  joinCalls: 0,
-  pollCalls: 0,
-  pollMessages: 0,
-  offersSent: 0,
-  offersReceived: 0,
-  answersSent: 0,
-  answersReceived: 0,
-  iceSent: 0,
-  iceReceived: 0,
-  connectAttempts: 0,
-  initiatorAttempts: 0,
-  responderAttempts: 0,
-  dcOpen: 0,
-  apiErrors: 0,
-  rtcErrors: 0,
-  lastRtcError: "",
-};
-
 export type LaatsteTestCollabUrls = {
   signalUrl: string;
   documentUrl: string;
@@ -58,22 +38,6 @@ export const DEFAULT_LAATSTE_TEST_COLLAB_URLS: LaatsteTestCollabUrls = {
   documentUrl: "/laatste-test/document.php",
   yjsUrl: "/laatste-test/document.php?format=yjs",
   room: "docs/test-together.md",
-};
-
-type LaatsteTestYjsDebugStats = {
-  localUpdates: number;
-  syncSent: number;
-  syncReceived: number;
-  awarenessSent: number;
-  awarenessReceived: number;
-};
-
-const EMPTY_YJS_DEBUG: LaatsteTestYjsDebugStats = {
-  localUpdates: 0,
-  syncSent: 0,
-  syncReceived: 0,
-  awarenessSent: 0,
-  awarenessReceived: 0,
 };
 
 export type LaatsteTestCollabSession = {
@@ -155,15 +119,12 @@ export function useLaatsteTestCollab({
   const [docStatus, setDocStatus] = useState("");
   const [peers, setPeers] = useState<LaatsteTestMeshPeer[]>([]);
   const [linkCount, setLinkCount] = useState(0);
-  const [debug, setDebug] = useState<LaatsteTestMeshDebugStats>(EMPTY_DEBUG);
-  const [yjsDebug, setYjsDebug] = useState<LaatsteTestYjsDebugStats>(EMPTY_YJS_DEBUG);
 
   const refreshMeshUi = useCallback(() => {
     const mesh = meshRef.current;
     if (!mesh) return;
     setLinkCount(mesh.linkCount());
     setPeers(mesh.getRoomPeers());
-    setDebug(mesh.getDebugStats());
     setStatus(
       `Mesh · ${mesh.getMyName()} · ${mesh.getMyId()?.slice(0, 8) ?? "—"}… · ${mesh.getPeerIds().length} other peer(s) · ${mesh.linkCount()} link(s)`,
     );
@@ -222,7 +183,6 @@ export function useLaatsteTestCollab({
     const encoder = encoding.createEncoder();
     syncProtocol.writeSyncStep1(encoder, ydoc);
     const msg = { type: "sync" as const, u: Array.from(encoding.toUint8Array(encoder)) };
-    setYjsDebug((prev) => ({ ...prev, syncSent: prev.syncSent + 1 }));
     if (toPeerId) mesh.sendTo(toPeerId, msg);
     else mesh.broadcast(msg);
   }, []);
@@ -234,20 +194,17 @@ export function useLaatsteTestCollab({
       if (!ydoc || !awareness) return;
 
       if (msg.type === "sync" && Array.isArray(msg.u)) {
-        setYjsDebug((prev) => ({ ...prev, syncReceived: prev.syncReceived + 1 }));
         const decoder = decoding.createDecoder(Uint8Array.from(msg.u));
         const encoder = encoding.createEncoder();
         syncProtocol.readSyncMessage(decoder, encoder, ydoc, MESH_ORIGIN);
         if (!isYDocEmpty(ydoc)) markDocReady();
         if (encoding.length(encoder) > 1) {
           const reply = { type: "sync" as const, u: Array.from(encoding.toUint8Array(encoder)) };
-          setYjsDebug((prev) => ({ ...prev, syncSent: prev.syncSent + 1 }));
           if (msg.from) meshRef.current?.sendTo(msg.from, reply);
           else meshRef.current?.broadcast(reply);
         }
       }
       if (msg.type === "awareness" && Array.isArray(msg.u)) {
-        setYjsDebug((prev) => ({ ...prev, awarenessReceived: prev.awarenessReceived + 1 }));
         awarenessProtocol.applyAwarenessUpdate(awareness, Uint8Array.from(msg.u), MESH_ORIGIN);
       }
       if (msg.type === "dc-open" && msg.from) {
@@ -272,8 +229,6 @@ export function useLaatsteTestCollab({
     setJoined(false);
     setPeers([]);
     setLinkCount(0);
-    setDebug(EMPTY_DEBUG);
-    setYjsDebug(EMPTY_YJS_DEBUG);
     setStatus("Disconnected");
     setDocStatus("");
   }, []);
@@ -308,11 +263,6 @@ export function useLaatsteTestCollab({
       if (origin === MESH_ORIGIN || origin === SEED_ORIGIN) return;
       const encoder = encoding.createEncoder();
       syncProtocol.writeUpdate(encoder, update);
-      setYjsDebug((prev) => ({
-        ...prev,
-        localUpdates: prev.localUpdates + 1,
-        syncSent: prev.syncSent + 1,
-      }));
       meshRef.current?.broadcast({
         type: "sync",
         u: Array.from(encoding.toUint8Array(encoder)),
@@ -328,7 +278,6 @@ export function useLaatsteTestCollab({
         if (origin === MESH_ORIGIN) return;
         const changed = added.concat(updated, removed);
         const encoded = awarenessProtocol.encodeAwarenessUpdate(awareness, changed);
-        setYjsDebug((prev) => ({ ...prev, awarenessSent: prev.awarenessSent + 1 }));
         meshRef.current?.broadcast({ type: "awareness", u: Array.from(encoded) });
       },
     );
@@ -364,6 +313,7 @@ export function useLaatsteTestCollab({
     teardown,
     trySeedFromFile,
     urls.documentUrl,
+    urls.room,
     urls.signalUrl,
     urls.yjsUrl,
     userName,
@@ -419,8 +369,6 @@ export function useLaatsteTestCollab({
     docStatus,
     peers,
     linkCount,
-    debug,
-    yjsDebug,
     join,
     leave,
     saveNow,
