@@ -49,7 +49,7 @@ export function DocsApp({ apiSource }: DocsAppProps = {}) {
     const room = filePath;
     const encodedRoom = encodeURIComponent(room);
     return {
-      signalUrl: `${baseUrl}/collab/parity-signal-auth`,
+      signalUrl: `${baseUrl}/collab/send`,
       collabApiBaseUrl: `${baseUrl}/collab`,
       authToken: wgwCurrentAccessToken() ?? undefined,
       documentUrl: `${baseUrl}/collab/document?room=${encodedRoom}`,
