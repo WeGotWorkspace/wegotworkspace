@@ -1,11 +1,12 @@
+import type { ComponentProps } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { TextEditor } from "@/text-editor-core/src/text-editor";
-import {
-  TEXT_EDITOR_CONTENT_FORMATS,
-  type TextEditorContentFormat,
-} from "@/text-editor-core/src/text-editor-content";
+import { TEXT_EDITOR_CONTENT_FORMATS } from "@/text-editor-core/src/text-editor-content";
 import { textEditorDemoContent } from "@/text-editor-core/src/text-editor-fixtures";
 import { TEXT_EDITOR_FORMAT_BAR_MAIL } from "@/text-editor-core/src/text-editor-format-bar-config";
+import { TextEditorWithSourceToggle } from "@/text-editor-core/stories/text-editor-source-stories.harness";
+
+import "@/text-editor-core/src/text-editor.css";
 
 const meta = {
   title: "Shared/TextEditor/TextEditor",
@@ -16,7 +17,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'Full rich-text editor: formatting toolbar, letter sheet, slash menu, and table controls. Use `format="html"` for mail bodies or `format="markdown"` for notes.',
+          'Full rich-text editor: formatting toolbar, letter sheet, slash menu, and table controls. Use `format="html"` for mail bodies or `format="markdown"` for notes. Set `viewSource` externally for split (wide landscape) or source-only (narrow / portrait) layouts.',
       },
     },
   },
@@ -28,6 +29,7 @@ const meta = {
     },
     editable: { control: "boolean" },
     showPrint: { control: "boolean" },
+    viewSource: { control: "boolean" },
     placeholder: { control: "text" },
   },
 } satisfies Meta<typeof TextEditor>;
@@ -81,5 +83,118 @@ export const MailHtml: Story = {
     content: "<p>Hello — use the mail toolbar preset.</p>",
     editable: true,
     formatBar: { groups: TEXT_EDITOR_FORMAT_BAR_MAIL, showPrint: false },
+  },
+};
+
+const sourceToggleRender = (args: ComponentProps<typeof TextEditor>) => (
+  <TextEditorWithSourceToggle {...args} />
+);
+
+export const HtmlWithSourceToggle: Story = {
+  name: "HTML source (external toggle)",
+  render: sourceToggleRender,
+  args: {
+    format: "html",
+    content: textEditorDemoContent("html"),
+    editable: true,
+    showPrint: true,
+    viewSource: false,
+  },
+};
+
+export const MarkdownWithSourceToggle: Story = {
+  name: "Markdown source (external toggle)",
+  render: sourceToggleRender,
+  args: {
+    format: "markdown",
+    content: textEditorDemoContent("markdown"),
+    editable: true,
+    showPrint: true,
+    viewSource: false,
+  },
+};
+
+export const MailHtmlWithSourceToggle: Story = {
+  name: "Mail HTML source (external toggle)",
+  render: sourceToggleRender,
+  args: {
+    format: "html",
+    content: "<p>Hello — use the mail toolbar preset.</p>",
+    editable: true,
+    formatBar: { groups: TEXT_EDITOR_FORMAT_BAR_MAIL, showPrint: false },
+    viewSource: false,
+  },
+};
+
+export const HtmlSourceSplit: Story = {
+  name: "HTML source split",
+  args: {
+    format: "html",
+    content: textEditorDemoContent("html"),
+    editable: true,
+    showPrint: true,
+    viewSource: true,
+  },
+};
+
+export const MarkdownSourceSplit: Story = {
+  name: "Markdown source split",
+  args: {
+    format: "markdown",
+    content: textEditorDemoContent("markdown"),
+    editable: true,
+    showPrint: true,
+    viewSource: true,
+  },
+};
+
+export const HtmlSourcePortrait: Story = {
+  name: "HTML source only (portrait)",
+  args: {
+    format: "html",
+    content: textEditorDemoContent("html"),
+    editable: true,
+    showPrint: false,
+    viewSource: true,
+  },
+  globals: {
+    viewport: { value: "mobile1", isRotated: false },
+  },
+};
+
+export const MarkdownSourcePortrait: Story = {
+  name: "Markdown source only (portrait)",
+  args: {
+    format: "markdown",
+    content: textEditorDemoContent("markdown"),
+    editable: true,
+    showPrint: false,
+    viewSource: true,
+  },
+  globals: {
+    viewport: { value: "mobile1", isRotated: false },
+  },
+};
+
+export const ReadOnlyMarkdownSource: Story = {
+  name: "Read only markdown source",
+  args: {
+    format: "markdown",
+    content: textEditorDemoContent("markdown"),
+    editable: false,
+    showPrint: false,
+    viewSource: true,
+  },
+};
+
+export const EmptyMarkdownSourceSplit: Story = {
+  name: "Empty markdown source split",
+  args: {
+    format: "markdown",
+    content: "",
+    editable: true,
+    placeholder: "Start writing, or type / for blocks…",
+    showPrint: false,
+    viewSource: true,
   },
 };

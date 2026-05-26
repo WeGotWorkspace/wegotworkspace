@@ -55,10 +55,17 @@ export function useDriveModalStoryController(preset: DriveModalStoryPreset) {
       case "newFolder":
         setNewFolderDialogOpen(true);
         break;
-      case "rename":
-        setRenameDialog({ id: sample.id });
-        setRenameName(sample.title);
+      case "rename": {
+        const isFolder = sample.kind === "folder";
+        const lastDot = sample.title.lastIndexOf(".");
+        const hasExtension = !isFolder && lastDot > 0;
+        setRenameDialog({
+          id: sample.id,
+          extension: hasExtension ? sample.title.slice(lastDot) : "",
+        });
+        setRenameName(hasExtension ? sample.title.slice(0, lastDot) : sample.title);
         break;
+      }
       case "deleteTrash":
         setConfirmDelete({ ids: [sample.id], permanent: false });
         break;

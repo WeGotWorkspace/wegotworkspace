@@ -1,0 +1,28 @@
+.rename-filename-field {
+  display: flex;
+  width: 100%;
+  align-items: stretch;
+}
+
+.rename-filename-field__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.rename-filename-field__extension {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  padding-inline: 0.75rem;
+  min-height: var(--input-height, 2.25rem);
+  font-size: var(--input-font-size, 0.875rem);
+  color: color-mix(in oklab, var(--color-foreground) 72%, transparent);
+  background-color: color-mix(in oklab, var(--color-muted) 55%, var(--color-background) 45%);
+  border: 0;
+  border-top-right-radius: var(--control-radius);
+  border-bottom-right-radius: var(--control-radius);
+  box-shadow: var(--control-shadow);
+  user-select: none;
+}

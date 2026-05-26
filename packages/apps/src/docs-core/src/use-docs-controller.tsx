@@ -5,6 +5,9 @@ import { parentAndName } from "@/lib/api/wgw/drive";
 import { markdownToPlainText } from "@/lib/models/note-body-markdown";
 import { mergeDocsLabels, type DocsUILabels } from "@/docs-core/src/docs-labels";
 import type { DocsAPIOperations, DocsDocument } from "@/docs-core/src/docs-types";
+import { docsEditorFormatFromFileName } from "@/docs-core/src/docs-editor-format";
+import { joinFileNameForRename, splitFileNameForRename } from "@/lib/files/filename-rename";
+import type { TextEditorContentFormat } from "@/text-editor-core/src/text-editor-content";
 
 type UseDocsControllerArgs = {
   filePath: string | null;
@@ -55,6 +58,7 @@ export function useDocsController({
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [renameName, setRenameName] = useState("");
+  const [renameExtension, setRenameExtension] = useState("");
   const [renamePending, setRenamePending] = useState(false);
 
   const queueAutoSaveToast = useCallback(() => {
@@ -183,9 +187,13 @@ export function useDocsController({
   );
 
   const title = document?.fileName ?? (filePath ? fileNameFromApiPath(filePath) : "");
+  const editorFormat: TextEditorContentFormat = docsEditorFormatFromFileName(title);
+  const isPlainTextDocument = editorFormat === "text";
 
   const openRenameDialog = useCallback(() => {
-    setRenameName(title);
+    const { baseName, extension, hasExtension } = splitFileNameForRename(title);
+    setRenameName(baseName);
+    setRenameExtension(hasExtension ? extension : "");
     setRenameDialogOpen(true);
   }, [title]);
 
@@ -193,11 +201,14 @@ export function useDocsController({
     if (renamePending) return;
     setRenameDialogOpen(false);
     setRenameName("");
+    setRenameExtension("");
   }, [renamePending]);
 
   const submitRename = useCallback(async () => {
     const path = latestPathRef.current;
-    const nextName = renameName.trim();
+    const nextName = renameExtension
+      ? joinFileNameForRename(renameName, renameExtension)
+      : renameName.trim();
     if (!path || !nextName || nextName === title) {
       closeRenameDialog();
       return;
@@ -218,6 +229,7 @@ export function useDocsController({
       show(`Renamed to “${nextName}”`, { icon: <Pencil className="size-4" /> });
       setRenameDialogOpen(false);
       setRenameName("");
+      setRenameExtension("");
     } catch {
       showError(L.renameError);
     } finally {
@@ -228,6 +240,7 @@ export function useDocsController({
     L.renameError,
     onFileRenamed,
     operations,
+    renameExtension,
     renameName,
     show,
     showError,
@@ -235,16 +248,18 @@ export function useDocsController({
   ]);
 
   const { wordCount, characterCount } = useMemo(() => {
-    const plain = markdownToPlainText(content);
+    const plain = isPlainTextDocument ? content : markdownToPlainText(content);
     return {
       wordCount: plain ? plain.split(/\s+/).filter(Boolean).length : 0,
       characterCount: plain.length,
     };
-  }, [content]);
+  }, [content, isPlainTextDocument]);
 
   return {
     labels: L,
     title,
+    editorFormat,
+    isPlainTextDocument,
     content,
     wordCount,
     characterCount,
@@ -259,6 +274,7 @@ export function useDocsController({
     renameDialogOpen,
     renameName,
     setRenameName,
+    renameExtension,
     renamePending,
     openRenameDialog,
     closeRenameDialog,
