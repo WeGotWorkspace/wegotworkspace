@@ -1,0 +1,93 @@
+import { LaatsteTestCollabEditorSurface } from "@/text-editor-core/laatste-test-collab/laatste-test-collab-editor-surface";
+import { useLaatsteTestCollab } from "@/text-editor-core/laatste-test-collab/use-laatste-test-collab";
+
+export type LaatsteTestCollabWorkspaceProps = {
+  userName: string;
+  autoJoin?: boolean;
+};
+
+export function LaatsteTestCollabWorkspace({
+  userName,
+  autoJoin = true,
+}: LaatsteTestCollabWorkspaceProps) {
+  const {
+    session,
+    joined,
+    status,
+    docStatus,
+    peers,
+    linkCount,
+    join,
+    leave,
+    saveNow,
+    onMarkdownChange,
+  } = useLaatsteTestCollab({ userName, autoJoin });
+
+  return (
+    <div className="flex min-h-screen flex-col bg-muted/30">
+      <header className="flex flex-wrap items-center gap-3 border-b bg-background px-4 py-3 text-sm">
+        <label className="flex items-center gap-2">
+          <span className="text-muted-foreground">Name</span>
+          <input
+            type="text"
+            value={userName}
+            readOnly
+            className="w-32 rounded border bg-muted/40 px-2 py-1 font-medium"
+            title="Set via Storybook controls"
+          />
+        </label>
+        {!autoJoin ? (
+          <button
+            type="button"
+            className="rounded bg-primary px-3 py-1 text-primary-foreground disabled:opacity-50"
+            disabled={joined}
+            onClick={() => void join()}
+          >
+            Join mesh
+          </button>
+        ) : null}
+        <button
+          type="button"
+          className="rounded border px-3 py-1 disabled:opacity-50"
+          disabled={!joined}
+          onClick={() => void leave()}
+        >
+          Leave
+        </button>
+        <button
+          type="button"
+          className="rounded border px-3 py-1 disabled:opacity-50"
+          disabled={!joined}
+          onClick={() => void saveNow()}
+        >
+          Save
+        </button>
+        <span className="text-muted-foreground">{status}</span>
+        {docStatus ? <span className="text-muted-foreground">· {docStatus}</span> : null}
+        <span className="ml-auto text-muted-foreground">
+          {linkCount} WebRTC link(s) · {peers.length} peer(s) in room
+        </span>
+      </header>
+
+      <div className="border-b bg-amber-50 px-4 py-2 text-sm text-amber-950 dark:bg-amber-950/40 dark:text-amber-100">
+        Open this story in <strong>two browser windows</strong> (or Storybook + iframe) with
+        different <strong>userName</strong> controls — e.g. Alex and Sam. Uses{" "}
+        <code className="rounded bg-black/10 px-1">laatste-test/signal.php</code> on port{" "}
+        <strong>8081</strong> (started by Storybook or <code>pnpm dev:laatste-test-signal</code>).
+      </div>
+
+      <main className="flex-1 p-4">
+        {session ? (
+          <LaatsteTestCollabEditorSurface
+            ydoc={session.ydoc}
+            awareness={session.awareness}
+            user={session.user}
+            onMarkdownChange={onMarkdownChange}
+          />
+        ) : (
+          <p className="text-muted-foreground">Join the mesh to start editing…</p>
+        )}
+      </main>
+    </div>
+  );
+}
