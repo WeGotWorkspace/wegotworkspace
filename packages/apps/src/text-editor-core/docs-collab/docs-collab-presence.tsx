@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import type { LaatsteTestMeshPeer } from "@/text-editor-core/laatste-test-collab/mesh";
+import type { DocsCollabMeshPeer } from "./mesh";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/tooltip";
 
 const COLORS = [
@@ -19,17 +19,13 @@ function colorForName(name: string): string {
   return COLORS[Math.abs(hash) % COLORS.length]!;
 }
 
-export type LaatsteTestCollabPresenceProps = {
+export type DocsCollabPresenceProps = {
   localUser: { displayName: string };
-  peers: LaatsteTestMeshPeer[];
+  peers: DocsCollabMeshPeer[];
   className?: string;
 };
 
-export function LaatsteTestCollabPresence({
-  localUser,
-  peers,
-  className,
-}: LaatsteTestCollabPresenceProps) {
+export function DocsCollabPresence({ localUser, peers, className }: DocsCollabPresenceProps) {
   return (
     <div
       className={cn("docs-collab-presence flex items-center gap-1", className)}

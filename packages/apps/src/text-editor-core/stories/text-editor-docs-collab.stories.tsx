@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { LaatsteTestDocsCollabWorkspace } from "@/text-editor-core/laatste-test-collab/laatste-test-docs-collab-workspace";
+import { DocsCollabWorkspace } from "@/text-editor-core/docs-collab";
 
 import "@/text-editor-core/src/text-editor.css";
 
@@ -9,29 +9,26 @@ const devPassword =
 const liveApiOrigin =
   (import.meta.env.VITE_WGW_LIVE_ORIGIN as string | undefined)?.trim() ||
   "https://wegotworkspace.dev";
-const finalCollabRoom = "/users/admin/final-collab-room.md";
-const finalDocumentBase = `${liveApiOrigin}/api/v1/collab/document`;
+const defaultRoom = "/users/admin/docs-collab-room.md";
+const documentBase = `${liveApiOrigin}/api/v1/collab/document`;
 
 const storyDescription = `
-Anonymous collaborative markdown editing using the **laatste-test** prototype stack:
+Collaborative markdown editing over the final docs-collab endpoints.
 
-- Signaling: \`laatste-test/signal.php\` (file-backed, no WGW login)
-- Document: \`laatste-test/document.php\` + \`document.md\`
-- Sync: Yjs over WebRTC data channels (same as \`laatste-test/mesh.js\` + \`editor.js\`)
+- Signaling: \`/api/v1/collab/join|poll|send|leave\`
+- Document: \`/api/v1/collab/document\`
+- Sync: Yjs over WebRTC data channels.
 
 ### Run
 
-1. Storybook starts PHP on **http://127.0.0.1:8081** automatically, or run \`pnpm dev:laatste-test-signal\` in another terminal.
-2. \`pnpm dev:ui\` (Storybook on :6006)
-3. Open this story — you will be prompted for a display name. Open a second window with a different name to test collab.
-4. Type in one window — edits and carets should appear in the other.
-
-No Laravel / JWT / \`collab/*\` API involved.
+1. \`pnpm dev:ui\` (Storybook on :6006)
+2. Ensure \`.env.local\` has valid \`VITE_WGW_DEV_USERNAME\`, \`VITE_WGW_DEV_PASSWORD\`, and \`VITE_WGW_LIVE_ORIGIN\`.
+3. Open this story in two windows with different names to test collaboration.
 `;
 
 const meta = {
-  title: "Shared/TextEditor/Laatste test collab",
-  component: LaatsteTestDocsCollabWorkspace,
+  title: "Shared/TextEditor/Docs collab",
+  component: DocsCollabWorkspace,
   tags: ["autodocs"],
   parameters: {
     layout: "fullscreen",
@@ -41,7 +38,7 @@ const meta = {
       },
     },
   },
-} satisfies Meta<typeof LaatsteTestDocsCollabWorkspace>;
+} satisfies Meta<typeof DocsCollabWorkspace>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -50,16 +47,17 @@ export const Collab: Story = {};
 
 export const CollabLaravelFinalApiAuth: Story = {
   args: {
+    userName: "Admin User",
     urls: {
       signalUrl: `${liveApiOrigin}/api/v1/collab/send`,
       collabApiBaseUrl: `${liveApiOrigin}/api/v1/collab`,
       authTokenUrl: `${liveApiOrigin}/api/v1/auth/token`,
       authUser: devUser,
       authPassword: devPassword,
-      documentUrl: `${finalDocumentBase}?room=${encodeURIComponent(finalCollabRoom)}`,
-      yjsUrl: `${finalDocumentBase}?room=${encodeURIComponent(finalCollabRoom)}&format=yjs`,
+      documentUrl: `${documentBase}?room=${encodeURIComponent(defaultRoom)}`,
+      yjsUrl: `${documentBase}?room=${encodeURIComponent(defaultRoom)}&format=yjs`,
       documentSaveMethod: "PUT",
-      room: finalCollabRoom,
+      room: defaultRoom,
     },
   },
   parameters: {
@@ -73,7 +71,7 @@ export const CollabLaravelFinalApiAuth: Story = {
   },
 };
 
-const isolatedRoom = "/users/admin/final-collab-room-isolated.md";
+const isolatedRoom = "/users/admin/docs-collab-room-isolated.md";
 
 export const CollabLaravelFinalApiAuthIsolatedRoom: Story = {
   args: {
@@ -83,8 +81,8 @@ export const CollabLaravelFinalApiAuthIsolatedRoom: Story = {
       authTokenUrl: `${liveApiOrigin}/api/v1/auth/token`,
       authUser: devUser,
       authPassword: devPassword,
-      documentUrl: `${finalDocumentBase}?room=${encodeURIComponent(isolatedRoom)}`,
-      yjsUrl: `${finalDocumentBase}?room=${encodeURIComponent(isolatedRoom)}&format=yjs`,
+      documentUrl: `${documentBase}?room=${encodeURIComponent(isolatedRoom)}`,
+      yjsUrl: `${documentBase}?room=${encodeURIComponent(isolatedRoom)}&format=yjs`,
       documentSaveMethod: "PUT",
       room: isolatedRoom,
     },
@@ -94,7 +92,7 @@ export const CollabLaravelFinalApiAuthIsolatedRoom: Story = {
       description: {
         story:
           "Step 2.4 room isolation audit: this story uses the final APIs with a different room. " +
-          "Tabs opened on this story should sync with each other but stay isolated from `final-collab-room.md`.",
+          "Tabs opened on this story should sync with each other but stay isolated from `docs-collab-room.md`.",
       },
     },
   },

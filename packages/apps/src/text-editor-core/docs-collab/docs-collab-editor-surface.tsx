@@ -8,22 +8,20 @@ import {
   type TextEditorContentFormat,
 } from "@/text-editor-core/src/text-editor-content";
 import { createTextEditorExtensions } from "@/text-editor-core/src/text-editor-extensions";
-import { LaatsteTestCollabEditor } from "@/text-editor-core/laatste-test-collab/laatste-test-collab-editor";
+import { DocsCollabEditor } from "./docs-collab-editor";
 
 const SEED_ORIGIN = "seed";
 
-export type LaatsteTestCollabEditorSurfaceProps = {
+export type DocsCollabEditorSurfaceProps = {
   ydoc: Y.Doc;
   awareness: Awareness;
   user: { name: string; color: string };
   onMarkdownChange: (getMarkdown: () => string) => void;
 };
 
-/** @deprecated Use LaatsteTestCollabEditor — kept for thin embeds */
-export function LaatsteTestCollabEditorSurface(props: LaatsteTestCollabEditorSurfaceProps) {
-  return (
-    <LaatsteTestCollabEditor {...props} sheetFill formatBar={false} className="min-h-[70vh]" />
-  );
+/** @deprecated Use DocsCollabEditor — kept for thin embeds */
+export function DocsCollabEditorSurface(props: DocsCollabEditorSurfaceProps) {
+  return <DocsCollabEditor {...props} sheetFill formatBar={false} className="min-h-[70vh]" />;
 }
 
 /** Seed helper (yjs-demos#16) — used before mounting the collab editor surface */

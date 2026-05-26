@@ -25,10 +25,10 @@ import { ViewHeader } from "@/view-header/src/view-header";
 import { getTextEditorContent } from "@/text-editor-core/src/text-editor-content";
 import { TEXT_EDITOR_FORMAT_BAR_FULL } from "@/text-editor-core/src/text-editor-format-bar-config";
 import { printTextEditorSheet } from "@/text-editor-core/src/text-editor-print";
-import { LaatsteTestCollabEditor } from "@/text-editor-core/laatste-test-collab/laatste-test-collab-editor";
-import { LaatsteTestCollabPresence } from "@/text-editor-core/laatste-test-collab/laatste-test-collab-presence";
-import { useLaatsteTestCollab } from "@/text-editor-core/laatste-test-collab/use-laatste-test-collab";
-import type { LaatsteTestCollabUrls } from "@/text-editor-core/laatste-test-collab/use-laatste-test-collab";
+import { DocsCollabEditor } from "./docs-collab-editor";
+import { DocsCollabPresence } from "./docs-collab-presence";
+import { useDocsCollab } from "./use-docs-collab";
+import type { DocsCollabUrls } from "./use-docs-collab";
 import {
   WorkspaceAppLayout,
   WorkspaceUserFooter,
@@ -38,13 +38,13 @@ import "@/docs-core/src/docs-workspace.css";
 
 const USERNAME_PROMPT = "Your display name";
 
-export type LaatsteTestDocsCollabWorkspaceProps = {
+export type DocsCollabWorkspaceProps = {
   /** When set (e.g. tests), skips the on-load `window.prompt`. */
   userName?: string;
   /** Optional document title shown in the header (defaults to together.md). */
   documentTitle?: string;
   /** Optional transport/doc endpoints for step-by-step backend migration testing. */
-  urls?: LaatsteTestCollabUrls;
+  urls?: DocsCollabUrls;
 };
 
 function countWords(text: string): number {
@@ -68,11 +68,11 @@ function defaultTitleFromRoom(room: string | undefined): string {
   return name || "document.md";
 }
 
-export function LaatsteTestDocsCollabWorkspace({
+export function DocsCollabWorkspace({
   userName: userNameProp,
   documentTitle,
   urls,
-}: LaatsteTestDocsCollabWorkspaceProps = {}) {
+}: DocsCollabWorkspaceProps = {}) {
   const [userName, setUserName] = useState<string | null>(() => userNameProp?.trim() || null);
   const [promptDismissed, setPromptDismissed] = useState(false);
 
@@ -97,23 +97,17 @@ export function LaatsteTestDocsCollabWorkspace({
     );
   }
 
-  return (
-    <LaatsteTestDocsCollabWorkspaceInner
-      userName={userName}
-      documentTitle={documentTitle}
-      urls={urls}
-    />
-  );
+  return <DocsCollabWorkspaceInner userName={userName} documentTitle={documentTitle} urls={urls} />;
 }
 
-function LaatsteTestDocsCollabWorkspaceInner({
+function DocsCollabWorkspaceInner({
   userName,
   documentTitle,
   urls,
 }: {
   userName: string;
   documentTitle?: string;
-  urls?: LaatsteTestCollabUrls;
+  urls?: DocsCollabUrls;
 }) {
   const labels = docsLabels;
   const session = useMemo(
@@ -133,7 +127,7 @@ function LaatsteTestDocsCollabWorkspaceInner({
     peers,
     docStatus,
     onMarkdownChange,
-  } = useLaatsteTestCollab({
+  } = useDocsCollab({
     userName,
     autoJoin: true,
     urls,
@@ -237,7 +231,7 @@ function LaatsteTestDocsCollabWorkspaceInner({
               actions={
                 <div className="docs-workspace__header-actions">
                   {collabSession ? (
-                    <LaatsteTestCollabPresence
+                    <DocsCollabPresence
                       localUser={{
                         displayName: session.user.displayName,
                       }}
@@ -277,7 +271,7 @@ function LaatsteTestDocsCollabWorkspaceInner({
           main={
             <div className="docs-workspace__editor">
               {collabSession ? (
-                <LaatsteTestCollabEditor
+                <DocsCollabEditor
                   ydoc={collabSession.ydoc}
                   awareness={collabSession.awareness}
                   user={collabSession.user}
