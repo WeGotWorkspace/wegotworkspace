@@ -140,10 +140,15 @@ function applyTokens(tokens: TokenResponse): void {
   setLoggedOutMarker(false);
 }
 
-export function wgwSessionAvailable(): boolean {
+/** True when access + refresh tokens are present (localStorage or memory). */
+export function wgwHasAuthenticatedSession(): boolean {
   hydrateTokensFromStorage();
-  const hasTokenPair = Boolean(accessToken && refreshToken);
-  if (hasTokenPair) return true;
+  return Boolean(accessToken && refreshToken);
+}
+
+/** True when the UI may skip the login form (stored session or dev auto-login). */
+export function wgwSessionAvailable(): boolean {
+  if (wgwHasAuthenticatedSession()) return true;
   if (readLoggedOutMarker()) return false;
   const username = import.meta.env.VITE_WGW_DEV_USERNAME as string | undefined;
   const password = import.meta.env.VITE_WGW_DEV_PASSWORD as string | undefined;
