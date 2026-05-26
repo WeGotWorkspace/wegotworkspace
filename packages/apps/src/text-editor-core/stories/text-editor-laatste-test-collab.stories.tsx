@@ -40,3 +40,24 @@ type Story = StoryObj<typeof meta>;
 export const Collab: Story = {
   name: "Collab",
 };
+
+export const CollabLaravelSignalParity: Story = {
+  name: "Collab (Laravel signal parity)",
+  args: {
+    urls: {
+      signalUrl: "https://wegotworkspace.local/api/v1/collab/parity-signal",
+      documentUrl: "/laatste-test/document.php",
+      yjsUrl: "/laatste-test/document.php?format=yjs",
+      room: "docs/parity-audit-room.md",
+    },
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Step 2.1 bridge: keeps the same editor + Yjs + document.php stack, but routes signaling " +
+          "through Laravel `/api/v1/collab/parity-signal` using the legacy `action` protocol.",
+      },
+    },
+  },
+};

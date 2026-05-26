@@ -179,6 +179,66 @@ final class CollabEndpointsTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_legacy_parity_signal_actions_work(): void
+    {
+        $aliceJoin = $this->postJson('/api/v1/collab/parity-signal', [
+            'action' => 'join',
+            'room' => self::ROOM,
+            'name' => 'Alice',
+        ]);
+        $aliceJoin->assertOk();
+        $alicePeerId = (string) $aliceJoin->json('peerId');
+        $this->assertMatchesRegularExpression('/^[a-f0-9]{16}$/', $alicePeerId);
+
+        $bobJoin = $this->postJson('/api/v1/collab/parity-signal', [
+            'action' => 'join',
+            'room' => self::ROOM,
+            'name' => 'Bob',
+        ]);
+        $bobJoin->assertOk();
+        $bobPeerId = (string) $bobJoin->json('peerId');
+        $bobJoin->assertJsonPath('peers.0.id', $alicePeerId);
+
+        $offerPayload = ['type' => 'offer', 'sdp' => 'v=0'];
+        $this->postJson('/api/v1/collab/parity-signal', [
+            'action' => 'signal',
+            'room' => self::ROOM,
+            'peerId' => $alicePeerId,
+            'to' => $bobPeerId,
+            'type' => 'offer',
+            'payload' => $offerPayload,
+        ])->assertOk()->assertJson(['ok' => true]);
+
+        $poll = $this->postJson('/api/v1/collab/parity-signal', [
+            'action' => 'poll',
+            'room' => self::ROOM,
+            'peerId' => $bobPeerId,
+            'since' => 0,
+        ]);
+        $poll->assertOk();
+        $messages = $poll->json('messages');
+        $this->assertIsArray($messages);
+        $this->assertCount(1, $messages);
+        $this->assertSame('offer', $messages[0]['type']);
+        $this->assertSame($alicePeerId, $messages[0]['from']);
+        $this->assertSame($offerPayload, $messages[0]['payload']);
+
+        $this->postJson('/api/v1/collab/parity-signal', [
+            'action' => 'leave',
+            'room' => self::ROOM,
+            'peerId' => $alicePeerId,
+        ])->assertOk()->assertJson(['ok' => true]);
+
+        $afterLeave = $this->postJson('/api/v1/collab/parity-signal', [
+            'action' => 'poll',
+            'room' => self::ROOM,
+            'peerId' => $bobPeerId,
+            'since' => 0,
+        ]);
+        $afterLeave->assertOk();
+        $afterLeave->assertJsonPath('peers', []);
+    }
+
     private function issueToken(string $username): string
     {
         $response = $this->postJson('/api/v1/auth/token', [
