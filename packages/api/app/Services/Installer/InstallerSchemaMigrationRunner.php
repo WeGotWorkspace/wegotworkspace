@@ -6,7 +6,7 @@ namespace App\Services\Installer;
 
 final class InstallerSchemaMigrationRunner
 {
-    public const CURRENT_SCHEMA_VERSION = 5;
+    public const CURRENT_SCHEMA_VERSION = 6;
 
     public static function migrate(\PDO $pdo): int
     {
@@ -76,6 +76,11 @@ final class InstallerSchemaMigrationRunner
 
         if ($current < 5) {
             self::migrateV5CreateDriveStarTable($pdo);
+            $current = 5;
+        }
+
+        if ($current < 6) {
+            self::migrateV6CreateCollabTables($pdo);
         }
     }
 
@@ -266,5 +271,63 @@ final class InstallerSchemaMigrationRunner
 
         $stmt = $pdo->prepare('INSERT INTO app_migrations (version, name, applied_at) VALUES (?, ?, ?)');
         $stmt->execute([5, 'create_drive_starred_items', date('c')]);
+    }
+
+    private static function migrateV6CreateCollabTables(\PDO $pdo): void
+    {
+        $driver = (string) $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'mysql') {
+            $pdo->exec(
+                'CREATE TABLE IF NOT EXISTS collab_peers (
+                    room VARCHAR(190) NOT NULL,
+                    peer_id VARCHAR(16) NOT NULL,
+                    name VARCHAR(64) NOT NULL DEFAULT \'\',
+                    owner_user VARCHAR(190) NOT NULL DEFAULT \'\',
+                    seen_at BIGINT NOT NULL,
+                    PRIMARY KEY(room, peer_id),
+                    KEY idx_collab_peers_room (room)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+            );
+            $pdo->exec(
+                'CREATE TABLE IF NOT EXISTS collab_messages (
+                    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                    room VARCHAR(190) NOT NULL,
+                    from_peer VARCHAR(16) NOT NULL,
+                    to_peer VARCHAR(16) NOT NULL,
+                    type VARCHAR(16) NOT NULL,
+                    payload MEDIUMTEXT NOT NULL,
+                    created_at BIGINT NOT NULL,
+                    PRIMARY KEY(id),
+                    KEY idx_collab_msg_target (room, to_peer, id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+            );
+        } else {
+            $pdo->exec(
+                'CREATE TABLE IF NOT EXISTS collab_peers (
+                    room TEXT NOT NULL,
+                    peer_id TEXT NOT NULL,
+                    name TEXT NOT NULL DEFAULT \'\',
+                    owner_user TEXT NOT NULL DEFAULT \'\',
+                    seen_at INTEGER NOT NULL,
+                    PRIMARY KEY(room, peer_id)
+                )'
+            );
+            $pdo->exec(
+                'CREATE TABLE IF NOT EXISTS collab_messages (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    room TEXT NOT NULL,
+                    from_peer TEXT NOT NULL,
+                    to_peer TEXT NOT NULL,
+                    type TEXT NOT NULL,
+                    payload TEXT NOT NULL,
+                    created_at INTEGER NOT NULL
+                )'
+            );
+            $pdo->exec('CREATE INDEX IF NOT EXISTS idx_collab_msg_target ON collab_messages(room, to_peer, id)');
+            $pdo->exec('CREATE INDEX IF NOT EXISTS idx_collab_peers_room ON collab_peers(room)');
+        }
+
+        $stmt = $pdo->prepare('INSERT INTO app_migrations (version, name, applied_at) VALUES (?, ?, ?)');
+        $stmt->execute([6, 'create_collab_signaling_tables', date('c')]);
     }
 }
