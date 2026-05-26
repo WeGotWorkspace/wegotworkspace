@@ -18,6 +18,8 @@ final class CollabDocumentEndpointsTest extends TestCase
 {
     private const ROOM = '/users/alice/docs/together.md';
 
+    private const ROOM_WITH_SPACES = '/users/alice/docs/Hello World.md';
+
     private string $dataDir = '';
 
     protected function setUp(): void
@@ -149,6 +151,26 @@ final class CollabDocumentEndpointsTest extends TestCase
             ])
             ->assertForbidden()
             ->assertJsonPath('error', 'forbidden');
+    }
+
+    public function test_document_room_with_spaces_is_supported(): void
+    {
+        $token = $this->issueToken();
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->putJson('/api/v1/collab/document', [
+                'room' => self::ROOM_WITH_SPACES,
+                'markdown' => "# Hello World\n",
+                'yjs' => [0, 0],
+            ])
+            ->assertOk()
+            ->assertJsonPath('ok', true);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->get('/api/v1/collab/document?room='.urlencode(self::ROOM_WITH_SPACES))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'text/markdown; charset=utf-8')
+            ->assertSeeText('# Hello World');
     }
 
     private function issueToken(string $username = 'alice'): string
