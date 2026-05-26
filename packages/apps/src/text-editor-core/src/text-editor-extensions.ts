@@ -1,3 +1,5 @@
+import Collaboration from "@tiptap/extension-collaboration";
+import CollaborationCaret from "@tiptap/extension-collaboration-caret";
 import Highlight from "@tiptap/extension-highlight";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
@@ -11,6 +13,8 @@ import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { Mark, mergeAttributes, type Extensions } from "@tiptap/react";
 import { Markdown } from "tiptap-markdown";
+import type { Awareness } from "y-protocols/awareness";
+import type * as Y from "yjs";
 import type { TextEditorContentFormat } from "@/text-editor-core/src/text-editor-content";
 import { PlainTextPaste } from "@/text-editor-core/src/text-editor-plain-paste";
 
@@ -100,4 +104,28 @@ export function createTextEditorExtensions(
   }
 
   return extensions;
+}
+
+export type CreateCollaborativeTextEditorExtensionsOptions = CreateTextEditorExtensionsOptions & {
+  document: Y.Doc;
+  awareness: Awareness;
+  user: { name: string; color: string };
+};
+
+/** Same surface as {@link createTextEditorExtensions} with Yjs + remote carets (undo disabled). */
+export function createCollaborativeTextEditorExtensions(
+  options: CreateCollaborativeTextEditorExtensionsOptions,
+): Extensions {
+  const { document, awareness, user, ...editorOptions } = options;
+  const base = createTextEditorExtensions(editorOptions).filter((ext) => ext.name !== "starterKit");
+
+  return [
+    StarterKit.configure({ undoRedo: false }),
+    ...base,
+    Collaboration.configure({ document }),
+    CollaborationCaret.configure({
+      provider: { awareness },
+      user,
+    }),
+  ];
 }
