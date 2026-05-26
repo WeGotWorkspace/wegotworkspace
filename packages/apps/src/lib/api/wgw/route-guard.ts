@@ -1,5 +1,5 @@
 import { redirect } from "@tanstack/react-router";
-import { wgwLiveApiEnabled, wgwSessionAvailable } from "@/lib/api/wgw/http";
+import { wgwHasAuthenticatedSession, wgwLiveApiEnabled } from "@/lib/api/wgw/http";
 
 type RouteLocationLike = {
   href?: string;
@@ -13,12 +13,14 @@ const AUTH_ROUTE_PREFIXES = ["/login", "/logout"] as const;
 const ALLOWED_RETURN_PREFIXES = [
   "/",
   "/admin",
+  "/docs",
   "/drive",
   "/install",
   "/mail",
   "/meet",
   "/notes",
   "/settings",
+  "/voice",
 ];
 
 const MAX_RETURN_UNWRAP_DEPTH = 16;
@@ -107,7 +109,7 @@ function returnPathFromLocation(location: RouteLocationLike | undefined): string
  */
 export function requireWgwAuth(location?: RouteLocationLike): void {
   if (!wgwLiveApiEnabled()) return;
-  if (wgwSessionAvailable()) return;
+  if (wgwHasAuthenticatedSession()) return;
   throw redirect({
     to: "/login",
     search: {
