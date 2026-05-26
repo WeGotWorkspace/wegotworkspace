@@ -12,6 +12,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { Mark, mergeAttributes, type Extensions } from "@tiptap/react";
 import { Markdown } from "tiptap-markdown";
 import type { TextEditorContentFormat } from "@/text-editor-core/src/text-editor-content";
+import { PlainTextPaste } from "@/text-editor-core/src/text-editor-plain-paste";
 
 export const CommentMark = Mark.create({
   name: "comment",
@@ -62,7 +63,8 @@ export function createTextEditorExtensions(
   options: CreateTextEditorExtensionsOptions = {},
 ): Extensions {
   const format = options.format ?? "html";
-  const placeholder = options.placeholder ?? "Press '/' for commands…";
+  const placeholder =
+    options.placeholder ?? (format === "text" ? "Start typing…" : "Press '/' for commands…");
 
   const extensions: Extensions = [
     StarterKit,
@@ -83,7 +85,7 @@ export function createTextEditorExtensions(
     SuggestionMark,
   ];
 
-  if (format === "markdown" || format === "text") {
+  if (format === "markdown") {
     extensions.push(
       Markdown.configure({
         html: true,
@@ -91,6 +93,10 @@ export function createTextEditorExtensions(
         transformCopiedText: true,
       }),
     );
+  }
+
+  if (format === "text") {
+    extensions.push(PlainTextPaste);
   }
 
   return extensions;
