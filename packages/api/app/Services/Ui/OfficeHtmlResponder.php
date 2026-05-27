@@ -79,6 +79,9 @@ final class OfficeHtmlResponder
             'timezone' => (string) ($cfg[WgwSettings::TIMEZONE] ?? 'UTC'),
             'office_path' => $officePath,
             'username' => $username,
+            // Prefer WebDAV writes; API save remains an explicit fallback mode.
+            'save_transport' => 'webdav+api',
+            'save_api_path' => '/api/v1/office/documents',
         ];
         $json = json_encode(
             $payload,
