@@ -13,7 +13,7 @@
     "setup:storybook-live-api": "bash tools/setup-storybook-live-api.sh --set-password",
     "test:collab-api": "bash tools/test-collab-api.sh",
     "dev:onlyoffice": "tools/with-root-env.sh -- turbo run dev --filter=@wgw/onlyoffice-web",
-    "build": "tools/with-root-env.sh -- turbo run typegen build --filter=@wgw/api --filter=@wgw/apps --filter=@wgw/onlyoffice-web",
+    "build": "tools/with-root-env.sh -- turbo run typegen build --filter=@wgw/api --filter=@wgw/apps",
     "ci:quality": "tools/with-root-env.sh -- turbo run typegen typegen:check lint format:check typecheck test --filter=@wgw/api --filter=@wgw/apps",
     "check:api-types": "tools/with-root-env.sh -- turbo run typegen:check --filter=@wgw/api",
     "lint": "tools/with-root-env.sh -- turbo run lint --filter=@wgw/api --filter=@wgw/apps",
