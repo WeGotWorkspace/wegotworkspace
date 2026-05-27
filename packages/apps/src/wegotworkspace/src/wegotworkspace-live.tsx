@@ -7,7 +7,7 @@ import { WeGotWorkspaceRouter } from "@/wegotworkspace/src/wegotworkspace-router
 export type WeGotWorkspaceLiveProps = WeGotWorkspaceProps & {
   /**
    * REST API origin for WeGotWorkspace (`/api/v1` is appended when missing).
-   * Example: `https://wegotworkspace.local:8443` or `/api/v1` (Storybook proxy).
+   * Example: `https://wegotworkspace.localhost:8443` or `/api/v1` (Storybook proxy).
    */
   apiBaseUrl: string;
 };
