@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace App\Services\Plugins;
 
+use App\Models\AppSetting;
 use App\Support\AppPaths;
 use App\Support\WgwSettings;
 
 final class PluginRegistryService
 {
+    private const ACTIVE_OVERRIDES_SETTING = 'plugins_active_overrides';
+
     public function __construct(private AppPaths $paths) {}
 
     /**
@@ -43,7 +46,66 @@ final class PluginRegistryService
             $pluginsById[$bundled['id']] = $bundled;
         }
 
-        return array_values($pluginsById);
+        $plugins = array_values($pluginsById);
+        $overrides = $this->activeOverrides();
+        foreach ($plugins as &$plugin) {
+            $id = (string) ($plugin['id'] ?? '');
+            if ($id !== '' && array_key_exists($id, $overrides)) {
+                $plugin['active'] = (bool) $overrides[$id];
+            }
+        }
+        unset($plugin);
+
+        return $plugins;
+    }
+
+    /**
+     * @return array{
+     *   plugin: array{
+     *     id: string,
+     *     name: string,
+     *     active: bool,
+     *     source: string
+     *   },
+     *   plugins: list<array{
+     *     id: string,
+     *     name: string,
+     *     active: bool,
+     *     source: string
+     *   }>
+     * }|null
+     */
+    public function setActive(string $id, bool $active): ?array
+    {
+        $id = trim($id);
+        if ($id === '') {
+            return null;
+        }
+
+        $existing = $this->list();
+        $knownIds = array_map(
+            static fn (array $plugin): string => (string) ($plugin['id'] ?? ''),
+            $existing,
+        );
+        if (! in_array($id, $knownIds, true)) {
+            return null;
+        }
+
+        $overrides = $this->activeOverrides();
+        $overrides[$id] = $active;
+        AppSetting::setValue(self::ACTIVE_OVERRIDES_SETTING, $overrides);
+
+        $plugins = $this->list();
+        foreach ($plugins as $plugin) {
+            if ((string) ($plugin['id'] ?? '') === $id) {
+                return [
+                    'plugin' => $plugin,
+                    'plugins' => $plugins,
+                ];
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -292,5 +354,25 @@ final class PluginRegistryService
         }
 
         return $plugin;
+    }
+
+    /**
+     * @return array<string, bool>
+     */
+    private function activeOverrides(): array
+    {
+        $value = AppSetting::getValue(self::ACTIVE_OVERRIDES_SETTING, []);
+        if (! is_array($value)) {
+            return [];
+        }
+        $normalized = [];
+        foreach ($value as $id => $active) {
+            if (! is_string($id) || trim($id) === '') {
+                continue;
+            }
+            $normalized[trim($id)] = (bool) $active;
+        }
+
+        return $normalized;
     }
 }

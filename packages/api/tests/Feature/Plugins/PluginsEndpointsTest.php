@@ -80,6 +80,37 @@ final class PluginsEndpointsTest extends TestCase
             ]);
     }
 
+    public function test_plugins_can_be_activated_and_deactivated(): void
+    {
+        $token = (string) $this->postJson('/api/v1/auth/token', [
+            'username' => 'alice',
+            'password' => 'secret',
+        ])->json('access_token');
+
+        $headers = ['Authorization' => 'Bearer '.$token];
+
+        $this->postJson('/api/v1/plugins/onlyoffice/deactivate', [], $headers)
+            ->assertOk()
+            ->assertJsonPath('plugin.id', 'onlyoffice')
+            ->assertJsonPath('plugin.active', false);
+
+        $this->getJson('/api/v1/plugins', $headers)
+            ->assertOk()
+            ->assertJsonFragment([
+                'id' => 'onlyoffice',
+                'active' => false,
+            ]);
+
+        $this->postJson('/api/v1/plugins/onlyoffice/activate', [], $headers)
+            ->assertOk()
+            ->assertJsonPath('plugin.id', 'onlyoffice')
+            ->assertJsonPath('plugin.active', true);
+
+        $this->postJson('/api/v1/plugins/unknown/deactivate', [], $headers)
+            ->assertNotFound()
+            ->assertJsonPath('error', 'plugin_not_found');
+    }
+
     private function seedAlice(): void
     {
         User::query()->create([
