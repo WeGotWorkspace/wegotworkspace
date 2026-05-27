@@ -543,7 +543,7 @@ export class EditorServer {
             }
           }
 
-          if (saveTransport !== "webdav") {
+          if (saveTransport === "api" || saveTransport === "webdav+api") {
             try {
               await saveOfficeDocumentViaApi(
                 putPathname,
