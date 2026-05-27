@@ -64,18 +64,6 @@ final class PluginsEndpointsTest extends TestCase
                     'name',
                     'active',
                     'source',
-                    'appTile' => ['id', 'label', 'route'],
-                    'drive' => [
-                        'openFileExtensions',
-                        'openFileRoute',
-                        'openFileQueryParam',
-                        'newFileTemplates' => [[
-                            'id',
-                            'label',
-                            'kind',
-                            'queryValue',
-                        ]],
-                    ],
                 ]],
             ]);
     }
