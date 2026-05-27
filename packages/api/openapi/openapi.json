@@ -669,6 +669,30 @@
         }
       }
     },
+    "/admin/plugins/install": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Install runtime plugin from ZIP upload",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plugin installed"
+          },
+          "400": {
+            "description": "Invalid plugin archive"
+          },
+          "500": {
+            "description": "Plugin install failed"
+          }
+        }
+      }
+    },
     "/admin/groups/{group}/members/{username}": {
       "put": {
         "tags": [
@@ -1581,6 +1605,86 @@
         "responses": {
           "200": {
             "description": "Updated Office document"
+          }
+        }
+      }
+    },
+    "/plugins": {
+      "get": {
+        "tags": [
+          "Plugins"
+        ],
+        "summary": "List discovered plugins and capabilities",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plugin registry snapshot"
+          }
+        }
+      }
+    },
+    "/plugins/{id}/activate": {
+      "post": {
+        "tags": [
+          "Plugins"
+        ],
+        "summary": "Activate a plugin",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plugin activated"
+          },
+          "404": {
+            "description": "Plugin not found"
+          }
+        }
+      }
+    },
+    "/plugins/{id}/deactivate": {
+      "post": {
+        "tags": [
+          "Plugins"
+        ],
+        "summary": "Deactivate a plugin",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plugin deactivated"
+          },
+          "404": {
+            "description": "Plugin not found"
           }
         }
       }
