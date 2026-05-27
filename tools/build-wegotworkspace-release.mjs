@@ -27,7 +27,6 @@ const appReleaseEntries = [
   "wgw-config.sample.php",
   "packages/apps/admin/dist",
   "packages/apps/drive/dist",
-  "packages/apps/office/build",
   "packages/apps/install/dist",
   "packages/apps/mail/dist",
   "packages/apps/notes/dist",

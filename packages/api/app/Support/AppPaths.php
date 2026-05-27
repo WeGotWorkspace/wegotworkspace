@@ -249,6 +249,8 @@ final class AppPaths
         $repo = dirname($root, 2);
 
         return [
+            $root.'/wgw-plugins/onlyoffice/assets/index.html',
+            $repo.'/wgw-plugins/onlyoffice/assets/index.html',
             $repo.'/packages/apps/office/build/index.html',
             $root.'/packages/apps/office/build/index.html',
         ];
