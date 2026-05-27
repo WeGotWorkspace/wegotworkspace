@@ -279,5 +279,9 @@ export function createMockAdminOperations(seed: AdminUIData): AdminAPIOperations
       );
       return snapshot();
     },
+    installPluginZip: async (_file, opts) => {
+      await sleep(200, opts?.signal);
+      throw new Error("Plugin install from ZIP requires a live server connection.");
+    },
   };
 }

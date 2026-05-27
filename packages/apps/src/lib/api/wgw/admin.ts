@@ -448,5 +448,17 @@ export function createWgwAdminOperations(): AdminAPIOperations {
       await wgwReadJson(res);
       return fetchAdminUiData(opts);
     },
+    installPluginZip: async (file, opts) => {
+      const form = new FormData();
+      form.append("plugin", file);
+      const res = await wgwFetch("/admin/plugins/install", {
+        method: "POST",
+        body: form,
+        signal: opts?.signal,
+      });
+      if (!res.ok) throw new Error(`POST /admin/plugins/install failed (${res.status})`);
+      await wgwReadJson(res);
+      return fetchAdminUiData(opts);
+    },
   };
 }
