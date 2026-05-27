@@ -3,7 +3,7 @@
 #
 #   pnpm docker:ssl:setup   # mkcert → docker/apache/certs (once)
 #   docker compose -f compose.dev.yml -f compose.local.yml up -d --build
-#   https://wegotworkspace.local/   (add 127.0.0.1 wegotworkspace.local to /etc/hosts)
+#   https://wegotworkspace.localhost/
 #
 #   pnpm dev:ui
 
@@ -18,7 +18,7 @@ services:
       - "${WGW_DOCKER_HTTP_PORT:-9080}:80"
     environment:
       WGW_APP_ROOT: /var/www/install
-      WGW_DEV_DOMAIN: ${WGW_DEV_DOMAIN:-wegotworkspace.local}
+      WGW_DEV_DOMAIN: ${WGW_DEV_DOMAIN:-wegotworkspace.localhost}
     volumes:
       - ./apps/wegotworkspace:/var/www/install
       - ./packages/api:/var/www/packages/api
