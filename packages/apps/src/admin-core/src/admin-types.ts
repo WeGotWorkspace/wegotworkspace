@@ -1,4 +1,4 @@
-export type AdminSection = "users" | "mail" | "meet" | "webdav" | "backups" | "updates";
+export type AdminSection = "users" | "mail" | "meet" | "webdav" | "plugins" | "backups" | "updates";
 
 export type AdminUser = {
   id: string;
@@ -123,6 +123,12 @@ export type AdminUIData = {
   voice: AdminVoiceSettings;
   apps: AdminAppsSettings;
   webdav: AdminWebdavSettings;
+  plugins: {
+    id: string;
+    name: string;
+    active: boolean;
+    source?: string;
+  }[];
   updates: AdminUpdateState;
   currentUser: string;
   logoutUrl: string;
@@ -170,4 +176,7 @@ export type AdminAPIOperations = {
     opts?: { signal?: AbortSignal },
   ) => Promise<AdminUIData>;
   deleteGroup: (groupSlug: string, opts?: { signal?: AbortSignal }) => Promise<AdminUIData>;
+  activatePlugin: (pluginId: string, opts?: { signal?: AbortSignal }) => Promise<AdminUIData>;
+  deactivatePlugin: (pluginId: string, opts?: { signal?: AbortSignal }) => Promise<AdminUIData>;
+  installPluginZip: (file: File, opts?: { signal?: AbortSignal }) => Promise<AdminUIData>;
 };

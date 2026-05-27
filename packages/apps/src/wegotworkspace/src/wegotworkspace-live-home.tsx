@@ -89,6 +89,21 @@ export function WeGotWorkspaceLiveHome() {
       fg: "#ffffff",
       onSelect: () => void navigate({ to: "/admin" }),
     },
+    ...homeState.pluginAppTiles.map((tile) => ({
+      id: tile.id,
+      label: tile.label,
+      icon:
+        tile.icon === "file-text" ? (
+          <FileText className="size-4" />
+        ) : (
+          <FileText className="size-4" />
+        ),
+      accent: "var(--drive-sidebar, #2563eb)",
+      fg: "#ffffff",
+      onSelect: () => {
+        window.location.assign(tile.route);
+      },
+    })),
   ];
 
   return (

@@ -109,6 +109,11 @@ final class AppPaths
         return $this->installRoot();
     }
 
+    public function pluginsRoot(): string
+    {
+        return rtrim($this->installRoot(), '/').'/wgw-plugins';
+    }
+
     public function installerSqlDir(string $driver): string
     {
         return dirname(__DIR__, 2).'/resources/installer/sql/'.$driver;
@@ -242,10 +247,29 @@ final class AppPaths
     {
         $root = $this->installRoot();
         $repo = dirname($root, 2);
+        $candidates = [];
 
-        return [
-            $repo.'/packages/apps/office/build/index.html',
-            $root.'/packages/apps/office/build/index.html',
-        ];
+        foreach ($this->privateDirCandidates() as $appsRoot) {
+            $candidates[] = $appsRoot.'/office/build/index.html';
+        }
+
+        // Optional plugin ZIP layout (Admin → Plugins or manual install under wgw-plugins/).
+        $candidates[] = $root.'/wgw-plugins/onlyoffice/assets/index.html';
+        $candidates[] = $repo.'/wgw-plugins/onlyoffice/assets/index.html';
+
+        return array_values(array_unique($candidates));
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function bundledPluginManifestCandidates(): array
+    {
+        $candidates = [];
+        foreach ($this->privateDirCandidates() as $appsRoot) {
+            $candidates[] = $appsRoot.'/office/plugin.json';
+        }
+
+        return array_values(array_unique($candidates));
     }
 }
