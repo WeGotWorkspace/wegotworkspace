@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DOMAIN="${WGW_DEV_DOMAIN:-wegotworkspace.local}"
+DOMAIN="${WGW_DEV_DOMAIN:-wegotworkspace.localhost}"
 CERT_DIR="${ROOT}/docker/apache/certs"
 
 mkdir -p "${CERT_DIR}"

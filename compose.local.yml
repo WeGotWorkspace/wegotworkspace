@@ -1,4 +1,4 @@
-# Optional local overlay: mkcert certs + host 80/443 for HTTPS (wegotworkspace.local).
+# Optional local overlay: mkcert certs + host 80/443 for HTTPS (wegotworkspace.localhost).
 # Not used on CI. After pnpm docker:ssl:setup:
 #   docker compose -f compose.dev.yml -f compose.local.yml up -d --build
 services:

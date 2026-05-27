@@ -45,11 +45,11 @@ Edit code in **`packages/api`** and **`packages/apps`** — nothing is copied in
 For CalDAV/CardDAV/WebDAV clients that need TLS and a stable hostname:
 
 ```bash
-pnpm docker:ssl:setup    # once: mkcert + /etc/hosts → 127.0.0.1 wegotworkspace.local
-pnpm docker:up
+pnpm docker:ssl:setup    # once: mkcert for wegotworkspace.localhost
+pnpm docker:up:https
 ```
 
-Then use **https://wegotworkspace.local/** (see [`docker/README.md`](docker/README.md)).
+Then use **https://wegotworkspace.localhost/** (see [`docker/README.md`](docker/README.md)).
 
 ### Other commands
 
