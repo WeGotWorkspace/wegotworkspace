@@ -9,7 +9,9 @@ use App\Models\Principal;
 use App\Models\User;
 use App\Services\Auth\AdminRoleResolver;
 use App\Storage\WgwStorage;
+use App\Support\AppPaths;
 use App\Support\WgwSettings;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Tests\Support\AuthTestKeys;
@@ -21,15 +23,21 @@ final class AdminEndpointsTest extends TestCase
 {
     private string $dataDir = '';
 
+    private string $previousAppRoot = '';
+
     protected function setUp(): void
     {
         parent::setUp();
 
         putenv('WGW_DISABLE_LOGIN_THROTTLE=1');
         $_ENV['WGW_DISABLE_LOGIN_THROTTLE'] = '1';
+        $this->previousAppRoot = getenv('WGW_APP_ROOT') ?: '';
 
         $this->dataDir = storage_path('framework/testing/wgw-admin-'.uniqid('', true));
         File::ensureDirectoryExists($this->dataDir.'/updates/backup');
+        File::ensureDirectoryExists($this->dataDir.'/install-root');
+        putenv('WGW_APP_ROOT='.$this->dataDir.'/install-root');
+        $_ENV['WGW_APP_ROOT'] = $this->dataDir.'/install-root';
         WgwTestDisks::refresh($this->dataDir);
 
         config([
@@ -62,6 +70,13 @@ final class AdminEndpointsTest extends TestCase
     {
         if ($this->dataDir !== '' && File::isDirectory($this->dataDir)) {
             File::deleteDirectory($this->dataDir);
+        }
+        if ($this->previousAppRoot !== '') {
+            putenv('WGW_APP_ROOT='.$this->previousAppRoot);
+            $_ENV['WGW_APP_ROOT'] = $this->previousAppRoot;
+        } else {
+            putenv('WGW_APP_ROOT');
+            unset($_ENV['WGW_APP_ROOT']);
         }
 
         parent::tearDown();
@@ -221,6 +236,43 @@ final class AdminEndpointsTest extends TestCase
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/v1/admin/state')
             ->assertForbidden();
+    }
+
+    public function test_admin_can_install_plugin_zip(): void
+    {
+        $token = $this->adminToken();
+        $zipPath = $this->dataDir.'/onlyoffice-plugin.zip';
+        $sourceRoot = $this->dataDir.'/plugin-source/onlyoffice';
+        File::ensureDirectoryExists($sourceRoot.'/assets');
+        File::put($sourceRoot.'/assets/index.html', '<!doctype html><title>Plugin</title>');
+        File::put($sourceRoot.'/plugin.json', json_encode([
+            'id' => 'onlyoffice',
+            'name' => 'ONLYOFFICE',
+            'active' => true,
+            'drive' => [
+                'openFileExtensions' => ['docx'],
+            ],
+        ], JSON_THROW_ON_ERROR));
+
+        $zip = new \ZipArchive;
+        $opened = $zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+        $this->assertSame(true, $opened);
+        $zip->addFile($sourceRoot.'/plugin.json', 'onlyoffice/plugin.json');
+        $zip->addFile($sourceRoot.'/assets/index.html', 'onlyoffice/assets/index.html');
+        $zip->close();
+
+        $upload = new UploadedFile($zipPath, 'onlyoffice.zip', 'application/zip', null, true);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->post('/api/v1/admin/plugins/install', ['plugin' => $upload])
+            ->assertOk()
+            ->assertJsonPath('ok', true)
+            ->assertJsonPath('plugin.id', 'onlyoffice')
+            ->assertJsonPath('plugin.active', true);
+
+        $pluginsRoot = app(AppPaths::class)->pluginsRoot();
+        $this->assertFileExists($pluginsRoot.'/onlyoffice/plugin.json');
+        $this->assertFileExists($pluginsRoot.'/onlyoffice/assets/index.html');
     }
 
     private function adminToken(): string

@@ -1,0 +1,41 @@
+{
+  "id": "onlyoffice",
+  "name": "ONLYOFFICE",
+  "active": true,
+  "source": "bundled",
+  "appTile": {
+    "id": "office",
+    "label": "Office",
+    "route": "/office",
+    "icon": "file-text"
+  },
+  "drive": {
+    "openFileExtensions": ["docx", "xlsx", "pptx"],
+    "openFileRoute": "/office/editor",
+    "openFileQueryParam": "file",
+    "newFileTemplates": [
+      {
+        "id": "onlyoffice-docx",
+        "label": "New document",
+        "kind": "doc",
+        "queryValue": "docx"
+      },
+      {
+        "id": "onlyoffice-xlsx",
+        "label": "New spreadsheet",
+        "kind": "sheet",
+        "queryValue": "xlsx"
+      },
+      {
+        "id": "onlyoffice-pptx",
+        "label": "New presentation",
+        "kind": "slides",
+        "queryValue": "pptx"
+      }
+    ]
+  },
+  "office": {
+    "saveTransport": "webdav+api",
+    "saveApiPath": "/api/v1/office/documents"
+  }
+}

@@ -102,7 +102,8 @@ function DriveSidebar({
     setSidebarOpen,
     createFolder,
     createMarkdown,
-    createBlank,
+    createFromTemplate,
+    newFileTemplates,
     fileInputRef,
   } = controller;
 
@@ -125,7 +126,8 @@ function DriveSidebar({
           onCreateFolder={createFolder}
           onUploadFiles={() => fileInputRef.current?.click()}
           onCreateMarkdown={onOpenDocsFile ? createMarkdown : undefined}
-          onCreateBlank={createBlank}
+          newFileTemplates={newFileTemplates}
+          onCreateTemplate={createFromTemplate}
         />
       }
     >

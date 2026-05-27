@@ -12,7 +12,8 @@ export type DriveApiSource = {
 export function createWgwDriveApiSource(): DriveApiSource {
   return {
     loadBootstrap: fetchDriveLiveBootstrap,
-    createOperations: (bootstrap) => createWgwDriveOperations(bootstrap?.data.cwd ?? "/"),
+    createOperations: (bootstrap) =>
+      createWgwDriveOperations(bootstrap?.data.cwd ?? "/", bootstrap?.data.plugins ?? []),
   };
 }
 
