@@ -6,7 +6,6 @@ namespace App\Services\Plugins;
 
 use App\Models\AppSetting;
 use App\Support\AppPaths;
-use App\Support\WgwSettings;
 
 final class PluginRegistryService
 {
@@ -39,11 +38,6 @@ final class PluginRegistryService
         $pluginsById = [];
         foreach ($this->loadRuntimePlugins() as $plugin) {
             $pluginsById[$plugin['id']] = $plugin;
-        }
-
-        $bundled = $this->bundledOnlyOfficePlugin();
-        if (! isset($pluginsById[$bundled['id']])) {
-            $pluginsById[$bundled['id']] = $bundled;
         }
 
         $plugins = array_values($pluginsById);
@@ -106,71 +100,6 @@ final class PluginRegistryService
         }
 
         return null;
-    }
-
-    /**
-     * @return array{
-     *   id: string,
-     *   name: string,
-     *   active: bool,
-     *   source: string,
-     *   appTile?: array{id: string, label: string, route: string, icon?: string},
-     *   drive?: array{
-     *     openFileExtensions?: list<string>,
-     *     openFileRoute?: string,
-     *     openFileQueryParam?: string,
-     *     newFileTemplates?: list<array{
-     *       id: string,
-     *       label: string,
-     *       kind: string,
-     *       queryValue: string
-     *     }>
-     *   }
-     * }
-     */
-    private function bundledOnlyOfficePlugin(): array
-    {
-        $cfg = WgwSettings::normalized();
-        $filesEnabled = (bool) ($cfg[WgwSettings::FILES_ENABLED] ?? true);
-        $officeIndexReady = $this->paths->officeIndex() !== null;
-
-        return [
-            'id' => 'onlyoffice',
-            'name' => 'ONLYOFFICE',
-            'active' => $filesEnabled && $officeIndexReady,
-            'source' => 'bundled',
-            'appTile' => [
-                'id' => 'office',
-                'label' => 'Office',
-                'route' => '/office',
-                'icon' => 'file-text',
-            ],
-            'drive' => [
-                'openFileExtensions' => ['docx', 'xlsx', 'pptx'],
-                'openFileRoute' => '/office/editor',
-                'openFileQueryParam' => 'file',
-                'newFileTemplates' => [
-                    [
-                        'id' => 'onlyoffice-docx',
-                        'label' => 'New document',
-                        'kind' => 'doc',
-                        'queryValue' => 'docx',
-                    ],
-                    [
-                        'id' => 'onlyoffice-xlsx',
-                        'label' => 'New spreadsheet',
-                        'kind' => 'sheet',
-                        'queryValue' => 'xlsx',
-                    ],
-                    [
-                        'id' => 'onlyoffice-pptx',
-                        'label' => 'New presentation',
-                        'kind' => 'slides',
-                        'queryValue' => 'pptx',
-                    ],
-                ],
-            ],
-        ];
     }
 
     /**

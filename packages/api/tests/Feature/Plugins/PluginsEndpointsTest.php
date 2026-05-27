@@ -7,18 +7,37 @@ namespace Tests\Feature\Plugins;
 use App\Models\Principal;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Tests\Support\AuthTestKeys;
 use Tests\Support\SqliteWgwSchema;
 use Tests\TestCase;
 
 final class PluginsEndpointsTest extends TestCase
 {
+    private string $dataDir = '';
+
+    private string $previousAppRoot = '';
+
     protected function setUp(): void
     {
         parent::setUp();
 
         putenv('WGW_DISABLE_LOGIN_THROTTLE=1');
         $_ENV['WGW_DISABLE_LOGIN_THROTTLE'] = '1';
+        $this->previousAppRoot = getenv('WGW_APP_ROOT') ?: '';
+        $this->dataDir = storage_path('framework/testing/wgw-plugins-'.uniqid('', true));
+        File::ensureDirectoryExists($this->dataDir.'/install-root/wgw-plugins/onlyoffice/assets');
+        putenv('WGW_APP_ROOT='.$this->dataDir.'/install-root');
+        $_ENV['WGW_APP_ROOT'] = $this->dataDir.'/install-root';
+        File::put($this->dataDir.'/install-root/wgw-plugins/onlyoffice/assets/index.html', '<!doctype html><title>Plugin</title>');
+        File::put($this->dataDir.'/install-root/wgw-plugins/onlyoffice/plugin.json', json_encode([
+            'id' => 'onlyoffice',
+            'name' => 'ONLYOFFICE',
+            'active' => true,
+            'drive' => [
+                'openFileExtensions' => ['docx'],
+            ],
+        ], JSON_THROW_ON_ERROR));
 
         config([
             'database.connections.wgw' => [
@@ -42,6 +61,22 @@ final class PluginsEndpointsTest extends TestCase
         SqliteWgwSchema::applyCoreTables();
         SqliteWgwSchema::applyAuthTables();
         $this->seedAlice();
+    }
+
+    protected function tearDown(): void
+    {
+        if ($this->dataDir !== '' && File::isDirectory($this->dataDir)) {
+            File::deleteDirectory($this->dataDir);
+        }
+        if ($this->previousAppRoot !== '') {
+            putenv('WGW_APP_ROOT='.$this->previousAppRoot);
+            $_ENV['WGW_APP_ROOT'] = $this->previousAppRoot;
+        } else {
+            putenv('WGW_APP_ROOT');
+            unset($_ENV['WGW_APP_ROOT']);
+        }
+
+        parent::tearDown();
     }
 
     public function test_plugins_requires_auth_and_returns_drive_handlers(): void
