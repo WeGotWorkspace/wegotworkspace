@@ -1,44 +1,47 @@
-# ONLYOFFICE plugin packaging
+# ONLYOFFICE packaging
 
-ONLYOFFICE ships as a separate plugin artifact and installs under:
+## Bundled in WeGotWorkspace (default)
 
-`apps/wegotworkspace/wgw-plugins/onlyoffice/`
+Monorepo and release builds put the static editor under:
 
-Expected runtime layout:
+`packages/apps/office/build/`
 
-```text
-wgw-plugins/
-  onlyoffice/
-    plugin.json
-    assets/
-      index.html
-      ...
+with manifest:
+
+`packages/apps/office/plugin.json`
+
+Build it with:
+
+```bash
+pnpm --filter @wgw/onlyoffice-web build
 ```
 
-The API plugin registry discovers runtime plugins from `wgw-plugins/*/plugin.json`.
-For ONLYOFFICE, `assets/index.html` is used as the Office static entrypoint.
+Root `pnpm build` includes that step. The API serves `/office/` from `office/build` and registers the bundled plugin from `office/plugin.json`.
 
-## Build plugin ZIP
+**Do not** unpack release artifacts into `wgw-plugins/` for local dev — that path is only for optional plugin ZIP installs.
+
+## Optional plugin ZIP (separate distribution)
+
+To ship ONLYOFFICE as an add-on for existing installs:
 
 ```bash
 pnpm run release:plugin:onlyoffice
 ```
 
-Output files are written to `dist/releases/`:
+Output in `dist/releases/`:
 
-- `wgw-plugin-onlyoffice-<version>.zip`
+- `wgw-plugin-onlyoffice-<version>.zip` (contains `onlyoffice/plugin.json` + `onlyoffice/assets/…`)
 - `wgw-plugin-onlyoffice-manifest.json`
 - `wgw-plugin-onlyoffice-manifest.sig` (when signing key is configured)
 
-The build command first runs `pnpm --filter @wgw/onlyoffice-web build` unless
-`WGW_PLUGIN_SKIP_BUILD=1` is set.
+Install via **Admin → Plugins** (upload ZIP), or unpack so files land at:
 
-## Install plugin ZIP
+`wgw-plugins/onlyoffice/`
 
-1. Unpack the ZIP into your install root so files land under
-   `wgw-plugins/onlyoffice/`.
-2. Activate the plugin via Admin → Plugins (or `POST /api/v1/plugins/onlyoffice/activate`).
-3. Verify:
-   - `GET /api/v1/plugins` shows `onlyoffice` as active
-   - `/office/` and `/office/editor` resolve
+not inside `wgw-plugins/wgw-plugins/…` (that happens when the ZIP is extracted into `wgw-plugins/` instead of the install root).
 
+## Verify
+
+- `GET /api/v1/plugins` lists `onlyoffice`
+- `/office/` and `/office/editor` load
+- `GET /api/v1/office/capabilities` reports `indexReady: true`

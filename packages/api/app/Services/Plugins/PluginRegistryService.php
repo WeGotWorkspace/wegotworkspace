@@ -36,6 +36,9 @@ final class PluginRegistryService
     public function list(): array
     {
         $pluginsById = [];
+        foreach ($this->loadBundledPlugins() as $plugin) {
+            $pluginsById[$plugin['id']] = $plugin;
+        }
         foreach ($this->loadRuntimePlugins() as $plugin) {
             $pluginsById[$plugin['id']] = $plugin;
         }
@@ -122,6 +125,62 @@ final class PluginRegistryService
      *   }
      * }>
      */
+    /**
+     * @return list<array{
+     *   id: string,
+     *   name: string,
+     *   active: bool,
+     *   source: string,
+     *   appTile?: array{id: string, label: string, route: string, icon?: string},
+     *   drive?: array{
+     *     openFileExtensions?: list<string>,
+     *     openFileRoute?: string,
+     *     openFileQueryParam?: string,
+     *     newFileTemplates?: list<array{
+     *       id: string,
+     *       label: string,
+     *       kind: string,
+     *       queryValue: string
+     *     }>
+     *   }
+     * }>
+     */
+    private function loadBundledPlugins(): array
+    {
+        $plugins = [];
+        foreach ($this->paths->bundledPluginManifestCandidates() as $manifestPath) {
+            if (! is_readable($manifestPath)) {
+                continue;
+            }
+            $appsRoot = dirname(dirname($manifestPath));
+            $module = basename(dirname($manifestPath));
+            $index = $appsRoot.'/'.$module.'/build/index.html';
+            if (! is_file($index)) {
+                continue;
+            }
+            $raw = @file_get_contents($manifestPath);
+            if (! is_string($raw) || $raw === '') {
+                continue;
+            }
+            try {
+                $data = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+            } catch (\JsonException) {
+                continue;
+            }
+            if (! is_array($data)) {
+                continue;
+            }
+            $normalized = $this->normalizeManifestPlugin($data);
+            if ($normalized === null) {
+                continue;
+            }
+            $normalized['source'] = 'bundled';
+            $plugins[] = $normalized;
+        }
+
+        return $plugins;
+    }
+
     private function loadRuntimePlugins(): array
     {
         $root = $this->paths->pluginsRoot();
