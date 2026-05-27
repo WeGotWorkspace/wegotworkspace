@@ -5,7 +5,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_LOCAL="$ROOT/.env.local"
 
-PROXY_TARGET="${WGW_PROXY_TARGET:-https://wegotworkspace.local}"
+PROXY_TARGET="${WGW_PROXY_TARGET:-https://wegotworkspace.localhost}"
 USERNAME="${WGW_DEV_USERNAME:-${VITE_WGW_DEV_USERNAME:-admin}}"
 PASSWORD="${WGW_DEV_PASSWORD:-${VITE_WGW_DEV_PASSWORD:-storybook-dev}}"
 SIGNAL_ROOM="${COLLAB_SIGNAL_ROOM:-docs/test-together.md}"
@@ -25,7 +25,7 @@ Reads defaults from repo-root .env.local when present:
   WGW_PROXY_TARGET, VITE_WGW_DEV_USERNAME, VITE_WGW_DEV_PASSWORD
 
 Options:
-  --base URL          API origin (default: WGW_PROXY_TARGET or https://wegotworkspace.local)
+  --base URL          API origin (default: WGW_PROXY_TARGET or https://wegotworkspace.localhost)
   --user NAME         Login username (default: admin)
   --password PASS     Login password (default: storybook-dev)
   --signal-room ID    Signaling room id (default: docs/test-together.md)
@@ -37,7 +37,7 @@ Options:
 
 Examples:
   pnpm test:collab-api
-  WGW_PROXY_TARGET=https://wegotworkspace.local tools/test-collab-api.sh
+  WGW_PROXY_TARGET=https://wegotworkspace.localhost tools/test-collab-api.sh
   tools/test-collab-api.sh --document-only
 EOF
 }
