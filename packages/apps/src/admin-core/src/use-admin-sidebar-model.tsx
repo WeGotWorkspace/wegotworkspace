@@ -1,4 +1,4 @@
-import { DatabaseBackup, Database, Mail, ShieldCheck, Users, Video } from "lucide-react";
+import { DatabaseBackup, Database, Mail, Puzzle, ShieldCheck, Users, Video } from "lucide-react";
 import type { AdminSection } from "@/admin-core/src/admin-types";
 
 export type AdminSectionDescriptor = {
@@ -33,6 +33,12 @@ export function useAdminSidebarModel(): AdminSectionDescriptor[] {
       label: "WebDAV",
       description: "Core platform and app toggles",
       icon: <ShieldCheck className="size-3.5" />,
+    },
+    {
+      id: "plugins",
+      label: "Plugins",
+      description: "Optional app integrations",
+      icon: <Puzzle className="size-3.5" />,
     },
     {
       id: "backups",

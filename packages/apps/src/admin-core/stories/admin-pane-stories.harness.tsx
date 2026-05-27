@@ -13,6 +13,7 @@ export type AdminStoryDataOverride = {
   voice?: Partial<AdminUIData["voice"]>;
   apps?: Partial<AdminUIData["apps"]>;
   webdav?: Partial<AdminUIData["webdav"]>;
+  plugins?: AdminUIData["plugins"];
   updates?: Partial<AdminUIData["updates"]>;
   currentUser?: string;
   logoutUrl?: string;
