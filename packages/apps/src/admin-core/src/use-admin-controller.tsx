@@ -679,6 +679,23 @@ export function useAdminController({
     }
   };
 
+  const installPluginZip = async (file: File) => {
+    if (!operations?.installPluginZip) {
+      showError("Plugin install API is not ready yet");
+      return false;
+    }
+    try {
+      const next = await operations.installPluginZip(file);
+      applyAdminData(next);
+      showSuccess("Plugin installed");
+      return true;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not install plugin ZIP";
+      showError(message);
+      return false;
+    }
+  };
+
   return {
     section,
     sections,
@@ -716,6 +733,7 @@ export function useAdminController({
       updateGroup,
       deleteGroup,
       setPluginActive,
+      installPluginZip,
     },
   };
 }

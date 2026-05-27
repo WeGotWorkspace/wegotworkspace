@@ -178,4 +178,5 @@ export type AdminAPIOperations = {
   deleteGroup: (groupSlug: string, opts?: { signal?: AbortSignal }) => Promise<AdminUIData>;
   activatePlugin: (pluginId: string, opts?: { signal?: AbortSignal }) => Promise<AdminUIData>;
   deactivatePlugin: (pluginId: string, opts?: { signal?: AbortSignal }) => Promise<AdminUIData>;
+  installPluginZip: (file: File, opts?: { signal?: AbortSignal }) => Promise<AdminUIData>;
 };
