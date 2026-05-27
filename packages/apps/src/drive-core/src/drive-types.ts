@@ -2,6 +2,7 @@ import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
 import type {
   WgwDriveDirectoryData,
   WgwDriveDirectoryEntry,
+  WgwPluginDescriptor,
   WgwDriveUserData,
 } from "@/lib/api/wgw/types";
 
@@ -9,6 +10,7 @@ export type DriveUIData = {
   user: WgwDriveUserData;
   cwd: string;
   directory: WgwDriveDirectoryData;
+  plugins: WgwPluginDescriptor[];
 };
 
 export type DriveAppBootstrap = {

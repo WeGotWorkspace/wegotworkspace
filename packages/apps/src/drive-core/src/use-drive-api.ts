@@ -22,6 +22,7 @@ export function useDriveAPI(source?: DriveApiSource) {
         location: "/",
         files: [],
       },
+      plugins: [],
     }),
     [],
   );
