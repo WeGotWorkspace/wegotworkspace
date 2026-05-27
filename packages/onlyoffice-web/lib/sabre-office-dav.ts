@@ -6,6 +6,8 @@ export type SabreOfficeInjectedConfig = {
   timezone: string;
   office_path: string;
   username: string;
+  save_transport?: "webdav" | "api" | "webdav+api";
+  save_api_path?: string;
 };
 
 export function readSabreOfficeConfig(): SabreOfficeInjectedConfig | null {
@@ -23,6 +25,14 @@ export function readSabreOfficeConfig(): SabreOfficeInjectedConfig | null {
     timezone: typeof c.timezone === "string" ? c.timezone : "UTC",
     office_path: typeof c.office_path === "string" ? c.office_path : "/office/",
     username: c.username,
+    save_transport:
+      c.save_transport === "webdav" || c.save_transport === "api" || c.save_transport === "webdav+api"
+        ? c.save_transport
+        : "webdav+api",
+    save_api_path:
+      typeof c.save_api_path === "string" && c.save_api_path.trim() !== ""
+        ? c.save_api_path
+        : "/api/v1/office/documents",
   };
 }
 

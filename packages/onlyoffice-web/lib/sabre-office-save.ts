@@ -38,6 +38,7 @@ function readAccessToken(): string | null {
 export async function saveOfficeDocumentViaApi(
   webdavPathname: string,
   bytes: Uint8Array,
+  apiPath = "/api/v1/office/documents",
   signal?: AbortSignal,
 ): Promise<void> {
   const token = readAccessToken();
@@ -46,7 +47,7 @@ export async function saveOfficeDocumentViaApi(
   }
 
   const path = officeApiPathFromWebdavPathname(webdavPathname);
-  const res = await fetch("/api/v1/office/documents", {
+  const res = await fetch(apiPath, {
     method: "PUT",
     credentials: "include",
     signal,
