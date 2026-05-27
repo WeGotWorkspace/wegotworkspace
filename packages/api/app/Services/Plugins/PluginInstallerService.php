@@ -54,7 +54,11 @@ final class PluginInstallerService
             throw new \InvalidArgumentException('plugin.json not found in ZIP.');
         }
 
-        $manifestRaw = (string) file_get_contents($manifestPath);
+        if (! File::isReadable($manifestPath)) {
+            File::deleteDirectory($tmpRoot);
+            throw new \InvalidArgumentException('plugin.json is not readable.');
+        }
+        $manifestRaw = File::get($manifestPath);
         try {
             $manifest = json_decode($manifestRaw, true, 512, JSON_THROW_ON_ERROR);
         } catch (\JsonException) {

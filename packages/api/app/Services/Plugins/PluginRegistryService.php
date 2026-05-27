@@ -6,6 +6,7 @@ namespace App\Services\Plugins;
 
 use App\Models\AppSetting;
 use App\Support\AppPaths;
+use Illuminate\Support\Facades\File;
 
 final class PluginRegistryService
 {
@@ -158,8 +159,11 @@ final class PluginRegistryService
             if (! is_file($index)) {
                 continue;
             }
-            $raw = @file_get_contents($manifestPath);
-            if (! is_string($raw) || $raw === '') {
+            if (! File::isReadable($manifestPath)) {
+                continue;
+            }
+            $raw = File::get($manifestPath);
+            if ($raw === '') {
                 continue;
             }
             try {
@@ -202,8 +206,11 @@ final class PluginRegistryService
             if (! is_readable($manifest)) {
                 continue;
             }
-            $raw = @file_get_contents($manifest);
-            if (! is_string($raw) || $raw === '') {
+            if (! File::isReadable($manifest)) {
+                continue;
+            }
+            $raw = File::get($manifest);
+            if ($raw === '') {
                 continue;
             }
             try {
