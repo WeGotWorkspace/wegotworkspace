@@ -17,7 +17,7 @@ const pluginName = "ONLYOFFICE";
 const version = resolveVersion();
 
 const runtimeOfficeBuild = resolve(appRoot, "packages/apps/office/build");
-const pluginRuntimeRoot = resolve(stagingRoot, `wgw-plugins/${pluginId}`);
+const pluginRuntimeRoot = resolve(stagingRoot, pluginId);
 const pluginAssetsRoot = resolve(pluginRuntimeRoot, "assets");
 const pluginManifestPath = resolve(pluginRuntimeRoot, "plugin.json");
 
@@ -42,33 +42,12 @@ rmSafe(stagingRoot);
 ensureDir(pluginAssetsRoot);
 cpSync(runtimeOfficeBuild, pluginAssetsRoot, { recursive: true });
 
-const pluginManifest = {
-  id: pluginId,
-  name: pluginName,
-  active: true,
-  source: "runtime",
-  appTile: {
-    id: "office",
-    label: "Office",
-    route: "/office",
-    icon: "file-text",
-  },
-  drive: {
-    openFileExtensions: ["docx", "xlsx", "pptx"],
-    openFileRoute: "/office/editor",
-    openFileQueryParam: "file",
-    newFileTemplates: [
-      { id: "onlyoffice-docx", label: "New document", kind: "doc", queryValue: "docx" },
-      { id: "onlyoffice-xlsx", label: "New spreadsheet", kind: "sheet", queryValue: "xlsx" },
-      { id: "onlyoffice-pptx", label: "New presentation", kind: "slides", queryValue: "pptx" },
-    ],
-  },
-  office: {
-    saveTransport: "webdav+api",
-    saveApiPath: "/api/v1/office/documents",
-  },
-};
-
+const manifestSource = resolve(repoRoot, "packages/onlyoffice-web/onlyoffice.plugin.json");
+if (!existsSync(manifestSource)) {
+  throw new Error(`Missing plugin manifest: ${relative(repoRoot, manifestSource)}`);
+}
+const pluginManifest = JSON.parse(readFileSync(manifestSource, "utf8"));
+pluginManifest.source = "runtime";
 writeFileSync(pluginManifestPath, `${JSON.stringify(pluginManifest, null, 2)}\n`, "utf8");
 
 zipDirectory(stagingRoot, packagePath);

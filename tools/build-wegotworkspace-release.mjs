@@ -28,6 +28,8 @@ const appReleaseEntries = [
   "packages/apps/admin/dist",
   "packages/apps/drive/dist",
   "packages/apps/install/dist",
+  "packages/apps/office/build",
+  "packages/apps/office/plugin.json",
   "packages/apps/mail/dist",
   "packages/apps/notes/dist",
   "packages/apps/shell/dist",

@@ -242,7 +242,7 @@ final class AdminEndpointsTest extends TestCase
     {
         $token = $this->adminToken();
         $zipPath = $this->dataDir.'/onlyoffice-plugin.zip';
-        $sourceRoot = $this->dataDir.'/plugin-source/wgw-plugins/onlyoffice';
+        $sourceRoot = $this->dataDir.'/plugin-source/onlyoffice';
         File::ensureDirectoryExists($sourceRoot.'/assets');
         File::put($sourceRoot.'/assets/index.html', '<!doctype html><title>Plugin</title>');
         File::put($sourceRoot.'/plugin.json', json_encode([
@@ -257,8 +257,8 @@ final class AdminEndpointsTest extends TestCase
         $zip = new \ZipArchive;
         $opened = $zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
         $this->assertSame(true, $opened);
-        $zip->addFile($sourceRoot.'/plugin.json', 'wgw-plugins/onlyoffice/plugin.json');
-        $zip->addFile($sourceRoot.'/assets/index.html', 'wgw-plugins/onlyoffice/assets/index.html');
+        $zip->addFile($sourceRoot.'/plugin.json', 'onlyoffice/plugin.json');
+        $zip->addFile($sourceRoot.'/assets/index.html', 'onlyoffice/assets/index.html');
         $zip->close();
 
         $upload = new UploadedFile($zipPath, 'onlyoffice.zip', 'application/zip', null, true);

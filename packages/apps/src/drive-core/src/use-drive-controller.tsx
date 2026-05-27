@@ -53,13 +53,6 @@ export type UseDriveControllerArgs = {
 };
 
 const WRITE_QUEUE_DELAY_MS = 2500;
-const DEFAULT_OPEN_FILE_EXTENSIONS = new Set(["docx", "xlsx", "pptx"]);
-const DEFAULT_NEW_FILE_TEMPLATES: (DriveNewFileTemplate & { queryValue: string })[] = [
-  { id: "default-docx", label: "New document", kind: "doc", queryValue: "docx" },
-  { id: "default-xlsx", label: "New spreadsheet", kind: "sheet", queryValue: "xlsx" },
-  { id: "default-pptx", label: "New presentation", kind: "slides", queryValue: "pptx" },
-];
-
 export function useDriveController({
   data,
   session,
@@ -75,8 +68,8 @@ export function useDriveController({
     [showError],
   );
 
-  const launchOfficeEditor = useCallback((params: URLSearchParams) => {
-    const target = `/office/editor?${params.toString()}`;
+  const launchOfficeEditor = useCallback((route: string, params: URLSearchParams) => {
+    const target = `${route}?${params.toString()}`;
     void wgwEnsureOfficeSession()
       .catch(() => {
         // Best effort: navigation still proceeds and server auth gate handles fallback.
@@ -91,15 +84,16 @@ export function useDriveController({
     [data.plugins],
   );
   const openFileExtensions = useMemo(() => {
+    if (!officePlugin) return new Set<string>();
     const configured =
-      officePlugin?.drive?.openFileExtensions?.map((ext) => ext.toLowerCase()) ?? [];
-    return configured.length > 0 ? new Set(configured) : DEFAULT_OPEN_FILE_EXTENSIONS;
+      officePlugin.drive?.openFileExtensions?.map((ext) => ext.toLowerCase()) ?? [];
+    return new Set(configured);
   }, [officePlugin]);
-  const officeOpenRoute = officePlugin?.drive?.openFileRoute || "/office/editor";
-  const officeOpenQueryParam = officePlugin?.drive?.openFileQueryParam || "file";
+  const officeOpenRoute = officePlugin?.drive?.openFileRoute ?? "/office/editor";
+  const officeOpenQueryParam = officePlugin?.drive?.openFileQueryParam ?? "file";
   const newFileTemplates = useMemo(() => {
-    const configured = officePlugin?.drive?.newFileTemplates ?? [];
-    if (configured.length === 0) return DEFAULT_NEW_FILE_TEMPLATES;
+    if (!officePlugin) return [];
+    const configured = officePlugin.drive?.newFileTemplates ?? [];
     return configured
       .filter((template) => ["doc", "sheet", "slides"].includes(template.kind))
       .map((template) => ({
@@ -955,21 +949,21 @@ export function useDriveController({
 
   const createFromTemplate = useCallback(
     (templateId: string) => {
+      if (!officePlugin) return;
       const template = newFileTemplates.find((item) => item.id === templateId);
       if (!template) return;
       const qp = new URLSearchParams({ new: template.queryValue });
-      launchOfficeEditor(qp);
+      launchOfficeEditor(officeOpenRoute, qp);
     },
-    [launchOfficeEditor, newFileTemplates],
+    [launchOfficeEditor, newFileTemplates, officeOpenRoute, officePlugin],
   );
 
   const createBlank = (kind: "doc" | "sheet" | "slides") => {
-    const template =
-      newFileTemplates.find((item) => item.kind === kind) ||
-      DEFAULT_NEW_FILE_TEMPLATES.find((item) => item.kind === kind);
+    if (!officePlugin) return;
+    const template = newFileTemplates.find((item) => item.kind === kind);
     if (!template) return;
     const qp = new URLSearchParams({ new: template.queryValue });
-    launchOfficeEditor(qp);
+    launchOfficeEditor(officeOpenRoute, qp);
   };
 
   const createMarkdown = useCallback(() => {

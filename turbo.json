@@ -15,7 +15,9 @@
       "outputs": [
         "../../packages/api/vendor/**",
         "../../apps/wegotworkspace/packages/api/**",
-        "../../apps/wegotworkspace/packages/apps/*/dist/**"
+        "../../apps/wegotworkspace/packages/apps/*/dist/**",
+        "../../apps/wegotworkspace/packages/apps/office/build/**",
+        "../../apps/wegotworkspace/packages/apps/office/plugin.json"
       ]
     },
     "typegen": {

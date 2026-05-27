@@ -247,10 +247,29 @@ final class AppPaths
     {
         $root = $this->installRoot();
         $repo = dirname($root, 2);
+        $candidates = [];
 
-        return [
-            $root.'/wgw-plugins/onlyoffice/assets/index.html',
-            $repo.'/wgw-plugins/onlyoffice/assets/index.html',
-        ];
+        foreach ($this->privateDirCandidates() as $appsRoot) {
+            $candidates[] = $appsRoot.'/office/build/index.html';
+        }
+
+        // Optional plugin ZIP layout (Admin → Plugins or manual install under wgw-plugins/).
+        $candidates[] = $root.'/wgw-plugins/onlyoffice/assets/index.html';
+        $candidates[] = $repo.'/wgw-plugins/onlyoffice/assets/index.html';
+
+        return array_values(array_unique($candidates));
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function bundledPluginManifestCandidates(): array
+    {
+        $candidates = [];
+        foreach ($this->privateDirCandidates() as $appsRoot) {
+            $candidates[] = $appsRoot.'/office/plugin.json';
+        }
+
+        return array_values(array_unique($candidates));
     }
 }
