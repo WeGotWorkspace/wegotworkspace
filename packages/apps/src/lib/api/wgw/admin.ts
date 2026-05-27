@@ -456,7 +456,13 @@ export function createWgwAdminOperations(): AdminAPIOperations {
         body: form,
         signal: opts?.signal,
       });
-      if (!res.ok) throw new Error(`POST /admin/plugins/install failed (${res.status})`);
+      if (!res.ok) {
+        const message = await readApiError(
+          res,
+          `POST /admin/plugins/install failed (${res.status})`,
+        );
+        throw new Error(message);
+      }
       await wgwReadJson(res);
       return fetchAdminUiData(opts);
     },
