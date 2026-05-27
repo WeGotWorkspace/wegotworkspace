@@ -15,7 +15,6 @@
       "outputs": [
         "../../packages/api/vendor/**",
         "../../apps/wegotworkspace/packages/api/**",
-        "../../apps/wegotworkspace/packages/apps/office/build/**",
         "../../apps/wegotworkspace/packages/apps/*/dist/**"
       ]
     },
