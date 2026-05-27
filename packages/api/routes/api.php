@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\Admin\GroupMemberController as AdminGroupMemberController;
 use App\Http\Controllers\Api\V1\Admin\GroupsController as AdminGroupsController;
+use App\Http\Controllers\Api\V1\Admin\PluginInstallController as AdminPluginInstallController;
 use App\Http\Controllers\Api\V1\Admin\SettingsController as AdminSettingsController;
 use App\Http\Controllers\Api\V1\Admin\StateController as AdminStateController;
 use App\Http\Controllers\Api\V1\Admin\UpdateApplyController as AdminUpdateApplyController;
@@ -173,6 +174,7 @@ Route::middleware(['wgw.auth', 'wgw.role:admin'])->prefix('admin')->group(functi
     Route::post('updates/check', AdminUpdateCheckController::class);
     Route::post('updates/apply', AdminUpdateApplyController::class);
     Route::post('updates/cancel', AdminUpdateCancelController::class);
+    Route::post('plugins/install', AdminPluginInstallController::class);
     Route::get('updates/backups/{name}', [AdminUpdateBackupController::class, 'show']);
     Route::delete('updates/backups/{name}', [AdminUpdateBackupController::class, 'destroy']);
     Route::put('groups/{group}/members/{username}', [AdminGroupMemberController::class, 'store']);
