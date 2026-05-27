@@ -748,12 +748,12 @@ final class UpdateRunner
         }
     }
 
-    private function quoteMysqlIdentifier(string $value): string
+    private static function quoteMysqlIdentifier(string $value): string
     {
         return '`'.str_replace('`', '``', $value).'`';
     }
 
-    private function sqlLiteral(\PDO $pdo, mixed $value): string
+    private static function sqlLiteral(\PDO $pdo, mixed $value): string
     {
         if ($value === null) {
             return 'NULL';
