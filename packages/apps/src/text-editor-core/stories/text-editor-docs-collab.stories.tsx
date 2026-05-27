@@ -8,7 +8,7 @@ const devPassword =
   (import.meta.env.VITE_WGW_DEV_PASSWORD as string | undefined) ?? "storybook-dev";
 const liveApiOrigin =
   (import.meta.env.VITE_WGW_LIVE_ORIGIN as string | undefined)?.trim() ||
-  "https://wegotworkspace.dev";
+  "https://wegotworkspace.localhost";
 const defaultRoom = "/users/admin/docs-collab-room.md";
 const documentBase = `${liveApiOrigin}/api/v1/collab/document`;
 

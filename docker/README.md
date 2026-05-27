@@ -27,7 +27,7 @@ docker compose -f compose.dev.yml up -d --build
 
 **Stop:** `docker compose -f compose.dev.yml down`
 
-## HTTPS + WebDAV (`wegotworkspace.local`)
+## HTTPS + WebDAV (`wegotworkspace.localhost`)
 
 WebDAV/CalDAV clients expect a stable hostname and trusted TLS. Use **mkcert** on the host and mount leaf certs into the container.
 
@@ -37,11 +37,7 @@ WebDAV/CalDAV clients expect a stable hostname and trusted TLS. Use **mkcert** o
    brew services stop httpd
    ```
 
-2. **Hosts file** (once):
-
-   ```
-   127.0.0.1 wegotworkspace.local
-   ```
+2. **Hosts file** step is not needed for `.localhost`.
 
 3. **Generate certs** (trusted in macOS Keychain after `mkcert -install`):
 
@@ -53,14 +49,14 @@ WebDAV/CalDAV clients expect a stable hostname and trusted TLS. Use **mkcert** o
 4. **Start stack** (maps host **443** → container HTTPS, **80** → HTTP redirect):
 
    ```bash
-   docker compose -f compose.dev.yml up -d --build
+   docker compose -f compose.dev.yml -f compose.local.yml up -d --build
    ```
 
-5. Open **https://wegotworkspace.local/** (no port — standard 443).
+5. Open **https://wegotworkspace.localhost/** (no port — standard 443).
 
 | Env | Default | Purpose |
 |-----|---------|---------|
-| `WGW_DEV_DOMAIN` | `wegotworkspace.local` | `ServerName` + cert filenames |
+| `WGW_DEV_DOMAIN` | `wegotworkspace.localhost` | `ServerName` + cert filenames |
 | `WGW_DOCKER_HTTPS_PORT` | `443` | Host port for HTTPS |
 | `WGW_DOCKER_HTTP_REDIRECT_PORT` | `80` | Host port for HTTP → HTTPS redirect |
 | `WGW_DOCKER_HTTP_PORT` | `9080` | Plain HTTP without `/etc/hosts` (health, curl) |
