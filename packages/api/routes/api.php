@@ -33,6 +33,7 @@ use App\Http\Controllers\Api\V1\Notes\StateController as NotesStateController;
 use App\Http\Controllers\Api\V1\Office\CapabilitiesController as OfficeCapabilitiesController;
 use App\Http\Controllers\Api\V1\Office\DocumentsController as OfficeDocumentsController;
 use App\Http\Controllers\Api\V1\Office\SessionController as OfficeSessionController;
+use App\Http\Controllers\Api\V1\Plugins\IndexController as PluginsIndexController;
 use App\Http\Controllers\Api\V1\Settings\MailController as SettingsMailController;
 use App\Http\Controllers\Api\V1\Settings\ProfileController as SettingsProfileController;
 use App\Http\Controllers\Api\V1\Settings\StateController as SettingsStateController;
@@ -106,6 +107,7 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($driveS
     Route::post('office/session', OfficeSessionController::class);
     Route::post('office/documents', [OfficeDocumentsController::class, 'store']);
     Route::put('office/documents', [OfficeDocumentsController::class, 'update']);
+    Route::get('plugins', PluginsIndexController::class);
     Route::get('settings/state', SettingsStateController::class);
     Route::put('settings/profile', SettingsProfileController::class);
     Route::put('settings/mail', SettingsMailController::class);

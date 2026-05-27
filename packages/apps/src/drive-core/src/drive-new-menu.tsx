@@ -19,12 +19,19 @@ import type { DriveUILabels } from "@/drive-core/src/drive-labels";
 
 export type DriveBlankKind = "doc" | "sheet" | "slides";
 
+export type DriveNewFileTemplate = {
+  id: string;
+  label: string;
+  kind: DriveBlankKind;
+};
+
 export type DriveNewMenuProps = {
   labels: DriveUILabels;
   onCreateFolder: () => void;
   onUploadFiles: () => void;
   onCreateMarkdown?: () => void;
-  onCreateBlank: (kind: DriveBlankKind) => void;
+  newFileTemplates: DriveNewFileTemplate[];
+  onCreateTemplate: (templateId: string) => void;
 };
 
 export function DriveNewMenu({
@@ -32,7 +39,8 @@ export function DriveNewMenu({
   onCreateFolder,
   onUploadFiles,
   onCreateMarkdown,
-  onCreateBlank,
+  newFileTemplates,
+  onCreateTemplate,
 }: DriveNewMenuProps) {
   return (
     <DropdownMenu>
@@ -62,27 +70,22 @@ export function DriveNewMenu({
             <span>{labels.newMarkdown}</span>
           </DropdownMenuItem>
         ) : null}
-        <DropdownMenuItem
-          onClick={() => onCreateBlank("doc")}
-          className="cursor-pointer gap-2.5 py-2"
-        >
-          <FileText className="size-4 opacity-70" />
-          <span>{labels.newDocument}</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => onCreateBlank("sheet")}
-          className="cursor-pointer gap-2.5 py-2"
-        >
-          <FileSpreadsheet className="size-4 opacity-70" />
-          <span>{labels.newSpreadsheet}</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => onCreateBlank("slides")}
-          className="cursor-pointer gap-2.5 py-2"
-        >
-          <Presentation className="size-4 opacity-70" />
-          <span>{labels.newPresentation}</span>
-        </DropdownMenuItem>
+        {newFileTemplates.map((template) => (
+          <DropdownMenuItem
+            key={template.id}
+            onClick={() => onCreateTemplate(template.id)}
+            className="cursor-pointer gap-2.5 py-2"
+          >
+            {template.kind === "doc" ? (
+              <FileText className="size-4 opacity-70" />
+            ) : template.kind === "sheet" ? (
+              <FileSpreadsheet className="size-4 opacity-70" />
+            ) : (
+              <Presentation className="size-4 opacity-70" />
+            )}
+            <span>{template.label}</span>
+          </DropdownMenuItem>
+        ))}
       </DropdownMenuContent>
     </DropdownMenu>
   );

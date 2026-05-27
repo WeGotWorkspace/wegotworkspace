@@ -1,4 +1,5 @@
 import { wgwFetch, wgwFetchPrincipal, wgwReadJson } from "@/lib/api/wgw/http";
+import { fetchWgwPlugins } from "@/lib/api/wgw/plugins";
 import type {
   WgwDriveChangeDirRequest,
   WgwDriveCreateRequest,
@@ -9,6 +10,7 @@ import type {
   WgwDriveStarUpdateRequest,
   WgwDriveStarsResponse,
   WgwDriveUserResponse,
+  WgwPluginDescriptor,
 } from "@/lib/api/wgw/types";
 import type {
   DriveAPIOperations,
@@ -67,7 +69,11 @@ async function fetchListing(dir: string, opts?: { signal?: AbortSignal }) {
   };
 }
 
-async function fetchState(dir: string, opts?: { signal?: AbortSignal }): Promise<DriveUIData> {
+async function fetchState(
+  dir: string,
+  opts?: { signal?: AbortSignal },
+  plugins: WgwPluginDescriptor[] = [],
+): Promise<DriveUIData> {
   const user = await fetchDriveUser(opts);
   const userRoot = normalizePath(`/users/${user.username}`);
   const requested = normalizePath(dir);
@@ -86,18 +92,29 @@ async function fetchState(dir: string, opts?: { signal?: AbortSignal }): Promise
         user,
         cwd: directory.location,
         directory: { ...directory, files: [...directory.files, ...groupFolders] },
+        plugins,
       };
     } catch {
       // Group merge is additive only; keep user root listing if /groups fetch fails.
     }
   }
 
-  return { user, cwd: directory.location, directory };
+  return { user, cwd: directory.location, directory, plugins };
 }
 
 export async function fetchDriveLiveBootstrap(): Promise<DriveAppBootstrap> {
-  const [session, data] = await Promise.all([wgwFetchPrincipal(), fetchState("/")]);
-  return { session, data };
+  const [session, driveState, plugins] = await Promise.all([
+    wgwFetchPrincipal(),
+    fetchState("/"),
+    fetchWgwPlugins().catch(() => []),
+  ]);
+  return {
+    session,
+    data: {
+      ...driveState,
+      plugins,
+    },
+  };
 }
 
 async function postJson(path: string, body: object, opts?: { signal?: AbortSignal }) {
@@ -110,12 +127,16 @@ async function postJson(path: string, body: object, opts?: { signal?: AbortSigna
   if (!res.ok) throw new Error(`POST ${path} failed (${res.status})`);
 }
 
-export function createWgwDriveOperations(initialCwd = "/"): DriveAPIOperations {
+export function createWgwDriveOperations(
+  initialCwd = "/",
+  initialPlugins: WgwPluginDescriptor[] = [],
+): DriveAPIOperations {
   let cwd = normalizePath(initialCwd);
+  const plugins: WgwPluginDescriptor[] = initialPlugins;
 
   return {
     async refreshState(opts) {
-      const state = await fetchState(cwd, opts);
+      const state = await fetchState(cwd, opts, plugins);
       cwd = state.cwd;
       return state;
     },
@@ -130,10 +151,10 @@ export function createWgwDriveOperations(initialCwd = "/"): DriveAPIOperations {
       if (!res.ok) throw new Error(`POST /drive/changedir failed (${res.status})`);
       const changed = (await wgwReadJson(res)) as { data: { cwd: string } };
       cwd = normalizePath(changed.data.cwd);
-      return fetchState(cwd, opts);
+      return fetchState(cwd, opts, plugins);
     },
     async listDirectory(at, opts) {
-      return fetchState(normalizePath(at), opts);
+      return fetchState(normalizePath(at), opts, plugins);
     },
     async search(query, opts) {
       const res = await wgwFetch("/drive/searchfiles", {
@@ -153,7 +174,7 @@ export function createWgwDriveOperations(initialCwd = "/"): DriveAPIOperations {
         type: "dir",
       };
       await postJson("/drive/createnew", payload, opts);
-      return fetchState(cwd, opts);
+      return fetchState(cwd, opts, plugins);
     },
     async createFile(input, opts) {
       const payload: WgwDriveCreateRequest = {
@@ -162,7 +183,7 @@ export function createWgwDriveOperations(initialCwd = "/"): DriveAPIOperations {
         type: "file",
       };
       await postJson("/drive/createnew", payload, opts);
-      return fetchState(cwd, opts);
+      return fetchState(cwd, opts, plugins);
     },
     async renameItem(input, opts) {
       const payload: WgwDriveRenameRequest = {
@@ -171,14 +192,14 @@ export function createWgwDriveOperations(initialCwd = "/"): DriveAPIOperations {
         to: input.to,
       };
       await postJson("/drive/renameitem", payload, opts);
-      return fetchState(cwd, opts);
+      return fetchState(cwd, opts, plugins);
     },
     async deleteItems(paths, opts) {
       const payload: WgwDriveDeleteItemsRequest = {
         items: paths.map((path) => ({ path: normalizePath(path) })),
       };
       await postJson("/drive/deleteitems", payload, opts);
-      return fetchState(cwd, opts);
+      return fetchState(cwd, opts, plugins);
     },
     async downloadFile(path, opts) {
       const encoded = encodeURIComponent(downloadPathToken(normalizePath(path)));
@@ -306,7 +327,7 @@ export function createWgwDriveOperations(initialCwd = "/"): DriveAPIOperations {
         filesCompleted += 1;
         publishProgress(file.name);
       }
-      const state = await fetchState(targetCwd, opts);
+      const state = await fetchState(targetCwd, opts, plugins);
       cwd = normalizePath(state.cwd);
       return state;
     },
