@@ -20,17 +20,13 @@ final class PluginsEndpointsTest extends TestCase
 
     protected function setUp(): void
     {
-        parent::setUp();
-
-        putenv('WGW_DISABLE_LOGIN_THROTTLE=1');
-        $_ENV['WGW_DISABLE_LOGIN_THROTTLE'] = '1';
         $this->previousAppRoot = getenv('WGW_APP_ROOT') ?: '';
-        $this->dataDir = storage_path('framework/testing/wgw-plugins-'.uniqid('', true));
-        File::ensureDirectoryExists($this->dataDir.'/install-root/wgw-plugins/onlyoffice/assets');
+        $this->dataDir = rtrim(sys_get_temp_dir(), '/').'/wgw-plugins-'.uniqid('', true);
+        @mkdir($this->dataDir.'/install-root/wgw-plugins/onlyoffice/assets', 0777, true);
         putenv('WGW_APP_ROOT='.$this->dataDir.'/install-root');
         $_ENV['WGW_APP_ROOT'] = $this->dataDir.'/install-root';
-        File::put($this->dataDir.'/install-root/wgw-plugins/onlyoffice/assets/index.html', '<!doctype html><title>Plugin</title>');
-        File::put($this->dataDir.'/install-root/wgw-plugins/onlyoffice/plugin.json', json_encode([
+        @file_put_contents($this->dataDir.'/install-root/wgw-plugins/onlyoffice/assets/index.html', '<!doctype html><title>Plugin</title>');
+        @file_put_contents($this->dataDir.'/install-root/wgw-plugins/onlyoffice/plugin.json', json_encode([
             'id' => 'onlyoffice',
             'name' => 'ONLYOFFICE',
             'active' => true,
@@ -38,6 +34,10 @@ final class PluginsEndpointsTest extends TestCase
                 'openFileExtensions' => ['docx'],
             ],
         ], JSON_THROW_ON_ERROR));
+        putenv('WGW_DISABLE_LOGIN_THROTTLE=1');
+        $_ENV['WGW_DISABLE_LOGIN_THROTTLE'] = '1';
+
+        parent::setUp();
 
         config([
             'database.connections.wgw' => [
