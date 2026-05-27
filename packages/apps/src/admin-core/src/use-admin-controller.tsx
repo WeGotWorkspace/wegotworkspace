@@ -109,6 +109,7 @@ export function useAdminController({
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [users, setUsers] = useState(data.users);
   const [groups, setGroups] = useState(data.groups);
+  const [plugins, setPlugins] = useState(data.plugins);
   const [settingsForm, setSettingsForm] = useState<SettingsFormState>(() =>
     buildSettingsFormState(data),
   );
@@ -122,6 +123,7 @@ export function useAdminController({
   useEffect(() => {
     setUsers(data.users);
     setGroups(data.groups);
+    setPlugins(data.plugins);
     setUpdates(data.updates);
     setUpdateLogLines(data.updateLogLines);
   }, [data]);
@@ -129,6 +131,7 @@ export function useAdminController({
   const applyAdminData = (next: AdminWorkspaceProps["data"]) => {
     setUsers(next.users);
     setGroups(next.groups);
+    setPlugins(next.plugins);
     setSettingsForm(buildSettingsFormState(next));
     setUpdates(next.updates);
     setUpdateLogLines(next.updateLogLines);
@@ -658,6 +661,24 @@ export function useAdminController({
     return true;
   };
 
+  const setPluginActive = async (pluginId: string, active: boolean) => {
+    const operation = active ? operations?.activatePlugin : operations?.deactivatePlugin;
+    if (!operation) {
+      showError("Plugin API is not ready yet");
+      return false;
+    }
+    try {
+      const next = await operation(pluginId);
+      applyAdminData(next);
+      showSuccess(active ? "Plugin activated" : "Plugin deactivated");
+      return true;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not update plugin state";
+      showError(message);
+      return false;
+    }
+  };
+
   return {
     section,
     sections,
@@ -667,6 +688,7 @@ export function useAdminController({
     selectSection,
     users,
     groups,
+    plugins,
     updates,
     updateLogLines,
     checkingUpdates,
@@ -693,6 +715,7 @@ export function useAdminController({
       createGroup,
       updateGroup,
       deleteGroup,
+      setPluginActive,
     },
   };
 }

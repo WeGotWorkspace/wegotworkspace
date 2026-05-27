@@ -265,5 +265,19 @@ export function createMockAdminOperations(seed: AdminUIData): AdminAPIOperations
       }));
       return snapshot();
     },
+    activatePlugin: async (pluginId, opts) => {
+      await sleep(120, opts?.signal);
+      current.plugins = current.plugins.map((plugin) =>
+        plugin.id === pluginId ? { ...plugin, active: true } : plugin,
+      );
+      return snapshot();
+    },
+    deactivatePlugin: async (pluginId, opts) => {
+      await sleep(120, opts?.signal);
+      current.plugins = current.plugins.map((plugin) =>
+        plugin.id === pluginId ? { ...plugin, active: false } : plugin,
+      );
+      return snapshot();
+    },
   };
 }
