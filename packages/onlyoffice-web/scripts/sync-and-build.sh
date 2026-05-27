@@ -15,7 +15,9 @@ if [[ -n "${SABRE_BUILD_DIR:-}" ]]; then
   fi
 fi
 
-OUT_DEST="$RUNTIME_ROOT/$PRIVATE_DIR_NAME/office/build"
+OFFICE_MODULE_ROOT="$RUNTIME_ROOT/$PRIVATE_DIR_NAME/office"
+OUT_DEST="$OFFICE_MODULE_ROOT/build"
+PLUGIN_MANIFEST_SRC="$REPO_ROOT/packages/onlyoffice-web/onlyoffice.plugin.json"
 OFFICE_BASE_PATH="${OFFICE_BASE_PATH:-/office}"
 OFFICE_VERSION="${OFFICE_VERSION:-v9.3.0.24-1}"
 
@@ -29,5 +31,7 @@ node utils/build-slim.mjs
 rm -rf "$OUT_DEST"
 mkdir -p "$OUT_DEST"
 cp -R out/* "$OUT_DEST/"
+cp "$PLUGIN_MANIFEST_SRC" "$OFFICE_MODULE_ROOT/plugin.json"
 
 echo "Done. ONLYOFFICE static export is in ${OUT_DEST}/ (URL prefix: ${OFFICE_BASE_PATH})."
+echo "Plugin manifest: ${OFFICE_MODULE_ROOT}/plugin.json (bundled; optional ZIP installs use wgw-plugins/onlyoffice/)."

@@ -3,6 +3,7 @@ import { Button } from "@/button/src/button";
 import { Card } from "@/card/src/card";
 import { FeatureRow } from "@/admin-core/src/admin-workspace-widgets";
 import type { AdminControllerState } from "@/admin-core/src/use-admin-controller";
+import { useConfirmDialog } from "@/hooks/use-confirm-dialog";
 
 export type AdminPluginsPaneProps = {
   controller: AdminControllerState;
@@ -10,6 +11,7 @@ export type AdminPluginsPaneProps = {
 
 export function AdminPluginsPane({ controller }: AdminPluginsPaneProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const { confirmDialog, requestConfirm } = useConfirmDialog();
 
   return (
     <Card title="Plugin lifecycle">
@@ -42,11 +44,26 @@ export function AdminPluginsPane({ controller }: AdminPluginsPaneProps) {
             desc={`${plugin.id}${plugin.source ? ` (${plugin.source})` : ""}`}
             value={plugin.active}
             onChange={(next) => {
+              if (!next && plugin.active) {
+                requestConfirm({
+                  title: `Disable ${plugin.name}?`,
+                  description:
+                    "Drive file handlers and plugin-provided app actions will be unavailable until you enable it again.",
+                  confirmLabel: "Disable plugin",
+                  cancelLabel: "Cancel",
+                  variant: "destructive",
+                  onConfirm: () => {
+                    void controller.actions.setPluginActive(plugin.id, false);
+                  },
+                });
+                return;
+              }
               void controller.actions.setPluginActive(plugin.id, next);
             }}
           />
         ))
       )}
+      {confirmDialog}
     </Card>
   );
 }

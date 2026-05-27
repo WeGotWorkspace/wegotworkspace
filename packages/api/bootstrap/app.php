@@ -12,6 +12,7 @@ use App\Services\Voice\VoiceResponseException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Validation\ValidationException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -65,6 +66,15 @@ return Application::configure(basePath: dirname(__DIR__))
                 'error' => $message,
                 'code' => 'bad_request',
             ], 400);
+        });
+        $exceptions->render(function (PostTooLargeException $e) {
+            $max = trim((string) ini_get('post_max_size'));
+            $hint = $max !== '' ? "Current server post_max_size is {$max}." : 'Current server post_max_size is too low.';
+
+            return response()->json([
+                'error' => "Upload too large. {$hint}",
+                'code' => 'post_too_large',
+            ], 413);
         });
     })
     ->create();
