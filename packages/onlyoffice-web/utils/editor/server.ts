@@ -521,30 +521,42 @@ export class EditorServer {
               `users/${cfg.username.replace(/[/\\]+/g, "_")}/${filenameForWebDavSave(cmdTitle, this.title, this.fileType)}`,
             );
           const bytes = new Uint8Array(output);
+          const saveTransport = cfg.save_transport ?? "webdav+api";
 
-          try {
-            await saveOfficeDocumentViaApi(putPathname, bytes);
-            if (!this.webdavResourcePath) {
-              this.webdavResourcePath = putPathname;
+          if (saveTransport !== "api") {
+            try {
+              await webdavPutOfficeFile(
+                cfg.base_uri,
+                putPathname,
+                bytes,
+                cmdTitle || this.title,
+              );
+              if (!this.webdavResourcePath) {
+                this.webdavResourcePath = putPathname;
+              }
+              return { status: "ok", dataUrl };
+            } catch (e) {
+              console.error("WebDAV save failed", e);
+              if (saveTransport === "webdav") {
+                throw e;
+              }
             }
-            return { status: "ok", dataUrl };
-          } catch (apiErr) {
-            console.warn("API save failed, trying WebDAV", apiErr);
           }
 
-          try {
-            await webdavPutOfficeFile(
-              cfg.base_uri,
-              putPathname,
-              bytes,
-              cmdTitle || this.title,
-            );
-            if (!this.webdavResourcePath) {
-              this.webdavResourcePath = putPathname;
+          if (saveTransport !== "webdav") {
+            try {
+              await saveOfficeDocumentViaApi(
+                putPathname,
+                bytes,
+                cfg.save_api_path || "/api/v1/office/documents",
+              );
+              if (!this.webdavResourcePath) {
+                this.webdavResourcePath = putPathname;
+              }
+              return { status: "ok", dataUrl };
+            } catch (apiErr) {
+              console.warn("API save failed", apiErr);
             }
-            return { status: "ok", dataUrl };
-          } catch (e) {
-            console.error("WebDAV save failed", e);
           }
         }
 
