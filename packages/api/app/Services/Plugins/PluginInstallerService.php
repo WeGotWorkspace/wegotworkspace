@@ -13,6 +13,8 @@ final class PluginInstallerService
 {
     private const ACTIVE_OVERRIDES_SETTING = 'plugins_active_overrides';
 
+    private const MAX_PLUGIN_ARCHIVE_BYTES = 512 * 1024 * 1024;
+
     public function __construct(
         private AppPaths $paths,
         private PluginRegistryService $registry,
@@ -27,6 +29,13 @@ final class PluginInstallerService
      */
     public function installFromZip(UploadedFile $archive): array
     {
+        if (strtolower((string) $archive->getClientOriginalExtension()) !== 'zip') {
+            throw new \InvalidArgumentException('Plugin archive must be a .zip file.');
+        }
+        if ($archive->getSize() !== null && $archive->getSize() > self::MAX_PLUGIN_ARCHIVE_BYTES) {
+            throw new \InvalidArgumentException('Plugin archive is too large.');
+        }
+
         $tmpRoot = rtrim((string) storage_path('framework/cache'), '/').'/plugin-install-'.uniqid('', true);
         File::ensureDirectoryExists($tmpRoot);
 
@@ -35,6 +44,7 @@ final class PluginInstallerService
         if ($opened !== true) {
             throw new \InvalidArgumentException('Invalid plugin ZIP archive.');
         }
+        $this->assertSafeZipEntries($zip);
         $zip->extractTo($tmpRoot);
         $zip->close();
 
@@ -146,5 +156,25 @@ final class PluginInstallerService
         }
 
         return null;
+    }
+
+    private function assertSafeZipEntries(\ZipArchive $zip): void
+    {
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $entry = (string) $zip->getNameIndex($i);
+            if ($entry === '') {
+                throw new \InvalidArgumentException('ZIP contains an invalid entry.');
+            }
+
+            $normalized = str_replace('\\', '/', $entry);
+            if (
+                str_starts_with($normalized, '/')
+                || str_contains($normalized, '../')
+                || str_contains($normalized, '/..')
+                || preg_match('/^[a-zA-Z]:\//', $normalized) === 1
+            ) {
+                throw new \InvalidArgumentException('ZIP contains unsafe path traversal entries.');
+            }
+        }
     }
 }
