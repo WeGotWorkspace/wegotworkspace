@@ -22,7 +22,7 @@ function parseEnvBoolean(value: string | undefined): boolean | null {
 
 /**
  * API root including `/api/v1`. In dev, keep the default so requests hit the Vite proxy
- * (see `vite.config.ts`) and avoid CORS against `wegotworkspace.local`.
+ * (see `vite.config.ts`) and avoid CORS against `wegotworkspace.localhost`.
  */
 export function wgwApiBaseUrl(): string {
   const runtime = activeWgwApiRuntime();
