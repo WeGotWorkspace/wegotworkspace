@@ -39,6 +39,7 @@ export function useAdminAPI(source?: AdminApiSource) {
         baseUri: "/",
         authRealm: "SabreDAV",
       },
+      plugins: [],
       updates: {
         installedVersion: "",
         schemaVersion: 0,

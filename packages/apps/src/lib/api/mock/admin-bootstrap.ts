@@ -57,6 +57,14 @@ const DEFAULT_DATA: AdminUIData = {
     baseUri: "/",
     authRealm: "SabreDAV",
   },
+  plugins: [
+    {
+      id: "onlyoffice",
+      name: "ONLYOFFICE",
+      active: true,
+      source: "bundled",
+    },
+  ],
   updates: {
     installedVersion: "0.0.0",
     schemaVersion: 0,
