@@ -33,6 +33,8 @@ use App\Http\Controllers\Api\V1\Notes\StateController as NotesStateController;
 use App\Http\Controllers\Api\V1\Office\CapabilitiesController as OfficeCapabilitiesController;
 use App\Http\Controllers\Api\V1\Office\DocumentsController as OfficeDocumentsController;
 use App\Http\Controllers\Api\V1\Office\SessionController as OfficeSessionController;
+use App\Http\Controllers\Api\V1\Plugins\ActivateController as PluginsActivateController;
+use App\Http\Controllers\Api\V1\Plugins\DeactivateController as PluginsDeactivateController;
 use App\Http\Controllers\Api\V1\Plugins\IndexController as PluginsIndexController;
 use App\Http\Controllers\Api\V1\Settings\MailController as SettingsMailController;
 use App\Http\Controllers\Api\V1\Settings\ProfileController as SettingsProfileController;
@@ -108,6 +110,10 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($driveS
     Route::post('office/documents', [OfficeDocumentsController::class, 'store']);
     Route::put('office/documents', [OfficeDocumentsController::class, 'update']);
     Route::get('plugins', PluginsIndexController::class);
+    Route::post('plugins/{id}/activate', PluginsActivateController::class)
+        ->where('id', '[a-z0-9_-]+');
+    Route::post('plugins/{id}/deactivate', PluginsDeactivateController::class)
+        ->where('id', '[a-z0-9_-]+');
     Route::get('settings/state', SettingsStateController::class);
     Route::put('settings/profile', SettingsProfileController::class);
     Route::put('settings/mail', SettingsMailController::class);
