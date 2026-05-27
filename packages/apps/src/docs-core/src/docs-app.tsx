@@ -12,11 +12,6 @@ import { DocsWorkspace } from "@/docs-core/src/docs-workspace";
 import { DocsCollabWorkspace } from "@/text-editor-core/docs-collab";
 import { useDocsAPI } from "@/docs-core/src/use-docs-api";
 
-function docsCollabEnabled(): boolean {
-  const raw = (import.meta.env.VITE_WGW_DOCS_COLLAB as string | undefined)?.trim().toLowerCase();
-  return raw === "1" || raw === "true" || raw === "yes" || raw === "on";
-}
-
 function isMyDriveDocPath(
   filePath: string | null | undefined,
   username: string | null | undefined,
@@ -54,10 +49,7 @@ export function DocsApp({ apiSource }: DocsAppProps = {}) {
 
   const fileIsMyDriveDoc = isMyDriveDocPath(filePath, session.user.username);
   const showCollab =
-    docsCollabEnabled() &&
-    typeof filePath === "string" &&
-    /\.(md|txt)$/i.test(filePath) &&
-    !fileIsMyDriveDoc;
+    typeof filePath === "string" && /\.(md|txt)$/i.test(filePath) && !fileIsMyDriveDoc;
   const collabUrls = useMemo(() => {
     if (!showCollab || !filePath) return undefined;
     const baseUrl = wgwApiBaseUrl();
