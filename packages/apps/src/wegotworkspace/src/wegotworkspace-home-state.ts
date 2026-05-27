@@ -1,4 +1,5 @@
 import { wgwFetch, wgwLiveApiEnabled, wgwReadJson } from "@/lib/api/wgw/http";
+import { fetchWgwPlugins } from "@/lib/api/wgw/plugins";
 import type { WgwSettingsStateResponse } from "@/lib/api/wgw/types";
 
 const ADMIN_GROUP_ID = "principals/groups/administrators";
@@ -7,12 +8,19 @@ export type WeGotWorkspaceHomeState = {
   showAdmin: boolean;
   userDisplayName: string;
   showUserMenu: boolean;
+  pluginAppTiles: {
+    id: string;
+    label: string;
+    route: string;
+    icon?: string;
+  }[];
 };
 
 export const MOCK_HOME_STATE: WeGotWorkspaceHomeState = {
   showAdmin: true,
   userDisplayName: "Demo User",
   showUserMenu: true,
+  pluginAppTiles: [],
 };
 
 export async function fetchWeGotWorkspaceHomeState(): Promise<WeGotWorkspaceHomeState> {
@@ -21,12 +29,20 @@ export async function fetchWeGotWorkspaceHomeState(): Promise<WeGotWorkspaceHome
   }
 
   try {
-    const res = await wgwFetch("/settings/state");
+    const [settingsRes, plugins] = await Promise.all([
+      wgwFetch("/settings/state"),
+      fetchWgwPlugins().catch(() => []),
+    ]);
+    const pluginAppTiles = plugins
+      .filter((plugin) => plugin.active && plugin.appTile)
+      .map((plugin) => plugin.appTile!);
+    const res = settingsRes;
     if (!res.ok) {
       return {
         showAdmin: false,
         userDisplayName: "User",
         showUserMenu: false,
+        pluginAppTiles,
       };
     }
     const state = (await wgwReadJson(res)) as WgwSettingsStateResponse;
@@ -36,12 +52,14 @@ export async function fetchWeGotWorkspaceHomeState(): Promise<WeGotWorkspaceHome
       showAdmin: state.groups.some((group) => group.id === ADMIN_GROUP_ID),
       userDisplayName,
       showUserMenu,
+      pluginAppTiles,
     };
   } catch {
     return {
       showAdmin: false,
       userDisplayName: "User",
       showUserMenu: false,
+      pluginAppTiles: [],
     };
   }
 }

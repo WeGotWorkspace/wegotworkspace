@@ -2,6 +2,8 @@ import type { AdminAppBootstrap } from "@/lib/api/mock/admin-bootstrap";
 import { wgwFetch, wgwFetchPrincipal, wgwReadJson } from "@/lib/api/wgw/http";
 import type {
   WgwAdminStateResponse,
+  WgwPluginDescriptor,
+  WgwPluginsResponse,
   WgwAdminSettingsSaveRequest,
   WgwUpdateApplyResponse,
   WgwUpdateLogResponse,
@@ -90,6 +92,7 @@ export function mapWgwUpdateStateToUI(state: WgwUpdateStateResponse): AdminUpdat
 
 export function mapWgwAdminStateToUI(
   state: WgwAdminStateResponse,
+  plugins: WgwPluginDescriptor[],
   updateLogLines: string[],
 ): AdminUIData {
   return {
@@ -132,11 +135,24 @@ export function mapWgwAdminStateToUI(
       baseUri: state.webdav.baseUri,
       authRealm: state.webdav.authRealm,
     },
+    plugins: plugins.map((plugin) => ({
+      id: plugin.id,
+      name: plugin.name,
+      active: plugin.active,
+      source: plugin.source,
+    })),
     updates: mapWgwUpdateStateToUI(state.updates),
     currentUser: state.currentUser,
     logoutUrl: state.logoutUrl,
     updateLogLines,
   };
+}
+
+async function fetchPlugins(opts?: { signal?: AbortSignal }): Promise<WgwPluginDescriptor[]> {
+  const res = await wgwFetch("/plugins", { signal: opts?.signal });
+  if (!res.ok) throw new Error(`GET /plugins failed (${res.status})`);
+  const payload = (await wgwReadJson(res)) as WgwPluginsResponse;
+  return Array.isArray(payload.plugins) ? payload.plugins : [];
 }
 
 async function fetchAdminState(opts?: { signal?: AbortSignal }): Promise<WgwAdminStateResponse> {
@@ -175,14 +191,15 @@ export async function fetchAdminLiveBootstrap(): Promise<AdminAppBootstrap> {
   const maxAttempts = 5;
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
-      const [session, state, logLines] = await Promise.all([
+      const [session, state, plugins, logLines] = await Promise.all([
         wgwFetchPrincipal(),
         fetchAdminState(),
+        fetchPlugins().catch(() => []),
         fetchAdminUpdateLog(),
       ]);
       return {
         session,
-        data: mapWgwAdminStateToUI(state, logLines),
+        data: mapWgwAdminStateToUI(state, plugins, logLines),
       };
     } catch (error) {
       const canRetry =
@@ -201,6 +218,12 @@ export async function fetchAdminLiveBootstrap(): Promise<AdminAppBootstrap> {
 
 async function fetchAdminUiData(opts?: { signal?: AbortSignal }): Promise<AdminUIData> {
   const state = await fetchAdminState(opts);
+  let plugins: WgwPluginDescriptor[] = [];
+  try {
+    plugins = await fetchPlugins(opts);
+  } catch {
+    plugins = [];
+  }
   let logLines: string[] = [];
   try {
     logLines = await fetchAdminUpdateLog(opts);
@@ -208,7 +231,7 @@ async function fetchAdminUiData(opts?: { signal?: AbortSignal }): Promise<AdminU
     // Some deployments can disable or protect update logs. Keep admin usable.
     logLines = [];
   }
-  return mapWgwAdminStateToUI(state, logLines);
+  return mapWgwAdminStateToUI(state, plugins, logLines);
 }
 
 async function readApiError(res: Response, fallback: string): Promise<string> {
@@ -404,6 +427,42 @@ export function createWgwAdminOperations(): AdminAPIOperations {
         signal: opts?.signal,
       });
       if (!res.ok) throw new Error(`DELETE /admin/groups/${slug} failed (${res.status})`);
+      await wgwReadJson(res);
+      return fetchAdminUiData(opts);
+    },
+    activatePlugin: async (pluginId, opts) => {
+      const res = await wgwFetch(`/plugins/${encodeURIComponent(pluginId)}/activate`, {
+        method: "POST",
+        signal: opts?.signal,
+      });
+      if (!res.ok) throw new Error(`POST /plugins/${pluginId}/activate failed (${res.status})`);
+      await wgwReadJson(res);
+      return fetchAdminUiData(opts);
+    },
+    deactivatePlugin: async (pluginId, opts) => {
+      const res = await wgwFetch(`/plugins/${encodeURIComponent(pluginId)}/deactivate`, {
+        method: "POST",
+        signal: opts?.signal,
+      });
+      if (!res.ok) throw new Error(`POST /plugins/${pluginId}/deactivate failed (${res.status})`);
+      await wgwReadJson(res);
+      return fetchAdminUiData(opts);
+    },
+    installPluginZip: async (file, opts) => {
+      const form = new FormData();
+      form.append("plugin", file);
+      const res = await wgwFetch("/admin/plugins/install", {
+        method: "POST",
+        body: form,
+        signal: opts?.signal,
+      });
+      if (!res.ok) {
+        const message = await readApiError(
+          res,
+          `POST /admin/plugins/install failed (${res.status})`,
+        );
+        throw new Error(message);
+      }
       await wgwReadJson(res);
       return fetchAdminUiData(opts);
     },

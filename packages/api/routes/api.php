@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\Admin\GroupMemberController as AdminGroupMemberController;
 use App\Http\Controllers\Api\V1\Admin\GroupsController as AdminGroupsController;
+use App\Http\Controllers\Api\V1\Admin\PluginInstallController as AdminPluginInstallController;
 use App\Http\Controllers\Api\V1\Admin\SettingsController as AdminSettingsController;
 use App\Http\Controllers\Api\V1\Admin\StateController as AdminStateController;
 use App\Http\Controllers\Api\V1\Admin\UpdateApplyController as AdminUpdateApplyController;
@@ -33,6 +34,9 @@ use App\Http\Controllers\Api\V1\Notes\StateController as NotesStateController;
 use App\Http\Controllers\Api\V1\Office\CapabilitiesController as OfficeCapabilitiesController;
 use App\Http\Controllers\Api\V1\Office\DocumentsController as OfficeDocumentsController;
 use App\Http\Controllers\Api\V1\Office\SessionController as OfficeSessionController;
+use App\Http\Controllers\Api\V1\Plugins\ActivateController as PluginsActivateController;
+use App\Http\Controllers\Api\V1\Plugins\DeactivateController as PluginsDeactivateController;
+use App\Http\Controllers\Api\V1\Plugins\IndexController as PluginsIndexController;
 use App\Http\Controllers\Api\V1\Settings\MailController as SettingsMailController;
 use App\Http\Controllers\Api\V1\Settings\ProfileController as SettingsProfileController;
 use App\Http\Controllers\Api\V1\Settings\StateController as SettingsStateController;
@@ -106,6 +110,11 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($driveS
     Route::post('office/session', OfficeSessionController::class);
     Route::post('office/documents', [OfficeDocumentsController::class, 'store']);
     Route::put('office/documents', [OfficeDocumentsController::class, 'update']);
+    Route::get('plugins', PluginsIndexController::class);
+    Route::post('plugins/{id}/activate', PluginsActivateController::class)
+        ->where('id', '[a-z0-9_-]+');
+    Route::post('plugins/{id}/deactivate', PluginsDeactivateController::class)
+        ->where('id', '[a-z0-9_-]+');
     Route::get('settings/state', SettingsStateController::class);
     Route::put('settings/profile', SettingsProfileController::class);
     Route::put('settings/mail', SettingsMailController::class);
@@ -165,6 +174,7 @@ Route::middleware(['wgw.auth', 'wgw.role:admin'])->prefix('admin')->group(functi
     Route::post('updates/check', AdminUpdateCheckController::class);
     Route::post('updates/apply', AdminUpdateApplyController::class);
     Route::post('updates/cancel', AdminUpdateCancelController::class);
+    Route::post('plugins/install', AdminPluginInstallController::class);
     Route::get('updates/backups/{name}', [AdminUpdateBackupController::class, 'show']);
     Route::delete('updates/backups/{name}', [AdminUpdateBackupController::class, 'destroy']);
     Route::put('groups/{group}/members/{username}', [AdminGroupMemberController::class, 'store']);

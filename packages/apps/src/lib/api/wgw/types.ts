@@ -284,3 +284,37 @@ export type WgwInstallerAction = InstallerAction;
 export type WgwInstallerActionPayload = InstallerActionPayload;
 export type WgwInstallerActionRequest = InstallerActionRequest;
 export type WgwInstallerActionResponse = InstallerActionResponse;
+
+export type WgwPluginDriveNewFileTemplate = {
+  id: string;
+  label: string;
+  kind: "doc" | "sheet" | "slides";
+  queryValue: string;
+};
+
+export type WgwPluginDriveConfig = {
+  openFileExtensions?: string[];
+  openFileRoute?: string;
+  openFileQueryParam?: string;
+  newFileTemplates?: WgwPluginDriveNewFileTemplate[];
+};
+
+export type WgwPluginAppTile = {
+  id: string;
+  label: string;
+  route: string;
+  icon?: string;
+};
+
+export type WgwPluginDescriptor = {
+  id: string;
+  name: string;
+  active: boolean;
+  source?: string;
+  drive?: WgwPluginDriveConfig;
+  appTile?: WgwPluginAppTile;
+};
+
+export type WgwPluginsResponse = {
+  plugins: WgwPluginDescriptor[];
+};
