@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Search;
 
+use Illuminate\Support\Facades\Cache;
+
 final class SearchReindexRunner
 {
     private const STALE_PROGRESS_SECONDS = 120;
@@ -21,10 +23,9 @@ final class SearchReindexRunner
         $this->recoverStaleLockState();
         $state = $this->store->read();
         $phase = is_string($state['phase'] ?? null) ? $state['phase'] : null;
-        $lockHeld = is_file($this->store->absolutePath($this->store->lockPath()));
 
         return [
-            'inProgress' => $lockHeld || $phase !== null,
+            'inProgress' => $phase !== null,
             'phase' => $phase,
             'phaseProgress' => is_array($state['phase_progress'] ?? null) ? $state['phase_progress'] : null,
             'cancelRequested' => (bool) ($state['cancel_requested'] ?? false),
@@ -39,11 +40,8 @@ final class SearchReindexRunner
     public function run(): array
     {
         $this->store->ensureDirs();
-        $lock = @fopen($this->store->absolutePath($this->store->lockPath()), 'c+');
-        if (! is_resource($lock)) {
-            throw new \RuntimeException('Could not create reindex lock file.');
-        }
-        if (! flock($lock, LOCK_EX | LOCK_NB)) {
+        $lock = Cache::lock('search-reindex-runner', 900);
+        if (! $lock->get()) {
             throw new \RuntimeException('Another search reindex process is already running.');
         }
 
@@ -79,13 +77,9 @@ final class SearchReindexRunner
             $result['finishedAt'] = date('c');
             $state = $this->store->read();
             $state['last_result'] = $result;
-            unset($state['phase'], $state['phase_progress'], $state['cancel_requested']);
+            unset($state['phase'], $state['phase_progress'], $state['phase_updated_at'], $state['cancel_requested']);
             $this->store->write($state);
-            @unlink($this->store->absolutePath($this->store->lockPath()));
-            if (is_resource($lock)) {
-                flock($lock, LOCK_UN);
-                fclose($lock);
-            }
+            $lock->release();
             $this->store->clearCancelRequest();
         }
 
@@ -97,11 +91,12 @@ final class SearchReindexRunner
      */
     public function cancel(): array
     {
-        if (! is_file($this->store->absolutePath($this->store->lockPath()))) {
+        $state = $this->store->read();
+        $phase = is_string($state['phase'] ?? null) ? trim((string) $state['phase']) : '';
+        if ($phase === '') {
             throw new \InvalidArgumentException('No search reindex is currently running.');
         }
         $this->store->requestCancel();
-        $state = $this->store->read();
         $state['cancel_requested'] = true;
         $this->store->write($state);
         $this->store->appendLog('Cancellation requested by admin user.');
@@ -111,43 +106,22 @@ final class SearchReindexRunner
 
     public function recoverStaleLockState(): void
     {
-        $lockPath = $this->store->absolutePath($this->store->lockPath());
-        if (! is_file($lockPath)) {
-            $state = $this->store->read();
-            $phase = is_string($state['phase'] ?? null) ? trim((string) $state['phase']) : '';
-            if ($phase !== '' && $this->isStaleProgressState($state)) {
-                unset($state['phase'], $state['phase_progress'], $state['cancel_requested']);
-                $this->store->write($state);
-                $this->store->appendLog('Cleared stale search reindex state without lock.');
-            }
-
-            return;
-        }
-
-        $lock = @fopen($lockPath, 'c+');
-        if (! is_resource($lock)) {
-            return;
-        }
-        $acquired = @flock($lock, LOCK_EX | LOCK_NB);
-        if ($acquired !== true) {
-            fclose($lock);
-
-            return;
-        }
-        flock($lock, LOCK_UN);
-        fclose($lock);
-        @unlink($lockPath);
-
         $state = $this->store->read();
-        unset($state['phase'], $state['phase_progress'], $state['cancel_requested']);
+        $phase = is_string($state['phase'] ?? null) ? trim((string) $state['phase']) : '';
+        if ($phase === '' || ! $this->isStaleProgressState($state)) {
+            return;
+        }
+
+        unset($state['phase'], $state['phase_progress'], $state['phase_updated_at'], $state['cancel_requested']);
         $this->store->write($state);
-        $this->store->appendLog('Recovered stale search reindex lock state.');
+        $this->store->appendLog('Cleared stale search reindex state.');
     }
 
     private function writePhase(string $phase): void
     {
         $state = $this->store->read();
         $state['phase'] = $phase;
+        $state['phase_updated_at'] = date('c');
         $state['cancel_requested'] = $this->store->isCancelRequested();
         unset($state['phase_progress']);
         $this->store->write($state);
@@ -165,6 +139,7 @@ final class SearchReindexRunner
             'percent' => min(100, max(0, (int) floor(($safeDone / $safeTotal) * 100))),
             'updatedAt' => date('c'),
         ];
+        $state['phase_updated_at'] = date('c');
         $state['cancel_requested'] = $this->store->isCancelRequested();
         $this->store->write($state);
     }
@@ -174,9 +149,12 @@ final class SearchReindexRunner
      */
     private function isStaleProgressState(array $state): bool
     {
-        $updatedAt = is_array($state['phase_progress'] ?? null) && is_string($state['phase_progress']['updatedAt'] ?? null)
-            ? strtotime((string) $state['phase_progress']['updatedAt'])
-            : false;
+        $updatedAt = false;
+        if (is_array($state['phase_progress'] ?? null) && is_string($state['phase_progress']['updatedAt'] ?? null)) {
+            $updatedAt = strtotime((string) $state['phase_progress']['updatedAt']);
+        } elseif (is_string($state['phase_updated_at'] ?? null)) {
+            $updatedAt = strtotime((string) $state['phase_updated_at']);
+        }
         if (! is_int($updatedAt) || $updatedAt <= 0) {
             return true;
         }

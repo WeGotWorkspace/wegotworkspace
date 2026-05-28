@@ -84,11 +84,11 @@ export async function downloadWgwUnifiedSearchRecord(input: {
   const qs = new URLSearchParams();
   qs.set("source_type", input.sourceType);
   qs.set("source_key", input.sourceKey);
-  const res = await wgwFetch(`/search/unified/download?${qs.toString()}`, {
+  const res = await wgwFetch(`/records/download?${qs.toString()}`, {
     method: "GET",
     signal: input.signal,
   });
-  if (!res.ok) throw new Error(`GET /search/unified/download failed (${res.status})`);
+  if (!res.ok) throw new Error(`GET /records/download failed (${res.status})`);
   const blob = await res.blob();
   const fileName = filenameFromContentDisposition(res.headers.get("content-disposition"));
   const url = URL.createObjectURL(blob);
