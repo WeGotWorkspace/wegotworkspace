@@ -195,6 +195,46 @@ final class UnifiedSearchEndpointsTest extends TestCase
         $scoped->assertOk()->assertJsonPath('data.results', []);
     }
 
+    public function test_unified_search_indexes_calendar_events_for_group_principals(): void
+    {
+        DB::connection('wgw')->table('calendars')->insert([
+            'id' => 9,
+            'synctoken' => 1,
+            'components' => 'VEVENT',
+        ]);
+        DB::connection('wgw')->table('calendarinstances')->insert([
+            'id' => 9,
+            'calendarid' => 9,
+            'principaluri' => 'principals/groups/administrators',
+            'access' => 1,
+            'uri' => 'team',
+            'displayname' => 'Team Calendar',
+        ]);
+        DB::connection('wgw')->table('calendarobjects')->insert([
+            'calendardata' => "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:grp-1\r\nSUMMARY:Group Standup\r\nDESCRIPTION:Daily sync for admins\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n",
+            'uri' => 'group-standup.ics',
+            'calendarid' => 9,
+            'lastmodified' => time(),
+            'etag' => '"g1"',
+            'size' => 170,
+            'componenttype' => 'VEVENT',
+            'firstoccurence' => time(),
+            'lastoccurence' => time(),
+            'uid' => 'grp-1',
+        ]);
+
+        app(SearchIndexerService::class)->reindexAll();
+
+        $indexed = DB::connection('wgw')
+            ->table('search_documents')
+            ->where('source_type', 'caldav')
+            ->where('source_key', 'groups/administrators|team|group-standup.ics')
+            ->first();
+
+        $this->assertNotNull($indexed);
+        $this->assertSame('Group Standup', $indexed->title);
+    }
+
     private function issueToken(): string
     {
         return (string) $this->postJson('/api/v1/auth/token', [

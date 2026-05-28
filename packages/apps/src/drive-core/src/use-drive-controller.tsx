@@ -320,7 +320,7 @@ export function useDriveController({
     let cancelled = false;
     const timeout = window.setTimeout(() => {
       void operations
-        .search(query, { limit: 200 })
+        .search(query, { limit: 100 })
         .then((entries) => {
           if (!cancelled) {
             setLiveSearchResults(
