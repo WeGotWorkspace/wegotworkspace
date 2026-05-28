@@ -85,6 +85,7 @@ export function UnifiedSearchResultsDropdown({
 
 function groupResults(results: WgwUnifiedSearchResult[]): ResultGroup[] {
   const files = results.filter((item) => item.sourceType === "file");
+  const notes = results.filter((item) => item.sourceType === "note");
   const calendars = results.filter((item) => item.sourceType === "caldav");
   const contacts = results.filter((item) => item.sourceType === "carddav");
 
@@ -95,6 +96,13 @@ function groupResults(results: WgwUnifiedSearchResult[]): ResultGroup[] {
       label: "Files",
       items: files,
     });
+  if (notes.length) {
+    groups.push({
+      key: "note",
+      label: "Notes",
+      items: notes,
+    });
+  }
   if (calendars.length) {
     groups.push({
       key: "caldav",
@@ -116,6 +124,7 @@ function groupResults(results: WgwUnifiedSearchResult[]): ResultGroup[] {
 function iconForResult(result: WgwUnifiedSearchResult): ReactNode {
   if (result.sourceType === "caldav") return <CalendarDays className="size-4" />;
   if (result.sourceType === "carddav") return <ContactRound className="size-4" />;
+  if (result.sourceType === "note") return <FileText className="size-4" />;
   if (result.category === "folder") return <Folder className="size-4" />;
   if (result.category === "spreadsheet") return <FileSpreadsheet className="size-4" />;
   if (result.category === "image") return <ImageIcon className="size-4" />;
@@ -125,6 +134,7 @@ function iconForResult(result: WgwUnifiedSearchResult): ReactNode {
 
 function accentColorForSource(sourceType: string): string {
   if (sourceType === "file") return "var(--unified-search-accent-files, #2563eb)";
+  if (sourceType === "note") return "var(--unified-search-accent-notes, #f59e0b)";
   if (sourceType === "caldav") return "var(--unified-search-accent-calendar, #8b5cf6)";
   if (sourceType === "carddav") return "var(--unified-search-accent-contacts, #16a34a)";
   return "var(--unified-search-accent-default, #475569)";

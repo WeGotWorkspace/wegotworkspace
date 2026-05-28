@@ -61,8 +61,7 @@ final class SearchIndexerService
             if ($storageKey === '') {
                 return;
             }
-            $this->store->delete('file', $storageKey);
-            $this->store->deletePrefix('file', $storageKey);
+            $this->deleteFileLikeDocuments($storageKey);
 
             return;
         }
@@ -93,8 +92,7 @@ final class SearchIndexerService
         $disk = $this->storage->files();
         $exists = $disk->fileExists($key) || $disk->directoryExists($key);
         if (! $exists) {
-            $this->store->delete('file', $key);
-            $this->store->deletePrefix('file', $key);
+            $this->deleteFileLikeDocuments($key);
 
             return;
         }
@@ -108,27 +106,58 @@ final class SearchIndexerService
             $group = $segments[1];
         }
         $isDirectory = $disk->directoryExists($key);
-        $name = basename($key);
-        $extension = $isDirectory ? null : strtolower(pathinfo($name, PATHINFO_EXTENSION));
-        if (! $isDirectory && $extension === 'yjs') {
-            $this->store->delete('file', $key);
+        $isNotePath = $this->isNotePath($key);
+        if ($this->isHiddenPath($key) && ! $isNotePath) {
+            $this->deleteFileLikeDocuments($key);
 
             return;
         }
-        $category = $isDirectory ? 'folder' : $this->categoryForExtension($extension);
+        if ($isDirectory) {
+            if ($isNotePath) {
+                // Keep .notes containers out of file results.
+                $this->deleteFileLikeDocuments($key);
+
+                return;
+            }
+        }
+
+        $name = basename($key);
+        $extension = $isDirectory ? null : strtolower(pathinfo($name, PATHINFO_EXTENSION));
+        if ($extension === 'yjs') {
+            $this->deleteFileLikeDocuments($key);
+
+            return;
+        }
+        $sourceType = $isNotePath ? 'note' : 'file';
+        if ($sourceType === 'note') {
+            $this->store->delete('file', $key);
+        } else {
+            $this->store->delete('note', $key);
+        }
+        $category = $isDirectory ? 'folder' : ($isNotePath ? 'note' : $this->categoryForExtension($extension));
         $size = $isDirectory ? 0 : (int) ($disk->size($key) ?? 0);
         $modified = (int) ($disk->lastModified($key) ?? time());
-        $body = $this->readFileBodyForIndexing($key, $extension, $size, $isDirectory);
+        $indexedText = $this->readFileBodyForIndexing($key, $extension, $size, $isDirectory, $isNotePath);
+        $body = $indexedText['body'];
+        $frontmatter = $indexedText['frontmatter'];
 
         $metadata = [
             'path' => '/'.$key,
             'kind' => $isDirectory ? 'dir' : 'file',
+            'isNote' => $isNotePath,
         ];
+        if ($isNotePath) {
+            $metadata['noteName'] = pathinfo($name, PATHINFO_FILENAME);
+        }
+        if ($frontmatter !== null && $frontmatter !== '') {
+            $metadata['frontmatter'] = $frontmatter;
+        }
 
         $document = [
+            'source_subtype' => $isNotePath ? 'note' : null,
             'owner_username' => $owner,
             'group_slug' => $group,
-            'title' => $name,
+            'title' => $isNotePath ? ($this->titleFromFrontmatter($frontmatter) ?? $name) : $name,
             'extension' => $extension,
             'category' => $category,
             'content_type' => $isDirectory ? 'inode/directory' : $this->safeMimeType($key),
@@ -138,11 +167,13 @@ final class SearchIndexerService
             'metadata' => $metadata,
         ];
         $tokens = [
-            'title' => $this->tokens->tokenize($name),
-            'meta' => $this->tokens->tokenize($category.' '.($extension ?? '').' /'.$key),
+            'title' => $this->tokens->tokenize((string) ($document['title'] ?? $name)),
+            'meta' => $this->tokens->tokenize(
+                trim($category.' '.$extension.' /'.$key.' '.($frontmatter ?? ''))
+            ),
             'body' => $this->tokens->tokenize($body ?? ''),
         ];
-        $this->store->upsert('file', $key, $document, $tokens);
+        $this->store->upsert($sourceType, $key, $document, $tokens);
     }
 
     public function indexCalendarObjectFromPath(string $path): void
@@ -380,33 +411,44 @@ final class SearchIndexerService
         };
     }
 
+    /**
+     * @return array{body: ?string, frontmatter: ?string}
+     */
     private function readFileBodyForIndexing(
         string $key,
         ?string $extension,
         int $size,
         bool $isDirectory,
-    ): ?string {
+        bool $isNotePath = false,
+    ): array {
         if ($isDirectory || ! in_array((string) $extension, self::FILE_BODY_EXTENSIONS, true)) {
-            return null;
+            return ['body' => null, 'frontmatter' => null];
         }
         if ($size > self::MAX_INDEXED_BODY_BYTES) {
-            return null;
+            return ['body' => null, 'frontmatter' => null];
         }
 
         $raw = $this->storage->files()->get($key);
         if ($raw === '') {
-            return null;
+            return ['body' => null, 'frontmatter' => null];
         }
 
         if (! mb_check_encoding($raw, 'UTF-8')) {
             $converted = @mb_convert_encoding($raw, 'UTF-8', 'UTF-8, ISO-8859-1, Windows-1252');
             if (! is_string($converted) || ! mb_check_encoding($converted, 'UTF-8')) {
-                return null;
+                return ['body' => null, 'frontmatter' => null];
             }
             $raw = $converted;
         }
 
-        return $this->normalizeBodyTextForIndexing($raw, $extension);
+        [$content, $frontmatter] = $isNotePath
+            ? $this->splitNotesFrontmatter($raw, $extension)
+            : $this->splitMarkdownFrontmatter($raw, $extension);
+
+        return [
+            'body' => $this->normalizeBodyTextForIndexing($content, $extension),
+            'frontmatter' => $frontmatter,
+        ];
     }
 
     private function safeMimeType(string $key): ?string
@@ -444,6 +486,101 @@ final class SearchIndexerService
         $text = preg_replace('/\R{3,}/', "\n\n", $text) ?? $text;
 
         return trim($text);
+    }
+
+    /**
+     * @return array{0: string, 1: ?string}
+     */
+    private function splitMarkdownFrontmatter(string $raw, ?string $extension): array
+    {
+        if ($extension !== 'md') {
+            return [$raw, null];
+        }
+        if (! preg_match('/\A---\R(.*?)\R---\R?/s', $raw, $matches)) {
+            return [$raw, null];
+        }
+
+        $block = (string) ($matches[0] ?? '');
+        $frontmatter = trim((string) ($matches[1] ?? ''));
+        if ($block === '') {
+            return [$raw, $frontmatter !== '' ? $frontmatter : null];
+        }
+
+        return [substr($raw, strlen($block)) ?: '', $frontmatter !== '' ? $frontmatter : null];
+    }
+
+    /**
+     * Notes markdown uses a simple frontmatter block ending with "----".
+     *
+     * @return array{0: string, 1: ?string}
+     */
+    private function splitNotesFrontmatter(string $raw, ?string $extension): array
+    {
+        if ($extension !== 'md') {
+            return [$raw, null];
+        }
+        $normalized = str_replace(["\r\n", "\r"], "\n", $raw);
+        $token = "\n----\n";
+        $idx = strpos($normalized, $token);
+        if ($idx === false) {
+            return $this->splitMarkdownFrontmatter($normalized, $extension);
+        }
+
+        $header = trim(substr($normalized, 0, $idx));
+        $body = substr($normalized, $idx + strlen($token));
+
+        return [$body === false ? '' : $body, $header !== '' ? $header : null];
+    }
+
+    private function isHiddenPath(string $key): bool
+    {
+        foreach (explode('/', trim($key, '/')) as $segment) {
+            if ($segment !== '' && str_starts_with($segment, '.')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function isNotePath(string $key): bool
+    {
+        $normalized = '/'.trim($key, '/');
+
+        return str_contains($normalized, '/.notes/');
+    }
+
+    private function titleFromFrontmatter(?string $frontmatter): ?string
+    {
+        if (! is_string($frontmatter) || trim($frontmatter) === '') {
+            return null;
+        }
+        if (! preg_match('/^\s*title\s*:\s*(.+)$/im', $frontmatter, $matches)) {
+            return null;
+        }
+
+        $value = trim((string) ($matches[1] ?? ''));
+        if ($value === '') {
+            return null;
+        }
+        if (
+            (str_starts_with($value, '"') && str_ends_with($value, '"'))
+            || (str_starts_with($value, "'") && str_ends_with($value, "'"))
+        ) {
+            $value = substr($value, 1, -1);
+        }
+
+        $value = trim($value);
+
+        return $value !== '' ? $value : null;
+    }
+
+    private function deleteFileLikeDocuments(string $storageKey): void
+    {
+        foreach (['file', 'note'] as $sourceType) {
+            $this->store->delete($sourceType, $storageKey);
+            $this->store->deletePrefix($sourceType, $storageKey);
+        }
     }
 
     private function calendarSourceKeyFromPath(string $path): ?string

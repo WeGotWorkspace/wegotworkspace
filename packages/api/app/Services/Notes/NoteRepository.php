@@ -6,9 +6,11 @@ namespace App\Services\Notes;
 
 use App\Exceptions\ApiHttpException;
 use App\Notes\NoteMarkdownCodec;
+use App\Services\Search\SearchIndexerService;
 use App\Storage\NoteStoragePaths;
 use App\Storage\WgwStorage;
 use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Database\QueryException;
 
 final class NoteRepository
 {
@@ -16,6 +18,7 @@ final class NoteRepository
         private WgwStorage $storage,
         private NoteStoragePaths $notePaths,
         private NoteMarkdownCodec $codec,
+        private SearchIndexerService $searchIndexer,
     ) {}
 
     /**
@@ -79,6 +82,7 @@ final class NoteRepository
         if (! $disk->put($key, $markdown)) {
             throw new ApiHttpException(500, 'Could not save note.', 'server_error');
         }
+        $this->syncSearchIndex(fn () => $this->searchIndexer->indexFileStorageKey($key));
 
         return [
             'ok' => true,
@@ -104,6 +108,7 @@ final class NoteRepository
         if (! $this->disk()->delete($location['key'])) {
             throw new ApiHttpException(500, 'Could not delete note.', 'server_error');
         }
+        $this->syncSearchIndex(fn () => $this->searchIndexer->deleteDavPath('files/'.$location['key']));
 
         return ['ok' => true];
     }
@@ -127,6 +132,8 @@ final class NoteRepository
         if (! $disk->move($from['key'], $toKey)) {
             throw new ApiHttpException(500, 'Could not move note.', 'server_error');
         }
+        $this->syncSearchIndex(fn () => $this->searchIndexer->deleteDavPath('files/'.$from['key']));
+        $this->syncSearchIndex(fn () => $this->searchIndexer->indexFileStorageKey($toKey));
 
         return [
             'ok' => true,
@@ -396,6 +403,8 @@ final class NoteRepository
             if (! $this->disk()->move($from, $to)) {
                 throw new ApiHttpException(500, 'Could not move notebook notes.', 'server_error');
             }
+            $this->syncSearchIndex(fn () => $this->searchIndexer->deleteDavPath('files/'.$from));
+            $this->syncSearchIndex(fn () => $this->searchIndexer->indexFileStorageKey($to));
         }
     }
 
@@ -418,8 +427,25 @@ final class NoteRepository
         foreach ($this->disk()->files($dir) as $path) {
             if ($this->codec->isNoteFilename(basename($path))) {
                 $this->disk()->delete($path);
+                $this->syncSearchIndex(fn () => $this->searchIndexer->deleteDavPath('files/'.$path));
             }
         }
         $this->removeDirIfEmpty($dir);
+    }
+
+    /**
+     * Keep notes APIs resilient when search index tables are unavailable.
+     *
+     * @param  callable(): void  $callback
+     */
+    private function syncSearchIndex(callable $callback): void
+    {
+        try {
+            $callback();
+        } catch (QueryException) {
+            // Search index is optional in some test and bootstrap contexts.
+        } catch (\Throwable) {
+            // Search sync should never block note writes.
+        }
     }
 }
