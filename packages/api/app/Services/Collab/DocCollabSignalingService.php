@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Collab;
 
+use App\Models\AppSetting;
+use App\Settings\SettingKeys;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -26,6 +28,20 @@ final class DocCollabSignalingService
         private CollabActorResolver $actors,
         private CollabRoomPolicy $rooms,
     ) {}
+
+    /**
+     * @return array{stunUrls: string, turnUrls: string, turnUsername: string, turnPassword: string, forceRelay: bool}
+     */
+    public function rtcSettings(): array
+    {
+        return [
+            'stunUrls' => $this->normalizeRtcUrls(AppSetting::getValue(SettingKeys::VOICE_STUN_URL, '')),
+            'turnUrls' => $this->normalizeRtcUrls(AppSetting::getValue(SettingKeys::VOICE_TURN_URL, '')),
+            'turnUsername' => trim((string) AppSetting::getValue(SettingKeys::VOICE_TURN_USERNAME, '')),
+            'turnPassword' => trim((string) AppSetting::getValue(SettingKeys::VOICE_TURN_CREDENTIAL, '')),
+            'forceRelay' => (bool) AppSetting::getValue(SettingKeys::VOICE_FORCE_RELAY, false),
+        ];
+    }
 
     /**
      * @param  array<string, mixed>  $body
@@ -302,5 +318,21 @@ final class DocCollabSignalingService
             $payload['message'] = $message;
         }
         throw new CollabResponseException($status, $payload);
+    }
+
+    private function normalizeRtcUrls(mixed $value): string
+    {
+        if (! is_string($value)) {
+            return '';
+        }
+        $parts = array_filter(
+            array_map(
+                static fn (string $piece): string => trim($piece),
+                preg_split('/[\r\n,]+/', $value) ?: []
+            ),
+            static fn (string $piece): bool => $piece !== ''
+        );
+
+        return implode(', ', $parts);
     }
 }

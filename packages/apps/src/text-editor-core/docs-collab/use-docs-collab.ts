@@ -7,11 +7,17 @@ import * as Y from "yjs";
 import { fetchWgwAuthToken } from "@/lib/api/wgw/auth-token";
 import { applyContentSeedToYDoc } from "./docs-collab-editor-surface";
 import type { TextEditorContentFormat } from "@/text-editor-core/src/text-editor-content";
-import { DocsCollabMesh, type DocsCollabMeshMessage, type DocsCollabMeshPeer } from "./mesh";
+import {
+  DocsCollabMesh,
+  type DocsCollabMeshMessage,
+  type DocsCollabMeshPeer,
+  type DocsCollabRtcSettings,
+} from "./mesh";
 
 const MESH_ORIGIN = "mesh";
 const SEED_ORIGIN = "seed";
 const SAVE_DELAY_MS = 2000;
+const PEER_FAILURE_WARNING_DELAY_MS = 6000;
 
 const COLORS = [
   "#2563eb",
@@ -27,6 +33,7 @@ const COLORS = [
 export type DocsCollabUrls = {
   signalUrl: string;
   collabApiBaseUrl?: string;
+  collabRtcUrl?: string;
   documentUrl: string;
   yjsUrl: string;
   room?: string;
@@ -40,6 +47,7 @@ export type DocsCollabUrls = {
 export const DEFAULT_DOCS_COLLAB_URLS: DocsCollabUrls = {
   signalUrl: "/api/v1/collab/send",
   collabApiBaseUrl: "/api/v1/collab",
+  collabRtcUrl: "/api/v1/collab/rtc",
   documentUrl: "/api/v1/collab/document",
   yjsUrl: "/api/v1/collab/document?format=yjs",
   documentSaveMethod: "PUT",
@@ -72,6 +80,69 @@ function withBearerAuth(
 ): Record<string, string> {
   if (authToken) headers.Authorization = `Bearer ${authToken}`;
   return headers;
+}
+
+function isRtcDebugEnabled(): boolean {
+  if (typeof window === "undefined") return false;
+  const qs = new URLSearchParams(window.location.search);
+  const fromQuery = qs.get("collabRtcDebug");
+  if (fromQuery === "1" || fromQuery === "true") return true;
+  const fromStorage = window.localStorage.getItem("wgw.docsCollabRtcDebug");
+  return fromStorage === "1" || fromStorage === "true";
+}
+
+function normalizeUrlList(raw: unknown): string {
+  if (typeof raw !== "string") return "";
+  return raw
+    .split(/[\n,\r]+/)
+    .map((value) => value.trim())
+    .filter((value) => value !== "")
+    .join(", ");
+}
+
+async function loadRtcSettings(
+  rtcSettingsUrl: string | undefined,
+  authToken?: string,
+  debug = false,
+): Promise<DocsCollabRtcSettings | undefined> {
+  if (!rtcSettingsUrl) return undefined;
+  if (debug) {
+    console.info("[docs-collab][rtc] rtc-settings-request", { rtcSettingsUrl });
+  }
+  const res = await fetch(rtcSettingsUrl, {
+    headers: withBearerAuth({}, authToken),
+  });
+  if (!res.ok) {
+    if (debug) {
+      console.info("[docs-collab][rtc] rtc-settings-response", {
+        rtcSettingsUrl,
+        ok: false,
+        status: res.status,
+      });
+    }
+    return undefined;
+  }
+  const payload = (await res.json()) as Record<string, unknown>;
+  const voice = (payload.voice ?? payload) as Record<string, unknown>;
+  const settings = {
+    stunUrls: normalizeUrlList(voice.stunUrls),
+    turnUrls: normalizeUrlList(voice.turnUrls),
+    turnUsername: typeof voice.turnUsername === "string" ? voice.turnUsername : "",
+    turnPassword: typeof voice.turnPassword === "string" ? voice.turnPassword : "",
+    forceRelay: Boolean(voice.forceRelay),
+  };
+  if (debug) {
+    console.info("[docs-collab][rtc] rtc-settings-response", {
+      rtcSettingsUrl,
+      ok: true,
+      status: res.status,
+      settings: {
+        ...settings,
+        turnPassword: settings.turnPassword ? "***" : "",
+      },
+    });
+  }
+  return settings;
 }
 
 async function loadMarkdown(documentUrl: string, authToken?: string): Promise<string> {
@@ -137,8 +208,12 @@ export type UseDocsCollabOptions = {
 export function useDocsCollab({
   userName,
   autoJoin = true,
-  urls = DEFAULT_DOCS_COLLAB_URLS,
+  urls: inputUrls = DEFAULT_DOCS_COLLAB_URLS,
 }: UseDocsCollabOptions) {
+  const urls: DocsCollabUrls = {
+    ...DEFAULT_DOCS_COLLAB_URLS,
+    ...(inputUrls ?? {}),
+  };
   const documentFormat = collabDocumentFormat(urls.room);
   const meshRef = useRef<DocsCollabMesh | null>(null);
   const ydocRef = useRef<Y.Doc | null>(null);
@@ -150,21 +225,54 @@ export function useDocsCollab({
   const getMarkdownRef = useRef<(() => string) | null>(null);
   const joinGenerationRef = useRef(0);
   const authTokenRef = useRef<string | undefined>(undefined);
+  const failedSinceRef = useRef<Map<string, number>>(new Map());
 
   const [session, setSession] = useState<DocsCollabSession | null>(null);
   const [joined, setJoined] = useState(false);
   const [status, setStatus] = useState("Disconnected");
   const [docStatus, setDocStatus] = useState("");
   const [peers, setPeers] = useState<DocsCollabMeshPeer[]>([]);
+  const [connectingPeers, setConnectingPeers] = useState<DocsCollabMeshPeer[]>([]);
+  const [warningPeers, setWarningPeers] = useState<DocsCollabMeshPeer[]>([]);
   const [linkCount, setLinkCount] = useState(0);
+  const rtcDebugEnabledRef = useRef(isRtcDebugEnabled());
 
   const refreshMeshUi = useCallback(() => {
     const mesh = meshRef.current;
     if (!mesh) return;
+    const roomPeerStatuses = mesh.getRoomPeerStatuses();
+    const connectedPeers = roomPeerStatuses
+      .filter((peer) => peer.link === "connected")
+      .map(({ id, name }) => ({ id, name }));
+    const pendingPeers = roomPeerStatuses
+      .filter((peer) => peer.link !== "connected")
+      .map(({ id, name }) => ({ id, name }));
+    const now = Date.now();
+    const failedNow = new Set<string>();
+    const warning: DocsCollabMeshPeer[] = [];
+    for (const peer of roomPeerStatuses) {
+      if (peer.link === "failed" || peer.link === "disconnected" || peer.link === "closed") {
+        failedNow.add(peer.id);
+        const failedSince = failedSinceRef.current.get(peer.id) ?? now;
+        failedSinceRef.current.set(peer.id, failedSince);
+        if (now - failedSince >= PEER_FAILURE_WARNING_DELAY_MS) {
+          warning.push({ id: peer.id, name: peer.name });
+        }
+      } else {
+        failedSinceRef.current.delete(peer.id);
+      }
+    }
+    for (const trackedId of [...failedSinceRef.current.keys()]) {
+      if (!failedNow.has(trackedId) && !roomPeerStatuses.some((peer) => peer.id === trackedId)) {
+        failedSinceRef.current.delete(trackedId);
+      }
+    }
     setLinkCount(mesh.linkCount());
-    setPeers(mesh.getRoomPeers());
+    setPeers(connectedPeers);
+    setConnectingPeers(pendingPeers);
+    setWarningPeers(warning);
     setStatus(
-      `Mesh · ${mesh.getMyName()} · ${mesh.getMyId()?.slice(0, 8) ?? "—"}… · ${mesh.getPeerIds().length} other peer(s) · ${mesh.linkCount()} link(s)`,
+      `Mesh · ${mesh.getMyName()} · ${mesh.getMyId()?.slice(0, 8) ?? "—"}… · ${roomPeerStatuses.length} peer(s) in room · ${mesh.linkCount()} link(s)`,
     );
   }, []);
 
@@ -274,6 +382,9 @@ export function useDocsCollab({
     setSession(null);
     setJoined(false);
     setPeers([]);
+    setConnectingPeers([]);
+    setWarningPeers([]);
+    failedSinceRef.current.clear();
     setLinkCount(0);
     setStatus("Disconnected");
     setDocStatus("");
@@ -297,6 +408,13 @@ export function useDocsCollab({
     });
     if (generation !== joinGenerationRef.current) return;
     authTokenRef.current = authToken;
+    let rtcSettings: DocsCollabRtcSettings | undefined;
+    try {
+      rtcSettings = await loadRtcSettings(urls.collabRtcUrl, authToken, rtcDebugEnabledRef.current);
+    } catch (error) {
+      console.warn("[docs-collab] rtc settings unavailable", error);
+    }
+    if (generation !== joinGenerationRef.current) return;
 
     setDocStatus("Loading document…");
     pendingMarkdownRef.current = await loadMarkdown(urls.documentUrl, authToken);
@@ -343,6 +461,8 @@ export function useDocsCollab({
       urls.room ?? "docs/test-together.md",
       authToken,
       urls.collabApiBaseUrl,
+      rtcSettings,
+      rtcDebugEnabledRef.current,
     );
     meshRef.current = mesh;
     mesh.onMessage(handleMeshMessage);
@@ -351,7 +471,7 @@ export function useDocsCollab({
     if (generation !== joinGenerationRef.current) return;
     setSession({ ydoc, awareness, user });
     setJoined(true);
-    setPeers(joinedData.peers);
+    setConnectingPeers(joinedData.peers);
     refreshMeshUi();
 
     if (!seedDoneRef.current && isYDocEmpty(ydoc)) {
@@ -375,6 +495,7 @@ export function useDocsCollab({
     trySeedFromFile,
     documentFormat,
     urls.collabApiBaseUrl,
+    urls.collabRtcUrl,
     urls.documentUrl,
     urls.authToken,
     urls.authPassword,
@@ -449,6 +570,8 @@ export function useDocsCollab({
     status,
     docStatus,
     peers,
+    connectingPeers,
+    warningPeers,
     linkCount,
     join,
     leave,

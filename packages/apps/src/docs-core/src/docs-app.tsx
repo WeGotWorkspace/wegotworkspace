@@ -58,6 +58,7 @@ export function DocsApp({ apiSource }: DocsAppProps = {}) {
     return {
       signalUrl: `${baseUrl}/collab/send`,
       collabApiBaseUrl: `${baseUrl}/collab`,
+      collabRtcUrl: `${baseUrl}/collab/rtc`,
       authToken: wgwCurrentAccessToken() ?? undefined,
       documentUrl: `${baseUrl}/collab/document?room=${encodedRoom}`,
       yjsUrl: `${baseUrl}/collab/document?room=${encodedRoom}&format=yjs`,
