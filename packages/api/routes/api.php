@@ -41,6 +41,7 @@ use App\Http\Controllers\Api\V1\Plugins\ActivateController as PluginsActivateCon
 use App\Http\Controllers\Api\V1\Plugins\DeactivateController as PluginsDeactivateController;
 use App\Http\Controllers\Api\V1\Plugins\IndexController as PluginsIndexController;
 use App\Http\Controllers\Api\V1\Search\UnifiedSearchController;
+use App\Http\Controllers\Api\V1\Search\UnifiedSearchDownloadController;
 use App\Http\Controllers\Api\V1\Settings\MailController as SettingsMailController;
 use App\Http\Controllers\Api\V1\Settings\ProfileController as SettingsProfileController;
 use App\Http\Controllers\Api\V1\Settings\StateController as SettingsStateController;
@@ -111,6 +112,7 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($driveS
         Route::post('drive/stars', [DriveController::class, 'starsUpdate']);
     });
     Route::get('search/unified', UnifiedSearchController::class);
+    Route::get('search/unified/download', UnifiedSearchDownloadController::class);
 
     Route::get('office/capabilities', OfficeCapabilitiesController::class);
     Route::post('office/session', OfficeSessionController::class);
