@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Voice;
 
+use App\Models\AppSetting;
+use App\Settings\SettingKeys;
 use Illuminate\Support\Facades\DB;
 use Tests\Support\AuthTestKeys;
 use Tests\Support\SqliteWgwSchema;
@@ -34,6 +36,7 @@ final class VoiceEndpointsTest extends TestCase
             'wgw.jwt.kid' => $keys['kid'],
         ]);
 
+        SqliteWgwSchema::applyCoreTables();
         SqliteWgwSchema::applyVoiceTables();
     }
 
@@ -142,5 +145,27 @@ final class VoiceEndpointsTest extends TestCase
             'peerId' => 'peer-two',
             'sessionKey' => $sessionKey,
         ])->assertOk();
+    }
+
+    public function test_rtc_settings_endpoint_exposes_voice_ice_values(): void
+    {
+        AppSetting::setValue(SettingKeys::VOICE_STUN_URL, "one.example.org:3478, \nstun:two.example.org");
+        AppSetting::setValue(SettingKeys::VOICE_TURN_URL, "turn:one.example.org\nturn-two.example.org:3478?transport=udp");
+        AppSetting::setValue(SettingKeys::VOICE_TURN_USERNAME, 'voice-user');
+        AppSetting::setValue(SettingKeys::VOICE_TURN_CREDENTIAL, 'voice-pass');
+        AppSetting::setValue(SettingKeys::VOICE_FORCE_RELAY, true);
+
+        $response = $this->getJson('/api/v1/voice/rtc');
+
+        $response->assertOk();
+        $response->assertJson([
+            'voice' => [
+                'stunUrls' => 'stun:one.example.org:3478, stun:two.example.org',
+                'turnUrls' => 'turn:one.example.org, turn:turn-two.example.org:3478?transport=udp',
+                'turnUsername' => 'voice-user',
+                'turnPassword' => 'voice-pass',
+                'forceRelay' => true,
+            ],
+        ]);
     }
 }

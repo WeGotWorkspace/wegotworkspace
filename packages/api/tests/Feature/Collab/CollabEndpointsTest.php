@@ -71,8 +71,8 @@ final class CollabEndpointsTest extends TestCase
 
     public function test_rtc_settings_returns_voice_ice_values_for_authenticated_user(): void
     {
-        AppSetting::setValue(SettingKeys::VOICE_STUN_URL, 'stun:stun.example.test:3478,stuns:stun2.example.test:5349');
-        AppSetting::setValue(SettingKeys::VOICE_TURN_URL, 'turn:turn.example.test:3478?transport=udp');
+        AppSetting::setValue(SettingKeys::VOICE_STUN_URL, 'stun.example.test:3478,stuns:stun2.example.test:5349');
+        AppSetting::setValue(SettingKeys::VOICE_TURN_URL, 'turn.example.test:3478?transport=udp');
         AppSetting::setValue(SettingKeys::VOICE_TURN_USERNAME, 'rtc-user');
         AppSetting::setValue(SettingKeys::VOICE_TURN_CREDENTIAL, 'rtc-secret');
         AppSetting::setValue(SettingKeys::VOICE_FORCE_RELAY, true);

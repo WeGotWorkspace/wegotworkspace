@@ -86,9 +86,7 @@ function isRtcDebugEnabled(): boolean {
   if (typeof window === "undefined") return false;
   const qs = new URLSearchParams(window.location.search);
   const fromQuery = qs.get("collabRtcDebug");
-  if (fromQuery === "1" || fromQuery === "true") return true;
-  const fromStorage = window.localStorage.getItem("wgw.docsCollabRtcDebug");
-  return fromStorage === "1" || fromStorage === "true";
+  return fromQuery === "1" || fromQuery === "true";
 }
 
 function normalizeUrlList(raw: unknown): string {

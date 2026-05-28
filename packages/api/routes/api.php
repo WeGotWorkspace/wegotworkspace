@@ -64,6 +64,7 @@ Route::post('auth/refresh', RefreshController::class);
 Route::post('auth/revoke', RevokeController::class);
 
 Route::post('voice/room', [VoiceController::class, 'room']);
+Route::get('voice/rtc', [VoiceController::class, 'rtc']);
 Route::post('voice/join', [VoiceController::class, 'join']);
 Route::post('voice/poll', [VoiceController::class, 'poll']);
 Route::post('voice/send', [VoiceController::class, 'send']);

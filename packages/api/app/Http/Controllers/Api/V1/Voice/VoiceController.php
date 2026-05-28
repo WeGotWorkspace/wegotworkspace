@@ -17,6 +17,11 @@ final class VoiceController
         return response()->json($this->voice->roomStatus($request->json()->all()));
     }
 
+    public function rtc(): JsonResponse
+    {
+        return response()->json(['voice' => $this->voice->rtcSettings()]);
+    }
+
     public function join(Request $request): JsonResponse
     {
         return response()->json($this->voice->join($request, $request->json()->all()));
