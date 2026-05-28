@@ -1,6 +1,6 @@
 .unified-search-results-dropdown {
   border: 1px solid var(--unified-search-dropdown-border, hsl(0 0% 84%));
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--unified-search-dropdown-bg, hsl(0 0% 100%));
   color: var(--unified-search-dropdown-text, hsl(0 0% 10%));
   box-shadow: var(--unified-search-dropdown-shadow, 0 12px 28px hsl(0 0% 0% / 0.14));
@@ -27,45 +27,34 @@
   border-top: 1px solid var(--unified-search-dropdown-divider, hsl(0 0% 91%));
 }
 
-.unified-search-results-dropdown__group-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
+.unified-search-results-dropdown__group .sidebar-section__heading {
+  margin-bottom: 0.25rem;
+  height: auto;
+  padding-top: 0.65rem;
+}
+
+.unified-search-results-dropdown__group .sidebar-section__title {
   font-size: 0.76rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--unified-search-dropdown-muted, hsl(0 0% 42%));
-  padding: 0.65rem 1rem 0.4rem;
-}
-
-.unified-search-results-dropdown__group-title-main {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-}
-
-.unified-search-results-dropdown__group-count {
-  font-variant-numeric: tabular-nums;
-  font-size: 0.72rem;
-  color: var(--unified-search-dropdown-muted, hsl(0 0% 42%));
-}
-
-.unified-search-results-dropdown__items {
-  list-style: none;
-  margin: 0;
-  padding: 0 0 0.25rem;
-}
-
-.unified-search-results-dropdown__item {
-  margin: 0.1rem 0;
 }
 
 .unified-search-results-dropdown__menu-item {
-  border-radius: 9px;
-  margin: 0 0.35rem;
-  width: calc(100% - 0.7rem);
+  border-radius: 6px;
+  margin: 0;
+  width: 100%;
   color: var(--unified-search-dropdown-text, hsl(0 0% 10%));
+}
+
+.unified-search-results-dropdown__menu-item .menu-item__badge {
+  background: transparent;
+  min-width: 0;
+  height: auto;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .unified-search-results-dropdown__menu-item--file {
@@ -93,11 +82,4 @@
 
 .unified-search-results-dropdown__item-icon {
   color: var(--unified-search-row-accent, var(--unified-search-dropdown-icon, hsl(0 0% 38%)));
-}
-
-.unified-search-results-dropdown__item-tags {
-  margin: -0.12rem 1rem 0.5rem 2.75rem;
-  display: flex;
-  gap: 0.35rem;
-  flex-wrap: wrap;
 }

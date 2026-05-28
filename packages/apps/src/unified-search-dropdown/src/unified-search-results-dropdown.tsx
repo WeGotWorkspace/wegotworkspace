@@ -6,11 +6,13 @@ import {
   FileSpreadsheet,
   FileText,
   Folder,
+  HardDrive,
   Image as ImageIcon,
   LoaderCircle,
 } from "lucide-react";
 import type { WgwUnifiedSearchResult } from "@/lib/api/wgw/search";
-import { MenuItem } from "@/menu-item/src/menu-item";
+import type { MenuItemProps } from "@/menu-item/src/menu-item";
+import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
 import { Tag } from "@/tag/src/tag";
 import { cn } from "@/lib/utils";
 import "@/unified-search-dropdown/src/unified-search-results-dropdown.css";
@@ -18,7 +20,6 @@ import "@/unified-search-dropdown/src/unified-search-results-dropdown.css";
 type ResultGroup = {
   key: string;
   label: string;
-  icon: ReactNode;
   items: WgwUnifiedSearchResult[];
 };
 
@@ -69,79 +70,12 @@ export function UnifiedSearchResultsDropdown({
       ) : (
         <div className="unified-search-results-dropdown__groups">
           {groups.map((group) => (
-            <section
+            <SidebarSection
               key={group.key}
+              title={group.label}
               className="unified-search-results-dropdown__group"
-              aria-label={group.label}
-            >
-              <header className="unified-search-results-dropdown__group-title">
-                <span className="unified-search-results-dropdown__group-title-main">
-                  {group.icon}
-                  <span>{group.label}</span>
-                </span>
-                <span className="unified-search-results-dropdown__group-count">
-                  {group.items.length}
-                </span>
-              </header>
-              <ul className="unified-search-results-dropdown__items">
-                {group.items.map((result) => (
-                  <li key={`${result.sourceType}:${result.sourceKey}`}>
-                    <div className="unified-search-results-dropdown__item">
-                      <MenuItem
-                        label={result.title || result.sourceKey}
-                        description={
-                          <span className="unified-search-results-dropdown__item-description">
-                            {result.snippet?.trim() || result.sourceKey}
-                          </span>
-                        }
-                        icon={
-                          <span
-                            className={cn(
-                              "unified-search-results-dropdown__item-icon",
-                              `unified-search-results-dropdown__item-icon--${result.sourceType}`,
-                            )}
-                          >
-                            {iconForResult(result)}
-                          </span>
-                        }
-                        onClick={() => onSelect?.(result)}
-                        className={cn(
-                          "unified-search-results-dropdown__menu-item",
-                          `unified-search-results-dropdown__menu-item--${result.sourceType}`,
-                        )}
-                      />
-                      <div className="unified-search-results-dropdown__item-tags">
-                        <Tag
-                          label={labelForSourceType(result.sourceType)}
-                          colors={{
-                            backgroundColor: "var(--unified-search-tag-bg, hsl(0 0% 95%))",
-                            color: accentColorForSource(result.sourceType),
-                          }}
-                        />
-                        {result.category ? (
-                          <Tag
-                            label={result.category}
-                            colors={{
-                              backgroundColor: "var(--unified-search-tag-bg, hsl(0 0% 95%))",
-                              color: "var(--unified-search-tag-fg, hsl(0 0% 34%))",
-                            }}
-                          />
-                        ) : null}
-                        {result.extension ? (
-                          <Tag
-                            label={result.extension}
-                            colors={{
-                              backgroundColor: "var(--unified-search-tag-bg, hsl(0 0% 95%))",
-                              color: "var(--unified-search-tag-fg, hsl(0 0% 34%))",
-                            }}
-                          />
-                        ) : null}
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </section>
+              items={groupItems(group, onSelect)}
+            />
           ))}
         </div>
       )}
@@ -159,14 +93,12 @@ function groupResults(results: WgwUnifiedSearchResult[]): ResultGroup[] {
     groups.push({
       key: "file",
       label: "Files",
-      icon: <Folder className="size-3.5" />,
       items: files,
     });
   if (calendars.length) {
     groups.push({
       key: "caldav",
-      label: "Calendar",
-      icon: <CalendarDays className="size-3.5" />,
+      label: "Calendars",
       items: calendars,
     });
   }
@@ -174,7 +106,6 @@ function groupResults(results: WgwUnifiedSearchResult[]): ResultGroup[] {
     groups.push({
       key: "carddav",
       label: "Contacts",
-      icon: <ContactRound className="size-3.5" />,
       items: contacts,
     });
   }
@@ -192,16 +123,79 @@ function iconForResult(result: WgwUnifiedSearchResult): ReactNode {
   return <File className="size-4" />;
 }
 
-function labelForSourceType(sourceType: string): string {
-  if (sourceType === "file") return "Files";
-  if (sourceType === "caldav") return "Calendar";
-  if (sourceType === "carddav") return "Contacts";
-  return sourceType;
-}
-
 function accentColorForSource(sourceType: string): string {
   if (sourceType === "file") return "var(--unified-search-accent-files, #2563eb)";
   if (sourceType === "caldav") return "var(--unified-search-accent-calendar, #8b5cf6)";
   if (sourceType === "carddav") return "var(--unified-search-accent-contacts, #16a34a)";
   return "var(--unified-search-accent-default, #475569)";
+}
+
+function groupItems(
+  group: ResultGroup,
+  onSelect?: (result: WgwUnifiedSearchResult) => void,
+): MenuItemProps[] {
+  return group.items.map((result) => {
+    const driveTag = driveTagForResult(result);
+
+    return {
+      label: result.title || result.sourceKey,
+      description: (
+        <span className="unified-search-results-dropdown__item-description">
+          {result.snippet?.trim() || result.sourceKey}
+        </span>
+      ),
+      icon: (
+        <span
+          className={cn(
+            "unified-search-results-dropdown__item-icon",
+            `unified-search-results-dropdown__item-icon--${result.sourceType}`,
+          )}
+        >
+          {iconForResult(result)}
+        </span>
+      ),
+      badge:
+        result.category || driveTag ? (
+          <>
+            {result.category ? (
+              <Tag
+                label={result.category}
+                colors={{
+                  backgroundColor: "var(--unified-search-tag-bg, hsl(0 0% 95%))",
+                  color: "var(--unified-search-tag-fg, hsl(0 0% 34%))",
+                }}
+              />
+            ) : null}
+            {driveTag ? (
+              <Tag
+                label={driveTag.label}
+                icon={<HardDrive className="size-3" />}
+                colors={{
+                  backgroundColor: "var(--unified-search-tag-bg, hsl(0 0% 95%))",
+                  color: "var(--unified-search-tag-fg, hsl(0 0% 34%))",
+                }}
+              />
+            ) : null}
+          </>
+        ) : null,
+      onClick: () => onSelect?.(result),
+      className: cn(
+        "unified-search-results-dropdown__menu-item",
+        `unified-search-results-dropdown__menu-item--${result.sourceType}`,
+      ),
+    };
+  });
+}
+
+function driveTagForResult(result: WgwUnifiedSearchResult): { label: string } | null {
+  if (result.sourceType !== "file") return null;
+  const segments = result.sourceKey.split("/").filter(Boolean);
+  if (segments.length < 2) return null;
+  if (segments[0] === "users") {
+    return { label: "My Drive" };
+  }
+  if (segments[0] === "groups" && segments[1]) {
+    return { label: segments[1] };
+  }
+  return null;
 }
