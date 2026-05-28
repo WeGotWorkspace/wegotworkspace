@@ -110,6 +110,11 @@ final class SearchIndexerService
         $isDirectory = $disk->directoryExists($key);
         $name = basename($key);
         $extension = $isDirectory ? null : strtolower(pathinfo($name, PATHINFO_EXTENSION));
+        if (! $isDirectory && $extension === 'yjs') {
+            $this->store->delete('file', $key);
+
+            return;
+        }
         $category = $isDirectory ? 'folder' : $this->categoryForExtension($extension);
         $size = $isDirectory ? 0 : (int) ($disk->size($key) ?? 0);
         $modified = (int) ($disk->lastModified($key) ?? time());
@@ -126,7 +131,7 @@ final class SearchIndexerService
             'title' => $name,
             'extension' => $extension,
             'category' => $category,
-            'content_type' => $isDirectory ? 'inode/directory' : ($disk->mimeType($key) ?: null),
+            'content_type' => $isDirectory ? 'inode/directory' : $this->safeMimeType($key),
             'size' => $size,
             'modified_at_ts' => $modified,
             'body_text' => $body,
@@ -402,6 +407,17 @@ final class SearchIndexerService
         }
 
         return trim($raw);
+    }
+
+    private function safeMimeType(string $key): ?string
+    {
+        try {
+            $mime = $this->storage->files()->mimeType($key);
+
+            return is_string($mime) && trim($mime) !== '' ? $mime : null;
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     private function calendarSourceKeyFromPath(string $path): ?string
