@@ -19,40 +19,58 @@ export function InstallMeetPane({
     <>
       <Card title="Voice & video">
         <InstallFeatureRow
-          label="Enable TURN server"
-          desc="Relay voice and video when direct peer connections are blocked."
+          label="Enable voice & video"
+          desc="Configure STUN/TURN routing for real-time peer connections."
           value={meet.enabled}
           onChange={(value) => setMeet((current) => ({ ...current, enabled: value }))}
         />
       </Card>
       {meet.enabled ? (
-        <Card title="TURN server">
-          <FieldLabelRow label="TURN URL">
-            <Input
-              value={meet.turn}
-              onChange={(event) => setMeet((current) => ({ ...current, turn: event.target.value }))}
-              placeholder="turn:turn.example.com:3478"
-            />
-          </FieldLabelRow>
-          <div className={c.grid2}>
-            <FieldLabelRow label="TURN username">
+        <>
+          <Card title="STUN servers">
+            <FieldLabelRow label="STUN URLs">
               <Input
-                value={meet.turnUser}
+                value={meet.stun}
                 onChange={(event) =>
-                  setMeet((current) => ({ ...current, turnUser: event.target.value }))
+                  setMeet((current) => ({ ...current, stun: event.target.value }))
                 }
+                placeholder="stun:stun.nextcloud.com:443, stun:stun.sipgate.net:3478"
               />
             </FieldLabelRow>
-            <FieldLabelRow label="TURN password">
-              <InstallPasswordInput
-                value={meet.turnPwd}
+            <p className="text-sm text-muted-foreground">
+              Comma-separated URLs. You can replace or remove these defaults at any time.
+            </p>
+          </Card>
+          <Card title="TURN server">
+            <FieldLabelRow label="TURN URL">
+              <Input
+                value={meet.turn}
                 onChange={(event) =>
-                  setMeet((current) => ({ ...current, turnPwd: event.target.value }))
+                  setMeet((current) => ({ ...current, turn: event.target.value }))
                 }
+                placeholder="turn:turn.example.com:3478"
               />
             </FieldLabelRow>
-          </div>
-        </Card>
+            <div className={c.grid2}>
+              <FieldLabelRow label="TURN username">
+                <Input
+                  value={meet.turnUser}
+                  onChange={(event) =>
+                    setMeet((current) => ({ ...current, turnUser: event.target.value }))
+                  }
+                />
+              </FieldLabelRow>
+              <FieldLabelRow label="TURN password">
+                <InstallPasswordInput
+                  value={meet.turnPwd}
+                  onChange={(event) =>
+                    setMeet((current) => ({ ...current, turnPwd: event.target.value }))
+                  }
+                />
+              </FieldLabelRow>
+            </div>
+          </Card>
+        </>
       ) : null}
     </>
   );

@@ -1,11 +1,12 @@
 import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
 import { mockWorkspaceSession } from "@/lib/api/mock/workspace-session-mock";
 import type { MeetAppBootstrap, MeetUIData } from "@/meet-core/src/meet-types";
+import { DEFAULT_PUBLIC_STUN_URLS_CSV } from "@/lib/rtc/default-stun";
 
 const DEFAULT_DATA: MeetUIData = {
   defaultDisplayName: "Demo User",
   rtc: {
-    stunUrls: "stun:stun.l.google.com:19302",
+    stunUrls: DEFAULT_PUBLIC_STUN_URLS_CSV,
     turnUrls: "",
     turnUsername: "",
     turnPassword: "",

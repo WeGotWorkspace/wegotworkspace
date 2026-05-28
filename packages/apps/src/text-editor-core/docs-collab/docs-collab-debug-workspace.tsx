@@ -74,8 +74,7 @@ export function DocsCollabWorkspace({ userName, autoJoin = true }: DocsCollabWor
         different <strong>userName</strong> controls — e.g. Alex and Sam. Uses a local signaling
         service on <strong>8081</strong> (started by Storybook or{" "}
         <code>pnpm dev:docs-collab-signal</code>). Enable verbose RTC diagnostics with{" "}
-        <code>?collabRtcDebug=1</code> (or{" "}
-        <code>localStorage.setItem("wgw.docsCollabRtcDebug", "1")</code>).
+        <code>?collabRtcDebug=1</code>.
       </div>
 
       <main className="flex-1 p-4">

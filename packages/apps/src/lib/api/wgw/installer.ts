@@ -45,6 +45,7 @@ export type InstallerInstallPayload = {
   mail_smtp_port: string;
   mail_smtp_security: string;
   voice_enabled: boolean;
+  voice_stun_url: string;
   voice_turn_url: string;
   voice_turn_username: string;
   voice_turn_credential: string;

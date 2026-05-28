@@ -63,23 +63,30 @@ export type DocsCollabMeshOptions = {
 };
 
 const DEFAULT_DOCS_COLLAB_RTC_SETTINGS: DocsCollabRtcSettings = {
-  stunUrls: "stun:stun.l.google.com:19302",
+  stunUrls: "",
   turnUrls: "",
   turnUsername: "",
   turnPassword: "",
   forceRelay: false,
 };
 
-function parseUrlList(raw: string): string[] {
+function normalizeIceUrl(raw: string, defaultScheme: "stun" | "turn"): string {
+  const value = raw.trim();
+  if (value === "") return "";
+  if (/^(stun|stuns|turn|turns):/i.test(value)) return value;
+  return `${defaultScheme}:${value}`;
+}
+
+function parseUrlList(raw: string, defaultScheme: "stun" | "turn"): string[] {
   return raw
     .split(/[\n,\r]+/)
-    .map((value) => value.trim())
+    .map((value) => normalizeIceUrl(value, defaultScheme))
     .filter((value) => value !== "");
 }
 
 function toRtcConfig(settings: DocsCollabRtcSettings, mode: "direct" | "relay"): RTCConfiguration {
-  const turnUrls = parseUrlList(settings.turnUrls);
-  const stunUrls = parseUrlList(settings.stunUrls);
+  const turnUrls = parseUrlList(settings.turnUrls, "turn");
+  const stunUrls = parseUrlList(settings.stunUrls, "stun");
   const forceRelay = (settings.forceRelay || mode === "relay") && turnUrls.length > 0;
   const iceServers: RTCIceServer[] = [];
 
@@ -92,8 +99,6 @@ function toRtcConfig(settings: DocsCollabRtcSettings, mode: "direct" | "relay"):
   } else {
     if (stunUrls.length > 0) {
       iceServers.push({ urls: [...new Set(stunUrls)] });
-    } else {
-      iceServers.push({ urls: "stun:stun.l.google.com:19302" });
     }
     if (turnUrls.length > 0) {
       iceServers.push({
@@ -146,7 +151,7 @@ export class DocsCollabMesh {
           ...rtcSettings,
         }
       : DEFAULT_DOCS_COLLAB_RTC_SETTINGS;
-    this.turnConfigured = parseUrlList(this.rtcSettings.turnUrls).length > 0;
+    this.turnConfigured = parseUrlList(this.rtcSettings.turnUrls, "turn").length > 0;
     this.debugRtc = debugRtc;
     this.debug("mesh-init", {
       room: this.room,
@@ -251,7 +256,7 @@ export class DocsCollabMesh {
       hasEndpointMode && endpointAction
         ? JSON.stringify(body)
         : JSON.stringify({ action, ...body });
-    this.debug("signal-request", { action, requestUrl, body });
+    this.debug("signal-request", { action, requestUrl });
 
     const res = await fetch(requestUrl, {
       method: "POST",
@@ -410,7 +415,6 @@ export class DocsCollabMesh {
           remoteId,
           type: this.candidateType(e.candidate.candidate),
           protocol: this.candidateProtocol(e.candidate.candidate),
-          candidate: e.candidate.candidate,
         });
         void this.sendSignal(remoteId, "ice", e.candidate.toJSON());
       } else {
@@ -702,7 +706,6 @@ export class DocsCollabMesh {
           from,
           type: this.candidateType(candidate.candidate),
           protocol: this.candidateProtocol(candidate.candidate),
-          candidate: candidate.candidate,
         });
       }
       await entry.pc.addIceCandidate(candidate);
