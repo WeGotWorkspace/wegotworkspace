@@ -41,6 +41,9 @@
 
 .mail-workspace .app-sidebar {
   --field-label-color: color-mix(in oklab, #ffffff 72%, transparent);
+  --app-switch-label-color: #ffffff;
+  --app-switch-label-tagline-color: color-mix(in oklab, #ffffff 72%, transparent);
+  --app-switch-chevron-color: color-mix(in oklab, #ffffff 70%, transparent);
 }
 
 /**
