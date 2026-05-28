@@ -16,24 +16,33 @@ final class UnifiedSearchService
 
     /**
      * @param  list<string>  $sources
+     * @param  array{
+     *   categories?: list<string>,
+     *   extensions?: list<string>,
+     *   modified_from?: int|null,
+     *   modified_to?: int|null
+     * }  $filters
      * @return array{
      *   query: string,
      *   limit: int,
      *   sources: list<string>,
+     *   filters: array<string, mixed>,
      *   results: list<array<string, mixed>>
      * }
      */
-    public function search(string $username, string $query, int $limit, array $sources): array
+    public function search(string $username, string $query, int $limit, array $sources, array $filters = []): array
     {
         $query = trim($query);
         $limit = max(1, min(100, $limit));
         $allowedSources = array_values(array_intersect(['file', 'caldav', 'carddav'], $sources));
+        $normalizedFilters = $this->normalizeFilters($filters);
         $tokens = $this->tokens->tokenize($query);
         if ($query === '' || $tokens === []) {
             return [
                 'query' => $query,
                 'limit' => $limit,
                 'sources' => $allowedSources === [] ? ['file', 'caldav', 'carddav'] : $allowedSources,
+                'filters' => $normalizedFilters,
                 'results' => [],
             ];
         }
@@ -43,7 +52,8 @@ final class UnifiedSearchService
             $this->groups->allowedGroupSlugs($username),
             $tokens,
             $limit,
-            $allowedSources
+            $allowedSources,
+            $normalizedFilters
         );
 
         $results = [];
@@ -79,7 +89,47 @@ final class UnifiedSearchService
             'query' => $query,
             'limit' => $limit,
             'sources' => $allowedSources === [] ? ['file', 'caldav', 'carddav'] : $allowedSources,
+            'filters' => $normalizedFilters,
             'results' => $results,
+        ];
+    }
+
+    /**
+     * @param  array{
+     *   categories?: list<string>,
+     *   extensions?: list<string>,
+     *   modified_from?: int|null,
+     *   modified_to?: int|null
+     * }  $filters
+     * @return array{
+     *   categories: list<string>,
+     *   extensions: list<string>,
+     *   modified_from: int|null,
+     *   modified_to: int|null
+     * }
+     */
+    private function normalizeFilters(array $filters): array
+    {
+        $categories = isset($filters['categories']) && is_array($filters['categories'])
+            ? array_values(array_unique(array_values(array_filter(
+                array_map(static fn (mixed $v): string => is_string($v) ? trim($v) : '', $filters['categories']),
+                static fn (string $v): bool => $v !== ''
+            ))))
+            : [];
+        $extensions = isset($filters['extensions']) && is_array($filters['extensions'])
+            ? array_values(array_unique(array_values(array_filter(
+                array_map(static fn (mixed $v): string => is_string($v) ? strtolower(trim($v)) : '', $filters['extensions']),
+                static fn (string $v): bool => $v !== ''
+            ))))
+            : [];
+        $modifiedFrom = isset($filters['modified_from']) && is_int($filters['modified_from']) ? $filters['modified_from'] : null;
+        $modifiedTo = isset($filters['modified_to']) && is_int($filters['modified_to']) ? $filters['modified_to'] : null;
+
+        return [
+            'categories' => $categories,
+            'extensions' => $extensions,
+            'modified_from' => $modifiedFrom,
+            'modified_to' => $modifiedTo,
         ];
     }
 

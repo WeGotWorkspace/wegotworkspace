@@ -110,7 +110,7 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($driveS
         Route::get('drive/stars', [DriveController::class, 'starsIndex']);
         Route::post('drive/stars', [DriveController::class, 'starsUpdate']);
     });
-    Route::post('search/unified', UnifiedSearchController::class);
+    Route::get('search/unified', UnifiedSearchController::class);
 
     Route::get('office/capabilities', OfficeCapabilitiesController::class);
     Route::post('office/session', OfficeSessionController::class);
