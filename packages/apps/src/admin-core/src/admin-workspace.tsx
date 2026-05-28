@@ -13,7 +13,7 @@ import { AdminBackupsPane } from "@/admin-core/src/admin-backups-pane";
 import { AdminMailPane } from "@/admin-core/src/admin-mail-pane";
 import { AdminUpdatesPane } from "@/admin-core/src/admin-updates-pane";
 import { AdminUsersPane } from "@/admin-core/src/admin-users-pane";
-import { AdminMeetPane } from "@/admin-core/src/admin-meet-pane";
+import { AdminRealtimeCollaborationPane } from "@/admin-core/src/admin-realtime-collaboration-pane";
 import { AdminPluginsPane } from "@/admin-core/src/admin-plugins-pane";
 import { AdminWebdavPane } from "@/admin-core/src/admin-webdav-pane";
 import { AdminWorkspaceModals } from "@/admin-core/src/admin-workspace-modals";
@@ -110,7 +110,9 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
               />
             ) : null}
             {controller.section === "mail" ? <AdminMailPane controller={controller} /> : null}
-            {controller.section === "meet" ? <AdminMeetPane controller={controller} /> : null}
+            {controller.section === "collaboration" ? (
+              <AdminRealtimeCollaborationPane controller={controller} />
+            ) : null}
             {controller.section === "webdav" ? <AdminWebdavPane controller={controller} /> : null}
             {controller.section === "plugins" ? <AdminPluginsPane controller={controller} /> : null}
             {controller.section === "backups" ? <AdminBackupsPane controller={controller} /> : null}

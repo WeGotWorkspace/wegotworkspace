@@ -1,4 +1,12 @@
-import { DatabaseBackup, Database, Mail, Puzzle, ShieldCheck, Users, Video } from "lucide-react";
+import {
+  DatabaseBackup,
+  Database,
+  Mail,
+  MessagesSquare,
+  Puzzle,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 import type { AdminSection } from "@/admin-core/src/admin-types";
 
 export type AdminSectionDescriptor = {
@@ -23,10 +31,10 @@ export function useAdminSidebarModel(): AdminSectionDescriptor[] {
       icon: <Mail className="size-3.5" />,
     },
     {
-      id: "meet",
-      label: "Meet",
-      description: "Meet signaling and TURN options",
-      icon: <Video className="size-3.5" />,
+      id: "collaboration",
+      label: "Real-time collaboration",
+      description: "WebRTC STUN/TURN and relay routing",
+      icon: <MessagesSquare className="size-3.5" />,
     },
     {
       id: "webdav",

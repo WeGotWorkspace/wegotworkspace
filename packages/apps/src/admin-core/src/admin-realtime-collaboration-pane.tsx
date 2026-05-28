@@ -16,11 +16,13 @@ import {
 } from "@/ui/alert-dialog";
 import type { AdminControllerState } from "@/admin-core/src/use-admin-controller";
 
-export type AdminMeetPaneProps = {
+export type AdminRealtimeCollaborationPaneProps = {
   controller: AdminControllerState;
 };
 
-export function AdminMeetPane({ controller }: AdminMeetPaneProps) {
+export function AdminRealtimeCollaborationPane({
+  controller,
+}: AdminRealtimeCollaborationPaneProps) {
   const [forceRelayConfirmOpen, setForceRelayConfirmOpen] = useState(false);
 
   const onForceRelayChange = (next: boolean) => {
@@ -33,14 +35,19 @@ export function AdminMeetPane({ controller }: AdminMeetPaneProps) {
 
   return (
     <>
-      <Card title="ICE servers">
-        <FormField label="Signaling URL">
+      <Card title="WebRTC ICE servers">
+        <p className="mb-3 text-sm text-muted-foreground">
+          ICE servers improve real-time reliability by helping peers discover the best route through
+          NATs and firewalls. Configure STUN for direct path discovery and TURN as a relay fallback
+          when direct peer-to-peer connections are blocked.
+        </p>
+        <FormField label="STUN URLs">
           <Input
-            value={controller.settingsForm.signalingUrl}
+            value={controller.settingsForm.stunUrls}
             onChange={(event) =>
               controller.setSettingsForm((prev) => ({
                 ...prev,
-                signalingUrl: event.currentTarget.value,
+                stunUrls: event.currentTarget.value,
               }))
             }
           />
@@ -83,10 +90,10 @@ export function AdminMeetPane({ controller }: AdminMeetPaneProps) {
         </div>
       </Card>
 
-      <Card title="Routing">
+      <Card title="Routing policy">
         <FeatureRow
-          label="Force TURN relay for all calls"
-          desc="Routes every call through the TURN server. Off by default."
+          label="Force TURN relay for all real-time sessions"
+          desc="Routes every session through TURN. Off by default."
           value={controller.settingsForm.forceRelay}
           onChange={onForceRelayChange}
         />
@@ -98,11 +105,11 @@ export function AdminMeetPane({ controller }: AdminMeetPaneProps) {
       <AlertDialog open={forceRelayConfirmOpen} onOpenChange={setForceRelayConfirmOpen}>
         <AlertDialogContent className="admin-dialog-surface">
           <AlertDialogHeader>
-            <AlertDialogTitle>Force TURN relay for all calls?</AlertDialogTitle>
+            <AlertDialogTitle>Force TURN relay for all real-time sessions?</AlertDialogTitle>
             <AlertDialogDescription>
-              When enabled, every Meet call is sent through your TURN server. This increases
-              bandwidth use and can add latency, but helps clients behind strict firewalls. You
-              still need to save changes for this to take effect on the server.
+              When enabled, every collaboration session is sent through your TURN server. This
+              increases bandwidth use and can add latency, but helps clients behind strict
+              firewalls. You still need to save changes for this to take effect on the server.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

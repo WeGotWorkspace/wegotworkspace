@@ -118,7 +118,6 @@ export function mapWgwAdminStateToUI(
       smtpSecurity: state.mail.smtpSecurity,
     },
     voice: {
-      signalingUrl: state.voice.signalingUrl,
       stunUrls: state.voice.stunUrls,
       turnUrls: state.voice.turnUrls,
       turnUsername: state.voice.turnUsername,
