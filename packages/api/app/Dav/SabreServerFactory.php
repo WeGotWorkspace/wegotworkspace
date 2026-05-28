@@ -11,7 +11,9 @@ use App\Dav\Server\AppCalendarRoot;
 use App\Dav\Server\AppFilesRootCollection;
 use App\Dav\Server\AppUserFilesHomeCollection;
 use App\Dav\Server\GroupFilesPrincipalCollection;
+use App\Dav\Server\SearchIndexPlugin;
 use App\Dav\Server\WebdavWriteGuardPlugin;
+use App\Services\Search\SearchIndexerService;
 use App\Support\WgwInstallConfig;
 use App\Support\WgwSettings;
 use Illuminate\Support\Facades\DB;
@@ -24,7 +26,10 @@ use Sabre\DAVACL;
 
 final class SabreServerFactory
 {
-    public function __construct(private WgwInstallConfig $install) {}
+    public function __construct(
+        private WgwInstallConfig $install,
+        private SearchIndexerService $searchIndexer,
+    ) {}
 
     public function create(): DAV\Server
     {
@@ -78,6 +83,7 @@ final class SabreServerFactory
 
         $server->addPlugin($authPlugin);
         $server->addPlugin(new WebdavWriteGuardPlugin);
+        $server->addPlugin(new SearchIndexPlugin($this->searchIndexer));
         $locksPath = rtrim($this->install->dataDir(), '/').'/webdav-locks.dat';
         $server->addPlugin(new Locks\Plugin(new Locks\Backend\File($locksPath)));
         if ((bool) ($cfg[WgwSettings::BROWSER_PLUGIN] ?? true)) {
