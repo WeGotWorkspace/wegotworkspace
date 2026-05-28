@@ -56,7 +56,7 @@ final class AdminStateService
     }
 
     /**
-     * @return array{signalingUrl: string, stunUrls: string, turnUrls: string, turnUsername: string, turnPassword: string, forceRelay: bool}
+     * @return array{stunUrls: string, turnUrls: string, turnUsername: string, turnPassword: string, forceRelay: bool}
      */
     private function voiceSettings(): array
     {
@@ -76,7 +76,6 @@ final class AdminStateService
         }
 
         return [
-            'signalingUrl' => trim((string) AppSetting::getValue(SettingKeys::VOICE_SIGNALING_URL, '')),
             'stunUrls' => implode("\n", $stun),
             'turnUrls' => implode("\n", $turn),
             'turnUsername' => trim((string) AppSetting::getValue(SettingKeys::VOICE_TURN_USERNAME, '')),

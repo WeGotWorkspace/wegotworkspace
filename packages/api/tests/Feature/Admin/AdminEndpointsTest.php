@@ -135,7 +135,6 @@ final class AdminEndpointsTest extends TestCase
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->putJson('/api/v1/admin/settings', [
                 'values' => [
-                    'voice_signaling_url' => 'https://signal.example.test/voice',
                     'voice_turn_url' => "stun:stun.example.test:3478\nturn:turn.example.test:3478?transport=udp",
                     'voice_turn_username' => 'meet-user',
                     'voice_turn_credential' => 'meet-secret',
@@ -148,7 +147,6 @@ final class AdminEndpointsTest extends TestCase
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/v1/admin/state')
             ->assertOk()
-            ->assertJsonPath('voice.signalingUrl', 'https://signal.example.test/voice')
             ->assertJsonPath('voice.turnUsername', 'meet-user')
             ->assertJsonPath('voice.turnPassword', 'meet-secret')
             ->assertJsonPath('voice.forceRelay', true)
