@@ -8,14 +8,16 @@ import {
 import { workspaceUserInitials, type WorkspaceSession } from "@/lib/workspace/workspace-session";
 import { ViewHeader } from "@/view-header/src/view-header";
 import { ViewModeToggle } from "@/view-mode-toggle/src/view-mode-toggle";
+import { downloadWgwUnifiedSearchRecord, type WgwUnifiedSearchResult } from "@/lib/api/wgw/search";
 import { cn } from "@/lib/utils";
 import { DriveMainPane } from "@/drive-core/src/drive-main-pane";
 import { DriveNewMenu } from "@/drive-core/src/drive-new-menu";
+import { UnifiedSearchApiDropdown } from "@/unified-search-dropdown/src/unified-search-api-dropdown";
+import type { DriveFile, FileKind } from "@/drive-core/src/drive-models";
 import { useDriveController } from "@/drive-core/src/use-drive-controller";
 import { useDriveSidebarModel } from "@/drive-core/src/use-drive-sidebar-model";
 import type { DriveWorkspaceProps } from "@/drive-core/src/drive-workspace-props";
 import { DriveWorkspaceModals } from "@/drive-core/src/drive-workspace-modals";
-import type { DriveAPIOperations } from "@/drive-core/src/drive-types";
 import "@/drive-core/src/drive-workspace.css";
 
 export function DriveWorkspace({
@@ -61,7 +63,9 @@ export function DriveWorkspace({
             groupSidebarItems={groupSidebarItems}
           />
         }
-        mainHeader={<DriveMainHeader controller={controller} />}
+        mainHeader={
+          <DriveMainHeader controller={controller} unifiedSearchEnabled={Boolean(operations)} />
+        }
         main={<DriveMainPane controller={controller} operations={operations} />}
       />
       <DriveWorkspaceModals controller={controller} />
@@ -139,7 +143,13 @@ function DriveSidebar({
   );
 }
 
-function DriveMainHeader({ controller }: { controller: DriveController }) {
+function DriveMainHeader({
+  controller,
+  unifiedSearchEnabled,
+}: {
+  controller: DriveController;
+  unifiedSearchEnabled: boolean;
+}) {
   const {
     labels,
     sidebarOpen,
@@ -152,7 +162,37 @@ function DriveMainHeader({ controller }: { controller: DriveController }) {
     searchQuery,
     setSearchQuery,
     searchInputRef,
+    selectView,
+    openFile,
   } = controller;
+
+  const handleSearchResultSelect = (result: WgwUnifiedSearchResult) => {
+    void (async () => {
+      try {
+        if (result.sourceType === "caldav" || result.sourceType === "carddav") {
+          await downloadWgwUnifiedSearchRecord({
+            sourceType: result.sourceType,
+            sourceKey: result.sourceKey,
+          });
+          return;
+        }
+
+        if (result.sourceType !== "file") return;
+        const normalized = normalizeVirtualPathFromSourceKey(result.sourceKey);
+        if (!normalized) return;
+
+        if (result.category === "folder") {
+          selectView({ type: "folder", path: normalized });
+          return;
+        }
+        openFile(fileFromSearchResult(result, normalized));
+      } catch {
+        const normalized = normalizeVirtualPathFromSourceKey(result.sourceKey);
+        if (!normalized) return;
+        selectView({ type: "folder", path: parentVirtualPath(normalized) });
+      }
+    })();
+  };
 
   return (
     <ViewHeader
@@ -166,6 +206,16 @@ function DriveMainHeader({ controller }: { controller: DriveController }) {
       searchValue={searchQuery}
       onSearchInput={setSearchQuery}
       searchInputRef={searchInputRef}
+      searchContent={
+        unifiedSearchEnabled ? (
+          <UnifiedSearchApiDropdown
+            className="drive-main-header__search-dropdown"
+            query={searchQuery}
+            limit={10}
+            onSelect={handleSearchResultSelect}
+          />
+        ) : null
+      }
       actions={
         <ViewModeToggle
           value={viewMode}
@@ -176,4 +226,59 @@ function DriveMainHeader({ controller }: { controller: DriveController }) {
       }
     />
   );
+}
+
+function normalizeVirtualPathFromSourceKey(sourceKey: string): string | null {
+  const key = sourceKey.trim().replace(/^\/+/, "");
+  if (!key) return null;
+  return `/${key}`;
+}
+
+function parentVirtualPath(path: string): string {
+  const normalized = path.trim().replace(/\/+$/, "");
+  const idx = normalized.lastIndexOf("/");
+  if (idx <= 0) return "/";
+  return normalized.slice(0, idx);
+}
+
+function apiPathFromSourceKey(sourceKey: string): string | null {
+  const key = sourceKey.trim().replace(/^\/+/, "");
+  if (!key) return null;
+  return `/${key}`;
+}
+
+function fileFromSearchResult(result: WgwUnifiedSearchResult, normalizedPath: string): DriveFile {
+  const title = result.title || normalizedPath.split("/").pop() || result.sourceKey;
+  const parent = parentVirtualPath(normalizedPath);
+  const apiPath = apiPathFromSourceKey(result.sourceKey) ?? undefined;
+  const kind = fileKindFromCategory(result.category);
+
+  return {
+    id: `search:${result.sourceType}:${result.sourceKey}`,
+    category: result.category ?? "File",
+    date: "",
+    title,
+    excerpt: result.snippet ?? "",
+    body: [],
+    notebook: "",
+    tags: [],
+    wordCount: 0,
+    parent,
+    kind,
+    size: result.size > 0 ? String(result.size) : "—",
+    apiPath,
+  };
+}
+
+function fileKindFromCategory(category?: string | null): FileKind {
+  if (category === "folder") return "folder";
+  if (category === "image") return "image";
+  if (category === "audio") return "audio";
+  if (category === "video") return "video";
+  if (category === "archive") return "archive";
+  if (category === "document" || category === "spreadsheet" || category === "presentation") {
+    return "doc";
+  }
+
+  return "file";
 }

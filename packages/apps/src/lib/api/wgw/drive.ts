@@ -160,7 +160,7 @@ export function createWgwDriveOperations(
       const res = await wgwFetch("/drive/searchfiles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ q: query.trim(), limit: opts?.limit ?? 200 }),
+        body: JSON.stringify({ q: query.trim(), limit: Math.min(100, opts?.limit ?? 100) }),
         signal: opts?.signal,
       });
       if (!res.ok) throw new Error(`POST /drive/searchfiles failed (${res.status})`);

@@ -6,7 +6,7 @@ namespace App\Services\Installer;
 
 final class InstallerSchemaMigrationRunner
 {
-    public const CURRENT_SCHEMA_VERSION = 6;
+    public const CURRENT_SCHEMA_VERSION = 7;
 
     public static function migrate(\PDO $pdo): int
     {
@@ -81,6 +81,11 @@ final class InstallerSchemaMigrationRunner
 
         if ($current < 6) {
             self::migrateV6CreateCollabTables($pdo);
+            $current = 6;
+        }
+
+        if ($current < 7) {
+            self::migrateV7CreateSearchIndexTables($pdo);
         }
     }
 
@@ -329,5 +334,98 @@ final class InstallerSchemaMigrationRunner
 
         $stmt = $pdo->prepare('INSERT INTO app_migrations (version, name, applied_at) VALUES (?, ?, ?)');
         $stmt->execute([6, 'create_collab_signaling_tables', date('c')]);
+    }
+
+    private static function migrateV7CreateSearchIndexTables(\PDO $pdo): void
+    {
+        $driver = (string) $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'mysql') {
+            $pdo->exec(
+                'CREATE TABLE IF NOT EXISTS search_documents (
+                    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                    source_type VARCHAR(24) NOT NULL,
+                    source_subtype VARCHAR(64) NULL,
+                    source_key VARBINARY(1024) NOT NULL,
+                    owner_username VARCHAR(190) NULL,
+                    group_slug VARCHAR(190) NULL,
+                    title VARCHAR(512) NULL,
+                    extension VARCHAR(32) NULL,
+                    category VARCHAR(64) NULL,
+                    content_type VARCHAR(255) NULL,
+                    size BIGINT UNSIGNED NULL,
+                    created_at_ts BIGINT UNSIGNED NULL,
+                    modified_at_ts BIGINT UNSIGNED NULL,
+                    body_text MEDIUMTEXT NULL,
+                    metadata_json MEDIUMTEXT NULL,
+                    created_at VARCHAR(32) NOT NULL,
+                    updated_at VARCHAR(32) NOT NULL,
+                    PRIMARY KEY(id),
+                    UNIQUE KEY uniq_search_source (source_type, source_key),
+                    KEY idx_search_owner (owner_username),
+                    KEY idx_search_group (group_slug),
+                    KEY idx_search_type_mtime (source_type, modified_at_ts)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+            );
+            $pdo->exec(
+                'CREATE TABLE IF NOT EXISTS search_terms (
+                    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                    document_id BIGINT UNSIGNED NOT NULL,
+                    token VARCHAR(120) NOT NULL,
+                    field VARCHAR(24) NOT NULL DEFAULT \'body\',
+                    weight SMALLINT UNSIGNED NOT NULL DEFAULT 1,
+                    created_at VARCHAR(32) NOT NULL,
+                    updated_at VARCHAR(32) NOT NULL,
+                    PRIMARY KEY(id),
+                    UNIQUE KEY uniq_search_term_doc_token_field (document_id, token, field),
+                    KEY idx_search_token_field (token, field),
+                    CONSTRAINT fk_search_terms_document
+                        FOREIGN KEY (document_id) REFERENCES search_documents(id)
+                        ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+            );
+        } else {
+            $pdo->exec(
+                'CREATE TABLE IF NOT EXISTS search_documents (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    source_type TEXT NOT NULL,
+                    source_subtype TEXT NULL,
+                    source_key TEXT NOT NULL,
+                    owner_username TEXT NULL,
+                    group_slug TEXT NULL,
+                    title TEXT NULL,
+                    extension TEXT NULL,
+                    category TEXT NULL,
+                    content_type TEXT NULL,
+                    size INTEGER NULL,
+                    created_at_ts INTEGER NULL,
+                    modified_at_ts INTEGER NULL,
+                    body_text TEXT NULL,
+                    metadata_json TEXT NULL,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
+                )'
+            );
+            $pdo->exec(
+                'CREATE TABLE IF NOT EXISTS search_terms (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    document_id INTEGER NOT NULL,
+                    token TEXT NOT NULL,
+                    field TEXT NOT NULL DEFAULT \'body\',
+                    weight INTEGER NOT NULL DEFAULT 1,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    FOREIGN KEY(document_id) REFERENCES search_documents(id) ON DELETE CASCADE
+                )'
+            );
+            $pdo->exec('CREATE UNIQUE INDEX IF NOT EXISTS uniq_search_source ON search_documents(source_type, source_key)');
+            $pdo->exec('CREATE INDEX IF NOT EXISTS idx_search_owner ON search_documents(owner_username)');
+            $pdo->exec('CREATE INDEX IF NOT EXISTS idx_search_group ON search_documents(group_slug)');
+            $pdo->exec('CREATE INDEX IF NOT EXISTS idx_search_type_mtime ON search_documents(source_type, modified_at_ts)');
+            $pdo->exec('CREATE UNIQUE INDEX IF NOT EXISTS uniq_search_term_doc_token_field ON search_terms(document_id, token, field)');
+            $pdo->exec('CREATE INDEX IF NOT EXISTS idx_search_token_field ON search_terms(token, field)');
+        }
+
+        $stmt = $pdo->prepare('INSERT INTO app_migrations (version, name, applied_at) VALUES (?, ?, ?)');
+        $stmt->execute([7, 'create_unified_search_tables', date('c')]);
     }
 }

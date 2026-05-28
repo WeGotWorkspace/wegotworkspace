@@ -25,3 +25,8 @@
 .view-header__subtitle {
   @apply max-w-full;
 }
+
+.view-header__search-stack {
+  @apply mt-0.5;
+  position: relative;
+}
