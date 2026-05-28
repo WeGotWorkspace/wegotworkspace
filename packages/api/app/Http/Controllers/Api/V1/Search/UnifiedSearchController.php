@@ -40,8 +40,8 @@ final class UnifiedSearchController
                     [
                         'categories' => $categories,
                         'extensions' => $extensions,
-                        'modified_from' => isset($validated['modified_from']) ? (int) $validated['modified_from'] : null,
-                        'modified_to' => isset($validated['modified_to']) ? (int) $validated['modified_to'] : null,
+                        'modified_from' => isset($validated['modified_from']) ? (string) $validated['modified_from'] : null,
+                        'modified_to' => isset($validated['modified_to']) ? (string) $validated['modified_to'] : null,
                     ]
                 ),
             ]);
