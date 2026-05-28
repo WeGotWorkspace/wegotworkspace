@@ -5,12 +5,14 @@ import type {
   WgwPluginDescriptor,
   WgwPluginsResponse,
   WgwAdminSettingsSaveRequest,
+  WgwSearchReindexStateResponse,
   WgwUpdateApplyResponse,
   WgwUpdateLogResponse,
   WgwUpdateStateResponse,
 } from "@/lib/api/wgw/types";
 import type {
   AdminAPIOperations,
+  AdminSearchReindexState,
   AdminUIData,
   AdminUpdateBackupItem,
   AdminUpdateCheck,
@@ -90,10 +92,37 @@ export function mapWgwUpdateStateToUI(state: WgwUpdateStateResponse): AdminUpdat
   };
 }
 
+export function mapWgwSearchReindexStateToUI(
+  state: WgwSearchReindexStateResponse,
+): AdminSearchReindexState {
+  return {
+    inProgress: state.inProgress,
+    phase: state.phase ?? null,
+    phaseProgress: state.phaseProgress
+      ? {
+          completed: state.phaseProgress.completed,
+          total: state.phaseProgress.total,
+          percent: state.phaseProgress.percent,
+          updatedAt: state.phaseProgress.updatedAt,
+        }
+      : null,
+    cancelRequested: state.cancelRequested,
+    lastResult: state.lastResult
+      ? {
+          ok: state.lastResult.ok,
+          message: state.lastResult.message,
+          finishedAt: state.lastResult.finishedAt ?? null,
+        }
+      : null,
+    logLines: Array.isArray(state.logLines) ? state.logLines : [],
+  };
+}
+
 export function mapWgwAdminStateToUI(
   state: WgwAdminStateResponse,
   plugins: WgwPluginDescriptor[],
   updateLogLines: string[],
+  searchReindex: AdminSearchReindexState,
 ): AdminUIData {
   return {
     users: state.users.map((user) => ({
@@ -141,6 +170,7 @@ export function mapWgwAdminStateToUI(
       source: plugin.source,
     })),
     updates: mapWgwUpdateStateToUI(state.updates),
+    searchReindex,
     currentUser: state.currentUser,
     logoutUrl: state.logoutUrl,
     updateLogLines,
@@ -173,6 +203,14 @@ async function fetchAdminUpdateState(opts?: { signal?: AbortSignal }): Promise<A
   return mapWgwUpdateStateToUI((await wgwReadJson(res)) as WgwUpdateStateResponse);
 }
 
+async function fetchAdminSearchReindexState(opts?: {
+  signal?: AbortSignal;
+}): Promise<AdminSearchReindexState> {
+  const res = await wgwFetch("/admin/search/state", { signal: opts?.signal });
+  if (!res.ok) throw new Error(`GET /admin/search/state failed (${res.status})`);
+  return mapWgwSearchReindexStateToUI((await wgwReadJson(res)) as WgwSearchReindexStateResponse);
+}
+
 async function fetchAdminUpdateStateWithWarmup(opts?: {
   signal?: AbortSignal;
 }): Promise<AdminUpdateState> {
@@ -196,9 +234,22 @@ export async function fetchAdminLiveBootstrap(): Promise<AdminAppBootstrap> {
         fetchPlugins().catch(() => []),
         fetchAdminUpdateLog(),
       ]);
+      let searchReindex: AdminSearchReindexState = {
+        inProgress: false,
+        phase: null,
+        phaseProgress: null,
+        cancelRequested: false,
+        lastResult: null,
+        logLines: [],
+      };
+      try {
+        searchReindex = await fetchAdminSearchReindexState();
+      } catch {
+        // Keep admin bootstrap usable if endpoint is unavailable.
+      }
       return {
         session,
-        data: mapWgwAdminStateToUI(state, plugins, logLines),
+        data: mapWgwAdminStateToUI(state, plugins, logLines, searchReindex),
       };
     } catch (error) {
       const canRetry =
@@ -230,7 +281,20 @@ async function fetchAdminUiData(opts?: { signal?: AbortSignal }): Promise<AdminU
     // Some deployments can disable or protect update logs. Keep admin usable.
     logLines = [];
   }
-  return mapWgwAdminStateToUI(state, plugins, logLines);
+  let searchReindex: AdminSearchReindexState = {
+    inProgress: false,
+    phase: null,
+    phaseProgress: null,
+    cancelRequested: false,
+    lastResult: null,
+    logLines: [],
+  };
+  try {
+    searchReindex = await fetchAdminSearchReindexState(opts);
+  } catch {
+    // Keep admin usable when endpoint is unavailable.
+  }
+  return mapWgwAdminStateToUI(state, plugins, logLines, searchReindex);
 }
 
 async function readApiError(res: Response, fallback: string): Promise<string> {
@@ -307,6 +371,28 @@ export function createWgwAdminOperations(): AdminAPIOperations {
       if (!res.ok) throw new Error(`POST /admin/updates/cancel failed (${res.status})`);
       const payload = (await wgwReadJson(res)) as { state: WgwUpdateStateResponse };
       return mapWgwUpdateStateToUI(payload.state);
+    },
+    startSearchReindex: async (opts) => {
+      const res = await wgwFetch("/admin/search/reindex", { method: "POST", signal: opts?.signal });
+      if (!res.ok) {
+        const message = await readApiError(
+          res,
+          `POST /admin/search/reindex failed (${res.status})`,
+        );
+        throw new Error(message);
+      }
+      await wgwReadJson(res);
+      return fetchAdminSearchReindexState(opts);
+    },
+    refreshSearchReindexState: (opts) => fetchAdminSearchReindexState(opts),
+    cancelSearchReindex: async (opts) => {
+      const res = await wgwFetch("/admin/search/cancel", { method: "POST", signal: opts?.signal });
+      if (!res.ok) {
+        const message = await readApiError(res, `POST /admin/search/cancel failed (${res.status})`);
+        throw new Error(message);
+      }
+      const payload = (await wgwReadJson(res)) as { state: WgwSearchReindexStateResponse };
+      return mapWgwSearchReindexStateToUI(payload.state);
     },
     refreshUpdateLog: (opts) => fetchAdminUpdateLog(opts),
     clearUpdateLog: async (opts) => {
