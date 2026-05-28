@@ -19,8 +19,8 @@ final class UnifiedSearchService
      * @param  array{
      *   categories?: list<string>,
      *   extensions?: list<string>,
-     *   modified_from?: int|null,
-     *   modified_to?: int|null
+     *   modified_from?: string|int|null,
+     *   modified_to?: string|int|null
      * }  $filters
      * @return array{
      *   query: string,
@@ -98,8 +98,8 @@ final class UnifiedSearchService
      * @param  array{
      *   categories?: list<string>,
      *   extensions?: list<string>,
-     *   modified_from?: int|null,
-     *   modified_to?: int|null
+     *   modified_from?: string|int|null,
+     *   modified_to?: string|int|null
      * }  $filters
      * @return array{
      *   categories: list<string>,
@@ -122,8 +122,8 @@ final class UnifiedSearchService
                 static fn (string $v): bool => $v !== ''
             ))))
             : [];
-        $modifiedFrom = isset($filters['modified_from']) && is_int($filters['modified_from']) ? $filters['modified_from'] : null;
-        $modifiedTo = isset($filters['modified_to']) && is_int($filters['modified_to']) ? $filters['modified_to'] : null;
+        $modifiedFrom = $this->normalizeTimestampFilter($filters['modified_from'] ?? null);
+        $modifiedTo = $this->normalizeTimestampFilter($filters['modified_to'] ?? null);
 
         return [
             'categories' => $categories,
@@ -131,6 +131,21 @@ final class UnifiedSearchService
             'modified_from' => $modifiedFrom,
             'modified_to' => $modifiedTo,
         ];
+    }
+
+    private function normalizeTimestampFilter(mixed $value): ?int
+    {
+        if (is_int($value)) {
+            return max(0, $value);
+        }
+        if (is_string($value)) {
+            $parsed = strtotime($value);
+            if (is_int($parsed) && $parsed >= 0) {
+                return $parsed;
+            }
+        }
+
+        return null;
     }
 
     /**

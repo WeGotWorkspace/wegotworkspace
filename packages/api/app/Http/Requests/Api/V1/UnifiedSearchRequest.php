@@ -28,8 +28,8 @@ final class UnifiedSearchRequest extends FormRequest
             'categories.*' => ['string', 'min:1', 'max:64'],
             'extensions' => ['sometimes', 'array'],
             'extensions.*' => ['string', 'min:1', 'max:32'],
-            'modified_from' => ['sometimes', 'integer', 'min:0'],
-            'modified_to' => ['sometimes', 'integer', 'min:0', 'gte:modified_from'],
+            'modified_from' => ['sometimes', 'string', 'date'],
+            'modified_to' => ['sometimes', 'string', 'date'],
         ];
     }
 
@@ -63,5 +63,24 @@ final class UnifiedSearchRequest extends FormRequest
             array_map(static fn (mixed $item): string => is_string($item) ? trim($item) : '', $value),
             static fn (string $v): bool => $v !== ''
         ));
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator): void {
+            $fromRaw = $this->input('modified_from');
+            $toRaw = $this->input('modified_to');
+            if (! is_string($fromRaw) || ! is_string($toRaw)) {
+                return;
+            }
+            $from = strtotime($fromRaw);
+            $to = strtotime($toRaw);
+            if (! is_int($from) || ! is_int($to)) {
+                return;
+            }
+            if ($to < $from) {
+                $validator->errors()->add('modified_to', 'The modified_to must be greater than or equal to modified_from.');
+            }
+        });
     }
 }
