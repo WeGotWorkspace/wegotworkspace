@@ -125,6 +125,8 @@ function DocsCollabWorkspaceInner({
   const {
     session: collabSession,
     peers,
+    connectingPeers,
+    warningPeers,
     docStatus,
     onMarkdownChange,
   } = useDocsCollab({
@@ -236,6 +238,8 @@ function DocsCollabWorkspaceInner({
                         displayName: session.user.displayName,
                       }}
                       peers={peers}
+                      connectingPeers={connectingPeers}
+                      warningPeers={warningPeers}
                       className="mr-1"
                     />
                   ) : null}

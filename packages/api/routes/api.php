@@ -151,6 +151,7 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($driveS
     Route::post('collab/poll', [CollabController::class, 'poll']);
     Route::post('collab/send', [CollabController::class, 'send']);
     Route::post('collab/leave', [CollabController::class, 'leave']);
+    Route::get('collab/rtc', [CollabController::class, 'rtc']);
     Route::get('collab/document', [CollabController::class, 'getDocument']);
     Route::put('collab/document', [CollabController::class, 'putDocument']);
 });
