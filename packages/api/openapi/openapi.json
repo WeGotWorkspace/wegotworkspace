@@ -615,6 +615,60 @@
         }
       }
     },
+    "/admin/search/reindex": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Run full unified search reindex",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reindex completed"
+          }
+        }
+      }
+    },
+    "/admin/search/state": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Get unified search reindex state",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reindex state"
+          }
+        }
+      }
+    },
+    "/admin/search/cancel": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Cancel running unified search reindex",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cancel acknowledged"
+          }
+        }
+      }
+    },
     "/admin/updates/backups/{name}": {
       "get": {
         "tags": [
@@ -1267,6 +1321,24 @@
         "responses": {
           "200": {
             "description": "Starred state updated"
+          }
+        }
+      }
+    },
+    "/search/unified": {
+      "post": {
+        "tags": [
+          "Search"
+        ],
+        "summary": "Unified search across files, calendars and contacts",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unified search results"
           }
         }
       }

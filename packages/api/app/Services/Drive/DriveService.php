@@ -6,6 +6,7 @@ namespace App\Services\Drive;
 
 use App\Models\Principal;
 use App\Services\Auth\AdminRoleResolver;
+use App\Services\Search\SearchIndexerService;
 use App\Storage\StoragePaths;
 use App\Storage\WgwStorage;
 use App\Support\WgwSettings;
@@ -22,6 +23,7 @@ final class DriveService
         private DriveSessionStore $session,
         private DriveStarService $stars,
         private AdminRoleResolver $adminRoles,
+        private SearchIndexerService $search,
     ) {}
 
     public function assertFilesEnabled(): void
@@ -133,6 +135,7 @@ final class DriveService
             }
             $disk->put($key, '');
         }
+        $this->search->indexFileStorageKey($key);
 
         return 'Created';
     }
@@ -167,6 +170,11 @@ final class DriveService
         if (! $disk->move($fromKey, $toKey)) {
             throw new \RuntimeException('Rename failed.');
         }
+        $this->search->deleteDavPath('files/'.$fromKey);
+        $this->search->indexFileStorageKey($toKey);
+        if ($disk->directoryExists($toKey)) {
+            $this->reindexSubtree($toKey);
+        }
 
         return 'Renamed';
     }
@@ -189,8 +197,10 @@ final class DriveService
             $key = $this->paths->virtualToStorageKey($path);
             if ($disk->directoryExists($key)) {
                 $disk->deleteDirectory($key);
+                $this->search->deleteDavPath('files/'.$key);
             } elseif ($disk->exists($key)) {
                 $disk->delete($key);
+                $this->search->deleteDavPath('files/'.$key);
             }
         }
 
@@ -282,6 +292,7 @@ final class DriveService
 
         if ($totalChunks <= 1) {
             $disk->put($targetKey, $file->get());
+            $this->search->indexFileStorageKey($targetKey);
 
             return 'Stored';
         }
@@ -302,6 +313,7 @@ final class DriveService
 
         $disk->put($targetKey, $tempDisk->get($partKey));
         $tempDisk->delete($partKey);
+        $this->search->indexFileStorageKey($targetKey);
 
         return 'Stored';
     }
@@ -529,5 +541,16 @@ final class DriveService
     private function disk(): Filesystem
     {
         return $this->storage->files();
+    }
+
+    private function reindexSubtree(string $prefix): void
+    {
+        $disk = $this->disk();
+        foreach ($disk->allDirectories($prefix) as $dirKey) {
+            $this->search->indexFileStorageKey($dirKey);
+        }
+        foreach ($disk->allFiles($prefix) as $fileKey) {
+            $this->search->indexFileStorageKey($fileKey);
+        }
     }
 }

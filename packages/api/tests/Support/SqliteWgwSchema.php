@@ -81,6 +81,52 @@ final class SqliteWgwSchema
         );
     }
 
+    public static function applySearchTables(): void
+    {
+        Schema::connection('wgw')->dropIfExists('search_terms');
+        Schema::connection('wgw')->dropIfExists('search_documents');
+
+        DB::connection('wgw')->statement(
+            'CREATE TABLE search_documents (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                source_type TEXT NOT NULL,
+                source_subtype TEXT,
+                source_key TEXT NOT NULL,
+                owner_username TEXT,
+                group_slug TEXT,
+                title TEXT,
+                extension TEXT,
+                category TEXT,
+                content_type TEXT,
+                size INTEGER,
+                created_at_ts INTEGER,
+                modified_at_ts INTEGER,
+                body_text TEXT,
+                metadata_json TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )'
+        );
+        DB::connection('wgw')->statement('CREATE UNIQUE INDEX uniq_search_source ON search_documents(source_type, source_key)');
+        DB::connection('wgw')->statement('CREATE INDEX idx_search_owner ON search_documents(owner_username)');
+        DB::connection('wgw')->statement('CREATE INDEX idx_search_group ON search_documents(group_slug)');
+        DB::connection('wgw')->statement('CREATE INDEX idx_search_type_mtime ON search_documents(source_type, modified_at_ts)');
+        DB::connection('wgw')->statement(
+            'CREATE TABLE search_terms (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                document_id INTEGER NOT NULL,
+                token TEXT NOT NULL,
+                field TEXT NOT NULL DEFAULT "body",
+                weight INTEGER NOT NULL DEFAULT 1,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY(document_id) REFERENCES search_documents(id) ON DELETE CASCADE
+            )'
+        );
+        DB::connection('wgw')->statement('CREATE UNIQUE INDEX uniq_search_term_doc_token_field ON search_terms(document_id, token, field)');
+        DB::connection('wgw')->statement('CREATE INDEX idx_search_token_field ON search_terms(token, field)');
+    }
+
     public static function applyCollabTables(): void
     {
         Schema::connection('wgw')->dropIfExists('collab_messages');
@@ -160,6 +206,7 @@ final class SqliteWgwSchema
                 $pdo->exec($sql);
             }
         }
+        self::applySearchTables();
     }
 
     public static function applyAuthTables(): void

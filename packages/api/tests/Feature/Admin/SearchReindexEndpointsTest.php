@@ -2,10 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature\Drive;
+namespace Tests\Feature\Admin;
 
 use App\Models\Principal;
 use App\Models\User;
+use App\Services\Auth\AdminRoleResolver;
 use App\Storage\WgwStorage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -14,7 +15,7 @@ use Tests\Support\SqliteWgwSchema;
 use Tests\Support\WgwTestDisks;
 use Tests\TestCase;
 
-final class DriveEndpointsTest extends TestCase
+final class SearchReindexEndpointsTest extends TestCase
 {
     private string $dataDir = '';
 
@@ -25,7 +26,7 @@ final class DriveEndpointsTest extends TestCase
         putenv('WGW_DISABLE_LOGIN_THROTTLE=1');
         $_ENV['WGW_DISABLE_LOGIN_THROTTLE'] = '1';
 
-        $this->dataDir = storage_path('framework/testing/wgw-drive-'.uniqid('', true));
+        $this->dataDir = storage_path('framework/testing/wgw-admin-search-'.uniqid('', true));
         File::ensureDirectoryExists($this->dataDir.'/files/users/alice');
         WgwTestDisks::refresh($this->dataDir);
 
@@ -50,21 +51,26 @@ final class DriveEndpointsTest extends TestCase
 
         SqliteWgwSchema::applyCoreTables();
         SqliteWgwSchema::applyAuthTables();
-        SqliteWgwSchema::applyDriveTables();
-        SqliteWgwSchema::applySearchTables();
+        SqliteWgwSchema::applySabreTables();
 
         User::query()->create([
             'username' => 'alice',
             'digesta1' => '',
             'digest' => password_hash('secret', PASSWORD_DEFAULT),
         ]);
-        Principal::query()->create([
+        $alice = Principal::query()->create([
             'uri' => 'principals/alice',
             'email' => 'alice@example.test',
             'displayname' => 'Alice',
         ]);
-
-        app(WgwStorage::class)->files()->put('users/alice/welcome.txt', 'hello');
+        $adminGroup = Principal::query()->create([
+            'uri' => AdminRoleResolver::ADMIN_GROUP_URI,
+            'displayname' => 'Administrators',
+        ]);
+        DB::connection('wgw')->table('groupmembers')->insert([
+            'principal_id' => $adminGroup->id,
+            'member_id' => $alice->id,
+        ]);
     }
 
     protected function tearDown(): void
@@ -76,39 +82,45 @@ final class DriveEndpointsTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_drive_user_listing_create_and_star_flow(): void
+    public function test_admin_can_run_and_read_search_reindex_state(): void
     {
+        app(WgwStorage::class)->files()->put('users/alice/admin-search.txt', 'Search endpoint smoke test');
         $token = $this->issueToken();
 
-        $user = $this->withBearer($token)->getJson('/api/v1/drive/user');
-        $user->assertOk()
-            ->assertJsonPath('data.username', 'alice')
-            ->assertJsonPath('data.name', 'Alice')
-            ->assertJsonPath('data.roots', ['/users', '/groups']);
+        $run = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/api/v1/admin/search/reindex');
+        $run->assertOk()
+            ->assertJsonPath('ok', true)
+            ->assertJsonPath('message', 'Search reindex completed.');
 
-        $listing = $this->withBearer($token)->postJson('/api/v1/drive/getdir', [
-            'dir' => '/users/alice',
+        $state = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/v1/admin/search/state');
+        $state->assertOk()
+            ->assertJsonPath('inProgress', false)
+            ->assertJsonPath('lastResult.ok', true);
+    }
+
+    public function test_non_admin_cannot_run_search_reindex(): void
+    {
+        User::query()->create([
+            'username' => 'bob',
+            'digesta1' => '',
+            'digest' => password_hash('secret', PASSWORD_DEFAULT),
         ]);
-        $listing->assertOk()
-            ->assertJsonPath('data.location', '/users/alice/')
-            ->assertJsonFragment(['name' => 'welcome.txt', 'type' => 'file']);
-
-        $create = $this->withBearer($token)->postJson('/api/v1/drive/createnew', [
-            'cwd' => '/users/alice',
-            'name' => 'Projects',
-            'type' => 'dir',
+        Principal::query()->create([
+            'uri' => 'principals/bob',
+            'email' => 'bob@example.test',
+            'displayname' => 'Bob',
         ]);
-        $create->assertOk()->assertJsonPath('data', 'Created');
 
-        $star = $this->withBearer($token)->postJson('/api/v1/drive/stars', [
-            'path' => '/users/alice/welcome.txt',
-            'starred' => true,
-        ]);
-        $star->assertOk()->assertJsonPath('data', 'Updated');
+        $token = (string) $this->postJson('/api/v1/auth/token', [
+            'username' => 'bob',
+            'password' => 'secret',
+        ])->json('access_token');
 
-        $stars = $this->withBearer($token)->getJson('/api/v1/drive/stars');
-        $stars->assertOk()
-            ->assertJsonPath('data.paths', ['/users/alice/welcome.txt']);
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/api/v1/admin/search/reindex')
+            ->assertForbidden();
     }
 
     private function issueToken(): string
@@ -117,10 +129,5 @@ final class DriveEndpointsTest extends TestCase
             'username' => 'alice',
             'password' => 'secret',
         ])->json('access_token');
-    }
-
-    private function withBearer(string $token): static
-    {
-        return $this->withHeader('Authorization', 'Bearer '.$token);
     }
 }

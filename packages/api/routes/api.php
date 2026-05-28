@@ -5,6 +5,9 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\V1\Admin\GroupMemberController as AdminGroupMemberController;
 use App\Http\Controllers\Api\V1\Admin\GroupsController as AdminGroupsController;
 use App\Http\Controllers\Api\V1\Admin\PluginInstallController as AdminPluginInstallController;
+use App\Http\Controllers\Api\V1\Admin\SearchReindexCancelController as AdminSearchReindexCancelController;
+use App\Http\Controllers\Api\V1\Admin\SearchReindexRunController as AdminSearchReindexRunController;
+use App\Http\Controllers\Api\V1\Admin\SearchReindexStateController as AdminSearchReindexStateController;
 use App\Http\Controllers\Api\V1\Admin\SettingsController as AdminSettingsController;
 use App\Http\Controllers\Api\V1\Admin\StateController as AdminStateController;
 use App\Http\Controllers\Api\V1\Admin\UpdateApplyController as AdminUpdateApplyController;
@@ -37,6 +40,7 @@ use App\Http\Controllers\Api\V1\Office\SessionController as OfficeSessionControl
 use App\Http\Controllers\Api\V1\Plugins\ActivateController as PluginsActivateController;
 use App\Http\Controllers\Api\V1\Plugins\DeactivateController as PluginsDeactivateController;
 use App\Http\Controllers\Api\V1\Plugins\IndexController as PluginsIndexController;
+use App\Http\Controllers\Api\V1\Search\UnifiedSearchController;
 use App\Http\Controllers\Api\V1\Settings\MailController as SettingsMailController;
 use App\Http\Controllers\Api\V1\Settings\ProfileController as SettingsProfileController;
 use App\Http\Controllers\Api\V1\Settings\StateController as SettingsStateController;
@@ -106,6 +110,7 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($driveS
         Route::get('drive/stars', [DriveController::class, 'starsIndex']);
         Route::post('drive/stars', [DriveController::class, 'starsUpdate']);
     });
+    Route::post('search/unified', UnifiedSearchController::class);
 
     Route::get('office/capabilities', OfficeCapabilitiesController::class);
     Route::post('office/session', OfficeSessionController::class);
@@ -176,6 +181,9 @@ Route::middleware(['wgw.auth', 'wgw.role:admin'])->prefix('admin')->group(functi
     Route::post('updates/check', AdminUpdateCheckController::class);
     Route::post('updates/apply', AdminUpdateApplyController::class);
     Route::post('updates/cancel', AdminUpdateCancelController::class);
+    Route::post('search/reindex', AdminSearchReindexRunController::class);
+    Route::get('search/state', AdminSearchReindexStateController::class);
+    Route::post('search/cancel', AdminSearchReindexCancelController::class);
     Route::post('plugins/install', AdminPluginInstallController::class);
     Route::get('updates/backups/{name}', [AdminUpdateBackupController::class, 'show']);
     Route::delete('updates/backups/{name}', [AdminUpdateBackupController::class, 'destroy']);
