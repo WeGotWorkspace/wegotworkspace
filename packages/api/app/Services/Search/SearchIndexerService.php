@@ -427,7 +427,14 @@ final class SearchIndexerService
             return null;
         }
 
-        return $parts[1].'|'.$parts[2].'|'.$parts[3];
+        $objectUri = (string) array_pop($parts);
+        $calendarUri = (string) array_pop($parts);
+        $principal = trim(implode('/', array_slice($parts, 1)), '/');
+        if ($principal === '' || $calendarUri === '' || $objectUri === '') {
+            return null;
+        }
+
+        return $principal.'|'.$calendarUri.'|'.$objectUri;
     }
 
     private function cardSourceKeyFromPath(string $path): ?string
@@ -437,7 +444,14 @@ final class SearchIndexerService
             return null;
         }
 
-        return $parts[1].'|'.$parts[2].'|'.$parts[3];
+        $cardUri = (string) array_pop($parts);
+        $bookUri = (string) array_pop($parts);
+        $principal = trim(implode('/', array_slice($parts, 1)), '/');
+        if ($principal === '' || $bookUri === '' || $cardUri === '') {
+            return null;
+        }
+
+        return $principal.'|'.$bookUri.'|'.$cardUri;
     }
 
     /**

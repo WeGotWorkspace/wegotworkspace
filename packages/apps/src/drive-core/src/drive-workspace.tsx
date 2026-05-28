@@ -8,9 +8,11 @@ import {
 import { workspaceUserInitials, type WorkspaceSession } from "@/lib/workspace/workspace-session";
 import { ViewHeader } from "@/view-header/src/view-header";
 import { ViewModeToggle } from "@/view-mode-toggle/src/view-mode-toggle";
+import type { WgwUnifiedSearchResult } from "@/lib/api/wgw/search";
 import { cn } from "@/lib/utils";
 import { DriveMainPane } from "@/drive-core/src/drive-main-pane";
 import { DriveNewMenu } from "@/drive-core/src/drive-new-menu";
+import { UnifiedSearchApiDropdown } from "@/unified-search-dropdown/src/unified-search-api-dropdown";
 import { useDriveController } from "@/drive-core/src/use-drive-controller";
 import { useDriveSidebarModel } from "@/drive-core/src/use-drive-sidebar-model";
 import type { DriveWorkspaceProps } from "@/drive-core/src/drive-workspace-props";
@@ -61,7 +63,9 @@ export function DriveWorkspace({
             groupSidebarItems={groupSidebarItems}
           />
         }
-        mainHeader={<DriveMainHeader controller={controller} />}
+        mainHeader={
+          <DriveMainHeader controller={controller} unifiedSearchEnabled={Boolean(operations)} />
+        }
         main={<DriveMainPane controller={controller} operations={operations} />}
       />
       <DriveWorkspaceModals controller={controller} />
@@ -139,7 +143,13 @@ function DriveSidebar({
   );
 }
 
-function DriveMainHeader({ controller }: { controller: DriveController }) {
+function DriveMainHeader({
+  controller,
+  unifiedSearchEnabled,
+}: {
+  controller: DriveController;
+  unifiedSearchEnabled: boolean;
+}) {
   const {
     labels,
     sidebarOpen,
@@ -154,6 +164,16 @@ function DriveMainHeader({ controller }: { controller: DriveController }) {
     searchInputRef,
   } = controller;
 
+  const handleSearchResultSelect = (result: WgwUnifiedSearchResult) => {
+    if (result.sourceType !== "file") return;
+    const normalized = normalizeVirtualPathFromSourceKey(result.sourceKey);
+    if (!normalized) return;
+
+    const path = result.category === "folder" ? normalized : parentVirtualPath(normalized);
+    setSearchQuery("");
+    selectView({ type: "folder", path });
+  };
+
   return (
     <ViewHeader
       sidebarOpen={sidebarOpen}
@@ -166,6 +186,16 @@ function DriveMainHeader({ controller }: { controller: DriveController }) {
       searchValue={searchQuery}
       onSearchInput={setSearchQuery}
       searchInputRef={searchInputRef}
+      searchContent={
+        unifiedSearchEnabled ? (
+          <UnifiedSearchApiDropdown
+            className="drive-main-header__search-dropdown"
+            query={searchQuery}
+            limit={10}
+            onSelect={handleSearchResultSelect}
+          />
+        ) : null
+      }
       actions={
         <ViewModeToggle
           value={viewMode}
@@ -176,4 +206,17 @@ function DriveMainHeader({ controller }: { controller: DriveController }) {
       }
     />
   );
+}
+
+function normalizeVirtualPathFromSourceKey(sourceKey: string): string | null {
+  const key = sourceKey.trim().replace(/^\/+/, "");
+  if (!key) return null;
+  return `/${key}`;
+}
+
+function parentVirtualPath(path: string): string {
+  const normalized = path.trim().replace(/\/+$/, "");
+  const idx = normalized.lastIndexOf("/");
+  if (idx <= 0) return "/";
+  return normalized.slice(0, idx);
 }
