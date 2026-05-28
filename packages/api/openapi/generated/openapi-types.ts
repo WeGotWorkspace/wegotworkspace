@@ -2905,7 +2905,6 @@ export interface components {
             smtpSecurity: string;
         };
         AdminVoiceSettings: {
-            signalingUrl: string;
             stunUrls: string;
             turnUrls: string;
             turnUsername: string;
