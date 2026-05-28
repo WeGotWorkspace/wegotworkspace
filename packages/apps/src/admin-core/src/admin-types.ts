@@ -1,4 +1,11 @@
-export type AdminSection = "users" | "mail" | "meet" | "webdav" | "plugins" | "backups" | "updates";
+export type AdminSection =
+  | "users"
+  | "mail"
+  | "collaboration"
+  | "webdav"
+  | "plugins"
+  | "backups"
+  | "updates";
 
 export type AdminUser = {
   id: string;
@@ -25,7 +32,6 @@ export type AdminMailSettings = {
 };
 
 export type AdminVoiceSettings = {
-  signalingUrl: string;
   stunUrls: string;
   turnUrls: string;
   turnUsername: string;

@@ -22,10 +22,20 @@ function colorForName(name: string): string {
 export type DocsCollabPresenceProps = {
   localUser: { displayName: string };
   peers: DocsCollabMeshPeer[];
+  connectingPeers?: DocsCollabMeshPeer[];
+  warningPeers?: DocsCollabMeshPeer[];
   className?: string;
 };
 
-export function DocsCollabPresence({ localUser, peers, className }: DocsCollabPresenceProps) {
+export function DocsCollabPresence({
+  localUser,
+  peers,
+  connectingPeers = [],
+  warningPeers = [],
+  className,
+}: DocsCollabPresenceProps) {
+  const connectingNames = connectingPeers.map((peer) => peer.name).join(", ");
+  const warningNames = warningPeers.map((peer) => peer.name).join(", ");
   return (
     <div
       className={cn("docs-collab-presence flex items-center gap-1", className)}
@@ -52,6 +62,30 @@ export function DocsCollabPresence({ localUser, peers, className }: DocsCollabPr
           <TooltipContent>{peer.name}</TooltipContent>
         </Tooltip>
       ))}
+      {connectingPeers.length > 0 ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="docs-collab-presence__avatar docs-collab-presence__avatar--connecting -ml-2 inline-flex size-7 items-center justify-center rounded-full text-[10px] font-semibold ring-2 ring-background">
+              ...
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            {`Connecting to ${connectingPeers.length} peer(s)${connectingNames ? `: ${connectingNames}` : ""}`}
+          </TooltipContent>
+        </Tooltip>
+      ) : null}
+      {warningPeers.length > 0 ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="docs-collab-presence__avatar docs-collab-presence__avatar--warning -ml-2 inline-flex size-7 items-center justify-center rounded-full text-[10px] font-semibold ring-2 ring-background">
+              !
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            {`Could not connect to ${warningPeers.length} peer(s)${warningNames ? `: ${warningNames}` : ""}`}
+          </TooltipContent>
+        </Tooltip>
+      ) : null}
     </div>
   );
 }
