@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Collab;
 
+use App\Models\AppSetting;
 use App\Models\Principal;
 use App\Models\User;
+use App\Settings\SettingKeys;
 use Illuminate\Support\Facades\DB;
 use Tests\Support\AuthTestKeys;
 use Tests\Support\SqliteWgwSchema;
@@ -65,6 +67,25 @@ final class CollabEndpointsTest extends TestCase
             'room' => self::ROOM,
             'name' => 'Alice',
         ])->assertUnauthorized();
+    }
+
+    public function test_rtc_settings_returns_voice_ice_values_for_authenticated_user(): void
+    {
+        AppSetting::setValue(SettingKeys::VOICE_STUN_URL, 'stun.example.test:3478,stuns:stun2.example.test:5349');
+        AppSetting::setValue(SettingKeys::VOICE_TURN_URL, 'turn.example.test:3478?transport=udp');
+        AppSetting::setValue(SettingKeys::VOICE_TURN_USERNAME, 'rtc-user');
+        AppSetting::setValue(SettingKeys::VOICE_TURN_CREDENTIAL, 'rtc-secret');
+        AppSetting::setValue(SettingKeys::VOICE_FORCE_RELAY, true);
+
+        $token = $this->issueToken('alice');
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/v1/collab/rtc')
+            ->assertOk()
+            ->assertJsonPath('voice.stunUrls', 'stun:stun.example.test:3478, stuns:stun2.example.test:5349')
+            ->assertJsonPath('voice.turnUrls', 'turn:turn.example.test:3478?transport=udp')
+            ->assertJsonPath('voice.turnUsername', 'rtc-user')
+            ->assertJsonPath('voice.turnPassword', 'rtc-secret')
+            ->assertJsonPath('voice.forceRelay', true);
     }
 
     public function test_two_users_exchange_signaling_messages(): void

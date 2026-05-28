@@ -15,6 +15,7 @@ import {
   installStepIndex,
   toInstallServerChecks,
 } from "@/install-core/src/install-models";
+import { DEFAULT_PUBLIC_STUN_URLS_CSV } from "@/lib/rtc/default-stun";
 import type {
   InstallAdminForm,
   InstallDavForm,
@@ -58,6 +59,7 @@ export function useInstallController({
   });
   const [meet, setMeet] = useState<InstallMeetForm>({
     enabled: false,
+    stun: DEFAULT_PUBLIC_STUN_URLS_CSV,
     turn: "",
     turnUser: "",
     turnPwd: "",
@@ -266,6 +268,7 @@ export function useInstallController({
             mail_smtp_port: mail.smtpPort,
             mail_smtp_security: mail.smtpSec,
             voice_enabled: meet.enabled,
+            voice_stun_url: meet.stun,
             voice_turn_url: meet.turn,
             voice_turn_username: meet.turnUser,
             voice_turn_credential: meet.turnPwd,

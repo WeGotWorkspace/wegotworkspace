@@ -1,7 +1,7 @@
 import { wgwApiBaseUrl, wgwFetch, wgwFetchPrincipal, wgwReadJson } from "@/lib/api/wgw/http";
+import { isRtcDebugEnabled } from "@/lib/rtc/debug";
 import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
 import type {
-  WgwAdminStateResponse,
   WgwVoiceChatRequest,
   WgwVoiceChatResponse,
   WgwVoiceJoinRequest,
@@ -27,6 +27,11 @@ const DEFAULT_RTC_SETTINGS: MeetRtcSettings = {
   turnPassword: "",
   forceRelay: false,
 };
+
+function logMeetRtcDebug(event: string, payload: Record<string, unknown>): void {
+  if (!isRtcDebugEnabled()) return;
+  console.info(`[meet][rtc] ${event}`, payload);
+}
 
 async function readApiError(res: Response, fallback: string): Promise<string> {
   try {
@@ -85,19 +90,61 @@ async function postVoiceJsonGuest<T>(
 }
 
 async function fetchRtcSettings(): Promise<MeetRtcSettings> {
-  const res = await wgwFetch("/admin/state");
-  if (!res.ok) return DEFAULT_RTC_SETTINGS;
+  const base = wgwApiBaseUrl();
+  const requestUrl = `${base}/voice/rtc`;
+  logMeetRtcDebug("rtc-settings-request", { requestUrl });
+  const res = await fetch(requestUrl, {
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    logMeetRtcDebug("rtc-settings-response", {
+      requestUrl,
+      ok: false,
+      status: res.status,
+    });
+    return DEFAULT_RTC_SETTINGS;
+  }
   try {
-    const payload = (await wgwReadJson(res)) as WgwAdminStateResponse;
-    if (!payload.voice) return DEFAULT_RTC_SETTINGS;
-    return {
-      stunUrls: payload.voice.stunUrls ?? "",
-      turnUrls: payload.voice.turnUrls ?? "",
-      turnUsername: payload.voice.turnUsername ?? "",
-      turnPassword: payload.voice.turnPassword ?? "",
-      forceRelay: !!payload.voice.forceRelay,
+    const payload = (await wgwReadJson(res)) as {
+      voice?: Partial<MeetRtcSettings>;
+      stunUrls?: string;
+      turnUrls?: string;
+      turnUsername?: string;
+      turnPassword?: string;
+      forceRelay?: boolean;
     };
+    const voice = payload.voice ?? payload;
+    const settings: MeetRtcSettings = {
+      stunUrls: typeof voice.stunUrls === "string" ? voice.stunUrls : "",
+      turnUrls: typeof voice.turnUrls === "string" ? voice.turnUrls : "",
+      turnUsername: typeof voice.turnUsername === "string" ? voice.turnUsername : "",
+      turnPassword: typeof voice.turnPassword === "string" ? voice.turnPassword : "",
+      forceRelay: !!voice.forceRelay,
+    };
+    logMeetRtcDebug("rtc-settings-response", {
+      requestUrl,
+      ok: true,
+      status: res.status,
+      stunCount: settings.stunUrls
+        .split(/[\n,\r]+/)
+        .map((value) => value.trim())
+        .filter((value) => value !== "").length,
+      turnCount: settings.turnUrls
+        .split(/[\n,\r]+/)
+        .map((value) => value.trim())
+        .filter((value) => value !== "").length,
+      forceRelay: settings.forceRelay,
+      turnUsernameConfigured: settings.turnUsername !== "",
+      turnPasswordConfigured: settings.turnPassword !== "",
+    });
+    return settings;
   } catch {
+    logMeetRtcDebug("rtc-settings-response", {
+      requestUrl,
+      ok: true,
+      status: res.status,
+      parseError: true,
+    });
     return DEFAULT_RTC_SETTINGS;
   }
 }

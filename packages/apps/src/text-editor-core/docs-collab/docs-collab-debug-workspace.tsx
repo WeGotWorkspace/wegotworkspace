@@ -13,6 +13,8 @@ export function DocsCollabWorkspace({ userName, autoJoin = true }: DocsCollabWor
     status,
     docStatus,
     peers,
+    connectingPeers,
+    warningPeers,
     linkCount,
     join,
     leave,
@@ -62,7 +64,8 @@ export function DocsCollabWorkspace({ userName, autoJoin = true }: DocsCollabWor
         <span className="text-muted-foreground">{status}</span>
         {docStatus ? <span className="text-muted-foreground">· {docStatus}</span> : null}
         <span className="ml-auto text-muted-foreground">
-          {linkCount} WebRTC link(s) · {peers.length} peer(s) in room
+          {linkCount} WebRTC link(s) · {peers.length} connected · {connectingPeers.length}{" "}
+          connecting · {warningPeers.length} warning
         </span>
       </header>
 
@@ -70,7 +73,8 @@ export function DocsCollabWorkspace({ userName, autoJoin = true }: DocsCollabWor
         Open this story in <strong>two browser windows</strong> (or Storybook + iframe) with
         different <strong>userName</strong> controls — e.g. Alex and Sam. Uses a local signaling
         service on <strong>8081</strong> (started by Storybook or{" "}
-        <code>pnpm dev:docs-collab-signal</code>).
+        <code>pnpm dev:docs-collab-signal</code>). Enable verbose RTC diagnostics with{" "}
+        <code>?rtcDebug=1</code>.
       </div>
 
       <main className="flex-1 p-4">
