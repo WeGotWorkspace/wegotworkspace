@@ -21,6 +21,7 @@
 .unified-search-results-dropdown__groups {
   display: flex;
   flex-direction: column;
+  padding: 0.35rem 0.45rem 0.55rem;
 }
 
 .unified-search-results-dropdown__group + .unified-search-results-dropdown__group {
@@ -28,9 +29,10 @@
 }
 
 .unified-search-results-dropdown__group .sidebar-section__heading {
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.4rem;
   height: auto;
-  padding-top: 0.65rem;
+  padding-top: 0.5rem;
+  padding-inline: 0.25rem;
 }
 
 .unified-search-results-dropdown__group .sidebar-section__title {
@@ -42,7 +44,7 @@
 
 .unified-search-results-dropdown__menu-item {
   border-radius: 6px;
-  margin: 0;
+  margin: 0.08rem 0;
   width: 100%;
   color: var(--unified-search-dropdown-text, hsl(0 0% 10%));
 }

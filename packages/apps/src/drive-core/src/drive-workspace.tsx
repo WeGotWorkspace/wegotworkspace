@@ -8,11 +8,12 @@ import {
 import { workspaceUserInitials, type WorkspaceSession } from "@/lib/workspace/workspace-session";
 import { ViewHeader } from "@/view-header/src/view-header";
 import { ViewModeToggle } from "@/view-mode-toggle/src/view-mode-toggle";
-import type { WgwUnifiedSearchResult } from "@/lib/api/wgw/search";
+import { downloadWgwUnifiedSearchRecord, type WgwUnifiedSearchResult } from "@/lib/api/wgw/search";
 import { cn } from "@/lib/utils";
 import { DriveMainPane } from "@/drive-core/src/drive-main-pane";
 import { DriveNewMenu } from "@/drive-core/src/drive-new-menu";
 import { UnifiedSearchApiDropdown } from "@/unified-search-dropdown/src/unified-search-api-dropdown";
+import { driveFileFromEntry } from "@/drive-core/src/drive-file-utils";
 import { useDriveController } from "@/drive-core/src/use-drive-controller";
 import { useDriveSidebarModel } from "@/drive-core/src/use-drive-sidebar-model";
 import type { DriveWorkspaceProps } from "@/drive-core/src/drive-workspace-props";
@@ -162,16 +163,57 @@ function DriveMainHeader({
     searchQuery,
     setSearchQuery,
     searchInputRef,
+    selectView,
+    openFile,
+    operations,
+    currentUsername,
   } = controller;
 
   const handleSearchResultSelect = (result: WgwUnifiedSearchResult) => {
-    if (result.sourceType !== "file") return;
-    const normalized = normalizeVirtualPathFromSourceKey(result.sourceKey);
-    if (!normalized) return;
+    void (async () => {
+      try {
+        if (result.sourceType === "caldav" || result.sourceType === "carddav") {
+          setSearchQuery("");
+          await downloadWgwUnifiedSearchRecord({
+            sourceType: result.sourceType,
+            sourceKey: result.sourceKey,
+          });
+          return;
+        }
 
-    const path = result.category === "folder" ? normalized : parentVirtualPath(normalized);
-    setSearchQuery("");
-    selectView({ type: "folder", path });
+        if (result.sourceType !== "file") return;
+        const normalized = normalizeVirtualPathFromSourceKey(result.sourceKey);
+        if (!normalized) return;
+        setSearchQuery("");
+
+        if (result.category === "folder") {
+          selectView({ type: "folder", path: normalized });
+          return;
+        }
+        if (!operations) {
+          selectView({ type: "folder", path: parentVirtualPath(normalized) });
+          return;
+        }
+
+        const apiPath = apiPathFromSourceKey(result.sourceKey);
+        if (!apiPath) {
+          selectView({ type: "folder", path: parentVirtualPath(normalized) });
+          return;
+        }
+
+        const entries = await operations.listEntriesByPaths([apiPath]);
+        const entry = entries[0];
+        if (!entry) {
+          selectView({ type: "folder", path: parentVirtualPath(normalized) });
+          return;
+        }
+        openFile(driveFileFromEntry(entry, currentUsername));
+      } catch {
+        const normalized = normalizeVirtualPathFromSourceKey(result.sourceKey);
+        if (!normalized) return;
+        selectView({ type: "folder", path: parentVirtualPath(normalized) });
+      }
+    })();
   };
 
   return (
@@ -219,4 +261,10 @@ function parentVirtualPath(path: string): string {
   const idx = normalized.lastIndexOf("/");
   if (idx <= 0) return "/";
   return normalized.slice(0, idx);
+}
+
+function apiPathFromSourceKey(sourceKey: string): string | null {
+  const key = sourceKey.trim().replace(/^\/+/, "");
+  if (!key) return null;
+  return `/${key}`;
 }

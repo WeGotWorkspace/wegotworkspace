@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Search;
 
 use App\Services\Drive\DriveGroupResolver;
+use Illuminate\Support\Facades\DB;
 
 final class UnifiedSearchService
 {
@@ -95,6 +96,69 @@ final class UnifiedSearchService
     }
 
     /**
+     * @return array{content:string,content_type:string,filename:string}|null
+     */
+    public function downloadRecord(string $username, string $sourceType, string $sourceKey): ?array
+    {
+        if (! in_array($sourceType, ['caldav', 'carddav'], true)) {
+            return null;
+        }
+
+        $doc = $this->store->findAccessibleDocument(
+            $username,
+            $this->groups->allowedGroupSlugs($username),
+            $sourceType,
+            $sourceKey
+        );
+        if ($doc === null) {
+            return null;
+        }
+
+        if ($sourceType === 'caldav') {
+            [$principal, $calendarUri, $objectUri] = explode('|', $sourceKey, 3);
+            $row = DB::connection('wgw')
+                ->table('calendarobjects as o')
+                ->join('calendarinstances as i', 'i.calendarid', '=', 'o.calendarid')
+                ->where('i.principaluri', 'principals/'.$principal)
+                ->where('i.uri', $calendarUri)
+                ->where('o.uri', $objectUri)
+                ->select(['o.calendardata', 'o.uri'])
+                ->first();
+            if ($row === null) {
+                return null;
+            }
+            $filename = $this->downloadName((string) ($row->uri ?? $objectUri), 'ics');
+
+            return [
+                'content' => (string) ($row->calendardata ?? ''),
+                'content_type' => 'text/calendar; charset=utf-8',
+                'filename' => $filename,
+            ];
+        }
+
+        [$principal, $bookUri, $cardUri] = explode('|', $sourceKey, 3);
+        $row = DB::connection('wgw')
+            ->table('cards as c')
+            ->join('addressbooks as a', 'a.id', '=', 'c.addressbookid')
+            ->where('a.principaluri', 'principals/'.$principal)
+            ->where('a.uri', $bookUri)
+            ->where('c.uri', $cardUri)
+            ->select(['c.carddata', 'c.uri'])
+            ->first();
+        if ($row === null) {
+            return null;
+        }
+
+        $filename = $this->downloadName((string) ($row->uri ?? $cardUri), 'vcf');
+
+        return [
+            'content' => (string) ($row->carddata ?? ''),
+            'content_type' => 'text/vcard; charset=utf-8',
+            'filename' => $filename,
+        ];
+    }
+
+    /**
      * @param  array{
      *   categories?: list<string>,
      *   extensions?: list<string>,
@@ -171,5 +235,18 @@ final class UnifiedSearchService
         }
 
         return mb_substr($trimmed, 0, 160);
+    }
+
+    private function downloadName(string $name, string $extension): string
+    {
+        $trimmed = trim($name);
+        if ($trimmed === '') {
+            return 'record.'.$extension;
+        }
+        if (str_contains($trimmed, '.')) {
+            return $trimmed;
+        }
+
+        return $trimmed.'.'.$extension;
     }
 }
