@@ -63,6 +63,16 @@ final class UnifiedSearchEndpointsTest extends TestCase
             'email' => 'alice@example.test',
             'displayname' => 'Alice',
         ]);
+        User::query()->create([
+            'username' => 'bob',
+            'digesta1' => '',
+            'digest' => password_hash('secret', PASSWORD_DEFAULT),
+        ]);
+        Principal::query()->create([
+            'uri' => 'principals/bob',
+            'email' => 'bob@example.test',
+            'displayname' => 'Bob',
+        ]);
     }
 
     protected function tearDown(): void
@@ -125,10 +135,10 @@ final class UnifiedSearchEndpointsTest extends TestCase
 
         $token = $this->issueToken();
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
-            ->postJson('/api/v1/search/unified', [
+            ->getJson('/api/v1/search/unified?'.http_build_query([
                 'q' => 'alpha',
                 'limit' => 20,
-            ]);
+            ]));
 
         $response->assertOk()
             ->assertJsonPath('data.query', 'alpha');
@@ -139,6 +149,50 @@ final class UnifiedSearchEndpointsTest extends TestCase
         $this->assertContains('file', $sourceTypes);
         $this->assertContains('caldav', $sourceTypes);
         $this->assertContains('carddav', $sourceTypes);
+    }
+
+    public function test_unified_search_supports_filters_date_range_and_auth_scope(): void
+    {
+        app(WgwStorage::class)->files()->put('users/alice/meeting-alpha.md', 'alpha note body');
+        app(WgwStorage::class)->files()->put('users/alice/meeting-alpha.csv', "name,value\nalpha,1");
+        app(WgwStorage::class)->files()->put('users/bob/secretbob.md', 'secretbob private for bob');
+
+        app(SearchIndexerService::class)->reindexAll();
+
+        $token = $this->issueToken();
+        $filtered = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/v1/search/unified?'.http_build_query([
+                'q' => 'alpha',
+                'sources' => ['file'],
+                'extensions' => ['md'],
+                'categories' => ['document'],
+                'modified_from' => 0,
+                'modified_to' => time() + 10,
+                'limit' => 50,
+            ]));
+
+        $filtered->assertOk()
+            ->assertJsonPath('data.filters.extensions.0', 'md')
+            ->assertJsonPath('data.filters.categories.0', 'document')
+            ->assertJsonPath('data.sources.0', 'file');
+
+        $results = $filtered->json('data.results');
+        $this->assertIsArray($results);
+        $this->assertNotEmpty($results);
+        foreach ($results as $result) {
+            $this->assertSame('file', $result['sourceType']);
+            $this->assertSame('md', $result['extension']);
+            $this->assertSame('document', $result['category']);
+            $this->assertStringStartsWith('users/alice/', (string) $result['sourceKey']);
+        }
+
+        $scoped = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/v1/search/unified?'.http_build_query([
+                'q' => 'secretbob',
+                'sources' => ['file'],
+                'limit' => 20,
+            ]));
+        $scoped->assertOk()->assertJsonPath('data.results', []);
     }
 
     private function issueToken(): string

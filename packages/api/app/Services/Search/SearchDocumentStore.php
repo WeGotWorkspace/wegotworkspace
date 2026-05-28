@@ -79,6 +79,7 @@ final class SearchDocumentStore
         array $tokens,
         int $limit,
         array $sources,
+        array $filters = [],
     ): array {
         $query = DB::connection('wgw')
             ->table('search_documents as d')
@@ -117,6 +118,18 @@ final class SearchDocumentStore
 
         if ($sources !== []) {
             $query->whereIn('d.source_type', $sources);
+        }
+        if (isset($filters['categories']) && is_array($filters['categories']) && $filters['categories'] !== []) {
+            $query->whereIn('d.category', $filters['categories']);
+        }
+        if (isset($filters['extensions']) && is_array($filters['extensions']) && $filters['extensions'] !== []) {
+            $query->whereIn('d.extension', $filters['extensions']);
+        }
+        if (isset($filters['modified_from']) && is_int($filters['modified_from'])) {
+            $query->where('d.modified_at_ts', '>=', $filters['modified_from']);
+        }
+        if (isset($filters['modified_to']) && is_int($filters['modified_to'])) {
+            $query->where('d.modified_at_ts', '<=', $filters['modified_to']);
         }
 
         if ($tokens !== []) {

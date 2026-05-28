@@ -21,14 +21,28 @@ final class UnifiedSearchController
         $principal = $request->attributes->get(AuthenticateWgwApi::PRINCIPAL_ATTRIBUTE);
 
         try {
+            $sources = isset($validated['sources']) && is_array($validated['sources'])
+                ? array_values(array_filter($validated['sources'], 'is_string'))
+                : [];
+            $categories = isset($validated['categories']) && is_array($validated['categories'])
+                ? array_values(array_filter($validated['categories'], 'is_string'))
+                : [];
+            $extensions = isset($validated['extensions']) && is_array($validated['extensions'])
+                ? array_values(array_filter($validated['extensions'], 'is_string'))
+                : [];
+
             return response()->json([
                 'data' => $this->search->search(
                     (string) $principal['username'],
                     (string) $validated['q'],
                     isset($validated['limit']) ? (int) $validated['limit'] : 25,
-                    isset($validated['sources']) && is_array($validated['sources'])
-                        ? array_values(array_filter($validated['sources'], 'is_string'))
-                        : []
+                    $sources,
+                    [
+                        'categories' => $categories,
+                        'extensions' => $extensions,
+                        'modified_from' => isset($validated['modified_from']) ? (int) $validated['modified_from'] : null,
+                        'modified_to' => isset($validated['modified_to']) ? (int) $validated['modified_to'] : null,
+                    ]
                 ),
             ]);
         } catch (\InvalidArgumentException $e) {
