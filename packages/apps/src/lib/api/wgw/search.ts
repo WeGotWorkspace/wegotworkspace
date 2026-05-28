@@ -2,7 +2,7 @@ import { wgwFetch, wgwReadJson } from "@/lib/api/wgw/http";
 
 export type WgwUnifiedSearchResult = {
   id: number;
-  sourceType: "file" | "caldav" | "carddav" | string;
+  sourceType: "file" | "note" | "caldav" | "carddav" | string;
   sourceSubtype?: string | null;
   sourceKey: string;
   title: string;
