@@ -33,15 +33,13 @@ export function DriveApp({ apiSource }: DriveAppProps = {}) {
     [navigate],
   );
 
-  const handleOpenDocsFile = useCallback(
-    (apiPath: string) => {
-      void navigate({
-        to: "/docs",
-        search: docsSearchFromApiPath(apiPath),
-      });
-    },
-    [navigate],
-  );
+  const handleOpenDocsFile = useCallback((apiPath: string) => {
+    const file = docsSearchFromApiPath(apiPath).file;
+    const query = new URLSearchParams();
+    if (file) query.set("file", file);
+    const href = `/docs${query.toString() ? `?${query.toString()}` : ""}`;
+    window.open(href, "_blank", "noopener,noreferrer");
+  }, []);
 
   return (
     <WorkspaceLiveAppShell
