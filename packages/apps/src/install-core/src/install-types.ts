@@ -76,6 +76,7 @@ export type InstallMailForm = {
 
 export type InstallMeetForm = {
   enabled: boolean;
+  stun: string;
   turn: string;
   turnUser: string;
   turnPwd: string;

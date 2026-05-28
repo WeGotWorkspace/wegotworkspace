@@ -64,6 +64,7 @@ Route::post('auth/refresh', RefreshController::class);
 Route::post('auth/revoke', RevokeController::class);
 
 Route::post('voice/room', [VoiceController::class, 'room']);
+Route::get('voice/rtc', [VoiceController::class, 'rtc']);
 Route::post('voice/join', [VoiceController::class, 'join']);
 Route::post('voice/poll', [VoiceController::class, 'poll']);
 Route::post('voice/send', [VoiceController::class, 'send']);
@@ -151,6 +152,7 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($driveS
     Route::post('collab/poll', [CollabController::class, 'poll']);
     Route::post('collab/send', [CollabController::class, 'send']);
     Route::post('collab/leave', [CollabController::class, 'leave']);
+    Route::get('collab/rtc', [CollabController::class, 'rtc']);
     Route::get('collab/document', [CollabController::class, 'getDocument']);
     Route::put('collab/document', [CollabController::class, 'putDocument']);
 });

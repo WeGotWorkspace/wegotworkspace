@@ -22,7 +22,6 @@ export function useAdminAPI(source?: AdminApiSource) {
         smtpSecurity: "",
       },
       voice: {
-        signalingUrl: "",
         stunUrls: "",
         turnUrls: "",
         turnUsername: "",

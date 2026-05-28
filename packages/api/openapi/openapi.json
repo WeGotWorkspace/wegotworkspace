@@ -1767,6 +1767,37 @@
         }
       }
     },
+    "/voice/rtc": {
+      "get": {
+        "tags": [
+          "Voice"
+        ],
+        "summary": "Get voice RTC ICE settings",
+        "responses": {
+          "200": {
+            "description": "Voice RTC settings"
+          }
+        }
+      }
+    },
+    "/collab/rtc": {
+      "get": {
+        "tags": [
+          "Collab"
+        ],
+        "summary": "Get document collab RTC ICE settings",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Collab RTC settings"
+          }
+        }
+      }
+    },
     "/collab/join": {
       "post": {
         "tags": [

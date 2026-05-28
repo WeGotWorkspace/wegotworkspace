@@ -22,8 +22,7 @@ final class SettingKeys
 
     public const MAIL_ENABLED = 'mail_enabled';
 
-    /** Optional absolute URL to Aura Voice signaling base endpoint. Empty = built-in /api/v1/voice path. */
-    public const VOICE_SIGNALING_URL = 'voice_signaling_url';
+    public const VOICE_STUN_URL = 'voice_stun_url';
 
     public const VOICE_TURN_URL = 'voice_turn_url';
 
@@ -60,7 +59,7 @@ final class SettingKeys
             self::CALENDAR_ENABLED,
             self::CONTACTS_ENABLED,
             self::MAIL_ENABLED,
-            self::VOICE_SIGNALING_URL,
+            self::VOICE_STUN_URL,
             self::VOICE_TURN_URL,
             self::VOICE_TURN_USERNAME,
             self::VOICE_TURN_CREDENTIAL,
