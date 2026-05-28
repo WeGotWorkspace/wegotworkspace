@@ -166,8 +166,8 @@ final class UnifiedSearchEndpointsTest extends TestCase
                 'sources' => ['file'],
                 'extensions' => ['md'],
                 'categories' => ['document'],
-                'modified_from' => 0,
-                'modified_to' => time() + 10,
+                'modified_from' => gmdate('c', 0),
+                'modified_to' => gmdate('c', time() + 10),
                 'limit' => 50,
             ]));
 
