@@ -135,8 +135,8 @@ final class AdminEndpointsTest extends TestCase
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->putJson('/api/v1/admin/settings', [
                 'values' => [
-                    'voice_stun_url' => 'stun:stun.example.test:3478',
-                    'voice_turn_url' => 'turn:turn.example.test:3478?transport=udp',
+                    'voice_stun_url' => 'stun:stun.example.test:3478,stuns:stun-backup.example.test:5349',
+                    'voice_turn_url' => 'turn:turn.example.test:3478?transport=udp,turns:turn-backup.example.test:5349?transport=tcp',
                     'voice_turn_username' => 'meet-user',
                     'voice_turn_credential' => 'meet-secret',
                     'voice_force_relay' => true,
@@ -151,8 +151,8 @@ final class AdminEndpointsTest extends TestCase
             ->assertJsonPath('voice.turnUsername', 'meet-user')
             ->assertJsonPath('voice.turnPassword', 'meet-secret')
             ->assertJsonPath('voice.forceRelay', true)
-            ->assertJsonPath('voice.stunUrls', 'stun:stun.example.test:3478')
-            ->assertJsonPath('voice.turnUrls', 'turn:turn.example.test:3478?transport=udp');
+            ->assertJsonPath('voice.stunUrls', 'stun:stun.example.test:3478, stuns:stun-backup.example.test:5349')
+            ->assertJsonPath('voice.turnUrls', 'turn:turn.example.test:3478?transport=udp, turns:turn-backup.example.test:5349?transport=tcp');
 
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->putJson('/api/v1/admin/groups/administrators/members/bob')

@@ -25,10 +25,29 @@ final class AdminSettingsService
             if ($key === SettingKeys::TIMEZONE) {
                 $value = TimezoneNormalizer::normalize($value);
             }
+            if ($key === SettingKeys::VOICE_STUN_URL || $key === SettingKeys::VOICE_TURN_URL) {
+                $value = $this->normalizeRtcUrls($value);
+            }
             AppSetting::setValue($key, $value);
             $saved[] = $key;
         }
 
         return ['ok' => true, 'saved' => $saved];
+    }
+
+    private function normalizeRtcUrls(mixed $value): string
+    {
+        if (! is_string($value)) {
+            return '';
+        }
+        $parts = array_filter(
+            array_map(
+                static fn (string $piece): string => trim($piece),
+                preg_split('/[\r\n,]+/', $value) ?: []
+            ),
+            static fn (string $piece): bool => $piece !== ''
+        );
+
+        return implode(', ', $parts);
     }
 }
