@@ -35,14 +35,14 @@ final class UnifiedSearchService
     {
         $query = trim($query);
         $limit = max(1, min(100, $limit));
-        $allowedSources = array_values(array_intersect(['file', 'caldav', 'carddav'], $sources));
+        $allowedSources = array_values(array_intersect(['file', 'note', 'caldav', 'carddav'], $sources));
         $normalizedFilters = $this->normalizeFilters($filters);
         $tokens = $this->tokens->tokenize($query);
         if ($query === '' || $tokens === []) {
             return [
                 'query' => $query,
                 'limit' => $limit,
-                'sources' => $allowedSources === [] ? ['file', 'caldav', 'carddav'] : $allowedSources,
+                'sources' => $allowedSources === [] ? ['file', 'note', 'caldav', 'carddav'] : $allowedSources,
                 'filters' => $normalizedFilters,
                 'results' => [],
             ];
@@ -89,7 +89,7 @@ final class UnifiedSearchService
         return [
             'query' => $query,
             'limit' => $limit,
-            'sources' => $allowedSources === [] ? ['file', 'caldav', 'carddav'] : $allowedSources,
+            'sources' => $allowedSources === [] ? ['file', 'note', 'caldav', 'carddav'] : $allowedSources,
             'filters' => $normalizedFilters,
             'results' => $results,
         ];

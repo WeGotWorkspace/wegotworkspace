@@ -23,7 +23,7 @@ final class UnifiedSearchRequest extends FormRequest
             'q' => ['required', 'string', 'min:2', 'max:512'],
             'limit' => ['sometimes', 'integer', 'min:1', 'max:100'],
             'sources' => ['sometimes', 'array'],
-            'sources.*' => ['string', Rule::in(['file', 'caldav', 'carddav'])],
+            'sources.*' => ['string', Rule::in(['file', 'note', 'caldav', 'carddav'])],
             'categories' => ['sometimes', 'array'],
             'categories.*' => ['string', 'min:1', 'max:64'],
             'extensions' => ['sometimes', 'array'],

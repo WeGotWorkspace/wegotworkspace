@@ -262,7 +262,7 @@ final class UnifiedSearchEndpointsTest extends TestCase
     {
         app(WgwStorage::class)->files()->put(
             'users/alice/plain-md.md',
-            "# Sprint plan\n- [Release Notes](https://example.test/release)\n**Ship** the _feature_ with `command --flag`\n"
+            "---\ntitle: Sprint\naudience: team-alpha\n---\n# Sprint plan\n- [Release Notes](https://example.test/release)\n**Ship** the _feature_ with `command --flag`\n"
         );
 
         app(SearchIndexerService::class)->reindexAll();
@@ -277,9 +277,105 @@ final class UnifiedSearchEndpointsTest extends TestCase
         $this->assertStringContainsString('Sprint plan', (string) $indexed->body_text);
         $this->assertStringContainsString('Release Notes', (string) $indexed->body_text);
         $this->assertStringContainsString('Ship the feature with command --flag', (string) $indexed->body_text);
+        $this->assertStringNotContainsString('audience: team-alpha', (string) $indexed->body_text);
         $this->assertStringNotContainsString('[Release Notes](', (string) $indexed->body_text);
         $this->assertStringNotContainsString('**Ship**', (string) $indexed->body_text);
         $this->assertStringNotContainsString('`command --flag`', (string) $indexed->body_text);
+
+        $metadata = json_decode((string) $indexed->metadata_json, true);
+        $this->assertIsArray($metadata);
+        $this->assertArrayHasKey('frontmatter', $metadata);
+        $this->assertStringContainsString('audience: team-alpha', (string) $metadata['frontmatter']);
+    }
+
+    public function test_unified_search_skips_hidden_paths_but_keeps_notes_as_note_category(): void
+    {
+        app(WgwStorage::class)->files()->put('users/alice/.secret.md', 'hidden should not index');
+        app(WgwStorage::class)->files()->put('users/alice/.hidden/folder.md', 'hidden folder should not index');
+        app(WgwStorage::class)->files()->put(
+            'users/alice/.notes/n-123.md',
+            "---\ntitle: My Note Title\n---\nMy note body\nsecond line"
+        );
+
+        app(SearchIndexerService::class)->reindexAll();
+
+        $hiddenFile = DB::connection('wgw')->table('search_documents')
+            ->where('source_type', 'file')
+            ->where('source_key', 'users/alice/.secret.md')
+            ->first();
+        $hiddenFolderFile = DB::connection('wgw')->table('search_documents')
+            ->where('source_type', 'file')
+            ->where('source_key', 'users/alice/.hidden/folder.md')
+            ->first();
+        $noteFile = DB::connection('wgw')->table('search_documents')
+            ->where('source_type', 'note')
+            ->where('source_key', 'users/alice/.notes/n-123.md')
+            ->first();
+
+        $this->assertNull($hiddenFile);
+        $this->assertNull($hiddenFolderFile);
+        $this->assertNotNull($noteFile);
+        $this->assertSame('note', $noteFile->category);
+        $this->assertSame('note', $noteFile->source_subtype);
+        $this->assertSame('My Note Title', $noteFile->title);
+    }
+
+    public function test_unified_search_updates_note_body_and_keeps_note_source_type(): void
+    {
+        $token = $this->issueToken();
+        $payload = [
+            'id' => 'n-search',
+            'notebook' => 'General',
+            'title' => 'First Note Title',
+            'body' => 'oldneedle123',
+            'tags' => ['alpha'],
+            'starred' => false,
+            'archived' => false,
+        ];
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->putJson('/api/v1/notes/items/n-search', $payload)
+            ->assertOk();
+
+        $firstSearch = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/v1/search/unified?'.http_build_query([
+                'q' => 'oldneedle123',
+                'sources' => ['note'],
+                'limit' => 20,
+            ]));
+        $firstSearch->assertOk();
+        $firstRows = (array) $firstSearch->json('data.results');
+        $this->assertNotEmpty($firstRows);
+        $this->assertSame('note', $firstRows[0]['sourceType'] ?? null);
+        $this->assertSame('First Note Title', $firstRows[0]['title'] ?? null);
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->putJson('/api/v1/notes/items/n-search', [
+                ...$payload,
+                'title' => 'Updated Note Title',
+                'body' => 'newneedle456',
+            ])
+            ->assertOk();
+
+        $staleSearch = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/v1/search/unified?'.http_build_query([
+                'q' => 'oldneedle123',
+                'sources' => ['note'],
+                'limit' => 20,
+            ]));
+        $staleSearch->assertOk()->assertJsonPath('data.results', []);
+
+        $updatedSearch = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/v1/search/unified?'.http_build_query([
+                'q' => 'newneedle456',
+                'sources' => ['note'],
+                'limit' => 20,
+            ]));
+        $updatedSearch->assertOk();
+        $updatedRows = (array) $updatedSearch->json('data.results');
+        $this->assertNotEmpty($updatedRows);
+        $this->assertSame('note', $updatedRows[0]['sourceType'] ?? null);
+        $this->assertSame('Updated Note Title', $updatedRows[0]['title'] ?? null);
     }
 
     private function issueToken(): string

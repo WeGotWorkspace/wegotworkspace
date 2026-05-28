@@ -15,6 +15,7 @@ import { DriveNewMenu } from "@/drive-core/src/drive-new-menu";
 import { UnifiedSearchApiDropdown } from "@/unified-search-dropdown/src/unified-search-api-dropdown";
 import type { DriveFile, FileKind } from "@/drive-core/src/drive-models";
 import { useDriveController } from "@/drive-core/src/use-drive-controller";
+import { uiPathFromApiPath } from "@/drive-core/src/drive-path-utils";
 import { useDriveSidebarModel } from "@/drive-core/src/use-drive-sidebar-model";
 import type { DriveWorkspaceProps } from "@/drive-core/src/drive-workspace-props";
 import { DriveWorkspaceModals } from "@/drive-core/src/drive-workspace-modals";
@@ -164,6 +165,10 @@ function DriveMainHeader({
     searchInputRef,
     selectView,
     openFile,
+    setActiveId,
+    setSelectedIds,
+    setDetailOpen,
+    currentUsername,
   } = controller;
 
   const handleSearchResultSelect = (result: WgwUnifiedSearchResult) => {
@@ -177,19 +182,33 @@ function DriveMainHeader({
           return;
         }
 
-        if (result.sourceType !== "file") return;
-        const normalized = normalizeVirtualPathFromSourceKey(result.sourceKey);
-        if (!normalized) return;
-
-        if (result.category === "folder") {
-          selectView({ type: "folder", path: normalized });
+        if (result.sourceType === "note") {
+          window.location.assign("/notes");
           return;
         }
-        openFile(fileFromSearchResult(result, normalized));
+        if (result.sourceType !== "file") return;
+        const apiPath = apiPathFromSourceKey(result.sourceKey);
+        if (!apiPath) return;
+        const uiPath = uiPathFromApiPath(apiPath, currentUsername);
+
+        if (result.category === "folder") {
+          setSearchQuery("");
+          selectView({ type: "folder", path: uiPath });
+          return;
+        }
+        const file = fileFromSearchResult(result, uiPath, apiPath);
+        if (result.category === "image") {
+          setActiveId(file.id);
+          setSelectedIds([file.id]);
+          setDetailOpen(true);
+          return;
+        }
+        openFile(file);
       } catch {
-        const normalized = normalizeVirtualPathFromSourceKey(result.sourceKey);
-        if (!normalized) return;
-        selectView({ type: "folder", path: parentVirtualPath(normalized) });
+        const apiPath = apiPathFromSourceKey(result.sourceKey);
+        if (!apiPath) return;
+        const uiPath = uiPathFromApiPath(apiPath, currentUsername);
+        selectView({ type: "folder", path: parentVirtualPath(uiPath) });
       }
     })();
   };
@@ -228,16 +247,10 @@ function DriveMainHeader({
   );
 }
 
-function normalizeVirtualPathFromSourceKey(sourceKey: string): string | null {
-  const key = sourceKey.trim().replace(/^\/+/, "");
-  if (!key) return null;
-  return `/${key}`;
-}
-
 function parentVirtualPath(path: string): string {
   const normalized = path.trim().replace(/\/+$/, "");
   const idx = normalized.lastIndexOf("/");
-  if (idx <= 0) return "/";
+  if (idx <= 0) return "My Drive";
   return normalized.slice(0, idx);
 }
 
@@ -247,10 +260,13 @@ function apiPathFromSourceKey(sourceKey: string): string | null {
   return `/${key}`;
 }
 
-function fileFromSearchResult(result: WgwUnifiedSearchResult, normalizedPath: string): DriveFile {
-  const title = result.title || normalizedPath.split("/").pop() || result.sourceKey;
-  const parent = parentVirtualPath(normalizedPath);
-  const apiPath = apiPathFromSourceKey(result.sourceKey) ?? undefined;
+function fileFromSearchResult(
+  result: WgwUnifiedSearchResult,
+  uiPath: string,
+  apiPath: string,
+): DriveFile {
+  const title = result.title || uiPath.split("/").pop() || result.sourceKey;
+  const parent = parentVirtualPath(uiPath);
   const kind = fileKindFromCategory(result.category);
 
   return {
@@ -266,7 +282,7 @@ function fileFromSearchResult(result: WgwUnifiedSearchResult, normalizedPath: st
     parent,
     kind,
     size: result.size > 0 ? String(result.size) : "—",
-    apiPath,
+    apiPath: apiPath || undefined,
   };
 }
 
