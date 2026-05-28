@@ -1,6 +1,7 @@
 import {
   DatabaseBackup,
   Database,
+  Search,
   Mail,
   MessagesSquare,
   Puzzle,
@@ -59,6 +60,12 @@ export function useAdminSidebarModel(): AdminSectionDescriptor[] {
       label: "Updates",
       description: "Checks, release status, and logs",
       icon: <Database className="size-3.5" />,
+    },
+    {
+      id: "search",
+      label: "Search",
+      description: "Unified index health and reindexing",
+      icon: <Search className="size-3.5" />,
     },
   ];
 }
