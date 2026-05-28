@@ -461,11 +461,13 @@ export class DocsCollabMesh {
       }
     };
     pc.onicecandidateerror = (event) => {
+      const hostCandidate = (event as RTCPeerConnectionIceErrorEvent & { hostCandidate?: string })
+        .hostCandidate;
       this.debug("ice-candidate-error", {
         remoteId,
         errorCode: event.errorCode,
         errorText: event.errorText,
-        hostCandidate: event.hostCandidate,
+        hostCandidate,
         url: event.url,
       });
     };
