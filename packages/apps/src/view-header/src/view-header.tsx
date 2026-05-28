@@ -19,6 +19,7 @@ type ViewHeaderProps = {
   onSearchInput?: (query: string) => void;
   searchDebounceMs?: number;
   searchInputRef?: RefObject<HTMLInputElement | null>;
+  searchContent?: ReactNode;
 };
 
 export function ViewHeader({
@@ -33,6 +34,7 @@ export function ViewHeader({
   onSearchInput,
   searchDebounceMs = 180,
   searchInputRef,
+  searchContent,
 }: ViewHeaderProps) {
   const [query, setQuery] = useState(searchValue);
 
@@ -70,12 +72,15 @@ export function ViewHeader({
         </div>
       </div>
       {searchPlaceholder ? (
-        <CollectionSearchInput
-          inputRef={searchInputRef}
-          value={query}
-          onChange={setQuery}
-          placeholder={searchPlaceholder}
-        />
+        <div className="view-header__search-stack">
+          <CollectionSearchInput
+            inputRef={searchInputRef}
+            value={query}
+            onChange={setQuery}
+            placeholder={searchPlaceholder}
+          />
+          {searchContent}
+        </div>
       ) : null}
     </>
   );
