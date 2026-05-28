@@ -22,6 +22,8 @@ final class SettingKeys
 
     public const MAIL_ENABLED = 'mail_enabled';
 
+    public const VOICE_STUN_URL = 'voice_stun_url';
+
     public const VOICE_TURN_URL = 'voice_turn_url';
 
     public const VOICE_TURN_USERNAME = 'voice_turn_username';
@@ -57,6 +59,7 @@ final class SettingKeys
             self::CALENDAR_ENABLED,
             self::CONTACTS_ENABLED,
             self::MAIL_ENABLED,
+            self::VOICE_STUN_URL,
             self::VOICE_TURN_URL,
             self::VOICE_TURN_USERNAME,
             self::VOICE_TURN_CREDENTIAL,
