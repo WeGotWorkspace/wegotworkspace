@@ -86,6 +86,8 @@ final class InstallerSchemaMigrationRunnerTest extends TestCase
             'drive_starred_items',
             'collab_peers',
             'collab_messages',
+            'search_documents',
+            'search_terms',
         ] as $table) {
             $this->assertTrue(self::tableExists($pdo, $table), "Expected table {$table} to exist.");
         }
@@ -107,6 +109,7 @@ final class InstallerSchemaMigrationRunnerTest extends TestCase
             4 => 'create_api_token_tables',
             5 => 'create_drive_starred_items',
             6 => 'create_collab_signaling_tables',
+            7 => 'create_unified_search_tables',
         ];
 
         foreach ($rows as $row) {

@@ -95,6 +95,7 @@ function applySettingsMap(
  */
 export function createMockAdminOperations(seed: AdminUIData): AdminAPIOperations {
   const current = cloneData(seed);
+  let mockSearchRunning = false;
 
   const snapshot = () => cloneData(current);
 
@@ -133,6 +134,87 @@ export function createMockAdminOperations(seed: AdminUIData): AdminAPIOperations
       const next: AdminUpdateState = { ...current.updates, inProgress: false, phase: null };
       current.updates = next;
       return cloneData(current).updates;
+    },
+    startSearchReindex: async (opts) => {
+      await sleep(120, opts?.signal);
+      current.searchReindex = {
+        ...current.searchReindex,
+        inProgress: true,
+        phase: "indexing_files",
+        phaseProgress: {
+          completed: 1,
+          total: 4,
+          percent: 25,
+          updatedAt: new Date().toISOString(),
+        },
+        cancelRequested: false,
+        logLines: [
+          ...current.searchReindex.logLines,
+          `[${new Date().toISOString()}] Search reindex started.`,
+        ],
+      };
+      mockSearchRunning = true;
+      return cloneData(current).searchReindex;
+    },
+    refreshSearchReindexState: async (opts) => {
+      await sleep(80, opts?.signal);
+      if (mockSearchRunning && current.searchReindex.inProgress) {
+        const now = new Date().toISOString();
+        const prev = current.searchReindex.phaseProgress;
+        const total = prev?.total ?? 4;
+        const completed = Math.min(total, (prev?.completed ?? 0) + 1);
+        const percent = Math.floor((completed / Math.max(1, total)) * 100);
+        const done = completed >= total;
+        current.searchReindex = {
+          ...current.searchReindex,
+          inProgress: !done,
+          phase: done ? null : "indexing_files",
+          phaseProgress: done
+            ? null
+            : {
+                completed,
+                total,
+                percent,
+                updatedAt: now,
+              },
+          lastResult: done
+            ? {
+                ok: true,
+                message: "Search reindex completed.",
+                finishedAt: now,
+              }
+            : current.searchReindex.lastResult,
+          logLines: done
+            ? [...current.searchReindex.logLines, `[${now}] Search reindex completed.`]
+            : current.searchReindex.logLines,
+        };
+        if (done) {
+          mockSearchRunning = false;
+        }
+      }
+      return cloneData(current).searchReindex;
+    },
+    cancelSearchReindex: async (opts) => {
+      await sleep(80, opts?.signal);
+      const now = new Date().toISOString();
+      current.searchReindex = {
+        ...current.searchReindex,
+        inProgress: false,
+        phase: null,
+        phaseProgress: null,
+        cancelRequested: true,
+        lastResult: {
+          ok: false,
+          message: "Search reindex cancelled by user.",
+          finishedAt: now,
+        },
+        logLines: [
+          ...current.searchReindex.logLines,
+          `[${now}] Cancellation requested by admin user.`,
+        ],
+      };
+      mockSearchRunning = false;
+      return cloneData(current).searchReindex;
     },
     refreshUpdateLog: async (opts) => {
       await sleep(80, opts?.signal);

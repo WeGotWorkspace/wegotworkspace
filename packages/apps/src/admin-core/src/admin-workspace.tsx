@@ -15,6 +15,7 @@ import { AdminUpdatesPane } from "@/admin-core/src/admin-updates-pane";
 import { AdminUsersPane } from "@/admin-core/src/admin-users-pane";
 import { AdminRealtimeCollaborationPane } from "@/admin-core/src/admin-realtime-collaboration-pane";
 import { AdminPluginsPane } from "@/admin-core/src/admin-plugins-pane";
+import { AdminSearchPane } from "@/admin-core/src/admin-search-pane";
 import { AdminWebdavPane } from "@/admin-core/src/admin-webdav-pane";
 import { AdminWorkspaceModals } from "@/admin-core/src/admin-workspace-modals";
 import { cn } from "@/lib/utils";
@@ -124,6 +125,7 @@ export function AdminWorkspace(props: AdminWorkspaceProps) {
                 updatingNow={updatingNow}
               />
             ) : null}
+            {controller.section === "search" ? <AdminSearchPane controller={controller} /> : null}
           </>
         }
       />

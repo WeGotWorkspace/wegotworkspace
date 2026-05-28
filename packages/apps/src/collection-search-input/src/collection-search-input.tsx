@@ -15,7 +15,7 @@ export function CollectionSearchInput({
 }: CollectionSearchInputProps) {
   return (
     <div
-      className="mt-3 flex items-center gap-2 px-3 h-9 rounded-md"
+      className="mt-3 flex items-center gap-2 px-3 h-9 rounded-[6px]"
       style={{
         backgroundColor: "color-mix(in oklab, var(--color-ink) 6%, transparent)",
         color: "var(--color-ink)",
@@ -40,7 +40,7 @@ export function CollectionSearchInput({
         <button
           aria-label="Clear search"
           onClick={() => onChange("")}
-          className="size-6 rounded-full flex items-center justify-center hover:bg-[color-mix(in_oklab,var(--color-ink)_10%,transparent)]"
+          className="size-6 rounded-[6px] flex items-center justify-center hover:bg-[color-mix(in_oklab,var(--color-ink)_10%,transparent)]"
         >
           <X className="size-3.5" />
         </button>
