@@ -64,13 +64,7 @@ type ControlMessage =
 
 const KNOCK_NAME_PREFIX = "__wgw_knock__:";
 const CONTROL_PREFIX = "__wgw_meet_control__:";
-
-const EU_STUN_SERVERS: RTCIceServer[] = [
-  { urls: "stun:stun.nextcloud.com:443" },
-  { urls: "stun:stun.sipgate.net:3478" },
-  { urls: "stun:stun.1und1.de:3478" },
-  { urls: "stun:stun.t-online.de:3478" },
-];
+const MEET_RTC_DEBUG_PARAM = "meetRtcDebug";
 
 const SIGNAL_ORDER: Record<SignalType, number> = {
   offer: 0,
@@ -79,6 +73,27 @@ const SIGNAL_ORDER: Record<SignalType, number> = {
   bye: 3,
   chat: 4,
 };
+
+function isMeetRtcDebugEnabled(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const value = new URLSearchParams(window.location.search).get(MEET_RTC_DEBUG_PARAM);
+    if (!value) return false;
+    return value === "1" || value.toLowerCase() === "true";
+  } catch {
+    return false;
+  }
+}
+
+function parseCandidateType(candidate: string): string {
+  const match = candidate.match(/\btyp\s+([a-z0-9]+)/i);
+  return match?.[1]?.toLowerCase() ?? "unknown";
+}
+
+function parseCandidateProtocol(candidate: string): string {
+  const parts = candidate.trim().split(/\s+/);
+  return parts[2]?.toLowerCase() ?? "unknown";
+}
 
 function randomId(len = 10): string {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -96,17 +111,24 @@ function randomRoom(): string {
   return `${id.slice(0, 4)}-${id.slice(4, 8)}-${id.slice(8, 12)}`.toLowerCase();
 }
 
-function parseUrlList(raw: string): string[] {
+function normalizeIceUrl(raw: string, defaultScheme: "stun" | "turn"): string {
+  const value = raw.trim();
+  if (value === "") return "";
+  if (/^(stun|stuns|turn|turns):/i.test(value)) return value;
+  return `${defaultScheme}:${value}`;
+}
+
+function parseUrlList(raw: string, defaultScheme: "stun" | "turn"): string[] {
   return raw
     .split(/[\n,\r]+/)
-    .map((v) => v.trim())
+    .map((v) => normalizeIceUrl(v, defaultScheme))
     .filter((v) => v !== "");
 }
 
 function toRtcConfig(settings: MeetRtcSettings, mode: IceMode): RTCConfiguration {
-  const turnUrls = parseUrlList(settings.turnUrls);
+  const turnUrls = parseUrlList(settings.turnUrls, "turn");
   const forceRelay = (settings.forceRelay || mode === "relay") && turnUrls.length > 0;
-  const stunUrls = parseUrlList(settings.stunUrls);
+  const stunUrls = parseUrlList(settings.stunUrls, "stun");
 
   const iceServers: RTCIceServer[] = [];
   if (forceRelay) {
@@ -116,8 +138,6 @@ function toRtcConfig(settings: MeetRtcSettings, mode: IceMode): RTCConfiguration
         username: settings.turnUsername || undefined,
         credential: settings.turnPassword || undefined,
       });
-    } else {
-      iceServers.push(...EU_STUN_SERVERS.slice(0, 2));
     }
   } else if (stunUrls.length > 0) {
     iceServers.push({ urls: [...new Set(stunUrls)] });
@@ -128,8 +148,6 @@ function toRtcConfig(settings: MeetRtcSettings, mode: IceMode): RTCConfiguration
         credential: settings.turnPassword || undefined,
       });
     }
-  } else {
-    iceServers.push(...EU_STUN_SERVERS);
   }
 
   return {
@@ -277,6 +295,11 @@ export function useMeetController({
   rtc,
   operations,
 }: UseMeetControllerArgs) {
+  const rtcDebugEnabledRef = useRef(isMeetRtcDebugEnabled());
+  const debugRtc = useCallback((event: string, payload: Record<string, unknown> = {}) => {
+    if (!rtcDebugEnabledRef.current) return;
+    console.info(`[meet][rtc][${new Date().toISOString()}] ${event}`, payload);
+  }, []);
   const canModerateKnocks = Boolean(session.user.username?.trim() || session.user.email?.trim());
   const [status, setStatus] = useState<CallStatus>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -338,6 +361,17 @@ export function useMeetController({
   micOnRef.current = micOn;
   videoOnRef.current = videoOn;
   screenOnRef.current = screenOn;
+
+  useEffect(() => {
+    debugRtc("controller-init", {
+      rtcDebugEnabled: rtcDebugEnabledRef.current,
+      stunCount: parseUrlList(rtc.stunUrls, "stun").length,
+      turnCount: parseUrlList(rtc.turnUrls, "turn").length,
+      forceRelay: rtc.forceRelay,
+      turnUsernameConfigured: rtc.turnUsername.trim() !== "",
+      turnPasswordConfigured: rtc.turnPassword.trim() !== "",
+    });
+  }, [debugRtc, rtc]);
 
   const refreshPeers = useCallback(() => {
     const next: RemotePeer[] = [];
@@ -456,8 +490,16 @@ export function useMeetController({
 
   const createPeerConnection = useCallback(
     (peerId: string, peerName: string, mode: IceMode = "direct"): PeerEntry => {
-      const pc = new RTCPeerConnection(toRtcConfig(rtc, mode));
+      const config = toRtcConfig(rtc, mode);
+      const pc = new RTCPeerConnection(config);
       const remoteStream = new MediaStream();
+      debugRtc("pc-create", {
+        peerId,
+        peerName,
+        mode,
+        iceTransportPolicy: config.iceTransportPolicy ?? "all",
+        iceServerCount: config.iceServers?.length ?? 0,
+      });
 
       const entry: PeerEntry = {
         pc,
@@ -500,6 +542,12 @@ export function useMeetController({
         ) {
           return;
         }
+        debugRtc("ice-candidate-local", {
+          peerId,
+          mode: entry.mode,
+          candidateType: parseCandidateType(candidate.candidate),
+          protocol: parseCandidateProtocol(candidate.candidate),
+        });
         void operationsRef.current.send({
           room: roomCodeRef.current,
           from: selfIdRef.current,
@@ -516,6 +564,14 @@ export function useMeetController({
       };
 
       pc.onconnectionstatechange = () => {
+        debugRtc("pc-connection-state", {
+          peerId,
+          peerName,
+          mode: entry.mode,
+          connectionState: pc.connectionState,
+          iceConnectionState: pc.iceConnectionState,
+          signalingState: pc.signalingState,
+        });
         if (pc.connectionState === "connected") {
           peerInboundSampleRef.current.delete(peerId);
           peerMediaHintRef.current.delete(peerId);
@@ -523,7 +579,7 @@ export function useMeetController({
         }
         refreshPeers();
         if (pc.connectionState !== "failed") return;
-        const turnConfigured = parseUrlList(rtc.turnUrls).length > 0;
+        const turnConfigured = parseUrlList(rtc.turnUrls, "turn").length > 0;
         if (entry.mode === "relay" || entry.relayFallbackTried || !turnConfigured) {
           setError(`Connection to ${peerName} failed.`);
           return;
@@ -531,6 +587,10 @@ export function useMeetController({
         entry.relayFallbackTried = true;
         entry.mode = "relay";
         try {
+          debugRtc("pc-relay-fallback-start", {
+            peerId,
+            peerName,
+          });
           pc.setConfiguration(toRtcConfig(rtc, "relay"));
           pc.restartIce();
           if (!operationsRef.current || !roomCodeRef.current || !selfIdRef.current) return;
@@ -546,8 +606,16 @@ export function useMeetController({
               payload: { sdp: pc.localDescription.sdp, type: pc.localDescription.type },
               sessionKey: joinedSessionKeyRef.current ?? undefined,
             });
+            debugRtc("pc-relay-fallback-offer-sent", {
+              peerId,
+              peerName,
+            });
           })();
         } catch {
+          debugRtc("pc-relay-fallback-failed", {
+            peerId,
+            peerName,
+          });
           setError(`Connection to ${peerName} failed.`);
         }
       };
@@ -666,6 +734,7 @@ export function useMeetController({
     async (message: { from: string; type: SignalType; payload: unknown }, peerName: string) => {
       if (message.type === "chat") return;
       const { from, type, payload } = message;
+      debugRtc("signal-received", { from, type, peerName });
       let entry = peersRef.current.get(from);
 
       if (type === "offer") {
@@ -726,8 +795,17 @@ export function useMeetController({
         }
         try {
           await entry.pc.addIceCandidate(candidate);
+          debugRtc("ice-candidate-remote-added", {
+            from,
+            candidateType: parseCandidateType(candidate.candidate),
+            protocol: parseCandidateProtocol(candidate.candidate),
+          });
         } catch {
           if (!entry.pc.remoteDescription) entry.pendingIce.push(candidate);
+          debugRtc("ice-candidate-remote-add-failed", {
+            from,
+            hasRemoteDescription: !!entry.pc.remoteDescription,
+          });
         }
         return;
       }
@@ -906,6 +984,7 @@ export function useMeetController({
         await pollOnce();
       } catch (e) {
         const message = e instanceof Error ? e.message : "Could not poll room updates.";
+        debugRtc("poll-failed", { message });
         setError(message);
       } finally {
         if (statusRef.current === "in-call" || statusRef.current === "waiting") {
@@ -934,6 +1013,7 @@ export function useMeetController({
       participantRosterDiffReadyRef.current = false;
 
       try {
+        debugRtc("join-room-start", { room: target, peerId });
         await ensureLocalMedia();
         if (operationsRef.current) {
           const joined = await operationsRef.current.join({
@@ -946,9 +1026,11 @@ export function useMeetController({
         }
         setStatus("in-call");
         setStartedAt(Date.now());
+        debugRtc("join-room-success", { room: target, peerId });
         startPolling();
       } catch (e) {
         const message = e instanceof Error ? e.message : "Could not join meeting.";
+        debugRtc("join-room-failed", { room: target, peerId, message });
         setStatus("failed");
         setError(message);
         throw e;
