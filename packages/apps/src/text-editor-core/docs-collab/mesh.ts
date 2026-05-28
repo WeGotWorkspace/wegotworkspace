@@ -38,6 +38,7 @@ type MeshPeerEntry = {
   mode: "direct" | "relay";
   relayFallbackTried: boolean;
   initiator: boolean;
+  pendingIce: RTCIceCandidateInit[];
 };
 
 type PollMessage = {
@@ -136,6 +137,8 @@ export class DocsCollabMesh {
   private readonly turnConfigured: boolean;
 
   private readonly debugRtc: boolean;
+
+  private rejoinInFlight = false;
 
   constructor(
     private readonly signalUrl: string,
@@ -294,6 +297,35 @@ export class DocsCollabMesh {
     for (const fn of this.listeners) fn(msg);
   }
 
+  private isUnknownPeerError(error: unknown): boolean {
+    if (!(error instanceof Error)) return false;
+    return error.message.includes("unknown_peer");
+  }
+
+  private async recoverUnknownPeer(): Promise<void> {
+    if (this.rejoinInFlight || !this.myName.trim()) return;
+    this.rejoinInFlight = true;
+    const previousPeerId = this.myId;
+    this.debug("peer-recover-start", { previousPeerId });
+    try {
+      for (const id of [...this.mesh.keys()]) this.removePeer(id);
+      this.myId = null;
+      this.lastMsgId = 0;
+      const data = (await this.api("join", { room: this.room, name: this.myName })) as {
+        peerId: string;
+        peers: DocsCollabMeshPeer[];
+      };
+      this.myId = data.peerId;
+      await this.onPoll({ peers: data.peers, messages: [] });
+      this.debug("peer-recover-success", { previousPeerId, peerId: data.peerId });
+      this.emit({ type: "link" });
+    } catch (error) {
+      this.debug("peer-recover-error", { previousPeerId, error });
+    } finally {
+      this.rejoinInFlight = false;
+    }
+  }
+
   private sendSignal(to: string, type: string, payload: unknown): Promise<unknown> {
     this.debug("send-signal", {
       to,
@@ -416,7 +448,14 @@ export class DocsCollabMesh {
           type: this.candidateType(e.candidate.candidate),
           protocol: this.candidateProtocol(e.candidate.candidate),
         });
-        void this.sendSignal(remoteId, "ice", e.candidate.toJSON());
+        void this.sendSignal(remoteId, "ice", e.candidate.toJSON()).catch((error) => {
+          if (this.isUnknownPeerError(error)) {
+            this.debug("peer-recover-trigger", { via: "ice-send", remoteId });
+            void this.recoverUnknownPeer();
+            return;
+          }
+          console.warn("[docs-collab] send ice failed", remoteId, error);
+        });
       } else {
         this.debug("ice-candidate-local-end", { remoteId });
       }
@@ -534,6 +573,7 @@ export class DocsCollabMesh {
       mode,
       relayFallbackTried: mode === "relay",
       initiator,
+      pendingIce: [],
     };
     this.mesh.set(remoteId, entry);
     this.debug("peer-connect-start", {
@@ -611,6 +651,19 @@ export class DocsCollabMesh {
     return { ...desc, sdp: rebuilt };
   }
 
+  private async flushPendingIce(entry: MeshPeerEntry, remoteId: string): Promise<void> {
+    while (entry.pendingIce.length > 0) {
+      const candidate = entry.pendingIce.shift();
+      if (!candidate) continue;
+      try {
+        await entry.pc.addIceCandidate(candidate);
+        this.debug("ice-candidate-remote-flushed", { remoteId });
+      } catch (error) {
+        this.debug("ice-candidate-remote-flush-failed", { remoteId, error });
+      }
+    }
+  }
+
   private async safeSetRemoteDescription(
     pc: RTCPeerConnection,
     desc: RTCSessionDescriptionInit,
@@ -650,6 +703,7 @@ export class DocsCollabMesh {
         mode,
         relayFallbackTried: mode === "relay",
         initiator: false,
+        pendingIce: [],
       };
       this.mesh.set(from, entry);
       pc.ondatachannel = (e) => {
@@ -659,6 +713,7 @@ export class DocsCollabMesh {
     // Responder can get stuck in non-stable states after earlier failed attempts; rebuild and retry once.
     const applyOffer = async (): Promise<void> => {
       await this.safeSetRemoteDescription(entry!.pc, sdp);
+      await this.flushPendingIce(entry!, from);
       const answer = await entry!.pc.createAnswer();
       await entry!.pc.setLocalDescription(answer);
       await this.sendSignal(from, "answer", entry!.pc.localDescription);
@@ -680,6 +735,7 @@ export class DocsCollabMesh {
         mode,
         relayFallbackTried: mode === "relay",
         initiator: false,
+        pendingIce: [],
       };
       this.mesh.set(from, entry);
       pc.ondatachannel = (e) => {
@@ -695,6 +751,7 @@ export class DocsCollabMesh {
     if (!entry) return;
     this.debug("answer-received", { from, type: sdp.type });
     await this.safeSetRemoteDescription(entry.pc, sdp);
+    await this.flushPendingIce(entry, from);
   }
 
   private async handleIce(from: string, candidate: RTCIceCandidateInit): Promise<void> {
@@ -708,9 +765,19 @@ export class DocsCollabMesh {
           protocol: this.candidateProtocol(candidate.candidate),
         });
       }
+      if (!entry.pc.remoteDescription) {
+        entry.pendingIce.push(candidate);
+        this.debug("ice-candidate-remote-queued", { from, queueSize: entry.pendingIce.length });
+        return;
+      }
       await entry.pc.addIceCandidate(candidate);
-    } catch {
-      // can arrive before remote description
+    } catch (error) {
+      if (!entry.pc.remoteDescription) {
+        entry.pendingIce.push(candidate);
+        this.debug("ice-candidate-remote-queued", { from, queueSize: entry.pendingIce.length });
+        return;
+      }
+      this.debug("ice-candidate-remote-error", { from, error });
     }
   }
 
@@ -778,6 +845,11 @@ export class DocsCollabMesh {
       void this.pollOnce()
         .catch((err) => {
           this.emit({ type: "link" });
+          if (this.isUnknownPeerError(err)) {
+            this.debug("peer-recover-trigger", { via: "poll" });
+            void this.recoverUnknownPeer();
+            return;
+          }
           console.warn("[docs-collab] poll failed", err);
         })
         .finally(() => this.schedulePoll());
