@@ -5,6 +5,7 @@ import * as awarenessProtocol from "y-protocols/awareness";
 import * as syncProtocol from "y-protocols/sync";
 import * as Y from "yjs";
 import { fetchWgwAuthToken } from "@/lib/api/wgw/auth-token";
+import { isRtcDebugEnabled } from "@/lib/rtc/debug";
 import { applyContentSeedToYDoc } from "./docs-collab-editor-surface";
 import type { TextEditorContentFormat } from "@/text-editor-core/src/text-editor-content";
 import {
@@ -80,13 +81,6 @@ function withBearerAuth(
 ): Record<string, string> {
   if (authToken) headers.Authorization = `Bearer ${authToken}`;
   return headers;
-}
-
-function isRtcDebugEnabled(): boolean {
-  if (typeof window === "undefined") return false;
-  const qs = new URLSearchParams(window.location.search);
-  const fromQuery = qs.get("collabRtcDebug");
-  return fromQuery === "1" || fromQuery === "true";
 }
 
 function normalizeUrlList(raw: unknown): string {

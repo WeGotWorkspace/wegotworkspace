@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { isRtcDebugEnabled } from "@/lib/rtc/debug";
 import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
 import { meetLabels } from "@/meet-core/src/meet-labels";
 import { sanitizeRtcSdp } from "@/meet-core/src/meet-rtc-sdp";
@@ -64,7 +65,6 @@ type ControlMessage =
 
 const KNOCK_NAME_PREFIX = "__wgw_knock__:";
 const CONTROL_PREFIX = "__wgw_meet_control__:";
-const MEET_RTC_DEBUG_PARAM = "meetRtcDebug";
 
 const SIGNAL_ORDER: Record<SignalType, number> = {
   offer: 0,
@@ -73,17 +73,6 @@ const SIGNAL_ORDER: Record<SignalType, number> = {
   bye: 3,
   chat: 4,
 };
-
-function isMeetRtcDebugEnabled(): boolean {
-  if (typeof window === "undefined") return false;
-  try {
-    const value = new URLSearchParams(window.location.search).get(MEET_RTC_DEBUG_PARAM);
-    if (!value) return false;
-    return value === "1" || value.toLowerCase() === "true";
-  } catch {
-    return false;
-  }
-}
 
 function parseCandidateType(candidate: string): string {
   const match = candidate.match(/\btyp\s+([a-z0-9]+)/i);
@@ -295,7 +284,7 @@ export function useMeetController({
   rtc,
   operations,
 }: UseMeetControllerArgs) {
-  const rtcDebugEnabledRef = useRef(isMeetRtcDebugEnabled());
+  const rtcDebugEnabledRef = useRef(isRtcDebugEnabled());
   const debugRtc = useCallback((event: string, payload: Record<string, unknown> = {}) => {
     if (!rtcDebugEnabledRef.current) return;
     console.info(`[meet][rtc][${new Date().toISOString()}] ${event}`, payload);

@@ -1,4 +1,5 @@
 import { wgwApiBaseUrl, wgwFetch, wgwFetchPrincipal, wgwReadJson } from "@/lib/api/wgw/http";
+import { isRtcDebugEnabled } from "@/lib/rtc/debug";
 import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
 import type {
   WgwVoiceChatRequest,
@@ -27,21 +28,8 @@ const DEFAULT_RTC_SETTINGS: MeetRtcSettings = {
   forceRelay: false,
 };
 
-const MEET_RTC_DEBUG_PARAM = "meetRtcDebug";
-
-function isMeetRtcDebugEnabled(): boolean {
-  if (typeof window === "undefined") return false;
-  try {
-    const value = new URLSearchParams(window.location.search).get(MEET_RTC_DEBUG_PARAM);
-    if (!value) return false;
-    return value === "1" || value.toLowerCase() === "true";
-  } catch {
-    return false;
-  }
-}
-
 function logMeetRtcDebug(event: string, payload: Record<string, unknown>): void {
-  if (!isMeetRtcDebugEnabled()) return;
+  if (!isRtcDebugEnabled()) return;
   console.info(`[meet][rtc] ${event}`, payload);
 }
 
