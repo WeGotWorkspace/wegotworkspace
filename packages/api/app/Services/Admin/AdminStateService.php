@@ -60,24 +60,9 @@ final class AdminStateService
      */
     private function voiceSettings(): array
     {
-        $voiceUrls = trim((string) AppSetting::getValue(SettingKeys::VOICE_TURN_URL, ''));
-        $stun = [];
-        $turn = [];
-        foreach (preg_split('/[\r\n,]+/', $voiceUrls) ?: [] as $piece) {
-            $url = trim((string) $piece);
-            if ($url === '') {
-                continue;
-            }
-            if (preg_match('#^stuns?:#i', $url) === 1) {
-                $stun[] = $url;
-            } else {
-                $turn[] = $url;
-            }
-        }
-
         return [
-            'stunUrls' => implode("\n", $stun),
-            'turnUrls' => implode("\n", $turn),
+            'stunUrls' => trim((string) AppSetting::getValue(SettingKeys::VOICE_STUN_URL, '')),
+            'turnUrls' => trim((string) AppSetting::getValue(SettingKeys::VOICE_TURN_URL, '')),
             'turnUsername' => trim((string) AppSetting::getValue(SettingKeys::VOICE_TURN_USERNAME, '')),
             'turnPassword' => trim((string) AppSetting::getValue(SettingKeys::VOICE_TURN_CREDENTIAL, '')),
             'forceRelay' => (bool) AppSetting::getValue(SettingKeys::VOICE_FORCE_RELAY, false),

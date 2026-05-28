@@ -63,7 +63,7 @@ function applySettingsMap(
   const smtpSecurity = readString("mail_smtp_security");
   if (smtpSecurity !== undefined) data.mail.smtpSecurity = smtpSecurity;
 
-  const stunUrls = readString("voice_stun_urls");
+  const stunUrls = readString("voice_stun_url");
   if (stunUrls !== undefined) data.voice.stunUrls = stunUrls;
   const turnUrls = readString("voice_turn_url");
   if (turnUrls !== undefined) data.voice.turnUrls = turnUrls;

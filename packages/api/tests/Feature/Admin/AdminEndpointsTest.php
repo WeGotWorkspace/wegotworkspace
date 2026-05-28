@@ -135,7 +135,8 @@ final class AdminEndpointsTest extends TestCase
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->putJson('/api/v1/admin/settings', [
                 'values' => [
-                    'voice_turn_url' => "stun:stun.example.test:3478\nturn:turn.example.test:3478?transport=udp",
+                    'voice_stun_url' => 'stun:stun.example.test:3478',
+                    'voice_turn_url' => 'turn:turn.example.test:3478?transport=udp',
                     'voice_turn_username' => 'meet-user',
                     'voice_turn_credential' => 'meet-secret',
                     'voice_force_relay' => true,
