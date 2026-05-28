@@ -77,7 +77,7 @@ export function useNotesController({
       wordCount: computeWordCount(note.body),
     })),
   );
-  const [activeId, setActiveId] = useState<string>(() => data.notes[0]?.id ?? "");
+  const [activeId, setActiveId] = useState<string>("");
   const [view, setView] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement | null>(null);
@@ -225,7 +225,6 @@ export function useNotesController({
     visibleIds: visibleNotes.map((n) => n.id),
     activeId,
     setActiveId,
-    initialId: data.notes[0]?.id,
     onPrimarySelect: (id) => {
       setActiveId(id);
       workspaceLayoutRef.current?.openMobileDetail();
@@ -241,7 +240,7 @@ export function useNotesController({
     setSelectionMode,
   });
 
-  const active = notes.length > 0 ? (notes.find((n) => n.id === activeId) ?? notes[0]) : undefined;
+  const active = activeId ? notes.find((n) => n.id === activeId) : undefined;
 
   const updateAndPersistNote = useCallback(
     (noteId: string, updater: (note: Note) => Note, options?: { autoSaveToast?: boolean }) => {
