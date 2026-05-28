@@ -153,6 +153,7 @@ export function useDriveController({
   const imagePreviewUrlsRef = useRef<Record<string, string>>({});
   const uploadProgressResetTimerRef = useRef<number | null>(null);
   const starredLoadVersionRef = useRef(0);
+  const recentOpenRef = useRef<{ key: string; at: number } | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const syncedFolderPathRef = useRef<string | null>(null);
@@ -581,6 +582,14 @@ export function useDriveController({
   }, [operations, detailOpen, active]);
 
   const openFile = (f: DriveFile) => {
+    const openKey = f.apiPath ?? `${f.parent}/${f.title}`;
+    const now = Date.now();
+    const recent = recentOpenRef.current;
+    if (recent && recent.key === openKey && now - recent.at < 700) {
+      return;
+    }
+    recentOpenRef.current = { key: openKey, at: now };
+
     if (f.kind === "folder") {
       const next = f.parent === "" ? f.title : `${f.parent}/${f.title}`;
       selectView({ type: "folder", path: next });
@@ -599,7 +608,34 @@ export function useDriveController({
             // Best effort: navigation still proceeds and server auth gate handles fallback.
           })
           .finally(() => {
-            window.location.assign(target);
+            window.open(target, "_blank", "noopener,noreferrer");
+          });
+        return;
+      }
+      if (f.apiPath && operations) {
+        const popup = window.open("about:blank", "_blank", "noopener,noreferrer");
+        void operations
+          .readFileBlob(f.apiPath)
+          .then((blob) => {
+            const url = URL.createObjectURL(blob);
+            if (popup && !popup.closed) {
+              popup.location.href = url;
+            } else {
+              const anchor = document.createElement("a");
+              anchor.href = url;
+              anchor.download = f.title || "download";
+              anchor.style.display = "none";
+              document.body.appendChild(anchor);
+              anchor.click();
+              anchor.remove();
+            }
+            window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+          })
+          .catch(() => {
+            if (popup && !popup.closed) popup.close();
+            setActiveId(f.id);
+            setSelectedIds([f.id]);
+            setDetailOpen(true);
           });
         return;
       }
