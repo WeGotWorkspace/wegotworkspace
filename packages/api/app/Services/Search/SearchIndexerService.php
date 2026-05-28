@@ -406,7 +406,7 @@ final class SearchIndexerService
             $raw = $converted;
         }
 
-        return trim($raw);
+        return $this->normalizeBodyTextForIndexing($raw, $extension);
     }
 
     private function safeMimeType(string $key): ?string
@@ -420,6 +420,32 @@ final class SearchIndexerService
         }
     }
 
+    private function normalizeBodyTextForIndexing(string $raw, ?string $extension): string
+    {
+        $text = trim($raw);
+        if ($text === '') {
+            return '';
+        }
+        if ($extension !== 'md') {
+            return $text;
+        }
+
+        $text = preg_replace('/```[a-z0-9_-]*\R?/i', '', $text) ?? $text;
+        $text = preg_replace('/`([^`]+)`/', '$1', $text) ?? $text;
+        $text = preg_replace('/!\[([^\]]*)\]\([^)]+\)/', '$1', $text) ?? $text;
+        $text = preg_replace('/\[(.*?)\]\([^)]+\)/', '$1', $text) ?? $text;
+        $text = preg_replace('/^>\s?/m', '', $text) ?? $text;
+        $text = preg_replace('/^#{1,6}\s+/m', '', $text) ?? $text;
+        $text = preg_replace('/^\s*[-*+]\s+/m', '', $text) ?? $text;
+        $text = preg_replace('/^\s*\d+\.\s+/m', '', $text) ?? $text;
+        $text = preg_replace('/(\*\*|__)(.*?)\1/', '$2', $text) ?? $text;
+        $text = preg_replace('/(\*|_)(.*?)\1/', '$2', $text) ?? $text;
+        $text = preg_replace('/~~(.*?)~~/', '$1', $text) ?? $text;
+        $text = preg_replace('/\R{3,}/', "\n\n", $text) ?? $text;
+
+        return trim($text);
+    }
+
     private function calendarSourceKeyFromPath(string $path): ?string
     {
         $parts = explode('/', $this->normalizeDavPath($path));
@@ -427,9 +453,9 @@ final class SearchIndexerService
             return null;
         }
 
-        $objectUri = (string) array_pop($parts);
-        $calendarUri = (string) array_pop($parts);
-        $principal = trim(implode('/', array_slice($parts, 1)), '/');
+        $objectUri = rawurldecode((string) array_pop($parts));
+        $calendarUri = rawurldecode((string) array_pop($parts));
+        $principal = rawurldecode(trim(implode('/', array_slice($parts, 1)), '/'));
         if ($principal === '' || $calendarUri === '' || $objectUri === '') {
             return null;
         }
@@ -444,9 +470,9 @@ final class SearchIndexerService
             return null;
         }
 
-        $cardUri = (string) array_pop($parts);
-        $bookUri = (string) array_pop($parts);
-        $principal = trim(implode('/', array_slice($parts, 1)), '/');
+        $cardUri = rawurldecode((string) array_pop($parts));
+        $bookUri = rawurldecode((string) array_pop($parts));
+        $principal = rawurldecode(trim(implode('/', array_slice($parts, 1)), '/'));
         if ($principal === '' || $bookUri === '' || $cardUri === '') {
             return null;
         }

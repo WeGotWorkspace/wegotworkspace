@@ -75,3 +75,52 @@ export async function fetchWgwUnifiedSearch(
   const payload = (await wgwReadJson(res)) as WgwUnifiedSearchResponse;
   return payload.data;
 }
+
+export async function downloadWgwUnifiedSearchRecord(input: {
+  sourceType: "caldav" | "carddav";
+  sourceKey: string;
+  signal?: AbortSignal;
+}): Promise<void> {
+  const qs = new URLSearchParams();
+  qs.set("source_type", input.sourceType);
+  qs.set("source_key", input.sourceKey);
+  const res = await wgwFetch(`/search/unified/download?${qs.toString()}`, {
+    method: "GET",
+    signal: input.signal,
+  });
+  if (!res.ok) throw new Error(`GET /search/unified/download failed (${res.status})`);
+  const blob = await res.blob();
+  const fileName = filenameFromContentDisposition(res.headers.get("content-disposition"));
+  const url = URL.createObjectURL(blob);
+  try {
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = fileName ?? fallbackDownloadName(input.sourceType, input.sourceKey);
+    anchor.style.display = "none";
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+function filenameFromContentDisposition(header: string | null): string | null {
+  if (!header) return null;
+  const utf8Match = header.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match?.[1]) {
+    try {
+      return decodeURIComponent(utf8Match[1]);
+    } catch {
+      return utf8Match[1];
+    }
+  }
+  const basicMatch = header.match(/filename="?([^"]+)"?/i);
+  return basicMatch?.[1] ?? null;
+}
+
+function fallbackDownloadName(sourceType: "caldav" | "carddav", sourceKey: string): string {
+  const tail = sourceKey.split("|").pop() ?? sourceKey;
+  if (tail.includes(".")) return tail;
+  return `${tail}.${sourceType === "caldav" ? "ics" : "vcf"}`;
+}

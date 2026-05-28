@@ -81,6 +81,10 @@ final class SearchDocumentStore
         array $sources,
         array $filters = [],
     ): array {
+        $groupPrincipalOwners = array_values(array_unique(array_map(
+            static fn (string $slug): string => 'groups/'.$slug,
+            array_values(array_filter($groupSlugs, static fn (mixed $slug): bool => is_string($slug) && trim($slug) !== ''))
+        )));
         $query = DB::connection('wgw')
             ->table('search_documents as d')
             ->select('d.*');
@@ -97,7 +101,7 @@ final class SearchDocumentStore
             $query->selectRaw('0 AS token_score');
         }
 
-        $query->where(function ($auth) use ($username, $groupSlugs): void {
+        $query->where(function ($auth) use ($username, $groupSlugs, $groupPrincipalOwners): void {
             $auth->where(function ($q) use ($username): void {
                 $q->where('d.source_type', 'file')
                     ->where('d.owner_username', $username);
@@ -114,6 +118,13 @@ final class SearchDocumentStore
                 $q->whereIn('d.source_type', ['caldav', 'carddav'])
                     ->where('d.owner_username', $username);
             });
+
+            if ($groupPrincipalOwners !== []) {
+                $auth->orWhere(function ($q) use ($groupPrincipalOwners): void {
+                    $q->whereIn('d.source_type', ['caldav', 'carddav'])
+                        ->whereIn('d.owner_username', $groupPrincipalOwners);
+                });
+            }
         });
 
         if ($sources !== []) {
@@ -157,6 +168,55 @@ final class SearchDocumentStore
             ->all();
 
         return $rows;
+    }
+
+    /**
+     * @param  list<string>  $groupSlugs
+     * @return array<string, mixed>|null
+     */
+    public function findAccessibleDocument(
+        string $username,
+        array $groupSlugs,
+        string $sourceType,
+        string $sourceKey,
+    ): ?array {
+        $groupPrincipalOwners = array_values(array_unique(array_map(
+            static fn (string $slug): string => 'groups/'.$slug,
+            array_values(array_filter($groupSlugs, static fn (mixed $slug): bool => is_string($slug) && trim($slug) !== ''))
+        )));
+
+        $row = DB::connection('wgw')
+            ->table('search_documents as d')
+            ->where('d.source_type', $sourceType)
+            ->where('d.source_key', $sourceKey)
+            ->where(function ($auth) use ($username, $groupSlugs, $groupPrincipalOwners): void {
+                $auth->where(function ($q) use ($username): void {
+                    $q->where('d.source_type', 'file')
+                        ->where('d.owner_username', $username);
+                });
+
+                if ($groupSlugs !== []) {
+                    $auth->orWhere(function ($q) use ($groupSlugs): void {
+                        $q->where('d.source_type', 'file')
+                            ->whereIn('d.group_slug', $groupSlugs);
+                    });
+                }
+
+                $auth->orWhere(function ($q) use ($username): void {
+                    $q->whereIn('d.source_type', ['caldav', 'carddav'])
+                        ->where('d.owner_username', $username);
+                });
+
+                if ($groupPrincipalOwners !== []) {
+                    $auth->orWhere(function ($q) use ($groupPrincipalOwners): void {
+                        $q->whereIn('d.source_type', ['caldav', 'carddav'])
+                            ->whereIn('d.owner_username', $groupPrincipalOwners);
+                    });
+                }
+            })
+            ->first();
+
+        return $row ? (array) $row : null;
     }
 
     /**
