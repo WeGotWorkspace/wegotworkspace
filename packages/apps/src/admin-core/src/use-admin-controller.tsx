@@ -67,14 +67,6 @@ function buildSettingsFormState(data: AdminWorkspaceProps["data"]): SettingsForm
   };
 }
 
-function combineVoiceIceUrls(stunUrls: string, turnUrls: string): string {
-  const parts = [...stunUrls.split(/[\r\n,]+/), ...turnUrls.split(/[\r\n,]+/)]
-    .map((piece) => piece.trim())
-    .filter((piece) => piece !== "");
-
-  return parts.join("\n");
-}
-
 function toSettingsMap(state: SettingsFormState): Record<string, string | number | boolean> {
   return {
     mail_imap_host: state.imapHost,
@@ -83,7 +75,8 @@ function toSettingsMap(state: SettingsFormState): Record<string, string | number
     mail_smtp_host: state.smtpHost,
     mail_smtp_port: state.smtpPort,
     mail_smtp_security: state.smtpSecurity,
-    voice_turn_url: combineVoiceIceUrls(state.stunUrls, state.turnUrls),
+    voice_stun_url: state.stunUrls,
+    voice_turn_url: state.turnUrls,
     voice_turn_username: state.turnUsername,
     voice_turn_credential: state.turnPassword,
     voice_force_relay: state.forceRelay,

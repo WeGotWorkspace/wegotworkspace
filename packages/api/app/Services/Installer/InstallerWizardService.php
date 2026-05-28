@@ -344,6 +344,7 @@ final class InstallerWizardService
                         SettingKeys::MAIL_SMTP_HOST => $mailEnabled ? trim((string) ($payload['mail_smtp_host'] ?? '')) : '',
                         SettingKeys::MAIL_SMTP_PORT => $mailEnabled ? (int) ($payload['mail_smtp_port'] ?? 587) : 587,
                         SettingKeys::MAIL_SMTP_SECURITY => $mailEnabled ? $this->normalizeMailSecurity((string) ($payload['mail_smtp_security'] ?? 'starttls'), 'starttls') : '',
+                        SettingKeys::VOICE_STUN_URL => $voiceEnabled ? trim((string) ($payload['voice_stun_url'] ?? '')) : '',
                         SettingKeys::VOICE_TURN_URL => $voiceEnabled ? trim((string) ($payload['voice_turn_url'] ?? '')) : '',
                         SettingKeys::VOICE_TURN_USERNAME => $voiceEnabled ? trim((string) ($payload['voice_turn_username'] ?? '')) : '',
                         SettingKeys::VOICE_TURN_CREDENTIAL => $voiceEnabled ? (string) ($payload['voice_turn_credential'] ?? '') : '',
