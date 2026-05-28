@@ -40,7 +40,6 @@ const DEFAULT_DATA: AdminUIData = {
     smtpSecurity: "ssl",
   },
   voice: {
-    signalingUrl: "",
     stunUrls: "",
     turnUrls: "",
     turnUsername: "",

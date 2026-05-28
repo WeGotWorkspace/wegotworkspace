@@ -26,7 +26,6 @@ type SettingsFormState = {
   smtpHost: string;
   smtpPort: number;
   smtpSecurity: string;
-  signalingUrl: string;
   stunUrls: string;
   turnUrls: string;
   turnUsername: string;
@@ -54,7 +53,6 @@ function buildSettingsFormState(data: AdminWorkspaceProps["data"]): SettingsForm
     smtpHost: data.mail.smtpHost,
     smtpPort: data.mail.smtpPort,
     smtpSecurity: normalizeSecurity(data.mail.smtpSecurity),
-    signalingUrl: data.voice.signalingUrl,
     stunUrls: data.voice.stunUrls,
     turnUrls: data.voice.turnUrls,
     turnUsername: data.voice.turnUsername,
@@ -85,7 +83,6 @@ function toSettingsMap(state: SettingsFormState): Record<string, string | number
     mail_smtp_host: state.smtpHost,
     mail_smtp_port: state.smtpPort,
     mail_smtp_security: state.smtpSecurity,
-    voice_signaling_url: state.signalingUrl,
     voice_turn_url: combineVoiceIceUrls(state.stunUrls, state.turnUrls),
     voice_turn_username: state.turnUsername,
     voice_turn_credential: state.turnPassword,
