@@ -615,6 +615,60 @@
         }
       }
     },
+    "/admin/search/reindex": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Run full unified search reindex",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reindex completed"
+          }
+        }
+      }
+    },
+    "/admin/search/state": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Get unified search reindex state",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reindex state"
+          }
+        }
+      }
+    },
+    "/admin/search/cancel": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Cancel running unified search reindex",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cancel acknowledged"
+          }
+        }
+      }
+    },
     "/admin/updates/backups/{name}": {
       "get": {
         "tags": [
@@ -1267,6 +1321,133 @@
         "responses": {
           "200": {
             "description": "Starred state updated"
+          }
+        }
+      }
+    },
+    "/search/unified": {
+      "get": {
+        "tags": [
+          "Search"
+        ],
+        "summary": "Unified search across files, calendars and contacts",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "sources",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "categories",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "extensions",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "modified_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "modified_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unified search results"
+          }
+        }
+      }
+    },
+    "/records/download": {
+      "get": {
+        "tags": [
+          "Search"
+        ],
+        "summary": "Download a record payload",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "source_type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "caldav",
+                "carddav"
+              ]
+            }
+          },
+          {
+            "name": "source_key",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Record downloaded"
           }
         }
       }

@@ -228,6 +228,23 @@ export type WgwUpdateApplyRequest = UpdateApplyRequest;
 export type WgwUpdateApplyResponse = UpdateApplyResponse;
 export type WgwUpdateLogResponse = UpdateLogResponse;
 export type WgwUpdateBackupItem = UpdateBackupItem;
+export type WgwSearchReindexStateResponse = {
+  inProgress: boolean;
+  phase: string | null;
+  phaseProgress: {
+    completed: number;
+    total: number;
+    percent: number;
+    updatedAt: string;
+  } | null;
+  cancelRequested: boolean;
+  lastResult: {
+    ok: boolean;
+    message: string;
+    finishedAt: string | null;
+  } | null;
+  logLines: string[];
+};
 export type WgwDriveEntryType = DriveEntryType;
 export type WgwDriveRootPath = DriveRootPath;
 export type WgwDriveDirectoryEntry = DriveDirectoryEntry;

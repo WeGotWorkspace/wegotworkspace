@@ -5,7 +5,8 @@ export type AdminSection =
   | "webdav"
   | "plugins"
   | "backups"
-  | "updates";
+  | "updates"
+  | "search";
 
 export type AdminUser = {
   id: string;
@@ -122,6 +123,28 @@ export type AdminUpdateState = {
   lastResult: AdminUpdateResult | null;
 };
 
+export type AdminSearchReindexPhaseProgress = {
+  completed: number;
+  total: number;
+  percent: number;
+  updatedAt: string;
+};
+
+export type AdminSearchReindexResult = {
+  ok: boolean;
+  message: string;
+  finishedAt: string | null;
+};
+
+export type AdminSearchReindexState = {
+  inProgress: boolean;
+  phase: string | null;
+  phaseProgress: AdminSearchReindexPhaseProgress | null;
+  cancelRequested: boolean;
+  lastResult: AdminSearchReindexResult | null;
+  logLines: string[];
+};
+
 export type AdminUIData = {
   users: AdminUser[];
   groups: AdminGroup[];
@@ -136,6 +159,7 @@ export type AdminUIData = {
     source?: string;
   }[];
   updates: AdminUpdateState;
+  searchReindex: AdminSearchReindexState;
   currentUser: string;
   logoutUrl: string;
   updateLogLines: string[];
@@ -151,6 +175,9 @@ export type AdminAPIOperations = {
   refreshUpdateState: (opts?: { signal?: AbortSignal }) => Promise<AdminUpdateState>;
   applyUpdate: (version?: string, opts?: { signal?: AbortSignal }) => Promise<AdminUpdateState>;
   cancelUpdate: (opts?: { signal?: AbortSignal }) => Promise<AdminUpdateState>;
+  startSearchReindex: (opts?: { signal?: AbortSignal }) => Promise<AdminSearchReindexState>;
+  refreshSearchReindexState: (opts?: { signal?: AbortSignal }) => Promise<AdminSearchReindexState>;
+  cancelSearchReindex: (opts?: { signal?: AbortSignal }) => Promise<AdminSearchReindexState>;
   refreshUpdateLog: (opts?: { signal?: AbortSignal }) => Promise<string[]>;
   clearUpdateLog: (opts?: { signal?: AbortSignal }) => Promise<string[]>;
   deleteBackup: (name: string, opts?: { signal?: AbortSignal }) => Promise<AdminUIData>;

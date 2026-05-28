@@ -104,6 +104,7 @@ export function useAdminController({
     buildSettingsFormState(data),
   );
   const [updates, setUpdates] = useState(data.updates);
+  const [searchReindex, setSearchReindex] = useState(data.searchReindex);
   const [updateLogLines, setUpdateLogLines] = useState(data.updateLogLines);
   const [checkingUpdates, setCheckingUpdates] = useState(false);
   const [refreshingServerChecks, setRefreshingServerChecks] = useState(false);
@@ -115,6 +116,7 @@ export function useAdminController({
     setGroups(data.groups);
     setPlugins(data.plugins);
     setUpdates(data.updates);
+    setSearchReindex(data.searchReindex);
     setUpdateLogLines(data.updateLogLines);
   }, [data]);
 
@@ -124,6 +126,7 @@ export function useAdminController({
     setPlugins(next.plugins);
     setSettingsForm(buildSettingsFormState(next));
     setUpdates(next.updates);
+    setSearchReindex(next.searchReindex);
     setUpdateLogLines(next.updateLogLines);
   };
 
@@ -186,6 +189,42 @@ export function useAdminController({
       }
     };
   }, [updates.inProgress, operations?.refreshState, operations?.refreshUpdateState]);
+
+  useEffect(() => {
+    const refresh = operations?.refreshSearchReindexState;
+    if (!refresh) return;
+    if (!searchReindex.inProgress && section !== "search") return;
+    let cancelled = false;
+    let timeoutId: number | null = null;
+
+    const tick = async () => {
+      try {
+        const next = await refresh();
+        if (!cancelled) {
+          setSearchReindex(next);
+        }
+      } catch {
+        // Keep existing state when polling temporarily fails.
+      }
+    };
+
+    const schedule = () => {
+      if (cancelled) return;
+      timeoutId = window.setTimeout(
+        () => {
+          void tick().finally(schedule);
+        },
+        searchReindex.inProgress ? 2000 : 5000,
+      );
+    };
+
+    void tick().finally(schedule);
+
+    return () => {
+      cancelled = true;
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
+    };
+  }, [operations?.refreshSearchReindexState, searchReindex.inProgress, section]);
 
   const currentSection = useMemo(
     () => sections.find((candidate) => candidate.id === section) ?? sections[0],
@@ -413,6 +452,52 @@ export function useAdminController({
       showSuccess("Cancel requested");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not cancel update";
+      showError(message);
+    }
+  };
+
+  const startSearchReindex = async () => {
+    try {
+      const next = await operations?.startSearchReindex();
+      if (!next) {
+        showError("Search reindex API is not ready yet");
+        return;
+      }
+      setSearchReindex(next);
+      showSuccess("Search reindex started");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not start search reindex";
+      showError(message);
+    }
+  };
+
+  const refreshSearchReindexState = async () => {
+    try {
+      const next = await operations?.refreshSearchReindexState();
+      if (!next) {
+        showError("Search reindex API is not ready yet");
+        return;
+      }
+      setSearchReindex(next);
+      showSuccess("Search reindex state refreshed");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Could not refresh search reindex state";
+      showError(message);
+    }
+  };
+
+  const cancelSearchReindex = async () => {
+    try {
+      const next = await operations?.cancelSearchReindex();
+      if (!next) {
+        showError("Search reindex API is not ready yet");
+        return;
+      }
+      setSearchReindex(next);
+      showSuccess("Search reindex cancellation requested");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not cancel search reindex";
       showError(message);
     }
   };
@@ -697,6 +782,7 @@ export function useAdminController({
     groups,
     plugins,
     updates,
+    searchReindex,
     updateLogLines,
     checkingUpdates,
     refreshingServerChecks,
@@ -715,6 +801,9 @@ export function useAdminController({
       downloadBackup,
       applyUpdate,
       cancelUpdate,
+      startSearchReindex,
+      refreshSearchReindexState,
+      cancelSearchReindex,
       createUser,
       updateUser,
       deleteUser,
