@@ -39,7 +39,8 @@ export function AdminRealtimeCollaborationPane({
         <p className="mb-3 text-sm text-muted-foreground">
           ICE servers improve real-time reliability by helping peers discover the best route through
           NATs and firewalls. Configure STUN for direct path discovery and TURN as a relay fallback
-          when direct peer-to-peer connections are blocked.
+          when direct peer-to-peer connections are blocked. Enter multiple URLs as a comma-separated
+          list.
         </p>
         <FormField label="STUN URLs">
           <Input
