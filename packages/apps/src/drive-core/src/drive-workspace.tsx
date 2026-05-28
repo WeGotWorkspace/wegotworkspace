@@ -183,7 +183,7 @@ function DriveMainHeader({
         }
 
         if (result.sourceType === "note") {
-          window.location.assign("/notes");
+          window.open("/notes", "_blank", "noopener,noreferrer");
           return;
         }
         if (result.sourceType !== "file") return;
