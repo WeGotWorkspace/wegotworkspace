@@ -63,6 +63,10 @@
   --unified-search-row-accent: var(--unified-search-accent-files, #2563eb);
 }
 
+.unified-search-results-dropdown__menu-item--note {
+  --unified-search-row-accent: var(--unified-search-accent-notes, #f59e0b);
+}
+
 .unified-search-results-dropdown__menu-item--caldav {
   --unified-search-row-accent: var(--unified-search-accent-calendar, #8b5cf6);
 }

@@ -103,7 +103,7 @@ final class SearchDocumentStore
 
         $query->where(function ($auth) use ($username, $groupSlugs, $groupPrincipalOwners): void {
             $auth->where(function ($q) use ($username): void {
-                $q->where('d.source_type', 'file')
+                $q->whereIn('d.source_type', ['file', 'note'])
                     ->where('d.owner_username', $username);
             });
 
@@ -191,7 +191,7 @@ final class SearchDocumentStore
             ->where('d.source_key', $sourceKey)
             ->where(function ($auth) use ($username, $groupSlugs, $groupPrincipalOwners): void {
                 $auth->where(function ($q) use ($username): void {
-                    $q->where('d.source_type', 'file')
+                    $q->whereIn('d.source_type', ['file', 'note'])
                         ->where('d.owner_username', $username);
                 });
 
