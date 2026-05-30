@@ -6,6 +6,7 @@ namespace App\Services\Installer;
 
 use App\LocalConfigFile;
 use App\Support\AppPaths;
+use App\Support\UpdateFeedDefaults;
 
 final class InstallerConfigWriter
 {
@@ -28,7 +29,7 @@ final class InstallerConfigWriter
 
         $written = [
             'data_dir' => $dataDir,
-            'update_feed_url' => 'https://github.com/woutervroege/wegotworkspace/releases/latest/download/manifest.json',
+            'update_feed_url' => UpdateFeedDefaults::MANIFEST_URL,
             'pdo' => $this->normalizePdo($pdo),
         ];
 

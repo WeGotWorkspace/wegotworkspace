@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Update;
 
+use App\Support\UpdateFeedDefaults;
 use App\Support\WgwInstallConfig;
 use Illuminate\Support\Facades\DB;
 
@@ -46,6 +47,6 @@ final class UpdateOperationsService
             ? trim($file['update_feed_url'])
             : '';
 
-        return $fromFile !== '' ? $fromFile : 'https://github.com/woutervroege/wegotworkspace/releases/latest/download/manifest.json';
+        return $fromFile !== '' ? $fromFile : UpdateFeedDefaults::MANIFEST_URL;
     }
 }
