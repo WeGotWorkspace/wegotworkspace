@@ -133,6 +133,23 @@ The deploy artifact includes `INSTALL.md` so people downloading a release get th
 
 The core deploy ZIP no longer bundles ONLYOFFICE assets; install ONLYOFFICE via the plugin ZIP when needed.
 
+## Contributing
+
+We're not accepting external code contributions yet.
+
+WeGotWorkspace is in the process of establishing its legal structure,
+including a Contributor License Agreement (CLA) that protects both
+contributors and the project's dual-license model (AGPL + commercial).
+
+Once the CLA is in place, we'll open up contributions properly.
+
+In the meantime:
+- Bug reports and feature requests are very welcome via GitHub Issues
+- Feel free to fork and experiment
+- Watch this repo to get notified when contributions open
+
+Thanks for your interest - we're moving fast.
+
 ## License
 
 Dual licensed:
