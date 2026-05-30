@@ -1,13 +1,18 @@
 # WeGotWorkspace
 
-WeGotWorkspace is a small self-hosted groupware app powered by SabreDAV.
+WeGotWorkspace is a self-hosted platform evolving into a full autonomous office suite.
+It builds on open-source projects and open protocols, including SabreDAV.
 
 It includes:
 - WebDAV files (`/files/`)
 - CalDAV calendars
 - CardDAV contacts
 - A web installer (`/install/`)
-- Optional web apps (`/admin/`, `/drive/`, `/voice/`, `/mail/`, `/notes/`, `/office/`, `/settings/`)
+- Product surfaces (`/drive/`, `/mail/`, `/notes/`, `/voice/` as Meet)
+- Utility surfaces (`/admin/`, `/settings/`)
+- Plugin surfaces (ONLYOFFICE plugin, which provides `/office/` when installed)
+
+Docs for these surfaces are still being expanded.
 
 ## Install (production)
 
