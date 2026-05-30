@@ -6,6 +6,7 @@ namespace Tests\Support;
 
 use App\LocalConfigFile;
 use App\Support\AppPaths;
+use App\Support\UpdateFeedDefaults;
 use App\Support\WgwInstallConfig;
 
 final class WgwInstallFixture
@@ -28,7 +29,7 @@ final class WgwInstallFixture
 
         $written = [
             'data_dir' => $relData,
-            'update_feed_url' => 'https://github.com/woutervroege/wegotworkspace/releases/latest/download/manifest.json',
+            'update_feed_url' => UpdateFeedDefaults::MANIFEST_URL,
             'pdo' => ['sqlite_file' => $relDb],
         ];
         $config = "<?php\n\ndeclare(strict_types=1);\n\nreturn ".var_export($written, true).";\n";
