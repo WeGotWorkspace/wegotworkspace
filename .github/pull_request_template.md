@@ -1,16 +1,31 @@
 ## Summary
 
-<!-- What does this PR do? -->
+<!-- Explain what this PR changes and why. -->
 
-## API greenfield (check all that apply)
+## Type of change
 
-- [ ] This PR does **not** touch `packages/api` REST / Laravel API
-- [ ] Or: follows `.cursor/rules/api-greenfield.mdc` and `packages/api/docs/api-done-gate.md` when applicable
-- [ ] Does **not** restore `packages/api/src/` or legacy `*Kernel` / `MailApi`
-- [ ] Feature tests added/updated for changed API routes (when runtime exists)
-- [ ] OpenAPI / `pnpm check:api-types` unchanged unless intentionally updated
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Refactor
+- [ ] Docs / chore
+- [ ] Breaking change
 
-## Test plan
+## How to test
 
-- [ ] `pnpm check:api-types` (if OpenAPI or generated types changed)
-- [ ] `composer --working-dir packages/api test` (after Laravel scaffold exists)
+<!-- List the steps reviewers can run to verify this change. -->
+
+## Checklist
+
+- [ ] I tested the changes locally
+- [ ] I updated docs or comments when needed
+- [ ] I added/updated tests when behavior changed
+
+## API changes (only if touching `packages/api`)
+
+- [ ] OpenAPI contract is unchanged, or intentionally updated
+- [ ] `pnpm check:api-types` was run when OpenAPI/types changed
+- [ ] Feature tests were added/updated for changed API behavior
+
+## Notes for reviewers
+
+<!-- Anything else reviewers should know (trade-offs, follow-ups, context). -->
