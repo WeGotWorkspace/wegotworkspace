@@ -1,19 +1,26 @@
 # WeGotWorkspace
 
-WeGotWorkspace is a small self-hosted groupware app powered by SabreDAV.
+WeGotWorkspace is a self-hosted platform evolving into a full autonomous office suite.
+It builds on open-source projects and open protocols, including SabreDAV.
 
 It includes:
+
 - WebDAV files (`/files/`)
-- CalDAV calendars
-- CardDAV contacts
+- CalDAV calendars (`/calendars/`)
+- CardDAV contacts (`/addressbooks/`)
 - A web installer (`/install/`)
-- Optional web apps (`/admin/`, `/drive/`, `/voice/`, `/mail/`, `/notes/`, `/office/`, `/settings/`)
+- Product surfaces (`/drive/`, `/mail/`, `/notes/`, `doc`, `/meet/`)
+- Utility surfaces (`/admin/`, `/settings/`)
+- Plugin surfaces (ONLYOFFICE plugin, which provides `/office/` when installed)
+
+Docs for these surfaces are still being expanded.
 
 ## Install (production)
 
 Use the step-by-step guide in `INSTALL.md`.
 
 That guide is intentionally short and covers:
+
 - Uploading files to your host
 - Creating `packages/api/.env` (Laravel runtime; preserved across in-place updates)
 - Copying `example.htaccess` to `.htaccess`
@@ -53,13 +60,13 @@ Then use **https://wegotworkspace.localhost/** (see [`docker/README.md`](docker/
 
 ### Other commands
 
-| Command | Use |
-|---------|-----|
-| `pnpm dev` | Host PHP API + UI + Storybook (no Docker) |
-| `pnpm dev:api` | PHP API only on `:9080` |
-| `pnpm dev:preview` | Release-like sync into `apps/wegotworkspace/packages/` |
-| `pnpm build` | Production build + runtime sync (CI/release) |
-| `pnpm test:api-e2e:docker` | Playwright against Docker stack |
+| Command                    | Use                                                    |
+| -------------------------- | ------------------------------------------------------ |
+| `pnpm dev`                 | Host PHP API + UI + Storybook (no Docker)              |
+| `pnpm dev:api`             | PHP API only on `:9080`                                |
+| `pnpm dev:preview`         | Release-like sync into `apps/wegotworkspace/packages/` |
+| `pnpm build`               | Production build + runtime sync (CI/release)           |
+| `pnpm test:api-e2e:docker` | Playwright against Docker stack                        |
 
 Environment variables: [`docs/env.md`](docs/env.md).
 
@@ -106,21 +113,21 @@ See [`docs/onlyoffice-plugin.md`](docs/onlyoffice-plugin.md) for install/runtime
 
 Release ZIP files are built in CI from **signed annotated** tag pushes (`v*`) via `.github/workflows/release.yml`.
 
-| Command | What it does |
-|---------|----------------|
-| `pnpm release` | `pnpm build` + **core** package to `dist/releases/` (loads signing key from repo-root `.env`) |
-| `pnpm release -- --skip-build` | Package only (when `pnpm build` already ran) |
-| `pnpm release:plugin:onlyoffice` | Build and package ONLYOFFICE plugin ZIP separately |
-| `pnpm release:publish patch` | Bump `apps/wegotworkspace/VERSION`, commit, **signed** tag, push → CI publishes the GitHub Release |
-| `pnpm release:publish 1.2.3 --yes` | Same with an explicit version and no confirmation prompt |
-| `pnpm release:publish patch --verify` | Run a local `pnpm release` before commit (catch build errors early) |
+| Command                               | What it does                                                                                       |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `pnpm release`                        | `pnpm build` + **core** package to `dist/releases/` (loads signing key from repo-root `.env`)      |
+| `pnpm release -- --skip-build`        | Package only (when `pnpm build` already ran)                                                       |
+| `pnpm release:plugin:onlyoffice`      | Build and package ONLYOFFICE plugin ZIP separately                                                 |
+| `pnpm release:publish patch`          | Bump `apps/wegotworkspace/VERSION`, commit, **signed** tag, push → CI publishes the GitHub Release |
+| `pnpm release:publish 1.2.3 --yes`    | Same with an explicit version and no confirmation prompt                                           |
+| `pnpm release:publish patch --verify` | Run a local `pnpm release` before commit (catch build errors early)                                |
 
 Publish requires a clean git tree and a **signed annotated** git tag. That uses a separate key from release ZIP signing:
 
-| `.env` variable | Purpose |
-|-----------------|--------|
-| `WGW_RELEASE_SIGNING_PRIVATE_KEY` | RSA PEM → `manifest.sig` on deploy ZIPs |
-| `WGW_GIT_SIGNING_PUBLIC_KEY` | SSH `.pub` path → `git tag -s` (or set `user.signingkey` globally) |
+| `.env` variable                   | Purpose                                                            |
+| --------------------------------- | ------------------------------------------------------------------ |
+| `WGW_RELEASE_SIGNING_PRIVATE_KEY` | RSA PEM → `manifest.sig` on deploy ZIPs                            |
+| `WGW_GIT_SIGNING_PUBLIC_KEY`      | SSH `.pub` path → `git tag -s` (or set `user.signingkey` globally) |
 
 CI uses the `WGW_RELEASE_SIGNING_PRIVATE_KEY` repository secret for artifacts; the pushed tag must still be signed locally.
 
@@ -128,8 +135,27 @@ The deploy artifact includes `INSTALL.md` so people downloading a release get th
 
 The core deploy ZIP no longer bundles ONLYOFFICE assets; install ONLYOFFICE via the plugin ZIP when needed.
 
+## Contributing
+
+We're not accepting external code contributions yet.
+
+WeGotWorkspace is in the process of establishing its legal structure,
+including a Contributor License Agreement (CLA) that protects both
+contributors and the project's dual-license model (AGPL + commercial).
+
+Once the CLA is in place, we'll open up contributions properly.
+
+In the meantime:
+
+- Bug reports and feature requests are very welcome via GitHub Issues
+- Feel free to fork and experiment
+- Watch this repo to get notified when contributions open
+
+Thanks for your interest - we're moving fast.
+
 ## License
 
 Dual licensed:
+
 - AGPL-3.0-or-later (`LICENSE`)
 - Commercial (`COMMERCIAL-LICENSE.md`)
