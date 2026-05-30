@@ -17,7 +17,7 @@ defined('WGW_DATA_DIR') || define('WGW_DATA_DIR', './wgw-content');
 
 // Release feed used by /admin/updates "Check now".
 // Can point to manifest.json directly or GitHub releases/latest API URL.
-defined('WGW_UPDATE_FEED_URL') || define('WGW_UPDATE_FEED_URL', 'https://github.com/woutervroege/wegotworkspace/releases/latest/download/manifest.json');
+defined('WGW_UPDATE_FEED_URL') || define('WGW_UPDATE_FEED_URL', 'https://github.com/WeGotWorkspace/wegotworkspace/releases/latest/download/manifest.json');
 
 // SQLite (recommended): optional path relative to runtime root or absolute path.
 // If omitted, runtime uses WGW_DATA_DIR + '/db.sqlite'.
