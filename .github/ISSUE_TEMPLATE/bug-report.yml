@@ -1,0 +1,74 @@
+name: Bug report
+description: Report something that is broken or not working correctly in WeGotWorkspace
+labels:
+  - bug
+  - needs-triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this.
+        Use this form to describe incorrect or broken behavior.
+
+        For feature requests or general questions, please use Discussions.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is going wrong?
+      description: >
+        Briefly describe the issue.
+        What behavior are you seeing that appears incorrect?
+      placeholder: >
+        Example:
+        While editing a table cell, pressing Enter crashes the editor and the document can no longer be recovered.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should happen instead?
+      description: >
+        Describe the expected behavior.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: >
+        Share clear steps we can follow to reproduce the issue.
+        A minimal online reproduction is very helpful when available.
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: Product version
+      description: >
+        Optional: include the version you are using, if you know it.
+      placeholder: e.g. v0.1.50
+    validations:
+      required: false
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: >
+        Browser, OS, and any other relevant environment details.
+      placeholder: e.g. Chrome 148, macOS 26
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: >
+        Include screenshots, videos, logs, or anything else that could help us investigate.
+    validations:
+      required: false
