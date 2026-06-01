@@ -7,8 +7,8 @@ This is the quickest way to install on a normal Apache/PHP host.
 Upload the deploy package contents to your website folder so these files are in place:
 - `index.php`
 - `bootstrap/` (front controller bootstrap before Laravel loads)
-- `.htaccess`
-- `packages/api/` (OpenAPI contract; production releases will again include a Composer `vendor/` once the Laravel API is restored)
+- `.htaccess` (or at least `example.htaccess` — see below)
+- `packages/api/` (includes Laravel `vendor/` in production releases)
 - `packages/apps/` (includes built web app bundles, for example `packages/apps/drive/dist/`)
 - `wgw-config.sample.php`
 
@@ -27,31 +27,28 @@ If that file is missing or empty, re-upload the full deploy ZIP — do not uploa
 
 Apache `.htaccess` rewrite rules are included for typical shared Apache hosts. On **nginx** (common on Plesk), ensure requests are routed to `index.php` (Plesk often sets this automatically when PHP is enabled for the domain). Without that, `/install/` may 404 even when files are on disk.
 
-## 2) Laravel API environment (`packages/api/.env`)
+## 2) First request bootstrap
 
-The API needs a local `.env` (not included in release ZIPs). After upload or an in-place update, create or restore it:
+On the first HTTP request, the install bootstrap automatically:
+
+- creates `packages/api/.env` from `.env.example` and generates `APP_KEY` when missing
+- creates `.htaccess` from `example.htaccess` when missing (common when SFTP drops dotfiles)
+
+Existing installs are not overwritten: a present `.env` or `.htaccess` is left as-is (including custom `RewriteBase` rules).
+
+Set `APP_ENV=production` and `APP_DEBUG=false` on a live host after install.  
+Default drivers use files under `packages/api/storage/` so you do not need `packages/api/database/database.sqlite`.  
+In-place updates preserve `.env`, `.htaccess`, session files, and logs, and copy `.env` into the update backup folder as `packages-api.env`.
+
+Manual fallback if something still fails:
 
 ```bash
 cp packages/api/.env.example packages/api/.env
 php artisan key:generate --working-dir packages/api
-```
-
-Set `APP_URL` to your public URL and `APP_ENV=production` / `APP_DEBUG=false` on a live host.  
-Default drivers use files under `packages/api/storage/` so you do not need `packages/api/database/database.sqlite`.  
-The web installer also creates `.env` and `APP_KEY` automatically when `packages/api` is present.  
-In-place updates preserve `.env`, session files, and logs, and copy `.env` into the update backup folder as `packages-api.env`.
-
-## 3) Create `.htaccess` (if needed)
-
-If your host does not keep dotfiles from ZIP uploads:
-
-```bash
 cp example.htaccess .htaccess
 ```
 
-Or do the same in your hosting file manager by duplicating `example.htaccess` and naming the copy `.htaccess`.
-
-## 4) Open the installer
+## 3) Open the installer
 
 Visit:
 
@@ -62,8 +59,14 @@ Then follow the wizard:
 - Choose SQLite (quickest) or MySQL
 - Create the first account
 
-## 5) Done
+## 4) Done
 
 After setup, sign in with your new account and connect clients using the same site URL.
 
 If your install is in a subfolder, set `RewriteBase` in `.htaccess` to that subfolder path.
+
+For local smoke tests with PHP’s built-in server (no Apache rewrites):
+
+```bash
+php -S localhost:8080 -t . index.php
+```
