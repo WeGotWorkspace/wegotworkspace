@@ -6,13 +6,17 @@ namespace App\Services\Plugins;
 
 use App\Models\AppSetting;
 use App\Support\AppPaths;
+use App\Support\SafePath;
 use Illuminate\Support\Facades\File;
 
 final class PluginRegistryService
 {
     private const ACTIVE_OVERRIDES_SETTING = 'plugins_active_overrides';
 
-    public function __construct(private AppPaths $paths) {}
+    public function __construct(
+        private AppPaths $paths,
+        private PluginPaths $pluginPaths,
+    ) {}
 
     /**
      * @return list<array{
@@ -106,26 +110,72 @@ final class PluginRegistryService
         return null;
     }
 
-    /**
-     * @return list<array{
-     *   id: string,
-     *   name: string,
-     *   active: bool,
-     *   source: string,
-     *   appTile?: array{id: string, label: string, route: string, icon?: string},
-     *   drive?: array{
-     *     openFileExtensions?: list<string>,
-     *     openFileRoute?: string,
-     *     openFileQueryParam?: string,
-     *     newFileTemplates?: list<array{
-     *       id: string,
-     *       label: string,
-     *       kind: string,
-     *       queryValue: string
-     *     }>
-     *   }
-     * }>
-     */
+    public function routeAssetIndex(string $route): ?string
+    {
+        $route = $this->normalizeRoute($route);
+        if ($route === '') {
+            return null;
+        }
+
+        foreach ($this->list() as $plugin) {
+            if (! ($plugin['active'] ?? false)) {
+                continue;
+            }
+            $pluginRoute = isset($plugin['appTile']['route']) && is_string($plugin['appTile']['route'])
+                ? $this->normalizeRoute($plugin['appTile']['route'])
+                : '';
+            if ($pluginRoute !== $route) {
+                continue;
+            }
+
+            $index = $this->assetIndexPath((string) ($plugin['id'] ?? ''));
+            if ($index !== null) {
+                return $index;
+            }
+        }
+
+        return null;
+    }
+
+    public function routeEditorReady(string $route): bool
+    {
+        $route = $this->normalizeRoute($route);
+        if ($route === '') {
+            return false;
+        }
+
+        foreach ($this->list() as $plugin) {
+            if (! ($plugin['active'] ?? false)) {
+                continue;
+            }
+            $pluginRoute = isset($plugin['appTile']['route']) && is_string($plugin['appTile']['route'])
+                ? $this->normalizeRoute($plugin['appTile']['route'])
+                : '';
+            if ($pluginRoute !== $route) {
+                continue;
+            }
+
+            $manifest = $this->manifestPathForPlugin((string) ($plugin['id'] ?? ''));
+            if ($manifest !== null && $this->pluginPaths->editorReadyForManifest($manifest)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function assetIndexPath(string $pluginId): ?string
+    {
+        $pluginId = trim($pluginId);
+        if ($pluginId === '') {
+            return null;
+        }
+
+        $manifest = $this->manifestPathForPlugin($pluginId);
+
+        return $manifest !== null ? $this->pluginPaths->indexPathForManifest($manifest) : null;
+    }
+
     /**
      * @return list<array{
      *   id: string,
@@ -149,17 +199,11 @@ final class PluginRegistryService
     private function loadBundledPlugins(): array
     {
         $plugins = [];
-        foreach ($this->paths->bundledPluginManifestCandidates() as $manifestPath) {
-            if (! is_readable($manifestPath)) {
+        foreach ($this->pluginPaths->bundledManifestPaths() as $manifestPath) {
+            if (! SafePath::isReadable($manifestPath)) {
                 continue;
             }
-            $appsRoot = dirname(dirname($manifestPath));
-            $module = basename(dirname($manifestPath));
-            $index = $appsRoot.'/'.$module.'/build/index.html';
-            if (! is_file($index)) {
-                continue;
-            }
-            if (! File::isReadable($manifestPath)) {
+            if ($this->pluginPaths->indexPathForManifest($manifestPath) === null) {
                 continue;
             }
             $raw = File::get($manifestPath);
@@ -199,14 +243,11 @@ final class PluginRegistryService
                 continue;
             }
             $dir = $root.'/'.$entry;
-            if (! is_dir($dir)) {
+            if (! SafePath::isDir($dir)) {
                 continue;
             }
             $manifest = $dir.'/plugin.json';
-            if (! is_readable($manifest)) {
-                continue;
-            }
-            if (! File::isReadable($manifest)) {
+            if (! SafePath::isReadable($manifest)) {
                 continue;
             }
             $raw = File::get($manifest);
@@ -369,5 +410,45 @@ final class PluginRegistryService
         }
 
         return $normalized;
+    }
+
+    private function manifestPathForPlugin(string $pluginId): ?string
+    {
+        foreach ($this->pluginPaths->allManifestPaths() as $manifestPath) {
+            if (! SafePath::isReadable($manifestPath)) {
+                continue;
+            }
+            $raw = File::get($manifestPath);
+            if ($raw === '') {
+                continue;
+            }
+            try {
+                $data = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+            } catch (\JsonException) {
+                continue;
+            }
+            if (! is_array($data)) {
+                continue;
+            }
+            $id = isset($data['id']) && is_string($data['id']) ? trim($data['id']) : '';
+            if ($id === $pluginId) {
+                return $manifestPath;
+            }
+        }
+
+        return null;
+    }
+
+    private function normalizeRoute(string $route): string
+    {
+        $route = trim($route);
+        if ($route === '') {
+            return '';
+        }
+        if ($route[0] !== '/') {
+            $route = '/'.$route;
+        }
+
+        return rtrim($route, '/');
     }
 }

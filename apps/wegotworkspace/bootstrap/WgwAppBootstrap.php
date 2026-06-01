@@ -11,6 +11,8 @@ final class WgwAppBootstrap
 {
     public static function run(string $appRoot): void
     {
+        require_once __DIR__.'/WgwSafePath.php';
+
         self::seedAppRootEnv($appRoot);
 
         $runtimeRoot = self::resolveRuntimeRoot($appRoot);
@@ -63,23 +65,30 @@ final class WgwAppBootstrap
      */
     private static function apiPackageCandidates(string $appRoot, string $runtimeRoot): array
     {
-        $repoApi = dirname($appRoot, 2).'/packages/api';
-
-        // Monorepo source first; synced copies under the install tree are release/preview only.
-        return array_values(array_unique([
-            $repoApi,
+        $normalized = rtrim(str_replace('\\', '/', $appRoot), '/');
+        $installCandidates = [
             $appRoot.'/packages/api',
             $runtimeRoot.'/packages/api',
-        ]));
+        ];
+
+        // Monorepo dev only: live packages/api beside apps/wegotworkspace.
+        if (str_ends_with($normalized, '/apps/wegotworkspace')) {
+            return array_values(array_unique([
+                dirname($normalized, 2).'/packages/api',
+                ...$installCandidates,
+            ]));
+        }
+
+        return array_values(array_unique($installCandidates));
     }
 
     private static function resolveApiPackageRoot(string $appRoot, string $runtimeRoot): ?string
     {
         foreach (self::apiPackageCandidates($appRoot, $runtimeRoot) as $candidate) {
-            if (! is_file($candidate.'/public/index.php')) {
+            if (! WgwSafePath::isFile($candidate.'/public/index.php')) {
                 continue;
             }
-            if (is_file($candidate.'/vendor/autoload.php')) {
+            if (WgwSafePath::isFile($candidate.'/vendor/autoload.php')) {
                 return $candidate;
             }
         }
@@ -90,7 +99,7 @@ final class WgwAppBootstrap
     private static function findApiPackageWithoutVendor(string $appRoot, string $runtimeRoot): ?string
     {
         foreach (self::apiPackageCandidates($appRoot, $runtimeRoot) as $candidate) {
-            if (is_file($candidate.'/public/index.php')) {
+            if (WgwSafePath::isFile($candidate.'/public/index.php')) {
                 return $candidate;
             }
         }
