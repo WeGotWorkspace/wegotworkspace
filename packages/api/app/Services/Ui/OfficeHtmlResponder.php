@@ -7,14 +7,14 @@ namespace App\Services\Ui;
 use App\Dav\Auth\SabreUiAuthGate;
 use App\Services\Auth\UiSessionService;
 use App\Services\Installer\InstallerWebBase;
-use App\Support\AppPaths;
+use App\Services\Plugins\PluginRegistryService;
 use App\Support\WgwSettings;
 use Symfony\Component\HttpFoundation\Response;
 
 final class OfficeHtmlResponder
 {
     public function __construct(
-        private AppPaths $paths,
+        private PluginRegistryService $plugins,
         private UiSessionService $uiSession,
     ) {}
 
@@ -58,7 +58,7 @@ final class OfficeHtmlResponder
             return redirect($login);
         }
 
-        $index = $this->paths->officeIndex();
+        $index = $this->plugins->routeAssetIndex('/office');
         $distFile = $this->resolveHtmlFile($webBase, $path, $index);
         if ($distFile === null || ! is_readable($distFile)) {
             return response(
