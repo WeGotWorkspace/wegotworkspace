@@ -86,6 +86,13 @@ CodeQL does not support PHP; the Laravel API is scanned with Semgrep instead.
 
 Reports are uploaded as workflow artifacts and (where supported) to **Security → Code scanning**.
 
+**Branch protection on `main`:**
+
+- Required checks: `build` (CI), `SAST (CodeQL JS/TS)`, `SAST (Semgrep PHP)`, `Secrets (Gitleaks)`, `SCA (Trivy)`
+- **Signed commits** required (GPG or SSH — same as release tags)
+- Rules apply to admins too (no bypass)
+- PR required; **0 approvals** for now (single maintainer — raise later)
+
 **Repository setup (org maintainers):**
 
 | Secret / variable | Required | Purpose |
