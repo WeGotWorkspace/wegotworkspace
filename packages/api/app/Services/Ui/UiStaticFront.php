@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Ui;
 
 use App\Services\Installer\InstallerWebBase;
+use App\Services\Plugins\PluginRegistryService;
 use App\Support\AppPaths;
 use App\Ui\OfficeStaticServer;
 use App\Ui\UiStaticServer;
@@ -15,6 +16,7 @@ final class UiStaticFront
 {
     public function __construct(
         private AppPaths $paths,
+        private PluginRegistryService $plugins,
         private UiStaticServer $static,
         private OfficeStaticServer $officeStatic,
         private OfficeHtmlResponder $officeHtml,
@@ -104,7 +106,7 @@ final class UiStaticFront
             return $html;
         }
 
-        $index = $this->paths->officeIndex();
+        $index = $this->plugins->routeAssetIndex('/office');
         if ($index === null) {
             return $this->distMissing('office');
         }

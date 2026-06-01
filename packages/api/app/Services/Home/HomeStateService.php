@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Home;
 
 use App\Services\Auth\AdminRoleResolver;
+use App\Services\Plugins\PluginRegistryService;
 use App\Support\AppPaths;
 use App\Support\WgwSettings;
 
@@ -12,6 +13,7 @@ final class HomeStateService
 {
     public function __construct(
         private AppPaths $paths,
+        private PluginRegistryService $plugins,
         private AdminRoleResolver $adminRoles,
     ) {}
 
@@ -36,7 +38,7 @@ final class HomeStateService
                 'mail' => $filesEnabled && $this->paths->appDistIndex('mail') !== null,
                 'voice' => $filesEnabled && $this->paths->appDistIndex('voice') !== null,
                 'notes' => $filesEnabled && $this->paths->appDistIndex('notes') !== null,
-                'office' => $filesEnabled && $this->paths->officeIndex() !== null,
+                'office' => $filesEnabled && $this->plugins->routeAssetIndex('/office') !== null,
             ],
         ];
     }
