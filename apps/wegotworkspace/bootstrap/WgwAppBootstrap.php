@@ -19,6 +19,7 @@ final class WgwAppBootstrap
         $apiPackageRoot = self::resolveApiPackageRoot($appRoot, $runtimeRoot);
 
         if ($apiPackageRoot !== null) {
+            self::ensureApiRuntimeEnv($apiPackageRoot);
             require $apiPackageRoot.'/public/index.php';
 
             return;
@@ -105,6 +106,16 @@ final class WgwAppBootstrap
         }
 
         return null;
+    }
+
+    private static function ensureApiRuntimeEnv(string $apiPackageRoot): void
+    {
+        require_once $apiPackageRoot.'/vendor/autoload.php';
+
+        (new \App\Services\Installer\ApiRuntimeEnvService)->ensureAtApiRoot(
+            $apiPackageRoot,
+            \App\Services\Installer\ApiRuntimeEnvService::guessRequestAppUrl(),
+        );
     }
 
     private static function respondApiUnavailable(?string $apiPackageWithoutVendor): void

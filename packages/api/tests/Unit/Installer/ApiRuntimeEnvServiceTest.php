@@ -54,6 +54,22 @@ final class ApiRuntimeEnvServiceTest extends TestCase
         $this->assertStringContainsString('APP_URL=https://cloud.example.test', $env);
     }
 
+    public function test_ensure_at_api_root_supports_resolved_monorepo_api_path(): void
+    {
+        file_put_contents($this->apiRoot.'/.env.example', implode("\n", [
+            'APP_KEY=',
+            'APP_URL=http://localhost',
+            '',
+        ]));
+
+        $service = new ApiRuntimeEnvService;
+        $result = $service->ensureAtApiRoot($this->apiRoot, 'http://127.0.0.1:9080');
+
+        $this->assertTrue($result['createdEnv']);
+        $this->assertTrue($result['generatedKey']);
+        $this->assertTrue($result['patchedUrl']);
+    }
+
     public function test_ensure_does_not_replace_existing_app_key(): void
     {
         file_put_contents($this->apiRoot.'/.env', "APP_KEY=base64:YWJj\nAPP_URL=https://existing.test\n");
