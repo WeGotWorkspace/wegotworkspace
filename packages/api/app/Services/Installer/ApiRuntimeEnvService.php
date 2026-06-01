@@ -33,8 +33,15 @@ final class ApiRuntimeEnvService
      */
     public function ensure(string $installRoot, ?string $appUrl = null): array
     {
-        $apiRoot = $this->apiPackageRoot($installRoot);
-        if ($apiRoot === null) {
+        return $this->ensureAtApiRoot($this->apiPackageRoot($installRoot), $appUrl);
+    }
+
+    /**
+     * @return array{createdEnv: bool, generatedKey: bool, patchedUrl: bool}
+     */
+    public function ensureAtApiRoot(?string $apiRoot, ?string $appUrl = null): array
+    {
+        if ($apiRoot === null || ! is_file($apiRoot.'/vendor/autoload.php')) {
             return ['createdEnv' => false, 'generatedKey' => false, 'patchedUrl' => false];
         }
 
