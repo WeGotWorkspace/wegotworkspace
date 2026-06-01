@@ -3,6 +3,7 @@
 import { cpSync, existsSync, mkdirSync, rmSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { createApiPackageCopyFilter } from "./api-package-copy-filter.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const packageRoot = resolve(__dirname, "..");
@@ -33,19 +34,8 @@ const baseDirs = [
   "tests",
 ];
 
-/** Never ship removed greenfield paths (e.g. deleted packages/api/legacy/). */
-const syncExcludeDirNames = new Set(["legacy"]);
-
 function hasWithVendorFlag(argv) {
   return argv.includes("--with-vendor");
-}
-
-function pathHasExcludedDir(absolutePath, copyRoot) {
-  const rel = absolutePath.slice(copyRoot.length).replace(/^[/\\]+/, "");
-  if (rel === "") {
-    return false;
-  }
-  return rel.split(/[/\\]/).some((segment) => syncExcludeDirNames.has(segment));
 }
 
 export function syncRuntimeApiPackage(options = {}) {
@@ -67,7 +57,7 @@ export function syncRuntimeApiPackage(options = {}) {
     rmSync(to, { recursive: true, force: true });
     cpSync(from, to, {
       recursive: true,
-      filter: (src) => !pathHasExcludedDir(src, from),
+      filter: createApiPackageCopyFilter(from, { includeEnv: true }),
     });
   }
 

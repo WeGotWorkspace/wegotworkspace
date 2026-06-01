@@ -5,6 +5,7 @@ import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node
 import { dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
+import { createApiPackageCopyFilter } from "../packages/api/scripts/api-package-copy-filter.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "..");
@@ -56,7 +57,10 @@ for (const entry of repoReleaseEntries) {
   }
   const target = resolve(stagingRoot, entry);
   ensureDir(dirname(target));
-  cpSync(source, target, { recursive: true });
+  cpSync(source, target, {
+    recursive: true,
+    filter: createApiPackageCopyFilter(source, { forRelease: true }),
+  });
 }
 const rootDocs = ["INSTALL.md", "README.md", "LICENSE"];
 for (const file of rootDocs) {
