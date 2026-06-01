@@ -77,9 +77,12 @@ CI-quality checks locally: `pnpm run ci:quality` (typegen, lint, format, typeche
 
 | Job | Tool | Blocks merge on |
 | --- | --- | --- |
-| SAST | CodeQL (PHP + JavaScript/TypeScript) | HIGH / CRITICAL |
+| SAST (JS/TS) | CodeQL | HIGH / CRITICAL |
+| SAST (PHP) | Semgrep | ERROR-severity security rules |
 | Secrets | Gitleaks | Any detected secret |
 | SCA | Trivy (Composer + pnpm lockfiles) | CRITICAL / HIGH CVEs |
+
+CodeQL does not support PHP; the Laravel API is scanned with Semgrep instead.
 
 Reports are uploaded as workflow artifacts and (where supported) to **Security → Code scanning**.
 
