@@ -1,0 +1,43 @@
+name: DAST finding
+description: Report a dynamic application security finding from OWASP ZAP
+labels:
+  - security
+  - dast
+  - needs-triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This template is used for OWASP ZAP full-scan findings created by the security workflow.
+        If you are reporting a finding manually, fill in the fields below.
+
+  - type: textarea
+    id: alert
+    attributes:
+      label: ZAP alert
+      description: Alert name and risk level from the ZAP report
+      placeholder: "Cross Site Scripting (Reflected) — High"
+    validations:
+      required: true
+
+  - type: input
+    id: url
+    attributes:
+      label: Affected URL
+      placeholder: "https://staging.example.com/drive/"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Paste the ZAP finding description or remediation hint
+    validations:
+      required: true
+
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Workflow run (optional)
+      description: Link to the GitHub Actions run that produced this finding
