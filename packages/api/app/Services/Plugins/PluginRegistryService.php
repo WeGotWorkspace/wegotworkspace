@@ -6,6 +6,7 @@ namespace App\Services\Plugins;
 
 use App\Models\AppSetting;
 use App\Support\AppPaths;
+use App\Support\SafePath;
 use Illuminate\Support\Facades\File;
 
 final class PluginRegistryService
@@ -199,13 +200,10 @@ final class PluginRegistryService
     {
         $plugins = [];
         foreach ($this->pluginPaths->bundledManifestPaths() as $manifestPath) {
-            if (! is_readable($manifestPath)) {
+            if (! SafePath::isReadable($manifestPath)) {
                 continue;
             }
             if ($this->pluginPaths->indexPathForManifest($manifestPath) === null) {
-                continue;
-            }
-            if (! File::isReadable($manifestPath)) {
                 continue;
             }
             $raw = File::get($manifestPath);
@@ -245,14 +243,11 @@ final class PluginRegistryService
                 continue;
             }
             $dir = $root.'/'.$entry;
-            if (! is_dir($dir)) {
+            if (! SafePath::isDir($dir)) {
                 continue;
             }
             $manifest = $dir.'/plugin.json';
-            if (! is_readable($manifest)) {
-                continue;
-            }
-            if (! File::isReadable($manifest)) {
+            if (! SafePath::isReadable($manifest)) {
                 continue;
             }
             $raw = File::get($manifest);
@@ -420,7 +415,7 @@ final class PluginRegistryService
     private function manifestPathForPlugin(string $pluginId): ?string
     {
         foreach ($this->pluginPaths->allManifestPaths() as $manifestPath) {
-            if (! is_readable($manifestPath)) {
+            if (! SafePath::isReadable($manifestPath)) {
                 continue;
             }
             $raw = File::get($manifestPath);

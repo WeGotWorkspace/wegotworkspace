@@ -73,4 +73,30 @@ final class SafePathTest extends TestCase
 
         $this->assertFalse(SafePath::isFile($blocked));
     }
+
+    #[Test]
+    public function is_html_file_rejects_null_byte_placeholders(): void
+    {
+        $path = sys_get_temp_dir().'/wgw-safe-path-'.uniqid('', true).'.html';
+        file_put_contents($path, str_repeat("\0", 128));
+
+        try {
+            $this->assertFalse(SafePath::isHtmlFile($path));
+        } finally {
+            @unlink($path);
+        }
+    }
+
+    #[Test]
+    public function is_html_file_accepts_real_html(): void
+    {
+        $path = sys_get_temp_dir().'/wgw-safe-path-'.uniqid('', true).'.html';
+        file_put_contents($path, '<!doctype html><html></html>');
+
+        try {
+            $this->assertTrue(SafePath::isHtmlFile($path));
+        } finally {
+            @unlink($path);
+        }
+    }
 }
