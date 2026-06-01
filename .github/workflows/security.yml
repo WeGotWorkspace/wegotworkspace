@@ -159,7 +159,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Scan Composer lockfile
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: packages/api/composer.lock
@@ -171,7 +171,7 @@ jobs:
           skip-dirs: packages/onlyoffice-web,node_modules,packages/api/vendor
 
       - name: Scan pnpm lockfile
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: pnpm-lock.yaml
