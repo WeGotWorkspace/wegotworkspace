@@ -11,6 +11,8 @@ final class WgwAppBootstrap
 {
     public static function run(string $appRoot): void
     {
+        require_once __DIR__.'/WgwSafePath.php';
+
         self::seedAppRootEnv($appRoot);
 
         $runtimeRoot = self::resolveRuntimeRoot($appRoot);
@@ -63,8 +65,6 @@ final class WgwAppBootstrap
      */
     private static function apiPackageCandidates(string $appRoot, string $runtimeRoot): array
     {
-        require_once __DIR__.'/WgwSafePath.php';
-
         $normalized = rtrim(str_replace('\\', '/', $appRoot), '/');
         $installCandidates = [
             $appRoot.'/packages/api',
@@ -84,8 +84,6 @@ final class WgwAppBootstrap
 
     private static function resolveApiPackageRoot(string $appRoot, string $runtimeRoot): ?string
     {
-        require_once __DIR__.'/WgwSafePath.php';
-
         foreach (self::apiPackageCandidates($appRoot, $runtimeRoot) as $candidate) {
             if (! WgwSafePath::isFile($candidate.'/public/index.php')) {
                 continue;
@@ -100,8 +98,6 @@ final class WgwAppBootstrap
 
     private static function findApiPackageWithoutVendor(string $appRoot, string $runtimeRoot): ?string
     {
-        require_once __DIR__.'/WgwSafePath.php';
-
         foreach (self::apiPackageCandidates($appRoot, $runtimeRoot) as $candidate) {
             if (WgwSafePath::isFile($candidate.'/public/index.php')) {
                 return $candidate;

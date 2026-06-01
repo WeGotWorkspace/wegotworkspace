@@ -154,7 +154,7 @@ final class AppPaths
     public function moduleDistRoot(string $module): ?string
     {
         foreach ($this->moduleDistCandidates($module) as $candidate) {
-            if (SafePath::isFile($candidate.'/index.html')) {
+            if (SafePath::isHtmlFile($candidate.'/index.html')) {
                 return $candidate;
             }
         }

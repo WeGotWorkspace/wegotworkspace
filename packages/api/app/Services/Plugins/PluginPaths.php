@@ -87,7 +87,7 @@ final class PluginPaths
             ? $pluginDir.'/assets/index.html'
             : $pluginDir.'/build/index.html';
 
-        return SafePath::isFile($index) ? $index : null;
+        return SafePath::isHtmlFile($index) ? $index : null;
     }
 
     public function editorReadyForManifest(string $manifestPath): bool

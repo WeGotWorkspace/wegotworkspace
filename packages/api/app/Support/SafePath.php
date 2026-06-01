@@ -24,6 +24,20 @@ final class SafePath
         return self::isAccessible($path) && is_dir($path);
     }
 
+    public static function isHtmlFile(string $path): bool
+    {
+        if (! self::isFile($path)) {
+            return false;
+        }
+
+        $head = @file_get_contents($path, false, null, 0, 512);
+        if (! is_string($head) || $head === '' || str_contains($head, "\0")) {
+            return false;
+        }
+
+        return str_starts_with(ltrim($head), '<');
+    }
+
     public static function isAccessible(string $path): bool
     {
         $path = self::normalize($path);
