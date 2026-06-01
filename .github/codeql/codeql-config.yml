@@ -1,0 +1,12 @@
+name: wegotworkspace-codeql
+
+paths:
+  - packages/api
+  - packages/apps
+
+paths-ignore:
+  - "**/node_modules/**"
+  - "**/vendor/**"
+  - "**/dist/**"
+  - packages/onlyoffice-web
+  - packages/api/storage/framework/views
