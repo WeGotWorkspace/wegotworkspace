@@ -178,6 +178,7 @@ jobs:
           # First-party UI only — root lockfile also covers vendored onlyoffice-web.
           scan-ref: packages/apps
           scanners: vuln
+          format: sarif
           output: trivy-pnpm.sarif
           severity: CRITICAL,HIGH
           exit-code: 1
