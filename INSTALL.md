@@ -14,6 +14,19 @@ Upload the deploy package contents to your website folder so these files are in 
 
 Your site document root must point to this folder.
 
+Upload with **SFTP** (binary-safe). After upload, confirm the installer UI is present:
+
+```bash
+head -c 40 packages/apps/install/dist/index.html
+# should start with <!doctype html> or <html
+```
+
+If that file is missing or empty, re-upload the full deploy ZIP — do not upload a git checkout without built `dist/` folders.
+
+### nginx / Plesk
+
+Apache `.htaccess` rewrite rules are included for typical shared Apache hosts. On **nginx** (common on Plesk), ensure requests are routed to `index.php` (Plesk often sets this automatically when PHP is enabled for the domain). Without that, `/install/` may 404 even when files are on disk.
+
 ## 2) Laravel API environment (`packages/api/.env`)
 
 The API needs a local `.env` (not included in release ZIPs). After upload or an in-place update, create or restore it:
