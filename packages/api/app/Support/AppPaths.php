@@ -154,7 +154,7 @@ final class AppPaths
     public function moduleDistRoot(string $module): ?string
     {
         foreach ($this->moduleDistCandidates($module) as $candidate) {
-            if (is_file($candidate.'/index.html')) {
+            if (SafePath::isHtmlFile($candidate.'/index.html')) {
                 return $candidate;
             }
         }
@@ -172,104 +172,16 @@ final class AppPaths
      */
     private function moduleDistCandidates(string $module): array
     {
-        $root = $this->installRoot();
-        $repo = dirname($root, 2);
+        return InstallLayout::pathCandidates(
+            $this->installRoot(),
+            function (string $root) use ($module): array {
+                $paths = [$root.'/packages/apps/'.$module.'/dist'];
+                if ($module === 'shell') {
+                    $paths[] = $root.'/packages/apps/dist';
+                }
 
-        $candidates = [
-            $repo.'/packages/apps/'.$module.'/dist',
-            $root.'/packages/apps/'.$module.'/dist',
-        ];
-
-        if ($module === 'shell') {
-            $candidates[] = $repo.'/packages/apps/dist';
-            $candidates[] = $root.'/packages/apps/dist';
-        }
-
-        return array_values(array_unique($candidates));
-    }
-
-    public function officeIndex(): ?string
-    {
-        foreach ($this->officeIndexCandidates() as $path) {
-            if (is_file($path)) {
-                return $path;
-            }
-        }
-
-        return null;
-    }
-
-    public function officeEditorReady(): bool
-    {
-        foreach ($this->officeBuildRoots() as $root) {
-            if (is_readable($root.'/editor.html')) {
-                return true;
-            }
-            if (is_readable($root.'/editor/index.html')) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function officeBuildRoots(): array
-    {
-        $roots = [];
-        foreach ($this->officeIndexCandidates() as $index) {
-            $roots[] = dirname($index);
-        }
-
-        return array_values(array_unique($roots));
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function privateDirCandidates(): array
-    {
-        $root = $this->installRoot();
-        $repo = dirname($root, 2);
-
-        return array_values(array_unique([
-            $repo.'/packages/apps',
-            $root.'/packages/apps',
-        ]));
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function officeIndexCandidates(): array
-    {
-        $root = $this->installRoot();
-        $repo = dirname($root, 2);
-        $candidates = [];
-
-        foreach ($this->privateDirCandidates() as $appsRoot) {
-            $candidates[] = $appsRoot.'/office/build/index.html';
-        }
-
-        // Optional plugin ZIP layout (Admin → Plugins or manual install under wgw-plugins/).
-        $candidates[] = $root.'/wgw-plugins/onlyoffice/assets/index.html';
-        $candidates[] = $repo.'/wgw-plugins/onlyoffice/assets/index.html';
-
-        return array_values(array_unique($candidates));
-    }
-
-    /**
-     * @return list<string>
-     */
-    public function bundledPluginManifestCandidates(): array
-    {
-        $candidates = [];
-        foreach ($this->privateDirCandidates() as $appsRoot) {
-            $candidates[] = $appsRoot.'/office/plugin.json';
-        }
-
-        return array_values(array_unique($candidates));
+                return $paths;
+            },
+        );
     }
 }

@@ -10,13 +10,10 @@ final class AppVersion
 
     public function current(): string
     {
-        $candidates = [
-            dirname($this->install->installRoot(), 2).'/VERSION',
-            $this->install->installRoot().'/VERSION',
-        ];
+        $candidates = [$this->install->installRoot().'/VERSION'];
 
         foreach ($candidates as $path) {
-            if (! is_readable($path)) {
+            if (! SafePath::isReadable($path)) {
                 continue;
             }
             $raw = trim((string) file_get_contents($path));
