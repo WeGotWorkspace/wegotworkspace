@@ -1,0 +1,228 @@
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 3 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  sast-codeql:
+    name: SAST (CodeQL)
+    if: >-
+      github.event_name != 'push' ||
+      !startsWith(github.event.head_commit.message, 'chore(release):')
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: javascript-typescript
+          - language: php
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: ctype, dom, iconv, imap, json, mbstring, pdo, pdo_sqlite, simplexml, zip
+          coverage: none
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+
+      - name: Install JS workspace
+        run: pnpm install --frozen-lockfile
+
+      - name: Install backend Composer dependencies
+        run: composer --working-dir packages/api install --no-interaction --prefer-dist
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          config-file: .github/codeql/codeql-config.yml
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:${{ matrix.language }}
+          output: codeql-sarif-results
+          upload: true
+
+      - name: Enforce HIGH/CRITICAL severity gate
+        run: |
+          SARIF="$(find codeql-sarif-results -name '*.sarif' -type f | head -1)"
+          if [[ -z "$SARIF" ]]; then
+            echo "No CodeQL SARIF output found; skipping severity gate."
+            exit 0
+          fi
+          bash .github/scripts/enforce-sarif-severity.sh "$SARIF" 7.0
+
+      - name: Upload CodeQL SARIF artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-${{ matrix.language }}-results
+          path: codeql-sarif-results/
+          if-no-files-found: ignore
+
+  secrets-gitleaks:
+    name: Secrets (Gitleaks)
+    if: >-
+      github.event_name != 'push' ||
+      !startsWith(github.event.head_commit.message, 'chore(release):')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan for secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: true
+
+      - name: Upload Gitleaks SARIF artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitleaks-report
+          path: |
+            gitleaks-report.sarif
+            results.sarif
+          if-no-files-found: ignore
+
+  sca-trivy:
+    name: SCA (Trivy)
+    if: >-
+      github.event_name != 'push' ||
+      !startsWith(github.event.head_commit.message, 'chore(release):')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scan Composer lockfile
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          scan-type: fs
+          scan-ref: packages/api/composer.lock
+          format: sarif
+          output: trivy-composer.sarif
+          severity: CRITICAL,HIGH
+          exit-code: 1
+          limit-severities-for-sarif: true
+          skip-dirs: packages/onlyoffice-web,node_modules,packages/api/vendor
+
+      - name: Scan pnpm lockfile
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          scan-type: fs
+          scan-ref: pnpm-lock.yaml
+          format: sarif
+          output: trivy-pnpm.sarif
+          severity: CRITICAL,HIGH
+          exit-code: 1
+          limit-severities-for-sarif: true
+          skip-dirs: packages/onlyoffice-web,node_modules,packages/api/vendor
+
+      - name: Upload Composer SARIF to Security tab
+        if: always() && hashFiles('trivy-composer.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-composer.sarif
+          category: trivy-composer
+
+      - name: Upload pnpm SARIF to Security tab
+        if: always() && hashFiles('trivy-pnpm.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-pnpm.sarif
+          category: trivy-pnpm
+
+      - name: Upload Trivy SARIF artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-sca-reports
+          path: |
+            trivy-composer.sarif
+            trivy-pnpm.sarif
+          if-no-files-found: ignore
+
+  dast-zap:
+    name: DAST (OWASP ZAP)
+    # Scaffolded — enable when staging + auth are configured (see .github/zap/README.md):
+    # vars.ENABLE_DAST == 'true' &&
+    # (github.event_name == 'schedule' ||
+    #  (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+    if: false
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: OWASP ZAP full scan
+        id: zap
+        uses: zaproxy/action-full-scan@v0.13.0
+        with:
+          target: ${{ vars.STAGING_URL }}
+          rules_file_name: .github/zap/zap-rules.conf
+          issue_title: "DAST: ZAP full scan findings"
+          fail_action: false
+          allow_issue_writing: true
+          artifact_name: zap-dast-report
+          cmd_options: "-I"
+
+      - name: Label ZAP issues
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = 'DAST: ZAP full scan findings';
+            const labels = ['security', 'dast', 'needs-triage'];
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 20,
+            });
+            for (const issue of issues) {
+              if (issue.title !== title) continue;
+              const existing = new Set(issue.labels.map((l) => l.name));
+              const toAdd = labels.filter((l) => !existing.has(l));
+              if (toAdd.length === 0) continue;
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: toAdd,
+              });
+            }

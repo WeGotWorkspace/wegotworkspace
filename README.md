@@ -71,6 +71,29 @@ Environment variables: [`docs/env.md`](docs/env.md).
 
 CI-quality checks locally: `pnpm run ci:quality` (typegen, lint, format, typecheck, API done gate).
 
+## Security scanning
+
+[`.github/workflows/security.yml`](.github/workflows/security.yml) runs on every pull request and push to `main`:
+
+| Job | Tool | Blocks merge on |
+| --- | --- | --- |
+| SAST | CodeQL (PHP + JavaScript/TypeScript) | HIGH / CRITICAL |
+| Secrets | Gitleaks | Any detected secret |
+| SCA | Trivy (Composer + pnpm lockfiles) | CRITICAL / HIGH CVEs |
+
+Reports are uploaded as workflow artifacts and (where supported) to **Security → Code scanning**.
+
+**Repository setup (org maintainers):**
+
+| Secret / variable | Required | Purpose |
+| --- | --- | --- |
+| `GITLEAKS_LICENSE` | Yes (org repos) | Free license from [gitleaks.io](https://gitleaks.io) |
+| `STAGING_URL` | DAST (later) | ZAP scan target |
+| `ENABLE_DAST` | DAST (later) | Repository variable; set to `true` to enable |
+| `ZAP_STAGING_USERNAME` / `ZAP_STAGING_PASSWORD` | DAST (later) | Authenticated staging scan |
+
+**DAST (OWASP ZAP)** is scaffolded but disabled until staging and login are configured. See [`.github/zap/README.md`](.github/zap/README.md). When enabled, it runs nightly and on push to `main`; findings open GitHub Issues and are non-blocking until v1.0.
+
 Git hooks (installed on `pnpm install` via Husky):
 
 - **pre-commit** — Prettier + ESLint fix on staged `@wgw/apps` files; Pint on staged `packages/api` PHP
