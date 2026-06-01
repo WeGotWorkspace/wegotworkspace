@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Front;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use PHPUnit\Framework\TestCase;
 
+#[RunTestsInSeparateProcesses]
 final class FreshDeployBootstrapTest extends TestCase
 {
     private ?string $deployRoot = null;
@@ -28,11 +30,47 @@ final class FreshDeployBootstrapTest extends TestCase
         $this->assertFileDoesNotExist($apiRoot.'/.env');
         $this->assertFileExists($apiRoot.'/.env.example');
 
+        $body = $this->runDeployRequest('/install/');
+
+        $this->assertFileExists($apiRoot.'/.env');
+        $env = (string) file_get_contents($apiRoot.'/.env');
+        $this->assertMatchesRegularExpression('/^APP_KEY=base64:/m', $env);
+        $this->assertStringContainsString('APP_URL=http://127.0.0.1:8080', $env);
+        $this->assertStringContainsString('<!doctype html>', strtolower($body));
+    }
+
+    public function test_bootstrap_seeds_htaccess_when_missing(): void
+    {
+        $this->deployRoot = $this->createFreshDeployRoot();
+        $this->assertFileDoesNotExist($this->deployRoot.'/.htaccess');
+        $this->assertFileExists($this->deployRoot.'/example.htaccess');
+
+        $this->runDeployRequest('/install/');
+
+        $this->assertFileExists($this->deployRoot.'/.htaccess');
+        $this->assertSame(
+            (string) file_get_contents($this->deployRoot.'/example.htaccess'),
+            (string) file_get_contents($this->deployRoot.'/.htaccess'),
+        );
+    }
+
+    public function test_bootstrap_does_not_overwrite_existing_htaccess(): void
+    {
+        $this->deployRoot = $this->createFreshDeployRoot();
+        file_put_contents($this->deployRoot.'/.htaccess', "RewriteBase /custom/\n");
+
+        $this->runDeployRequest('/install/');
+
+        $this->assertSame("RewriteBase /custom/\n", (string) file_get_contents($this->deployRoot.'/.htaccess'));
+    }
+
+    private function runDeployRequest(string $requestUri): string
+    {
         $_SERVER['HTTP_HOST'] = '127.0.0.1:8080';
         $_SERVER['SERVER_PORT'] = '8080';
         $_SERVER['HTTPS'] = '';
         $_SERVER['REQUEST_METHOD'] = 'GET';
-        $_SERVER['REQUEST_URI'] = '/install/';
+        $_SERVER['REQUEST_URI'] = $requestUri;
         $_SERVER['SCRIPT_NAME'] = '/index.php';
         putenv('WGW_APP_ROOT='.$this->deployRoot);
         $_ENV['WGW_APP_ROOT'] = $this->deployRoot;
@@ -40,16 +78,11 @@ final class FreshDeployBootstrapTest extends TestCase
         ob_start();
         try {
             require $this->deployRoot.'/index.php';
-            $body = (string) ob_get_contents();
+
+            return (string) ob_get_contents();
         } finally {
             ob_end_clean();
         }
-
-        $this->assertFileExists($apiRoot.'/.env');
-        $env = (string) file_get_contents($apiRoot.'/.env');
-        $this->assertMatchesRegularExpression('/^APP_KEY=base64:/m', $env);
-        $this->assertStringContainsString('APP_URL=http://127.0.0.1:8080', $env);
-        $this->assertStringContainsString('<!doctype html>', strtolower($body));
     }
 
     private function createFreshDeployRoot(): string
@@ -79,6 +112,8 @@ final class FreshDeployBootstrapTest extends TestCase
                 copy($from, $root.'/packages/api/'.$file);
             }
         }
+
+        copy($installSrc.'/example.htaccess', $root.'/example.htaccess');
 
         mkdir($root.'/packages/apps/install/dist', 0775, true);
         self::copyTree(
