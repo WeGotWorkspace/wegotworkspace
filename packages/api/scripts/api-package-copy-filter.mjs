@@ -52,6 +52,15 @@ function isStorageRuntimePath(relative) {
   return false;
 }
 
+function isSwaggerUiNonDistPath(relative) {
+  const prefix = "vendor/swagger-api/swagger-ui/";
+  if (!relative.startsWith(prefix)) {
+    return false;
+  }
+  const rest = relative.slice(prefix.length);
+  return rest !== "" && rest !== "dist" && !rest.startsWith("dist/");
+}
+
 const releaseOnlyExcludedTopLevel = new Set([
   "node_modules",
   "tests",
@@ -93,6 +102,10 @@ export function createApiPackageCopyFilter(copyRoot, options = {}) {
     const fileName = basename(relative);
 
     if (!includeEnv && fileName === ".env") {
+      return false;
+    }
+
+    if (forRelease && isSwaggerUiNonDistPath(relative)) {
       return false;
     }
 

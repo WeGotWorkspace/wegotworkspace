@@ -3,7 +3,7 @@
   "private": true,
   "packageManager": "pnpm@9.15.4",
   "scripts": {
-    "build": "composer run-script prune && node scripts/sync-runtime-api-package.mjs --with-vendor",
+    "build": "composer run-script prune && node scripts/prune-swagger-ui-vendor.mjs && node scripts/sync-runtime-api-package.mjs --with-vendor",
     "watch:runtime": "node scripts/watch-runtime-api-package.mjs",
     "sync:runtime": "node scripts/sync-runtime-api-package.mjs --with-vendor",
     "dev": "pnpm run dev:php",
