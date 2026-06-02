@@ -233,16 +233,35 @@ async function wgwTryRefresh(): Promise<boolean> {
   }
 }
 
+const TUNNELED_HTTP_METHODS = new Set(["PUT", "PATCH", "DELETE"]);
+
+/**
+ * Some Apache/nginx frontends redirect PUT/PATCH/DELETE with 301/302, which browsers
+ * follow as GET. Tunnel through POST + Symfony/Laravel method override instead.
+ */
+function tunnelMutatingHttpMethod(init: RequestInit): RequestInit {
+  const method = (init.method ?? "GET").toUpperCase();
+  if (!TUNNELED_HTTP_METHODS.has(method)) {
+    return init;
+  }
+
+  const headers = new Headers(init.headers);
+  headers.set("X-HTTP-Method-Override", method);
+
+  return { ...init, method: "POST", headers };
+}
+
 export async function wgwFetch(path: string, init: RequestInit = {}): Promise<Response> {
   await wgwEnsureSession();
+  const requestInit = tunnelMutatingHttpMethod(init);
   const base = wgwApiBaseUrl();
   const p = path.startsWith("/") ? path : `/${path}`;
   const url = `${base}${p}`;
 
   const doOnce = (token: string) => {
-    const headers = new Headers(init.headers);
+    const headers = new Headers(requestInit.headers);
     headers.set("Authorization", `Bearer ${token}`);
-    return fetch(url, { ...init, headers });
+    return fetch(url, { ...requestInit, headers });
   };
 
   let res = await doOnce(accessToken!);

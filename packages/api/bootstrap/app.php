@@ -13,7 +13,9 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Exceptions\PostTooLargeException;
+use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -75,6 +77,16 @@ return Application::configure(basePath: dirname(__DIR__))
                 'error' => "Upload too large. {$hint}",
                 'code' => 'post_too_large',
             ], 413);
+        });
+        $exceptions->render(function (MethodNotAllowedHttpException $e, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return response()->json([
+                'error' => 'Method not allowed.',
+                'code' => 'method_not_allowed',
+            ], 405);
         });
     })
     ->create();
