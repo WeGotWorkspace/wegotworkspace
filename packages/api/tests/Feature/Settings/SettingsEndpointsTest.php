@@ -99,6 +99,22 @@ final class SettingsEndpointsTest extends TestCase
         $mail->assertJsonPath('mailServer.imapPort', 993);
     }
 
+    public function test_settings_mail_accepts_post_with_method_override(): void
+    {
+        $token = $this->issueToken();
+
+        $this->postJson('/api/v1/settings/mail', [
+            'imapUsername' => 'tunnel@imap.example.test',
+            'imapPassword' => 'mail-secret',
+        ], [
+            'Authorization' => 'Bearer '.$token,
+            'X-HTTP-Method-Override' => 'PUT',
+        ])
+            ->assertOk()
+            ->assertJsonPath('mail.imapUsername', 'tunnel@imap.example.test')
+            ->assertJsonPath('mail.imapHasPassword', true);
+    }
+
     public function test_settings_mail_save_persists_password_and_syncs_profile_email(): void
     {
         $token = $this->issueToken();
