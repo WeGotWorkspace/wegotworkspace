@@ -38,22 +38,7 @@ final class PluginPathsTest extends TestCase
     }
 
     #[Test]
-    public function bundled_index_path_uses_build_directory(): void
-    {
-        $manifest = $this->installRoot.'/packages/apps/bundled-plugin/plugin.json';
-        $index = $this->installRoot.'/packages/apps/bundled-plugin/build/index.html';
-        mkdir(dirname($manifest), 0777, true);
-        mkdir(dirname($index), 0777, true);
-        file_put_contents($manifest, '{}');
-        file_put_contents($index, '<!doctype html>');
-
-        $paths = new PluginPaths(new AppPaths(new WgwInstallConfig));
-
-        $this->assertSame($index, $paths->indexPathForManifest($manifest));
-    }
-
-    #[Test]
-    public function runtime_index_path_uses_assets_directory(): void
+    public function installed_index_path_uses_assets_directory(): void
     {
         $manifest = $this->installRoot.'/wgw-plugins/demo/plugin.json';
         $index = $this->installRoot.'/wgw-plugins/demo/assets/index.html';

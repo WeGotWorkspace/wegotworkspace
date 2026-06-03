@@ -1,6 +1,8 @@
 # Plugins
 
-Optional product features ship as **plugins** with their own release artifacts in the [WeGotWorkspace/plugins](https://github.com/WeGotWorkspace/plugins) organization.
+Optional product features ship as **plugins**. They are always installed separately from the core WeGotWorkspace release — never bundled in the deploy ZIP.
+
+Plugin packages and releases live in the [WeGotWorkspace/plugins](https://github.com/WeGotWorkspace/plugins) organization.
 
 Core discovers installed plugins via `GET /api/v1/plugins`, serves each plugin’s static UI at the route declared in `plugin.json` (`appTile.route`), and exposes `POST /api/v1/plugins/{id}/session` for browser UI session cookies.
 
