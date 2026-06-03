@@ -302,6 +302,18 @@ export type WgwInstallerActionPayload = InstallerActionPayload;
 export type WgwInstallerActionRequest = InstallerActionRequest;
 export type WgwInstallerActionResponse = InstallerActionResponse;
 
+export type WgwPluginIntegrationConfig = {
+  configGlobal?: string;
+  sessionApiPath?: string;
+  saveTransport?: string;
+  editorPaths?: string[];
+};
+
+export type WgwPluginRuntime = {
+  indexReady: boolean;
+  editorReady: boolean;
+};
+
 export type WgwPluginDriveNewFileTemplate = {
   id: string;
   label: string;
@@ -330,6 +342,8 @@ export type WgwPluginDescriptor = {
   source?: string;
   drive?: WgwPluginDriveConfig;
   appTile?: WgwPluginAppTile;
+  integration?: WgwPluginIntegrationConfig;
+  runtime?: WgwPluginRuntime;
 };
 
 export type WgwPluginsResponse = {

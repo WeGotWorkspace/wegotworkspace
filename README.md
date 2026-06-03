@@ -11,7 +11,7 @@ It includes:
 - A web installer (`/install/`)
 - Product surfaces (`/drive/`, `/mail/`, `/notes/`, `doc`, `/meet/`)
 - Utility surfaces (`/admin/`, `/settings/`)
-- Plugin surfaces (ONLYOFFICE plugin, which provides `/office/` when installed)
+- Plugin surfaces (always installed separately via **Admin → Plugins**; routes come from each plugin manifest)
 
 Docs for these surfaces are still being expanded.
 
@@ -111,14 +111,11 @@ Git hooks (installed on `pnpm install` via Husky):
 
 Use `HUSKY=0 git commit` to skip hooks once. Full gate before push: `pnpm run ci:quality`.
 
-## ONLYOFFICE plugin
+## Plugins
 
-Office editing is a **separate plugin** with its own repository and release artifacts:
+Plugins are **never** part of the core deploy ZIP. Each plugin ships from [WeGotWorkspace/plugins](https://github.com/WeGotWorkspace/plugins) as its own release artifact and is installed via **Admin → Plugins** (upload the plugin ZIP).
 
-- [github.com/WeGotWorkspace/plugins](https://github.com/WeGotWorkspace/plugins) (`onlyoffice/`)
-- Install via **Admin → Plugins** (upload the plugin ZIP from that repo’s releases)
-
-See [`docs/onlyoffice-plugin.md`](docs/onlyoffice-plugin.md) for layout and verification.
+See [`docs/plugins.md`](docs/plugins.md) for layout and verification.
 
 ## Release artifacts
 
@@ -142,8 +139,6 @@ Publish requires a clean git tree and a **signed annotated** git tag. That uses 
 CI uses the `WGW_RELEASE_SIGNING_PRIVATE_KEY` repository secret for artifacts; the pushed tag must still be signed locally.
 
 The deploy artifact includes `INSTALL.md` so people downloading a release get the install steps directly in the package.
-
-ONLYOFFICE is **not** bundled in the core deploy ZIP; install it from [WeGotWorkspace/plugins](https://github.com/WeGotWorkspace/plugins) releases when needed.
 
 ## Contributing
 

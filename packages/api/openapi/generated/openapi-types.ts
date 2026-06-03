@@ -1934,14 +1934,14 @@ export interface paths {
         };
         trace?: never;
     };
-    "/office/capabilities": {
+    "/plugins": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Office capabilities */
+        /** List discovered plugins and capabilities */
         get: {
             parameters: {
                 query?: never;
@@ -1951,13 +1951,13 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Office capabilities */
+                /** @description Plugin registry snapshot */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["OfficeCapabilitiesResponse"];
+                        "application/json": components["schemas"]["PluginsResponse"];
                     };
                 };
             };
@@ -1970,7 +1970,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/office/documents": {
+    "/plugins/{id}/activate": {
         parameters: {
             query?: never;
             header?: never;
@@ -1978,53 +1978,120 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** Update Office document content (.docx/.xlsx/.pptx) */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["OfficeDocumentUpdateRequest"];
-                };
-            };
-            responses: {
-                /** @description Updated Office document */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["OfficeDocumentMutationResponse"];
-                    };
-                };
-            };
-        };
-        /** Create Office document (.docx/.xlsx/.pptx) */
+        put?: never;
+        /** Activate a plugin */
         post: {
             parameters: {
                 query?: never;
                 header?: never;
-                path?: never;
+                path: {
+                    id: string;
+                };
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["OfficeDocumentCreateRequest"];
+            requestBody?: never;
+            responses: {
+                /** @description Plugin activated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Plugin not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
             };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/plugins/{id}/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Deactivate a plugin */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
             responses: {
-                /** @description Created Office document */
+                /** @description Plugin deactivated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Plugin not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/plugins/{id}/session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Establish browser UI session cookie for a plugin surface */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Session established */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["OfficeDocumentMutationResponse"];
+                        "application/json": components["schemas"]["PluginSessionResponse"];
                     };
+                };
+                /** @description Plugin not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
             };
         };
@@ -2574,40 +2641,6 @@ export interface paths {
             requestBody?: never;
             responses: {
                 /** @description Cancel acknowledged */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/office/session": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Establish browser UI session cookie for ONLYOFFICE */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Session established */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -3642,34 +3675,29 @@ export interface components {
             ok: boolean;
             delivered: number;
         };
-        OfficeCapabilitiesResponse: {
-            enabled?: boolean;
-            indexReady?: boolean;
-            editorReady?: boolean;
+        PluginRuntime: {
+            indexReady: boolean;
+            editorReady: boolean;
         };
-        /**
-         * @example {
-         *       "path": "/users/alice/New Document.docx"
-         *     }
-         */
-        OfficeDocumentCreateRequest: {
-            path: string;
-            content_base64?: string;
+        PluginIntegration: {
+            configGlobal?: string;
+            sessionApiPath?: string;
+            saveTransport?: string;
+            editorPaths?: string[];
         };
-        /**
-         * @example {
-         *       "path": "/users/alice/New Document.docx",
-         *       "content_base64": "UEsDBBQAAAAIAAAAIQAAAAAAAAAAAAAAAAAJAAAAd29yZC9QSw=="
-         *     }
-         */
-        OfficeDocumentUpdateRequest: {
-            path: string;
-            content_base64: string;
+        PluginDescriptor: {
+            id: string;
+            name: string;
+            active: boolean;
+            source?: string;
+            runtime?: components["schemas"]["PluginRuntime"];
+            integration?: components["schemas"]["PluginIntegration"];
         };
-        OfficeDocumentMutationResponse: {
-            ok?: boolean;
-            path?: string;
-            bytes?: number;
+        PluginsResponse: {
+            plugins: components["schemas"]["PluginDescriptor"][];
+        };
+        PluginSessionResponse: {
+            ok: boolean;
         };
         HomeStateResponse: {
             username?: string;

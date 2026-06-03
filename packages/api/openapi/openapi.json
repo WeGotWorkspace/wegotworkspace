@@ -1720,76 +1720,6 @@
         }
       }
     },
-    "/office/capabilities": {
-      "get": {
-        "tags": [
-          "Office"
-        ],
-        "summary": "Office capabilities",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Office capabilities"
-          }
-        }
-      }
-    },
-    "/office/session": {
-      "post": {
-        "tags": [
-          "Office"
-        ],
-        "summary": "Establish browser UI session cookie for ONLYOFFICE",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Session established"
-          }
-        }
-      }
-    },
-    "/office/documents": {
-      "post": {
-        "tags": [
-          "Office"
-        ],
-        "summary": "Create Office document (.docx/.xlsx/.pptx)",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Created Office document"
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Office"
-        ],
-        "summary": "Update Office document content (.docx/.xlsx/.pptx)",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Updated Office document"
-          }
-        }
-      }
-    },
     "/plugins": {
       "get": {
         "tags": [
@@ -1863,6 +1793,37 @@
         "responses": {
           "200": {
             "description": "Plugin deactivated"
+          },
+          "404": {
+            "description": "Plugin not found"
+          }
+        }
+      }
+    },
+    "/plugins/{id}/session": {
+      "post": {
+        "tags": [
+          "Plugins"
+        ],
+        "summary": "Establish browser UI session cookie for a plugin surface",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session established"
           },
           "404": {
             "description": "Plugin not found"

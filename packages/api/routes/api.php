@@ -34,12 +34,10 @@ use App\Http\Controllers\Api\V1\Notes\CapabilitiesController as NotesCapabilitie
 use App\Http\Controllers\Api\V1\Notes\ItemsController as NotesItemsController;
 use App\Http\Controllers\Api\V1\Notes\NotebooksController;
 use App\Http\Controllers\Api\V1\Notes\StateController as NotesStateController;
-use App\Http\Controllers\Api\V1\Office\CapabilitiesController as OfficeCapabilitiesController;
-use App\Http\Controllers\Api\V1\Office\DocumentsController as OfficeDocumentsController;
-use App\Http\Controllers\Api\V1\Office\SessionController as OfficeSessionController;
 use App\Http\Controllers\Api\V1\Plugins\ActivateController as PluginsActivateController;
 use App\Http\Controllers\Api\V1\Plugins\DeactivateController as PluginsDeactivateController;
 use App\Http\Controllers\Api\V1\Plugins\IndexController as PluginsIndexController;
+use App\Http\Controllers\Api\V1\Plugins\SessionController as PluginsSessionController;
 use App\Http\Controllers\Api\V1\Search\UnifiedSearchController;
 use App\Http\Controllers\Api\V1\Search\UnifiedSearchDownloadController;
 use App\Http\Controllers\Api\V1\Settings\MailController as SettingsMailController;
@@ -114,11 +112,9 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($driveS
     Route::get('search/unified', UnifiedSearchController::class);
     Route::get('records/download', UnifiedSearchDownloadController::class);
 
-    Route::get('office/capabilities', OfficeCapabilitiesController::class);
-    Route::post('office/session', OfficeSessionController::class);
-    Route::post('office/documents', [OfficeDocumentsController::class, 'store']);
-    Route::put('office/documents', [OfficeDocumentsController::class, 'update']);
     Route::get('plugins', PluginsIndexController::class);
+    Route::post('plugins/{id}/session', PluginsSessionController::class)
+        ->where('id', '[a-z0-9_-]+');
     Route::post('plugins/{id}/activate', PluginsActivateController::class)
         ->where('id', '[a-z0-9_-]+');
     Route::post('plugins/{id}/deactivate', PluginsDeactivateController::class)

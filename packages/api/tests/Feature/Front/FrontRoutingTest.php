@@ -63,7 +63,7 @@ final class FrontRoutingTest extends TestCase
         $installRoot = $this->repoRoot.'/apps/wegotworkspace';
         $data = $installRoot.'/wgw-content';
         WgwInstallFixture::markInstalled($installRoot, $data);
-        WgwInstallFixture::forgetInstallBindings();
+        WgwInstallFixture::syncDatabaseConnection();
 
         $docs = $this->get('/docs');
         $docs->assertOk()
