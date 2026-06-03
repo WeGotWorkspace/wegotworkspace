@@ -43,7 +43,7 @@ final class CapabilitiesService
             'mail' => 'user',
             'drive' => 'user',
             'notes' => 'user',
-            'office' => 'user',
+            'plugins' => 'user',
             'voice' => 'guest',
             'installer' => 'guest',
             'home' => 'guest',

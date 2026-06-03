@@ -12,7 +12,7 @@ use Tests\Support\AuthTestKeys;
 use Tests\Support\SqliteWgwSchema;
 use Tests\TestCase;
 
-final class PluginsEndpointsTest extends TestCase
+final class PluginSessionEndpointsTest extends TestCase
 {
     private string $dataDir = '';
 
@@ -21,7 +21,7 @@ final class PluginsEndpointsTest extends TestCase
     protected function setUp(): void
     {
         $this->previousAppRoot = getenv('WGW_APP_ROOT') ?: '';
-        $this->dataDir = rtrim(sys_get_temp_dir(), '/').'/wgw-plugins-'.uniqid('', true);
+        $this->dataDir = rtrim(sys_get_temp_dir(), '/').'/wgw-plugin-session-'.uniqid('', true);
         @mkdir($this->dataDir.'/install-root/wgw-plugins/onlyoffice/assets', 0777, true);
         putenv('WGW_APP_ROOT='.$this->dataDir.'/install-root');
         $_ENV['WGW_APP_ROOT'] = $this->dataDir.'/install-root';
@@ -36,8 +36,8 @@ final class PluginsEndpointsTest extends TestCase
                 'label' => 'Office',
                 'route' => '/office',
             ],
-            'drive' => [
-                'openFileExtensions' => ['docx'],
+            'integration' => [
+                'sessionApiPath' => '/api/v1/plugins/onlyoffice/session',
             ],
         ], JSON_THROW_ON_ERROR));
         putenv('WGW_DISABLE_LOGIN_THROTTLE=1');
@@ -85,51 +85,10 @@ final class PluginsEndpointsTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_plugins_requires_auth_and_returns_drive_handlers(): void
+    public function test_plugin_session_requires_auth_and_establishes_cookie(): void
     {
-        $this->getJson('/api/v1/plugins')->assertUnauthorized();
+        $this->postJson('/api/v1/plugins/onlyoffice/session')->assertUnauthorized();
 
-        $token = (string) $this->postJson('/api/v1/auth/token', [
-            'username' => 'alice',
-            'password' => 'secret',
-        ])->json('access_token');
-
-        $response = $this->getJson('/api/v1/plugins', [
-            'Authorization' => 'Bearer '.$token,
-        ]);
-
-        $response->assertOk()
-            ->assertJsonStructure([
-                'plugins' => [[
-                    'id',
-                    'name',
-                    'active',
-                    'source',
-                    'runtime' => [
-                        'indexReady',
-                        'editorReady',
-                    ],
-                ]],
-            ]);
-    }
-
-    public function test_plugins_runtime_readiness_flags(): void
-    {
-        $token = (string) $this->postJson('/api/v1/auth/token', [
-            'username' => 'alice',
-            'password' => 'secret',
-        ])->json('access_token');
-
-        $this->getJson('/api/v1/plugins', [
-            'Authorization' => 'Bearer '.$token,
-        ])
-            ->assertOk()
-            ->assertJsonPath('plugins.0.runtime.indexReady', true)
-            ->assertJsonPath('plugins.0.runtime.editorReady', true);
-    }
-
-    public function test_plugins_can_be_activated_and_deactivated(): void
-    {
         $token = (string) $this->postJson('/api/v1/auth/token', [
             'username' => 'alice',
             'password' => 'secret',
@@ -137,26 +96,13 @@ final class PluginsEndpointsTest extends TestCase
 
         $headers = ['Authorization' => 'Bearer '.$token];
 
-        $this->postJson('/api/v1/plugins/onlyoffice/deactivate', [], $headers)
-            ->assertOk()
-            ->assertJsonPath('plugin.id', 'onlyoffice')
-            ->assertJsonPath('plugin.active', false);
-
-        $this->getJson('/api/v1/plugins', $headers)
-            ->assertOk()
-            ->assertJsonFragment([
-                'id' => 'onlyoffice',
-                'active' => false,
-            ]);
-
-        $this->postJson('/api/v1/plugins/onlyoffice/activate', [], $headers)
-            ->assertOk()
-            ->assertJsonPath('plugin.id', 'onlyoffice')
-            ->assertJsonPath('plugin.active', true);
-
-        $this->postJson('/api/v1/plugins/unknown/deactivate', [], $headers)
+        $this->postJson('/api/v1/plugins/unknown/session', [], $headers)
             ->assertNotFound()
             ->assertJsonPath('error', 'plugin_not_found');
+
+        $this->postJson('/api/v1/plugins/onlyoffice/session', [], $headers)
+            ->assertOk()
+            ->assertJsonPath('ok', true);
     }
 
     private function seedAlice(): void
