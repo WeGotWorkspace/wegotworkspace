@@ -1133,7 +1133,7 @@ export function useDriveController({
 
   return {
     labels: driveLabels,
-    launchOfficeEditor,
+    launchPluginEditor,
     currentUsername,
     files,
     setFiles,
