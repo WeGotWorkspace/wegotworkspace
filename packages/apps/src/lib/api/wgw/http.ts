@@ -344,14 +344,21 @@ export async function wgwFetchPrincipal(): Promise<WorkspaceSession> {
   return { user, viewerInboxLabel: "me" };
 }
 
-export async function wgwEnsureOfficeSession(): Promise<void> {
+export async function wgwEnsurePluginSession(sessionApiPath: string): Promise<void> {
   if (!wgwLiveApiEnabled()) return;
-  const res = await wgwFetch("/office/session", {
+  let path = sessionApiPath.trim();
+  if (path.startsWith("/api/v1")) {
+    path = path.slice("/api/v1".length);
+  }
+  if (!path.startsWith("/")) {
+    path = `/${path}`;
+  }
+  const res = await wgwFetch(path, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: "{}",
   });
   if (!res.ok) {
-    throw new Error(`POST /office/session failed (${res.status})`);
+    throw new Error(`POST ${path} failed (${res.status})`);
   }
 }
