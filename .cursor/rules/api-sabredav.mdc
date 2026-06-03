@@ -13,7 +13,7 @@ alwaysApply: false
 
 ## File WebDAV = Flysystem
 
-- User/group file nodes use **`app/DAV/Storage/*`** backed by disk `wgw_files` — same as REST drive/office
+- User/group file nodes use **`app/DAV/Storage/*`** backed by disk `wgw_files` — same as REST drive/plugins
 - Do **not** pass raw `$userFilesPath` / `$groupFilesPath` strings from `Paths::data()` into Sabre FS trees in new code
 - CalDAV / CardDAV: PDO backends (unchanged); do not route calendar data through file disks
 

@@ -78,12 +78,12 @@ Current REST surface and access levels.
 | `POST /api/v1/voice/leave` | guest/user/admin |
 | `POST /api/v1/voice/chat` | guest/user/admin |
 
-## Notes + Office + Home + Installer + DAV
+## Notes + Plugins + Home + Installer + DAV
 
 | Domain | Routes | Access |
 |---|---|---|
 | notes | `GET /api/v1/notes/capabilities` | user/admin |
-| office | `GET /api/v1/office/capabilities` | user/admin |
+| plugins | `GET /api/v1/plugins`, `POST /api/v1/plugins/{id}/session` | user/admin |
 | home | `GET /api/v1/home/state` | user/admin |
 | installer | `GET /api/v1/installer/state`, `POST /api/v1/installer/action` | guest/admin |
 | dav | `GET /api/v1/dav/capabilities` | user/admin |

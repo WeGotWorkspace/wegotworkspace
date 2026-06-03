@@ -7,7 +7,9 @@ namespace Tests\Support;
 use App\LocalConfigFile;
 use App\Support\AppPaths;
 use App\Support\UpdateFeedDefaults;
+use App\Support\WgwDatabaseConfig;
 use App\Support\WgwInstallConfig;
+use Illuminate\Support\Facades\DB;
 
 final class WgwInstallFixture
 {
@@ -47,6 +49,30 @@ final class WgwInstallFixture
         }
         app()->forgetInstance(WgwInstallConfig::class);
         app()->forgetInstance(AppPaths::class);
+        app()->forgetInstance(WgwDatabaseConfig::class);
+    }
+
+    /**
+     * Point Laravel's {@code wgw} connection at the sqlite file from {@see markInstalled()}.
+     *
+     * Required when HTTP/feature tests call models after markInstalled: WgwServiceProvider
+     * boot may have bound :memory: (or a dev checkout DB) before the fixture wrote config.
+     */
+    public static function syncDatabaseConnection(): void
+    {
+        if (! function_exists('app')) {
+            return;
+        }
+        self::forgetInstallBindings();
+
+        $db = app(WgwDatabaseConfig::class)->connectionConfig();
+        config([
+            'database.connections.wgw' => array_merge(
+                (array) config('database.connections.wgw', []),
+                $db,
+            ),
+        ]);
+        DB::purge('wgw');
     }
 
     private static function seedSqliteDatabase(string $path, string $username): void
@@ -64,6 +90,12 @@ final class WgwInstallFixture
                 digesta1 TEXT NOT NULL DEFAULT "",
                 digest TEXT NOT NULL,
                 UNIQUE(username)
+            )'
+        );
+        $pdo->exec(
+            'CREATE TABLE app_settings (
+                name TEXT NOT NULL PRIMARY KEY,
+                value TEXT NOT NULL
             )'
         );
         $stmt = $pdo->prepare('INSERT INTO users (username, digesta1, digest) VALUES (?, ?, ?)');

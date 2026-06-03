@@ -4,7 +4,6 @@
 **/vendor
 apps/wegotworkspace/packages
 apps/wegotworkspace/wgw-content
-packages/onlyoffice-web
 **/.phpunit.cache
 **/storage/logs
 **/storage/framework/views

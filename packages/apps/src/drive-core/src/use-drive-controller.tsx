@@ -9,7 +9,8 @@ import { canMoveDriveItemsToFolder } from "@/drive-core/src/drive-item-path";
 import { useDriveBatchActions } from "@/drive-core/src/use-drive-batch-actions";
 import { driveLabels } from "@/drive-core/src/drive-labels";
 import { useDriveSelectionBar } from "@/drive-core/src/use-drive-selection-bar";
-import { wgwEnsureOfficeSession } from "@/lib/api/wgw/http";
+import { wgwEnsurePluginSession } from "@/lib/api/wgw/http";
+import type { WgwPluginDescriptor } from "@/lib/api/wgw/types";
 import type {
   DriveAPIOperations,
   DriveUIData,
@@ -53,6 +54,34 @@ export type UseDriveControllerArgs = {
 };
 
 const WRITE_QUEUE_DELAY_MS = 2500;
+
+function findDrivePluginForExtension(
+  plugins: WgwPluginDescriptor[],
+  ext: string,
+): WgwPluginDescriptor | undefined {
+  const normalized = ext.toLowerCase();
+  return plugins.find(
+    (plugin) =>
+      plugin.active &&
+      plugin.drive?.openFileExtensions?.some(
+        (candidate) => candidate.toLowerCase() === normalized,
+      ) &&
+      plugin.drive.openFileRoute &&
+      plugin.drive.openFileQueryParam,
+  );
+}
+
+function findDrivePluginWithTemplates(
+  plugins: WgwPluginDescriptor[],
+): WgwPluginDescriptor | undefined {
+  return plugins.find(
+    (plugin) =>
+      plugin.active &&
+      plugin.drive?.openFileRoute &&
+      (plugin.drive.newFileTemplates?.length ?? 0) > 0,
+  );
+}
+
 export function useDriveController({
   data,
   session,
@@ -68,33 +97,26 @@ export function useDriveController({
     [showError],
   );
 
-  const launchOfficeEditor = useCallback((route: string, params: URLSearchParams) => {
-    const target = `${route}?${params.toString()}`;
-    void wgwEnsureOfficeSession()
-      .catch(() => {
-        // Best effort: navigation still proceeds and server auth gate handles fallback.
-      })
-      .finally(() => {
-        window.location.assign(target);
-      });
-  }, []);
-
-  const officePlugin = useMemo(
-    () => data.plugins.find((plugin) => plugin.id === "onlyoffice" && plugin.active),
-    [data.plugins],
+  const launchPluginEditor = useCallback(
+    (plugin: WgwPluginDescriptor, route: string, params: URLSearchParams) => {
+      const target = `${route}?${params.toString()}`;
+      const sessionPath = plugin.integration?.sessionApiPath;
+      const ensureSession = sessionPath ? wgwEnsurePluginSession(sessionPath) : Promise.resolve();
+      void ensureSession
+        .catch(() => {
+          // Best effort: navigation still proceeds and server auth gate handles fallback.
+        })
+        .finally(() => {
+          window.location.assign(target);
+        });
+    },
+    [],
   );
-  const openFileExtensions = useMemo(() => {
-    if (!officePlugin) return new Set<string>();
-    const configured =
-      officePlugin.drive?.openFileExtensions?.map((ext) => ext.toLowerCase()) ?? [];
-    return new Set(configured);
-  }, [officePlugin]);
-  const officeOpenRoute = officePlugin?.drive?.openFileRoute ?? "/office/editor";
-  const officeOpenQueryParam = officePlugin?.drive?.openFileQueryParam ?? "file";
+
+  const templatePlugin = useMemo(() => findDrivePluginWithTemplates(data.plugins), [data.plugins]);
   const newFileTemplates = useMemo(() => {
-    if (!officePlugin) return [];
-    const configured = officePlugin.drive?.newFileTemplates ?? [];
-    return configured
+    if (!templatePlugin?.drive?.newFileTemplates) return [];
+    return templatePlugin.drive.newFileTemplates
       .filter((template) => ["doc", "sheet", "slides"].includes(template.kind))
       .map((template) => ({
         id: template.id,
@@ -102,7 +124,7 @@ export function useDriveController({
         kind: template.kind,
         queryValue: template.queryValue,
       }));
-  }, [officePlugin]);
+  }, [templatePlugin]);
 
   const currentUsername = data.user.username || session.user.username || "";
   const [files, setFiles] = useState<DriveFile[]>(
@@ -599,18 +621,25 @@ export function useDriveController({
         onOpenDocsFile(f.apiPath);
         return;
       }
-      if (f.apiPath && openFileExtensions.has(ext)) {
-        const rel = f.apiPath.replace(/^\/+/, "");
-        const qp = new URLSearchParams({ [officeOpenQueryParam]: rel });
-        const target = `${officeOpenRoute}?${qp.toString()}`;
-        void wgwEnsureOfficeSession()
-          .catch(() => {
-            // Best effort: navigation still proceeds and server auth gate handles fallback.
-          })
-          .finally(() => {
-            window.open(target, "_blank", "noopener,noreferrer");
-          });
-        return;
+      if (f.apiPath) {
+        const plugin = findDrivePluginForExtension(data.plugins, ext);
+        if (plugin?.drive?.openFileRoute && plugin.drive.openFileQueryParam) {
+          const rel = f.apiPath.replace(/^\/+/, "");
+          const qp = new URLSearchParams({ [plugin.drive.openFileQueryParam]: rel });
+          const target = `${plugin.drive.openFileRoute}?${qp.toString()}`;
+          const sessionPath = plugin.integration?.sessionApiPath;
+          const ensureSession = sessionPath
+            ? wgwEnsurePluginSession(sessionPath)
+            : Promise.resolve();
+          void ensureSession
+            .catch(() => {
+              // Best effort: navigation still proceeds and server auth gate handles fallback.
+            })
+            .finally(() => {
+              window.open(target, "_blank", "noopener,noreferrer");
+            });
+          return;
+        }
       }
       if (f.apiPath && operations) {
         const popup = window.open("about:blank", "_blank", "noopener,noreferrer");
@@ -985,21 +1014,21 @@ export function useDriveController({
 
   const createFromTemplate = useCallback(
     (templateId: string) => {
-      if (!officePlugin) return;
+      if (!templatePlugin?.drive?.openFileRoute) return;
       const template = newFileTemplates.find((item) => item.id === templateId);
       if (!template) return;
       const qp = new URLSearchParams({ new: template.queryValue });
-      launchOfficeEditor(officeOpenRoute, qp);
+      launchPluginEditor(templatePlugin, templatePlugin.drive.openFileRoute, qp);
     },
-    [launchOfficeEditor, newFileTemplates, officeOpenRoute, officePlugin],
+    [launchPluginEditor, newFileTemplates, templatePlugin],
   );
 
   const createBlank = (kind: "doc" | "sheet" | "slides") => {
-    if (!officePlugin) return;
+    if (!templatePlugin?.drive?.openFileRoute) return;
     const template = newFileTemplates.find((item) => item.kind === kind);
     if (!template) return;
     const qp = new URLSearchParams({ new: template.queryValue });
-    launchOfficeEditor(officeOpenRoute, qp);
+    launchPluginEditor(templatePlugin, templatePlugin.drive.openFileRoute, qp);
   };
 
   const createMarkdown = useCallback(() => {
@@ -1104,7 +1133,7 @@ export function useDriveController({
 
   return {
     labels: driveLabels,
-    launchOfficeEditor,
+    launchPluginEditor,
     currentUsername,
     files,
     setFiles,

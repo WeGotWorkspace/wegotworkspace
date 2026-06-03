@@ -2926,69 +2926,93 @@
                     "delivered"
                 ]
             },
-            "OfficeCapabilitiesResponse": {
+            "PluginRuntime": {
                 "type": "object",
                 "properties": {
-                    "enabled": {
-                        "type": "boolean"
-                    },
                     "indexReady": {
                         "type": "boolean"
                     },
                     "editorReady": {
                         "type": "boolean"
                     }
-                }
+                },
+                "required": [
+                    "indexReady",
+                    "editorReady"
+                ]
             },
-            "OfficeDocumentCreateRequest": {
+            "PluginIntegration": {
                 "type": "object",
                 "properties": {
-                    "path": {
+                    "configGlobal": {
                         "type": "string"
                     },
-                    "content_base64": {
+                    "sessionApiPath": {
                         "type": "string"
+                    },
+                    "saveTransport": {
+                        "type": "string"
+                    },
+                    "editorPaths": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "PluginDescriptor": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "active": {
+                        "type": "boolean"
+                    },
+                    "source": {
+                        "type": "string"
+                    },
+                    "runtime": {
+                        "$ref": "#/components/schemas/PluginRuntime"
+                    },
+                    "integration": {
+                        "$ref": "#/components/schemas/PluginIntegration"
                     }
                 },
                 "required": [
-                    "path"
-                ],
-                "example": {
-                    "path": "/users/alice/New Document.docx"
-                }
+                    "id",
+                    "name",
+                    "active"
+                ]
             },
-            "OfficeDocumentUpdateRequest": {
+            "PluginsResponse": {
                 "type": "object",
                 "properties": {
-                    "path": {
-                        "type": "string"
-                    },
-                    "content_base64": {
-                        "type": "string"
+                    "plugins": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PluginDescriptor"
+                        }
                     }
                 },
                 "required": [
-                    "path",
-                    "content_base64"
-                ],
-                "example": {
-                    "path": "/users/alice/New Document.docx",
-                    "content_base64": "UEsDBBQAAAAIAAAAIQAAAAAAAAAAAAAAAAAJAAAAd29yZC9QSw=="
-                }
+                    "plugins"
+                ]
             },
-            "OfficeDocumentMutationResponse": {
+            "PluginSessionResponse": {
                 "type": "object",
                 "properties": {
                     "ok": {
                         "type": "boolean"
-                    },
-                    "path": {
-                        "type": "string"
-                    },
-                    "bytes": {
-                        "type": "integer"
                     }
-                }
+                },
+                "required": [
+                    "ok"
+                ]
             },
             "HomeStateResponse": {
                 "type": "object",
@@ -4765,12 +4789,12 @@
                 }
             }
         },
-        "/office/capabilities": {
+        "/plugins": {
             "get": {
                 "tags": [
-                    "Office"
+                    "Plugins"
                 ],
-                "summary": "Office capabilities",
+                "summary": "List discovered plugins and capabilities",
                 "security": [
                     {
                         "bearerAuth": []
@@ -4778,11 +4802,11 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Office capabilities",
+                        "description": "Plugin registry snapshot",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/OfficeCapabilitiesResponse"
+                                    "$ref": "#/components/schemas/PluginsResponse"
                                 }
                             }
                         }
@@ -4790,70 +4814,102 @@
                 }
             }
         },
-        "/office/documents": {
+        "/plugins/{id}/activate": {
             "post": {
                 "tags": [
-                    "Office"
+                    "Plugins"
                 ],
-                "summary": "Create Office document (.docx/.xlsx/.pptx)",
+                "summary": "Activate a plugin",
                 "security": [
                     {
                         "bearerAuth": []
                     }
                 ],
-                "responses": {
-                    "200": {
-                        "description": "Created Office document",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/OfficeDocumentMutationResponse"
-                                }
-                            }
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
                         }
                     }
-                },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/OfficeDocumentCreateRequest"
-                            }
-                        }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Plugin activated"
+                    },
+                    "404": {
+                        "description": "Plugin not found"
                     }
                 }
-            },
-            "put": {
+            }
+        },
+        "/plugins/{id}/deactivate": {
+            "post": {
                 "tags": [
-                    "Office"
+                    "Plugins"
                 ],
-                "summary": "Update Office document content (.docx/.xlsx/.pptx)",
+                "summary": "Deactivate a plugin",
                 "security": [
                     {
                         "bearerAuth": []
                     }
                 ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "Updated Office document",
+                        "description": "Plugin deactivated"
+                    },
+                    "404": {
+                        "description": "Plugin not found"
+                    }
+                }
+            }
+        },
+        "/plugins/{id}/session": {
+            "post": {
+                "tags": [
+                    "Plugins"
+                ],
+                "summary": "Establish browser UI session cookie for a plugin surface",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Session established",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/OfficeDocumentMutationResponse"
+                                    "$ref": "#/components/schemas/PluginSessionResponse"
                                 }
                             }
                         }
-                    }
-                },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/OfficeDocumentUpdateRequest"
-                            }
-                        }
+                    },
+                    "404": {
+                        "description": "Plugin not found"
                     }
                 }
             }
@@ -5214,24 +5270,6 @@
                 "responses": {
                     "200": {
                         "description": "Cancel acknowledged"
-                    }
-                }
-            }
-        },
-        "/office/session": {
-            "post": {
-                "tags": [
-                    "Office"
-                ],
-                "summary": "Establish browser UI session cookie for ONLYOFFICE",
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Session established"
                     }
                 }
             }

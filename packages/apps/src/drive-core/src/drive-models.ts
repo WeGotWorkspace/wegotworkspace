@@ -18,5 +18,4 @@ export type ViewKey =
   | { type: "starred" }
   | { type: "shared" };
 
-export const OFFICE_EDITOR_EXTENSIONS = new Set(["docx", "xlsx", "pptx", "pdf"]);
 export const DOCS_EDITOR_EXTENSIONS = new Set(["md", "markdown", "txt"]);
