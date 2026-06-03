@@ -8,5 +8,4 @@ paths-ignore:
   - "**/node_modules/**"
   - "**/vendor/**"
   - "**/dist/**"
-  - packages/onlyoffice-web
   - packages/api/storage/framework/views
