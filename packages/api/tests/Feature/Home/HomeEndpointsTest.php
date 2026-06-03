@@ -74,7 +74,6 @@ final class HomeEndpointsTest extends TestCase
                     'mail',
                     'voice',
                     'notes',
-                    'office',
                 ],
             ]);
     }

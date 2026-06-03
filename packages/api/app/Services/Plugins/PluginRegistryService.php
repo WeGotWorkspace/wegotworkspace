@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Plugins;
 
 use App\Models\AppSetting;
+use App\Services\Installer\InstallerWebBase;
 use App\Support\AppPaths;
 use App\Support\SafePath;
 use Illuminate\Support\Facades\File;
@@ -35,7 +36,14 @@ final class PluginRegistryService
      *       kind: string,
      *       queryValue: string
      *     }>
-     *   }
+     *   },
+     *   integration?: array{
+     *     configGlobal?: string,
+     *     sessionApiPath?: string,
+     *     saveTransport?: string,
+     *     editorPaths?: list<string>
+     *   },
+     *   runtime?: array{indexReady: bool, editorReady: bool}
      * }>
      */
     public function list(): array
@@ -55,6 +63,7 @@ final class PluginRegistryService
             if ($id !== '' && array_key_exists($id, $overrides)) {
                 $plugin['active'] = (bool) $overrides[$id];
             }
+            $plugin['runtime'] = $this->runtimeForPlugin($plugin);
         }
         unset($plugin);
 
@@ -164,6 +173,45 @@ final class PluginRegistryService
         return false;
     }
 
+    /**
+     * @return array{
+     *   plugin: array<string, mixed>,
+     *   routePrefix: string,
+     *   indexPath: string|null,
+     *   buildRoot: string|null
+     * }|null
+     */
+    public function findActiveByRequestPath(string $webBase, string $path): ?array
+    {
+        foreach ($this->list() as $plugin) {
+            if (! ($plugin['active'] ?? false)) {
+                continue;
+            }
+            if (! isset($plugin['appTile']['route']) || ! is_string($plugin['appTile']['route'])) {
+                continue;
+            }
+            $route = trim($plugin['appTile']['route']);
+            if ($route === '') {
+                continue;
+            }
+            $routePrefix = InstallerWebBase::url($webBase, $route);
+            if ($path !== $routePrefix && ! str_starts_with($path, $routePrefix.'/')) {
+                continue;
+            }
+
+            $indexPath = $this->assetIndexPath((string) ($plugin['id'] ?? ''));
+
+            return [
+                'plugin' => $plugin,
+                'routePrefix' => $routePrefix,
+                'indexPath' => $indexPath,
+                'buildRoot' => $indexPath !== null ? dirname($indexPath) : null,
+            ];
+        }
+
+        return null;
+    }
+
     public function assetIndexPath(string $pluginId): ?string
     {
         $pluginId = trim($pluginId);
@@ -193,7 +241,14 @@ final class PluginRegistryService
      *       kind: string,
      *       queryValue: string
      *     }>
-     *   }
+     *   },
+     *   integration?: array{
+     *     configGlobal?: string,
+     *     sessionApiPath?: string,
+     *     saveTransport?: string,
+     *     editorPaths?: list<string>
+     *   },
+     *   runtime?: array{indexReady: bool, editorReady: bool}
      * }>
      */
     private function loadBundledPlugins(): array
@@ -389,7 +444,77 @@ final class PluginRegistryService
             }
         }
 
+        $integration = $this->normalizeIntegration($data);
+        if ($integration !== []) {
+            $plugin['integration'] = $integration;
+        }
+
         return $plugin;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array{
+     *   configGlobal?: string,
+     *   sessionApiPath?: string,
+     *   saveTransport?: string,
+     *   editorPaths?: list<string>
+     * }
+     */
+    private function normalizeIntegration(array $data): array
+    {
+        $source = isset($data['integration']) && is_array($data['integration'])
+            ? $data['integration']
+            : [];
+        $integration = [];
+        foreach (['configGlobal', 'sessionApiPath', 'saveTransport'] as $field) {
+            if (isset($source[$field]) && is_string($source[$field])) {
+                $value = trim($source[$field]);
+                if ($value !== '') {
+                    $integration[$field] = $value;
+                }
+            }
+        }
+        if (isset($source['editorPaths']) && is_array($source['editorPaths'])) {
+            $paths = [];
+            foreach ($source['editorPaths'] as $editorPath) {
+                if (! is_string($editorPath)) {
+                    continue;
+                }
+                $normalized = trim($editorPath);
+                if ($normalized !== '') {
+                    $paths[] = $normalized;
+                }
+            }
+            if ($paths !== []) {
+                $integration['editorPaths'] = array_values(array_unique($paths));
+            }
+        }
+
+        return $integration;
+    }
+
+    /**
+     * @param  array<string, mixed>  $plugin
+     * @return array{indexReady: bool, editorReady: bool}
+     */
+    private function runtimeForPlugin(array $plugin): array
+    {
+        $id = (string) ($plugin['id'] ?? '');
+        if ($id === '') {
+            return [
+                'indexReady' => false,
+                'editorReady' => false,
+            ];
+        }
+
+        $indexPath = $this->assetIndexPath($id);
+        $manifest = $this->manifestPathForPlugin($id);
+
+        return [
+            'indexReady' => $indexPath !== null,
+            'editorReady' => $manifest !== null && $this->pluginPaths->editorReadyForManifest($manifest),
+        ];
     }
 
     /**
