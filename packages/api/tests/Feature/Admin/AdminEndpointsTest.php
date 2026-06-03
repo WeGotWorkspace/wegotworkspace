@@ -240,13 +240,13 @@ final class AdminEndpointsTest extends TestCase
     public function test_admin_can_install_plugin_zip(): void
     {
         $token = $this->adminToken();
-        $zipPath = $this->dataDir.'/onlyoffice-plugin.zip';
-        $sourceRoot = $this->dataDir.'/plugin-source/onlyoffice';
+        $zipPath = $this->dataDir.'/demo-plugin.zip';
+        $sourceRoot = $this->dataDir.'/plugin-source/demo-plugin';
         File::ensureDirectoryExists($sourceRoot.'/assets');
         File::put($sourceRoot.'/assets/index.html', '<!doctype html><title>Plugin</title>');
         File::put($sourceRoot.'/plugin.json', json_encode([
-            'id' => 'onlyoffice',
-            'name' => 'ONLYOFFICE',
+            'id' => 'demo-plugin',
+            'name' => 'Demo plugin',
             'active' => true,
             'drive' => [
                 'openFileExtensions' => ['docx'],
@@ -256,22 +256,22 @@ final class AdminEndpointsTest extends TestCase
         $zip = new \ZipArchive;
         $opened = $zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
         $this->assertSame(true, $opened);
-        $zip->addFile($sourceRoot.'/plugin.json', 'onlyoffice/plugin.json');
-        $zip->addFile($sourceRoot.'/assets/index.html', 'onlyoffice/assets/index.html');
+        $zip->addFile($sourceRoot.'/plugin.json', 'demo-plugin/plugin.json');
+        $zip->addFile($sourceRoot.'/assets/index.html', 'demo-plugin/assets/index.html');
         $zip->close();
 
-        $upload = new UploadedFile($zipPath, 'onlyoffice.zip', 'application/zip', null, true);
+        $upload = new UploadedFile($zipPath, 'demo-plugin.zip', 'application/zip', null, true);
 
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->post('/api/v1/admin/plugins/install', ['plugin' => $upload])
             ->assertOk()
             ->assertJsonPath('ok', true)
-            ->assertJsonPath('plugin.id', 'onlyoffice')
+            ->assertJsonPath('plugin.id', 'demo-plugin')
             ->assertJsonPath('plugin.active', true);
 
         $pluginsRoot = app(AppPaths::class)->pluginsRoot();
-        $this->assertFileExists($pluginsRoot.'/onlyoffice/plugin.json');
-        $this->assertFileExists($pluginsRoot.'/onlyoffice/assets/index.html');
+        $this->assertFileExists($pluginsRoot.'/demo-plugin/plugin.json');
+        $this->assertFileExists($pluginsRoot.'/demo-plugin/assets/index.html');
     }
 
     private function adminToken(): string

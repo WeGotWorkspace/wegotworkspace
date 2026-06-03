@@ -36,7 +36,7 @@ When working on **`packages/api`** REST or a new Laravel API:
 
 ## Storage (when implementing)
 
-File I/O for drive, notes, office, and WebDAV **files** uses Laravel **Flysystem** (`WgwStorage`). See `.cursor/rules/api-storage-flysystem.mdc`.
+File I/O for drive, notes, plugins, and WebDAV **files** uses Laravel **Flysystem** (`WgwStorage`). See `.cursor/rules/api-storage-flysystem.mdc`.
 
 ## Commits
 

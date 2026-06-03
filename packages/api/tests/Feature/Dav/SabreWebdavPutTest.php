@@ -58,7 +58,7 @@ final class SabreWebdavPutTest extends TestCase
 
     public function test_put_persists_file_body_through_laravel_front(): void
     {
-        $payload = 'office-save-payload-'.random_bytes(8);
+        $payload = 'docx-save-payload-'.random_bytes(8);
         $auth = 'Basic '.base64_encode('alice:secret');
 
         $this->call(

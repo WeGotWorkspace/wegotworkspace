@@ -19,7 +19,6 @@ node_modules/
 /apps/wegotworkspace/wgw-plugins/
 /apps/wegotworkspace/packages/
 /apps/wegotworkspace/packages/apps/docs/build/
-/apps/wegotworkspace/packages/apps/office/build/
 /apps/wegotworkspace/packages/apps/drive/dist/
 /apps/wegotworkspace/packages/apps/voice/dist/
 /apps/wegotworkspace/packages/apps/mail/dist/
@@ -35,8 +34,6 @@ node_modules/
 /data/*
 /data/sessions/*
 /tools/office-website/
-/tools/onlyoffice-web-apps/
-/tools/onlyoffice-artifacts/
 /tools/bright-face-connect/
 /dist/
 /build/

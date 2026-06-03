@@ -10,7 +10,7 @@ use App\Support\WgwInstallConfig;
 use Symfony\Component\HttpFoundation\Cookie;
 
 /**
- * Signed HttpOnly browser session cookie for UI shells (office, drive HTML).
+ * Signed HttpOnly browser session cookie for plugin UI shells and drive HTML.
  */
 final class UiSessionService
 {
