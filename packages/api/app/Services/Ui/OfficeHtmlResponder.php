@@ -64,7 +64,8 @@ final class OfficeHtmlResponder
             return response(
                 '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Office unavailable</title></head><body>'
                 .'<h1>Office UI is not built</h1>'
-                .'<p>Run <code>pnpm --filter @wgw/onlyoffice-web build</code>, then reload.</p>'
+                .'<p>Install the ONLYOFFICE plugin from <strong>Admin → Plugins</strong> '
+                .'(see <a href="https://github.com/WeGotWorkspace/plugins/releases">WeGotWorkspace/plugins</a> releases), then reload.</p>'
                 .'</body></html>',
                 503,
                 ['Content-Type' => 'text/html; charset=utf-8']
