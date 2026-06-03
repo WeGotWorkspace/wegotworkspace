@@ -8,20 +8,20 @@ use App\Services\Installer\InstallerWebBase;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Serves the ONLYOFFICE Web static export at {@code /office/}.
+ * Serves plugin static exports at a manifest {@code appTile.route} prefix.
  */
-final class OfficeStaticServer
+final class PluginStaticServer
 {
-    public function matchesOfficePath(string $webBase, string $path): bool
+    public function matchesPluginPath(string $webBase, string $path, string $route): bool
     {
-        $prefix = InstallerWebBase::url($webBase, '/office');
+        $prefix = InstallerWebBase::url($webBase, $route);
 
         return $path === $prefix || str_starts_with($path, $prefix.'/');
     }
 
-    public function tryServe(string $buildRoot, string $webBase, string $path): ?Response
+    public function tryServe(string $buildRoot, string $webBase, string $path, string $route): ?Response
     {
-        $prefix = InstallerWebBase::url($webBase, '/office');
+        $prefix = InstallerWebBase::url($webBase, $route);
         if ($path !== $prefix && ! str_starts_with($path, $prefix.'/')) {
             return null;
         }
