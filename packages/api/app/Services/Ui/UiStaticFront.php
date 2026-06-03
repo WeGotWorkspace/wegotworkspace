@@ -7,7 +7,7 @@ namespace App\Services\Ui;
 use App\Services\Installer\InstallerWebBase;
 use App\Services\Plugins\PluginRegistryService;
 use App\Support\AppPaths;
-use App\Ui\OfficeStaticServer;
+use App\Ui\PluginStaticServer;
 use App\Ui\UiStaticServer;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,8 +18,8 @@ final class UiStaticFront
         private AppPaths $paths,
         private PluginRegistryService $plugins,
         private UiStaticServer $static,
-        private OfficeStaticServer $officeStatic,
-        private OfficeHtmlResponder $officeHtml,
+        private PluginStaticServer $pluginStatic,
+        private PluginHtmlResponder $pluginHtml,
     ) {}
 
     public function handle(Request $request): ?Response
@@ -58,8 +58,9 @@ final class UiStaticFront
             return InstallerWebBase::redirectToInstallWizard();
         }
 
-        if ($this->officeStatic->matchesOfficePath($webBase, $path)) {
-            return $this->handleOffice($webBase, $path, $method);
+        $pluginMatch = $this->plugins->findActiveByRequestPath($webBase, $path);
+        if ($pluginMatch !== null) {
+            return $this->handlePluginRoutes($webBase, $path, $method, $pluginMatch);
         }
 
         if ($this->static->matchesShellPath($webBase, $path)) {
@@ -95,24 +96,36 @@ final class UiStaticFront
         return $served ?? $this->notFound();
     }
 
-    private function handleOffice(string $webBase, string $path, string $method): Response
+    /**
+     * @param  array{
+     *   plugin: array<string, mixed>,
+     *   routePrefix: string,
+     *   indexPath: string|null,
+     *   buildRoot: string|null
+     * }  $pluginMatch
+     */
+    private function handlePluginRoutes(string $webBase, string $path, string $method, array $pluginMatch): Response
     {
         if ($method === 'HEAD') {
             return response('', 200);
         }
 
-        $html = $this->officeHtml->tryRespond($webBase, $path);
+        $html = $this->pluginHtml->tryRespond($webBase, $path, $pluginMatch);
         if ($html !== null) {
             return $html;
         }
 
-        $index = $this->plugins->routeAssetIndex('/office');
-        if ($index === null) {
-            return $this->distMissing('office');
+        $buildRoot = $pluginMatch['buildRoot'] ?? null;
+        if ($buildRoot === null) {
+            $pluginId = (string) ($pluginMatch['plugin']['id'] ?? 'plugin');
+
+            return $this->distMissing($pluginId);
         }
 
-        $buildRoot = dirname($index);
-        $served = $this->officeStatic->tryServe($buildRoot, $webBase, $path);
+        $route = isset($pluginMatch['plugin']['appTile']['route']) && is_string($pluginMatch['plugin']['appTile']['route'])
+            ? $pluginMatch['plugin']['appTile']['route']
+            : '/';
+        $served = $this->pluginStatic->tryServe($buildRoot, $webBase, $path, $route);
 
         return $served ?? $this->notFound();
     }
