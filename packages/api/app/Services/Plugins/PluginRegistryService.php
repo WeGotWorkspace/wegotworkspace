@@ -49,10 +49,7 @@ final class PluginRegistryService
     public function list(): array
     {
         $pluginsById = [];
-        foreach ($this->loadBundledPlugins() as $plugin) {
-            $pluginsById[$plugin['id']] = $plugin;
-        }
-        foreach ($this->loadRuntimePlugins() as $plugin) {
+        foreach ($this->loadInstalledPlugins() as $plugin) {
             $pluginsById[$plugin['id']] = $plugin;
         }
 
@@ -251,10 +248,10 @@ final class PluginRegistryService
      *   runtime?: array{indexReady: bool, editorReady: bool}
      * }>
      */
-    private function loadBundledPlugins(): array
+    private function loadInstalledPlugins(): array
     {
         $plugins = [];
-        foreach ($this->pluginPaths->bundledManifestPaths() as $manifestPath) {
+        foreach ($this->pluginPaths->installedManifestPaths() as $manifestPath) {
             if (! SafePath::isReadable($manifestPath)) {
                 continue;
             }
@@ -262,50 +259,6 @@ final class PluginRegistryService
                 continue;
             }
             $raw = File::get($manifestPath);
-            if ($raw === '') {
-                continue;
-            }
-            try {
-                $data = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
-            } catch (\JsonException) {
-                continue;
-            }
-            if (! is_array($data)) {
-                continue;
-            }
-            $normalized = $this->normalizeManifestPlugin($data);
-            if ($normalized === null) {
-                continue;
-            }
-            $normalized['source'] = 'bundled';
-            $plugins[] = $normalized;
-        }
-
-        return $plugins;
-    }
-
-    private function loadRuntimePlugins(): array
-    {
-        $root = $this->paths->pluginsRoot();
-        $entries = @scandir($root);
-        if (! is_array($entries)) {
-            return [];
-        }
-
-        $plugins = [];
-        foreach ($entries as $entry) {
-            if ($entry === '.' || $entry === '..') {
-                continue;
-            }
-            $dir = $root.'/'.$entry;
-            if (! SafePath::isDir($dir)) {
-                continue;
-            }
-            $manifest = $dir.'/plugin.json';
-            if (! SafePath::isReadable($manifest)) {
-                continue;
-            }
-            $raw = File::get($manifest);
             if ($raw === '') {
                 continue;
             }
@@ -361,7 +314,7 @@ final class PluginRegistryService
             'id' => $id,
             'name' => $name,
             'active' => $active,
-            'source' => 'runtime',
+            'source' => 'installed',
         ];
 
         if (isset($data['appTile']) && is_array($data['appTile'])) {
@@ -539,7 +492,7 @@ final class PluginRegistryService
 
     private function manifestPathForPlugin(string $pluginId): ?string
     {
-        foreach ($this->pluginPaths->allManifestPaths() as $manifestPath) {
+        foreach ($this->pluginPaths->installedManifestPaths() as $manifestPath) {
             if (! SafePath::isReadable($manifestPath)) {
                 continue;
             }

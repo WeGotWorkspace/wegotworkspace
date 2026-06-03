@@ -11,7 +11,7 @@ It includes:
 - A web installer (`/install/`)
 - Product surfaces (`/drive/`, `/mail/`, `/notes/`, `doc`, `/meet/`)
 - Utility surfaces (`/admin/`, `/settings/`)
-- Plugin surfaces (installed via **Admin → Plugins**; routes come from each plugin manifest)
+- Plugin surfaces (always installed separately via **Admin → Plugins**; routes come from each plugin manifest)
 
 Docs for these surfaces are still being expanded.
 
@@ -113,10 +113,7 @@ Use `HUSKY=0 git commit` to skip hooks once. Full gate before push: `pnpm run ci
 
 ## Plugins
 
-Optional features ship as separate plugins with their own repository and release artifacts:
-
-- [github.com/WeGotWorkspace/plugins](https://github.com/WeGotWorkspace/plugins)
-- Install via **Admin → Plugins** (upload a plugin ZIP from that org’s releases)
+Plugins are **never** part of the core deploy ZIP. Each plugin ships from [WeGotWorkspace/plugins](https://github.com/WeGotWorkspace/plugins) as its own release artifact and is installed via **Admin → Plugins** (upload the plugin ZIP).
 
 See [`docs/plugins.md`](docs/plugins.md) for layout and verification.
 
@@ -142,8 +139,6 @@ Publish requires a clean git tree and a **signed annotated** git tag. That uses 
 CI uses the `WGW_RELEASE_SIGNING_PRIVATE_KEY` repository secret for artifacts; the pushed tag must still be signed locally.
 
 The deploy artifact includes `INSTALL.md` so people downloading a release get the install steps directly in the package.
-
-Plugins are **not** bundled in the core deploy ZIP; install them from [WeGotWorkspace/plugins](https://github.com/WeGotWorkspace/plugins) releases when needed.
 
 ## Contributing
 
