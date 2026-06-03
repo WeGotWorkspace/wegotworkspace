@@ -66,6 +66,12 @@ final class WgwInstallFixture
                 UNIQUE(username)
             )'
         );
+        $pdo->exec(
+            'CREATE TABLE app_settings (
+                name TEXT NOT NULL PRIMARY KEY,
+                value TEXT NOT NULL
+            )'
+        );
         $stmt = $pdo->prepare('INSERT INTO users (username, digesta1, digest) VALUES (?, ?, ?)');
         $stmt->execute([$username, '', password_hash('secret', PASSWORD_DEFAULT)]);
     }
