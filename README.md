@@ -113,9 +113,9 @@ Use `HUSKY=0 git commit` to skip hooks once. Full gate before push: `pnpm run ci
 
 ## Plugins
 
-Plugins are **never** part of the core deploy ZIP. Each plugin ships from [WeGotWorkspace/plugins](https://github.com/WeGotWorkspace/plugins) as its own release artifact and is installed via **Admin → Plugins** (upload the plugin ZIP).
+Plugins are **never** part of the core deploy ZIP. [WeGotWorkspace/plugins](https://github.com/WeGotWorkspace/plugins) hosts **first-party** plugins; **third-party** plugins are supported when they conform to the same manifest and layout standards. Install any conforming plugin via **Admin → Plugins** (upload the plugin ZIP).
 
-See [`docs/plugins.md`](docs/plugins.md) for layout and verification.
+See [`docs/plugins.md`](docs/plugins.md) for the plugin contract, layout, and verification.
 
 ## Release artifacts
 
