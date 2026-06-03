@@ -1,47 +1,29 @@
-# ONLYOFFICE packaging
+# ONLYOFFICE plugin
 
-## Bundled in WeGotWorkspace (default)
+Office editing (`/office/`, `/office/editor`) is provided by the **ONLYOFFICE plugin**, distributed separately from the core WeGotWorkspace release.
 
-Monorepo and release builds put the static editor under:
+- **Source & releases:** [github.com/WeGotWorkspace/plugins](https://github.com/WeGotWorkspace/plugins) (`onlyoffice/`)
+- **Plugin id:** `onlyoffice`
 
-`packages/apps/office/build/`
+## Install
 
-with manifest:
+1. Download the latest `wgw-plugin-onlyoffice-*.zip` from the [plugins releases](https://github.com/WeGotWorkspace/plugins/releases).
+2. In WeGotWorkspace, open **Admin → Plugins** and upload the ZIP.
 
-`packages/apps/office/plugin.json`
-
-Build it with:
-
-```bash
-pnpm --filter @wgw/onlyoffice-web build
-```
-
-Root `pnpm build` includes that step. The API serves `/office/` from `office/build` and registers the bundled plugin from `office/plugin.json`.
-
-**Do not** unpack release artifacts into `wgw-plugins/` for local dev — that path is only for optional plugin ZIP installs.
-
-## Optional plugin ZIP (separate distribution)
-
-To ship ONLYOFFICE as an add-on for existing installs:
-
-```bash
-pnpm run release:plugin:onlyoffice
-```
-
-Output in `dist/releases/`:
-
-- `wgw-plugin-onlyoffice-<version>.zip` (contains `onlyoffice/plugin.json` + `onlyoffice/assets/…`)
-- `wgw-plugin-onlyoffice-manifest.json`
-- `wgw-plugin-onlyoffice-manifest.sig` (when signing key is configured)
-
-Install via **Admin → Plugins** (upload ZIP), or unpack so files land at:
+Or unpack manually so files land at:
 
 `wgw-plugins/onlyoffice/`
 
-not inside `wgw-plugins/wgw-plugins/…` (that happens when the ZIP is extracted into `wgw-plugins/` instead of the install root).
+(with `plugin.json` and `assets/` directly under that folder — not nested twice under `wgw-plugins/`).
 
 ## Verify
 
-- `GET /api/v1/plugins` lists `onlyoffice`
+- `GET /api/v1/plugins` lists `onlyoffice` as active
 - `/office/` and `/office/editor` load
 - `GET /api/v1/office/capabilities` reports `indexReady: true`
+
+## Core vs plugin
+
+The core deploy ZIP does **not** include ONLYOFFICE assets. Drive and the API expose office routes when the plugin is installed; without it, `/office/` shows an install hint.
+
+Build and release the plugin from the **[WeGotWorkspace/plugins](https://github.com/WeGotWorkspace/plugins)** repository (`onlyoffice/`), not from this monorepo.

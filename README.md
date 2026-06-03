@@ -111,35 +111,14 @@ Git hooks (installed on `pnpm install` via Husky):
 
 Use `HUSKY=0 git commit` to skip hooks once. Full gate before push: `pnpm run ci:quality`.
 
-## Updating ONLYOFFICE Web
+## ONLYOFFICE plugin
 
-`packages/onlyoffice-web` is tracked as a git-subtree style vendored dependency.
+Office editing is a **separate plugin** with its own repository and release artifacts:
 
-Update it from the upstream repo with:
+- [github.com/WeGotWorkspace/plugins](https://github.com/WeGotWorkspace/plugins) (`onlyoffice/`)
+- Install via **Admin → Plugins** (upload the plugin ZIP from that repo’s releases)
 
-```bash
-pnpm run update:onlyoffice-web
-```
-
-Optional args:
-
-```bash
-bash tools/update-onlyoffice-web-subtree.sh <repo-url> <branch> [--squash|--no-squash]
-```
-
-After updating, rebuild the package so runtime assets are refreshed:
-
-```bash
-pnpm --filter @wgw/onlyoffice-web build
-```
-
-To create a standalone ONLYOFFICE plugin ZIP (for `wgw-plugins/onlyoffice`):
-
-```bash
-pnpm run release:plugin:onlyoffice
-```
-
-See [`docs/onlyoffice-plugin.md`](docs/onlyoffice-plugin.md) for install/runtime layout.
+See [`docs/onlyoffice-plugin.md`](docs/onlyoffice-plugin.md) for layout and verification.
 
 ## Release artifacts
 
@@ -149,7 +128,6 @@ Release ZIP files are built in CI from **signed annotated** tag pushes (`v*`) vi
 | ------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | `pnpm release`                        | `pnpm build` + **core** package to `dist/releases/` (loads signing key from repo-root `.env`)      |
 | `pnpm release -- --skip-build`        | Package only (when `pnpm build` already ran)                                                       |
-| `pnpm release:plugin:onlyoffice`      | Build and package ONLYOFFICE plugin ZIP separately                                                 |
 | `pnpm release:publish patch`          | Bump `apps/wegotworkspace/VERSION`, commit, **signed** tag, push → CI publishes the GitHub Release |
 | `pnpm release:publish 1.2.3 --yes`    | Same with an explicit version and no confirmation prompt                                           |
 | `pnpm release:publish patch --verify` | Run a local `pnpm release` before commit (catch build errors early)                                |
@@ -165,7 +143,7 @@ CI uses the `WGW_RELEASE_SIGNING_PRIVATE_KEY` repository secret for artifacts; t
 
 The deploy artifact includes `INSTALL.md` so people downloading a release get the install steps directly in the package.
 
-The core deploy ZIP no longer bundles ONLYOFFICE assets; install ONLYOFFICE via the plugin ZIP when needed.
+ONLYOFFICE is **not** bundled in the core deploy ZIP; install it from [WeGotWorkspace/plugins](https://github.com/WeGotWorkspace/plugins) releases when needed.
 
 ## Contributing
 
