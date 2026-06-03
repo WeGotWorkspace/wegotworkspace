@@ -18,12 +18,12 @@ Or unpack manually so files land at:
 
 ## Verify
 
-- `GET /api/v1/plugins` lists `onlyoffice` as active
-- `/office/` and `/office/editor` load
-- `GET /api/v1/office/capabilities` reports `indexReady: true`
+- `GET /api/v1/plugins` lists `onlyoffice` as active with `runtime.indexReady: true`
+- `/office/` and `/office/editor` load (routes come from the plugin manifest `appTile.route`)
+- `POST /api/v1/plugins/onlyoffice/session` establishes the browser UI session cookie
 
 ## Core vs plugin
 
-The core deploy ZIP does **not** include ONLYOFFICE assets. Drive and the API expose office routes when the plugin is installed; without it, `/office/` shows an install hint.
+The core deploy ZIP does **not** include ONLYOFFICE assets. Core discovers plugins via `GET /api/v1/plugins`, serves static UI at each plugin’s `appTile.route`, and exposes generic session hooks at `POST /api/v1/plugins/{id}/session`. File saves use **Drive API** and WebDAV — there are no office-specific document endpoints in core.
 
 Build and release the plugin from the **[WeGotWorkspace/plugins](https://github.com/WeGotWorkspace/plugins)** repository (`onlyoffice/`), not from this monorepo.
