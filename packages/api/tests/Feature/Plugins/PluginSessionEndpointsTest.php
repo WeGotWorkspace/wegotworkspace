@@ -22,22 +22,22 @@ final class PluginSessionEndpointsTest extends TestCase
     {
         $this->previousAppRoot = getenv('WGW_APP_ROOT') ?: '';
         $this->dataDir = rtrim(sys_get_temp_dir(), '/').'/wgw-plugin-session-'.uniqid('', true);
-        @mkdir($this->dataDir.'/install-root/wgw-plugins/onlyoffice/assets', 0777, true);
+        @mkdir($this->dataDir.'/install-root/wgw-plugins/demo-plugin/assets', 0777, true);
         putenv('WGW_APP_ROOT='.$this->dataDir.'/install-root');
         $_ENV['WGW_APP_ROOT'] = $this->dataDir.'/install-root';
-        @file_put_contents($this->dataDir.'/install-root/wgw-plugins/onlyoffice/assets/index.html', '<!doctype html><title>Plugin</title>');
-        @file_put_contents($this->dataDir.'/install-root/wgw-plugins/onlyoffice/assets/editor.html', '<!doctype html><title>Editor</title>');
-        @file_put_contents($this->dataDir.'/install-root/wgw-plugins/onlyoffice/plugin.json', json_encode([
-            'id' => 'onlyoffice',
-            'name' => 'ONLYOFFICE',
+        @file_put_contents($this->dataDir.'/install-root/wgw-plugins/demo-plugin/assets/index.html', '<!doctype html><title>Plugin</title>');
+        @file_put_contents($this->dataDir.'/install-root/wgw-plugins/demo-plugin/assets/editor.html', '<!doctype html><title>Editor</title>');
+        @file_put_contents($this->dataDir.'/install-root/wgw-plugins/demo-plugin/plugin.json', json_encode([
+            'id' => 'demo-plugin',
+            'name' => 'Demo plugin',
             'active' => true,
             'appTile' => [
-                'id' => 'office',
-                'label' => 'Office',
-                'route' => '/office',
+                'id' => 'demo',
+                'label' => 'Demo',
+                'route' => '/apps/demo-editor',
             ],
             'integration' => [
-                'sessionApiPath' => '/api/v1/plugins/onlyoffice/session',
+                'sessionApiPath' => '/api/v1/plugins/demo-plugin/session',
             ],
         ], JSON_THROW_ON_ERROR));
         putenv('WGW_DISABLE_LOGIN_THROTTLE=1');
@@ -87,7 +87,7 @@ final class PluginSessionEndpointsTest extends TestCase
 
     public function test_plugin_session_requires_auth_and_establishes_cookie(): void
     {
-        $this->postJson('/api/v1/plugins/onlyoffice/session')->assertUnauthorized();
+        $this->postJson('/api/v1/plugins/demo-plugin/session')->assertUnauthorized();
 
         $token = (string) $this->postJson('/api/v1/auth/token', [
             'username' => 'alice',
@@ -100,7 +100,7 @@ final class PluginSessionEndpointsTest extends TestCase
             ->assertNotFound()
             ->assertJsonPath('error', 'plugin_not_found');
 
-        $this->postJson('/api/v1/plugins/onlyoffice/session', [], $headers)
+        $this->postJson('/api/v1/plugins/demo-plugin/session', [], $headers)
             ->assertOk()
             ->assertJsonPath('ok', true);
     }

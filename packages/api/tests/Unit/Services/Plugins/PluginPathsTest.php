@@ -40,8 +40,8 @@ final class PluginPathsTest extends TestCase
     #[Test]
     public function bundled_index_path_uses_build_directory(): void
     {
-        $manifest = $this->installRoot.'/packages/apps/office/plugin.json';
-        $index = $this->installRoot.'/packages/apps/office/build/index.html';
+        $manifest = $this->installRoot.'/packages/apps/bundled-plugin/plugin.json';
+        $index = $this->installRoot.'/packages/apps/bundled-plugin/build/index.html';
         mkdir(dirname($manifest), 0777, true);
         mkdir(dirname($index), 0777, true);
         file_put_contents($manifest, '{}');

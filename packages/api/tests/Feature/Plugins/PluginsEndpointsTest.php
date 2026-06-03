@@ -22,19 +22,19 @@ final class PluginsEndpointsTest extends TestCase
     {
         $this->previousAppRoot = getenv('WGW_APP_ROOT') ?: '';
         $this->dataDir = rtrim(sys_get_temp_dir(), '/').'/wgw-plugins-'.uniqid('', true);
-        @mkdir($this->dataDir.'/install-root/wgw-plugins/onlyoffice/assets', 0777, true);
+        @mkdir($this->dataDir.'/install-root/wgw-plugins/demo-plugin/assets', 0777, true);
         putenv('WGW_APP_ROOT='.$this->dataDir.'/install-root');
         $_ENV['WGW_APP_ROOT'] = $this->dataDir.'/install-root';
-        @file_put_contents($this->dataDir.'/install-root/wgw-plugins/onlyoffice/assets/index.html', '<!doctype html><title>Plugin</title>');
-        @file_put_contents($this->dataDir.'/install-root/wgw-plugins/onlyoffice/assets/editor.html', '<!doctype html><title>Editor</title>');
-        @file_put_contents($this->dataDir.'/install-root/wgw-plugins/onlyoffice/plugin.json', json_encode([
-            'id' => 'onlyoffice',
-            'name' => 'ONLYOFFICE',
+        @file_put_contents($this->dataDir.'/install-root/wgw-plugins/demo-plugin/assets/index.html', '<!doctype html><title>Plugin</title>');
+        @file_put_contents($this->dataDir.'/install-root/wgw-plugins/demo-plugin/assets/editor.html', '<!doctype html><title>Editor</title>');
+        @file_put_contents($this->dataDir.'/install-root/wgw-plugins/demo-plugin/plugin.json', json_encode([
+            'id' => 'demo-plugin',
+            'name' => 'Demo plugin',
             'active' => true,
             'appTile' => [
-                'id' => 'office',
-                'label' => 'Office',
-                'route' => '/office',
+                'id' => 'demo',
+                'label' => 'Demo',
+                'route' => '/apps/demo-editor',
             ],
             'drive' => [
                 'openFileExtensions' => ['docx'],
@@ -137,21 +137,21 @@ final class PluginsEndpointsTest extends TestCase
 
         $headers = ['Authorization' => 'Bearer '.$token];
 
-        $this->postJson('/api/v1/plugins/onlyoffice/deactivate', [], $headers)
+        $this->postJson('/api/v1/plugins/demo-plugin/deactivate', [], $headers)
             ->assertOk()
-            ->assertJsonPath('plugin.id', 'onlyoffice')
+            ->assertJsonPath('plugin.id', 'demo-plugin')
             ->assertJsonPath('plugin.active', false);
 
         $this->getJson('/api/v1/plugins', $headers)
             ->assertOk()
             ->assertJsonFragment([
-                'id' => 'onlyoffice',
+                'id' => 'demo-plugin',
                 'active' => false,
             ]);
 
-        $this->postJson('/api/v1/plugins/onlyoffice/activate', [], $headers)
+        $this->postJson('/api/v1/plugins/demo-plugin/activate', [], $headers)
             ->assertOk()
-            ->assertJsonPath('plugin.id', 'onlyoffice')
+            ->assertJsonPath('plugin.id', 'demo-plugin')
             ->assertJsonPath('plugin.active', true);
 
         $this->postJson('/api/v1/plugins/unknown/deactivate', [], $headers)
