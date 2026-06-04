@@ -1,9 +1,3 @@
----
-description: SabreDAV — thin dav.php; file tree on Flysystem; plugins use Laravel services.
-globs: packages/api/app/DAV/**,packages/api/dav.php
-alwaysApply: false
----
-
 # SabreDAV
 
 ## Entry
@@ -25,4 +19,4 @@ alwaysApply: false
 ## Data
 
 - DB: Eloquent / `DB` for principals, settings, mail credentials
-- Files: **only** Flysystem — shared with REST (see `api-storage-flysystem.mdc`)
+- Files: **only** Flysystem — shared with REST (see [storage-flysystem.md](storage-flysystem.md))

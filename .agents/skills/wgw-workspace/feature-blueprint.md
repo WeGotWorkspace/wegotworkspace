@@ -1,12 +1,6 @@
----
-description: Blueprint for *App + *Workspace + controller + panes (settings-core pattern) when refactoring apps packages.
-globs: packages/apps/src/**/*-app.tsx,packages/apps/src/**/*-workspace.tsx,packages/apps/src/**/*-core/**/use-*-controller.tsx,packages/apps/src/**/*-core/**/use-*-api.ts,packages/apps/src/**/*-core/**/*-workspace*.css,packages/apps/src/**/*-core/**/*-workspace.styles.ts
-alwaysApply: false
----
-
 # Workspace feature blueprint (settings-style)
 
-Use **`packages/apps/src/settings-core/`** as the reference when splitting a product into a thin route **`*App`**, a composable **`*Workspace`**, a **controller** hook, and **panes**. Aligns with **`workspace-app-shell.mdc`** for `WorkspaceAppLayout`, `AppSidebar`, and navigation ownership.
+Use **`packages/apps/src/settings-core/`** as the reference when splitting a product into a thin route **`*App`**, a composable **`*Workspace`**, a **controller** hook, and **panes**. Aligns with the workspace shell skill for `WorkspaceAppLayout`, `AppSidebar`, and navigation ownership.
 
 ## Layers (top to bottom)
 
@@ -56,11 +50,11 @@ Structural refactors must still compose **existing** UI from `packages/apps/src/
 
 - [ ] If nav / layout state is tangled with data fetching, peel **`use*Shell`** (or similar) out of **`use*Controller`** once it earns its own file.
 - [ ] **`use*Controller`** composes shell state + domain hooks; **`Workspace`** passes `Pick<Props, "data" | "operations">` (or the same shape settings uses).
-- [ ] Move layout from route files into **`*Workspace.tsx`** using **`WorkspaceAppLayout`** split props (see **`workspace-app-shell.mdc`**).
+- [ ] Move layout from route files into **`*Workspace.tsx`** using **`WorkspaceAppLayout`** split props.
 - [ ] Replace inline `window.location` / logout in packages with **`onLogout`** (or similar) props implemented in **`*App`**.
 - [ ] Colocate **shell CSS variables** on the workspace root class (e.g. `.settings-workspace`); panes use **shared caption** patterns (`field-label-row__label`, `--field-label-color`).
 - [ ] Panes use **`Card`**, **`FieldLabelRow`**, and (where applicable) **`Form` / `FormTextField`** — delete any interim `*Card`, `*Field`, `*FeatureRow` helpers added during the split.
-- [ ] Storybook: follow **`storybook-component-stories.mdc`** — story file per UI component (`Apps/<Product>/Components/*` + `Panes/*`), Controls on simple props, named stories per meaningful state; no Storybook `decorators` (use `*-story-scope.tsx` in `render` when tokens need a workspace root); workspace story uses fullscreen + production root class; bootstrap returns coherent **`data` + `session`** (and **`operations`** when needed).
+- [ ] Storybook: story file per UI component (`Apps/<Product>/Components/*` + `Panes/*`), Controls on simple props, named stories per meaningful state; no Storybook `decorators` (use `*-story-scope.tsx` in `render` when tokens need a workspace root); workspace story uses fullscreen + production root class; bootstrap returns coherent **`data` + `session`** (and **`operations`** when needed).
 
 ## Anti-patterns
 
