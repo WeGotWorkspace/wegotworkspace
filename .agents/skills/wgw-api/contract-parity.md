@@ -1,9 +1,3 @@
----
-description: HTTP contract parity via tests — not legacy code structure.
-globs: packages/api/**
-alwaysApply: false
----
-
 # Contract parity
 
 ## Source of truth

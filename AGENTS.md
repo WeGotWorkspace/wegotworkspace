@@ -1,14 +1,30 @@
 # Agent instructions (WeGotWorkspace)
 
-## API greenfield (read first)
+## Non-negotiables
 
-When working on **`packages/api`** REST or a new Laravel API:
+**API greenfield:** Work under `packages/api/` is a new Laravel app matching OpenAPI — no legacy PHP in tree. Do not restore `packages/api/src/`, `*Kernel`, `MailApi`, or dual autoload. Reimplement from `packages/api/openapi/openapi.json` + feature tests. Full guidance: [`.agents/skills/wgw-api/`](.agents/skills/wgw-api/).
 
-1. Read **`.cursor/rules/api-greenfield.mdc`** (always applied).
+**Git:** Do not `git commit` unless the user explicitly asks. When committing, use Conventional Commits. See [`.agents/skills/git-workflow/`](.agents/skills/git-workflow/).
+
+## Skills index
+
+Agent skills live in [`.agents/skills/`](.agents/skills/) (tool-agnostic [Agent Skills](https://agentskills.io/) format):
+
+| Skill | When to use |
+|-------|-------------|
+| [wgw-developer](.agents/skills/wgw-developer/) | Starting work, onboarding, skill routing |
+| [wgw-api](.agents/skills/wgw-api/) | `packages/api` — REST, auth, storage, WebDAV, tests |
+| [wgw-apps-ui](.agents/skills/wgw-apps-ui/) | UI primitives, CSS variables, action surfaces |
+| [wgw-workspace](.agents/skills/wgw-workspace/) | *App, *Workspace, workspace shell, feature blueprint |
+| [git-workflow](.agents/skills/git-workflow/) | Staging, commits, commit message format |
+
+## API (read first for `packages/api` work)
+
+1. Load **[wgw-api](.agents/skills/wgw-api/)** skill.
 2. Use **`packages/api/openapi/openapi.json`** as the only in-tree API reference — there is **no** legacy PHP to copy.
 3. Before calling API work done, see **`packages/api/docs/api-done-gate.md`**.
 
-**Contract parity ≠ code parity.** Match OpenAPI via feature tests; implement logic in new Laravel layers. Legacy `packages/api/src/` was removed from the workspace on purpose.
+**Contract parity ≠ code parity.** Match OpenAPI via feature tests; implement logic in new Laravel layers.
 
 **API done gate:** `pnpm test:api-done-gate` / `composer done-gate` in `packages/api` — see `packages/api/docs/api-done-gate.md`.
 
@@ -36,8 +52,4 @@ When working on **`packages/api`** REST or a new Laravel API:
 
 ## Storage (when implementing)
 
-File I/O for drive, notes, plugins, and WebDAV **files** uses Laravel **Flysystem** (`WgwStorage`). See `.cursor/rules/api-storage-flysystem.mdc`.
-
-## Commits
-
-Do not `git commit` unless the user asks. See `.cursor/rules/no-auto-git-commit.mdc`.
+File I/O for drive, notes, plugins, and WebDAV **files** uses Laravel **Flysystem** (`WgwStorage`). See [`.agents/skills/wgw-api/storage-flysystem.md`](.agents/skills/wgw-api/storage-flysystem.md).

@@ -1,19 +1,19 @@
 ---
-description: Git workflow — no commits unless asked; when committing, use Conventional Commits.
-alwaysApply: true
+name: git-workflow
+description: Git workflow for this repository — no commits unless explicitly requested; Conventional Commits when committing. Use when staging, committing, or asked about git workflow.
 ---
 
 # Git commits
 
 - **Do not** run `git commit` or create commits on your own initiative, including after finishing a task or refactor.
-- **Only** stage and commit when the user clearly requests a commit (e.g. “commit”, “commit this”, “commit the diff”).
+- **Only** stage and commit when the user clearly requests a commit (e.g. "commit", "commit this", "commit the diff").
 - It is fine to run read-only git commands (`git status`, `git diff`, `git log`) for investigation without asking.
 
-# Conventional Commits (when the user asks you to commit)
+## Conventional Commits (when the user asks you to commit)
 
 Use **[Conventional Commits](https://www.conventionalcommits.org/)** for every commit message:
 
-- **Format:** `<type>(<optional scope>): <description>`  
+- **Format:** `<type>(<optional scope>): <description>`
   Example: `feat(settings): add mail transport label helper`
 - **Common types:** `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `perf`, `ci`, `build`, `revert`
 - **Description:** imperative mood, lowercase start (unless a proper noun), no trailing period; **subject line ~72 chars or less** when practical.

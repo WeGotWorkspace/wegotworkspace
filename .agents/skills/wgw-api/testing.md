@@ -1,9 +1,3 @@
----
-description: Pest tests gate API work — feature parity before domain is done.
-globs: packages/api/tests/**
-alwaysApply: false
----
-
 # API testing (Pest)
 
 ## Gate

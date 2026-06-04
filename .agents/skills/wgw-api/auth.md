@@ -1,9 +1,3 @@
----
-description: JWT auth — Laravel implementation, v1 wire shape.
-globs: packages/api/app/Services/Auth/**,packages/api/app/Http/Controllers/Api/V1/Auth/**,packages/api/routes/api.php
-alwaysApply: false
----
-
 # API auth
 
 ## Wire contract (parity)
