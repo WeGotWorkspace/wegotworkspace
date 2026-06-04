@@ -28,6 +28,6 @@ pnpm --filter @wgw/api typegen:check          # fail if generated files are stal
 
 ## Implementing the API
 
-Implement and extend the Laravel app under `packages/api/` against `openapi/openapi.json`. Follow `.cursor/rules/api-greenfield.mdc` and `docs/api-done-gate.md`.
+Implement and extend the Laravel app under `packages/api/` against `openapi/openapi.json`. Follow `.agents/skills/wgw-api/` and `docs/api-done-gate.md`.
 
 Do not restore `packages/api/src/` into this tree.
