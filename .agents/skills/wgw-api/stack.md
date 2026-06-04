@@ -1,9 +1,3 @@
----
-description: packages/api stack — Laravel REST, separate SabreDAV, shared-hosting constraints.
-globs: packages/api/**
-alwaysApply: false
----
-
 # API stack
 
 ## Laravel

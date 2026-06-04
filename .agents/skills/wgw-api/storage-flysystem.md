@@ -1,12 +1,6 @@
----
-description: Unified file storage via Laravel Flysystem — REST, notes, office, and SabreDAV must share one layer.
-globs: packages/api/app/**,packages/api/config/filesystems.php,packages/api/dav.php
-alwaysApply: false
----
-
 # Storage (Flysystem — single API)
 
-All **user/group files**, **notes markdown**, **office documents**, and **WebDAV file nodes** go through Laravel **Flysystem** (`Storage` facade or injected `Illuminate\Contracts\Filesystem\Filesystem`).  
+All **user/group files**, **notes markdown**, **office documents**, and **WebDAV file nodes** go through Laravel **Flysystem** (`Storage` facade or injected `Illuminate\Contracts\Filesystem\Filesystem`).
 **One path policy, one adapter config** — not scattered `Paths::data()` + PHP filesystem calls.
 
 ## Configuration (`config/filesystems.php`)
@@ -53,7 +47,7 @@ file_put_contents(Paths::data().'/files/'.$path, $contents);
 
 - `Paths::data()`, `file_get_contents`, `file_put_contents`, `readfile`, `is_file`, `scandir` in `app/Services/`, `app/Repositories/`, `app/Http/`
 - Separate filesystem roots computed differently in Drive, Office, Notes, and `SabreApp`
-- “Temporary” direct disk access in new code “until we add Flysystem”
+- "Temporary" direct disk access in new code "until we add Flysystem"
 
 ## Tests
 

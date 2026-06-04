@@ -1,10 +1,24 @@
 ---
-description: Workspace shell layout, sidebar scrim, and app-owned navigation for apps packages.
-globs: packages/apps/src/workspace-shell/**/*.{ts,tsx,css},packages/apps/src/**/*-workspace.tsx,packages/apps/src/**/*-app.tsx
-alwaysApply: false
+name: wgw-workspace
+description: Workspace shell layout, sidebar scrim, app-owned navigation, and settings-style feature blueprint for packages/apps. Use when working on *App, *Workspace, workspace-shell, or controller hooks.
+paths:
+  - "packages/apps/src/**/*-app.tsx"
+  - "packages/apps/src/**/*-workspace.tsx"
+  - "packages/apps/src/workspace-shell/**"
+  - "packages/apps/src/**/*-core/**/use-*-controller.tsx"
+  - "packages/apps/src/**/*-core/**/use-*-api.ts"
+  - "packages/apps/src/**/*-core/**/*-workspace*.css"
+  - "packages/apps/src/**/*-core/**/*-workspace.styles.ts"
 ---
 
-# Workspace shell and workspace components
+# WeGotWorkspace Apps — Workspace Shell
+
+## Quick decision matrix
+
+| Task | Read |
+|------|------|
+| Shell layout, sidebar, navigation | This file |
+| Splitting a product into App + Workspace + panes | [feature-blueprint.md](feature-blueprint.md) |
 
 ## `WorkspaceAppLayout` split mode
 

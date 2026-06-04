@@ -1,9 +1,3 @@
----
-description: Laravel API layering for packages/api — controllers, requests, resources, services, models.
-globs: packages/api/app/**,packages/api/routes/**
-alwaysApply: false
----
-
 # API layers (`packages/api`)
 
 ## Controllers (`app/Http/Controllers/Api/V1/`)
@@ -27,11 +21,11 @@ alwaysApply: false
 ## Models (`app/Models/`)
 
 - Eloquent for installer DB tables; relationships documented
-- No parallel “repository” that duplicates the model with raw SQL unless querying is genuinely complex
+- No parallel "repository" that duplicates the model with raw SQL unless querying is genuinely complex
 
 ## Storage (`app/Storage/`)
 
-- **`WgwStorage`** (or equivalent): single entry for Flysystem disks — see `api-storage-flysystem.mdc`
+- **`WgwStorage`** (or equivalent): single entry for Flysystem disks — see [storage-flysystem.md](storage-flysystem.md)
 - Path normalization + ACL live in `app/Storage/` (or `app/Services/Storage/`), not per-domain copies
 
 ## Repositories (`app/Repositories/`)
