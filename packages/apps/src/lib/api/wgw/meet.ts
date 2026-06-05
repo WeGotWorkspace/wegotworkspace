@@ -1,23 +1,28 @@
+/**
+ * Meet app HTTP client (`/api/v1/meet/*`, WebRTC audio + video).
+ */
 import { wgwApiBaseUrl, wgwFetch, wgwFetchPrincipal } from "@/lib/api/wgw/http";
 import { fetchRtcSettings } from "@/lib/api/wgw/rtc";
 import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
 import type {
-  WgwVoiceChatRequest,
-  WgwVoiceChatResponse,
-  WgwVoiceJoinRequest,
-  WgwVoiceJoinResponse,
-  WgwVoiceLeaveRequest,
-  WgwVoiceLeaveResponse,
-  WgwVoicePollRequest,
-  WgwVoicePollResponse,
-  WgwVoiceSendRequest,
-  WgwVoiceSendResponse,
+  WgwMeetChatRequest,
+  WgwMeetChatResponse,
+  WgwMeetJoinRequest,
+  WgwMeetJoinResponse,
+  WgwMeetLeaveRequest,
+  WgwMeetLeaveResponse,
+  WgwMeetPollRequest,
+  WgwMeetPollResponse,
+  WgwMeetSendRequest,
+  WgwMeetSendResponse,
 } from "@/lib/api/wgw/types";
 import type {
   MeetAPIOperations,
   MeetAppBootstrap,
   MeetRequestOptions,
 } from "@/meet-core/src/meet-types";
+
+const MEET_API_PREFIX = "/meet";
 
 async function readApiError(res: Response, fallback: string): Promise<string> {
   try {
@@ -38,44 +43,44 @@ async function readApiError(res: Response, fallback: string): Promise<string> {
   return fallback;
 }
 
-async function postVoiceJson<T>(
+async function postMeetJson<T>(
   action: "room" | "join" | "poll" | "send" | "leave" | "chat",
   body: object,
   opts?: MeetRequestOptions,
 ): Promise<T> {
-  const res = await wgwFetch(`/voice/${action}`, {
+  const res = await wgwFetch(`${MEET_API_PREFIX}/${action}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
     signal: opts?.signal,
   });
   if (!res.ok) {
-    const fallback = `POST /voice/${action} failed (${res.status})`;
+    const fallback = `POST ${MEET_API_PREFIX}/${action} failed (${res.status})`;
     throw new Error(await readApiError(res, fallback));
   }
   return (await res.json()) as T;
 }
 
-async function postVoiceJsonGuest<T>(
+async function postMeetJsonGuest<T>(
   action: "room" | "join" | "poll" | "send" | "leave" | "chat",
   body: object,
   opts?: MeetRequestOptions,
 ): Promise<T> {
   const base = wgwApiBaseUrl();
-  const res = await fetch(`${base}/voice/${action}`, {
+  const res = await fetch(`${base}${MEET_API_PREFIX}/${action}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
     signal: opts?.signal,
   });
   if (!res.ok) {
-    const fallback = `POST /voice/${action} failed (${res.status})`;
+    const fallback = `POST ${MEET_API_PREFIX}/${action} failed (${res.status})`;
     throw new Error(await readApiError(res, fallback));
   }
   return (await res.json()) as T;
 }
 
-export async function fetchVoiceLiveBootstrap(): Promise<MeetAppBootstrap> {
+export async function fetchMeetLiveBootstrap(): Promise<MeetAppBootstrap> {
   const [session, rtc] = await Promise.all([wgwFetchPrincipal(), fetchRtcSettings()]);
   return {
     session,
@@ -86,7 +91,7 @@ export async function fetchVoiceLiveBootstrap(): Promise<MeetAppBootstrap> {
   };
 }
 
-export async function fetchVoiceGuestBootstrap(): Promise<MeetAppBootstrap> {
+export async function fetchMeetGuestBootstrap(): Promise<MeetAppBootstrap> {
   const rtc = await fetchRtcSettings();
   return {
     session: {
@@ -103,37 +108,37 @@ export async function fetchVoiceGuestBootstrap(): Promise<MeetAppBootstrap> {
   };
 }
 
-export function createWgwVoiceOperations(): MeetAPIOperations {
+export function createWgwMeetOperations(): MeetAPIOperations {
   return {
     roomStatus: (input: { room: string }, opts?: MeetRequestOptions) =>
-      postVoiceJson<{ active: boolean }>("room", input, opts),
-    join: (input: WgwVoiceJoinRequest, opts?: MeetRequestOptions) =>
-      postVoiceJson<WgwVoiceJoinResponse>("join", input, opts),
-    poll: (input: WgwVoicePollRequest, opts?: MeetRequestOptions) =>
-      postVoiceJson<WgwVoicePollResponse>("poll", input, opts),
-    send: (input: WgwVoiceSendRequest, opts?: MeetRequestOptions) =>
-      postVoiceJson<WgwVoiceSendResponse>("send", input, opts),
-    leave: (input: WgwVoiceLeaveRequest, opts?: MeetRequestOptions) =>
-      postVoiceJson<WgwVoiceLeaveResponse>("leave", input, opts),
-    chat: (input: WgwVoiceChatRequest, opts?: MeetRequestOptions) =>
-      postVoiceJson<WgwVoiceChatResponse>("chat", input, opts),
+      postMeetJson<{ active: boolean }>("room", input, opts),
+    join: (input: WgwMeetJoinRequest, opts?: MeetRequestOptions) =>
+      postMeetJson<WgwMeetJoinResponse>("join", input, opts),
+    poll: (input: WgwMeetPollRequest, opts?: MeetRequestOptions) =>
+      postMeetJson<WgwMeetPollResponse>("poll", input, opts),
+    send: (input: WgwMeetSendRequest, opts?: MeetRequestOptions) =>
+      postMeetJson<WgwMeetSendResponse>("send", input, opts),
+    leave: (input: WgwMeetLeaveRequest, opts?: MeetRequestOptions) =>
+      postMeetJson<WgwMeetLeaveResponse>("leave", input, opts),
+    chat: (input: WgwMeetChatRequest, opts?: MeetRequestOptions) =>
+      postMeetJson<WgwMeetChatResponse>("chat", input, opts),
   };
 }
 
-export function createWgwVoiceGuestOperations(): MeetAPIOperations {
+export function createWgwMeetGuestOperations(): MeetAPIOperations {
   return {
     roomStatus: (input: { room: string }, opts?: MeetRequestOptions) =>
-      postVoiceJsonGuest<{ active: boolean }>("room", input, opts),
-    join: (input: WgwVoiceJoinRequest, opts?: MeetRequestOptions) =>
-      postVoiceJsonGuest<WgwVoiceJoinResponse>("join", input, opts),
-    poll: (input: WgwVoicePollRequest, opts?: MeetRequestOptions) =>
-      postVoiceJsonGuest<WgwVoicePollResponse>("poll", input, opts),
-    send: (input: WgwVoiceSendRequest, opts?: MeetRequestOptions) =>
-      postVoiceJsonGuest<WgwVoiceSendResponse>("send", input, opts),
-    leave: (input: WgwVoiceLeaveRequest, opts?: MeetRequestOptions) =>
-      postVoiceJsonGuest<WgwVoiceLeaveResponse>("leave", input, opts),
-    chat: (input: WgwVoiceChatRequest, opts?: MeetRequestOptions) =>
-      postVoiceJsonGuest<WgwVoiceChatResponse>("chat", input, opts),
+      postMeetJsonGuest<{ active: boolean }>("room", input, opts),
+    join: (input: WgwMeetJoinRequest, opts?: MeetRequestOptions) =>
+      postMeetJsonGuest<WgwMeetJoinResponse>("join", input, opts),
+    poll: (input: WgwMeetPollRequest, opts?: MeetRequestOptions) =>
+      postMeetJsonGuest<WgwMeetPollResponse>("poll", input, opts),
+    send: (input: WgwMeetSendRequest, opts?: MeetRequestOptions) =>
+      postMeetJsonGuest<WgwMeetSendResponse>("send", input, opts),
+    leave: (input: WgwMeetLeaveRequest, opts?: MeetRequestOptions) =>
+      postMeetJsonGuest<WgwMeetLeaveResponse>("leave", input, opts),
+    chat: (input: WgwMeetChatRequest, opts?: MeetRequestOptions) =>
+      postMeetJsonGuest<WgwMeetChatResponse>("chat", input, opts),
   };
 }
 

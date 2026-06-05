@@ -155,7 +155,7 @@ export function useMeetController({
 }: UseMeetControllerArgs) {
   const rtcDebugEnabledRef = useRef(isRtcDebugEnabled());
   const debugRtc = useCallback((event: string, payload: Record<string, unknown> = {}) => {
-    rtcLog({ channel: "voice", peerId: selfIdRef.current }, event, payload);
+    rtcLog({ channel: "meet", peerId: selfIdRef.current }, event, payload);
   }, []);
   const canModerateKnocks = Boolean(session.user.username?.trim() || session.user.email?.trim());
   const [status, setStatus] = useState<CallStatus>("idle");
@@ -650,7 +650,7 @@ export function useMeetController({
       peerId,
       sessionKey: meetRtc.getSessionKey() ?? undefined,
     });
-    const endpoint = "/api/v1/voice/leave";
+    const endpoint = "/api/v1/meet/leave";
     let sent = false;
     try {
       if (typeof navigator.sendBeacon === "function") {
