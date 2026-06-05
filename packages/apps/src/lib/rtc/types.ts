@@ -45,10 +45,8 @@ export const DEFAULT_RTC_POLL_INTERVALS: RtcPollIntervals = {
   steadyMs: 1200,
 };
 
-export const COLLAB_RTC_POLL_INTERVALS: RtcPollIntervals = {
-  connectingMs: 800,
-  steadyMs: 2000,
-};
+/** @deprecated Use `DEFAULT_RTC_POLL_INTERVALS` — all channels share the same poll cadence. */
+export const COLLAB_RTC_POLL_INTERVALS: RtcPollIntervals = DEFAULT_RTC_POLL_INTERVALS;
 
 export const RTC_SIGNAL_ORDER: Record<string, number> = {
   offer: 0,
