@@ -37,8 +37,8 @@ final readonly class RtcSignalingPolicy
     public static function meet(): self
     {
         return new self(
-            peersTable: 'voice_peers',
-            messagesTable: 'voice_messages',
+            peersTable: 'meet_peers',
+            messagesTable: 'meet_messages',
             peerTimeoutSeconds: 600,
             messageRetentionSeconds: 600,
             maxMessagesPerRoom: null,

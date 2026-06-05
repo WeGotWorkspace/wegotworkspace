@@ -6,7 +6,7 @@ namespace App\Services\Installer;
 
 final class InstallerSchemaMigrationRunner
 {
-    public const CURRENT_SCHEMA_VERSION = 7;
+    public const CURRENT_SCHEMA_VERSION = 9;
 
     public static function migrate(\PDO $pdo): int
     {
@@ -86,6 +86,15 @@ final class InstallerSchemaMigrationRunner
 
         if ($current < 7) {
             self::migrateV7CreateSearchIndexTables($pdo);
+            $current = 7;
+        }
+
+        if ($current < 8) {
+            self::migrateV8RenameVoiceToMeet($pdo);
+        }
+
+        if ($current < 9) {
+            self::migrateV9RenameMeetRtcSettingsToRtc($pdo);
         }
     }
 
@@ -125,17 +134,17 @@ final class InstallerSchemaMigrationRunner
         $driver = (string) $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
         if ($driver === 'mysql') {
             $pdo->exec(
-                'CREATE TABLE IF NOT EXISTS voice_peers (
+                'CREATE TABLE IF NOT EXISTS meet_peers (
                     room VARCHAR(64) NOT NULL,
                     peer_id VARCHAR(64) NOT NULL,
                     name VARCHAR(64) NOT NULL DEFAULT \'\',
                     seen_at BIGINT NOT NULL,
                     PRIMARY KEY(room, peer_id),
-                    KEY idx_voice_peers_room (room)
+                    KEY idx_meet_peers_room (room)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
             );
             $pdo->exec(
-                'CREATE TABLE IF NOT EXISTS voice_messages (
+                'CREATE TABLE IF NOT EXISTS meet_messages (
                     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
                     room VARCHAR(64) NOT NULL,
                     from_peer VARCHAR(64) NOT NULL,
@@ -144,12 +153,12 @@ final class InstallerSchemaMigrationRunner
                     payload MEDIUMTEXT NOT NULL,
                     created_at BIGINT NOT NULL,
                     PRIMARY KEY(id),
-                    KEY idx_voice_msg_target (room, to_peer, id)
+                    KEY idx_meet_msg_target (room, to_peer, id)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
             );
         } else {
             $pdo->exec(
-                'CREATE TABLE IF NOT EXISTS voice_peers (
+                'CREATE TABLE IF NOT EXISTS meet_peers (
                     room TEXT NOT NULL,
                     peer_id TEXT NOT NULL,
                     name TEXT NOT NULL DEFAULT \'\',
@@ -158,7 +167,7 @@ final class InstallerSchemaMigrationRunner
                 )'
             );
             $pdo->exec(
-                'CREATE TABLE IF NOT EXISTS voice_messages (
+                'CREATE TABLE IF NOT EXISTS meet_messages (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     room TEXT NOT NULL,
                     from_peer TEXT NOT NULL,
@@ -168,8 +177,8 @@ final class InstallerSchemaMigrationRunner
                     created_at INTEGER NOT NULL
                 )'
             );
-            $pdo->exec('CREATE INDEX IF NOT EXISTS idx_voice_msg_target ON voice_messages(room, to_peer, id)');
-            $pdo->exec('CREATE INDEX IF NOT EXISTS idx_voice_peers_room ON voice_peers(room)');
+            $pdo->exec('CREATE INDEX IF NOT EXISTS idx_meet_msg_target ON meet_messages(room, to_peer, id)');
+            $pdo->exec('CREATE INDEX IF NOT EXISTS idx_meet_peers_room ON meet_peers(room)');
         }
 
         $stmt = $pdo->prepare('INSERT INTO app_migrations (version, name, applied_at) VALUES (?, ?, ?)');
@@ -178,15 +187,16 @@ final class InstallerSchemaMigrationRunner
 
     private static function migrateV3AddVoicePeerOwner(\PDO $pdo): void
     {
+        $peerTable = self::resolveMeetPeerTable($pdo);
         $driver = (string) $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
         try {
             if ($driver === 'mysql') {
                 $pdo->exec(
-                    'ALTER TABLE voice_peers
-                     ADD COLUMN owner_user VARCHAR(190) NOT NULL DEFAULT \'\' AFTER name'
+                    "ALTER TABLE {$peerTable}
+                     ADD COLUMN owner_user VARCHAR(190) NOT NULL DEFAULT '' AFTER name"
                 );
             } else {
-                $pdo->exec('ALTER TABLE voice_peers ADD COLUMN owner_user TEXT NOT NULL DEFAULT \'\'');
+                $pdo->exec("ALTER TABLE {$peerTable} ADD COLUMN owner_user TEXT NOT NULL DEFAULT ''");
             }
         } catch (\PDOException $e) {
             $msg = strtolower($e->getMessage());
@@ -427,5 +437,95 @@ final class InstallerSchemaMigrationRunner
 
         $stmt = $pdo->prepare('INSERT INTO app_migrations (version, name, applied_at) VALUES (?, ?, ?)');
         $stmt->execute([7, 'create_unified_search_tables', date('c')]);
+    }
+
+    private static function migrateV8RenameVoiceToMeet(\PDO $pdo): void
+    {
+        $driver = (string) $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
+
+        if (self::tableExists($pdo, 'voice_peers') && ! self::tableExists($pdo, 'meet_peers')) {
+            if ($driver === 'mysql') {
+                if (self::tableExists($pdo, 'voice_messages')) {
+                    $pdo->exec('RENAME TABLE voice_peers TO meet_peers, voice_messages TO meet_messages');
+                } else {
+                    $pdo->exec('RENAME TABLE voice_peers TO meet_peers');
+                }
+            } else {
+                $pdo->exec('ALTER TABLE voice_peers RENAME TO meet_peers');
+                if (self::tableExists($pdo, 'voice_messages')) {
+                    $pdo->exec('ALTER TABLE voice_messages RENAME TO meet_messages');
+                }
+            }
+        }
+
+        $settingRenames = [
+            'voice_stun_url' => 'meet_stun_url',
+            'voice_turn_url' => 'meet_turn_url',
+            'voice_turn_username' => 'meet_turn_username',
+            'voice_turn_credential' => 'meet_turn_credential',
+        ];
+        if (self::tableExists($pdo, 'app_settings')) {
+            foreach ($settingRenames as $from => $to) {
+                $stmt = $pdo->prepare('UPDATE app_settings SET name = ? WHERE name = ?');
+                $stmt->execute([$to, $from]);
+            }
+        }
+
+        $stmt = $pdo->prepare('INSERT INTO app_migrations (version, name, applied_at) VALUES (?, ?, ?)');
+        $stmt->execute([8, 'rename_voice_to_meet', date('c')]);
+    }
+
+    private static function migrateV9RenameMeetRtcSettingsToRtc(\PDO $pdo): void
+    {
+        if (! self::tableExists($pdo, 'app_settings')) {
+            $stmt = $pdo->prepare('INSERT INTO app_migrations (version, name, applied_at) VALUES (?, ?, ?)');
+            $stmt->execute([9, 'rename_meet_rtc_settings_to_rtc', date('c')]);
+
+            return;
+        }
+
+        $settingRenames = [
+            'meet_stun_url' => 'rtc_stun_url',
+            'meet_turn_url' => 'rtc_turn_url',
+            'meet_turn_username' => 'rtc_turn_username',
+            'meet_turn_credential' => 'rtc_turn_credential',
+        ];
+        foreach ($settingRenames as $from => $to) {
+            $stmt = $pdo->prepare('UPDATE app_settings SET name = ? WHERE name = ?');
+            $stmt->execute([$to, $from]);
+        }
+
+        $stmt = $pdo->prepare('INSERT INTO app_migrations (version, name, applied_at) VALUES (?, ?, ?)');
+        $stmt->execute([9, 'rename_meet_rtc_settings_to_rtc', date('c')]);
+    }
+
+    private static function resolveMeetPeerTable(\PDO $pdo): string
+    {
+        if (self::tableExists($pdo, 'meet_peers')) {
+            return 'meet_peers';
+        }
+        if (self::tableExists($pdo, 'voice_peers')) {
+            return 'voice_peers';
+        }
+
+        throw new \RuntimeException('Missing meet/voice peers table for schema migration v3.');
+    }
+
+    private static function tableExists(\PDO $pdo, string $table): bool
+    {
+        $driver = (string) $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'mysql') {
+            $stmt = $pdo->prepare(
+                'SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ? LIMIT 1'
+            );
+            $stmt->execute([$table]);
+
+            return $stmt->fetchColumn() !== false;
+        }
+
+        $stmt = $pdo->prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ? LIMIT 1");
+        $stmt->execute([$table]);
+
+        return $stmt->fetchColumn() !== false;
     }
 }
