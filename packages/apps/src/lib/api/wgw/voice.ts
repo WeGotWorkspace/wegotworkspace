@@ -1,5 +1,5 @@
-import { wgwApiBaseUrl, wgwFetch, wgwFetchPrincipal, wgwReadJson } from "@/lib/api/wgw/http";
-import { isRtcDebugEnabled } from "@/lib/rtc/debug";
+import { wgwApiBaseUrl, wgwFetch, wgwFetchPrincipal } from "@/lib/api/wgw/http";
+import { fetchRtcSettings } from "@/lib/api/wgw/rtc";
 import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
 import type {
   WgwVoiceChatRequest,
@@ -17,25 +17,11 @@ import type {
   MeetAPIOperations,
   MeetAppBootstrap,
   MeetRequestOptions,
-  MeetRtcSettings,
 } from "@/meet-core/src/meet-types";
-
-const DEFAULT_RTC_SETTINGS: MeetRtcSettings = {
-  stunUrls: "",
-  turnUrls: "",
-  turnUsername: "",
-  turnPassword: "",
-  forceRelay: false,
-};
-
-function logMeetRtcDebug(event: string, payload: Record<string, unknown>): void {
-  if (!isRtcDebugEnabled()) return;
-  console.info(`[meet][rtc] ${event}`, payload);
-}
 
 async function readApiError(res: Response, fallback: string): Promise<string> {
   try {
-    const payload = (await wgwReadJson(res)) as { error?: string; message?: string };
+    const payload = (await res.json()) as { error?: string; message?: string };
     const message = payload.error ?? payload.message;
     if (typeof message === "string" && message.trim() !== "") {
       return message;
@@ -67,7 +53,7 @@ async function postVoiceJson<T>(
     const fallback = `POST /voice/${action} failed (${res.status})`;
     throw new Error(await readApiError(res, fallback));
   }
-  return (await wgwReadJson(res)) as T;
+  return (await res.json()) as T;
 }
 
 async function postVoiceJsonGuest<T>(
@@ -86,67 +72,7 @@ async function postVoiceJsonGuest<T>(
     const fallback = `POST /voice/${action} failed (${res.status})`;
     throw new Error(await readApiError(res, fallback));
   }
-  return (await wgwReadJson(res)) as T;
-}
-
-async function fetchRtcSettings(): Promise<MeetRtcSettings> {
-  const base = wgwApiBaseUrl();
-  const requestUrl = `${base}/voice/rtc`;
-  logMeetRtcDebug("rtc-settings-request", { requestUrl });
-  const res = await fetch(requestUrl, {
-    cache: "no-store",
-  });
-  if (!res.ok) {
-    logMeetRtcDebug("rtc-settings-response", {
-      requestUrl,
-      ok: false,
-      status: res.status,
-    });
-    return DEFAULT_RTC_SETTINGS;
-  }
-  try {
-    const payload = (await wgwReadJson(res)) as {
-      voice?: Partial<MeetRtcSettings>;
-      stunUrls?: string;
-      turnUrls?: string;
-      turnUsername?: string;
-      turnPassword?: string;
-      forceRelay?: boolean;
-    };
-    const voice = payload.voice ?? payload;
-    const settings: MeetRtcSettings = {
-      stunUrls: typeof voice.stunUrls === "string" ? voice.stunUrls : "",
-      turnUrls: typeof voice.turnUrls === "string" ? voice.turnUrls : "",
-      turnUsername: typeof voice.turnUsername === "string" ? voice.turnUsername : "",
-      turnPassword: typeof voice.turnPassword === "string" ? voice.turnPassword : "",
-      forceRelay: !!voice.forceRelay,
-    };
-    logMeetRtcDebug("rtc-settings-response", {
-      requestUrl,
-      ok: true,
-      status: res.status,
-      stunCount: settings.stunUrls
-        .split(/[\n,\r]+/)
-        .map((value) => value.trim())
-        .filter((value) => value !== "").length,
-      turnCount: settings.turnUrls
-        .split(/[\n,\r]+/)
-        .map((value) => value.trim())
-        .filter((value) => value !== "").length,
-      forceRelay: settings.forceRelay,
-      turnUsernameConfigured: settings.turnUsername !== "",
-      turnPasswordConfigured: settings.turnPassword !== "",
-    });
-    return settings;
-  } catch {
-    logMeetRtcDebug("rtc-settings-response", {
-      requestUrl,
-      ok: true,
-      status: res.status,
-      parseError: true,
-    });
-    return DEFAULT_RTC_SETTINGS;
-  }
+  return (await res.json()) as T;
 }
 
 export async function fetchVoiceLiveBootstrap(): Promise<MeetAppBootstrap> {
@@ -161,6 +87,7 @@ export async function fetchVoiceLiveBootstrap(): Promise<MeetAppBootstrap> {
 }
 
 export async function fetchVoiceGuestBootstrap(): Promise<MeetAppBootstrap> {
+  const rtc = await fetchRtcSettings();
   return {
     session: {
       user: {
@@ -171,7 +98,7 @@ export async function fetchVoiceGuestBootstrap(): Promise<MeetAppBootstrap> {
     },
     data: {
       defaultDisplayName: "Guest",
-      rtc: DEFAULT_RTC_SETTINGS,
+      rtc,
     },
   };
 }
@@ -209,3 +136,5 @@ export function createWgwVoiceGuestOperations(): MeetAPIOperations {
       postVoiceJsonGuest<WgwVoiceChatResponse>("chat", input, opts),
   };
 }
+
+export { fetchRtcSettings } from "@/lib/api/wgw/rtc";
