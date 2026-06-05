@@ -15,8 +15,27 @@ final class HttpSignalingStoreTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        Schema::connection('wgw')->dropIfExists('meet_messages');
+        Schema::connection('wgw')->dropIfExists('meet_peers');
         Schema::connection('wgw')->dropIfExists('collab_messages');
         Schema::connection('wgw')->dropIfExists('collab_peers');
+        Schema::connection('wgw')->create('meet_peers', function ($table): void {
+            $table->string('room');
+            $table->string('peer_id');
+            $table->string('name');
+            $table->string('owner_user')->default('');
+            $table->integer('seen_at');
+            $table->unique(['room', 'peer_id']);
+        });
+        Schema::connection('wgw')->create('meet_messages', function ($table): void {
+            $table->increments('id');
+            $table->string('room');
+            $table->string('from_peer');
+            $table->string('to_peer');
+            $table->string('type');
+            $table->text('payload');
+            $table->integer('created_at');
+        });
         Schema::connection('wgw')->create('collab_peers', function ($table): void {
             $table->string('room');
             $table->string('peer_id');
@@ -64,6 +83,8 @@ final class HttpSignalingStoreTest extends TestCase
 
     protected function tearDown(): void
     {
+        Schema::connection('wgw')->dropIfExists('meet_messages');
+        Schema::connection('wgw')->dropIfExists('meet_peers');
         Schema::connection('wgw')->dropIfExists('collab_messages');
         Schema::connection('wgw')->dropIfExists('collab_peers');
         parent::tearDown();
