@@ -32,7 +32,7 @@ export type AdminMailSettings = {
   smtpSecurity: string;
 };
 
-export type AdminVoiceSettings = {
+export type AdminMeetSettings = {
   stunUrls: string;
   turnUrls: string;
   turnUsername: string;
@@ -148,7 +148,7 @@ export type AdminUIData = {
   users: AdminUser[];
   groups: AdminGroup[];
   mail: AdminMailSettings;
-  voice: AdminVoiceSettings;
+  meet: AdminMeetSettings;
   apps: AdminAppsSettings;
   webdav: AdminWebdavSettings;
   plugins: {

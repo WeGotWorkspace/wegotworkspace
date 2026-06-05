@@ -10,7 +10,7 @@ export type AdminStoryDataOverride = {
   users?: AdminUIData["users"];
   groups?: AdminUIData["groups"];
   mail?: Partial<AdminUIData["mail"]>;
-  voice?: Partial<AdminUIData["voice"]>;
+  meet?: Partial<AdminUIData["meet"]>;
   apps?: Partial<AdminUIData["apps"]>;
   webdav?: Partial<AdminUIData["webdav"]>;
   plugins?: AdminUIData["plugins"];
@@ -38,7 +38,7 @@ function mergeAdminStoryData(base: AdminUIData, override?: AdminStoryDataOverrid
   return {
     ...base,
     ...override,
-    voice: { ...base.voice, ...override.voice },
+    meet: { ...base.meet, ...override.meet },
     mail: { ...base.mail, ...override.mail },
     apps: { ...base.apps, ...override.apps },
     webdav: { ...base.webdav, ...override.webdav },

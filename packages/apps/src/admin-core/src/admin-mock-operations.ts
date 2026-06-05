@@ -64,13 +64,13 @@ function applySettingsMap(
   if (smtpSecurity !== undefined) data.mail.smtpSecurity = smtpSecurity;
 
   const stunUrls = readString("voice_stun_url");
-  if (stunUrls !== undefined) data.voice.stunUrls = stunUrls;
+  if (stunUrls !== undefined) data.meet.stunUrls = stunUrls;
   const turnUrls = readString("voice_turn_url");
-  if (turnUrls !== undefined) data.voice.turnUrls = turnUrls;
+  if (turnUrls !== undefined) data.meet.turnUrls = turnUrls;
   const turnUsername = readString("voice_turn_username");
-  if (turnUsername !== undefined) data.voice.turnUsername = turnUsername;
+  if (turnUsername !== undefined) data.meet.turnUsername = turnUsername;
   const turnPassword = readString("voice_turn_credential");
-  if (turnPassword !== undefined) data.voice.turnPassword = turnPassword;
+  if (turnPassword !== undefined) data.meet.turnPassword = turnPassword;
 
   const calendars = readBool("calendar_enabled");
   if (calendars !== undefined) data.apps.calendars = calendars;

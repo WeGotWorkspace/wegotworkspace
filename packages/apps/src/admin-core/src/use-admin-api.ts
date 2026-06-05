@@ -21,7 +21,7 @@ export function useAdminAPI(source?: AdminApiSource) {
         smtpPort: 0,
         smtpSecurity: "",
       },
-      voice: {
+      meet: {
         stunUrls: "",
         turnUrls: "",
         turnUsername: "",
