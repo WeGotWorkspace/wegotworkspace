@@ -146,7 +146,7 @@ export function mapWgwAdminStateToUI(
       smtpPort: state.mail.smtpPort,
       smtpSecurity: state.mail.smtpSecurity,
     },
-    meet: {
+    rtc: {
       stunUrls: state.rtc.stunUrls,
       turnUrls: state.rtc.turnUrls,
       turnUsername: state.rtc.turnUsername,
