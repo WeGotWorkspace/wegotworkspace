@@ -1,0 +1,40 @@
+# `@/lib/rtc` — WebRTC platform kernel
+
+Shared browser RTC stack for **meet**, **docs**, and future **chat / sheet / slides** apps.
+
+## Layers
+
+| Module                       | Role                                        |
+| ---------------------------- | ------------------------------------------- |
+| `config.ts`                  | ICE / TURN → `RTCConfiguration`             |
+| `signaling/http-client.ts`   | HTTP join / poll / send / leave             |
+| `session/peer-mesh.ts`       | **`RtcPeerMesh`** — one ICE engine per room |
+| `session/bindings.ts`        | Media or data-channel attachment            |
+| `telemetry/selected-pair.ts` | Logs selected candidate pair on connect     |
+| `hooks/use-rtc-session.ts`   | React lifecycle wrapper                     |
+
+## Per-app pattern
+
+- `use-*-rtc.ts` — configures `RtcPeerMesh` (channel, bindings, poll intervals)
+- `use-*-controller.tsx` — product UX only; **no** `RTCPeerConnection`
+
+## Debug
+
+Add `?rtcDebug=1` to the URL. Logs use prefix:
+
+`[rtc][channel][peerId][event]`
+
+Manual network checks: [`docs/testing/rtc-network-matrix.md`](../../../../docs/testing/rtc-network-matrix.md)
+
+## Initiator rules
+
+| Channel         | Rule                       |
+| --------------- | -------------------------- |
+| `voice` (meet)  | Higher peer id sends offer |
+| `collab` (docs) | Lower peer id sends offer  |
+
+Set via `initiatorRule: "higherId" | "lowerId"` on `RtcPeerMesh`.
+
+## Relay fallback
+
+On `connectionState === "failed"`, initiator **recreates** the peer connection in relay-only mode and sends a fresh offer (not `setConfiguration` + `restartIce`).
