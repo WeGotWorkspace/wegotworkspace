@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Services\Voice;
+namespace App\Services\Meet;
 
 use App\Services\Rtc\RtcSettingsService;
 use App\Services\Rtc\Signaling\HttpSignalingStore;
@@ -11,7 +11,7 @@ use App\Services\Rtc\Signaling\RtcSignalingPolicy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-final class VoiceSignalingService
+final class MeetSignalingService
 {
     private const KNOCK_NAME_PREFIX = '__wgw_knock__:';
 
@@ -20,7 +20,7 @@ final class VoiceSignalingService
     private readonly HttpSignalingStore $store;
 
     public function __construct(
-        private VoiceActorResolver $actors,
+        private MeetActorResolver $actors,
         private RtcSettingsService $rtcSettingsService,
     ) {
         $this->store = new HttpSignalingStore(RtcSignalingPolicy::meet());
@@ -250,7 +250,7 @@ final class VoiceSignalingService
         try {
             return $action();
         } catch (RtcSignalingException $exception) {
-            throw new VoiceResponseException($exception->status, $exception->payload);
+            throw new MeetResponseException($exception->status, $exception->payload);
         }
     }
 
@@ -263,6 +263,6 @@ final class VoiceSignalingService
         if ($message !== null) {
             $payload['message'] = $message;
         }
-        throw new VoiceResponseException($status, $payload);
+        throw new MeetResponseException($status, $payload);
     }
 }

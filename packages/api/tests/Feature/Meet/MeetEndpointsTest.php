@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature\Voice;
+namespace Tests\Feature\Meet;
 
 use App\Models\AppSetting;
 use App\Settings\SettingKeys;
@@ -11,7 +11,7 @@ use Tests\Support\AuthTestKeys;
 use Tests\Support\SqliteWgwSchema;
 use Tests\TestCase;
 
-final class VoiceEndpointsTest extends TestCase
+final class MeetEndpointsTest extends TestCase
 {
     protected function setUp(): void
     {
@@ -37,7 +37,7 @@ final class VoiceEndpointsTest extends TestCase
         ]);
 
         SqliteWgwSchema::applyCoreTables();
-        SqliteWgwSchema::applyVoiceTables();
+        SqliteWgwSchema::applyMeetTables();
     }
 
     public function test_room_status_empty_room(): void
@@ -147,22 +147,22 @@ final class VoiceEndpointsTest extends TestCase
         ])->assertOk();
     }
 
-    public function test_rtc_settings_endpoint_exposes_voice_ice_values(): void
+    public function test_rtc_settings_endpoint_exposes_meet_ice_values(): void
     {
-        AppSetting::setValue(SettingKeys::VOICE_STUN_URL, "one.example.org:3478, \nstun:two.example.org");
-        AppSetting::setValue(SettingKeys::VOICE_TURN_URL, "turn:one.example.org\nturn-two.example.org:3478?transport=udp");
-        AppSetting::setValue(SettingKeys::VOICE_TURN_USERNAME, 'voice-user');
-        AppSetting::setValue(SettingKeys::VOICE_TURN_CREDENTIAL, 'voice-pass');
+        AppSetting::setValue(SettingKeys::RTC_STUN_URL, "one.example.org:3478, \nstun:two.example.org");
+        AppSetting::setValue(SettingKeys::RTC_TURN_URL, "turn:one.example.org\nturn-two.example.org:3478?transport=udp");
+        AppSetting::setValue(SettingKeys::RTC_TURN_USERNAME, 'rtc-user');
+        AppSetting::setValue(SettingKeys::RTC_TURN_CREDENTIAL, 'rtc-pass');
 
         $response = $this->getJson('/api/v1/meet/rtc');
 
         $response->assertOk();
         $response->assertJson([
-            'meet' => [
+            'rtc' => [
                 'stunUrls' => 'stun:one.example.org:3478, stun:two.example.org',
                 'turnUrls' => 'turn:one.example.org, turn:turn-two.example.org:3478?transport=udp',
-                'turnUsername' => 'voice-user',
-                'turnPassword' => 'voice-pass',
+                'turnUsername' => 'rtc-user',
+                'turnPassword' => 'rtc-pass',
             ],
         ]);
         $response->assertJsonMissing(['forceRelay' => true]);
