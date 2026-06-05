@@ -17,12 +17,14 @@ import {
 
 export type { InitiatorRule };
 
+export type CreateRtcSessionSignalingOptions = Omit<CreateRtcSignalingClientOptions, "channel">;
+
 export type CreateRtcSessionOptions = {
   channel: SignalingChannel;
   room: string;
   rtcSettings: RtcSettings;
   binding?: RtcSessionBinding;
-  signaling?: CreateRtcSignalingClientOptions;
+  signaling?: CreateRtcSessionSignalingOptions;
   pollIntervals?: RtcPollIntervals;
   iceCandidatePoolSize?: number;
   initiatorRule?: InitiatorRule;
