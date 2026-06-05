@@ -72,7 +72,7 @@ final class HomeEndpointsTest extends TestCase
                     'filesEnabled',
                     'drive',
                     'mail',
-                    'voice',
+                    'meet',
                     'notes',
                 ],
             ]);
