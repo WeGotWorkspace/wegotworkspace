@@ -34,7 +34,7 @@ final readonly class RtcSignalingPolicy
         public bool $requireLivePeersOnSend,
     ) {}
 
-    public static function voice(): self
+    public static function meet(): self
     {
         return new self(
             peersTable: 'voice_peers',

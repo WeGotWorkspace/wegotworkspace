@@ -42,7 +42,7 @@ final class VoiceEndpointsTest extends TestCase
 
     public function test_room_status_empty_room(): void
     {
-        $response = $this->postJson('/api/v1/voice/room', [
+        $response = $this->postJson('/api/v1/meet/room', [
             'room' => 'daily-room',
         ]);
 
@@ -52,7 +52,7 @@ final class VoiceEndpointsTest extends TestCase
 
     public function test_guest_join_returns_session_key_and_peers(): void
     {
-        $response = $this->postJson('/api/v1/voice/join', [
+        $response = $this->postJson('/api/v1/meet/join', [
             'room' => 'daily-room',
             'peerId' => 'peer-alpha',
             'name' => 'Guest One',
@@ -66,7 +66,7 @@ final class VoiceEndpointsTest extends TestCase
 
     public function test_poll_requires_session_or_auth(): void
     {
-        $response = $this->postJson('/api/v1/voice/poll', [
+        $response = $this->postJson('/api/v1/meet/poll', [
             'room' => 'daily-room',
             'peerId' => 'peer-alpha',
         ]);
@@ -77,7 +77,7 @@ final class VoiceEndpointsTest extends TestCase
 
     public function test_guest_join_poll_leave_flow(): void
     {
-        $join = $this->postJson('/api/v1/voice/join', [
+        $join = $this->postJson('/api/v1/meet/join', [
             'room' => 'daily-room',
             'peerId' => 'peer-alpha',
             'name' => 'Guest One',
@@ -85,7 +85,7 @@ final class VoiceEndpointsTest extends TestCase
         $join->assertOk();
         $sessionKey = (string) $join->json('sessionKey');
 
-        $poll = $this->postJson('/api/v1/voice/poll', [
+        $poll = $this->postJson('/api/v1/meet/poll', [
             'room' => 'daily-room',
             'peerId' => 'peer-alpha',
             'sessionKey' => $sessionKey,
@@ -93,7 +93,7 @@ final class VoiceEndpointsTest extends TestCase
         $poll->assertOk();
         $poll->assertJsonStructure(['peers', 'messages']);
 
-        $leave = $this->postJson('/api/v1/voice/leave', [
+        $leave = $this->postJson('/api/v1/meet/leave', [
             'room' => 'daily-room',
             'peerId' => 'peer-alpha',
             'sessionKey' => $sessionKey,
@@ -104,20 +104,20 @@ final class VoiceEndpointsTest extends TestCase
 
     public function test_room_active_after_guest_join(): void
     {
-        $this->postJson('/api/v1/voice/join', [
+        $this->postJson('/api/v1/meet/join', [
             'room' => 'daily-room',
             'peerId' => 'peer-alpha',
             'name' => 'Guest One',
         ])->assertOk();
 
-        $room = $this->postJson('/api/v1/voice/room', ['room' => 'daily-room']);
+        $room = $this->postJson('/api/v1/meet/room', ['room' => 'daily-room']);
         $room->assertOk();
         $room->assertJson(['active' => true]);
     }
 
     public function test_guest_rejoin_reuses_session_key(): void
     {
-        $first = $this->postJson('/api/v1/voice/join', [
+        $first = $this->postJson('/api/v1/meet/join', [
             'room' => 'daily-room',
             'peerId' => 'peer-one',
             'name' => 'Guest',
@@ -125,13 +125,13 @@ final class VoiceEndpointsTest extends TestCase
         $first->assertOk();
         $sessionKey = (string) $first->json('sessionKey');
 
-        $this->postJson('/api/v1/voice/leave', [
+        $this->postJson('/api/v1/meet/leave', [
             'room' => 'daily-room',
             'peerId' => 'peer-one',
             'sessionKey' => $sessionKey,
         ])->assertOk();
 
-        $second = $this->postJson('/api/v1/voice/join', [
+        $second = $this->postJson('/api/v1/meet/join', [
             'room' => 'daily-room',
             'peerId' => 'peer-two',
             'name' => 'Guest',
@@ -140,7 +140,7 @@ final class VoiceEndpointsTest extends TestCase
         $second->assertOk();
         $this->assertSame($sessionKey, $second->json('sessionKey'));
 
-        $this->postJson('/api/v1/voice/poll', [
+        $this->postJson('/api/v1/meet/poll', [
             'room' => 'daily-room',
             'peerId' => 'peer-two',
             'sessionKey' => $sessionKey,
@@ -154,11 +154,11 @@ final class VoiceEndpointsTest extends TestCase
         AppSetting::setValue(SettingKeys::VOICE_TURN_USERNAME, 'voice-user');
         AppSetting::setValue(SettingKeys::VOICE_TURN_CREDENTIAL, 'voice-pass');
 
-        $response = $this->getJson('/api/v1/voice/rtc');
+        $response = $this->getJson('/api/v1/meet/rtc');
 
         $response->assertOk();
         $response->assertJson([
-            'voice' => [
+            'meet' => [
                 'stunUrls' => 'stun:one.example.org:3478, stun:two.example.org',
                 'turnUrls' => 'turn:one.example.org, turn:turn-two.example.org:3478?transport=udp',
                 'turnUsername' => 'voice-user',

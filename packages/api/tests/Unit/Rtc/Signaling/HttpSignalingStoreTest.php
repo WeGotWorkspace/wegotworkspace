@@ -54,7 +54,7 @@ final class HttpSignalingStoreTest extends TestCase
 
     public function test_missing_peer_returns_unknown_peer_for_recovery(): void
     {
-        $store = new HttpSignalingStore(RtcSignalingPolicy::voice());
+        $store = new HttpSignalingStore(RtcSignalingPolicy::meet());
 
         $this->expectException(RtcSignalingException::class);
         $this->expectExceptionMessage('unknown_peer');

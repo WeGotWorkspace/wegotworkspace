@@ -19,7 +19,7 @@ final class VoiceController
 
     public function rtc(): JsonResponse
     {
-        return response()->json(['voice' => $this->voice->rtcSettings()]);
+        return response()->json(['meet' => $this->voice->rtcSettings()]);
     }
 
     public function join(Request $request): JsonResponse
