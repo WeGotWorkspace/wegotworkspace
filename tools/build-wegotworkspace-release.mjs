@@ -33,7 +33,7 @@ const appReleaseEntries = [
   "packages/apps/notes/dist",
   "packages/apps/shell/dist",
   "packages/apps/settings/dist",
-  "packages/apps/voice/dist",
+  "packages/apps/meet/dist",
 ];
 const repoReleaseEntries = ["packages/api"];
 

@@ -27,7 +27,7 @@ const modules = [
   { name: "mail", title: "Mail - WeGotWorkspace" },
   { name: "notes", title: "Notes - WeGotWorkspace" },
   { name: "settings", title: "Settings - WeGotWorkspace" },
-  { name: "voice", title: "Meet - WeGotWorkspace" },
+  { name: "meet", title: "Meet - WeGotWorkspace" },
 ];
 
 const RUNTIME_FONT_PRELOADS = [
