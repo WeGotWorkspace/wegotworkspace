@@ -44,7 +44,7 @@ export type CreateRtcSessionOptions = {
 
 const CHANNEL_INITIATOR: Partial<Record<SignalingChannel, InitiatorRule>> = {
   collab: "lowerId",
-  voice: "higherId",
+  meet: "higherId",
 };
 
 /** Configure `RtcPeerMesh` + `HttpSignalingClient` for a signaling channel. */
