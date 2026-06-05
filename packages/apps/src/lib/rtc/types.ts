@@ -1,4 +1,9 @@
-export type SignalingChannel = "voice" | "collab" | "chat" | "sheet" | "slides";
+export type SignalingChannel = "meet" | "collab" | "chat" | "sheet" | "slides";
+
+/** OpenAPI HTTP path segment for a signaling channel. */
+export function signalingApiSegment(channel: SignalingChannel): string {
+  return channel;
+}
 
 export type IceMode = "direct" | "relay";
 

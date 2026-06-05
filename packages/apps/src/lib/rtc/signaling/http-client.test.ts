@@ -35,13 +35,13 @@ describe("HttpSignalingClient", () => {
     expect(fetchImpl).toHaveBeenCalledTimes(2);
   });
 
-  it("includes session key on voice guest sends", async () => {
+  it("includes session key on meet guest sends", async () => {
     const fetchImpl = vi.fn<HttpSignalingFetch>(
       async () => new Response(JSON.stringify({ ok: true }), { status: 200 }),
     );
     const client = new HttpSignalingClient({
-      channel: "voice",
-      apiBase: "/api/v1/voice",
+      channel: "meet",
+      apiBase: "/api/v1/meet",
       fetchImpl,
       getAuth: () => ({ sessionKey: "guest-key" }),
     });

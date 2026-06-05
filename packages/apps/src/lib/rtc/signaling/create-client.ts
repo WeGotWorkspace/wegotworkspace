@@ -5,6 +5,7 @@ import {
   type HttpSignalingFetch,
 } from "@/lib/rtc/signaling/http-client";
 import type { SignalingChannel } from "@/lib/rtc/types";
+import { signalingApiSegment } from "@/lib/rtc/types";
 
 export type RtcSignalingAuth = {
   bearerToken?: string;
@@ -21,7 +22,7 @@ export type CreateRtcSignalingClientOptions = {
 
 function channelApiBase(channel: SignalingChannel, apiBase?: string): string {
   if (apiBase) return apiBase.replace(/\/$/, "");
-  return `${wgwApiBaseUrl()}/${channel === "collab" ? "collab" : "voice"}`;
+  return `${wgwApiBaseUrl()}/${signalingApiSegment(channel)}`;
 }
 
 export function createWgwSignalingFetch(): HttpSignalingFetch {
@@ -36,7 +37,7 @@ const CHANNEL_DEFAULTS: Partial<
   Record<SignalingChannel, Pick<HttpSignalingClientOptions, "sendFromField">>
 > = {
   collab: { sendFromField: "peerId" },
-  voice: { sendFromField: "from" },
+  meet: { sendFromField: "from" },
 };
 
 /** Shared HTTP signaling client for meet, docs, and future RTC apps. */

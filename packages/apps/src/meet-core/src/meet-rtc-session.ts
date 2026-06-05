@@ -49,7 +49,7 @@ export class MeetRtcSession {
     });
 
     return createRtcSession({
-      channel: "voice",
+      channel: "meet",
       room,
       rtcSettings: this.options.rtcSettings,
       binding,
