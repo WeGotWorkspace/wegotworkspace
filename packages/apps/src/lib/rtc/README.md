@@ -24,6 +24,11 @@ Add `?rtcDebug=1` to the URL. Logs use prefix:
 
 `[rtc][channel][peerId][event]`
 
+Force TURN relay-only mode (dev/debug, not admin):
+
+- URL: `?rtcForceRelay=1`
+- Vite/Storybook: `VITE_WGW_RTC_FORCE_RELAY=1` in `.env.local`
+
 Manual network checks: [`docs/testing/rtc-network-matrix.md`](../../../../docs/testing/rtc-network-matrix.md)
 
 ## Initiator rules

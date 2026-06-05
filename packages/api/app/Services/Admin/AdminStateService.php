@@ -56,7 +56,7 @@ final class AdminStateService
     }
 
     /**
-     * @return array{stunUrls: string, turnUrls: string, turnUsername: string, turnPassword: string, forceRelay: bool}
+     * @return array{stunUrls: string, turnUrls: string, turnUsername: string, turnPassword: string}
      */
     private function voiceSettings(): array
     {
@@ -80,7 +80,6 @@ final class AdminStateService
             'turnUrls' => $normalizeUrls(AppSetting::getValue(SettingKeys::VOICE_TURN_URL, '')),
             'turnUsername' => trim((string) AppSetting::getValue(SettingKeys::VOICE_TURN_USERNAME, '')),
             'turnPassword' => trim((string) AppSetting::getValue(SettingKeys::VOICE_TURN_CREDENTIAL, '')),
-            'forceRelay' => (bool) AppSetting::getValue(SettingKeys::VOICE_FORCE_RELAY, false),
         ];
     }
 }

@@ -33,7 +33,3 @@ type Story = StoryObj<typeof AdminRealtimeCollaborationPane>;
 export const Default: Story = {
   render: () => <RealtimeCollaborationPaneHarness />,
 };
-
-export const ForceRelayEnabled: Story = {
-  render: () => <RealtimeCollaborationPaneHarness dataOverride={{ voice: { forceRelay: true } }} />,
-};

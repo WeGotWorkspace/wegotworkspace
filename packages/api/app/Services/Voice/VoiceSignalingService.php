@@ -22,7 +22,7 @@ final class VoiceSignalingService
     ) {}
 
     /**
-     * @return array{stunUrls: string, turnUrls: string, turnUsername: string, turnPassword: string, forceRelay: bool}
+     * @return array{stunUrls: string, turnUrls: string, turnUsername: string, turnPassword: string}
      */
     public function rtcSettings(): array
     {

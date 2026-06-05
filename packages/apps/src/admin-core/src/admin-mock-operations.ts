@@ -71,8 +71,6 @@ function applySettingsMap(
   if (turnUsername !== undefined) data.voice.turnUsername = turnUsername;
   const turnPassword = readString("voice_turn_credential");
   if (turnPassword !== undefined) data.voice.turnPassword = turnPassword;
-  const forceRelay = readBool("voice_force_relay");
-  if (forceRelay !== undefined) data.voice.forceRelay = forceRelay;
 
   const calendars = readBool("calendar_enabled");
   if (calendars !== undefined) data.apps.calendars = calendars;

@@ -1,19 +1,25 @@
 import { wgwApiBaseUrl, wgwReadJson } from "@/lib/api/wgw/http";
 import { isRtcDebugEnabled } from "@/lib/rtc/debug";
 import { rtcLog } from "@/lib/rtc/log";
+import { applyRtcDebugOverrides } from "@/lib/rtc/force-relay";
 import { DEFAULT_RTC_SETTINGS, type RtcSettings } from "@/lib/rtc/types";
 
 export type { RtcSettings };
 
-export function parseRtcSettingsPayload(payload: Record<string, unknown>): RtcSettings {
+export type RtcIceSettings = Omit<RtcSettings, "forceRelay">;
+
+export function parseRtcSettingsPayload(payload: Record<string, unknown>): RtcIceSettings {
   const voice = (payload.voice ?? payload) as Record<string, unknown>;
   return {
     stunUrls: typeof voice.stunUrls === "string" ? voice.stunUrls : "",
     turnUrls: typeof voice.turnUrls === "string" ? voice.turnUrls : "",
     turnUsername: typeof voice.turnUsername === "string" ? voice.turnUsername : "",
     turnPassword: typeof voice.turnPassword === "string" ? voice.turnPassword : "",
-    forceRelay: Boolean(voice.forceRelay),
   };
+}
+
+export function resolveRtcSettings(ice: RtcIceSettings): RtcSettings {
+  return applyRtcDebugOverrides({ ...DEFAULT_RTC_SETTINGS, ...ice, forceRelay: false });
 }
 
 export async function fetchRtcSettings(options?: {
@@ -31,11 +37,11 @@ export async function fetchRtcSettings(options?: {
   const res = await fetch(requestUrl, { cache: "no-store", headers });
   if (!res.ok) {
     rtcLog({ channel }, "rtc-settings-response", { requestUrl, ok: false, status: res.status });
-    return DEFAULT_RTC_SETTINGS;
+    return resolveRtcSettings(DEFAULT_RTC_SETTINGS);
   }
   try {
     const payload = (await wgwReadJson(res)) as Record<string, unknown>;
-    const settings = parseRtcSettingsPayload(payload);
+    const settings = resolveRtcSettings(parseRtcSettingsPayload(payload));
     rtcLog({ channel }, "rtc-settings-response", {
       requestUrl,
       ok: true,
@@ -52,7 +58,7 @@ export async function fetchRtcSettings(options?: {
       status: res.status,
       parseError: true,
     });
-    return DEFAULT_RTC_SETTINGS;
+    return resolveRtcSettings(DEFAULT_RTC_SETTINGS);
   }
 }
 

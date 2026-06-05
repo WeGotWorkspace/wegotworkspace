@@ -37,7 +37,6 @@ export type AdminVoiceSettings = {
   turnUrls: string;
   turnUsername: string;
   turnPassword: string;
-  forceRelay: boolean;
 };
 
 export type AdminAppsSettings = {
