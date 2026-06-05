@@ -23,7 +23,7 @@ final class VoiceSignalingService
         private VoiceActorResolver $actors,
         private RtcSettingsService $rtcSettingsService,
     ) {
-        $this->store = new HttpSignalingStore(RtcSignalingPolicy::voice());
+        $this->store = new HttpSignalingStore(RtcSignalingPolicy::meet());
     }
 
     /**

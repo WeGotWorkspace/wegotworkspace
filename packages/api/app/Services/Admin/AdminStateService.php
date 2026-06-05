@@ -38,7 +38,7 @@ final class AdminStateService
                 'smtpPort' => (int) ($cfg[SettingKeys::MAIL_SMTP_PORT] ?? 587),
                 'smtpSecurity' => (string) ($cfg[SettingKeys::MAIL_SMTP_SECURITY] ?? 'starttls'),
             ],
-            'voice' => $this->voiceSettings(),
+            'meet' => $this->meetSettings(),
             'apps' => [
                 'calendars' => (bool) ($cfg[SettingKeys::CALENDAR_ENABLED] ?? true),
                 'contacts' => (bool) ($cfg[SettingKeys::CONTACTS_ENABLED] ?? true),
@@ -58,7 +58,7 @@ final class AdminStateService
     /**
      * @return array{stunUrls: string, turnUrls: string, turnUsername: string, turnPassword: string}
      */
-    private function voiceSettings(): array
+    private function meetSettings(): array
     {
         $normalizeUrls = static function (mixed $value): string {
             if (! is_string($value)) {

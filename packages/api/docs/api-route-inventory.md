@@ -72,11 +72,12 @@ Current REST surface and access levels.
 
 | Route | Access |
 |---|---|
-| `POST /api/v1/voice/join` | guest/user/admin |
-| `POST /api/v1/voice/poll` | guest/user/admin |
-| `POST /api/v1/voice/send` | guest/user/admin |
-| `POST /api/v1/voice/leave` | guest/user/admin |
-| `POST /api/v1/voice/chat` | guest/user/admin |
+| `POST /api/v1/meet/join` | guest/user/admin |
+| `POST /api/v1/meet/poll` | guest/user/admin |
+| `POST /api/v1/meet/send` | guest/user/admin |
+| `POST /api/v1/meet/leave` | guest/user/admin |
+| `POST /api/v1/meet/chat` | guest/user/admin |
+| `GET /api/v1/meet/rtc` | guest/user/admin |
 
 ## Notes + Plugins + Home + Installer + DAV
 

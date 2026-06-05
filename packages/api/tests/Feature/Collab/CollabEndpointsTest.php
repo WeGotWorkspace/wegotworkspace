@@ -80,11 +80,11 @@ final class CollabEndpointsTest extends TestCase
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/v1/collab/rtc')
             ->assertOk()
-            ->assertJsonPath('voice.stunUrls', 'stun:stun.example.test:3478, stuns:stun2.example.test:5349')
-            ->assertJsonPath('voice.turnUrls', 'turn:turn.example.test:3478?transport=udp')
-            ->assertJsonPath('voice.turnUsername', 'rtc-user')
-            ->assertJsonPath('voice.turnPassword', 'rtc-secret')
-            ->assertJsonMissingPath('voice.forceRelay');
+            ->assertJsonPath('meet.stunUrls', 'stun:stun.example.test:3478, stuns:stun2.example.test:5349')
+            ->assertJsonPath('meet.turnUrls', 'turn:turn.example.test:3478?transport=udp')
+            ->assertJsonPath('meet.turnUsername', 'rtc-user')
+            ->assertJsonPath('meet.turnPassword', 'rtc-secret')
+            ->assertJsonMissingPath('meet.forceRelay');
     }
 
     public function test_two_users_exchange_signaling_messages(): void

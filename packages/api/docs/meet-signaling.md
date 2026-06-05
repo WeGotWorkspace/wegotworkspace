@@ -1,6 +1,6 @@
-# Voice / Meet signaling
+# Meet signaling
 
-Meet uses `POST /api/v1/voice/{room,join,poll,send,leave,chat}` (OpenAPI). Signaling is implemented in Laravel only:
+Meet uses `POST /api/v1/meet/{room,join,poll,send,leave,chat}` and `GET /api/v1/meet/rtc` (OpenAPI). Signaling is implemented in Laravel only:
 
 | Component | Role |
 |-----------|------|
@@ -9,12 +9,13 @@ Meet uses `POST /api/v1/voice/{room,join,poll,send,leave,chat}` (OpenAPI). Signa
 | `app/Services/Voice/VoiceRequestAuth.php` | JWT bearer, `sabre_ui_auth` cookie, HTTP Basic |
 | `app/Http/Controllers/Api/V1/Voice/VoiceController.php` | HTTP entry |
 
-Meet **UI** is in `packages/apps` (`meet-core`); no client changes required for API work.
+Meet **UI** is in `packages/apps` (`meet-core`); client RTC channel is `meet`.
 
 ## Tests
 
 ```bash
 cd packages/api && composer test -- --filter Voice
+pnpm test:meet-api
 ```
 
 Coverage includes guest join/poll/leave, `sessionKey` reuse on re-join, and room active probe.
