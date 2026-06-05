@@ -1,10 +1,11 @@
 import { useCallback, useMemo, useRef } from "react";
-import type { HttpSignalingPollResult } from "@/lib/rtc/signaling/http-client";
+import type { HttpSignalingFetch, HttpSignalingPollResult } from "@/lib/rtc/signaling/http-client";
 import type { RtcPeerDescriptor, RtcSettings } from "@/lib/rtc/types";
 import { MeetRtcSession } from "@/meet-core/src/meet-rtc-session";
 
 export type UseMeetRtcOptions = {
   rtcSettings: RtcSettings;
+  signalingFetch?: HttpSignalingFetch;
   getLocalStream: () => MediaStream | null;
   onLinkChange: () => void;
   onPollData: (data: HttpSignalingPollResult) => void | Promise<void>;
@@ -19,6 +20,7 @@ export type UseMeetRtcOptions = {
 function createSession(options: UseMeetRtcOptions): MeetRtcSession {
   return new MeetRtcSession({
     rtcSettings: options.rtcSettings,
+    fetchImpl: options.signalingFetch,
     getLocalStream: options.getLocalStream,
     onLinkChange: options.onLinkChange,
     onPollData: options.onPollData,

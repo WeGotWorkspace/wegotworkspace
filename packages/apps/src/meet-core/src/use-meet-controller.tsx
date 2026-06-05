@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { createWgwMeetGuestSignalingFetch } from "@/lib/api/wgw/meet";
 import { parseUrlList } from "@/lib/rtc/config";
 import { isRtcDebugEnabled } from "@/lib/rtc/debug";
 import type { HttpSignalingPollResult } from "@/lib/rtc/signaling/http-client";
@@ -325,8 +326,15 @@ export function useMeetController({
     }
   }, []);
 
+  const isGuestSession = !session.user.username?.trim() && !session.user.email?.trim();
+  const guestSignalingFetch = useMemo(
+    () => (isGuestSession ? createWgwMeetGuestSignalingFetch() : undefined),
+    [isGuestSession],
+  );
+
   const meetRtc = useMeetRtc({
     rtcSettings: rtc,
+    signalingFetch: guestSignalingFetch,
     getLocalStream: () => localStreamRef.current,
     onLinkChange: () => refreshPeersRef.current(),
     onPollData: handlePollData,
