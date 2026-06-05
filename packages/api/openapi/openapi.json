@@ -1831,12 +1831,12 @@
         }
       }
     },
-    "/voice/room": {
+    "/meet/room": {
       "post": {
         "tags": [
-          "Voice"
+          "Meet"
         ],
-        "summary": "Probe or resolve voice room metadata",
+        "summary": "Probe or resolve meet room metadata",
         "responses": {
           "200": {
             "description": "Room metadata"
@@ -1844,12 +1844,12 @@
         }
       }
     },
-    "/voice/join": {
+    "/meet/join": {
       "post": {
         "tags": [
-          "Voice"
+          "Meet"
         ],
-        "summary": "Join voice room (guest or authenticated)",
+        "summary": "Join meet room (guest or authenticated)",
         "responses": {
           "200": {
             "description": "Join response"
@@ -1857,12 +1857,12 @@
         }
       }
     },
-    "/voice/poll": {
+    "/meet/poll": {
       "post": {
         "tags": [
-          "Voice"
+          "Meet"
         ],
-        "summary": "Poll voice messages",
+        "summary": "Poll meet signaling messages",
         "responses": {
           "200": {
             "description": "Poll response"
@@ -1870,12 +1870,12 @@
         }
       }
     },
-    "/voice/send": {
+    "/meet/send": {
       "post": {
         "tags": [
-          "Voice"
+          "Meet"
         ],
-        "summary": "Send voice signaling message",
+        "summary": "Send meet WebRTC signaling message",
         "responses": {
           "200": {
             "description": "Send response"
@@ -1883,12 +1883,12 @@
         }
       }
     },
-    "/voice/leave": {
+    "/meet/leave": {
       "post": {
         "tags": [
-          "Voice"
+          "Meet"
         ],
-        "summary": "Leave voice room",
+        "summary": "Leave meet room",
         "responses": {
           "200": {
             "description": "Leave response"
@@ -1896,12 +1896,12 @@
         }
       }
     },
-    "/voice/chat": {
+    "/meet/chat": {
       "post": {
         "tags": [
-          "Voice"
+          "Meet"
         ],
-        "summary": "Voice room chat message",
+        "summary": "Meet room chat message",
         "responses": {
           "200": {
             "description": "Chat response"
@@ -1909,15 +1909,15 @@
         }
       }
     },
-    "/voice/rtc": {
+    "/meet/rtc": {
       "get": {
         "tags": [
-          "Voice"
+          "Meet"
         ],
-        "summary": "Get voice RTC ICE settings",
+        "summary": "Get Meet WebRTC ICE settings",
         "responses": {
           "200": {
-            "description": "Voice RTC settings"
+            "description": "Meet RTC ICE settings"
           }
         }
       }
