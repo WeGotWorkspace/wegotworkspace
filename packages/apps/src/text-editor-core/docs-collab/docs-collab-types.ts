@@ -14,12 +14,3 @@ export type DocsCollabMeshMessage =
   | { type: "awareness"; u: number[]; from?: string }
   | { type: "dc-open"; from: string }
   | { type: "link" };
-
-/** @deprecated Use RtcSettings from @/lib/rtc */
-export type DocsCollabRtcSettings = {
-  stunUrls: string;
-  turnUrls: string;
-  turnUsername: string;
-  turnPassword: string;
-  forceRelay: boolean;
-};
