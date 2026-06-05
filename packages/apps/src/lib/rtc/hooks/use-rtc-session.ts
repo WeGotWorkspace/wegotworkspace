@@ -1,15 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
-import { HttpSignalingClient } from "@/lib/rtc/signaling/http-client";
-import { RtcPeerMesh, type RtcPeerMeshOptions } from "@/lib/rtc/session/peer-mesh";
+import {
+  createRtcSession,
+  type CreateRtcSessionOptions,
+  type CreateRtcSessionSignalingOptions,
+} from "@/lib/rtc/session/create-rtc-session";
+import type { RtcSignalingAuth } from "@/lib/rtc/signaling/create-client";
+import type { RtcPeerMesh } from "@/lib/rtc/session/peer-mesh";
 import type { RtcLinkState, RtcPeerDescriptor } from "@/lib/rtc/types";
 
-export type UseRtcSessionOptions = Omit<RtcPeerMeshOptions, "signaling"> & {
+export type UseRtcSessionOptions = Omit<CreateRtcSessionOptions, "signaling"> & {
   apiBase: string;
   enabled?: boolean;
-  auth?: {
-    bearerToken?: string;
-    sessionKey?: string;
-  };
+  auth?: RtcSignalingAuth;
+  signaling?: CreateRtcSessionSignalingOptions;
 };
 
 export type UseRtcSessionResult = {
@@ -22,23 +25,22 @@ export type UseRtcSessionResult = {
 };
 
 export function useRtcSession(options: UseRtcSessionOptions): UseRtcSessionResult {
-  const { apiBase, enabled = true, auth, ...meshOptions } = options;
+  const { apiBase, enabled = true, auth, signaling, ...sessionOptions } = options;
   const mesh = useMemo(() => {
     if (!enabled) return null;
-    const signaling = new HttpSignalingClient({
-      channel: meshOptions.channel,
-      apiBase,
-      getAuth: () => auth ?? {},
-    });
-    return new RtcPeerMesh({
-      ...meshOptions,
-      signaling,
+    return createRtcSession({
+      ...sessionOptions,
+      signaling: {
+        apiBase,
+        getAuth: () => auth ?? {},
+        ...signaling,
+      },
       onLinkChange: () => {
-        meshOptions.onLinkChange?.();
+        sessionOptions.onLinkChange?.();
       },
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- mesh is scoped to channel/room/apiBase
-  }, [enabled, apiBase, meshOptions.channel, meshOptions.room]);
+  }, [enabled, apiBase, sessionOptions.channel, sessionOptions.room]);
 
   const [peerId, setPeerId] = useState<string | null>(null);
   const [peers, setPeers] = useState<RtcPeerDescriptor[]>([]);
