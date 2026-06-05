@@ -101,8 +101,8 @@ export class RtcPeerMesh {
     this.turnConfigured = turnUrlCount(options.rtcSettings) > 0;
     this.createPeerConnection =
       options.ports?.createPeerConnection ?? ((config) => new RTCPeerConnection(config));
-    this.scheduleTimeout = options.ports?.setTimeout ?? setTimeout;
-    this.cancelTimeout = options.ports?.clearTimeout ?? clearTimeout;
+    this.scheduleTimeout = options.ports?.setTimeout ?? setTimeout.bind(globalThis);
+    this.cancelTimeout = options.ports?.clearTimeout ?? clearTimeout.bind(globalThis);
   }
 
   private log(event: string, details?: unknown): void {

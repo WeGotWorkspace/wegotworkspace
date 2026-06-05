@@ -3,6 +3,7 @@
  */
 import { wgwApiBaseUrl, wgwFetch, wgwFetchPrincipal } from "@/lib/api/wgw/http";
 import { fetchRtcSettings } from "@/lib/api/wgw/rtc";
+import type { HttpSignalingFetch } from "@/lib/rtc/signaling/http-client";
 import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
 import type {
   WgwMeetChatRequest,
@@ -78,6 +79,16 @@ async function postMeetJsonGuest<T>(
     throw new Error(await readApiError(res, fallback));
   }
   return (await res.json()) as T;
+}
+
+/** Unauthenticated fetch for guest meet signaling (join/poll/send/leave). */
+export function createWgwMeetGuestSignalingFetch(): HttpSignalingFetch {
+  return (url, init) => {
+    const base = wgwApiBaseUrl();
+    const path = url.startsWith(base) ? url.slice(base.length) : url;
+    const normalized = path.startsWith("/") ? path : `/${path}`;
+    return fetch(`${base}${normalized}`, init);
+  };
 }
 
 export async function fetchMeetLiveBootstrap(): Promise<MeetAppBootstrap> {
