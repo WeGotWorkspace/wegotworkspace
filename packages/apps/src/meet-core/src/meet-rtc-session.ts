@@ -15,11 +15,11 @@ function formatMeetInboundDescription(
   return { ...raw, sdp: sanitizeRtcSdp(raw.sdp) };
 }
 
+/** Leave local descriptions untouched — sanitizing outbound SDP strips SSRC lines and can break senders. */
 function formatMeetOutboundDescription(
   description: RTCSessionDescriptionInit,
 ): RTCSessionDescriptionInit {
-  if (typeof description.sdp !== "string") return description;
-  return { ...description, sdp: sanitizeRtcSdp(description.sdp) };
+  return description;
 }
 
 export type MeetRtcSessionOptions = {
