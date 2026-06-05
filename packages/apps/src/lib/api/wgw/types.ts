@@ -42,7 +42,7 @@ import type {
   AdminUserCreateRequest,
   AdminUserSummary,
   AdminUserUpdateRequest,
-  AdminMeetSettings,
+  AdminRtcSettings,
   AdminWebdavSettings,
   UpdateApplyRequest,
   UpdateApplyResponse,
@@ -215,7 +215,7 @@ export type WgwAdminStateResponse = AdminStateResponse;
 export type WgwAdminUserSummary = AdminUserSummary;
 export type WgwAdminGroupSummary = AdminGroupSummary;
 export type WgwAdminMailSettings = AdminMailSettings;
-export type WgwAdminMeetSettings = AdminMeetSettings;
+export type WgwAdminRtcSettings = AdminRtcSettings;
 export type WgwAdminAppsSettings = AdminAppsSettings;
 export type WgwAdminWebdavSettings = AdminWebdavSettings;
 export type WgwAdminSettingsSaveRequest = AdminSettingsSaveRequest;

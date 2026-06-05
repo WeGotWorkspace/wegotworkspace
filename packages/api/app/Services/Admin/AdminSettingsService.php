@@ -25,7 +25,7 @@ final class AdminSettingsService
             if ($key === SettingKeys::TIMEZONE) {
                 $value = TimezoneNormalizer::normalize($value);
             }
-            if ($key === SettingKeys::VOICE_STUN_URL || $key === SettingKeys::VOICE_TURN_URL) {
+            if ($key === SettingKeys::RTC_STUN_URL || $key === SettingKeys::RTC_TURN_URL) {
                 $value = $this->normalizeRtcUrls($value);
             }
             AppSetting::setValue($key, $value);

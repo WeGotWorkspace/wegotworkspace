@@ -69,21 +69,21 @@ final class CollabEndpointsTest extends TestCase
         ])->assertUnauthorized();
     }
 
-    public function test_rtc_settings_returns_voice_ice_values_for_authenticated_user(): void
+    public function test_rtc_settings_returns_meet_ice_values_for_authenticated_user(): void
     {
-        AppSetting::setValue(SettingKeys::VOICE_STUN_URL, 'stun.example.test:3478,stuns:stun2.example.test:5349');
-        AppSetting::setValue(SettingKeys::VOICE_TURN_URL, 'turn.example.test:3478?transport=udp');
-        AppSetting::setValue(SettingKeys::VOICE_TURN_USERNAME, 'rtc-user');
-        AppSetting::setValue(SettingKeys::VOICE_TURN_CREDENTIAL, 'rtc-secret');
+        AppSetting::setValue(SettingKeys::RTC_STUN_URL, 'stun.example.test:3478,stuns:stun2.example.test:5349');
+        AppSetting::setValue(SettingKeys::RTC_TURN_URL, 'turn.example.test:3478?transport=udp');
+        AppSetting::setValue(SettingKeys::RTC_TURN_USERNAME, 'rtc-user');
+        AppSetting::setValue(SettingKeys::RTC_TURN_CREDENTIAL, 'rtc-secret');
 
         $token = $this->issueToken('alice');
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/v1/collab/rtc')
             ->assertOk()
-            ->assertJsonPath('meet.stunUrls', 'stun:stun.example.test:3478, stuns:stun2.example.test:5349')
-            ->assertJsonPath('meet.turnUrls', 'turn:turn.example.test:3478?transport=udp')
-            ->assertJsonPath('meet.turnUsername', 'rtc-user')
-            ->assertJsonPath('meet.turnPassword', 'rtc-secret')
+            ->assertJsonPath('rtc.stunUrls', 'stun:stun.example.test:3478, stuns:stun2.example.test:5349')
+            ->assertJsonPath('rtc.turnUrls', 'turn:turn.example.test:3478?transport=udp')
+            ->assertJsonPath('rtc.turnUsername', 'rtc-user')
+            ->assertJsonPath('rtc.turnPassword', 'rtc-secret')
             ->assertJsonMissingPath('meet.forceRelay');
     }
 

@@ -2110,7 +2110,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Join voice room (guest or authenticated) */
+        /** Join meet room (guest or authenticated) */
         post: {
             parameters: {
                 query?: never;
@@ -2150,7 +2150,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Poll voice messages */
+        /** Poll meet signaling messages */
         post: {
             parameters: {
                 query?: never;
@@ -2190,7 +2190,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Send voice signaling message */
+        /** Send meet WebRTC signaling message */
         post: {
             parameters: {
                 query?: never;
@@ -2230,7 +2230,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Leave voice room */
+        /** Leave meet room */
         post: {
             parameters: {
                 query?: never;
@@ -2270,7 +2270,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Voice room chat message */
+        /** Meet room chat message */
         post: {
             parameters: {
                 query?: never;
@@ -2835,11 +2835,11 @@ export interface components {
             mail_smtp_host?: string;
             mail_smtp_port?: string;
             mail_smtp_security?: string;
-            voice_enabled?: boolean;
-            voice_stun_url?: string;
-            voice_turn_url?: string;
-            voice_turn_username?: string;
-            voice_turn_credential?: string;
+            meet_enabled?: boolean;
+            rtc_stun_url?: string;
+            rtc_turn_url?: string;
+            rtc_turn_username?: string;
+            rtc_turn_credential?: string;
         };
         /**
          * @example {
@@ -2972,7 +2972,7 @@ export interface components {
             smtpPort: number;
             smtpSecurity: string;
         };
-        AdminMeetSettings: {
+        AdminRtcSettings: {
             stunUrls: string;
             turnUrls: string;
             turnUsername: string;
@@ -3055,7 +3055,7 @@ export interface components {
             users: components["schemas"]["AdminUserSummary"][];
             groups: components["schemas"]["AdminGroupSummary"][];
             mail: components["schemas"]["AdminMailSettings"];
-            meet: components["schemas"]["AdminMeetSettings"];
+            rtc: components["schemas"]["AdminRtcSettings"];
             apps: components["schemas"]["AdminAppsSettings"];
             webdav: components["schemas"]["AdminWebdavSettings"];
             updates: components["schemas"]["UpdateStateResponse"];

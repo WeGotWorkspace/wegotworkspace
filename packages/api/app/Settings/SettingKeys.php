@@ -22,13 +22,13 @@ final class SettingKeys
 
     public const MAIL_ENABLED = 'mail_enabled';
 
-    public const VOICE_STUN_URL = 'voice_stun_url';
+    public const RTC_STUN_URL = 'rtc_stun_url';
 
-    public const VOICE_TURN_URL = 'voice_turn_url';
+    public const RTC_TURN_URL = 'rtc_turn_url';
 
-    public const VOICE_TURN_USERNAME = 'voice_turn_username';
+    public const RTC_TURN_USERNAME = 'rtc_turn_username';
 
-    public const VOICE_TURN_CREDENTIAL = 'voice_turn_credential';
+    public const RTC_TURN_CREDENTIAL = 'rtc_turn_credential';
 
     public const MAIL_IMAP_HOST = 'mail_imap_host';
 
@@ -56,10 +56,10 @@ final class SettingKeys
             self::CALENDAR_ENABLED,
             self::CONTACTS_ENABLED,
             self::MAIL_ENABLED,
-            self::VOICE_STUN_URL,
-            self::VOICE_TURN_URL,
-            self::VOICE_TURN_USERNAME,
-            self::VOICE_TURN_CREDENTIAL,
+            self::RTC_STUN_URL,
+            self::RTC_TURN_URL,
+            self::RTC_TURN_USERNAME,
+            self::RTC_TURN_CREDENTIAL,
             self::MAIL_IMAP_HOST,
             self::MAIL_IMAP_PORT,
             self::MAIL_IMAP_SECURITY,

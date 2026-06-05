@@ -400,19 +400,19 @@
                     "mail_smtp_security": {
                         "type": "string"
                     },
-                    "voice_enabled": {
+                    "meet_enabled": {
                         "type": "boolean"
                     },
-                    "voice_stun_url": {
+                    "rtc_stun_url": {
                         "type": "string"
                     },
-                    "voice_turn_url": {
+                    "rtc_turn_url": {
                         "type": "string"
                     },
-                    "voice_turn_username": {
+                    "rtc_turn_username": {
                         "type": "string"
                     },
-                    "voice_turn_credential": {
+                    "rtc_turn_credential": {
                         "type": "string"
                     }
                 }
@@ -700,7 +700,7 @@
                     "smtpSecurity"
                 ]
             },
-            "AdminMeetSettings": {
+            "AdminRtcSettings": {
                 "type": "object",
                 "properties": {
                     "stunUrls": {
@@ -1090,8 +1090,8 @@
                     "mail": {
                         "$ref": "#/components/schemas/AdminMailSettings"
                     },
-                    "meet": {
-                        "$ref": "#/components/schemas/AdminMeetSettings"
+                    "rtc": {
+                        "$ref": "#/components/schemas/AdminRtcSettings"
                     },
                     "apps": {
                         "$ref": "#/components/schemas/AdminAppsSettings"
@@ -1113,7 +1113,7 @@
                     "users",
                     "groups",
                     "mail",
-                    "meet",
+                    "rtc",
                     "apps",
                     "webdav",
                     "updates",
@@ -4915,7 +4915,7 @@
                 "tags": [
                     "Meet"
                 ],
-                "summary": "Join voice room (guest or authenticated)",
+                "summary": "Join meet room (guest or authenticated)",
                 "responses": {
                     "200": {
                         "description": "Join response",
@@ -4945,7 +4945,7 @@
                 "tags": [
                     "Meet"
                 ],
-                "summary": "Poll voice messages",
+                "summary": "Poll meet signaling messages",
                 "responses": {
                     "200": {
                         "description": "Poll response",
@@ -4975,7 +4975,7 @@
                 "tags": [
                     "Meet"
                 ],
-                "summary": "Send voice signaling message",
+                "summary": "Send meet WebRTC signaling message",
                 "responses": {
                     "200": {
                         "description": "Send response",
@@ -5005,7 +5005,7 @@
                 "tags": [
                     "Meet"
                 ],
-                "summary": "Leave voice room",
+                "summary": "Leave meet room",
                 "responses": {
                     "200": {
                         "description": "Leave response",
@@ -5035,7 +5035,7 @@
                 "tags": [
                     "Meet"
                 ],
-                "summary": "Voice room chat message",
+                "summary": "Meet room chat message",
                 "responses": {
                     "200": {
                         "description": "Chat response",
