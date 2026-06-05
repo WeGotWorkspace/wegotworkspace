@@ -2,19 +2,20 @@ import { wgwApiBaseUrl, wgwReadJson } from "@/lib/api/wgw/http";
 import { isRtcDebugEnabled } from "@/lib/rtc/debug";
 import { rtcLog } from "@/lib/rtc/log";
 import { applyRtcDebugOverrides } from "@/lib/rtc/force-relay";
-import { DEFAULT_RTC_SETTINGS, type RtcSettings } from "@/lib/rtc/types";
+import { DEFAULT_RTC_SETTINGS, signalingApiSegment, type RtcSettings } from "@/lib/rtc/types";
 
 export type { RtcSettings };
 
 export type RtcIceSettings = Omit<RtcSettings, "forceRelay">;
 
 export function parseRtcSettingsPayload(payload: Record<string, unknown>): RtcIceSettings {
-  const voice = (payload.voice ?? payload) as Record<string, unknown>;
+  // OpenAPI/admin payload key for Meet ICE settings.
+  const meet = (payload.meet ?? payload) as Record<string, unknown>;
   return {
-    stunUrls: typeof voice.stunUrls === "string" ? voice.stunUrls : "",
-    turnUrls: typeof voice.turnUrls === "string" ? voice.turnUrls : "",
-    turnUsername: typeof voice.turnUsername === "string" ? voice.turnUsername : "",
-    turnPassword: typeof voice.turnPassword === "string" ? voice.turnPassword : "",
+    stunUrls: typeof meet.stunUrls === "string" ? meet.stunUrls : "",
+    turnUrls: typeof meet.turnUrls === "string" ? meet.turnUrls : "",
+    turnUsername: typeof meet.turnUsername === "string" ? meet.turnUsername : "",
+    turnPassword: typeof meet.turnPassword === "string" ? meet.turnPassword : "",
   };
 }
 
@@ -25,11 +26,11 @@ export function resolveRtcSettings(ice: RtcIceSettings): RtcSettings {
 export async function fetchRtcSettings(options?: {
   url?: string;
   bearerToken?: string;
-  channel?: "voice" | "collab";
+  channel?: "meet" | "collab";
 }): Promise<RtcSettings> {
-  const channel = options?.channel ?? "voice";
+  const channel = options?.channel ?? "meet";
   const base = wgwApiBaseUrl();
-  const requestUrl = options?.url ?? `${base}/${channel === "collab" ? "collab" : "voice"}/rtc`;
+  const requestUrl = options?.url ?? `${base}/${signalingApiSegment(channel)}/rtc`;
   rtcLog({ channel }, "rtc-settings-request", { requestUrl });
   const headers: Record<string, string> = {};
   if (options?.bearerToken) headers.Authorization = `Bearer ${options.bearerToken}`;

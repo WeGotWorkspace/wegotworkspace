@@ -42,7 +42,7 @@ import type {
   AdminUserCreateRequest,
   AdminUserSummary,
   AdminUserUpdateRequest,
-  AdminVoiceSettings,
+  AdminMeetSettings,
   AdminWebdavSettings,
   UpdateApplyRequest,
   UpdateApplyResponse,
@@ -70,19 +70,19 @@ import type {
   DriveUserResponse,
 } from "@wgw-api-generated/drive-types";
 import type {
-  VoiceChatRequest,
-  VoiceChatResponse,
-  VoiceJoinRequest,
-  VoiceJoinResponse,
-  VoiceLeaveRequest,
-  VoiceLeaveResponse,
-  VoicePeer,
-  VoicePollRequest,
-  VoicePollResponse,
-  VoiceSendRequest,
-  VoiceSendResponse,
-  VoiceSignalEnvelope,
-} from "@wgw-api-generated/voice-types";
+  MeetChatRequest,
+  MeetChatResponse,
+  MeetJoinRequest,
+  MeetJoinResponse,
+  MeetLeaveRequest,
+  MeetLeaveResponse,
+  MeetPeer,
+  MeetPollRequest,
+  MeetPollResponse,
+  MeetSendRequest,
+  MeetSendResponse,
+  MeetSignalEnvelope,
+} from "@wgw-api-generated/meet-types";
 import type {
   InstallerAction,
   InstallerActionPayload,
@@ -215,7 +215,7 @@ export type WgwAdminStateResponse = AdminStateResponse;
 export type WgwAdminUserSummary = AdminUserSummary;
 export type WgwAdminGroupSummary = AdminGroupSummary;
 export type WgwAdminMailSettings = AdminMailSettings;
-export type WgwAdminVoiceSettings = AdminVoiceSettings;
+export type WgwAdminMeetSettings = AdminMeetSettings;
 export type WgwAdminAppsSettings = AdminAppsSettings;
 export type WgwAdminWebdavSettings = AdminWebdavSettings;
 export type WgwAdminSettingsSaveRequest = AdminSettingsSaveRequest;
@@ -272,24 +272,24 @@ export type WgwDriveStarUpdateRequest = {
   path: string;
   starred: boolean;
 };
-export type WgwVoicePeer = VoicePeer;
-export type WgwVoiceSignalEnvelope = VoiceSignalEnvelope;
-export type WgwVoiceRoomStatusRequest = {
+export type WgwMeetPeer = MeetPeer;
+export type WgwMeetSignalEnvelope = MeetSignalEnvelope;
+export type WgwMeetRoomStatusRequest = {
   room: string;
 };
-export type WgwVoiceRoomStatusResponse = {
+export type WgwMeetRoomStatusResponse = {
   active: boolean;
 };
-export type WgwVoiceJoinRequest = VoiceJoinRequest;
-export type WgwVoiceJoinResponse = VoiceJoinResponse;
-export type WgwVoicePollRequest = VoicePollRequest;
-export type WgwVoicePollResponse = VoicePollResponse;
-export type WgwVoiceSendRequest = VoiceSendRequest;
-export type WgwVoiceSendResponse = VoiceSendResponse;
-export type WgwVoiceLeaveRequest = VoiceLeaveRequest;
-export type WgwVoiceLeaveResponse = VoiceLeaveResponse;
-export type WgwVoiceChatRequest = VoiceChatRequest;
-export type WgwVoiceChatResponse = VoiceChatResponse;
+export type WgwMeetJoinRequest = MeetJoinRequest;
+export type WgwMeetJoinResponse = MeetJoinResponse;
+export type WgwMeetPollRequest = MeetPollRequest;
+export type WgwMeetPollResponse = MeetPollResponse;
+export type WgwMeetSendRequest = MeetSendRequest;
+export type WgwMeetSendResponse = MeetSendResponse;
+export type WgwMeetLeaveRequest = MeetLeaveRequest;
+export type WgwMeetLeaveResponse = MeetLeaveResponse;
+export type WgwMeetChatRequest = MeetChatRequest;
+export type WgwMeetChatResponse = MeetChatResponse;
 export type WgwInstallerStep = InstallerStep;
 export type WgwInstallerDbDriver = InstallerDbDriver;
 export type WgwInstallerDbState = InstallerDbState;
