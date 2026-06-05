@@ -20,7 +20,6 @@ const ALLOWED_RETURN_PREFIXES = [
   "/meet",
   "/notes",
   "/settings",
-  "/voice",
 ];
 
 const MAX_RETURN_UNWRAP_DEPTH = 16;
