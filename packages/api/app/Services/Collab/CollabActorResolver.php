@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Services\Collab;
 
-use App\Services\Voice\VoiceRequestAuth;
+use App\Services\Meet\MeetRequestAuth;
 use Illuminate\Http\Request;
 
 final class CollabActorResolver
 {
-    public function __construct(private VoiceRequestAuth $auth) {}
+    public function __construct(private MeetRequestAuth $auth) {}
 
     /**
      * @return non-empty-string

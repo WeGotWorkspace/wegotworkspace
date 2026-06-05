@@ -8,7 +8,7 @@ use App\Http\Middleware\RequireWgwRole;
 use App\Http\Middleware\WgwSecurityHeaders;
 use App\Services\Collab\CollabResponseException;
 use App\Services\Mail\MailResponseException;
-use App\Services\Voice\VoiceResponseException;
+use App\Services\Meet\MeetResponseException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -47,7 +47,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (MailResponseException $e) {
             return response()->json($e->payload, $e->status);
         });
-        $exceptions->render(function (VoiceResponseException $e) {
+        $exceptions->render(function (MeetResponseException $e) {
             return response()->json($e->payload, $e->status);
         });
         $exceptions->render(function (CollabResponseException $e) {

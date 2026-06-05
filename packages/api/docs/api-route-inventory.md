@@ -68,7 +68,7 @@ Current REST surface and access levels.
 | `GET /api/v1/drive/download` | user/admin |
 | `POST /api/v1/drive/upload` | user/admin |
 
-## Voice
+## Meet
 
 | Route | Access |
 |---|---|
@@ -91,6 +91,6 @@ Current REST surface and access levels.
 
 ## Role Matrix
 
-- `guest`: health/capabilities/auth token/jwks + guest voice + installer bootstrap paths.
+- `guest`: health/capabilities/auth token/jwks + guest meet + installer bootstrap paths.
 - `user`: all user-owned app endpoints.
 - `admin`: all user endpoints + admin namespace.
