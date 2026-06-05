@@ -14,13 +14,9 @@ import type {
   WgwVoiceSendResponse,
 } from "@/lib/api/wgw/types";
 
-export type MeetRtcSettings = {
-  stunUrls: string;
-  turnUrls: string;
-  turnUsername: string;
-  turnPassword: string;
-  forceRelay: boolean;
-};
+import type { RtcSettings } from "@/lib/rtc/types";
+
+export type MeetRtcSettings = RtcSettings;
 
 export type MeetUIData = {
   defaultDisplayName: string;

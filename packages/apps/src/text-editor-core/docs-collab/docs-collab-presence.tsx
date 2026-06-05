@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import type { DocsCollabMeshPeer } from "./mesh";
+import type { DocsCollabMeshPeer } from "./docs-collab-types";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/ui/tooltip";
 
 const COLORS = [

@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { parseUrlList, toRtcConfig, turnUrlCount } from "@/lib/rtc/config";
 import { isRtcDebugEnabled } from "@/lib/rtc/debug";
+import { rtcLog } from "@/lib/rtc/log";
+import { sortRtcSignalMessages } from "@/lib/rtc/types";
 import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
 import { meetLabels } from "@/meet-core/src/meet-labels";
 import { sanitizeRtcSdp } from "@/meet-core/src/meet-rtc-sdp";
@@ -66,14 +69,6 @@ type ControlMessage =
 const KNOCK_NAME_PREFIX = "__wgw_knock__:";
 const CONTROL_PREFIX = "__wgw_meet_control__:";
 
-const SIGNAL_ORDER: Record<SignalType, number> = {
-  offer: 0,
-  answer: 1,
-  ice: 2,
-  bye: 3,
-  chat: 4,
-};
-
 function parseCandidateType(candidate: string): string {
   const match = candidate.match(/\btyp\s+([a-z0-9]+)/i);
   return match?.[1]?.toLowerCase() ?? "unknown";
@@ -100,52 +95,6 @@ function randomRoom(): string {
   return `${id.slice(0, 4)}-${id.slice(4, 8)}-${id.slice(8, 12)}`.toLowerCase();
 }
 
-function normalizeIceUrl(raw: string, defaultScheme: "stun" | "turn"): string {
-  const value = raw.trim();
-  if (value === "") return "";
-  if (/^(stun|stuns|turn|turns):/i.test(value)) return value;
-  return `${defaultScheme}:${value}`;
-}
-
-function parseUrlList(raw: string, defaultScheme: "stun" | "turn"): string[] {
-  return raw
-    .split(/[\n,\r]+/)
-    .map((v) => normalizeIceUrl(v, defaultScheme))
-    .filter((v) => v !== "");
-}
-
-function toRtcConfig(settings: MeetRtcSettings, mode: IceMode): RTCConfiguration {
-  const turnUrls = parseUrlList(settings.turnUrls, "turn");
-  const forceRelay = (settings.forceRelay || mode === "relay") && turnUrls.length > 0;
-  const stunUrls = parseUrlList(settings.stunUrls, "stun");
-
-  const iceServers: RTCIceServer[] = [];
-  if (forceRelay) {
-    if (turnUrls.length > 0) {
-      iceServers.push({
-        urls: turnUrls,
-        username: settings.turnUsername || undefined,
-        credential: settings.turnPassword || undefined,
-      });
-    }
-  } else if (stunUrls.length > 0) {
-    iceServers.push({ urls: [...new Set(stunUrls)] });
-    if (turnUrls.length > 0) {
-      iceServers.push({
-        urls: turnUrls,
-        username: settings.turnUsername || undefined,
-        credential: settings.turnPassword || undefined,
-      });
-    }
-  }
-
-  return {
-    iceServers,
-    iceTransportPolicy: forceRelay ? "relay" : "all",
-    iceCandidatePoolSize: forceRelay ? 0 : 4,
-  };
-}
-
 function buildAudioConstraints(deviceId?: string): MediaTrackConstraints {
   return {
     echoCancellation: true,
@@ -161,12 +110,7 @@ function buildVideoConstraints(deviceId?: string): MediaTrackConstraints {
 }
 
 function sortSignalMessages(messages: Array<{ from: string; type: SignalType; payload: unknown }>) {
-  return [...messages].sort((a, b) => {
-    const aRank = SIGNAL_ORDER[a.type];
-    const bRank = SIGNAL_ORDER[b.type];
-    if (aRank !== bRank) return aRank - bRank;
-    return a.from.localeCompare(b.from);
-  });
+  return sortRtcSignalMessages(messages);
 }
 
 function encodeKnockerName(displayName: string): string {
@@ -286,8 +230,7 @@ export function useMeetController({
 }: UseMeetControllerArgs) {
   const rtcDebugEnabledRef = useRef(isRtcDebugEnabled());
   const debugRtc = useCallback((event: string, payload: Record<string, unknown> = {}) => {
-    if (!rtcDebugEnabledRef.current) return;
-    console.info(`[meet][rtc][${new Date().toISOString()}] ${event}`, payload);
+    rtcLog({ channel: "voice", peerId: selfIdRef.current }, event, payload);
   }, []);
   const canModerateKnocks = Boolean(session.user.username?.trim() || session.user.email?.trim());
   const [status, setStatus] = useState<CallStatus>("idle");
@@ -568,45 +511,49 @@ export function useMeetController({
         }
         refreshPeers();
         if (pc.connectionState !== "failed") return;
-        const turnConfigured = parseUrlList(rtc.turnUrls, "turn").length > 0;
-        if (entry.mode === "relay" || entry.relayFallbackTried || !turnConfigured) {
+        if (entry.mode === "relay" || entry.relayFallbackTried || turnUrlCount(rtc) === 0) {
           setError(`Connection to ${peerName} failed.`);
           return;
         }
-        entry.relayFallbackTried = true;
-        entry.mode = "relay";
-        try {
-          debugRtc("pc-relay-fallback-start", {
-            peerId,
-            peerName,
-          });
-          pc.setConfiguration(toRtcConfig(rtc, "relay"));
-          pc.restartIce();
-          if (!operationsRef.current || !roomCodeRef.current || !selfIdRef.current) return;
-          void (async () => {
-            const offer = await pc.createOffer({ iceRestart: true });
-            await pc.setLocalDescription(offer);
-            if (!pc.localDescription?.sdp) return;
-            await operationsRef.current?.send({
-              room: roomCodeRef.current!,
-              from: selfIdRef.current!,
-              to: peerId,
-              type: "offer",
-              payload: { sdp: pc.localDescription.sdp, type: pc.localDescription.type },
-              sessionKey: joinedSessionKeyRef.current ?? undefined,
-            });
-            debugRtc("pc-relay-fallback-offer-sent", {
+        void (async () => {
+          try {
+            debugRtc("relay-fallback-start", { peerId, peerName });
+            entry.pc.close();
+            peersRef.current.delete(peerId);
+            const replacement = createPeerConnection(peerId, peerName, "relay");
+            replacement.relayFallbackTried = true;
+            peersRef.current.set(peerId, replacement);
+            if (
+              selfIdRef.current &&
+              selfIdRef.current > peerId &&
+              operationsRef.current &&
+              roomCodeRef.current
+            ) {
+              const offer = await replacement.pc.createOffer({ iceRestart: true });
+              await applyLocalDescription(replacement.pc, offer);
+              if (!replacement.pc.localDescription?.sdp) return;
+              await operationsRef.current.send({
+                room: roomCodeRef.current,
+                from: selfIdRef.current,
+                to: peerId,
+                type: "offer",
+                payload: {
+                  sdp: replacement.pc.localDescription.sdp,
+                  type: replacement.pc.localDescription.type,
+                },
+                sessionKey: joinedSessionKeyRef.current ?? undefined,
+              });
+              debugRtc("relay-fallback-offer-sent", { peerId, peerName });
+            }
+          } catch (error) {
+            debugRtc("relay-fallback-failed", {
               peerId,
               peerName,
+              error: error instanceof Error ? error.message : String(error),
             });
-          })();
-        } catch {
-          debugRtc("pc-relay-fallback-failed", {
-            peerId,
-            peerName,
-          });
-          setError(`Connection to ${peerName} failed.`);
-        }
+            setError(`Connection to ${peerName} failed.`);
+          }
+        })();
       };
 
       return entry;

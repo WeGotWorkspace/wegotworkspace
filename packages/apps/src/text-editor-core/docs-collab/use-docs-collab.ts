@@ -4,16 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import * as awarenessProtocol from "y-protocols/awareness";
 import * as syncProtocol from "y-protocols/sync";
 import * as Y from "yjs";
+import { fetchRtcSettings } from "@/lib/api/wgw/rtc";
 import { fetchWgwAuthToken } from "@/lib/api/wgw/auth-token";
-import { isRtcDebugEnabled } from "@/lib/rtc/debug";
 import { applyContentSeedToYDoc } from "./docs-collab-editor-surface";
 import type { TextEditorContentFormat } from "@/text-editor-core/src/text-editor-content";
-import {
-  DocsCollabMesh,
-  type DocsCollabMeshMessage,
-  type DocsCollabMeshPeer,
-  type DocsCollabRtcSettings,
-} from "./mesh";
+import { DocsRtcSession } from "./docs-rtc-session";
+import type { DocsCollabMeshMessage, DocsCollabMeshPeer } from "./docs-collab-types";
 
 const MESH_ORIGIN = "mesh";
 const SEED_ORIGIN = "seed";
@@ -81,60 +77,6 @@ function withBearerAuth(
 ): Record<string, string> {
   if (authToken) headers.Authorization = `Bearer ${authToken}`;
   return headers;
-}
-
-function normalizeUrlList(raw: unknown): string {
-  if (typeof raw !== "string") return "";
-  return raw
-    .split(/[\n,\r]+/)
-    .map((value) => value.trim())
-    .filter((value) => value !== "")
-    .join(", ");
-}
-
-async function loadRtcSettings(
-  rtcSettingsUrl: string | undefined,
-  authToken?: string,
-  debug = false,
-): Promise<DocsCollabRtcSettings | undefined> {
-  if (!rtcSettingsUrl) return undefined;
-  if (debug) {
-    console.info("[docs-collab][rtc] rtc-settings-request", { rtcSettingsUrl });
-  }
-  const res = await fetch(rtcSettingsUrl, {
-    headers: withBearerAuth({}, authToken),
-  });
-  if (!res.ok) {
-    if (debug) {
-      console.info("[docs-collab][rtc] rtc-settings-response", {
-        rtcSettingsUrl,
-        ok: false,
-        status: res.status,
-      });
-    }
-    return undefined;
-  }
-  const payload = (await res.json()) as Record<string, unknown>;
-  const voice = (payload.voice ?? payload) as Record<string, unknown>;
-  const settings = {
-    stunUrls: normalizeUrlList(voice.stunUrls),
-    turnUrls: normalizeUrlList(voice.turnUrls),
-    turnUsername: typeof voice.turnUsername === "string" ? voice.turnUsername : "",
-    turnPassword: typeof voice.turnPassword === "string" ? voice.turnPassword : "",
-    forceRelay: Boolean(voice.forceRelay),
-  };
-  if (debug) {
-    console.info("[docs-collab][rtc] rtc-settings-response", {
-      rtcSettingsUrl,
-      ok: true,
-      status: res.status,
-      settings: {
-        ...settings,
-        turnPassword: settings.turnPassword ? "***" : "",
-      },
-    });
-  }
-  return settings;
 }
 
 async function loadMarkdown(documentUrl: string, authToken?: string): Promise<string> {
@@ -207,7 +149,7 @@ export function useDocsCollab({
     ...(inputUrls ?? {}),
   };
   const documentFormat = collabDocumentFormat(urls.room);
-  const meshRef = useRef<DocsCollabMesh | null>(null);
+  const meshRef = useRef<DocsRtcSession | null>(null);
   const ydocRef = useRef<Y.Doc | null>(null);
   const awarenessRef = useRef<awarenessProtocol.Awareness | null>(null);
   const pendingMarkdownRef = useRef("");
@@ -227,7 +169,6 @@ export function useDocsCollab({
   const [connectingPeers, setConnectingPeers] = useState<DocsCollabMeshPeer[]>([]);
   const [warningPeers, setWarningPeers] = useState<DocsCollabMeshPeer[]>([]);
   const [linkCount, setLinkCount] = useState(0);
-  const rtcDebugEnabledRef = useRef(isRtcDebugEnabled());
 
   const refreshMeshUi = useCallback(() => {
     const mesh = meshRef.current;
@@ -400,9 +341,13 @@ export function useDocsCollab({
     });
     if (generation !== joinGenerationRef.current) return;
     authTokenRef.current = authToken;
-    let rtcSettings: DocsCollabRtcSettings | undefined;
+    let rtcSettings;
     try {
-      rtcSettings = await loadRtcSettings(urls.collabRtcUrl, authToken, rtcDebugEnabledRef.current);
+      rtcSettings = await fetchRtcSettings({
+        url: urls.collabRtcUrl,
+        bearerToken: authToken,
+        channel: "collab",
+      });
     } catch (error) {
       console.warn("[docs-collab] rtc settings unavailable", error);
     }
@@ -448,14 +393,18 @@ export function useDocsCollab({
       },
     );
 
-    const mesh = new DocsCollabMesh(
-      urls.signalUrl,
-      urls.room ?? "docs/test-together.md",
+    const mesh = new DocsRtcSession({
+      apiBase: urls.collabApiBaseUrl ?? "/api/v1/collab",
+      room: urls.room ?? "docs/test-together.md",
       authToken,
-      urls.collabApiBaseUrl,
-      rtcSettings,
-      rtcDebugEnabledRef.current,
-    );
+      rtcSettings: rtcSettings ?? {
+        stunUrls: "",
+        turnUrls: "",
+        turnUsername: "",
+        turnPassword: "",
+        forceRelay: false,
+      },
+    });
     meshRef.current = mesh;
     mesh.onMessage(handleMeshMessage);
 
