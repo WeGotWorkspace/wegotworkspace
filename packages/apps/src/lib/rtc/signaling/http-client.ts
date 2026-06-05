@@ -59,6 +59,8 @@ export type HttpSignalingClientOptions = {
   apiBase: string;
   fetchImpl?: HttpSignalingFetch;
   getAuth?: () => HttpSignalingAuth;
+  /** Collab API uses `peerId` instead of `from` on send. */
+  sendFromField?: "from" | "peerId";
 };
 
 export class HttpSignalingClient {
@@ -70,11 +72,14 @@ export class HttpSignalingClient {
 
   private readonly getAuth: () => HttpSignalingAuth;
 
+  private readonly sendFromField: "from" | "peerId";
+
   constructor(options: HttpSignalingClientOptions) {
     this.channel = options.channel;
     this.apiBase = options.apiBase.replace(/\/$/, "");
     this.fetchImpl = options.fetchImpl ?? ((url, init) => fetch(url, init));
     this.getAuth = options.getAuth ?? (() => ({}));
+    this.sendFromField = options.sendFromField ?? "from";
   }
 
   private url(action: string): string {
@@ -146,7 +151,7 @@ export class HttpSignalingClient {
   send(input: HttpSignalingSendInput): Promise<unknown> {
     const body: Record<string, unknown> = {
       room: input.room,
-      from: input.from,
+      [this.sendFromField]: input.from,
       to: input.to,
       type: input.type,
       payload: input.payload,

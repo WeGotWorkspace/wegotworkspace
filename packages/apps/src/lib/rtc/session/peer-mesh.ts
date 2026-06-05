@@ -175,6 +175,47 @@ export class RtcPeerMesh {
     return this.peers.get(remoteId)?.remoteStream ?? null;
   }
 
+  getPeerIds(): string[] {
+    return [...this.peers.keys()];
+  }
+
+  linkCount(): number {
+    if (this.options.binding?.kind === "data") {
+      let count = 0;
+      for (const entry of this.peers.values()) {
+        if (entry.dataChannel?.readyState === "open") count += 1;
+      }
+      return count;
+    }
+    let count = 0;
+    for (const entry of this.peers.values()) {
+      if (entry.pc.connectionState === "connected") count += 1;
+    }
+    return count;
+  }
+
+  broadcastJson(message: unknown): void {
+    const raw = JSON.stringify(message);
+    for (const entry of this.peers.values()) {
+      if (entry.dataChannel?.readyState !== "open") continue;
+      try {
+        entry.dataChannel.send(raw);
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  sendJsonTo(remoteId: string, message: unknown): void {
+    const entry = this.peers.get(remoteId);
+    if (entry?.dataChannel?.readyState !== "open") return;
+    try {
+      entry.dataChannel.send(JSON.stringify(message));
+    } catch {
+      // ignore
+    }
+  }
+
   private isUnknownPeerError(error: unknown): boolean {
     if (!(error instanceof Error)) return false;
     return error.message.includes("unknown_peer");

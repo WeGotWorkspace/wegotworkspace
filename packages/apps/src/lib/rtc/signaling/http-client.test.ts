@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { HttpSignalingClient } from "@/lib/rtc/signaling/http-client";
+import { HttpSignalingClient, type HttpSignalingFetch } from "@/lib/rtc/signaling/http-client";
 
 describe("HttpSignalingClient", () => {
   it("posts join and poll to channel api base", async () => {
@@ -36,7 +36,7 @@ describe("HttpSignalingClient", () => {
   });
 
   it("includes session key on voice guest sends", async () => {
-    const fetchImpl = vi.fn(
+    const fetchImpl = vi.fn<HttpSignalingFetch>(
       async () => new Response(JSON.stringify({ ok: true }), { status: 200 }),
     );
     const client = new HttpSignalingClient({
@@ -52,7 +52,9 @@ describe("HttpSignalingClient", () => {
       type: "ice",
       payload: { candidate: "candidate:1 1 udp" },
     });
-    const body = JSON.parse(String(fetchImpl.mock.calls[0]?.[1]?.body)) as Record<string, unknown>;
+    const call = fetchImpl.mock.calls[0];
+    expect(call).toBeDefined();
+    const body = JSON.parse(String(call![1]?.body)) as Record<string, unknown>;
     expect(body.sessionKey).toBe("guest-key");
   });
 });
