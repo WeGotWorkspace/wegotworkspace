@@ -1,6 +1,6 @@
 import { toRtcConfig, turnUrlCount } from "@/lib/rtc/config";
 import { rtcLog } from "@/lib/rtc/log";
-import type { HttpSignalingClient } from "@/lib/rtc/signaling/http-client";
+import type { HttpSignalingClient, HttpSignalingPollResult } from "@/lib/rtc/signaling/http-client";
 import type { RtcSessionBinding } from "@/lib/rtc/session/bindings";
 import {
   flushPendingIce,
@@ -46,6 +46,13 @@ export type RtcPeerMeshOptions = {
   formatOutboundDescription?: (description: RTCSessionDescriptionInit) => RTCSessionDescriptionInit;
   onLinkChange?: () => void;
   onUnknownPeer?: () => void;
+  shouldConnectToPeer?: (peer: RtcPeerDescriptor) => boolean;
+  shouldHandleRtcSignals?: () => boolean;
+  onPollData?: (data: HttpSignalingPollResult) => void | Promise<void>;
+  onPeerRemoved?: (remoteId: string, name: string, reason: "bye" | "roster") => void;
+  onConnectionFailed?: (remoteId: string, name: string) => void;
+  onPollError?: (error: unknown) => void;
+  onPeerConnected?: (remoteId: string) => void;
 };
 
 type MeshPeerEntry = {
@@ -237,13 +244,17 @@ export class RtcPeerMesh {
     });
   }
 
-  private removePeer(remoteId: string): void {
+  private removePeer(remoteId: string, reason: "bye" | "roster" | "local" = "local"): void {
     const entry = this.peers.get(remoteId);
     if (!entry) return;
+    const name = entry.name;
     entry.dataChannel?.close();
     entry.pc.close();
     this.peers.delete(remoteId);
-    this.log("peer-removed", { remoteId });
+    this.log("peer-removed", { remoteId, reason });
+    if (reason !== "local") {
+      this.options.onPeerRemoved?.(remoteId, name, reason);
+    }
     this.notifyLinkChange();
   }
 
@@ -280,10 +291,13 @@ export class RtcPeerMesh {
       });
       if (pc.connectionState === "connected") {
         void logSelectedPairTelemetry(this.options.channel, this.myId, remoteId, pc, "connected");
+        this.options.onPeerConnected?.(remoteId);
       }
       if (pc.connectionState === "failed") {
         void logSelectedPairTelemetry(this.options.channel, this.myId, remoteId, pc, "failed");
-        void this.restartWithRelay(remoteId, entry);
+        void this.restartWithRelay(remoteId, entry).then((retried) => {
+          if (!retried) this.options.onConnectionFailed?.(remoteId, entry.name);
+        });
       }
       this.notifyLinkChange();
     };
@@ -292,7 +306,9 @@ export class RtcPeerMesh {
         void logSelectedPairTelemetry(this.options.channel, this.myId, remoteId, pc, "connected");
       }
       if (pc.iceConnectionState === "failed") {
-        void this.restartWithRelay(remoteId, entry);
+        void this.restartWithRelay(remoteId, entry).then((retried) => {
+          if (!retried) this.options.onConnectionFailed?.(remoteId, entry.name);
+        });
       }
       this.notifyLinkChange();
     };
@@ -324,14 +340,14 @@ export class RtcPeerMesh {
     });
   }
 
-  private async restartWithRelay(remoteId: string, entry: MeshPeerEntry): Promise<void> {
+  private async restartWithRelay(remoteId: string, entry: MeshPeerEntry): Promise<boolean> {
     if (
       !entry.initiator ||
       entry.mode === "relay" ||
       entry.relayFallbackTried ||
       !this.turnConfigured
     ) {
-      return;
+      return false;
     }
     entry.relayFallbackTried = true;
     this.log("relay-fallback-start", { remoteId, initiator: entry.initiator });
@@ -339,7 +355,7 @@ export class RtcPeerMesh {
       this.removePeer(remoteId);
       await this.connectTo(remoteId, entry.name, "relay");
       const next = this.peers.get(remoteId);
-      if (!next?.initiator) return;
+      if (!next?.initiator) return false;
       const offer = await next.pc.createOffer({ iceRestart: true });
       const formatted = this.formatOutbound(offer);
       await next.pc.setLocalDescription(formatted);
@@ -353,8 +369,10 @@ export class RtcPeerMesh {
         next.pc,
         "relay-fallback",
       );
+      return true;
     } catch (error) {
       this.log("relay-fallback-failed", { remoteId, error });
+      return false;
     }
   }
 
@@ -484,24 +502,37 @@ export class RtcPeerMesh {
   }
 
   private async handleBye(from: string): Promise<void> {
-    this.removePeer(from);
+    this.removePeer(from, "bye");
   }
 
-  private async onPoll(data: {
-    peers: RtcPeerDescriptor[];
-    messages: Array<{ id?: number; from: string; type: string; payload: unknown }>;
-  }): Promise<void> {
+  private rtcSignalsEnabled(): boolean {
+    return this.options.shouldHandleRtcSignals?.() ?? true;
+  }
+
+  private async onPoll(data: HttpSignalingPollResult): Promise<void> {
+    await this.options.onPollData?.(data);
+
     const roomIds = new Set(data.peers.map((peer) => peer.id));
     this.lastRoomPeers = data.peers.filter((peer) => peer.id !== this.myId);
 
-    for (const peer of this.lastRoomPeers) {
-      void this.connectTo(peer.id, peer.name).catch((error) => {
-        this.log("peer-connect-failed", { remoteId: peer.id, error });
-      });
+    if (this.rtcSignalsEnabled()) {
+      for (const peer of this.lastRoomPeers) {
+        if (this.options.shouldConnectToPeer && !this.options.shouldConnectToPeer(peer)) {
+          continue;
+        }
+        void this.connectTo(peer.id, peer.name).catch((error) => {
+          this.log("peer-connect-failed", { remoteId: peer.id, error });
+        });
+      }
+
+      for (const id of [...this.peers.keys()]) {
+        if (!roomIds.has(id)) this.removePeer(id, "roster");
+      }
     }
 
-    for (const id of [...this.peers.keys()]) {
-      if (!roomIds.has(id)) this.removePeer(id);
+    if (!this.rtcSignalsEnabled()) {
+      this.notifyLinkChange();
+      return;
     }
 
     const signals = sortRtcSignalMessages(
@@ -552,6 +583,7 @@ export class RtcPeerMesh {
             return;
           }
           this.log("poll-failed", { error });
+          this.options.onPollError?.(error);
         })
         .finally(() => this.schedulePoll(true));
     }, delay);
@@ -611,6 +643,56 @@ export class RtcPeerMesh {
       peers: joined.peers,
       sessionKey: joined.sessionKey,
     };
+  }
+
+  getSessionKey(): string | null {
+    return this.sessionKey;
+  }
+
+  getMyName(): string {
+    return this.myName;
+  }
+
+  async updateJoinName(name: string): Promise<void> {
+    const trimmed = name.trim();
+    if (!trimmed || !this.myId) return;
+    this.myName = trimmed;
+    const joined = await this.options.signaling.join({
+      room: this.options.room,
+      name: this.myName,
+      peerId: this.myId,
+    });
+    if (typeof joined.sessionKey === "string") this.sessionKey = joined.sessionKey;
+  }
+
+  async sendByeToAll(): Promise<void> {
+    for (const remoteId of [...this.peers.keys()]) {
+      try {
+        await this.sendSignal(remoteId, "bye", null);
+      } catch {
+        // Best-effort bye while leaving.
+      }
+    }
+  }
+
+  async replaceAudioTrack(track: MediaStreamTrack): Promise<void> {
+    const updates: Promise<void>[] = [];
+    for (const entry of this.peers.values()) {
+      const sender = entry.pc.getSenders().find((s) => s.track?.kind === "audio");
+      if (!sender) continue;
+      updates.push(sender.replaceTrack(track));
+    }
+    await Promise.all(updates);
+  }
+
+  async replaceVideoTrack(track: MediaStreamTrack): Promise<void> {
+    const updates: Promise<void>[] = [];
+    for (const entry of this.peers.values()) {
+      const sender = entry.pc.getSenders().find((s) => s.track?.kind === "video");
+      if (!sender) continue;
+      updates.push(sender.replaceTrack(track));
+    }
+    await Promise.all(updates);
   }
 
   async leave(): Promise<void> {

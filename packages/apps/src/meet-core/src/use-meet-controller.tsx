@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { parseUrlList, toRtcConfig, turnUrlCount } from "@/lib/rtc/config";
+import { parseUrlList } from "@/lib/rtc/config";
 import { isRtcDebugEnabled } from "@/lib/rtc/debug";
+import type { HttpSignalingPollResult } from "@/lib/rtc/signaling/http-client";
 import { rtcLog } from "@/lib/rtc/log";
-import { sortRtcSignalMessages } from "@/lib/rtc/types";
+import type { RtcPeerDescriptor } from "@/lib/rtc/types";
 import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
 import { meetLabels } from "@/meet-core/src/meet-labels";
-import { sanitizeRtcSdp } from "@/meet-core/src/meet-rtc-sdp";
 import { readInboundMediaTotals } from "@/meet-core/src/meet-inbound-media-stats";
 import type { MeetAPIOperations, MeetRtcSettings } from "@/meet-core/src/meet-types";
+import { useMeetRtc } from "@/meet-core/src/use-meet-rtc";
 
 type SignalType = "offer" | "answer" | "ice" | "bye" | "chat";
-type IceMode = "direct" | "relay";
 type CallStatus = "idle" | "preparing" | "waiting" | "in-call" | "failed";
 
 type RemotePeer = {
@@ -39,15 +39,6 @@ type Knocker = {
   name: string;
 };
 
-type PeerEntry = {
-  pc: RTCPeerConnection;
-  name: string;
-  stream: MediaStream;
-  mode: IceMode;
-  relayFallbackTried: boolean;
-  pendingIce: RTCIceCandidateInit[];
-};
-
 type PeerInboundSample = {
   t: number;
   videoBytes: number;
@@ -68,16 +59,6 @@ type ControlMessage =
 
 const KNOCK_NAME_PREFIX = "__wgw_knock__:";
 const CONTROL_PREFIX = "__wgw_meet_control__:";
-
-function parseCandidateType(candidate: string): string {
-  const match = candidate.match(/\btyp\s+([a-z0-9]+)/i);
-  return match?.[1]?.toLowerCase() ?? "unknown";
-}
-
-function parseCandidateProtocol(candidate: string): string {
-  const parts = candidate.trim().split(/\s+/);
-  return parts[2]?.toLowerCase() ?? "unknown";
-}
 
 function randomId(len = 10): string {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -107,10 +88,6 @@ function buildVideoConstraints(deviceId?: string): MediaTrackConstraints {
   return deviceId
     ? { width: { ideal: 1280 }, height: { ideal: 720 }, deviceId: { exact: deviceId } }
     : { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" };
-}
-
-function sortSignalMessages(messages: Array<{ from: string; type: SignalType; payload: unknown }>) {
-  return sortRtcSignalMessages(messages);
 }
 
 function encodeKnockerName(displayName: string): string {
@@ -163,58 +140,6 @@ function parseControlMessage(text: string): ControlMessage | null {
   return null;
 }
 
-function toSessionDescription(
-  payload: unknown,
-  fallbackType: RTCSdpType,
-): RTCSessionDescriptionInit | null {
-  const raw = payload as { sdp?: unknown; type?: unknown } | null;
-  if (!raw || typeof raw.sdp !== "string" || raw.sdp.trim() === "") return null;
-  const type = raw.type;
-  const normalizedType: RTCSdpType =
-    type === "offer" || type === "answer" || type === "pranswer" || type === "rollback"
-      ? type
-      : fallbackType;
-  return { type: normalizedType, sdp: sanitizeRtcSdp(raw.sdp) };
-}
-
-function localDescriptionPayload(description: RTCSessionDescription): {
-  sdp: string;
-  type: RTCSdpType;
-} {
-  return {
-    type: description.type,
-    sdp: sanitizeRtcSdp(description.sdp ?? ""),
-  };
-}
-
-async function applyLocalDescription(
-  pc: RTCPeerConnection,
-  description: RTCSessionDescriptionInit,
-): Promise<void> {
-  if (description.type === "rollback") {
-    await pc.setLocalDescription(description);
-    return;
-  }
-  const normalized = toSessionDescription(description, description.type as RTCSdpType);
-  if (!normalized) {
-    await pc.setLocalDescription(description);
-    return;
-  }
-  await pc.setLocalDescription(normalized);
-}
-
-async function flushPendingIce(entry: PeerEntry): Promise<void> {
-  while (entry.pendingIce.length > 0) {
-    const candidate = entry.pendingIce.shift();
-    if (!candidate) continue;
-    try {
-      await entry.pc.addIceCandidate(candidate);
-    } catch {
-      // Ignore invalid queued candidates.
-    }
-  }
-}
-
 type UseMeetControllerArgs = {
   session: WorkspaceSession;
   defaultDisplayName: string;
@@ -260,10 +185,7 @@ export function useMeetController({
   const localStreamRef = useRef<MediaStream | null>(null);
   const cameraTrackRef = useRef<MediaStreamTrack | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
-  const peersRef = useRef<Map<string, PeerEntry>>(new Map());
   const participantRosterDiffReadyRef = useRef(false);
-  const pollTimerRef = useRef<number | null>(null);
-  const joinedSessionKeyRef = useRef<string | null>(null);
   const selfIdRef = useRef<string | null>(null);
   const roomCodeRef = useRef<string | null>(null);
   const statusRef = useRef<CallStatus>("idle");
@@ -279,7 +201,7 @@ export function useMeetController({
   const peerDisclosedMediaRef = useRef<
     Map<string, { mic: boolean; camera: boolean; screen?: boolean }>
   >(new Map());
-  const wasKnockerPeerIdsRef = useRef<Set<string>>(new Set());
+  const peerNamesRef = useRef<Map<string, string>>(new Map());
   const micOnRef = useRef(micOn);
   const videoOnRef = useRef(videoOn);
   const screenOnRef = useRef(screenOn);
@@ -294,6 +216,147 @@ export function useMeetController({
   videoOnRef.current = videoOn;
   screenOnRef.current = screenOn;
 
+  const refreshPeersRef = useRef<() => void>(() => {});
+  const announceMediaPresenceRef = useRef<
+    (mic: boolean, camera: boolean, screen?: boolean) => Promise<void>
+  >(async () => {});
+  const meetRtcRef = useRef<ReturnType<typeof useMeetRtc> | null>(null);
+
+  const handlePollData = useCallback(async (poll: HttpSignalingPollResult) => {
+    const roster = poll.peers ?? [];
+    const incoming = (poll.messages ?? []) as Array<{
+      from: string;
+      type: SignalType;
+      payload: unknown;
+    }>;
+    const selfPeerId = selfIdRef.current;
+    if (!selfPeerId) return;
+
+    const pendingKnockers = roster
+      .map((peer) => {
+        const name = decodeKnockerName(peer.name);
+        if (!name) return null;
+        return { id: peer.id, name } satisfies Knocker;
+      })
+      .filter((peer): peer is Knocker => peer !== null);
+    setKnockers(pendingKnockers);
+    const pendingKnockerIds = new Set(pendingKnockers.map((peer) => peer.id));
+    const activeRoster = new Map<string, string>();
+    for (const peer of roster) {
+      if (pendingKnockerIds.has(peer.id)) continue;
+      activeRoster.set(peer.id, peer.name);
+      peerNamesRef.current.set(peer.id, peer.name);
+    }
+    if (statusRef.current === "in-call") {
+      if (!participantRosterDiffReadyRef.current) {
+        participantRosterDiffReadyRef.current = true;
+        rosterRef.current = activeRoster;
+      } else {
+        const prev = rosterRef.current;
+        activeRoster.forEach((name, id) => {
+          if (id === selfPeerId) return;
+          if (!prev.has(id)) toast.success(meetLabels.participantJoined(name));
+        });
+        rosterRef.current = activeRoster;
+      }
+    } else {
+      rosterRef.current = activeRoster;
+    }
+
+    for (const msg of incoming) {
+      if (msg.type !== "chat") continue;
+      const text = (msg.payload as { text?: unknown } | null)?.text;
+      if (typeof text !== "string" || text.trim() === "") continue;
+      const control = parseControlMessage(text.trim());
+      if (control) {
+        if (control.kind === "knock") {
+          setKnockers((prev) => {
+            if (prev.some((entry) => entry.id === control.peerId)) return prev;
+            return [...prev, { id: control.peerId, name: control.name }];
+          });
+        }
+        if (control.kind === "end") {
+          if (statusRef.current === "in-call") {
+            setEndedMessage(`Call ended by ${control.by}.`);
+            toast.info(`Call ended by ${control.by}.`);
+            await leaveRef.current?.({ preserveEndedMessage: true });
+          }
+          continue;
+        }
+        if (control.kind === "media") {
+          if (msg.from !== selfPeerId) {
+            peerDisclosedMediaRef.current.set(msg.from, {
+              mic: control.mic,
+              camera: control.camera,
+              screen: control.screen,
+            });
+            refreshPeersRef.current();
+          }
+          continue;
+        }
+        if (control.kind !== "admit" && control.kind !== "deny") continue;
+        if (control.peerId !== selfPeerId) continue;
+        if (control.kind === "admit") {
+          if (waitingForAdmissionRef.current && roomCodeRef.current && selfPeerId) {
+            await meetRtcRef.current?.updateJoinName(displayNameRef.current.trim() || "Guest");
+            setWaitingForAdmission(false);
+            setStatus("in-call");
+            setStartedAt(Date.now());
+            toast.success("You were let in.");
+          }
+        } else if (control.kind === "deny") {
+          toast.error("The host denied your request to join.");
+          await leaveRef.current?.();
+        }
+        continue;
+      }
+      const fromName = roster.find((peer) => peer.id === msg.from)?.name ?? "Peer";
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          id: `${msg.from}-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`,
+          fromPeerId: msg.from,
+          fromName,
+          body: text.trim(),
+          ts: Date.now(),
+          isSelf: msg.from === selfPeerId,
+        },
+      ]);
+    }
+  }, []);
+
+  const meetRtc = useMeetRtc({
+    rtcSettings: rtc,
+    getLocalStream: () => localStreamRef.current,
+    onLinkChange: () => refreshPeersRef.current(),
+    onPollData: handlePollData,
+    shouldConnectToPeer: (peer: RtcPeerDescriptor) =>
+      !decodeKnockerName(peer.name) && !waitingForAdmissionRef.current,
+    shouldHandleRtcSignals: () => !waitingForAdmissionRef.current,
+    onPeerRemoved: (peerId, name) => {
+      peerNamesRef.current.delete(peerId);
+      peerInboundSampleRef.current.delete(peerId);
+      peerMediaHintRef.current.delete(peerId);
+      peerDisclosedMediaRef.current.delete(peerId);
+      refreshPeersRef.current();
+      if (statusRef.current === "in-call" && peerId !== selfIdRef.current && selfIdRef.current) {
+        toast.info(meetLabels.participantLeft(name));
+      }
+    },
+    onConnectionFailed: (_peerId, peerName) => {
+      setError(`Connection to ${peerName} failed.`);
+    },
+    onPollError: (error) => {
+      const message = error instanceof Error ? error.message : "Could not poll room updates.";
+      debugRtc("poll-failed", { message });
+      setError(message);
+    },
+    onPeerConnected: () => {
+      void announceMediaPresenceRef.current(micOnRef.current, videoOnRef.current);
+    },
+  });
+  meetRtcRef.current = meetRtc;
+
   useEffect(() => {
     debugRtc("controller-init", {
       rtcDebugEnabled: rtcDebugEnabledRef.current,
@@ -307,19 +370,24 @@ export function useMeetController({
 
   const refreshPeers = useCallback(() => {
     const next: RemotePeer[] = [];
-    peersRef.current.forEach((entry, id) => {
-      const connected = entry.pc.connectionState === "connected";
+    for (const id of meetRtc.getPeerIds()) {
+      const pc = meetRtc.getPeerConnection(id);
+      const name = peerNamesRef.current.get(id) ?? "Peer";
+      const stream = meetRtc.getRemoteStream(id);
+      const connectionState = pc?.connectionState ?? "new";
+      const connected = connectionState === "connected";
       next.push({
         id,
-        name: entry.name,
-        stream: entry.stream,
-        connectionState: entry.pc.connectionState,
+        name,
+        stream,
+        connectionState,
         remoteMedia: connected ? (peerMediaHintRef.current.get(id) ?? null) : null,
         disclosedMedia: peerDisclosedMediaRef.current.get(id) ?? null,
       });
-    });
+    }
     setPeers(next);
-  }, []);
+  }, [meetRtc]);
+  refreshPeersRef.current = refreshPeers;
 
   const announceMediaPresence = useCallback(
     async (mic: boolean, camera: boolean, screen?: boolean) => {
@@ -336,14 +404,15 @@ export function useMeetController({
             camera,
             screen: screenOnNow,
           }),
-          sessionKey: joinedSessionKeyRef.current ?? undefined,
+          sessionKey: meetRtc.getSessionKey() ?? undefined,
         });
       } catch {
         // Best-effort; peers may still infer from tracks or RTP stats.
       }
     },
-    [],
+    [meetRtc],
   );
+  announceMediaPresenceRef.current = announceMediaPresence;
 
   const refreshDeviceList = useCallback(async () => {
     if (!navigator.mediaDevices?.enumerateDevices) return;
@@ -375,190 +444,18 @@ export function useMeetController({
     return stream;
   }, [micOn, refreshDeviceList, selectedCamId, selectedMicId, videoOn]);
 
-  const replaceAudioTrackOnAllPeers = useCallback(async (track: MediaStreamTrack) => {
-    const updates: Promise<void>[] = [];
-    peersRef.current.forEach((entry) => {
-      const sender = entry.pc.getSenders().find((s) => s.track?.kind === "audio");
-      if (!sender) return;
-      updates.push(sender.replaceTrack(track));
-    });
-    await Promise.all(updates);
-  }, []);
-
-  const replaceVideoTrackOnAllPeers = useCallback(async (track: MediaStreamTrack) => {
-    const updates: Promise<void>[] = [];
-    peersRef.current.forEach((entry) => {
-      const sender = entry.pc.getSenders().find((s) => s.track?.kind === "video");
-      if (!sender) return;
-      updates.push(sender.replaceTrack(track));
-    });
-    await Promise.all(updates);
-  }, []);
-
-  const closePeer = useCallback(
-    (peerId: string, opts?: { announceLeave?: boolean }) => {
-      const entry = peersRef.current.get(peerId);
-      if (!entry) return;
-      const name = entry.name;
-      const announce = opts?.announceLeave !== false;
-      entry.pc.close();
-      entry.stream.getTracks().forEach((track) => track.stop());
-      peersRef.current.delete(peerId);
-      peerInboundSampleRef.current.delete(peerId);
-      peerMediaHintRef.current.delete(peerId);
-      peerDisclosedMediaRef.current.delete(peerId);
-      refreshPeers();
-      if (
-        announce &&
-        statusRef.current === "in-call" &&
-        peerId !== selfIdRef.current &&
-        selfIdRef.current
-      ) {
-        toast.info(meetLabels.participantLeft(name));
-      }
+  const replaceAudioTrackOnAllPeers = useCallback(
+    async (track: MediaStreamTrack) => {
+      await meetRtc.replaceAudioTrack(track);
     },
-    [refreshPeers],
+    [meetRtc],
   );
 
-  const createPeerConnection = useCallback(
-    (peerId: string, peerName: string, mode: IceMode = "direct"): PeerEntry => {
-      const config = toRtcConfig(rtc, mode);
-      const pc = new RTCPeerConnection(config);
-      const remoteStream = new MediaStream();
-      debugRtc("pc-create", {
-        peerId,
-        peerName,
-        mode,
-        iceTransportPolicy: config.iceTransportPolicy ?? "all",
-        iceServerCount: config.iceServers?.length ?? 0,
-      });
-
-      const entry: PeerEntry = {
-        pc,
-        name: peerName,
-        stream: remoteStream,
-        mode,
-        relayFallbackTried: false,
-        pendingIce: [],
-      };
-      peersRef.current.set(peerId, entry);
-
-      if (localStreamRef.current) {
-        localStreamRef.current
-          .getTracks()
-          .forEach((track) => pc.addTrack(track, localStreamRef.current!));
-      }
-
-      pc.ontrack = (event) => {
-        const track = event.track;
-        if (track && !remoteStream.getTracks().includes(track)) {
-          remoteStream.addTrack(track);
-        }
-        event.streams[0]?.getTracks().forEach((t) => {
-          if (!remoteStream.getTracks().includes(t)) {
-            remoteStream.addTrack(t);
-          }
-        });
-        refreshPeers();
-      };
-
-      pc.onicecandidate = (event) => {
-        const candidate = event.candidate?.toJSON();
-        if (
-          !candidate ||
-          typeof candidate.candidate !== "string" ||
-          candidate.candidate.trim() === "" ||
-          !operationsRef.current ||
-          !roomCodeRef.current ||
-          !selfIdRef.current
-        ) {
-          return;
-        }
-        debugRtc("ice-candidate-local", {
-          peerId,
-          mode: entry.mode,
-          candidateType: parseCandidateType(candidate.candidate),
-          protocol: parseCandidateProtocol(candidate.candidate),
-        });
-        void operationsRef.current.send({
-          room: roomCodeRef.current,
-          from: selfIdRef.current,
-          to: peerId,
-          type: "ice",
-          payload: {
-            candidate: candidate.candidate,
-            sdpMid: candidate.sdpMid ?? undefined,
-            sdpMLineIndex: candidate.sdpMLineIndex ?? undefined,
-            usernameFragment: candidate.usernameFragment ?? undefined,
-          },
-          sessionKey: joinedSessionKeyRef.current ?? undefined,
-        });
-      };
-
-      pc.onconnectionstatechange = () => {
-        debugRtc("pc-connection-state", {
-          peerId,
-          peerName,
-          mode: entry.mode,
-          connectionState: pc.connectionState,
-          iceConnectionState: pc.iceConnectionState,
-          signalingState: pc.signalingState,
-        });
-        if (pc.connectionState === "connected") {
-          peerInboundSampleRef.current.delete(peerId);
-          peerMediaHintRef.current.delete(peerId);
-          void announceMediaPresence(micOnRef.current, videoOnRef.current);
-        }
-        refreshPeers();
-        if (pc.connectionState !== "failed") return;
-        if (entry.mode === "relay" || entry.relayFallbackTried || turnUrlCount(rtc) === 0) {
-          setError(`Connection to ${peerName} failed.`);
-          return;
-        }
-        void (async () => {
-          try {
-            debugRtc("relay-fallback-start", { peerId, peerName });
-            entry.pc.close();
-            peersRef.current.delete(peerId);
-            const replacement = createPeerConnection(peerId, peerName, "relay");
-            replacement.relayFallbackTried = true;
-            peersRef.current.set(peerId, replacement);
-            if (
-              selfIdRef.current &&
-              selfIdRef.current > peerId &&
-              operationsRef.current &&
-              roomCodeRef.current
-            ) {
-              const offer = await replacement.pc.createOffer({ iceRestart: true });
-              await applyLocalDescription(replacement.pc, offer);
-              if (!replacement.pc.localDescription?.sdp) return;
-              await operationsRef.current.send({
-                room: roomCodeRef.current,
-                from: selfIdRef.current,
-                to: peerId,
-                type: "offer",
-                payload: {
-                  sdp: replacement.pc.localDescription.sdp,
-                  type: replacement.pc.localDescription.type,
-                },
-                sessionKey: joinedSessionKeyRef.current ?? undefined,
-              });
-              debugRtc("relay-fallback-offer-sent", { peerId, peerName });
-            }
-          } catch (error) {
-            debugRtc("relay-fallback-failed", {
-              peerId,
-              peerName,
-              error: error instanceof Error ? error.message : String(error),
-            });
-            setError(`Connection to ${peerName} failed.`);
-          }
-        })();
-      };
-
-      return entry;
+  const replaceVideoTrackOnAllPeers = useCallback(
+    async (track: MediaStreamTrack) => {
+      await meetRtc.replaceVideoTrack(track);
     },
-    [announceMediaPresence, refreshPeers, rtc],
+    [meetRtc],
   );
 
   useEffect(() => {
@@ -575,16 +472,17 @@ export function useMeetController({
 
     const sampleTick = async () => {
       if (cancelled) return;
-      const entries = [...peersRef.current.entries()];
+      const peerIds = meetRtc.getPeerIds();
       await Promise.all(
-        entries.map(async ([id, entry]) => {
-          if (entry.pc.connectionState !== "connected") {
+        peerIds.map(async (id) => {
+          const pc = meetRtc.getPeerConnection(id);
+          if (!pc || pc.connectionState !== "connected") {
             peerInboundSampleRef.current.delete(id);
             peerMediaHintRef.current.delete(id);
             return;
           }
           try {
-            const totals = await readInboundMediaTotals(entry.pc);
+            const totals = await readInboundMediaTotals(pc);
             const now = Date.now();
             const prev = peerInboundSampleRef.current.get(id);
             if (!prev) {
@@ -664,272 +562,7 @@ export function useMeetController({
       cancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [announceMediaPresence, status, refreshPeers]);
-
-  const handleSignal = useCallback(
-    async (message: { from: string; type: SignalType; payload: unknown }, peerName: string) => {
-      if (message.type === "chat") return;
-      const { from, type, payload } = message;
-      debugRtc("signal-received", { from, type, peerName });
-      let entry = peersRef.current.get(from);
-
-      if (type === "offer") {
-        if (!entry) {
-          entry = createPeerConnection(from, peerName, rtc.forceRelay ? "relay" : "direct");
-        }
-        const sdp = toSessionDescription(payload, "offer");
-        if (!sdp) return;
-        if (entry.pc.signalingState !== "stable") {
-          try {
-            await entry.pc.setLocalDescription({ type: "rollback" });
-          } catch {
-            // Ignore rollback failures on incompatible states.
-          }
-        }
-        await entry.pc.setRemoteDescription(sdp);
-        await flushPendingIce(entry);
-        const answer = await entry.pc.createAnswer();
-        await entry.pc.setLocalDescription(answer);
-        if (!entry.pc.localDescription?.sdp) return;
-        if (!operationsRef.current || !roomCodeRef.current || !selfIdRef.current) return;
-        await operationsRef.current.send({
-          room: roomCodeRef.current,
-          from: selfIdRef.current,
-          to: from,
-          type: "answer",
-          payload: {
-            sdp: entry.pc.localDescription.sdp,
-            type: entry.pc.localDescription.type,
-          },
-          sessionKey: joinedSessionKeyRef.current ?? undefined,
-        });
-        return;
-      }
-
-      if (type === "answer" && entry) {
-        const sdp = toSessionDescription(payload, "answer");
-        if (!sdp) return;
-        if (entry.pc.signalingState !== "stable") {
-          await entry.pc.setRemoteDescription(sdp);
-          await flushPendingIce(entry);
-        }
-        return;
-      }
-
-      if (type === "ice" && entry) {
-        const candidate = payload as RTCIceCandidateInit | null;
-        if (
-          !candidate ||
-          typeof candidate.candidate !== "string" ||
-          candidate.candidate.trim() === ""
-        ) {
-          return;
-        }
-        if (!entry.pc.remoteDescription) {
-          entry.pendingIce.push(candidate);
-          return;
-        }
-        try {
-          await entry.pc.addIceCandidate(candidate);
-          debugRtc("ice-candidate-remote-added", {
-            from,
-            candidateType: parseCandidateType(candidate.candidate),
-            protocol: parseCandidateProtocol(candidate.candidate),
-          });
-        } catch {
-          if (!entry.pc.remoteDescription) entry.pendingIce.push(candidate);
-          debugRtc("ice-candidate-remote-add-failed", {
-            from,
-            hasRemoteDescription: !!entry.pc.remoteDescription,
-          });
-        }
-        return;
-      }
-
-      if (type === "bye") {
-        closePeer(from);
-      }
-    },
-    [closePeer, createPeerConnection, rtc.forceRelay],
-  );
-
-  const pollOnce = useCallback(async () => {
-    if (!operationsRef.current || !roomCodeRef.current || !selfIdRef.current) return;
-    const poll = await operationsRef.current.poll({
-      room: roomCodeRef.current,
-      peerId: selfIdRef.current,
-      sessionKey: joinedSessionKeyRef.current ?? undefined,
-    });
-
-    const roster = poll.peers ?? [];
-    const incoming = (poll.messages ?? []) as Array<{
-      from: string;
-      type: SignalType;
-      payload: unknown;
-    }>;
-    const selfPeerId = selfIdRef.current;
-    const pendingKnockers = roster
-      .map((peer) => {
-        const name = decodeKnockerName(peer.name);
-        if (!name) return null;
-        return { id: peer.id, name } satisfies Knocker;
-      })
-      .filter((peer): peer is Knocker => peer !== null);
-    setKnockers(pendingKnockers);
-    const pendingKnockerIds = new Set(pendingKnockers.map((peer) => peer.id));
-    const activeRoster = new Map<string, string>();
-    for (const peer of roster) {
-      if (pendingKnockerIds.has(peer.id)) continue;
-      activeRoster.set(peer.id, peer.name);
-    }
-    if (statusRef.current === "in-call") {
-      if (!participantRosterDiffReadyRef.current) {
-        participantRosterDiffReadyRef.current = true;
-        rosterRef.current = activeRoster;
-      } else {
-        const prev = rosterRef.current;
-        activeRoster.forEach((name, id) => {
-          if (id === selfPeerId) return;
-          if (!prev.has(id)) toast.success(meetLabels.participantJoined(name));
-        });
-        rosterRef.current = activeRoster;
-      }
-    } else {
-      rosterRef.current = activeRoster;
-    }
-
-    for (const msg of incoming) {
-      if (msg.type !== "chat") continue;
-      const text = (msg.payload as { text?: unknown } | null)?.text;
-      if (typeof text !== "string" || text.trim() === "") continue;
-      const control = parseControlMessage(text.trim());
-      if (control) {
-        if (control.kind === "knock") {
-          setKnockers((prev) => {
-            if (prev.some((entry) => entry.id === control.peerId)) return prev;
-            return [...prev, { id: control.peerId, name: control.name }];
-          });
-        }
-        if (control.kind === "end") {
-          if (statusRef.current === "in-call") {
-            setEndedMessage(`Call ended by ${control.by}.`);
-            toast.info(`Call ended by ${control.by}.`);
-            await leaveRef.current?.({ preserveEndedMessage: true });
-          }
-          continue;
-        }
-        if (control.kind === "media") {
-          if (msg.from !== selfPeerId) {
-            peerDisclosedMediaRef.current.set(msg.from, {
-              mic: control.mic,
-              camera: control.camera,
-              screen: control.screen,
-            });
-            refreshPeers();
-          }
-          continue;
-        }
-        if (control.kind !== "admit" && control.kind !== "deny") continue;
-        if (control.peerId !== selfPeerId) continue;
-        if (control.kind === "admit") {
-          if (
-            waitingForAdmissionRef.current &&
-            operationsRef.current &&
-            roomCodeRef.current &&
-            selfIdRef.current
-          ) {
-            const joined = await operationsRef.current.join({
-              room: roomCodeRef.current,
-              peerId: selfIdRef.current,
-              name: displayNameRef.current.trim() || "Guest",
-            });
-            joinedSessionKeyRef.current =
-              typeof joined.sessionKey === "string" ? joined.sessionKey : null;
-            setWaitingForAdmission(false);
-            setStatus("in-call");
-            setStartedAt(Date.now());
-            toast.success("You were let in.");
-          }
-        } else if (control.kind === "deny") {
-          toast.error("The host denied your request to join.");
-          await leaveRef.current?.();
-        }
-        continue;
-      }
-      const fromName = roster.find((peer) => peer.id === msg.from)?.name ?? "Peer";
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          id: `${msg.from}-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`,
-          fromPeerId: msg.from,
-          fromName,
-          body: text.trim(),
-          ts: Date.now(),
-          isSelf: msg.from === selfPeerId,
-        },
-      ]);
-    }
-
-    const signals = sortSignalMessages(incoming.filter((msg) => msg.type !== "chat"));
-    for (const signal of signals) {
-      if (waitingForAdmissionRef.current) continue;
-      if (pendingKnockerIds.has(signal.from)) continue;
-      const fromName = roster.find((peer) => peer.id === signal.from)?.name ?? "Peer";
-      await handleSignal(signal, fromName);
-    }
-
-    const known = peersRef.current;
-    for (const peer of roster) {
-      if (known.has(peer.id) || !selfPeerId) continue;
-      if (waitingForAdmissionRef.current || pendingKnockerIds.has(peer.id)) continue;
-      if (selfPeerId > peer.id) {
-        const entry = createPeerConnection(peer.id, peer.name, rtc.forceRelay ? "relay" : "direct");
-        const offer = await entry.pc.createOffer();
-        await entry.pc.setLocalDescription(offer);
-        if (!entry.pc.localDescription?.sdp) continue;
-        await operationsRef.current.send({
-          room: roomCodeRef.current!,
-          from: selfPeerId,
-          to: peer.id,
-          type: "offer",
-          payload: { sdp: entry.pc.localDescription.sdp, type: entry.pc.localDescription.type },
-          sessionKey: joinedSessionKeyRef.current ?? undefined,
-        });
-      }
-    }
-
-    const rosterIds = new Set(roster.map((peer) => peer.id));
-    known.forEach((_entry, id) => {
-      if (!rosterIds.has(id)) closePeer(id);
-    });
-  }, [closePeer, createPeerConnection, handleSignal, refreshPeers, rtc.forceRelay]);
-
-  const stopPolling = useCallback(() => {
-    if (pollTimerRef.current !== null) {
-      window.clearTimeout(pollTimerRef.current);
-      pollTimerRef.current = null;
-    }
-  }, []);
-
-  const startPolling = useCallback(() => {
-    stopPolling();
-    const tick = async () => {
-      const isActive = statusRef.current === "in-call" || statusRef.current === "waiting";
-      if (!isActive) return;
-      try {
-        await pollOnce();
-      } catch (e) {
-        const message = e instanceof Error ? e.message : "Could not poll room updates.";
-        debugRtc("poll-failed", { message });
-        setError(message);
-      } finally {
-        if (statusRef.current === "in-call" || statusRef.current === "waiting") {
-          pollTimerRef.current = window.setTimeout(tick, 1200);
-        }
-      }
-    };
-    pollTimerRef.current = window.setTimeout(tick, 250);
-  }, [pollOnce, stopPolling]);
+  }, [announceMediaPresence, meetRtc, status, refreshPeers]);
 
   const joinRoom = useCallback(
     async (room?: string) => {
@@ -946,24 +579,20 @@ export function useMeetController({
       setKnockers([]);
       setEndedMessage(null);
       rosterRef.current = new Map();
+      peerNamesRef.current = new Map();
       participantRosterDiffReadyRef.current = false;
 
       try {
         debugRtc("join-room-start", { room: target, peerId });
         await ensureLocalMedia();
-        if (operationsRef.current) {
-          const joined = await operationsRef.current.join({
-            room: target,
-            peerId,
-            name: displayNameRef.current.trim() || "Guest",
-          });
-          joinedSessionKeyRef.current =
-            typeof joined.sessionKey === "string" ? joined.sessionKey : null;
-        }
+        await meetRtc.join({
+          room: target,
+          peerId,
+          name: displayNameRef.current.trim() || "Guest",
+        });
         setStatus("in-call");
         setStartedAt(Date.now());
         debugRtc("join-room-success", { room: target, peerId });
-        startPolling();
       } catch (e) {
         const message = e instanceof Error ? e.message : "Could not join meeting.";
         debugRtc("join-room-failed", { room: target, peerId, message });
@@ -972,49 +601,18 @@ export function useMeetController({
         throw e;
       }
     },
-    [ensureLocalMedia, startPolling],
+    [ensureLocalMedia, meetRtc],
   );
 
   const leave = useCallback(
     async (opts?: { preserveEndedMessage?: boolean }) => {
-      stopPolling();
-      const currentRoom = roomCodeRef.current;
-      const currentPeerId = selfIdRef.current;
-      if (operationsRef.current && currentRoom && currentPeerId) {
-        const peerIds = [...peersRef.current.keys()];
-        for (const peerId of peerIds) {
-          try {
-            await operationsRef.current.send({
-              room: currentRoom,
-              from: currentPeerId,
-              to: peerId,
-              type: "bye",
-              payload: null,
-              sessionKey: joinedSessionKeyRef.current ?? undefined,
-            });
-          } catch {
-            // Ignore best-effort bye signal failures while leaving.
-          }
-        }
-        try {
-          await operationsRef.current.leave({
-            room: currentRoom,
-            peerId: currentPeerId,
-            sessionKey: joinedSessionKeyRef.current ?? undefined,
-          });
-        } catch {
-          // Ignore leave API failures on cleanup.
-        }
-      }
-
-      [...peersRef.current.keys()].forEach((id) => closePeer(id, { announceLeave: false }));
+      await meetRtc.leave();
       localStreamRef.current?.getTracks().forEach((track) => track.stop());
       screenStreamRef.current?.getTracks().forEach((track) => track.stop());
       localStreamRef.current = null;
       screenStreamRef.current = null;
       setScreenPreviewStream(null);
       cameraTrackRef.current = null;
-      joinedSessionKeyRef.current = null;
       if (localVideoRef.current) localVideoRef.current.srcObject = null;
 
       setStatus("idle");
@@ -1037,8 +635,9 @@ export function useMeetController({
       roomCodeRef.current = null;
       selfIdRef.current = null;
       peerDisclosedMediaRef.current.clear();
+      peerNamesRef.current.clear();
     },
-    [closePeer, stopPolling],
+    [meetRtc],
   );
   leaveRef.current = leave;
 
@@ -1049,7 +648,7 @@ export function useMeetController({
     const payload = JSON.stringify({
       room,
       peerId,
-      sessionKey: joinedSessionKeyRef.current ?? undefined,
+      sessionKey: meetRtc.getSessionKey() ?? undefined,
     });
     const endpoint = "/api/v1/voice/leave";
     let sent = false;
@@ -1070,7 +669,7 @@ export function useMeetController({
     }).catch(() => {
       // Ignore best-effort unload failures.
     });
-  }, []);
+  }, [meetRtc]);
 
   const requestJoin = useCallback(
     async (room: string) => {
@@ -1088,18 +687,17 @@ export function useMeetController({
       setKnockers([]);
       setEndedMessage(null);
       rosterRef.current = new Map();
+      peerNamesRef.current = new Map();
       participantRosterDiffReadyRef.current = false;
 
       try {
         await ensureLocalMedia();
+        await meetRtc.join({
+          room: target,
+          peerId,
+          name: encodeKnockerName(displayNameRef.current),
+        });
         if (operationsRef.current) {
-          const joined = await operationsRef.current.join({
-            room: target,
-            peerId,
-            name: encodeKnockerName(displayNameRef.current),
-          });
-          joinedSessionKeyRef.current =
-            typeof joined.sessionKey === "string" ? joined.sessionKey : null;
           await operationsRef.current.chat({
             room: target,
             from: peerId,
@@ -1108,11 +706,10 @@ export function useMeetController({
               peerId,
               name: displayNameRef.current.trim() || "Guest",
             }),
-            sessionKey: joinedSessionKeyRef.current ?? undefined,
+            sessionKey: meetRtc.getSessionKey() ?? undefined,
           });
         }
         setStatus("waiting");
-        startPolling();
       } catch (e) {
         const message = e instanceof Error ? e.message : "Could not request to join.";
         setStatus("failed");
@@ -1121,7 +718,7 @@ export function useMeetController({
         throw e;
       }
     },
-    [ensureLocalMedia, startPolling],
+    [ensureLocalMedia, meetRtc],
   );
 
   const admitKnocker = useCallback(
@@ -1132,7 +729,7 @@ export function useMeetController({
         room: roomCodeRef.current,
         from: selfIdRef.current,
         text: buildControlMessage({ kind: "admit", peerId }),
-        sessionKey: joinedSessionKeyRef.current ?? undefined,
+        sessionKey: meetRtc.getSessionKey() ?? undefined,
       });
       setKnockers((prev) => prev.filter((entry) => entry.id !== peerId));
     },
@@ -1147,7 +744,7 @@ export function useMeetController({
         room: roomCodeRef.current,
         from: selfIdRef.current,
         text: buildControlMessage({ kind: "deny", peerId }),
-        sessionKey: joinedSessionKeyRef.current ?? undefined,
+        sessionKey: meetRtc.getSessionKey() ?? undefined,
       });
       setKnockers((prev) => prev.filter((entry) => entry.id !== peerId));
     },
@@ -1167,7 +764,7 @@ export function useMeetController({
           kind: "end",
           by: displayNameRef.current.trim() || "Host",
         }),
-        sessionKey: joinedSessionKeyRef.current ?? undefined,
+        sessionKey: meetRtc.getSessionKey() ?? undefined,
       });
     } catch {
       // Continue with local leave even if broadcast fails.
@@ -1197,7 +794,7 @@ export function useMeetController({
         room: roomCodeRef.current,
         from: me,
         text,
-        sessionKey: joinedSessionKeyRef.current ?? undefined,
+        sessionKey: meetRtc.getSessionKey() ?? undefined,
       });
     } catch (e) {
       setChatMessages((prev) => prev.filter((line) => line.id !== localLine.id));
