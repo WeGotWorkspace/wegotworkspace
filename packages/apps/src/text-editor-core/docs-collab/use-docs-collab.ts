@@ -4,7 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import * as awarenessProtocol from "y-protocols/awareness";
 import * as syncProtocol from "y-protocols/sync";
 import * as Y from "yjs";
-import { fetchRtcSettings } from "@/lib/api/wgw/rtc";
+import { fetchRtcSettings, resolveRtcSettings } from "@/lib/api/wgw/rtc";
+import { DEFAULT_RTC_SETTINGS } from "@/lib/rtc/types";
 import { fetchWgwAuthToken } from "@/lib/api/wgw/auth-token";
 import { applyContentSeedToYDoc } from "./docs-collab-editor-surface";
 import type { TextEditorContentFormat } from "@/text-editor-core/src/text-editor-content";
@@ -350,6 +351,7 @@ export function useDocsCollab({
       });
     } catch (error) {
       console.warn("[docs-collab] rtc settings unavailable", error);
+      rtcSettings = resolveRtcSettings(DEFAULT_RTC_SETTINGS);
     }
     if (generation !== joinGenerationRef.current) return;
 
@@ -397,13 +399,7 @@ export function useDocsCollab({
       apiBase: urls.collabApiBaseUrl ?? "/api/v1/collab",
       room: urls.room ?? "docs/test-together.md",
       authToken,
-      rtcSettings: rtcSettings ?? {
-        stunUrls: "",
-        turnUrls: "",
-        turnUsername: "",
-        turnPassword: "",
-        forceRelay: false,
-      },
+      rtcSettings: rtcSettings ?? resolveRtcSettings(DEFAULT_RTC_SETTINGS),
     });
     meshRef.current = mesh;
     mesh.onMessage(handleMeshMessage);

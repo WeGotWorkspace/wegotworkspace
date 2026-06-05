@@ -8,4 +8,6 @@ export * from "@/lib/rtc/session/peer-mesh";
 export * from "@/lib/rtc/session/sdp";
 export * from "@/lib/rtc/telemetry/selected-pair";
 export * from "@/lib/rtc/force-relay";
+export * from "@/lib/rtc/signaling/create-client";
+export * from "@/lib/rtc/session/create-rtc-session";
 export * from "@/lib/rtc/hooks/use-rtc-session";

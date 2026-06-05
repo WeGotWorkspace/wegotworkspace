@@ -1,7 +1,7 @@
-import { HttpSignalingClient } from "@/lib/rtc/signaling/http-client";
 import { createDataBinding } from "@/lib/rtc/session/bindings";
-import { RtcPeerMesh } from "@/lib/rtc/session/peer-mesh";
-import { COLLAB_RTC_POLL_INTERVALS, type RtcSettings } from "@/lib/rtc/types";
+import { createRtcSession } from "@/lib/rtc/session/create-rtc-session";
+import type { RtcPeerMesh } from "@/lib/rtc/session/peer-mesh";
+import type { RtcSettings } from "@/lib/rtc/types";
 import type {
   DocsCollabMeshMessage,
   DocsCollabMeshPeer,
@@ -43,23 +43,16 @@ export class DocsRtcSession {
       onClose: () => this.emit({ type: "link" }),
     });
 
-    const signaling = new HttpSignalingClient({
-      channel: "collab",
-      apiBase: options.apiBase,
-      sendFromField: "peerId",
-      getAuth: () => ({ bearerToken: options.authToken }),
-    });
-
-    this.mesh = new RtcPeerMesh({
+    this.mesh = createRtcSession({
       channel: "collab",
       room: options.room,
-      signaling,
       rtcSettings: options.rtcSettings,
       binding,
-      pollIntervals: COLLAB_RTC_POLL_INTERVALS,
       iceCandidatePoolSize: 2,
-      initiatorRule: "lowerId",
-      recoverOnUnknownPeer: true,
+      signaling: {
+        apiBase: options.apiBase,
+        getAuth: () => ({ bearerToken: options.authToken }),
+      },
       onLinkChange: () => this.emit({ type: "link" }),
     });
   }

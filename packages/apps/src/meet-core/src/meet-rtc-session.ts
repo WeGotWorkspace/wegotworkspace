@@ -1,20 +1,10 @@
-import { wgwApiBaseUrl, wgwFetch } from "@/lib/api/wgw/http";
 import { createMediaBinding } from "@/lib/rtc/session/bindings";
-import { RtcPeerMesh } from "@/lib/rtc/session/peer-mesh";
+import { createRtcSession } from "@/lib/rtc/session/create-rtc-session";
+import type { RtcPeerMesh } from "@/lib/rtc/session/peer-mesh";
 import { toSessionDescriptionPayload } from "@/lib/rtc/session/sdp";
-import {
-  HttpSignalingClient,
-  type HttpSignalingFetch,
-  type HttpSignalingPollResult,
-} from "@/lib/rtc/signaling/http-client";
+import type { HttpSignalingFetch, HttpSignalingPollResult } from "@/lib/rtc/signaling/http-client";
 import type { RtcPeerDescriptor, RtcSettings } from "@/lib/rtc/types";
 import { sanitizeRtcSdp } from "@/meet-core/src/meet-rtc-sdp";
-
-function voiceSignalingFetch(url: string, init: RequestInit): Promise<Response> {
-  const base = wgwApiBaseUrl();
-  const path = url.startsWith(base) ? url.slice(base.length) : url;
-  return wgwFetch(path.startsWith("/") ? path : `/${path}`, init);
-}
 
 function formatMeetInboundDescription(
   payload: unknown,
@@ -53,25 +43,20 @@ export class MeetRtcSession {
   constructor(private readonly options: MeetRtcSessionOptions) {}
 
   private createMesh(room: string): RtcPeerMesh {
-    const signaling = new HttpSignalingClient({
-      channel: "voice",
-      apiBase: this.options.apiBase ?? `${wgwApiBaseUrl()}/voice`,
-      fetchImpl: this.options.fetchImpl ?? voiceSignalingFetch,
-    });
-
     const binding = createMediaBinding({
       getLocalStream: this.options.getLocalStream,
       onRemoteStream: () => this.options.onLinkChange?.(),
     });
 
-    return new RtcPeerMesh({
+    return createRtcSession({
       channel: "voice",
       room,
-      signaling,
       rtcSettings: this.options.rtcSettings,
       binding,
-      pollIntervals: { connectingMs: 250, steadyMs: 1200 },
-      initiatorRule: "higherId",
+      signaling: {
+        apiBase: this.options.apiBase,
+        fetchImpl: this.options.fetchImpl,
+      },
       formatInboundDescription: formatMeetInboundDescription,
       formatOutboundDescription: formatMeetOutboundDescription,
       shouldConnectToPeer: this.options.shouldConnectToPeer,

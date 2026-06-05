@@ -4,21 +4,26 @@ Shared browser RTC stack for **meet**, **docs**, and future **chat / sheet / sli
 
 ## Layers
 
-| Module                       | Role                                        |
-| ---------------------------- | ------------------------------------------- |
-| `config.ts`                  | ICE / TURN → `RTCConfiguration`             |
-| `signaling/http-client.ts`   | HTTP join / poll / send / leave             |
-| `session/peer-mesh.ts`       | **`RtcPeerMesh`** — one ICE engine per room |
-| `session/bindings.ts`        | Media or data-channel attachment            |
-| `telemetry/selected-pair.ts` | Logs selected candidate pair on connect     |
-| `hooks/use-rtc-session.ts`   | React lifecycle wrapper                     |
+| Module                          | Role                                            |
+| ------------------------------- | ----------------------------------------------- |
+| `config.ts`                     | ICE / TURN → `RTCConfiguration`                 |
+| `signaling/http-client.ts`      | HTTP join / poll / send / leave                 |
+| `session/peer-mesh.ts`          | **`RtcPeerMesh`** — one ICE engine per room     |
+| `session/bindings.ts`           | Media or data-channel attachment                |
+| `telemetry/selected-pair.ts`    | Logs selected candidate pair on connect         |
+| `hooks/use-rtc-session.ts`      | React lifecycle wrapper                         |
+| `signaling/create-client.ts`    | `createRtcSignalingClient()` — channel defaults |
+| `session/create-rtc-session.ts` | `createRtcSession()` — signaling + mesh factory |
 
 Meet uses `meet-core/src/meet-rtc-session.ts` + `use-meet-rtc.ts` (media binding, meet SDP sanitization).
 Docs uses `docs-collab/docs-rtc-session.ts` (data binding).
 
+Both use `DEFAULT_RTC_POLL_INTERVALS` and `recoverOnUnknownPeer: true` via `createRtcSession()`.
+
 ## Per-app pattern
 
-- `use-*-rtc.ts` — configures `RtcPeerMesh` (channel, bindings, poll intervals)
+- `createRtcSession()` / `*-rtc-session.ts` — shared factory + thin app wrappers
+- `use-*-rtc.ts` — bindings and product hooks
 - `use-*-controller.tsx` — product UX only; **no** `RTCPeerConnection`
 
 ## Debug
