@@ -13,6 +13,9 @@ Shared browser RTC stack for **meet**, **docs**, and future **chat / sheet / sli
 | `telemetry/selected-pair.ts` | Logs selected candidate pair on connect     |
 | `hooks/use-rtc-session.ts`   | React lifecycle wrapper                     |
 
+Meet uses `meet-core/src/meet-rtc-session.ts` + `use-meet-rtc.ts` (media binding, meet SDP sanitization).
+Docs uses `docs-collab/docs-rtc-session.ts` (data binding).
+
 ## Per-app pattern
 
 - `use-*-rtc.ts` — configures `RtcPeerMesh` (channel, bindings, poll intervals)
