@@ -4,7 +4,7 @@ Enable browser logging with `?rtcDebug=1` on meet or docs URLs. Logs use prefix 
 
 ## Prerequisites
 
-- Admin **Voice / Meet** settings: valid STUN URL(s) and external TURN (`turn:host:3478?transport=udp` format).
+- Admin **Meet** settings: valid STUN URL(s) and external TURN (`turn:host:3478?transport=udp` format).
 - Trickle ICE test page shows a **relay** candidate row before go-live.
 - Docker dev stack or shared-hosting install with `/api/v1/meet/*` and `/api/v1/collab/*` reachable.
 
