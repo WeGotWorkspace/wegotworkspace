@@ -714,17 +714,13 @@
                     },
                     "turnPassword": {
                         "type": "string"
-                    },
-                    "forceRelay": {
-                        "type": "boolean"
                     }
                 },
                 "required": [
                     "stunUrls",
                     "turnUrls",
                     "turnUsername",
-                    "turnPassword",
-                    "forceRelay"
+                    "turnPassword"
                 ]
             },
             "AdminAppsSettings": {

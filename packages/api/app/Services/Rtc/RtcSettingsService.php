@@ -10,7 +10,7 @@ use App\Settings\SettingKeys;
 final class RtcSettingsService
 {
     /**
-     * @return array{stunUrls: string, turnUrls: string, turnUsername: string, turnPassword: string, forceRelay: bool}
+     * @return array{stunUrls: string, turnUrls: string, turnUsername: string, turnPassword: string}
      */
     public function settings(): array
     {
@@ -19,7 +19,6 @@ final class RtcSettingsService
             'turnUrls' => $this->normalizeRtcUrls(AppSetting::getValue(SettingKeys::VOICE_TURN_URL, ''), 'turn'),
             'turnUsername' => trim((string) AppSetting::getValue(SettingKeys::VOICE_TURN_USERNAME, '')),
             'turnPassword' => trim((string) AppSetting::getValue(SettingKeys::VOICE_TURN_CREDENTIAL, '')),
-            'forceRelay' => (bool) AppSetting::getValue(SettingKeys::VOICE_FORCE_RELAY, false),
         ];
     }
 

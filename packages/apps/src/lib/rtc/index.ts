@@ -7,4 +7,5 @@ export * from "@/lib/rtc/session/bindings";
 export * from "@/lib/rtc/session/peer-mesh";
 export * from "@/lib/rtc/session/sdp";
 export * from "@/lib/rtc/telemetry/selected-pair";
+export * from "@/lib/rtc/force-relay";
 export * from "@/lib/rtc/hooks/use-rtc-session";

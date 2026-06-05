@@ -44,7 +44,6 @@ const DEFAULT_DATA: AdminUIData = {
     turnUrls: "",
     turnUsername: "",
     turnPassword: "",
-    forceRelay: false,
   },
   apps: {
     calendars: true,

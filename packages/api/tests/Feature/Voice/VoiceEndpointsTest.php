@@ -153,7 +153,6 @@ final class VoiceEndpointsTest extends TestCase
         AppSetting::setValue(SettingKeys::VOICE_TURN_URL, "turn:one.example.org\nturn-two.example.org:3478?transport=udp");
         AppSetting::setValue(SettingKeys::VOICE_TURN_USERNAME, 'voice-user');
         AppSetting::setValue(SettingKeys::VOICE_TURN_CREDENTIAL, 'voice-pass');
-        AppSetting::setValue(SettingKeys::VOICE_FORCE_RELAY, true);
 
         $response = $this->getJson('/api/v1/voice/rtc');
 
@@ -164,8 +163,8 @@ final class VoiceEndpointsTest extends TestCase
                 'turnUrls' => 'turn:one.example.org, turn:turn-two.example.org:3478?transport=udp',
                 'turnUsername' => 'voice-user',
                 'turnPassword' => 'voice-pass',
-                'forceRelay' => true,
             ],
         ]);
+        $response->assertJsonMissing(['forceRelay' => true]);
     }
 }

@@ -26,7 +26,6 @@ export function useAdminAPI(source?: AdminApiSource) {
         turnUrls: "",
         turnUsername: "",
         turnPassword: "",
-        forceRelay: false,
       },
       apps: {
         calendars: true,

@@ -40,7 +40,7 @@ describe("toRtcConfig", () => {
     expect(config.iceServers?.[0]?.urls).toContain("turn:turn.example.com:3478?transport=udp");
   });
 
-  it("respects admin forceRelay without turn urls", () => {
+  it("ignores forceRelay when turn urls are missing", () => {
     const config = toRtcConfig({ ...baseSettings, turnUrls: "", forceRelay: true }, "direct");
     expect(config.iceTransportPolicy).toBe("all");
     expect(config.iceServers).toHaveLength(1);

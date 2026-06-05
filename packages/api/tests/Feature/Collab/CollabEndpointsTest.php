@@ -75,7 +75,6 @@ final class CollabEndpointsTest extends TestCase
         AppSetting::setValue(SettingKeys::VOICE_TURN_URL, 'turn.example.test:3478?transport=udp');
         AppSetting::setValue(SettingKeys::VOICE_TURN_USERNAME, 'rtc-user');
         AppSetting::setValue(SettingKeys::VOICE_TURN_CREDENTIAL, 'rtc-secret');
-        AppSetting::setValue(SettingKeys::VOICE_FORCE_RELAY, true);
 
         $token = $this->issueToken('alice');
         $this->withHeader('Authorization', 'Bearer '.$token)
@@ -85,7 +84,7 @@ final class CollabEndpointsTest extends TestCase
             ->assertJsonPath('voice.turnUrls', 'turn:turn.example.test:3478?transport=udp')
             ->assertJsonPath('voice.turnUsername', 'rtc-user')
             ->assertJsonPath('voice.turnPassword', 'rtc-secret')
-            ->assertJsonPath('voice.forceRelay', true);
+            ->assertJsonMissingPath('voice.forceRelay');
     }
 
     public function test_two_users_exchange_signaling_messages(): void

@@ -2,10 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Rtc;
+namespace App\Services\Rtc;
 
 use App\Models\AppSetting;
-use App\Services\Rtc\RtcSettingsService;
 use App\Settings\SettingKeys;
 use Tests\TestCase;
 
@@ -17,7 +16,6 @@ final class RtcSettingsServiceTest extends TestCase
         AppSetting::setValue(SettingKeys::VOICE_TURN_URL, 'turn.example.com:3478?transport=udp');
         AppSetting::setValue(SettingKeys::VOICE_TURN_USERNAME, 'user');
         AppSetting::setValue(SettingKeys::VOICE_TURN_CREDENTIAL, 'pass');
-        AppSetting::setValue(SettingKeys::VOICE_FORCE_RELAY, true);
 
         $settings = (new RtcSettingsService)->settings();
 
@@ -25,6 +23,6 @@ final class RtcSettingsServiceTest extends TestCase
         $this->assertSame('turn:turn.example.com:3478?transport=udp', $settings['turnUrls']);
         $this->assertSame('user', $settings['turnUsername']);
         $this->assertSame('pass', $settings['turnPassword']);
-        $this->assertTrue($settings['forceRelay']);
+        $this->assertArrayNotHasKey('forceRelay', $settings);
     }
 }

@@ -30,9 +30,6 @@ final class SettingKeys
 
     public const VOICE_TURN_CREDENTIAL = 'voice_turn_credential';
 
-    /** When enabled, Meet clients use TURN relay-only mode from the start. */
-    public const VOICE_FORCE_RELAY = 'voice_force_relay';
-
     public const MAIL_IMAP_HOST = 'mail_imap_host';
 
     public const MAIL_IMAP_PORT = 'mail_imap_port';
@@ -63,7 +60,6 @@ final class SettingKeys
             self::VOICE_TURN_URL,
             self::VOICE_TURN_USERNAME,
             self::VOICE_TURN_CREDENTIAL,
-            self::VOICE_FORCE_RELAY,
             self::MAIL_IMAP_HOST,
             self::MAIL_IMAP_PORT,
             self::MAIL_IMAP_SECURITY,

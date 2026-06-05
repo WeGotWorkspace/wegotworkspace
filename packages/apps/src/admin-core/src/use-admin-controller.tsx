@@ -30,7 +30,6 @@ type SettingsFormState = {
   turnUrls: string;
   turnUsername: string;
   turnPassword: string;
-  forceRelay: boolean;
   calendars: boolean;
   contacts: boolean;
   sabreUi: boolean;
@@ -57,7 +56,6 @@ function buildSettingsFormState(data: AdminWorkspaceProps["data"]): SettingsForm
     turnUrls: data.voice.turnUrls,
     turnUsername: data.voice.turnUsername,
     turnPassword: data.voice.turnPassword,
-    forceRelay: data.voice.forceRelay,
     calendars: data.apps.calendars,
     contacts: data.apps.contacts,
     sabreUi: data.webdav.sabreUi,
@@ -79,7 +77,6 @@ function toSettingsMap(state: SettingsFormState): Record<string, string | number
     voice_turn_url: state.turnUrls,
     voice_turn_username: state.turnUsername,
     voice_turn_credential: state.turnPassword,
-    voice_force_relay: state.forceRelay,
     calendar_enabled: state.calendars,
     contacts_enabled: state.contacts,
     browser_plugin: state.sabreUi,

@@ -2943,7 +2943,6 @@ export interface components {
             turnUrls: string;
             turnUsername: string;
             turnPassword: string;
-            forceRelay: boolean;
         };
         AdminAppsSettings: {
             calendars: boolean;

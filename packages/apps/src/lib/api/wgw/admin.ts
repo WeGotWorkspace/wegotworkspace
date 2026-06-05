@@ -151,7 +151,6 @@ export function mapWgwAdminStateToUI(
       turnUrls: state.voice.turnUrls,
       turnUsername: state.voice.turnUsername,
       turnPassword: state.voice.turnPassword,
-      forceRelay: state.voice.forceRelay,
     },
     apps: {
       calendars: state.apps.calendars,
