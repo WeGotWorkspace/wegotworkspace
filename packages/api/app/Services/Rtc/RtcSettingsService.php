@@ -15,10 +15,10 @@ final class RtcSettingsService
     public function settings(): array
     {
         return [
-            'stunUrls' => $this->normalizeRtcUrls(AppSetting::getValue(SettingKeys::VOICE_STUN_URL, ''), 'stun'),
-            'turnUrls' => $this->normalizeRtcUrls(AppSetting::getValue(SettingKeys::VOICE_TURN_URL, ''), 'turn'),
-            'turnUsername' => trim((string) AppSetting::getValue(SettingKeys::VOICE_TURN_USERNAME, '')),
-            'turnPassword' => trim((string) AppSetting::getValue(SettingKeys::VOICE_TURN_CREDENTIAL, '')),
+            'stunUrls' => $this->normalizeRtcUrls(AppSetting::getValue(SettingKeys::RTC_STUN_URL, ''), 'stun'),
+            'turnUrls' => $this->normalizeRtcUrls(AppSetting::getValue(SettingKeys::RTC_TURN_URL, ''), 'turn'),
+            'turnUsername' => trim((string) AppSetting::getValue(SettingKeys::RTC_TURN_USERNAME, '')),
+            'turnPassword' => trim((string) AppSetting::getValue(SettingKeys::RTC_TURN_CREDENTIAL, '')),
         ];
     }
 

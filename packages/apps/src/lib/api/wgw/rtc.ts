@@ -9,13 +9,13 @@ export type { RtcSettings };
 export type RtcIceSettings = Omit<RtcSettings, "forceRelay">;
 
 export function parseRtcSettingsPayload(payload: Record<string, unknown>): RtcIceSettings {
-  // OpenAPI/admin payload key for Meet ICE settings.
-  const meet = (payload.meet ?? payload) as Record<string, unknown>;
+  // Shared platform ICE settings (`GET /meet/rtc`, `GET /collab/rtc`, admin state).
+  const rtc = (payload.rtc ?? payload) as Record<string, unknown>;
   return {
-    stunUrls: typeof meet.stunUrls === "string" ? meet.stunUrls : "",
-    turnUrls: typeof meet.turnUrls === "string" ? meet.turnUrls : "",
-    turnUsername: typeof meet.turnUsername === "string" ? meet.turnUsername : "",
-    turnPassword: typeof meet.turnPassword === "string" ? meet.turnPassword : "",
+    stunUrls: typeof rtc.stunUrls === "string" ? rtc.stunUrls : "",
+    turnUrls: typeof rtc.turnUrls === "string" ? rtc.turnUrls : "",
+    turnUsername: typeof rtc.turnUsername === "string" ? rtc.turnUsername : "",
+    turnPassword: typeof rtc.turnPassword === "string" ? rtc.turnPassword : "",
   };
 }
 
