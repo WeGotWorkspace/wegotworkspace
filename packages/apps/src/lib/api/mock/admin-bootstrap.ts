@@ -39,7 +39,7 @@ const DEFAULT_DATA: AdminUIData = {
     smtpPort: 465,
     smtpSecurity: "ssl",
   },
-  voice: {
+  meet: {
     stunUrls: "",
     turnUrls: "",
     turnUsername: "",

@@ -14,6 +14,6 @@ export type {
   AdminUIData,
   AdminUpdateState,
   AdminUser,
-  AdminVoiceSettings,
+  AdminMeetSettings,
   AdminWebdavSettings,
 } from "./admin-types";
