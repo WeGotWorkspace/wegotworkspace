@@ -147,6 +147,65 @@ final class MeetEndpointsTest extends TestCase
         ])->assertOk();
     }
 
+    public function test_chat_requires_session_or_auth(): void
+    {
+        $this->postJson('/api/v1/meet/join', [
+            'room' => 'daily-room',
+            'peerId' => 'peer-alpha',
+            'name' => 'Guest One',
+        ])->assertOk();
+
+        $this->postJson('/api/v1/meet/chat', [
+            'room' => 'daily-room',
+            'from' => 'peer-alpha',
+            'text' => 'hello',
+        ])
+            ->assertUnauthorized()
+            ->assertJson(['error' => 'auth_required']);
+    }
+
+    public function test_guest_chat_delivers_to_other_peer_via_poll(): void
+    {
+        $hostJoin = $this->postJson('/api/v1/meet/join', [
+            'room' => 'daily-room',
+            'peerId' => 'host-peer1',
+            'name' => 'Host',
+        ]);
+        $hostJoin->assertOk();
+        $hostSessionKey = (string) $hostJoin->json('sessionKey');
+
+        $guestJoin = $this->postJson('/api/v1/meet/join', [
+            'room' => 'daily-room',
+            'peerId' => 'guest-peer',
+            'name' => 'Guest',
+        ]);
+        $guestJoin->assertOk();
+        $guestSessionKey = (string) $guestJoin->json('sessionKey');
+
+        $this->postJson('/api/v1/meet/chat', [
+            'room' => 'daily-room',
+            'from' => 'guest-peer',
+            'text' => 'Hello host',
+            'sessionKey' => $guestSessionKey,
+        ])
+            ->assertOk()
+            ->assertJson(['ok' => true, 'delivered' => 1]);
+
+        $poll = $this->postJson('/api/v1/meet/poll', [
+            'room' => 'daily-room',
+            'peerId' => 'host-peer1',
+            'sessionKey' => $hostSessionKey,
+        ]);
+        $poll->assertOk();
+
+        $messages = $poll->json('messages');
+        $this->assertIsArray($messages);
+        $this->assertCount(1, $messages);
+        $this->assertSame('chat', $messages[0]['type']);
+        $this->assertSame('guest-peer', $messages[0]['from']);
+        $this->assertSame(['text' => 'Hello host'], $messages[0]['payload']);
+    }
+
     public function test_rtc_settings_endpoint_exposes_meet_ice_values(): void
     {
         AppSetting::setValue(SettingKeys::RTC_STUN_URL, "one.example.org:3478, \nstun:two.example.org");
