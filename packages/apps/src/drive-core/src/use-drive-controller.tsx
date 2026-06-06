@@ -425,7 +425,16 @@ export function useDriveController({
       if (b.kind === "folder" && a.kind !== "folder") return 1;
       return 0;
     });
-  }, [files, liveSearchResults, operations, searchQuery, starred, starredItems, view]);
+  }, [
+    currentUsername,
+    files,
+    liveSearchResults,
+    operations,
+    searchQuery,
+    starred,
+    starredItems,
+    view,
+  ]);
 
   const folderListingPending = useMemo(() => {
     if (!operations || view.type !== "folder") return false;
@@ -481,7 +490,7 @@ export function useDriveController({
       ];
     }
     return buildDriveFolderBreadcrumbs(view.path, driveLabels);
-  }, [driveLabels, view]);
+  }, [view]);
 
   const viewLabel = breadcrumbs[breadcrumbs.length - 1].label;
   const viewResetKey = view.type === "folder" ? `${view.type}:${view.path}` : view.type;
