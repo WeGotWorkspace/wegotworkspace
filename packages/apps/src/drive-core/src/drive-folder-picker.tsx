@@ -26,8 +26,6 @@ import "@/drive-core/src/drive-folder-picker.css";
 
 const GROUPS_ROOT = "Groups";
 
-export { DRIVE_FOLDER_PICKER_ROOT };
-
 function isTrashPath(path: string) {
   return path === DRIVE_TRASH_UI_PATH || path.startsWith(`${DRIVE_TRASH_UI_PATH}/`);
 }
@@ -40,15 +38,6 @@ function isTrashPickerFile(file: DriveFile) {
 
 function isTrashPickerPath(path: string) {
   return isTrashPath(path);
-}
-
-export function resolveDriveFolderPickerStartPath(
-  view: ViewKey,
-  singleItemParent?: string,
-): string {
-  if (view.type === "folder" && !isTrashPath(view.path)) return view.path;
-  if (singleItemParent && !isTrashPath(singleItemParent)) return singleItemParent;
-  return "My Drive";
 }
 
 function sharedDriveRootLabel(path: string, labels: DriveUILabels): string {
@@ -189,7 +178,7 @@ export function DriveFolderPicker({
         ? initialBrowsePath
         : null,
     );
-  }, [initialBrowsePath, moveIds]);
+  }, [files, initialBrowsePath, moveIds]);
 
   useEffect(() => {
     if (browsePath === DRIVE_FOLDER_PICKER_ROOT || browsePath === GROUPS_ROOT) {

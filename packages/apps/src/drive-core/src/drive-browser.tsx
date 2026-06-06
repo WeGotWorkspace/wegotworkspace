@@ -7,10 +7,8 @@ import { kindIcon } from "@/drive-core/src/drive-icons";
 import type { MenuItemProps } from "@/menu-item/src/menu-item";
 import { cn } from "@/lib/utils";
 import { DriveDetailActionBar } from "@/drive-core/src/drive-detail-action-bar";
-import {
-  buildDriveFileActions,
-  DriveFileItemActionsMenu,
-} from "@/drive-core/src/drive-file-actions";
+import { buildDriveFileActions } from "@/drive-core/src/drive-file-action-builders";
+import { DriveFileItemActionsMenu } from "@/drive-core/src/drive-file-actions";
 import { DriveMediaPreview } from "@/drive-core/src/drive-media-preview";
 import type { DriveUILabels } from "@/drive-core/src/drive-labels";
 import { driveFolderUiPath } from "@/drive-core/src/drive-item-path";

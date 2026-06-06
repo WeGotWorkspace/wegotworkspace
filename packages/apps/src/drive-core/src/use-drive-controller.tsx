@@ -312,7 +312,7 @@ export function useDriveController({
           showError(message);
         });
     },
-    [operations, currentUsername],
+    [operations, currentUsername, showError],
   );
 
   const reloadStarredFromServer = useCallback(() => {
@@ -331,7 +331,7 @@ export function useDriveController({
         const message = error instanceof Error ? error.message : String(error);
         showError(message);
       });
-  }, [operations, loadStarredItemsFromPaths]);
+  }, [operations, loadStarredItemsFromPaths, showError]);
 
   useEffect(() => {
     if (!operations) return;
@@ -362,7 +362,7 @@ export function useDriveController({
       cancelled = true;
       window.clearTimeout(timeout);
     };
-  }, [operations, searchQuery, currentUsername]);
+  }, [operations, searchQuery, currentUsername, showError]);
 
   const isTouch = useIsTouch();
   const lastTouchTapRef = useRef<{ id: string; at: number } | null>(null);
