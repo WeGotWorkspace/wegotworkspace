@@ -27,6 +27,12 @@ docker compose -f compose.dev.yml up -d --build
 
 **Stop:** `docker compose -f compose.dev.yml down`
 
+**After pulling API schema changes** (e.g. new `collab_peers` tables), apply pending WGW migrations:
+
+```bash
+docker compose -f compose.dev.yml exec web php /var/www/packages/api/artisan wgw:schema-migrate
+```
+
 ## HTTPS + WebDAV (`wegotworkspace.localhost`)
 
 WebDAV/CalDAV clients expect a stable hostname and trusted TLS. Use **mkcert** on the host and mount leaf certs into the container.
