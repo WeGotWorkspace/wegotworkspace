@@ -1,96 +1,110 @@
 # `/api/v1` Route Inventory
 
-Current REST surface and access levels.
+Artifact-based REST surface. **Authoritative contract:** `openapi/openapi.json` (each operation has `x-wgw-access`).
 
 ## Auth + System
 
 | Route | Access | Notes |
-|---|---|---|
-| `POST /api/v1/auth/token` | guest | Issues RS256 bearer token after Sabre credential validation. |
-| `GET /api/v1/me` | user/admin | Returns current principal from bearer token. |
-| `GET /api/v1/health` | guest | API health. |
-| `GET /api/v1/capabilities` | guest | Domain and auth capability discovery. |
-| `GET /api/v1/.well-known/jwks.json` | guest | Public JWKS for JWT verification. |
+|-------|--------|-------|
+| `POST /api/v1/auth/token` | guest | Issue bearer + refresh token. |
+| `POST /api/v1/auth/refresh` | guest | Rotate access token. |
+| `POST /api/v1/auth/revoke` | guest | Revoke refresh token. |
+| `GET /api/v1/me` | user | Current principal. |
+| `GET /api/v1/health` | guest | Liveness. |
+| `GET /api/v1/capabilities` | guest | Feature discovery. |
+| `GET /api/v1/.well-known/jwks.json` | guest | JWT public keys. |
 
-## Admin
-
-| Route | Access |
-|---|---|
-| `GET /api/v1/admin/state` | admin |
-| `POST /api/v1/admin/users` | admin |
-| `PATCH /api/v1/admin/users/{username}` | admin |
-| `DELETE /api/v1/admin/users/{username}` | admin |
-| `POST /api/v1/admin/groups` | admin |
-| `PATCH /api/v1/admin/groups/{group}` | admin |
-| `DELETE /api/v1/admin/groups/{group}` | admin |
-| `PUT /api/v1/admin/groups/{group}/members/{username}` | admin |
-| `PUT /api/v1/admin/settings` | admin |
-| `GET /api/v1/admin/updates/state` | admin |
-| `GET /api/v1/admin/updates/log` | admin |
-| `POST /api/v1/admin/updates/check` | admin |
-| `POST /api/v1/admin/updates/apply` | admin |
-| `POST /api/v1/admin/updates/cancel` | admin |
-
-## User Settings
+## Files (replaces Drive)
 
 | Route | Access |
-|---|---|
-| `GET /api/v1/settings/state` | user/admin |
-| `PUT /api/v1/settings/profile` | user/admin |
-| `PUT /api/v1/settings/mail` | user/admin |
+|-------|--------|
+| `GET /api/v1/files/context` | user |
+| `GET /api/v1/files/children?path=` | user |
+| `GET /api/v1/files?search=` | user |
+| `POST /api/v1/files/directories?path=` | user |
+| `PATCH /api/v1/files?path=` | user |
+| `DELETE /api/v1/files?path=` or body `{ paths: [] }` | user |
+| `GET/HEAD/POST /api/v1/files/content?path=` | user |
+| `GET/PUT /api/v1/files/collaboration?path=` | user |
+| `POST/DELETE /api/v1/files/star?path=` | user |
+| `GET /api/v1/files/starred` | user |
+| `POST /api/v1/files/rooms?path=` | user |
+
+## Meetings + Rooms
+
+| Route | Access |
+|-------|--------|
+| `POST /api/v1/meetings/rooms` | guest |
+| `GET /api/v1/meetings/rooms/{roomId}` | guest |
+| `POST /api/v1/rooms/{roomId}/participants` | guest |
+| `GET /api/v1/rooms/{roomId}/events` | guest |
+| `POST /api/v1/rooms/{roomId}/events` | guest |
+| `DELETE /api/v1/rooms/{roomId}/participants/{participantId}` | guest |
+| `GET /api/v1/rooms/{roomId}/configuration` | guest |
+| `POST /api/v1/rooms/{roomId}/messages` | guest |
 
 ## Mail
 
 | Route | Access |
-|---|---|
-| `GET /api/v1/mail/status` | user/admin |
-| `GET /api/v1/mail/config` | user/admin |
-| `PUT /api/v1/mail/config` | user/admin |
-| `GET /api/v1/mail/folders` | user/admin |
-| `GET /api/v1/mail/messages` | user/admin |
-| `GET /api/v1/mail/messages/{id}` | user/admin |
-| `PATCH /api/v1/mail/messages/{id}` | user/admin |
-| `POST /api/v1/mail/messages/{id}/move` | user/admin |
-| `POST /api/v1/mail/send` | user/admin |
-| `POST /api/v1/mail/drafts` | user/admin |
+|-------|--------|
+| `GET /api/v1/mail/status` | user |
+| `GET/POST/PATCH/DELETE /api/v1/mail/folders` | user |
+| `GET/POST /api/v1/mail/messages` | user |
+| `POST /api/v1/mail/drafts` | user |
+| `GET/PATCH/DELETE /api/v1/mail/messages/{messageId}` | user |
+| `GET /api/v1/mail/messages/{messageId}/attachments/{attachmentId}` | user |
 
-## Drive
+## Search + Workspace
 
 | Route | Access |
-|---|---|
-| `GET /api/v1/drive/user` | user/admin |
-| `POST /api/v1/drive/directories/read` | user/admin |
-| `POST /api/v1/drive/search` | user/admin |
-| `POST /api/v1/drive/directories/change` | user/admin |
-| `POST /api/v1/drive/directories` | user/admin |
-| `PATCH /api/v1/drive/items/rename` | user/admin |
-| `DELETE /api/v1/drive/items` | user/admin |
-| `GET /api/v1/drive/download` | user/admin |
-| `POST /api/v1/drive/upload` | user/admin |
+|-------|--------|
+| `GET /api/v1/search/results` | user |
+| `GET /api/v1/search/results/{resultId}/content` | user |
+| `GET /api/v1/workspace/state` | user |
 
-## Meet
+## Settings, Notes, Plugins, DAV
 
 | Route | Access |
-|---|---|
-| `POST /api/v1/meet/join` | guest/user/admin |
-| `POST /api/v1/meet/poll` | guest/user/admin |
-| `POST /api/v1/meet/send` | guest/user/admin |
-| `POST /api/v1/meet/leave` | guest/user/admin |
-| `POST /api/v1/meet/chat` | guest/user/admin |
-| `GET /api/v1/meet/rtc` | guest/user/admin |
+|-------|--------|
+| `GET/PUT /api/v1/settings/*` | user |
+| `GET/POST/PUT/PATCH/DELETE /api/v1/notes/*` | user |
+| `GET /api/v1/plugins` | user |
+| `PUT /api/v1/plugins/{id}/activation` | user |
+| `POST /api/v1/plugins/{id}/session` | user |
+| `GET /api/v1/dav/capabilities` | user |
 
-## Notes + Plugins + Home + Installer + DAV
+## Admin
 
-| Domain | Routes | Access |
-|---|---|---|
-| notes | `GET /api/v1/notes/capabilities` | user/admin |
-| plugins | `GET /api/v1/plugins`, `POST /api/v1/plugins/{id}/session` | user/admin |
-| home | `GET /api/v1/home/state` | user/admin |
-| installer | `GET /api/v1/installer/state`, `POST /api/v1/installer/action` | guest/admin |
-| dav | `GET /api/v1/dav/capabilities` | user/admin |
+| Route | Access |
+|-------|--------|
+| `GET /api/v1/admin/state` | admin |
+| `POST/PATCH/DELETE /api/v1/admin/users/{username}` | admin |
+| `POST/PATCH/DELETE /api/v1/admin/groups/{group}` | admin |
+| `PUT/DELETE /api/v1/admin/groups/{group}/members/{username}` | admin |
+| `PUT /api/v1/admin/settings` | admin |
+| `GET /api/v1/admin/updates/state` | admin |
+| `GET/DELETE /api/v1/admin/updates/log` | admin |
+| `POST/DELETE /api/v1/admin/update-jobs/{jobId}` | admin |
+| `POST/GET/DELETE /api/v1/admin/search/jobs/*` | admin |
+| `POST /api/v1/admin/plugins` | admin |
+| `GET/DELETE /api/v1/admin/backups/{name}` | admin |
 
-## Role Matrix
+## Installer
 
-- `guest`: health/capabilities/auth token/jwks + guest meet + installer bootstrap paths.
-- `user`: all user-owned app endpoints.
-- `admin`: all user endpoints + admin namespace.
+| Route | Access |
+|-------|--------|
+| `GET /api/v1/installer/state` | guest |
+| `GET /api/v1/installer/bootstrap` | guest |
+| `POST /api/v1/installer/action` | guest |
+
+## Role matrix
+
+| Role | Middleware | Scope |
+|------|------------|-------|
+| guest | none / optional auth | Public, auth, meet/rooms, installer |
+| user | `wgw.auth` + `wgw.role:user` | Signed-in app features (admin satisfies user) |
+| admin | `wgw.auth` + `wgw.role:admin` | `/admin/*` only |
+
+Automated checks: `tests/Architecture/RoleAccessMatrixTest.php`.
+
+Design notes: `.agents/skills/wgw-api/rest-design.md`.

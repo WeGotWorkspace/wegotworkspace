@@ -17,6 +17,7 @@ When the user says **greenfield**, **new API**, or work under `packages/api/`:
 | Task | Read |
 |------|------|
 | New endpoint / domain | [layers.md](layers.md), [contract-parity.md](contract-parity.md) |
+| Route naming / REST layout | [rest-design.md](rest-design.md) |
 | Auth / JWT | [auth.md](auth.md) |
 | Stack overview | [stack.md](stack.md) |
 | File storage / notes / drive | [storage-flysystem.md](storage-flysystem.md) |
