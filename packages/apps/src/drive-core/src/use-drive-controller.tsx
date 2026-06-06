@@ -312,7 +312,7 @@ export function useDriveController({
           showError(message);
         });
     },
-    [operations, currentUsername],
+    [operations, currentUsername, showError],
   );
 
   const reloadStarredFromServer = useCallback(() => {
@@ -331,7 +331,7 @@ export function useDriveController({
         const message = error instanceof Error ? error.message : String(error);
         showError(message);
       });
-  }, [operations, loadStarredItemsFromPaths]);
+  }, [operations, loadStarredItemsFromPaths, showError]);
 
   useEffect(() => {
     if (!operations) return;
@@ -362,7 +362,7 @@ export function useDriveController({
       cancelled = true;
       window.clearTimeout(timeout);
     };
-  }, [operations, searchQuery, currentUsername]);
+  }, [operations, searchQuery, currentUsername, showError]);
 
   const isTouch = useIsTouch();
   const lastTouchTapRef = useRef<{ id: string; at: number } | null>(null);
@@ -425,7 +425,16 @@ export function useDriveController({
       if (b.kind === "folder" && a.kind !== "folder") return 1;
       return 0;
     });
-  }, [files, liveSearchResults, operations, searchQuery, starred, starredItems, view]);
+  }, [
+    currentUsername,
+    files,
+    liveSearchResults,
+    operations,
+    searchQuery,
+    starred,
+    starredItems,
+    view,
+  ]);
 
   const folderListingPending = useMemo(() => {
     if (!operations || view.type !== "folder") return false;
@@ -481,7 +490,7 @@ export function useDriveController({
       ];
     }
     return buildDriveFolderBreadcrumbs(view.path, driveLabels);
-  }, [driveLabels, view]);
+  }, [view]);
 
   const viewLabel = breadcrumbs[breadcrumbs.length - 1].label;
   const viewResetKey = view.type === "folder" ? `${view.type}:${view.path}` : view.type;

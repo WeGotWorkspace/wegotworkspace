@@ -14,12 +14,10 @@ use App\Support\WgwSettings;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use Tests\Support\AuthTestKeys;
-use Tests\Support\SqliteWgwSchema;
+use Tests\Support\WgwDatabaseTestCase;
 use Tests\Support\WgwTestDisks;
-use Tests\TestCase;
 
-final class AdminEndpointsTest extends TestCase
+final class AdminEndpointsTest extends WgwDatabaseTestCase
 {
     private string $dataDir = '';
 
@@ -39,28 +37,7 @@ final class AdminEndpointsTest extends TestCase
         putenv('WGW_APP_ROOT='.$this->dataDir.'/install-root');
         $_ENV['WGW_APP_ROOT'] = $this->dataDir.'/install-root';
         WgwTestDisks::refresh($this->dataDir);
-
-        config([
-            'database.connections.wgw' => [
-                'driver' => 'sqlite',
-                'database' => ':memory:',
-                'prefix' => '',
-                'foreign_key_constraints' => true,
-            ],
-        ]);
-        DB::purge('wgw');
-
-        $keys = AuthTestKeys::rsaPair();
-        config([
-            'wgw.jwt.private_key' => $keys['private_key'],
-            'wgw.jwt.public_key' => $keys['public_key'],
-            'wgw.jwt.issuer' => $keys['issuer'],
-            'wgw.jwt.audience' => $keys['audience'],
-            'wgw.jwt.kid' => $keys['kid'],
-        ]);
-
-        SqliteWgwSchema::applyCoreTables();
-        SqliteWgwSchema::applyAuthTables();
+        $this->configureWgwJwtKeys();
 
         $this->seedAdminAlice();
         $this->seedBobUser();

@@ -1,5 +1,8 @@
 name: CI
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   push:
     branches: [main]
@@ -13,7 +16,7 @@ jobs:
       !startsWith(github.event.head_commit.message, 'chore(release):')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: shivammathur/setup-php@v2
         with:
@@ -21,11 +24,11 @@ jobs:
           extensions: ctype, dom, iconv, imap, json, mbstring, pdo, pdo_sqlite, simplexml, zip
           coverage: none
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v4.4.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version: "24"
           cache: "pnpm"
 
       - name: Install JS workspace
@@ -47,3 +50,48 @@ jobs:
 
       - name: Build (Composer + UI via Turborepo)
         run: pnpm run build
+
+  api-mysql:
+    if: >-
+      github.event_name != 'push' ||
+      !startsWith(github.event.head_commit.message, 'chore(release):')
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: wgw_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: ctype, dom, iconv, imap, json, mbstring, pdo, pdo_mysql, pdo_sqlite, simplexml, zip
+          coverage: none
+
+      - name: Install backend Composer dependencies
+        run: composer --working-dir packages/api install --no-interaction --prefer-dist
+
+      - name: Prepare Laravel env for tests
+        run: |
+          cp packages/api/.env.example packages/api/.env
+          php packages/api/artisan key:generate --force --no-interaction
+
+      - name: API tests (MySQL wgw connection)
+        env:
+          WGW_TEST_DRIVER: mysql
+          WGW_TEST_MYSQL_HOST: 127.0.0.1
+          WGW_TEST_MYSQL_PORT: 3306
+          WGW_TEST_MYSQL_DATABASE: wgw_test
+          WGW_TEST_MYSQL_USERNAME: root
+          WGW_TEST_MYSQL_PASSWORD: root
+        run: composer --working-dir packages/api run test:mysql

@@ -9,32 +9,18 @@ use App\Models\Principal;
 use App\Models\User;
 use App\Services\Auth\UiSessionService;
 use App\Support\WgwSettings;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Tests\Support\SqliteWgwSchema;
+use Tests\Support\WgwDatabaseTestCase;
 use Tests\Support\WgwInstallFixture;
 use Tests\Support\WgwTestDisks;
-use Tests\TestCase;
 
-final class SabreWebdavGetTest extends TestCase
+final class SabreWebdavGetTest extends WgwDatabaseTestCase
 {
     private string $dataDir;
 
     protected function setUp(): void
     {
         parent::setUp();
-
-        config([
-            'database.connections.wgw' => [
-                'driver' => 'sqlite',
-                'database' => ':memory:',
-                'prefix' => '',
-                'foreign_key_constraints' => true,
-            ],
-        ]);
-        DB::purge('wgw');
-        SqliteWgwSchema::applyCoreTables();
-        SqliteWgwSchema::applySabreTables();
 
         User::query()->create([
             'username' => 'alice',

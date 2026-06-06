@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services\Update;
 
+use App\Models\AppUpdateHistory;
 use App\Services\Installer\ApiRuntimeEnvService;
 use App\Services\Installer\InstallerEnvChecker;
-use App\Services\Installer\InstallerSchemaMigrationRunner;
+use App\Services\Installer\WgwSchemaMigrator;
 use App\Support\AppVersion;
 use App\Support\WgwInstallConfig;
 
@@ -22,6 +23,7 @@ final class UpdateRunner
         private InstallerEnvChecker $envChecker,
         private ReleaseFeedClient $releaseFeed,
         private ApiRuntimeEnvService $apiEnv,
+        private WgwSchemaMigrator $schemaMigrator,
     ) {}
 
     /**
@@ -48,7 +50,7 @@ final class UpdateRunner
 
         return [
             'installedVersion' => $installedVersion,
-            'schemaVersion' => InstallerSchemaMigrationRunner::currentVersion($pdo),
+            'schemaVersion' => $this->schemaMigrator->currentVersion(),
             'latest' => $latest,
             'updateAvailable' => $hasRequiredMetadata && self::isUpdateAvailable($installedVersion, $latest),
             'compatible' => $compatible,
@@ -295,8 +297,8 @@ final class UpdateRunner
             file_put_contents($this->install->installRoot().'/VERSION', $targetVersion."\n", LOCK_EX);
 
             self::writeStatus('running_migrations', $beforeVersion, $targetVersion);
-            InstallerSchemaMigrationRunner::migrate($pdo);
-            self::recordHistory($pdo, $beforeVersion, $targetVersion, 'success', 'Update applied successfully.');
+            $this->schemaMigrator->migrate();
+            self::recordHistory($beforeVersion, $targetVersion, 'success', 'Update applied successfully.');
             $result['ok'] = true;
             $result['message'] = 'Update applied successfully.';
             $this->store->appendLog('Update finished successfully.');
@@ -309,7 +311,6 @@ final class UpdateRunner
                 );
             }
             self::recordHistory(
-                $pdo,
                 $beforeVersion,
                 $targetVersion,
                 $e->getMessage() === 'Update cancelled by user.' ? 'cancelled' : 'failed',
@@ -1619,16 +1620,18 @@ final class UpdateRunner
         return is_array($decoded) ? $decoded : [];
     }
 
-    private function recordHistory(
-        \PDO $pdo,
+    private static function recordHistory(
         string $fromVersion,
         string $toVersion,
         string $status,
         string $message
     ): void {
-        $stmt = $pdo->prepare(
-            'INSERT INTO app_update_history (from_version, to_version, status, message, created_at) VALUES (?, ?, ?, ?, ?)'
-        );
-        $stmt->execute([$fromVersion, $toVersion, $status, $message, date('c')]);
+        AppUpdateHistory::query()->create([
+            'from_version' => $fromVersion,
+            'to_version' => $toVersion,
+            'status' => $status,
+            'message' => $message,
+            'created_at' => date('c'),
+        ]);
     }
 }

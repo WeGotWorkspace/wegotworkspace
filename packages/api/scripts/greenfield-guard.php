@@ -47,6 +47,12 @@ foreach ($scanRoots as $root) {
     scanDirectory($root, $forbidden, $errors);
 }
 
+$servicesRoot = $appRoot.'/Services';
+if (is_dir($servicesRoot)) {
+    scanServicesNoDbTable($servicesRoot, $errors);
+    scanServicesNoRuntimeDdl($servicesRoot, $errors);
+}
+
 $composerPath = $apiRoot.'/composer.json';
 if (is_readable($composerPath)) {
     $composer = (string) file_get_contents($composerPath);
@@ -164,4 +170,95 @@ function relativePath(string $absolute): string
     return str_starts_with($absolute, $apiRoot.'/')
         ? 'packages/api/'.substr($absolute, strlen($apiRoot) + 1)
         : $absolute;
+}
+
+/**
+ * @return list<string>
+ */
+function domainServiceExcludedPrefixes(string $servicesRoot): array
+{
+    return [
+        $servicesRoot.DIRECTORY_SEPARATOR.'Installer'.DIRECTORY_SEPARATOR,
+        $servicesRoot.DIRECTORY_SEPARATOR.'Update'.DIRECTORY_SEPARATOR,
+        $servicesRoot.DIRECTORY_SEPARATOR.'Settings'.DIRECTORY_SEPARATOR,
+        $servicesRoot.DIRECTORY_SEPARATOR.'Admin'.DIRECTORY_SEPARATOR,
+        $servicesRoot.DIRECTORY_SEPARATOR.'Auth'.DIRECTORY_SEPARATOR,
+    ];
+}
+
+function scanServicesNoDbTable(string $servicesRoot, array &$errors): void
+{
+    $excludedPrefixes = domainServiceExcludedPrefixes($servicesRoot);
+
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($servicesRoot, FilesystemIterator::SKIP_DOTS)
+    );
+
+    foreach ($iterator as $file) {
+        if (! $file->isFile() || $file->getExtension() !== 'php') {
+            continue;
+        }
+        $path = $file->getPathname();
+        foreach ($excludedPrefixes as $prefix) {
+            if (str_starts_with($path, $prefix)) {
+                continue 2;
+            }
+        }
+
+        $lines = file($path);
+        if ($lines === false) {
+            continue;
+        }
+
+        foreach ($lines as $num => $line) {
+            if (preg_match('/DB::connection\([^)]+\)->table\(/', $line)) {
+                $errors[] = [
+                    'file' => relativePath($path),
+                    'line' => $num + 1,
+                    'message' => 'Use Eloquent models in Services, not DB::connection()->table()',
+                ];
+            }
+        }
+    }
+}
+
+/**
+ * Schema changes belong in migrations, not runtime service DDL.
+ *
+ * @param  list<array{file: string, line: int, message: string}>  $errors
+ */
+function scanServicesNoRuntimeDdl(string $servicesRoot, array &$errors): void
+{
+    $excludedPrefixes = domainServiceExcludedPrefixes($servicesRoot);
+
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($servicesRoot, FilesystemIterator::SKIP_DOTS)
+    );
+
+    foreach ($iterator as $file) {
+        if (! $file->isFile() || $file->getExtension() !== 'php') {
+            continue;
+        }
+        $path = $file->getPathname();
+        foreach ($excludedPrefixes as $prefix) {
+            if (str_starts_with($path, $prefix)) {
+                continue 2;
+            }
+        }
+
+        $lines = file($path);
+        if ($lines === false) {
+            continue;
+        }
+
+        foreach ($lines as $num => $line) {
+            if (preg_match('/\bALTER\s+TABLE\b/i', $line)) {
+                $errors[] = [
+                    'file' => relativePath($path),
+                    'line' => $num + 1,
+                    'message' => 'Use wgw migrations for DDL, not runtime ALTER TABLE in services',
+                ];
+            }
+        }
+    }
 }

@@ -313,7 +313,7 @@ export function useMeetController({
         throw e;
       }
     },
-    [ensureLocalMedia, meetRtc],
+    [debugRtc, ensureLocalMedia, meetRtc],
   );
 
   const leave = useCallback(
@@ -439,7 +439,7 @@ export function useMeetController({
       });
       setKnockers((prev) => prev.filter((entry) => entry.id !== peerId));
     },
-    [canModerateKnocks],
+    [canModerateKnocks, meetRtc],
   );
 
   const denyKnocker = useCallback(
@@ -454,7 +454,7 @@ export function useMeetController({
       });
       setKnockers((prev) => prev.filter((entry) => entry.id !== peerId));
     },
-    [canModerateKnocks],
+    [canModerateKnocks, meetRtc],
   );
 
   const endCallForAll = useCallback(async () => {
@@ -476,30 +476,33 @@ export function useMeetController({
       // Continue with local leave even if broadcast fails.
     }
     await leave();
-  }, [leave]);
+  }, [leave, meetRtc]);
 
-  const sendChat = useCallback(async (body: string) => {
-    const text = body.trim();
-    if (!text) return;
-    const me = selfIdRef.current;
-    if (!me || !roomCodeRef.current) return;
+  const sendChat = useCallback(
+    async (body: string) => {
+      const text = body.trim();
+      if (!text) return;
+      const me = selfIdRef.current;
+      if (!me || !roomCodeRef.current) return;
 
-    const localLine = buildLocalMeetChatLine(me, displayNameRef.current.trim() || "You", text);
-    setChatMessages((prev) => [...prev, localLine]);
+      const localLine = buildLocalMeetChatLine(me, displayNameRef.current.trim() || "You", text);
+      setChatMessages((prev) => [...prev, localLine]);
 
-    if (!operationsRef.current) return;
-    try {
-      await operationsRef.current.chat({
-        room: roomCodeRef.current,
-        from: me,
-        text,
-        sessionKey: meetRtc.getSessionKey() ?? undefined,
-      });
-    } catch (e) {
-      setChatMessages((prev) => prev.filter((line) => line.id !== localLine.id));
-      toast.error(e instanceof Error ? e.message : "Could not send message.");
-    }
-  }, []);
+      if (!operationsRef.current) return;
+      try {
+        await operationsRef.current.chat({
+          room: roomCodeRef.current,
+          from: me,
+          text,
+          sessionKey: meetRtc.getSessionKey() ?? undefined,
+        });
+      } catch (e) {
+        setChatMessages((prev) => prev.filter((line) => line.id !== localLine.id));
+        toast.error(e instanceof Error ? e.message : "Could not send message.");
+      }
+    },
+    [meetRtc],
+  );
 
   useEffect(() => {
     return () => {
@@ -571,7 +574,7 @@ export function useMeetController({
     if (!node) return;
     const stream = getLocalStream();
     node.srcObject = stream;
-  }, [getLocalStream, videoOn, screenOn, status]);
+  }, [getLocalStream, localVideoRef, videoOn, screenOn, status]);
 
   const startMeeting = useCallback(async () => {
     await joinRoom();

@@ -80,7 +80,6 @@ const baseArgs = {
 };
 
 export const Default: Story = {
-  name: "Default",
   args: baseArgs,
 };
 

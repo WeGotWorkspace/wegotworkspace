@@ -20,7 +20,6 @@ export const EmptyFolder: Story = {
 };
 
 export const Loading: Story = {
-  name: "Loading",
   args: {
     variant: "loading",
     children: "Loading folder…",
