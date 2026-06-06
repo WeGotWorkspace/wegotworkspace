@@ -236,9 +236,11 @@ export function useMeetLocalMedia({
     return () => media.removeEventListener("devicechange", onDeviceChange);
   }, [refreshDeviceList]);
 
+  const getLocalStream = useCallback(() => localStreamRef.current, []);
+
   return {
     localVideoRef,
-    getLocalStream: () => localStreamRef.current,
+    getLocalStream,
     screenPreviewStream,
     audioInputs,
     videoInputs,

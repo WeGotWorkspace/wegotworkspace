@@ -257,22 +257,24 @@ export function useMeetController({
   });
   getLocalStreamRef.current = getLocalStream;
 
+  const announceMediaPresenceEnterInCall = useCallback(() => {
+    void announceMediaPresence(micOnRef.current, videoOnRef.current);
+  }, [announceMediaPresence]);
+
   useMeetInboundMediaHints({
     enabled: status === "in-call",
     meetRtc,
     peerInboundSampleRef,
     peerMediaHintRef,
     refreshPeers,
-    onEnterInCall: () => {
-      void announceMediaPresence(micOnRef.current, videoOnRef.current);
-    },
+    onEnterInCall: announceMediaPresenceEnterInCall,
   });
 
   useEffect(() => {
     if (status === "in-call") return;
     peerDisclosedMediaRef.current.clear();
-    refreshPeers();
-  }, [status, refreshPeers]);
+    refreshPeersRef.current();
+  }, [status]);
 
   const joinRoom = useCallback(
     async (room?: string) => {

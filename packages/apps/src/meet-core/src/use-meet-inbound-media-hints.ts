@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { RefObject } from "react";
 import {
   advancePeerInboundSample,
@@ -26,15 +26,20 @@ export function useMeetInboundMediaHints({
   refreshPeers,
   onEnterInCall,
 }: UseMeetInboundMediaHintsArgs) {
+  const refreshPeersRef = useRef(refreshPeers);
+  const onEnterInCallRef = useRef(onEnterInCall);
+  refreshPeersRef.current = refreshPeers;
+  onEnterInCallRef.current = onEnterInCall;
+
   useEffect(() => {
     if (!enabled) {
       peerInboundSampleRef.current.clear();
       peerMediaHintRef.current.clear();
-      refreshPeers();
+      refreshPeersRef.current();
       return;
     }
 
-    onEnterInCall();
+    onEnterInCallRef.current();
     let cancelled = false;
 
     const sampleTick = async () => {
@@ -67,7 +72,7 @@ export function useMeetInboundMediaHints({
           }
         }),
       );
-      refreshPeers();
+      refreshPeersRef.current();
     };
 
     const intervalId = window.setInterval(() => {
@@ -79,5 +84,5 @@ export function useMeetInboundMediaHints({
       cancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [enabled, meetRtc, onEnterInCall, peerInboundSampleRef, peerMediaHintRef, refreshPeers]);
+  }, [enabled, meetRtc, peerInboundSampleRef, peerMediaHintRef]);
 }
