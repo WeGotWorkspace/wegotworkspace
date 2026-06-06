@@ -78,6 +78,19 @@ final class FilesEndpointsTest extends WgwDatabaseTestCase
             ->assertJsonPath('data.paths', ['/users/alice/welcome.txt']);
     }
 
+    public function test_files_content_downloads_by_plain_path_query(): void
+    {
+        $token = $this->issueToken();
+
+        $response = $this->withBearer($token)
+            ->get('/api/v1/files/content?path=/users/alice/welcome.txt');
+
+        $response->assertOk()
+            ->assertHeader('content-type', 'text/plain; charset=utf-8');
+
+        $this->assertSame('hello', $response->streamedContent());
+    }
+
     private function issueToken(): string
     {
         return (string) $this->postJson('/api/v1/auth/token', [

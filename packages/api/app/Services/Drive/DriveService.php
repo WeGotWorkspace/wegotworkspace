@@ -229,16 +229,11 @@ final class DriveService
         return 'Updated';
     }
 
-    public function downloadResponse(string $username, string $encodedPath): StreamedResponse
+    public function downloadResponse(string $username, string $path): StreamedResponse
     {
         $this->assertFilesEnabled();
         $groupSlugs = $this->groups->allowedGroupSlugs($username);
-        $decoded = base64_decode($encodedPath, true);
-        if (! is_string($decoded) || $decoded === '') {
-            throw new \InvalidArgumentException('Invalid download path.');
-        }
-
-        $virtual = $this->paths->normalizeVirtualPath($decoded);
+        $virtual = $this->paths->normalizeVirtualPath($path);
         $this->assertAllowed($virtual, $username, $groupSlugs, false);
 
         $disk = $this->disk();
