@@ -14,7 +14,8 @@ return new class extends WgwMigration
                 $table->id();
                 $table->string('source_type', 24);
                 $table->string('source_subtype', 64)->nullable();
-                $table->string('source_key', 1024);
+                // 512 keeps (source_type, source_key) unique index under MySQL utf8mb4 limit.
+                $table->string('source_key', 512);
                 $table->string('owner_username', 190)->nullable();
                 $table->string('group_slug', 190)->nullable();
                 $table->string('title', 512)->nullable();

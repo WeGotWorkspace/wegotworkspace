@@ -15,7 +15,8 @@ return new class extends WgwMigration
 
         $this->wgw()->create('drive_starred_items', function (Blueprint $table): void {
             $table->string('username', 190);
-            $table->string('path', 1024);
+            // 512 keeps (username, path) composite PK under MySQL utf8mb4 index limit (3072 bytes).
+            $table->string('path', 512);
             $table->unsignedBigInteger('created_at');
             $table->primary(['username', 'path']);
             $table->index('username', 'idx_drive_starred_user');
