@@ -1,0 +1,23 @@
+import type { LucideIcon } from "lucide-react";
+import { Clock, HardDrive, Star, Trash2 } from "lucide-react";
+import { isDriveSharedGroupPath } from "@/drive-core/src/drive-breadcrumbs";
+import type { ViewKey } from "@/drive-core/src/drive-models";
+
+/** Icons aligned with {@link useDriveSidebarModel} sidebar items. */
+export const driveViewIcons = {
+  myDrive: HardDrive,
+  recent: Clock,
+  starred: Star,
+  trash: Trash2,
+  groupDrive: HardDrive,
+} as const satisfies Record<string, LucideIcon>;
+
+export function resolveDriveViewIcon(view: ViewKey): LucideIcon {
+  if (view.type === "recent") return driveViewIcons.recent;
+  if (view.type === "starred") return driveViewIcons.starred;
+  if (view.type === "shared") return driveViewIcons.myDrive;
+
+  if (view.path === "Trash" || view.path.startsWith("Trash/")) return driveViewIcons.trash;
+  if (isDriveSharedGroupPath(view.path)) return driveViewIcons.groupDrive;
+  return driveViewIcons.myDrive;
+}

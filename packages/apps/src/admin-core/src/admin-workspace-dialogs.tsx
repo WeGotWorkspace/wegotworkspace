@@ -188,7 +188,7 @@ export function GroupDialog({
         ? users.filter((user) => user.groups.includes(initial.id)).map((user) => user.id)
         : [],
     );
-  }, [open, initial?.id, initial?.displayName, users]);
+  }, [open, initial, users]);
   const toggleMember = (userId: string) =>
     setMemberUserIds((prev) =>
       prev.includes(userId) ? prev.filter((candidate) => candidate !== userId) : [...prev, userId],

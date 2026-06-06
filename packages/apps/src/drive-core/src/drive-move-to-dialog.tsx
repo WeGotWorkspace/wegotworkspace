@@ -8,10 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/ui/dialog";
-import {
-  DriveFolderPicker,
-  resolveDriveFolderPickerStartPath,
-} from "@/drive-core/src/drive-folder-picker";
+import { resolveDriveFolderPickerStartPath } from "@/drive-core/src/drive-folder-picker-utils";
+import { DriveFolderPicker } from "@/drive-core/src/drive-folder-picker";
 import type { DriveFile, ViewKey } from "@/drive-core/src/drive-models";
 import type { DriveUILabels } from "@/drive-core/src/drive-labels";
 import type { DriveAPIOperations } from "@/drive-core/src/drive-types";
