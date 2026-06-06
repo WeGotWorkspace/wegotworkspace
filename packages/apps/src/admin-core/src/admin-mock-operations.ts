@@ -63,16 +63,14 @@ function applySettingsMap(
   const smtpSecurity = readString("mail_smtp_security");
   if (smtpSecurity !== undefined) data.mail.smtpSecurity = smtpSecurity;
 
-  const stunUrls = readString("voice_stun_url");
-  if (stunUrls !== undefined) data.voice.stunUrls = stunUrls;
-  const turnUrls = readString("voice_turn_url");
-  if (turnUrls !== undefined) data.voice.turnUrls = turnUrls;
-  const turnUsername = readString("voice_turn_username");
-  if (turnUsername !== undefined) data.voice.turnUsername = turnUsername;
-  const turnPassword = readString("voice_turn_credential");
-  if (turnPassword !== undefined) data.voice.turnPassword = turnPassword;
-  const forceRelay = readBool("voice_force_relay");
-  if (forceRelay !== undefined) data.voice.forceRelay = forceRelay;
+  const stunUrls = readString("rtc_stun_url");
+  if (stunUrls !== undefined) data.rtc.stunUrls = stunUrls;
+  const turnUrls = readString("rtc_turn_url");
+  if (turnUrls !== undefined) data.rtc.turnUrls = turnUrls;
+  const turnUsername = readString("rtc_turn_username");
+  if (turnUsername !== undefined) data.rtc.turnUsername = turnUsername;
+  const turnPassword = readString("rtc_turn_credential");
+  if (turnPassword !== undefined) data.rtc.turnPassword = turnPassword;
 
   const calendars = readBool("calendar_enabled");
   if (calendars !== undefined) data.apps.calendars = calendars;

@@ -68,15 +68,16 @@ Current REST surface and access levels.
 | `GET /api/v1/drive/download` | user/admin |
 | `POST /api/v1/drive/upload` | user/admin |
 
-## Voice
+## Meet
 
 | Route | Access |
 |---|---|
-| `POST /api/v1/voice/join` | guest/user/admin |
-| `POST /api/v1/voice/poll` | guest/user/admin |
-| `POST /api/v1/voice/send` | guest/user/admin |
-| `POST /api/v1/voice/leave` | guest/user/admin |
-| `POST /api/v1/voice/chat` | guest/user/admin |
+| `POST /api/v1/meet/join` | guest/user/admin |
+| `POST /api/v1/meet/poll` | guest/user/admin |
+| `POST /api/v1/meet/send` | guest/user/admin |
+| `POST /api/v1/meet/leave` | guest/user/admin |
+| `POST /api/v1/meet/chat` | guest/user/admin |
+| `GET /api/v1/meet/rtc` | guest/user/admin |
 
 ## Notes + Plugins + Home + Installer + DAV
 
@@ -90,6 +91,6 @@ Current REST surface and access levels.
 
 ## Role Matrix
 
-- `guest`: health/capabilities/auth token/jwks + guest voice + installer bootstrap paths.
+- `guest`: health/capabilities/auth token/jwks + guest meet + installer bootstrap paths.
 - `user`: all user-owned app endpoints.
 - `admin`: all user endpoints + admin namespace.

@@ -7,7 +7,7 @@ const WELCOME_ITEMS = [
   { label: "Database", icon: <Database className="size-4" /> },
   { label: "Files, Contacts & Calendars", icon: <Cloud className="size-4" /> },
   { label: "Mail server", icon: <MailIcon className="size-4" /> },
-  { label: "Meet & voice", icon: <Phone className="size-4" /> },
+  { label: "Meet", icon: <Phone className="size-4" /> },
   { label: "Admin account", icon: <UserPlus className="size-4" /> },
 ];
 

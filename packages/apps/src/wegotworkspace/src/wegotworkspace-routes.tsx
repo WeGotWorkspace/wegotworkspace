@@ -208,21 +208,15 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
     component: isLive ? withWeGotWorkspaceAuth(MeetApp) : MockMeetRoute,
   });
 
-  const voiceRoute = createRoute({
-    getParentRoute: () => wegotworkspaceRootRoute,
-    path: "/voice",
-    component: isLive ? withWeGotWorkspaceAuth(MeetApp) : MockMeetRoute,
-  });
-
   const meetGuestRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/meet/guest",
     component: MeetGuestRoute,
   });
 
-  const voiceJoinRoute = createRoute({
+  const meetJoinRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
-    path: "/voice/join",
+    path: "/meet/join",
     component: MeetGuestRoute,
   });
 
@@ -248,9 +242,8 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
     docsRoute,
     settingsRoute,
     meetRoute,
-    voiceRoute,
     meetGuestRoute,
-    voiceJoinRoute,
+    meetJoinRoute,
     adminRoute,
     installRoute,
   ]);

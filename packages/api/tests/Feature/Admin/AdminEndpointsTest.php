@@ -96,7 +96,7 @@ final class AdminEndpointsTest extends TestCase
                 'users',
                 'groups',
                 'mail',
-                'voice',
+                'rtc',
                 'apps',
                 'webdav',
                 'updates' => ['installedVersion', 'schemaVersion', 'backups'],
@@ -135,11 +135,10 @@ final class AdminEndpointsTest extends TestCase
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->putJson('/api/v1/admin/settings', [
                 'values' => [
-                    'voice_stun_url' => 'stun:stun.example.test:3478,stuns:stun-backup.example.test:5349',
-                    'voice_turn_url' => 'turn:turn.example.test:3478?transport=udp,turns:turn-backup.example.test:5349?transport=tcp',
-                    'voice_turn_username' => 'meet-user',
-                    'voice_turn_credential' => 'meet-secret',
-                    'voice_force_relay' => true,
+                    'rtc_stun_url' => 'stun:stun.example.test:3478,stuns:stun-backup.example.test:5349',
+                    'rtc_turn_url' => 'turn:turn.example.test:3478?transport=udp,turns:turn-backup.example.test:5349?transport=tcp',
+                    'rtc_turn_username' => 'rtc-user',
+                    'rtc_turn_credential' => 'rtc-secret',
                 ],
             ])
             ->assertOk()
@@ -148,11 +147,10 @@ final class AdminEndpointsTest extends TestCase
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/v1/admin/state')
             ->assertOk()
-            ->assertJsonPath('voice.turnUsername', 'meet-user')
-            ->assertJsonPath('voice.turnPassword', 'meet-secret')
-            ->assertJsonPath('voice.forceRelay', true)
-            ->assertJsonPath('voice.stunUrls', 'stun:stun.example.test:3478, stuns:stun-backup.example.test:5349')
-            ->assertJsonPath('voice.turnUrls', 'turn:turn.example.test:3478?transport=udp, turns:turn-backup.example.test:5349?transport=tcp');
+            ->assertJsonPath('rtc.turnUsername', 'rtc-user')
+            ->assertJsonPath('rtc.turnPassword', 'rtc-secret')
+            ->assertJsonPath('rtc.stunUrls', 'stun:stun.example.test:3478, stuns:stun-backup.example.test:5349')
+            ->assertJsonPath('rtc.turnUrls', 'turn:turn.example.test:3478?transport=udp, turns:turn-backup.example.test:5349?transport=tcp');
 
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->putJson('/api/v1/admin/groups/administrators/members/bob')

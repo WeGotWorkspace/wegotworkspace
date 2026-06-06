@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Services\Voice;
+namespace App\Services\Meet;
 
 use App\Dav\Auth\SabreUiAuthGate;
 use App\Services\Auth\BearerAuthenticationService;
@@ -10,10 +10,10 @@ use App\Services\Auth\SabreCredentialValidator;
 use Illuminate\Http\Request;
 
 /**
- * Resolves the authenticated username for voice endpoints: JWT bearer,
+ * Resolves the authenticated username for meet endpoints: JWT bearer,
  * {@code sabre_ui_auth} cookie, or HTTP Basic.
  */
-final class VoiceRequestAuth
+final class MeetRequestAuth
 {
     public function __construct(
         private BearerAuthenticationService $bearer,

@@ -267,11 +267,11 @@ export function useInstallController({
             mail_smtp_host: mail.smtpHost,
             mail_smtp_port: mail.smtpPort,
             mail_smtp_security: mail.smtpSec,
-            voice_enabled: meet.enabled,
-            voice_stun_url: meet.stun,
-            voice_turn_url: meet.turn,
-            voice_turn_username: meet.turnUser,
-            voice_turn_credential: meet.turnPwd,
+            meet_enabled: meet.enabled,
+            rtc_stun_url: meet.stun,
+            rtc_turn_url: meet.turn,
+            rtc_turn_username: meet.turnUser,
+            rtc_turn_credential: meet.turnPwd,
           };
           const response = syncAction(await operations.install(payload));
           if (response.redirect) {

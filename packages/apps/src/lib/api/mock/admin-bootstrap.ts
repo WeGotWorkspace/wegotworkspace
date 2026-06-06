@@ -39,12 +39,11 @@ const DEFAULT_DATA: AdminUIData = {
     smtpPort: 465,
     smtpSecurity: "ssl",
   },
-  voice: {
+  rtc: {
     stunUrls: "",
     turnUrls: "",
     turnUsername: "",
     turnPassword: "",
-    forceRelay: false,
   },
   apps: {
     calendars: true,

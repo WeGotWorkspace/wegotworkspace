@@ -38,7 +38,7 @@ final class AdminStateService
                 'smtpPort' => (int) ($cfg[SettingKeys::MAIL_SMTP_PORT] ?? 587),
                 'smtpSecurity' => (string) ($cfg[SettingKeys::MAIL_SMTP_SECURITY] ?? 'starttls'),
             ],
-            'voice' => $this->voiceSettings(),
+            'rtc' => $this->rtcSettings(),
             'apps' => [
                 'calendars' => (bool) ($cfg[SettingKeys::CALENDAR_ENABLED] ?? true),
                 'contacts' => (bool) ($cfg[SettingKeys::CONTACTS_ENABLED] ?? true),
@@ -56,9 +56,9 @@ final class AdminStateService
     }
 
     /**
-     * @return array{stunUrls: string, turnUrls: string, turnUsername: string, turnPassword: string, forceRelay: bool}
+     * @return array{stunUrls: string, turnUrls: string, turnUsername: string, turnPassword: string}
      */
-    private function voiceSettings(): array
+    private function rtcSettings(): array
     {
         $normalizeUrls = static function (mixed $value): string {
             if (! is_string($value)) {
@@ -76,11 +76,10 @@ final class AdminStateService
         };
 
         return [
-            'stunUrls' => $normalizeUrls(AppSetting::getValue(SettingKeys::VOICE_STUN_URL, '')),
-            'turnUrls' => $normalizeUrls(AppSetting::getValue(SettingKeys::VOICE_TURN_URL, '')),
-            'turnUsername' => trim((string) AppSetting::getValue(SettingKeys::VOICE_TURN_USERNAME, '')),
-            'turnPassword' => trim((string) AppSetting::getValue(SettingKeys::VOICE_TURN_CREDENTIAL, '')),
-            'forceRelay' => (bool) AppSetting::getValue(SettingKeys::VOICE_FORCE_RELAY, false),
+            'stunUrls' => $normalizeUrls(AppSetting::getValue(SettingKeys::RTC_STUN_URL, '')),
+            'turnUrls' => $normalizeUrls(AppSetting::getValue(SettingKeys::RTC_TURN_URL, '')),
+            'turnUsername' => trim((string) AppSetting::getValue(SettingKeys::RTC_TURN_USERNAME, '')),
+            'turnPassword' => trim((string) AppSetting::getValue(SettingKeys::RTC_TURN_CREDENTIAL, '')),
         ];
     }
 }

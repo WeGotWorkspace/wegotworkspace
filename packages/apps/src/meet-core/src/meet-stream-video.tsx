@@ -22,8 +22,21 @@ export function MeetStreamVideo({
   useEffect(() => {
     const node = ref.current;
     if (!node || !stream) return;
+
+    const play = () => {
+      void node.play().catch(() => {
+        // Autoplay may resume once the user has joined the call.
+      });
+    };
+
     node.srcObject = stream;
+    play();
+
+    const onAddTrack = () => play();
+    stream.addEventListener("addtrack", onAddTrack);
+
     return () => {
+      stream.removeEventListener("addtrack", onAddTrack);
       node.srcObject = null;
     };
   }, [stream]);

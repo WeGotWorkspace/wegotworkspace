@@ -1,12 +1,30 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type APIRequestContext } from "@playwright/test";
 
 const installBaseURL =
   process.env.WGW_INSTALL_BASE_URL ?? "http://127.0.0.1:9080";
+
+async function isWorkspaceInstalled(request: APIRequestContext): Promise<boolean> {
+  const response = await request.get("/api/v1/installer/state");
+  if (!response.ok()) {
+    return false;
+  }
+  const body = (await response.json()) as { installed?: boolean };
+  return body.installed === true;
+}
 
 test.describe("Install wizard", () => {
   test.use({
     baseURL: installBaseURL,
     ignoreHTTPSErrors: true,
+  });
+
+  test.beforeEach(async ({ request }, testInfo) => {
+    if (await isWorkspaceInstalled(request)) {
+      testInfo.skip(
+        true,
+        "Workspace already installed — install wizard e2e needs a fresh tree (pnpm test:api-e2e:docker)",
+      );
+    }
   });
 
   test("GET /install serves the wizard without redirect loop", async ({ request }) => {

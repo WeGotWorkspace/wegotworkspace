@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature\Voice;
+namespace Tests\Feature\Meet;
 
 use App\Models\AppSetting;
 use App\Settings\SettingKeys;
@@ -11,7 +11,7 @@ use Tests\Support\AuthTestKeys;
 use Tests\Support\SqliteWgwSchema;
 use Tests\TestCase;
 
-final class VoiceEndpointsTest extends TestCase
+final class MeetEndpointsTest extends TestCase
 {
     protected function setUp(): void
     {
@@ -37,12 +37,12 @@ final class VoiceEndpointsTest extends TestCase
         ]);
 
         SqliteWgwSchema::applyCoreTables();
-        SqliteWgwSchema::applyVoiceTables();
+        SqliteWgwSchema::applyMeetTables();
     }
 
     public function test_room_status_empty_room(): void
     {
-        $response = $this->postJson('/api/v1/voice/room', [
+        $response = $this->postJson('/api/v1/meet/room', [
             'room' => 'daily-room',
         ]);
 
@@ -52,7 +52,7 @@ final class VoiceEndpointsTest extends TestCase
 
     public function test_guest_join_returns_session_key_and_peers(): void
     {
-        $response = $this->postJson('/api/v1/voice/join', [
+        $response = $this->postJson('/api/v1/meet/join', [
             'room' => 'daily-room',
             'peerId' => 'peer-alpha',
             'name' => 'Guest One',
@@ -66,7 +66,7 @@ final class VoiceEndpointsTest extends TestCase
 
     public function test_poll_requires_session_or_auth(): void
     {
-        $response = $this->postJson('/api/v1/voice/poll', [
+        $response = $this->postJson('/api/v1/meet/poll', [
             'room' => 'daily-room',
             'peerId' => 'peer-alpha',
         ]);
@@ -77,7 +77,7 @@ final class VoiceEndpointsTest extends TestCase
 
     public function test_guest_join_poll_leave_flow(): void
     {
-        $join = $this->postJson('/api/v1/voice/join', [
+        $join = $this->postJson('/api/v1/meet/join', [
             'room' => 'daily-room',
             'peerId' => 'peer-alpha',
             'name' => 'Guest One',
@@ -85,7 +85,7 @@ final class VoiceEndpointsTest extends TestCase
         $join->assertOk();
         $sessionKey = (string) $join->json('sessionKey');
 
-        $poll = $this->postJson('/api/v1/voice/poll', [
+        $poll = $this->postJson('/api/v1/meet/poll', [
             'room' => 'daily-room',
             'peerId' => 'peer-alpha',
             'sessionKey' => $sessionKey,
@@ -93,7 +93,7 @@ final class VoiceEndpointsTest extends TestCase
         $poll->assertOk();
         $poll->assertJsonStructure(['peers', 'messages']);
 
-        $leave = $this->postJson('/api/v1/voice/leave', [
+        $leave = $this->postJson('/api/v1/meet/leave', [
             'room' => 'daily-room',
             'peerId' => 'peer-alpha',
             'sessionKey' => $sessionKey,
@@ -104,20 +104,20 @@ final class VoiceEndpointsTest extends TestCase
 
     public function test_room_active_after_guest_join(): void
     {
-        $this->postJson('/api/v1/voice/join', [
+        $this->postJson('/api/v1/meet/join', [
             'room' => 'daily-room',
             'peerId' => 'peer-alpha',
             'name' => 'Guest One',
         ])->assertOk();
 
-        $room = $this->postJson('/api/v1/voice/room', ['room' => 'daily-room']);
+        $room = $this->postJson('/api/v1/meet/room', ['room' => 'daily-room']);
         $room->assertOk();
         $room->assertJson(['active' => true]);
     }
 
     public function test_guest_rejoin_reuses_session_key(): void
     {
-        $first = $this->postJson('/api/v1/voice/join', [
+        $first = $this->postJson('/api/v1/meet/join', [
             'room' => 'daily-room',
             'peerId' => 'peer-one',
             'name' => 'Guest',
@@ -125,13 +125,13 @@ final class VoiceEndpointsTest extends TestCase
         $first->assertOk();
         $sessionKey = (string) $first->json('sessionKey');
 
-        $this->postJson('/api/v1/voice/leave', [
+        $this->postJson('/api/v1/meet/leave', [
             'room' => 'daily-room',
             'peerId' => 'peer-one',
             'sessionKey' => $sessionKey,
         ])->assertOk();
 
-        $second = $this->postJson('/api/v1/voice/join', [
+        $second = $this->postJson('/api/v1/meet/join', [
             'room' => 'daily-room',
             'peerId' => 'peer-two',
             'name' => 'Guest',
@@ -140,32 +140,90 @@ final class VoiceEndpointsTest extends TestCase
         $second->assertOk();
         $this->assertSame($sessionKey, $second->json('sessionKey'));
 
-        $this->postJson('/api/v1/voice/poll', [
+        $this->postJson('/api/v1/meet/poll', [
             'room' => 'daily-room',
             'peerId' => 'peer-two',
             'sessionKey' => $sessionKey,
         ])->assertOk();
     }
 
-    public function test_rtc_settings_endpoint_exposes_voice_ice_values(): void
+    public function test_chat_requires_session_or_auth(): void
     {
-        AppSetting::setValue(SettingKeys::VOICE_STUN_URL, "one.example.org:3478, \nstun:two.example.org");
-        AppSetting::setValue(SettingKeys::VOICE_TURN_URL, "turn:one.example.org\nturn-two.example.org:3478?transport=udp");
-        AppSetting::setValue(SettingKeys::VOICE_TURN_USERNAME, 'voice-user');
-        AppSetting::setValue(SettingKeys::VOICE_TURN_CREDENTIAL, 'voice-pass');
-        AppSetting::setValue(SettingKeys::VOICE_FORCE_RELAY, true);
+        $this->postJson('/api/v1/meet/join', [
+            'room' => 'daily-room',
+            'peerId' => 'peer-alpha',
+            'name' => 'Guest One',
+        ])->assertOk();
 
-        $response = $this->getJson('/api/v1/voice/rtc');
+        $this->postJson('/api/v1/meet/chat', [
+            'room' => 'daily-room',
+            'from' => 'peer-alpha',
+            'text' => 'hello',
+        ])
+            ->assertUnauthorized()
+            ->assertJson(['error' => 'auth_required']);
+    }
+
+    public function test_guest_chat_delivers_to_other_peer_via_poll(): void
+    {
+        $hostJoin = $this->postJson('/api/v1/meet/join', [
+            'room' => 'daily-room',
+            'peerId' => 'host-peer1',
+            'name' => 'Host',
+        ]);
+        $hostJoin->assertOk();
+        $hostSessionKey = (string) $hostJoin->json('sessionKey');
+
+        $guestJoin = $this->postJson('/api/v1/meet/join', [
+            'room' => 'daily-room',
+            'peerId' => 'guest-peer',
+            'name' => 'Guest',
+        ]);
+        $guestJoin->assertOk();
+        $guestSessionKey = (string) $guestJoin->json('sessionKey');
+
+        $this->postJson('/api/v1/meet/chat', [
+            'room' => 'daily-room',
+            'from' => 'guest-peer',
+            'text' => 'Hello host',
+            'sessionKey' => $guestSessionKey,
+        ])
+            ->assertOk()
+            ->assertJson(['ok' => true, 'delivered' => 1]);
+
+        $poll = $this->postJson('/api/v1/meet/poll', [
+            'room' => 'daily-room',
+            'peerId' => 'host-peer1',
+            'sessionKey' => $hostSessionKey,
+        ]);
+        $poll->assertOk();
+
+        $messages = $poll->json('messages');
+        $this->assertIsArray($messages);
+        $this->assertCount(1, $messages);
+        $this->assertSame('chat', $messages[0]['type']);
+        $this->assertSame('guest-peer', $messages[0]['from']);
+        $this->assertSame(['text' => 'Hello host'], $messages[0]['payload']);
+    }
+
+    public function test_rtc_settings_endpoint_exposes_meet_ice_values(): void
+    {
+        AppSetting::setValue(SettingKeys::RTC_STUN_URL, "one.example.org:3478, \nstun:two.example.org");
+        AppSetting::setValue(SettingKeys::RTC_TURN_URL, "turn:one.example.org\nturn-two.example.org:3478?transport=udp");
+        AppSetting::setValue(SettingKeys::RTC_TURN_USERNAME, 'rtc-user');
+        AppSetting::setValue(SettingKeys::RTC_TURN_CREDENTIAL, 'rtc-pass');
+
+        $response = $this->getJson('/api/v1/meet/rtc');
 
         $response->assertOk();
         $response->assertJson([
-            'voice' => [
+            'rtc' => [
                 'stunUrls' => 'stun:one.example.org:3478, stun:two.example.org',
                 'turnUrls' => 'turn:one.example.org, turn:turn-two.example.org:3478?transport=udp',
-                'turnUsername' => 'voice-user',
-                'turnPassword' => 'voice-pass',
-                'forceRelay' => true,
+                'turnUsername' => 'rtc-user',
+                'turnPassword' => 'rtc-pass',
             ],
         ]);
+        $response->assertJsonMissing(['forceRelay' => true]);
     }
 }

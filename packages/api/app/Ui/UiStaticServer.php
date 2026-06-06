@@ -40,7 +40,6 @@ final class UiStaticServer
             '/meet',
             '/notes',
             '/settings',
-            '/voice',
         ];
 
         foreach (self::GLOBAL_PREFIXES as $prefix) {
@@ -128,7 +127,6 @@ final class UiStaticServer
             '/meet',
             '/notes',
             '/settings',
-            '/voice',
             '/install',
         ];
     }

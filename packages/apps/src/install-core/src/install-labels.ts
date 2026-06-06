@@ -13,7 +13,7 @@ export function installStepTitle(id: InstallStepId): string {
     case "mail":
       return "Mail server";
     case "meet":
-      return "Meet & voice";
+      return "Meet";
     case "admin":
       return "Create admin account";
     case "done":
@@ -34,7 +34,7 @@ export function installStepSubtitle(id: InstallStepId): string {
     case "mail":
       return "Server addresses only - accounts are configured per user later.";
     case "meet":
-      return "TURN settings used for voice and video calls.";
+      return "TURN settings used for Meet video calls.";
     case "admin":
       return "This account can manage everything in the server panel.";
     case "done":

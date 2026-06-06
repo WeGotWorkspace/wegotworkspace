@@ -28,7 +28,7 @@ Agent skills live in [`.agents/skills/`](.agents/skills/) (tool-agnostic [Agent 
 
 **API done gate:** `pnpm test:api-done-gate` / `composer done-gate` in `packages/api` — see `packages/api/docs/api-done-gate.md`.
 
-**Meet signaling:** Laravel `VoiceSignalingService` only — see `packages/api/docs/voice-migration.md`. Do not restore full `packages/api/src/` or `legacy/Voice/`.
+**Meet signaling:** Laravel `MeetSignalingService` only — see `packages/api/docs/meet-signaling.md`. Do not restore full `packages/api/src/` or `legacy/Voice/`.
 
 ## `packages/api` layout
 

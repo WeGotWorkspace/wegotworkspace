@@ -17,9 +17,9 @@ export function InstallMeetPane({
 
   return (
     <>
-      <Card title="Voice & video">
+      <Card title="Meet">
         <InstallFeatureRow
-          label="Enable voice & video"
+          label="Enable Meet"
           desc="Configure STUN/TURN routing for real-time peer connections."
           value={meet.enabled}
           onChange={(value) => setMeet((current) => ({ ...current, enabled: value }))}

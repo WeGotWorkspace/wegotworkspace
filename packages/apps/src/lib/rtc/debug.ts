@@ -1,5 +1,5 @@
 const RTC_DEBUG_QUERY_PARAM = "rtcDebug";
-const LEGACY_RTC_DEBUG_QUERY_PARAMS = ["meetRtcDebug", "collabRtcDebug"] as const;
+const LEGACY_RTC_DEBUG_QUERY_PARAMS = ["meetRtcDebug", "collabRtcDebug", "debugRtc"] as const;
 
 export function isRtcDebugEnabledFromQuery(search: string): boolean {
   const params = new URLSearchParams(search);

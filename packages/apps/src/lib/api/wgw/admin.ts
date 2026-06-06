@@ -146,12 +146,11 @@ export function mapWgwAdminStateToUI(
       smtpPort: state.mail.smtpPort,
       smtpSecurity: state.mail.smtpSecurity,
     },
-    voice: {
-      stunUrls: state.voice.stunUrls,
-      turnUrls: state.voice.turnUrls,
-      turnUsername: state.voice.turnUsername,
-      turnPassword: state.voice.turnPassword,
-      forceRelay: state.voice.forceRelay,
+    rtc: {
+      stunUrls: state.rtc.stunUrls,
+      turnUrls: state.rtc.turnUrls,
+      turnUsername: state.rtc.turnUsername,
+      turnPassword: state.rtc.turnPassword,
     },
     apps: {
       calendars: state.apps.calendars,

@@ -2101,7 +2101,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/voice/join": {
+    "/meet/join": {
         parameters: {
             query?: never;
             header?: never;
@@ -2110,7 +2110,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Join voice room (guest or authenticated) */
+        /** Join meet room (guest or authenticated) */
         post: {
             parameters: {
                 query?: never;
@@ -2120,7 +2120,7 @@ export interface paths {
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["VoiceJoinRequest"];
+                    "application/json": components["schemas"]["MeetJoinRequest"];
                 };
             };
             responses: {
@@ -2130,7 +2130,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["VoiceJoinResponse"];
+                        "application/json": components["schemas"]["MeetJoinResponse"];
                     };
                 };
             };
@@ -2141,7 +2141,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/voice/poll": {
+    "/meet/poll": {
         parameters: {
             query?: never;
             header?: never;
@@ -2150,7 +2150,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Poll voice messages */
+        /** Poll meet signaling messages */
         post: {
             parameters: {
                 query?: never;
@@ -2160,7 +2160,7 @@ export interface paths {
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["VoicePollRequest"];
+                    "application/json": components["schemas"]["MeetPollRequest"];
                 };
             };
             responses: {
@@ -2170,7 +2170,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["VoicePollResponse"];
+                        "application/json": components["schemas"]["MeetPollResponse"];
                     };
                 };
             };
@@ -2181,7 +2181,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/voice/send": {
+    "/meet/send": {
         parameters: {
             query?: never;
             header?: never;
@@ -2190,7 +2190,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Send voice signaling message */
+        /** Send meet WebRTC signaling message */
         post: {
             parameters: {
                 query?: never;
@@ -2200,7 +2200,7 @@ export interface paths {
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["VoiceSendRequest"];
+                    "application/json": components["schemas"]["MeetSendRequest"];
                 };
             };
             responses: {
@@ -2210,7 +2210,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["VoiceSendResponse"];
+                        "application/json": components["schemas"]["MeetSendResponse"];
                     };
                 };
             };
@@ -2221,7 +2221,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/voice/leave": {
+    "/meet/leave": {
         parameters: {
             query?: never;
             header?: never;
@@ -2230,7 +2230,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Leave voice room */
+        /** Leave meet room */
         post: {
             parameters: {
                 query?: never;
@@ -2240,7 +2240,7 @@ export interface paths {
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["VoiceLeaveRequest"];
+                    "application/json": components["schemas"]["MeetLeaveRequest"];
                 };
             };
             responses: {
@@ -2250,7 +2250,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["VoiceLeaveResponse"];
+                        "application/json": components["schemas"]["MeetLeaveResponse"];
                     };
                 };
             };
@@ -2261,7 +2261,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/voice/chat": {
+    "/meet/chat": {
         parameters: {
             query?: never;
             header?: never;
@@ -2270,7 +2270,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Voice room chat message */
+        /** Meet room chat message */
         post: {
             parameters: {
                 query?: never;
@@ -2280,7 +2280,7 @@ export interface paths {
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["VoiceChatRequest"];
+                    "application/json": components["schemas"]["MeetChatRequest"];
                 };
             };
             responses: {
@@ -2290,7 +2290,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["VoiceChatResponse"];
+                        "application/json": components["schemas"]["MeetChatResponse"];
                     };
                 };
             };
@@ -2655,7 +2655,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/voice/room": {
+    "/meet/room": {
         parameters: {
             query?: never;
             header?: never;
@@ -2664,7 +2664,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Probe or resolve voice room metadata */
+        /** Probe or resolve meet room metadata */
         post: {
             parameters: {
                 query?: never;
@@ -2683,6 +2683,40 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/meet/rtc": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Meet WebRTC ICE settings */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Meet RTC ICE settings */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2801,11 +2835,11 @@ export interface components {
             mail_smtp_host?: string;
             mail_smtp_port?: string;
             mail_smtp_security?: string;
-            voice_enabled?: boolean;
-            voice_stun_url?: string;
-            voice_turn_url?: string;
-            voice_turn_username?: string;
-            voice_turn_credential?: string;
+            meet_enabled?: boolean;
+            rtc_stun_url?: string;
+            rtc_turn_url?: string;
+            rtc_turn_username?: string;
+            rtc_turn_credential?: string;
         };
         /**
          * @example {
@@ -2938,12 +2972,11 @@ export interface components {
             smtpPort: number;
             smtpSecurity: string;
         };
-        AdminVoiceSettings: {
+        AdminRtcSettings: {
             stunUrls: string;
             turnUrls: string;
             turnUsername: string;
             turnPassword: string;
-            forceRelay: boolean;
         };
         AdminAppsSettings: {
             calendars: boolean;
@@ -3022,7 +3055,7 @@ export interface components {
             users: components["schemas"]["AdminUserSummary"][];
             groups: components["schemas"]["AdminGroupSummary"][];
             mail: components["schemas"]["AdminMailSettings"];
-            voice: components["schemas"]["AdminVoiceSettings"];
+            rtc: components["schemas"]["AdminRtcSettings"];
             apps: components["schemas"]["AdminAppsSettings"];
             webdav: components["schemas"]["AdminWebdavSettings"];
             updates: components["schemas"]["UpdateStateResponse"];
@@ -3557,39 +3590,39 @@ export interface components {
             mode: "archive" | "move" | "purge";
             target?: string;
         };
-        VoiceSessionKey: string;
-        VoicePeer: {
+        MeetSessionKey: string;
+        MeetPeer: {
             id: string;
             name: string;
         };
-        VoicePeerList: components["schemas"]["VoicePeer"][];
+        MeetPeerList: components["schemas"]["MeetPeer"][];
         /** @enum {string} */
-        VoiceMessageType: "offer" | "answer" | "ice" | "bye" | "chat";
+        MeetMessageType: "offer" | "answer" | "ice" | "bye" | "chat";
         /** @enum {string} */
-        VoiceSendType: "offer" | "answer" | "ice" | "bye";
-        VoiceSdpPayload: {
+        MeetSendType: "offer" | "answer" | "ice" | "bye";
+        MeetSdpPayload: {
             sdp: string;
             type?: string;
         };
-        VoiceIcePayload: {
+        MeetIcePayload: {
             candidate: string;
             sdpMid?: string;
             sdpMLineIndex?: number;
             usernameFragment?: string;
         };
-        VoiceChatPayload: {
+        MeetChatPayload: {
             text: string;
         };
-        VoiceByePayload: {
+        MeetByePayload: {
             reason?: string;
         };
-        VoiceSignalPayload: components["schemas"]["VoiceSdpPayload"] | components["schemas"]["VoiceIcePayload"] | components["schemas"]["VoiceChatPayload"] | components["schemas"]["VoiceByePayload"] | null;
-        VoiceSignalEnvelope: {
+        MeetSignalPayload: components["schemas"]["MeetSdpPayload"] | components["schemas"]["MeetIcePayload"] | components["schemas"]["MeetChatPayload"] | components["schemas"]["MeetByePayload"] | null;
+        MeetSignalEnvelope: {
             from: string;
-            type: components["schemas"]["VoiceMessageType"];
-            payload: components["schemas"]["VoiceSignalPayload"];
+            type: components["schemas"]["MeetMessageType"];
+            payload: components["schemas"]["MeetSignalPayload"];
         };
-        VoiceSignalEnvelopeList: components["schemas"]["VoiceSignalEnvelope"][];
+        MeetSignalEnvelopeList: components["schemas"]["MeetSignalEnvelope"][];
         /**
          * @example {
          *       "room": "daily-room",
@@ -3597,11 +3630,11 @@ export interface components {
          *       "name": "Guest User"
          *     }
          */
-        VoiceJoinRequest: {
+        MeetJoinRequest: {
             room: string;
             peerId: string;
             name?: string;
-            sessionKey?: components["schemas"]["VoiceSessionKey"];
+            sessionKey?: components["schemas"]["MeetSessionKey"];
         };
         /**
          * @example {
@@ -3609,10 +3642,10 @@ export interface components {
          *       "peerId": "peer1234"
          *     }
          */
-        VoicePollRequest: {
+        MeetPollRequest: {
             room: string;
             peerId: string;
-            sessionKey?: components["schemas"]["VoiceSessionKey"];
+            sessionKey?: components["schemas"]["MeetSessionKey"];
         };
         /**
          * @example {
@@ -3625,13 +3658,13 @@ export interface components {
          *       }
          *     }
          */
-        VoiceSendRequest: {
+        MeetSendRequest: {
             room: string;
             from: string;
             to: string;
-            type: components["schemas"]["VoiceSendType"];
-            payload?: components["schemas"]["VoiceSignalPayload"];
-            sessionKey?: components["schemas"]["VoiceSessionKey"];
+            type: components["schemas"]["MeetSendType"];
+            payload?: components["schemas"]["MeetSignalPayload"];
+            sessionKey?: components["schemas"]["MeetSessionKey"];
         };
         /**
          * @example {
@@ -3639,10 +3672,10 @@ export interface components {
          *       "peerId": "peer1234"
          *     }
          */
-        VoiceLeaveRequest: {
+        MeetLeaveRequest: {
             room: string;
             peerId: string;
-            sessionKey?: components["schemas"]["VoiceSessionKey"];
+            sessionKey?: components["schemas"]["MeetSessionKey"];
         };
         /**
          * @example {
@@ -3651,27 +3684,27 @@ export interface components {
          *       "text": "Hello team"
          *     }
          */
-        VoiceChatRequest: {
+        MeetChatRequest: {
             room: string;
             from: string;
             text: string;
-            sessionKey?: components["schemas"]["VoiceSessionKey"];
+            sessionKey?: components["schemas"]["MeetSessionKey"];
         };
-        VoiceJoinResponse: {
-            peers: components["schemas"]["VoicePeerList"];
+        MeetJoinResponse: {
+            peers: components["schemas"]["MeetPeerList"];
             sessionKey: string | null;
         };
-        VoicePollResponse: {
-            peers: components["schemas"]["VoicePeerList"];
-            messages: components["schemas"]["VoiceSignalEnvelopeList"];
+        MeetPollResponse: {
+            peers: components["schemas"]["MeetPeerList"];
+            messages: components["schemas"]["MeetSignalEnvelopeList"];
         };
-        VoiceSendResponse: {
+        MeetSendResponse: {
             ok: boolean;
         };
-        VoiceLeaveResponse: {
+        MeetLeaveResponse: {
             ok: boolean;
         };
-        VoiceChatResponse: {
+        MeetChatResponse: {
             ok: boolean;
             delivered: number;
         };

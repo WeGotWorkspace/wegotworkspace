@@ -161,13 +161,13 @@ final class SqliteWgwSchema
         );
     }
 
-    public static function applyVoiceTables(): void
+    public static function applyMeetTables(): void
     {
-        Schema::connection('wgw')->dropIfExists('voice_messages');
-        Schema::connection('wgw')->dropIfExists('voice_peers');
+        Schema::connection('wgw')->dropIfExists('meet_messages');
+        Schema::connection('wgw')->dropIfExists('meet_peers');
 
         DB::connection('wgw')->statement(
-            'CREATE TABLE voice_peers (
+            'CREATE TABLE meet_peers (
                 room TEXT NOT NULL,
                 peer_id TEXT NOT NULL,
                 name TEXT NOT NULL DEFAULT "",
@@ -177,7 +177,7 @@ final class SqliteWgwSchema
             )'
         );
         DB::connection('wgw')->statement(
-            'CREATE TABLE voice_messages (
+            'CREATE TABLE meet_messages (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 room TEXT NOT NULL,
                 from_peer TEXT NOT NULL,
@@ -188,10 +188,10 @@ final class SqliteWgwSchema
             )'
         );
         DB::connection('wgw')->statement(
-            'CREATE INDEX idx_voice_msg_target ON voice_messages(room, to_peer, id)'
+            'CREATE INDEX idx_meet_msg_target ON meet_messages(room, to_peer, id)'
         );
         DB::connection('wgw')->statement(
-            'CREATE INDEX idx_voice_peers_room ON voice_peers(room)'
+            'CREATE INDEX idx_meet_peers_room ON meet_peers(room)'
         );
     }
 

@@ -15,7 +15,7 @@ const notesTypesPath = path.resolve(generatedDir, "notes-types.ts");
 const settingsTypesPath = path.resolve(generatedDir, "settings-types.ts");
 const adminTypesPath = path.resolve(generatedDir, "admin-types.ts");
 const driveTypesPath = path.resolve(generatedDir, "drive-types.ts");
-const voiceTypesPath = path.resolve(generatedDir, "voice-types.ts");
+const meetTypesPath = path.resolve(generatedDir, "meet-types.ts");
 const installerTypesPath = path.resolve(generatedDir, "installer-types.ts");
 
 function buildDomainTypesModule({
@@ -96,10 +96,10 @@ export async function generateOpenApiDomainTypes() {
     outputPath: driveTypesPath,
   });
   buildDomainTypesModule({
-    domainName: "Voice",
-    domainPrefix: "Voice",
-    pathPrefix: "voice",
-    outputPath: voiceTypesPath,
+    domainName: "Meet",
+    domainPrefix: "Meet",
+    pathPrefix: "meet",
+    outputPath: meetTypesPath,
   });
   buildDomainTypesModule({
     domainName: "Installer",
@@ -120,7 +120,7 @@ if (import.meta.url === new URL(process.argv[1], "file://").href) {
   process.stdout.write(`Wrote ${settingsTypesPath}\n`);
   process.stdout.write(`Wrote ${adminTypesPath}\n`);
   process.stdout.write(`Wrote ${driveTypesPath}\n`);
-  process.stdout.write(`Wrote ${voiceTypesPath}\n`);
+  process.stdout.write(`Wrote ${meetTypesPath}\n`);
   process.stdout.write(`Wrote ${installerTypesPath}\n`);
   process.stdout.write(
     `Wrote ${path.resolve(packageRoot, "openapi/generated/settings-request-zod.ts")}\n`,

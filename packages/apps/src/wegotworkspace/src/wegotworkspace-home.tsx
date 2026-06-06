@@ -62,7 +62,7 @@ export function WeGotWorkspaceHome() {
       icon: <Video className="size-4" />,
       accent: "#4f7cff",
       fg: "#ffffff",
-      onSelect: () => void navigate({ to: "/voice" }),
+      onSelect: () => void navigate({ to: "/meet" }),
     },
     {
       id: "admin",
