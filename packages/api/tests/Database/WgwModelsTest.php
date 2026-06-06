@@ -9,26 +9,13 @@ use App\Models\GroupMember;
 use App\Models\Principal;
 use App\Models\User;
 use App\Support\WgwDatabaseConfig;
-use Illuminate\Support\Facades\DB;
-use Tests\Support\SqliteWgwSchema;
-use Tests\TestCase;
+use Tests\Support\WgwDatabaseTestCase;
 
-final class WgwModelsTest extends TestCase
+final class WgwModelsTest extends WgwDatabaseTestCase
 {
     protected function setUp(): void
     {
         parent::setUp();
-
-        config([
-            'database.connections.wgw' => [
-                'driver' => 'sqlite',
-                'database' => ':memory:',
-                'prefix' => '',
-                'foreign_key_constraints' => true,
-            ],
-        ]);
-        DB::purge('wgw');
-        SqliteWgwSchema::applyCoreTables();
     }
 
     public function test_user_and_principal_round_trip(): void

@@ -9,28 +9,14 @@ use App\Models\User;
 use App\Services\Mail\MailCredentialService;
 use App\Services\Mail\MailSecretService;
 use App\Support\WgwInstallConfig;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use Tests\Support\SqliteWgwSchema;
-use Tests\TestCase;
+use Tests\Support\WgwDatabaseTestCase;
 
-final class MailCredentialServiceImapUsernameTest extends TestCase
+final class MailCredentialServiceImapUsernameTest extends WgwDatabaseTestCase
 {
     protected function setUp(): void
     {
         parent::setUp();
-
-        config([
-            'database.connections.wgw' => [
-                'driver' => 'sqlite',
-                'database' => ':memory:',
-                'prefix' => '',
-                'foreign_key_constraints' => true,
-            ],
-        ]);
-        DB::purge('wgw');
-        SqliteWgwSchema::applyCoreTables();
-        SqliteWgwSchema::applyMailTables();
 
         $dataDir = storage_path('framework/testing/wgw-mail-cred-'.uniqid('', true));
         File::ensureDirectoryExists($dataDir);

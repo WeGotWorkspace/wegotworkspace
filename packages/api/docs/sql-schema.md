@@ -30,4 +30,8 @@ Additional tables (meet/collab/search/drive, Cal/Card DAV, mail) are created by 
 
 ## Tests
 
-`tests/Unit/Installer/WgwSchemaMigratorTest.php` covers fresh migrate, idempotency, and legacy `app_migrations` v0–5 cutover.
+- **Harness:** `WgwDatabaseTestCase` + `WgwTestDatabase` run `migrate:fresh` on `database/migrations/wgw/` (replaces hand-rolled `SqliteWgwSchema`).
+- **Drivers:** default SQLite (`:memory:`); set `WGW_TEST_DRIVER=mysql` with `WGW_TEST_MYSQL_*` env vars for MySQL.
+- **CI:** `api-mysql` job runs `composer test:mysql`; full stack uses `composer done-gate:full`.
+- **Parity:** `tests/Architecture/WgwSchemaParityTest.php` asserts expected tables per driver.
+- **Cutover:** `tests/Unit/Installer/WgwSchemaMigratorTest.php` covers fresh migrate, idempotency, and legacy `app_migrations` v0–5.

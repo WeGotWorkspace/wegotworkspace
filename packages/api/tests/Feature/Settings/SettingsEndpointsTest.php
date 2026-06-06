@@ -11,11 +11,9 @@ use App\Services\Auth\AdminRoleResolver;
 use App\Support\WgwSettings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use Tests\Support\AuthTestKeys;
-use Tests\Support\SqliteWgwSchema;
-use Tests\TestCase;
+use Tests\Support\WgwDatabaseTestCase;
 
-final class SettingsEndpointsTest extends TestCase
+final class SettingsEndpointsTest extends WgwDatabaseTestCase
 {
     private string $dataDir = '';
 
@@ -27,29 +25,7 @@ final class SettingsEndpointsTest extends TestCase
         $this->dataDir = storage_path('framework/testing/wgw-'.uniqid('', true));
         File::ensureDirectoryExists($this->dataDir.'/drive');
         config(['wgw.data_dir' => $this->dataDir]);
-
-        config([
-            'database.connections.wgw' => [
-                'driver' => 'sqlite',
-                'database' => ':memory:',
-                'prefix' => '',
-                'foreign_key_constraints' => true,
-            ],
-        ]);
-        DB::purge('wgw');
-
-        $keys = AuthTestKeys::rsaPair();
-        config([
-            'wgw.jwt.private_key' => $keys['private_key'],
-            'wgw.jwt.public_key' => $keys['public_key'],
-            'wgw.jwt.issuer' => $keys['issuer'],
-            'wgw.jwt.audience' => $keys['audience'],
-            'wgw.jwt.kid' => $keys['kid'],
-        ]);
-
-        SqliteWgwSchema::applyCoreTables();
-        SqliteWgwSchema::applyAuthTables();
-        SqliteWgwSchema::applyMailTables();
+        $this->configureWgwJwtKeys();
         $this->seedAlice();
     }
 

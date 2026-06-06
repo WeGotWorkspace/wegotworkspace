@@ -6,26 +6,13 @@ namespace Tests\Feature\Dav;
 
 use App\Dav\SabreServerFactory;
 use App\Support\AppPaths;
-use Illuminate\Support\Facades\DB;
-use Tests\Support\SqliteWgwSchema;
+use Tests\Support\WgwDatabaseTestCase;
 use Tests\Support\WgwInstallFixture;
-use Tests\TestCase;
 
-final class SabreWebdavFrontTest extends TestCase
+final class SabreWebdavFrontTest extends WgwDatabaseTestCase
 {
     public function test_sabre_server_factory_builds_when_installed(): void
     {
-        config([
-            'database.connections.wgw' => [
-                'driver' => 'sqlite',
-                'database' => ':memory:',
-                'prefix' => '',
-                'foreign_key_constraints' => true,
-            ],
-        ]);
-        DB::purge('wgw');
-        SqliteWgwSchema::applyCoreTables();
-        SqliteWgwSchema::applySabreTables();
 
         $installRoot = sys_get_temp_dir().'/wgw-sabre-root-'.uniqid('', true);
         mkdir($installRoot, 0775, true);

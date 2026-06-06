@@ -6,31 +6,17 @@ namespace Tests\Feature\Dav;
 
 use App\Models\Principal;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Tests\Support\SqliteWgwSchema;
+use Tests\Support\WgwDatabaseTestCase;
 use Tests\Support\WgwInstallFixture;
-use Tests\TestCase;
 
-final class SabreWebdavPutTest extends TestCase
+final class SabreWebdavPutTest extends WgwDatabaseTestCase
 {
     private string $dataDir;
 
     protected function setUp(): void
     {
         parent::setUp();
-
-        config([
-            'database.connections.wgw' => [
-                'driver' => 'sqlite',
-                'database' => ':memory:',
-                'prefix' => '',
-                'foreign_key_constraints' => true,
-            ],
-        ]);
-        DB::purge('wgw');
-        SqliteWgwSchema::applyCoreTables();
-        SqliteWgwSchema::applySabreTables();
 
         User::query()->create([
             'username' => 'alice',
