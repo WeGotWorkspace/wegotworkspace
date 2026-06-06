@@ -19,7 +19,7 @@ test.describe("Meet lobby smoke", () => {
     request,
   }) => {
     const room = `e2e-${Date.now()}`;
-    const join = await request.post("/api/v1/meet/join", {
+    const join = await request.post(`/api/v1/rooms/${encodeURIComponent(room)}/participants`, {
       data: {
         room,
         peerId: "e2e-host",

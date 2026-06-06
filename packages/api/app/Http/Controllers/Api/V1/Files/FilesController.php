@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1\Files;
 
 use App\Exceptions\ApiHttpException;
-use App\Http\Controllers\Api\V1\Collab\CollabController;
 use App\Http\Middleware\AuthenticateWgwApi;
 use App\Http\Requests\Api\V1\FilesBulkDeleteRequest;
+use App\Services\Collab\DocCollabDocumentService;
 use App\Services\Drive\DriveGroupResolver;
 use App\Services\Drive\DriveService;
 use App\Services\Rtc\RoomIdCodec;
@@ -22,7 +22,7 @@ final class FilesController
         private DriveService $drive,
         private DriveGroupResolver $groups,
         private RoomIdCodec $roomIds,
-        private CollabController $collab,
+        private DocCollabDocumentService $collabDocuments,
     ) {}
 
     public function context(Request $request): JsonResponse
@@ -196,7 +196,22 @@ final class FilesController
         $path = $this->requirePath($request);
         $request->query->set('room', $path);
 
-        return $this->collab->getDocument($request);
+        if ($request->query('format') === 'yjs') {
+            $binary = $this->collabDocuments->getYjsBinary($request, $path);
+            if ($binary === null) {
+                return response('', 204);
+            }
+
+            return response($binary, 200, [
+                'Content-Type' => 'application/octet-stream',
+            ]);
+        }
+
+        return response(
+            $this->collabDocuments->getMarkdown($request, $path),
+            200,
+            ['Content-Type' => 'text/markdown; charset=utf-8'],
+        );
     }
 
     public function updateCollaboration(Request $request): JsonResponse
@@ -209,7 +224,7 @@ final class FilesController
         $payload['room'] = $path;
         $request->json()->replace($payload);
 
-        return $this->collab->putDocument($request);
+        return response()->json($this->collabDocuments->put($request, $payload));
     }
 
     public function star(Request $request): JsonResponse
