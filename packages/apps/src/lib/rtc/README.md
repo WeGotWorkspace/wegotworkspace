@@ -53,3 +53,23 @@ Set via `initiatorRule: "higherId" | "lowerId"` on `RtcPeerMesh`.
 ## Relay fallback
 
 On `connectionState === "failed"`, initiator **recreates** the peer connection in relay-only mode and sends a fresh offer (not `setConfiguration` + `restartIce`).
+
+## Meet invariants
+
+These rules are enforced in product code and covered by unit tests under `session/peer-mesh.test.ts` and `meet-core/src/meet-rtc-session.test.ts`:
+
+| Topic          | Rule                                                                                               |
+| -------------- | -------------------------------------------------------------------------------------------------- |
+| A/V transport  | WebRTC media binding only (`createMediaBinding`)                                                   |
+| Chat + control | HTTP `POST /meet/chat` → poll delivery; **not** data channels                                      |
+| Signaling      | HTTP join / poll / send / leave (same poll loop as chat)                                           |
+| Meet SDP       | **Sanitize inbound (remote) only** — never rewrite outbound/local SDP before `setLocalDescription` |
+| Guest tabs     | Unauthenticated `fetchImpl` + `sessionKey` on poll/send/chat                                       |
+| Initiator      | Meet uses `higherId` (lexicographically higher peer id sends the offer)                            |
+| Poll order     | `onPollData` runs before RTC signal handling (chat/control before offer/answer)                    |
+
+Run kernel tests:
+
+```bash
+pnpm --dir packages/apps exec vitest run src/lib/rtc/session src/meet-core/src/meet-rtc-session.test.ts
+```
