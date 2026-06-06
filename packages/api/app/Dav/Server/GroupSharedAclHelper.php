@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace App\Dav\Server;
 
-use App\Admin\GroupManager;
+use App\Services\Settings\GroupMembershipResolver;
 
 /**
  * ACL rules for on-disk group folders: owner is the group principal; members
- * from {@see GroupManager::getMembers} get full access. No user authenticates
- * as the group URI, so member ACEs are required.
+ * from {@see GroupMembershipResolver::memberPrincipalUris} get full access.
+ * No user authenticates as the group URI, so member ACEs are required.
  */
 final class GroupSharedAclHelper
 {
     /**
      * @return list<array{privilege: string, principal: string, protected?: bool}>
      */
-    public static function aclForGroup(\PDO $pdo, string $groupPrincipalUri): array
+    public static function aclForGroup(string $groupPrincipalUri, ?GroupMembershipResolver $membership = null): array
     {
         $aces = [
             [
@@ -26,7 +26,8 @@ final class GroupSharedAclHelper
             ],
         ];
         try {
-            $members = GroupManager::getMembers($pdo, $groupPrincipalUri);
+            $members = ($membership ?? app(GroupMembershipResolver::class))
+                ->memberPrincipalUris($groupPrincipalUri);
         } catch (\Throwable) {
             $members = [];
         }

@@ -4,13 +4,17 @@ declare(strict_types=1);
 
 namespace App\Services\Settings;
 
-use App\Admin\AdminConstants;
 use App\Models\Principal;
+use App\Services\Admin\AdminConstants;
 use Illuminate\Support\Facades\DB;
 use Sabre\DAVACL\PrincipalBackend\PDO as PrincipalBackend;
 
 final class GroupDirectoryService
 {
+    public function __construct(
+        private readonly GroupMembershipResolver $membership,
+    ) {}
+
     /**
      * @return list<array{id: string, name: string, displayName: string}>
      */
@@ -141,9 +145,7 @@ final class GroupDirectoryService
      */
     private function memberUris(string $groupUri): array
     {
-        $backend = new PrincipalBackend(DB::connection('wgw')->getPdo());
-
-        return $backend->getGroupMemberSet($groupUri);
+        return $this->membership->memberPrincipalUris($groupUri);
     }
 
     /**

@@ -13,7 +13,6 @@ final class GroupSharedFile extends FlysystemAclFile
         Filesystem $filesystem,
         string $key,
         private readonly string $groupPrincipalUri,
-        private readonly \PDO $pdo,
     ) {
         parent::__construct($filesystem, $key, [], $groupPrincipalUri);
     }
@@ -23,6 +22,6 @@ final class GroupSharedFile extends FlysystemAclFile
      */
     public function getACL(): array
     {
-        return GroupSharedAclHelper::aclForGroup($this->pdo, $this->groupPrincipalUri);
+        return GroupSharedAclHelper::aclForGroup($this->groupPrincipalUri);
     }
 }
