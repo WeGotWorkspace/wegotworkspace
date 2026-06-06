@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Rtc;
 
 use App\Models\AppSetting;
-use App\Settings\SettingKeys;
+use App\Services\Settings\SettingKeys;
 
 final class RtcSettingsService
 {

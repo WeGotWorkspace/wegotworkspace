@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Admin;
 
-use App\Admin\AdminConstants;
 use App\Exceptions\ApiHttpException;
 use App\Http\Middleware\AuthenticateWgwApi;
+use App\Services\Admin\AdminConstants;
 use App\Services\Settings\GroupDirectoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

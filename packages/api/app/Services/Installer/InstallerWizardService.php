@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Installer;
 
-use App\Settings\SettingKeys;
+use App\Services\Settings\SettingKeys;
 use App\Support\AppPaths;
 use Illuminate\Support\Facades\Cache;
 

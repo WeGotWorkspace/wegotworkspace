@@ -6,7 +6,7 @@ namespace Tests\Unit\Rtc;
 
 use App\Models\AppSetting;
 use App\Services\Rtc\RtcSettingsService;
-use App\Settings\SettingKeys;
+use App\Services\Settings\SettingKeys;
 use Tests\Support\WgwDatabaseTestCase;
 
 final class RtcSettingsServiceTest extends WgwDatabaseTestCase

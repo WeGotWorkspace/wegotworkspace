@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Notes;
 
-use App\Notes\NoteMarkdownCodec;
+use App\Services\Notes\NoteMarkdownCodec;
 use PHPUnit\Framework\TestCase;
 
 final class NoteMarkdownCodecTest extends TestCase

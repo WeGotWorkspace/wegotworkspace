@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services\Notes;
 
 use App\Exceptions\ApiHttpException;
-use App\Notes\NoteMarkdownCodec;
 use App\Services\Search\SearchIndexerService;
 use App\Storage\NoteStoragePaths;
 use App\Storage\WgwStorage;

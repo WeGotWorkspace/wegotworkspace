@@ -7,7 +7,7 @@ namespace Tests\Feature\Mail;
 use App\Models\AppSetting;
 use App\Models\Principal;
 use App\Models\User;
-use App\Settings\SettingKeys;
+use App\Services\Settings\SettingKeys;
 use Tests\Support\WgwDatabaseTestCase;
 
 final class MailEndpointsTest extends WgwDatabaseTestCase

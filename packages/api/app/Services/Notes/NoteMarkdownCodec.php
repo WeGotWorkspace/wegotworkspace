@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Notes;
+namespace App\Services\Notes;
 
 /**
  * Frontmatter + body codec for note markdown files (pure PHP, no I/O).

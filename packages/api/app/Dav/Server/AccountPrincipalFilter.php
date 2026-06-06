@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Dav\Server;
 
-use App\Admin\AdminConstants;
+use App\Services\Admin\AdminConstants;
 
 /**
  * True for {@code principals/{username}} when {@code username} exists in {@code users}
