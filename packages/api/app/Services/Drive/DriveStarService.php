@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Drive;
 
+use App\Models\DriveStarredItem;
 use App\Storage\StoragePaths;
-use Illuminate\Support\Facades\DB;
 
 final class DriveStarService
 {
@@ -17,8 +17,7 @@ final class DriveStarService
      */
     public function listPaths(string $username, array $groupSlugs): array
     {
-        $rows = DB::connection('wgw')
-            ->table('drive_starred_items')
+        $rows = DriveStarredItem::query()
             ->where('username', $username)
             ->orderByDesc('created_at')
             ->pluck('path');
@@ -49,7 +48,7 @@ final class DriveStarService
         }
 
         if ($starred) {
-            DB::connection('wgw')->table('drive_starred_items')->updateOrInsert(
+            DriveStarredItem::query()->updateOrInsert(
                 ['username' => $username, 'path' => $path],
                 ['created_at' => time()]
             );
@@ -57,8 +56,7 @@ final class DriveStarService
             return;
         }
 
-        DB::connection('wgw')
-            ->table('drive_starred_items')
+        DriveStarredItem::query()
             ->where('username', $username)
             ->where('path', $path)
             ->delete();

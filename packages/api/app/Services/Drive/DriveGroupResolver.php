@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Drive;
 
-use Illuminate\Support\Facades\DB;
+use App\Models\GroupMember;
 
 final class DriveGroupResolver
 {
@@ -13,10 +13,9 @@ final class DriveGroupResolver
      */
     public function allowedGroupSlugs(string $username): array
     {
-        $rows = DB::connection('wgw')
-            ->table('principals as g')
-            ->join('groupmembers as gm', 'gm.principal_id', '=', 'g.id')
-            ->join('principals as m', 'm.id', '=', 'gm.member_id')
+        $rows = GroupMember::query()
+            ->join('principals as g', 'g.id', '=', 'groupmembers.principal_id')
+            ->join('principals as m', 'm.id', '=', 'groupmembers.member_id')
             ->where('m.uri', 'principals/'.$username)
             ->where('g.uri', 'like', 'principals/groups/%')
             ->pluck('g.uri');

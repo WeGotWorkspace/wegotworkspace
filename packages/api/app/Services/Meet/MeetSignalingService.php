@@ -9,7 +9,6 @@ use App\Services\Rtc\Signaling\HttpSignalingStore;
 use App\Services\Rtc\Signaling\RtcSignalingException;
 use App\Services\Rtc\Signaling\RtcSignalingPolicy;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 final class MeetSignalingService
 {
@@ -55,7 +54,6 @@ final class MeetSignalingService
     public function join(Request $request, array $body): array
     {
         return $this->run(function () use ($request, $body): array {
-            $this->store->ensureOwnerColumn();
             $this->store->pruneOldRows();
 
             $username = $this->actors->tryAuthenticatedUsername($request);
@@ -94,7 +92,6 @@ final class MeetSignalingService
     public function poll(Request $request, array $body): array
     {
         return $this->run(function () use ($request, $body): array {
-            $this->store->ensureOwnerColumn();
             $this->store->pruneOldRows();
 
             $ownerMarker = $this->actors->requireActorMarker($request, $body);
@@ -113,7 +110,6 @@ final class MeetSignalingService
     public function send(Request $request, array $body): array
     {
         return $this->run(function () use ($request, $body): array {
-            $this->store->ensureOwnerColumn();
             $this->store->pruneOldRows();
 
             $ownerMarker = $this->actors->requireActorMarker($request, $body);
@@ -136,7 +132,6 @@ final class MeetSignalingService
     public function leave(Request $request, array $body): array
     {
         return $this->run(function () use ($request, $body): array {
-            $this->store->ensureOwnerColumn();
             $this->store->pruneOldRows();
 
             $ownerMarker = $this->actors->requireActorMarker($request, $body);
@@ -156,7 +151,6 @@ final class MeetSignalingService
     public function chat(Request $request, array $body): array
     {
         return $this->run(function () use ($request, $body): array {
-            $this->store->ensureOwnerColumn();
             $this->store->pruneOldRows();
 
             $ownerMarker = $this->actors->requireActorMarker($request, $body);
@@ -179,12 +173,7 @@ final class MeetSignalingService
                 $this->fail('payload_too_large', 413);
             }
 
-            $policy = $this->store->policy();
-            $targets = DB::connection('wgw')->table($policy->peersTable)
-                ->where('room', $room)
-                ->where('peer_id', '!=', $from)
-                ->pluck('peer_id')
-                ->all();
+            $targets = $this->store->peerIdsInRoomExcept($room, $from);
 
             if ($targets === []) {
                 return ['ok' => true, 'delivered' => 0];
@@ -196,13 +185,13 @@ final class MeetSignalingService
                 $rows[] = [
                     'room' => $room,
                     'from_peer' => $from,
-                    'to_peer' => (string) $target,
+                    'to_peer' => $target,
                     'type' => 'chat',
                     'payload' => $payload,
                     'created_at' => $now,
                 ];
             }
-            DB::connection('wgw')->table($policy->messagesTable)->insert($rows);
+            $this->store->insertMessages($rows);
 
             return ['ok' => true, 'delivered' => count($targets)];
         });
@@ -210,13 +199,7 @@ final class MeetSignalingService
 
     private function roomHasJoinablePeer(string $room): bool
     {
-        $policy = $this->store->policy();
-        $rows = DB::connection('wgw')->table($policy->peersTable)
-            ->where('room', $room)
-            ->limit(32)
-            ->get(['owner_user', 'name']);
-
-        foreach ($rows as $row) {
+        foreach ($this->store->peersInRoom($room) as $row) {
             $owner = is_string($row->owner_user ?? null) ? $row->owner_user : '';
             if (str_starts_with($owner, 'u:')) {
                 return true;

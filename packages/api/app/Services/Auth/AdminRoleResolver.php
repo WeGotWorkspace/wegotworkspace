@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Auth;
 
-use Illuminate\Support\Facades\DB;
+use App\Models\GroupMember;
 
 final class AdminRoleResolver
 {
@@ -12,10 +12,9 @@ final class AdminRoleResolver
 
     public function isAdmin(string $username): bool
     {
-        return DB::connection('wgw')
-            ->table('groupmembers as gm')
-            ->join('principals as g', 'g.id', '=', 'gm.principal_id')
-            ->join('principals as m', 'm.id', '=', 'gm.member_id')
+        return GroupMember::query()
+            ->join('principals as g', 'g.id', '=', 'groupmembers.principal_id')
+            ->join('principals as m', 'm.id', '=', 'groupmembers.member_id')
             ->where('g.uri', self::ADMIN_GROUP_URI)
             ->where('m.uri', 'principals/'.$username)
             ->exists();
