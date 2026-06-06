@@ -308,7 +308,7 @@ final class InstallerWizardService
         $enableContacts = (bool) ($state['enable_contacts'] ?? true);
         $enableFiles = (bool) ($state['enable_files'] ?? true);
         $mailEnabled = ! empty($payload['mail_enabled']);
-        $voiceEnabled = ! empty($payload['voice_enabled']);
+        $meetEnabled = ! empty($payload['meet_enabled']);
 
         if ($enableFiles) {
             @mkdir(rtrim($this->paths->dataDir(), '/').'/files', 0775, true);
@@ -344,10 +344,10 @@ final class InstallerWizardService
                         SettingKeys::MAIL_SMTP_HOST => $mailEnabled ? trim((string) ($payload['mail_smtp_host'] ?? '')) : '',
                         SettingKeys::MAIL_SMTP_PORT => $mailEnabled ? (int) ($payload['mail_smtp_port'] ?? 587) : 587,
                         SettingKeys::MAIL_SMTP_SECURITY => $mailEnabled ? $this->normalizeMailSecurity((string) ($payload['mail_smtp_security'] ?? 'starttls'), 'starttls') : '',
-                        SettingKeys::VOICE_STUN_URL => $voiceEnabled ? trim((string) ($payload['voice_stun_url'] ?? '')) : '',
-                        SettingKeys::VOICE_TURN_URL => $voiceEnabled ? trim((string) ($payload['voice_turn_url'] ?? '')) : '',
-                        SettingKeys::VOICE_TURN_USERNAME => $voiceEnabled ? trim((string) ($payload['voice_turn_username'] ?? '')) : '',
-                        SettingKeys::VOICE_TURN_CREDENTIAL => $voiceEnabled ? (string) ($payload['voice_turn_credential'] ?? '') : '',
+                        SettingKeys::RTC_STUN_URL => $meetEnabled ? trim((string) ($payload['rtc_stun_url'] ?? '')) : '',
+                        SettingKeys::RTC_TURN_URL => $meetEnabled ? trim((string) ($payload['rtc_turn_url'] ?? '')) : '',
+                        SettingKeys::RTC_TURN_USERNAME => $meetEnabled ? trim((string) ($payload['rtc_turn_username'] ?? '')) : '',
+                        SettingKeys::RTC_TURN_CREDENTIAL => $meetEnabled ? (string) ($payload['rtc_turn_credential'] ?? '') : '',
                     ],
                 );
                 $this->jwtKeys->ensureKeys();

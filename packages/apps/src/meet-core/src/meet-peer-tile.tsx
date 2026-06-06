@@ -53,21 +53,23 @@ export function MeetPeerTile({
   const micLiveUi = disclosedMedia ? disclosedMedia.mic : micFromTracks;
   const showAvatarFill = !showRemoteVideo || !remoteVideoOk;
   const mirrored = shouldMirrorMeetStream(stream, disclosedMedia?.screen);
+  const playbackStream = stream && stream.getTracks().length > 0 ? stream : null;
 
   return (
     <div className={cn("meet-peer-tile", compact && "meet-peer-tile--compact")}>
-      {showRemoteVideo ? (
-        <div className="meet-peer-tile__media">
+      {playbackStream ? (
+        <div className={cn("meet-peer-tile__media", !showRemoteVideo && "sr-only")}>
           <MeetStreamVideo
-            stream={stream}
+            stream={playbackStream}
             mirrored={mirrored}
-            onPresentationViable={onPresentationViable}
+            onPresentationViable={showRemoteVideo ? onPresentationViable : undefined}
             className={cn(
               "meet-peer-tile__stream h-full w-full",
-              !remoteVideoOk && "meet-peer-tile__stream--hidden",
+              !showRemoteVideo && "pointer-events-none absolute h-px w-px opacity-0",
+              showRemoteVideo && !remoteVideoOk && "meet-peer-tile__stream--hidden",
             )}
           />
-          {showAvatarFill ? (
+          {showRemoteVideo && showAvatarFill ? (
             <div className="meet-peer-tile__fill">
               <UserAvatar displayName={name} compact size={compact ? "md" : "lg"} />
             </div>

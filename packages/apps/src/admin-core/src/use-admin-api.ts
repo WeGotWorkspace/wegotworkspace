@@ -21,12 +21,11 @@ export function useAdminAPI(source?: AdminApiSource) {
         smtpPort: 0,
         smtpSecurity: "",
       },
-      voice: {
+      rtc: {
         stunUrls: "",
         turnUrls: "",
         turnUsername: "",
         turnPassword: "",
-        forceRelay: false,
       },
       apps: {
         calendars: true,

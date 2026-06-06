@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS mail_user_credentials (
     updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
 );
 
-CREATE TABLE IF NOT EXISTS voice_peers (
+CREATE TABLE IF NOT EXISTS meet_peers (
     room TEXT NOT NULL,
     peer_id TEXT NOT NULL,
     name TEXT NOT NULL DEFAULT '',
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS voice_peers (
     PRIMARY KEY(room, peer_id)
 );
 
-CREATE TABLE IF NOT EXISTS voice_messages (
+CREATE TABLE IF NOT EXISTS meet_messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     room TEXT NOT NULL,
     from_peer TEXT NOT NULL,
@@ -28,8 +28,8 @@ CREATE TABLE IF NOT EXISTS voice_messages (
     created_at INTEGER NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_voice_msg_target ON voice_messages(room, to_peer, id);
-CREATE INDEX IF NOT EXISTS idx_voice_peers_room ON voice_peers(room);
+CREATE INDEX IF NOT EXISTS idx_meet_msg_target ON meet_messages(room, to_peer, id);
+CREATE INDEX IF NOT EXISTS idx_meet_peers_room ON meet_peers(room);
 
 CREATE TABLE IF NOT EXISTS collab_peers (
     room TEXT NOT NULL,

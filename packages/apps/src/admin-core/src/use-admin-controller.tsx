@@ -30,7 +30,6 @@ type SettingsFormState = {
   turnUrls: string;
   turnUsername: string;
   turnPassword: string;
-  forceRelay: boolean;
   calendars: boolean;
   contacts: boolean;
   sabreUi: boolean;
@@ -53,11 +52,10 @@ function buildSettingsFormState(data: AdminWorkspaceProps["data"]): SettingsForm
     smtpHost: data.mail.smtpHost,
     smtpPort: data.mail.smtpPort,
     smtpSecurity: normalizeSecurity(data.mail.smtpSecurity),
-    stunUrls: data.voice.stunUrls,
-    turnUrls: data.voice.turnUrls,
-    turnUsername: data.voice.turnUsername,
-    turnPassword: data.voice.turnPassword,
-    forceRelay: data.voice.forceRelay,
+    stunUrls: data.rtc.stunUrls,
+    turnUrls: data.rtc.turnUrls,
+    turnUsername: data.rtc.turnUsername,
+    turnPassword: data.rtc.turnPassword,
     calendars: data.apps.calendars,
     contacts: data.apps.contacts,
     sabreUi: data.webdav.sabreUi,
@@ -75,11 +73,10 @@ function toSettingsMap(state: SettingsFormState): Record<string, string | number
     mail_smtp_host: state.smtpHost,
     mail_smtp_port: state.smtpPort,
     mail_smtp_security: state.smtpSecurity,
-    voice_stun_url: state.stunUrls,
-    voice_turn_url: state.turnUrls,
-    voice_turn_username: state.turnUsername,
-    voice_turn_credential: state.turnPassword,
-    voice_force_relay: state.forceRelay,
+    rtc_stun_url: state.stunUrls,
+    rtc_turn_url: state.turnUrls,
+    rtc_turn_username: state.turnUsername,
+    rtc_turn_credential: state.turnPassword,
     calendar_enabled: state.calendars,
     contacts_enabled: state.contacts,
     browser_plugin: state.sabreUi,

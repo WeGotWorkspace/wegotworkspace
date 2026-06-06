@@ -22,7 +22,7 @@ Incremental upgrades use `InstallerSchemaMigrationRunner` (`app_migrations` vers
 | `groupmembers` | `App\Models\GroupMember` | Group membership join |
 | `app_settings` | `App\Models\AppSetting` | Key/value site settings (string PK `name`) |
 
-Additional tables (Cal/Card DAV, mail, voice) are defined in the same SQL bundles; add models when those domains are ported.
+Additional tables (Cal/Card DAV, mail, meet) are defined in the same SQL bundles; add models when those domains are ported.
 
 ## Connection
 

@@ -50,7 +50,7 @@ final class InstallerSchemaMigrationRunnerTest extends TestCase
         $this->assertMigrationAuditTrail($pdo);
     }
 
-    public function test_migrate_v3_tolerates_existing_voice_peer_owner_column(): void
+    public function test_migrate_v3_tolerates_existing_meet_peer_owner_column(): void
     {
         $pdo = LegacySchemaFixture::createSqlite();
         LegacySchemaFixture::seedAtVersion($pdo, 3);
@@ -58,7 +58,7 @@ final class InstallerSchemaMigrationRunnerTest extends TestCase
         InstallerSchemaMigrationRunner::migrate($pdo);
 
         $this->assertSame(InstallerSchemaMigrationRunner::CURRENT_SCHEMA_VERSION, InstallerSchemaMigrationRunner::currentVersion($pdo));
-        $this->assertTableHasColumn($pdo, 'voice_peers', 'owner_user');
+        $this->assertTableHasColumn($pdo, 'meet_peers', 'owner_user');
     }
 
     /**
@@ -79,8 +79,8 @@ final class InstallerSchemaMigrationRunnerTest extends TestCase
         foreach ([
             'app_migrations',
             'app_update_history',
-            'voice_peers',
-            'voice_messages',
+            'meet_peers',
+            'meet_messages',
             'api_refresh_tokens',
             'api_revoked_tokens',
             'drive_starred_items',
@@ -92,7 +92,7 @@ final class InstallerSchemaMigrationRunnerTest extends TestCase
             $this->assertTrue(self::tableExists($pdo, $table), "Expected table {$table} to exist.");
         }
 
-        $this->assertTableHasColumn($pdo, 'voice_peers', 'owner_user');
+        $this->assertTableHasColumn($pdo, 'meet_peers', 'owner_user');
     }
 
     private function assertMigrationAuditTrail(\PDO $pdo): void
@@ -110,6 +110,8 @@ final class InstallerSchemaMigrationRunnerTest extends TestCase
             5 => 'create_drive_starred_items',
             6 => 'create_collab_signaling_tables',
             7 => 'create_unified_search_tables',
+            8 => 'rename_voice_to_meet',
+            9 => 'rename_meet_rtc_settings_to_rtc',
         ];
 
         foreach ($rows as $row) {

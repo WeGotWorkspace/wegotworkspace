@@ -1,26 +1,21 @@
 import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
 import type {
-  WgwVoiceChatRequest,
-  WgwVoiceChatResponse,
-  WgwVoiceJoinRequest,
-  WgwVoiceJoinResponse,
-  WgwVoiceLeaveRequest,
-  WgwVoiceLeaveResponse,
-  WgwVoicePollRequest,
-  WgwVoicePollResponse,
-  WgwVoiceRoomStatusRequest,
-  WgwVoiceRoomStatusResponse,
-  WgwVoiceSendRequest,
-  WgwVoiceSendResponse,
+  WgwMeetChatRequest,
+  WgwMeetChatResponse,
+  WgwMeetJoinRequest,
+  WgwMeetJoinResponse,
+  WgwMeetLeaveRequest,
+  WgwMeetLeaveResponse,
+  WgwMeetPollRequest,
+  WgwMeetPollResponse,
+  WgwMeetRoomStatusRequest,
+  WgwMeetRoomStatusResponse,
+  WgwMeetSendRequest,
+  WgwMeetSendResponse,
 } from "@/lib/api/wgw/types";
+import type { RtcSettings } from "@/lib/rtc/types";
 
-export type MeetRtcSettings = {
-  stunUrls: string;
-  turnUrls: string;
-  turnUsername: string;
-  turnPassword: string;
-  forceRelay: boolean;
-};
+export type MeetRtcSettings = RtcSettings;
 
 export type MeetUIData = {
   defaultDisplayName: string;
@@ -38,12 +33,12 @@ export type MeetRequestOptions = {
 
 export type MeetAPIOperations = {
   roomStatus: (
-    input: WgwVoiceRoomStatusRequest,
+    input: WgwMeetRoomStatusRequest,
     opts?: MeetRequestOptions,
-  ) => Promise<WgwVoiceRoomStatusResponse>;
-  join: (input: WgwVoiceJoinRequest, opts?: MeetRequestOptions) => Promise<WgwVoiceJoinResponse>;
-  poll: (input: WgwVoicePollRequest, opts?: MeetRequestOptions) => Promise<WgwVoicePollResponse>;
-  send: (input: WgwVoiceSendRequest, opts?: MeetRequestOptions) => Promise<WgwVoiceSendResponse>;
-  leave: (input: WgwVoiceLeaveRequest, opts?: MeetRequestOptions) => Promise<WgwVoiceLeaveResponse>;
-  chat: (input: WgwVoiceChatRequest, opts?: MeetRequestOptions) => Promise<WgwVoiceChatResponse>;
+  ) => Promise<WgwMeetRoomStatusResponse>;
+  join: (input: WgwMeetJoinRequest, opts?: MeetRequestOptions) => Promise<WgwMeetJoinResponse>;
+  poll: (input: WgwMeetPollRequest, opts?: MeetRequestOptions) => Promise<WgwMeetPollResponse>;
+  send: (input: WgwMeetSendRequest, opts?: MeetRequestOptions) => Promise<WgwMeetSendResponse>;
+  leave: (input: WgwMeetLeaveRequest, opts?: MeetRequestOptions) => Promise<WgwMeetLeaveResponse>;
+  chat: (input: WgwMeetChatRequest, opts?: MeetRequestOptions) => Promise<WgwMeetChatResponse>;
 };

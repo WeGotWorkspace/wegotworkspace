@@ -49,8 +49,7 @@ export function usePeerStreamPresence(stream: MediaStream | null) {
   const videoTrack = stream?.getVideoTracks()[0] ?? null;
   const audioTrack = stream?.getAudioTracks()[0] ?? null;
 
-  const cameraRendering =
-    !!videoTrack && videoTrack.readyState === "live" && !videoTrack.muted && videoTrack.enabled;
+  const cameraRendering = !!videoTrack && videoTrack.readyState === "live" && videoTrack.enabled;
 
   const micLive = !!audioTrack && audioTrack.readyState === "live" && !audioTrack.muted;
 

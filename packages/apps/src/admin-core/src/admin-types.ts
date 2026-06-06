@@ -32,12 +32,11 @@ export type AdminMailSettings = {
   smtpSecurity: string;
 };
 
-export type AdminVoiceSettings = {
+export type AdminRtcSettings = {
   stunUrls: string;
   turnUrls: string;
   turnUsername: string;
   turnPassword: string;
-  forceRelay: boolean;
 };
 
 export type AdminAppsSettings = {
@@ -149,7 +148,7 @@ export type AdminUIData = {
   users: AdminUser[];
   groups: AdminGroup[];
   mail: AdminMailSettings;
-  voice: AdminVoiceSettings;
+  rtc: AdminRtcSettings;
   apps: AdminAppsSettings;
   webdav: AdminWebdavSettings;
   plugins: {

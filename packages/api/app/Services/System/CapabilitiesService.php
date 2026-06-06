@@ -44,7 +44,7 @@ final class CapabilitiesService
             'drive' => 'user',
             'notes' => 'user',
             'plugins' => 'user',
-            'voice' => 'guest',
+            'meet' => 'guest',
             'installer' => 'guest',
             'home' => 'guest',
             'dav' => 'user',

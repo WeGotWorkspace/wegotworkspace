@@ -111,7 +111,7 @@ final class InstallerEndpointsTest extends TestCase
                 'password' => 'longpassword',
                 'password_confirm' => 'longpassword',
                 'mail_enabled' => false,
-                'voice_enabled' => false,
+                'meet_enabled' => false,
             ],
         ]);
 

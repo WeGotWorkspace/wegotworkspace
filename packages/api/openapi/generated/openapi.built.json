@@ -400,19 +400,19 @@
                     "mail_smtp_security": {
                         "type": "string"
                     },
-                    "voice_enabled": {
+                    "meet_enabled": {
                         "type": "boolean"
                     },
-                    "voice_stun_url": {
+                    "rtc_stun_url": {
                         "type": "string"
                     },
-                    "voice_turn_url": {
+                    "rtc_turn_url": {
                         "type": "string"
                     },
-                    "voice_turn_username": {
+                    "rtc_turn_username": {
                         "type": "string"
                     },
-                    "voice_turn_credential": {
+                    "rtc_turn_credential": {
                         "type": "string"
                     }
                 }
@@ -700,7 +700,7 @@
                     "smtpSecurity"
                 ]
             },
-            "AdminVoiceSettings": {
+            "AdminRtcSettings": {
                 "type": "object",
                 "properties": {
                     "stunUrls": {
@@ -714,17 +714,13 @@
                     },
                     "turnPassword": {
                         "type": "string"
-                    },
-                    "forceRelay": {
-                        "type": "boolean"
                     }
                 },
                 "required": [
                     "stunUrls",
                     "turnUrls",
                     "turnUsername",
-                    "turnPassword",
-                    "forceRelay"
+                    "turnPassword"
                 ]
             },
             "AdminAppsSettings": {
@@ -1094,8 +1090,8 @@
                     "mail": {
                         "$ref": "#/components/schemas/AdminMailSettings"
                     },
-                    "voice": {
-                        "$ref": "#/components/schemas/AdminVoiceSettings"
+                    "rtc": {
+                        "$ref": "#/components/schemas/AdminRtcSettings"
                     },
                     "apps": {
                         "$ref": "#/components/schemas/AdminAppsSettings"
@@ -1117,7 +1113,7 @@
                     "users",
                     "groups",
                     "mail",
-                    "voice",
+                    "rtc",
                     "apps",
                     "webdav",
                     "updates",
@@ -2567,11 +2563,11 @@
                     "target": "Archive"
                 }
             },
-            "VoiceSessionKey": {
+            "MeetSessionKey": {
                 "type": "string",
                 "pattern": "^[a-f0-9]{32}$"
             },
-            "VoicePeer": {
+            "MeetPeer": {
                 "type": "object",
                 "properties": {
                     "id": {
@@ -2586,13 +2582,13 @@
                     "name"
                 ]
             },
-            "VoicePeerList": {
+            "MeetPeerList": {
                 "type": "array",
                 "items": {
-                    "$ref": "#/components/schemas/VoicePeer"
+                    "$ref": "#/components/schemas/MeetPeer"
                 }
             },
-            "VoiceMessageType": {
+            "MeetMessageType": {
                 "type": "string",
                 "enum": [
                     "offer",
@@ -2602,7 +2598,7 @@
                     "chat"
                 ]
             },
-            "VoiceSendType": {
+            "MeetSendType": {
                 "type": "string",
                 "enum": [
                     "offer",
@@ -2611,7 +2607,7 @@
                     "bye"
                 ]
             },
-            "VoiceSdpPayload": {
+            "MeetSdpPayload": {
                 "type": "object",
                 "properties": {
                     "sdp": {
@@ -2625,7 +2621,7 @@
                     "sdp"
                 ]
             },
-            "VoiceIcePayload": {
+            "MeetIcePayload": {
                 "type": "object",
                 "properties": {
                     "candidate": {
@@ -2645,7 +2641,7 @@
                     "candidate"
                 ]
             },
-            "VoiceChatPayload": {
+            "MeetChatPayload": {
                 "type": "object",
                 "properties": {
                     "text": {
@@ -2656,7 +2652,7 @@
                     "text"
                 ]
             },
-            "VoiceByePayload": {
+            "MeetByePayload": {
                 "type": "object",
                 "properties": {
                     "reason": {
@@ -2664,36 +2660,36 @@
                     }
                 }
             },
-            "VoiceSignalPayload": {
+            "MeetSignalPayload": {
                 "oneOf": [
                     {
-                        "$ref": "#/components/schemas/VoiceSdpPayload"
+                        "$ref": "#/components/schemas/MeetSdpPayload"
                     },
                     {
-                        "$ref": "#/components/schemas/VoiceIcePayload"
+                        "$ref": "#/components/schemas/MeetIcePayload"
                     },
                     {
-                        "$ref": "#/components/schemas/VoiceChatPayload"
+                        "$ref": "#/components/schemas/MeetChatPayload"
                     },
                     {
-                        "$ref": "#/components/schemas/VoiceByePayload"
+                        "$ref": "#/components/schemas/MeetByePayload"
                     },
                     {
                         "type": "null"
                     }
                 ]
             },
-            "VoiceSignalEnvelope": {
+            "MeetSignalEnvelope": {
                 "type": "object",
                 "properties": {
                     "from": {
                         "type": "string"
                     },
                     "type": {
-                        "$ref": "#/components/schemas/VoiceMessageType"
+                        "$ref": "#/components/schemas/MeetMessageType"
                     },
                     "payload": {
-                        "$ref": "#/components/schemas/VoiceSignalPayload"
+                        "$ref": "#/components/schemas/MeetSignalPayload"
                     }
                 },
                 "required": [
@@ -2702,13 +2698,13 @@
                     "payload"
                 ]
             },
-            "VoiceSignalEnvelopeList": {
+            "MeetSignalEnvelopeList": {
                 "type": "array",
                 "items": {
-                    "$ref": "#/components/schemas/VoiceSignalEnvelope"
+                    "$ref": "#/components/schemas/MeetSignalEnvelope"
                 }
             },
-            "VoiceJoinRequest": {
+            "MeetJoinRequest": {
                 "type": "object",
                 "properties": {
                     "room": {
@@ -2724,7 +2720,7 @@
                         "maxLength": 64
                     },
                     "sessionKey": {
-                        "$ref": "#/components/schemas/VoiceSessionKey"
+                        "$ref": "#/components/schemas/MeetSessionKey"
                     }
                 },
                 "required": [
@@ -2737,7 +2733,7 @@
                     "name": "Guest User"
                 }
             },
-            "VoicePollRequest": {
+            "MeetPollRequest": {
                 "type": "object",
                 "properties": {
                     "room": {
@@ -2749,7 +2745,7 @@
                         "pattern": "^[A-Za-z0-9_-]{4,64}$"
                     },
                     "sessionKey": {
-                        "$ref": "#/components/schemas/VoiceSessionKey"
+                        "$ref": "#/components/schemas/MeetSessionKey"
                     }
                 },
                 "required": [
@@ -2761,7 +2757,7 @@
                     "peerId": "peer1234"
                 }
             },
-            "VoiceSendRequest": {
+            "MeetSendRequest": {
                 "type": "object",
                 "properties": {
                     "room": {
@@ -2777,13 +2773,13 @@
                         "pattern": "^[A-Za-z0-9_-]{4,64}$"
                     },
                     "type": {
-                        "$ref": "#/components/schemas/VoiceSendType"
+                        "$ref": "#/components/schemas/MeetSendType"
                     },
                     "payload": {
-                        "$ref": "#/components/schemas/VoiceSignalPayload"
+                        "$ref": "#/components/schemas/MeetSignalPayload"
                     },
                     "sessionKey": {
-                        "$ref": "#/components/schemas/VoiceSessionKey"
+                        "$ref": "#/components/schemas/MeetSessionKey"
                     }
                 },
                 "required": [
@@ -2802,7 +2798,7 @@
                     }
                 }
             },
-            "VoiceLeaveRequest": {
+            "MeetLeaveRequest": {
                 "type": "object",
                 "properties": {
                     "room": {
@@ -2814,7 +2810,7 @@
                         "pattern": "^[A-Za-z0-9_-]{4,64}$"
                     },
                     "sessionKey": {
-                        "$ref": "#/components/schemas/VoiceSessionKey"
+                        "$ref": "#/components/schemas/MeetSessionKey"
                     }
                 },
                 "required": [
@@ -2826,7 +2822,7 @@
                     "peerId": "peer1234"
                 }
             },
-            "VoiceChatRequest": {
+            "MeetChatRequest": {
                 "type": "object",
                 "properties": {
                     "room": {
@@ -2842,7 +2838,7 @@
                         "maxLength": 2000
                     },
                     "sessionKey": {
-                        "$ref": "#/components/schemas/VoiceSessionKey"
+                        "$ref": "#/components/schemas/MeetSessionKey"
                     }
                 },
                 "required": [
@@ -2856,11 +2852,11 @@
                     "text": "Hello team"
                 }
             },
-            "VoiceJoinResponse": {
+            "MeetJoinResponse": {
                 "type": "object",
                 "properties": {
                     "peers": {
-                        "$ref": "#/components/schemas/VoicePeerList"
+                        "$ref": "#/components/schemas/MeetPeerList"
                     },
                     "sessionKey": {
                         "type": [
@@ -2874,14 +2870,14 @@
                     "sessionKey"
                 ]
             },
-            "VoicePollResponse": {
+            "MeetPollResponse": {
                 "type": "object",
                 "properties": {
                     "peers": {
-                        "$ref": "#/components/schemas/VoicePeerList"
+                        "$ref": "#/components/schemas/MeetPeerList"
                     },
                     "messages": {
-                        "$ref": "#/components/schemas/VoiceSignalEnvelopeList"
+                        "$ref": "#/components/schemas/MeetSignalEnvelopeList"
                     }
                 },
                 "required": [
@@ -2889,7 +2885,7 @@
                     "messages"
                 ]
             },
-            "VoiceSendResponse": {
+            "MeetSendResponse": {
                 "type": "object",
                 "properties": {
                     "ok": {
@@ -2900,7 +2896,7 @@
                     "ok"
                 ]
             },
-            "VoiceLeaveResponse": {
+            "MeetLeaveResponse": {
                 "type": "object",
                 "properties": {
                     "ok": {
@@ -2911,7 +2907,7 @@
                     "ok"
                 ]
             },
-            "VoiceChatResponse": {
+            "MeetChatResponse": {
                 "type": "object",
                 "properties": {
                     "ok": {
@@ -4914,19 +4910,19 @@
                 }
             }
         },
-        "/voice/join": {
+        "/meet/join": {
             "post": {
                 "tags": [
-                    "Voice"
+                    "Meet"
                 ],
-                "summary": "Join voice room (guest or authenticated)",
+                "summary": "Join meet room (guest or authenticated)",
                 "responses": {
                     "200": {
                         "description": "Join response",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/VoiceJoinResponse"
+                                    "$ref": "#/components/schemas/MeetJoinResponse"
                                 }
                             }
                         }
@@ -4937,26 +4933,26 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/VoiceJoinRequest"
+                                "$ref": "#/components/schemas/MeetJoinRequest"
                             }
                         }
                     }
                 }
             }
         },
-        "/voice/poll": {
+        "/meet/poll": {
             "post": {
                 "tags": [
-                    "Voice"
+                    "Meet"
                 ],
-                "summary": "Poll voice messages",
+                "summary": "Poll meet signaling messages",
                 "responses": {
                     "200": {
                         "description": "Poll response",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/VoicePollResponse"
+                                    "$ref": "#/components/schemas/MeetPollResponse"
                                 }
                             }
                         }
@@ -4967,26 +4963,26 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/VoicePollRequest"
+                                "$ref": "#/components/schemas/MeetPollRequest"
                             }
                         }
                     }
                 }
             }
         },
-        "/voice/send": {
+        "/meet/send": {
             "post": {
                 "tags": [
-                    "Voice"
+                    "Meet"
                 ],
-                "summary": "Send voice signaling message",
+                "summary": "Send meet WebRTC signaling message",
                 "responses": {
                     "200": {
                         "description": "Send response",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/VoiceSendResponse"
+                                    "$ref": "#/components/schemas/MeetSendResponse"
                                 }
                             }
                         }
@@ -4997,26 +4993,26 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/VoiceSendRequest"
+                                "$ref": "#/components/schemas/MeetSendRequest"
                             }
                         }
                     }
                 }
             }
         },
-        "/voice/leave": {
+        "/meet/leave": {
             "post": {
                 "tags": [
-                    "Voice"
+                    "Meet"
                 ],
-                "summary": "Leave voice room",
+                "summary": "Leave meet room",
                 "responses": {
                     "200": {
                         "description": "Leave response",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/VoiceLeaveResponse"
+                                    "$ref": "#/components/schemas/MeetLeaveResponse"
                                 }
                             }
                         }
@@ -5027,26 +5023,26 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/VoiceLeaveRequest"
+                                "$ref": "#/components/schemas/MeetLeaveRequest"
                             }
                         }
                     }
                 }
             }
         },
-        "/voice/chat": {
+        "/meet/chat": {
             "post": {
                 "tags": [
-                    "Voice"
+                    "Meet"
                 ],
-                "summary": "Voice room chat message",
+                "summary": "Meet room chat message",
                 "responses": {
                     "200": {
                         "description": "Chat response",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/VoiceChatResponse"
+                                    "$ref": "#/components/schemas/MeetChatResponse"
                                 }
                             }
                         }
@@ -5057,7 +5053,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/VoiceChatRequest"
+                                "$ref": "#/components/schemas/MeetChatRequest"
                             }
                         }
                     }
@@ -5274,15 +5270,28 @@
                 }
             }
         },
-        "/voice/room": {
+        "/meet/room": {
             "post": {
                 "tags": [
-                    "Voice"
+                    "Meet"
                 ],
-                "summary": "Probe or resolve voice room metadata",
+                "summary": "Probe or resolve meet room metadata",
                 "responses": {
                     "200": {
                         "description": "Room metadata"
+                    }
+                }
+            }
+        },
+        "/meet/rtc": {
+            "get": {
+                "tags": [
+                    "Meet"
+                ],
+                "summary": "Get Meet WebRTC ICE settings",
+                "responses": {
+                    "200": {
+                        "description": "Meet RTC ICE settings"
                     }
                 }
             }

@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace App\Services\Voice;
+namespace App\Services\Meet;
 
 use Illuminate\Http\Request;
 
-final class VoiceActorResolver
+final class MeetActorResolver
 {
-    public function __construct(private VoiceRequestAuth $auth) {}
+    public function __construct(private MeetRequestAuth $auth) {}
 
     public function tryAuthenticatedUsername(Request $request): ?string
     {
@@ -32,7 +32,7 @@ final class VoiceActorResolver
             return $this->ownerMarkerForGuestSession($sessionKey);
         }
 
-        throw new VoiceResponseException(401, [
+        throw new MeetResponseException(401, [
             'error' => 'auth_required',
             'message' => 'Sign in or re-open the guest join link to start a signaling session.',
         ]);

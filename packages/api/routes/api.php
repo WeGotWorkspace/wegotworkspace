@@ -30,6 +30,7 @@ use App\Http\Controllers\Api\V1\Installer\ActionController as InstallerActionCon
 use App\Http\Controllers\Api\V1\Installer\BootstrapController as InstallerBootstrapController;
 use App\Http\Controllers\Api\V1\Installer\StateController as InstallerStateController;
 use App\Http\Controllers\Api\V1\Mail\MailController;
+use App\Http\Controllers\Api\V1\Meet\MeetController;
 use App\Http\Controllers\Api\V1\Notes\CapabilitiesController as NotesCapabilitiesController;
 use App\Http\Controllers\Api\V1\Notes\ItemsController as NotesItemsController;
 use App\Http\Controllers\Api\V1\Notes\NotebooksController;
@@ -45,7 +46,6 @@ use App\Http\Controllers\Api\V1\Settings\ProfileController as SettingsProfileCon
 use App\Http\Controllers\Api\V1\Settings\StateController as SettingsStateController;
 use App\Http\Controllers\Api\V1\System\CapabilitiesController;
 use App\Http\Controllers\Api\V1\System\HealthController;
-use App\Http\Controllers\Api\V1\Voice\VoiceController;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Session\Middleware\StartSession;
@@ -66,13 +66,13 @@ Route::post('auth/token', TokenController::class);
 Route::post('auth/refresh', RefreshController::class);
 Route::post('auth/revoke', RevokeController::class);
 
-Route::post('voice/room', [VoiceController::class, 'room']);
-Route::get('voice/rtc', [VoiceController::class, 'rtc']);
-Route::post('voice/join', [VoiceController::class, 'join']);
-Route::post('voice/poll', [VoiceController::class, 'poll']);
-Route::post('voice/send', [VoiceController::class, 'send']);
-Route::post('voice/leave', [VoiceController::class, 'leave']);
-Route::post('voice/chat', [VoiceController::class, 'chat']);
+Route::post('meet/room', [MeetController::class, 'room']);
+Route::get('meet/rtc', [MeetController::class, 'rtc']);
+Route::post('meet/join', [MeetController::class, 'join']);
+Route::post('meet/poll', [MeetController::class, 'poll']);
+Route::post('meet/send', [MeetController::class, 'send']);
+Route::post('meet/leave', [MeetController::class, 'leave']);
+Route::post('meet/chat', [MeetController::class, 'chat']);
 
 Route::middleware([
     EncryptCookies::class,

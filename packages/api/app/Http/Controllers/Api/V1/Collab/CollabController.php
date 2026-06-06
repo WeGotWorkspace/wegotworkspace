@@ -39,7 +39,7 @@ final class CollabController
 
     public function rtc(): JsonResponse
     {
-        return response()->json(['voice' => $this->collab->rtcSettings()]);
+        return response()->json(['rtc' => $this->collab->rtcSettings()]);
     }
 
     public function getDocument(Request $request): Response
