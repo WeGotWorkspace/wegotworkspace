@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { DocsCollabWorkspace } from "@/text-editor-core/docs-collab";
+import { encodeFileRoomId } from "@/lib/rtc/room-id";
 
 import "@/text-editor-core/src/text-editor.css";
 
@@ -10,13 +11,29 @@ const liveApiOrigin =
   (import.meta.env.VITE_WGW_LIVE_ORIGIN as string | undefined)?.trim() ||
   "https://wegotworkspace.localhost";
 const defaultRoom = "/users/admin/docs-collab-room.md";
-const documentBase = `${liveApiOrigin}/api/v1/collab/document`;
+
+function collabStoryUrls(room: string) {
+  const roomId = encodeFileRoomId(room);
+  const pathQuery = encodeURIComponent(room);
+  return {
+    signalUrl: `${liveApiOrigin}/api/v1/rooms/${encodeURIComponent(roomId)}/events`,
+    collabApiBaseUrl: `${liveApiOrigin}/api/v1/rooms`,
+    collabRtcUrl: `${liveApiOrigin}/api/v1/rooms/${encodeURIComponent(roomId)}/configuration`,
+    authTokenUrl: `${liveApiOrigin}/api/v1/auth/token`,
+    authUser: devUser,
+    authPassword: devPassword,
+    documentUrl: `${liveApiOrigin}/api/v1/files/collaboration?path=${pathQuery}`,
+    yjsUrl: `${liveApiOrigin}/api/v1/files/collaboration?path=${pathQuery}&format=yjs`,
+    documentSaveMethod: "PUT" as const,
+    room,
+  };
+}
 
 const storyDescription = `
-Collaborative markdown editing over the final docs-collab endpoints.
+Collaborative markdown editing over artifact-based REST endpoints.
 
-- Signaling: \`/api/v1/collab/join|poll|send|leave\`
-- Document: \`/api/v1/collab/document\`
+- Signaling: \`/api/v1/rooms/{roomId}/participants|events\`
+- Document: \`/api/v1/files/collaboration?path=\`
 - Sync: Yjs over WebRTC data channels.
 
 ### Run
@@ -48,24 +65,13 @@ export const Collab: Story = {};
 export const CollabLaravelFinalApiAuth: Story = {
   args: {
     userName: "Admin User",
-    urls: {
-      signalUrl: `${liveApiOrigin}/api/v1/collab/send`,
-      collabApiBaseUrl: `${liveApiOrigin}/api/v1/collab`,
-      authTokenUrl: `${liveApiOrigin}/api/v1/auth/token`,
-      authUser: devUser,
-      authPassword: devPassword,
-      documentUrl: `${documentBase}?room=${encodeURIComponent(defaultRoom)}`,
-      yjsUrl: `${documentBase}?room=${encodeURIComponent(defaultRoom)}&format=yjs`,
-      documentSaveMethod: "PUT",
-      room: defaultRoom,
-    },
+    urls: collabStoryUrls(defaultRoom),
   },
   parameters: {
     docs: {
       description: {
         story:
-          "Steps 2.5+2.6 cutover: signaling uses final `/collab/join|poll|send|leave` endpoints " +
-          "and document persistence uses `/collab/document` (GET/PUT) with JWT auth.",
+          "Signaling uses `/rooms/{roomId}/*` and document persistence uses `/files/collaboration?path=` with JWT auth.",
       },
     },
   },
@@ -75,17 +81,7 @@ const isolatedRoom = "/users/admin/docs-collab-room-isolated.md";
 
 export const CollabLaravelFinalApiAuthIsolatedRoom: Story = {
   args: {
-    urls: {
-      signalUrl: `${liveApiOrigin}/api/v1/collab/send`,
-      collabApiBaseUrl: `${liveApiOrigin}/api/v1/collab`,
-      authTokenUrl: `${liveApiOrigin}/api/v1/auth/token`,
-      authUser: devUser,
-      authPassword: devPassword,
-      documentUrl: `${documentBase}?room=${encodeURIComponent(isolatedRoom)}`,
-      yjsUrl: `${documentBase}?room=${encodeURIComponent(isolatedRoom)}&format=yjs`,
-      documentSaveMethod: "PUT",
-      room: isolatedRoom,
-    },
+    urls: collabStoryUrls(isolatedRoom),
   },
   parameters: {
     docs: {

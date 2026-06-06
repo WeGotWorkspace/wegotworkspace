@@ -89,4 +89,94 @@ final class OpenApiContract
 
         return $operations;
     }
+
+    /**
+     * @return list<array{method: string, path: string, access: string}>
+     */
+    public static function operationsWithAccess(): array
+    {
+        $operations = [];
+        foreach (self::paths() as $path => $pathItem) {
+            if (! is_string($path) || ! is_array($pathItem)) {
+                continue;
+            }
+            foreach ($pathItem as $op => $definition) {
+                if (! is_string($op) || ! is_array($definition)) {
+                    continue;
+                }
+                if (in_array(strtolower($op), ['parameters', 'summary', 'description', 'servers'], true)) {
+                    continue;
+                }
+                $access = $definition['x-wgw-access'] ?? null;
+                if (! is_string($access) || $access === '') {
+                    continue;
+                }
+                $operations[] = [
+                    'method' => strtoupper($op),
+                    'path' => $path,
+                    'access' => $access,
+                ];
+            }
+        }
+
+        usort($operations, static fn (array $a, array $b): int => [$a['path'], $a['method']] <=> [$b['path'], $b['method']]);
+
+        return $operations;
+    }
+
+    /**
+     * Replace OpenAPI path placeholders with stable sample values for smoke requests.
+     */
+    public static function sampleRequestPath(string $openApiPath): string
+    {
+        $replacements = [
+            '{roomId}' => 'daily-room',
+            '{messageId}' => 'INBOX:1',
+            '{username}' => 'bob',
+            '{group}' => 'testgroup',
+            '{participantId}' => 'peer-alpha',
+            '{id}' => 'demo-plugin',
+            '{name}' => 'backup.zip',
+            '{jobId}' => 'current',
+            '{resultId}' => '1',
+            '{attachmentId}' => '1.1',
+        ];
+
+        $path = $openApiPath;
+        foreach ($replacements as $placeholder => $sample) {
+            if ($placeholder === '{id}' && str_starts_with($openApiPath, '/notes/')) {
+                continue;
+            }
+            if ($placeholder === '{name}' && str_starts_with($openApiPath, '/notes/notebooks/')) {
+                continue;
+            }
+            $path = str_replace($placeholder, $sample, $path);
+        }
+        if (str_starts_with($openApiPath, '/notes/items/')) {
+            $path = str_replace('{id}', 'note-1', $path);
+        }
+        if (str_starts_with($openApiPath, '/notes/notebooks/')) {
+            $path = str_replace('{name}', 'Inbox', $path);
+        }
+
+        return $path;
+    }
+
+    public static function sampleQueryString(string $openApiPath, string $method): string
+    {
+        if (str_starts_with($openApiPath, '/files')) {
+            return 'path='.rawurlencode('/users/bob');
+        }
+        if ($openApiPath === '/files' && $method === 'GET') {
+            return 'search='.rawurlencode('test');
+        }
+        if (str_starts_with($openApiPath, '/mail/messages') && $method === 'GET' && ! str_contains($openApiPath, '{')) {
+            return 'folder='.rawurlencode('INBOX').'&limit=1';
+        }
+        if ($openApiPath === '/rooms/{roomId}/events' && $method === 'GET') {
+            return 'peerId=peer-alpha';
+        }
+
+        return '';
+    }
 }

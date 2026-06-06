@@ -102,7 +102,8 @@
           "200": {
             "description": "JWK set"
           }
-        }
+        },
+        "x-wgw-access": "guest"
       }
     },
     "/admin/backups/{name}": {
@@ -130,7 +131,8 @@
           "200": {
             "description": "Backup ZIP stream"
           }
-        }
+        },
+        "x-wgw-access": "admin"
       },
       "delete": {
         "tags": [
@@ -156,7 +158,8 @@
           "200": {
             "description": "Updated backup state"
           }
-        }
+        },
+        "x-wgw-access": "admin"
       }
     },
     "/admin/groups": {
@@ -180,7 +183,8 @@
           "403": {
             "description": "Forbidden"
           }
-        }
+        },
+        "x-wgw-access": "admin"
       }
     },
     "/admin/groups/{group}": {
@@ -217,7 +221,8 @@
           "404": {
             "description": "Group not found"
           }
-        }
+        },
+        "x-wgw-access": "admin"
       },
       "delete": {
         "tags": [
@@ -249,7 +254,8 @@
           "404": {
             "description": "Group not found"
           }
-        }
+        },
+        "x-wgw-access": "admin"
       }
     },
     "/admin/groups/{group}/members/{username}": {
@@ -285,7 +291,8 @@
           "200": {
             "description": "Membership added"
           }
-        }
+        },
+        "x-wgw-access": "admin"
       },
       "delete": {
         "tags": [
@@ -319,7 +326,8 @@
           "200": {
             "description": "Membership removed"
           }
-        }
+        },
+        "x-wgw-access": "admin"
       }
     },
     "/admin/plugins": {
@@ -423,7 +431,8 @@
           "200": {
             "description": "Settings saved"
           }
-        }
+        },
+        "x-wgw-access": "admin"
       }
     },
     "/admin/state": {
@@ -441,7 +450,8 @@
           "200": {
             "description": "Admin state"
           }
-        }
+        },
+        "x-wgw-access": "admin"
       }
     },
     "/admin/update-jobs": {
@@ -507,7 +517,8 @@
           "200": {
             "description": "Update log lines"
           }
-        }
+        },
+        "x-wgw-access": "admin"
       },
       "delete": {
         "tags": [
@@ -523,7 +534,8 @@
           "200": {
             "description": "Log cleared"
           }
-        }
+        },
+        "x-wgw-access": "admin"
       }
     },
     "/admin/updates/state": {
@@ -541,7 +553,8 @@
           "200": {
             "description": "Update state"
           }
-        }
+        },
+        "x-wgw-access": "admin"
       }
     },
     "/admin/users": {
@@ -565,7 +578,8 @@
           "403": {
             "description": "Forbidden"
           }
-        }
+        },
+        "x-wgw-access": "admin"
       }
     },
     "/admin/users/{username}": {
@@ -602,7 +616,8 @@
           "404": {
             "description": "User not found"
           }
-        }
+        },
+        "x-wgw-access": "admin"
       },
       "delete": {
         "tags": [
@@ -634,7 +649,8 @@
           "404": {
             "description": "User not found"
           }
-        }
+        },
+        "x-wgw-access": "admin"
       }
     },
     "/auth/refresh": {
@@ -678,7 +694,8 @@
           "401": {
             "description": "Unauthorized"
           }
-        }
+        },
+        "x-wgw-access": "guest"
       }
     },
     "/auth/revoke": {
@@ -711,7 +728,8 @@
           "200": {
             "description": "Revocation result"
           }
-        }
+        },
+        "x-wgw-access": "guest"
       }
     },
     "/auth/token": {
@@ -765,7 +783,8 @@
           "503": {
             "description": "JWT not configured"
           }
-        }
+        },
+        "x-wgw-access": "guest"
       }
     },
     "/capabilities": {
@@ -778,7 +797,8 @@
           "200": {
             "description": "Capabilities response"
           }
-        }
+        },
+        "x-wgw-access": "guest"
       }
     },
     "/dav/capabilities": {
@@ -796,7 +816,8 @@
           "200": {
             "description": "DAV capabilities"
           }
-        }
+        },
+        "x-wgw-access": "user"
       }
     },
     "/files": {
@@ -1206,7 +1227,8 @@
           "200": {
             "description": "Service health"
           }
-        }
+        },
+        "x-wgw-access": "guest"
       }
     },
     "/installer/action": {
@@ -1219,7 +1241,8 @@
           "200": {
             "description": "Installer action result"
           }
-        }
+        },
+        "x-wgw-access": "guest"
       }
     },
     "/installer/bootstrap": {
@@ -1232,7 +1255,8 @@
           "200": {
             "description": "Installer bootstrap payload"
           }
-        }
+        },
+        "x-wgw-access": "guest"
       }
     },
     "/installer/state": {
@@ -1245,7 +1269,8 @@
           "200": {
             "description": "Installer state"
           }
-        }
+        },
+        "x-wgw-access": "guest"
       }
     },
     "/mail/drafts": {
@@ -1282,7 +1307,8 @@
           "200": {
             "description": "Mail folder tree"
           }
-        }
+        },
+        "x-wgw-access": "user"
       },
       "post": {
         "tags": [
@@ -1298,7 +1324,8 @@
           "200": {
             "description": "Folder created"
           }
-        }
+        },
+        "x-wgw-access": "user"
       },
       "patch": {
         "tags": [
@@ -1314,7 +1341,8 @@
           "200": {
             "description": "Folder moved"
           }
-        }
+        },
+        "x-wgw-access": "user"
       },
       "delete": {
         "tags": [
@@ -1330,7 +1358,8 @@
           "200": {
             "description": "Folder deleted"
           }
-        }
+        },
+        "x-wgw-access": "user"
       }
     },
     "/mail/messages": {
@@ -1348,7 +1377,8 @@
           "200": {
             "description": "Message list"
           }
-        }
+        },
+        "x-wgw-access": "user"
       },
       "post": {
         "tags": [
@@ -1502,7 +1532,8 @@
           "200": {
             "description": "Mail status"
           }
-        }
+        },
+        "x-wgw-access": "user"
       }
     },
     "/me": {
@@ -1527,7 +1558,8 @@
               }
             }
           }
-        }
+        },
+        "x-wgw-access": "user"
       }
     },
     "/meetings/rooms": {
@@ -1583,7 +1615,8 @@
           "200": {
             "description": "Notes capabilities"
           }
-        }
+        },
+        "x-wgw-access": "user"
       }
     },
     "/notes/items": {
@@ -1601,7 +1634,8 @@
           "200": {
             "description": "Notes list"
           }
-        }
+        },
+        "x-wgw-access": "user"
       },
       "post": {
         "tags": [
@@ -1617,7 +1651,8 @@
           "201": {
             "description": "Created note"
           }
-        }
+        },
+        "x-wgw-access": "user"
       }
     },
     "/notes/items/{id}": {
@@ -1645,7 +1680,8 @@
           "200": {
             "description": "Updated note"
           }
-        }
+        },
+        "x-wgw-access": "user"
       },
       "delete": {
         "tags": [
@@ -1671,7 +1707,8 @@
           "200": {
             "description": "Deleted note"
           }
-        }
+        },
+        "x-wgw-access": "user"
       },
       "patch": {
         "tags": [
@@ -1716,7 +1753,8 @@
           "200": {
             "description": "Notebook list"
           }
-        }
+        },
+        "x-wgw-access": "user"
       },
       "post": {
         "tags": [
@@ -1732,7 +1770,8 @@
           "201": {
             "description": "Notebook created"
           }
-        }
+        },
+        "x-wgw-access": "user"
       }
     },
     "/notes/notebooks/{name}": {
@@ -1760,7 +1799,8 @@
           "200": {
             "description": "Notebook renamed"
           }
-        }
+        },
+        "x-wgw-access": "user"
       },
       "delete": {
         "tags": [
@@ -1786,7 +1826,8 @@
           "200": {
             "description": "Notebook deleted"
           }
-        }
+        },
+        "x-wgw-access": "user"
       }
     },
     "/notes/state": {
@@ -1804,7 +1845,8 @@
           "200": {
             "description": "Notes state"
           }
-        }
+        },
+        "x-wgw-access": "user"
       }
     },
     "/plugins": {
@@ -1822,7 +1864,8 @@
           "200": {
             "description": "Plugin registry snapshot"
           }
-        }
+        },
+        "x-wgw-access": "user"
       }
     },
     "/plugins/{id}/activation": {
@@ -1882,7 +1925,8 @@
           "404": {
             "description": "Plugin not found"
           }
-        }
+        },
+        "x-wgw-access": "user"
       }
     },
     "/rooms/{roomId}/configuration": {
@@ -2098,7 +2142,8 @@
           "200": {
             "description": "Updated settings state"
           }
-        }
+        },
+        "x-wgw-access": "user"
       }
     },
     "/settings/profile": {
@@ -2116,7 +2161,8 @@
           "200": {
             "description": "Updated settings state"
           }
-        }
+        },
+        "x-wgw-access": "user"
       }
     },
     "/settings/state": {
@@ -2134,7 +2180,8 @@
           "200": {
             "description": "Settings state"
           }
-        }
+        },
+        "x-wgw-access": "user"
       }
     },
     "/workspace/state": {
