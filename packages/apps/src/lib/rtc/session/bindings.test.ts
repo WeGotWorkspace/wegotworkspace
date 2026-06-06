@@ -37,7 +37,7 @@ describe("createMediaBinding", () => {
     pc.ontrack?.({
       track,
       streams: [],
-    } as RTCTrackEvent);
+    } as unknown as RTCTrackEvent);
 
     expect(remoteStream.getTracks()).toContain(track);
     expect(onRemoteStream).toHaveBeenCalledWith("REMOTE1", remoteStream);
