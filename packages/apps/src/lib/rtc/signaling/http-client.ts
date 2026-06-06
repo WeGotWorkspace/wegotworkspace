@@ -89,7 +89,10 @@ export class HttpSignalingClient {
   }
 
   private headers(): Record<string, string> {
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    const headers: Record<string, string> = {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    };
     const { bearerToken } = this.getAuth();
     if (bearerToken) headers.Authorization = `Bearer ${bearerToken}`;
     return headers;
