@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Meet;
 
 use App\Models\AppSetting;
-use App\Settings\SettingKeys;
+use App\Services\Settings\SettingKeys;
 use Tests\Support\WgwDatabaseTestCase;
 
 final class MeetEndpointsTest extends WgwDatabaseTestCase

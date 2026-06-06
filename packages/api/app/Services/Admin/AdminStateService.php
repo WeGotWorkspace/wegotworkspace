@@ -6,8 +6,8 @@ namespace App\Services\Admin;
 
 use App\Models\AppSetting;
 use App\Services\Settings\GroupDirectoryService;
+use App\Services\Settings\SettingKeys;
 use App\Services\Update\UpdateStateService;
-use App\Settings\SettingKeys;
 use App\Support\ApiUrlBuilder;
 use App\Support\WgwSettings;
 

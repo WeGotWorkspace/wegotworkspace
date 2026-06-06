@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Dav\Server;
 
-use App\Admin\AdminConstants;
+use App\Services\Admin\AdminConstants;
 use Sabre\CalDAV\Principal\Collection as CalDAVPrincipalCollection;
 use Sabre\CalDAV\Principal\User;
 use Sabre\DAV;

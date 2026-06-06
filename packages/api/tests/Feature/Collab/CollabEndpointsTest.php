@@ -7,7 +7,7 @@ namespace Tests\Feature\Collab;
 use App\Models\AppSetting;
 use App\Models\Principal;
 use App\Models\User;
-use App\Settings\SettingKeys;
+use App\Services\Settings\SettingKeys;
 use Tests\Support\RoomTestHelper;
 use Tests\Support\WgwDatabaseTestCase;
 

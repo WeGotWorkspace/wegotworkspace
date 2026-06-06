@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Installer;
 
-use App\Admin\AdminConstants;
+use App\Services\Admin\AdminConstants;
 use App\Support\AppPaths;
 use Sabre\CalDAV\Backend\PDO as CalPDO;
 use Sabre\CalDAV\Xml\Property\SupportedCalendarComponentSet;
