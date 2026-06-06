@@ -23,6 +23,8 @@ Enable browser logging with `?rtcDebug=1` on meet or docs URLs. Logs use prefix 
 | N8 | Leave cleanup | Leave meet/docs | Peers removed; `/leave` succeeds |
 | N9 | Collab signaling API | `pnpm test:collab-api` | join/poll/send/leave return JSON |
 | N10 | Meet signaling API | `pnpm test:meet-api` | guest join/poll/leave on `/meet/*` return JSON |
+| N11 | Meet mesh smoke | Two tabs, same room, `?rtcDebug=1` | `[rtc][meet][…][pc-connected]`; inbound RTP bytes increase; remote tile shows A/V; outbound offer SDP includes `m=audio` and `m=video`; no `Illegal invocation` in console |
+| N12 | Guest meet control | Guest knock URL (no auth) → host admits | Guest reaches `in-call`; knock/admit chat control works; guest `sessionKey` on poll/chat; media presence toggles propagate |
 
 ## Shared hosting notes
 

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createMediaBinding } from "@/lib/rtc/session/bindings";
 import { RtcPeerMesh } from "@/lib/rtc/session/peer-mesh";
-import type { HttpSignalingPollResult } from "@/lib/rtc/signaling/http-client";
+import type { HttpSignalingClient, HttpSignalingPollResult } from "@/lib/rtc/signaling/http-client";
 import type { RtcSettings } from "@/lib/rtc/types";
 
 vi.mock("@/lib/rtc/log", () => ({ rtcLog: vi.fn() }));
@@ -17,24 +17,41 @@ const RTC_SETTINGS: RtcSettings = {
   forceRelay: false,
 };
 
-type StubPc = RTCPeerConnection & {
+type StubPeerConnection = {
+  connectionState: RTCPeerConnectionState;
+  iceConnectionState: RTCIceConnectionState;
+  signalingState: RTCSignalingState;
+  localDescription: RTCSessionDescription | null;
+  remoteDescription: RTCSessionDescription | null;
+  onicecandidate: RTCPeerConnection["onicecandidate"];
+  ontrack: RTCPeerConnection["ontrack"];
+  onconnectionstatechange: RTCPeerConnection["onconnectionstatechange"];
+  oniceconnectionstatechange: RTCPeerConnection["oniceconnectionstatechange"];
   __localDesc: RTCSessionDescriptionInit | null;
   __remoteDesc: RTCSessionDescriptionInit | null;
+  getSenders: () => RTCRtpSender[];
+  close: ReturnType<typeof vi.fn>;
+  addTrack: ReturnType<typeof vi.fn>;
+  createOffer: ReturnType<typeof vi.fn>;
+  createAnswer: ReturnType<typeof vi.fn>;
+  setLocalDescription: ReturnType<typeof vi.fn>;
+  setRemoteDescription: ReturnType<typeof vi.fn>;
+  addIceCandidate: ReturnType<typeof vi.fn>;
 };
 
-function createStubPeerConnection(offerSdp?: string): StubPc {
-  const pc = {
-    connectionState: "new" as RTCPeerConnectionState,
-    iceConnectionState: "new" as RTCIceConnectionState,
-    signalingState: "stable" as RTCSignalingState,
-    localDescription: null as RTCSessionDescription | null,
-    remoteDescription: null as RTCSessionDescription | null,
-    onicecandidate: null as RTCPeerConnection["onicecandidate"],
-    ontrack: null as RTCPeerConnection["ontrack"],
-    onconnectionstatechange: null as RTCPeerConnection["onconnectionstatechange"],
-    oniceconnectionstatechange: null as RTCPeerConnection["oniceconnectionstatechange"],
-    __localDesc: null as RTCSessionDescriptionInit | null,
-    __remoteDesc: null as RTCSessionDescriptionInit | null,
+function createStubPeerConnection(offerSdp?: string): RTCPeerConnection {
+  const pc: StubPeerConnection = {
+    connectionState: "new",
+    iceConnectionState: "new",
+    signalingState: "stable",
+    localDescription: null,
+    remoteDescription: null,
+    onicecandidate: null,
+    ontrack: null,
+    onconnectionstatechange: null,
+    oniceconnectionstatechange: null,
+    __localDesc: null,
+    __remoteDesc: null,
     getSenders: () => [],
     close: vi.fn(),
     addTrack: vi.fn(),
@@ -48,22 +65,32 @@ function createStubPeerConnection(offerSdp?: string): StubPc {
       type: "answer" as const,
       sdp: "v=0\r\no=- 0 0 IN IP4 127.0.0.1\r\ns=-\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n",
     })),
-    setLocalDescription: vi.fn(async function (this: StubPc, desc: RTCSessionDescriptionInit) {
+    setLocalDescription: vi.fn(async function (
+      this: StubPeerConnection,
+      desc: RTCSessionDescriptionInit,
+    ) {
       this.__localDesc = desc;
       this.localDescription = desc as RTCSessionDescription;
       if (desc.type === "offer") this.signalingState = "have-local-offer";
       if (desc.type === "answer") this.signalingState = "stable";
     }),
-    setRemoteDescription: vi.fn(async function (this: StubPc, desc: RTCSessionDescriptionInit) {
+    setRemoteDescription: vi.fn(async function (
+      this: StubPeerConnection,
+      desc: RTCSessionDescriptionInit,
+    ) {
       this.__remoteDesc = desc;
       this.remoteDescription = desc as RTCSessionDescription;
       if (desc.type === "offer") this.signalingState = "have-remote-offer";
       if (desc.type === "answer") this.signalingState = "stable";
     }),
     addIceCandidate: vi.fn(async () => {}),
-  } as StubPc;
+  };
 
-  return pc;
+  return pc as unknown as RTCPeerConnection;
+}
+
+function asStubPeerConnection(pc: RTCPeerConnection): StubPeerConnection {
+  return pc as unknown as StubPeerConnection;
 }
 
 function createMockSignaling(initialJoin: {
@@ -104,13 +131,13 @@ function meshWithStubPc(
   signaling: ReturnType<typeof createMockSignaling>["client"],
   overrides: Partial<ConstructorParameters<typeof RtcPeerMesh>[0]> = {},
 ) {
-  const pcs = new Map<string, StubPc>();
+  const pcs = new Map<string, StubPeerConnection>();
   return {
     pcs,
     mesh: new RtcPeerMesh({
       channel: "meet",
       room: "test-room",
-      signaling,
+      signaling: signaling as unknown as HttpSignalingClient,
       rtcSettings: RTC_SETTINGS,
       initiatorRule: "higherId",
       pollIntervals: { connectingMs: 400, steadyMs: 1200 },
@@ -118,7 +145,7 @@ function meshWithStubPc(
       ports: {
         createPeerConnection: () => {
           const pc = createStubPeerConnection();
-          pcs.set(String(pcs.size), pc);
+          pcs.set(String(pcs.size), asStubPeerConnection(pc));
           return pc;
         },
         ...overrides.ports,
@@ -216,18 +243,18 @@ describe("RtcPeerMesh", () => {
       peers: [{ id: "AAAAAAAAAA", name: "Guest" }],
     });
 
-    const pcs: StubPc[] = [];
+    const pcs: StubPeerConnection[] = [];
     const mesh = new RtcPeerMesh({
       channel: "meet",
       room: "test-room",
-      signaling: signaling.client,
+      signaling: signaling.client as unknown as HttpSignalingClient,
       rtcSettings: RTC_SETTINGS,
       initiatorRule: "higherId",
       formatOutboundDescription: outboundSpy,
       ports: {
         createPeerConnection: () => {
           const pc = createStubPeerConnection(offerWithSsrc);
-          pcs.push(pc);
+          pcs.push(asStubPeerConnection(pc));
           return pc;
         },
       },
