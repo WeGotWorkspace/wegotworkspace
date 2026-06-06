@@ -84,7 +84,7 @@ final class MailEndpointsTest extends WgwDatabaseTestCase
     {
         $token = $this->tokenForAlice();
 
-        $this->deleteJson('/api/v1/mail/message', [], [
+        $this->deleteJson('/api/v1/mail/messages/incomplete-id', [], [
             'Authorization' => 'Bearer '.$token,
         ])
             ->assertStatus(400)

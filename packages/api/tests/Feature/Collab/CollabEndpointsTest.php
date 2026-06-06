@@ -8,6 +8,7 @@ use App\Models\AppSetting;
 use App\Models\Principal;
 use App\Models\User;
 use App\Settings\SettingKeys;
+use Tests\Support\RoomTestHelper;
 use Tests\Support\WgwDatabaseTestCase;
 
 final class CollabEndpointsTest extends WgwDatabaseTestCase
@@ -38,8 +39,7 @@ final class CollabEndpointsTest extends WgwDatabaseTestCase
 
     public function test_join_requires_auth(): void
     {
-        $this->postJson('/api/v1/collab/join', [
-            'room' => self::ROOM,
+        $this->postJson('/api/v1/rooms/'.$this->roomId().'/participants', [
             'name' => 'Alice',
         ])->assertUnauthorized();
     }
@@ -53,7 +53,7 @@ final class CollabEndpointsTest extends WgwDatabaseTestCase
 
         $token = $this->issueToken('alice');
         $this->withHeader('Authorization', 'Bearer '.$token)
-            ->getJson('/api/v1/collab/rtc')
+            ->getJson('/api/v1/rooms/'.$this->roomId().'/configuration')
             ->assertOk()
             ->assertJsonPath('rtc.stunUrls', 'stun:stun.example.test:3478, stuns:stun2.example.test:5349')
             ->assertJsonPath('rtc.turnUrls', 'turn:turn.example.test:3478?transport=udp')
@@ -79,10 +79,10 @@ final class CollabEndpointsTest extends WgwDatabaseTestCase
 
         $aliceToken = $this->issueToken('alice');
         $bobToken = $this->issueToken('bob');
+        $roomId = $this->roomId();
 
         $aliceJoin = $this->withHeader('Authorization', 'Bearer '.$aliceToken)
-            ->postJson('/api/v1/collab/join', [
-                'room' => self::ROOM,
+            ->postJson('/api/v1/rooms/'.$roomId.'/participants', [
                 'name' => 'Alice',
             ]);
         $aliceJoin->assertOk();
@@ -91,8 +91,7 @@ final class CollabEndpointsTest extends WgwDatabaseTestCase
         $this->assertMatchesRegularExpression('/^[a-f0-9]{16}$/', $alicePeerId);
 
         $bobJoin = $this->withHeader('Authorization', 'Bearer '.$bobToken)
-            ->postJson('/api/v1/collab/join', [
-                'room' => self::ROOM,
+            ->postJson('/api/v1/rooms/'.$roomId.'/participants', [
                 'name' => 'Bob',
             ]);
         $bobJoin->assertOk();
@@ -101,8 +100,7 @@ final class CollabEndpointsTest extends WgwDatabaseTestCase
 
         $offerPayload = ['type' => 'offer', 'sdp' => 'v=0'];
         $this->withHeader('Authorization', 'Bearer '.$aliceToken)
-            ->postJson('/api/v1/collab/send', [
-                'room' => self::ROOM,
+            ->postJson('/api/v1/rooms/'.$roomId.'/events', [
                 'peerId' => $alicePeerId,
                 'to' => $bobPeerId,
                 'type' => 'offer',
@@ -112,11 +110,7 @@ final class CollabEndpointsTest extends WgwDatabaseTestCase
             ->assertJson(['ok' => true]);
 
         $poll = $this->withHeader('Authorization', 'Bearer '.$bobToken)
-            ->postJson('/api/v1/collab/poll', [
-                'room' => self::ROOM,
-                'peerId' => $bobPeerId,
-                'since' => 0,
-            ]);
+            ->getJson('/api/v1/rooms/'.$roomId.'/events?peerId='.$bobPeerId.'&since=0');
         $poll->assertOk();
         $poll->assertJsonPath('peers.0.id', $alicePeerId);
         $messages = $poll->json('messages');
@@ -127,19 +121,12 @@ final class CollabEndpointsTest extends WgwDatabaseTestCase
         $this->assertSame($offerPayload, $messages[0]['payload']);
 
         $this->withHeader('Authorization', 'Bearer '.$aliceToken)
-            ->postJson('/api/v1/collab/leave', [
-                'room' => self::ROOM,
-                'peerId' => $alicePeerId,
-            ])
+            ->deleteJson('/api/v1/rooms/'.$roomId.'/participants/'.$alicePeerId)
             ->assertOk()
             ->assertJson(['ok' => true]);
 
         $afterLeave = $this->withHeader('Authorization', 'Bearer '.$bobToken)
-            ->postJson('/api/v1/collab/poll', [
-                'room' => self::ROOM,
-                'peerId' => $bobPeerId,
-                'since' => 0,
-            ]);
+            ->getJson('/api/v1/rooms/'.$roomId.'/events?peerId='.$bobPeerId.'&since=0');
         $afterLeave->assertOk();
         $afterLeave->assertJsonPath('peers', []);
     }
@@ -147,18 +134,17 @@ final class CollabEndpointsTest extends WgwDatabaseTestCase
     public function test_same_user_can_join_multiple_peers_in_same_room(): void
     {
         $token = $this->issueToken('alice');
+        $roomId = $this->roomId();
 
         $first = $this->withHeader('Authorization', 'Bearer '.$token)
-            ->postJson('/api/v1/collab/join', [
-                'room' => self::ROOM,
+            ->postJson('/api/v1/rooms/'.$roomId.'/participants', [
                 'name' => 'Alice',
             ]);
         $first->assertOk();
         $firstPeerId = (string) $first->json('peerId');
 
         $second = $this->withHeader('Authorization', 'Bearer '.$token)
-            ->postJson('/api/v1/collab/join', [
-                'room' => self::ROOM,
+            ->postJson('/api/v1/rooms/'.$roomId.'/participants', [
                 'name' => 'Alice',
             ]);
         $second->assertOk();
@@ -166,12 +152,13 @@ final class CollabEndpointsTest extends WgwDatabaseTestCase
         $this->assertNotSame($firstPeerId, $secondPeerId);
 
         $this->withHeader('Authorization', 'Bearer '.$token)
-            ->postJson('/api/v1/collab/poll', [
-                'room' => self::ROOM,
-                'peerId' => $firstPeerId,
-                'since' => 0,
-            ])
+            ->getJson('/api/v1/rooms/'.$roomId.'/events?peerId='.$firstPeerId.'&since=0')
             ->assertOk();
+    }
+
+    private function roomId(): string
+    {
+        return RoomTestHelper::fileRoomId(self::ROOM);
     }
 
     private function issueToken(string $username): string

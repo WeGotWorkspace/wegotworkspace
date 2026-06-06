@@ -3,7 +3,7 @@
   "info": {
     "title": "WeGotWorkspace API",
     "version": "1.0.0",
-    "description": "Parallel OpenAPI-first REST API for all app domains."
+    "description": "Artifact-based OpenAPI-first REST API."
   },
   "servers": [
     {
@@ -92,32 +92,6 @@
     }
   },
   "paths": {
-    "/health": {
-      "get": {
-        "tags": [
-          "System"
-        ],
-        "summary": "Health check",
-        "responses": {
-          "200": {
-            "description": "Service health"
-          }
-        }
-      }
-    },
-    "/capabilities": {
-      "get": {
-        "tags": [
-          "System"
-        ],
-        "summary": "Platform capabilities and domains",
-        "responses": {
-          "200": {
-            "description": "Capabilities response"
-          }
-        }
-      }
-    },
     "/.well-known/jwks.json": {
       "get": {
         "tags": [
@@ -131,228 +105,12 @@
         }
       }
     },
-    "/auth/token": {
-      "post": {
-        "tags": [
-          "Auth"
-        ],
-        "summary": "Issue RS256 bearer token from username/password",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "username",
-                  "password"
-                ],
-                "properties": {
-                  "username": {
-                    "type": "string"
-                  },
-                  "password": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Token issued",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthTokenResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "429": {
-            "description": "Too many login attempts"
-          },
-          "503": {
-            "description": "JWT not configured"
-          }
-        }
-      }
-    },
-    "/auth/refresh": {
-      "post": {
-        "tags": [
-          "Auth"
-        ],
-        "summary": "Refresh access token using refresh token",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "refresh_token"
-                ],
-                "properties": {
-                  "refresh_token": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Refreshed token pair",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthTokenResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          }
-        }
-      }
-    },
-    "/auth/revoke": {
-      "post": {
-        "tags": [
-          "Auth"
-        ],
-        "summary": "Revoke current access token and/or refresh token",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "refresh_token": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Revocation result"
-          }
-        }
-      }
-    },
-    "/me": {
-      "get": {
-        "tags": [
-          "Auth"
-        ],
-        "summary": "Current authenticated principal",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Current principal",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Principal"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/admin/state": {
+    "/admin/backups/{name}": {
       "get": {
         "tags": [
           "Admin"
         ],
-        "summary": "Admin aggregate state",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Admin state"
-          }
-        }
-      }
-    },
-    "/admin/settings": {
-      "put": {
-        "tags": [
-          "Admin"
-        ],
-        "summary": "Save admin-managed app settings",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Settings saved"
-          }
-        }
-      }
-    },
-    "/admin/users": {
-      "post": {
-        "tags": [
-          "Admin"
-        ],
-        "summary": "Create user account",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "User created"
-          },
-          "400": {
-            "description": "Invalid request"
-          },
-          "403": {
-            "description": "Forbidden"
-          }
-        }
-      }
-    },
-    "/admin/users/{username}": {
-      "patch": {
-        "tags": [
-          "Admin"
-        ],
-        "summary": "Update user account",
+        "summary": "Download an update backup archive",
         "security": [
           {
             "bearerAuth": []
@@ -360,7 +118,7 @@
         ],
         "parameters": [
           {
-            "name": "username",
+            "name": "name",
             "in": "path",
             "required": true,
             "schema": {
@@ -370,16 +128,7 @@
         ],
         "responses": {
           "200": {
-            "description": "User updated"
-          },
-          "400": {
-            "description": "Invalid request"
-          },
-          "403": {
-            "description": "Forbidden"
-          },
-          "404": {
-            "description": "User not found"
+            "description": "Backup ZIP stream"
           }
         }
       },
@@ -387,7 +136,7 @@
         "tags": [
           "Admin"
         ],
-        "summary": "Delete user account",
+        "summary": "Delete an update backup archive",
         "security": [
           {
             "bearerAuth": []
@@ -395,7 +144,7 @@
         ],
         "parameters": [
           {
-            "name": "username",
+            "name": "name",
             "in": "path",
             "required": true,
             "schema": {
@@ -405,13 +154,7 @@
         ],
         "responses": {
           "200": {
-            "description": "User deleted"
-          },
-          "403": {
-            "description": "Forbidden"
-          },
-          "404": {
-            "description": "User not found"
+            "description": "Updated backup state"
           }
         }
       }
@@ -509,244 +252,6 @@
         }
       }
     },
-    "/admin/updates/log": {
-      "get": {
-        "tags": [
-          "Admin"
-        ],
-        "summary": "Read update process log lines",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Update log lines"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Admin"
-        ],
-        "summary": "Clear update process log",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Log cleared"
-          }
-        }
-      }
-    },
-    "/admin/updates/state": {
-      "get": {
-        "tags": [
-          "Admin"
-        ],
-        "summary": "Update subsystem state snapshot",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Update state"
-          }
-        }
-      }
-    },
-    "/admin/updates/check": {
-      "post": {
-        "tags": [
-          "Admin"
-        ],
-        "summary": "Check release feed for updates",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Update state after check"
-          }
-        }
-      }
-    },
-    "/admin/updates/apply": {
-      "post": {
-        "tags": [
-          "Admin"
-        ],
-        "summary": "Apply checked release update",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Apply result"
-          }
-        }
-      }
-    },
-    "/admin/updates/cancel": {
-      "post": {
-        "tags": [
-          "Admin"
-        ],
-        "summary": "Request cancellation of in-progress update",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Cancel acknowledged"
-          }
-        }
-      }
-    },
-    "/admin/search/reindex": {
-      "post": {
-        "tags": [
-          "Admin"
-        ],
-        "summary": "Run full unified search reindex",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Reindex completed"
-          }
-        }
-      }
-    },
-    "/admin/search/state": {
-      "get": {
-        "tags": [
-          "Admin"
-        ],
-        "summary": "Get unified search reindex state",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Reindex state"
-          }
-        }
-      }
-    },
-    "/admin/search/cancel": {
-      "post": {
-        "tags": [
-          "Admin"
-        ],
-        "summary": "Cancel running unified search reindex",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Cancel acknowledged"
-          }
-        }
-      }
-    },
-    "/admin/updates/backups/{name}": {
-      "get": {
-        "tags": [
-          "Admin"
-        ],
-        "summary": "Download an update backup archive",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "name",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Backup ZIP stream"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Admin"
-        ],
-        "summary": "Delete an update backup archive",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "name",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Updated backup state"
-          }
-        }
-      }
-    },
-    "/admin/plugins/install": {
-      "post": {
-        "tags": [
-          "Admin"
-        ],
-        "summary": "Install runtime plugin from ZIP upload",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Plugin installed"
-          },
-          "400": {
-            "description": "Invalid plugin archive"
-          },
-          "500": {
-            "description": "Plugin install failed"
-          }
-        }
-      }
-    },
     "/admin/groups/{group}/members/{username}": {
       "put": {
         "tags": [
@@ -817,12 +322,79 @@
         }
       }
     },
-    "/settings/state": {
+    "/admin/plugins": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Install plugin",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Installed"
+          }
+        },
+        "x-wgw-access": "admin"
+      }
+    },
+    "/admin/search/jobs": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Start search reindex",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          }
+        },
+        "x-wgw-access": "admin"
+      }
+    },
+    "/admin/search/jobs/{jobId}": {
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Cancel search job",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cancelled"
+          }
+        },
+        "x-wgw-access": "admin"
+      }
+    },
+    "/admin/search/jobs/current": {
       "get": {
         "tags": [
-          "Settings"
+          "Admin"
         ],
-        "summary": "User settings aggregate state",
+        "summary": "Search job state",
         "security": [
           {
             "bearerAuth": []
@@ -830,17 +402,18 @@
         ],
         "responses": {
           "200": {
-            "description": "Settings state"
+            "description": "State"
           }
-        }
+        },
+        "x-wgw-access": "admin"
       }
     },
-    "/settings/profile": {
+    "/admin/settings": {
       "put": {
         "tags": [
-          "Settings"
+          "Admin"
         ],
-        "summary": "Update profile details for current user",
+        "summary": "Save admin-managed app settings",
         "security": [
           {
             "bearerAuth": []
@@ -848,35 +421,839 @@
         ],
         "responses": {
           "200": {
-            "description": "Updated settings state"
+            "description": "Settings saved"
           }
         }
       }
     },
-    "/settings/mail": {
-      "put": {
-        "tags": [
-          "Settings"
-        ],
-        "summary": "Update personal mail credentials for current user",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Updated settings state"
-          }
-        }
-      }
-    },
-    "/mail/status": {
+    "/admin/state": {
       "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Admin aggregate state",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Admin state"
+          }
+        }
+      }
+    },
+    "/admin/update-jobs": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Start update job",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          }
+        },
+        "x-wgw-access": "admin"
+      }
+    },
+    "/admin/update-jobs/{jobId}": {
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Cancel update job",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cancelled"
+          }
+        },
+        "x-wgw-access": "admin"
+      }
+    },
+    "/admin/updates/log": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Read update process log lines",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Update log lines"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Clear update process log",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Log cleared"
+          }
+        }
+      }
+    },
+    "/admin/updates/state": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Update subsystem state snapshot",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Update state"
+          }
+        }
+      }
+    },
+    "/admin/users": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Create user account",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User created"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/admin/users/{username}": {
+      "patch": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Update user account",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User updated"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Delete user account",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User deleted"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Refresh access token using refresh token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "refresh_token"
+                ],
+                "properties": {
+                  "refresh_token": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Refreshed token pair",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/auth/revoke": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Revoke current access token and/or refresh token",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "refresh_token": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Revocation result"
+          }
+        }
+      }
+    },
+    "/auth/token": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Issue RS256 bearer token from username/password",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "username",
+                  "password"
+                ],
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token issued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "429": {
+            "description": "Too many login attempts"
+          },
+          "503": {
+            "description": "JWT not configured"
+          }
+        }
+      }
+    },
+    "/capabilities": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Platform capabilities and domains",
+        "responses": {
+          "200": {
+            "description": "Capabilities response"
+          }
+        }
+      }
+    },
+    "/dav/capabilities": {
+      "get": {
+        "tags": [
+          "Dav"
+        ],
+        "summary": "DAV capabilities",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "DAV capabilities"
+          }
+        }
+      }
+    },
+    "/files": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Search files",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Results"
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "patch": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Rename file or directory",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Renamed"
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "delete": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Delete files",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/files/children": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "List directory children",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Listing"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/files/collaboration": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Load collaboration document",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "markdown",
+                "yjs"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Document"
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "put": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Save collaboration document",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Saved"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/files/content": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Download file content",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stream"
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Upload file content",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Accepted"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/files/context": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "User file context",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/files/directories": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Create directory",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/files/rooms": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Resolve file collab room",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Room"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/files/star": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Star path",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Starred"
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "delete": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Unstar path",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unstarred"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/files/starred": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "List starred paths",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paths"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Health check",
+        "responses": {
+          "200": {
+            "description": "Service health"
+          }
+        }
+      }
+    },
+    "/installer/action": {
+      "post": {
+        "tags": [
+          "Installer"
+        ],
+        "summary": "Perform installer step action",
+        "responses": {
+          "200": {
+            "description": "Installer action result"
+          }
+        }
+      }
+    },
+    "/installer/bootstrap": {
+      "get": {
+        "tags": [
+          "Installer"
+        ],
+        "summary": "Installer bootstrap payload (full state)",
+        "responses": {
+          "200": {
+            "description": "Installer bootstrap payload"
+          }
+        }
+      }
+    },
+    "/installer/state": {
+      "get": {
+        "tags": [
+          "Installer"
+        ],
+        "summary": "Installer summary and current state snapshot",
+        "responses": {
+          "200": {
+            "description": "Installer state"
+          }
+        }
+      }
+    },
+    "/mail/drafts": {
+      "post": {
         "tags": [
           "Mail"
         ],
-        "summary": "Mail runtime status",
+        "summary": "Save draft",
         "security": [
           {
             "bearerAuth": []
@@ -884,9 +1261,10 @@
         ],
         "responses": {
           "200": {
-            "description": "Mail status"
+            "description": "Saved"
           }
-        }
+        },
+        "x-wgw-access": "user"
       }
     },
     "/mail/folders": {
@@ -971,14 +1349,12 @@
             "description": "Message list"
           }
         }
-      }
-    },
-    "/mail/messages/attachments": {
-      "get": {
+      },
+      "post": {
         "tags": [
           "Mail"
         ],
-        "summary": "List attachment metadata for messages",
+        "summary": "Send message",
         "security": [
           {
             "bearerAuth": []
@@ -986,17 +1362,18 @@
         ],
         "responses": {
           "200": {
-            "description": "Attachment metadata"
+            "description": "Sent"
           }
-        }
+        },
+        "x-wgw-access": "user"
       }
     },
-    "/mail/message": {
+    "/mail/messages/{messageId}": {
       "get": {
         "tags": [
           "Mail"
         ],
-        "summary": "Get a single message",
+        "summary": "Get message",
         "security": [
           {
             "bearerAuth": []
@@ -1004,15 +1381,16 @@
         ],
         "responses": {
           "200": {
-            "description": "Message payload"
+            "description": "OK"
           }
-        }
+        },
+        "x-wgw-access": "user"
       },
       "patch": {
         "tags": [
           "Mail"
         ],
-        "summary": "Patch read/starred flags on a message",
+        "summary": "Patch message",
         "security": [
           {
             "bearerAuth": []
@@ -1020,15 +1398,16 @@
         ],
         "responses": {
           "200": {
-            "description": "Message updated"
+            "description": "OK"
           }
-        }
+        },
+        "x-wgw-access": "user"
       },
       "delete": {
         "tags": [
           "Mail"
         ],
-        "summary": "Permanently delete a message",
+        "summary": "Delete message",
         "security": [
           {
             "bearerAuth": []
@@ -1036,301 +1415,18 @@
         ],
         "responses": {
           "200": {
-            "description": "Message deleted"
+            "description": "OK"
           }
-        }
+        },
+        "x-wgw-access": "user"
       }
     },
-    "/mail/message/attachment": {
+    "/mail/messages/{messageId}/attachments": {
       "get": {
         "tags": [
           "Mail"
         ],
-        "summary": "Download a message attachment",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Attachment stream"
-          }
-        }
-      }
-    },
-    "/mail/move": {
-      "post": {
-        "tags": [
-          "Mail"
-        ],
-        "summary": "Move a message to another folder",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Message moved"
-          }
-        }
-      }
-    },
-    "/mail/send": {
-      "post": {
-        "tags": [
-          "Mail"
-        ],
-        "summary": "Send an email",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Message sent"
-          }
-        }
-      }
-    },
-    "/mail/draft": {
-      "post": {
-        "tags": [
-          "Mail"
-        ],
-        "summary": "Save a message draft",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Draft saved"
-          }
-        }
-      }
-    },
-    "/drive/user": {
-      "get": {
-        "tags": [
-          "Drive"
-        ],
-        "summary": "Drive user context",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Drive user payload"
-          }
-        }
-      }
-    },
-    "/drive/getdir": {
-      "post": {
-        "tags": [
-          "Drive"
-        ],
-        "summary": "Read directory listing",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Directory listing"
-          }
-        }
-      }
-    },
-    "/drive/searchfiles": {
-      "post": {
-        "tags": [
-          "Drive"
-        ],
-        "summary": "Search files and directories",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Search results"
-          }
-        }
-      }
-    },
-    "/drive/changedir": {
-      "post": {
-        "tags": [
-          "Drive"
-        ],
-        "summary": "Change current drive directory",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Current directory updated"
-          }
-        }
-      }
-    },
-    "/drive/createnew": {
-      "post": {
-        "tags": [
-          "Drive"
-        ],
-        "summary": "Create a new drive directory",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Item created"
-          }
-        }
-      }
-    },
-    "/drive/renameitem": {
-      "post": {
-        "tags": [
-          "Drive"
-        ],
-        "summary": "Rename a drive item",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Item renamed"
-          }
-        }
-      }
-    },
-    "/drive/deleteitems": {
-      "post": {
-        "tags": [
-          "Drive"
-        ],
-        "summary": "Delete one or more drive items",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Items deleted"
-          }
-        }
-      }
-    },
-    "/drive/download": {
-      "get": {
-        "tags": [
-          "Drive"
-        ],
-        "summary": "Download a drive file",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "File stream"
-          }
-        }
-      }
-    },
-    "/drive/upload": {
-      "get": {
-        "tags": [
-          "Drive"
-        ],
-        "summary": "Drive upload readiness probe",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Upload is available"
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Drive"
-        ],
-        "summary": "Upload file chunk(s) to drive",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Upload accepted"
-          }
-        }
-      }
-    },
-    "/drive/stars": {
-      "get": {
-        "tags": [
-          "Drive"
-        ],
-        "summary": "List starred drive paths for current user",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Starred paths"
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Drive"
-        ],
-        "summary": "Set starred state for a drive path",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Starred state updated"
-          }
-        }
-      }
-    },
-    "/search/unified": {
-      "get": {
-        "tags": [
-          "Search"
-        ],
-        "summary": "Unified search across files, calendars and contacts",
+        "summary": "List attachments",
         "security": [
           {
             "bearerAuth": []
@@ -1338,107 +1434,8 @@
         ],
         "parameters": [
           {
-            "name": "q",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "name": "sources",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          {
-            "name": "categories",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          {
-            "name": "extensions",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          {
-            "name": "modified_from",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            }
-          },
-          {
-            "name": "modified_to",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Unified search results"
-          }
-        }
-      }
-    },
-    "/records/download": {
-      "get": {
-        "tags": [
-          "Search"
-        ],
-        "summary": "Download a record payload",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "source_type",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "caldav",
-                "carddav"
-              ]
-            }
-          },
-          {
-            "name": "source_key",
-            "in": "query",
+            "name": "messageId",
+            "in": "path",
             "required": true,
             "schema": {
               "type": "string"
@@ -1447,9 +1444,128 @@
         ],
         "responses": {
           "200": {
-            "description": "Record downloaded"
+            "description": "Attachments"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/mail/messages/{messageId}/attachments/{attachmentId}": {
+      "get": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "Download attachment",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "messageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "attachmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attachment"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/mail/status": {
+      "get": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "Mail runtime status",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mail status"
           }
         }
+      }
+    },
+    "/me": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Current authenticated principal",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current principal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Principal"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/meetings/rooms": {
+      "post": {
+        "tags": [
+          "Meetings"
+        ],
+        "summary": "Create meeting room",
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "x-wgw-access": "guest"
+      }
+    },
+    "/meetings/rooms/{roomId}": {
+      "get": {
+        "tags": [
+          "Meetings"
+        ],
+        "summary": "Meeting room status",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status"
+          }
+        },
+        "x-wgw-access": "guest"
       }
     },
     "/notes/capabilities": {
@@ -1466,24 +1582,6 @@
         "responses": {
           "200": {
             "description": "Notes capabilities"
-          }
-        }
-      }
-    },
-    "/notes/state": {
-      "get": {
-        "tags": [
-          "Notes"
-        ],
-        "summary": "Notes runtime boot state for authenticated user",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Notes state"
           }
         }
       }
@@ -1574,14 +1672,12 @@
             "description": "Deleted note"
           }
         }
-      }
-    },
-    "/notes/items/{id}/archive": {
-      "post": {
+      },
+      "patch": {
         "tags": [
           "Notes"
         ],
-        "summary": "Archive a note",
+        "summary": "Patch note (e.g. archive)",
         "security": [
           {
             "bearerAuth": []
@@ -1599,37 +1695,10 @@
         ],
         "responses": {
           "200": {
-            "description": "Archived note"
+            "description": "Updated"
           }
-        }
-      }
-    },
-    "/notes/items/{id}/restore": {
-      "post": {
-        "tags": [
-          "Notes"
-        ],
-        "summary": "Restore an archived note",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Restored note"
-          }
-        }
+        },
+        "x-wgw-access": "user"
       }
     },
     "/notes/notebooks": {
@@ -1720,6 +1789,24 @@
         }
       }
     },
+    "/notes/state": {
+      "get": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Notes runtime boot state for authenticated user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notes state"
+          }
+        }
+      }
+    },
     "/plugins": {
       "get": {
         "tags": [
@@ -1738,12 +1825,12 @@
         }
       }
     },
-    "/plugins/{id}/activate": {
-      "post": {
+    "/plugins/{id}/activation": {
+      "put": {
         "tags": [
           "Plugins"
         ],
-        "summary": "Activate a plugin",
+        "summary": "Set plugin activation",
         "security": [
           {
             "bearerAuth": []
@@ -1761,43 +1848,10 @@
         ],
         "responses": {
           "200": {
-            "description": "Plugin activated"
-          },
-          "404": {
-            "description": "Plugin not found"
+            "description": "Updated"
           }
-        }
-      }
-    },
-    "/plugins/{id}/deactivate": {
-      "post": {
-        "tags": [
-          "Plugins"
-        ],
-        "summary": "Deactivate a plugin",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Plugin deactivated"
-          },
-          "404": {
-            "description": "Plugin not found"
-          }
-        }
+        },
+        "x-wgw-access": "user"
       }
     },
     "/plugins/{id}/session": {
@@ -1831,193 +1885,181 @@
         }
       }
     },
-    "/meet/room": {
-      "post": {
-        "tags": [
-          "Meet"
-        ],
-        "summary": "Probe or resolve meet room metadata",
-        "responses": {
-          "200": {
-            "description": "Room metadata"
-          }
-        }
-      }
-    },
-    "/meet/join": {
-      "post": {
-        "tags": [
-          "Meet"
-        ],
-        "summary": "Join meet room (guest or authenticated)",
-        "responses": {
-          "200": {
-            "description": "Join response"
-          }
-        }
-      }
-    },
-    "/meet/poll": {
-      "post": {
-        "tags": [
-          "Meet"
-        ],
-        "summary": "Poll meet signaling messages",
-        "responses": {
-          "200": {
-            "description": "Poll response"
-          }
-        }
-      }
-    },
-    "/meet/send": {
-      "post": {
-        "tags": [
-          "Meet"
-        ],
-        "summary": "Send meet WebRTC signaling message",
-        "responses": {
-          "200": {
-            "description": "Send response"
-          }
-        }
-      }
-    },
-    "/meet/leave": {
-      "post": {
-        "tags": [
-          "Meet"
-        ],
-        "summary": "Leave meet room",
-        "responses": {
-          "200": {
-            "description": "Leave response"
-          }
-        }
-      }
-    },
-    "/meet/chat": {
-      "post": {
-        "tags": [
-          "Meet"
-        ],
-        "summary": "Meet room chat message",
-        "responses": {
-          "200": {
-            "description": "Chat response"
-          }
-        }
-      }
-    },
-    "/meet/rtc": {
+    "/rooms/{roomId}/configuration": {
       "get": {
         "tags": [
-          "Meet"
+          "Rooms"
         ],
-        "summary": "Get Meet WebRTC ICE settings",
+        "summary": "RTC configuration",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "Meet RTC ICE settings"
+            "description": "OK"
           }
-        }
+        },
+        "x-wgw-access": "guest"
       }
     },
-    "/collab/rtc": {
+    "/rooms/{roomId}/events": {
       "get": {
         "tags": [
-          "Collab"
+          "Rooms"
         ],
-        "summary": "Get document collab RTC ICE settings",
-        "security": [
+        "summary": "Poll events",
+        "parameters": [
           {
-            "bearerAuth": []
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Collab RTC settings"
+            "description": "OK"
           }
-        }
-      }
-    },
-    "/collab/join": {
+        },
+        "x-wgw-access": "guest"
+      },
       "post": {
         "tags": [
-          "Collab"
+          "Rooms"
         ],
-        "summary": "Join document collab room",
-        "security": [
+        "summary": "Send event",
+        "parameters": [
           {
-            "bearerAuth": []
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Join response with peerId and peers"
+            "description": "OK"
           }
-        }
+        },
+        "x-wgw-access": "guest"
       }
     },
-    "/collab/poll": {
+    "/rooms/{roomId}/messages": {
       "post": {
         "tags": [
-          "Collab"
+          "Rooms"
         ],
-        "summary": "Poll document collab signaling messages",
-        "security": [
+        "summary": "Chat message",
+        "parameters": [
           {
-            "bearerAuth": []
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Poll response with peers and messages"
+            "description": "OK"
           }
-        }
+        },
+        "x-wgw-access": "guest"
       }
     },
-    "/collab/send": {
+    "/rooms/{roomId}/participants": {
       "post": {
         "tags": [
-          "Collab"
+          "Rooms"
         ],
-        "summary": "Send WebRTC signaling message for document collab",
-        "security": [
+        "summary": "Join participant",
+        "parameters": [
           {
-            "bearerAuth": []
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Send response"
+            "description": "OK"
           }
-        }
+        },
+        "x-wgw-access": "guest"
       }
     },
-    "/collab/leave": {
-      "post": {
+    "/rooms/{roomId}/participants/{participantId}": {
+      "delete": {
         "tags": [
-          "Collab"
+          "Rooms"
         ],
-        "summary": "Leave document collab room",
-        "security": [
+        "summary": "Leave room",
+        "parameters": [
           {
-            "bearerAuth": []
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "participantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Leave response"
+            "description": "OK"
           }
-        }
+        },
+        "x-wgw-access": "guest"
       }
     },
-    "/collab/document": {
+    "/search/results": {
       "get": {
         "tags": [
-          "Collab"
+          "Search"
         ],
-        "summary": "Load collaborative document markdown or Yjs sidecar",
+        "summary": "Search results",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/search/results/{resultId}/content": {
+      "get": {
+        "tags": [
+          "Search"
+        ],
+        "summary": "Download search result content",
         "security": [
           {
             "bearerAuth": []
@@ -2025,41 +2067,28 @@
         ],
         "parameters": [
           {
-            "name": "room",
-            "in": "query",
+            "name": "resultId",
+            "in": "path",
             "required": true,
             "schema": {
               "type": "string"
-            },
-            "description": "Drive virtual path to the .md or .txt document"
-          },
-          {
-            "name": "format",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "yjs"
-              ]
-            },
-            "description": "When yjs, returns application/octet-stream or 204 if missing"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Markdown body or Yjs binary"
-          },
-          "204": {
-            "description": "No Yjs sidecar yet"
+            "description": "Content"
           }
-        }
-      },
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/settings/mail": {
       "put": {
         "tags": [
-          "Collab"
+          "Settings"
         ],
-        "summary": "Save collaborative document markdown and/or Yjs sidecar",
+        "summary": "Update personal mail credentials for current user",
         "security": [
           {
             "bearerAuth": []
@@ -2067,56 +2096,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Save acknowledged"
+            "description": "Updated settings state"
           }
         }
       }
     },
-    "/installer/state": {
-      "get": {
+    "/settings/profile": {
+      "put": {
         "tags": [
-          "Installer"
+          "Settings"
         ],
-        "summary": "Installer summary and current state snapshot",
-        "responses": {
-          "200": {
-            "description": "Installer state"
-          }
-        }
-      }
-    },
-    "/installer/bootstrap": {
-      "get": {
-        "tags": [
-          "Installer"
-        ],
-        "summary": "Installer bootstrap payload (full state)",
-        "responses": {
-          "200": {
-            "description": "Installer bootstrap payload"
-          }
-        }
-      }
-    },
-    "/installer/action": {
-      "post": {
-        "tags": [
-          "Installer"
-        ],
-        "summary": "Perform installer step action",
-        "responses": {
-          "200": {
-            "description": "Installer action result"
-          }
-        }
-      }
-    },
-    "/home/state": {
-      "get": {
-        "tags": [
-          "Home"
-        ],
-        "summary": "Home app state",
+        "summary": "Update profile details for current user",
         "security": [
           {
             "bearerAuth": []
@@ -2124,17 +2114,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Home state"
+            "description": "Updated settings state"
           }
         }
       }
     },
-    "/dav/capabilities": {
+    "/settings/state": {
       "get": {
         "tags": [
-          "Dav"
+          "Settings"
         ],
-        "summary": "DAV capabilities",
+        "summary": "User settings aggregate state",
         "security": [
           {
             "bearerAuth": []
@@ -2142,9 +2132,28 @@
         ],
         "responses": {
           "200": {
-            "description": "DAV capabilities"
+            "description": "Settings state"
           }
         }
+      }
+    },
+    "/workspace/state": {
+      "get": {
+        "tags": [
+          "Workspace"
+        ],
+        "summary": "Workspace bootstrap",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "x-wgw-access": "user"
       }
     }
   }

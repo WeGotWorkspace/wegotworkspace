@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\File;
 use Tests\Support\WgwDatabaseTestCase;
 use Tests\Support\WgwTestDisks;
 
-final class DriveEndpointsTest extends WgwDatabaseTestCase
+final class FilesEndpointsTest extends WgwDatabaseTestCase
 {
     private string $dataDir = '';
 
@@ -22,7 +22,7 @@ final class DriveEndpointsTest extends WgwDatabaseTestCase
         putenv('WGW_DISABLE_LOGIN_THROTTLE=1');
         $_ENV['WGW_DISABLE_LOGIN_THROTTLE'] = '1';
 
-        $this->dataDir = storage_path('framework/testing/wgw-drive-'.uniqid('', true));
+        $this->dataDir = storage_path('framework/testing/wgw-files-'.uniqid('', true));
         File::ensureDirectoryExists($this->dataDir.'/files/users/alice');
         WgwTestDisks::refresh($this->dataDir);
         $this->configureWgwJwtKeys();
@@ -50,37 +50,30 @@ final class DriveEndpointsTest extends WgwDatabaseTestCase
         parent::tearDown();
     }
 
-    public function test_drive_user_listing_create_and_star_flow(): void
+    public function test_files_context_listing_create_and_star_flow(): void
     {
         $token = $this->issueToken();
 
-        $user = $this->withBearer($token)->getJson('/api/v1/drive/user');
+        $user = $this->withBearer($token)->getJson('/api/v1/files/context');
         $user->assertOk()
             ->assertJsonPath('data.username', 'alice')
             ->assertJsonPath('data.name', 'Alice')
             ->assertJsonPath('data.roots', ['/users', '/groups']);
 
-        $listing = $this->withBearer($token)->postJson('/api/v1/drive/getdir', [
-            'dir' => '/users/alice',
-        ]);
+        $listing = $this->withBearer($token)->getJson('/api/v1/files/children?path=/users/alice');
         $listing->assertOk()
             ->assertJsonPath('data.location', '/users/alice/')
             ->assertJsonFragment(['name' => 'welcome.txt', 'type' => 'file']);
 
-        $create = $this->withBearer($token)->postJson('/api/v1/drive/createnew', [
-            'cwd' => '/users/alice',
+        $create = $this->withBearer($token)->postJson('/api/v1/files/directories?path=/users/alice', [
             'name' => 'Projects',
-            'type' => 'dir',
         ]);
         $create->assertOk()->assertJsonPath('data', 'Created');
 
-        $star = $this->withBearer($token)->postJson('/api/v1/drive/stars', [
-            'path' => '/users/alice/welcome.txt',
-            'starred' => true,
-        ]);
+        $star = $this->withBearer($token)->postJson('/api/v1/files/star?path=/users/alice/welcome.txt');
         $star->assertOk()->assertJsonPath('data', 'Updated');
 
-        $stars = $this->withBearer($token)->getJson('/api/v1/drive/stars');
+        $stars = $this->withBearer($token)->getJson('/api/v1/files/starred');
         $stars->assertOk()
             ->assertJsonPath('data.paths', ['/users/alice/welcome.txt']);
     }

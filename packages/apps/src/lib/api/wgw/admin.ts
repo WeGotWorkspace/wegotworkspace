@@ -205,8 +205,8 @@ async function fetchAdminUpdateState(opts?: { signal?: AbortSignal }): Promise<A
 async function fetchAdminSearchReindexState(opts?: {
   signal?: AbortSignal;
 }): Promise<AdminSearchReindexState> {
-  const res = await wgwFetch("/admin/search/state", { signal: opts?.signal });
-  if (!res.ok) throw new Error(`GET /admin/search/state failed (${res.status})`);
+  const res = await wgwFetch("/admin/search/jobs/current", { signal: opts?.signal });
+  if (!res.ok) throw new Error(`GET /admin/search/jobs/current failed (${res.status})`);
   return mapWgwSearchReindexStateToUI((await wgwReadJson(res)) as WgwSearchReindexStateResponse);
 }
 
@@ -336,16 +336,21 @@ export function createWgwAdminOperations(): AdminAPIOperations {
       return fetchAdminUiData(opts);
     },
     checkUpdates: async (opts) => {
-      const res = await wgwFetch("/admin/updates/check", { method: "POST", signal: opts?.signal });
-      if (!res.ok) throw new Error(`POST /admin/updates/check failed (${res.status})`);
+      const res = await wgwFetch("/admin/update-jobs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "check" }),
+        signal: opts?.signal,
+      });
+      if (!res.ok) throw new Error(`POST /admin/update-jobs failed (${res.status})`);
       return fetchAdminUiData(opts);
     },
     refreshUpdateState: (opts) => fetchAdminUpdateState(opts),
     applyUpdate: async (version, opts) => {
-      const res = await wgwFetch("/admin/updates/apply", {
+      const res = await wgwFetch("/admin/update-jobs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ version }),
+        body: JSON.stringify({ type: "apply", version }),
         signal: opts?.signal,
       });
       if (!res.ok) {
@@ -359,25 +364,25 @@ export function createWgwAdminOperations(): AdminAPIOperations {
             // Fall through to detailed error below.
           }
         }
-        const message = await readApiError(res, `POST /admin/updates/apply failed (${res.status})`);
+        const message = await readApiError(res, `POST /admin/update-jobs failed (${res.status})`);
         throw new Error(message);
       }
       await wgwReadJson(res as Response);
       return fetchAdminUpdateStateWithWarmup(opts);
     },
     cancelUpdate: async (opts) => {
-      const res = await wgwFetch("/admin/updates/cancel", { method: "POST", signal: opts?.signal });
-      if (!res.ok) throw new Error(`POST /admin/updates/cancel failed (${res.status})`);
+      const res = await wgwFetch("/admin/update-jobs/current", {
+        method: "DELETE",
+        signal: opts?.signal,
+      });
+      if (!res.ok) throw new Error(`DELETE /admin/update-jobs/current failed (${res.status})`);
       const payload = (await wgwReadJson(res)) as { state: WgwUpdateStateResponse };
       return mapWgwUpdateStateToUI(payload.state);
     },
     startSearchReindex: async (opts) => {
-      const res = await wgwFetch("/admin/search/reindex", { method: "POST", signal: opts?.signal });
+      const res = await wgwFetch("/admin/search/jobs", { method: "POST", signal: opts?.signal });
       if (!res.ok) {
-        const message = await readApiError(
-          res,
-          `POST /admin/search/reindex failed (${res.status})`,
-        );
+        const message = await readApiError(res, `POST /admin/search/jobs failed (${res.status})`);
         throw new Error(message);
       }
       await wgwReadJson(res);
@@ -385,9 +390,15 @@ export function createWgwAdminOperations(): AdminAPIOperations {
     },
     refreshSearchReindexState: (opts) => fetchAdminSearchReindexState(opts),
     cancelSearchReindex: async (opts) => {
-      const res = await wgwFetch("/admin/search/cancel", { method: "POST", signal: opts?.signal });
+      const res = await wgwFetch("/admin/search/jobs/current", {
+        method: "DELETE",
+        signal: opts?.signal,
+      });
       if (!res.ok) {
-        const message = await readApiError(res, `POST /admin/search/cancel failed (${res.status})`);
+        const message = await readApiError(
+          res,
+          `DELETE /admin/search/jobs/current failed (${res.status})`,
+        );
         throw new Error(message);
       }
       const payload = (await wgwReadJson(res)) as { state: WgwSearchReindexStateResponse };
@@ -401,11 +412,11 @@ export function createWgwAdminOperations(): AdminAPIOperations {
       return [];
     },
     deleteBackup: async (name, opts) => {
-      const res = await wgwFetch(`/admin/updates/backups/${encodeURIComponent(name)}`, {
+      const res = await wgwFetch(`/admin/backups/${encodeURIComponent(name)}`, {
         method: "DELETE",
         signal: opts?.signal,
       });
-      if (!res.ok) throw new Error(`DELETE /admin/updates/backups/${name} failed (${res.status})`);
+      if (!res.ok) throw new Error(`DELETE /admin/backups/${name} failed (${res.status})`);
       await wgwReadJson(res);
       return fetchAdminUiData(opts);
     },
@@ -422,11 +433,11 @@ export function createWgwAdminOperations(): AdminAPIOperations {
       return fetchAdminUiData(opts);
     },
     downloadBackup: async (name, opts) => {
-      const res = await wgwFetch(`/admin/updates/backups/${encodeURIComponent(name)}`, {
+      const res = await wgwFetch(`/admin/backups/${encodeURIComponent(name)}`, {
         method: "GET",
         signal: opts?.signal,
       });
-      if (!res.ok) throw new Error(`GET /admin/updates/backups/${name} failed (${res.status})`);
+      if (!res.ok) throw new Error(`GET /admin/backups/${name} failed (${res.status})`);
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       try {
@@ -515,36 +526,37 @@ export function createWgwAdminOperations(): AdminAPIOperations {
       return fetchAdminUiData(opts);
     },
     activatePlugin: async (pluginId, opts) => {
-      const res = await wgwFetch(`/plugins/${encodeURIComponent(pluginId)}/activate`, {
-        method: "POST",
+      const res = await wgwFetch(`/plugins/${encodeURIComponent(pluginId)}/activation`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ active: true }),
         signal: opts?.signal,
       });
-      if (!res.ok) throw new Error(`POST /plugins/${pluginId}/activate failed (${res.status})`);
+      if (!res.ok) throw new Error(`PUT /plugins/${pluginId}/activation failed (${res.status})`);
       await wgwReadJson(res);
       return fetchAdminUiData(opts);
     },
     deactivatePlugin: async (pluginId, opts) => {
-      const res = await wgwFetch(`/plugins/${encodeURIComponent(pluginId)}/deactivate`, {
-        method: "POST",
+      const res = await wgwFetch(`/plugins/${encodeURIComponent(pluginId)}/activation`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ active: false }),
         signal: opts?.signal,
       });
-      if (!res.ok) throw new Error(`POST /plugins/${pluginId}/deactivate failed (${res.status})`);
+      if (!res.ok) throw new Error(`PUT /plugins/${pluginId}/activation failed (${res.status})`);
       await wgwReadJson(res);
       return fetchAdminUiData(opts);
     },
     installPluginZip: async (file, opts) => {
       const form = new FormData();
       form.append("plugin", file);
-      const res = await wgwFetch("/admin/plugins/install", {
+      const res = await wgwFetch("/admin/plugins", {
         method: "POST",
         body: form,
         signal: opts?.signal,
       });
       if (!res.ok) {
-        const message = await readApiError(
-          res,
-          `POST /admin/plugins/install failed (${res.status})`,
-        );
+        const message = await readApiError(res, `POST /admin/plugins failed (${res.status})`);
         throw new Error(message);
       }
       await wgwReadJson(res);

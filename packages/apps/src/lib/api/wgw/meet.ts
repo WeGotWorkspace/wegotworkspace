@@ -1,5 +1,5 @@
 /**
- * Meet app HTTP client (`/api/v1/meet/*`, WebRTC audio + video).
+ * Meet app HTTP client (`/api/v1/meetings/rooms`, `/api/v1/rooms/{roomId}/*`).
  */
 import { wgwApiBaseUrl, wgwFetch, wgwFetchPrincipal } from "@/lib/api/wgw/http";
 import { fetchRtcSettings } from "@/lib/api/wgw/rtc";
@@ -23,8 +23,6 @@ import type {
   MeetRequestOptions,
 } from "@/meet-core/src/meet-types";
 
-const MEET_API_PREFIX = "/meet";
-
 async function readApiError(res: Response, fallback: string): Promise<string> {
   try {
     const payload = (await res.json()) as { error?: string; message?: string };
@@ -44,41 +42,27 @@ async function readApiError(res: Response, fallback: string): Promise<string> {
   return fallback;
 }
 
-async function postMeetJson<T>(
-  action: "room" | "join" | "poll" | "send" | "leave" | "chat",
-  body: object,
-  opts?: MeetRequestOptions,
+function roomPath(roomId: string, suffix: string): string {
+  return `/rooms/${encodeURIComponent(roomId)}${suffix}`;
+}
+
+async function wgwMeetJson<T>(
+  path: string,
+  init: RequestInit,
+  fallback: string,
+  fetchImpl: typeof wgwFetch | HttpSignalingFetch = wgwFetch,
 ): Promise<T> {
-  const res = await wgwFetch(`${MEET_API_PREFIX}/${action}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-    signal: opts?.signal,
-  });
+  const res = await fetchImpl(path, init);
   if (!res.ok) {
-    const fallback = `POST ${MEET_API_PREFIX}/${action} failed (${res.status})`;
     throw new Error(await readApiError(res, fallback));
   }
   return (await res.json()) as T;
 }
 
-async function postMeetJsonGuest<T>(
-  action: "room" | "join" | "poll" | "send" | "leave" | "chat",
-  body: object,
-  opts?: MeetRequestOptions,
-): Promise<T> {
+async function guestFetch(path: string, init: RequestInit): Promise<Response> {
   const base = wgwApiBaseUrl();
-  const res = await fetch(`${base}${MEET_API_PREFIX}/${action}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-    signal: opts?.signal,
-  });
-  if (!res.ok) {
-    const fallback = `POST ${MEET_API_PREFIX}/${action} failed (${res.status})`;
-    throw new Error(await readApiError(res, fallback));
-  }
-  return (await res.json()) as T;
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  return fetch(`${base}${normalized}`, init);
 }
 
 /** Unauthenticated fetch for guest meet signaling (join/poll/send/leave). */
@@ -119,38 +103,92 @@ export async function fetchMeetGuestBootstrap(): Promise<MeetAppBootstrap> {
   };
 }
 
-export function createWgwMeetOperations(): MeetAPIOperations {
+function createMeetOperations(fetchImpl: typeof wgwFetch | HttpSignalingFetch): MeetAPIOperations {
   return {
-    roomStatus: (input: { room: string }, opts?: MeetRequestOptions) =>
-      postMeetJson<{ active: boolean }>("room", input, opts),
-    join: (input: WgwMeetJoinRequest, opts?: MeetRequestOptions) =>
-      postMeetJson<WgwMeetJoinResponse>("join", input, opts),
-    poll: (input: WgwMeetPollRequest, opts?: MeetRequestOptions) =>
-      postMeetJson<WgwMeetPollResponse>("poll", input, opts),
-    send: (input: WgwMeetSendRequest, opts?: MeetRequestOptions) =>
-      postMeetJson<WgwMeetSendResponse>("send", input, opts),
-    leave: (input: WgwMeetLeaveRequest, opts?: MeetRequestOptions) =>
-      postMeetJson<WgwMeetLeaveResponse>("leave", input, opts),
-    chat: (input: WgwMeetChatRequest, opts?: MeetRequestOptions) =>
-      postMeetJson<WgwMeetChatResponse>("chat", input, opts),
+    roomStatus: async (input, opts) => {
+      const path = `/meetings/rooms/${encodeURIComponent(input.room)}`;
+      return wgwMeetJson<{ active: boolean }>(
+        path,
+        { method: "GET", signal: opts?.signal },
+        `GET ${path} failed`,
+        fetchImpl,
+      );
+    },
+    join: async (input, opts) =>
+      wgwMeetJson<WgwMeetJoinResponse>(
+        roomPath(input.room, "/participants"),
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(input),
+          signal: opts?.signal,
+        },
+        `POST ${roomPath(input.room, "/participants")} failed`,
+        fetchImpl,
+      ),
+    poll: async (input, opts) => {
+      const params = new URLSearchParams();
+      params.set("peerId", input.peerId);
+      const since = (input as WgwMeetPollRequest & { since?: number }).since;
+      if (since !== undefined) params.set("since", String(since));
+      if (input.sessionKey) params.set("sessionKey", input.sessionKey);
+      const path = `${roomPath(input.room, "/events")}?${params.toString()}`;
+      return wgwMeetJson<WgwMeetPollResponse>(
+        path,
+        { method: "GET", signal: opts?.signal },
+        `GET ${path} failed`,
+        fetchImpl,
+      );
+    },
+    send: async (input, opts) =>
+      wgwMeetJson<WgwMeetSendResponse>(
+        roomPath(input.room, "/events"),
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(input),
+          signal: opts?.signal,
+        },
+        `POST ${roomPath(input.room, "/events")} failed`,
+        fetchImpl,
+      ),
+    leave: async (input, opts) =>
+      wgwMeetJson<WgwMeetLeaveResponse>(
+        roomPath(input.room, `/participants/${encodeURIComponent(input.peerId)}`),
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            room: input.room,
+            peerId: input.peerId,
+            sessionKey: input.sessionKey,
+          }),
+          signal: opts?.signal,
+        },
+        `DELETE ${roomPath(input.room, `/participants/${input.peerId}`)} failed`,
+        fetchImpl,
+      ),
+    chat: async (input, opts) =>
+      wgwMeetJson<WgwMeetChatResponse>(
+        roomPath(input.room, "/messages"),
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(input),
+          signal: opts?.signal,
+        },
+        `POST ${roomPath(input.room, "/messages")} failed`,
+        fetchImpl,
+      ),
   };
 }
 
+export function createWgwMeetOperations(): MeetAPIOperations {
+  return createMeetOperations(wgwFetch);
+}
+
 export function createWgwMeetGuestOperations(): MeetAPIOperations {
-  return {
-    roomStatus: (input: { room: string }, opts?: MeetRequestOptions) =>
-      postMeetJsonGuest<{ active: boolean }>("room", input, opts),
-    join: (input: WgwMeetJoinRequest, opts?: MeetRequestOptions) =>
-      postMeetJsonGuest<WgwMeetJoinResponse>("join", input, opts),
-    poll: (input: WgwMeetPollRequest, opts?: MeetRequestOptions) =>
-      postMeetJsonGuest<WgwMeetPollResponse>("poll", input, opts),
-    send: (input: WgwMeetSendRequest, opts?: MeetRequestOptions) =>
-      postMeetJsonGuest<WgwMeetSendResponse>("send", input, opts),
-    leave: (input: WgwMeetLeaveRequest, opts?: MeetRequestOptions) =>
-      postMeetJsonGuest<WgwMeetLeaveResponse>("leave", input, opts),
-    chat: (input: WgwMeetChatRequest, opts?: MeetRequestOptions) =>
-      postMeetJsonGuest<WgwMeetChatResponse>("chat", input, opts),
-  };
+  return createMeetOperations(guestFetch);
 }
 
 export { fetchRtcSettings } from "@/lib/api/wgw/rtc";
