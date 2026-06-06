@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services\Search;
 
+use App\Models\CalendarObject;
+use App\Models\Card;
 use App\Storage\WgwStorage;
-use Illuminate\Support\Facades\DB;
 use Sabre\VObject\Component\VCalendar;
 use Sabre\VObject\Component\VCard;
 use Sabre\VObject\Reader;
@@ -183,8 +184,8 @@ final class SearchIndexerService
             return;
         }
         [$principal, $calendarUri, $objectUri] = explode('|', $sourceKey, 3);
-        $row = DB::connection('wgw')
-            ->table('calendarobjects as o')
+        $row = CalendarObject::query()
+            ->from('calendarobjects as o')
             ->join('calendarinstances as i', 'i.calendarid', '=', 'o.calendarid')
             ->where('i.principaluri', 'principals/'.$principal)
             ->where('i.uri', $calendarUri)
@@ -253,8 +254,8 @@ final class SearchIndexerService
             return;
         }
         [$principal, $bookUri, $cardUri] = explode('|', $sourceKey, 3);
-        $row = DB::connection('wgw')
-            ->table('cards as c')
+        $row = Card::query()
+            ->from('cards as c')
             ->join('addressbooks as a', 'a.id', '=', 'c.addressbookid')
             ->where('a.principaluri', 'principals/'.$principal)
             ->where('a.uri', $bookUri)
@@ -346,8 +347,8 @@ final class SearchIndexerService
         }
 
         /** @var list<object{principaluri:string, calendar_uri:string, object_uri:string}> $calendarRows */
-        $calendarRows = DB::connection('wgw')
-            ->table('calendarobjects as o')
+        $calendarRows = CalendarObject::query()
+            ->from('calendarobjects as o')
             ->join('calendarinstances as i', 'i.calendarid', '=', 'o.calendarid')
             ->selectRaw('i.principaluri as principaluri, i.uri as calendar_uri, o.uri as object_uri')
             ->get()
@@ -367,8 +368,8 @@ final class SearchIndexerService
         }
 
         /** @var list<object{principaluri:string, book_uri:string, card_uri:string}> $cardRows */
-        $cardRows = DB::connection('wgw')
-            ->table('cards as c')
+        $cardRows = Card::query()
+            ->from('cards as c')
             ->join('addressbooks as a', 'a.id', '=', 'c.addressbookid')
             ->selectRaw('a.principaluri as principaluri, a.uri as book_uri, c.uri as card_uri')
             ->get()

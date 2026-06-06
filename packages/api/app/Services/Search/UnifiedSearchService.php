@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services\Search;
 
+use App\Models\CalendarObject;
+use App\Models\Card;
 use App\Services\Drive\DriveGroupResolver;
-use Illuminate\Support\Facades\DB;
 
 final class UnifiedSearchService
 {
@@ -116,8 +117,8 @@ final class UnifiedSearchService
 
         if ($sourceType === 'caldav') {
             [$principal, $calendarUri, $objectUri] = explode('|', $sourceKey, 3);
-            $row = DB::connection('wgw')
-                ->table('calendarobjects as o')
+            $row = CalendarObject::query()
+                ->from('calendarobjects as o')
                 ->join('calendarinstances as i', 'i.calendarid', '=', 'o.calendarid')
                 ->where('i.principaluri', 'principals/'.$principal)
                 ->where('i.uri', $calendarUri)
@@ -137,8 +138,8 @@ final class UnifiedSearchService
         }
 
         [$principal, $bookUri, $cardUri] = explode('|', $sourceKey, 3);
-        $row = DB::connection('wgw')
-            ->table('cards as c')
+        $row = Card::query()
+            ->from('cards as c')
             ->join('addressbooks as a', 'a.id', '=', 'c.addressbookid')
             ->where('a.principaluri', 'principals/'.$principal)
             ->where('a.uri', $bookUri)
