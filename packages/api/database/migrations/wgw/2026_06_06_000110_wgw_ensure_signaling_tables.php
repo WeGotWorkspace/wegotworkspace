@@ -1,0 +1,75 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Database\Migrations\WgwMigration;
+use Illuminate\Database\Schema\Blueprint;
+
+/**
+ * Repair installs where signaling migrations were recorded but tables are missing
+ * (e.g. partial legacy cutover or restored sqlite without app tables).
+ */
+return new class extends WgwMigration
+{
+    public function up(): void
+    {
+        if (! $this->wgwHasTable('meet_peers')) {
+            $this->wgw()->create('meet_peers', function (Blueprint $table): void {
+                $table->string('room', 64);
+                $table->string('peer_id', 64);
+                $table->string('name', 64)->default('');
+                $table->string('owner_user', 190)->default('');
+                $table->unsignedBigInteger('seen_at');
+                $table->primary(['room', 'peer_id']);
+                $table->index('room', 'idx_meet_peers_room');
+            });
+        } elseif (! $this->wgwHasColumn('meet_peers', 'owner_user')) {
+            $this->wgw()->table('meet_peers', function (Blueprint $table): void {
+                $table->string('owner_user', 190)->default('');
+            });
+        }
+
+        if (! $this->wgwHasTable('meet_messages')) {
+            $this->wgw()->create('meet_messages', function (Blueprint $table): void {
+                $table->id();
+                $table->string('room', 64);
+                $table->string('from_peer', 64);
+                $table->string('to_peer', 64);
+                $table->string('type', 16);
+                $table->longText('payload');
+                $table->unsignedBigInteger('created_at');
+                $table->index(['room', 'to_peer', 'id'], 'idx_meet_msg_target');
+            });
+        }
+
+        if (! $this->wgwHasTable('collab_peers')) {
+            $this->wgw()->create('collab_peers', function (Blueprint $table): void {
+                $table->string('room', 190);
+                $table->string('peer_id', 16);
+                $table->string('name', 64)->default('');
+                $table->string('owner_user', 190)->default('');
+                $table->unsignedBigInteger('seen_at');
+                $table->primary(['room', 'peer_id']);
+                $table->index('room', 'idx_collab_peers_room');
+            });
+        }
+
+        if (! $this->wgwHasTable('collab_messages')) {
+            $this->wgw()->create('collab_messages', function (Blueprint $table): void {
+                $table->id();
+                $table->string('room', 190);
+                $table->string('from_peer', 16);
+                $table->string('to_peer', 16);
+                $table->string('type', 16);
+                $table->longText('payload');
+                $table->unsignedBigInteger('created_at');
+                $table->index(['room', 'to_peer', 'id'], 'idx_collab_msg_target');
+            });
+        }
+    }
+
+    public function down(): void
+    {
+        // Repair migration; no down.
+    }
+};
