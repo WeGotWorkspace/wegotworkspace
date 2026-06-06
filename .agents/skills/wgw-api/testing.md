@@ -13,6 +13,15 @@ A domain is **not done** until feature tests pass for its routes without calling
 
 ## Architecture tests
 
+`tests/Architecture/GreenfieldArchitectureTest.php` and `scripts/greenfield-guard.php` enforce:
+
+- No legacy handlers, `Paths`, or raw file I/O in domain layers
+- Domain services do not use `DB::connection('wgw')->table()`
+- All `app/Models/*.php` use `UsesWgwConnection`
+- No runtime `ALTER TABLE` DDL in domain services
+
+PHPUnit example patterns (Pest optional):
+
 ```php
 arch('controllers are thin')->expect('App\Http\Controllers')->not->toUse('Illuminate\Database\Eloquent\Model');
 arch('services do not return responses')->expect('App\Services')->not->toUse('Illuminate\Http\Response');
