@@ -26,7 +26,6 @@ final class GroupFilesPrincipalCollection extends AbstractPrincipalCollection im
     public function __construct(
         BackendInterface $principalBackend,
         private readonly string $storagePath,
-        private readonly \PDO $pdo,
         private readonly AuthPlugin $authPlugin,
     ) {
         parent::__construct($principalBackend, 'principals/groups');
@@ -104,7 +103,7 @@ final class GroupFilesPrincipalCollection extends AbstractPrincipalCollection im
             $filesystem->makeDirectory($key);
         }
 
-        return new GroupSharedCollection($filesystem, $key, $uri, $this->pdo);
+        return new GroupSharedCollection($filesystem, $key, $uri);
     }
 
     private function principalIsMemberOfGroup(string $memberPrincipalUri, string $groupPrincipalUri): bool

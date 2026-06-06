@@ -67,7 +67,7 @@ final class SabreServerFactory
         if ($files) {
             $nodes[] = new AppFilesRootCollection([
                 new AppUserFilesHomeCollection($principalBackend, 'users', $pdo, $authPlugin),
-                new GroupFilesPrincipalCollection($principalBackend, 'groups', $pdo, $authPlugin),
+                new GroupFilesPrincipalCollection($principalBackend, 'groups', $authPlugin),
             ]);
         }
 
