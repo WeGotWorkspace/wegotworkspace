@@ -64,13 +64,13 @@ final class SearchReindexEndpointsTest extends WgwDatabaseTestCase
         $token = $this->issueToken();
 
         $run = $this->withHeader('Authorization', 'Bearer '.$token)
-            ->postJson('/api/v1/admin/search/reindex');
+            ->postJson('/api/v1/admin/search/jobs');
         $run->assertOk()
             ->assertJsonPath('ok', true)
             ->assertJsonPath('message', 'Search reindex completed.');
 
         $state = $this->withHeader('Authorization', 'Bearer '.$token)
-            ->getJson('/api/v1/admin/search/state');
+            ->getJson('/api/v1/admin/search/jobs/current');
         $state->assertOk()
             ->assertJsonPath('inProgress', false)
             ->assertJsonPath('lastResult.ok', true);
@@ -95,7 +95,7 @@ final class SearchReindexEndpointsTest extends WgwDatabaseTestCase
         ])->json('access_token');
 
         $this->withHeader('Authorization', 'Bearer '.$token)
-            ->postJson('/api/v1/admin/search/reindex')
+            ->postJson('/api/v1/admin/search/jobs')
             ->assertForbidden();
     }
 

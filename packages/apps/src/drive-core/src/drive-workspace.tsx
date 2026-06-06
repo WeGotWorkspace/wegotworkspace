@@ -176,6 +176,7 @@ function DriveMainHeader({
       try {
         if (result.sourceType === "caldav" || result.sourceType === "carddav") {
           await downloadWgwUnifiedSearchRecord({
+            resultId: result.id,
             sourceType: result.sourceType,
             sourceKey: result.sourceKey,
           });

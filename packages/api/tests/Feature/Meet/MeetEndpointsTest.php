@@ -10,6 +10,8 @@ use Tests\Support\WgwDatabaseTestCase;
 
 final class MeetEndpointsTest extends WgwDatabaseTestCase
 {
+    private const ROOM_ID = 'daily-room';
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -18,9 +20,7 @@ final class MeetEndpointsTest extends WgwDatabaseTestCase
 
     public function test_room_status_empty_room(): void
     {
-        $response = $this->postJson('/api/v1/meet/room', [
-            'room' => 'daily-room',
-        ]);
+        $response = $this->getJson('/api/v1/meetings/rooms/'.self::ROOM_ID);
 
         $response->assertOk();
         $response->assertJson(['active' => false]);
@@ -28,8 +28,7 @@ final class MeetEndpointsTest extends WgwDatabaseTestCase
 
     public function test_guest_join_returns_session_key_and_peers(): void
     {
-        $response = $this->postJson('/api/v1/meet/join', [
-            'room' => 'daily-room',
+        $response = $this->postJson('/api/v1/rooms/'.self::ROOM_ID.'/participants', [
             'peerId' => 'peer-alpha',
             'name' => 'Guest One',
         ]);
@@ -42,10 +41,7 @@ final class MeetEndpointsTest extends WgwDatabaseTestCase
 
     public function test_poll_requires_session_or_auth(): void
     {
-        $response = $this->postJson('/api/v1/meet/poll', [
-            'room' => 'daily-room',
-            'peerId' => 'peer-alpha',
-        ]);
+        $response = $this->getJson('/api/v1/rooms/'.self::ROOM_ID.'/events?peerId=peer-alpha');
 
         $response->assertUnauthorized();
         $response->assertJson(['error' => 'auth_required']);
@@ -53,25 +49,18 @@ final class MeetEndpointsTest extends WgwDatabaseTestCase
 
     public function test_guest_join_poll_leave_flow(): void
     {
-        $join = $this->postJson('/api/v1/meet/join', [
-            'room' => 'daily-room',
+        $join = $this->postJson('/api/v1/rooms/'.self::ROOM_ID.'/participants', [
             'peerId' => 'peer-alpha',
             'name' => 'Guest One',
         ]);
         $join->assertOk();
         $sessionKey = (string) $join->json('sessionKey');
 
-        $poll = $this->postJson('/api/v1/meet/poll', [
-            'room' => 'daily-room',
-            'peerId' => 'peer-alpha',
-            'sessionKey' => $sessionKey,
-        ]);
+        $poll = $this->getJson('/api/v1/rooms/'.self::ROOM_ID.'/events?peerId=peer-alpha&sessionKey='.$sessionKey);
         $poll->assertOk();
         $poll->assertJsonStructure(['peers', 'messages']);
 
-        $leave = $this->postJson('/api/v1/meet/leave', [
-            'room' => 'daily-room',
-            'peerId' => 'peer-alpha',
+        $leave = $this->deleteJson('/api/v1/rooms/'.self::ROOM_ID.'/participants/peer-alpha', [
             'sessionKey' => $sessionKey,
         ]);
         $leave->assertOk();
@@ -80,35 +69,30 @@ final class MeetEndpointsTest extends WgwDatabaseTestCase
 
     public function test_room_active_after_guest_join(): void
     {
-        $this->postJson('/api/v1/meet/join', [
-            'room' => 'daily-room',
+        $this->postJson('/api/v1/rooms/'.self::ROOM_ID.'/participants', [
             'peerId' => 'peer-alpha',
             'name' => 'Guest One',
         ])->assertOk();
 
-        $room = $this->postJson('/api/v1/meet/room', ['room' => 'daily-room']);
+        $room = $this->getJson('/api/v1/meetings/rooms/'.self::ROOM_ID);
         $room->assertOk();
         $room->assertJson(['active' => true]);
     }
 
     public function test_guest_rejoin_reuses_session_key(): void
     {
-        $first = $this->postJson('/api/v1/meet/join', [
-            'room' => 'daily-room',
+        $first = $this->postJson('/api/v1/rooms/'.self::ROOM_ID.'/participants', [
             'peerId' => 'peer-one',
             'name' => 'Guest',
         ]);
         $first->assertOk();
         $sessionKey = (string) $first->json('sessionKey');
 
-        $this->postJson('/api/v1/meet/leave', [
-            'room' => 'daily-room',
-            'peerId' => 'peer-one',
+        $this->deleteJson('/api/v1/rooms/'.self::ROOM_ID.'/participants/peer-one', [
             'sessionKey' => $sessionKey,
         ])->assertOk();
 
-        $second = $this->postJson('/api/v1/meet/join', [
-            'room' => 'daily-room',
+        $second = $this->postJson('/api/v1/rooms/'.self::ROOM_ID.'/participants', [
             'peerId' => 'peer-two',
             'name' => 'Guest',
             'sessionKey' => $sessionKey,
@@ -116,23 +100,18 @@ final class MeetEndpointsTest extends WgwDatabaseTestCase
         $second->assertOk();
         $this->assertSame($sessionKey, $second->json('sessionKey'));
 
-        $this->postJson('/api/v1/meet/poll', [
-            'room' => 'daily-room',
-            'peerId' => 'peer-two',
-            'sessionKey' => $sessionKey,
-        ])->assertOk();
+        $this->getJson('/api/v1/rooms/'.self::ROOM_ID.'/events?peerId=peer-two&sessionKey='.$sessionKey)
+            ->assertOk();
     }
 
     public function test_chat_requires_session_or_auth(): void
     {
-        $this->postJson('/api/v1/meet/join', [
-            'room' => 'daily-room',
+        $this->postJson('/api/v1/rooms/'.self::ROOM_ID.'/participants', [
             'peerId' => 'peer-alpha',
             'name' => 'Guest One',
         ])->assertOk();
 
-        $this->postJson('/api/v1/meet/chat', [
-            'room' => 'daily-room',
+        $this->postJson('/api/v1/rooms/'.self::ROOM_ID.'/messages', [
             'from' => 'peer-alpha',
             'text' => 'hello',
         ])
@@ -142,24 +121,21 @@ final class MeetEndpointsTest extends WgwDatabaseTestCase
 
     public function test_guest_chat_delivers_to_other_peer_via_poll(): void
     {
-        $hostJoin = $this->postJson('/api/v1/meet/join', [
-            'room' => 'daily-room',
+        $hostJoin = $this->postJson('/api/v1/rooms/'.self::ROOM_ID.'/participants', [
             'peerId' => 'host-peer1',
             'name' => 'Host',
         ]);
         $hostJoin->assertOk();
         $hostSessionKey = (string) $hostJoin->json('sessionKey');
 
-        $guestJoin = $this->postJson('/api/v1/meet/join', [
-            'room' => 'daily-room',
+        $guestJoin = $this->postJson('/api/v1/rooms/'.self::ROOM_ID.'/participants', [
             'peerId' => 'guest-peer',
             'name' => 'Guest',
         ]);
         $guestJoin->assertOk();
         $guestSessionKey = (string) $guestJoin->json('sessionKey');
 
-        $this->postJson('/api/v1/meet/chat', [
-            'room' => 'daily-room',
+        $this->postJson('/api/v1/rooms/'.self::ROOM_ID.'/messages', [
             'from' => 'guest-peer',
             'text' => 'Hello host',
             'sessionKey' => $guestSessionKey,
@@ -167,11 +143,7 @@ final class MeetEndpointsTest extends WgwDatabaseTestCase
             ->assertOk()
             ->assertJson(['ok' => true, 'delivered' => 1]);
 
-        $poll = $this->postJson('/api/v1/meet/poll', [
-            'room' => 'daily-room',
-            'peerId' => 'host-peer1',
-            'sessionKey' => $hostSessionKey,
-        ]);
+        $poll = $this->getJson('/api/v1/rooms/'.self::ROOM_ID.'/events?peerId=host-peer1&sessionKey='.$hostSessionKey);
         $poll->assertOk();
 
         $messages = $poll->json('messages');
@@ -189,7 +161,7 @@ final class MeetEndpointsTest extends WgwDatabaseTestCase
         AppSetting::setValue(SettingKeys::RTC_TURN_USERNAME, 'rtc-user');
         AppSetting::setValue(SettingKeys::RTC_TURN_CREDENTIAL, 'rtc-pass');
 
-        $response = $this->getJson('/api/v1/meet/rtc');
+        $response = $this->getJson('/api/v1/rooms/'.self::ROOM_ID.'/configuration');
 
         $response->assertOk();
         $response->assertJson([

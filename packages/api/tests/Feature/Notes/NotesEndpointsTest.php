@@ -74,7 +74,9 @@ final class NotesEndpointsTest extends WgwDatabaseTestCase
         $list->assertOk();
         $this->assertCount(1, $list->json('items'));
 
-        $archive = $this->postJson('/api/v1/notes/items/'.$noteId.'/archive', [], [
+        $archive = $this->patchJson('/api/v1/notes/items/'.$noteId, [
+            'archived' => true,
+        ], [
             'Authorization' => 'Bearer '.$token,
         ]);
         $archive->assertOk();
@@ -85,7 +87,9 @@ final class NotesEndpointsTest extends WgwDatabaseTestCase
         ]);
         $this->assertSame([], $active->json('items'));
 
-        $restore = $this->postJson('/api/v1/notes/items/'.$noteId.'/restore', [], [
+        $restore = $this->patchJson('/api/v1/notes/items/'.$noteId, [
+            'archived' => false,
+        ], [
             'Authorization' => 'Bearer '.$token,
         ]);
         $restore->assertOk();

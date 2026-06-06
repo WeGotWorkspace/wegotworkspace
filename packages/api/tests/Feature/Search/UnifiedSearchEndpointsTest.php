@@ -111,7 +111,7 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
 
         $token = $this->issueToken();
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
-            ->getJson('/api/v1/search/unified?'.http_build_query([
+            ->getJson('/api/v1/search/results?'.http_build_query([
                 'q' => 'alpha',
                 'limit' => 20,
             ]));
@@ -137,7 +137,7 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
 
         $token = $this->issueToken();
         $filtered = $this->withHeader('Authorization', 'Bearer '.$token)
-            ->getJson('/api/v1/search/unified?'.http_build_query([
+            ->getJson('/api/v1/search/results?'.http_build_query([
                 'q' => 'alpha',
                 'sources' => ['file'],
                 'extensions' => ['md'],
@@ -163,7 +163,7 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
         }
 
         $scoped = $this->withHeader('Authorization', 'Bearer '.$token)
-            ->getJson('/api/v1/search/unified?'.http_build_query([
+            ->getJson('/api/v1/search/results?'.http_build_query([
                 'q' => 'secretbob',
                 'sources' => ['file'],
                 'limit' => 20,
@@ -223,7 +223,7 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
 
         $token = $this->issueToken();
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
-            ->getJson('/api/v1/search/unified?'.http_build_query([
+            ->getJson('/api/v1/search/results?'.http_build_query([
                 'q' => 'standup',
                 'sources' => ['caldav'],
                 'limit' => 20,
@@ -314,7 +314,7 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
             ->assertOk();
 
         $firstSearch = $this->withHeader('Authorization', 'Bearer '.$token)
-            ->getJson('/api/v1/search/unified?'.http_build_query([
+            ->getJson('/api/v1/search/results?'.http_build_query([
                 'q' => 'oldneedle123',
                 'sources' => ['note'],
                 'limit' => 20,
@@ -334,7 +334,7 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
             ->assertOk();
 
         $staleSearch = $this->withHeader('Authorization', 'Bearer '.$token)
-            ->getJson('/api/v1/search/unified?'.http_build_query([
+            ->getJson('/api/v1/search/results?'.http_build_query([
                 'q' => 'oldneedle123',
                 'sources' => ['note'],
                 'limit' => 20,
@@ -342,7 +342,7 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
         $staleSearch->assertOk()->assertJsonPath('data.results', []);
 
         $updatedSearch = $this->withHeader('Authorization', 'Bearer '.$token)
-            ->getJson('/api/v1/search/unified?'.http_build_query([
+            ->getJson('/api/v1/search/results?'.http_build_query([
                 'q' => 'newneedle456',
                 'sources' => ['note'],
                 'limit' => 20,

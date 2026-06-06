@@ -238,7 +238,7 @@ final class AdminEndpointsTest extends WgwDatabaseTestCase
         $upload = new UploadedFile($zipPath, 'demo-plugin.zip', 'application/zip', null, true);
 
         $this->withHeader('Authorization', 'Bearer '.$token)
-            ->post('/api/v1/admin/plugins/install', ['plugin' => $upload])
+            ->post('/api/v1/admin/plugins', ['plugin' => $upload])
             ->assertOk()
             ->assertJsonPath('ok', true)
             ->assertJsonPath('plugin.id', 'demo-plugin')
