@@ -6,7 +6,7 @@ namespace App\Services\Update;
 
 use App\Services\Installer\ApiRuntimeEnvService;
 use App\Services\Installer\InstallerEnvChecker;
-use App\Services\Installer\InstallerSchemaMigrationRunner;
+use App\Services\Installer\WgwSchemaMigrator;
 use App\Support\AppVersion;
 use App\Support\WgwInstallConfig;
 
@@ -22,6 +22,7 @@ final class UpdateRunner
         private InstallerEnvChecker $envChecker,
         private ReleaseFeedClient $releaseFeed,
         private ApiRuntimeEnvService $apiEnv,
+        private WgwSchemaMigrator $schemaMigrator,
     ) {}
 
     /**
@@ -48,7 +49,7 @@ final class UpdateRunner
 
         return [
             'installedVersion' => $installedVersion,
-            'schemaVersion' => InstallerSchemaMigrationRunner::currentVersion($pdo),
+            'schemaVersion' => $this->schemaMigrator->currentVersion(),
             'latest' => $latest,
             'updateAvailable' => $hasRequiredMetadata && self::isUpdateAvailable($installedVersion, $latest),
             'compatible' => $compatible,
@@ -295,7 +296,7 @@ final class UpdateRunner
             file_put_contents($this->install->installRoot().'/VERSION', $targetVersion."\n", LOCK_EX);
 
             self::writeStatus('running_migrations', $beforeVersion, $targetVersion);
-            InstallerSchemaMigrationRunner::migrate($pdo);
+            $this->schemaMigrator->migrate();
             self::recordHistory($pdo, $beforeVersion, $targetVersion, 'success', 'Update applied successfully.');
             $result['ok'] = true;
             $result['message'] = 'Update applied successfully.';

@@ -1,17 +1,17 @@
 # Database schema (installer-owned)
 
-Greenfield Laravel code uses Eloquent on the **`wgw`** connection. Schema is **not** managed by Laravel migrations in production installs.
+Greenfield Laravel code uses Eloquent on the **`wgw`** connection.
 
 ## Source of truth
 
-| Engine | SQL files |
-|--------|-----------|
-| SQLite | `src/sql/sqlite/*.sql` |
-| MySQL | `src/sql/mysql/*.sql` |
+Product schema is defined in **`database/migrations/wgw/`** and applied by `WgwSchemaMigrator` during:
 
-Applied by the web installer via `InstallerSchemaRunner`. New API work must stay compatible with these tables.
+- Fresh install (`InstallerDatabaseInstaller`)
+- In-place updates (`UpdateRunner` → `running_migrations` step)
 
-Incremental upgrades use `InstallerSchemaMigrationRunner` (`app_migrations` versions 1–5). PHPUnit covers stepping from legacy versions 0–4 in `tests/Unit/Installer/InstallerSchemaMigrationRunnerTest.php`.
+Sabre Cal/Card/Locks/PropertyStorage tables are still loaded from driver-specific SQL bundles under `resources/installer/sql/{sqlite,mysql}/` inside migration `2026_06_06_000030_wgw_apply_sabre_sql_bundles.php` until fully ported to Blueprint.
+
+Legacy `app_migrations` (versions 1–9) remains on upgraded installs as audit history; active tracking uses Laravel's `migrations` table on the `wgw` connection.
 
 ## Core product tables (Phase 1 models)
 
@@ -22,8 +22,12 @@ Incremental upgrades use `InstallerSchemaMigrationRunner` (`app_migrations` vers
 | `groupmembers` | `App\Models\GroupMember` | Group membership join |
 | `app_settings` | `App\Models\AppSetting` | Key/value site settings (string PK `name`) |
 
-Additional tables (Cal/Card DAV, mail, meet) are defined in the same SQL bundles; add models when those domains are ported.
+Additional tables (meet/collab/search/drive, Cal/Card DAV, mail) are created by wgw migrations; add Eloquent models as domains are refactored.
 
 ## Connection
 
 `WgwDatabaseConfig` reads `wgw-config.php` → `database.connections.wgw` at boot (`WgwServiceProvider`). Use `DB::connection('wgw')` or models with `UsesWgwConnection`.
+
+## Tests
+
+`tests/Unit/Installer/WgwSchemaMigratorTest.php` covers fresh migrate, idempotency, and legacy `app_migrations` v0–5 cutover.
