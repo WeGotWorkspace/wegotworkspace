@@ -7,9 +7,22 @@ import type { HttpSignalingPollResult } from "@/lib/rtc/signaling/http-client";
 import { rtcLog } from "@/lib/rtc/log";
 import type { RtcPeerDescriptor } from "@/lib/rtc/types";
 import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
+import {
+  buildMeetControlMessage,
+  decodeMeetKnockerName,
+  encodeMeetKnockerName,
+  parseMeetControlMessage,
+} from "@/meet-core/src/meet-control-messages";
+import type { PeerInboundSample } from "@/meet-core/src/meet-inbound-media-hints";
 import { meetLabels } from "@/meet-core/src/meet-labels";
-import { readInboundMediaTotals } from "@/meet-core/src/meet-inbound-media-stats";
+import {
+  buildActiveMeetRoster,
+  listKnockersFromRoster,
+  listNewParticipantNames,
+  type MeetKnocker,
+} from "@/meet-core/src/meet-poll-roster";
 import type { MeetAPIOperations, MeetRtcSettings } from "@/meet-core/src/meet-types";
+import { useMeetInboundMediaHints } from "@/meet-core/src/use-meet-inbound-media-hints";
 import { useMeetRtc } from "@/meet-core/src/use-meet-rtc";
 
 type SignalType = "offer" | "answer" | "ice" | "bye" | "chat";
@@ -34,32 +47,6 @@ type ChatLine = {
   ts: number;
   isSelf: boolean;
 };
-
-type Knocker = {
-  id: string;
-  name: string;
-};
-
-type PeerInboundSample = {
-  t: number;
-  videoBytes: number;
-  audioBytes: number;
-  videoFramesDecoded: number;
-  audioEnergy: number | null;
-  videoStallTicks: number;
-  audioStallTicks: number;
-  pollCount: number;
-};
-
-type ControlMessage =
-  | { kind: "knock"; peerId: string; name: string }
-  | { kind: "admit"; peerId: string }
-  | { kind: "deny"; peerId: string }
-  | { kind: "end"; by: string }
-  | { kind: "media"; mic: boolean; camera: boolean; screen?: boolean };
-
-const KNOCK_NAME_PREFIX = "__wgw_knock__:";
-const CONTROL_PREFIX = "__wgw_meet_control__:";
 
 function randomId(len = 10): string {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -89,56 +76,6 @@ function buildVideoConstraints(deviceId?: string): MediaTrackConstraints {
   return deviceId
     ? { width: { ideal: 1280 }, height: { ideal: 720 }, deviceId: { exact: deviceId } }
     : { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" };
-}
-
-function encodeKnockerName(displayName: string): string {
-  const safeName = displayName.trim() || "Guest";
-  return `${KNOCK_NAME_PREFIX}${safeName}`;
-}
-
-function decodeKnockerName(peerName: string): string | null {
-  if (!peerName.startsWith(KNOCK_NAME_PREFIX)) return null;
-  const name = peerName.slice(KNOCK_NAME_PREFIX.length).trim();
-  return name === "" ? "Guest" : name;
-}
-
-function buildControlMessage(payload: ControlMessage): string {
-  return `${CONTROL_PREFIX}${JSON.stringify(payload)}`;
-}
-
-function parseControlMessage(text: string): ControlMessage | null {
-  if (!text.startsWith(CONTROL_PREFIX)) return null;
-  try {
-    const parsed = JSON.parse(text.slice(CONTROL_PREFIX.length)) as Record<string, unknown>;
-    if (
-      parsed.kind === "knock" &&
-      typeof parsed.peerId === "string" &&
-      typeof parsed.name === "string"
-    ) {
-      return { kind: "knock", peerId: parsed.peerId, name: parsed.name };
-    }
-    if ((parsed.kind === "admit" || parsed.kind === "deny") && typeof parsed.peerId === "string") {
-      return { kind: parsed.kind, peerId: parsed.peerId };
-    }
-    if (parsed.kind === "end" && typeof parsed.by === "string") {
-      return { kind: "end", by: parsed.by };
-    }
-    if (
-      parsed.kind === "media" &&
-      typeof parsed.mic === "boolean" &&
-      typeof parsed.camera === "boolean"
-    ) {
-      return {
-        kind: "media",
-        mic: parsed.mic,
-        camera: parsed.camera,
-        ...(typeof parsed.screen === "boolean" ? { screen: parsed.screen } : {}),
-      };
-    }
-  } catch {
-    return null;
-  }
-  return null;
 }
 
 type UseMeetControllerArgs = {
@@ -179,7 +116,7 @@ export function useMeetController({
   const [selectedCamId, setSelectedCamId] = useState<string | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [waitingForAdmission, setWaitingForAdmission] = useState(false);
-  const [knockers, setKnockers] = useState<Knocker[]>([]);
+  const [knockers, setKnockers] = useState<MeetKnocker[]>([]);
   const [endedMessage, setEndedMessage] = useState<string | null>(null);
 
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -233,31 +170,21 @@ export function useMeetController({
     const selfPeerId = selfIdRef.current;
     if (!selfPeerId) return;
 
-    const pendingKnockers = roster
-      .map((peer) => {
-        const name = decodeKnockerName(peer.name);
-        if (!name) return null;
-        return { id: peer.id, name } satisfies Knocker;
-      })
-      .filter((peer): peer is Knocker => peer !== null);
+    const pendingKnockers = listKnockersFromRoster(roster);
     setKnockers(pendingKnockers);
     const pendingKnockerIds = new Set(pendingKnockers.map((peer) => peer.id));
-    const activeRoster = new Map<string, string>();
-    for (const peer of roster) {
-      if (pendingKnockerIds.has(peer.id)) continue;
-      activeRoster.set(peer.id, peer.name);
-      peerNamesRef.current.set(peer.id, peer.name);
+    const activeRoster = buildActiveMeetRoster(roster, pendingKnockerIds);
+    for (const [id, name] of activeRoster) {
+      peerNamesRef.current.set(id, name);
     }
     if (statusRef.current === "in-call") {
       if (!participantRosterDiffReadyRef.current) {
         participantRosterDiffReadyRef.current = true;
         rosterRef.current = activeRoster;
       } else {
-        const prev = rosterRef.current;
-        activeRoster.forEach((name, id) => {
-          if (id === selfPeerId) return;
-          if (!prev.has(id)) toast.success(meetLabels.participantJoined(name));
-        });
+        for (const name of listNewParticipantNames(rosterRef.current, activeRoster, selfPeerId)) {
+          toast.success(meetLabels.participantJoined(name));
+        }
         rosterRef.current = activeRoster;
       }
     } else {
@@ -268,7 +195,7 @@ export function useMeetController({
       if (msg.type !== "chat") continue;
       const text = (msg.payload as { text?: unknown } | null)?.text;
       if (typeof text !== "string" || text.trim() === "") continue;
-      const control = parseControlMessage(text.trim());
+      const control = parseMeetControlMessage(text.trim());
       if (control) {
         if (control.kind === "knock") {
           setKnockers((prev) => {
@@ -339,7 +266,7 @@ export function useMeetController({
     onLinkChange: () => refreshPeersRef.current(),
     onPollData: handlePollData,
     shouldConnectToPeer: (peer: RtcPeerDescriptor) =>
-      !decodeKnockerName(peer.name) && !waitingForAdmissionRef.current,
+      !decodeMeetKnockerName(peer.name) && !waitingForAdmissionRef.current,
     shouldHandleRtcSignals: () => !waitingForAdmissionRef.current,
     onPeerRemoved: (peerId, name) => {
       peerNamesRef.current.delete(peerId);
@@ -406,7 +333,7 @@ export function useMeetController({
         await operationsRef.current.chat({
           room: roomCodeRef.current,
           from: selfIdRef.current,
-          text: buildControlMessage({
+          text: buildMeetControlMessage({
             kind: "media",
             mic,
             camera,
@@ -466,111 +393,22 @@ export function useMeetController({
     [meetRtc],
   );
 
+  useMeetInboundMediaHints({
+    enabled: status === "in-call",
+    meetRtc,
+    peerInboundSampleRef,
+    peerMediaHintRef,
+    refreshPeers,
+    onEnterInCall: () => {
+      void announceMediaPresence(micOnRef.current, videoOnRef.current);
+    },
+  });
+
   useEffect(() => {
-    if (status !== "in-call") {
-      peerInboundSampleRef.current.clear();
-      peerMediaHintRef.current.clear();
-      peerDisclosedMediaRef.current.clear();
-      refreshPeers();
-      return;
-    }
-
-    void announceMediaPresence(micOnRef.current, videoOnRef.current);
-    let cancelled = false;
-
-    const sampleTick = async () => {
-      if (cancelled) return;
-      const peerIds = meetRtc.getPeerIds();
-      await Promise.all(
-        peerIds.map(async (id) => {
-          const pc = meetRtc.getPeerConnection(id);
-          if (!pc || pc.connectionState !== "connected") {
-            peerInboundSampleRef.current.delete(id);
-            peerMediaHintRef.current.delete(id);
-            return;
-          }
-          try {
-            const totals = await readInboundMediaTotals(pc);
-            const now = Date.now();
-            const prev = peerInboundSampleRef.current.get(id);
-            if (!prev) {
-              peerInboundSampleRef.current.set(id, {
-                t: now,
-                videoBytes: totals.videoBytes,
-                audioBytes: totals.audioBytes,
-                videoFramesDecoded: totals.videoFramesDecoded,
-                audioEnergy: totals.audioEnergy,
-                videoStallTicks: 0,
-                audioStallTicks: 0,
-                pollCount: 1,
-              });
-              peerMediaHintRef.current.delete(id);
-              return;
-            }
-
-            const dt = now - prev.t;
-            if (dt < 400) return;
-
-            const dvb = totals.videoBytes - prev.videoBytes;
-            const dab = totals.audioBytes - prev.audioBytes;
-            const dvf = totals.videoFramesDecoded - prev.videoFramesDecoded;
-            const dEnergy =
-              totals.audioEnergy != null && prev.audioEnergy != null
-                ? totals.audioEnergy - prev.audioEnergy
-                : null;
-
-            let videoStallTicks = prev.videoStallTicks;
-            let audioStallTicks = prev.audioStallTicks;
-
-            if (prev.pollCount >= 2) {
-              const videoFrozen = dvf === 0 && dvb < 260;
-              videoStallTicks = videoFrozen ? prev.videoStallTicks + 1 : 0;
-
-              let audioQuiet = dab < 52;
-              if (dEnergy != null) {
-                audioQuiet = audioQuiet && dEnergy < 1e-7;
-              }
-              audioStallTicks = audioQuiet ? prev.audioStallTicks + 1 : 0;
-            }
-
-            const nextSample: PeerInboundSample = {
-              t: now,
-              videoBytes: totals.videoBytes,
-              audioBytes: totals.audioBytes,
-              videoFramesDecoded: totals.videoFramesDecoded,
-              audioEnergy: totals.audioEnergy,
-              videoStallTicks,
-              audioStallTicks,
-              pollCount: prev.pollCount + 1,
-            };
-            peerInboundSampleRef.current.set(id, nextSample);
-
-            if (nextSample.pollCount >= 3) {
-              peerMediaHintRef.current.set(id, {
-                camera: videoStallTicks < 3,
-                mic: audioStallTicks < 5,
-              });
-            } else {
-              peerMediaHintRef.current.delete(id);
-            }
-          } catch {
-            // Ignore stats read failures.
-          }
-        }),
-      );
-      refreshPeers();
-    };
-
-    const intervalId = window.setInterval(() => {
-      void sampleTick();
-    }, 650);
-    void sampleTick();
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(intervalId);
-    };
-  }, [announceMediaPresence, meetRtc, status, refreshPeers]);
+    if (status === "in-call") return;
+    peerDisclosedMediaRef.current.clear();
+    refreshPeers();
+  }, [status, refreshPeers]);
 
   const joinRoom = useCallback(
     async (room?: string) => {
@@ -703,13 +541,13 @@ export function useMeetController({
         await meetRtc.join({
           room: target,
           peerId,
-          name: encodeKnockerName(displayNameRef.current),
+          name: encodeMeetKnockerName(displayNameRef.current),
         });
         if (operationsRef.current) {
           await operationsRef.current.chat({
             room: target,
             from: peerId,
-            text: buildControlMessage({
+            text: buildMeetControlMessage({
               kind: "knock",
               peerId,
               name: displayNameRef.current.trim() || "Guest",
@@ -736,7 +574,7 @@ export function useMeetController({
       await operationsRef.current.chat({
         room: roomCodeRef.current,
         from: selfIdRef.current,
-        text: buildControlMessage({ kind: "admit", peerId }),
+        text: buildMeetControlMessage({ kind: "admit", peerId }),
         sessionKey: meetRtc.getSessionKey() ?? undefined,
       });
       setKnockers((prev) => prev.filter((entry) => entry.id !== peerId));
@@ -751,7 +589,7 @@ export function useMeetController({
       await operationsRef.current.chat({
         room: roomCodeRef.current,
         from: selfIdRef.current,
-        text: buildControlMessage({ kind: "deny", peerId }),
+        text: buildMeetControlMessage({ kind: "deny", peerId }),
         sessionKey: meetRtc.getSessionKey() ?? undefined,
       });
       setKnockers((prev) => prev.filter((entry) => entry.id !== peerId));
@@ -768,7 +606,7 @@ export function useMeetController({
       await operationsRef.current.chat({
         room: roomCodeRef.current,
         from: selfIdRef.current,
-        text: buildControlMessage({
+        text: buildMeetControlMessage({
           kind: "end",
           by: displayNameRef.current.trim() || "Host",
         }),
