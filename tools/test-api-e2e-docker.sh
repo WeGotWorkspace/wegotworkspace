@@ -55,17 +55,24 @@ restore_install_state() {
   rmdir "${STASH_DIR}" 2>/dev/null || true
 }
 
-stash_install_state
-
 COMPOSE_FILES=(-f compose.ci.yml)
+
+cleanup() {
+  docker compose "${COMPOSE_FILES[@]}" down -v 2>/dev/null || true
+}
+trap 'restore_install_state; cleanup' EXIT
+
+if lsof -nP -iTCP:"${PORT}" -sTCP:LISTEN >/dev/null 2>&1; then
+  echo "ERROR: port ${PORT} is already in use (often wgw-dev-web-1 from pnpm docker:up)." >&2
+  echo "Stop it with: docker compose -f compose.dev.yml down" >&2
+  echo "Or run on another port: WGW_DOCKER_HTTP_PORT=9081 pnpm test:api-e2e:docker" >&2
+  exit 1
+fi
+
+stash_install_state
 
 echo "==> Starting Docker stack (compose.ci.yml)"
 docker compose "${COMPOSE_FILES[@]}" up -d --build --wait
-
-cleanup() {
-  docker compose "${COMPOSE_FILES[@]}" down -v
-}
-trap 'restore_install_state; cleanup' EXIT
 
 export WGW_API_E2E_NO_SERVER=1
 export WGW_API_BASE_URL="${BASE}"
