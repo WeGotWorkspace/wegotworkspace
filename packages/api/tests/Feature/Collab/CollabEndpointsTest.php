@@ -8,12 +8,9 @@ use App\Models\AppSetting;
 use App\Models\Principal;
 use App\Models\User;
 use App\Settings\SettingKeys;
-use Illuminate\Support\Facades\DB;
-use Tests\Support\AuthTestKeys;
-use Tests\Support\SqliteWgwSchema;
-use Tests\TestCase;
+use Tests\Support\WgwDatabaseTestCase;
 
-final class CollabEndpointsTest extends TestCase
+final class CollabEndpointsTest extends WgwDatabaseTestCase
 {
     private const ROOM = 'docs/test-together.md';
 
@@ -23,29 +20,7 @@ final class CollabEndpointsTest extends TestCase
 
         putenv('WGW_DISABLE_LOGIN_THROTTLE=1');
         $_ENV['WGW_DISABLE_LOGIN_THROTTLE'] = '1';
-
-        config([
-            'database.connections.wgw' => [
-                'driver' => 'sqlite',
-                'database' => ':memory:',
-                'prefix' => '',
-                'foreign_key_constraints' => true,
-            ],
-        ]);
-        DB::purge('wgw');
-
-        $keys = AuthTestKeys::rsaPair();
-        config([
-            'wgw.jwt.private_key' => $keys['private_key'],
-            'wgw.jwt.public_key' => $keys['public_key'],
-            'wgw.jwt.issuer' => $keys['issuer'],
-            'wgw.jwt.audience' => $keys['audience'],
-            'wgw.jwt.kid' => $keys['kid'],
-        ]);
-
-        SqliteWgwSchema::applyCoreTables();
-        SqliteWgwSchema::applyAuthTables();
-        SqliteWgwSchema::applyCollabTables();
+        $this->configureWgwJwtKeys();
 
         User::query()->insert([
             'id' => 1,

@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Search;
 
-use Illuminate\Support\Facades\DB;
+use App\Models\SearchDocument;
+use App\Models\SearchTerm;
 
 final class SearchDocumentStore
 {
@@ -33,12 +34,12 @@ final class SearchDocumentStore
             'updated_at' => $now,
         ];
 
-        DB::connection('wgw')->table('search_documents')->updateOrInsert(
+        SearchDocument::query()->updateOrInsert(
             ['source_type' => $sourceType, 'source_key' => $sourceKey],
             array_merge($payload, ['created_at' => $now])
         );
 
-        $documentId = DB::connection('wgw')->table('search_documents')
+        $documentId = SearchDocument::query()
             ->where('source_type', $sourceType)
             ->where('source_key', $sourceKey)
             ->value('id');
@@ -50,7 +51,7 @@ final class SearchDocumentStore
 
     public function delete(string $sourceType, string $sourceKey): void
     {
-        DB::connection('wgw')->table('search_documents')
+        SearchDocument::query()
             ->where('source_type', $sourceType)
             ->where('source_key', $sourceKey)
             ->delete();
@@ -58,7 +59,7 @@ final class SearchDocumentStore
 
     public function deletePrefix(string $sourceType, string $sourceKeyPrefix): void
     {
-        DB::connection('wgw')->table('search_documents')
+        SearchDocument::query()
             ->where('source_type', $sourceType)
             ->where('source_key', 'like', $sourceKeyPrefix.'/%')
             ->delete();
@@ -66,8 +67,8 @@ final class SearchDocumentStore
 
     public function clearAll(): void
     {
-        DB::connection('wgw')->table('search_terms')->delete();
-        DB::connection('wgw')->table('search_documents')->delete();
+        SearchTerm::query()->delete();
+        SearchDocument::query()->delete();
     }
 
     /**
@@ -85,8 +86,8 @@ final class SearchDocumentStore
             static fn (string $slug): string => 'groups/'.$slug,
             array_values(array_filter($groupSlugs, static fn (mixed $slug): bool => is_string($slug) && trim($slug) !== ''))
         )));
-        $query = DB::connection('wgw')
-            ->table('search_documents as d')
+        $query = SearchDocument::query()
+            ->from('search_documents as d')
             ->select('d.*');
 
         if ($tokens !== []) {
@@ -164,7 +165,7 @@ final class SearchDocumentStore
             ->orderByDesc('d.modified_at_ts')
             ->limit(max(1, min(100, $limit)))
             ->get()
-            ->map(static fn ($row): array => (array) $row)
+            ->map(static fn (SearchDocument $row): array => $row->toArray())
             ->all();
 
         return $rows;
@@ -185,8 +186,8 @@ final class SearchDocumentStore
             array_values(array_filter($groupSlugs, static fn (mixed $slug): bool => is_string($slug) && trim($slug) !== ''))
         )));
 
-        $row = DB::connection('wgw')
-            ->table('search_documents as d')
+        $row = SearchDocument::query()
+            ->from('search_documents as d')
             ->where('d.source_type', $sourceType)
             ->where('d.source_key', $sourceKey)
             ->where(function ($auth) use ($username, $groupSlugs, $groupPrincipalOwners): void {
@@ -216,7 +217,7 @@ final class SearchDocumentStore
             })
             ->first();
 
-        return $row ? (array) $row : null;
+        return $row ? (array) $row->toArray() : null;
     }
 
     /**
@@ -224,7 +225,7 @@ final class SearchDocumentStore
      */
     private function replaceTokens(int $documentId, array $tokensByField): void
     {
-        DB::connection('wgw')->table('search_terms')
+        SearchTerm::query()
             ->where('document_id', $documentId)
             ->delete();
 
@@ -244,7 +245,7 @@ final class SearchDocumentStore
             }
         }
         if ($rows !== []) {
-            DB::connection('wgw')->table('search_terms')->insert($rows);
+            SearchTerm::query()->insert($rows);
         }
     }
 

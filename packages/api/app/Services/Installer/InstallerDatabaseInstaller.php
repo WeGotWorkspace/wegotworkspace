@@ -5,14 +5,16 @@ declare(strict_types=1);
 namespace App\Services\Installer;
 
 use App\Support\AppPaths;
+use App\Support\WgwConnectionConfigurator;
+use Illuminate\Support\Facades\DB;
 
 final class InstallerDatabaseInstaller
 {
     public function __construct(
         private AppPaths $paths,
-        private InstallerSchemaRunner $schema,
         private InstallerSeeder $seeder,
         private InstallerAppSettingsWriter $settings,
+        private WgwSchemaMigrator $schemaMigrator,
     ) {}
 
     /**
@@ -58,14 +60,21 @@ final class InstallerDatabaseInstaller
         bool $enableContacts,
         array $initialSettings,
     ): void {
-        $driver = (string) $db['driver'];
-        $pdo = $this->connect($db);
+        if (($db['driver'] ?? '') === 'sqlite') {
+            $path = $this->paths->resolveProjectPath((string) ($db['sqlite_path'] ?? $this->paths->defaultSqliteRelativePath()));
+            $dir = dirname($path);
+            if (! is_dir($dir)) {
+                @mkdir($dir, 0775, true);
+            }
+        }
+
+        WgwConnectionConfigurator::applyFromInstallerDb($db);
+        $pdo = DB::connection('wgw')->getPdo();
         $pdo->beginTransaction();
         try {
-            $this->schema->apply($pdo, $driver);
+            $this->schemaMigrator->migrate();
             $this->seeder->seed($pdo, $username, $password, $displayName, $email, $enableCalendars, $enableContacts);
             $this->settings->replaceMany($pdo, $initialSettings);
-            InstallerSchemaMigrationRunner::migrate($pdo);
             if ($pdo->inTransaction()) {
                 $pdo->commit();
             }

@@ -5,28 +5,14 @@ declare(strict_types=1);
 namespace Tests\Feature\Dav;
 
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
-use Tests\Support\SqliteWgwSchema;
+use Tests\Support\WgwDatabaseTestCase;
 use Tests\Support\WgwInstallFixture;
-use Tests\TestCase;
 
-final class SabreBrowserAssetTest extends TestCase
+final class SabreBrowserAssetTest extends WgwDatabaseTestCase
 {
     protected function setUp(): void
     {
         parent::setUp();
-
-        config([
-            'database.connections.wgw' => [
-                'driver' => 'sqlite',
-                'database' => ':memory:',
-                'prefix' => '',
-                'foreign_key_constraints' => true,
-            ],
-        ]);
-        DB::purge('wgw');
-        SqliteWgwSchema::applyCoreTables();
-        SqliteWgwSchema::applySabreTables();
 
         User::query()->create([
             'username' => 'alice',

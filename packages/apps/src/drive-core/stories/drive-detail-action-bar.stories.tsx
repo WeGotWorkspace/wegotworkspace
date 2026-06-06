@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { DriveDetailActionBar } from "@/drive-core/src/drive-detail-action-bar";
-import { buildDriveFileActions } from "@/drive-core/src/drive-file-actions";
+import { buildDriveFileActions } from "@/drive-core/src/drive-file-action-builders";
 import { driveStoryLabels } from "@/drive-core/stories/drive-pane-stories.fixtures";
 import {
   driveStoryParameters,
@@ -75,7 +75,6 @@ export const InTrash: Story = {
 };
 
 export const Mobile: Story = {
-  name: "Mobile",
   args: {
     actions: storyActions(false, false),
     onClose: STORY_NOOP,

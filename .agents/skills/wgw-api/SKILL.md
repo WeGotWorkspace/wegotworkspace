@@ -35,7 +35,7 @@ Build a **new Laravel application** that matches the **HTTP contract** in OpenAP
 
 - **HTTP:** `routes/api.php` → controllers → Form Requests → API Resources
 - **Logic:** `app/Services/{Domain}/` — constructor injection
-- **Persistence:** Eloquent / `DB::connection('wgw')` — not raw `\PDO` through the stack
+- **Persistence:** Eloquent models on `wgw` (`app/Models/*` + `UsesWgwConnection`) — not `DB::table()` or raw `\PDO` in domain services (PDO only at documented installer/update/Sabre boundaries; see `packages/api/docs/sql-schema.md`)
 - **Config:** Laravel `config/` + `.env` — not legacy `Config::load()` in domain code
 - **Auth:** Laravel guard or dedicated JWT service — not legacy bearer + superglobals
 - **Tests:** Feature tests per route group before a domain is "done"

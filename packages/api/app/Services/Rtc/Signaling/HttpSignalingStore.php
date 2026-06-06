@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Rtc\Signaling;
 
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 final class HttpSignalingStore
 {
@@ -17,36 +18,17 @@ final class HttpSignalingStore
         return $this->policy;
     }
 
-    public function ensureOwnerColumn(): void
-    {
-        if (DB::connection('wgw')->getSchemaBuilder()->hasColumn($this->policy->peersTable, 'owner_user')) {
-            return;
-        }
-
-        $driver = DB::connection('wgw')->getDriverName();
-        if ($driver === 'mysql') {
-            DB::connection('wgw')->statement(
-                'ALTER TABLE '.$this->policy->peersTable."
-                 ADD COLUMN owner_user VARCHAR(190) NOT NULL DEFAULT '' AFTER name"
-            );
-        } else {
-            DB::connection('wgw')->statement(
-                'ALTER TABLE '.$this->policy->peersTable." ADD COLUMN owner_user TEXT NOT NULL DEFAULT ''"
-            );
-        }
-    }
-
     public function pruneOldRows(): void
     {
         $cutoff = time() - $this->policy->peerTimeoutSeconds;
-        $stalePeerIds = DB::connection('wgw')->table($this->policy->peersTable)
+        $stalePeerIds = $this->peerQuery()
             ->where('seen_at', '<', $cutoff)
             ->pluck('peer_id')
             ->all();
 
         if ($stalePeerIds !== []) {
-            DB::connection('wgw')->table($this->policy->peersTable)->whereIn('peer_id', $stalePeerIds)->delete();
-            DB::connection('wgw')->table($this->policy->messagesTable)
+            $this->peerQuery()->whereIn('peer_id', $stalePeerIds)->delete();
+            $this->messageQuery()
                 ->where(function ($query) use ($stalePeerIds): void {
                     $query->whereIn('from_peer', $stalePeerIds)->orWhereIn('to_peer', $stalePeerIds);
                 })
@@ -54,43 +36,36 @@ final class HttpSignalingStore
         }
 
         $messageCutoff = time() - $this->policy->messageRetentionSeconds;
-        DB::connection('wgw')->table($this->policy->messagesTable)
+        $this->messageQuery()
             ->where('created_at', '<', $messageCutoff)
             ->delete();
     }
 
     public function upsertPeer(string $room, string $peerId, string $name, string $ownerMarker, int $now): void
     {
-        $driver = DB::connection('wgw')->getDriverName();
-        if ($driver === 'mysql') {
-            DB::connection('wgw')->statement(
-                'INSERT INTO '.$this->policy->peersTable.' (room, peer_id, name, owner_user, seen_at)
-                 VALUES (?, ?, ?, ?, ?)
-                 ON DUPLICATE KEY UPDATE name = VALUES(name), owner_user = VALUES(owner_user), seen_at = VALUES(seen_at)',
-                [$room, $peerId, $name, $ownerMarker, $now]
-            );
-
-            return;
-        }
-
-        DB::connection('wgw')->statement(
-            'INSERT INTO '.$this->policy->peersTable.' (room, peer_id, name, owner_user, seen_at)
-             VALUES (?, ?, ?, ?, ?)
-             ON CONFLICT(room, peer_id) DO UPDATE SET name = excluded.name, owner_user = excluded.owner_user, seen_at = excluded.seen_at',
-            [$room, $peerId, $name, $ownerMarker, $now]
+        $this->policy->peerModelClass::upsert(
+            [[
+                'room' => $room,
+                'peer_id' => $peerId,
+                'name' => $name,
+                'owner_user' => $ownerMarker,
+                'seen_at' => $now,
+            ]],
+            ['room', 'peer_id'],
+            ['name', 'owner_user', 'seen_at'],
         );
     }
 
     public function countPeers(string $room): int
     {
-        return (int) DB::connection('wgw')->table($this->policy->peersTable)
+        return $this->peerQuery()
             ->where('room', $room)
             ->count();
     }
 
     public function deletePeer(string $room, string $peerId): void
     {
-        DB::connection('wgw')->table($this->policy->peersTable)
+        $this->peerQuery()
             ->where('room', $room)
             ->where('peer_id', $peerId)
             ->delete();
@@ -101,7 +76,7 @@ final class HttpSignalingStore
      */
     public function peerList(string $room, string $selfId): array
     {
-        return DB::connection('wgw')->table($this->policy->peersTable)
+        return $this->peerQuery()
             ->where('room', $room)
             ->where('peer_id', '!=', $selfId)
             ->get(['peer_id as id', 'name'])
@@ -112,7 +87,7 @@ final class HttpSignalingStore
 
     public function touchPeer(string $room, string $peerId, ?int $now = null): void
     {
-        DB::connection('wgw')->table($this->policy->peersTable)
+        $this->peerQuery()
             ->where('room', $room)
             ->where('peer_id', $peerId)
             ->update(['seen_at' => $now ?? time()]);
@@ -120,7 +95,7 @@ final class HttpSignalingStore
 
     public function assertPeerOwnedByActor(string $room, string $peerId, string $ownerMarker): void
     {
-        $row = DB::connection('wgw')->table($this->policy->peersTable)
+        $row = $this->peerQuery()
             ->where('room', $room)
             ->where('peer_id', $peerId)
             ->first(['owner_user']);
@@ -140,7 +115,7 @@ final class HttpSignalingStore
 
     public function peerExists(string $room, string $peerId): bool
     {
-        return DB::connection('wgw')->table($this->policy->peersTable)
+        return $this->peerQuery()
             ->where('room', $room)
             ->where('peer_id', $peerId)
             ->exists();
@@ -154,7 +129,7 @@ final class HttpSignalingStore
         $this->touchPeer($room, $peerId);
 
         if ($this->policy->pollMode === RtcSignalingPollMode::SinceCursor) {
-            $query = DB::connection('wgw')->table($this->policy->messagesTable)
+            $query = $this->messageQuery()
                 ->where('room', $room)
                 ->where('to_peer', $peerId)
                 ->where('id', '>', max(0, $since))
@@ -178,7 +153,7 @@ final class HttpSignalingStore
             ];
         }
 
-        $rows = DB::connection('wgw')->table($this->policy->messagesTable)
+        $rows = $this->messageQuery()
             ->where('room', $room)
             ->where('to_peer', $peerId)
             ->orderBy('id')
@@ -187,7 +162,7 @@ final class HttpSignalingStore
         $messages = [];
         if ($rows->isNotEmpty()) {
             $ids = $rows->pluck('id')->all();
-            DB::connection('wgw')->table($this->policy->messagesTable)->whereIn('id', $ids)->delete();
+            $this->messageQuery()->whereIn('id', $ids)->delete();
             foreach ($rows as $row) {
                 $decoded = json_decode((string) $row->payload, true);
                 $messages[] = [
@@ -221,7 +196,7 @@ final class HttpSignalingStore
             $this->fail('payload_too_large', 413);
         }
 
-        DB::connection('wgw')->table($this->policy->messagesTable)->insert([
+        $this->policy->messageModelClass::query()->create([
             'room' => $room,
             'from_peer' => $from,
             'to_peer' => $to,
@@ -239,13 +214,13 @@ final class HttpSignalingStore
 
     public function leave(string $room, string $peerId): void
     {
-        DB::connection('wgw')->table($this->policy->peersTable)
+        $this->peerQuery()
             ->where('room', $room)
             ->where('peer_id', $peerId)
             ->delete();
 
         if ($this->policy->leaveDeletesPeerMessages) {
-            DB::connection('wgw')->table($this->policy->messagesTable)
+            $this->messageQuery()
                 ->where('room', $room)
                 ->where(function ($query) use ($peerId): void {
                     $query->where('from_peer', $peerId)->orWhere('to_peer', $peerId);
@@ -273,6 +248,43 @@ final class HttpSignalingStore
         return $this->cleanPeer($body[$field] ?? null);
     }
 
+    /**
+     * @param  list<array<string, mixed>>  $rows
+     */
+    public function insertMessages(array $rows): void
+    {
+        if ($rows === []) {
+            return;
+        }
+
+        $this->policy->messageModelClass::query()->insert($rows);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function peerIdsInRoomExcept(string $room, string $exceptPeerId): array
+    {
+        return $this->peerQuery()
+            ->where('room', $room)
+            ->where('peer_id', '!=', $exceptPeerId)
+            ->pluck('peer_id')
+            ->map(static fn ($id) => (string) $id)
+            ->all();
+    }
+
+    /**
+     * @return list<object{owner_user: mixed, name: mixed}>
+     */
+    public function peersInRoom(string $room, int $limit = 32): array
+    {
+        return $this->peerQuery()
+            ->where('room', $room)
+            ->limit($limit)
+            ->get(['owner_user', 'name'])
+            ->all();
+    }
+
     private function trimMessages(string $room): void
     {
         $max = $this->policy->maxMessagesPerRoom;
@@ -280,23 +292,35 @@ final class HttpSignalingStore
             return;
         }
 
-        $count = (int) DB::connection('wgw')->table($this->policy->messagesTable)->where('room', $room)->count();
+        $count = $this->messageQuery()->where('room', $room)->count();
         if ($count <= $max) {
             return;
         }
 
-        $keepFromId = DB::connection('wgw')->table($this->policy->messagesTable)
+        $keepFromId = $this->messageQuery()
             ->where('room', $room)
             ->orderByDesc('id')
             ->offset($max - 1)
             ->value('id');
 
         if ($keepFromId !== null) {
-            DB::connection('wgw')->table($this->policy->messagesTable)
+            $this->messageQuery()
                 ->where('room', $room)
                 ->where('id', '<', $keepFromId)
                 ->delete();
         }
+    }
+
+    /** @return Builder<Model> */
+    private function peerQuery(): Builder
+    {
+        return $this->policy->peerModelClass::query();
+    }
+
+    /** @return Builder<Model> */
+    private function messageQuery(): Builder
+    {
+        return $this->policy->messageModelClass::query();
     }
 
     private function fail(string $error, int $status = 400, ?string $message = null): never
