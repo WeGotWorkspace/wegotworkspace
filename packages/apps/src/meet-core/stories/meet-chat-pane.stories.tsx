@@ -40,11 +40,9 @@ export const WithMessages: Story = {
 };
 
 export const Empty: Story = {
-  name: "Empty",
   args: { draft: "", hasMessages: false },
 };
 
 export const Composing: Story = {
-  name: "Composing",
   args: { draft: "Thanks — joining in a second.", hasMessages: true },
 };
