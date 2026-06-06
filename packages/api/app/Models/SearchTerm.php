@@ -1,0 +1,33 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Models;
+
+use App\Models\Concerns\UsesWgwConnection;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+final class SearchTerm extends Model
+{
+    use UsesWgwConnection;
+
+    protected $table = 'search_terms';
+
+    public $timestamps = false;
+
+    /** @var list<string> */
+    protected $fillable = [
+        'document_id',
+        'token',
+        'field',
+        'weight',
+        'created_at',
+        'updated_at',
+    ];
+
+    public function document(): BelongsTo
+    {
+        return $this->belongsTo(SearchDocument::class, 'document_id');
+    }
+}
