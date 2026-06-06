@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Architecture;
 
 use Illuminate\Testing\TestResponse;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Support\OpenApiContract;
 use Tests\Support\WgwDatabaseTestCase;
 use Tests\Support\WgwRoleFixtures;
@@ -56,9 +57,7 @@ final class RoleAccessMatrixTest extends WgwDatabaseTestCase
         }
     }
 
-    /**
-     * @dataProvider accessMatrixProvider
-     */
+    #[DataProvider('accessMatrixProvider')]
     public function test_role_access_matches_openapi_annotation(string $method, string $path, string $access): void
     {
         $userToken = $this->userBearerToken();
