@@ -6,9 +6,9 @@ namespace Tests\Unit\Installer;
 
 use App\Services\Installer\WgwSchemaMigrator;
 use App\Support\WgwConnectionConfigurator;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Tests\Support\WgwTestDatabase;
 use Tests\TestCase;
 
 final class WgwSchemaMigratorTest extends TestCase
@@ -16,16 +16,7 @@ final class WgwSchemaMigratorTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
-        config([
-            'database.connections.wgw' => [
-                'driver' => 'sqlite',
-                'database' => ':memory:',
-                'prefix' => '',
-                'foreign_key_constraints' => true,
-            ],
-        ]);
-        DB::purge('wgw');
+        WgwTestDatabase::configureConnection('sqlite');
     }
 
     public function test_migrate_empty_database_reaches_current_version(): void

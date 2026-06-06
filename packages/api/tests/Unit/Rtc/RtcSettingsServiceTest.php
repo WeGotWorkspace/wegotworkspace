@@ -7,27 +7,13 @@ namespace Tests\Unit\Rtc;
 use App\Models\AppSetting;
 use App\Services\Rtc\RtcSettingsService;
 use App\Settings\SettingKeys;
-use Illuminate\Support\Facades\DB;
-use Tests\Support\SqliteWgwSchema;
-use Tests\TestCase;
+use Tests\Support\WgwDatabaseTestCase;
 
-final class RtcSettingsServiceTest extends TestCase
+final class RtcSettingsServiceTest extends WgwDatabaseTestCase
 {
     protected function setUp(): void
     {
         parent::setUp();
-
-        config([
-            'database.connections.wgw' => [
-                'driver' => 'sqlite',
-                'database' => ':memory:',
-                'prefix' => '',
-                'foreign_key_constraints' => true,
-            ],
-        ]);
-        DB::purge('wgw');
-
-        SqliteWgwSchema::applyCoreTables();
     }
 
     public function test_settings_normalizes_bare_turn_host(): void
