@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Database;
 
 use App\Models\AppSetting;
+use App\Models\AppUpdateHistory;
 use App\Models\GroupMember;
 use App\Models\Principal;
 use App\Models\User;
@@ -65,6 +66,22 @@ final class WgwModelsTest extends WgwDatabaseTestCase
 
         $this->assertCount(1, $group->groupMembers);
         $this->assertSame('principals/alice', $group->groupMembers->first()?->uri);
+    }
+
+    public function test_app_update_history_records_upgrade_event(): void
+    {
+        AppUpdateHistory::query()->create([
+            'from_version' => '1.0.0',
+            'to_version' => '1.1.0',
+            'status' => 'success',
+            'message' => 'Update applied successfully.',
+            'created_at' => '2026-06-06T12:00:00+00:00',
+        ]);
+
+        $row = AppUpdateHistory::query()->first();
+        $this->assertNotNull($row);
+        $this->assertSame('1.0.0', $row->from_version);
+        $this->assertSame('success', $row->status);
     }
 
     public function test_wgw_connection_uses_install_config_when_present(): void
