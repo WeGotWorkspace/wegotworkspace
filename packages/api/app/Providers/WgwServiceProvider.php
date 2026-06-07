@@ -8,6 +8,7 @@ use App\Storage\NoteStoragePaths;
 use App\Storage\StoragePaths;
 use App\Storage\WgwStorage;
 use App\Support\WgwDatabaseConfig;
+use App\Support\WgwDatabaseProbe;
 use App\Support\WgwInstallConfig;
 use Illuminate\Support\ServiceProvider;
 
@@ -17,6 +18,7 @@ final class WgwServiceProvider extends ServiceProvider
     {
         $this->app->singleton(WgwInstallConfig::class);
         $this->app->singleton(WgwDatabaseConfig::class);
+        $this->app->singleton(WgwDatabaseProbe::class);
         $this->app->singleton(StoragePaths::class);
         $this->app->singleton(NoteStoragePaths::class);
         $this->app->singleton(WgwStorage::class);

@@ -318,7 +318,7 @@ final class InstallerWizardService
         $this->removeEmptySqliteDatabase($db);
 
         try {
-            if ($this->databaseHasUsers($db)) {
+            if ($this->database->hasUsers($db)) {
                 $this->jwtKeys->ensureKeys();
             } else {
                 $this->database->installFresh(
@@ -562,20 +562,6 @@ final class InstallerWizardService
         $normalized = strtolower(trim($value));
 
         return in_array($normalized, ['ssl', 'starttls', 'none'], true) ? $normalized : $fallback;
-    }
-
-    /**
-     * @param  array<string, mixed>  $db
-     */
-    private function databaseHasUsers(array $db): bool
-    {
-        try {
-            $pdo = $this->database->connect($db);
-
-            return (int) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn() > 0;
-        } catch (\Throwable) {
-            return false;
-        }
     }
 
     /**

@@ -6,7 +6,6 @@ namespace Tests\Unit\Support;
 
 use App\LocalConfigFile;
 use App\Support\AppPaths;
-use App\Support\WgwInstallConfig;
 use Tests\Support\WgwInstallFixture;
 use Tests\TestCase;
 
@@ -60,7 +59,7 @@ PHP;
         file_put_contents($this->installRoot.'/wgw-content/keys/api-jwt-private.pem', str_repeat('a', 64));
         file_put_contents($this->installRoot.'/wgw-content/keys/api-jwt-public.pem', str_repeat('b', 64));
 
-        $paths = new AppPaths(new WgwInstallConfig);
+        $paths = app(AppPaths::class);
 
         $this->assertFileDoesNotExist($this->installRoot.'/wgw-content/db.sqlite');
         $this->assertFalse($paths->databaseReady());
@@ -71,7 +70,7 @@ PHP;
     {
         WgwInstallFixture::markInstalled($this->installRoot, $this->installRoot.'/wgw-content');
 
-        $paths = new AppPaths(new WgwInstallConfig);
+        $paths = app(AppPaths::class);
 
         $this->assertTrue($paths->databaseReady());
         $this->assertTrue($paths->isInstalled());

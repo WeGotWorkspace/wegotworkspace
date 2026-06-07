@@ -42,19 +42,19 @@ Sabre-owned tables (`calendars`, `addressbooks`, `locks`, `propertystorage`, …
 
 ## PDO exception boundaries
 
-`\PDO` / `getPdo()` is allowed only at system boundaries — not in domain `Services` outside these areas:
+`\PDO` / `getPdo()` is allowed only for **SabreDAV** and **update SQL backup dumps**:
 
 | Area | Why PDO remains |
 |------|-----------------|
-| `InstallerDatabaseInstaller::connect()` | Pre-install connectivity check before Laravel `wgw` connection exists |
 | `InstallerSeeder` (Sabre Cal/Card init) | Sabre `CalPDO` / `CardPDO` backends require `\PDO` |
 | `UpdateRunner::backupDatabase()` | Table-by-table SQL dump during in-place update backup |
 | `Services/Settings/GroupDirectoryService` | Sabre `PrincipalBackend` |
 | `Services/Admin/AdminUserProvisionerService` | Sabre Cal/Card teardown on user delete |
 | `Services/Auth/SabreCredentialValidator` | Sabre `PDOBasicAuth` |
 | `Dav/SabreServerFactory` | Sabre server PDO bridge |
+| `WgwConnectionConfigurator::applyFromPdo()` | Unit-test bridge for legacy schema fixtures only |
 
-Installer seeding, app settings, and update state/history use Eloquent on the `wgw` connection.
+Installer connectivity, user probes, and install readiness use `WgwDatabaseProbe` (`DB` + Eloquent on `wgw`).
 
 ## Connection
 
