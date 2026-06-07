@@ -137,6 +137,7 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($filesS
     Route::get('mail/messages', [MailController::class, 'messagesIndex']);
     Route::post('mail/messages', [MailController::class, 'messagesStore']);
     Route::post('mail/drafts', [MailController::class, 'draftsStore']);
+    Route::post('mail/move', [MailController::class, 'move']);
     Route::get('mail/messages/{messageId}', [MailController::class, 'messageShowById'])
         ->where('messageId', '.+');
     Route::patch('mail/messages/{messageId}', [MailController::class, 'messageUpdateById'])
