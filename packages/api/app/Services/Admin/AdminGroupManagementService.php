@@ -9,7 +9,6 @@ use App\Models\Principal;
 use App\Services\Installer\InstallerSeeder;
 use App\Services\Settings\GroupDirectoryService;
 use App\Support\AppPaths;
-use Illuminate\Support\Facades\DB;
 
 final class AdminGroupManagementService
 {
@@ -28,7 +27,7 @@ final class AdminGroupManagementService
             throw new \InvalidArgumentException('That group already exists.');
         }
 
-        $this->installerSeeder->ensureGroupsContainerPrincipal(DB::connection('wgw')->getPdo());
+        $this->installerSeeder->ensureGroupsContainerPrincipal();
 
         Principal::query()->create([
             'uri' => $uri,

@@ -69,21 +69,20 @@ final class InstallerDatabaseInstaller
         }
 
         WgwConnectionConfigurator::applyFromInstallerDb($db);
-        $pdo = DB::connection('wgw')->getPdo();
-        $pdo->beginTransaction();
-        try {
+
+        DB::connection('wgw')->transaction(function () use (
+            $username,
+            $password,
+            $displayName,
+            $email,
+            $enableCalendars,
+            $enableContacts,
+            $initialSettings,
+        ): void {
             $this->schemaMigrator->migrate();
-            $this->seeder->seed($pdo, $username, $password, $displayName, $email, $enableCalendars, $enableContacts);
-            $this->settings->replaceMany($pdo, $initialSettings);
-            if ($pdo->inTransaction()) {
-                $pdo->commit();
-            }
-        } catch (\Throwable $e) {
-            if ($pdo->inTransaction()) {
-                $pdo->rollBack();
-            }
-            throw $e;
-        }
+            $this->seeder->seed($username, $password, $displayName, $email, $enableCalendars, $enableContacts);
+            $this->settings->replaceMany($initialSettings);
+        });
     }
 
     /**

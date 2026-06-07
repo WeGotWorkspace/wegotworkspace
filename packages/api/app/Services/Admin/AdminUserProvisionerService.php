@@ -49,7 +49,6 @@ final class AdminUserProvisionerService
         $enableContacts = (bool) ($cfg[WgwSettings::CONTACTS_ENABLED] ?? true);
 
         $this->installerSeeder->seed(
-            DB::connection('wgw')->getPdo(),
             $username,
             $password,
             $displayName !== '' ? $displayName : $username,

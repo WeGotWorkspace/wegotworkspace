@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace App\Services\Installer;
 
+use App\Models\GroupMember;
+use App\Models\Principal;
+use App\Models\User;
 use App\Services\Admin\AdminConstants;
 use App\Support\AppPaths;
+use Illuminate\Support\Facades\DB;
 use Sabre\CalDAV\Backend\PDO as CalPDO;
 use Sabre\CalDAV\Xml\Property\SupportedCalendarComponentSet;
 use Sabre\CardDAV\Backend\PDO as CardPDO;
@@ -15,7 +19,6 @@ final class InstallerSeeder
     public function __construct(private AppPaths $paths) {}
 
     public function seed(
-        \PDO $pdo,
         string $username,
         string $password,
         string $displayName,
@@ -29,18 +32,30 @@ final class InstallerSeeder
             throw new \RuntimeException('Password hashing failed.');
         }
 
-        $pdo->prepare('INSERT INTO users (username, digesta1, digest) VALUES (?, ?, ?)')
-            ->execute([$username, '', $hash]);
+        User::query()->create([
+            'username' => $username,
+            'digesta1' => '',
+            'digest' => $hash,
+        ]);
 
         $principalUri = 'principals/'.$username;
-        $pdo->prepare('INSERT INTO principals (uri, email, displayname) VALUES (?, ?, ?)')
-            ->execute([$principalUri, $email, $displayName]);
+        Principal::query()->create([
+            'uri' => $principalUri,
+            'email' => $email,
+            'displayname' => $displayName,
+        ]);
+
+        $pdo = DB::connection('wgw')->getPdo();
 
         if ($enableCalendars) {
-            $pdo->prepare('INSERT INTO principals (uri, email, displayname) VALUES (?, NULL, NULL)')
-                ->execute([$principalUri.'/calendar-proxy-read']);
-            $pdo->prepare('INSERT INTO principals (uri, email, displayname) VALUES (?, NULL, NULL)')
-                ->execute([$principalUri.'/calendar-proxy-write']);
+            Principal::query()->firstOrCreate(
+                ['uri' => $principalUri.'/calendar-proxy-read'],
+                ['email' => null, 'displayname' => null],
+            );
+            Principal::query()->firstOrCreate(
+                ['uri' => $principalUri.'/calendar-proxy-write'],
+                ['email' => null, 'displayname' => null],
+            );
 
             $caldav = new CalPDO($pdo);
             $caldav->createCalendar($principalUri, 'default', [
@@ -57,43 +72,36 @@ final class InstallerSeeder
         }
 
         $this->ensureUserFilesDirectory($username);
-        $this->joinAdminGroup($pdo, $principalUri);
+        $this->joinAdminGroup($principalUri);
     }
 
-    public function ensureGroupsContainerPrincipal(\PDO $pdo): void
+    public function ensureGroupsContainerPrincipal(): void
     {
-        $driver = $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
-        $sql = $driver === 'mysql'
-            ? 'INSERT IGNORE INTO principals (uri, email, displayname) VALUES (?, NULL, ?)'
-            : 'INSERT OR IGNORE INTO principals (uri, email, displayname) VALUES (?, NULL, ?)';
-        $pdo->prepare($sql)->execute([AdminConstants::GROUP_CONTAINER_URI, 'Groups']);
+        Principal::query()->firstOrCreate(
+            ['uri' => AdminConstants::GROUP_CONTAINER_URI],
+            ['email' => null, 'displayname' => 'Groups'],
+        );
     }
 
-    private function joinAdminGroup(\PDO $pdo, string $memberPrincipalUri): void
+    private function joinAdminGroup(string $memberPrincipalUri): void
     {
-        $this->ensureGroupsContainerPrincipal($pdo);
+        $this->ensureGroupsContainerPrincipal();
 
-        $driver = $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
-        $sql = $driver === 'mysql'
-            ? 'INSERT IGNORE INTO principals (uri, email, displayname) VALUES (?, NULL, ?)'
-            : 'INSERT OR IGNORE INTO principals (uri, email, displayname) VALUES (?, NULL, ?)';
-        $pdo->prepare($sql)->execute([AdminConstants::ADMIN_GROUP_URI, 'Administrators']);
+        $group = Principal::query()->firstOrCreate(
+            ['uri' => AdminConstants::ADMIN_GROUP_URI],
+            ['email' => null, 'displayname' => 'Administrators'],
+        );
         $this->ensureGroupFilesDirectory('administrators');
 
-        $q = $pdo->prepare('SELECT id FROM principals WHERE uri = ?');
-        $q->execute([AdminConstants::ADMIN_GROUP_URI]);
-        $groupId = $q->fetchColumn();
-        $q->execute([$memberPrincipalUri]);
-        $memberPrincipalId = $q->fetchColumn();
-        if ($groupId === false || $memberPrincipalId === false) {
+        $member = Principal::query()->where('uri', $memberPrincipalUri)->first();
+        if ($member === null) {
             return;
         }
-        try {
-            $pdo->prepare('INSERT INTO groupmembers (principal_id, member_id) VALUES (?, ?)')
-                ->execute([(int) $groupId, (int) $memberPrincipalId]);
-        } catch (\PDOException) {
-            // duplicate membership
-        }
+
+        GroupMember::query()->firstOrCreate([
+            'principal_id' => (int) $group->id,
+            'member_id' => (int) $member->id,
+        ]);
     }
 
     private function ensureUserFilesDirectory(string $username): void
