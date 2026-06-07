@@ -29,7 +29,7 @@ describe("MeetRtcSession SDP wiring", () => {
 
   it("uses guest fetchImpl for signaling when provided", async () => {
     const fetchImpl = vi.fn(async (url: string, init: RequestInit) => {
-      if (url.endsWith("/join")) {
+      if (url.includes("/participants") && init.method === "POST") {
         return new Response(
           JSON.stringify({
             peerId: "GUESTPEER1",
@@ -39,10 +39,10 @@ describe("MeetRtcSession SDP wiring", () => {
           { status: 200 },
         );
       }
-      if (url.endsWith("/poll")) {
+      if (url.includes("/events") && init.method === "GET") {
         return new Response(JSON.stringify({ peers: [], messages: [] }), { status: 200 });
       }
-      if (url.endsWith("/leave")) {
+      if (url.includes("/participants/") && init.method === "DELETE") {
         return new Response(JSON.stringify({ ok: true }), { status: 200 });
       }
       return new Response(JSON.stringify({ error: "unexpected" }), { status: 500 });
@@ -62,7 +62,11 @@ describe("MeetRtcSession SDP wiring", () => {
     });
     expect(joined.peerId).toBe("GUESTPEER1");
     expect(joined.sessionKey).toBe("a".repeat(32));
-    expect(fetchImpl.mock.calls.some(([url]) => url.endsWith("/join"))).toBe(true);
+    expect(
+      fetchImpl.mock.calls.some(
+        ([url, init]) => url.includes("/participants") && init?.method === "POST",
+      ),
+    ).toBe(true);
 
     await session.leave();
   });
