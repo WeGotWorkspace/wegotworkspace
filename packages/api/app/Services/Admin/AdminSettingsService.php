@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Admin;
 
 use App\Models\AppSetting;
-use App\Settings\SettingKeys;
+use App\Services\Settings\SettingKeys;
 use App\Support\TimezoneNormalizer;
 
 final class AdminSettingsService

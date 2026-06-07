@@ -36,6 +36,30 @@ composer done-gate:contract
 
 CI runs the full gate (see `.github/workflows/ci.yml`).
 
+## Reading the output
+
+`composer done-gate` prints labeled steps and a final summary. **Exit code 0 = passed.**
+
+PHPUnit may still print **"OK, but there were issues!"** — that means **deprecations**, not failing tests:
+
+| Signal | Meaning |
+|--------|---------|
+| `.` | Test passed |
+| `D` | Test passed but triggered a deprecation (details listed after the run) |
+| `F` / `E` | Failure / error — gate should exit non-zero |
+
+Common deprecations today:
+
+- **PHPUnit metadata** — prefer `#[DataProvider]` attributes over `@dataProvider` docblocks.
+
+More detail on demand:
+
+```bash
+composer done-gate -- --verbose          # testdox names on full suite
+DONE_GATE_VERBOSE=1 composer done-gate
+php vendor/bin/phpunit --display-deprecations --display-phpunit-deprecations
+```
+
 ## What each layer means
 
 | Layer | Enforces |

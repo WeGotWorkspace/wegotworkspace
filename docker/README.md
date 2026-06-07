@@ -27,6 +27,12 @@ docker compose -f compose.dev.yml up -d --build
 
 **Stop:** `docker compose -f compose.dev.yml down`
 
+**After pulling API schema changes** (e.g. new `collab_peers` tables), apply pending WGW migrations:
+
+```bash
+docker compose -f compose.dev.yml exec web php /var/www/packages/api/artisan wgw:schema-migrate
+```
+
 ## HTTPS + WebDAV (`wegotworkspace.localhost`)
 
 WebDAV/CalDAV clients expect a stable hostname and trusted TLS. Use **mkcert** on the host and mount leaf certs into the container.
@@ -62,6 +68,12 @@ WebDAV/CalDAV clients expect a stable hostname and trusted TLS. Use **mkcert** o
 | `WGW_DOCKER_HTTP_PORT` | `9080` | Plain HTTP without `/etc/hosts` (health, curl) |
 
 Certs live in `docker/apache/certs/` (gitignored `*.pem`). Without certs, the entrypoint serves HTTP only on port 80 inside the container.
+
+### MySQL during install (Docker)
+
+The Apache image includes **pdo_mysql**. After changing PHP extensions, rebuild: `docker compose -f compose.dev.yml up -d --build`.
+
+If MySQL runs on the **host** (e.g. MAMP on port 8889), use **`host.docker.internal`** as the host from inside the container — `127.0.0.1` points at the container itself, not your Mac.
 
 ## Optional Mailhog
 

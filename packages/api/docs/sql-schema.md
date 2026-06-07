@@ -26,6 +26,7 @@ All models use [`UsesWgwConnection`](app/Models/Concerns/UsesWgwConnection.php) 
 | `api_refresh_tokens` | `App\Models\ApiRefreshToken` | JWT refresh tokens (`token_hash` PK) |
 | `api_revoked_tokens` | `App\Models\ApiRevokedToken` | Revoked JWT JTIs |
 | `app_update_history` | `App\Models\AppUpdateHistory` | In-place update audit log |
+| `app_migrations` | `App\Models\AppMigration` | Legacy schema version audit (upgraded installs) |
 | `meet_peers` | `App\Models\MeetPeer` | Meet signaling peers (composite key) |
 | `meet_messages` | `App\Models\MeetMessage` | Meet signaling messages |
 | `collab_peers` | `App\Models\CollabPeer` | Collab signaling peers |
@@ -41,18 +42,19 @@ Sabre-owned tables (`calendars`, `addressbooks`, `locks`, `propertystorage`, …
 
 ## PDO exception boundaries
 
-`\PDO` / `getPdo()` is allowed only at system boundaries — not in domain `Services` outside these areas:
+`\PDO` / `getPdo()` is allowed only for **SabreDAV** and **update SQL backup dumps**:
 
 | Area | Why PDO remains |
 |------|-----------------|
-| `Services/Installer/` | Initial DB connect before Laravel is fully booted |
-| `Services/Update/UpdateRunner` | Database dump/restore during backup (not history writes) |
+| `InstallerSeeder` (Sabre Cal/Card init) | Sabre `CalPDO` / `CardPDO` backends require `\PDO` |
+| `UpdateRunner::backupDatabase()` | Table-by-table SQL dump during in-place update backup |
 | `Services/Settings/GroupDirectoryService` | Sabre `PrincipalBackend` |
-| `Services/Admin/*` | Sabre user/group provisioning |
+| `Services/Admin/AdminUserProvisionerService` | Sabre Cal/Card teardown on user delete |
 | `Services/Auth/SabreCredentialValidator` | Sabre `PDOBasicAuth` |
 | `Dav/SabreServerFactory` | Sabre server PDO bridge |
+| `WgwConnectionConfigurator::applyFromPdo()` | Unit-test bridge for legacy schema fixtures only |
 
-Everything else uses Eloquent. `greenfield-guard` enforces no `DB::connection()->table()` in domain services and no runtime `ALTER TABLE` DDL in services.
+Installer connectivity, user probes, and install readiness use `WgwDatabaseProbe` (`DB` + Eloquent on `wgw`).
 
 ## Connection
 

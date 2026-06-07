@@ -10,6 +10,7 @@ use App\Services\Installer\InstallerEnvChecker;
 use App\Services\Installer\WgwSchemaMigrator;
 use App\Support\AppVersion;
 use App\Support\WgwInstallConfig;
+use Illuminate\Support\Facades\DB;
 
 final class UpdateRunner
 {
@@ -29,13 +30,13 @@ final class UpdateRunner
     /**
      * @return array<string, mixed>
      */
-    public function getState(\PDO $pdo): array
+    public function getState(): array
     {
         $this->recoverStaleLockState();
         $state = $this->store->read();
         $latest = isset($state['latest']) && is_array($state['latest']) ? $state['latest'] : null;
         $hasRequiredMetadata = self::hasRequiredReleaseMetadata($latest);
-        $driver = (string) $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        $driver = $this->wgwDriver();
         $checks = $this->envChecker->checkAll($driver === 'mysql' ? 'mysql' : 'sqlite');
         $compatible = $this->envChecker->allPassed($checks);
         $checks = array_merge($checks, self::capacityChecks($this->install->installRoot()));
@@ -180,7 +181,7 @@ final class UpdateRunner
     /**
      * @return array<string, mixed>
      */
-    public function check(\PDO $pdo, string $feedUrl): array
+    public function check(string $feedUrl): array
     {
         self::ensureRateLimit('check', 10);
         $state = $this->store->read();
@@ -205,14 +206,14 @@ final class UpdateRunner
         }
         $this->store->write($state);
 
-        return self::getState($pdo);
+        return $this->getState();
     }
 
     /**
      * @param  array<string, mixed>  $input
      * @return array<string, mixed>
      */
-    public function apply(\PDO $pdo, array $input): array
+    public function apply(array $input): array
     {
         self::ensureRateLimit('apply', 30);
         $lock = @fopen($this->store->absolutePath($this->store->lockPath()), 'c+');
@@ -285,7 +286,7 @@ final class UpdateRunner
 
             self::writeStatus('backing_up', $beforeVersion, $targetVersion);
             @mkdir($backupDir, 0775, true);
-            self::backupDatabase($pdo, $backupDir, $beforeVersion, $targetVersion);
+            self::backupDatabase($backupDir, $beforeVersion, $targetVersion);
             $this->backupApiEnvFile($backupDir);
             self::throwIfCancelRequested();
             self::assertApplyCapacity($releaseRoot, $this->install->installRoot(), $replacePaths);
@@ -385,7 +386,7 @@ final class UpdateRunner
      * @param  array<string, mixed>  $input
      * @return array<string, mixed>
      */
-    public function deleteBackup(\PDO $pdo, array $input): array
+    public function deleteBackup(array $input): array
     {
         $name = isset($input['name']) && is_string($input['name']) ? trim($input['name']) : '';
         if ($name === '' || ! preg_match('/^[A-Za-z0-9._-]+$/', $name)) {
@@ -401,7 +402,7 @@ final class UpdateRunner
             throw new \RuntimeException('Could not delete backup.');
         }
 
-        return self::getState($pdo);
+        return $this->getState();
     }
 
     public function inMaintenanceMode(): bool
@@ -412,7 +413,7 @@ final class UpdateRunner
     /**
      * @return array<string, mixed>
      */
-    public function cancel(\PDO $pdo): array
+    public function cancel(): array
     {
         $state = $this->store->read();
         if (! is_file($this->store->absolutePath($this->store->lockPath()))) {
@@ -427,7 +428,7 @@ final class UpdateRunner
         $this->store->write($state);
         $this->store->appendLog('Cancellation requested by admin user.');
 
-        return self::getState($pdo);
+        return $this->getState();
     }
 
     private function writeMaintenanceMode(bool $enabled): void
@@ -627,14 +628,14 @@ final class UpdateRunner
     }
 
     private function backupDatabase(
-        \PDO $pdo,
         string $backupRoot,
         string $fromVersion,
         string $toVersion
     ): void {
         self::writePhaseProgress('backing_up', $fromVersion, $toVersion, 0, 1);
-        $driver = (string) $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        $driver = $this->wgwDriver();
         if ($driver === 'sqlite') {
+            $pdo = DB::connection('wgw')->getPdo();
             $sqlitePath = self::resolveSqlitePathFromPdo($pdo);
             if ($sqlitePath === null || ! is_file($sqlitePath)) {
                 throw new \RuntimeException('Could not locate SQLite database file for backup.');
@@ -652,12 +653,17 @@ final class UpdateRunner
         }
         if ($driver === 'mysql') {
             $dest = $backupRoot.'/database.sql';
-            self::exportMysqlDatabase($pdo, $dest);
+            self::exportMysqlDatabase(DB::connection('wgw')->getPdo(), $dest);
             self::writePhaseProgress('backing_up', $fromVersion, $toVersion, 1, 1);
 
             return;
         }
         throw new \RuntimeException('Database backup is not supported for PDO driver: '.$driver);
+    }
+
+    private function wgwDriver(): string
+    {
+        return DB::connection('wgw')->getDriverName();
     }
 
     private function resolveSqlitePathFromPdo(\PDO $pdo): ?string

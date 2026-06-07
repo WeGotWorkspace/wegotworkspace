@@ -211,25 +211,25 @@ export async function deleteNoteItem(
 
 export async function archiveNoteItem(id: string, opts?: { signal?: AbortSignal }): Promise<Note> {
   const json = await requestNotesJson(
-    `/notes/items/${encodeURIComponent(id)}/archive`,
-    "POST",
-    {},
+    `/notes/items/${encodeURIComponent(id)}`,
+    "PATCH",
+    { archived: true },
     opts,
   );
   const row = parseNoteMutationPayload(json);
-  if (!row) throw new Error(`POST /notes/items/${id}/archive returned no note payload`);
+  if (!row) throw new Error(`PATCH /notes/items/${id} archive returned no note payload`);
   return noteFromWgwItem(row);
 }
 
 export async function restoreNoteItem(id: string, opts?: { signal?: AbortSignal }): Promise<Note> {
   const json = await requestNotesJson(
-    `/notes/items/${encodeURIComponent(id)}/restore`,
-    "POST",
-    {},
+    `/notes/items/${encodeURIComponent(id)}`,
+    "PATCH",
+    { archived: false },
     opts,
   );
   const row = parseNoteMutationPayload(json);
-  if (!row) throw new Error(`POST /notes/items/${id}/restore returned no note payload`);
+  if (!row) throw new Error(`PATCH /notes/items/${id} restore returned no note payload`);
   return noteFromWgwItem(row);
 }
 

@@ -1,13 +1,8 @@
 import { wgwFetch, wgwFetchPrincipal, wgwReadJson } from "@/lib/api/wgw/http";
 import { fetchWgwPlugins } from "@/lib/api/wgw/plugins";
 import type {
-  WgwDriveChangeDirRequest,
-  WgwDriveCreateRequest,
-  WgwDriveDeleteItemsRequest,
   WgwDriveDirectoryEntry,
   WgwDriveListingResponse,
-  WgwDriveRenameRequest,
-  WgwDriveStarUpdateRequest,
   WgwDriveStarsResponse,
   WgwDriveUserResponse,
   WgwPluginDescriptor,
@@ -27,13 +22,8 @@ function normalizePath(path: string): string {
   return withLeading.replace(/\/+$/, "");
 }
 
-function downloadPathToken(path: string): string {
-  const bytes = new TextEncoder().encode(path);
-  let binary = "";
-  for (let i = 0; i < bytes.length; i += 1) {
-    binary += String.fromCharCode(bytes[i]!);
-  }
-  return btoa(binary);
+function pathQuery(path: string): string {
+  return `path=${encodeURIComponent(normalizePath(path))}`;
 }
 
 function uploadIdentifier(file: File): string {
@@ -48,20 +38,15 @@ function isVisibleDriveEntry(entry: WgwDriveDirectoryEntry): boolean {
 const DRIVE_UPLOAD_CHUNK_SIZE = 1 * 1024 * 1024; // Stay below stricter upload_max_filesize defaults.
 
 async function fetchDriveUser(opts?: { signal?: AbortSignal }) {
-  const res = await wgwFetch("/drive/user", { signal: opts?.signal });
-  if (!res.ok) throw new Error(`GET /drive/user failed (${res.status})`);
+  const res = await wgwFetch("/files/context", { signal: opts?.signal });
+  if (!res.ok) throw new Error(`GET /files/context failed (${res.status})`);
   const payload = (await wgwReadJson(res)) as WgwDriveUserResponse;
   return payload.data;
 }
 
 async function fetchListing(dir: string, opts?: { signal?: AbortSignal }) {
-  const res = await wgwFetch("/drive/getdir", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ dir: normalizePath(dir) }),
-    signal: opts?.signal,
-  });
-  if (!res.ok) throw new Error(`POST /drive/getdir failed (${res.status})`);
+  const res = await wgwFetch(`/files/children?${pathQuery(dir)}`, { signal: opts?.signal });
+  if (!res.ok) throw new Error(`GET /files/children failed (${res.status})`);
   const payload = (await wgwReadJson(res)) as WgwDriveListingResponse;
   return {
     ...payload.data,
@@ -127,6 +112,26 @@ async function postJson(path: string, body: object, opts?: { signal?: AbortSigna
   if (!res.ok) throw new Error(`POST ${path} failed (${res.status})`);
 }
 
+async function patchJson(path: string, body: object, opts?: { signal?: AbortSignal }) {
+  const res = await wgwFetch(path, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    signal: opts?.signal,
+  });
+  if (!res.ok) throw new Error(`PATCH ${path} failed (${res.status})`);
+}
+
+async function deleteJson(path: string, body: object, opts?: { signal?: AbortSignal }) {
+  const res = await wgwFetch(path, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    signal: opts?.signal,
+  });
+  if (!res.ok) throw new Error(`DELETE ${path} failed (${res.status})`);
+}
+
 export function createWgwDriveOperations(
   initialCwd = "/",
   initialPlugins: WgwPluginDescriptor[] = [],
@@ -141,70 +146,65 @@ export function createWgwDriveOperations(
       return state;
     },
     async changeDir(to, opts) {
-      const payload: WgwDriveChangeDirRequest = { to: normalizePath(to) };
-      const res = await wgwFetch("/drive/changedir", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-        signal: opts?.signal,
-      });
-      if (!res.ok) throw new Error(`POST /drive/changedir failed (${res.status})`);
-      const changed = (await wgwReadJson(res)) as { data: { cwd: string } };
-      cwd = normalizePath(changed.data.cwd);
+      cwd = normalizePath(to);
       return fetchState(cwd, opts, plugins);
     },
     async listDirectory(at, opts) {
       return fetchState(normalizePath(at), opts, plugins);
     },
     async search(query, opts) {
-      const res = await wgwFetch("/drive/searchfiles", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ q: query.trim(), limit: Math.min(100, opts?.limit ?? 100) }),
-        signal: opts?.signal,
-      });
-      if (!res.ok) throw new Error(`POST /drive/searchfiles failed (${res.status})`);
+      const params = new URLSearchParams();
+      params.set("search", query.trim());
+      params.set("limit", String(Math.min(100, opts?.limit ?? 100)));
+      const res = await wgwFetch(`/files?${params.toString()}`, { signal: opts?.signal });
+      if (!res.ok) throw new Error(`GET /files?search= failed (${res.status})`);
       const payload = (await wgwReadJson(res)) as WgwDriveListingResponse;
       return payload.data.files.filter(isVisibleDriveEntry);
     },
     async createFolder(input, opts) {
-      const payload: WgwDriveCreateRequest = {
-        cwd: normalizePath(input.cwd),
-        name: input.name.trim(),
-        type: "dir",
-      };
-      await postJson("/drive/createnew", payload, opts);
+      const parent = normalizePath(input.cwd);
+      const name = input.name.trim();
+      await postJson(`/files/directories?${pathQuery(parent)}`, { name }, opts);
       return fetchState(cwd, opts, plugins);
     },
     async createFile(input, opts) {
-      const payload: WgwDriveCreateRequest = {
-        cwd: normalizePath(input.cwd),
-        name: input.name.trim(),
-        type: "file",
-      };
-      await postJson("/drive/createnew", payload, opts);
+      const parent = normalizePath(input.cwd);
+      const name = input.name.trim();
+      await postJson(`/files/directories?${pathQuery(parent)}`, { name, type: "file" }, opts);
       return fetchState(cwd, opts, plugins);
     },
     async renameItem(input, opts) {
-      const payload: WgwDriveRenameRequest = {
-        destination: normalizePath(input.destination),
-        from: input.from,
-        to: input.to,
-      };
-      await postJson("/drive/renameitem", payload, opts);
+      const fromPath = input.from.includes("/")
+        ? normalizePath(input.from)
+        : (() => {
+            const parent = normalizePath(input.destination);
+            return parent === "/" ? `/${input.from}` : `${parent}/${input.from}`;
+          })();
+      const destination = normalizePath(input.destination);
+      const body: { name: string; destination?: string } = { name: input.to };
+      if (destination !== parentAndName(fromPath).destination) {
+        body.destination = destination;
+      }
+      await patchJson(`/files?${pathQuery(fromPath)}`, body, opts);
       return fetchState(cwd, opts, plugins);
     },
     async deleteItems(paths, opts) {
-      const payload: WgwDriveDeleteItemsRequest = {
-        items: paths.map((path) => ({ path: normalizePath(path) })),
-      };
-      await postJson("/drive/deleteitems", payload, opts);
+      const normalized = paths.map((path) => normalizePath(path));
+      if (normalized.length === 1) {
+        await wgwFetch(`/files?${pathQuery(normalized[0]!)}`, {
+          method: "DELETE",
+          signal: opts?.signal,
+        }).then((res) => {
+          if (!res.ok) throw new Error(`DELETE /files?path= failed (${res.status})`);
+        });
+      } else {
+        await deleteJson("/files", { paths: normalized }, opts);
+      }
       return fetchState(cwd, opts, plugins);
     },
     async downloadFile(path, opts) {
-      const encoded = encodeURIComponent(downloadPathToken(normalizePath(path)));
-      const res = await wgwFetch(`/drive/download?path=${encoded}`, { signal: opts?.signal });
-      if (!res.ok) throw new Error(`GET /drive/download failed (${res.status})`);
+      const res = await wgwFetch(`/files/content?${pathQuery(path)}`, { signal: opts?.signal });
+      if (!res.ok) throw new Error(`GET /files/content failed (${res.status})`);
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       try {
@@ -219,18 +219,17 @@ export function createWgwDriveOperations(
       }
     },
     async readFileBlob(path, opts) {
-      const encoded = encodeURIComponent(downloadPathToken(normalizePath(path)));
-      const res = await wgwFetch(`/drive/download?path=${encoded}`, { signal: opts?.signal });
-      if (!res.ok) throw new Error(`GET /drive/download failed (${res.status})`);
+      const res = await wgwFetch(`/files/content?${pathQuery(path)}`, { signal: opts?.signal });
+      if (!res.ok) throw new Error(`GET /files/content failed (${res.status})`);
       return res.blob();
     },
     async checkUploadReady(opts) {
-      const res = await wgwFetch("/drive/upload", { method: "GET", signal: opts?.signal });
-      if (!res.ok) throw new Error(`GET /drive/upload failed (${res.status})`);
+      const res = await wgwFetch("/files/content", { method: "HEAD", signal: opts?.signal });
+      if (!res.ok) throw new Error(`HEAD /files/content failed (${res.status})`);
     },
     async listStars(opts) {
-      const res = await wgwFetch("/drive/stars", { method: "GET", signal: opts?.signal });
-      if (!res.ok) throw new Error(`GET /drive/stars failed (${res.status})`);
+      const res = await wgwFetch("/files/starred", { method: "GET", signal: opts?.signal });
+      if (!res.ok) throw new Error(`GET /files/starred failed (${res.status})`);
       const payload = (await wgwReadJson(res)) as WgwDriveStarsResponse;
       return payload.data.paths ?? [];
     },
@@ -267,11 +266,13 @@ export function createWgwDriveOperations(
         .filter((entry): entry is WgwDriveDirectoryEntry => !!entry);
     },
     async setStar(input, opts) {
-      const payload: WgwDriveStarUpdateRequest = {
-        path: normalizePath(input.path),
-        starred: !!input.starred,
-      };
-      await postJson("/drive/stars", payload, opts);
+      const target = `/files/star?${pathQuery(input.path)}`;
+      if (input.starred) {
+        await postJson(target, {}, opts);
+      } else {
+        const res = await wgwFetch(target, { method: "DELETE", signal: opts?.signal });
+        if (!res.ok) throw new Error(`DELETE /files/star failed (${res.status})`);
+      }
     },
     async uploadFiles(input, opts) {
       const targetCwd = normalizePath(input.cwd);
@@ -312,14 +313,13 @@ export function createWgwDriveOperations(
           form.append("resumableIdentifier", identifier);
           form.append("resumableChunkNumber", String(chunkIndex + 1));
           form.append("resumableTotalChunks", String(fileChunks));
-          form.append("cwd", targetCwd);
 
-          const res = await wgwFetch("/drive/upload", {
+          const res = await wgwFetch(`/files/content?${pathQuery(targetCwd)}`, {
             method: "POST",
             body: form,
             signal: opts?.signal,
           });
-          if (!res.ok) throw new Error(`POST /drive/upload failed (${res.status})`);
+          if (!res.ok) throw new Error(`POST /files/content failed (${res.status})`);
           uploadedChunks += 1;
           uploadedBytes += chunkBlob.size;
           publishProgress(file.name);

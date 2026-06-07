@@ -7,6 +7,7 @@ import {
   parseDocsRouteSearch,
 } from "@/docs-core/src/docs-route-search";
 import { wgwApiBaseUrl, wgwCurrentAccessToken } from "@/lib/api/wgw/http";
+import { encodeFileRoomId } from "@/lib/rtc/room-id";
 import type { DocsAppProps } from "@/docs-core/src/docs-app-props";
 import { DocsWorkspace } from "@/docs-core/src/docs-workspace";
 import { DocsCollabWorkspace } from "@/text-editor-core/docs-collab";
@@ -54,14 +55,15 @@ export function DocsApp({ apiSource }: DocsAppProps = {}) {
     if (!showCollab || !filePath) return undefined;
     const baseUrl = wgwApiBaseUrl();
     const room = filePath;
-    const encodedRoom = encodeURIComponent(room);
+    const roomId = encodeFileRoomId(room);
+    const pathQuery = encodeURIComponent(room);
     return {
-      signalUrl: `${baseUrl}/collab/send`,
-      collabApiBaseUrl: `${baseUrl}/collab`,
-      collabRtcUrl: `${baseUrl}/collab/rtc`,
+      signalUrl: `${baseUrl}/rooms/${encodeURIComponent(roomId)}/events`,
+      collabApiBaseUrl: `${baseUrl}/rooms`,
+      collabRtcUrl: `${baseUrl}/rooms/${encodeURIComponent(roomId)}/configuration`,
       authToken: wgwCurrentAccessToken() ?? undefined,
-      documentUrl: `${baseUrl}/collab/document?room=${encodedRoom}`,
-      yjsUrl: `${baseUrl}/collab/document?room=${encodedRoom}&format=yjs`,
+      documentUrl: `${baseUrl}/files/collaboration?path=${pathQuery}`,
+      yjsUrl: `${baseUrl}/files/collaboration?path=${pathQuery}&format=yjs`,
       documentSaveMethod: "PUT" as const,
       room,
     };

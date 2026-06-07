@@ -1,8 +1,8 @@
 export type SignalingChannel = "meet" | "collab" | "chat" | "sheet" | "slides";
 
-/** OpenAPI HTTP path segment for a signaling channel. */
-export function signalingApiSegment(channel: SignalingChannel): string {
-  return channel;
+/** REST collection segment for room session signaling (`/rooms/{roomId}/*`). */
+export function signalingApiSegment(_channel: SignalingChannel): string {
+  return "rooms";
 }
 
 export type IceMode = "direct" | "relay";

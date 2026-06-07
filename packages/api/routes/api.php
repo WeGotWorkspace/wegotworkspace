@@ -5,15 +5,11 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\V1\Admin\GroupMemberController as AdminGroupMemberController;
 use App\Http\Controllers\Api\V1\Admin\GroupsController as AdminGroupsController;
 use App\Http\Controllers\Api\V1\Admin\PluginInstallController as AdminPluginInstallController;
-use App\Http\Controllers\Api\V1\Admin\SearchReindexCancelController as AdminSearchReindexCancelController;
-use App\Http\Controllers\Api\V1\Admin\SearchReindexRunController as AdminSearchReindexRunController;
-use App\Http\Controllers\Api\V1\Admin\SearchReindexStateController as AdminSearchReindexStateController;
+use App\Http\Controllers\Api\V1\Admin\SearchJobController as AdminSearchJobController;
 use App\Http\Controllers\Api\V1\Admin\SettingsController as AdminSettingsController;
 use App\Http\Controllers\Api\V1\Admin\StateController as AdminStateController;
-use App\Http\Controllers\Api\V1\Admin\UpdateApplyController as AdminUpdateApplyController;
 use App\Http\Controllers\Api\V1\Admin\UpdateBackupController as AdminUpdateBackupController;
-use App\Http\Controllers\Api\V1\Admin\UpdateCancelController as AdminUpdateCancelController;
-use App\Http\Controllers\Api\V1\Admin\UpdateCheckController as AdminUpdateCheckController;
+use App\Http\Controllers\Api\V1\Admin\UpdateJobController as AdminUpdateJobController;
 use App\Http\Controllers\Api\V1\Admin\UpdateLogController as AdminUpdateLogController;
 use App\Http\Controllers\Api\V1\Admin\UpdateStateController as AdminUpdateStateController;
 use App\Http\Controllers\Api\V1\Admin\UsersController as AdminUsersController;
@@ -22,23 +18,22 @@ use App\Http\Controllers\Api\V1\Auth\MeController;
 use App\Http\Controllers\Api\V1\Auth\RefreshController;
 use App\Http\Controllers\Api\V1\Auth\RevokeController;
 use App\Http\Controllers\Api\V1\Auth\TokenController;
-use App\Http\Controllers\Api\V1\Collab\CollabController;
 use App\Http\Controllers\Api\V1\Dav\CapabilitiesController as DavCapabilitiesController;
-use App\Http\Controllers\Api\V1\Drive\DriveController;
+use App\Http\Controllers\Api\V1\Files\FilesController;
 use App\Http\Controllers\Api\V1\Home\StateController as HomeStateController;
 use App\Http\Controllers\Api\V1\Installer\ActionController as InstallerActionController;
 use App\Http\Controllers\Api\V1\Installer\BootstrapController as InstallerBootstrapController;
 use App\Http\Controllers\Api\V1\Installer\StateController as InstallerStateController;
 use App\Http\Controllers\Api\V1\Mail\MailController;
-use App\Http\Controllers\Api\V1\Meet\MeetController;
+use App\Http\Controllers\Api\V1\Meetings\MeetingsController;
 use App\Http\Controllers\Api\V1\Notes\CapabilitiesController as NotesCapabilitiesController;
 use App\Http\Controllers\Api\V1\Notes\ItemsController as NotesItemsController;
 use App\Http\Controllers\Api\V1\Notes\NotebooksController;
 use App\Http\Controllers\Api\V1\Notes\StateController as NotesStateController;
-use App\Http\Controllers\Api\V1\Plugins\ActivateController as PluginsActivateController;
-use App\Http\Controllers\Api\V1\Plugins\DeactivateController as PluginsDeactivateController;
+use App\Http\Controllers\Api\V1\Plugins\ActivationController as PluginsActivationController;
 use App\Http\Controllers\Api\V1\Plugins\IndexController as PluginsIndexController;
 use App\Http\Controllers\Api\V1\Plugins\SessionController as PluginsSessionController;
+use App\Http\Controllers\Api\V1\Rooms\RoomSessionController;
 use App\Http\Controllers\Api\V1\Search\UnifiedSearchController;
 use App\Http\Controllers\Api\V1\Search\UnifiedSearchDownloadController;
 use App\Http\Controllers\Api\V1\Settings\MailController as SettingsMailController;
@@ -66,13 +61,23 @@ Route::post('auth/token', TokenController::class);
 Route::post('auth/refresh', RefreshController::class);
 Route::post('auth/revoke', RevokeController::class);
 
-Route::post('meet/room', [MeetController::class, 'room']);
-Route::get('meet/rtc', [MeetController::class, 'rtc']);
-Route::post('meet/join', [MeetController::class, 'join']);
-Route::post('meet/poll', [MeetController::class, 'poll']);
-Route::post('meet/send', [MeetController::class, 'send']);
-Route::post('meet/leave', [MeetController::class, 'leave']);
-Route::post('meet/chat', [MeetController::class, 'chat']);
+Route::post('meetings/rooms', [MeetingsController::class, 'store']);
+Route::get('meetings/rooms/{roomId}', [MeetingsController::class, 'show'])
+    ->where('roomId', '[A-Za-z0-9_-]+');
+
+Route::post('rooms/{roomId}/participants', [RoomSessionController::class, 'storeParticipant'])
+    ->where('roomId', '[A-Za-z0-9_.-]+');
+Route::get('rooms/{roomId}/events', [RoomSessionController::class, 'indexEvents'])
+    ->where('roomId', '[A-Za-z0-9_.-]+');
+Route::post('rooms/{roomId}/events', [RoomSessionController::class, 'storeEvent'])
+    ->where('roomId', '[A-Za-z0-9_.-]+');
+Route::delete('rooms/{roomId}/participants/{participantId}', [RoomSessionController::class, 'destroyParticipant'])
+    ->where('roomId', '[A-Za-z0-9_.-]+')
+    ->where('participantId', '[A-Za-z0-9_-]+|me');
+Route::get('rooms/{roomId}/configuration', [RoomSessionController::class, 'configuration'])
+    ->where('roomId', '[A-Za-z0-9_.-]+');
+Route::post('rooms/{roomId}/messages', [RoomSessionController::class, 'storeMessage'])
+    ->where('roomId', '[A-Za-z0-9_.-]+');
 
 Route::middleware([
     EncryptCookies::class,
@@ -84,40 +89,41 @@ Route::middleware([
     Route::post('installer/action', InstallerActionController::class);
 });
 
-$driveSession = [
+$filesSession = [
     EncryptCookies::class,
     AddQueuedCookiesToResponse::class,
     StartSession::class,
 ];
 
-Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($driveSession): void {
+Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($filesSession): void {
     Route::get('me', MeController::class);
-    Route::get('home/state', HomeStateController::class);
+    Route::get('workspace/state', HomeStateController::class);
     Route::get('dav/capabilities', DavCapabilitiesController::class);
 
-    Route::middleware($driveSession)->group(function (): void {
-        Route::get('drive/user', [DriveController::class, 'user']);
-        Route::post('drive/getdir', [DriveController::class, 'getDir']);
-        Route::post('drive/searchfiles', [DriveController::class, 'searchFiles']);
-        Route::post('drive/changedir', [DriveController::class, 'changeDir']);
-        Route::post('drive/createnew', [DriveController::class, 'createNew']);
-        Route::post('drive/renameitem', [DriveController::class, 'renameItem']);
-        Route::post('drive/deleteitems', [DriveController::class, 'deleteItems']);
-        Route::get('drive/download', [DriveController::class, 'download']);
-        Route::get('drive/upload', [DriveController::class, 'uploadProbe']);
-        Route::post('drive/upload', [DriveController::class, 'upload']);
-        Route::get('drive/stars', [DriveController::class, 'starsIndex']);
-        Route::post('drive/stars', [DriveController::class, 'starsUpdate']);
+    Route::middleware($filesSession)->group(function (): void {
+        Route::get('files/context', [FilesController::class, 'context']);
+        Route::get('files/children', [FilesController::class, 'children']);
+        Route::get('files', [FilesController::class, 'index']);
+        Route::post('files/directories', [FilesController::class, 'storeDirectory']);
+        Route::patch('files', [FilesController::class, 'patch']);
+        Route::delete('files', [FilesController::class, 'destroy']);
+        Route::match(['GET', 'HEAD', 'POST'], 'files/content', [FilesController::class, 'content']);
+        Route::get('files/collaboration', [FilesController::class, 'showCollaboration']);
+        Route::put('files/collaboration', [FilesController::class, 'updateCollaboration']);
+        Route::post('files/star', [FilesController::class, 'star']);
+        Route::delete('files/star', [FilesController::class, 'unstar']);
+        Route::get('files/starred', [FilesController::class, 'starred']);
+        Route::post('files/rooms', [FilesController::class, 'resolveRoom']);
     });
-    Route::get('search/unified', UnifiedSearchController::class);
-    Route::get('records/download', UnifiedSearchDownloadController::class);
+
+    Route::get('search/results', UnifiedSearchController::class);
+    Route::get('search/results/{resultId}/content', [UnifiedSearchDownloadController::class, 'contentByResultId'])
+        ->where('resultId', '.+');
 
     Route::get('plugins', PluginsIndexController::class);
     Route::post('plugins/{id}/session', PluginsSessionController::class)
         ->where('id', '[a-z0-9_-]+');
-    Route::post('plugins/{id}/activate', PluginsActivateController::class)
-        ->where('id', '[a-z0-9_-]+');
-    Route::post('plugins/{id}/deactivate', PluginsDeactivateController::class)
+    Route::put('plugins/{id}/activation', PluginsActivationController::class)
         ->where('id', '[a-z0-9_-]+');
     Route::get('settings/state', SettingsStateController::class);
     Route::put('settings/profile', SettingsProfileController::class);
@@ -129,35 +135,32 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($driveS
     Route::patch('mail/folders', [MailController::class, 'foldersUpdate']);
     Route::delete('mail/folders', [MailController::class, 'foldersDestroy']);
     Route::get('mail/messages', [MailController::class, 'messagesIndex']);
-    Route::get('mail/messages/attachments', [MailController::class, 'messageAttachments']);
-    Route::get('mail/message', [MailController::class, 'messageShow']);
-    Route::patch('mail/message', [MailController::class, 'messageUpdate']);
-    Route::delete('mail/message', [MailController::class, 'messageDestroy']);
-    Route::get('mail/message/attachment', [MailController::class, 'messageAttachment']);
+    Route::post('mail/messages', [MailController::class, 'messagesStore']);
+    Route::post('mail/drafts', [MailController::class, 'draftsStore']);
     Route::post('mail/move', [MailController::class, 'move']);
-    Route::post('mail/send', [MailController::class, 'send']);
-    Route::post('mail/draft', [MailController::class, 'draft']);
+    Route::get('mail/messages/{messageId}', [MailController::class, 'messageShowById'])
+        ->where('messageId', '.+');
+    Route::patch('mail/messages/{messageId}', [MailController::class, 'messageUpdateById'])
+        ->where('messageId', '.+');
+    Route::delete('mail/messages/{messageId}', [MailController::class, 'messageDestroyById'])
+        ->where('messageId', '.+');
+    Route::get('mail/messages/{messageId}/attachments', [MailController::class, 'messageAttachmentsById'])
+        ->where('messageId', '.+');
+    Route::get('mail/messages/{messageId}/attachments/{attachmentId}', [MailController::class, 'messageAttachmentById'])
+        ->where('messageId', '.+')
+        ->where('attachmentId', '[0-9.]+');
 
     Route::get('notes/capabilities', NotesCapabilitiesController::class);
     Route::get('notes/state', NotesStateController::class);
     Route::get('notes/items', [NotesItemsController::class, 'index']);
     Route::post('notes/items', [NotesItemsController::class, 'store']);
     Route::put('notes/items/{id}', [NotesItemsController::class, 'update']);
+    Route::patch('notes/items/{id}', [NotesItemsController::class, 'patch']);
     Route::delete('notes/items/{id}', [NotesItemsController::class, 'destroy']);
-    Route::post('notes/items/{id}/archive', [NotesItemsController::class, 'archive']);
-    Route::post('notes/items/{id}/restore', [NotesItemsController::class, 'restore']);
     Route::get('notes/notebooks', [NotebooksController::class, 'index']);
     Route::post('notes/notebooks', [NotebooksController::class, 'store']);
     Route::patch('notes/notebooks/{name}', [NotebooksController::class, 'update']);
     Route::delete('notes/notebooks/{name}', [NotebooksController::class, 'destroy']);
-
-    Route::post('collab/join', [CollabController::class, 'join']);
-    Route::post('collab/poll', [CollabController::class, 'poll']);
-    Route::post('collab/send', [CollabController::class, 'send']);
-    Route::post('collab/leave', [CollabController::class, 'leave']);
-    Route::get('collab/rtc', [CollabController::class, 'rtc']);
-    Route::get('collab/document', [CollabController::class, 'getDocument']);
-    Route::put('collab/document', [CollabController::class, 'putDocument']);
 });
 
 Route::middleware(['wgw.auth', 'wgw.role:admin'])->prefix('admin')->group(function (): void {
@@ -176,15 +179,16 @@ Route::middleware(['wgw.auth', 'wgw.role:admin'])->prefix('admin')->group(functi
     Route::get('updates/state', AdminUpdateStateController::class);
     Route::get('updates/log', [AdminUpdateLogController::class, 'show']);
     Route::delete('updates/log', [AdminUpdateLogController::class, 'destroy']);
-    Route::post('updates/check', AdminUpdateCheckController::class);
-    Route::post('updates/apply', AdminUpdateApplyController::class);
-    Route::post('updates/cancel', AdminUpdateCancelController::class);
-    Route::post('search/reindex', AdminSearchReindexRunController::class);
-    Route::get('search/state', AdminSearchReindexStateController::class);
-    Route::post('search/cancel', AdminSearchReindexCancelController::class);
-    Route::post('plugins/install', AdminPluginInstallController::class);
-    Route::get('updates/backups/{name}', [AdminUpdateBackupController::class, 'show']);
-    Route::delete('updates/backups/{name}', [AdminUpdateBackupController::class, 'destroy']);
+    Route::post('update-jobs', [AdminUpdateJobController::class, 'store']);
+    Route::delete('update-jobs/{jobId}', [AdminUpdateJobController::class, 'destroy'])
+        ->where('jobId', '[a-z0-9_-]+');
+    Route::post('search/jobs', [AdminSearchJobController::class, 'store']);
+    Route::get('search/jobs/current', [AdminSearchJobController::class, 'showCurrent']);
+    Route::delete('search/jobs/{jobId}', [AdminSearchJobController::class, 'destroy'])
+        ->where('jobId', '[a-z0-9_-]+');
+    Route::post('plugins', AdminPluginInstallController::class);
+    Route::get('backups/{name}', [AdminUpdateBackupController::class, 'show']);
+    Route::delete('backups/{name}', [AdminUpdateBackupController::class, 'destroy']);
     Route::put('groups/{group}/members/{username}', [AdminGroupMemberController::class, 'store']);
     Route::delete('groups/{group}/members/{username}', [AdminGroupMemberController::class, 'destroy']);
 });

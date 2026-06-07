@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services\Update;
 
 use App\Storage\WgwStorage;
-use Illuminate\Support\Facades\DB;
 
 final class UpdateStateService
 {
@@ -21,7 +20,7 @@ final class UpdateStateService
     {
         $this->runner->recoverStaleLockState();
 
-        return $this->runner->getState(DB::connection('wgw')->getPdo());
+        return $this->runner->getState();
     }
 
     public function deleteBackup(string $name): array

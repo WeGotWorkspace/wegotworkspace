@@ -254,13 +254,23 @@ function parseDetailMessageId(raw: Record<string, unknown>): string | undefined 
   return undefined;
 }
 
-/** PATCH `/mail/message` for read/starred updates on one message. */
+function wgwMailMessageId(mail: Pick<Mail, "folder" | "uid">): string {
+  return `${mail.folder}:${mail.uid}`;
+}
+
+/** PATCH `/mail/messages/{messageId}` for read/starred updates on one message. */
 export async function patchMailMessage(
   mail: Mail,
   patch: Pick<WgwMailMessagePatchRequest, "read" | "starred">,
   opts?: { signal?: AbortSignal },
 ): Promise<void> {
-  await postOrPatchMail("/mail/message", "PATCH", wgwMailPatchRequest(mail, patch), opts);
+  const messageId = encodeURIComponent(wgwMailMessageId(mail));
+  await postOrPatchMail(
+    `/mail/messages/${messageId}`,
+    "PATCH",
+    wgwMailPatchRequest(mail, patch),
+    opts,
+  );
 }
 
 /** POST `/mail/move` for one message. */
@@ -272,58 +282,61 @@ export async function moveMailMessage(
   await moveMailMessageByTokens(wgwMailMoveRequest(mail, toFolderToken), opts);
 }
 
-/** POST `/mail/draft` for creating/updating drafts. */
+/** POST `/mail/drafts` for creating/updating drafts. */
 export async function saveMailDraft(
   input: WgwMailDraftRequest,
   opts?: { signal?: AbortSignal },
 ): Promise<void> {
-  await postOrPatchMail("/mail/draft", "POST", input, opts);
+  await postOrPatchMail("/mail/drafts", "POST", input, opts);
 }
 
-/** POST `/mail/send` for sending messages. */
+/** POST `/mail/messages` for sending messages. */
 export async function sendMailMessage(
   input: WgwMailSendRequest,
   opts?: { signal?: AbortSignal },
 ): Promise<void> {
-  await postOrPatchMail("/mail/send", "POST", input, opts);
+  await postOrPatchMail("/mail/messages", "POST", input, opts);
 }
 
-/** GET `/mail/message` for one message detail row. */
+/** GET `/mail/messages/{messageId}` for one message detail row. */
 export async function fetchMailMessageDetail(
   mail: Pick<Mail, "folder" | "uid">,
 ): Promise<WgwMailMessageDetail | null> {
-  const qp = `folder=${encodeURIComponent(mail.folder)}&uid=${encodeURIComponent(String(mail.uid))}`;
-  const res = await wgwFetch(`/mail/message?${qp}`);
-  if (!res.ok) throw new Error(`GET /mail/message failed (${res.status})`);
+  const messageId = encodeURIComponent(wgwMailMessageId(mail));
+  const res = await wgwFetch(`/mail/messages/${messageId}`);
+  if (!res.ok) throw new Error(`GET /mail/messages/${messageId} failed (${res.status})`);
   const json = await wgwReadJson(res);
   return parseMessageDetailPayload(json);
 }
 
-/** DELETE `/mail/message` for permanent deletion of one message. */
+/** DELETE `/mail/messages/{messageId}` for permanent deletion of one message. */
 export async function deleteMailMessage(
   mail: Pick<Mail, "folder" | "uid">,
   opts?: { signal?: AbortSignal },
 ): Promise<void> {
-  const qp = `folder=${encodeURIComponent(mail.folder)}&uid=${encodeURIComponent(String(mail.uid))}`;
-  const res = await wgwFetch(`/mail/message?${qp}`, { method: "DELETE", signal: opts?.signal });
-  if (!res.ok) throw new Error(`DELETE /mail/message failed (${res.status})`);
+  const messageId = encodeURIComponent(wgwMailMessageId(mail));
+  const res = await wgwFetch(`/mail/messages/${messageId}`, {
+    method: "DELETE",
+    signal: opts?.signal,
+  });
+  if (!res.ok) throw new Error(`DELETE /mail/messages/${messageId} failed (${res.status})`);
 }
 
-/** GET `/mail/message/attachment` with auth-bearing request, returns attachment blob. */
+/** GET `/mail/messages/{messageId}/attachments/{attachmentId}` with auth-bearing request. */
 export async function downloadMailAttachment(
   mail: Pick<Mail, "folder" | "uid">,
   attachment: { id?: string; part?: string; name: string; type?: string },
   opts?: { signal?: AbortSignal },
 ): Promise<Blob> {
-  const params = new URLSearchParams();
-  params.set("folder", mail.folder);
-  params.set("uid", String(mail.uid));
-  if (attachment.part) params.set("part", attachment.part);
-  if (attachment.id) params.set("id", attachment.id);
-  const res = await wgwFetch(`/mail/message/attachment?${params.toString()}`, {
+  const messageId = encodeURIComponent(wgwMailMessageId(mail));
+  const attachmentId = encodeURIComponent(attachment.part ?? attachment.id ?? attachment.name);
+  const res = await wgwFetch(`/mail/messages/${messageId}/attachments/${attachmentId}`, {
     signal: opts?.signal,
   });
-  if (!res.ok) throw new Error(`GET /mail/message/attachment failed (${res.status})`);
+  if (!res.ok)
+    throw new Error(
+      `GET /mail/messages/${messageId}/attachments/${attachmentId} failed (${res.status})`,
+    );
   return await res.blob();
 }
 

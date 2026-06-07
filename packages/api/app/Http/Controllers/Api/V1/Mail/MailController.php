@@ -94,6 +94,88 @@ final class MailController
         return $this->json(fn () => $this->mail->saveDraft($this->username($request), $request->json()->all()));
     }
 
+    public function draftsStore(Request $request): JsonResponse
+    {
+        return $this->draft($request);
+    }
+
+    public function messagesStore(Request $request): JsonResponse
+    {
+        return $this->send($request);
+    }
+
+    public function messageShowById(Request $request, string $messageId): JsonResponse
+    {
+        return $this->json(fn () => $this->mail->getMessage(
+            $this->username($request),
+            $this->messageQueryFromId($messageId, $request->query()),
+        ));
+    }
+
+    public function messageUpdateById(Request $request, string $messageId): JsonResponse
+    {
+        $body = $request->json()->all();
+        if (! is_array($body)) {
+            $body = [];
+        }
+        $body = array_merge($this->messageQueryFromId($messageId, []), $body);
+
+        return $this->json(fn () => $this->mail->patchMessage($this->username($request), $body));
+    }
+
+    public function messageDestroyById(Request $request, string $messageId): JsonResponse
+    {
+        return $this->json(fn () => $this->mail->deleteMessage(
+            $this->username($request),
+            $this->messageQueryFromId($messageId, $request->query()),
+        ));
+    }
+
+    public function messageAttachmentsById(Request $request, string $messageId): JsonResponse
+    {
+        return $this->json(fn () => $this->mail->listMessageAttachments(
+            $this->username($request),
+            $this->messageQueryFromId($messageId, $request->query()),
+        ));
+    }
+
+    public function messageAttachmentById(Request $request, string $messageId, string $attachmentId): Response
+    {
+        $query = $this->messageQueryFromId($messageId, $request->query());
+        $query['part'] = $attachmentId;
+
+        $download = $this->mail->downloadAttachment($this->username($request), $query);
+        $ascii = preg_replace('/[^A-Za-z0-9._-]+/', '_', trim($download->filename)) ?: 'attachment';
+        $star = rawurlencode(trim($download->filename) !== '' ? $download->filename : 'attachment');
+
+        return response($download->bytes, 200, [
+            'Content-Type' => $download->mime,
+            'Cache-Control' => 'private, max-age=0',
+            'X-Content-Type-Options' => 'nosniff',
+            'Content-Length' => (string) strlen($download->bytes),
+            'Content-Disposition' => 'attachment; filename="'.$ascii.'"; filename*=UTF-8\'\''.$star,
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $query
+     * @return array<string, mixed>
+     */
+    private function messageQueryFromId(string $messageId, array $query): array
+    {
+        if (isset($query['folder'], $query['uid'])) {
+            return $query;
+        }
+
+        if (str_contains($messageId, ':')) {
+            [$folder, $uid] = explode(':', $messageId, 2);
+            $query['folder'] = $folder;
+            $query['uid'] = $uid;
+        }
+
+        return $query;
+    }
+
     /**
      * @param  callable(): array<string, mixed>  $callback
      */

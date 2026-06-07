@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Dav\Server;
 
-use App\Admin\AdminConstants;
+use App\Models\User;
+use App\Services\Admin\AdminConstants;
 
 /**
  * True for {@code principals/{username}} when {@code username} exists in {@code users}
@@ -12,7 +13,7 @@ use App\Admin\AdminConstants;
  */
 final class AccountPrincipalFilter
 {
-    public static function isAccountPrincipalUri(\PDO $pdo, string $uri): bool
+    public static function isAccountPrincipalUri(string $uri): bool
     {
         if ($uri === AdminConstants::GROUP_CONTAINER_URI) {
             return false;
@@ -25,17 +26,14 @@ final class AccountPrincipalFilter
             return false;
         }
 
-        $stmt = $pdo->prepare('SELECT 1 FROM users WHERE username = ?');
-        $stmt->execute([$rest]);
-
-        return (bool) $stmt->fetchColumn();
+        return User::query()->where('username', $rest)->exists();
     }
 
     /**
      * @param  array{uri?: string, ...}  $principalInfo
      */
-    public static function isAccountPrincipal(\PDO $pdo, array $principalInfo): bool
+    public static function isAccountPrincipal(array $principalInfo): bool
     {
-        return self::isAccountPrincipalUri($pdo, $principalInfo['uri'] ?? '');
+        return self::isAccountPrincipalUri($principalInfo['uri'] ?? '');
     }
 }

@@ -2,14 +2,15 @@ import { wgwApiBaseUrl, wgwReadJson } from "@/lib/api/wgw/http";
 import { isRtcDebugEnabled } from "@/lib/rtc/debug";
 import { rtcLog } from "@/lib/rtc/log";
 import { applyRtcDebugOverrides } from "@/lib/rtc/force-relay";
-import { DEFAULT_RTC_SETTINGS, signalingApiSegment, type RtcSettings } from "@/lib/rtc/types";
+import { resolveRoomId } from "@/lib/rtc/room-id";
+import { DEFAULT_RTC_SETTINGS, type RtcSettings } from "@/lib/rtc/types";
 
 export type { RtcSettings };
 
 export type RtcIceSettings = Omit<RtcSettings, "forceRelay">;
 
 export function parseRtcSettingsPayload(payload: Record<string, unknown>): RtcIceSettings {
-  // Shared platform ICE settings (`GET /meet/rtc`, `GET /collab/rtc`, admin state).
+  // Shared platform ICE settings (`GET /rooms/{roomId}/configuration`).
   const rtc = (payload.rtc ?? payload) as Record<string, unknown>;
   return {
     stunUrls: typeof rtc.stunUrls === "string" ? rtc.stunUrls : "",
@@ -27,10 +28,16 @@ export async function fetchRtcSettings(options?: {
   url?: string;
   bearerToken?: string;
   channel?: "meet" | "collab";
+  room?: string;
 }): Promise<RtcSettings> {
   const channel = options?.channel ?? "meet";
   const base = wgwApiBaseUrl();
-  const requestUrl = options?.url ?? `${base}/${signalingApiSegment(channel)}/rtc`;
+  const room = options?.room ?? (channel === "meet" ? "bootstrap" : "");
+  const requestUrl =
+    options?.url ??
+    (room
+      ? `${base}/rooms/${encodeURIComponent(resolveRoomId(channel, room))}/configuration`
+      : `${base}/rooms/bootstrap/configuration`);
   rtcLog({ channel }, "rtc-settings-request", { requestUrl });
   const headers: Record<string, string> = {};
   if (options?.bearerToken) headers.Authorization = `Bearer ${options.bearerToken}`;

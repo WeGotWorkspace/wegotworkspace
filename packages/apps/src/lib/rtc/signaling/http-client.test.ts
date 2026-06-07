@@ -2,17 +2,17 @@ import { describe, expect, it, vi } from "vitest";
 import { HttpSignalingClient, type HttpSignalingFetch } from "@/lib/rtc/signaling/http-client";
 
 describe("HttpSignalingClient", () => {
-  it("posts join and poll to channel api base", async () => {
+  it("posts join and polls events on room session paths", async () => {
     const fetchImpl = vi.fn(async (url: string, init: RequestInit) => {
-      const body = JSON.parse(String(init.body)) as Record<string, unknown>;
-      if (url.endsWith("/join")) {
+      if (url.includes("/participants") && init.method === "POST") {
+        const body = JSON.parse(String(init.body)) as Record<string, unknown>;
         expect(body.room).toBe("room-a");
         expect(body.name).toBe("Alice");
         return new Response(JSON.stringify({ peerId: "p1", peers: [] }), { status: 200 });
       }
-      if (url.endsWith("/poll")) {
-        expect(body.peerId).toBe("p1");
-        expect(body.since).toBe(3);
+      if (url.includes("/events") && init.method === "GET") {
+        expect(url).toContain("peerId=p1");
+        expect(url).toContain("since=3");
         return new Response(JSON.stringify({ peers: [{ id: "p2", name: "Bob" }], messages: [] }), {
           status: 200,
         });
@@ -22,7 +22,7 @@ describe("HttpSignalingClient", () => {
 
     const client = new HttpSignalingClient({
       channel: "collab",
-      apiBase: "/api/v1/collab",
+      apiBase: "/api/v1/rooms",
       fetchImpl,
       getAuth: () => ({ bearerToken: "token-1" }),
     });
@@ -41,7 +41,7 @@ describe("HttpSignalingClient", () => {
     );
     const client = new HttpSignalingClient({
       channel: "meet",
-      apiBase: "/api/v1/meet",
+      apiBase: "/api/v1/rooms",
       fetchImpl,
       getAuth: () => ({ sessionKey: "guest-key" }),
     });
@@ -54,6 +54,7 @@ describe("HttpSignalingClient", () => {
     });
     const call = fetchImpl.mock.calls[0];
     expect(call).toBeDefined();
+    expect(String(call![0])).toContain("/rooms/abcd-efgh-ijkl/events");
     const body = JSON.parse(String(call![1]?.body)) as Record<string, unknown>;
     expect(body.sessionKey).toBe("guest-key");
   });

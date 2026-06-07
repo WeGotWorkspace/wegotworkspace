@@ -113,7 +113,7 @@ final class PluginsEndpointsTest extends WgwDatabaseTestCase
 
         $headers = ['Authorization' => 'Bearer '.$token];
 
-        $this->postJson('/api/v1/plugins/demo-plugin/deactivate', [], $headers)
+        $this->putJson('/api/v1/plugins/demo-plugin/activation', ['active' => false], $headers)
             ->assertOk()
             ->assertJsonPath('plugin.id', 'demo-plugin')
             ->assertJsonPath('plugin.active', false);
@@ -125,12 +125,12 @@ final class PluginsEndpointsTest extends WgwDatabaseTestCase
                 'active' => false,
             ]);
 
-        $this->postJson('/api/v1/plugins/demo-plugin/activate', [], $headers)
+        $this->putJson('/api/v1/plugins/demo-plugin/activation', ['active' => true], $headers)
             ->assertOk()
             ->assertJsonPath('plugin.id', 'demo-plugin')
             ->assertJsonPath('plugin.active', true);
 
-        $this->postJson('/api/v1/plugins/unknown/deactivate', [], $headers)
+        $this->putJson('/api/v1/plugins/unknown/activation', ['active' => false], $headers)
             ->assertNotFound()
             ->assertJsonPath('error', 'plugin_not_found');
     }

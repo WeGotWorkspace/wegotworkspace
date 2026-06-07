@@ -14,7 +14,6 @@ final class GroupSharedCollection extends FlysystemAclCollection
         Filesystem $filesystem,
         string $key,
         private readonly string $groupPrincipalUri,
-        private readonly \PDO $pdo,
     ) {
         parent::__construct($filesystem, $key, [], $groupPrincipalUri);
     }
@@ -24,7 +23,7 @@ final class GroupSharedCollection extends FlysystemAclCollection
      */
     public function getACL(): array
     {
-        return GroupSharedAclHelper::aclForGroup($this->pdo, $this->groupPrincipalUri);
+        return GroupSharedAclHelper::aclForGroup($this->groupPrincipalUri);
     }
 
     public function getChild($name): DAV\INode
@@ -34,10 +33,10 @@ final class GroupSharedCollection extends FlysystemAclCollection
         }
         $key = $this->childKey($name);
         if ($this->filesystem->directoryExists($key)) {
-            return new self($this->filesystem, $key, $this->groupPrincipalUri, $this->pdo);
+            return new self($this->filesystem, $key, $this->groupPrincipalUri);
         }
         if ($this->filesystem->fileExists($key)) {
-            return new GroupSharedFile($this->filesystem, $key, $this->groupPrincipalUri, $this->pdo);
+            return new GroupSharedFile($this->filesystem, $key, $this->groupPrincipalUri);
         }
 
         throw new DAV\Exception\NotFound('File could not be located');
