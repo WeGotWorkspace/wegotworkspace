@@ -59,6 +59,9 @@ final class InstallerDatabaseInstaller
 
         WgwConnectionConfigurator::applyFromInstallerDb($db);
 
+        // Schema migrations run DDL; MySQL implicitly commits and breaks Laravel transactions.
+        $this->schemaMigrator->migrate();
+
         DB::connection('wgw')->transaction(function () use (
             $username,
             $password,
@@ -68,7 +71,6 @@ final class InstallerDatabaseInstaller
             $enableContacts,
             $initialSettings,
         ): void {
-            $this->schemaMigrator->migrate();
             $this->seeder->seed($username, $password, $displayName, $email, $enableCalendars, $enableContacts);
             $this->settings->replaceMany($initialSettings);
         });
