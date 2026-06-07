@@ -79,15 +79,22 @@ final class FilesController
             throw new ApiHttpException(400, 'Missing name.', 'bad_request');
         }
 
-        $destination = dirname($path);
-        if ($destination === '.') {
-            $destination = '/';
+        $destinationInput = $request->input('destination');
+        if (is_string($destinationInput) && trim($destinationInput) !== '') {
+            $destination = trim($destinationInput);
+            $from = $path;
+        } else {
+            $destination = dirname($path);
+            if ($destination === '.') {
+                $destination = '/';
+            }
+            $from = basename($path);
         }
 
         return $this->jsonData(fn () => $this->drive->renameItem(
             $this->username($request),
             $destination,
-            basename($path),
+            $from,
             $name,
         ));
     }
