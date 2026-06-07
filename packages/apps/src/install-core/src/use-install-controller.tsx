@@ -104,6 +104,15 @@ export function useInstallController({
     });
   }, []);
 
+  const hydrateNonDbFieldsFromState = useCallback((state: WgwInstallerRuntimeState) => {
+    setInstallerState(state);
+    setDav({
+      files: !!state.enable_files,
+      calendars: !!state.enable_calendars,
+      contacts: !!state.enable_contacts,
+    });
+  }, []);
+
   useEffect(() => {
     if (!data.state) return;
     hydrateFromState(data.state);
@@ -137,7 +146,11 @@ export function useInstallController({
   const syncAction = useCallback(
     (response: WgwInstallerActionResponse) => {
       if (response.state) {
-        hydrateFromState(response.state);
+        if (response.ok) {
+          hydrateFromState(response.state);
+        } else {
+          hydrateNonDbFieldsFromState(response.state);
+        }
       }
       if (!response.ok) {
         throw new Error(response.error || response.state?.flash || "Installer action failed.");
@@ -147,7 +160,25 @@ export function useInstallController({
       }
       return response;
     },
-    [hydrateFromState],
+    [hydrateFromState, hydrateNonDbFieldsFromState],
+  );
+
+  const selectDbType = useCallback(
+    (nextType: "sqlite" | "mysql") => {
+      setDbType(nextType);
+      setMysqlTest({ state: "idle" });
+      void operations
+        .requirementsCheck({ db_driver: nextType })
+        .then((response) => {
+          if (response.state) {
+            setInstallerState(response.state);
+          }
+        })
+        .catch(() => {
+          // Keep the local driver choice even if checks could not be refreshed.
+        });
+    },
+    [operations],
   );
 
   const buildDatabasePayload = useCallback(
@@ -343,6 +374,7 @@ export function useInstallController({
     setShowChecks,
     dbType,
     setDbType,
+    selectDbType,
     sqlitePath,
     setSqlitePath,
     mysql,
