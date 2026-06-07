@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Services\Installer;
 
+use App\Models\AppMigration;
 use App\Support\WgwConnectionConfigurator;
 use Illuminate\Database\Migrations\Migrator;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 final class WgwSchemaMigrator
 {
     /** Number of baseline migrations in {@see migrationsPath()}. */
-    public const CURRENT_SCHEMA_VERSION = 10;
+    public const CURRENT_SCHEMA_VERSION = 11;
 
     public function migrate(): void
     {
@@ -63,10 +63,6 @@ final class WgwSchemaMigrator
             return 0;
         }
 
-        $max = DB::connection('wgw')
-            ->table('app_migrations')
-            ->max('version');
-
-        return (int) ($max ?: 0);
+        return AppMigration::legacyMaxVersion();
     }
 }

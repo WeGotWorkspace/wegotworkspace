@@ -356,18 +356,9 @@ export function useMeetController({
       peerId,
       sessionKey: meetRtc.getSessionKey() ?? undefined,
     });
-    const endpoint = "/api/v1/meet/leave";
-    let sent = false;
-    try {
-      if (typeof navigator.sendBeacon === "function") {
-        sent = navigator.sendBeacon(endpoint, new Blob([payload], { type: "application/json" }));
-      }
-    } catch {
-      sent = false;
-    }
-    if (sent) return;
+    const endpoint = `/api/v1/rooms/${encodeURIComponent(room)}/participants/${encodeURIComponent(peerId)}`;
     void fetch(endpoint, {
-      method: "POST",
+      method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: payload,
       keepalive: true,

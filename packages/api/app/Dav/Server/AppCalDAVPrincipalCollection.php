@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Dav\Server;
 
-use App\Admin\AdminConstants;
+use App\Services\Admin\AdminConstants;
 use Sabre\CalDAV\Principal\Collection as CalDAVPrincipalCollection;
 use Sabre\CalDAV\Principal\User;
 use Sabre\DAV;
@@ -21,7 +21,6 @@ final class AppCalDAVPrincipalCollection extends CalDAVPrincipalCollection
 {
     public function __construct(
         BackendInterface $principalBackend,
-        private readonly \PDO $pdo,
         private readonly AuthPlugin $authPlugin,
         string $principalPrefix = 'principals',
     ) {
@@ -42,7 +41,7 @@ final class AppCalDAVPrincipalCollection extends CalDAVPrincipalCollection
         }
         $children = [];
         $ownInfo = $this->principalBackend->getPrincipalByPath($current);
-        if ($ownInfo && AccountPrincipalFilter::isAccountPrincipal($this->pdo, $ownInfo)) {
+        if ($ownInfo && AccountPrincipalFilter::isAccountPrincipal($ownInfo)) {
             $children[] = $this->getChildForPrincipal($ownInfo);
         }
         $groupsInfo = $this->principalBackend->getPrincipalByPath(AdminConstants::GROUP_CONTAINER_URI);
@@ -69,7 +68,7 @@ final class AppCalDAVPrincipalCollection extends CalDAVPrincipalCollection
             throw new DAV\Exception\NotFound('Node with name '.$name.' was not found');
         }
         $principalInfo = $this->principalBackend->getPrincipalByPath($this->principalPrefix.'/'.$name);
-        if (! $principalInfo || ! AccountPrincipalFilter::isAccountPrincipal($this->pdo, $principalInfo)) {
+        if (! $principalInfo || ! AccountPrincipalFilter::isAccountPrincipal($principalInfo)) {
             throw new DAV\Exception\NotFound('Node with name '.$name.' was not found');
         }
         if (($principalInfo['uri'] ?? '') !== $current) {
@@ -93,7 +92,7 @@ final class AppCalDAVPrincipalCollection extends CalDAVPrincipalCollection
             return false;
         }
 
-        return AccountPrincipalFilter::isAccountPrincipal($this->pdo, $principalInfo)
+        return AccountPrincipalFilter::isAccountPrincipal($principalInfo)
             && ($principalInfo['uri'] ?? '') === $current;
     }
 

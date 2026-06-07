@@ -67,16 +67,17 @@ export async function fetchWgwUnifiedSearch(
     );
   }
 
-  const res = await wgwFetch(`/search/unified?${qs.toString()}`, {
+  const res = await wgwFetch(`/search/results?${qs.toString()}`, {
     method: "GET",
     signal: params.signal,
   });
-  if (!res.ok) throw new Error(`GET /search/unified failed (${res.status})`);
+  if (!res.ok) throw new Error(`GET /search/results failed (${res.status})`);
   const payload = (await wgwReadJson(res)) as WgwUnifiedSearchResponse;
   return payload.data;
 }
 
 export async function downloadWgwUnifiedSearchRecord(input: {
+  resultId?: number | string;
   sourceType: "caldav" | "carddav";
   sourceKey: string;
   signal?: AbortSignal;
@@ -84,11 +85,21 @@ export async function downloadWgwUnifiedSearchRecord(input: {
   const qs = new URLSearchParams();
   qs.set("source_type", input.sourceType);
   qs.set("source_key", input.sourceKey);
-  const res = await wgwFetch(`/records/download?${qs.toString()}`, {
+  const resultSegment =
+    input.resultId !== undefined && input.resultId !== null
+      ? encodeURIComponent(String(input.resultId))
+      : encodeURIComponent(
+          btoa(JSON.stringify({ source_type: input.sourceType, source_key: input.sourceKey }))
+            .replace(/\+/g, "-")
+            .replace(/\//g, "_")
+            .replace(/=+$/, ""),
+        );
+  const res = await wgwFetch(`/search/results/${resultSegment}/content?${qs.toString()}`, {
     method: "GET",
     signal: input.signal,
   });
-  if (!res.ok) throw new Error(`GET /records/download failed (${res.status})`);
+  if (!res.ok)
+    throw new Error(`GET /search/results/${resultSegment}/content failed (${res.status})`);
   const blob = await res.blob();
   const fileName = filenameFromContentDisposition(res.headers.get("content-disposition"));
   const url = URL.createObjectURL(blob);

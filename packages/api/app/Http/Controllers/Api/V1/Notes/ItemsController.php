@@ -43,6 +43,22 @@ final class ItemsController
         );
     }
 
+    public function patch(Request $request, string $id): JsonResponse
+    {
+        /** @var array{username: string, role: string} $principal */
+        $principal = $request->attributes->get(AuthenticateWgwApi::PRINCIPAL_ATTRIBUTE);
+
+        if ($request->has('archived')) {
+            return response()->json(
+                $this->notes->setArchived($principal['username'], $id, $request->boolean('archived'))
+            );
+        }
+
+        return response()->json(
+            $this->notes->upsert($principal['username'], $id, $request->json()->all())
+        );
+    }
+
     public function destroy(Request $request, string $id): JsonResponse
     {
         /** @var array{username: string, role: string} $principal */

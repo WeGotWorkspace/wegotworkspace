@@ -136,4 +136,72 @@ final class InstallerEndpointsTest extends TestCase
             ->assertJsonPath('installed', true)
             ->assertJsonPath('state.step', 'installed');
     }
+
+    public function test_database_test_failure_preserves_mysql_driver_choice(): void
+    {
+        $this->postJson('/api/v1/installer/action', [
+            'action' => 'welcome_next',
+            'payload' => [],
+        ])->assertOk();
+
+        $this->postJson('/api/v1/installer/action', [
+            'action' => 'requirements_next',
+            'payload' => ['db_driver' => 'sqlite'],
+        ])->assertOk()->assertJsonPath('state.step', 'database');
+
+        $response = $this->postJson('/api/v1/installer/action', [
+            'action' => 'database_test',
+            'payload' => [
+                'db_driver' => 'mysql',
+                'mysql_host' => '127.0.0.1',
+                'mysql_port' => 3306,
+                'mysql_db' => 'wgw',
+                'mysql_user' => 'wgw',
+                'mysql_password' => 'wrong-password',
+            ],
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('ok', false)
+            ->assertJsonPath('state.step', 'database')
+            ->assertJsonPath('state.db_driver', 'mysql')
+            ->assertJsonPath('state.db.mysql_host', '127.0.0.1')
+            ->assertJsonPath('state.db.mysql_db', 'wgw');
+    }
+
+    public function test_database_test_reports_missing_pdo_mysql_extension(): void
+    {
+        if (extension_loaded('pdo_mysql')) {
+            $this->markTestSkipped('pdo_mysql is loaded in this PHP runtime.');
+        }
+
+        $this->postJson('/api/v1/installer/action', [
+            'action' => 'welcome_next',
+            'payload' => [],
+        ])->assertOk();
+
+        $this->postJson('/api/v1/installer/action', [
+            'action' => 'requirements_next',
+            'payload' => ['db_driver' => 'sqlite'],
+        ])->assertOk();
+
+        $response = $this->postJson('/api/v1/installer/action', [
+            'action' => 'database_test',
+            'payload' => [
+                'db_driver' => 'mysql',
+                'mysql_host' => '127.0.0.1',
+                'mysql_port' => 3306,
+                'mysql_db' => 'wgw',
+                'mysql_user' => 'wgw',
+                'mysql_password' => 'secret',
+            ],
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('ok', false)
+            ->assertJsonPath('state.db_driver', 'mysql');
+
+        $error = (string) $response->json('error');
+        $this->assertStringContainsString('pdo_mysql', $error);
+    }
 }

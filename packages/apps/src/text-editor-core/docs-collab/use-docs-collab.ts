@@ -43,11 +43,11 @@ export type DocsCollabUrls = {
 };
 
 export const DEFAULT_DOCS_COLLAB_URLS: DocsCollabUrls = {
-  signalUrl: "/api/v1/collab/send",
-  collabApiBaseUrl: "/api/v1/collab",
-  collabRtcUrl: "/api/v1/collab/rtc",
-  documentUrl: "/api/v1/collab/document",
-  yjsUrl: "/api/v1/collab/document?format=yjs",
+  signalUrl: "/api/v1/rooms/f_ZG9jcy90ZXN0LXRvZ2V0aGVyLm1k/events",
+  collabApiBaseUrl: "/api/v1/rooms",
+  collabRtcUrl: "/api/v1/rooms/f_ZG9jcy90ZXN0LXRvZ2V0aGVyLm1k/configuration",
+  documentUrl: "/api/v1/files/collaboration?path=docs%2Ftest-together.md",
+  yjsUrl: "/api/v1/files/collaboration?path=docs%2Ftest-together.md&format=yjs",
   documentSaveMethod: "PUT",
   room: "docs/test-together.md",
 };
@@ -396,7 +396,7 @@ export function useDocsCollab({
     );
 
     const mesh = new DocsRtcSession({
-      apiBase: urls.collabApiBaseUrl ?? "/api/v1/collab",
+      apiBase: urls.collabApiBaseUrl ?? "/api/v1/rooms",
       room: urls.room ?? "docs/test-together.md",
       authToken,
       rtcSettings: rtcSettings ?? resolveRtcSettings(DEFAULT_RTC_SETTINGS),

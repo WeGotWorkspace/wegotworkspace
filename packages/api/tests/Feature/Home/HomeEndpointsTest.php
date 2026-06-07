@@ -23,7 +23,7 @@ final class HomeEndpointsTest extends WgwDatabaseTestCase
 
     public function test_home_state_requires_auth_and_returns_availability(): void
     {
-        $this->getJson('/api/v1/home/state')->assertUnauthorized();
+        $this->getJson('/api/v1/workspace/state')->assertUnauthorized();
 
         $token = $this->postJson('/api/v1/auth/token', [
             'username' => 'alice',
@@ -35,7 +35,7 @@ final class HomeEndpointsTest extends WgwDatabaseTestCase
             'value' => json_encode(true, JSON_THROW_ON_ERROR),
         ]);
 
-        $response = $this->getJson('/api/v1/home/state', [
+        $response = $this->getJson('/api/v1/workspace/state', [
             'Authorization' => 'Bearer '.$token,
         ]);
 

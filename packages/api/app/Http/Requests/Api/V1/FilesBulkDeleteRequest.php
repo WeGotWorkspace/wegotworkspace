@@ -6,7 +6,7 @@ namespace App\Http\Requests\Api\V1;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-final class DriveRenameRequest extends FormRequest
+final class FilesBulkDeleteRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -19,9 +19,8 @@ final class DriveRenameRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'destination' => ['required', 'string'],
-            'from' => ['required', 'string'],
-            'to' => ['required', 'string'],
+            'paths' => ['required', 'array', 'min:1'],
+            'paths.*' => ['required', 'string'],
         ];
     }
 }

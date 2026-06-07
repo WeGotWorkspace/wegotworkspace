@@ -7,7 +7,7 @@ namespace Tests\Feature\Mail;
 use App\Models\AppSetting;
 use App\Models\Principal;
 use App\Models\User;
-use App\Settings\SettingKeys;
+use App\Services\Settings\SettingKeys;
 use Tests\Support\WgwDatabaseTestCase;
 
 final class MailEndpointsTest extends WgwDatabaseTestCase
@@ -84,11 +84,26 @@ final class MailEndpointsTest extends WgwDatabaseTestCase
     {
         $token = $this->tokenForAlice();
 
-        $this->deleteJson('/api/v1/mail/message', [], [
+        $this->deleteJson('/api/v1/mail/messages/incomplete-id', [], [
             'Authorization' => 'Bearer '.$token,
         ])
             ->assertStatus(400)
             ->assertJson(['error' => 'bad_params']);
+    }
+
+    public function test_mail_move_is_routed_and_validates_params(): void
+    {
+        $token = $this->tokenForAlice();
+
+        $this->postJson('/api/v1/mail/move', [
+            'fromFolder' => 'SU5CT1g',
+            'toFolder' => 'SU5CT1guQXJjaGl2ZQ',
+            'uid' => 1,
+        ], [
+            'Authorization' => 'Bearer '.$token,
+        ])
+            ->assertStatus(400)
+            ->assertJson(['error' => 'not_configured']);
     }
 
     private function seedMailServers(): void

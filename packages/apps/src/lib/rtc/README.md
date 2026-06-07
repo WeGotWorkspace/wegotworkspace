@@ -20,7 +20,7 @@ Docs uses `docs-collab/docs-rtc-session.ts` (data binding).
 
 Both use `DEFAULT_RTC_POLL_INTERVALS` and `recoverOnUnknownPeer: true` via `createRtcSession()`.
 
-Signaling channel and OpenAPI paths are both **`meet`** (`signalingApiSegment()` in `types.ts`).
+Signaling uses `/api/v1/rooms/{roomId}/*` (`signalingApiSegment()` returns `rooms` in `types.ts`).
 
 ## Per-app pattern
 
@@ -61,8 +61,8 @@ These rules are enforced in product code and covered by unit tests under `sessio
 | Topic          | Rule                                                                                               |
 | -------------- | -------------------------------------------------------------------------------------------------- |
 | A/V transport  | WebRTC media binding only (`createMediaBinding`)                                                   |
-| Chat + control | HTTP `POST /meet/chat` → poll delivery; **not** data channels                                      |
-| Signaling      | HTTP join / poll / send / leave (same poll loop as chat)                                           |
+| Chat + control | HTTP `POST /rooms/{roomId}/messages` → poll delivery; **not** data channels                        |
+| Signaling      | HTTP join / poll / send / leave on `/rooms/{roomId}/*`                                             |
 | Meet SDP       | **Sanitize inbound (remote) only** — never rewrite outbound/local SDP before `setLocalDescription` |
 | Guest tabs     | Unauthenticated `fetchImpl` + `sessionKey` on poll/send/chat                                       |
 | Initiator      | Meet uses `higherId` (lexicographically higher peer id sends the offer)                            |

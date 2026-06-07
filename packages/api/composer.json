@@ -31,6 +31,7 @@
     "scripts": {
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+            "@php scripts/patch-laravel-php85-pdo.php",
             "@php artisan package:discover --ansi"
         ],
         "lint": "php scripts/greenfield-guard.php",
@@ -40,19 +41,9 @@
         "test:mysql": "WGW_TEST_DRIVER=mysql phpunit -c phpunit.xml",
         "test:architecture": "phpunit -c phpunit.xml --testsuite Architecture",
         "greenfield:guard": "@lint",
-        "done-gate:contract": [
-            "@greenfield:guard",
-            "@test:architecture"
-        ],
-        "done-gate": [
-            "@done-gate:contract",
-            "@test"
-        ],
-        "done-gate:full": [
-            "@done-gate:contract",
-            "@test",
-            "@test:mysql"
-        ],
+        "done-gate:contract": "php scripts/done-gate.php --contract",
+        "done-gate": "php scripts/done-gate.php",
+        "done-gate:full": "php scripts/done-gate.php --full",
         "prune": [
             "@composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction"
         ]
