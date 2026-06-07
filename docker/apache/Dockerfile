@@ -11,12 +11,14 @@ RUN apt-get update \
         libicu-dev \
         libxml2-dev \
         libsqlite3-dev \
+        default-libmysqlclient-dev \
         libc-client-dev \
         libkrb5-dev \
     && docker-php-ext-configure imap --with-kerberos --with-imap-ssl \
     && docker-php-ext-install \
         pdo \
         pdo_sqlite \
+        pdo_mysql \
         mbstring \
         zip \
         intl \
