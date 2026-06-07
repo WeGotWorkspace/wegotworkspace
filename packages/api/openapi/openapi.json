@@ -1384,6 +1384,51 @@
         "x-wgw-access": "user"
       }
     },
+    "/mail/move": {
+      "post": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "Move message to another folder",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "fromFolder",
+                  "toFolder",
+                  "uid"
+                ],
+                "properties": {
+                  "fromFolder": {
+                    "type": "string"
+                  },
+                  "toFolder": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Message moved"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
     "/mail/messages": {
       "get": {
         "tags": [

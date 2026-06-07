@@ -91,6 +91,21 @@ final class MailEndpointsTest extends WgwDatabaseTestCase
             ->assertJson(['error' => 'bad_params']);
     }
 
+    public function test_mail_move_is_routed_and_validates_params(): void
+    {
+        $token = $this->tokenForAlice();
+
+        $this->postJson('/api/v1/mail/move', [
+            'fromFolder' => 'SU5CT1g',
+            'toFolder' => 'SU5CT1guQXJjaGl2ZQ',
+            'uid' => 1,
+        ], [
+            'Authorization' => 'Bearer '.$token,
+        ])
+            ->assertStatus(400)
+            ->assertJson(['error' => 'not_configured']);
+    }
+
     private function seedMailServers(): void
     {
         AppSetting::setValue(SettingKeys::MAIL_IMAP_HOST, 'imap.example.test');
