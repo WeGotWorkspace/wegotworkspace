@@ -50,7 +50,6 @@ PHPUnit may still print **"OK, but there were issues!"** — that means **deprec
 
 Common deprecations today:
 
-- **PHP 8.5 + Laravel** — `PDO::MYSQL_ATTR_SSL_CA` in vendor `database.php` (harmless until Laravel updates).
 - **PHPUnit metadata** — prefer `#[DataProvider]` attributes over `@dataProvider` docblocks.
 
 More detail on demand:
