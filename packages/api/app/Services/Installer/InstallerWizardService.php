@@ -95,7 +95,10 @@ final class InstallerWizardService
     {
         $driver = $this->normalizeDriver($payload['db_driver'] ?? 'sqlite');
         $state = $this->wizardState();
-        $state['step'] = 'requirements';
+        $currentStep = (string) ($state['step'] ?? 'welcome');
+        if (! in_array($currentStep, ['database', 'site', 'account'], true)) {
+            $state['step'] = 'requirements';
+        }
         $state['db_driver'] = $driver;
         unset($state['_flash']);
         $this->saveWizardState($state);
@@ -143,10 +146,13 @@ final class InstallerWizardService
         $db = $this->readDbFromPayload($payload);
         try {
             $this->database->testConnection($db);
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
+            $this->persistDatabaseDraft($db);
+            $message = $this->databaseConnectionErrorMessage($db, $e);
+
             return [
                 'ok' => false,
-                'error' => 'Could not connect to the database. Check your settings.',
+                'error' => $message,
                 'state' => $this->runtimeState($webBase),
             ];
         }
@@ -170,15 +176,13 @@ final class InstallerWizardService
         $db = $this->readDbFromPayload($payload);
         try {
             $this->database->testConnection($db);
-        } catch (\Throwable) {
-            $state = $this->wizardState();
-            $state['step'] = 'database';
-            $state['_flash'] = 'Could not connect to the database. Check your settings.';
-            $this->saveWizardState($state);
+        } catch (\Throwable $e) {
+            $flash = $this->databaseConnectionErrorMessage($db, $e);
+            $this->persistDatabaseDraft($db, $flash);
 
             return [
                 'ok' => false,
-                'error' => $state['_flash'],
+                'error' => $flash,
                 'state' => $this->runtimeState($webBase),
             ];
         }
@@ -471,6 +475,21 @@ final class InstallerWizardService
 
     /**
      * @param  array<string, mixed>  $db
+     */
+    private function persistDatabaseDraft(array $db, ?string $flash = null): void
+    {
+        $state = $this->wizardState();
+        $state['step'] = 'database';
+        $state['db_driver'] = (string) $db['driver'];
+        $state['db'] = $db;
+        if ($flash !== null) {
+            $state['_flash'] = $flash;
+        }
+        $this->saveWizardState($state);
+    }
+
+    /**
+     * @param  array<string, mixed>  $db
      * @return array<string, mixed>
      */
     private function publicDbState(array $db): array
@@ -555,6 +574,23 @@ final class InstallerWizardService
         $driver = is_string($driver) ? $driver : 'sqlite';
 
         return in_array($driver, ['sqlite', 'mysql'], true) ? $driver : 'sqlite';
+    }
+
+    /**
+     * @param  array<string, mixed>  $db
+     */
+    private function databaseConnectionErrorMessage(array $db, \Throwable $e): string
+    {
+        if (($db['driver'] ?? '') === 'mysql' && ! extension_loaded('pdo_mysql')) {
+            return 'PHP MySQL extension (pdo_mysql) is not loaded on this server. Rebuild the API container or enable pdo_mysql in PHP.';
+        }
+
+        $detail = trim($e->getMessage());
+        if ($detail !== '') {
+            return 'Could not connect to the database: '.$detail;
+        }
+
+        return 'Could not connect to the database. Check your settings.';
     }
 
     private function normalizeMailSecurity(string $value, string $fallback): string

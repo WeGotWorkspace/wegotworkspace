@@ -12,7 +12,7 @@ export function InstallDatabasePane({
   controller: Pick<
     InstallControllerState,
     | "dbType"
-    | "setDbType"
+    | "selectDbType"
     | "sqlitePath"
     | "setSqlitePath"
     | "mysql"
@@ -21,8 +21,16 @@ export function InstallDatabasePane({
     | "setMysqlTest"
   >;
 }) {
-  const { dbType, setDbType, sqlitePath, setSqlitePath, mysql, setMysql, mysqlTest, setMysqlTest } =
-    controller;
+  const {
+    dbType,
+    selectDbType,
+    sqlitePath,
+    setSqlitePath,
+    mysql,
+    setMysql,
+    mysqlTest,
+    setMysqlTest,
+  } = controller;
 
   return (
     <>
@@ -35,8 +43,7 @@ export function InstallDatabasePane({
                 key={candidate}
                 type="button"
                 onClick={() => {
-                  setDbType(candidate);
-                  setMysqlTest({ state: "idle" });
+                  selectDbType(candidate);
                 }}
                 className={`${c.dbTypeOption} ${active ? c.dbTypeOptionActive : ""}`}
               >
