@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Admin;
 
+use App\Models\GroupMember;
 use App\Models\MailUserCredential;
 use App\Models\Principal;
 use App\Models\User;
@@ -111,10 +112,10 @@ final class AdminUserProvisionerService
 
         $principalUri = 'principals/'.$username;
         $principal = Principal::query()->where('uri', $principalUri)->first();
-        $pdo = DB::connection('wgw')->getPdo();
 
         if ($principal !== null) {
             $principalId = (int) $principal->id;
+            $pdo = DB::connection('wgw')->getPdo();
 
             if (Schema::connection('wgw')->hasTable('calendars')) {
                 $caldav = new CalPDO($pdo);
@@ -134,10 +135,15 @@ final class AdminUserProvisionerService
                 }
             }
 
-            $pdo->prepare('DELETE FROM groupmembers WHERE member_id = ? OR principal_id = ?')
-                ->execute([$principalId, $principalId]);
-            $pdo->prepare('DELETE FROM principals WHERE uri = ? OR uri LIKE ?')
-                ->execute([$principalUri, $principalUri.'/%']);
+            GroupMember::query()
+                ->where('member_id', $principalId)
+                ->orWhere('principal_id', $principalId)
+                ->delete();
+
+            Principal::query()
+                ->where('uri', $principalUri)
+                ->orWhere('uri', 'like', $principalUri.'/%')
+                ->delete();
         }
 
         User::query()->where('username', $username)->delete();

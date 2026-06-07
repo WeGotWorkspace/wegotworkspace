@@ -54,19 +54,19 @@ final class SabreServerFactory
 
         $nodes = [];
         if ($cal || $card) {
-            $nodes[] = new AppCalDAVPrincipalCollection($principalBackend, $pdo, $authPlugin);
+            $nodes[] = new AppCalDAVPrincipalCollection($principalBackend, $authPlugin);
         }
         if ($cal) {
             $caldavBackend = new CalDAV\Backend\PDO($pdo);
-            $nodes[] = new AppCalendarRoot($principalBackend, $caldavBackend, $pdo, $authPlugin);
+            $nodes[] = new AppCalendarRoot($principalBackend, $caldavBackend, $authPlugin);
         }
         if ($card) {
             $carddavBackend = new CardDAV\Backend\PDO($pdo);
-            $nodes[] = new AppAddressBookRoot($principalBackend, $carddavBackend, $pdo, $authPlugin);
+            $nodes[] = new AppAddressBookRoot($principalBackend, $carddavBackend, $authPlugin);
         }
         if ($files) {
             $nodes[] = new AppFilesRootCollection([
-                new AppUserFilesHomeCollection($principalBackend, 'users', $pdo, $authPlugin),
+                new AppUserFilesHomeCollection($principalBackend, 'users', $authPlugin),
                 new GroupFilesPrincipalCollection($principalBackend, 'groups', $authPlugin),
             ]);
         }

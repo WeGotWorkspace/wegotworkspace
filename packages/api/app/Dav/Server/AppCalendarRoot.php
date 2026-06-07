@@ -18,7 +18,6 @@ final class AppCalendarRoot extends CalendarRoot
     public function __construct(
         PrincipalBackend $principalBackend,
         BackendInterface $caldavBackend,
-        private readonly \PDO $pdo,
         private readonly AuthPlugin $authPlugin,
         string $principalPrefix = 'principals',
     ) {
@@ -38,7 +37,7 @@ final class AppCalendarRoot extends CalendarRoot
             return [];
         }
         $principalInfo = $this->principalBackend->getPrincipalByPath($current);
-        if (! $principalInfo || ! AccountPrincipalFilter::isAccountPrincipal($this->pdo, $principalInfo)) {
+        if (! $principalInfo || ! AccountPrincipalFilter::isAccountPrincipal($principalInfo)) {
             return [];
         }
 
@@ -48,7 +47,7 @@ final class AppCalendarRoot extends CalendarRoot
     public function getChild($name): DAV\INode
     {
         $principalInfo = $this->principalBackend->getPrincipalByPath($this->principalPrefix.'/'.$name);
-        if (! $principalInfo || ! AccountPrincipalFilter::isAccountPrincipal($this->pdo, $principalInfo)) {
+        if (! $principalInfo || ! AccountPrincipalFilter::isAccountPrincipal($principalInfo)) {
             throw new DAV\Exception\NotFound('Principal with name '.$name.' not found');
         }
         $current = $this->authPlugin->getCurrentPrincipal();
@@ -70,7 +69,7 @@ final class AppCalendarRoot extends CalendarRoot
             return false;
         }
 
-        return AccountPrincipalFilter::isAccountPrincipal($this->pdo, $principalInfo)
+        return AccountPrincipalFilter::isAccountPrincipal($principalInfo)
             && ($principalInfo['uri'] ?? '') === $current;
     }
 }
