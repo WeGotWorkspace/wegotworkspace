@@ -69,6 +69,12 @@ WebDAV/CalDAV clients expect a stable hostname and trusted TLS. Use **mkcert** o
 
 Certs live in `docker/apache/certs/` (gitignored `*.pem`). Without certs, the entrypoint serves HTTP only on port 80 inside the container.
 
+### MySQL during install (Docker)
+
+The Apache image includes **pdo_mysql**. After changing PHP extensions, rebuild: `docker compose -f compose.dev.yml up -d --build`.
+
+If MySQL runs on the **host** (e.g. MAMP on port 8889), use **`host.docker.internal`** as the host from inside the container — `127.0.0.1` points at the container itself, not your Mac.
+
 ## Optional Mailhog
 
 ```bash
