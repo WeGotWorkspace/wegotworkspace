@@ -6,7 +6,10 @@ namespace App\Support;
 
 final class AppPaths
 {
-    public function __construct(private WgwInstallConfig $install) {}
+    public function __construct(
+        private WgwInstallConfig $install,
+        private WgwDatabaseProbe $databaseProbe,
+    ) {}
 
     public function installRoot(): string
     {
@@ -77,19 +80,7 @@ final class AppPaths
             }
         }
 
-        try {
-            $pdo = new \PDO(
-                $dsn,
-                $credentials['user'],
-                $credentials['password'],
-                [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION],
-            );
-            $users = $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn();
-
-            return (int) $users > 0;
-        } catch (\Throwable) {
-            return false;
-        }
+        return $this->databaseProbe->installConfigHasUsers($this->install);
     }
 
     public function clearStaleInstallLock(): void

@@ -6,7 +6,6 @@ namespace Tests\Unit\Services\Plugins;
 
 use App\Services\Plugins\PluginPaths;
 use App\Support\AppPaths;
-use App\Support\WgwInstallConfig;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -47,7 +46,7 @@ final class PluginPathsTest extends TestCase
         file_put_contents($manifest, '{}');
         file_put_contents($index, '<!doctype html>');
 
-        $paths = new PluginPaths(new AppPaths(new WgwInstallConfig));
+        $paths = new PluginPaths(app(AppPaths::class));
 
         $this->assertSame($index, $paths->indexPathForManifest($manifest));
     }

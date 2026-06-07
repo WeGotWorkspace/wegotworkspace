@@ -6,6 +6,7 @@ namespace App\Services\Installer;
 
 use App\Support\AppPaths;
 use App\Support\WgwConnectionConfigurator;
+use App\Support\WgwDatabaseProbe;
 use Illuminate\Support\Facades\DB;
 
 final class InstallerDatabaseInstaller
@@ -15,35 +16,23 @@ final class InstallerDatabaseInstaller
         private InstallerSeeder $seeder,
         private InstallerAppSettingsWriter $settings,
         private WgwSchemaMigrator $schemaMigrator,
+        private WgwDatabaseProbe $databaseProbe,
     ) {}
 
     /**
      * @param  array<string, mixed>  $db
      */
-    public function connect(array $db): \PDO
+    public function testConnection(array $db): void
     {
-        if (($db['driver'] ?? '') === 'sqlite') {
-            $path = $this->paths->resolveProjectPath((string) ($db['sqlite_path'] ?? $this->paths->defaultSqliteRelativePath()));
-            $dir = dirname($path);
-            if (! is_dir($dir)) {
-                @mkdir($dir, 0775, true);
-            }
+        $this->databaseProbe->pingInstallerDb($db);
+    }
 
-            return new \PDO('sqlite:'.$path, null, null, [
-                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-            ]);
-        }
-
-        $host = (string) ($db['mysql_host'] ?? '127.0.0.1');
-        $port = (int) ($db['mysql_port'] ?? 3306);
-        $name = (string) ($db['mysql_db'] ?? '');
-        $user = (string) ($db['mysql_user'] ?? '');
-        $pass = (string) ($db['mysql_password'] ?? '');
-        $dsn = sprintf('mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4', $host, $port, $name);
-
-        return new \PDO($dsn, $user, $pass, [
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-        ]);
+    /**
+     * @param  array<string, mixed>  $db
+     */
+    public function hasUsers(array $db): bool
+    {
+        return $this->databaseProbe->installerDbHasUsers($db);
     }
 
     /**
@@ -83,13 +72,5 @@ final class InstallerDatabaseInstaller
             $this->seeder->seed($username, $password, $displayName, $email, $enableCalendars, $enableContacts);
             $this->settings->replaceMany($initialSettings);
         });
-    }
-
-    /**
-     * @param  array<string, mixed>  $db
-     */
-    public function testConnection(array $db): void
-    {
-        $this->connect($db)->query('SELECT 1');
     }
 }
