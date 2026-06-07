@@ -91,6 +91,43 @@ final class FilesEndpointsTest extends WgwDatabaseTestCase
         $this->assertSame('hello', $response->streamedContent());
     }
 
+    public function test_files_patch_renames_in_place(): void
+    {
+        $token = $this->issueToken();
+
+        $rename = $this->withBearer($token)->patchJson('/api/v1/files?path=/users/alice/welcome.txt', [
+            'name' => 'hello.txt',
+        ]);
+        $rename->assertOk()->assertJsonPath('data', 'Renamed');
+
+        $listing = $this->withBearer($token)->getJson('/api/v1/files/children?path=/users/alice');
+        $listing->assertOk()
+            ->assertJsonFragment(['name' => 'hello.txt', 'type' => 'file'])
+            ->assertJsonMissing(['name' => 'welcome.txt']);
+    }
+
+    public function test_files_patch_moves_to_destination(): void
+    {
+        $token = $this->issueToken();
+
+        $this->withBearer($token)->postJson('/api/v1/files/directories?path=/users/alice', [
+            'name' => 'Archive',
+        ])->assertOk();
+
+        $move = $this->withBearer($token)->patchJson('/api/v1/files?path=/users/alice/welcome.txt', [
+            'name' => 'welcome.txt',
+            'destination' => '/users/alice/Archive',
+        ]);
+        $move->assertOk()->assertJsonPath('data', 'Renamed');
+
+        $source = $this->withBearer($token)->getJson('/api/v1/files/children?path=/users/alice');
+        $source->assertOk()->assertJsonMissing(['name' => 'welcome.txt']);
+
+        $dest = $this->withBearer($token)->getJson('/api/v1/files/children?path=/users/alice/Archive');
+        $dest->assertOk()
+            ->assertJsonFragment(['name' => 'welcome.txt', 'type' => 'file']);
+    }
+
     private function issueToken(): string
     {
         return (string) $this->postJson('/api/v1/auth/token', [

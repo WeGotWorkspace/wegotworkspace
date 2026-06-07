@@ -174,9 +174,18 @@ export function createWgwDriveOperations(
       return fetchState(cwd, opts, plugins);
     },
     async renameItem(input, opts) {
-      const parent = normalizePath(input.destination);
-      const fullPath = parent === "/" ? `/${input.from}` : `${parent}/${input.from}`;
-      await patchJson(`/files?${pathQuery(fullPath)}`, { name: input.to }, opts);
+      const fromPath = input.from.includes("/")
+        ? normalizePath(input.from)
+        : (() => {
+            const parent = normalizePath(input.destination);
+            return parent === "/" ? `/${input.from}` : `${parent}/${input.from}`;
+          })();
+      const destination = normalizePath(input.destination);
+      const body: { name: string; destination?: string } = { name: input.to };
+      if (destination !== parentAndName(fromPath).destination) {
+        body.destination = destination;
+      }
+      await patchJson(`/files?${pathQuery(fromPath)}`, body, opts);
       return fetchState(cwd, opts, plugins);
     },
     async deleteItems(paths, opts) {

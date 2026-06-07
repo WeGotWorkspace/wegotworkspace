@@ -873,7 +873,7 @@
         "tags": [
           "Files"
         ],
-        "summary": "Rename file or directory",
+        "summary": "Rename or move file or directory",
         "security": [
           {
             "bearerAuth": []
@@ -889,6 +889,28 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "destination": {
+                    "type": "string",
+                    "description": "Target parent directory; omit to rename in place"
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Renamed"
