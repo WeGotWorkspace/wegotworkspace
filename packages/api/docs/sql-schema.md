@@ -45,14 +45,15 @@ Sabre-owned tables (`calendars`, `addressbooks`, `locks`, `propertystorage`, …
 
 | Area | Why PDO remains |
 |------|-----------------|
-| `Services/Installer/` | Initial DB connect before Laravel is fully booted |
-| `Services/Update/UpdateRunner` | Database dump/restore during backup (not history writes) |
+| `InstallerDatabaseInstaller::connect()` | Pre-install connectivity check before Laravel `wgw` connection exists |
+| `InstallerSeeder` (Sabre Cal/Card init) | Sabre `CalPDO` / `CardPDO` backends require `\PDO` |
+| `UpdateRunner::backupDatabase()` | Table-by-table SQL dump during in-place update backup |
 | `Services/Settings/GroupDirectoryService` | Sabre `PrincipalBackend` |
-| `Services/Admin/*` | Sabre user/group provisioning |
+| `Services/Admin/AdminUserProvisionerService` | Sabre Cal/Card teardown on user delete |
 | `Services/Auth/SabreCredentialValidator` | Sabre `PDOBasicAuth` |
 | `Dav/SabreServerFactory` | Sabre server PDO bridge |
 
-Everything else uses Eloquent. `greenfield-guard` enforces no `DB::connection()->table()` in domain services and no runtime `ALTER TABLE` DDL in services.
+Installer seeding, app settings, and update state/history use Eloquent on the `wgw` connection.
 
 ## Connection
 

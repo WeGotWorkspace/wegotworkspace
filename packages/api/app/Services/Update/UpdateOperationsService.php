@@ -6,7 +6,6 @@ namespace App\Services\Update;
 
 use App\Support\UpdateFeedDefaults;
 use App\Support\WgwInstallConfig;
-use Illuminate\Support\Facades\DB;
 
 final class UpdateOperationsService
 {
@@ -20,7 +19,7 @@ final class UpdateOperationsService
      */
     public function check(): array
     {
-        return $this->runner->check(DB::connection('wgw')->getPdo(), $this->updateFeedUrl());
+        return $this->runner->check($this->updateFeedUrl());
     }
 
     /**
@@ -29,7 +28,7 @@ final class UpdateOperationsService
      */
     public function apply(array $input): array
     {
-        return $this->runner->apply(DB::connection('wgw')->getPdo(), $input);
+        return $this->runner->apply($input);
     }
 
     /**
@@ -37,7 +36,7 @@ final class UpdateOperationsService
      */
     public function cancel(): array
     {
-        return $this->runner->cancel(DB::connection('wgw')->getPdo());
+        return $this->runner->cancel();
     }
 
     private function updateFeedUrl(): string
