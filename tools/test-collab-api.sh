@@ -19,7 +19,7 @@ usage() {
   cat <<'EOF'
 Usage: tools/test-collab-api.sh [options]
 
-Smoke-test /api/v1/collab/* (join/poll/leave + document GET/PUT) on the local install.
+Smoke-test /api/v1/rooms/* signaling and /api/v1/files/collaboration on the local install.
 
 Reads defaults from repo-root .env.local when present:
   WGW_PROXY_TARGET, VITE_WGW_DEV_USERNAME, VITE_WGW_DEV_PASSWORD
@@ -28,7 +28,7 @@ Options:
   --base URL          API origin (default: WGW_PROXY_TARGET or https://wegotworkspace.localhost)
   --user NAME         Login username (default: admin)
   --password PASS     Login password (default: storybook-dev)
-  --signal-room ID    Signaling room id (default: docs/test-together.md)
+  --signal-room ID    Signaling room path (default: docs/test-together.md)
   --doc-room PATH     Drive path for document API (default: /users/admin/docs/test-together.md)
   --signaling-only    Run Phase 1 only
   --document-only     Run Phase 2 only (requires TOKEN or runs auth first)
@@ -64,6 +64,13 @@ normalize_base() {
   else
     printf '%s/api/v1' "$origin"
   fi
+}
+
+encode_file_room_id() {
+  python3 -c 'import base64, sys
+path = sys.argv[1]
+encoded = base64.b64encode(path.encode()).decode().rstrip("=").translate(str.maketrans("+/","-_"))
+print("f_" + encoded)' "$1"
 }
 
 while [[ $# -gt 0 ]]; do
@@ -120,6 +127,7 @@ USERNAME="${WGW_DEV_USERNAME:-${VITE_WGW_DEV_USERNAME:-$USERNAME}}"
 PASSWORD="${WGW_DEV_PASSWORD:-${VITE_WGW_DEV_PASSWORD:-$PASSWORD}}"
 
 BASE="$(normalize_base "$PROXY_TARGET")"
+ROOM_ID="$(encode_file_room_id "$SIGNAL_ROOM")"
 CURL=(curl -sS)
 if [[ "$BASE" == https://* ]]; then
   CURL+=(-k)
@@ -165,6 +173,7 @@ log "Config"
 echo "  BASE=$BASE"
 echo "  USER=$USERNAME"
 echo "  SIGNAL_ROOM=$SIGNAL_ROOM"
+echo "  ROOM_ID=$ROOM_ID"
 echo "  DOC_ROOM=$DOC_ROOM"
 
 require_python
@@ -189,36 +198,32 @@ echo "  access_token=${TOKEN:0:24}..."
 AUTH_HEADER=(-H "Authorization: Bearer ${TOKEN}")
 
 if [[ "$RUN_SIGNALING" -eq 1 ]]; then
-  log "Phase 1 — collab join"
-  JOIN_RESPONSE="$(run_curl -w '\n%{http_code}' -X POST "$BASE/collab/join" \
+  log "Phase 1 — join participant"
+  JOIN_RESPONSE="$(run_curl -w '\n%{http_code}' -X POST "$BASE/rooms/${ROOM_ID}/participants" \
     "${AUTH_HEADER[@]}" \
     -H 'Content-Type: application/json' \
-    -d "{\"room\":\"${SIGNAL_ROOM}\",\"name\":\"${USERNAME}\"}")"
+    -d "{\"name\":\"${USERNAME}\"}")"
   JOIN_CODE="${JOIN_RESPONSE##*$'\n'}"
   JOIN_JSON="${JOIN_RESPONSE%$'\n'*}"
-  check_http "$JOIN_CODE" "200" "POST /collab/join"
+  check_http "$JOIN_CODE" "200" "POST /rooms/{roomId}/participants"
   PEER="$(printf '%s' "$JOIN_JSON" | json_get peerId)"
   echo "$JOIN_JSON" | python3 -m json.tool
   echo "  peerId=$PEER"
 
-  log "Phase 1 — collab poll"
-  POLL_RESPONSE="$(run_curl -w '\n%{http_code}' -X POST "$BASE/collab/poll" \
-    "${AUTH_HEADER[@]}" \
-    -H 'Content-Type: application/json' \
-    -d "{\"room\":\"${SIGNAL_ROOM}\",\"peerId\":\"${PEER}\",\"since\":0}")"
+  log "Phase 1 — poll events"
+  POLL_RESPONSE="$(run_curl -w '\n%{http_code}' "${AUTH_HEADER[@]}" \
+    "$BASE/rooms/${ROOM_ID}/events?peerId=${PEER}&since=0")"
   POLL_CODE="${POLL_RESPONSE##*$'\n'}"
   POLL_JSON="${POLL_RESPONSE%$'\n'*}"
-  check_http "$POLL_CODE" "200" "POST /collab/poll"
+  check_http "$POLL_CODE" "200" "GET /rooms/{roomId}/events"
   echo "$POLL_JSON" | python3 -m json.tool
 
-  log "Phase 1 — collab leave"
-  LEAVE_RESPONSE="$(run_curl -w '\n%{http_code}' -X POST "$BASE/collab/leave" \
-    "${AUTH_HEADER[@]}" \
-    -H 'Content-Type: application/json' \
-    -d "{\"room\":\"${SIGNAL_ROOM}\",\"peerId\":\"${PEER}\"}")"
+  log "Phase 1 — leave participant"
+  LEAVE_RESPONSE="$(run_curl -w '\n%{http_code}' -X DELETE "$BASE/rooms/${ROOM_ID}/participants/${PEER}" \
+    "${AUTH_HEADER[@]}")"
   LEAVE_CODE="${LEAVE_RESPONSE##*$'\n'}"
   LEAVE_JSON="${LEAVE_RESPONSE%$'\n'*}"
-  check_http "$LEAVE_CODE" "200" "POST /collab/leave"
+  check_http "$LEAVE_CODE" "200" "DELETE /rooms/{roomId}/participants/{participantId}"
   echo "$LEAVE_JSON" | python3 -m json.tool
 fi
 
@@ -227,10 +232,10 @@ if [[ "$RUN_DOCUMENT" -eq 1 ]]; then
 
   log "Phase 2 — GET document (markdown)"
   MD_RESPONSE="$(run_curl -w '\n%{http_code}' "${AUTH_HEADER[@]}" \
-    "$BASE/collab/document?room=${DOC_Q}")"
+    "$BASE/files/collaboration?path=${DOC_Q}")"
   MD_CODE="${MD_RESPONSE##*$'\n'}"
   MD_BODY="${MD_RESPONSE%$'\n'*}"
-  check_http "$MD_CODE" "200" "GET /collab/document"
+  check_http "$MD_CODE" "200" "GET /files/collaboration"
   echo "$MD_BODY" | head -5
   if [[ "$(printf '%s' "$MD_BODY" | wc -l | tr -d ' ')" -gt 5 ]]; then
     echo "  … ($(printf '%s' "$MD_BODY" | wc -c | tr -d ' ') bytes total)"
@@ -238,7 +243,7 @@ if [[ "$RUN_DOCUMENT" -eq 1 ]]; then
 
   log "Phase 2 — GET document (yjs, expect 204 if empty)"
   YJS_CODE="$(run_curl -o /dev/null -w '%{http_code}' "${AUTH_HEADER[@]}" \
-    "$BASE/collab/document?room=${DOC_Q}&format=yjs")"
+    "$BASE/files/collaboration?path=${DOC_Q}&format=yjs")"
   echo "  HTTP $YJS_CODE"
   if [[ "$YJS_CODE" != "204" && "$YJS_CODE" != "200" ]]; then
     echo "FAIL: unexpected Yjs GET status" >&2
@@ -246,25 +251,25 @@ if [[ "$RUN_DOCUMENT" -eq 1 ]]; then
   fi
 
   log "Phase 2 — PUT document (markdown + yjs)"
-  PUT_RESPONSE="$(run_curl -w '\n%{http_code}' -X PUT "$BASE/collab/document" \
+  PUT_RESPONSE="$(run_curl -w '\n%{http_code}' -X PUT "$BASE/files/collaboration?path=${DOC_Q}" \
     "${AUTH_HEADER[@]}" \
     -H 'Content-Type: application/json' \
-    -d "{\"room\":\"${DOC_ROOM}\",\"markdown\":\"# Together\\n\\nHello from test-collab-api.sh.\\n\",\"yjs\":[1,2,3,255]}")"
+    -d "{\"markdown\":\"# Together\\n\\nHello from test-collab-api.sh.\\n\",\"yjs\":[1,2,3,255]}")"
   PUT_CODE="${PUT_RESPONSE##*$'\n'}"
   PUT_JSON="${PUT_RESPONSE%$'\n'*}"
-  check_http "$PUT_CODE" "200" "PUT /collab/document"
+  check_http "$PUT_CODE" "200" "PUT /files/collaboration"
   echo "$PUT_JSON" | python3 -m json.tool
 
   log "Phase 2 — GET document (markdown, after save)"
   MD2_RESPONSE="$(run_curl -w '\n%{http_code}' "${AUTH_HEADER[@]}" \
-    "$BASE/collab/document?room=${DOC_Q}")"
+    "$BASE/files/collaboration?path=${DOC_Q}")"
   MD2_CODE="${MD2_RESPONSE##*$'\n'}"
   MD2_BODY="${MD2_RESPONSE%$'\n'*}"
-  check_http "$MD2_CODE" "200" "GET /collab/document (after PUT)"
+  check_http "$MD2_CODE" "200" "GET /files/collaboration (after PUT)"
   echo "$MD2_BODY" | head -5
 
   log "Phase 2 — GET document (yjs bytes)"
-  YJS_BYTES="$(run_curl "${AUTH_HEADER[@]}" "$BASE/collab/document?room=${DOC_Q}&format=yjs")"
+  YJS_BYTES="$(run_curl "${AUTH_HEADER[@]}" "$BASE/files/collaboration?path=${DOC_Q}&format=yjs")"
   if command -v xxd >/dev/null 2>&1; then
     printf '%s' "$YJS_BYTES" | xxd
   else

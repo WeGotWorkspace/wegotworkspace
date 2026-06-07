@@ -83,7 +83,6 @@ function done_gate_summary(array $results, bool $passed): void
         fwrite(STDOUT, "\nNotes:\n");
         fwrite(STDOUT, "  • \"OK, but there were issues!\" from PHPUnit means deprecations, not test failures.\n");
         fwrite(STDOUT, "  • D in progress output = a test triggered a deprecation (details printed above).\n");
-        fwrite(STDOUT, "  • Common: PHP 8.5 + Laravel PDO::MYSQL_ATTR_SSL_CA (vendor; harmless for now).\n");
         fwrite(STDOUT, "  • Docs: packages/api/docs/api-done-gate.md\n");
     }
 
