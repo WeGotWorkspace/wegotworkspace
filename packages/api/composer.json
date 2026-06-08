@@ -2,7 +2,7 @@
     "name": "wgw/api",
     "description": "WeGotWorkspace Laravel REST API (greenfield)",
     "type": "project",
-    "license": "MIT",
+    "license": "AGPL-3.0-or-later",
     "require": {
         "php": "^8.3",
         "laravel/framework": "^11.44",
