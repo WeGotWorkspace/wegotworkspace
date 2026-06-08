@@ -41,3 +41,4 @@ wgw-content/
 .DS_Store
 .playwright-mcp/
 .env.local
+wgw-plugins
