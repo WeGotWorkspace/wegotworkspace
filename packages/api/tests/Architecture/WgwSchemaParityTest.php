@@ -5,15 +5,13 @@ declare(strict_types=1);
 namespace Tests\Architecture;
 
 use Illuminate\Support\Facades\Schema;
+use Tests\Support\WgwDatabaseTestCase;
 use Tests\Support\WgwTestDatabase;
-use Tests\TestCase;
 
-final class WgwSchemaParityTest extends TestCase
+final class WgwSchemaParityTest extends WgwDatabaseTestCase
 {
     public function test_wgw_migrations_create_expected_tables(): void
     {
-        WgwTestDatabase::setUpFreshSchema();
-
         foreach ([
             'users',
             'principals',
