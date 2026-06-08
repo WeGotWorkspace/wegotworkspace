@@ -61,7 +61,7 @@ final class SearchReindexEndpointsTest extends WgwDatabaseTestCase
     public function test_admin_can_run_and_read_search_reindex_state(): void
     {
         app(WgwStorage::class)->files()->put('users/alice/admin-search.txt', 'Search endpoint smoke test');
-        $token = $this->issueToken();
+        $token = $this->issueBearerToken();
 
         $run = $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/v1/admin/search/jobs');
@@ -97,13 +97,5 @@ final class SearchReindexEndpointsTest extends WgwDatabaseTestCase
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/v1/admin/search/jobs')
             ->assertForbidden();
-    }
-
-    private function issueToken(): string
-    {
-        return (string) $this->postJson('/api/v1/auth/token', [
-            'username' => 'alice',
-            'password' => 'secret',
-        ])->json('access_token');
     }
 }

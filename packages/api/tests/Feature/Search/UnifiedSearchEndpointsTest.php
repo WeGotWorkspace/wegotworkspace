@@ -109,7 +109,7 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
 
         app(SearchIndexerService::class)->reindexAll();
 
-        $token = $this->issueToken();
+        $token = $this->issueBearerToken();
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/v1/search/results?'.http_build_query([
                 'q' => 'alpha',
@@ -135,7 +135,7 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
 
         app(SearchIndexerService::class)->reindexAll();
 
-        $token = $this->issueToken();
+        $token = $this->issueBearerToken();
         $filtered = $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/v1/search/results?'.http_build_query([
                 'q' => 'alpha',
@@ -221,7 +221,7 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
         $this->assertNotNull($indexed);
         $this->assertSame('Group Standup', $indexed->title);
 
-        $token = $this->issueToken();
+        $token = $this->issueBearerToken();
         $response = $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/v1/search/results?'.http_build_query([
                 'q' => 'standup',
@@ -298,7 +298,7 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
 
     public function test_unified_search_updates_note_body_and_keeps_note_source_type(): void
     {
-        $token = $this->issueToken();
+        $token = $this->issueBearerToken();
         $payload = [
             'id' => 'n-search',
             'notebook' => 'General',
@@ -352,13 +352,5 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
         $this->assertNotEmpty($updatedRows);
         $this->assertSame('note', $updatedRows[0]['sourceType'] ?? null);
         $this->assertSame('Updated Note Title', $updatedRows[0]['title'] ?? null);
-    }
-
-    private function issueToken(): string
-    {
-        return (string) $this->postJson('/api/v1/auth/token', [
-            'username' => 'alice',
-            'password' => 'secret',
-        ])->json('access_token');
     }
 }

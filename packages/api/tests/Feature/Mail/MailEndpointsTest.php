@@ -36,7 +36,7 @@ final class MailEndpointsTest extends WgwDatabaseTestCase
 
     public function test_mail_status_without_server_or_account_config(): void
     {
-        $token = $this->tokenForAlice();
+        $token = $this->issueBearerTokenFor('alice');
 
         $response = $this->getJson('/api/v1/mail/status', [
             'Authorization' => 'Bearer '.$token,
@@ -58,7 +58,7 @@ final class MailEndpointsTest extends WgwDatabaseTestCase
     public function test_mail_folders_returns_not_configured_without_credentials(): void
     {
         $this->seedMailServers();
-        $token = $this->tokenForAlice();
+        $token = $this->issueBearerTokenFor('alice');
 
         $response = $this->getJson('/api/v1/mail/folders', [
             'Authorization' => 'Bearer '.$token,
@@ -70,7 +70,7 @@ final class MailEndpointsTest extends WgwDatabaseTestCase
 
     public function test_mail_messages_requires_folder(): void
     {
-        $token = $this->tokenForAlice();
+        $token = $this->issueBearerTokenFor('alice');
 
         $response = $this->getJson('/api/v1/mail/messages', [
             'Authorization' => 'Bearer '.$token,
@@ -82,7 +82,7 @@ final class MailEndpointsTest extends WgwDatabaseTestCase
 
     public function test_mail_message_delete_requires_folder_and_uid(): void
     {
-        $token = $this->tokenForAlice();
+        $token = $this->issueBearerTokenFor('alice');
 
         $this->deleteJson('/api/v1/mail/messages/incomplete-id', [], [
             'Authorization' => 'Bearer '.$token,
@@ -93,7 +93,7 @@ final class MailEndpointsTest extends WgwDatabaseTestCase
 
     public function test_mail_move_is_routed_and_validates_params(): void
     {
-        $token = $this->tokenForAlice();
+        $token = $this->issueBearerTokenFor('alice');
 
         $this->postJson('/api/v1/mail/move', [
             'fromFolder' => 'SU5CT1g',
@@ -114,16 +114,5 @@ final class MailEndpointsTest extends WgwDatabaseTestCase
         AppSetting::setValue(SettingKeys::MAIL_SMTP_HOST, 'smtp.example.test');
         AppSetting::setValue(SettingKeys::MAIL_SMTP_PORT, 465);
         AppSetting::setValue(SettingKeys::MAIL_SMTP_SECURITY, 'ssl');
-    }
-
-    private function tokenForAlice(): string
-    {
-        $response = $this->postJson('/api/v1/auth/token', [
-            'username' => 'alice',
-            'password' => 'secret',
-        ]);
-        $response->assertOk();
-
-        return (string) $response->json('access_token');
     }
 }

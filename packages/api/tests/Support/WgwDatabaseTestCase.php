@@ -12,6 +12,7 @@ use Tests\TestCase;
 
 abstract class WgwDatabaseTestCase extends TestCase
 {
+    use InteractsWithWgwBearerTokens;
     use RefreshDatabase;
 
     /** @var list<string> */
