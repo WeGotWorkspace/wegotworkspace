@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Notes;
+namespace Tests\Unit\Notes;
 
 use App\Services\Notes\NoteMarkdownCodec;
 use PHPUnit\Framework\TestCase;
