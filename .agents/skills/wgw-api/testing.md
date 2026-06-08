@@ -9,8 +9,9 @@ A domain is **not done** until feature tests pass for its routes without calling
 - Feature test per controller/route (status + JSON vs OpenAPI / captured fixtures)
 - Unit tests for services and non-trivial repositories
 - Database-backed tests extend **`Tests\Support\WgwDatabaseTestCase`** (Laravel `RefreshDatabase` on the `wgw` connection)
-- Factories in `database/factories/` (`UserFactory`, `PrincipalFactory`, `GroupMemberFactory`)
+- Factories in `database/factories/` (`UserFactory`, `PrincipalFactory`, `GroupMemberFactory`, `AppSettingFactory`)
 - `SeedsWgwIdentity` on `WgwDatabaseTestCase` (`seedWgwUser()`, `seedWgwGroup()`, `addPrincipalToGroup()`) — avoid hardcoded IDs
+- `ConfiguresAppSettings` on `WgwDatabaseTestCase` (`setAppSetting()`, `setAppSettings()`)
 - File features: `Storage::fake('wgw_files')` / `wgw_notes` — no manual `$tmpDir` unless configuring fake disk root
 
 ## `WgwDatabaseTestCase`
@@ -20,6 +21,7 @@ Most API and model tests extend `tests/Support/WgwDatabaseTestCase.php`:
 - Runs `migrate:fresh` **once** against `database/migrations/wgw` on connection `wgw`
 - Wraps each test in a transaction on `wgw` (rollback between tests)
 - Calls `WgwTestDatabase::configureConnection()` so SQLite `:memory:` is the default and `WGW_TEST_DRIVER=mysql` still works
+- Mixes in `InteractsWithWgwBearerTokens` for JWT helpers (`issueBearerToken()`, `issueBearerTokenFor()`, `withBearer()`, `bearerHeaders()`)
 
 PHPUnit sets `DB_CONNECTION=wgw` and `WGW_DB_DATABASE=:memory:` in `phpunit.xml`.
 
