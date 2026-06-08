@@ -8,6 +8,7 @@ use App\Services\Rtc\Signaling\HttpSignalingStore;
 use App\Services\Rtc\Signaling\RtcSignalingException;
 use App\Services\Rtc\Signaling\RtcSignalingPolicy;
 use Illuminate\Support\Facades\Schema;
+use Tests\Support\WgwTestDatabase;
 use Tests\TestCase;
 
 final class HttpSignalingStoreTest extends TestCase
@@ -15,6 +16,7 @@ final class HttpSignalingStoreTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        WgwTestDatabase::configureConnection('sqlite');
         Schema::connection('wgw')->dropIfExists('meet_messages');
         Schema::connection('wgw')->dropIfExists('meet_peers');
         Schema::connection('wgw')->dropIfExists('collab_messages');
