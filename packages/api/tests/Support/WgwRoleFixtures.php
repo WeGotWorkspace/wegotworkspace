@@ -8,7 +8,6 @@ use App\Models\AppSetting;
 use App\Models\Principal;
 use App\Models\User;
 use App\Services\Auth\AdminRoleResolver;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Seeds bob (user) and alice (admin) and issues bearer tokens for role-matrix tests.
@@ -31,35 +30,12 @@ trait WgwRoleFixtures
             return;
         }
 
-        User::query()->create([
-            'username' => 'bob',
-            'digesta1' => '',
-            'digest' => password_hash('secret', PASSWORD_DEFAULT),
-        ]);
-        Principal::query()->create([
-            'uri' => 'principals/bob',
-            'email' => 'bob@example.test',
-            'displayname' => 'Bob',
-        ]);
-
-        User::query()->create([
-            'username' => 'alice',
-            'digesta1' => '',
-            'digest' => password_hash('secret', PASSWORD_DEFAULT),
-        ]);
-        $alice = Principal::query()->create([
-            'uri' => 'principals/alice',
-            'email' => 'alice@example.test',
-            'displayname' => 'Alice',
-        ]);
-        $group = Principal::query()->create([
-            'uri' => AdminRoleResolver::ADMIN_GROUP_URI,
-            'displayname' => 'Administrators',
-        ]);
-        DB::connection('wgw')->table('groupmembers')->insert([
-            'principal_id' => $group->id,
-            'member_id' => $alice->id,
-        ]);
+        $this->seedWgwUser('bob', displayName: 'Bob');
+        $this->seedWgwUser('alice', displayName: 'Alice');
+        $alice = Principal::forUsername('alice');
+        $this->assertNotNull($alice);
+        $group = $this->seedWgwGroup(AdminRoleResolver::ADMIN_GROUP_URI, 'Administrators');
+        $this->addPrincipalToGroup($group, $alice);
     }
 
     protected function userBearerToken(): string
