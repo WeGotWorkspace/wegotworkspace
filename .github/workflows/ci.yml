@@ -45,6 +45,10 @@ jobs:
       - name: License policy (production dependencies)
         run: pnpm run check:licenses
 
+      - name: Reject Cursor commit attribution
+        if: github.event_name == 'pull_request'
+        run: node tools/git/check-commit-range-attribution.mjs "${{ github.event.pull_request.base.sha }}..${{ github.sha }}"
+
       - name: Quality gate (typegen, lint, format, typecheck, API done gate)
         run: pnpm run ci:quality
 
