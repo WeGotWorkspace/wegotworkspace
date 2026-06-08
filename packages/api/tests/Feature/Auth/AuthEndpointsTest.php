@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Auth;
 
-use App\Models\AppSetting;
 use App\Models\Principal;
 use App\Services\Auth\AdminRoleResolver;
 use Tests\Support\WgwDatabaseTestCase;
@@ -48,9 +47,7 @@ final class AuthEndpointsTest extends WgwDatabaseTestCase
         $access = (string) $tokenResponse->json('access_token');
         $refresh = (string) $tokenResponse->json('refresh_token');
 
-        $me = $this->getJson('/api/v1/me', [
-            'Authorization' => 'Bearer '.$access,
-        ]);
+        $me = $this->withBearer($access)->getJson('/api/v1/me');
         $me->assertOk();
         $me->assertJson([
             'username' => 'alice',
@@ -64,17 +61,13 @@ final class AuthEndpointsTest extends WgwDatabaseTestCase
         $newAccess = (string) $refreshed->json('access_token');
         $this->assertNotSame('', $newAccess);
 
-        $revoke = $this->postJson('/api/v1/auth/revoke', [
+        $revoke = $this->withBearer($newAccess)->postJson('/api/v1/auth/revoke', [
             'refresh_token' => (string) $refreshed->json('refresh_token'),
-        ], [
-            'Authorization' => 'Bearer '.$newAccess,
         ]);
         $revoke->assertOk();
         $revoke->assertJson(['ok' => true]);
 
-        $this->getJson('/api/v1/me', [
-            'Authorization' => 'Bearer '.$newAccess,
-        ])->assertUnauthorized();
+        $this->withBearer($newAccess)->getJson('/api/v1/me')->assertUnauthorized();
     }
 
     public function test_invalid_credentials_return_401(): void
@@ -107,7 +100,7 @@ final class AuthEndpointsTest extends WgwDatabaseTestCase
 
     private function seedAliceUser(): void
     {
-        AppSetting::setValue('auth_realm', 'SabreDAV');
+        $this->setAppSetting('auth_realm', 'SabreDAV');
         $this->seedWgwUser('alice', displayName: 'Alice');
     }
 }

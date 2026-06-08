@@ -63,18 +63,13 @@ final class PluginSessionEndpointsTest extends WgwDatabaseTestCase
     {
         $this->postJson('/api/v1/plugins/demo-plugin/session')->assertUnauthorized();
 
-        $token = (string) $this->postJson('/api/v1/auth/token', [
-            'username' => 'alice',
-            'password' => 'secret',
-        ])->json('access_token');
+        $client = $this->withBearer($this->issueBearerToken());
 
-        $headers = ['Authorization' => 'Bearer '.$token];
-
-        $this->postJson('/api/v1/plugins/unknown/session', [], $headers)
+        $client->postJson('/api/v1/plugins/unknown/session')
             ->assertNotFound()
             ->assertJsonPath('error', 'plugin_not_found');
 
-        $this->postJson('/api/v1/plugins/demo-plugin/session', [], $headers)
+        $client->postJson('/api/v1/plugins/demo-plugin/session')
             ->assertOk()
             ->assertJsonPath('ok', true);
     }

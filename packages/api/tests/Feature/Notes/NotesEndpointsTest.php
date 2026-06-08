@@ -45,52 +45,44 @@ final class NotesEndpointsTest extends WgwDatabaseTestCase
 
     public function test_notes_crud_archive_and_notebooks(): void
     {
-        $token = $this->token();
+        $token = $this->issueBearerToken();
 
-        $create = $this->postJson('/api/v1/notes/items', [
+        $create = $this->withBearer($token)->postJson('/api/v1/notes/items', [
             'notebook' => 'Drafts',
             'title' => 'Hello',
             'body' => 'World',
             'tags' => ['demo'],
             'starred' => false,
             'archived' => false,
-        ], ['Authorization' => 'Bearer '.$token]);
+        ]);
         $create->assertCreated();
         $noteId = (string) $create->json('item.id');
         $this->assertNotSame('', $noteId);
 
-        $list = $this->getJson('/api/v1/notes/items', ['Authorization' => 'Bearer '.$token]);
+        $list = $this->withBearer($token)->getJson('/api/v1/notes/items');
         $list->assertOk();
         $this->assertCount(1, $list->json('items'));
 
-        $archive = $this->patchJson('/api/v1/notes/items/'.$noteId, [
+        $archive = $this->withBearer($token)->patchJson('/api/v1/notes/items/'.$noteId, [
             'archived' => true,
-        ], [
-            'Authorization' => 'Bearer '.$token,
         ]);
         $archive->assertOk();
         $this->assertTrue($archive->json('item.archived'));
 
-        $active = $this->getJson('/api/v1/notes/items?archived=false', [
-            'Authorization' => 'Bearer '.$token,
-        ]);
+        $active = $this->withBearer($token)->getJson('/api/v1/notes/items?archived=false');
         $this->assertSame([], $active->json('items'));
 
-        $restore = $this->patchJson('/api/v1/notes/items/'.$noteId, [
+        $restore = $this->withBearer($token)->patchJson('/api/v1/notes/items/'.$noteId, [
             'archived' => false,
-        ], [
-            'Authorization' => 'Bearer '.$token,
         ]);
         $restore->assertOk();
         $this->assertFalse($restore->json('item.archived'));
 
-        $this->postJson('/api/v1/notes/notebooks', [
+        $this->withBearer($token)->postJson('/api/v1/notes/notebooks', [
             'name' => 'Projects',
-        ], ['Authorization' => 'Bearer '.$token])->assertCreated();
+        ])->assertCreated();
 
-        $notebooks = $this->getJson('/api/v1/notes/notebooks', [
-            'Authorization' => 'Bearer '.$token,
-        ]);
+        $notebooks = $this->withBearer($token)->getJson('/api/v1/notes/notebooks');
         $notebooks->assertOk();
         $names = array_column($notebooks->json('items'), 'name');
         $this->assertContains('Drafts', $names);
@@ -99,23 +91,23 @@ final class NotesEndpointsTest extends WgwDatabaseTestCase
 
     public function test_notes_upsert_allows_empty_body_and_no_tags(): void
     {
-        $token = $this->token();
+        $token = $this->issueBearerToken();
 
-        $create = $this->postJson('/api/v1/notes/items', [
+        $create = $this->withBearer($token)->postJson('/api/v1/notes/items', [
             'notebook' => 'Drafts',
             'title' => 'Blank',
-        ], ['Authorization' => 'Bearer '.$token]);
+        ]);
         $create->assertCreated();
         $noteId = (string) $create->json('item.id');
         $this->assertSame('', $create->json('item.body'));
         $this->assertSame([], $create->json('item.tags'));
 
-        $update = $this->putJson('/api/v1/notes/items/'.$noteId, [
+        $update = $this->withBearer($token)->putJson('/api/v1/notes/items/'.$noteId, [
             'notebook' => 'Drafts',
             'title' => 'Still blank',
             'body' => '',
             'tags' => [],
-        ], ['Authorization' => 'Bearer '.$token]);
+        ]);
         $update->assertOk();
         $this->assertSame('', $update->json('item.body'));
         $this->assertSame([], $update->json('item.tags'));
@@ -131,8 +123,8 @@ final class NotesEndpointsTest extends WgwDatabaseTestCase
         );
         File::put($drafts.'/._good.md', "\x00\xff Mac OS X\x00\x00 resource fork");
 
-        $token = $this->token();
-        $list = $this->getJson('/api/v1/notes/items', ['Authorization' => 'Bearer '.$token]);
+        $token = $this->issueBearerToken();
+        $list = $this->withBearer($token)->getJson('/api/v1/notes/items');
         $list->assertOk();
         $this->assertCount(1, $list->json('items'));
         $this->assertSame('good', $list->json('items.0.id'));
@@ -141,26 +133,15 @@ final class NotesEndpointsTest extends WgwDatabaseTestCase
 
     public function test_notes_capabilities_and_state(): void
     {
-        $token = $this->token();
+        $token = $this->issueBearerToken();
 
-        $this->getJson('/api/v1/notes/capabilities', ['Authorization' => 'Bearer '.$token])
+        $this->withBearer($token)->getJson('/api/v1/notes/capabilities')
             ->assertOk()
             ->assertJsonStructure(['enabled', 'distReady', 'baseUri']);
 
-        $this->getJson('/api/v1/notes/state', ['Authorization' => 'Bearer '.$token])
+        $this->withBearer($token)->getJson('/api/v1/notes/state')
             ->assertOk()
             ->assertJsonPath('username', 'alice')
             ->assertJsonStructure(['notesPath', 'logoutUrl', 'filesEnabled']);
-    }
-
-    private function token(): string
-    {
-        $response = $this->postJson('/api/v1/auth/token', [
-            'username' => 'alice',
-            'password' => 'secret',
-        ]);
-        $response->assertOk();
-
-        return (string) $response->json('access_token');
     }
 }

@@ -48,13 +48,13 @@ final class SearchReindexEndpointsTest extends WgwDatabaseTestCase
         app(WgwStorage::class)->files()->put('users/alice/admin-search.txt', 'Search endpoint smoke test');
         $token = $this->issueBearerToken();
 
-        $run = $this->withHeader('Authorization', 'Bearer '.$token)
+        $run = $this->withBearer($token)
             ->postJson('/api/v1/admin/search/jobs');
         $run->assertOk()
             ->assertJsonPath('ok', true)
             ->assertJsonPath('message', 'Search reindex completed.');
 
-        $state = $this->withHeader('Authorization', 'Bearer '.$token)
+        $state = $this->withBearer($token)
             ->getJson('/api/v1/admin/search/jobs/current');
         $state->assertOk()
             ->assertJsonPath('inProgress', false)
@@ -66,7 +66,7 @@ final class SearchReindexEndpointsTest extends WgwDatabaseTestCase
         $this->seedWgwUser('bob', displayName: 'Bob');
         $token = $this->issueBearerTokenFor('bob');
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->postJson('/api/v1/admin/search/jobs')
             ->assertForbidden();
     }

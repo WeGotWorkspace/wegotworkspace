@@ -63,14 +63,9 @@ final class PluginsEndpointsTest extends WgwDatabaseTestCase
     {
         $this->getJson('/api/v1/plugins')->assertUnauthorized();
 
-        $token = (string) $this->postJson('/api/v1/auth/token', [
-            'username' => 'alice',
-            'password' => 'secret',
-        ])->json('access_token');
+        $token = $this->issueBearerToken();
 
-        $response = $this->getJson('/api/v1/plugins', [
-            'Authorization' => 'Bearer '.$token,
-        ]);
+        $response = $this->withBearer($token)->getJson('/api/v1/plugins');
 
         $response->assertOk()
             ->assertJsonStructure([
@@ -89,14 +84,7 @@ final class PluginsEndpointsTest extends WgwDatabaseTestCase
 
     public function test_plugins_runtime_readiness_flags(): void
     {
-        $token = (string) $this->postJson('/api/v1/auth/token', [
-            'username' => 'alice',
-            'password' => 'secret',
-        ])->json('access_token');
-
-        $this->getJson('/api/v1/plugins', [
-            'Authorization' => 'Bearer '.$token,
-        ])
+        $this->withBearer($this->issueBearerToken())->getJson('/api/v1/plugins')
             ->assertOk()
             ->assertJsonPath('plugins.0.runtime.indexReady', true)
             ->assertJsonPath('plugins.0.runtime.editorReady', true);
@@ -104,31 +92,26 @@ final class PluginsEndpointsTest extends WgwDatabaseTestCase
 
     public function test_plugins_can_be_activated_and_deactivated(): void
     {
-        $token = (string) $this->postJson('/api/v1/auth/token', [
-            'username' => 'alice',
-            'password' => 'secret',
-        ])->json('access_token');
+        $client = $this->withBearer($this->issueBearerToken());
 
-        $headers = ['Authorization' => 'Bearer '.$token];
-
-        $this->putJson('/api/v1/plugins/demo-plugin/activation', ['active' => false], $headers)
+        $client->putJson('/api/v1/plugins/demo-plugin/activation', ['active' => false])
             ->assertOk()
             ->assertJsonPath('plugin.id', 'demo-plugin')
             ->assertJsonPath('plugin.active', false);
 
-        $this->getJson('/api/v1/plugins', $headers)
+        $client->getJson('/api/v1/plugins')
             ->assertOk()
             ->assertJsonFragment([
                 'id' => 'demo-plugin',
                 'active' => false,
             ]);
 
-        $this->putJson('/api/v1/plugins/demo-plugin/activation', ['active' => true], $headers)
+        $client->putJson('/api/v1/plugins/demo-plugin/activation', ['active' => true])
             ->assertOk()
             ->assertJsonPath('plugin.id', 'demo-plugin')
             ->assertJsonPath('plugin.active', true);
 
-        $this->putJson('/api/v1/plugins/unknown/activation', ['active' => false], $headers)
+        $client->putJson('/api/v1/plugins/unknown/activation', ['active' => false])
             ->assertNotFound()
             ->assertJsonPath('error', 'plugin_not_found');
     }

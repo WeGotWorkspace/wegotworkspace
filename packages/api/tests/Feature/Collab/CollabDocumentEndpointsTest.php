@@ -51,18 +51,18 @@ final class CollabDocumentEndpointsTest extends WgwDatabaseTestCase
     {
         $token = $this->issueBearerToken();
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->get('/api/v1/files/collaboration?path='.urlencode(self::ROOM))
             ->assertOk()
             ->assertHeader('Content-Type', 'text/markdown; charset=utf-8')
             ->assertSeeText('# Collaborative document');
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->get('/api/v1/files/collaboration?path='.urlencode(self::ROOM).'&format=yjs')
             ->assertNoContent();
 
         $yjsBytes = [1, 2, 3, 255];
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->putJson('/api/v1/files/collaboration?path='.urlencode(self::ROOM), [
                 'markdown' => "# Together\n\nHello collab.\n",
                 'yjs' => $yjsBytes,
@@ -79,12 +79,12 @@ final class CollabDocumentEndpointsTest extends WgwDatabaseTestCase
             $storage->get('users/alice/docs/.together.md.yjs')
         );
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->get('/api/v1/files/collaboration?path='.urlencode(self::ROOM))
             ->assertOk()
             ->assertSeeText('Hello collab.');
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->get('/api/v1/files/collaboration?path='.urlencode(self::ROOM).'&format=yjs')
             ->assertOk()
             ->assertHeader('Content-Type', 'application/octet-stream')
@@ -95,7 +95,7 @@ final class CollabDocumentEndpointsTest extends WgwDatabaseTestCase
     {
         $this->seedWgwUser('bob', displayName: 'Bob');
 
-        $this->withHeader('Authorization', 'Bearer '.$this->issueBearerTokenFor('bob'))
+        $this->withBearer($this->issueBearerTokenFor('bob'))
             ->putJson('/api/v1/files/collaboration?path='.urlencode(self::ROOM), [
                 'markdown' => 'nope',
             ])
@@ -107,7 +107,7 @@ final class CollabDocumentEndpointsTest extends WgwDatabaseTestCase
     {
         $token = $this->issueBearerToken();
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->putJson('/api/v1/files/collaboration?path='.urlencode(self::ROOM_WITH_SPACES), [
                 'markdown' => "# Hello World\n",
                 'yjs' => [0, 0],
@@ -115,7 +115,7 @@ final class CollabDocumentEndpointsTest extends WgwDatabaseTestCase
             ->assertOk()
             ->assertJsonPath('ok', true);
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->get('/api/v1/files/collaboration?path='.urlencode(self::ROOM_WITH_SPACES))
             ->assertOk()
             ->assertHeader('Content-Type', 'text/markdown; charset=utf-8')

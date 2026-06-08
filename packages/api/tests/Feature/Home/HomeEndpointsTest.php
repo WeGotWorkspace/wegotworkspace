@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Home;
 
-use App\Models\AppSetting;
 use Tests\Support\WgwDatabaseTestCase;
 
 final class HomeEndpointsTest extends WgwDatabaseTestCase
@@ -23,19 +22,11 @@ final class HomeEndpointsTest extends WgwDatabaseTestCase
     {
         $this->getJson('/api/v1/workspace/state')->assertUnauthorized();
 
-        $token = $this->postJson('/api/v1/auth/token', [
-            'username' => 'alice',
-            'password' => 'secret',
-        ])->json('access_token');
+        $token = $this->issueBearerToken();
 
-        AppSetting::query()->create([
-            'name' => 'files_enabled',
-            'value' => json_encode(true, JSON_THROW_ON_ERROR),
-        ]);
+        $this->setAppSetting('files_enabled', true);
 
-        $response = $this->getJson('/api/v1/workspace/state', [
-            'Authorization' => 'Bearer '.$token,
-        ]);
+        $response = $this->withBearer($token)->getJson('/api/v1/workspace/state');
 
         $response->assertOk()
             ->assertJsonPath('username', 'alice')

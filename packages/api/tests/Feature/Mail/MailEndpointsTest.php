@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Mail;
 
-use App\Models\AppSetting;
 use App\Services\Settings\SettingKeys;
 use Tests\Support\WgwDatabaseTestCase;
 
@@ -25,9 +24,7 @@ final class MailEndpointsTest extends WgwDatabaseTestCase
     {
         $token = $this->issueBearerTokenFor('alice');
 
-        $response = $this->getJson('/api/v1/mail/status', [
-            'Authorization' => 'Bearer '.$token,
-        ]);
+        $response = $this->withBearer($token)->getJson('/api/v1/mail/status');
 
         $response->assertOk();
         $response->assertJsonStructure([
@@ -47,9 +44,7 @@ final class MailEndpointsTest extends WgwDatabaseTestCase
         $this->seedMailServers();
         $token = $this->issueBearerTokenFor('alice');
 
-        $response = $this->getJson('/api/v1/mail/folders', [
-            'Authorization' => 'Bearer '.$token,
-        ]);
+        $response = $this->withBearer($token)->getJson('/api/v1/mail/folders');
 
         $response->assertStatus(400);
         $response->assertJson(['error' => 'not_configured']);
@@ -59,9 +54,7 @@ final class MailEndpointsTest extends WgwDatabaseTestCase
     {
         $token = $this->issueBearerTokenFor('alice');
 
-        $response = $this->getJson('/api/v1/mail/messages', [
-            'Authorization' => 'Bearer '.$token,
-        ]);
+        $response = $this->withBearer($token)->getJson('/api/v1/mail/messages');
 
         $response->assertStatus(400);
         $response->assertJson(['error' => 'mailbox_required']);
@@ -71,9 +64,7 @@ final class MailEndpointsTest extends WgwDatabaseTestCase
     {
         $token = $this->issueBearerTokenFor('alice');
 
-        $this->deleteJson('/api/v1/mail/messages/incomplete-id', [], [
-            'Authorization' => 'Bearer '.$token,
-        ])
+        $this->withBearer($token)->deleteJson('/api/v1/mail/messages/incomplete-id')
             ->assertStatus(400)
             ->assertJson(['error' => 'bad_params']);
     }
@@ -82,12 +73,10 @@ final class MailEndpointsTest extends WgwDatabaseTestCase
     {
         $token = $this->issueBearerTokenFor('alice');
 
-        $this->postJson('/api/v1/mail/move', [
+        $this->withBearer($token)->postJson('/api/v1/mail/move', [
             'fromFolder' => 'SU5CT1g',
             'toFolder' => 'SU5CT1guQXJjaGl2ZQ',
             'uid' => 1,
-        ], [
-            'Authorization' => 'Bearer '.$token,
         ])
             ->assertStatus(400)
             ->assertJson(['error' => 'not_configured']);
@@ -95,11 +84,13 @@ final class MailEndpointsTest extends WgwDatabaseTestCase
 
     private function seedMailServers(): void
     {
-        AppSetting::setValue(SettingKeys::MAIL_IMAP_HOST, 'imap.example.test');
-        AppSetting::setValue(SettingKeys::MAIL_IMAP_PORT, 993);
-        AppSetting::setValue(SettingKeys::MAIL_IMAP_SECURITY, 'ssl');
-        AppSetting::setValue(SettingKeys::MAIL_SMTP_HOST, 'smtp.example.test');
-        AppSetting::setValue(SettingKeys::MAIL_SMTP_PORT, 465);
-        AppSetting::setValue(SettingKeys::MAIL_SMTP_SECURITY, 'ssl');
+        $this->setAppSettings([
+            SettingKeys::MAIL_IMAP_HOST => 'imap.example.test',
+            SettingKeys::MAIL_IMAP_PORT => 993,
+            SettingKeys::MAIL_IMAP_SECURITY => 'ssl',
+            SettingKeys::MAIL_SMTP_HOST => 'smtp.example.test',
+            SettingKeys::MAIL_SMTP_PORT => 465,
+            SettingKeys::MAIL_SMTP_SECURITY => 'ssl',
+        ]);
     }
 }

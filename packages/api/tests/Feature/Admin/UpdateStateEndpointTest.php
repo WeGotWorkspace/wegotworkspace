@@ -58,7 +58,7 @@ final class UpdateStateEndpointTest extends WgwDatabaseTestCase
             ], JSON_UNESCAPED_SLASHES)."\n",
         );
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->getJson('/api/v1/admin/updates/state')
             ->assertOk()
             ->assertJsonPath('inProgress', true)
@@ -86,7 +86,7 @@ final class UpdateStateEndpointTest extends WgwDatabaseTestCase
             ], JSON_UNESCAPED_SLASHES)."\n",
         );
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->getJson('/api/v1/admin/updates/state')
             ->assertOk()
             ->assertJsonPath('inProgress', false)

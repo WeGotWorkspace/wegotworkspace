@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Dav;
 
-use App\Models\AppSetting;
 use Tests\Support\WgwDatabaseTestCase;
 
 final class DavEndpointsTest extends WgwDatabaseTestCase
@@ -23,17 +22,14 @@ final class DavEndpointsTest extends WgwDatabaseTestCase
     {
         $this->getJson('/api/v1/dav/capabilities')->assertUnauthorized();
 
-        $token = $this->postJson('/api/v1/auth/token', [
-            'username' => 'alice',
-            'password' => 'secret',
-        ])->json('access_token');
+        $token = $this->issueBearerToken();
 
-        AppSetting::setValue('base_uri', '/dav/');
-        AppSetting::setValue('calendar_enabled', false);
-
-        $response = $this->getJson('/api/v1/dav/capabilities', [
-            'Authorization' => 'Bearer '.$token,
+        $this->setAppSettings([
+            'base_uri' => '/dav/',
+            'calendar_enabled' => false,
         ]);
+
+        $response = $this->withBearer($token)->getJson('/api/v1/dav/capabilities');
 
         $response->assertOk()
             ->assertJsonPath('baseUri', '/dav/')

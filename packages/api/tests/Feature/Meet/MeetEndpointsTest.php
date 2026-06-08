@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Meet;
 
-use App\Models\AppSetting;
 use App\Services\Settings\SettingKeys;
 use Tests\Support\WgwDatabaseTestCase;
 
@@ -156,10 +155,12 @@ final class MeetEndpointsTest extends WgwDatabaseTestCase
 
     public function test_rtc_settings_endpoint_exposes_meet_ice_values(): void
     {
-        AppSetting::setValue(SettingKeys::RTC_STUN_URL, "one.example.org:3478, \nstun:two.example.org");
-        AppSetting::setValue(SettingKeys::RTC_TURN_URL, "turn:one.example.org\nturn-two.example.org:3478?transport=udp");
-        AppSetting::setValue(SettingKeys::RTC_TURN_USERNAME, 'rtc-user');
-        AppSetting::setValue(SettingKeys::RTC_TURN_CREDENTIAL, 'rtc-pass');
+        $this->setAppSettings([
+            SettingKeys::RTC_STUN_URL => "one.example.org:3478, \nstun:two.example.org",
+            SettingKeys::RTC_TURN_URL => "turn:one.example.org\nturn-two.example.org:3478?transport=udp",
+            SettingKeys::RTC_TURN_USERNAME => 'rtc-user',
+            SettingKeys::RTC_TURN_CREDENTIAL => 'rtc-pass',
+        ]);
 
         $response = $this->getJson('/api/v1/rooms/'.self::ROOM_ID.'/configuration');
 
