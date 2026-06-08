@@ -5,10 +5,15 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Models\Concerns\UsesWgwConnection;
+use Database\Factories\AppSettingFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 final class AppSetting extends Model
 {
+    /** @use HasFactory<AppSettingFactory> */
+    use HasFactory;
+
     use UsesWgwConnection;
 
     protected $table = 'app_settings';
