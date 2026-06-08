@@ -18,16 +18,10 @@ final class WgwModelsTest extends WgwDatabaseTestCase
 {
     public function test_user_and_principal_round_trip(): void
     {
-        $user = User::query()->create([
-            'username' => 'alice',
+        $user = User::factory()->named('alice')->create([
             'digest' => '$2y$10$abcdefghijklmnopqrstuv',
-            'digesta1' => '',
         ]);
-        Principal::query()->create([
-            'uri' => 'principals/alice',
-            'email' => 'alice@example.test',
-            'displayname' => 'Alice',
-        ]);
+        Principal::factory()->forUsername('alice', 'Alice')->create();
 
         $this->assertSame('principals/alice', $user->principalUri());
         $principal = $user->principal();
@@ -48,18 +42,9 @@ final class WgwModelsTest extends WgwDatabaseTestCase
 
     public function test_group_member_links_principals(): void
     {
-        $group = Principal::query()->create([
-            'uri' => 'principals/groups/team',
-            'displayname' => 'Team',
-        ]);
-        $member = Principal::query()->create([
-            'uri' => 'principals/alice',
-            'displayname' => 'Alice',
-        ]);
-        GroupMember::query()->create([
-            'principal_id' => $group->id,
-            'member_id' => $member->id,
-        ]);
+        $group = Principal::factory()->forGroup('team', 'Team')->create();
+        $member = Principal::factory()->forUsername('alice', 'Alice')->create();
+        GroupMember::factory()->forGroupAndMember($group, $member)->create();
 
         $this->assertCount(1, $group->groupMembers);
         $this->assertSame('principals/alice', $group->groupMembers->first()?->uri);

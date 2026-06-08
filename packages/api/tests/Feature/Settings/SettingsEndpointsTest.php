@@ -6,10 +6,8 @@ namespace Tests\Feature\Settings;
 
 use App\Models\AppSetting;
 use App\Models\Principal;
-use App\Models\User;
 use App\Services\Auth\AdminRoleResolver;
 use App\Support\WgwSettings;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Tests\Support\WgwDatabaseTestCase;
 
@@ -113,19 +111,11 @@ final class SettingsEndpointsTest extends WgwDatabaseTestCase
 
     public function test_settings_state_includes_group_membership(): void
     {
-        $group = Principal::query()->create([
-            'uri' => AdminRoleResolver::ADMIN_GROUP_URI,
-            'displayname' => 'Administrators',
-        ]);
-        $support = Principal::query()->create([
-            'uri' => 'principals/groups/support',
-            'displayname' => 'Support',
-        ]);
-        $alice = Principal::query()->where('uri', 'principals/alice')->first();
+        $this->seedWgwGroup(AdminRoleResolver::ADMIN_GROUP_URI, 'Administrators');
+        $support = $this->seedWgwGroup('principals/groups/support', 'Support');
+        $alice = Principal::forUsername('alice');
         $this->assertNotNull($alice);
-        DB::connection('wgw')->table('groupmembers')->insert([
-            ['principal_id' => $support->id, 'member_id' => $alice->id],
-        ]);
+        $this->addPrincipalToGroup($support, $alice);
 
         $token = $this->issueBearerToken();
         $state = $this->getJson('/api/v1/settings/state', [
@@ -141,15 +131,6 @@ final class SettingsEndpointsTest extends WgwDatabaseTestCase
         AppSetting::setValue('auth_realm', 'SabreDAV');
         AppSetting::setValue(WgwSettings::MAIL_IMAP_HOST, 'imap.example.test');
         AppSetting::setValue(WgwSettings::MAIL_IMAP_PORT, 993);
-        User::query()->create([
-            'username' => 'alice',
-            'digest' => password_hash('secret', PASSWORD_DEFAULT),
-            'digesta1' => '',
-        ]);
-        Principal::query()->create([
-            'uri' => 'principals/alice',
-            'email' => 'old@example.test',
-            'displayname' => 'Old Name',
-        ]);
+        $this->seedWgwUser('alice', email: 'old@example.test', displayName: 'Old Name');
     }
 }

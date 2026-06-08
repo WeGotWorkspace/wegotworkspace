@@ -5,10 +5,8 @@ declare(strict_types=1);
 namespace Tests\Feature\Admin;
 
 use App\Models\Principal;
-use App\Models\User;
 use App\Services\Auth\AdminRoleResolver;
 use App\Storage\WgwStorage;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Tests\Support\WgwDatabaseTestCase;
 use Tests\Support\WgwTestDisks;
@@ -29,24 +27,11 @@ final class SearchReindexEndpointsTest extends WgwDatabaseTestCase
         WgwTestDisks::refresh($this->dataDir);
         $this->configureWgwJwtKeys();
 
-        User::query()->create([
-            'username' => 'alice',
-            'digesta1' => '',
-            'digest' => password_hash('secret', PASSWORD_DEFAULT),
-        ]);
-        $alice = Principal::query()->create([
-            'uri' => 'principals/alice',
-            'email' => 'alice@example.test',
-            'displayname' => 'Alice',
-        ]);
-        $adminGroup = Principal::query()->create([
-            'uri' => AdminRoleResolver::ADMIN_GROUP_URI,
-            'displayname' => 'Administrators',
-        ]);
-        DB::connection('wgw')->table('groupmembers')->insert([
-            'principal_id' => $adminGroup->id,
-            'member_id' => $alice->id,
-        ]);
+        $this->seedWgwUser('alice', displayName: 'Alice');
+        $alice = Principal::forUsername('alice');
+        $this->assertNotNull($alice);
+        $adminGroup = $this->seedWgwGroup(AdminRoleResolver::ADMIN_GROUP_URI, 'Administrators');
+        $this->addPrincipalToGroup($adminGroup, $alice);
     }
 
     protected function tearDown(): void
@@ -78,21 +63,8 @@ final class SearchReindexEndpointsTest extends WgwDatabaseTestCase
 
     public function test_non_admin_cannot_run_search_reindex(): void
     {
-        User::query()->create([
-            'username' => 'bob',
-            'digesta1' => '',
-            'digest' => password_hash('secret', PASSWORD_DEFAULT),
-        ]);
-        Principal::query()->create([
-            'uri' => 'principals/bob',
-            'email' => 'bob@example.test',
-            'displayname' => 'Bob',
-        ]);
-
-        $token = (string) $this->postJson('/api/v1/auth/token', [
-            'username' => 'bob',
-            'password' => 'secret',
-        ])->json('access_token');
+        $this->seedWgwUser('bob', displayName: 'Bob');
+        $token = $this->issueBearerTokenFor('bob');
 
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->postJson('/api/v1/admin/search/jobs')

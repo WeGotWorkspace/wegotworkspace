@@ -14,11 +14,7 @@ final class SabreBrowserAssetTest extends WgwDatabaseTestCase
     {
         parent::setUp();
 
-        User::query()->create([
-            'username' => 'alice',
-            'digesta1' => '',
-            'digest' => password_hash('secret', PASSWORD_DEFAULT),
-        ]);
+        User::factory()->named('alice')->create();
 
         $installRoot = sys_get_temp_dir().'/wgw-browser-root-'.uniqid('', true);
         mkdir($installRoot, 0775, true);

@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Tests\Feature\Home;
 
 use App\Models\AppSetting;
-use App\Models\Principal;
-use App\Models\User;
 use Tests\Support\WgwDatabaseTestCase;
 
 final class HomeEndpointsTest extends WgwDatabaseTestCase
@@ -55,15 +53,6 @@ final class HomeEndpointsTest extends WgwDatabaseTestCase
 
     private function seedAlice(): void
     {
-        User::query()->create([
-            'username' => 'alice',
-            'digesta1' => '',
-            'digest' => password_hash('secret', PASSWORD_DEFAULT),
-        ]);
-        Principal::query()->create([
-            'uri' => 'principals/alice',
-            'email' => 'alice@example.test',
-            'displayname' => 'Alice',
-        ]);
+        $this->seedWgwUser('alice', displayName: 'Alice');
     }
 }

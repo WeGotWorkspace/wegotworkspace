@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Drive;
 
-use App\Models\Principal;
-use App\Models\User;
 use App\Storage\WgwStorage;
 use Illuminate\Support\Facades\File;
 use Tests\Support\WgwDatabaseTestCase;
@@ -27,16 +25,7 @@ final class FilesEndpointsTest extends WgwDatabaseTestCase
         WgwTestDisks::refresh($this->dataDir);
         $this->configureWgwJwtKeys();
 
-        User::query()->create([
-            'username' => 'alice',
-            'digesta1' => '',
-            'digest' => password_hash('secret', PASSWORD_DEFAULT),
-        ]);
-        Principal::query()->create([
-            'uri' => 'principals/alice',
-            'email' => 'alice@example.test',
-            'displayname' => 'Alice',
-        ]);
+        $this->seedWgwUser('alice', displayName: 'Alice');
 
         app(WgwStorage::class)->files()->put('users/alice/welcome.txt', 'hello');
     }

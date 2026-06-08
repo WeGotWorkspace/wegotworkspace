@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Notes;
 
-use App\Models\Principal;
-use App\Models\User;
 use App\Support\WgwInstallConfig;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
@@ -34,16 +32,7 @@ final class NotesEndpointsTest extends WgwDatabaseTestCase
         Storage::purge('wgw_notes');
         $this->configureWgwJwtKeys();
 
-        User::query()->create([
-            'username' => 'alice',
-            'digest' => password_hash('secret', PASSWORD_DEFAULT),
-            'digesta1' => '',
-        ]);
-        Principal::query()->create([
-            'uri' => 'principals/alice',
-            'displayname' => 'Alice',
-            'email' => 'alice@example.test',
-        ]);
+        $this->seedWgwUser('alice', displayName: 'Alice');
     }
 
     protected function tearDown(): void

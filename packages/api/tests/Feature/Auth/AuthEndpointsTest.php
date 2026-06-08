@@ -6,9 +6,7 @@ namespace Tests\Feature\Auth;
 
 use App\Models\AppSetting;
 use App\Models\Principal;
-use App\Models\User;
 use App\Services\Auth\AdminRoleResolver;
-use Illuminate\Support\Facades\DB;
 use Tests\Support\WgwDatabaseTestCase;
 
 final class AuthEndpointsTest extends WgwDatabaseTestCase
@@ -94,16 +92,10 @@ final class AuthEndpointsTest extends WgwDatabaseTestCase
 
     public function test_admin_role_when_in_administrators_group(): void
     {
-        $group = Principal::query()->create([
-            'uri' => AdminRoleResolver::ADMIN_GROUP_URI,
-            'displayname' => 'Administrators',
-        ]);
-        $alicePrincipal = Principal::query()->where('uri', 'principals/alice')->first();
+        $group = $this->seedWgwGroup(AdminRoleResolver::ADMIN_GROUP_URI, 'Administrators');
+        $alicePrincipal = Principal::forUsername('alice');
         $this->assertNotNull($alicePrincipal);
-        DB::connection('wgw')->table('groupmembers')->insert([
-            'principal_id' => $group->id,
-            'member_id' => $alicePrincipal->id,
-        ]);
+        $this->addPrincipalToGroup($group, $alicePrincipal);
 
         $response = $this->postJson('/api/v1/auth/token', [
             'username' => 'alice',
@@ -116,15 +108,6 @@ final class AuthEndpointsTest extends WgwDatabaseTestCase
     private function seedAliceUser(): void
     {
         AppSetting::setValue('auth_realm', 'SabreDAV');
-        User::query()->create([
-            'username' => 'alice',
-            'digest' => password_hash('secret', PASSWORD_DEFAULT),
-            'digesta1' => '',
-        ]);
-        Principal::query()->create([
-            'uri' => 'principals/alice',
-            'email' => 'alice@example.test',
-            'displayname' => 'Alice',
-        ]);
+        $this->seedWgwUser('alice', displayName: 'Alice');
     }
 }

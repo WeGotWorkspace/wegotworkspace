@@ -9,7 +9,8 @@ A domain is **not done** until feature tests pass for its routes without calling
 - Feature test per controller/route (status + JSON vs OpenAPI / captured fixtures)
 - Unit tests for services and non-trivial repositories
 - Database-backed tests extend **`Tests\Support\WgwDatabaseTestCase`** (Laravel `RefreshDatabase` on the `wgw` connection)
-- Factories for repeated identity seeding (`User`, `Principal`, …) — avoid hardcoded IDs
+- Factories in `database/factories/` (`UserFactory`, `PrincipalFactory`, `GroupMemberFactory`)
+- `SeedsWgwIdentity` on `WgwDatabaseTestCase` (`seedWgwUser()`, `seedWgwGroup()`, `addPrincipalToGroup()`) — avoid hardcoded IDs
 - File features: `Storage::fake('wgw_files')` / `wgw_notes` — no manual `$tmpDir` unless configuring fake disk root
 
 ## `WgwDatabaseTestCase`

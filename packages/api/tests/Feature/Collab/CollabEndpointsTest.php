@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Tests\Feature\Collab;
 
 use App\Models\AppSetting;
-use App\Models\Principal;
-use App\Models\User;
 use App\Services\Settings\SettingKeys;
 use Tests\Support\RoomTestHelper;
 use Tests\Support\WgwDatabaseTestCase;
@@ -23,18 +21,7 @@ final class CollabEndpointsTest extends WgwDatabaseTestCase
         $_ENV['WGW_DISABLE_LOGIN_THROTTLE'] = '1';
         $this->configureWgwJwtKeys();
 
-        User::query()->insert([
-            'id' => 1,
-            'username' => 'alice',
-            'digest' => password_hash('secret', PASSWORD_DEFAULT),
-            'digesta1' => '',
-        ]);
-        Principal::query()->insert([
-            'id' => 1,
-            'uri' => 'principals/alice',
-            'email' => 'alice@example.test',
-            'displayname' => 'Alice',
-        ]);
+        $this->seedWgwUser('alice', displayName: 'Alice');
     }
 
     public function test_join_requires_auth(): void
@@ -64,18 +51,7 @@ final class CollabEndpointsTest extends WgwDatabaseTestCase
 
     public function test_two_users_exchange_signaling_messages(): void
     {
-        User::query()->insert([
-            'id' => 2,
-            'username' => 'bob',
-            'digest' => password_hash('secret', PASSWORD_DEFAULT),
-            'digesta1' => '',
-        ]);
-        Principal::query()->insert([
-            'id' => 2,
-            'uri' => 'principals/bob',
-            'email' => 'bob@example.test',
-            'displayname' => 'Bob',
-        ]);
+        $this->seedWgwUser('bob', displayName: 'Bob');
 
         $aliceToken = $this->issueBearerTokenFor('alice');
         $bobToken = $this->issueBearerTokenFor('bob');

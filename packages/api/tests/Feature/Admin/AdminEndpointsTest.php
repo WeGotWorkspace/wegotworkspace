@@ -6,13 +6,11 @@ namespace Tests\Feature\Admin;
 
 use App\Models\AppSetting;
 use App\Models\Principal;
-use App\Models\User;
 use App\Services\Auth\AdminRoleResolver;
 use App\Storage\WgwStorage;
 use App\Support\AppPaths;
 use App\Support\WgwSettings;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Tests\Support\WgwDatabaseTestCase;
 use Tests\Support\WgwTestDisks;
@@ -259,37 +257,15 @@ final class AdminEndpointsTest extends WgwDatabaseTestCase
 
     private function seedAdminAlice(): void
     {
-        User::query()->create([
-            'username' => 'alice',
-            'digesta1' => '',
-            'digest' => password_hash('secret', PASSWORD_DEFAULT),
-        ]);
-        $alice = Principal::query()->create([
-            'uri' => 'principals/alice',
-            'email' => 'alice@example.test',
-            'displayname' => 'Alice',
-        ]);
-        $group = Principal::query()->create([
-            'uri' => AdminRoleResolver::ADMIN_GROUP_URI,
-            'displayname' => 'Administrators',
-        ]);
-        DB::connection('wgw')->table('groupmembers')->insert([
-            'principal_id' => $group->id,
-            'member_id' => $alice->id,
-        ]);
+        $this->seedWgwUser('alice', displayName: 'Alice');
+        $alice = Principal::forUsername('alice');
+        $this->assertNotNull($alice);
+        $group = $this->seedWgwGroup(AdminRoleResolver::ADMIN_GROUP_URI, 'Administrators');
+        $this->addPrincipalToGroup($group, $alice);
     }
 
     private function seedBobUser(): void
     {
-        User::query()->create([
-            'username' => 'bob',
-            'digesta1' => '',
-            'digest' => password_hash('secret', PASSWORD_DEFAULT),
-        ]);
-        Principal::query()->create([
-            'uri' => 'principals/bob',
-            'email' => 'bob@example.test',
-            'displayname' => 'Bob',
-        ]);
+        $this->seedWgwUser('bob', displayName: 'Bob');
     }
 }
