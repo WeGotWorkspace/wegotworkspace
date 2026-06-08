@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Dav;
 
-use App\Models\AppSetting;
-use App\Models\Principal;
-use App\Models\User;
 use App\Services\Auth\UiSessionService;
 use App\Support\WgwSettings;
 use Illuminate\Support\Facades\Storage;
@@ -22,16 +19,7 @@ final class SabreWebdavGetTest extends WgwDatabaseTestCase
     {
         parent::setUp();
 
-        User::query()->create([
-            'username' => 'alice',
-            'digesta1' => '',
-            'digest' => password_hash('secret', PASSWORD_DEFAULT),
-        ]);
-        Principal::query()->create([
-            'uri' => 'principals/alice',
-            'email' => 'alice@example.test',
-            'displayname' => 'Alice',
-        ]);
+        $this->seedWgwUser('alice', displayName: 'Alice');
 
         $installRoot = sys_get_temp_dir().'/wgw-get-root-'.uniqid('', true);
         mkdir($installRoot, 0775, true);
@@ -41,7 +29,7 @@ final class SabreWebdavGetTest extends WgwDatabaseTestCase
         putenv('WGW_APP_ROOT='.$installRoot);
         $_ENV['WGW_APP_ROOT'] = $installRoot;
         WgwInstallFixture::markInstalled($installRoot, $this->dataDir, 'alice');
-        AppSetting::setValue(WgwSettings::BROWSER_PLUGIN, false);
+        $this->setAppSetting(WgwSettings::BROWSER_PLUGIN, false);
 
         config(['wgw.data_dir' => $this->dataDir]);
         WgwTestDisks::refresh($this->dataDir);

@@ -4,11 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Auth;
 
-use App\Models\AppSetting;
 use App\Models\Principal;
-use App\Models\User;
 use App\Services\Auth\AdminRoleResolver;
-use Illuminate\Support\Facades\DB;
 use Tests\Support\WgwDatabaseTestCase;
 
 final class AuthEndpointsTest extends WgwDatabaseTestCase
@@ -50,9 +47,7 @@ final class AuthEndpointsTest extends WgwDatabaseTestCase
         $access = (string) $tokenResponse->json('access_token');
         $refresh = (string) $tokenResponse->json('refresh_token');
 
-        $me = $this->getJson('/api/v1/me', [
-            'Authorization' => 'Bearer '.$access,
-        ]);
+        $me = $this->withBearer($access)->getJson('/api/v1/me');
         $me->assertOk();
         $me->assertJson([
             'username' => 'alice',
@@ -66,17 +61,13 @@ final class AuthEndpointsTest extends WgwDatabaseTestCase
         $newAccess = (string) $refreshed->json('access_token');
         $this->assertNotSame('', $newAccess);
 
-        $revoke = $this->postJson('/api/v1/auth/revoke', [
+        $revoke = $this->withBearer($newAccess)->postJson('/api/v1/auth/revoke', [
             'refresh_token' => (string) $refreshed->json('refresh_token'),
-        ], [
-            'Authorization' => 'Bearer '.$newAccess,
         ]);
         $revoke->assertOk();
         $revoke->assertJson(['ok' => true]);
 
-        $this->getJson('/api/v1/me', [
-            'Authorization' => 'Bearer '.$newAccess,
-        ])->assertUnauthorized();
+        $this->withBearer($newAccess)->getJson('/api/v1/me')->assertUnauthorized();
     }
 
     public function test_invalid_credentials_return_401(): void
@@ -94,16 +85,10 @@ final class AuthEndpointsTest extends WgwDatabaseTestCase
 
     public function test_admin_role_when_in_administrators_group(): void
     {
-        $group = Principal::query()->create([
-            'uri' => AdminRoleResolver::ADMIN_GROUP_URI,
-            'displayname' => 'Administrators',
-        ]);
-        $alicePrincipal = Principal::query()->where('uri', 'principals/alice')->first();
+        $group = $this->seedWgwGroup(AdminRoleResolver::ADMIN_GROUP_URI, 'Administrators');
+        $alicePrincipal = Principal::forUsername('alice');
         $this->assertNotNull($alicePrincipal);
-        DB::connection('wgw')->table('groupmembers')->insert([
-            'principal_id' => $group->id,
-            'member_id' => $alicePrincipal->id,
-        ]);
+        $this->addPrincipalToGroup($group, $alicePrincipal);
 
         $response = $this->postJson('/api/v1/auth/token', [
             'username' => 'alice',
@@ -115,16 +100,7 @@ final class AuthEndpointsTest extends WgwDatabaseTestCase
 
     private function seedAliceUser(): void
     {
-        AppSetting::setValue('auth_realm', 'SabreDAV');
-        User::query()->create([
-            'username' => 'alice',
-            'digest' => password_hash('secret', PASSWORD_DEFAULT),
-            'digesta1' => '',
-        ]);
-        Principal::query()->create([
-            'uri' => 'principals/alice',
-            'email' => 'alice@example.test',
-            'displayname' => 'Alice',
-        ]);
+        $this->setAppSetting('auth_realm', 'SabreDAV');
+        $this->seedWgwUser('alice', displayName: 'Alice');
     }
 }

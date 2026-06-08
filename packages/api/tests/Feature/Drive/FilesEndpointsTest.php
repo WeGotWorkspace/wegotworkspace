@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Drive;
 
-use App\Models\Principal;
-use App\Models\User;
 use App\Storage\WgwStorage;
 use Illuminate\Support\Facades\File;
 use Tests\Support\WgwDatabaseTestCase;
@@ -27,16 +25,7 @@ final class FilesEndpointsTest extends WgwDatabaseTestCase
         WgwTestDisks::refresh($this->dataDir);
         $this->configureWgwJwtKeys();
 
-        User::query()->create([
-            'username' => 'alice',
-            'digesta1' => '',
-            'digest' => password_hash('secret', PASSWORD_DEFAULT),
-        ]);
-        Principal::query()->create([
-            'uri' => 'principals/alice',
-            'email' => 'alice@example.test',
-            'displayname' => 'Alice',
-        ]);
+        $this->seedWgwUser('alice', displayName: 'Alice');
 
         app(WgwStorage::class)->files()->put('users/alice/welcome.txt', 'hello');
     }
@@ -52,7 +41,7 @@ final class FilesEndpointsTest extends WgwDatabaseTestCase
 
     public function test_files_context_listing_create_and_star_flow(): void
     {
-        $token = $this->issueToken();
+        $token = $this->issueBearerToken();
 
         $user = $this->withBearer($token)->getJson('/api/v1/files/context');
         $user->assertOk()
@@ -80,7 +69,7 @@ final class FilesEndpointsTest extends WgwDatabaseTestCase
 
     public function test_files_content_downloads_by_plain_path_query(): void
     {
-        $token = $this->issueToken();
+        $token = $this->issueBearerToken();
 
         $response = $this->withBearer($token)
             ->get('/api/v1/files/content?path=/users/alice/welcome.txt');
@@ -93,7 +82,7 @@ final class FilesEndpointsTest extends WgwDatabaseTestCase
 
     public function test_files_patch_renames_in_place(): void
     {
-        $token = $this->issueToken();
+        $token = $this->issueBearerToken();
 
         $rename = $this->withBearer($token)->patchJson('/api/v1/files?path=/users/alice/welcome.txt', [
             'name' => 'hello.txt',
@@ -108,7 +97,7 @@ final class FilesEndpointsTest extends WgwDatabaseTestCase
 
     public function test_files_patch_moves_to_destination(): void
     {
-        $token = $this->issueToken();
+        $token = $this->issueBearerToken();
 
         $this->withBearer($token)->postJson('/api/v1/files/directories?path=/users/alice', [
             'name' => 'Archive',
@@ -126,18 +115,5 @@ final class FilesEndpointsTest extends WgwDatabaseTestCase
         $dest = $this->withBearer($token)->getJson('/api/v1/files/children?path=/users/alice/Archive');
         $dest->assertOk()
             ->assertJsonFragment(['name' => 'welcome.txt', 'type' => 'file']);
-    }
-
-    private function issueToken(): string
-    {
-        return (string) $this->postJson('/api/v1/auth/token', [
-            'username' => 'alice',
-            'password' => 'secret',
-        ])->json('access_token');
-    }
-
-    private function withBearer(string $token): static
-    {
-        return $this->withHeader('Authorization', 'Bearer '.$token);
     }
 }

@@ -14,26 +14,11 @@ final class GroupMembershipResolverTest extends WgwDatabaseTestCase
 {
     public function test_member_principal_uris_for_group(): void
     {
-        $group = Principal::query()->create([
-            'uri' => 'principals/groups/support',
-            'displayname' => 'Support',
-        ]);
-        $alice = Principal::query()->create([
-            'uri' => 'principals/alice',
-            'displayname' => 'Alice',
-        ]);
-        $bob = Principal::query()->create([
-            'uri' => 'principals/bob',
-            'displayname' => 'Bob',
-        ]);
-        GroupMember::query()->create([
-            'principal_id' => $group->id,
-            'member_id' => $bob->id,
-        ]);
-        GroupMember::query()->create([
-            'principal_id' => $group->id,
-            'member_id' => $alice->id,
-        ]);
+        $group = Principal::factory()->forGroup('support', 'Support')->create();
+        $alice = Principal::factory()->forUsername('alice', 'Alice')->create();
+        $bob = Principal::factory()->forUsername('bob', 'Bob')->create();
+        GroupMember::factory()->forGroupAndMember($group, $bob)->create();
+        GroupMember::factory()->forGroupAndMember($group, $alice)->create();
 
         $resolver = new GroupMembershipResolver;
         $members = $resolver->memberPrincipalUris('principals/groups/support');
@@ -43,18 +28,9 @@ final class GroupMembershipResolverTest extends WgwDatabaseTestCase
 
     public function test_group_shared_acl_includes_members(): void
     {
-        $group = Principal::query()->create([
-            'uri' => 'principals/groups/team',
-            'displayname' => 'Team',
-        ]);
-        $alice = Principal::query()->create([
-            'uri' => 'principals/alice',
-            'displayname' => 'Alice',
-        ]);
-        GroupMember::query()->create([
-            'principal_id' => $group->id,
-            'member_id' => $alice->id,
-        ]);
+        $group = Principal::factory()->forGroup('team', 'Team')->create();
+        $alice = Principal::factory()->forUsername('alice', 'Alice')->create();
+        GroupMember::factory()->forGroupAndMember($group, $alice)->create();
 
         $resolver = new GroupMembershipResolver;
         $acl = GroupSharedAclHelper::aclForGroup('principals/groups/team', $resolver);

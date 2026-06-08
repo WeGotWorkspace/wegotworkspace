@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Database;
 
+use App\LocalConfigFile;
 use App\Models\AppSetting;
 use App\Models\AppUpdateHistory;
 use App\Models\GroupMember;
@@ -11,26 +12,16 @@ use App\Models\Principal;
 use App\Models\User;
 use App\Support\WgwDatabaseConfig;
 use Tests\Support\WgwDatabaseTestCase;
+use Tests\Support\WgwInstallFixture;
 
 final class WgwModelsTest extends WgwDatabaseTestCase
 {
-    protected function setUp(): void
-    {
-        parent::setUp();
-    }
-
     public function test_user_and_principal_round_trip(): void
     {
-        $user = User::query()->create([
-            'username' => 'alice',
+        $user = User::factory()->named('alice')->create([
             'digest' => '$2y$10$abcdefghijklmnopqrstuv',
-            'digesta1' => '',
         ]);
-        Principal::query()->create([
-            'uri' => 'principals/alice',
-            'email' => 'alice@example.test',
-            'displayname' => 'Alice',
-        ]);
+        Principal::factory()->forUsername('alice', 'Alice')->create();
 
         $this->assertSame('principals/alice', $user->principalUri());
         $principal = $user->principal();
@@ -51,18 +42,9 @@ final class WgwModelsTest extends WgwDatabaseTestCase
 
     public function test_group_member_links_principals(): void
     {
-        $group = Principal::query()->create([
-            'uri' => 'principals/groups/team',
-            'displayname' => 'Team',
-        ]);
-        $member = Principal::query()->create([
-            'uri' => 'principals/alice',
-            'displayname' => 'Alice',
-        ]);
-        GroupMember::query()->create([
-            'principal_id' => $group->id,
-            'member_id' => $member->id,
-        ]);
+        $group = Principal::factory()->forGroup('team', 'Team')->create();
+        $member = Principal::factory()->forUsername('alice', 'Alice')->create();
+        GroupMember::factory()->forGroupAndMember($group, $member)->create();
 
         $this->assertCount(1, $group->groupMembers);
         $this->assertSame('principals/alice', $group->groupMembers->first()?->uri);
@@ -86,8 +68,67 @@ final class WgwModelsTest extends WgwDatabaseTestCase
 
     public function test_wgw_connection_uses_install_config_when_present(): void
     {
+        $installRoot = sys_get_temp_dir().'/wgw-models-config-'.uniqid('', true);
+        mkdir($installRoot, 0775, true);
+        mkdir($installRoot.'/wgw-content', 0775, true);
+
+        putenv('WGW_APP_ROOT='.$installRoot);
+        $_ENV['WGW_APP_ROOT'] = $installRoot;
+        WgwInstallFixture::forgetInstallBindings();
+        LocalConfigFile::clearCache();
+
+        file_put_contents($installRoot.'/wgw-config.php', <<<'PHP'
+<?php
+
+declare(strict_types=1);
+
+return [
+    'data_dir' => './wgw-content',
+    'update_feed_url' => 'https://example.test/releases/manifest.json',
+    'pdo' => ['sqlite_file' => './wgw-content/test.sqlite'],
+];
+PHP);
+
+        WgwInstallFixture::forgetInstallBindings();
+        LocalConfigFile::clearCache();
+
         $config = $this->app->make(WgwDatabaseConfig::class)->connectionConfig();
+
+        putenv('WGW_APP_ROOT');
+        unset($_ENV['WGW_APP_ROOT']);
+        WgwInstallFixture::forgetInstallBindings();
+        LocalConfigFile::clearCache();
+        if (is_dir($installRoot)) {
+            $this->removeTree($installRoot);
+        }
+
         $this->assertSame('sqlite', $config['driver']);
         $this->assertArrayHasKey('database', $config);
+    }
+
+    private function removeTree(string $dir): void
+    {
+        if (! is_dir($dir)) {
+            return;
+        }
+
+        $items = scandir($dir);
+        if ($items === false) {
+            return;
+        }
+
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..') {
+                continue;
+            }
+            $path = $dir.'/'.$item;
+            if (is_dir($path)) {
+                $this->removeTree($path);
+            } else {
+                @unlink($path);
+            }
+        }
+
+        @rmdir($dir);
     }
 }

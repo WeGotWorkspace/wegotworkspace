@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Collab;
 
-use App\Models\Principal;
-use App\Models\User;
 use App\Storage\WgwStorage;
 use Illuminate\Support\Facades\File;
 use Tests\Support\WgwDatabaseTestCase;
@@ -31,18 +29,7 @@ final class CollabDocumentEndpointsTest extends WgwDatabaseTestCase
         WgwTestDisks::refresh($this->dataDir);
         $this->configureWgwJwtKeys();
 
-        User::query()->insert([
-            'id' => 1,
-            'username' => 'alice',
-            'digest' => password_hash('secret', PASSWORD_DEFAULT),
-            'digesta1' => '',
-        ]);
-        Principal::query()->insert([
-            'id' => 1,
-            'uri' => 'principals/alice',
-            'email' => 'alice@example.test',
-            'displayname' => 'Alice',
-        ]);
+        $this->seedWgwUser('alice', displayName: 'Alice');
     }
 
     protected function tearDown(): void
@@ -62,20 +49,20 @@ final class CollabDocumentEndpointsTest extends WgwDatabaseTestCase
 
     public function test_markdown_and_yjs_sidecar_round_trip(): void
     {
-        $token = $this->issueToken();
+        $token = $this->issueBearerToken();
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->get('/api/v1/files/collaboration?path='.urlencode(self::ROOM))
             ->assertOk()
             ->assertHeader('Content-Type', 'text/markdown; charset=utf-8')
             ->assertSeeText('# Collaborative document');
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->get('/api/v1/files/collaboration?path='.urlencode(self::ROOM).'&format=yjs')
             ->assertNoContent();
 
         $yjsBytes = [1, 2, 3, 255];
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->putJson('/api/v1/files/collaboration?path='.urlencode(self::ROOM), [
                 'markdown' => "# Together\n\nHello collab.\n",
                 'yjs' => $yjsBytes,
@@ -92,12 +79,12 @@ final class CollabDocumentEndpointsTest extends WgwDatabaseTestCase
             $storage->get('users/alice/docs/.together.md.yjs')
         );
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->get('/api/v1/files/collaboration?path='.urlencode(self::ROOM))
             ->assertOk()
             ->assertSeeText('Hello collab.');
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->get('/api/v1/files/collaboration?path='.urlencode(self::ROOM).'&format=yjs')
             ->assertOk()
             ->assertHeader('Content-Type', 'application/octet-stream')
@@ -106,20 +93,9 @@ final class CollabDocumentEndpointsTest extends WgwDatabaseTestCase
 
     public function test_other_user_cannot_write_alice_document(): void
     {
-        User::query()->insert([
-            'id' => 2,
-            'username' => 'bob',
-            'digest' => password_hash('secret', PASSWORD_DEFAULT),
-            'digesta1' => '',
-        ]);
-        Principal::query()->insert([
-            'id' => 2,
-            'uri' => 'principals/bob',
-            'email' => 'bob@example.test',
-            'displayname' => 'Bob',
-        ]);
+        $this->seedWgwUser('bob', displayName: 'Bob');
 
-        $this->withHeader('Authorization', 'Bearer '.$this->issueToken('bob'))
+        $this->withBearer($this->issueBearerTokenFor('bob'))
             ->putJson('/api/v1/files/collaboration?path='.urlencode(self::ROOM), [
                 'markdown' => 'nope',
             ])
@@ -129,9 +105,9 @@ final class CollabDocumentEndpointsTest extends WgwDatabaseTestCase
 
     public function test_document_room_with_spaces_is_supported(): void
     {
-        $token = $this->issueToken();
+        $token = $this->issueBearerToken();
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->putJson('/api/v1/files/collaboration?path='.urlencode(self::ROOM_WITH_SPACES), [
                 'markdown' => "# Hello World\n",
                 'yjs' => [0, 0],
@@ -139,21 +115,10 @@ final class CollabDocumentEndpointsTest extends WgwDatabaseTestCase
             ->assertOk()
             ->assertJsonPath('ok', true);
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->get('/api/v1/files/collaboration?path='.urlencode(self::ROOM_WITH_SPACES))
             ->assertOk()
             ->assertHeader('Content-Type', 'text/markdown; charset=utf-8')
             ->assertSeeText('# Hello World');
-    }
-
-    private function issueToken(string $username = 'alice'): string
-    {
-        $response = $this->postJson('/api/v1/auth/token', [
-            'username' => $username,
-            'password' => 'secret',
-        ]);
-        $response->assertOk();
-
-        return (string) $response->json('access_token');
     }
 }

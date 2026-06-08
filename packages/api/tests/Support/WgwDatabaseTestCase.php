@@ -4,14 +4,55 @@ declare(strict_types=1);
 
 namespace Tests\Support;
 
+use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\RefreshDatabaseState;
+use Illuminate\Support\Facades\Artisan;
 use Tests\TestCase;
 
 abstract class WgwDatabaseTestCase extends TestCase
 {
-    protected function setUp(): void
+    use ConfiguresAppSettings;
+    use InteractsWithWgwBearerTokens;
+    use RefreshDatabase;
+    use SeedsWgwIdentity;
+
+    /** @var list<string> */
+    protected $connectionsToTransact = ['wgw'];
+
+    protected function beforeRefreshingDatabase(): void
     {
-        parent::setUp();
-        WgwTestDatabase::setUpFreshSchema();
+        WgwTestDatabase::configureConnection(WgwTestDatabase::driver());
+    }
+
+    /**
+     * @return array<string, bool|string>
+     */
+    protected function migrateFreshUsing(): array
+    {
+        return [
+            '--path' => 'database/migrations/wgw',
+            '--seed' => false,
+        ];
+    }
+
+    /**
+     * Use Artisan::call so tests do not require mockery/mockery for PendingCommand.
+     */
+    protected function refreshTestDatabase(): void
+    {
+        if (! RefreshDatabaseState::$migrated) {
+            Artisan::call('migrate:fresh', array_merge(
+                ['--force' => true],
+                $this->migrateFreshUsing(),
+            ));
+
+            $this->app[Kernel::class]->setArtisan(null);
+
+            RefreshDatabaseState::$migrated = true;
+        }
+
+        $this->beginDatabaseTransaction();
     }
 
     /**

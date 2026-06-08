@@ -13,6 +13,7 @@
         "zbateson/mail-mime-parser": "^4.0"
     },
     "require-dev": {
+        "fakerphp/faker": "^1.24",
         "laravel/pint": "^1.18",
         "phpunit/phpunit": "^11.0"
     },
@@ -49,6 +50,7 @@
         ]
     },
     "config": {
+        "process-timeout": 900,
         "sort-packages": true,
         "optimize-autoloader": true,
         "platform": {

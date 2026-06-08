@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Mail;
 
-use App\Models\Principal;
-use App\Models\User;
 use App\Services\Mail\MailCredentialService;
 use App\Services\Mail\MailSecretService;
 use App\Support\WgwInstallConfig;
@@ -23,16 +21,7 @@ final class MailCredentialServiceImapUsernameTest extends WgwDatabaseTestCase
         config(['wgw.data_dir' => $dataDir]);
         $this->app->forgetInstance(WgwInstallConfig::class);
 
-        User::query()->create([
-            'username' => 'alice',
-            'digest' => password_hash('secret', PASSWORD_DEFAULT),
-            'digesta1' => '',
-        ]);
-        Principal::query()->create([
-            'uri' => 'principals/alice',
-            'email' => 'alice@example.test',
-            'displayname' => 'Alice',
-        ]);
+        $this->seedWgwUser('alice', displayName: 'Alice');
     }
 
     public function test_save_stores_submitted_imap_username_independent_of_profile_email(): void

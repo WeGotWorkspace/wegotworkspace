@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Support;
 
-use App\Services\Installer\WgwSchemaMigrator;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 
 final class WgwTestDatabase
@@ -18,12 +16,6 @@ final class WgwTestDatabase
         }
 
         return 'sqlite';
-    }
-
-    public static function setUpFreshSchema(): void
-    {
-        self::configureConnection(self::driver());
-        self::migrateFresh();
     }
 
     public static function configureConnection(string $driver): void
@@ -61,19 +53,5 @@ final class WgwTestDatabase
             ],
         ]);
         DB::purge('wgw');
-    }
-
-    public static function migrateFresh(): void
-    {
-        $path = app(WgwSchemaMigrator::class)->migrationsPath();
-        $relativePath = str_starts_with($path, base_path())
-            ? ltrim(str_replace('\\', '/', substr($path, strlen(base_path()))), '/')
-            : 'database/migrations/wgw';
-
-        Artisan::call('migrate:fresh', [
-            '--database' => 'wgw',
-            '--path' => $relativePath,
-            '--force' => true,
-        ]);
     }
 }

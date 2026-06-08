@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Dav;
 
-use App\Models\Principal;
-use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 use Tests\Support\WgwDatabaseTestCase;
 use Tests\Support\WgwInstallFixture;
@@ -18,16 +16,7 @@ final class SabreWebdavPutTest extends WgwDatabaseTestCase
     {
         parent::setUp();
 
-        User::query()->create([
-            'username' => 'alice',
-            'digesta1' => '',
-            'digest' => password_hash('secret', PASSWORD_DEFAULT),
-        ]);
-        Principal::query()->create([
-            'uri' => 'principals/alice',
-            'email' => 'alice@example.test',
-            'displayname' => 'Alice',
-        ]);
+        $this->seedWgwUser('alice', displayName: 'Alice');
 
         $installRoot = sys_get_temp_dir().'/wgw-put-root-'.uniqid('', true);
         mkdir($installRoot, 0775, true);

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Feature\Search;
 
 use App\Models\Principal;
-use App\Models\User;
 use App\Services\Search\SearchIndexerService;
 use App\Storage\WgwStorage;
 use Illuminate\Support\Facades\DB;
@@ -29,26 +28,8 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
         WgwTestDisks::refresh($this->dataDir);
         $this->configureWgwJwtKeys();
 
-        User::query()->create([
-            'username' => 'alice',
-            'digesta1' => '',
-            'digest' => password_hash('secret', PASSWORD_DEFAULT),
-        ]);
-        Principal::query()->create([
-            'uri' => 'principals/alice',
-            'email' => 'alice@example.test',
-            'displayname' => 'Alice',
-        ]);
-        User::query()->create([
-            'username' => 'bob',
-            'digesta1' => '',
-            'digest' => password_hash('secret', PASSWORD_DEFAULT),
-        ]);
-        Principal::query()->create([
-            'uri' => 'principals/bob',
-            'email' => 'bob@example.test',
-            'displayname' => 'Bob',
-        ]);
+        $this->seedWgwUser('alice', displayName: 'Alice');
+        $this->seedWgwUser('bob', displayName: 'Bob');
     }
 
     protected function tearDown(): void
@@ -109,8 +90,8 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
 
         app(SearchIndexerService::class)->reindexAll();
 
-        $token = $this->issueToken();
-        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+        $token = $this->issueBearerToken();
+        $response = $this->withBearer($token)
             ->getJson('/api/v1/search/results?'.http_build_query([
                 'q' => 'alpha',
                 'limit' => 20,
@@ -135,8 +116,8 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
 
         app(SearchIndexerService::class)->reindexAll();
 
-        $token = $this->issueToken();
-        $filtered = $this->withHeader('Authorization', 'Bearer '.$token)
+        $token = $this->issueBearerToken();
+        $filtered = $this->withBearer($token)
             ->getJson('/api/v1/search/results?'.http_build_query([
                 'q' => 'alpha',
                 'sources' => ['file'],
@@ -162,7 +143,7 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
             $this->assertStringStartsWith('users/alice/', (string) $result['sourceKey']);
         }
 
-        $scoped = $this->withHeader('Authorization', 'Bearer '.$token)
+        $scoped = $this->withBearer($token)
             ->getJson('/api/v1/search/results?'.http_build_query([
                 'q' => 'secretbob',
                 'sources' => ['file'],
@@ -173,16 +154,10 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
 
     public function test_unified_search_indexes_calendar_events_for_group_principals(): void
     {
-        $group = Principal::query()->create([
-            'uri' => 'principals/groups/administrators',
-            'email' => null,
-            'displayname' => 'Administrators',
-        ]);
-        $alice = Principal::query()->where('uri', 'principals/alice')->firstOrFail();
-        DB::connection('wgw')->table('groupmembers')->insert([
-            'principal_id' => $group->id,
-            'member_id' => $alice->id,
-        ]);
+        $group = $this->seedWgwGroup('principals/groups/administrators', 'Administrators');
+        $alice = Principal::forUsername('alice');
+        $this->assertNotNull($alice);
+        $this->addPrincipalToGroup($group, $alice);
 
         DB::connection('wgw')->table('calendars')->insert([
             'id' => 9,
@@ -221,8 +196,8 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
         $this->assertNotNull($indexed);
         $this->assertSame('Group Standup', $indexed->title);
 
-        $token = $this->issueToken();
-        $response = $this->withHeader('Authorization', 'Bearer '.$token)
+        $token = $this->issueBearerToken();
+        $response = $this->withBearer($token)
             ->getJson('/api/v1/search/results?'.http_build_query([
                 'q' => 'standup',
                 'sources' => ['caldav'],
@@ -298,7 +273,7 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
 
     public function test_unified_search_updates_note_body_and_keeps_note_source_type(): void
     {
-        $token = $this->issueToken();
+        $token = $this->issueBearerToken();
         $payload = [
             'id' => 'n-search',
             'notebook' => 'General',
@@ -309,11 +284,11 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
             'archived' => false,
         ];
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->putJson('/api/v1/notes/items/n-search', $payload)
             ->assertOk();
 
-        $firstSearch = $this->withHeader('Authorization', 'Bearer '.$token)
+        $firstSearch = $this->withBearer($token)
             ->getJson('/api/v1/search/results?'.http_build_query([
                 'q' => 'oldneedle123',
                 'sources' => ['note'],
@@ -325,7 +300,7 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
         $this->assertSame('note', $firstRows[0]['sourceType'] ?? null);
         $this->assertSame('First Note Title', $firstRows[0]['title'] ?? null);
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->putJson('/api/v1/notes/items/n-search', [
                 ...$payload,
                 'title' => 'Updated Note Title',
@@ -333,7 +308,7 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
             ])
             ->assertOk();
 
-        $staleSearch = $this->withHeader('Authorization', 'Bearer '.$token)
+        $staleSearch = $this->withBearer($token)
             ->getJson('/api/v1/search/results?'.http_build_query([
                 'q' => 'oldneedle123',
                 'sources' => ['note'],
@@ -341,7 +316,7 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
             ]));
         $staleSearch->assertOk()->assertJsonPath('data.results', []);
 
-        $updatedSearch = $this->withHeader('Authorization', 'Bearer '.$token)
+        $updatedSearch = $this->withBearer($token)
             ->getJson('/api/v1/search/results?'.http_build_query([
                 'q' => 'newneedle456',
                 'sources' => ['note'],
@@ -352,13 +327,5 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
         $this->assertNotEmpty($updatedRows);
         $this->assertSame('note', $updatedRows[0]['sourceType'] ?? null);
         $this->assertSame('Updated Note Title', $updatedRows[0]['title'] ?? null);
-    }
-
-    private function issueToken(): string
-    {
-        return (string) $this->postJson('/api/v1/auth/token', [
-            'username' => 'alice',
-            'password' => 'secret',
-        ])->json('access_token');
     }
 }
