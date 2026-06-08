@@ -14,6 +14,7 @@ abstract class WgwDatabaseTestCase extends TestCase
 {
     use InteractsWithWgwBearerTokens;
     use RefreshDatabase;
+    use SeedsWgwIdentity;
 
     /** @var list<string> */
     protected $connectionsToTransact = ['wgw'];
