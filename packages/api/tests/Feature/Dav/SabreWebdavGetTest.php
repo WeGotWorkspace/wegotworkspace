@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Dav;
 
-use App\Models\AppSetting;
 use App\Services\Auth\UiSessionService;
 use App\Support\WgwSettings;
 use Illuminate\Support\Facades\Storage;
@@ -30,7 +29,7 @@ final class SabreWebdavGetTest extends WgwDatabaseTestCase
         putenv('WGW_APP_ROOT='.$installRoot);
         $_ENV['WGW_APP_ROOT'] = $installRoot;
         WgwInstallFixture::markInstalled($installRoot, $this->dataDir, 'alice');
-        AppSetting::setValue(WgwSettings::BROWSER_PLUGIN, false);
+        $this->setAppSetting(WgwSettings::BROWSER_PLUGIN, false);
 
         config(['wgw.data_dir' => $this->dataDir]);
         WgwTestDisks::refresh($this->dataDir);

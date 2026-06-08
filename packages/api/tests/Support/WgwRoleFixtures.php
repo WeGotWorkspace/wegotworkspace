@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Support;
 
-use App\Models\AppSetting;
 use App\Models\Principal;
 use App\Models\User;
 use App\Services\Auth\AdminRoleResolver;
@@ -20,7 +19,7 @@ trait WgwRoleFixtures
         $_ENV['WGW_DISABLE_LOGIN_THROTTLE'] = '1';
         $this->configureWgwJwtKeys();
         config(['wgw.auth_realm' => 'SabreDAV']);
-        AppSetting::setValue('auth_realm', 'SabreDAV');
+        $this->setAppSetting('auth_realm', 'SabreDAV');
         $this->seedRoleMatrixUsers();
     }
 

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Admin;
 
-use App\Models\AppSetting;
 use App\Models\Principal;
 use App\Services\Auth\AdminRoleResolver;
 use App\Storage\WgwStorage;
@@ -63,7 +62,7 @@ final class AdminEndpointsTest extends WgwDatabaseTestCase
 
         app(WgwStorage::class)->data()->put('updates/process.log', "[2026-01-01T00:00:00+00:00] test line\n");
 
-        $state = $this->withHeader('Authorization', 'Bearer '.$token)
+        $state = $this->withBearer($token)
             ->getJson('/api/v1/admin/state');
         $state->assertOk()
             ->assertJsonPath('currentUser', 'alice')
@@ -78,17 +77,17 @@ final class AdminEndpointsTest extends WgwDatabaseTestCase
                 'logoutUrl',
             ]);
 
-        $log = $this->withHeader('Authorization', 'Bearer '.$token)
+        $log = $this->withBearer($token)
             ->getJson('/api/v1/admin/updates/log');
         $log->assertOk()->assertJsonPath('lines.0', '[2026-01-01T00:00:00+00:00] test line');
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->deleteJson('/api/v1/admin/updates/log')
             ->assertOk()
             ->assertJsonPath('ok', true)
             ->assertJsonPath('lines', []);
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->getJson('/api/v1/admin/updates/state')
             ->assertOk()
             ->assertJsonStructure([
@@ -99,7 +98,7 @@ final class AdminEndpointsTest extends WgwDatabaseTestCase
                 'updateAvailable',
             ]);
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->putJson('/api/v1/admin/settings', [
                 'values' => ['timezone' => 'Europe/Amsterdam'],
             ])
@@ -107,7 +106,7 @@ final class AdminEndpointsTest extends WgwDatabaseTestCase
             ->assertJsonPath('ok', true)
             ->assertJsonFragment(['saved' => ['timezone']]);
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->putJson('/api/v1/admin/settings', [
                 'values' => [
                     'rtc_stun_url' => 'stun:stun.example.test:3478,stuns:stun-backup.example.test:5349',
@@ -119,7 +118,7 @@ final class AdminEndpointsTest extends WgwDatabaseTestCase
             ->assertOk()
             ->assertJsonPath('ok', true);
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->getJson('/api/v1/admin/state')
             ->assertOk()
             ->assertJsonPath('rtc.turnUsername', 'rtc-user')
@@ -127,13 +126,13 @@ final class AdminEndpointsTest extends WgwDatabaseTestCase
             ->assertJsonPath('rtc.stunUrls', 'stun:stun.example.test:3478, stuns:stun-backup.example.test:5349')
             ->assertJsonPath('rtc.turnUrls', 'turn:turn.example.test:3478?transport=udp, turns:turn-backup.example.test:5349?transport=tcp');
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->putJson('/api/v1/admin/groups/administrators/members/bob')
             ->assertOk()
             ->assertJsonPath('ok', true);
 
         $state->assertOk();
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->getJson('/api/v1/admin/state')
             ->assertOk()
             ->assertJsonFragment(['username' => 'bob']);
@@ -141,12 +140,14 @@ final class AdminEndpointsTest extends WgwDatabaseTestCase
 
     public function test_admin_users_and_groups_crud(): void
     {
-        AppSetting::setValue(WgwSettings::CALENDAR_ENABLED, false);
-        AppSetting::setValue(WgwSettings::CONTACTS_ENABLED, false);
+        $this->setAppSettings([
+            WgwSettings::CALENDAR_ENABLED => false,
+            WgwSettings::CONTACTS_ENABLED => false,
+        ]);
 
         $token = $this->adminToken();
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->postJson('/api/v1/admin/users', [
                 'username' => 'carol',
                 'password' => 'carol-secret',
@@ -157,7 +158,7 @@ final class AdminEndpointsTest extends WgwDatabaseTestCase
             ->assertOk()
             ->assertJsonPath('ok', true);
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->patchJson('/api/v1/admin/users/carol', [
                 'displayName' => 'Carol Updated',
                 'email' => 'carol.updated@example.test',
@@ -165,7 +166,7 @@ final class AdminEndpointsTest extends WgwDatabaseTestCase
             ->assertOk()
             ->assertJsonPath('ok', true);
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->postJson('/api/v1/admin/groups', [
                 'name' => 'Support Team',
                 'displayName' => 'Support Team',
@@ -173,7 +174,7 @@ final class AdminEndpointsTest extends WgwDatabaseTestCase
             ->assertOk()
             ->assertJsonPath('ok', true);
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->patchJson('/api/v1/admin/groups/support-team', [
                 'displayName' => 'Support',
                 'members' => ['bob', 'carol'],
@@ -181,7 +182,7 @@ final class AdminEndpointsTest extends WgwDatabaseTestCase
             ->assertOk()
             ->assertJsonPath('ok', true);
 
-        $state = $this->withHeader('Authorization', 'Bearer '.$token)
+        $state = $this->withBearer($token)
             ->getJson('/api/v1/admin/state');
         $state->assertOk();
         $usernames = array_column($state->json('users'), 'username');
@@ -189,11 +190,11 @@ final class AdminEndpointsTest extends WgwDatabaseTestCase
         $groupIds = array_column($state->json('groups'), 'id');
         $this->assertContains('principals/groups/support-team', $groupIds);
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->deleteJson('/api/v1/admin/users/carol')
             ->assertOk();
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->deleteJson('/api/v1/admin/groups/support-team')
             ->assertOk();
     }
@@ -205,7 +206,7 @@ final class AdminEndpointsTest extends WgwDatabaseTestCase
             'password' => 'secret',
         ])->json('access_token');
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->getJson('/api/v1/admin/state')
             ->assertForbidden();
     }
@@ -235,7 +236,7 @@ final class AdminEndpointsTest extends WgwDatabaseTestCase
 
         $upload = new UploadedFile($zipPath, 'demo-plugin.zip', 'application/zip', null, true);
 
-        $this->withHeader('Authorization', 'Bearer '.$token)
+        $this->withBearer($token)
             ->post('/api/v1/admin/plugins', ['plugin' => $upload])
             ->assertOk()
             ->assertJsonPath('ok', true)
