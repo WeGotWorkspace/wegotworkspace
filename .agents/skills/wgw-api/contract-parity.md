@@ -3,7 +3,7 @@
 ## Source of truth
 
 1. `packages/api/openapi/openapi.json`
-2. Pest feature tests (authoritative at merge time)
+2. PHPUnit feature tests (authoritative at merge time)
 3. Legacy runtime — **behavior reference only**, not copy-paste source
 
 ## Rules
