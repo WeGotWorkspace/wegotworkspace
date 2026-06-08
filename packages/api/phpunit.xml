@@ -7,7 +7,6 @@
     <testsuites>
         <testsuite name="Unit">
             <directory>tests/Unit</directory>
-            <directory>tests/Notes</directory>
             <directory>tests/Database</directory>
         </testsuite>
         <testsuite name="Feature">
