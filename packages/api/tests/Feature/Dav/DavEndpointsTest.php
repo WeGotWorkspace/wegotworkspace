@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Tests\Feature\Dav;
 
 use App\Models\AppSetting;
-use App\Models\Principal;
-use App\Models\User;
 use Tests\Support\WgwDatabaseTestCase;
 
 final class DavEndpointsTest extends WgwDatabaseTestCase
@@ -18,16 +16,7 @@ final class DavEndpointsTest extends WgwDatabaseTestCase
         putenv('WGW_DISABLE_LOGIN_THROTTLE=1');
         $_ENV['WGW_DISABLE_LOGIN_THROTTLE'] = '1';
         $this->configureWgwJwtKeys();
-        User::query()->create([
-            'username' => 'alice',
-            'digesta1' => '',
-            'digest' => password_hash('secret', PASSWORD_DEFAULT),
-        ]);
-        Principal::query()->create([
-            'uri' => 'principals/alice',
-            'email' => 'alice@example.test',
-            'displayname' => 'Alice',
-        ]);
+        $this->seedWgwUser('alice', displayName: 'Alice');
     }
 
     public function test_dav_capabilities_requires_auth_and_returns_flags(): void

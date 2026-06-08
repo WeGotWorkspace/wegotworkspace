@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Collab;
 
-use App\Models\Principal;
-use App\Models\User;
 use App\Storage\WgwStorage;
 use Illuminate\Support\Facades\File;
 use Tests\Support\WgwDatabaseTestCase;
@@ -31,18 +29,7 @@ final class CollabDocumentEndpointsTest extends WgwDatabaseTestCase
         WgwTestDisks::refresh($this->dataDir);
         $this->configureWgwJwtKeys();
 
-        User::query()->insert([
-            'id' => 1,
-            'username' => 'alice',
-            'digest' => password_hash('secret', PASSWORD_DEFAULT),
-            'digesta1' => '',
-        ]);
-        Principal::query()->insert([
-            'id' => 1,
-            'uri' => 'principals/alice',
-            'email' => 'alice@example.test',
-            'displayname' => 'Alice',
-        ]);
+        $this->seedWgwUser('alice', displayName: 'Alice');
     }
 
     protected function tearDown(): void
@@ -62,7 +49,7 @@ final class CollabDocumentEndpointsTest extends WgwDatabaseTestCase
 
     public function test_markdown_and_yjs_sidecar_round_trip(): void
     {
-        $token = $this->issueBearerTokenFor();
+        $token = $this->issueBearerToken();
 
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->get('/api/v1/files/collaboration?path='.urlencode(self::ROOM))
@@ -106,18 +93,7 @@ final class CollabDocumentEndpointsTest extends WgwDatabaseTestCase
 
     public function test_other_user_cannot_write_alice_document(): void
     {
-        User::query()->insert([
-            'id' => 2,
-            'username' => 'bob',
-            'digest' => password_hash('secret', PASSWORD_DEFAULT),
-            'digesta1' => '',
-        ]);
-        Principal::query()->insert([
-            'id' => 2,
-            'uri' => 'principals/bob',
-            'email' => 'bob@example.test',
-            'displayname' => 'Bob',
-        ]);
+        $this->seedWgwUser('bob', displayName: 'Bob');
 
         $this->withHeader('Authorization', 'Bearer '.$this->issueBearerTokenFor('bob'))
             ->putJson('/api/v1/files/collaboration?path='.urlencode(self::ROOM), [
@@ -129,7 +105,7 @@ final class CollabDocumentEndpointsTest extends WgwDatabaseTestCase
 
     public function test_document_room_with_spaces_is_supported(): void
     {
-        $token = $this->issueBearerTokenFor();
+        $token = $this->issueBearerToken();
 
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->putJson('/api/v1/files/collaboration?path='.urlencode(self::ROOM_WITH_SPACES), [

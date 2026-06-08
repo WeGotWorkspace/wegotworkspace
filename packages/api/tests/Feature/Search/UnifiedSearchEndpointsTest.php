@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Feature\Search;
 
 use App\Models\Principal;
-use App\Models\User;
 use App\Services\Search\SearchIndexerService;
 use App\Storage\WgwStorage;
 use Illuminate\Support\Facades\DB;
@@ -29,26 +28,8 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
         WgwTestDisks::refresh($this->dataDir);
         $this->configureWgwJwtKeys();
 
-        User::query()->create([
-            'username' => 'alice',
-            'digesta1' => '',
-            'digest' => password_hash('secret', PASSWORD_DEFAULT),
-        ]);
-        Principal::query()->create([
-            'uri' => 'principals/alice',
-            'email' => 'alice@example.test',
-            'displayname' => 'Alice',
-        ]);
-        User::query()->create([
-            'username' => 'bob',
-            'digesta1' => '',
-            'digest' => password_hash('secret', PASSWORD_DEFAULT),
-        ]);
-        Principal::query()->create([
-            'uri' => 'principals/bob',
-            'email' => 'bob@example.test',
-            'displayname' => 'Bob',
-        ]);
+        $this->seedWgwUser('alice', displayName: 'Alice');
+        $this->seedWgwUser('bob', displayName: 'Bob');
     }
 
     protected function tearDown(): void
@@ -173,16 +154,10 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
 
     public function test_unified_search_indexes_calendar_events_for_group_principals(): void
     {
-        $group = Principal::query()->create([
-            'uri' => 'principals/groups/administrators',
-            'email' => null,
-            'displayname' => 'Administrators',
-        ]);
-        $alice = Principal::query()->where('uri', 'principals/alice')->firstOrFail();
-        DB::connection('wgw')->table('groupmembers')->insert([
-            'principal_id' => $group->id,
-            'member_id' => $alice->id,
-        ]);
+        $group = $this->seedWgwGroup('principals/groups/administrators', 'Administrators');
+        $alice = Principal::forUsername('alice');
+        $this->assertNotNull($alice);
+        $this->addPrincipalToGroup($group, $alice);
 
         DB::connection('wgw')->table('calendars')->insert([
             'id' => 9,

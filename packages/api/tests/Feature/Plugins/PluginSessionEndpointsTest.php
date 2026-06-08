@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Plugins;
 
-use App\Models\Principal;
-use App\Models\User;
 use Illuminate\Support\Facades\File;
 use Tests\Support\WgwDatabaseTestCase;
 
@@ -83,15 +81,6 @@ final class PluginSessionEndpointsTest extends WgwDatabaseTestCase
 
     private function seedAlice(): void
     {
-        User::query()->create([
-            'username' => 'alice',
-            'digesta1' => '',
-            'digest' => password_hash('secret', PASSWORD_DEFAULT),
-        ]);
-        Principal::query()->create([
-            'uri' => 'principals/alice',
-            'email' => 'alice@example.test',
-            'displayname' => 'Alice',
-        ]);
+        $this->seedWgwUser('alice', displayName: 'Alice');
     }
 }

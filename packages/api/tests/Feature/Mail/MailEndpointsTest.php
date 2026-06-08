@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Tests\Feature\Mail;
 
 use App\Models\AppSetting;
-use App\Models\Principal;
-use App\Models\User;
 use App\Services\Settings\SettingKeys;
 use Tests\Support\WgwDatabaseTestCase;
 
@@ -20,18 +18,7 @@ final class MailEndpointsTest extends WgwDatabaseTestCase
         $_ENV['WGW_DISABLE_LOGIN_THROTTLE'] = '1';
         $this->configureWgwJwtKeys();
 
-        User::query()->insert([
-            'id' => 1,
-            'username' => 'alice',
-            'digest' => password_hash('secret', PASSWORD_DEFAULT),
-            'digesta1' => '',
-        ]);
-        Principal::query()->insert([
-            'id' => 1,
-            'uri' => 'principals/alice',
-            'email' => 'alice@example.test',
-            'displayname' => 'Alice',
-        ]);
+        $this->seedWgwUser('alice', displayName: 'Alice');
     }
 
     public function test_mail_status_without_server_or_account_config(): void
