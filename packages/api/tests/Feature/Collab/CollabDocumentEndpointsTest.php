@@ -62,7 +62,7 @@ final class CollabDocumentEndpointsTest extends WgwDatabaseTestCase
 
     public function test_markdown_and_yjs_sidecar_round_trip(): void
     {
-        $token = $this->issueToken();
+        $token = $this->issueBearerTokenFor();
 
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->get('/api/v1/files/collaboration?path='.urlencode(self::ROOM))
@@ -119,7 +119,7 @@ final class CollabDocumentEndpointsTest extends WgwDatabaseTestCase
             'displayname' => 'Bob',
         ]);
 
-        $this->withHeader('Authorization', 'Bearer '.$this->issueToken('bob'))
+        $this->withHeader('Authorization', 'Bearer '.$this->issueBearerTokenFor('bob'))
             ->putJson('/api/v1/files/collaboration?path='.urlencode(self::ROOM), [
                 'markdown' => 'nope',
             ])
@@ -129,7 +129,7 @@ final class CollabDocumentEndpointsTest extends WgwDatabaseTestCase
 
     public function test_document_room_with_spaces_is_supported(): void
     {
-        $token = $this->issueToken();
+        $token = $this->issueBearerTokenFor();
 
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->putJson('/api/v1/files/collaboration?path='.urlencode(self::ROOM_WITH_SPACES), [
@@ -144,16 +144,5 @@ final class CollabDocumentEndpointsTest extends WgwDatabaseTestCase
             ->assertOk()
             ->assertHeader('Content-Type', 'text/markdown; charset=utf-8')
             ->assertSeeText('# Hello World');
-    }
-
-    private function issueToken(string $username = 'alice'): string
-    {
-        $response = $this->postJson('/api/v1/auth/token', [
-            'username' => $username,
-            'password' => 'secret',
-        ]);
-        $response->assertOk();
-
-        return (string) $response->json('access_token');
     }
 }

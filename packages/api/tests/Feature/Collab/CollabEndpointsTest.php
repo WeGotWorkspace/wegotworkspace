@@ -51,7 +51,7 @@ final class CollabEndpointsTest extends WgwDatabaseTestCase
         AppSetting::setValue(SettingKeys::RTC_TURN_USERNAME, 'rtc-user');
         AppSetting::setValue(SettingKeys::RTC_TURN_CREDENTIAL, 'rtc-secret');
 
-        $token = $this->issueToken('alice');
+        $token = $this->issueBearerTokenFor('alice');
         $this->withHeader('Authorization', 'Bearer '.$token)
             ->getJson('/api/v1/rooms/'.$this->roomId().'/configuration')
             ->assertOk()
@@ -77,8 +77,8 @@ final class CollabEndpointsTest extends WgwDatabaseTestCase
             'displayname' => 'Bob',
         ]);
 
-        $aliceToken = $this->issueToken('alice');
-        $bobToken = $this->issueToken('bob');
+        $aliceToken = $this->issueBearerTokenFor('alice');
+        $bobToken = $this->issueBearerTokenFor('bob');
         $roomId = $this->roomId();
 
         $aliceJoin = $this->withHeader('Authorization', 'Bearer '.$aliceToken)
@@ -133,7 +133,7 @@ final class CollabEndpointsTest extends WgwDatabaseTestCase
 
     public function test_same_user_can_join_multiple_peers_in_same_room(): void
     {
-        $token = $this->issueToken('alice');
+        $token = $this->issueBearerTokenFor('alice');
         $roomId = $this->roomId();
 
         $first = $this->withHeader('Authorization', 'Bearer '.$token)
@@ -159,16 +159,5 @@ final class CollabEndpointsTest extends WgwDatabaseTestCase
     private function roomId(): string
     {
         return RoomTestHelper::fileRoomId(self::ROOM);
-    }
-
-    private function issueToken(string $username): string
-    {
-        $response = $this->postJson('/api/v1/auth/token', [
-            'username' => $username,
-            'password' => 'secret',
-        ]);
-        $response->assertOk();
-
-        return (string) $response->json('access_token');
     }
 }

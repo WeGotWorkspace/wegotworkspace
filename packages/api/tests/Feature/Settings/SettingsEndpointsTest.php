@@ -44,7 +44,7 @@ final class SettingsEndpointsTest extends WgwDatabaseTestCase
 
     public function test_settings_state_profile_and_mail(): void
     {
-        $token = $this->issueToken();
+        $token = $this->issueBearerToken();
 
         $state = $this->getJson('/api/v1/settings/state', [
             'Authorization' => 'Bearer '.$token,
@@ -77,7 +77,7 @@ final class SettingsEndpointsTest extends WgwDatabaseTestCase
 
     public function test_settings_mail_accepts_post_with_method_override(): void
     {
-        $token = $this->issueToken();
+        $token = $this->issueBearerToken();
 
         $this->postJson('/api/v1/settings/mail', [
             'imapUsername' => 'tunnel@imap.example.test',
@@ -93,7 +93,7 @@ final class SettingsEndpointsTest extends WgwDatabaseTestCase
 
     public function test_settings_mail_save_persists_password_and_syncs_profile_email(): void
     {
-        $token = $this->issueToken();
+        $token = $this->issueBearerToken();
 
         $this->putJson('/api/v1/settings/mail', [
             'imapUsername' => 'alice@imap.example.test',
@@ -127,24 +127,13 @@ final class SettingsEndpointsTest extends WgwDatabaseTestCase
             ['principal_id' => $support->id, 'member_id' => $alice->id],
         ]);
 
-        $token = $this->issueToken();
+        $token = $this->issueBearerToken();
         $state = $this->getJson('/api/v1/settings/state', [
             'Authorization' => 'Bearer '.$token,
         ]);
         $state->assertOk();
         $ids = array_column($state->json('groups'), 'id');
         $this->assertContains('principals/groups/support', $ids);
-    }
-
-    private function issueToken(): string
-    {
-        $response = $this->postJson('/api/v1/auth/token', [
-            'username' => 'alice',
-            'password' => 'secret',
-        ]);
-        $response->assertOk();
-
-        return (string) $response->json('access_token');
     }
 
     private function seedAlice(): void

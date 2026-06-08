@@ -9,7 +9,6 @@ use App\Models\Principal;
 use App\Models\User;
 use App\Services\Auth\AdminRoleResolver;
 use Illuminate\Support\Facades\DB;
-use Tests\TestCase;
 
 /**
  * Seeds bob (user) and alice (admin) and issues bearer tokens for role-matrix tests.
@@ -71,29 +70,5 @@ trait WgwRoleFixtures
     protected function adminBearerToken(): string
     {
         return $this->issueBearerTokenFor('alice');
-    }
-
-    protected function issueBearerTokenFor(string $username): string
-    {
-        /** @var TestCase $this */
-        $response = $this->postJson('/api/v1/auth/token', [
-            'username' => $username,
-            'password' => 'secret',
-        ]);
-        $response->assertOk();
-
-        return (string) $response->json('access_token');
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    protected function bearerHeaders(?string $token): array
-    {
-        if ($token === null || $token === '') {
-            return [];
-        }
-
-        return ['Authorization' => 'Bearer '.$token];
     }
 }
