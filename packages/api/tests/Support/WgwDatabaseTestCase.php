@@ -12,6 +12,7 @@ use Tests\TestCase;
 
 abstract class WgwDatabaseTestCase extends TestCase
 {
+    use ConfiguresAppSettings;
     use InteractsWithWgwBearerTokens;
     use RefreshDatabase;
     use SeedsWgwIdentity;
