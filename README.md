@@ -107,7 +107,10 @@ Reports are uploaded as workflow artifacts and (where supported) to **Security �
 Git hooks (installed on `pnpm install` via Husky):
 
 - **pre-commit** — Prettier + ESLint fix on staged `@wgw/apps` files; Pint on staged `packages/api` PHP
-- **commit-msg** — [Conventional Commits](https://www.conventionalcommits.org/) via Commitlint (`feat(scope): subject`)
+- **prepare-commit-msg** — strips Cursor `Co-authored-by` / `Made-with` trailers before the commit is signed
+- **commit-msg** — rejects any remaining Cursor attribution, then [Conventional Commits](https://www.conventionalcommits.org/) via Commitlint (`feat(scope): subject`)
+
+CI also rejects Cursor attribution on pull requests (covers `--no-verify`). You can disable injection at the source in **Cursor Settings → Agents → Attribution**.
 
 Use `HUSKY=0 git commit` to skip hooks once. Full gate before push: `pnpm run ci:quality`.
 
