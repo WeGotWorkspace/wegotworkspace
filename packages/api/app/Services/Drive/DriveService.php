@@ -24,6 +24,7 @@ final class DriveService
         private DriveStarService $stars,
         private AdminRoleResolver $adminRoles,
         private SearchIndexerService $search,
+        private DriveGitVersioningService $gitVersioning,
     ) {}
 
     public function assertFilesEnabled(): void
@@ -135,6 +136,9 @@ final class DriveService
             }
             $disk->put($key, '');
         }
+        if ($type === 'file') {
+            $this->gitVersioning->recordUpsert($key, $username);
+        }
         $this->search->indexFileStorageKey($key);
 
         return 'Created';
@@ -167,8 +171,19 @@ final class DriveService
         if ($disk->exists($toKey)) {
             throw new \InvalidArgumentException('Destination already exists.');
         }
+        $movedFiles = $disk->directoryExists($fromKey) ? $disk->allFiles($fromKey) : [];
         if (! $disk->move($fromKey, $toKey)) {
             throw new \RuntimeException('Rename failed.');
+        }
+        if ($movedFiles !== []) {
+            $fromPrefix = rtrim($fromKey, '/').'/';
+            $toPrefix = rtrim($toKey, '/').'/';
+            foreach ($movedFiles as $fileKey) {
+                $suffix = substr($fileKey, strlen($fromPrefix));
+                $this->gitVersioning->recordMove($fileKey, $toPrefix.$suffix, $username);
+            }
+        } else {
+            $this->gitVersioning->recordMove($fromKey, $toKey, $username);
         }
         $this->search->deleteDavPath('files/'.$fromKey);
         $this->search->indexFileStorageKey($toKey);
@@ -196,10 +211,14 @@ final class DriveService
             $this->assertAllowed($path, $username, $groupSlugs, true);
             $key = $this->paths->virtualToStorageKey($path);
             if ($disk->directoryExists($key)) {
+                foreach ($disk->allFiles($key) as $fileKey) {
+                    $this->gitVersioning->recordDelete($fileKey, $username);
+                }
                 $disk->deleteDirectory($key);
                 $this->search->deleteDavPath('files/'.$key);
             } elseif ($disk->exists($key)) {
                 $disk->delete($key);
+                $this->gitVersioning->recordDelete($key, $username);
                 $this->search->deleteDavPath('files/'.$key);
             }
         }
@@ -287,6 +306,7 @@ final class DriveService
 
         if ($totalChunks <= 1) {
             $disk->put($targetKey, $file->get());
+            $this->gitVersioning->recordUpsert($targetKey, $username);
             $this->search->indexFileStorageKey($targetKey);
 
             return 'Stored';
@@ -308,6 +328,7 @@ final class DriveService
 
         $disk->put($targetKey, $tempDisk->get($partKey));
         $tempDisk->delete($partKey);
+        $this->gitVersioning->recordUpsert($targetKey, $username);
         $this->search->indexFileStorageKey($targetKey);
 
         return 'Stored';

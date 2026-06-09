@@ -25,4 +25,9 @@ return [
         /** Set {@code WGW_MAIL_SMTP_VERIFY_TLS=false} for local/dev SMTP with self-signed certs. */
         'smtp_verify_tls' => filter_var(env('WGW_MAIL_SMTP_VERIFY_TLS', true), FILTER_VALIDATE_BOOL),
     ],
+
+    'git_versioning' => [
+        'enabled' => filter_var(env('WGW_GIT_VERSIONING', true), FILTER_VALIDATE_BOOL),
+        'max_bytes' => (int) env('WGW_GIT_VERSIONING_MAX_BYTES', 8 * 1024 * 1024),
+    ],
 ];

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Collab;
 
+use App\Services\Drive\DriveGitVersioningService;
 use App\Services\Drive\DriveGroupResolver;
 use App\Storage\StoragePaths;
 use App\Storage\WgwStorage;
@@ -29,6 +30,7 @@ final class DocCollabDocumentService
         private WgwStorage $storage,
         private StoragePaths $paths,
         private DriveGroupResolver $groups,
+        private DriveGitVersioningService $gitVersioning,
     ) {}
 
     public function getMarkdown(Request $request, mixed $room): string
@@ -87,6 +89,7 @@ final class DocCollabDocumentService
         }
 
         $disk = $this->storage->files();
+        $username = $this->actors->requireUsername($request);
         if ($hasMarkdown) {
             if (! is_string($body['markdown'])) {
                 $this->fail('invalid_markdown');
@@ -95,7 +98,9 @@ final class DocCollabDocumentService
             if (strlen($markdown) > self::MAX_MARKDOWN_BYTES) {
                 $this->fail('markdown_too_large', 413);
             }
-            $disk->put($this->paths->virtualToStorageKey($virtual), $markdown);
+            $storageKey = $this->paths->virtualToStorageKey($virtual);
+            $disk->put($storageKey, $markdown);
+            $this->gitVersioning->recordUpsert($storageKey, $username);
         }
 
         if ($hasYjs) {
