@@ -67,4 +67,4 @@ Only commit when the user explicitly asks. Use Conventional Commits per [git-wor
 
 - Planning output format: [plan-feature](../plan-feature/SKILL.md)
 - API done gate docs: `packages/api/docs/api-done-gate.md`
-- Workspace feature structure: [workspace/feature-blueprint.md](../workspace/feature-blueprint.md)
+- Workspace feature structure: [workspace/feature-blueprint.md](../workspace/feature-blueprint.md) (split shell); shell choice: [packages/apps/docs/workspace-shells.md](../../../packages/apps/docs/workspace-shells.md)

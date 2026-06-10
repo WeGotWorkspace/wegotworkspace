@@ -17,8 +17,9 @@ paths:
 
 | Task | Read |
 |------|------|
-| Shell layout, sidebar, navigation | This file |
-| Splitting a product into App + Workspace + panes | [feature-blueprint.md](feature-blueprint.md) |
+| **Which shell pattern?** (split vs collection vs custom) | [workspace-shells.md](../../../packages/apps/docs/workspace-shells.md) |
+| Shell layout, sidebar, navigation, toasts | This file |
+| Split product into App + Workspace + panes | [feature-blueprint.md](feature-blueprint.md) |
 
 ## `WorkspaceAppLayout` split mode
 

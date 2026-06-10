@@ -1,6 +1,16 @@
-# Workspace feature blueprint (settings-style)
+# Workspace feature blueprint (split shell)
+
+> **Shell choice first.** This document applies to the **split** pattern (`WorkspaceAppLayout`). For mail/notes-style **collection** or meet-style **custom** shells, read [workspace-shells.md](../../../packages/apps/docs/workspace-shells.md) before refactoring.
 
 Use **`packages/apps/src/settings-core/`** as the reference when splitting a product into a thin route **`*App`**, a composable **`*Workspace`**, a **controller** hook, and **panes**. Aligns with the workspace shell skill for `WorkspaceAppLayout`, `AppSidebar`, and navigation ownership.
+
+## When this blueprint applies
+
+| Shell | Use this blueprint? | Entry |
+|-------|---------------------|-------|
+| Split (settings, admin, drive, install, docs) | **Yes** | `WorkspaceAppLayout` |
+| Collection (mail, notes) | **No** — list/detail via `WorkspaceApp` | [workspace-shells.md](../../../packages/apps/docs/workspace-shells.md) |
+| Custom (meet, login header) | **No** — bespoke layout | [workspace-shells.md](../../../packages/apps/docs/workspace-shells.md) |
 
 ## Layers (top to bottom)
 
