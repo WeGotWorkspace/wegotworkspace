@@ -1,16 +1,3 @@
 {
-  "allowedMissing": [
-    "text-editor-core/docs-collab::DocsCollabDebugWorkspace",
-    "wegotworkspace/src::WegotworkspaceApp",
-    "wegotworkspace/src::WegotworkspaceHome",
-    "wegotworkspace/src::WegotworkspaceLive",
-    "wegotworkspace/src::WegotworkspaceLiveHome",
-    "wegotworkspace/src::WegotworkspaceLoginRoute",
-    "wegotworkspace/src::WegotworkspaceLogout",
-    "wegotworkspace/src::WegotworkspaceRequireAuth",
-    "wegotworkspace/src::WegotworkspaceRouter",
-    "wegotworkspace/src::WegotworkspaceRouterShared",
-    "wegotworkspace/src::WegotworkspaceRoutes",
-    "wegotworkspace/src::WegotworkspaceShell"
-  ]
+  "allowedMissing": []
 }
