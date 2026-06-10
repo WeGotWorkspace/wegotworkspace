@@ -33,6 +33,7 @@ paths:
 | Apps Vitest (unit + jsdom) | `pnpm test` in `packages/apps` |
 | Storybook Vitest smoke (`vitest-ci`) | `pnpm test:storybook:ci` in `packages/apps` |
 | API e2e (Docker) | `pnpm test:api-e2e:docker` |
+| Apps Playwright smoke (Storybook) | `pnpm test:apps-e2e` |
 
 Handoff and PR verification: [developer/done-checklist.md](../developer/done-checklist.md). Issue acceptance criteria: [verify-issue](../verify-issue/SKILL.md). Policy vs CI: [.agents/POLICY.md](../../POLICY.md). Review gate: [code-review](../code-review/SKILL.md).
 

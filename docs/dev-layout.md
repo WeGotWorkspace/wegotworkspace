@@ -39,6 +39,22 @@ See [`env.md`](env.md) — root `.env` (tooling), `packages/api/.env` (Laravel),
 
 Copies `packages/api` and UI `dist/` into `apps/wegotworkspace/packages/` and watches with runtime sync — same layout as a release ZIP. Use when testing install-path or Apache edge cases only.
 
+## UI smoke e2e (Playwright, optional)
+
+Phase 1 loads mock-tier Storybook stories — no live API required:
+
+```bash
+pnpm test:apps-e2e
+```
+
+Starts Storybook on **:6006** (or reuses `pnpm dev:ui`). Specs live in `packages/apps/e2e/`. With Storybook already running:
+
+```bash
+WGW_APPS_E2E_NO_SERVER=1 pnpm test:apps-e2e
+```
+
+Not part of `pnpm test:apps-done-gate` or CI yet (see [apps-done-gate.md](../.agents/skills/testing/apps-done-gate.md)).
+
 ## Mental model
 
 - **`packages/*`** = where you edit.
