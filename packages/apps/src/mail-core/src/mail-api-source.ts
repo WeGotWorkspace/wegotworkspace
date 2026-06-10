@@ -1,12 +1,12 @@
 import { createMailAppBootstrap, type MailAppBootstrap } from "@/lib/api/mock/mail-bootstrap";
 import { createWorkspaceSource } from "@/lib/api/create-workspace-source";
 import { wgwLiveApiEnabled } from "@/lib/api/wgw/http";
+import { folderTokenFromMailboxLabel } from "@/lib/mail/folder-token";
 import {
   deleteMailMessage,
   downloadMailAttachment,
   fetchMailMessageDetail,
   fetchMailLiveBootstrap,
-  folderTokenFromMailboxLabel,
   moveMailMessageByTokens,
   patchMailMessage,
   saveMailDraft,

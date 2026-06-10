@@ -57,14 +57,7 @@ export {
  * Encode a mailbox display label to the opaque `folder` string used in
  * `MailMessagePatchRequest`, `MailMoveRequest`, and message rows (often base64).
  */
-export function folderTokenFromMailboxLabel(label: string): string {
-  const bytes = new TextEncoder().encode(label);
-  let binary = "";
-  for (let i = 0; i < bytes.length; i += 1) {
-    binary += String.fromCharCode(bytes[i]!);
-  }
-  return btoa(binary);
-}
+import { folderTokenFromMailboxLabel } from "@/lib/mail/folder-token";
 
 // --- message parsing/mapping utilities are in mail-message-utils.ts ----------------------------
 

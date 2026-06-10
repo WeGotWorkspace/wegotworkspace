@@ -8,14 +8,11 @@ import {
 import { workspaceUserInitials, type WorkspaceSession } from "@/lib/workspace/workspace-session";
 import { ViewHeader } from "@/view-header/src/view-header";
 import { ViewModeToggle } from "@/view-mode-toggle/src/view-mode-toggle";
-import { downloadWgwUnifiedSearchRecord, type WgwUnifiedSearchResult } from "@/lib/api/wgw/search";
 import { cn } from "@/lib/utils";
 import { DriveMainPane } from "@/drive-core/src/drive-main-pane";
 import { DriveNewMenu } from "@/drive-core/src/drive-new-menu";
 import { UnifiedSearchApiDropdown } from "@/unified-search-dropdown/src/unified-search-api-dropdown";
-import type { DriveFile, FileKind } from "@/drive-core/src/drive-models";
 import { useDriveController } from "@/drive-core/src/use-drive-controller";
-import { uiPathFromApiPath } from "@/drive-core/src/drive-path-utils";
 import { useDriveSidebarModel } from "@/drive-core/src/use-drive-sidebar-model";
 import type { DriveWorkspaceProps } from "@/drive-core/src/drive-workspace-props";
 import { DriveWorkspaceModals } from "@/drive-core/src/drive-workspace-modals";
@@ -163,56 +160,8 @@ function DriveMainHeader({
     searchQuery,
     setSearchQuery,
     searchInputRef,
-    selectView,
-    openFile,
-    setActiveId,
-    setSelectedIds,
-    setDetailOpen,
-    currentUsername,
+    handleUnifiedSearchSelect,
   } = controller;
-
-  const handleSearchResultSelect = (result: WgwUnifiedSearchResult) => {
-    void (async () => {
-      try {
-        if (result.sourceType === "caldav" || result.sourceType === "carddav") {
-          await downloadWgwUnifiedSearchRecord({
-            resultId: result.id,
-            sourceType: result.sourceType,
-            sourceKey: result.sourceKey,
-          });
-          return;
-        }
-
-        if (result.sourceType === "note") {
-          window.open("/notes", "_blank", "noopener,noreferrer");
-          return;
-        }
-        if (result.sourceType !== "file") return;
-        const apiPath = apiPathFromSourceKey(result.sourceKey);
-        if (!apiPath) return;
-        const uiPath = uiPathFromApiPath(apiPath, currentUsername);
-
-        if (result.category === "folder") {
-          setSearchQuery("");
-          selectView({ type: "folder", path: uiPath });
-          return;
-        }
-        const file = fileFromSearchResult(result, uiPath, apiPath);
-        if (result.category === "image") {
-          setActiveId(file.id);
-          setSelectedIds([file.id]);
-          setDetailOpen(true);
-          return;
-        }
-        openFile(file);
-      } catch {
-        const apiPath = apiPathFromSourceKey(result.sourceKey);
-        if (!apiPath) return;
-        const uiPath = uiPathFromApiPath(apiPath, currentUsername);
-        selectView({ type: "folder", path: parentVirtualPath(uiPath) });
-      }
-    })();
-  };
 
   return (
     <ViewHeader
@@ -232,7 +181,7 @@ function DriveMainHeader({
             className="drive-main-header__search-dropdown"
             query={searchQuery}
             limit={10}
-            onSelect={handleSearchResultSelect}
+            onSelect={handleUnifiedSearchSelect}
           />
         ) : null
       }
@@ -246,56 +195,4 @@ function DriveMainHeader({
       }
     />
   );
-}
-
-function parentVirtualPath(path: string): string {
-  const normalized = path.trim().replace(/\/+$/, "");
-  const idx = normalized.lastIndexOf("/");
-  if (idx <= 0) return "My Drive";
-  return normalized.slice(0, idx);
-}
-
-function apiPathFromSourceKey(sourceKey: string): string | null {
-  const key = sourceKey.trim().replace(/^\/+/, "");
-  if (!key) return null;
-  return `/${key}`;
-}
-
-function fileFromSearchResult(
-  result: WgwUnifiedSearchResult,
-  uiPath: string,
-  apiPath: string,
-): DriveFile {
-  const title = result.title || uiPath.split("/").pop() || result.sourceKey;
-  const parent = parentVirtualPath(uiPath);
-  const kind = fileKindFromCategory(result.category);
-
-  return {
-    id: `search:${result.sourceType}:${result.sourceKey}`,
-    category: result.category ?? "File",
-    date: "",
-    title,
-    excerpt: result.snippet ?? "",
-    body: [],
-    notebook: "",
-    tags: [],
-    wordCount: 0,
-    parent,
-    kind,
-    size: result.size > 0 ? String(result.size) : "—",
-    apiPath: apiPath || undefined,
-  };
-}
-
-function fileKindFromCategory(category?: string | null): FileKind {
-  if (category === "folder") return "folder";
-  if (category === "image") return "image";
-  if (category === "audio") return "audio";
-  if (category === "video") return "video";
-  if (category === "archive") return "archive";
-  if (category === "document" || category === "spreadsheet" || category === "presentation") {
-    return "doc";
-  }
-
-  return "file";
 }

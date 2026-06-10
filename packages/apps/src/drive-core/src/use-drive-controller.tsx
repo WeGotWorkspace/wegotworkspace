@@ -9,13 +9,19 @@ import { canMoveDriveItemsToFolder } from "@/drive-core/src/drive-item-path";
 import { useDriveBatchActions } from "@/drive-core/src/use-drive-batch-actions";
 import { driveLabels } from "@/drive-core/src/drive-labels";
 import { useDriveSelectionBar } from "@/drive-core/src/use-drive-selection-bar";
-import { wgwEnsurePluginSession } from "@/lib/api/wgw/http";
-import type { WgwPluginDescriptor } from "@/lib/api/wgw/types";
+import type { WgwPluginDescriptor } from "@/drive-core/src/drive-types";
 import type {
   DriveAPIOperations,
   DriveUIData,
+  DriveUnifiedSearchResult,
   DriveUploadProgress,
 } from "@/drive-core/src/drive-types";
+import {
+  apiPathFromSearchSourceKey,
+  driveFileFromSearchResult,
+  parentVirtualPath,
+  uiPathForSearchResult,
+} from "@/drive-core/src/drive-search-utils";
 import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
 import { DRIVE_MOCK_FILES } from "@/drive-core/src/drive-mock-files";
 import type { DriveFile, FileKind, ViewKey } from "@/drive-core/src/drive-models";
@@ -97,20 +103,25 @@ export function useDriveController({
     [showError],
   );
 
+  const ensurePluginSessionBeforeNavigate = useCallback(
+    (sessionPath: string | undefined, navigate: () => void) => {
+      const ensureSession =
+        sessionPath && operations?.ensurePluginSession
+          ? operations.ensurePluginSession(sessionPath)
+          : Promise.resolve();
+      void ensureSession.catch(() => {}).finally(navigate);
+    },
+    [operations],
+  );
+
   const launchPluginEditor = useCallback(
     (plugin: WgwPluginDescriptor, route: string, params: URLSearchParams) => {
       const target = `${route}?${params.toString()}`;
-      const sessionPath = plugin.integration?.sessionApiPath;
-      const ensureSession = sessionPath ? wgwEnsurePluginSession(sessionPath) : Promise.resolve();
-      void ensureSession
-        .catch(() => {
-          // Best effort: navigation still proceeds and server auth gate handles fallback.
-        })
-        .finally(() => {
-          window.location.assign(target);
-        });
+      ensurePluginSessionBeforeNavigate(plugin.integration?.sessionApiPath, () => {
+        window.location.assign(target);
+      });
     },
-    [],
+    [ensurePluginSessionBeforeNavigate],
   );
 
   const templatePlugin = useMemo(() => findDrivePluginWithTemplates(data.plugins), [data.plugins]);
@@ -636,17 +647,9 @@ export function useDriveController({
           const rel = f.apiPath.replace(/^\/+/, "");
           const qp = new URLSearchParams({ [plugin.drive.openFileQueryParam]: rel });
           const target = `${plugin.drive.openFileRoute}?${qp.toString()}`;
-          const sessionPath = plugin.integration?.sessionApiPath;
-          const ensureSession = sessionPath
-            ? wgwEnsurePluginSession(sessionPath)
-            : Promise.resolve();
-          void ensureSession
-            .catch(() => {
-              // Best effort: navigation still proceeds and server auth gate handles fallback.
-            })
-            .finally(() => {
-              window.open(target, "_blank", "noopener,noreferrer");
-            });
+          ensurePluginSessionBeforeNavigate(plugin.integration?.sessionApiPath, () => {
+            window.open(target, "_blank", "noopener,noreferrer");
+          });
           return;
         }
       }
@@ -1126,6 +1129,58 @@ export function useDriveController({
     return () => window.removeEventListener("keydown", handler);
   }, [selectedIds, detailOpen, inTrashView]);
 
+  const handleUnifiedSearchSelect = useCallback(
+    (result: DriveUnifiedSearchResult) => {
+      void (async () => {
+        try {
+          if (result.sourceType === "caldav" || result.sourceType === "carddav") {
+            await operations?.downloadUnifiedSearchRecord?.({
+              resultId: result.id,
+              sourceType: result.sourceType,
+              sourceKey: result.sourceKey,
+            });
+            return;
+          }
+          if (result.sourceType === "note") {
+            window.open("/notes", "_blank", "noopener,noreferrer");
+            return;
+          }
+          if (result.sourceType !== "file") return;
+          const apiPath = apiPathFromSearchSourceKey(result.sourceKey);
+          if (!apiPath) return;
+          const uiPath = uiPathFromApiPath(apiPath, currentUsername);
+          if (result.category === "folder") {
+            setSearchQuery("");
+            selectView({ type: "folder", path: uiPath });
+            return;
+          }
+          const file = driveFileFromSearchResult(result, uiPath, apiPath);
+          if (result.category === "image") {
+            setActiveId(file.id);
+            setSelectedIds([file.id]);
+            setDetailOpen(true);
+            return;
+          }
+          openFile(file);
+        } catch {
+          const apiPath = apiPathFromSearchSourceKey(result.sourceKey);
+          if (!apiPath) return;
+          const uiPath = uiPathFromApiPath(apiPath, currentUsername);
+          selectView({ type: "folder", path: parentVirtualPath(uiPath) });
+        }
+      })();
+    },
+    [
+      currentUsername,
+      operations,
+      selectView,
+      setActiveId,
+      setDetailOpen,
+      setSearchQuery,
+      setSelectedIds,
+    ],
+  );
+
   const { selectionBar } = useDriveSelectionBar({
     labels: driveLabels,
     files,
@@ -1231,5 +1286,6 @@ export function useDriveController({
     selectView,
     listLoading,
     operations,
+    handleUnifiedSearchSelect,
   };
 }

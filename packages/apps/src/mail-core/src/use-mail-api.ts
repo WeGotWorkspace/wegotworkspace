@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from "react";
 import type { MailUIData, MailAPIOperations } from "@/mail-core/src/mail-types";
 import { mockWorkspaceSession } from "@/lib/api/mock/workspace-session-mock";
-import { folderTokenFromMailboxLabel } from "@/lib/api/wgw/mail";
+import { folderTokenFromMailboxLabel } from "@/lib/mail/folder-token";
 import { useWorkspaceApi } from "@/hooks/use-workspace-api";
 import { createDefaultMailApiSource, type MailApiSource } from "./mail-api-source";
 

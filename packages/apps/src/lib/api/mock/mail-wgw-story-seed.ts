@@ -1,9 +1,6 @@
 import type { MailUIData } from "@/mail-core/src/mail-types";
-import {
-  folderTokenFromMailboxLabel,
-  mailFromWgwListItem,
-  mailboxNameByFolderToken,
-} from "@/lib/api/wgw/mail";
+import { folderTokenFromMailboxLabel } from "@/lib/mail/folder-token";
+import { mailFromWgwListItem, mailboxNameByFolderToken } from "@/lib/api/wgw/mail";
 import type { WgwMailFolderNode, WgwMailMessageListItem } from "@/lib/api/wgw/types";
 
 /**

@@ -28,6 +28,22 @@ export type DriveUploadProgress = {
   filesTotal: number;
 };
 
+export type DriveUnifiedSearchResult = {
+  id: number;
+  sourceType: string;
+  sourceKey: string;
+  title: string;
+  category?: string | null;
+  snippet?: string | null;
+  size: number;
+};
+
+export type DriveUnifiedSearchDownloadInput = {
+  resultId?: number | string;
+  sourceType: "caldav" | "carddav";
+  sourceKey: string;
+};
+
 export type DriveAPIOperations = {
   refreshState: (opts?: { signal?: AbortSignal }) => Promise<DriveUIData>;
   changeDir: (to: string, opts?: { signal?: AbortSignal }) => Promise<DriveUIData>;
@@ -69,4 +85,9 @@ export type DriveAPIOperations = {
       onProgress?: (progress: DriveUploadProgress) => void;
     },
   ) => Promise<DriveUIData>;
+  downloadUnifiedSearchRecord?: (
+    input: DriveUnifiedSearchDownloadInput,
+    opts?: { signal?: AbortSignal },
+  ) => Promise<void>;
+  ensurePluginSession?: (sessionApiPath: string, opts?: { signal?: AbortSignal }) => Promise<void>;
 };

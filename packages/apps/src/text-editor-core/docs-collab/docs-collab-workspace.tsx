@@ -27,6 +27,7 @@ import { TEXT_EDITOR_FORMAT_BAR_FULL } from "@/text-editor-core/src/text-editor-
 import { printTextEditorSheet } from "@/text-editor-core/src/text-editor-print";
 import { DocsCollabEditor } from "./docs-collab-editor";
 import { DocsCollabPresence } from "./docs-collab-presence";
+import type { DocsCollabWireOperations } from "./docs-collab-wire";
 import { useDocsCollab } from "./use-docs-collab";
 import type { DocsCollabUrls } from "./use-docs-collab";
 import {
@@ -45,6 +46,8 @@ export type DocsCollabWorkspaceProps = {
   documentTitle?: string;
   /** Optional transport/doc endpoints for step-by-step backend migration testing. */
   urls?: DocsCollabUrls;
+  /** Auth + RTC fetch for live API; defaults to offline mesh. */
+  wire?: DocsCollabWireOperations;
 };
 
 function countWords(text: string): number {
@@ -72,6 +75,7 @@ export function DocsCollabWorkspace({
   userName: userNameProp,
   documentTitle,
   urls,
+  wire,
 }: DocsCollabWorkspaceProps = {}) {
   const [userName, setUserName] = useState<string | null>(() => userNameProp?.trim() || null);
   const [promptDismissed, setPromptDismissed] = useState(false);
@@ -97,17 +101,26 @@ export function DocsCollabWorkspace({
     );
   }
 
-  return <DocsCollabWorkspaceInner userName={userName} documentTitle={documentTitle} urls={urls} />;
+  return (
+    <DocsCollabWorkspaceInner
+      userName={userName}
+      documentTitle={documentTitle}
+      urls={urls}
+      wire={wire}
+    />
+  );
 }
 
 function DocsCollabWorkspaceInner({
   userName,
   documentTitle,
   urls,
+  wire,
 }: {
   userName: string;
   documentTitle?: string;
   urls?: DocsCollabUrls;
+  wire?: DocsCollabWireOperations;
 }) {
   const labels = docsLabels;
   const session = useMemo(
@@ -133,6 +146,7 @@ function DocsCollabWorkspaceInner({
     userName,
     autoJoin: true,
     urls,
+    wire,
   });
 
   const [sidebarOpen, setSidebarOpen] = useState(false);

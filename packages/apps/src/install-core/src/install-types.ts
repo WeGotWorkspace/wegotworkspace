@@ -1,10 +1,10 @@
-import type {
+export type {
   InstallerDatabasePayload,
   InstallerInstallPayload,
   InstallerRequirementsPayload,
   InstallerSitePayload,
 } from "@/lib/api/wgw/installer";
-import type { WgwInstallerActionResponse, WgwInstallerRuntimeState } from "@/lib/api/wgw";
+export type { WgwInstallerActionResponse, WgwInstallerRuntimeState } from "@/lib/api/wgw";
 
 export type InstallStepId =
   | "welcome"

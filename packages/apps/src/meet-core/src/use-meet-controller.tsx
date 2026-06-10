@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { createWgwMeetGuestSignalingFetch } from "@/lib/api/wgw/meet";
 import { parseUrlList } from "@/lib/rtc/config";
 import { isRtcDebugEnabled } from "@/lib/rtc/debug";
 import { rtcLog } from "@/lib/rtc/log";
@@ -132,8 +131,8 @@ export function useMeetController({
 
   const isGuestSession = !session.user.username?.trim() && !session.user.email?.trim();
   const guestSignalingFetch = useMemo(
-    () => (isGuestSession ? createWgwMeetGuestSignalingFetch() : undefined),
-    [isGuestSession],
+    () => (isGuestSession ? operations?.guestSignalingFetch?.() : undefined),
+    [isGuestSession, operations],
   );
 
   const meetRtc = useMeetRtc({

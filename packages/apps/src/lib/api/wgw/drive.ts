@@ -1,4 +1,10 @@
-import { wgwFetch, wgwFetchPrincipal, wgwReadJson } from "@/lib/api/wgw/http";
+import {
+  wgwFetch,
+  wgwFetchPrincipal,
+  wgwEnsurePluginSession,
+  wgwReadJson,
+} from "@/lib/api/wgw/http";
+import { downloadWgwUnifiedSearchRecord } from "@/lib/api/wgw/search";
 import { fetchWgwPlugins } from "@/lib/api/wgw/plugins";
 import type {
   WgwDriveDirectoryEntry,
@@ -14,13 +20,11 @@ import type {
   DriveUIData,
 } from "@/drive-core/src/drive-types";
 
-function normalizePath(path: string): string {
-  const trimmed = path.trim();
-  if (!trimmed) return "/";
-  const withLeading = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
-  if (withLeading === "/") return "/";
-  return withLeading.replace(/\/+$/, "");
-}
+import {
+  parentAndName,
+  pathFromDirectoryEntry,
+  normalizeApiVirtualPath as normalizePath,
+} from "@/lib/files/api-path";
 
 function pathQuery(path: string): string {
   return `path=${encodeURIComponent(normalizePath(path))}`;
@@ -331,16 +335,13 @@ export function createWgwDriveOperations(
       cwd = normalizePath(state.cwd);
       return state;
     },
+    async downloadUnifiedSearchRecord(input, opts) {
+      await downloadWgwUnifiedSearchRecord({ ...input, signal: opts?.signal });
+    },
+    async ensurePluginSession(sessionApiPath, opts) {
+      await wgwEnsurePluginSession(sessionApiPath, opts);
+    },
   };
 }
 
-export function parentAndName(path: string): { destination: string; from: string } {
-  const normalized = normalizePath(path);
-  const idx = normalized.lastIndexOf("/");
-  if (idx <= 0) return { destination: "/", from: normalized.replace(/^\//, "") };
-  return { destination: normalized.slice(0, idx), from: normalized.slice(idx + 1) };
-}
-
-export function pathFromDirectoryEntry(entry: WgwDriveDirectoryEntry): string {
-  return normalizePath(entry.path);
-}
+export { parentAndName, pathFromDirectoryEntry } from "@/lib/files/api-path";

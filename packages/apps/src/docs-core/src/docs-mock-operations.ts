@@ -1,4 +1,4 @@
-import { parentAndName } from "@/lib/api/wgw/drive";
+import { parentAndName } from "@/lib/files/api-path";
 import { DOCS_DEMO_MARKDOWN, DOCS_DEMO_TEXT } from "@/docs-core/src/docs-demo-content";
 import type { DocsAPIOperations } from "@/docs-core/src/docs-types";
 
