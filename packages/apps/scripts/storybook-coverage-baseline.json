@@ -1,11 +1,5 @@
 {
   "allowedMissing": [
-    "admin-core/src::AdminPluginsPane",
-    "admin-core/src::AdminSearchPane",
-    "docs-core/src::DocsMainPane",
-    "mail-core/src::MailAttachmentChip",
-    "meet-core/src::MeetWorkspaceHeader",
-    "note-detail-view/src::NoteTextEditorBody",
     "text-editor-core/docs-collab::DocsCollabDebugWorkspace",
     "text-editor-core/docs-collab::DocsCollabEditor",
     "text-editor-core/docs-collab::DocsCollabPresence",
