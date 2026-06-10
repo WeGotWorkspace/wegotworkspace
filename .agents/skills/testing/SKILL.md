@@ -35,7 +35,7 @@ Handoff and PR verification: [developer/done-checklist.md](../developer/done-che
 ## Multitask
 
 - Test **hardening / verify** chunks run after build chunks merge; red-green tests belong with or before build — see [developer/multitask.md](../developer/multitask.md).
-- After parallel builds, parent agent runs full verification suite.
+- After parallel builds, spawn a verifier when [multitask-verifier.md](../developer/multitask-verifier.md) applies; parent runs full verification suite per [done-checklist](../developer/done-checklist.md).
 - Do not mark plan todos complete until tests actually pass.
 
 ## API depth

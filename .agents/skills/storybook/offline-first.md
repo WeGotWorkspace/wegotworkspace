@@ -128,6 +128,6 @@ Run `node packages/apps/scripts/check-storybook-coverage.mjs --update-baseline` 
 | Storybook baseline debt | **0** — CI fails on new exports without stories |
 | Ops DI in product controllers/hooks/workspaces | **Done** (#77); wgw remains in `*-api-source`, app shells, login |
 | `play` / WCAG / Chromatic | **Partial** — 5 `play`, 10 `vitest-ci` of 111; a11y manual; Chromatic not CI-gated |
-| Multitask verifier subagents | **Not built** |
+| Multitask verifier subagents | **Built** — [multitask-verifier.md](../developer/multitask-verifier.md) |
 
 Do not add live-only stories for components lacking offline coverage.

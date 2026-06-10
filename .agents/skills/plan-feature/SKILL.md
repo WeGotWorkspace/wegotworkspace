@@ -52,6 +52,10 @@ Before writing the plan:
 - **Verify with:** command or checklist
 - **Parallel with:** chunk IDs or "none"
 
+Optional final chunk after parallel builds merge:
+
+- **Chunk V: Cross-chunk verify** — read-only verifier subagent; prompt from [developer/multitask-verifier.md](../developer/multitask-verifier.md); `done-when`: verifier `PASS` or `PASS_WITH_NITS` and parent ran [done-checklist](../developer/done-checklist.md).
+
 ## Test plan
 
 - [ ] API: OpenAPI → failing feature test → implement → `composer done-gate` ([testing/test-first.md](../testing/test-first.md))

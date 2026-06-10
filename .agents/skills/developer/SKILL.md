@@ -42,7 +42,7 @@ See [dev-environment](../dev-environment/SKILL.md) for commands, URLs, and troub
 
 ## Multitask
 
-When running parallel agents, see [multitask.md](multitask.md) for chunk splitting, handoffs, and post-parallel verification. Before declaring done: [done-checklist.md](done-checklist.md). Policy vs CI: [POLICY.md](../../POLICY.md).
+When running parallel agents, see [multitask.md](multitask.md) for chunk splitting, handoffs, and post-parallel verification. After parallel builds merge, spawn a read-only verifier per [multitask-verifier.md](multitask-verifier.md) when chunks share contracts or boundaries. Before declaring done: [done-checklist.md](done-checklist.md). Policy vs CI: [POLICY.md](../../POLICY.md).
 
 ## When NOT to use this skill
 

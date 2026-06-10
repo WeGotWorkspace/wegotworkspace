@@ -41,8 +41,9 @@ Each chunk in a plan should include:
 After parallel builds finish:
 
 1. Parent agent reconciles todos / plan status (subagents may not auto-update plan todos).
-2. Run full verification per [done-checklist.md](done-checklist.md).
-3. Resolve merge conflicts before declaring done.
+2. Resolve merge conflicts before verification.
+3. Spawn a **verifier subagent** when cross-chunk review is needed — see [multitask-verifier.md](multitask-verifier.md) for when to skip vs spawn, checklist, and prompt template.
+4. Run full verification per [done-checklist.md](done-checklist.md) (parent runs commands; verifier reports gaps).
 
 ## Example split
 
@@ -54,3 +55,4 @@ Feature: new admin pane + unrelated API health endpoint.
 | B: Admin pane UI + workspace CSS | Yes (with A if no shared files) | `workspace`, `apps-ui` |
 | C: Mock-tier stories for pane | With or after B | `storybook`, `accessibility` |
 | D: Full verify (done gate + Vitest) | After A/B merge | `testing` |
+| V: Cross-chunk verifier (read-only) | After D or with D if disjoint domains | `code-review` via [multitask-verifier.md](multitask-verifier.md) |

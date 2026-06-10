@@ -30,4 +30,8 @@ Lightweight gate before handoff or PR — not a second copy of domain skills.
 
 ## Multitask merges
 
-After parallel chunks: parent runs full [done-checklist](../developer/done-checklist.md) and smells on the combined diff ([multitask.md](../developer/multitask.md)).
+After parallel chunks:
+
+1. Parent spawns a read-only **verifier subagent** when [multitask-verifier.md](../developer/multitask-verifier.md) applies (shared contracts, 2+ build chunks, full-stack).
+2. Parent runs full [done-checklist](../developer/done-checklist.md) commands.
+3. This skill's order (smells → done-checklist → policy) is the verifier's script — do not duplicate checklists in verifier prompts; link to those docs.

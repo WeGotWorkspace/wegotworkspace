@@ -38,4 +38,4 @@ Load [clean-code](.agents/skills/clean-code/) when building or refactoring; [cod
 
 ## Multitask
 
-Parallel agents: plan with [plan-feature](.agents/skills/plan-feature/), split per [developer/multitask.md](.agents/skills/developer/multitask.md), verify with [testing](.agents/skills/testing/).
+Parallel agents: plan with [plan-feature](.agents/skills/plan-feature/), split per [developer/multitask.md](.agents/skills/developer/multitask.md), cross-chunk review via [developer/multitask-verifier.md](.agents/skills/developer/multitask-verifier.md), verify with [testing](.agents/skills/testing/) and [done-checklist](.agents/skills/developer/done-checklist.md).
