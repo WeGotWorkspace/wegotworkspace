@@ -81,7 +81,7 @@ Reference: `meet-core/stories/meet-app.stories.tsx`. **`Live …`** stories need
 
 ## Operations DI (tech debt)
 
-Prefer **`operations`** on meet controllers over direct `@/lib/api/wgw/*` imports. Tracker: [#71](https://github.com/WeGotWorkspace/wegotworkspace/issues/71).
+Prefer **`operations`** on meet controllers over direct `@/lib/api/wgw/*` imports. Product vertical wired in [#77](https://github.com/WeGotWorkspace/wegotworkspace/pull/77).
 
 ## When unsure
 

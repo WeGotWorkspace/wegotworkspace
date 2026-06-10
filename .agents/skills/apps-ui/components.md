@@ -94,18 +94,16 @@ See [testing/ui-architecture.md](../testing/ui-architecture.md).
 - **Workspace stories:** omit **`operations`** or pass no-ops; slices use stub handlers (see settings harnesses).
 - **Shared widget stories:** stub **`saveFn`** / **`on*`** in `args`.
 
-### Legacy debt (known gaps)
+### Residual debt (incremental)
 
-The tree **does not fully match** the target yet. That is expected — fix incrementally. Tracker: [#71](https://github.com/WeGotWorkspace/wegotworkspace/issues/71) (per-product: [#66](https://github.com/WeGotWorkspace/wegotworkspace/issues/66)–[#70](https://github.com/WeGotWorkspace/wegotworkspace/issues/70)).
+Product **controllers, hooks, mock ops, and workspaces** for meet, docs, drive, mail, and install follow the target pipeline ([#77](https://github.com/WeGotWorkspace/wegotworkspace/pull/77)). Remaining gaps are incremental — fix when you touch the area:
 
-Common violations to refactor:
-
-- **`@/lib/api/wgw/*` imports in `use*Controller`** (should use `operations` only) — e.g. meet/docs controllers
-- **Direct API calls in panes or composites**
+- **`@/lib/api/wgw/*` in app shells** — e.g. `wegotworkspace-*`, `docs-app` collab URL wiring, `login-core` (live bootstrap / auth routes)
+- **Direct API calls in panes or composites** (outside `*-api-source`)
 - **Ad hoc `*Fn` on product panes** instead of slice handlers
 - **Missing `operations?`** — component unreachable in stories without module mocks
 
-**Do not** block feature work to refactor unrelated files. **Do** follow the target for code you touch; file issues for remaining debt.
+**Do not** block feature work to refactor unrelated files. **Do** follow the target for code you touch; file new issues for remaining debt.
 
 ### Filing refactor issues
 
@@ -135,7 +133,7 @@ App → operations → controller → pane slices (`.agents/skills/apps-ui/compo
 - [ ] Tests mock props, not modules
 ```
 
-Track related work on [#71](https://github.com/WeGotWorkspace/wegotworkspace/issues/71) or link new issues to per-product refactors ([#66](https://github.com/WeGotWorkspace/wegotworkspace/issues/66)–[#70](https://github.com/WeGotWorkspace/wegotworkspace/issues/70)).
+Track new refactor issues on GitHub (label `refactor` / `tech-debt` if available); link to [apps-ui/components.md](components.md) for the acceptance checklist.
 
 ## Composition
 
