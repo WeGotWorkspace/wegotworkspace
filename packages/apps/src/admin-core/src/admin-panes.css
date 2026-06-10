@@ -2,7 +2,7 @@
 
 /**
  * Admin pane chrome under the workspace shell or portaled dialogs (`admin-dialog-surface`).
- * Use these instead of long `className` / `style` stacks on pane TSX — see `.agents/skills/wgw-apps-ui/`.
+ * Use these instead of long `className` / `style` stacks on pane TSX — see `.agents/skills/apps-ui/`.
  */
 
 /* --- Lists (users, groups, group dialog) --- */

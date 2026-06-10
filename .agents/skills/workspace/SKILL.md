@@ -1,5 +1,5 @@
 ---
-name: wgw-workspace
+name: workspace
 description: Workspace shell layout, sidebar scrim, app-owned navigation, and settings-style feature blueprint for packages/apps. Use when working on *App, *Workspace, workspace-shell, or controller hooks.
 paths:
   - "packages/apps/src/**/*-app.tsx"

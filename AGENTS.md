@@ -2,25 +2,39 @@
 
 ## Non-negotiables
 
-**API greenfield:** Work under `packages/api/` is a new Laravel app matching OpenAPI — no legacy PHP in tree. Do not restore `packages/api/src/`, `*Kernel`, `MailApi`, or dual autoload. Reimplement from `packages/api/openapi/openapi.json` + feature tests. Full guidance: [`.agents/skills/wgw-api/`](.agents/skills/wgw-api/).
+**API greenfield:** Work under `packages/api/` is a new Laravel app matching OpenAPI — no legacy PHP in tree. Do not restore `packages/api/src/`, `*Kernel`, `MailApi`, or dual autoload. Reimplement from `packages/api/openapi/openapi.json` + feature tests. Full guidance: [`.agents/skills/api/`](.agents/skills/api/).
 
 **Git:** Do not `git commit` unless the user explicitly asks. When committing, use Conventional Commits. See [`.agents/skills/git-workflow/`](.agents/skills/git-workflow/).
 
 ## Skills index
 
-Agent skills live in [`.agents/skills/`](.agents/skills/) (tool-agnostic [Agent Skills](https://agentskills.io/) format):
+Agent skills live in [`.agents/skills/`](.agents/skills/) (tool-agnostic [Agent Skills](https://agentskills.io/) format). **Naming:** unprefixed directory names only — no `wgw-` skill prefixes.
 
 | Skill | When to use |
 |-------|-------------|
-| [wgw-developer](.agents/skills/wgw-developer/) | Starting work, onboarding, skill routing |
-| [wgw-api](.agents/skills/wgw-api/) | `packages/api` — REST, auth, storage, WebDAV, tests |
-| [wgw-apps-ui](.agents/skills/wgw-apps-ui/) | UI primitives, CSS variables, action surfaces |
-| [wgw-workspace](.agents/skills/wgw-workspace/) | *App, *Workspace, workspace shell, feature blueprint |
+| [developer](.agents/skills/developer/) | Starting work, onboarding, skill routing, multitask |
+| [api](.agents/skills/api/) | `packages/api` — REST, auth, storage, WebDAV, tests |
+| [apps-ui](.agents/skills/apps-ui/) | UI primitives, CSS variables, components, TypeScript |
+| [workspace](.agents/skills/workspace/) | *App, *Workspace, workspace shell, feature blueprint |
+| [plan-feature](.agents/skills/plan-feature/) | Scoping features, parallel chunk plans |
+| [testing](.agents/skills/testing/) | PHPUnit, Vitest, e2e, done-when checklists |
+| [document](.agents/skills/document/) | README, API docs, dev-layout updates |
+| [clean-code](.agents/skills/clean-code/) | Code quality guardrails (Robert C. Martin series) |
+| [storybook](.agents/skills/storybook/) | `.stories.tsx`, cssprops, coverage |
+| [accessibility](.agents/skills/accessibility/) | WCAG 2.x UI compliance |
 | [git-workflow](.agents/skills/git-workflow/) | Staging, commits, commit message format |
+
+## Code quality
+
+Load [clean-code](.agents/skills/clean-code/) when building, reviewing, or refactoring. Domain skills override when more specific.
+
+## Multitask
+
+Parallel agents: plan with [plan-feature](.agents/skills/plan-feature/), split per [developer/multitask.md](.agents/skills/developer/multitask.md), verify with [testing](.agents/skills/testing/).
 
 ## API (read first for `packages/api` work)
 
-1. Load **[wgw-api](.agents/skills/wgw-api/)** skill.
+1. Load **[api](.agents/skills/api/)** skill.
 2. Use **`packages/api/openapi/openapi.json`** as the only in-tree API reference — there is **no** legacy PHP to copy.
 3. Before calling API work done, see **`packages/api/docs/api-done-gate.md`**.
 
@@ -52,4 +66,4 @@ Agent skills live in [`.agents/skills/`](.agents/skills/) (tool-agnostic [Agent 
 
 ## Storage (when implementing)
 
-File I/O for drive, notes, plugins, and WebDAV **files** uses Laravel **Flysystem** (`WgwStorage`). See [`.agents/skills/wgw-api/storage-flysystem.md`](.agents/skills/wgw-api/storage-flysystem.md).
+File I/O for drive, notes, plugins, and WebDAV **files** uses Laravel **Flysystem** (`WgwStorage`). See [`.agents/skills/api/storage-flysystem.md`](.agents/skills/api/storage-flysystem.md).

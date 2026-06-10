@@ -107,4 +107,4 @@ Artifact-based REST surface. **Authoritative contract:** `openapi/openapi.json` 
 
 Automated checks: `tests/Architecture/RoleAccessMatrixTest.php`.
 
-Design notes: `.agents/skills/wgw-api/rest-design.md`.
+Design notes: `.agents/skills/api/rest-design.md`.

@@ -2,18 +2,30 @@
 
 Tool-agnostic agent skills following the [Agent Skills](https://agentskills.io/specification) open standard. Compatible with Cursor, Claude Code, Codex, Copilot, and other skills-aware agents.
 
+## Naming
+
+Skill directories use **unprefixed names** (e.g. `api`, `developer`, `storybook`) — never `wgw-` prefixes. Product terms like `wgw` DB connection or `@wgw-api-generated` in code are unrelated.
+
 ## Skills index
 
 | Skill | Purpose |
 |-------|---------|
-| [wgw-developer](skills/wgw-developer/) | Monorepo entry point — dev layout, skill routing |
-| [wgw-api](skills/wgw-api/) | Greenfield Laravel API — OpenAPI, layers, auth, storage, SabreDAV |
-| [wgw-apps-ui](skills/wgw-apps-ui/) | UI primitives, CSS variables, responsive action surfaces |
-| [wgw-workspace](skills/wgw-workspace/) | Workspace shell, *App/*Workspace blueprint |
+| [developer](skills/developer/) | Monorepo entry point — dev layout, skill routing, multitask |
+| [api](skills/api/) | Greenfield Laravel API — OpenAPI, layers, auth, storage, SabreDAV |
+| [apps-ui](skills/apps-ui/) | UI primitives, CSS variables, components, TypeScript |
+| [workspace](skills/workspace/) | Workspace shell, *App/*Workspace blueprint |
+| [plan-feature](skills/plan-feature/) | Feature planning and parallel chunk templates |
+| [testing](skills/testing/) | PHPUnit, Vitest, e2e, done-when checklists |
+| [document](skills/document/) | When/where to write docs; templates |
+| [clean-code](skills/clean-code/) | Robert C. Martin series guardrails |
+| [storybook](skills/storybook/) | Story catalog — coverage, cssprops, fixtures, a11y |
+| [accessibility](skills/accessibility/) | WCAG 2.x compliance |
 | [git-workflow](skills/git-workflow/) | No auto-commit, Conventional Commits |
 
 ## Usage
 
 Agents discover skills by `name` and `description` at startup, then load full `SKILL.md` instructions when a task matches. Path-scoped skills (`paths` frontmatter) activate when editing matching files.
+
+Depth lives in sibling `.md` files (e.g. `api/layers.md`, `storybook/coverage.md`) — load on demand.
 
 For repo-wide bootstrap and non-negotiable constraints, see [AGENTS.md](../AGENTS.md) at the repository root.
