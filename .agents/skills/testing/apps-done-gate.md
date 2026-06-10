@@ -50,13 +50,14 @@ CI runs apps Vitest via `turbo run test` and Storybook smoke via `test:storybook
 
 Baseline audit (expand over time — not a hard gate count yet):
 
-| Signal | Baseline | Near-term target |
-|--------|----------|------------------|
+| Signal | Current (post #81) | Near-term target |
+|--------|--------------------|------------------|
 | Story files | ~101 | + mock-tier for every new export |
-| `vitest-ci` tagged stories | ~10 (primitives) | **15+** including product panes |
-| `play` functions | ~5 (primitives) | **8+** including one flow per major app |
+| `vitest-ci` tagged story files | **18** (primitives + all 7 product verticals) | **25+** — deeper flows per app |
+| `play` functions | **14** | One `play` per touched pane in new work |
+| WCAG gate | Opt-in (`STORYBOOK_A11Y_GATE=1`) | On by default in CI smoke |
 
-Tag product-pane smoke stories at **meta** or **story** level with `vitest-ci`. Prefer one high-value `play` per app vertical (Drive, Mail, Settings, Install).
+Tag product-pane smoke stories at **meta** or **story** level with `vitest-ci`. Every major vertical (Drive, Mail, Settings, Install, Notes, Meet, Docs, Admin) has at least one `play` flow — keep it that way for new verticals.
 
 ## Type contracts (UI ↔ API)
 

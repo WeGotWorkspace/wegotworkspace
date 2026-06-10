@@ -88,18 +88,18 @@ Run `node packages/apps/scripts/check-storybook-coverage.mjs --update-baseline` 
 | **B** | CommentMark, SuggestionMark, TextEditorSlashMenu, TextEditorTableControls, DocsCollabEditor, DocsCollabPresence | 18 → 12 |
 | **C+D** | DocsCollabDebugWorkspace, Wegotworkspace shell (11 exports) | 12 → **0** |
 
-### Honest grade (agent stack — snapshot post #77)
+### Honest grade (agent stack — snapshot post #81)
 
-| Dimension | Post P0–P2 | Post P3 (#74+#75) | #76 | Now (#77) | Notes |
-|-----------|------------|-------------------|-----|-----------|-------|
-| Structure & routing | A− | A− | A− | **A** | Install DI pattern now standard for meet, docs, drive, mail, install |
-| Accuracy vs repo | B+ | A− | **A** | **A** | Baseline **0**; coverage CI matches policy |
-| Actionability | B+ | A− | A− | **A** | Every major product vertical has copyable DI + mock-story path |
-| Multitask readiness | B− | B+ | **A−** | **A** | #74→#77 stack; vertical boundaries clean for parallel agents |
-| Maintenance | B | B+ | **A** | **A** | Baseline debt gone (24→0); ops DI tracker closed |
-| Token efficiency | B | B+ | B+ | B+ | Shared `lib/files`, `lib/mail`, collab wire — modest gain |
-| Enforcement | B− | B+ | **A−** | **A−** | Coverage + vitest-ci smoke in CI; `play`/WCAG/Chromatic partial |
-| **Overall** | B+ | **A−** | **A** | **A** | Held at **A** — structure caught up; A+ blockers remain |
+| Dimension | Post P0–P2 | Post P3 (#74+#75) | #76 | #77 | Now (#81) | Notes |
+|-----------|------------|-------------------|-----|-----|-----------|-------|
+| Structure & routing | A− | A− | A− | **A** | **A** | Install DI pattern now standard for meet, docs, drive, mail, install |
+| Accuracy vs repo | B+ | A− | **A** | **A** | **A** | Baseline **0**; coverage CI matches policy |
+| Actionability | B+ | A− | A− | **A** | **A** | Every major product vertical has copyable DI + mock-story path |
+| Multitask readiness | B− | B+ | **A−** | **A** | **A** | Verifier subagent pattern built (#79); vertical boundaries clean |
+| Maintenance | B | B+ | **A** | **A** | **A** | Baseline debt gone (24→0); ops DI tracker closed |
+| Token efficiency | B | B+ | B+ | B+ | B+ | Shared `lib/files`, `lib/mail`, collab wire — modest gain |
+| Enforcement | B− | B+ | **A−** | **A−** | **A** | Apps done gate (#80); smoke on all 7 verticals (#80/#81); WCAG/Chromatic opt-in |
+| **Overall** | B+ | **A−** | **A** | **A** | **A** | Solid **A** — remaining A+ work is enforcement defaults, not structure |
 
 #### Readiness by use case
 
@@ -111,7 +111,7 @@ Run `node packages/apps/scripts/check-storybook-coverage.mjs --update-baseline` 
 | Occasional contributor | B+ | B+ |
 | “Docs match reality” | A− | **A** |
 
-#### On main (#74–#77)
+#### On main (#74–#81)
 
 | Chunk | Status |
 |-------|--------|
@@ -120,6 +120,9 @@ Run `node packages/apps/scripts/check-storybook-coverage.mjs --update-baseline` 
 | Storybook baseline **24 → 0**, **111/111** (#76) | ✅ |
 | Ops DI — meet, docs, drive, mail, install (#77) | ✅ |
 | #66–#71, #72 closed | ✅ |
+| Multitask verifier subagent pattern (#79) | ✅ |
+| Apps done gate + jsdom Vitest + product-pane smoke (#80) | ✅ |
+| Meet / Docs / Admin smoke stories (#81) | ✅ |
 
 #### Still between A and A+
 
@@ -127,7 +130,10 @@ Run `node packages/apps/scripts/check-storybook-coverage.mjs --update-baseline` 
 |-----|--------|
 | Storybook baseline debt | **0** — CI fails on new exports without stories |
 | Ops DI in product controllers/hooks/workspaces | **Done** (#77); wgw remains in `*-api-source`, app shells, login |
-| `play` / WCAG / Chromatic | **Partial** — 5 `play`, 10 `vitest-ci` of 111; a11y manual; Chromatic not CI-gated |
-| Multitask verifier subagents | **Built** — [multitask-verifier.md](../developer/multitask-verifier.md) |
+| `play` / `vitest-ci` breadth | **Good** — 14 `play`, 18 `vitest-ci` story files (37 smoke tests), all 7 product verticals; 83 story files still skipped in smoke |
+| WCAG gate in CI | **Opt-in** — `STORYBOOK_A11Y_GATE=1`; enable by default after fixing remaining label violations |
+| Chromatic | **Optional** — CI job behind `CHROMATIC_ENABLED=true` + token; no baselines yet |
+| Apps done gate | **Built** (#80) — `pnpm test:apps-done-gate`; not yet part of `ci:quality` |
+| Multitask verifier subagents | **Built** (#79) — [multitask-verifier.md](../developer/multitask-verifier.md) |
 
 Do not add live-only stories for components lacking offline coverage.
