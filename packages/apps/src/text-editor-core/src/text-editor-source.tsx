@@ -1,9 +1,6 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import {
-  textEditorSourceLineCount,
-  textEditorSourceLines,
-} from "@/text-editor-core/src/text-editor-source-lines";
+import { textEditorSourceLines } from "@/text-editor-core/src/text-editor-source-lines";
 
 export { textEditorSourceLineCount } from "@/text-editor-core/src/text-editor-source-lines";
 

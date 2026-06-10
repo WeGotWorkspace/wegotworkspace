@@ -20,11 +20,7 @@ import type {
   DriveUIData,
 } from "@/drive-core/src/drive-types";
 
-import {
-  parentAndName,
-  pathFromDirectoryEntry,
-  normalizeApiVirtualPath as normalizePath,
-} from "@/lib/files/api-path";
+import { parentAndName, normalizeApiVirtualPath as normalizePath } from "@/lib/files/api-path";
 
 function pathQuery(path: string): string {
   return `path=${encodeURIComponent(normalizePath(path))}`;
