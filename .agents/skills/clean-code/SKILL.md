@@ -28,4 +28,4 @@ Domain skills override when more specific ([api/layers.md](../api/layers.md), [a
 
 ## Tests
 
-F.I.R.S.T. reminders live in [smells.md](smells.md). Commands and layout: [testing](../testing/SKILL.md).
+F.I.R.S.T. reminders live in [smells.md](smells.md). Commands: [testing](../testing/SKILL.md). Handoff/PR gate: [code-review](../code-review/SKILL.md).

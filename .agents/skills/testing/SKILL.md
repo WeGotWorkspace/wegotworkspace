@@ -30,15 +30,7 @@ paths:
 | Apps Vitest | `pnpm test` in `packages/apps` |
 | API e2e (Docker) | `pnpm test:api-e2e:docker` |
 
-## Done-when checklist
-
-Before calling test work complete, see [developer/done-checklist.md](../developer/done-checklist.md). Summary:
-
-- [ ] Work followed [test-first.md](test-first.md) order where applicable (API: failing feature test before implementation; UI: mock story / unit test before pane logic)
-- [ ] New/changed behavior has automated tests appropriate to layer
-- [ ] API domains: feature tests pass; `composer greenfield:guard` passes
-- [ ] No tests call deleted legacy handlers
-- [ ] Full suite passes for touched packages (not only the new test file)
+Handoff and PR verification: [developer/done-checklist.md](../developer/done-checklist.md). Policy vs CI: [.agents/POLICY.md](../../POLICY.md). Review gate: [code-review](../code-review/SKILL.md).
 
 ## Multitask
 
