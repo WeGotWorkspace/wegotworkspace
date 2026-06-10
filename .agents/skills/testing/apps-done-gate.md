@@ -2,6 +2,10 @@
 
 Use this checklist before calling substantial `packages/apps` UI work **done** or merging feature slices that touch panes, hooks, or stories.
 
+## Package reuse guides
+
+Per-domain maps (exports, Storybook paths, shell pattern, API hooks): [packages/apps/docs/README.md](../../../packages/apps/docs/README.md) and package READMEs under `packages/apps/src/*-core/`.
+
 ## One command
 
 From the repo root:
