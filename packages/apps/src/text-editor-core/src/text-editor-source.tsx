@@ -34,7 +34,6 @@ export function TextEditorSource({
   const [lineHeights, setLineHeights] = useState<number[]>([]);
 
   const lines = useMemo(() => textEditorSourceLines(value), [value]);
-  const lineCount = lines.length;
 
   const measureLineHeights = useCallback(() => {
     const mirror = mirrorRef.current;

@@ -1,11 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { LoadingSpinner } from "@/loading-spinner/src/loading-spinner";
 
-const surfaceStyle = {
-  ["--loading-spinner-color" as string]: "color-mix(in oklab, var(--color-ink) 45%, transparent)",
-  backgroundColor: "var(--color-cream, #ffffff)",
-} as const;
-
 const meta = {
   title: "Shared/Loading Spinner",
   component: LoadingSpinner,
