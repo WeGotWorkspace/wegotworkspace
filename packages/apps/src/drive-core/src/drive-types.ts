@@ -1,4 +1,5 @@
 import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
+export type { WgwPluginDescriptor } from "@/lib/api/wgw/types";
 import type {
   WgwDriveDirectoryData,
   WgwDriveDirectoryEntry,

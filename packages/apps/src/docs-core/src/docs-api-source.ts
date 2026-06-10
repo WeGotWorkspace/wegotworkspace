@@ -1,5 +1,6 @@
 import { createWorkspaceSource } from "@/lib/api/create-workspace-source";
 import { wgwFetchPrincipal, wgwLiveApiEnabled } from "@/lib/api/wgw/http";
+import { createWgwDriveOperations } from "@/lib/api/wgw/drive";
 import { parentAndName } from "@/lib/files/api-path";
 import { createDocsAppBootstrap } from "@/lib/api/mock/docs-bootstrap";
 import type { DocsAPIOperations, DocsAppBootstrap } from "@/docs-core/src/docs-types";

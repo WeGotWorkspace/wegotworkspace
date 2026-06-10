@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import * as awarenessProtocol from "y-protocols/awareness";
 import * as syncProtocol from "y-protocols/sync";
 import * as Y from "yjs";
+import { applyRtcDebugOverrides } from "@/lib/rtc/force-relay";
+import { DEFAULT_RTC_SETTINGS } from "@/lib/rtc/types";
 import { applyContentSeedToYDoc } from "./docs-collab-editor-surface";
 import type { TextEditorContentFormat } from "@/text-editor-core/src/text-editor-content";
 import { DEFAULT_DOCS_COLLAB_WIRE, type DocsCollabWireOperations } from "./docs-collab-wire";
@@ -399,7 +401,8 @@ export function useDocsCollab({
       apiBase: urls.collabApiBaseUrl ?? "/api/v1/rooms",
       room: urls.room ?? "docs/test-together.md",
       authToken,
-      rtcSettings: rtcSettings ?? resolveRtcSettings(DEFAULT_RTC_SETTINGS),
+      rtcSettings:
+        rtcSettings ?? applyRtcDebugOverrides({ ...DEFAULT_RTC_SETTINGS, forceRelay: false }),
     });
     meshRef.current = mesh;
     mesh.onMessage(handleMeshMessage);

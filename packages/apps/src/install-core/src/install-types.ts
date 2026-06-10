@@ -6,6 +6,14 @@ export type {
 } from "@/lib/api/wgw/installer";
 export type { WgwInstallerActionResponse, WgwInstallerRuntimeState } from "@/lib/api/wgw";
 
+import type {
+  InstallerDatabasePayload,
+  InstallerInstallPayload,
+  InstallerRequirementsPayload,
+  InstallerSitePayload,
+} from "@/lib/api/wgw/installer";
+import type { WgwInstallerActionResponse, WgwInstallerRuntimeState } from "@/lib/api/wgw";
+
 export type InstallStepId =
   | "welcome"
   | "server"

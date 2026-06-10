@@ -339,7 +339,8 @@ export function createWgwDriveOperations(
       await downloadWgwUnifiedSearchRecord({ ...input, signal: opts?.signal });
     },
     async ensurePluginSession(sessionApiPath, opts) {
-      await wgwEnsurePluginSession(sessionApiPath, opts);
+      void opts;
+      await wgwEnsurePluginSession(sessionApiPath);
     },
   };
 }
