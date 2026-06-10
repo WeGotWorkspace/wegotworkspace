@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { expect, within } from "storybook/test";
 import { MeetLobbyPane } from "@/meet-core/src/meet-lobby-pane";
 import {
   MeetLobbyPaneStory,
@@ -76,7 +77,16 @@ const hostBase: MeetLobbyPaneStoryArgs = {
 
 export const HostReady: Story = {
   name: "Host ready",
+  tags: ["vitest-ci"],
   args: hostBase,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByRole("heading", { name: "Ready when you are." })).toBeInTheDocument();
+    await expect(canvas.getByRole("button", { name: "Start meeting" })).toBeEnabled();
+    await expect(canvas.getByDisplayValue("Demo User")).toBeInTheDocument();
+    await expect(canvas.getByRole("button", { name: "Mute" })).toBeInTheDocument();
+    await expect(canvas.getByRole("button", { name: "Stop video" })).toBeInTheDocument();
+  },
 };
 
 export const HostCameraOff: Story = {
