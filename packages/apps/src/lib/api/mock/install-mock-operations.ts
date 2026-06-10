@@ -3,9 +3,11 @@ import type {
   InstallerInstallPayload,
   InstallerRequirementsPayload,
   InstallerSitePayload,
-} from "@/lib/api/wgw/installer";
-import type { WgwInstallerActionResponse, WgwInstallerRuntimeState } from "@/lib/api/wgw";
-import type { InstallAPIOperations, InstallerBackendStep } from "@/install-core/src/install-types";
+  InstallAPIOperations,
+  InstallerBackendStep,
+  WgwInstallerActionResponse,
+  WgwInstallerRuntimeState,
+} from "@/install-core/src/install-types";
 
 function cloneState(state: WgwInstallerRuntimeState): WgwInstallerRuntimeState {
   return structuredClone(state);

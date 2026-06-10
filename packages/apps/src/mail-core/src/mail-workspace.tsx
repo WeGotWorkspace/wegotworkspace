@@ -21,7 +21,7 @@ import { MailDetailActionBar } from "@/mail-core/src/mail-detail-action-bar";
 import { MailListPanel } from "@/mail-core/src/mail-list-panel";
 import { useMailSidebarModel } from "@/mail-core/src/use-mail-sidebar-model";
 import { useMailController } from "@/mail-core/src/use-mail-controller";
-import { folderTokenFromMailboxLabel } from "@/lib/api/wgw/mail";
+import { folderTokenFromMailboxLabel } from "@/lib/mail/folder-token";
 import type { MailWorkspaceProps } from "@/mail-core/src/mail-workspace-props";
 
 const DEFAULT_SYSTEM_MAILBOXES = [

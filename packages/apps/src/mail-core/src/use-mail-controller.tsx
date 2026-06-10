@@ -31,7 +31,7 @@ import {
 import { useMailBatchActions } from "@/mail-core/src/use-mail-batch-actions";
 import { useMailSelectionBar } from "@/mail-core/src/use-mail-selection-bar";
 import { compareMailDesc } from "@/mail-core/src/mail-date-utils";
-import { plainTextFromWgwDetail } from "@/lib/api/wgw/mail-message-utils";
+import { plainTextFromMailDetail } from "@/mail-core/src/mail-detail-content";
 
 type MailboxLoadState = {
   offset: number;
@@ -584,7 +584,7 @@ export function useMailController({
           fetchedDetailIdsRef.current.add(targetId);
           return;
         }
-        const fullBodySource = plainTextFromWgwDetail(detail);
+        const fullBodySource = plainTextFromMailDetail(detail);
         const body = splitDetailBodyParagraphs(fullBodySource);
         const excerpt = fullBodySource.replace(/\s+/g, " ").trim();
         setMail((prev) =>

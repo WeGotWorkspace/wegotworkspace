@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, Pencil } from "lucide-react";
 import { useAppToast } from "@/hooks/use-app-toast";
-import { parentAndName } from "@/lib/api/wgw/drive";
+import { parentAndName } from "@/lib/files/api-path";
 import { markdownToPlainText } from "@/lib/models/note-body-markdown";
 import { mergeDocsLabels, type DocsUILabels } from "@/docs-core/src/docs-labels";
 import type { DocsAPIOperations, DocsDocument } from "@/docs-core/src/docs-types";

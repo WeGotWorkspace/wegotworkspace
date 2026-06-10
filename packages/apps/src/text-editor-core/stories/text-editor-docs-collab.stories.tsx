@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { DocsCollabWorkspace } from "@/text-editor-core/docs-collab";
+import { createWgwDocsCollabWire } from "@/docs-core/src/docs-collab-wgw-wire";
 import { encodeFileRoomId } from "@/lib/rtc/room-id";
 
 import "@/text-editor-core/src/text-editor.css";
@@ -62,10 +63,13 @@ type Story = StoryObj<typeof meta>;
 
 export const Collab: Story = {};
 
+const liveCollabWire = createWgwDocsCollabWire();
+
 export const CollabLaravelFinalApiAuth: Story = {
   args: {
     userName: "Admin User",
     urls: collabStoryUrls(defaultRoom),
+    wire: liveCollabWire,
   },
   parameters: {
     docs: {
@@ -82,6 +86,7 @@ const isolatedRoom = "/users/admin/docs-collab-room-isolated.md";
 export const CollabLaravelFinalApiAuthIsolatedRoom: Story = {
   args: {
     urls: collabStoryUrls(isolatedRoom),
+    wire: liveCollabWire,
   },
   parameters: {
     docs: {

@@ -11,6 +11,7 @@ import { encodeFileRoomId } from "@/lib/rtc/room-id";
 import type { DocsAppProps } from "@/docs-core/src/docs-app-props";
 import { DocsWorkspace } from "@/docs-core/src/docs-workspace";
 import { DocsCollabWorkspace } from "@/text-editor-core/docs-collab";
+import { createWgwDocsCollabWire } from "@/docs-core/src/docs-collab-wgw-wire";
 import { useDocsAPI } from "@/docs-core/src/use-docs-api";
 
 function isMyDriveDocPath(
@@ -90,6 +91,7 @@ export function DocsApp({ apiSource }: DocsAppProps = {}) {
               userName={collabUserName}
               documentTitle={collabDocumentTitle}
               urls={collabUrls}
+              wire={createWgwDocsCollabWire()}
             />
           ) : (
             <DocsWorkspace

@@ -188,7 +188,10 @@ export function createWgwMeetOperations(): MeetAPIOperations {
 }
 
 export function createWgwMeetGuestOperations(): MeetAPIOperations {
-  return createMeetOperations(guestFetch);
+  return {
+    ...createMeetOperations(guestFetch),
+    guestSignalingFetch: createWgwMeetGuestSignalingFetch,
+  };
 }
 
 export { fetchRtcSettings } from "@/lib/api/wgw/rtc";

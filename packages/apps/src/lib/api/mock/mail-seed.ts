@@ -1,4 +1,4 @@
-import { folderTokenFromMailboxLabel } from "@/lib/api/wgw/mail";
+import { folderTokenFromMailboxLabel } from "@/lib/mail/folder-token";
 import type { MailUIData } from "@/mail-core/src/mail-types";
 import type { Mail } from "@/types/mail";
 

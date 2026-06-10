@@ -1,4 +1,4 @@
-import { parentAndName, pathFromDirectoryEntry } from "@/lib/api/wgw/drive";
+import { parentAndName, pathFromDirectoryEntry } from "@/lib/files/api-path";
 import type { DriveUIData } from "@/drive-core/src/drive-types";
 import type { DriveFile, FileKind } from "@/drive-core/src/drive-models";
 import { uiPathFromApiPath } from "@/drive-core/src/drive-path-utils";

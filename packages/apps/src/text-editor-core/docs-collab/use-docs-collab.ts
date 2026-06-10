@@ -4,11 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import * as awarenessProtocol from "y-protocols/awareness";
 import * as syncProtocol from "y-protocols/sync";
 import * as Y from "yjs";
-import { fetchRtcSettings, resolveRtcSettings } from "@/lib/api/wgw/rtc";
+import { applyRtcDebugOverrides } from "@/lib/rtc/force-relay";
 import { DEFAULT_RTC_SETTINGS } from "@/lib/rtc/types";
-import { fetchWgwAuthToken } from "@/lib/api/wgw/auth-token";
 import { applyContentSeedToYDoc } from "./docs-collab-editor-surface";
 import type { TextEditorContentFormat } from "@/text-editor-core/src/text-editor-content";
+import { DEFAULT_DOCS_COLLAB_WIRE, type DocsCollabWireOperations } from "./docs-collab-wire";
 import { DocsRtcSession } from "./docs-rtc-session";
 import type { DocsCollabMeshMessage, DocsCollabMeshPeer } from "./docs-collab-types";
 
@@ -138,12 +138,14 @@ export type UseDocsCollabOptions = {
   userName: string;
   autoJoin?: boolean;
   urls?: DocsCollabUrls;
+  wire?: DocsCollabWireOperations;
 };
 
 export function useDocsCollab({
   userName,
   autoJoin = true,
   urls: inputUrls = DEFAULT_DOCS_COLLAB_URLS,
+  wire = DEFAULT_DOCS_COLLAB_WIRE,
 }: UseDocsCollabOptions) {
   const urls: DocsCollabUrls = {
     ...DEFAULT_DOCS_COLLAB_URLS,
@@ -334,7 +336,7 @@ export function useDocsCollab({
 
     teardown();
 
-    const authToken = await fetchWgwAuthToken({
+    const authToken = await wire.fetchAuthToken({
       authToken: urls.authToken,
       authTokenUrl: urls.authTokenUrl,
       authUser: urls.authUser,
@@ -344,14 +346,14 @@ export function useDocsCollab({
     authTokenRef.current = authToken;
     let rtcSettings;
     try {
-      rtcSettings = await fetchRtcSettings({
+      rtcSettings = await wire.fetchRtcSettings({
         url: urls.collabRtcUrl,
         bearerToken: authToken,
         channel: "collab",
       });
     } catch (error) {
       console.warn("[docs-collab] rtc settings unavailable", error);
-      rtcSettings = resolveRtcSettings(DEFAULT_RTC_SETTINGS);
+      rtcSettings = await DEFAULT_DOCS_COLLAB_WIRE.fetchRtcSettings({ channel: "collab" });
     }
     if (generation !== joinGenerationRef.current) return;
 
@@ -399,7 +401,8 @@ export function useDocsCollab({
       apiBase: urls.collabApiBaseUrl ?? "/api/v1/rooms",
       room: urls.room ?? "docs/test-together.md",
       authToken,
-      rtcSettings: rtcSettings ?? resolveRtcSettings(DEFAULT_RTC_SETTINGS),
+      rtcSettings:
+        rtcSettings ?? applyRtcDebugOverrides({ ...DEFAULT_RTC_SETTINGS, forceRelay: false }),
     });
     meshRef.current = mesh;
     mesh.onMessage(handleMeshMessage);

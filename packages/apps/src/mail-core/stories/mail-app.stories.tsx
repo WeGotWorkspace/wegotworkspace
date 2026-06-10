@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { createMailAppBootstrap } from "@/lib/api/mock/mail-bootstrap";
 import { MailWorkspace } from "@/mail-core/src/mail-workspace";
 import { mailStoryLabels } from "@/mail-core/src/mail-app.stories.fixtures";
-import { folderTokenFromMailboxLabel } from "@/lib/api/wgw/mail";
+import { folderTokenFromMailboxLabel } from "@/lib/mail/folder-token";
 
 const STORY_SYSTEM_MAILBOXES = [
   "Inbox",

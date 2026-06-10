@@ -1,4 +1,5 @@
 import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
+export type { WgwPluginDescriptor } from "@/lib/api/wgw/types";
 import type {
   WgwDriveDirectoryData,
   WgwDriveDirectoryEntry,
@@ -26,6 +27,22 @@ export type DriveUploadProgress = {
   currentFileName: string;
   filesCompleted: number;
   filesTotal: number;
+};
+
+export type DriveUnifiedSearchResult = {
+  id: number;
+  sourceType: string;
+  sourceKey: string;
+  title: string;
+  category?: string | null;
+  snippet?: string | null;
+  size: number;
+};
+
+export type DriveUnifiedSearchDownloadInput = {
+  resultId?: number | string;
+  sourceType: "caldav" | "carddav";
+  sourceKey: string;
 };
 
 export type DriveAPIOperations = {
@@ -69,4 +86,9 @@ export type DriveAPIOperations = {
       onProgress?: (progress: DriveUploadProgress) => void;
     },
   ) => Promise<DriveUIData>;
+  downloadUnifiedSearchRecord?: (
+    input: DriveUnifiedSearchDownloadInput,
+    opts?: { signal?: AbortSignal },
+  ) => Promise<void>;
+  ensurePluginSession?: (sessionApiPath: string, opts?: { signal?: AbortSignal }) => Promise<void>;
 };

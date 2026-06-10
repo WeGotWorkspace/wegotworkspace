@@ -2,11 +2,20 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Check } from "lucide-react";
 import type {
+  InstallAdminForm,
+  InstallDavForm,
+  InstallMailForm,
+  InstallMeetForm,
+  InstallMysqlForm,
+  InstallMysqlTestState,
+  InstallerBackendStep,
   InstallerDatabasePayload,
   InstallerInstallPayload,
   InstallerSitePayload,
-} from "@/lib/api/wgw/installer";
-import type { WgwInstallerActionResponse, WgwInstallerRuntimeState } from "@/lib/api/wgw";
+  InstallStepId,
+  WgwInstallerActionResponse,
+  WgwInstallerRuntimeState,
+} from "@/install-core/src/install-types";
 import type { InstallWorkspaceProps } from "@/install-core/src/install-workspace-props";
 import {
   INSTALL_STEPS,
@@ -15,16 +24,6 @@ import {
   toInstallServerChecks,
 } from "@/install-core/src/install-models";
 import { DEFAULT_PUBLIC_STUN_URLS_CSV } from "@/lib/rtc/default-stun";
-import type {
-  InstallAdminForm,
-  InstallDavForm,
-  InstallMailForm,
-  InstallMeetForm,
-  InstallMysqlForm,
-  InstallMysqlTestState,
-  InstallStepId,
-  InstallerBackendStep,
-} from "@/install-core/src/install-types";
 
 export function useInstallController({
   data,

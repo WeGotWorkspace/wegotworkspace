@@ -9,7 +9,7 @@ import {
   Sparkles,
   UserPlus,
 } from "lucide-react";
-import type { WgwInstallerRuntimeState } from "@/lib/api/wgw";
+import type { WgwInstallerRuntimeState } from "@/install-core/src/install-types";
 import type {
   InstallServerCheck,
   InstallStepId,

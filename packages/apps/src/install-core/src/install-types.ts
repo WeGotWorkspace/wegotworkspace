@@ -1,3 +1,11 @@
+export type {
+  InstallerDatabasePayload,
+  InstallerInstallPayload,
+  InstallerRequirementsPayload,
+  InstallerSitePayload,
+} from "@/lib/api/wgw/installer";
+export type { WgwInstallerActionResponse, WgwInstallerRuntimeState } from "@/lib/api/wgw";
+
 import type {
   InstallerDatabasePayload,
   InstallerInstallPayload,

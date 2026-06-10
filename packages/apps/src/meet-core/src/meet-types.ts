@@ -1,3 +1,4 @@
+import type { HttpSignalingFetch } from "@/lib/rtc/signaling/http-client";
 import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
 import type {
   WgwMeetChatRequest,
@@ -41,4 +42,6 @@ export type MeetAPIOperations = {
   send: (input: WgwMeetSendRequest, opts?: MeetRequestOptions) => Promise<WgwMeetSendResponse>;
   leave: (input: WgwMeetLeaveRequest, opts?: MeetRequestOptions) => Promise<WgwMeetLeaveResponse>;
   chat: (input: WgwMeetChatRequest, opts?: MeetRequestOptions) => Promise<WgwMeetChatResponse>;
+  /** Guest RTC signaling when the session has no auth token (wired in meet-api-source). */
+  guestSignalingFetch?: () => HttpSignalingFetch;
 };

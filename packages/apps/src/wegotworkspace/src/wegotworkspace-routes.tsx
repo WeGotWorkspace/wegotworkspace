@@ -24,7 +24,7 @@ import { createMeetAppBootstrap } from "@/lib/api/mock/meet-bootstrap";
 import { createDocsAppBootstrap } from "@/lib/api/mock/docs-bootstrap";
 import { createNotesAppBootstrap } from "@/lib/api/mock/notes-bootstrap";
 import { createSettingsAppBootstrap } from "@/lib/api/mock/settings-bootstrap";
-import { folderTokenFromMailboxLabel } from "@/lib/api/wgw/mail";
+import { folderTokenFromMailboxLabel } from "@/lib/mail/folder-token";
 import { AdminWorkspace } from "@/admin-core/src/admin-workspace";
 import { DriveWorkspace } from "@/drive-core/src/drive-workspace";
 import { InstallWorkspace } from "@/install-core/src/install-workspace";
