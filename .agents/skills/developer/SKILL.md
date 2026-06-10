@@ -54,4 +54,5 @@ When running parallel agents, see [multitask.md](multitask.md) for chunk splitti
 
 - Root: [AGENTS.md](../../../AGENTS.md)
 - API done gate: `packages/api/docs/api-done-gate.md`
+- Apps done gate: [testing/apps-done-gate.md](../testing/apps-done-gate.md)
 - OpenAPI contract: `packages/api/openapi/openapi.json`

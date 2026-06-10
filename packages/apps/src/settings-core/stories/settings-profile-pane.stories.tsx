@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { expect, userEvent, within } from "storybook/test";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { SettingsProfilePane } from "@/settings-core/src/settings-profile-pane";
@@ -58,7 +59,17 @@ export default meta;
 type Story = StoryObj<typeof SettingsProfilePane>;
 
 export const Default: Story = {
+  tags: ["vitest-ci"],
   render: () => <ProfileStoryHarness variant="default" />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const saveButton = canvas.getByRole("button", { name: "Save changes" });
+    await expect(saveButton).toBeDisabled();
+    const displayName = canvas.getByLabelText("Display name");
+    await userEvent.clear(displayName);
+    await userEvent.type(displayName, "Updated display name");
+    await expect(saveButton).toBeEnabled();
+  },
 };
 
 export const DirtyIdentity: Story = {

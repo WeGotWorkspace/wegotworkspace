@@ -71,9 +71,9 @@ const preview: Preview = {
 
     a11y: {
       // 'todo' - show a11y violations in the test UI only
-      // 'error' - fail CI on a11y violations
+      // 'error' - fail CI on a11y violations (Storybook Vitest smoke sets STORYBOOK_VITEST_SMOKE=1)
       // 'off' - skip a11y checks entirely
-      test: "todo",
+      test: import.meta.env.STORYBOOK_A11Y_GATE === "1" ? "error" : "todo",
     },
     docs: {
       codePanel: true,

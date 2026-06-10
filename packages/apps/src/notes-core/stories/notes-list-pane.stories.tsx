@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { expect, userEvent, within } from "storybook/test";
 import { CollectionListWorkspace } from "@/collection-layout/src/collection-layout";
 import { NotesListPanel } from "@/notes-core/src/notes-list-panel";
 import { useNotesPaneStoryController } from "./notes-pane-stories.harness";
@@ -89,7 +90,15 @@ export default meta;
 type Story = StoryObj<typeof NotesListPaneHarness>;
 
 export const Default: Story = {
+  tags: ["vitest-ci"],
   args: { preset: "default" },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByText(/Architecture of Quiet/i)).toBeInTheDocument();
+    const input = canvas.getByPlaceholderText("Search notes...");
+    await userEvent.type(input, "Nordic");
+    await expect(input).toHaveValue("Nordic");
+  },
 };
 
 export const Empty: Story = {

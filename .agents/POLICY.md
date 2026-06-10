@@ -9,12 +9,14 @@ Policies agents should follow for **new work**. Backlog gaps are tracked on GitH
 | **Operations DI** (App → operations → controller → pane) | Required in touched UI | Review + incremental refactor | [apps-ui/components.md](skills/apps-ui/components.md) — product verticals done in [#77](https://github.com/WeGotWorkspace/wegotworkspace/pull/77) |
 | **Mock-tier Storybook** for every new export | Required | CI: `pnpm check:storybook-coverage` (baseline — no new gaps) | [storybook/offline-first.md](skills/storybook/offline-first.md) — audit closed in [#72](https://github.com/WeGotWorkspace/wegotworkspace/issues/72) / [#76](https://github.com/WeGotWorkspace/wegotworkspace/pull/76) |
 | **Live-tier stories** (`Live …`) | Optional smoke only; never sole coverage | Manual | [storybook/offline-first.md](skills/storybook/offline-first.md) |
-| **Story `play` functions** | Target for critical UI flows | Not in CI | [testing/test-first.md](skills/testing/test-first.md) |
+| **Story `play` functions** | Target for critical UI flows | CI via `vitest-ci` smoke stories | [testing/apps-done-gate.md](skills/testing/apps-done-gate.md) |
 | **`@storybook/addon-vitest`** | Target | CI: `pnpm --filter @wgw/apps run test:storybook:ci` (smoke-tagged stories); full catalog locally via `test:storybook` | [storybook/offline-first.md](skills/storybook/offline-first.md) — wired in [#74](https://github.com/WeGotWorkspace/wegotworkspace/pull/74) |
-| **Vitest for hooks / pure logic** | Required when adding non-trivial logic | `pnpm test` in CI (`@wgw/apps`) | [testing/ui-architecture.md](skills/testing/ui-architecture.md) |
-| **UI pane RTL tests** | Encouraged for interaction-heavy panes | Not widespread today | — |
+| **Apps done gate** | Run before merge-ready UI work | `pnpm test:apps-done-gate` (local); Vitest + Storybook smoke in CI | [testing/apps-done-gate.md](skills/testing/apps-done-gate.md) |
+| **Vitest for hooks / pure logic** | Required when adding non-trivial logic | `pnpm test` in CI (`@wgw/apps`, unit + jsdom) | [testing/ui-architecture.md](skills/testing/ui-architecture.md) |
+| **UI pane RTL tests** | Encouraged for interaction-heavy panes | jsdom project (`*.test.tsx`) | [testing/ui-architecture.md](skills/testing/ui-architecture.md) |
 | **UI e2e (Playwright apps)** | Out of scope | — | — |
-| **WCAG 2.2 AA** | Required for new/changed UI | Storybook a11y addon (manual) | [accessibility/SKILL.md](skills/accessibility/SKILL.md) |
+| **WCAG 2.2 AA** | Required for new/changed UI | Manual in dev (`todo`); opt-in CI via `STORYBOOK_A11Y_GATE=1` | [storybook/a11y-testing.md](skills/storybook/a11y-testing.md) |
+| **Chromatic** | Optional visual regression | CI job when `CHROMATIC_ENABLED=true` + `CHROMATIC_PROJECT_TOKEN` | [testing/apps-done-gate.md](skills/testing/apps-done-gate.md) |
 | **No auto-commits / PRs** | Always | User instruction | [git-workflow/SKILL.md](skills/git-workflow/SKILL.md) |
 | **Signed commits on `main`** | Required for merge | Branch protection | [git-workflow/pull-requests.md](skills/git-workflow/pull-requests.md) |
 

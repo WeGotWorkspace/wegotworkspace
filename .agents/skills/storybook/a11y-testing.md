@@ -30,7 +30,7 @@ Perceivable, operable, understandable, robust criteria: [accessibility/wcag.md](
 
 ## CI escalation
 
-When the team adopts CI enforcement, switch preview `test` to `error` for merged stories — coordinate with maintainers before changing global default.
+Opt-in CI gate: set `STORYBOOK_A11Y_GATE=1` when running Storybook Vitest (see `packages/apps/vitest.config.ts` `define`) to switch `.storybook/preview.ts` a11y `test` to **`error`**. Local Storybook dev stays on `todo`. Enable in CI after `vitest-ci` stories are violation-free.
 
 ## Limits
 
