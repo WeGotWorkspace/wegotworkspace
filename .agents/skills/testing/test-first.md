@@ -64,6 +64,7 @@ In [plan-feature](../plan-feature/SKILL.md) chunks, order:
 1. **Red-green chunk** — OpenAPI + failing feature test (API) or mock-tier story (UI); same chunk or immediately before build; may run parallel with unrelated domains
 2. **Build chunk** — implementation until red-green passes
 3. **Verify chunk** — full suite + done gate after build chunks merge
+4. **Cross-chunk verifier** (optional) — read-only subagent per [multitask-verifier.md](../developer/multitask-verifier.md) when 2+ build chunks or shared contracts
 
 See [developer/multitask.md](../developer/multitask.md) for parallel vs sequential rules.
 

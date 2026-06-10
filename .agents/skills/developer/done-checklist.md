@@ -43,7 +43,7 @@ Meet/RTC: `pnpm --dir packages/apps exec vitest run src/lib/rtc/session src/meet
 
 - [ ] API checklist + UI checklist
 - [ ] OpenAPI/typegen before UI consumers if contract changed
-- [ ] After parallel agent chunks: parent runs full verify ([multitask.md](multitask.md))
+- [ ] After parallel agent chunks: verifier report when required ([multitask-verifier.md](multitask-verifier.md)); parent runs full verify ([multitask.md](multitask.md))
 
 ## Before PR (when user requests push/PR)
 
