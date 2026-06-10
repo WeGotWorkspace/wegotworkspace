@@ -110,7 +110,7 @@ Git hooks (installed on `pnpm install` via Husky):
 - **prepare-commit-msg** — strips Cursor `Co-authored-by` / `Made-with` trailers before the commit is signed
 - **commit-msg** — rejects any remaining Cursor attribution, then [Conventional Commits](https://www.conventionalcommits.org/) via Commitlint (`feat(scope): subject`)
 
-CI also rejects Cursor attribution on pull requests (covers `--no-verify`). You can disable injection at the source in **Cursor Settings → Agents → Attribution**.
+CI also rejects Cursor attribution in PR commits and PR descriptions (covers `--no-verify`). Project hooks block `gh pr create` / `gh pr edit` when the body includes attribution. You can disable injection at the source in **Cursor Settings → Agents → Attribution**.
 
 Use `HUSKY=0 git commit` to skip hooks once. Full gate before push: `pnpm run ci:quality`.
 

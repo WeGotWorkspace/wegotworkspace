@@ -40,4 +40,4 @@ Do not use vague one-word subjects (`fix`, `update`, `wip`) without a clear desc
 
 - **Signed commits** required on `main` (GPG or SSH).
 - **Branch protection:** PR required; CI checks must pass — see [pull-requests.md](pull-requests.md).
-- Husky runs Prettier/ESLint/Pint on commit; Commitlint enforces Conventional Commits. CI rejects Cursor attribution in commit messages.
+- Husky runs Prettier/ESLint/Pint on commit; Commitlint enforces Conventional Commits. CI rejects Cursor attribution in commit messages and PR descriptions; `.cursor/hooks` blocks `gh pr create` / `gh pr edit` with attribution in `--body`.
