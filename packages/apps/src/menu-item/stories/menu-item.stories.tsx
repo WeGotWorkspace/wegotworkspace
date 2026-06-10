@@ -5,6 +5,7 @@ import { MenuItem } from "../src/menu-item";
 const meta: Meta<typeof MenuItem> = {
   title: "Shared/Menu Item",
   component: MenuItem,
+  tags: ["vitest-ci"],
 };
 
 export default meta;

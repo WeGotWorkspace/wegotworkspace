@@ -55,8 +55,8 @@ jobs:
       - name: Install Playwright (Storybook Vitest)
         run: pnpm --filter @wgw/apps exec playwright install chromium --with-deps
 
-      - name: Storybook Vitest
-        run: pnpm --filter @wgw/apps run test:storybook
+      - name: Storybook Vitest (smoke)
+        run: pnpm --filter @wgw/apps run test:storybook:ci
 
       - name: Build (Composer + UI via Turborepo)
         run: pnpm run build

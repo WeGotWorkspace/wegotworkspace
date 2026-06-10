@@ -9,6 +9,7 @@ const surfaceStyle = {
 const meta = {
   title: "Shared/Loading Spinner",
   component: LoadingSpinner,
+  tags: ["vitest-ci"],
   parameters: { layout: "padded" },
   argTypes: {
     size: { control: "radio", options: ["sm", "lg"] },

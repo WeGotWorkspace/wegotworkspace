@@ -65,6 +65,7 @@ const liveApiStory = {
 
 export const LiveApi: StoryObj<WeGotWorkspaceLiveProps> = {
   name: "Live API",
+  tags: ["!test", "live"],
   ...liveApiStory,
   args: {
     ...liveApiStory.args,
@@ -74,6 +75,7 @@ export const LiveApi: StoryObj<WeGotWorkspaceLiveProps> = {
 
 export const LiveDocs: StoryObj<WeGotWorkspaceLiveProps> = {
   name: "Live Docs",
+  tags: ["!test", "live"],
   ...liveApiStory,
   args: {
     ...liveApiStory.args,

@@ -59,4 +59,5 @@ Keep titles stable; they are the catalog index.
 
 - **Mock-tier (required):** full UI catalog without live API — see [offline-first.md](offline-first.md).
 - **CI coverage:** `pnpm check:storybook-coverage` — baseline in `packages/apps/scripts/storybook-coverage-baseline.json`.
+- **Vitest browser tests:** `@storybook/addon-vitest` — CI runs smoke stories tagged `vitest-ci` via `pnpm --filter @wgw/apps run test:storybook:ci`; full catalog locally via `test:storybook`. Live-tier stories use `tags: ['!test', 'live']`.
 - **Live-tier (optional):** `Live …` stories with dev API + proxy — never the only coverage for a component.

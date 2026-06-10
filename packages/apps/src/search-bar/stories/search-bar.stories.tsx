@@ -4,7 +4,7 @@ import { SearchBar } from "@/search-bar/src/search-bar";
 const meta = {
   title: "Shared/SearchBar",
   component: SearchBar,
-  tags: ["autodocs"],
+  tags: ["autodocs", "vitest-ci"],
 } satisfies Meta<typeof SearchBar>;
 
 export default meta;

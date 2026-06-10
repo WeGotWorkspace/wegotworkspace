@@ -5,6 +5,7 @@ import { BUTTON_SIZE_OPTIONS, BUTTON_VARIANT_OPTIONS, Button } from "../src/butt
 const meta: Meta<typeof Button> = {
   title: "Shared/Buttons/Button",
   component: Button,
+  tags: ["vitest-ci"],
   argTypes: {
     size: {
       control: "select",

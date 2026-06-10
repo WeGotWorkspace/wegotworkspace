@@ -62,7 +62,7 @@ Users and agents should never need the API to click through UI states, open menu
 | Manual | Storybook UI at http://127.0.0.1:6006 | **Supported today** |
 | a11y | `@storybook/addon-a11y` | **Supported** — see [a11y-testing.md](a11y-testing.md) |
 | Story `play` functions | CSF `play` + `@storybook/test` | **Target** — add for critical interactions |
-| Storybook in Vitest | `@storybook/addon-vitest` | **Wired** — `pnpm --filter @wgw/apps run test:storybook` |
+| Storybook in Vitest | `@storybook/addon-vitest` | **Wired** — CI smoke: `pnpm --filter @wgw/apps run test:storybook:ci` (`vitest-ci` tag); full catalog locally: `test:storybook` |
 
 When adding `play` tests, keep them on **mock-tier** stories only.
 

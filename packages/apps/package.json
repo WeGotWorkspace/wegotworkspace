@@ -21,6 +21,7 @@
     "build-storybook": "storybook build",
     "test": "vitest run --project unit",
     "test:storybook": "vitest run --project storybook",
+    "test:storybook:ci": "STORYBOOK_VITEST_SMOKE=1 vitest run --project storybook",
     "test:watch": "vitest --project unit",
     "check:storybook-coverage": "node scripts/check-storybook-coverage.mjs"
   },

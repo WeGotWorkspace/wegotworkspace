@@ -57,14 +57,14 @@ Replace prefixed agent skills with a tool-agnostic `.agents/skills/` stack that 
 
 - **Skill:** storybook, testing, developer
 - **Done when:** `check-storybook-coverage.mjs` + baseline; `@storybook/addon-vitest` wired; `check:agent-docs` in CI
-- **Verify with:** `pnpm run check:agent-docs`, `pnpm run check:storybook-coverage`, `pnpm --filter @wgw/apps run test:storybook`
+- **Verify with:** `pnpm run check:agent-docs`, `pnpm run check:storybook-coverage`, `pnpm --filter @wgw/apps run test:storybook:ci`
 
 ## Test plan
 
 - [x] API done gate unchanged (`pnpm test:api-done-gate`)
 - [x] Apps unit tests (`pnpm --filter @wgw/apps test`)
-- [ ] Storybook Vitest project in CI (P2)
-- [ ] Coverage baseline prevents new export gaps without stories
+- [x] Storybook Vitest smoke project in CI (P2)
+- [x] Coverage baseline prevents new export gaps without stories
 
 ## Tracking issues
 

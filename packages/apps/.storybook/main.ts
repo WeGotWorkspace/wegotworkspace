@@ -59,6 +59,7 @@ const config: StorybookConfig = {
             ? baseConfig.resolve.alias
             : {}),
           "@": path.join(appsRoot, "src"),
+          "@wgw-api-generated": path.join(wgwMonorepoRoot, "packages/api/openapi/generated"),
         },
       },
     };
