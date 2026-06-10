@@ -1,7 +1,6 @@
 import { Paperclip } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MailAttachmentChip } from "@/mail-core/src/mail-attachment-chip";
-import { mailWorkspacePaneClasses } from "@/mail-core/src/mail-workspace.styles";
 import type { MailAttachment } from "@/types/mail";
 
 type MailAttachmentsProps = {
@@ -24,15 +23,15 @@ export function MailAttachments({
   if (!attachments || attachments.length === 0) return null;
 
   return (
-    <section className={cn(mailWorkspacePaneClasses.attachments, className)} aria-label={label}>
-      <div className={mailWorkspacePaneClasses.attachmentsLabel}>
+    <section className={cn("mail-attachments", className)} aria-label={label}>
+      <div className="mail-attachments__label">
         <Paperclip className="size-3.5" />
         <span>
           {label} ({attachments.length})
         </span>
       </div>
 
-      <ul className={mailWorkspacePaneClasses.attachmentsGrid}>
+      <ul className="mail-attachments__grid">
         {attachments.map((attachment, index) => {
           const url = buildDownloadUrl?.(attachment);
 

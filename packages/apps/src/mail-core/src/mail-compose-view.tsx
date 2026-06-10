@@ -8,7 +8,6 @@ import { DialogFooter } from "@/ui/dialog";
 import { cn } from "@/lib/utils";
 import { TextEditor, TEXT_EDITOR_FORMAT_BAR_MAIL } from "@/text-editor-core/src";
 import { MailAttachmentChip } from "@/mail-core/src/mail-attachment-chip";
-import { mailWorkspacePaneClasses } from "@/mail-core/src/mail-workspace.styles";
 import {
   composeBodyToEditorHtml,
   type MailComposeAttachment,
@@ -104,17 +103,17 @@ export function MailComposeView({
   };
 
   return (
-    <div className={cn(mailWorkspacePaneClasses.composeView, className)}>
-      <header className={mailWorkspacePaneClasses.composeHeader}>
+    <div className={cn("mail-compose-view", className)}>
+      <header className="mail-compose-view__header">
         <ViewHeader hideSidebarToggle title={composeHeaderTitle(composeMode)} subtitle={mailbox} />
       </header>
 
-      <div className={mailWorkspacePaneClasses.composeBody}>
-        <div className={mailWorkspacePaneClasses.composeFields}>
-          <FieldLabelRow label="To" className={mailWorkspacePaneClasses.composeField}>
-            <div className={mailWorkspacePaneClasses.composeToRow}>
+      <div className="mail-compose-view__body">
+        <div className="mail-compose-view__fields">
+          <FieldLabelRow label="To" className="mail-compose-view__field">
+            <div className="mail-compose-view__to-row">
               <Input
-                className={mailWorkspacePaneClasses.composeToInput}
+                className="mail-compose-view__to-input"
                 value={to}
                 onChange={(event) => onToChange(event.target.value)}
                 placeholder="alice@example.com, bob@example.com"
@@ -134,7 +133,7 @@ export function MailComposeView({
 
           {showCcBcc ? (
             <>
-              <FieldLabelRow label="Cc" className={mailWorkspacePaneClasses.composeField}>
+              <FieldLabelRow label="Cc" className="mail-compose-view__field">
                 <Input
                   value={cc}
                   onChange={(event) => onCcChange(event.target.value)}
@@ -142,7 +141,7 @@ export function MailComposeView({
                   autoComplete="off"
                 />
               </FieldLabelRow>
-              <FieldLabelRow label="Bcc" className={mailWorkspacePaneClasses.composeField}>
+              <FieldLabelRow label="Bcc" className="mail-compose-view__field">
                 <Input
                   value={bcc}
                   onChange={(event) => onBccChange(event.target.value)}
@@ -153,7 +152,7 @@ export function MailComposeView({
             </>
           ) : null}
 
-          <FieldLabelRow label="Subject" className={mailWorkspacePaneClasses.composeField}>
+          <FieldLabelRow label="Subject" className="mail-compose-view__field">
             <Input
               value={subject}
               onChange={(event) => onSubjectChange(event.target.value)}
@@ -163,11 +162,8 @@ export function MailComposeView({
           </FieldLabelRow>
 
           {attachments.length > 0 ? (
-            <div className={mailWorkspacePaneClasses.composeAttachmentsSection}>
-              <ul
-                className={mailWorkspacePaneClasses.composeAttachmentsList}
-                aria-label={attachmentsLabel}
-              >
+            <div className="mail-compose-view__attachments">
+              <ul className="mail-compose-view__attachments-list" aria-label={attachmentsLabel}>
                 {attachments.map((attachment) => (
                   <li key={attachment.id}>
                     <MailAttachmentChip
@@ -185,8 +181,8 @@ export function MailComposeView({
           ) : null}
         </div>
 
-        <div className={mailWorkspacePaneClasses.composeMessageShell}>
-          <FieldLabelRow label="Message" className={mailWorkspacePaneClasses.composeMessageField}>
+        <div className="mail-compose-view__message-shell">
+          <FieldLabelRow label="Message" className="mail-compose-view__message-field">
             <TextEditor
               key={editorKey}
               format="html"
@@ -196,7 +192,7 @@ export function MailComposeView({
               content={composeBodyToEditorHtml(body)}
               placeholder="Write your message..."
               formatBar={{ groups: TEXT_EDITOR_FORMAT_BAR_MAIL, showPrint: false }}
-              className={mailWorkspacePaneClasses.composeMessageEditor}
+              className="mail-compose-view__message-editor"
               onUpdate={({ content }) => onBodyChange(content)}
             />
           </FieldLabelRow>
@@ -207,12 +203,12 @@ export function MailComposeView({
         ref={fileInputRef}
         type="file"
         multiple
-        className={mailWorkspacePaneClasses.composeAttachmentsInput}
+        className="mail-compose-view__attachments-input"
         onChange={handleFilesSelected}
       />
 
-      <DialogFooter className={mailWorkspacePaneClasses.composeFooter}>
-        <div className={mailWorkspacePaneClasses.composeFooterStart}>
+      <DialogFooter className="mail-compose-dialog__footer">
+        <div className="mail-compose-dialog__footer-start">
           <IconButton
             type="button"
             variant="ghost"
@@ -232,7 +228,7 @@ export function MailComposeView({
             disabled={disableActions}
           />
         </div>
-        <div className={mailWorkspacePaneClasses.composeFooterEnd}>
+        <div className="mail-compose-dialog__footer-end">
           <Button
             type="button"
             variant="outline"
