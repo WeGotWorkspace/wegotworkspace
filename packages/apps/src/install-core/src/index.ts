@@ -1,4 +1,5 @@
 export { InstallApp } from "./install-app";
+export type { InstallAppProps } from "./install-app";
 export { InstallWorkspace } from "./install-workspace";
 export type { InstallWorkspaceProps } from "./install-workspace-props";
 export { createDefaultInstallApiSource, createWgwInstallApiSource } from "./install-api-source";

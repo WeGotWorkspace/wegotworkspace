@@ -1,35 +1,34 @@
 import { useCallback, useMemo } from "react";
-import { useLiveBootstrap } from "@/lib/live/use-live-bootstrap";
+import { useWorkspaceApi } from "@/hooks/use-workspace-api";
+import { mockWorkspaceSession } from "@/lib/api/mock/workspace-session-mock";
 import {
   createDefaultInstallApiSource,
   type InstallApiSource,
 } from "@/install-core/src/install-api-source";
-import type { InstallAPIOperations, InstallUIData } from "@/install-core/src/install-types";
-
-type InstallBootstrap = {
-  data: InstallUIData;
-  operations?: InstallAPIOperations;
-};
+import type { InstallUIData } from "@/install-core/src/install-types";
 
 export function useInstallAPI(source?: InstallApiSource) {
   const resolvedSource = useMemo(() => source ?? createDefaultInstallApiSource(), [source]);
-  const loadBootstrap = useCallback(async (): Promise<InstallBootstrap> => {
-    const data = await resolvedSource.loadBootstrap();
-    return {
-      data,
-      operations: resolvedSource.createOperations(data),
-    };
-  }, [resolvedSource]);
-
-  const { phase, error, data, load, successVersion } = useLiveBootstrap(loadBootstrap);
   const placeholderData = useMemo<InstallUIData>(() => ({ state: null }), []);
+  const loadBootstrapFromSource = useCallback(
+    (apiSource: InstallApiSource) => apiSource.loadBootstrap(),
+    [],
+  );
+  const createOperationsFromSource = useCallback(
+    (apiSource: InstallApiSource, bootstrap: Parameters<InstallApiSource["createOperations"]>[1]) =>
+      apiSource.createOperations(apiSource, bootstrap),
+    [],
+  );
 
-  return {
-    phase,
-    error,
-    retry: load,
-    successVersion,
-    data: data?.data ?? placeholderData,
-    operations: data?.operations,
-  };
+  const { phase, error, retry, successVersion, listLoading, session, data, operations } =
+    useWorkspaceApi({
+      source: resolvedSource,
+      createDefaultSource: createDefaultInstallApiSource,
+      placeholderData,
+      loadBootstrap: loadBootstrapFromSource,
+      createOperations: createOperationsFromSource,
+      fallbackSession: mockWorkspaceSession,
+    });
+
+  return { phase, error, retry, successVersion, listLoading, session, data, operations };
 }

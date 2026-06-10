@@ -1,10 +1,16 @@
 import { buildWgwLoginHref } from "@/lib/api/wgw/route-guard";
 import { WorkspaceLiveAppShell } from "@/lib/live/workspace-live-app-shell";
+import type { InstallApiSource } from "@/install-core/src/install-api-source";
 import { InstallWorkspace } from "@/install-core/src/install-workspace";
 import { useInstallAPI } from "@/install-core/src/use-install-api";
 
-export function InstallApp() {
-  const { phase, error, retry, successVersion, data, operations } = useInstallAPI();
+export type InstallAppProps = {
+  /** When set (e.g. Storybook live story), bypasses `wgwLiveApiEnabled()` routing. */
+  apiSource?: InstallApiSource;
+};
+
+export function InstallApp({ apiSource }: InstallAppProps = {}) {
+  const { phase, error, retry, successVersion, data, operations } = useInstallAPI(apiSource);
 
   return (
     <WorkspaceLiveAppShell
