@@ -8,6 +8,7 @@ const appsRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 /** @type {list<{ label: string, cmd: string[], env?: Record<string, string> }>} */
 const steps = [
   { label: "Typecheck", cmd: ["pnpm", "typecheck"] },
+  { label: "UI ↔ OpenAPI contract (Vitest)", cmd: ["pnpm", "test:contract"] },
   { label: "Vitest (unit)", cmd: ["pnpm", "test:unit"] },
   { label: "Vitest (jsdom)", cmd: ["pnpm", "test:jsdom"] },
   {
