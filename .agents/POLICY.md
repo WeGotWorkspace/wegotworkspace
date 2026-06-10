@@ -15,7 +15,7 @@ Policies agents should follow for **new work**. Backlog gaps are tracked on GitH
 | **Vitest for hooks / pure logic** | Required when adding non-trivial logic | `pnpm test` in CI (`@wgw/apps`, unit + jsdom) | [testing/ui-architecture.md](skills/testing/ui-architecture.md) |
 | **UI pane RTL tests** | Encouraged for interaction-heavy panes | jsdom project (`*.test.tsx`) | [testing/ui-architecture.md](skills/testing/ui-architecture.md) |
 | **UI e2e (Playwright apps)** | Out of scope | — | — |
-| **WCAG 2.2 AA** | Required for new/changed UI | Manual in dev (`todo`); opt-in CI via `STORYBOOK_A11Y_GATE=1` | [storybook/a11y-testing.md](skills/storybook/a11y-testing.md) |
+| **WCAG 2.2 AA** | Required for new/changed UI | CI: a11y `error` on `vitest-ci` smoke (`STORYBOOK_A11Y_GATE=1`); manual `todo` in dev | [storybook/a11y-testing.md](skills/storybook/a11y-testing.md) |
 | **Chromatic** | Optional visual regression | CI job when `CHROMATIC_ENABLED=true` + `CHROMATIC_PROJECT_TOKEN` | [testing/apps-done-gate.md](skills/testing/apps-done-gate.md) |
 | **No auto-commits / PRs** | Always | User instruction | [git-workflow/SKILL.md](skills/git-workflow/SKILL.md) |
 | **Signed commits on `main`** | Required for merge | Branch protection | [git-workflow/pull-requests.md](skills/git-workflow/pull-requests.md) |

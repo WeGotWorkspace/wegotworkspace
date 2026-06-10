@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { Mic, Settings as SettingsIcon, Video } from "lucide-react";
 import { FieldLabelRow } from "@/ui/field-label-row";
 import { Input } from "@/ui/input";
@@ -38,12 +39,14 @@ export function MeetDeviceForm({
   children,
   className,
 }: MeetDeviceFormProps) {
+  const displayNameId = useId();
   return (
     <div className={cn("meet-workspace__form", className)}>
       {displayName ? (
         <div className="meet-workspace__form-identity">
-          <FieldLabelRow label={meetLabels.displayNameLabel}>
+          <FieldLabelRow label={meetLabels.displayNameLabel} htmlFor={displayNameId}>
             <Input
+              id={displayNameId}
               value={displayName.value}
               onChange={(event) => displayName.onChange(event.target.value)}
               className="meet-workspace__display-name-input"

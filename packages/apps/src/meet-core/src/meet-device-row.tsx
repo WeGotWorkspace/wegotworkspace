@@ -14,7 +14,7 @@ export function MeetDeviceRow({ icon, label, value, onChange, options }: MeetDev
   return (
     <FieldLabelRow label={label} icon={icon} className="meet-device-row mb-0">
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="meet-device-row__trigger">
+        <SelectTrigger aria-label={label} className="meet-device-row__trigger">
           <SelectValue />
         </SelectTrigger>
         <SelectContent className="meet-popover-surface">

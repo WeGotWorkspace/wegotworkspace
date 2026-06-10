@@ -60,6 +60,19 @@
   border-radius: var(--control-radius);
 }
 
+/* Invisible primary click/keyboard target covering the tile; visual children
+   stay in the tile container so the actions menu is never nested in a button. */
+.drive-workspace .drive-tile__hit {
+  @apply absolute inset-0 cursor-pointer outline-none focus-visible:ring-2;
+  border-radius: var(--control-radius);
+}
+
+.drive-workspace .drive-folder-tile .button,
+.drive-workspace .drive-file-tile .button {
+  position: relative;
+  z-index: 1;
+}
+
 .drive-workspace .drive-folder-tile--dragging {
   @apply opacity-40;
 }

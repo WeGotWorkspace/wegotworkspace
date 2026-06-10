@@ -15,6 +15,8 @@ export type FieldLabelRowProps = {
   className?: string;
   /** Merged onto the label (e.g. theme overrides). */
   labelClassName?: string;
+  /** Associates the label with the control's `id` (WCAG: every input needs a label). */
+  htmlFor?: string;
 };
 
 /**
@@ -28,10 +30,11 @@ export function FieldLabelRow({
   icon,
   className,
   labelClassName,
+  htmlFor,
 }: FieldLabelRowProps) {
   return (
     <div className={cn("field-label-row", className)}>
-      <Label className={cn("field-label-row__label", labelClassName)}>
+      <Label htmlFor={htmlFor} className={cn("field-label-row__label", labelClassName)}>
         {icon}
         {label}
         {readOnly ? <Lock className="field-label-row__lock" aria-hidden /> : null}

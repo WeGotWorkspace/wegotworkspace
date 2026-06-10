@@ -70,6 +70,8 @@ jobs:
           fi
 
       - name: Storybook Vitest (smoke)
+        env:
+          STORYBOOK_A11Y_GATE: "1"
         run: pnpm --filter @wgw/apps run test:storybook:ci
 
       - name: Chromatic (optional)

@@ -16,8 +16,16 @@ export const Readonly: Story = {
   args: {
     label: "Username",
     readOnly: true,
+    htmlFor: "form-field-story-username",
     icon: <User className="size-3.5 opacity-70" />,
-    children: <Input value="elias.linden" readOnly className="cursor-default" />,
+    children: (
+      <Input
+        id="form-field-story-username"
+        value="elias.linden"
+        readOnly
+        className="cursor-default"
+      />
+    ),
   },
 };
 
@@ -25,8 +33,11 @@ export const Editable: Story = {
   tags: ["vitest-ci"],
   args: {
     label: "Email",
+    htmlFor: "form-field-story-email",
     icon: <Mail className="size-3.5 opacity-70" />,
-    children: <Input defaultValue="elias@northlight.studio" type="email" />,
+    children: (
+      <Input id="form-field-story-email" defaultValue="elias@northlight.studio" type="email" />
+    ),
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
