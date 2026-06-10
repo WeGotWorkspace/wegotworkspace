@@ -24,9 +24,16 @@ Do not duplicate full app routing inside every story unless testing routing beha
 - Default path: `parameters.routerPath` (default `/notes`)
 - Skip router + toaster wrapper: `parameters.wegotworkspaceRouter: true` when the story supplies its own shell
 
-## Mock operations
+## Mock bootstrap library
 
-For write flows in stories, pass no-op or mock `operations` so panes render without live API — see workspace blueprint ([workspace/feature-blueprint.md](../workspace/feature-blueprint.md)).
+Prefer fixtures from `@/lib/api/mock/`:
+
+- `createSettingsAppBootstrap`, `createMailAppBootstrap`, `createDriveAppBootstrap`, …
+- `createMockDocsOperations`, `createInstallAppBootstrap`, etc.
+
+Stories must not import `@/lib/api/wgw/http` for data loading. See [offline-first.md](offline-first.md).
+
+For write flows, pass no-op or mock `operations` / slice handlers — see [workspace/feature-blueprint.md](../workspace/feature-blueprint.md).
 
 ## File layout
 

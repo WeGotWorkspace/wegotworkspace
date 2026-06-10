@@ -18,13 +18,14 @@
 
 ## What belongs in Storybook instead
 
-| Storybook | Vitest |
-|-----------|--------|
+| Storybook (mock-tier, offline) | Vitest |
+|--------------------------------|--------|
 | Visual states, layout, responsive breakpoints | Business logic, parsing, state machines |
 | CSS variable theming across variants | API client behavior |
 | Empty / loading / error **appearance** | Error **handling** contracts |
+| Manual + `play` interaction (target) | Automated unit/integration with mocked props |
 
-See [storybook/coverage.md](../storybook/coverage.md).
+See [storybook/offline-first.md](../storybook/offline-first.md) and [storybook/coverage.md](../storybook/coverage.md).
 
 ## Practices
 

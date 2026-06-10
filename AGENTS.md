@@ -20,7 +20,7 @@ Agent skills live in [`.agents/skills/`](.agents/skills/) (tool-agnostic [Agent 
 | [testing](.agents/skills/testing/) | PHPUnit, Vitest, e2e, done-when checklists |
 | [document](.agents/skills/document/) | README, API docs, dev-layout updates |
 | [clean-code](.agents/skills/clean-code/) | Code quality guardrails (Robert C. Martin series) |
-| [storybook](.agents/skills/storybook/) | `.stories.tsx`, cssprops, coverage |
+| [storybook](.agents/skills/storybook/) | Offline-first catalog, mock vs live tiers, `.stories.tsx` |
 | [accessibility](.agents/skills/accessibility/) | WCAG 2.x UI compliance |
 | [git-workflow](.agents/skills/git-workflow/) | Branching, commits, PRs, CI gates |
 

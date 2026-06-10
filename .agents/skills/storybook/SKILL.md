@@ -1,6 +1,6 @@
 ---
 name: storybook
-description: Storybook standards for packages/apps — CSF3 stories, coverage, argTypes knobs, cssprops addon, fixtures, and a11y testing. Use when creating or updating .stories.tsx files.
+description: Storybook standards for packages/apps — offline-first coverage, CSF3 stories, mock vs live tiers, argTypes knobs, cssprops, fixtures, and a11y. Use when creating or updating .stories.tsx files.
 paths:
   - "packages/apps/**/*.stories.*"
   - "packages/apps/.storybook/**"
@@ -16,6 +16,7 @@ Addons in use: `@storybook/addon-a11y`, `@ljcl/storybook-addon-cssprops`, `@stor
 
 | Task | Read |
 |------|------|
+| Offline-first / mock vs live / 100% coverage | [offline-first.md](offline-first.md) |
 | Story coverage / naming | [coverage.md](coverage.md) |
 | CSS variable knobs | [cssprops.md](cssprops.md) |
 | Harnesses / fixtures / router | [fixtures.md](fixtures.md) |
@@ -53,3 +54,8 @@ Reference: `packages/apps/src/button/stories/button.stories.tsx`.
 - `Apps/{Product}/…` — product-specific panes and apps
 
 Keep titles stable; they are the catalog index.
+
+## Policy summary
+
+- **Mock-tier (required):** full UI catalog without live API — see [offline-first.md](offline-first.md).
+- **Live-tier (optional):** `Live …` stories with dev API + proxy — never the only coverage for a component.

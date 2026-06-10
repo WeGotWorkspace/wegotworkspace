@@ -17,6 +17,7 @@ paths:
 | API / PHPUnit / done gate | [api/testing.md](../api/testing.md) |
 | UI unit tests / Vitest | [ui-architecture.md](ui-architecture.md) |
 | Storybook visual states | [storybook](../storybook/SKILL.md) |
+| Offline UI catalog (no API) | [storybook/offline-first.md](../storybook/offline-first.md) |
 | Code quality (F.I.R.S.T.) | [clean-code](../clean-code/SKILL.md) |
 
 ## Commands
