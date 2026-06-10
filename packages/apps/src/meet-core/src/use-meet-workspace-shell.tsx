@@ -11,15 +11,27 @@ import { playMeetKnockSound } from "@/meet-core/src/meet-chat-utils";
 import type { MeetWorkspaceProps } from "@/meet-core/src/meet-workspace-props";
 import { useMeetController } from "@/meet-core/src/use-meet-controller";
 
-type MeetWorkspaceShellInput = Pick<MeetWorkspaceProps, "data" | "session" | "operations">;
+type MeetWorkspaceShellInput = Pick<
+  MeetWorkspaceProps,
+  "data" | "session" | "operations" | "invitedRoom" | "buildCallLink" | "onRoomChange"
+>;
 
-export function useMeetWorkspaceShell({ data, session, operations }: MeetWorkspaceShellInput) {
+export function useMeetWorkspaceShell({
+  data,
+  session,
+  operations,
+  invitedRoom = null,
+  buildCallLink,
+  onRoomChange,
+}: MeetWorkspaceShellInput) {
   const toast = useAppToast();
   const controller = useMeetController({
     session,
     defaultDisplayName: data.defaultDisplayName,
     rtc: data.rtc,
     operations,
+    buildCallLink,
+    onRoomChange,
   });
 
   const [chatOpen, setChatOpen] = useState(false);
@@ -30,11 +42,6 @@ export function useMeetWorkspaceShell({ data, session, operations }: MeetWorkspa
 
   const hasSignedInIdentity = Boolean(session.user.username?.trim() || session.user.email?.trim());
   const displayName = controller.displayName || session.user.displayName || "Guest";
-  const invitedRoom = useMemo(() => {
-    if (typeof window === "undefined") return null;
-    const room = new URLSearchParams(window.location.search).get("room")?.trim();
-    return room && room.length > 0 ? room : null;
-  }, []);
   const inJoinFlow = Boolean(invitedRoom);
 
   const [guestInviteState, setGuestInviteState] = useState<"checking" | "active" | "missing">(() =>

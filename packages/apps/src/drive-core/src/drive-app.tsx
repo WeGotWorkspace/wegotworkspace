@@ -41,6 +41,10 @@ export function DriveApp({ apiSource }: DriveAppProps = {}) {
     window.open(href, "_blank", "noopener,noreferrer");
   }, []);
 
+  const handleNavigate = useCallback((href: string) => {
+    window.location.assign(href);
+  }, []);
+
   return (
     <WorkspaceLiveAppShell
       phase={phase}
@@ -58,6 +62,7 @@ export function DriveApp({ apiSource }: DriveAppProps = {}) {
           view={routeView}
           onViewChange={handleViewChange}
           onOpenDocsFile={handleOpenDocsFile}
+          onNavigate={handleNavigate}
           onLogout={() => {
             window.location.assign("/logout");
           }}

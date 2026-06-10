@@ -57,6 +57,7 @@ export type UseDriveControllerArgs = {
   view?: ViewKey;
   onViewChange?: (view: ViewKey) => void;
   onOpenDocsFile?: (apiPath: string) => void;
+  onNavigate?: (href: string) => void;
 };
 
 const WRITE_QUEUE_DELAY_MS = 2500;
@@ -96,6 +97,7 @@ export function useDriveController({
   view: controlledView,
   onViewChange,
   onOpenDocsFile,
+  onNavigate,
 }: UseDriveControllerArgs) {
   const { show, showError } = useAppToast();
   const showMutationError = useCallback(
@@ -118,10 +120,10 @@ export function useDriveController({
     (plugin: WgwPluginDescriptor, route: string, params: URLSearchParams) => {
       const target = `${route}?${params.toString()}`;
       ensurePluginSessionBeforeNavigate(plugin.integration?.sessionApiPath, () => {
-        window.location.assign(target);
+        onNavigate?.(target);
       });
     },
-    [ensurePluginSessionBeforeNavigate],
+    [ensurePluginSessionBeforeNavigate, onNavigate],
   );
 
   const templatePlugin = useMemo(() => findDrivePluginWithTemplates(data.plugins), [data.plugins]);

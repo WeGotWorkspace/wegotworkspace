@@ -39,6 +39,8 @@ type UseMeetControllerArgs = {
   defaultDisplayName: string;
   rtc: MeetRtcSettings;
   operations?: MeetAPIOperations;
+  buildCallLink?: (roomCode: string) => string;
+  onRoomChange?: (roomCode: string | null) => void;
 };
 
 export function useMeetController({
@@ -46,6 +48,8 @@ export function useMeetController({
   defaultDisplayName,
   rtc,
   operations,
+  buildCallLink,
+  onRoomChange,
 }: UseMeetControllerArgs) {
   const rtcDebugEnabledRef = useRef(isRtcDebugEnabled());
   const debugRtc = useCallback((event: string, payload: Record<string, unknown> = {}) => {
@@ -534,30 +538,18 @@ export function useMeetController({
   }, [startedAt]);
 
   const callLink = useMemo(() => {
-    if (!roomCode || typeof window === "undefined") return "";
-    const url = new URL(window.location.href);
-    if (/\/meet\/guest\/?$/.test(url.pathname)) {
-      url.pathname = url.pathname.replace(/\/meet\/guest\/?$/, "/meet/guest");
-    } else if (/\/meet\/?$/.test(url.pathname)) {
-      url.pathname = url.pathname.replace(/\/meet\/?$/, "/meet/guest");
-    } else {
-      url.pathname = "/meet/guest";
-    }
-    url.searchParams.set("room", roomCode);
-    return url.toString();
-  }, [roomCode]);
+    if (!roomCode || !buildCallLink) return "";
+    return buildCallLink(roomCode);
+  }, [buildCallLink, roomCode]);
 
+  const roomChangeReadyRef = useRef(false);
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!roomCode) return;
-    const next = new URL(window.location.href);
-    next.searchParams.set("room", roomCode);
-    const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-    const nextUrl = `${next.pathname}${next.search}${next.hash}`;
-    if (currentUrl !== nextUrl) {
-      window.history.replaceState(window.history.state, "", nextUrl);
+    if (!roomChangeReadyRef.current) {
+      roomChangeReadyRef.current = true;
+      return;
     }
-  }, [roomCode]);
+    onRoomChange?.(roomCode);
+  }, [onRoomChange, roomCode]);
 
   useEffect(() => {
     const node = localVideoRef.current;
