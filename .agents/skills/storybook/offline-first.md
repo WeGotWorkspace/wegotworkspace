@@ -74,6 +74,33 @@ Only when integration validation is valuable:
 
 Use the UI section of [developer/done-checklist.md](../developer/done-checklist.md) — mock-tier story, offline render, stub `operations`, a11y panel.
 
-## Known gaps
+## Coverage status
 
-Coverage is **audited in CI** via `pnpm check:storybook-coverage` (baseline in `packages/apps/scripts/storybook-coverage-baseline.json`). Tracking: [#72](https://github.com/WeGotWorkspace/wegotworkspace/issues/72). Run `node scripts/check-storybook-coverage.mjs --update-baseline` in `packages/apps` after adding stories for baseline entries. Do not add live-only stories for components lacking offline coverage.
+**111/111** surfaces covered (2026-06-10). Baseline is empty — CI fails on any new export without mock-tier stories.
+
+Run `node packages/apps/scripts/check-storybook-coverage.mjs --update-baseline` in `packages/apps` only when intentionally recording new gaps during a phased rollout; prefer adding stories instead.
+
+### Storybook baseline batches (#76)
+
+| Batch | Surfaces | Baseline |
+|-------|----------|----------|
+| **A** | AdminPluginsPane, AdminSearchPane, DocsMainPane, MailAttachmentChip, MeetWorkspaceHeader, NoteTextEditorBody | 24 → 18 |
+| **B** | CommentMark, SuggestionMark, TextEditorSlashMenu, TextEditorTableControls, DocsCollabEditor, DocsCollabPresence | 18 → 12 |
+| **C+D** | DocsCollabDebugWorkspace, Wegotworkspace shell (11 exports) | 12 → **0** |
+
+### Honest grade (agent stack — snapshot post #76)
+
+| Dimension | Post P0–P2 | Post P3 (#74+#75) | Now (#76) |
+|-----------|------------|-------------------|-----------|
+| Structure & routing | A− | A− | A− |
+| Accuracy vs repo | B+ | A− | **A** |
+| Actionability | B+ | A− | A− |
+| Multitask readiness | B− | B+ | **A−** |
+| Maintenance | B | B+ | **A** |
+| Token efficiency | B | B+ | B+ |
+| Enforcement | B− | B+ | **A−** |
+| **Overall** | B+ | **A−** | **A** |
+
+Still open for A+: ops DI outside install (#66–#71), full `play`/WCAG/Chromatic enforcement, multitask verifier subagents.
+
+Tracking: [#72](https://github.com/WeGotWorkspace/wegotworkspace/issues/72). Do not add live-only stories for components lacking offline coverage.

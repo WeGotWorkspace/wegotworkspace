@@ -15,6 +15,7 @@ export type AdminStoryDataOverride = {
   webdav?: Partial<AdminUIData["webdav"]>;
   plugins?: AdminUIData["plugins"];
   updates?: Partial<AdminUIData["updates"]>;
+  searchReindex?: Partial<AdminUIData["searchReindex"]>;
   currentUser?: string;
   logoutUrl?: string;
   updateLogLines?: string[];
@@ -43,6 +44,7 @@ function mergeAdminStoryData(base: AdminUIData, override?: AdminStoryDataOverrid
     apps: { ...base.apps, ...override.apps },
     webdav: { ...base.webdav, ...override.webdav },
     updates: { ...base.updates, ...override.updates },
+    searchReindex: { ...base.searchReindex, ...override.searchReindex },
   };
 }
 

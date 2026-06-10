@@ -1,28 +1,3 @@
 {
-  "allowedMissing": [
-    "admin-core/src::AdminPluginsPane",
-    "admin-core/src::AdminSearchPane",
-    "docs-core/src::DocsMainPane",
-    "mail-core/src::MailAttachmentChip",
-    "meet-core/src::MeetWorkspaceHeader",
-    "note-detail-view/src::NoteTextEditorBody",
-    "text-editor-core/docs-collab::DocsCollabDebugWorkspace",
-    "text-editor-core/docs-collab::DocsCollabEditor",
-    "text-editor-core/docs-collab::DocsCollabPresence",
-    "text-editor-core/src::CommentMark",
-    "text-editor-core/src::SuggestionMark",
-    "text-editor-core/src::TextEditorSlashMenu",
-    "text-editor-core/src::TextEditorTableControls",
-    "wegotworkspace/src::WegotworkspaceApp",
-    "wegotworkspace/src::WegotworkspaceHome",
-    "wegotworkspace/src::WegotworkspaceLive",
-    "wegotworkspace/src::WegotworkspaceLiveHome",
-    "wegotworkspace/src::WegotworkspaceLoginRoute",
-    "wegotworkspace/src::WegotworkspaceLogout",
-    "wegotworkspace/src::WegotworkspaceRequireAuth",
-    "wegotworkspace/src::WegotworkspaceRouter",
-    "wegotworkspace/src::WegotworkspaceRouterShared",
-    "wegotworkspace/src::WegotworkspaceRoutes",
-    "wegotworkspace/src::WegotworkspaceShell"
-  ]
+  "allowedMissing": []
 }
