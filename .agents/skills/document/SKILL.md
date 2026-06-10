@@ -57,7 +57,7 @@ When adding a domain to `packages/api/docs/`:
 
 ### Dev-layout change
 
-When changing ports, commands, or Docker flow — update `docs/dev-layout.md` and cross-check `AGENTS.md` / `developer` skill dev layout bullets.
+When changing ports, commands, or Docker flow — update `docs/dev-layout.md`, [dev-environment](../dev-environment/SKILL.md), and cross-check [developer](../developer/SKILL.md) dev layout bullets.
 
 ## Changelog / commits
 

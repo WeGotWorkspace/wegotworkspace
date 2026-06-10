@@ -22,7 +22,7 @@ When the user says **greenfield**, **new API**, or work under `packages/api/`:
 | Stack overview | [stack.md](stack.md) |
 | File storage / notes / drive | [storage-flysystem.md](storage-flysystem.md) |
 | WebDAV | [sabredav.md](sabredav.md) |
-| Meet / room signaling | `packages/api/docs/meet-signaling.md` — Laravel `MeetSignalingService` only; do not restore `legacy/Voice/` |
+| Meet / room signaling | `packages/api/docs/meet-signaling.md` — or [meet](../meet/SKILL.md) for UI + RTC |
 | Tests / done gate | [testing.md](testing.md) |
 | Legacy reference | [legacy-reference.md](legacy-reference.md) |
 

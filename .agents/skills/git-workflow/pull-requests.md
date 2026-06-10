@@ -10,7 +10,7 @@ When touching `packages/apps` or `packages/api`, run locally if feasible:
 pnpm run ci:quality
 ```
 
-For API contract work also run `pnpm test:api-done-gate` — see [testing](../testing/SKILL.md).
+For API contract work also run `pnpm test:api-done-gate` — see [testing](../testing/SKILL.md) and [developer/done-checklist.md](../developer/done-checklist.md).
 
 Ensure commits are **signed** (required for merge to `main`).
 

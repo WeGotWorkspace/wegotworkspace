@@ -62,18 +62,15 @@ Before writing the plan:
 - …
 ```
 
-## Parallelization rules
+## Parallelization
 
-**Safe in parallel:** independent API domains, independent UI panes, docs-only work.
-
-**Sequential:** OpenAPI before implementation; shared CSS tokens before pane refactors; migrations before dependent features.
-
-See [developer/multitask.md](../developer/multitask.md) for handoff format and post-parallel sync.
+**Canonical rules:** [developer/multitask.md](../developer/multitask.md) — safe vs sequential ordering, red-green vs verify chunks, handoffs, post-parallel sync. **Do not restate those rules in plans**; set **Parallel with** on each chunk instead.
 
 ## Quality bar
 
 Chunk `done-when` should reference:
 
+- [developer/done-checklist.md](../developer/done-checklist.md) commands where applicable
 - Domain skill requirements (e.g. API feature tests, apps-ui CSS rules)
 - [clean-code](../clean-code/SKILL.md) smells checklist on touched files
-- [testing](../testing/SKILL.md) commands where applicable
+- [.agents/POLICY.md](../../POLICY.md) for policy vs enforced expectations

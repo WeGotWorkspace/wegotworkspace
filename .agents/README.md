@@ -11,7 +11,9 @@ Skill directories use **unprefixed names** (e.g. `api`, `developer`, `storybook`
 | Skill | Purpose |
 |-------|---------|
 | [developer](skills/developer/) | Monorepo entry point — dev layout, skill routing, multitask |
+| [dev-environment](skills/dev-environment/) | Docker, ports, Storybook proxy, troubleshooting |
 | [api](skills/api/) | Greenfield Laravel API — OpenAPI, layers, auth, storage, SabreDAV |
+| [meet](skills/meet/) | Meet UI, RTC, room signaling |
 | [apps-ui](skills/apps-ui/) | UI primitives, CSS variables, components, TypeScript |
 | [workspace](skills/workspace/) | Workspace shell, *App/*Workspace blueprint |
 | [plan-feature](skills/plan-feature/) | Feature planning and parallel chunk templates |
@@ -26,6 +28,8 @@ Skill directories use **unprefixed names** (e.g. `api`, `developer`, `storybook`
 
 Agents discover skills by `name` and `description` at startup, then load full `SKILL.md` instructions when a task matches. Path-scoped skills (`paths` frontmatter) activate when editing matching files.
 
-Depth lives in sibling `.md` files (e.g. `api/layers.md`, `storybook/coverage.md`) — load on demand.
+Depth lives in sibling `.md` files (e.g. `api/layers.md`, `storybook/offline-first.md`) — load on demand.
+
+**Policy vs enforcement:** [.agents/POLICY.md](POLICY.md). **Done verification:** [developer/done-checklist.md](skills/developer/done-checklist.md).
 
 For repo-wide bootstrap and non-negotiable constraints, see [AGENTS.md](../AGENTS.md) at the repository root.

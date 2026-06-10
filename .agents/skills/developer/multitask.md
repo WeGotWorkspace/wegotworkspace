@@ -41,7 +41,7 @@ Each chunk in a plan should include:
 After parallel builds finish:
 
 1. Parent agent reconciles todos / plan status (subagents may not auto-update plan todos).
-2. Run full verification: API done-gate + apps Vitest + spot-check Storybook a11y.
+2. Run full verification per [done-checklist.md](done-checklist.md).
 3. Resolve merge conflicts before declaring done.
 
 ## Example split

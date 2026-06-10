@@ -8,7 +8,7 @@
 
 ## Start here
 
-Load **[developer](.agents/skills/developer/)** for dev layout, skill routing, multitask handoffs, and links to package-specific depth (`docs/dev-layout.md`, API done gate, HTTP routing, storage).
+Load **[developer](.agents/skills/developer/)** for dev layout, skill routing, multitask handoffs, and links to package-specific depth. **Policy vs CI:** [.agents/POLICY.md](.agents/POLICY.md). **Done verification:** [developer/done-checklist.md](.agents/skills/developer/done-checklist.md).
 
 ## Skills index
 
@@ -17,7 +17,9 @@ Agent skills live in [`.agents/skills/`](.agents/skills/) (tool-agnostic [Agent 
 | Skill | When to use |
 |-------|-------------|
 | [developer](.agents/skills/developer/) | Starting work, onboarding, skill routing, multitask |
+| [dev-environment](.agents/skills/dev-environment/) | Docker, ports, Storybook proxy, troubleshooting |
 | [api](.agents/skills/api/) | `packages/api` — REST, auth, storage, WebDAV, tests |
+| [meet](.agents/skills/meet/) | Meet UI, RTC, room signaling |
 | [apps-ui](.agents/skills/apps-ui/) | UI primitives, CSS variables, components, TypeScript |
 | [workspace](.agents/skills/workspace/) | *App, *Workspace, workspace shell, feature blueprint |
 | [plan-feature](.agents/skills/plan-feature/) | Scoping features, parallel chunk plans |

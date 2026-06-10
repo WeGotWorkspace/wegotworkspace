@@ -16,8 +16,8 @@ Addons in use: `@storybook/addon-a11y`, `@ljcl/storybook-addon-cssprops`, `@stor
 
 | Task | Read |
 |------|------|
-| Offline-first / mock vs live / 100% coverage | [offline-first.md](offline-first.md) |
-| Story coverage / naming | [coverage.md](coverage.md) |
+| Offline-first / mock vs live / 100% coverage | [offline-first.md](offline-first.md) (canonical) |
+| Variant matrix / new export checklist | [coverage.md](coverage.md) |
 | CSS variable knobs | [cssprops.md](cssprops.md) |
 | Harnesses / fixtures / router | [fixtures.md](fixtures.md) |
 | Accessibility testing | [a11y-testing.md](a11y-testing.md) → [accessibility](../accessibility/SKILL.md) |

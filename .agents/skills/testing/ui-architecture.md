@@ -12,7 +12,7 @@
 |----------|----------|
 | Pure functions | `meet-room-id.test.ts`, `auth-token.test.ts` |
 | Injected dependencies | Components with slice handlers or `operations` — mock props, not modules ([apps-ui/components.md](../apps-ui/components.md)) |
-| Session / protocol logic | `peer-mesh.test.ts`, `meet-control-messages.test.ts` |
+| Session / protocol logic | `peer-mesh.test.ts`, `meet-control-messages.test.ts` — see [meet](../meet/SKILL.md) |
 | Hooks (with RTL) | `use-meet-inbound-media-hints.test.tsx` |
 | Config / env parsing | `config.test.ts`, `force-relay.test.ts` |
 

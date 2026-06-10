@@ -32,7 +32,7 @@ paths:
 
 ## Done-when checklist
 
-Before calling test work complete:
+Before calling test work complete, see [developer/done-checklist.md](../developer/done-checklist.md). Summary:
 
 - [ ] Work followed [test-first.md](test-first.md) order where applicable (API: failing feature test before implementation; UI: mock story / unit test before pane logic)
 - [ ] New/changed behavior has automated tests appropriate to layer
@@ -42,7 +42,7 @@ Before calling test work complete:
 
 ## Multitask
 
-- Test chunks run **after** their build chunk completes.
+- Test **hardening / verify** chunks run after build chunks merge; red-green tests belong with or before build — see [developer/multitask.md](../developer/multitask.md).
 - After parallel builds, parent agent runs full verification suite.
 - Do not mark plan todos complete until tests actually pass.
 

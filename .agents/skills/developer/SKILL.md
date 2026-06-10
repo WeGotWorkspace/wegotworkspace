@@ -13,8 +13,10 @@ Context-loading skill for AI agents and developers working in the WeGotWorkspace
 
 | Task | Skill | Key docs |
 |------|-------|----------|
-| Starting work / skill routing | `developer` | [multitask.md](multitask.md) |
+| Starting work / skill routing | `developer` | [multitask.md](multitask.md), [done-checklist.md](done-checklist.md), [POLICY.md](../../POLICY.md) |
+| Dev env / Docker / ports | [dev-environment](../dev-environment/SKILL.md) | `docs/dev-layout.md` |
 | API / Laravel / REST / WebDAV | [api](../api/SKILL.md) | [layers.md](../api/layers.md), [testing.md](../api/testing.md) |
+| Meet / RTC / room signaling | [meet](../meet/SKILL.md) | `packages/api/docs/meet-signaling.md` |
 | UI primitives / CSS / styling | [apps-ui](../apps-ui/SKILL.md) | [components.md](../apps-ui/components.md), [typescript.md](../apps-ui/typescript.md) |
 | Workspace shell / *App / *Workspace | [workspace](../workspace/SKILL.md) | [feature-blueprint.md](../workspace/feature-blueprint.md) |
 | Planning a feature | [plan-feature](../plan-feature/SKILL.md) | — |
@@ -22,16 +24,12 @@ Context-loading skill for AI agents and developers working in the WeGotWorkspace
 | Writing or updating docs | [document](../document/SKILL.md) | — |
 | Branching / commits / PRs | [git-workflow](../git-workflow/SKILL.md) | [branches.md](../git-workflow/branches.md), [pull-requests.md](../git-workflow/pull-requests.md) |
 | Code quality / review / refactor | [clean-code](../clean-code/SKILL.md) | [smells.md](../clean-code/smells.md) |
-| Storybook stories | [storybook](../storybook/SKILL.md) | [coverage.md](../storybook/coverage.md) |
+| Storybook stories | [storybook](../storybook/SKILL.md) | [offline-first.md](../storybook/offline-first.md), [coverage.md](../storybook/coverage.md) |
 | Accessibility / WCAG | [accessibility](../accessibility/SKILL.md) | [wcag.md](../accessibility/wcag.md) |
 
 ## Dev layout
 
-- **Default:** `pnpm docker:up` + `pnpm dev:ui` → Storybook http://127.0.0.1:6006, API http://127.0.0.1:9080 — see `docs/dev-layout.md`
-- **Edit:** `packages/api` (Laravel), `packages/apps` (UI → `dist/`); install shell `apps/wegotworkspace` is config/data only
-- **Env:** root `.env` (tooling), `packages/api/.env` (Laravel) — `docs/env.md`
-- **Release-like tree:** `pnpm dev:preview` or `pnpm build` syncs into `apps/wegotworkspace/packages/`
-- **Docker / HTTPS / WebDAV:** `docker/README.md`; API e2e (local): `pnpm test:api-e2e:docker`
+See [dev-environment](../dev-environment/SKILL.md) for commands, URLs, and troubleshooting. Summary: `pnpm docker:up` + `pnpm dev:ui` → API http://127.0.0.1:9080, Storybook http://127.0.0.1:6006 — [`docs/dev-layout.md`](../../../docs/dev-layout.md).
 
 ## Critical warnings
 
@@ -42,7 +40,7 @@ Context-loading skill for AI agents and developers working in the WeGotWorkspace
 
 ## Multitask
 
-When running parallel agents, see [multitask.md](multitask.md) for chunk splitting, handoffs, and post-parallel verification.
+When running parallel agents, see [multitask.md](multitask.md) for chunk splitting, handoffs, and post-parallel verification. Before declaring done: [done-checklist.md](done-checklist.md). Policy vs CI: [POLICY.md](../../POLICY.md).
 
 ## When NOT to use this skill
 
