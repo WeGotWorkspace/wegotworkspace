@@ -20,6 +20,7 @@ Skip formal planning for single-file fixes with obvious scope.
 
 Before writing the plan:
 
+- [ ] GitHub issue (if any): fetch with `gh issue view` and copy acceptance criteria into chunk `done-when` — verify later with [verify-issue](../verify-issue/SKILL.md)
 - [ ] Relevant domain skill (`api`, `apps-ui`, `workspace`)
 - [ ] OpenAPI contract if API involved: `packages/api/openapi/openapi.json`
 - [ ] Done gate if API involved: `packages/api/docs/api-done-gate.md`

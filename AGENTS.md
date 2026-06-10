@@ -8,7 +8,7 @@
 
 ## Start here
 
-Load **[developer](.agents/skills/developer/)** for dev layout, skill routing, multitask handoffs, and links to package-specific depth. **Policy vs CI:** [.agents/POLICY.md](.agents/POLICY.md). **Done verification:** [developer/done-checklist.md](.agents/skills/developer/done-checklist.md).
+Load **[developer](.agents/skills/developer/)** for dev layout, skill routing, multitask handoffs, and links to package-specific depth. **Policy vs CI:** [.agents/POLICY.md](.agents/POLICY.md). **Done verification:** [developer/done-checklist.md](.agents/skills/developer/done-checklist.md); issue AC: [verify-issue](.agents/skills/verify-issue/).
 
 ## Skills index
 
@@ -24,6 +24,7 @@ Agent skills live in [`.agents/skills/`](.agents/skills/) (tool-agnostic [Agent 
 | [apps-ui](.agents/skills/apps-ui/) | UI primitives, CSS variables, components, TypeScript |
 | [workspace](.agents/skills/workspace/) | *App, *Workspace, workspace shell, feature blueprint |
 | [plan-feature](.agents/skills/plan-feature/) | Scoping features, parallel chunk plans |
+| [verify-issue](.agents/skills/verify-issue/) | GitHub issue acceptance criteria — fetch, map, verify, report before handoff/PR |
 | [testing](.agents/skills/testing/) | PHPUnit, Vitest, e2e, done-when checklists |
 | [document](.agents/skills/document/) | README, API docs, dev-layout updates |
 | [clean-code](.agents/skills/clean-code/) | Review checklist — [smells.md](.agents/skills/clean-code/smells.md) before handoff |
@@ -38,4 +39,4 @@ Load [clean-code](.agents/skills/clean-code/) when building or refactoring; [cod
 
 ## Multitask
 
-Parallel agents: plan with [plan-feature](.agents/skills/plan-feature/), split per [developer/multitask.md](.agents/skills/developer/multitask.md), cross-chunk review via [developer/multitask-verifier.md](.agents/skills/developer/multitask-verifier.md), verify with [testing](.agents/skills/testing/) and [done-checklist](.agents/skills/developer/done-checklist.md).
+Parallel agents: plan with [plan-feature](.agents/skills/plan-feature/), split per [developer/multitask.md](.agents/skills/developer/multitask.md), cross-chunk review via [developer/multitask-verifier.md](.agents/skills/developer/multitask-verifier.md), verify issue AC with [verify-issue](.agents/skills/verify-issue/) when scoped to a GitHub issue, then [testing](.agents/skills/testing/) and [done-checklist](.agents/skills/developer/done-checklist.md).

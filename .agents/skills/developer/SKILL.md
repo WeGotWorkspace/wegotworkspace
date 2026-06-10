@@ -21,6 +21,7 @@ Context-loading skill for AI agents and developers working in the WeGotWorkspace
 | UI primitives / CSS / styling | [apps-ui](../apps-ui/SKILL.md) | [components.md](../apps-ui/components.md), [typescript.md](../apps-ui/typescript.md) |
 | Workspace shell / *App / *Workspace | [workspace](../workspace/SKILL.md) | [workspace-shells.md](../../../packages/apps/docs/workspace-shells.md), [feature-blueprint.md](../workspace/feature-blueprint.md) |
 | Planning a feature | [plan-feature](../plan-feature/SKILL.md) | — |
+| Issue acceptance criteria / "is #N done?" | [verify-issue](../verify-issue/SKILL.md) | — |
 | Writing or running tests | [testing](../testing/SKILL.md) | [test-first.md](../testing/test-first.md), [ui-architecture.md](../testing/ui-architecture.md) |
 | Writing or updating docs | [document](../document/SKILL.md) | — |
 | Branching / commits / PRs | [git-workflow](../git-workflow/SKILL.md) | [branches.md](../git-workflow/branches.md), [pull-requests.md](../git-workflow/pull-requests.md) |
@@ -42,7 +43,7 @@ See [dev-environment](../dev-environment/SKILL.md) for commands, URLs, and troub
 
 ## Multitask
 
-When running parallel agents, see [multitask.md](multitask.md) for chunk splitting, handoffs, and post-parallel verification. After parallel builds merge, spawn a read-only verifier per [multitask-verifier.md](multitask-verifier.md) when chunks share contracts or boundaries. Before declaring done: [done-checklist.md](done-checklist.md). Policy vs CI: [POLICY.md](../../POLICY.md).
+When running parallel agents, see [multitask.md](multitask.md) for chunk splitting, handoffs, and post-parallel verification. After parallel builds merge, spawn a read-only verifier per [multitask-verifier.md](multitask-verifier.md) when chunks share contracts or boundaries. For issue-scoped work, run [verify-issue](../verify-issue/SKILL.md) before declaring done. Before declaring done: [done-checklist.md](done-checklist.md). Policy vs CI: [POLICY.md](../../POLICY.md).
 
 ## When NOT to use this skill
 
