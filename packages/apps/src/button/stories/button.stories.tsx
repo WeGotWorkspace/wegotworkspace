@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { expect, fn, userEvent, within } from "storybook/test";
 import { PenSquare } from "lucide-react";
 import { BUTTON_SIZE_OPTIONS, BUTTON_VARIANT_OPTIONS, Button } from "../src/button";
 
@@ -29,7 +30,12 @@ export const Primary: Story = {
     label: "Compose",
     icon: <PenSquare />,
     variant: "primary",
-    onClick: () => {},
+    onClick: fn(),
+  },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Compose" }));
+    await expect(args.onClick).toHaveBeenCalledOnce();
   },
 };
 

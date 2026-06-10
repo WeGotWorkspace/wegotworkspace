@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { expect, fn, userEvent, within } from "storybook/test";
 import { Folder, Star } from "lucide-react";
 import { MenuItem } from "../src/menu-item";
 
@@ -15,8 +16,15 @@ export const Default: Story = {
   args: {
     label: "Inbox",
     icon: <Folder className="size-3.5" />,
-    onClick: () => {},
+    onClick: fn(),
     selected: false,
+  },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    const item = canvas.getByRole("button", { name: "Inbox" });
+    item.focus();
+    await userEvent.keyboard("{Enter}");
+    await expect(args.onClick).toHaveBeenCalledOnce();
   },
 };
 

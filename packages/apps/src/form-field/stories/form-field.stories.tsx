@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { expect, userEvent, within } from "storybook/test";
 import { Mail, User } from "lucide-react";
 import { Input } from "@/ui/input";
 import { FormField } from "../src";
@@ -26,5 +27,12 @@ export const Editable: Story = {
     label: "Email",
     icon: <Mail className="size-3.5 opacity-70" />,
     children: <Input defaultValue="elias@northlight.studio" type="email" />,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const input = canvas.getByRole("textbox");
+    await userEvent.clear(input);
+    await userEvent.type(input, "agent@example.com");
+    await expect(input).toHaveValue("agent@example.com");
   },
 };
