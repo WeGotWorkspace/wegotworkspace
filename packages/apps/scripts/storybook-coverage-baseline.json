@@ -1,12 +1,6 @@
 {
   "allowedMissing": [
     "text-editor-core/docs-collab::DocsCollabDebugWorkspace",
-    "text-editor-core/docs-collab::DocsCollabEditor",
-    "text-editor-core/docs-collab::DocsCollabPresence",
-    "text-editor-core/src::CommentMark",
-    "text-editor-core/src::SuggestionMark",
-    "text-editor-core/src::TextEditorSlashMenu",
-    "text-editor-core/src::TextEditorTableControls",
     "wegotworkspace/src::WegotworkspaceApp",
     "wegotworkspace/src::WegotworkspaceHome",
     "wegotworkspace/src::WegotworkspaceLive",
