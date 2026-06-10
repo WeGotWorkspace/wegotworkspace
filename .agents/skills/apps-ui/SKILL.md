@@ -1,5 +1,5 @@
 ---
-name: wgw-apps-ui
+name: apps-ui
 description: UI architecture for packages/apps — primitive API boundaries, parent-scoped CSS variables, workspace pane styling, and responsive action surfaces. Use when building or refactoring UI in packages/apps.
 paths:
   - "packages/apps/src/**/*.ts"
@@ -10,6 +10,17 @@ paths:
 # WeGotWorkspace Apps UI
 
 When building or refactoring UI in `packages/apps/src/**/*.{ts,tsx,css}`:
+
+## Quick decision matrix
+
+| Task | Read |
+|------|------|
+| Primitive API / CSS variables / action surfaces | This file |
+| Component / pane API design | [components.md](components.md) |
+| TypeScript conventions | [typescript.md](typescript.md) |
+| Workspace shell / *App / *Workspace | [workspace](../workspace/SKILL.md) |
+| Accessibility / WCAG | [accessibility](../accessibility/SKILL.md) |
+| Storybook stories | [storybook](../storybook/SKILL.md) |
 
 ## Primitive API boundaries
 

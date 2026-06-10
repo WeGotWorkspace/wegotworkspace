@@ -1,5 +1,5 @@
 ---
-name: wgw-api
+name: api
 description: Greenfield Laravel API for packages/api — OpenAPI contract, layering, auth, Flysystem storage, SabreDAV. Use when working on packages/api, REST routes, JWT auth, WebDAV, or API tests.
 paths:
   - "packages/api/**"
@@ -22,6 +22,8 @@ When the user says **greenfield**, **new API**, or work under `packages/api/`:
 | Stack overview | [stack.md](stack.md) |
 | File storage / notes / drive | [storage-flysystem.md](storage-flysystem.md) |
 | WebDAV | [sabredav.md](sabredav.md) |
+| Plugins / activation | [plugins](../plugins/SKILL.md) |
+| Meet / room signaling | `packages/api/docs/meet-signaling.md` — or [meet](../meet/SKILL.md) for UI + RTC |
 | Tests / done gate | [testing.md](testing.md) |
 | Legacy reference | [legacy-reference.md](legacy-reference.md) |
 

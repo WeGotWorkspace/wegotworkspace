@@ -6,6 +6,7 @@ import { Callout } from "../src/callout";
 const meta = {
   title: "Shared/Callout",
   component: Callout,
+  tags: ["vitest-ci"],
   args: {
     severity: "info" as const,
     title: "Callout title",

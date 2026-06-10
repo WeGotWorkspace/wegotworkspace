@@ -6,6 +6,7 @@ import { FormField } from "../src";
 const meta: Meta<typeof FormField> = {
   title: "Shared/Form Field",
   component: FormField,
+  tags: ["vitest-ci"],
 };
 
 export default meta;

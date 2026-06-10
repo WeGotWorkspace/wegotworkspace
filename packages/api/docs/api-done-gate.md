@@ -74,7 +74,7 @@ php vendor/bin/phpunit --display-deprecations --display-phpunit-deprecations
 
 1. Edit **`openapi/openapi.json`** first (path + method + schemas).
 2. Add route → Form Request → Resource → Service.
-3. Add **`tests/Feature/...`** coverage.
+3. Add **`tests/Feature/...`** coverage (**write or extend failing tests before implementation** — see [`.agents/skills/testing/test-first.md`](../../../.agents/skills/testing/test-first.md)).
 4. Run **`composer done-gate`** (or at least Architecture + your feature tests).
 
 Regenerate types when the spec changes:

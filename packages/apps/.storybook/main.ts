@@ -14,6 +14,7 @@ const config: StorybookConfig = {
     "@chromatic-com/storybook",
     "@storybook/addon-a11y",
     "@storybook/addon-docs",
+    "@storybook/addon-vitest",
     "@ljcl/storybook-addon-cssprops",
   ],
   framework: {
@@ -58,6 +59,7 @@ const config: StorybookConfig = {
             ? baseConfig.resolve.alias
             : {}),
           "@": path.join(appsRoot, "src"),
+          "@wgw-api-generated": path.join(wgwMonorepoRoot, "packages/api/openapi/generated"),
         },
       },
     };
