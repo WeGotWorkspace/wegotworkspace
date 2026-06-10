@@ -21,7 +21,7 @@ Update docs when the user asks, or when shipping:
 
 | Area | Path |
 |------|------|
-| Monorepo dev | `docs/` (`dev-layout.md`, `env.md`, …) |
+| Monorepo dev | `docs/` (`dev-layout.md`, `env.md`, `docs/plans/` archives, …) |
 | API | `packages/api/docs/` |
 | Package README | `packages/api/README.md`, root `README.md` |
 | Agent skills | `.agents/skills/` sibling refs |

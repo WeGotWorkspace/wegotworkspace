@@ -19,8 +19,10 @@
     "typecheck": "tsc -p tsconfig.typecheck.json --noEmit",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test": "vitest run --project unit",
+    "test:storybook": "vitest run --project storybook",
+    "test:watch": "vitest --project unit",
+    "check:storybook-coverage": "node scripts/check-storybook-coverage.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

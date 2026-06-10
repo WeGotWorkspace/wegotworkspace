@@ -58,4 +58,5 @@ Keep titles stable; they are the catalog index.
 ## Policy summary
 
 - **Mock-tier (required):** full UI catalog without live API — see [offline-first.md](offline-first.md).
+- **CI coverage:** `pnpm check:storybook-coverage` — baseline in `packages/apps/scripts/storybook-coverage-baseline.json`.
 - **Live-tier (optional):** `Live …` stories with dev API + proxy — never the only coverage for a component.

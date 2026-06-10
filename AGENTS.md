@@ -19,20 +19,21 @@ Agent skills live in [`.agents/skills/`](.agents/skills/) (tool-agnostic [Agent 
 | [developer](.agents/skills/developer/) | Starting work, onboarding, skill routing, multitask |
 | [dev-environment](.agents/skills/dev-environment/) | Docker, ports, Storybook proxy, troubleshooting |
 | [api](.agents/skills/api/) | `packages/api` — REST, auth, storage, WebDAV, tests |
+| [plugins](.agents/skills/plugins/) | Plugin registry, activation, install, Flysystem boundaries |
 | [meet](.agents/skills/meet/) | Meet UI, RTC, room signaling |
 | [apps-ui](.agents/skills/apps-ui/) | UI primitives, CSS variables, components, TypeScript |
 | [workspace](.agents/skills/workspace/) | *App, *Workspace, workspace shell, feature blueprint |
 | [plan-feature](.agents/skills/plan-feature/) | Scoping features, parallel chunk plans |
 | [testing](.agents/skills/testing/) | PHPUnit, Vitest, e2e, done-when checklists |
 | [document](.agents/skills/document/) | README, API docs, dev-layout updates |
-| [clean-code](.agents/skills/clean-code/) | Code quality guardrails (Robert C. Martin series) |
+| [clean-code](.agents/skills/clean-code/) | Review checklist — [smells.md](.agents/skills/clean-code/smells.md) before handoff |
 | [storybook](.agents/skills/storybook/) | Offline-first catalog, mock vs live tiers, `.stories.tsx` |
 | [accessibility](.agents/skills/accessibility/) | WCAG 2.x UI compliance |
 | [git-workflow](.agents/skills/git-workflow/) | Branching, commits, PRs, CI gates |
 
 ## Code quality
 
-Load [clean-code](.agents/skills/clean-code/) when building, reviewing, or refactoring. Domain skills override when more specific.
+Load [clean-code](.agents/skills/clean-code/) when building, reviewing, or refactoring — scan [smells.md](.agents/skills/clean-code/smells.md) on touched files. Domain skills override when more specific.
 
 ## Multitask
 

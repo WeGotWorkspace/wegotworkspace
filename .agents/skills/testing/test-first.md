@@ -74,8 +74,8 @@ Chunk `done-when` must include **automated proof**, not “looks fine in browser
 | Item | Status |
 |------|--------|
 | Story `play` on every story | Target — add for critical flows |
-| `@storybook/addon-vitest` in CI | Not wired — [#72](https://github.com/WeGotWorkspace/wegotworkspace/issues/72) |
-| 100% Storybook export audit in CI | Policy only — [#72](https://github.com/WeGotWorkspace/wegotworkspace/issues/72) |
+| `@storybook/addon-vitest` in CI | Wired — `pnpm --filter @wgw/apps run test:storybook` ([#72](https://github.com/WeGotWorkspace/wegotworkspace/issues/72)) |
+| 100% Storybook export audit in CI | Baseline regression guard — `pnpm check:storybook-coverage` ([#72](https://github.com/WeGotWorkspace/wegotworkspace/issues/72)) |
 | UI e2e (Playwright apps) | Not in scope |
 | Strict TDD on every one-line fix | Judgment — skip for typos/docs |
 

@@ -7,10 +7,10 @@ Policies agents should follow for **new work**. Backlog gaps are tracked on GitH
 | **API greenfield** | Reimplement from OpenAPI; no legacy PHP | `composer greenfield:guard`, architecture tests, done gate | [api/SKILL.md](skills/api/SKILL.md) |
 | **OpenAPI → failing feature test → implement** | Required for new REST behavior | CI: `pnpm test:api-done-gate` (feature suites) | [testing/test-first.md](skills/testing/test-first.md) |
 | **Operations DI** (App → operations → controller → pane) | Required in touched UI | Review + incremental refactor | [#71](https://github.com/WeGotWorkspace/wegotworkspace/issues/71), [#66](https://github.com/WeGotWorkspace/wegotworkspace/issues/66)–[#70](https://github.com/WeGotWorkspace/wegotworkspace/issues/70) |
-| **Mock-tier Storybook** for every new export | Required | Manual / Storybook run; not CI-audited yet | [#72](https://github.com/WeGotWorkspace/wegotworkspace/issues/72) |
+| **Mock-tier Storybook** for every new export | Required | CI: `pnpm check:storybook-coverage` (baseline — no new gaps) | [#72](https://github.com/WeGotWorkspace/wegotworkspace/issues/72) |
 | **Live-tier stories** (`Live …`) | Optional smoke only; never sole coverage | Manual | [storybook/offline-first.md](skills/storybook/offline-first.md) |
 | **Story `play` functions** | Target for critical UI flows | Not in CI | [testing/test-first.md](skills/testing/test-first.md) |
-| **`@storybook/addon-vitest`** | Target | Not wired in `.storybook/main.ts` | [#72](https://github.com/WeGotWorkspace/wegotworkspace/issues/72) |
+| **`@storybook/addon-vitest`** | Target | CI: `pnpm --filter @wgw/apps run test:storybook` | [#72](https://github.com/WeGotWorkspace/wegotworkspace/issues/72) |
 | **Vitest for hooks / pure logic** | Required when adding non-trivial logic | `pnpm test` in CI (`@wgw/apps`) | [testing/ui-architecture.md](skills/testing/ui-architecture.md) |
 | **UI pane RTL tests** | Encouraged for interaction-heavy panes | Not widespread today | — |
 | **UI e2e (Playwright apps)** | Out of scope | — | — |

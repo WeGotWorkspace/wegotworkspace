@@ -31,6 +31,7 @@ pnpm dev:ui                              # Storybook — mock-tier stories for c
 ```
 
 - [ ] New/changed **exports** have **mock-tier** stories ([storybook/offline-first.md](../storybook/offline-first.md))
+- [ ] `pnpm check:storybook-coverage` passes (no new baseline gaps)
 - [ ] Stories run without Docker/API (`pnpm dev:ui` only)
 - [ ] Slice handlers / mock `operations` — no `@/lib/api/wgw/http` in panes ([apps-ui/components.md](../apps-ui/components.md))
 - [ ] Storybook a11y panel on new/changed stories ([storybook/a11y-testing.md](../storybook/a11y-testing.md))

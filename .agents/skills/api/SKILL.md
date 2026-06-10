@@ -22,6 +22,7 @@ When the user says **greenfield**, **new API**, or work under `packages/api/`:
 | Stack overview | [stack.md](stack.md) |
 | File storage / notes / drive | [storage-flysystem.md](storage-flysystem.md) |
 | WebDAV | [sabredav.md](sabredav.md) |
+| Plugins / activation | [plugins](../plugins/SKILL.md) |
 | Meet / room signaling | `packages/api/docs/meet-signaling.md` — or [meet](../meet/SKILL.md) for UI + RTC |
 | Tests / done gate | [testing.md](testing.md) |
 | Legacy reference | [legacy-reference.md](legacy-reference.md) |
