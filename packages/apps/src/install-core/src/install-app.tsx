@@ -4,7 +4,7 @@ import { InstallWorkspace } from "@/install-core/src/install-workspace";
 import { useInstallAPI } from "@/install-core/src/use-install-api";
 
 export function InstallApp() {
-  const { phase, error, retry, successVersion, data } = useInstallAPI();
+  const { phase, error, retry, successVersion, data, operations } = useInstallAPI();
 
   return (
     <WorkspaceLiveAppShell
@@ -17,6 +17,7 @@ export function InstallApp() {
         <InstallWorkspace
           key={key}
           data={data}
+          operations={operations}
           onInstallRedirect={(url) => {
             if (typeof window !== "undefined") {
               window.location.assign(url);
