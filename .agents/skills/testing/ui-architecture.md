@@ -3,8 +3,9 @@
 ## Layout
 
 - Co-locate tests: `*.test.ts` / `*.test.tsx` next to source (see `meet-core`, `lib/rtc`, `lib/api/wgw`).
-- Run: `pnpm test` or `pnpm test:watch` in `packages/apps`.
-- Config: `packages/apps/vitest.config.ts`.
+- Run: `pnpm test` or `pnpm test:watch` in `packages/apps` (unit + jsdom projects).
+- Config: `packages/apps/vitest.config.ts` — **`unit`** (Node, `*.test.ts`) and **`jsdom`** (RTL, `*.test.tsx`).
+- Done gate: [apps-done-gate.md](apps-done-gate.md).
 
 ## What to test with Vitest
 
@@ -23,7 +24,7 @@
 | Visual states, layout, responsive breakpoints | Business logic, parsing, state machines |
 | CSS variable theming across variants | API client behavior |
 | Empty / loading / error **appearance** | Error **handling** contracts |
-| Manual + `play` interaction (target) | Automated unit/integration with mocked props |
+| Manual + `play` interaction (`vitest-ci` smoke) | Automated unit/integration with mocked props |
 
 See [storybook/offline-first.md](../storybook/offline-first.md) and [storybook/coverage.md](../storybook/coverage.md).
 

@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { expect, userEvent, within } from "storybook/test";
 import { CollectionListWorkspace } from "@/collection-layout/src/collection-layout";
 import { MailListPanel } from "@/mail-core/src/mail-list-panel";
 import { useMailPaneStoryController } from "./mail-pane-stories.harness";
@@ -74,7 +75,15 @@ export default meta;
 type Story = StoryObj<typeof MailListPaneHarness>;
 
 export const Default: Story = {
+  tags: ["vitest-ci"],
   args: { preset: "default" },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByText(/Revised proofs for the autumn issue/i)).toBeInTheDocument();
+    const input = canvas.getByPlaceholderText("Search mail...");
+    await userEvent.type(input, "newsletter");
+    await expect(input).toHaveValue("newsletter");
+  },
 };
 
 export const Empty: Story = {

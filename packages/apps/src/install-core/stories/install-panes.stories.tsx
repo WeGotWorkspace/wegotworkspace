@@ -1,5 +1,5 @@
-import { useEffect } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { expect, userEvent, within } from "storybook/test";
 import { InstallAdminPane } from "@/install-core/src/install-admin-pane";
 import { InstallDatabasePane } from "@/install-core/src/install-database-pane";
 import { InstallDavPane } from "@/install-core/src/install-dav-pane";
@@ -49,12 +49,20 @@ export const Welcome: Story = {
 
 export const Server: Story = {
   name: "InstallServerPane",
+  tags: ["vitest-ci"],
   render: () => (
     <ControllerPane
       initialStep="server"
       renderPane={(controller) => <InstallServerPane controller={controller} />}
     />
   ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const toggle = canvas.getByRole("button", { name: "Show checks" });
+    await userEvent.click(toggle);
+    await expect(canvas.getByRole("button", { name: "Hide checks" })).toBeInTheDocument();
+    await expect(canvas.getByText("PHP version")).toBeInTheDocument();
+  },
 };
 
 export const ServerChecksVisible: Story = {

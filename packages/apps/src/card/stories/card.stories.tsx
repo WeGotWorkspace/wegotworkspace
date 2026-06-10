@@ -8,7 +8,6 @@ import { FieldLabelRow as FormField } from "@/ui/field-label-row";
 const meta: Meta<typeof Card> = {
   title: "Shared/Card",
   component: Card,
-  tags: ["vitest-ci"],
 };
 
 export default meta;
@@ -48,6 +47,7 @@ export const EditableFormLike: Story = {
 };
 
 export const WithHeaderIconActions: Story = {
+  tags: ["vitest-ci"],
   render: () => (
     <Card
       title="Update log"

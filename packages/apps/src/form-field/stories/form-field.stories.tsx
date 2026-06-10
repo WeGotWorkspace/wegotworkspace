@@ -7,7 +7,6 @@ import { FormField } from "../src";
 const meta: Meta<typeof FormField> = {
   title: "Shared/Form Field",
   component: FormField,
-  tags: ["vitest-ci"],
 };
 
 export default meta;
@@ -23,6 +22,7 @@ export const Readonly: Story = {
 };
 
 export const Editable: Story = {
+  tags: ["vitest-ci"],
   args: {
     label: "Email",
     icon: <Mail className="size-3.5 opacity-70" />,

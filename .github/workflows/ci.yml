@@ -72,8 +72,43 @@ jobs:
       - name: Storybook Vitest (smoke)
         run: pnpm --filter @wgw/apps run test:storybook:ci
 
+      - name: Chromatic (optional)
+        if: vars.CHROMATIC_ENABLED == 'true'
+        env:
+          CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+        run: pnpm --filter @wgw/apps exec chromatic --build-script-name build-storybook --exit-zero-on-changes
+
       - name: Build (Composer + UI via Turborepo)
         run: pnpm run build
+
+  chromatic:
+    if: >-
+      vars.CHROMATIC_ENABLED == 'true' &&
+      (github.event_name != 'push' ||
+      !startsWith(github.event.head_commit.message, 'chore(release):'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4.4.0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "pnpm"
+
+      - name: Install JS workspace
+        run: pnpm install --frozen-lockfile
+
+      - name: Publish to Chromatic
+        uses: chromaui/action@v13
+        with:
+          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+          workingDir: packages/apps
+          onlyChanged: true
+          exitZeroOnChanges: true
 
   api-mysql:
     if: >-

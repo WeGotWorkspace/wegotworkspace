@@ -32,10 +32,28 @@ export default defineConfig({
         test: {
           name: "unit",
           environment: "node",
-          include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+          include: ["src/**/*.test.ts"],
         },
       },
       {
+        resolve: {
+          alias: {
+            "@": path.resolve(__dirname, "src"),
+            "@wgw-api-generated": apiGeneratedRoot,
+          },
+        },
+        test: {
+          name: "jsdom",
+          environment: "jsdom",
+          include: ["src/**/*.test.tsx"],
+        },
+      },
+      {
+        define: {
+          "import.meta.env.STORYBOOK_A11Y_GATE": JSON.stringify(
+            process.env.STORYBOOK_A11Y_GATE ?? "",
+          ),
+        },
         resolve: {
           alias: {
             "@": path.resolve(__dirname, "src"),

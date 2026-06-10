@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { expect, userEvent, within } from "storybook/test";
 import { DRIVE_DOCS_EDITOR_STORY_FILES } from "@/drive-core/src/drive-docs-story-files";
 import { DriveMainPane } from "@/drive-core/src/drive-main-pane";
 import { getDriveStoryFilesInMyDrive } from "@/drive-core/stories/drive-pane-stories.fixtures";
@@ -48,7 +49,15 @@ export default meta;
 type Story = StoryObj<typeof DriveMainPaneHarness>;
 
 export const Default: Story = {
+  tags: ["vitest-ci"],
   args: { preset: "default" },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByText(/Studio Assets/i)).toBeInTheDocument();
+    const input = canvas.getByPlaceholderText("Search in Drive...");
+    await userEvent.type(input, "proofs");
+    await expect(input).toHaveValue("proofs");
+  },
 };
 
 export const Empty: Story = {

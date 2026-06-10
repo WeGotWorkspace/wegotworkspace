@@ -24,6 +24,7 @@
     "typecheck": "tools/with-root-env.sh -- turbo run typegen typecheck --filter=@wgw/apps",
     "test": "tools/with-root-env.sh -- turbo run test --filter=@wgw/api",
     "test:api-done-gate": "pnpm test",
+    "test:apps-done-gate": "pnpm --filter @wgw/apps run test:done-gate",
     "test:api-e2e": "tools/with-root-env.sh -- pnpm --filter @wgw/api test:e2e",
     "test:api-e2e:docker": "tools/with-root-env.sh -- bash tools/test-api-e2e-docker.sh",
     "docker:up": "docker compose -f compose.dev.yml up -d --build",

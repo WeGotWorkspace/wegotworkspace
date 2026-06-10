@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { expect, fn, screen, userEvent, within } from "storybook/test";
 import { Archive, Mail, NotebookPen, Star } from "lucide-react";
 import { Button } from "@/button/src/button";
 import { DropdownMenu } from "../src/dropdown-menu";
@@ -8,7 +9,6 @@ import "./menu-dropdown.stories.css";
 const meta: Meta<typeof DropdownMenu> = {
   title: "Shared/Dropdown Menu",
   component: DropdownMenu,
-  tags: ["vitest-ci"],
   parameters: {
     layout: "centered",
   },
@@ -25,13 +25,16 @@ const meta: Meta<typeof DropdownMenu> = {
 export default meta;
 type Story = StoryObj<typeof DropdownMenu>;
 
+const notesClick = fn();
+
 const baseItems: DropdownMenuItemProps[] = [
-  { id: "notes", label: "Notes", icon: <NotebookPen className="size-4" />, onClick: () => {} },
+  { id: "notes", label: "Notes", icon: <NotebookPen className="size-4" />, onClick: notesClick },
   { id: "mail", label: "Mail", icon: <Mail className="size-4" />, onClick: () => {} },
   { id: "archive", label: "Archive", icon: <Archive className="size-4" />, onClick: () => {} },
 ];
 
 export const Default: Story = {
+  tags: ["vitest-ci"],
   args: {
     contentClassName: "menu-dropdown-story__panel",
   },
@@ -42,6 +45,12 @@ export const Default: Story = {
       items={baseItems}
     />
   ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Open menu" }));
+    await userEvent.click(screen.getByRole("button", { name: "Notes" }));
+    await expect(notesClick).toHaveBeenCalledOnce();
+  },
 };
 
 export const CheckedState: Story = {

@@ -26,7 +26,8 @@ Optional local: `pnpm test:api-e2e:docker`, `pnpm test:meet-api` (meet signaling
 ## UI (`packages/apps`)
 
 ```bash
-pnpm --dir packages/apps test              # Vitest
+pnpm test:apps-done-gate                 # typecheck + Vitest + Storybook smoke + coverage
+pnpm --dir packages/apps test              # Vitest only
 pnpm dev:ui                              # Storybook — mock-tier stories for changed exports
 ```
 

@@ -16,6 +16,7 @@ paths:
 |------|------|
 | Test-first / red-green order | [test-first.md](test-first.md) |
 | API / PHPUnit / done gate | [api/testing.md](../api/testing.md) |
+| Apps UI done gate | [apps-done-gate.md](apps-done-gate.md) |
 | UI unit tests / Vitest | [ui-architecture.md](ui-architecture.md) |
 | Storybook visual states | [storybook](../storybook/SKILL.md) |
 | Offline UI catalog (no API) | [storybook/offline-first.md](../storybook/offline-first.md) |
@@ -26,8 +27,10 @@ paths:
 | Scope | Command |
 |-------|---------|
 | API done gate | `pnpm test:api-done-gate` or `composer done-gate` in `packages/api` |
+| Apps done gate | `pnpm test:apps-done-gate` or `pnpm run test:done-gate` in `packages/apps` |
 | API PHPUnit (package) | `composer test` in `packages/api` |
-| Apps Vitest | `pnpm test` in `packages/apps` |
+| Apps Vitest (unit + jsdom) | `pnpm test` in `packages/apps` |
+| Storybook Vitest smoke (`vitest-ci`) | `pnpm test:storybook:ci` in `packages/apps` |
 | API e2e (Docker) | `pnpm test:api-e2e:docker` |
 
 Handoff and PR verification: [developer/done-checklist.md](../developer/done-checklist.md). Policy vs CI: [.agents/POLICY.md](../../POLICY.md). Review gate: [code-review](../code-review/SKILL.md).
