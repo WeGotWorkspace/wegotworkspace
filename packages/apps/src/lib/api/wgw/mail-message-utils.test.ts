@@ -8,11 +8,18 @@ import {
   plainTextFromWgwDetail,
   resolveMailboxLabel,
 } from "@/lib/api/wgw/mail-message-utils";
-import type { WgwMailFolderNode, WgwMailMessageListItem } from "@/lib/api/wgw/types";
+import type {
+  WgwMailFolderNode,
+  WgwMailMessageDetail,
+  WgwMailMessageListItem,
+} from "@/lib/api/wgw/types";
 
 describe("coerceMailListRow", () => {
   it("normalizes uid from wire variants and applies default folder", () => {
-    const row = coerceMailListRow({ id: "msg:42", subject: "Hello" }, "folder-inbox");
+    const row = coerceMailListRow(
+      { id: "msg:42", subject: "Hello" } as WgwMailMessageListItem,
+      "folder-inbox",
+    );
     expect(row.uid).toBe(42);
     expect(row.folder).toBe("folder-inbox");
     expect(row.messageId).toBe("msg:42");
@@ -68,7 +75,14 @@ describe("resolveMailboxLabel", () => {
 
 describe("plainTextFromWgwDetail", () => {
   it("returns body text from detail payload", () => {
-    expect(plainTextFromWgwDetail({ body: "Hello world" })).toBe("Hello world");
+    expect(
+      plainTextFromWgwDetail({
+        body: "Hello world",
+        folder: "folder-inbox",
+        uid: 1,
+        bodyHtml: null,
+      } satisfies WgwMailMessageDetail),
+    ).toBe("Hello world");
   });
 });
 
@@ -109,7 +123,7 @@ describe("mailFromWgwListItem", () => {
       read: true,
     };
     const mail = mailFromWgwListItem(
-      { ...row, to: "Bob <bob@example.com>" } as WgwMailMessageListItem,
+      { ...row, to: [{ name: "Bob", email: "bob@example.com" }] },
       folderNames,
       { mailboxDisplay: "Sent" },
     );
@@ -130,7 +144,12 @@ describe("mailFromWgwDetail", () => {
       date: "2026-06-10T12:00:00.000Z",
     };
     const mail = mailFromWgwDetail(
-      { body: "First paragraph.\n\nSecond paragraph with more detail." },
+      {
+        body: "First paragraph.\n\nSecond paragraph with more detail.",
+        folder: "folder-inbox",
+        uid: 3,
+        bodyHtml: null,
+      } satisfies WgwMailMessageDetail,
       { "folder-inbox": "Inbox" },
       listRow,
     );

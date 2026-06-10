@@ -8,6 +8,12 @@ import type { DriveUIData } from "@/drive-core/src/drive-types";
 
 const USER = "alice";
 const groupRoots = new Set<string>();
+const EMPTY_DRIVE_UI: DriveUIData = {
+  user: { username: USER, name: USER, role: "user", roots: ["/users"] },
+  cwd: "",
+  directory: { location: "", files: [] },
+  plugins: [],
+};
 
 function driveFile(
   partial: Partial<DriveFile> & Pick<DriveFile, "id" | "title" | "parent">,
@@ -57,9 +63,10 @@ describe("mergeDriveFolderListing", () => {
         parent: "My Drive/Projects",
       }),
     ];
-    const nextData: DriveUIData = {
+    const nextData = {
       cwd: "/users/alice/Projects",
       directory: {
+        location: "/users/alice/Projects",
         files: [
           {
             name: "old.md",
@@ -67,10 +74,11 @@ describe("mergeDriveFolderListing", () => {
             type: "file",
             size: 100,
             time: 1,
+            permissions: 644,
           },
         ],
       },
-    };
+    } as DriveUIData;
     const merged = mergeDriveFolderListing(previous, nextData, USER);
     expect(merged.map((file) => file.title)).toEqual(["old.md", "new.md"]);
   });
@@ -80,8 +88,9 @@ describe("mergeDriveFolderListing", () => {
       driveFile({ id: "/users/alice/Inbox/new.md", title: "new.md", parent: "My Drive/Inbox" }),
     ];
     const nextData: DriveUIData = {
+      ...EMPTY_DRIVE_UI,
       cwd: "/users/alice/Projects",
-      directory: { files: [] },
+      directory: { location: "/users/alice/Projects", files: [] },
     };
     expect(mergeDriveFolderListing(previous, nextData, USER)).toEqual([]);
   });
