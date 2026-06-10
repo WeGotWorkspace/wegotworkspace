@@ -53,10 +53,9 @@ export const Default: Story = {
   args: { preset: "default" },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByText(/Studio Assets/i)).toBeInTheDocument();
-    const input = canvas.getByPlaceholderText("Search in Drive...");
-    await userEvent.type(input, "proofs");
-    await expect(input).toHaveValue("proofs");
+    const folderTile = canvas.getByRole("button", { name: /Studio Assets/i });
+    await userEvent.click(folderTile);
+    await expect(canvas.getByText(/Archives/i)).toBeInTheDocument();
   },
 };
 
