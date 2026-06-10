@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { Editor } from "@tiptap/react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { expect, within } from "storybook/test";
 import { TooltipProvider } from "@/ui/tooltip";
 import { createDocsAppBootstrap, createDocsTxtBootstrap } from "@/lib/api/mock/docs-bootstrap";
 import type { DocsAppBootstrap } from "@/docs-core/src/docs-types";
@@ -59,7 +60,16 @@ export default meta;
 type Story = StoryObj<typeof DocsMainPane>;
 
 export const Default: Story = {
+  tags: ["vitest-ci"],
   render: () => <DocsMainPaneHarness bootstrap={createDocsAppBootstrap()} />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(
+      await canvas.findByRole("heading", { name: "Product brief", level: 1 }),
+    ).toBeInTheDocument();
+    await expect(canvas.getByText("Discovery notes")).toBeInTheDocument();
+    await expect(canvas.getByText("Approve table layout")).toBeInTheDocument();
+  },
 };
 
 export const PlainText: Story = {

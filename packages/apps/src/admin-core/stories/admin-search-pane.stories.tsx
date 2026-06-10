@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { expect, screen, userEvent, within } from "storybook/test";
 import type { AdminStoryDataOverride } from "@/admin-core/stories/admin-pane-stories.harness";
 import { AdminSearchPane } from "@/admin-core/src/admin-search-pane";
 import { useAdminPaneStoryController } from "@/admin-core/stories/admin-pane-stories.harness";
@@ -25,7 +26,16 @@ export default meta;
 type Story = StoryObj<typeof AdminSearchPane>;
 
 export const Default: Story = {
+  tags: ["vitest-ci"],
   render: () => <SearchPaneHarness />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByText("Indexer idle")).toBeInTheDocument();
+    await userEvent.click(canvas.getByRole("button", { name: "Re-index search" }));
+    // Confirm dialog renders in a portal outside the canvas.
+    await userEvent.click(await screen.findByRole("button", { name: "Start reindex" }));
+    await expect(await canvas.findByText("Reindex in progress")).toBeInTheDocument();
+  },
 };
 
 export const InProgress: Story = {
