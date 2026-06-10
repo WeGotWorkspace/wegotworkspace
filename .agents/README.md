@@ -20,7 +20,7 @@ Skill directories use **unprefixed names** (e.g. `api`, `developer`, `storybook`
 | [clean-code](skills/clean-code/) | Robert C. Martin series guardrails |
 | [storybook](skills/storybook/) | Story catalog — coverage, cssprops, fixtures, a11y |
 | [accessibility](skills/accessibility/) | WCAG 2.x compliance |
-| [git-workflow](skills/git-workflow/) | No auto-commit, Conventional Commits |
+| [git-workflow](skills/git-workflow/) | Branching, commits, PRs, signed commits, CI gates |
 
 ## Usage
 

@@ -4,7 +4,7 @@
 
 **API greenfield:** Work under `packages/api/` is a new Laravel app matching OpenAPI — no legacy PHP in tree. Do not restore `packages/api/src/`, `*Kernel`, `MailApi`, or dual autoload. Reimplement from `packages/api/openapi/openapi.json` + feature tests. Full guidance: [`.agents/skills/api/`](.agents/skills/api/).
 
-**Git:** Do not `git commit` unless the user explicitly asks. When committing, use Conventional Commits. See [`.agents/skills/git-workflow/`](.agents/skills/git-workflow/).
+**Git:** Do not `git commit` or open PRs unless the user explicitly asks. Branching, signed commits, and PR flow: [`.agents/skills/git-workflow/`](.agents/skills/git-workflow/).
 
 ## Skills index
 
@@ -22,7 +22,7 @@ Agent skills live in [`.agents/skills/`](.agents/skills/) (tool-agnostic [Agent 
 | [clean-code](.agents/skills/clean-code/) | Code quality guardrails (Robert C. Martin series) |
 | [storybook](.agents/skills/storybook/) | `.stories.tsx`, cssprops, coverage |
 | [accessibility](.agents/skills/accessibility/) | WCAG 2.x UI compliance |
-| [git-workflow](.agents/skills/git-workflow/) | Staging, commits, commit message format |
+| [git-workflow](.agents/skills/git-workflow/) | Branching, commits, PRs, CI gates |
 
 ## Code quality
 

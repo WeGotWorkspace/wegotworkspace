@@ -1,13 +1,27 @@
 ---
 name: git-workflow
-description: Git workflow for this repository — no commits unless explicitly requested; Conventional Commits when committing. Use when staging, committing, or asked about git workflow.
+description: Git workflow for this repository — branching, commits, pull requests, signed commits, and CI gates. Use when creating branches, staging, committing, opening PRs, or asked about git workflow.
 ---
 
-# Git commits
+# Git workflow
+
+## Quick decision matrix
+
+| Task | Read |
+|------|------|
+| Creating or naming a branch | [branches.md](branches.md) |
+| Staging / committing | This file (below) |
+| Opening or updating a PR | [pull-requests.md](pull-requests.md) |
+| PR summary wording | [document](../document/SKILL.md) |
+| Test plan for PR | [testing](../testing/SKILL.md) |
+| Parallel agent branches | [developer/multitask.md](../developer/multitask.md) |
+
+## Commits
 
 - **Do not** run `git commit` or create commits on your own initiative, including after finishing a task or refactor.
 - **Only** stage and commit when the user clearly requests a commit (e.g. "commit", "commit this", "commit the diff").
 - It is fine to run read-only git commands (`git status`, `git diff`, `git log`) for investigation without asking.
+- **Do not** push to remote unless the user explicitly asks.
 
 ## Conventional Commits (when the user asks you to commit)
 
@@ -21,3 +35,9 @@ Use **[Conventional Commits](https://www.conventionalcommits.org/)** for every c
 - **Breaking changes:** `!` after type/scope (e.g. `feat(api)!:`) and/or a `BREAKING CHANGE:` footer when appropriate.
 
 Do not use vague one-word subjects (`fix`, `update`, `wip`) without a clear description after the colon.
+
+## Repo constraints (summary)
+
+- **Signed commits** required on `main` (GPG or SSH).
+- **Branch protection:** PR required; CI checks must pass — see [pull-requests.md](pull-requests.md).
+- Husky runs Prettier/ESLint/Pint on commit; Commitlint enforces Conventional Commits. CI rejects Cursor attribution in commit messages.
