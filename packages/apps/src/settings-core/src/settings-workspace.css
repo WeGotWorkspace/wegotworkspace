@@ -8,12 +8,11 @@
  */
 .settings-workspace {
   --settings-accent: color-mix(in oklab, #4a5059 50%, #ffffff);
-  --settings-sidebar: var(--settings-accent);
   --settings-accent-bg: var(--settings-accent);
   --workspace-accent: var(--settings-accent);
   --workspace-root-bg: var(--color-cream, #ffffff);
   --workspace-main-bg: color-mix(in oklab, var(--settings-accent) 6%, var(--color-cream, #ffffff));
-  --app-sidebar-bg: var(--settings-sidebar);
+  --app-sidebar-bg: var(--settings-accent);
   --app-sidebar-border-color: color-mix(in oklab, var(--color-ink) 12%, transparent);
   --app-sidebar-color: var(--color-ink);
   --sidebar-logo-brand-fill: var(--color-ink);
