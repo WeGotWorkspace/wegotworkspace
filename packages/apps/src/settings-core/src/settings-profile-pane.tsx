@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { Input } from "@/ui/input";
 import { Card } from "@/card/src/card";
 import { settingsWorkspacePaneClasses } from "@/settings-core/src/settings-workspace.styles";
@@ -13,6 +14,7 @@ export type SettingsProfilePaneProps = {
 
 export function SettingsProfilePane({ profile }: SettingsProfilePaneProps) {
   const { form, username, saveProfile } = profile;
+  const usernameId = useId();
   const [newPasswordWatch, confirmPasswordWatch] = form.watch(["newPassword", "confirmPassword"]);
 
   const identityDisabled =
@@ -25,8 +27,8 @@ export function SettingsProfilePane({ profile }: SettingsProfilePaneProps) {
   return (
     <Form {...form}>
       <Card title="Identity">
-        <FieldLabelRow label="Username" readOnly>
-          <Input value={username} readOnly />
+        <FieldLabelRow label="Username" readOnly htmlFor={usernameId}>
+          <Input id={usernameId} value={username} readOnly />
         </FieldLabelRow>
         <FormTextField
           {...settingsWorkspacePaneClasses.formTextField}

@@ -131,7 +131,7 @@ Run `node packages/apps/scripts/check-storybook-coverage.mjs --update-baseline` 
 | Storybook baseline debt | **0** — CI fails on new exports without stories |
 | Ops DI in product controllers/hooks/workspaces | **Done** (#77); wgw remains in `*-api-source`, app shells, login |
 | `play` / `vitest-ci` breadth | **Good** — 14 `play`, 18 `vitest-ci` story files (37 smoke tests), all 7 product verticals; 83 story files still skipped in smoke |
-| WCAG gate in CI | **Opt-in** — `STORYBOOK_A11Y_GATE=1`; enable by default after fixing remaining label violations |
+| WCAG gate in CI | **On** — a11y `error` for `vitest-ci` smoke in CI and done gate; violations fixed (labels, nested-interactive tiles, meet contrast) |
 | Chromatic | **Optional** — CI job behind `CHROMATIC_ENABLED=true` + token; no baselines yet |
 | Apps done gate | **Built** (#80) — `pnpm test:apps-done-gate`; not yet part of `ci:quality` |
 | Multitask verifier subagents | **Built** (#79) — [multitask-verifier.md](../developer/multitask-verifier.md) |

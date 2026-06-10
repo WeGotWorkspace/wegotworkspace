@@ -43,7 +43,7 @@ CI runs apps Vitest via `turbo run test` and Storybook smoke via `test:storybook
 | **Typecheck** | TS contracts compile; OpenAPI-generated types (`@wgw-api-generated`) match consumers. |
 | **Vitest unit** | Pure parsers, mappers, RTC/session helpers — co-located `*.test.ts`. |
 | **Vitest jsdom** | Hook and pane RTL with **mock `operations`** — co-located `*.test.tsx`. |
-| **Storybook `vitest-ci`** | Offline mock-tier stories render; `play` asserts critical interactions. Optional: `STORYBOOK_A11Y_GATE=1` fails on WCAG violations. |
+| **Storybook `vitest-ci`** | Offline mock-tier stories render; `play` asserts critical interactions; a11y `error` via `STORYBOOK_A11Y_GATE=1` (set by gate and CI). |
 | **Storybook coverage** | Every exported pane/component has a mock-tier story ([storybook/offline-first.md](../storybook/offline-first.md)). |
 
 ## Interaction test targets (ongoing)
@@ -55,7 +55,7 @@ Baseline audit (expand over time — not a hard gate count yet):
 | Story files | ~101 | + mock-tier for every new export |
 | `vitest-ci` tagged story files | **18** (primitives + all 7 product verticals) | **25+** — deeper flows per app |
 | `play` functions | **14** | One `play` per touched pane in new work |
-| WCAG gate | Opt-in (`STORYBOOK_A11Y_GATE=1`) | On by default in CI smoke |
+| WCAG gate | **On** in CI smoke + done gate | Keep `vitest-ci` stories violation-free |
 
 Tag product-pane smoke stories at **meta** or **story** level with `vitest-ci`. Every major vertical (Drive, Mail, Settings, Install, Notes, Meet, Docs, Admin) has at least one `play` flow — keep it that way for new verticals.
 

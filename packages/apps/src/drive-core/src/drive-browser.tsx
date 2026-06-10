@@ -202,17 +202,10 @@ function FolderTile({
   onTrash: () => void;
 }) {
   const lp = useLongPress(onLongPress);
+  // Tile root is non-interactive so the actions menu is not nested inside a
+  // button (axe nested-interactive); the overlay button is the click target.
   return (
-    <button
-      type="button"
-      onClick={(e) => {
-        if (lp.fired.current) return;
-        onSelect(e);
-      }}
-      onDoubleClick={onOpen}
-      onTouchStart={lp.start}
-      onTouchEnd={lp.cancel}
-      onTouchMove={lp.cancel}
+    <div
       onContextMenu={(e) => {
         if (!isTouch) {
           e.preventDefault();
@@ -231,6 +224,19 @@ function FolderTile({
         !isSelected && !folderDropZone.isDropTarget && "drive-folder-tile--idle",
       )}
     >
+      <button
+        type="button"
+        aria-label={file.title}
+        className="drive-tile__hit"
+        onClick={(e) => {
+          if (lp.fired.current) return;
+          onSelect(e);
+        }}
+        onDoubleClick={onOpen}
+        onTouchStart={lp.start}
+        onTouchEnd={lp.cancel}
+        onTouchMove={lp.cancel}
+      />
       <Folder
         className="drive-folder-tile__icon size-5 shrink-0"
         fill="currentColor"
@@ -249,7 +255,7 @@ function FolderTile({
         onMove={onMove}
         onDelete={onTrash}
       />
-    </button>
+    </div>
   );
 }
 
@@ -291,16 +297,10 @@ function FileTile({
   onTrash: () => void;
 }) {
   const lp = useLongPress(onLongPress);
+  // Same overlay pattern as FolderTile: keeps the actions menu out of the
+  // interactive tile target (axe nested-interactive).
   return (
     <div
-      onClick={(e) => {
-        if (lp.fired.current) return;
-        onSelect(e);
-      }}
-      onDoubleClick={onOpen}
-      onTouchStart={lp.start}
-      onTouchEnd={lp.cancel}
-      onTouchMove={lp.cancel}
       onContextMenu={(e) => {
         if (!isTouch) {
           e.preventDefault();
@@ -310,14 +310,25 @@ function FileTile({
       draggable={!isTouch}
       onDragStart={itemDragHandlers.onDragStart}
       onDragEnd={itemDragHandlers.onDragEnd}
-      role="button"
-      tabIndex={0}
       className={cn(
         "group drive-file-tile",
         isDragging && "drive-file-tile--dragging",
         isSelected && "drive-file-tile--selected",
       )}
     >
+      <button
+        type="button"
+        aria-label={file.title}
+        className="drive-tile__hit"
+        onClick={(e) => {
+          if (lp.fired.current) return;
+          onSelect(e);
+        }}
+        onDoubleClick={onOpen}
+        onTouchStart={lp.start}
+        onTouchEnd={lp.cancel}
+        onTouchMove={lp.cancel}
+      />
       {isStarred ? (
         <span className="drive-file-tile__star-badge" aria-hidden="true">
           <Star className="size-3.5" fill="currentColor" />

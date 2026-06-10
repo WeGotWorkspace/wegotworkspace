@@ -30,7 +30,7 @@ Perceivable, operable, understandable, robust criteria: [accessibility/wcag.md](
 
 ## CI escalation
 
-Opt-in CI gate: set `STORYBOOK_A11Y_GATE=1` when running Storybook Vitest (see `packages/apps/vitest.config.ts` `define`) to switch `.storybook/preview.ts` a11y `test` to **`error`**. Local Storybook dev stays on `todo`. Enable in CI after `vitest-ci` stories are violation-free.
+**Gated in CI:** the Storybook Vitest smoke step and `pnpm test:apps-done-gate` set `STORYBOOK_A11Y_GATE=1` (see `packages/apps/vitest.config.ts` `define`), switching `.storybook/preview.ts` a11y `test` to **`error`** for `vitest-ci` stories. Local Storybook dev stays on `todo`. New `vitest-ci` stories must be violation-free before merge.
 
 ## Limits
 

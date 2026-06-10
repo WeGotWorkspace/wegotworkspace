@@ -11,9 +11,9 @@ const steps = [
   { label: "Vitest (unit)", cmd: ["pnpm", "test:unit"] },
   { label: "Vitest (jsdom)", cmd: ["pnpm", "test:jsdom"] },
   {
-    label: "Storybook Vitest smoke (vitest-ci)",
+    label: "Storybook Vitest smoke (vitest-ci + a11y gate)",
     cmd: ["pnpm", "test:storybook:ci"],
-    env: { STORYBOOK_VITEST_SMOKE: "1" },
+    env: { STORYBOOK_VITEST_SMOKE: "1", STORYBOOK_A11Y_GATE: "1" },
   },
   { label: "Storybook coverage", cmd: ["pnpm", "check:storybook-coverage"] },
 ];
