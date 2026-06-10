@@ -49,6 +49,12 @@ jobs:
         if: github.event_name == 'pull_request'
         run: node tools/git/check-commit-range-attribution.mjs "${{ github.event.pull_request.base.sha }}..${{ github.sha }}"
 
+      - name: Reject Cursor PR description attribution
+        if: github.event_name == 'pull_request'
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: node tools/git/check-pr-body-attribution.mjs
+
       - name: Quality gate (typegen, lint, format, typecheck, API done gate)
         run: pnpm run ci:quality
 
