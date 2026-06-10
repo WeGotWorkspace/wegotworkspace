@@ -53,7 +53,10 @@ Before writing the plan:
 - **Parallel with:** chunk IDs or "none"
 
 ## Test plan
-- …
+
+- [ ] API: OpenAPI → failing feature test → implement → `composer done-gate` ([testing/test-first.md](../testing/test-first.md))
+- [ ] UI: mock-tier Storybook → Vitest for logic → optional `play` for critical flows
+- [ ] …
 
 ## Doc updates (only if user wants)
 - …

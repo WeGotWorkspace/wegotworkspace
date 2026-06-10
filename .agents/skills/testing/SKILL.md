@@ -1,6 +1,6 @@
 ---
 name: testing
-description: Testing workflow for the WeGotWorkspace monorepo — API PHPUnit, apps Vitest, e2e, done-gate, and done-when checklists. Use when writing, running, or reviewing tests.
+description: Testing workflow for the WeGotWorkspace monorepo — test-first order, API PHPUnit, apps Vitest, e2e, done-gate, and done-when checklists. Use when writing, running, or reviewing tests.
 paths:
   - "packages/api/tests/**"
   - "packages/apps/**/*.test.ts"
@@ -14,6 +14,7 @@ paths:
 
 | Task | Read |
 |------|------|
+| Test-first / red-green order | [test-first.md](test-first.md) |
 | API / PHPUnit / done gate | [api/testing.md](../api/testing.md) |
 | UI unit tests / Vitest | [ui-architecture.md](ui-architecture.md) |
 | Storybook visual states | [storybook](../storybook/SKILL.md) |
@@ -33,6 +34,7 @@ paths:
 
 Before calling test work complete:
 
+- [ ] Work followed [test-first.md](test-first.md) order where applicable (API: failing feature test before implementation; UI: mock story / unit test before pane logic)
 - [ ] New/changed behavior has automated tests appropriate to layer
 - [ ] API domains: feature tests pass; `composer greenfield:guard` passes
 - [ ] No tests call deleted legacy handlers

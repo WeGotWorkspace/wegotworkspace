@@ -18,7 +18,7 @@ Context-loading skill for AI agents and developers working in the WeGotWorkspace
 | UI primitives / CSS / styling | [apps-ui](../apps-ui/SKILL.md) | [components.md](../apps-ui/components.md), [typescript.md](../apps-ui/typescript.md) |
 | Workspace shell / *App / *Workspace | [workspace](../workspace/SKILL.md) | [feature-blueprint.md](../workspace/feature-blueprint.md) |
 | Planning a feature | [plan-feature](../plan-feature/SKILL.md) | — |
-| Writing or running tests | [testing](../testing/SKILL.md) | [ui-architecture.md](../testing/ui-architecture.md) |
+| Writing or running tests | [testing](../testing/SKILL.md) | [test-first.md](../testing/test-first.md), [ui-architecture.md](../testing/ui-architecture.md) |
 | Writing or updating docs | [document](../document/SKILL.md) | — |
 | Branching / commits / PRs | [git-workflow](../git-workflow/SKILL.md) | [branches.md](../git-workflow/branches.md), [pull-requests.md](../git-workflow/pull-requests.md) |
 | Code quality / review / refactor | [clean-code](../clean-code/SKILL.md) | [smells.md](../clean-code/smells.md) |
