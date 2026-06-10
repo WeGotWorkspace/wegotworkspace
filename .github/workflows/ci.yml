@@ -52,8 +52,22 @@ jobs:
       - name: Quality gate (typegen, lint, format, typecheck, API done gate)
         run: pnpm run ci:quality
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-chromium-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-chromium-
+
       - name: Install Playwright (Storybook Vitest)
-        run: pnpm --filter @wgw/apps exec playwright install chromium --with-deps
+        run: |
+          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" != 'true' ]; then
+            pnpm --filter @wgw/apps exec playwright install chromium --with-deps
+          else
+            pnpm --filter @wgw/apps exec playwright install chromium
+          fi
 
       - name: Storybook Vitest (smoke)
         run: pnpm --filter @wgw/apps run test:storybook:ci

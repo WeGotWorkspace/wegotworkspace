@@ -8,6 +8,7 @@ import "./menu-dropdown.stories.css";
 const meta: Meta<typeof DropdownMenu> = {
   title: "Shared/Dropdown Menu",
   component: DropdownMenu,
+  tags: ["vitest-ci"],
   parameters: {
     layout: "centered",
   },

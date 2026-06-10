@@ -1,10 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { expect, fn, userEvent, within } from "storybook/test";
 import { ViewModeToggle } from "@/view-mode-toggle/src/view-mode-toggle";
 
 const meta = {
   title: "Shared/ViewModeToggle",
   component: ViewModeToggle,
-  tags: ["autodocs"],
+  tags: ["autodocs", "vitest-ci"],
   argTypes: {
     value: { control: "radio", options: ["grid", "list"] },
   },
@@ -18,7 +19,12 @@ export const Grid: Story = {
     value: "grid",
     gridLabel: "Grid view",
     listLabel: "List view",
-    onChange: () => {},
+    onChange: fn(),
+  },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "List view" }));
+    await expect(args.onChange).toHaveBeenCalledWith("list");
   },
 };
 
