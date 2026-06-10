@@ -7,7 +7,6 @@ import type {
   InstallerSitePayload,
 } from "@/lib/api/wgw/installer";
 import type { WgwInstallerActionResponse, WgwInstallerRuntimeState } from "@/lib/api/wgw";
-import { wgwInstallOperations } from "@/install-core/src/install-wgw-operations";
 import type { InstallWorkspaceProps } from "@/install-core/src/install-workspace-props";
 import {
   INSTALL_STEPS,
@@ -30,9 +29,8 @@ import type {
 export function useInstallController({
   data,
   onInstallRedirect,
-  operations: operationsProp,
+  operations,
 }: Pick<InstallWorkspaceProps, "data" | "onInstallRedirect" | "operations">) {
-  const operations = operationsProp ?? wgwInstallOperations;
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [stepIdx, setStepIdx] = useState(0);
   const [actionPending, setActionPending] = useState(false);
@@ -167,6 +165,9 @@ export function useInstallController({
     (nextType: "sqlite" | "mysql") => {
       setDbType(nextType);
       setMysqlTest({ state: "idle" });
+      if (!operations) {
+        return;
+      }
       void operations
         .requirementsCheck({ db_driver: nextType })
         .then((response) => {
@@ -195,6 +196,9 @@ export function useInstallController({
   );
 
   const testDatabaseConnection = useCallback(async (): Promise<boolean> => {
+    if (!operations) {
+      return false;
+    }
     setMysqlTest({ state: "testing" });
     try {
       const response = syncAction(await operations.databaseTest(buildDatabasePayload()));
@@ -241,7 +245,7 @@ export function useInstallController({
   })();
 
   const goNext = useCallback(async () => {
-    if (!canNext || actionPending) return;
+    if (!canNext || actionPending || !operations) return;
     try {
       await withPending(async () => {
         if (step.id === "welcome") {
@@ -349,6 +353,9 @@ export function useInstallController({
   }, []);
 
   const refreshServerChecks = useCallback(async () => {
+    if (!operations) {
+      return;
+    }
     await withPending(async () => {
       const response = syncAction(await operations.requirementsCheck({ db_driver: dbType }));
       if (response.state) setStepFromBackend(response.state, "server");

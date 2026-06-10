@@ -57,16 +57,9 @@ Users and agents should never need the API to click through UI states, open menu
 
 ## Automated interaction tests
 
-| Layer | Tool | Status |
-|-------|------|--------|
-| Manual | Storybook UI at http://127.0.0.1:6006 | **Supported today** |
-| a11y | `@storybook/addon-a11y` | **Supported** — see [a11y-testing.md](a11y-testing.md) |
-| Story `play` functions | CSF `play` + `@storybook/test` | **Target** — add for critical interactions |
-| Storybook in Vitest | `@storybook/addon-vitest` | **Wired** — CI smoke: `pnpm --filter @wgw/apps run test:storybook:ci` (`vitest-ci` tag); full catalog locally: `test:storybook` |
+Prefer mock-tier **`play`** functions for critical flows (`storybook/test`). Vitest browser smoke uses the `vitest-ci` tag — see [.agents/POLICY.md](../../POLICY.md) for what CI runs vs local-only.
 
-When adding `play` tests, keep them on **mock-tier** stories only.
-
-Vitest component tests that need DOM: prefer testing harnesses with injected props ([testing/ui-architecture.md](../testing/ui-architecture.md)) — do not duplicate every story in Vitest unless the interaction is critical.
+When adding `play` tests, keep them on **mock-tier** stories only. DOM-heavy logic: [testing/ui-architecture.md](../testing/ui-architecture.md).
 
 ## Live-tier checklist (optional stories)
 
@@ -79,11 +72,7 @@ Only when integration validation is valuable:
 
 ## Done-when (new UI)
 
-- [ ] Mock-tier story exists for every new export
-- [ ] Story runs with `pnpm dev:ui` only (no API)
-- [ ] Writes use stub `operations` / slice handlers, not live HTTP
-- [ ] a11y panel checked on new stories
-- [ ] Live-tier added only if needed, clearly labeled
+Use the UI section of [developer/done-checklist.md](../developer/done-checklist.md) — mock-tier story, offline render, stub `operations`, a11y panel.
 
 ## Known gaps
 

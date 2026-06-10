@@ -71,13 +71,7 @@ Chunk `done-when` must include **automated proof**, not “looks fine in browser
 
 ## What we do not require (yet)
 
-| Item | Status |
-|------|--------|
-| Story `play` on every story | Target — add for critical flows |
-| `@storybook/addon-vitest` in CI | Wired — CI smoke: `pnpm --filter @wgw/apps run test:storybook:ci`; full catalog locally: `test:storybook` ([#72](https://github.com/WeGotWorkspace/wegotworkspace/issues/72)) |
-| 100% Storybook export audit in CI | Baseline regression guard — `pnpm check:storybook-coverage` ([#72](https://github.com/WeGotWorkspace/wegotworkspace/issues/72)) |
-| UI e2e (Playwright apps) | Not in scope |
-| Strict TDD on every one-line fix | Judgment — skip for typos/docs |
+Enforcement status for Storybook coverage, `play` functions, Vitest smoke, and e2e: [.agents/POLICY.md](../../POLICY.md). Tracking: [#72](https://github.com/WeGotWorkspace/wegotworkspace/issues/72).
 
 ## When to skip test-first
 

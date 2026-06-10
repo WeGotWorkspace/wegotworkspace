@@ -21,6 +21,7 @@ Skill directories use **unprefixed names** (e.g. `api`, `developer`, `storybook`
 | [testing](skills/testing/) | PHPUnit, Vitest, e2e, done-when checklists |
 | [document](skills/document/) | When/where to write docs; templates |
 | [clean-code](skills/clean-code/) | Review checklist — smells.md before handoff |
+| [code-review](skills/code-review/) | PR/handoff gate — smells, done-checklist, policy |
 | [storybook](skills/storybook/) | Offline-first catalog, mock vs live, coverage, cssprops, a11y |
 | [accessibility](skills/accessibility/) | WCAG 2.x compliance |
 | [git-workflow](skills/git-workflow/) | Branching, commits, PRs, signed commits, CI gates |

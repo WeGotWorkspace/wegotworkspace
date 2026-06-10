@@ -24,7 +24,8 @@ Context-loading skill for AI agents and developers working in the WeGotWorkspace
 | Writing or running tests | [testing](../testing/SKILL.md) | [test-first.md](../testing/test-first.md), [ui-architecture.md](../testing/ui-architecture.md) |
 | Writing or updating docs | [document](../document/SKILL.md) | — |
 | Branching / commits / PRs | [git-workflow](../git-workflow/SKILL.md) | [branches.md](../git-workflow/branches.md), [pull-requests.md](../git-workflow/pull-requests.md) |
-| Code quality / review / refactor | [clean-code](../clean-code/SKILL.md) | [smells.md](../clean-code/smells.md) |
+| Code quality / refactor | [clean-code](../clean-code/SKILL.md) | [smells.md](../clean-code/smells.md) |
+| PR review / handoff gate | [code-review](../code-review/SKILL.md) | [done-checklist.md](done-checklist.md), [POLICY.md](../../POLICY.md) |
 | Storybook stories | [storybook](../storybook/SKILL.md) | [offline-first.md](../storybook/offline-first.md), [coverage.md](../storybook/coverage.md) |
 | Accessibility / WCAG | [accessibility](../accessibility/SKILL.md) | [wcag.md](../accessibility/wcag.md) |
 
