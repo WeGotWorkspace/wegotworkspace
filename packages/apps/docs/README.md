@@ -1,0 +1,22 @@
+# Apps package docs
+
+Guides for `packages/apps` — app library structure, rollout, and per-domain reuse maps.
+
+## Package reuse guides
+
+| Package      | Shell                        | README                                |
+| ------------ | ---------------------------- | ------------------------------------- |
+| `mail-core`  | Collection (`WorkspaceApp`)  | [README](../src/mail-core/README.md)  |
+| `drive-core` | Split (`WorkspaceAppLayout`) | [README](../src/drive-core/README.md) |
+| `notes-core` | Collection (`WorkspaceApp`)  | [README](../src/notes-core/README.md) |
+| `admin-core` | Split (`WorkspaceAppLayout`) | [README](../src/admin-core/README.md) |
+| `lib/rtc`    | —                            | [README](../src/lib/rtc/README.md)    |
+
+## Architecture
+
+- [Workspace feature blueprint](../../../.agents/skills/workspace/feature-blueprint.md) — `*App`, `*Workspace`, controller, panes
+- [App library rollout pattern](./rollout-pattern.md) — migrating routes to shared shell components
+
+## Quality gates
+
+- [Apps done gate](../../../.agents/skills/testing/apps-done-gate.md) — `pnpm test:apps-done-gate`

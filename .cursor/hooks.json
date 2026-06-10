@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeShellExecution": [
+      {
+        "command": ".cursor/hooks/reject-pr-attribution.mjs",
+        "matcher": "gh\\s+pr\\s+(create|edit)"
+      }
+    ]
+  }
+}

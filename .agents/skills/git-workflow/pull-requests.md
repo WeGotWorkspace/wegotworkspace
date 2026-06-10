@@ -59,6 +59,7 @@ Fix failing checks before expecting merge.
 
 ## Agent rules
 
+- **Do not** add Cursor attribution to PR titles or bodies (`Made with Cursor`, `Made-with: Cursor`, `Co-authored-by: Cursor`, etc.). CI and project hooks reject it.
 - **Do not** push or open PRs unless the user asks.
 - **Do not** force-push `main`.
 - **Do not** skip hooks (`--no-verify`) unless the user explicitly requests it.
