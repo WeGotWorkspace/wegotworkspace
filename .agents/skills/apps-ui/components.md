@@ -96,7 +96,7 @@ See [testing/ui-architecture.md](../testing/ui-architecture.md).
 
 ### Legacy debt (known gaps)
 
-The tree **does not fully match** the target yet. That is expected — fix incrementally.
+The tree **does not fully match** the target yet. That is expected — fix incrementally. Tracker: [#71](https://github.com/WeGotWorkspace/wegotworkspace/issues/71) (per-product: [#66](https://github.com/WeGotWorkspace/wegotworkspace/issues/66)–[#70](https://github.com/WeGotWorkspace/wegotworkspace/issues/70)).
 
 Common violations to refactor:
 
@@ -117,7 +117,7 @@ When you find a violation outside current task scope, open a GitHub issue (label
 
 ```markdown
 ## Target pattern
-App → operations → controller → pane slices ([.agents/skills/apps-ui/components.md](…))
+App → operations → controller → pane slices (`.agents/skills/apps-ui/components.md`)
 
 ## Current violation
 - File: `packages/apps/src/…`
@@ -135,7 +135,7 @@ App → operations → controller → pane slices ([.agents/skills/apps-ui/compo
 - [ ] Tests mock props, not modules
 ```
 
-Track related issues in epic or checklist if splitting by product (`settings-core`, `meet-core`, …).
+Track related work on [#71](https://github.com/WeGotWorkspace/wegotworkspace/issues/71) or link new issues to per-product refactors ([#66](https://github.com/WeGotWorkspace/wegotworkspace/issues/66)–[#70](https://github.com/WeGotWorkspace/wegotworkspace/issues/70)).
 
 ## Composition
 

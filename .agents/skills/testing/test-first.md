@@ -61,9 +61,11 @@ it("saveProfile calls operations.saveProfile", async () => {
 
 In [plan-feature](../plan-feature/SKILL.md) chunks, order:
 
-1. **Test / story chunk** (failing tests or mock stories) — can run parallel with OpenAPI chunk for API
-2. **Build chunk** — implementation
-3. **Verify chunk** — full suite + done gate
+1. **Red-green chunk** — OpenAPI + failing feature test (API) or mock-tier story (UI); same chunk or immediately before build; may run parallel with unrelated domains
+2. **Build chunk** — implementation until red-green passes
+3. **Verify chunk** — full suite + done gate after build chunks merge
+
+See [developer/multitask.md](../developer/multitask.md) for parallel vs sequential rules.
 
 Chunk `done-when` must include **automated proof**, not “looks fine in browser.”
 
@@ -72,8 +74,8 @@ Chunk `done-when` must include **automated proof**, not “looks fine in browser
 | Item | Status |
 |------|--------|
 | Story `play` on every story | Target — add for critical flows |
-| `@storybook/addon-vitest` in CI | Not wired — see GitHub tracking issue |
-| 100% Storybook export audit in CI | Policy only — audit issue filed |
+| `@storybook/addon-vitest` in CI | Not wired — [#72](https://github.com/WeGotWorkspace/wegotworkspace/issues/72) |
+| 100% Storybook export audit in CI | Policy only — [#72](https://github.com/WeGotWorkspace/wegotworkspace/issues/72) |
 | UI e2e (Playwright apps) | Not in scope |
 | Strict TDD on every one-line fix | Judgment — skip for typos/docs |
 

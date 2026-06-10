@@ -62,7 +62,7 @@ Users and agents should never need the API to click through UI states, open menu
 | Manual | Storybook UI at http://127.0.0.1:6006 | **Supported today** |
 | a11y | `@storybook/addon-a11y` | **Supported** — see [a11y-testing.md](a11y-testing.md) |
 | Story `play` functions | CSF `play` + `@storybook/test` | **Target** — add for critical interactions |
-| Storybook in Vitest | `@storybook/addon-vitest` (in `package.json`) | **Not wired** in `.storybook/main.ts` yet |
+| Storybook in Vitest | `@storybook/addon-vitest` (in `package.json`) | **Not wired** — [#72](https://github.com/WeGotWorkspace/wegotworkspace/issues/72) |
 
 When adding `play` tests, keep them on **mock-tier** stories only.
 
@@ -87,4 +87,4 @@ Only when integration validation is valuable:
 
 ## Known gaps
 
-Coverage is **good but not audited to 100%**. File a Storybook coverage issue when you find an export without mock-tier stories. Do not add live-only stories for components lacking offline coverage.
+Coverage is **good but not audited to 100%**. Tracking: [#72](https://github.com/WeGotWorkspace/wegotworkspace/issues/72) (coverage audit + `@storybook/addon-vitest` wiring). Comment on #72 when you find an export without mock-tier stories. Do not add live-only stories for components lacking offline coverage.

@@ -2,9 +2,13 @@
 
 ## Non-negotiables
 
-**API greenfield:** Work under `packages/api/` is a new Laravel app matching OpenAPI — no legacy PHP in tree. Do not restore `packages/api/src/`, `*Kernel`, `MailApi`, or dual autoload. Reimplement from `packages/api/openapi/openapi.json` + feature tests. Full guidance: [`.agents/skills/api/`](.agents/skills/api/).
+**API greenfield:** Work under `packages/api/` is a new Laravel app matching OpenAPI — no legacy PHP in tree. Do not restore `packages/api/src/`, `*Kernel`, `MailApi`, or dual autoload. Full guidance: [`.agents/skills/api/`](.agents/skills/api/).
 
-**Git:** Do not `git commit` or open PRs unless the user explicitly asks. Branching, signed commits, and PR flow: [`.agents/skills/git-workflow/`](.agents/skills/git-workflow/).
+**Git:** Do not `git commit` or open PRs unless the user explicitly asks. [`.agents/skills/git-workflow/`](.agents/skills/git-workflow/).
+
+## Start here
+
+Load **[developer](.agents/skills/developer/)** for dev layout, skill routing, multitask handoffs, and links to package-specific depth (`docs/dev-layout.md`, API done gate, HTTP routing, storage).
 
 ## Skills index
 
@@ -31,39 +35,3 @@ Load [clean-code](.agents/skills/clean-code/) when building, reviewing, or refac
 ## Multitask
 
 Parallel agents: plan with [plan-feature](.agents/skills/plan-feature/), split per [developer/multitask.md](.agents/skills/developer/multitask.md), verify with [testing](.agents/skills/testing/).
-
-## API (read first for `packages/api` work)
-
-1. Load **[api](.agents/skills/api/)** skill.
-2. Use **`packages/api/openapi/openapi.json`** as the only in-tree API reference — there is **no** legacy PHP to copy.
-3. Before calling API work done, see **`packages/api/docs/api-done-gate.md`**.
-
-**Contract parity ≠ code parity.** Match OpenAPI via feature tests; implement logic in new Laravel layers.
-
-**API done gate:** `pnpm test:api-done-gate` / `composer done-gate` in `packages/api` — see `packages/api/docs/api-done-gate.md`.
-
-**Meet signaling:** Laravel `MeetSignalingService` only — see `packages/api/docs/meet-signaling.md`. Do not restore full `packages/api/src/` or `legacy/Voice/`.
-
-## `packages/api` layout
-
-| Present | Absent (do not restore) |
-|---------|-------------------------|
-| `openapi/`, `scripts/` (typegen), `docs/api-done-gate.md`, Laravel `app/` | `src/`, `legacy/`, `MailApi`, `ApiKernel`, `DomainRouteService`, dual `App\` autoload |
-
-## Dev layout
-
-- **Default:** `pnpm docker:up` + `pnpm dev:ui` → Storybook http://127.0.0.1:6006, API http://127.0.0.1:9080 — see `docs/dev-layout.md`
-- **Edit:** `packages/api` (Laravel), `packages/apps` (UI → `dist/`); install shell `apps/wegotworkspace` is config/data only
-- **Env:** root `.env` (tooling), `packages/api/.env` (Laravel) — `docs/env.md`
-- **Release-like tree:** `pnpm dev:preview` or `pnpm build` syncs into `apps/wegotworkspace/packages/`
-- **Docker / HTTPS / WebDAV:** `docker/README.md`; API e2e (local): `pnpm test:api-e2e:docker`
-
-## HTTP routing
-
-- **REST:** `routes/api.php` (`/api/v1/*`)
-- **UI + WebDAV:** `routes/web.php` → `WgwFrontController` (`UiStaticFront` then `SabreWebdavFront`)
-- **Install front door:** `apps/wegotworkspace/index.php` → `packages/api/public/index.php` only
-
-## Storage (when implementing)
-
-File I/O for drive, notes, plugins, and WebDAV **files** uses Laravel **Flysystem** (`WgwStorage`). See [`.agents/skills/api/storage-flysystem.md`](.agents/skills/api/storage-flysystem.md).
