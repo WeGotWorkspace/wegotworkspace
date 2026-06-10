@@ -11,6 +11,7 @@
 | Good fit | Examples |
 |----------|----------|
 | Pure functions | `meet-room-id.test.ts`, `auth-token.test.ts` |
+| Injected dependencies | Components with slice handlers or `operations` — mock props, not modules ([apps-ui/components.md](../apps-ui/components.md)) |
 | Session / protocol logic | `peer-mesh.test.ts`, `meet-control-messages.test.ts` |
 | Hooks (with RTL) | `use-meet-inbound-media-hints.test.tsx` |
 | Config / env parsing | `config.test.ts`, `force-relay.test.ts` |
@@ -28,7 +29,7 @@ See [storybook/coverage.md](../storybook/coverage.md).
 ## Practices
 
 - Prefer testing public module exports over private helpers.
-- Mock HTTP at `lib/api/wgw` boundaries; use fixtures for stable shapes.
+- Mock HTTP at `lib/api/wgw` boundaries in **App/controller tests** only — prefer **`operations`** / **`*Fn` props** in component tests so panes never import the client ([apps-ui/components.md](../apps-ui/components.md)).
 - Avoid snapshot tests unless output is stable and high-value.
 - Keep tests fast (F.I.R.S.T. — see [clean-code](../clean-code/SKILL.md)).
 

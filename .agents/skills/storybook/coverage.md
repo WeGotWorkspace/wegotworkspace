@@ -25,6 +25,7 @@ Global `tags: ["autodocs"]` in `.storybook/preview.ts`. Use `component` in `meta
 2. Prefer `args` + `argTypes` for knob-driven primitives.
 3. Use harness components for panes needing providers (see [fixtures.md](fixtures.md)).
 4. Run Storybook a11y panel on new stories ([a11y-testing.md](a11y-testing.md)).
+5. Side-effectful panes: stub **slice handlers** or omit **`operations`** per [apps-ui/components.md](../apps-ui/components.md). Use **`saveFn`** only for shared generic widget stories.
 
 ## Vitest vs Storybook
 

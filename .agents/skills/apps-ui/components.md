@@ -19,6 +19,124 @@ Extends primitive API rules in [SKILL.md](SKILL.md). For *App / *Workspace split
 - **Callbacks upward** for shell-owned flows: `onLogout`, navigation — workspace must not call `window.location` ([workspace](../workspace/SKILL.md)).
 - Optional props with sensible defaults; avoid required props that are always the same at every callsite.
 
+## Dependency injection (target standard)
+
+**Goal:** one consistent pipeline so every layer is testable without module mocks. Side effects enter **only through props** — never by importing `@/lib/api/wgw/*` inside panes, composites, or primitives.
+
+### Target pipeline (all new work)
+
+```text
+*App  →  use*API / createOperations()  →  operations
+       →  use*Controller({ operations })  →  slices (data + bound handlers)
+       →  *Pane({ profile | mail | … })  →  primitives (onClick only)
+```
+
+| Layer | Receives | Calls API? |
+|-------|----------|------------|
+| **`*App`** | route, API base URL | Builds **`operations`** via `use*API` |
+| **`use*Controller`** | optional **`operations`** | **Only** layer that invokes `operations.*` (besides App wiring) |
+| **`*Pane`** | **slice** (data + handlers like `saveProfile`) | **Never** — handlers already bound upstream |
+| **Primitive / composite** | `onClick`, `onChange`, … | **Never** |
+
+Reference: [feature-blueprint](../workspace/feature-blueprint.md) (`operations` optional in stories).
+
+**Pane props use slice handlers, not `saveFn`.** The injected dependency is the handler on the slice (`profile.saveProfile`), wired in the controller from `operations`. Same idea as `saveFn`, different shape — **one convention for product UI**.
+
+```tsx
+// ✅ target — pane
+<SettingsProfilePane profile={profile} />
+
+// ✅ target — controller binds operations to slice
+const saveProfile = form.handleSubmit(async (values) => {
+  await operations?.saveProfile?.(mapProfile(values));
+});
+
+// ❌ avoid — pane imports API
+function SettingsProfilePane() {
+  await wgwFetch("/settings/profile", …);
+}
+```
+
+### When `*Fn` / `on*` is allowed
+
+Use **`*Fn` + `on*`** only for **shared, product-agnostic** components (candidates for `@/ui`), not for `*-core` panes:
+
+| Context | Convention |
+|---------|------------|
+| Product pane (`*-core`) | **`operations` → slice handlers** |
+| Shared generic widget | **`*Fn`** (work) + **`on*`** (after) |
+
+Do not mix `saveFn` on a settings pane and `operations` on admin — product code follows the slice pattern.
+
+### Naming (slice handlers)
+
+| Prop | Purpose |
+|------|---------|
+| `saveProfile`, `refreshState`, … | Bound handler on a domain slice (preferred for panes) |
+| `onLogout`, `onNavigate`, … | Shell callbacks ([workspace](../workspace/SKILL.md)) |
+| `saveFn`, `fetchFn` | Shared generic components only |
+
+### Tests (Vitest)
+
+Mock at the **prop boundary** — inject fake `operations` in controller tests, or pass slices with `vi.fn()` handlers to panes:
+
+```tsx
+const saveProfile = vi.fn().mockResolvedValue(undefined);
+render(<SettingsProfilePane profile={{ …profile, saveProfile }} />);
+await userEvent.click(screen.getByRole("button", { name: /save/i }));
+expect(saveProfile).toHaveBeenCalled();
+```
+
+See [testing/ui-architecture.md](../testing/ui-architecture.md).
+
+### Storybook
+
+- **Workspace stories:** omit **`operations`** or pass no-ops; slices use stub handlers (see settings harnesses).
+- **Shared widget stories:** stub **`saveFn`** / **`on*`** in `args`.
+
+### Legacy debt (known gaps)
+
+The tree **does not fully match** the target yet. That is expected — fix incrementally.
+
+Common violations to refactor:
+
+- **`@/lib/api/wgw/*` imports in `use*Controller`** (should use `operations` only) — e.g. meet/docs controllers
+- **Direct API calls in panes or composites**
+- **Ad hoc `*Fn` on product panes** instead of slice handlers
+- **Missing `operations?`** — component unreachable in stories without module mocks
+
+**Do not** block feature work to refactor unrelated files. **Do** follow the target for code you touch; file issues for remaining debt.
+
+### Filing refactor issues
+
+When you find a violation outside current task scope, open a GitHub issue (label `refactor` / `tech-debt` if available):
+
+**Title:** `refactor(apps-ui): inject operations in <area> — remove direct wgw imports`
+
+**Body template:**
+
+```markdown
+## Target pattern
+App → operations → controller → pane slices ([.agents/skills/apps-ui/components.md](…))
+
+## Current violation
+- File: `packages/apps/src/…`
+- What: imports `@/lib/api/wgw/…` in controller | pane | …
+
+## Proposed change
+- Move calls behind `operations` on `*APIOperations`
+- Pass slice handlers to panes
+- Update stories/tests to use prop injection
+
+## Acceptance
+- [ ] No `@/lib/api/wgw` imports in listed pane/composite files
+- [ ] Controller uses `operations?.*` only (or documents exception)
+- [ ] Story renders without live API
+- [ ] Tests mock props, not modules
+```
+
+Track related issues in epic or checklist if splitting by product (`settings-core`, `meet-core`, …).
+
 ## Composition
 
 - Reuse `@/ui` and shared packages before inventing product-prefixed clones.
