@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { EditorContent } from "@tiptap/react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { expect, screen, userEvent, within } from "storybook/test";
 import { TextEditorSlashMenu } from "@/text-editor-core/src/text-editor-slash-menu";
 import { useTextEditor } from "@/text-editor-core/src/use-text-editor";
 
@@ -52,5 +53,12 @@ export const Default: Story = {
 
 export const Filtered: Story = {
   name: "Filtered query",
+  tags: ["vitest-ci"],
   render: () => <SlashMenuHarness query="head" />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const headingOption = await screen.findByRole("option", { name: /Heading 1/i });
+    await userEvent.click(headingOption);
+    await expect(canvas.getByRole("heading", { level: 1 })).toBeInTheDocument();
+  },
 };

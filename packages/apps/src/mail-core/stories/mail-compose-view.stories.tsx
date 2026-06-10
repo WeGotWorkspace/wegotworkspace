@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { expect, userEvent, within } from "storybook/test";
 import { MailComposeView } from "@/mail-core/src/mail-compose-view";
 import { mailStoryLabels } from "@/mail-core/src/mail-app.stories.fixtures";
 import { createComposeAttachment } from "@/mail-core/src/mail-compose-utils";
@@ -84,7 +85,17 @@ export default meta;
 type Story = StoryObj<typeof MailComposeViewHarness>;
 
 export const NewMessage: Story = {
+  tags: ["vitest-ci"],
   args: { mode: "new" },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const subject = canvas.getByPlaceholderText("Subject");
+    await userEvent.type(subject, "Quarterly update");
+    await expect(subject).toHaveValue("Quarterly update");
+    await userEvent.click(canvas.getByRole("button", { name: "(B)cc" }));
+    await expect(canvas.queryByRole("button", { name: "(B)cc" })).not.toBeInTheDocument();
+    await expect(canvas.getAllByPlaceholderText("Optional").length).toBeGreaterThanOrEqual(1);
+  },
 };
 
 export const Reply: Story = {

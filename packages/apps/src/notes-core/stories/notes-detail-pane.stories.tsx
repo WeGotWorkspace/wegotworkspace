@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { expect, userEvent, within } from "storybook/test";
 import { NoteDetailView } from "@/note-detail-view/src/note-detail-view";
 import { getNotesDetailStoryProps } from "./notes-pane-stories.fixtures";
 import { NotesStoryScope } from "./notes-story-scope";
@@ -51,7 +52,15 @@ export default meta;
 type Story = StoryObj<typeof NotesDetailPaneHarness>;
 
 export const Editable: Story = {
+  tags: ["vitest-ci"],
   args: {},
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const title = canvas.getByRole("heading", { name: /Architecture of Quiet/i });
+    await userEvent.clear(title);
+    await userEvent.type(title, "Updated note title");
+    await expect(title).toHaveTextContent("Updated note title");
+  },
 };
 
 export const ReadOnly: Story = {
