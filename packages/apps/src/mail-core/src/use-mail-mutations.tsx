@@ -9,6 +9,7 @@ import {
   composeDraftHasContent,
   composeDraftToApiPayload,
   isComposeDraftDirty,
+  randomDraftUid,
   serializeComposeSnapshot,
 } from "@/mail-core/src/mail-compose-utils";
 import {
@@ -242,7 +243,7 @@ export function useMailMutations({ shell, list }: UseMailMutationsArgs) {
       const draft: Mail = {
         id,
         folder: encodeFolderToken("Drafts"),
-        uid: Math.floor(Math.random() * 1_000_000_000),
+        uid: randomDraftUid(),
         from: selfLabel,
         email: session.user.email ?? "",
         notebook: selfLabel,
