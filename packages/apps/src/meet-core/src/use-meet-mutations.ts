@@ -14,9 +14,7 @@ export type UseMeetMutationsArgs = {
   room: MeetRoomState;
   session: MeetCallSessionState;
   canModerateKnocks: boolean;
-  leaveRef: MutableRefObject<
-    null | ((opts?: { preserveEndedMessage?: boolean }) => Promise<void>)
-  >;
+  leaveRef: MutableRefObject<null | ((opts?: { preserveEndedMessage?: boolean }) => Promise<void>)>;
 };
 
 export function useMeetMutations({

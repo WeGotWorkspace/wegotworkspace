@@ -22,9 +22,9 @@ export function useMeetController({
   rtc,
   operations,
 }: UseMeetControllerArgs) {
-  const leaveRef = useRef<
-    null | ((opts?: { preserveEndedMessage?: boolean }) => Promise<void>)
-  >(null);
+  const leaveRef = useRef<null | ((opts?: { preserveEndedMessage?: boolean }) => Promise<void>)>(
+    null,
+  );
 
   const room = useMeetRoomState({
     defaultDisplayName,

@@ -14,7 +14,9 @@ export function useMeetRoomState({ defaultDisplayName, sessionDisplayName }: Use
   const [error, setError] = useState<string | null>(null);
   const [roomCode, setRoomCode] = useState<string | null>(null);
   const [selfId, setSelfId] = useState<string | null>(null);
-  const [displayName, setDisplayName] = useState(defaultDisplayName || sessionDisplayName || "Guest");
+  const [displayName, setDisplayName] = useState(
+    defaultDisplayName || sessionDisplayName || "Guest",
+  );
   const [micOn, setMicOn] = useState(true);
   const [videoOn, setVideoOn] = useState(true);
   const [screenOn, setScreenOn] = useState(false);

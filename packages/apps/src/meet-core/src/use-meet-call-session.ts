@@ -22,9 +22,7 @@ export type UseMeetCallSessionArgs = {
   rtc: MeetRtcSettings;
   operations?: MeetAPIOperations;
   isGuestSession: boolean;
-  leaveRef: MutableRefObject<
-    null | ((opts?: { preserveEndedMessage?: boolean }) => Promise<void>)
-  >;
+  leaveRef: MutableRefObject<null | ((opts?: { preserveEndedMessage?: boolean }) => Promise<void>)>;
 };
 
 export function useMeetCallSession({
@@ -44,9 +42,12 @@ export function useMeetCallSession({
     (mic: boolean, camera: boolean, screen?: boolean) => Promise<void>
   >(async () => {});
 
-  const debugRtc = useCallback((event: string, payload: Record<string, unknown> = {}) => {
-    rtcLog({ channel: "meet", peerId: room.selfIdRef.current }, event, payload);
-  }, [room.selfIdRef]);
+  const debugRtc = useCallback(
+    (event: string, payload: Record<string, unknown> = {}) => {
+      rtcLog({ channel: "meet", peerId: room.selfIdRef.current }, event, payload);
+    },
+    [room.selfIdRef],
+  );
 
   const handlePollData = useMeetPollHandler({
     selfIdRef: room.selfIdRef,
