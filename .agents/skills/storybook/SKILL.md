@@ -21,6 +21,7 @@ Addons in use: `@storybook/addon-a11y`, `@ljcl/storybook-addon-cssprops`, `@stor
 | CSS variable knobs | [cssprops.md](cssprops.md) |
 | Harnesses / fixtures / router | [fixtures.md](fixtures.md) |
 | Accessibility testing | [a11y-testing.md](a11y-testing.md) → [accessibility](../accessibility/SKILL.md) |
+| Chromatic / visual regression (opt-in) | [chromatic.md](chromatic.md) |
 
 ## CSF3 baseline
 

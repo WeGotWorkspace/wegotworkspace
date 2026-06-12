@@ -72,7 +72,7 @@ Chunk `done-when` must include **automated proof**, not “looks fine in browser
 
 ## What we do not require (yet)
 
-Enforcement status for Storybook coverage, `play` functions, Vitest smoke, and e2e: [.agents/POLICY.md](../../POLICY.md). Apps measurable done criteria: [apps-done-gate.md](apps-done-gate.md). Coverage audit closed ([#72](https://github.com/WeGotWorkspace/wegotworkspace/issues/72) / [#76](https://github.com/WeGotWorkspace/wegotworkspace/pull/76)); expand `play` / WCAG / Chromatic over time.
+Enforcement status for Storybook coverage, `play` functions, Vitest smoke, and e2e: [.agents/POLICY.md](../../POLICY.md). Apps measurable done criteria: [apps-done-gate.md](apps-done-gate.md). Coverage audit closed ([#72](https://github.com/WeGotWorkspace/wegotworkspace/issues/72) / [#76](https://github.com/WeGotWorkspace/wegotworkspace/pull/76)); expand `play` / WCAG / [Chromatic](../storybook/chromatic.md) over time.
 
 ## When to skip test-first
 

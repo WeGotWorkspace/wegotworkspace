@@ -102,11 +102,23 @@ Add contract coverage when introducing a new `*UIData` mapper or changing OpenAP
 3. **`vitest-ci` + `play`** for one critical interaction per touched product pane.
 4. Run **`pnpm run test:done-gate`** before handoff.
 
+## Chromatic (optional — out of done gate)
+
+Visual regression via [Chromatic](https://www.chromatic.com/) is wired in CI but **dormant** ([#85](https://github.com/WeGotWorkspace/wegotworkspace/issues/85)). It is not run by `pnpm test:apps-done-gate`.
+
+| Aspect | Policy |
+|--------|--------|
+| Required for merge | **No** — optional until maintainers enable and optionally add as required check |
+| CI gating | **`exitZeroOnChanges: true`** — publish for review; unreviewed diffs do not fail CI |
+| Snapshot scope | Dedicated job uses **`onlyChanged: true`** (TurboSnap) |
+| Enablement | Repo variable `CHROMATIC_ENABLED=true` + secret `CHROMATIC_PROJECT_TOKEN` |
+
+Setup, CI wiring, and maintainer checklist: [storybook/chromatic.md](../storybook/chromatic.md).
+
 ## Out of scope for this gate
 
 - **Live-tier stories** (`Live …`) — manual smoke only.
 - **Apps Playwright e2e** — not in CI.
-- **Chromatic** — optional; enable with repo variable `CHROMATIC_ENABLED=true` and `CHROMATIC_PROJECT_TOKEN` secret (see `.github/workflows/ci.yml`).
 - **Full Storybook Vitest catalog** — run locally: `pnpm --filter @wgw/apps run test:storybook`.
 
 ## Definition of done (UI slice)
