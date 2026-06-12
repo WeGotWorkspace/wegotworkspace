@@ -203,6 +203,7 @@ export function MailComposeView({
         ref={fileInputRef}
         type="file"
         multiple
+        aria-label={attachFilesLabel}
         className="mail-compose-view__attachments-input"
         onChange={handleFilesSelected}
       />

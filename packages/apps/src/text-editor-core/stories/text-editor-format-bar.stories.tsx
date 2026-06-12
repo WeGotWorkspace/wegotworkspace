@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { expect, userEvent, within } from "storybook/test";
 import { EditorContent } from "@tiptap/react";
 import {
   TextEditorFormatBar,
@@ -71,11 +72,18 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Html: Story = {
+  tags: ["vitest-ci"],
   args: {
     format: "html",
     groups: [...TEXT_EDITOR_FORMAT_BAR_GROUPS],
     showPrint: true,
     editable: true,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const bold = canvas.getByTitle("Bold");
+    await userEvent.click(bold);
+    await expect(bold).toHaveAttribute("aria-pressed", "true");
   },
 };
 

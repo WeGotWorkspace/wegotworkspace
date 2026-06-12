@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { expect, userEvent, within } from "storybook/test";
 import { DRIVE_DOCS_EDITOR_STORY_FILES } from "@/drive-core/src/drive-docs-story-files";
@@ -8,8 +9,10 @@ import { DriveStoryScope } from "@/drive-core/stories/drive-story-scope";
 
 function DriveMainPaneHarness({
   preset = "default",
+  viewMode = "grid",
 }: {
   preset?: "default" | "empty" | "docsEditor";
+  viewMode?: "grid" | "list";
 }) {
   const controller = useDrivePaneStoryController(
     preset === "empty"
@@ -23,6 +26,11 @@ function DriveMainPaneHarness({
           }
         : undefined,
   );
+  const { setViewMode } = controller;
+
+  useEffect(() => {
+    setViewMode(viewMode);
+  }, [setViewMode, viewMode]);
 
   return (
     <DriveStoryScope className="flex h-dvh flex-col">
@@ -41,6 +49,10 @@ const meta = {
     preset: {
       control: "select",
       options: ["default", "empty", "docsEditor"],
+    },
+    viewMode: {
+      control: "radio",
+      options: ["grid", "list"],
     },
   },
 } satisfies Meta<typeof DriveMainPaneHarness>;
@@ -66,4 +78,17 @@ export const Empty: Story = {
 export const DocsEditorFiles: Story = {
   name: "Docs editor files (.md + .txt)",
   args: { preset: "docsEditor" },
+};
+
+export const ListView: Story = {
+  name: "List view (table)",
+  tags: ["vitest-ci"],
+  args: { preset: "default", viewMode: "list" },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByRole("table")).toBeInTheDocument();
+    const studioAssets = canvas.getByText("Studio Assets");
+    await userEvent.click(studioAssets);
+    await expect(studioAssets.closest("tr")).toHaveClass(/drive-list-row--selected/);
+  },
 };
