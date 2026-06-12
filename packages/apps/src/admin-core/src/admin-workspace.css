@@ -88,3 +88,9 @@
   --primary-foreground: #ffffff;
   --segmented-control-track-active-bg: var(--button-primary-bg);
 }
+
+/* Storybook pane stories: cream canvas without inline layout presets. */
+.admin-workspace.admin-story-scope {
+  min-height: 100dvh;
+  background-color: var(--workspace-root-bg, var(--color-cream, #ffffff));
+}

@@ -12,25 +12,25 @@ describe("getServerCheckVisual", () => {
   it("maps error statuses to failure visuals", () => {
     expect(getServerCheckVisual({ ok: false, status: "error" })).toEqual({
       Icon: CircleX,
-      color: "#b14242",
+      tone: "error",
     });
   });
 
   it("maps warnings and unknown detail to warning visuals", () => {
     expect(getServerCheckVisual({ ok: true, status: "warn" })).toEqual({
       Icon: AlertTriangle,
-      color: "#c98a1f",
+      tone: "warning",
     });
     expect(getServerCheckVisual({ ok: true, detail: "unknown provider" })).toEqual({
       Icon: AlertTriangle,
-      color: "#c98a1f",
+      tone: "warning",
     });
   });
 
   it("maps healthy checks to success visuals", () => {
     expect(getServerCheckVisual({ ok: true, status: "ok" })).toEqual({
       Icon: CheckCircle2,
-      color: "#3a8f5a",
+      tone: "success",
     });
   });
 });

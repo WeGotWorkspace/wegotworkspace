@@ -190,3 +190,15 @@
 :is(.admin-workspace, .admin-dialog-surface) .admin-server-check-item {
   @apply px-0 py-2 text-(--color-ink) hover:bg-transparent focus-visible:ring-0;
 }
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-server-check-icon[data-check-tone="error"] {
+  color: #b14242;
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-server-check-icon[data-check-tone="warning"] {
+  color: #c98a1f;
+}
+
+:is(.admin-workspace, .admin-dialog-surface) .admin-server-check-icon[data-check-tone="success"] {
+  color: #3a8f5a;
+}

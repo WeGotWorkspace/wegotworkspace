@@ -222,12 +222,12 @@ export function AdminUpdatesPane({
         <div className="space-y-1">
           {controller.updates.checks.map((check, index) =>
             (() => {
-              const { Icon, color } = getServerCheckVisual(check);
+              const { Icon, tone } = getServerCheckVisual(check);
               return (
                 <MenuItem
                   key={`${check.label}-${index}`}
                   className="admin-server-check-item"
-                  icon={<Icon style={{ color }} />}
+                  icon={<Icon className="admin-server-check-icon" data-check-tone={tone} />}
                   label={check.label}
                   description={check.detail}
                 />
