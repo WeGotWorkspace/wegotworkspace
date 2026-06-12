@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, type CSSProperties } from "react";
 import { Archive, Check } from "lucide-react";
 import {
   SwipeableListItem,
@@ -6,6 +6,7 @@ import {
   TrailingActions,
   LeadingActions,
 } from "react-swipeable-list";
+import "./list-item.css";
 
 export type SwipeAction = {
   icon: React.ReactNode;
@@ -65,6 +66,19 @@ const LONG_PRESS_DELAY_MS = 450;
 const TOUCH_MOVE_CANCEL_PX = 8;
 const DESTRUCTIVE_CALLBACK_DELAY_MS = 380;
 
+function themeToCssVars(theme: Partial<ListItemTheme>): CSSProperties {
+  const vars: Record<string, string> = {};
+  if (theme.baseBackground) vars["--list-item-base-bg"] = theme.baseBackground;
+  if (theme.activeBackground) vars["--list-item-active-bg"] = theme.activeBackground;
+  if (theme.selectedBackground) vars["--list-item-selected-bg"] = theme.selectedBackground;
+  if (theme.borderColor) vars["--list-item-border-color"] = theme.borderColor;
+  if (theme.accentColor) vars["--list-item-accent-color"] = theme.accentColor;
+  if (theme.titleColor) vars["--list-item-title-color"] = theme.titleColor;
+  if (theme.mutedColor) vars["--list-item-muted-color"] = theme.mutedColor;
+  if (theme.bodyColor) vars["--list-item-body-color"] = theme.bodyColor;
+  return vars as CSSProperties;
+}
+
 export function ListItem({
   id,
   title,
@@ -89,6 +103,7 @@ export function ListItem({
   theme,
 }: ListItemProps) {
   const palette = { ...defaultTheme, ...theme };
+  const themeVars = theme ? themeToCssVars(palette) : undefined;
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressFired = useRef(false);
   const longPressBlockedBySwipeRef = useRef(false);
@@ -123,16 +138,13 @@ export function ListItem({
     touchStartYRef.current = null;
   };
 
-  const bg = isSelected
-    ? palette.selectedBackground
-    : isActive
-      ? palette.activeBackground
-      : palette.baseBackground;
-
   const button = (
     <button
       type="button"
       data-list-item-id={id}
+      data-active={isActive ? "true" : "false"}
+      data-selected={isSelected ? "true" : "false"}
+      data-selection-mode={selectionMode ? "true" : "false"}
       onClick={(e) => {
         if (longPressFired.current || longPressBlockedBySwipeRef.current) {
           e.preventDefault();
@@ -160,39 +172,22 @@ export function ListItem({
         e.dataTransfer.setData("text/plain", id);
       }}
       onDragEnd={onDragEnd}
-      className={`relative w-full text-left px-4 py-3 md:px-6 md:py-4 border-b transition-colors block select-none outline-none focus:outline-none ${
+      className={`list-item__button relative w-full text-left px-4 py-3 md:px-6 md:py-4 border-b block select-none outline-none focus:outline-none ${
         isDragging ? "opacity-40" : ""
       } ${selectionMode ? "pl-9 md:pl-11" : ""}`}
-      style={{
-        backgroundColor: bg,
-        borderColor: palette.borderColor,
-        outlineColor: palette.accentColor,
-        transition: "padding 180ms ease, background-color 150ms ease",
-      }}
+      style={themeVars}
     >
       <span
         aria-hidden
-        className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 transition-opacity duration-150"
-        style={{ opacity: selectionMode ? 1 : 0 }}
+        className="list-item__checkbox-wrap absolute left-3 md:left-4 top-1/2 -translate-y-1/2"
       >
-        <span
-          className="inline-flex size-4 items-center justify-center rounded-[4px] border"
-          style={{
-            borderColor: isSelected
-              ? palette.accentColor
-              : "color-mix(in oklab, var(--color-ink) 30%, transparent)",
-            backgroundColor: isSelected ? palette.accentColor : "transparent",
-          }}
-        >
+        <span className="list-item__checkbox inline-flex size-4 items-center justify-center rounded-[4px] border">
           {isSelected ? <Check className="size-3 text-white" strokeWidth={2.75} /> : null}
         </span>
       </span>
 
       <div className="flex justify-between items-baseline mb-1 gap-3">
-        <span
-          className="text-sm font-semibold truncate min-w-0 font-sans"
-          style={{ color: palette.bodyColor }}
-        >
+        <span className="list-item__subtitle text-sm font-semibold truncate min-w-0 font-sans">
           {subtitle}
         </span>
         <span className="flex items-center gap-1.5 shrink-0">
@@ -201,25 +196,18 @@ export function ListItem({
               {icon}
             </span>
           ))}
-          <span className="text-xs tabular-nums" style={{ color: palette.mutedColor }}>
-            {date}
-          </span>
+          <span className="list-item__date text-xs tabular-nums">{date}</span>
         </span>
       </div>
 
       <h3
-        className="text-base font-medium leading-tight mb-1 tracking-tight truncate"
-        style={{
-          fontFamily: "var(--font-sans)",
-          color: title
-            ? palette.titleColor
-            : "color-mix(in oklab, var(--color-ink) 35%, transparent)",
-        }}
+        className="list-item__title text-base font-medium leading-tight mb-1 tracking-tight truncate"
+        data-empty={title ? "false" : "true"}
       >
         {title || emptyTitle}
       </h3>
 
-      <p className="text-sm leading-relaxed line-clamp-1" style={{ color: palette.bodyColor }}>
+      <p className="list-item__body text-sm leading-relaxed line-clamp-1">
         {text || (!title ? emptyText : "")}
       </p>
     </button>
@@ -234,8 +222,8 @@ export function ListItem({
         destructive={swipeLeftAction.destructive}
       >
         <div
-          className="flex items-center justify-center text-white text-xs font-medium gap-1 flex-col w-full"
-          style={{ backgroundColor: swipeLeftAction.color, minWidth: 80 }}
+          className="list-item__swipe-action flex items-center justify-center text-white text-xs font-medium gap-1 flex-col w-full"
+          style={{ "--list-item-swipe-bg": swipeLeftAction.color } as CSSProperties}
         >
           {swipeLeftAction.icon}
           {swipeLeftAction.label ?? "Action"}
@@ -251,8 +239,8 @@ export function ListItem({
         destructive={swipeRightAction.destructive}
       >
         <div
-          className="flex items-center justify-center text-white text-xs font-medium gap-1 flex-col w-full"
-          style={{ backgroundColor: swipeRightAction.color, minWidth: 80 }}
+          className="list-item__swipe-action flex items-center justify-center text-white text-xs font-medium gap-1 flex-col w-full"
+          style={{ "--list-item-swipe-bg": swipeRightAction.color } as CSSProperties}
         >
           {swipeRightAction.icon ?? <Archive className="size-5" />}
           {swipeRightAction.label ?? "Action"}

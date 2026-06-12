@@ -1,5 +1,18 @@
 @import "../../styles.css" reference;
 
+.multi-selection-view__icon-ring {
+  background-color: color-mix(in oklab, var(--color-ink) 8%, transparent);
+  color: color-mix(in oklab, var(--color-ink) 70%, transparent);
+}
+
+.multi-selection-view__label {
+  color: color-mix(in oklab, var(--color-ink) 55%, transparent);
+}
+
+.multi-selection-view__title {
+  color: var(--color-ink);
+}
+
 .multi-selection-view__actions {
   --button-subtle-color: color-mix(in oklab, var(--color-ink) 70%, transparent);
   --button-subtle-background: color-mix(in oklab, var(--color-ink) 6%, transparent);
