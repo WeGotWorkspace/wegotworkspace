@@ -1,10 +1,18 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+} from "react";
 import { Star, StarOff, Upload, FolderPlus, Pencil, ScrollText } from "lucide-react";
 import { useAppToast } from "@/hooks/use-app-toast";
-import { useEntityBatchActions } from "@/hooks/use-entity-batch-actions";
 import { useIsTouch } from "@/hooks/use-is-touch";
-import { useQueuedMutation } from "@/hooks/use-queued-mutation";
-import { useSidebarListDrag } from "@/hooks/use-sidebar-list-drag";
+import { useSelectionResetOnKeyChange } from "@/hooks/use-selection-reset-on-key-change";
+import { useWorkspaceListController } from "@/hooks/use-workspace-list-controller";
+import { useWorkspaceListKeyboardShortcuts } from "@/hooks/use-workspace-list-keyboard-shortcuts";
 import { canMoveDriveItemsToFolder } from "@/drive-core/src/drive-item-path";
 import { useDriveBatchActions } from "@/drive-core/src/use-drive-batch-actions";
 import { driveLabels } from "@/drive-core/src/drive-labels";
@@ -158,12 +166,9 @@ export function useDriveController({
     [isViewControlled, onViewChange],
   );
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [lastClickedId, setLastClickedId] = useState<string | null>(null);
   const [starred, setStarred] = useState<Record<string, boolean>>({});
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [selectionMode, setSelectionMode] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [newFolderDialogOpen, setNewFolderDialogOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
@@ -455,17 +460,34 @@ export function useDriveController({
     return hydratedFolderPath !== view.path;
   }, [currentUsername, hydratedFolderPath, listLoading, operations, view]);
 
-  const { beginOptimisticUpdate } = useEntityBatchActions<DriveFile>({
+  const visibleIds = useMemo(() => visibleItems.map((file) => file.id), [visibleItems]);
+
+  const {
+    selectedIds,
+    setSelectedIds,
+    selectionMode,
+    setSelectionMode,
+    handleSelect: listHandleSelect,
+    enterSelectionFor,
+    exitSelection,
+    isItemDragging,
+    itemDragHandlers,
+    sidebarDropZoneProps,
+    beginOptimisticUpdate,
+    queueMutation,
+    undoLatest,
+    navigateListByKeyboard,
+  } = useWorkspaceListController<DriveFile>({
     items: files,
     setItems: setFiles,
-    visibleIds: visibleItems.map((file) => file.id),
+    visibleIds,
     activeId: activeId ?? "",
-    setActiveId,
-  });
-  const { queueMutation } = useQueuedMutation({
-    delayMs: WRITE_QUEUE_DELAY_MS,
+    setActiveId: (id) => setActiveId(id),
+    onPrimarySelect: (id) => setActiveId(id),
     onMutationError: showMutationError,
+    queueDelayMs: WRITE_QUEUE_DELAY_MS,
   });
+
   const { moveToTrash, reallyDelete, batchStar, moveToFolder } = useDriveBatchActions({
     files,
     setFiles,
@@ -508,10 +530,14 @@ export function useDriveController({
   const viewLabel = breadcrumbs[breadcrumbs.length - 1].label;
   const viewResetKey = view.type === "folder" ? `${view.type}:${view.path}` : view.type;
 
+  useSelectionResetOnKeyChange({
+    resetKey: viewResetKey,
+    setSelectedIds,
+    setSelectionMode,
+  });
+
   useEffect(() => {
-    setSelectedIds([]);
     setActiveId(null);
-    setSelectionMode(false);
     setDetailOpen(false);
     setRenameDialog(null);
     lastTouchTapRef.current = null;
@@ -688,55 +714,27 @@ export function useDriveController({
     }
   };
 
-  const handleSelect = (id: string, e: React.MouseEvent) => {
-    if (isTouch && !selectionMode && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
-      const now = Date.now();
-      const lastTap = lastTouchTapRef.current;
-      if (lastTap && lastTap.id === id && now - lastTap.at < 350) {
-        const tappedItem = visibleItems.find((file) => file.id === id);
-        if (tappedItem) {
-          lastTouchTapRef.current = null;
-          openFile(tappedItem);
-          return;
+  const handleSelect = useCallback(
+    (id: string, e: ReactMouseEvent) => {
+      if (isTouch && !selectionMode && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
+        const now = Date.now();
+        const lastTap = lastTouchTapRef.current;
+        if (lastTap && lastTap.id === id && now - lastTap.at < 350) {
+          const tappedItem = visibleItems.find((file) => file.id === id);
+          if (tappedItem) {
+            lastTouchTapRef.current = null;
+            openFile(tappedItem);
+            return;
+          }
         }
+        lastTouchTapRef.current = { id, at: now };
+      } else if (!isTouch) {
+        lastTouchTapRef.current = null;
       }
-      lastTouchTapRef.current = { id, at: now };
-    } else if (!isTouch) {
-      lastTouchTapRef.current = null;
-    }
-
-    if (selectionMode) {
-      setSelectedIds((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
-      setLastClickedId(id);
-      return;
-    }
-    if (e.shiftKey && lastClickedId) {
-      const ids = visibleItems.map((f) => f.id);
-      const a = ids.indexOf(lastClickedId);
-      const b = ids.indexOf(id);
-      if (a === -1 || b === -1) setSelectedIds([id]);
-      else {
-        const [s, eIdx] = a < b ? [a, b] : [b, a];
-        setSelectedIds(ids.slice(s, eIdx + 1));
-      }
-    } else if (e.metaKey || e.ctrlKey) {
-      setSelectedIds((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
-      setLastClickedId(id);
-    } else {
-      setSelectedIds([id]);
-      setLastClickedId(id);
-      setActiveId(id);
-    }
-  };
-
-  const enterSelectionFor = (id: string) => {
-    setSelectionMode(true);
-    setSelectedIds((p) => (p.includes(id) ? p : [...p, id]));
-  };
-  const exitSelection = () => {
-    setSelectionMode(false);
-    setSelectedIds(activeId ? [activeId] : []);
-  };
+      listHandleSelect(id, e);
+    },
+    [isTouch, listHandleSelect, openFile, selectionMode, visibleItems],
+  );
 
   const fileById = (id: string) =>
     (liveSearchResults?.find((file) => file.id === id) ?? files.find((file) => file.id === id)) ||
@@ -783,9 +781,6 @@ export function useDriveController({
     });
   };
 
-  const { isItemDragging, itemDragHandlers, sidebarDropZoneProps, dropZoneProps } =
-    useSidebarListDrag(selectedIds);
-
   const commitMoveToFolder = useCallback(
     (ids: string[], destinationPath: string) => {
       const movable = canMoveDriveItemsToFolder(files, ids, destinationPath);
@@ -796,8 +791,8 @@ export function useDriveController({
 
   const folderDropZoneProps = useCallback(
     (destinationPath: string) =>
-      dropZoneProps(destinationPath, (ids) => commitMoveToFolder(ids, destinationPath)),
-    [commitMoveToFolder, dropZoneProps],
+      sidebarDropZoneProps(destinationPath, (ids) => commitMoveToFolder(ids, destinationPath)),
+    [commitMoveToFolder, sidebarDropZoneProps],
   );
 
   const requestDeleteSelected = () => {
@@ -1102,34 +1097,27 @@ export function useDriveController({
     view,
   ]);
 
+  useWorkspaceListKeyboardShortcuts({
+    searchInputRef,
+    selectedCount: selectedIds.length,
+    onRequestDeleteSelection: requestDeleteSelected,
+    onNavigateList: navigateListByKeyboard,
+    onUndoQueuedAction: undoLatest,
+  });
+
   useEffect(() => {
-    const isMac =
-      typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.platform);
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       const inField =
         !!target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
-      if ((e.key === "k" && (e.metaKey || e.ctrlKey)) || (!inField && e.key === "/")) {
-        e.preventDefault();
-        searchInputRef.current?.focus();
-        searchInputRef.current?.select();
-        return;
-      }
       if (inField) return;
       if (e.key === "Escape" && detailOpen) {
         setDetailOpen(false);
-        return;
-      }
-      const macDelete = isMac && (e.key === "Backspace" || (e.metaKey && e.key === "Backspace"));
-      const winDelete = !isMac && e.key === "Delete";
-      if ((macDelete || winDelete) && selectedIds.length > 0) {
-        e.preventDefault();
-        setConfirmDelete({ ids: selectedIds, permanent: inTrashView });
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [selectedIds, detailOpen, inTrashView]);
+  }, [detailOpen]);
 
   const handleUnifiedSearchSelect = useCallback(
     (result: DriveUnifiedSearchResult) => {
@@ -1209,8 +1197,6 @@ export function useDriveController({
     setActiveId,
     selectedIds,
     setSelectedIds,
-    lastClickedId,
-    setLastClickedId,
     starred,
     setStarred,
     sidebarOpen,
