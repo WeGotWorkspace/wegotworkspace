@@ -13,10 +13,20 @@ export function MeetWorkspace({
   data,
   session,
   operations,
+  invitedRoom = null,
+  buildCallLink,
+  onRoomChange,
   onLogout,
   className,
 }: MeetWorkspaceProps) {
-  const shell = useMeetWorkspaceShell({ data, session, operations });
+  const shell = useMeetWorkspaceShell({
+    data,
+    session,
+    operations,
+    invitedRoom,
+    buildCallLink,
+    onRoomChange,
+  });
 
   return (
     <TooltipProvider delayDuration={200}>

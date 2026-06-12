@@ -1,11 +1,18 @@
+import { useCallback } from "react";
 import { WorkspaceLiveAppShell } from "@/lib/live/workspace-live-app-shell";
 import type { MeetAppProps } from "@/meet-core/src/meet-app-props";
 import { MeetWorkspace } from "@/meet-core/src/meet-workspace";
 import { useMeetAPI } from "@/meet-core/src/use-meet-api";
+import { useMeetRouteSync } from "@/meet-core/src/use-meet-route-sync";
 
 export function MeetApp({ source }: MeetAppProps = {}) {
   const { phase, error, retry, successVersion, listLoading, data, session, operations } =
     useMeetAPI(source);
+  const { invitedRoom, buildCallLink, onRoomChange } = useMeetRouteSync();
+
+  const handleLogout = useCallback(() => {
+    window.location.assign("/logout");
+  }, []);
 
   return (
     <WorkspaceLiveAppShell
@@ -21,9 +28,10 @@ export function MeetApp({ source }: MeetAppProps = {}) {
           session={session}
           operations={operations}
           listLoading={listLoading}
-          onLogout={() => {
-            window.location.assign("/logout");
-          }}
+          invitedRoom={invitedRoom}
+          buildCallLink={buildCallLink}
+          onRoomChange={onRoomChange}
+          onLogout={handleLogout}
         />
       )}
     />

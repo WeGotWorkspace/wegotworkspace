@@ -19,6 +19,7 @@ export const Default: Story = {
     ...createDriveAppBootstrap(),
     onLogout: () => {},
     onOpenDocsFile: STORY_NOOP,
+    onNavigate: STORY_NOOP,
   },
   parameters: {
     docs: {

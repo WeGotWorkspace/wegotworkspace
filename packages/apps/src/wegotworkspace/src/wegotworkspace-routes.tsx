@@ -10,6 +10,7 @@ import { DocsApp } from "@/docs-core/src/docs-app";
 import { validateDocsRouteSearch } from "@/docs-core/src/docs-route-search";
 import { DriveApp } from "@/drive-core/src/drive-app";
 import { validateDriveRouteSearch } from "@/drive-core/src/drive-route-search";
+import { validateMeetRouteSearch } from "@/meet-core/src/meet-route-search";
 import { InstallApp } from "@/install-core/src/install-app";
 import { MailApp } from "@/mail-core/src/mail-app";
 import { MeetApp } from "@/meet-core/src/meet-app";
@@ -205,18 +206,21 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
   const meetRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/meet",
+    validateSearch: validateMeetRouteSearch,
     component: isLive ? withWeGotWorkspaceAuth(MeetApp) : MockMeetRoute,
   });
 
   const meetGuestRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/meet/guest",
+    validateSearch: validateMeetRouteSearch,
     component: MeetGuestRoute,
   });
 
   const meetJoinRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/meet/join",
+    validateSearch: validateMeetRouteSearch,
     component: MeetGuestRoute,
   });
 
