@@ -5,7 +5,7 @@
 ## Reusable exports
 
 - `MailWorkspace` (`src/mail-core/src/mail-workspace.tsx`)
-- `useMailController` (`src/mail-core/src/use-mail-controller.tsx`)
+- `useMailController` (`src/mail-core/src/use-mail-controller.tsx`) — thin composer over `useMailShell`, `useMailList`, and `useMailMutations`
 - `MailAPIOperations`, `MailUIData`, `MailboxSummary`, and `MailMailboxLoader` (`src/mail-core/src/mail-types.ts`)
 - View composition pieces:
   - `MailListPanel`
