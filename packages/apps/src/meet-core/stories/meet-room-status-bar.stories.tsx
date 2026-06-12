@@ -10,7 +10,6 @@ import {
   storyBooleanControl,
   storyNumberControl,
   storyTextControl,
-  renderInMeetScope,
 } from "@/meet-core/stories/meet-story-shared";
 
 const meta = {

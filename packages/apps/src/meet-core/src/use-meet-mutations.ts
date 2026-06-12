@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, type MutableRefObject } from "react";
+import { useCallback, useEffect, type MutableRefObject } from "react";
 import { toast } from "sonner";
 import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
 import {

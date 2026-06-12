@@ -6,6 +6,9 @@ import { DriveMainPane } from "@/drive-core/src/drive-main-pane";
 import { getDriveStoryFilesInMyDrive } from "@/drive-core/stories/drive-pane-stories.fixtures";
 import { useDrivePaneStoryController } from "@/drive-core/stories/drive-pane-stories.harness";
 import { DriveStoryScope } from "@/drive-core/stories/drive-story-scope";
+import type { DriveFile } from "@/drive-core/src/drive-models";
+
+const EMPTY_DRIVE_FILES: DriveFile[] = [];
 
 function DriveMainPaneHarness({
   preset = "default",
@@ -16,7 +19,7 @@ function DriveMainPaneHarness({
 }) {
   const controller = useDrivePaneStoryController(
     preset === "empty"
-      ? { filesOverride: [] }
+      ? { filesOverride: EMPTY_DRIVE_FILES }
       : preset === "docsEditor"
         ? {
             filesOverride: [

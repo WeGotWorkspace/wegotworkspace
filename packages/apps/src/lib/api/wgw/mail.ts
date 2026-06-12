@@ -6,7 +6,6 @@ import type {
   WgwMailMessageDetail,
   WgwMailMessageListItem,
   WgwMailMessagePatchRequest,
-  WgwMailMessageResponse,
   WgwMailMoveRequest,
   WgwMailSendRequest,
 } from "@/lib/api/wgw/types";
@@ -19,7 +18,6 @@ import {
   WGW_UI_SYSTEM_MAILBOXES,
 } from "@/lib/api/wgw/mail-folder-utils";
 import {
-  mailFromWgwDetail,
   mailFromWgwListItem,
   mailboxNameByFolderToken,
   parseMessagesPayload,
