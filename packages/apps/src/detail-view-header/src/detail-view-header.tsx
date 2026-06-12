@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties } from "react";
 import { EditableText } from "@/editable-text/src/editable-text";
 import { Tag, type TagProps } from "@/tag/src/tag";
 

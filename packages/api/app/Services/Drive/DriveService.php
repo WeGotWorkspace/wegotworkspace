@@ -118,6 +118,7 @@ final class DriveService
             throw new \InvalidArgumentException('Invalid item type. Use "dir" or "file".');
         }
 
+        $this->assertExplicitParentAllowed($cwd, $username, $groupSlugs);
         $parent = $this->session->resolveCwd($cwd, $username, $groupSlugs);
         $newPath = $this->paths->normalizeVirtualPath($parent.'/'.$name);
         $this->assertAllowed($newPath, $username, $groupSlugs, true);
@@ -278,6 +279,7 @@ final class DriveService
         $chunkNumber = max(1, $chunkNumber);
         $totalChunks = max(1, $totalChunks);
 
+        $this->assertExplicitParentAllowed($cwd, $username, $groupSlugs);
         $parent = $this->session->resolveCwd($cwd, $username, $groupSlugs);
         $targetVirtual = $this->paths->normalizeVirtualPath($parent.'/'.$filename);
         $this->assertAllowed($targetVirtual, $username, $groupSlugs, true);
@@ -492,6 +494,19 @@ final class DriveService
             'time' => max(0, $time),
             'permissions' => 0,
         ];
+    }
+
+    /**
+     * @param  list<string>  $groupSlugs
+     */
+    private function assertExplicitParentAllowed(?string $cwd, string $username, array $groupSlugs): void
+    {
+        if ($cwd === null || trim($cwd) === '') {
+            return;
+        }
+
+        $requested = $this->paths->normalizeVirtualPath($cwd);
+        $this->assertAllowed($requested, $username, $groupSlugs, true);
     }
 
     /**

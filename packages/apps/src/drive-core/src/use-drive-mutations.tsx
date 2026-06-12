@@ -54,7 +54,6 @@ export function useDriveMutations({ shell, list, onOpenDocsFile }: UseDriveMutat
     activeId,
     setActiveId,
     setDetailOpen,
-    visibleItems,
     fileById,
     exitSelection,
     dropZoneProps,

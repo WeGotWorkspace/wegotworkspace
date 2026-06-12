@@ -51,8 +51,6 @@ export function useDriveController({
   }, [shell.viewResetKey]);
 
   useEffect(() => {
-    const isMac =
-      typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/.test(navigator.platform);
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       const inField =
