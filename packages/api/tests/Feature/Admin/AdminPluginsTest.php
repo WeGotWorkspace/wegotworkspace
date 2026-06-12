@@ -1,0 +1,79 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Feature\Admin;
+
+use Illuminate\Support\Facades\File;
+use Tests\Support\AdminTestFixtures;
+use Tests\Support\WgwDatabaseTestCase;
+
+final class AdminPluginsTest extends WgwDatabaseTestCase
+{
+    use AdminTestFixtures;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->setUpAdminFixtures(withAppRoot: true);
+        $this->seedDemoPlugin();
+    }
+
+    protected function tearDown(): void
+    {
+        $this->tearDownAdminFixtures();
+        parent::tearDown();
+    }
+
+    public function test_admin_can_list_and_toggle_plugin_activation(): void
+    {
+        $token = $this->adminBearerToken();
+
+        $this->withBearer($token)
+            ->getJson('/api/v1/plugins')
+            ->assertOk()
+            ->assertJsonFragment([
+                'id' => 'demo-plugin',
+                'active' => true,
+            ]);
+
+        $this->withBearer($token)
+            ->putJson('/api/v1/plugins/demo-plugin/activation', ['active' => false])
+            ->assertOk()
+            ->assertJsonPath('plugin.active', false);
+
+        $this->withBearer($token)
+            ->getJson('/api/v1/plugins')
+            ->assertOk()
+            ->assertJsonFragment([
+                'id' => 'demo-plugin',
+                'active' => false,
+            ]);
+
+        $this->withBearer($token)
+            ->putJson('/api/v1/plugins/demo-plugin/activation', ['active' => true])
+            ->assertOk();
+    }
+
+    public function test_non_admin_cannot_install_plugin_zip(): void
+    {
+        $this->withBearer($this->userBearerToken())
+            ->post('/api/v1/admin/plugins', [])
+            ->assertForbidden();
+    }
+
+    private function seedDemoPlugin(): void
+    {
+        $root = $this->adminDataDirectory().'/install-root/wgw-plugins/demo-plugin';
+        File::ensureDirectoryExists($root.'/assets');
+        File::put($root.'/assets/index.html', '<!doctype html><title>Plugin</title>');
+        File::put($root.'/plugin.json', json_encode([
+            'id' => 'demo-plugin',
+            'name' => 'Demo plugin',
+            'active' => true,
+            'drive' => [
+                'openFileExtensions' => ['docx'],
+            ],
+        ], JSON_THROW_ON_ERROR));
+    }
+}
