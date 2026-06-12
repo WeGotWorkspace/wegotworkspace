@@ -18,6 +18,8 @@
   --upload-progress-active-fill: var(--drive-sidebar);
   --upload-progress-done-fill: var(--color-emerald);
   --file-drop-overlay-card-color: var(--drive-sidebar);
+  --drive-detail-tag-bg: color-mix(in oklab, var(--drive-sidebar) 12%, transparent);
+  --drive-detail-tag-fg: var(--drive-sidebar);
 }
 
 .drive-workspace .workspace-app-layout__main-scroll {
@@ -203,4 +205,9 @@
 
 .drive-workspace .drive-detail-panel__scroll {
   @apply flex-1 overflow-y-auto px-5 md:px-6 py-6;
+}
+
+.drive-workspace .drive-detail-panel__path .tag {
+  background-color: var(--drive-detail-tag-bg);
+  color: var(--drive-detail-tag-fg);
 }
