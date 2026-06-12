@@ -2,7 +2,9 @@ import { AlertTriangle, CheckCircle2, CircleX, type LucideIcon } from "lucide-re
 
 export type UpdateLogRow = { id: string; date: string | null; level: string; message: string };
 
-export type CheckVisual = { Icon: LucideIcon; color: string };
+export type ServerCheckTone = "error" | "warning" | "success";
+
+export type CheckVisual = { Icon: LucideIcon; tone: ServerCheckTone };
 
 export function getServerCheckVisual(check: {
   ok: boolean;
@@ -17,7 +19,7 @@ export function getServerCheckVisual(check: {
     normalizedStatus === "fail" ||
     normalizedStatus === "failed"
   ) {
-    return { Icon: CircleX, color: "#b14242" };
+    return { Icon: CircleX, tone: "error" };
   }
 
   if (
@@ -25,18 +27,18 @@ export function getServerCheckVisual(check: {
     normalizedStatus === "warning" ||
     normalizedStatus === "unknown"
   ) {
-    return { Icon: AlertTriangle, color: "#c98a1f" };
+    return { Icon: AlertTriangle, tone: "warning" };
   }
 
   if (normalizedDetail.startsWith("unknown")) {
-    return { Icon: AlertTriangle, color: "#c98a1f" };
+    return { Icon: AlertTriangle, tone: "warning" };
   }
 
   if (check.ok) {
-    return { Icon: CheckCircle2, color: "#3a8f5a" };
+    return { Icon: CheckCircle2, tone: "success" };
   }
 
-  return { Icon: CircleX, color: "#b14242" };
+  return { Icon: CircleX, tone: "error" };
 }
 
 export function parseUpdateLogLine(line: string, index: number): UpdateLogRow {
