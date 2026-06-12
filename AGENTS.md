@@ -22,7 +22,7 @@ Agent skills live in [`.agents/skills/`](.agents/skills/) (tool-agnostic [Agent 
 | [plugins](.agents/skills/plugins/) | Plugin registry, activation, install, Flysystem boundaries |
 | [meet](.agents/skills/meet/) | Meet UI, RTC, room signaling |
 | [apps-ui](.agents/skills/apps-ui/) | UI primitives, CSS variables, components, TypeScript |
-| [workspace](.agents/skills/workspace/) | *App, *Workspace, workspace shell, feature blueprint |
+| [workspace](.agents/skills/workspace/) | *App, *Workspace, workspace shell — [workspace-shells.md](packages/apps/docs/workspace-shells.md), [feature-blueprint.md](.agents/skills/workspace/feature-blueprint.md), [apps-done-gate.md](.agents/skills/testing/apps-done-gate.md) |
 | [plan-feature](.agents/skills/plan-feature/) | Scoping features, parallel chunk plans |
 | [verify-issue](.agents/skills/verify-issue/) | GitHub issue acceptance criteria — fetch, map, verify, report before handoff/PR |
 | [testing](.agents/skills/testing/) | PHPUnit, Vitest, e2e, done-when checklists |

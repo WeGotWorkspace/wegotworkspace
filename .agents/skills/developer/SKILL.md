@@ -19,7 +19,7 @@ Context-loading skill for AI agents and developers working in the WeGotWorkspace
 | Plugins / wgw-plugins | [plugins](../plugins/SKILL.md) | [storage-flysystem.md](../api/storage-flysystem.md) |
 | Meet / RTC / room signaling | [meet](../meet/SKILL.md) | `packages/api/docs/meet-signaling.md` |
 | UI primitives / CSS / styling | [apps-ui](../apps-ui/SKILL.md) | [components.md](../apps-ui/components.md), [typescript.md](../apps-ui/typescript.md) |
-| Workspace shell / *App / *Workspace | [workspace](../workspace/SKILL.md) | [workspace-shells.md](../../../packages/apps/docs/workspace-shells.md), [feature-blueprint.md](../workspace/feature-blueprint.md) |
+| Workspace shell / *App / *Workspace | [workspace](../workspace/SKILL.md) | [workspace-shells.md](../../../packages/apps/docs/workspace-shells.md), [feature-blueprint.md](../workspace/feature-blueprint.md), [apps-done-gate.md](../testing/apps-done-gate.md) |
 | Planning a feature | [plan-feature](../plan-feature/SKILL.md) | — |
 | Issue acceptance criteria / "is #N done?" | [verify-issue](../verify-issue/SKILL.md) | — |
 | Writing or running tests | [testing](../testing/SKILL.md) | [test-first.md](../testing/test-first.md), [ui-architecture.md](../testing/ui-architecture.md) |
