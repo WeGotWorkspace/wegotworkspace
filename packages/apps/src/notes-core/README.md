@@ -18,7 +18,8 @@ Public (`src/notes-core/src/index.ts`):
 
 Internal composition:
 
-- `useNotesController` (`src/notes-core/src/use-notes-controller.tsx`)
+- `useNotesController` (`src/notes-core/src/use-notes-controller.tsx`) — thin composer
+- `useNotesShell`, `useNotesList`, `useNotesMutations` — domain slices
 - `NotesListPanel`, `NotesDetailActionBar`
 - Shared detail/multi-select: `@/note-detail-view`, `@/multi-selection-view`, `@/dialogs`
 
