@@ -1,22 +1,22 @@
 /** Shared detection for Cursor-injected commit trailers and PR description footers. */
 
-export const CURSOR_COMMIT_ATTRIBUTION_LINE_PATTERNS = [
+const CURSOR_COMMIT_ATTRIBUTION_LINE_PATTERNS = [
   /^Co-authored-by:\s*Cursor\s*<cursoragent@cursor\.com>\s*$/i,
   /^Made-with:\s*Cursor\s*$/i,
 ];
 
-export const CURSOR_PR_ATTRIBUTION_LINE_PATTERNS = [
+const CURSOR_PR_ATTRIBUTION_LINE_PATTERNS = [
   /^Made with Cursor\s*$/i,
   /^Made with \[Cursor\](?:\([^)]*\))?\s*$/i,
   ...CURSOR_COMMIT_ATTRIBUTION_LINE_PATTERNS,
 ];
 
-export function isCursorCommitAttributionLine(line) {
+function isCursorCommitAttributionLine(line) {
   const trimmed = line.trim();
   return CURSOR_COMMIT_ATTRIBUTION_LINE_PATTERNS.some((pattern) => pattern.test(trimmed));
 }
 
-export function isCursorPrAttributionLine(line) {
+function isCursorPrAttributionLine(line) {
   const trimmed = line.trim();
   return CURSOR_PR_ATTRIBUTION_LINE_PATTERNS.some((pattern) => pattern.test(trimmed));
 }
@@ -25,7 +25,7 @@ export function containsCursorAttribution(message) {
   return message.split("\n").some(isCursorCommitAttributionLine);
 }
 
-export const CURSOR_ATTRIBUTION_SUBSTRING_PATTERNS = [
+const CURSOR_ATTRIBUTION_SUBSTRING_PATTERNS = [
   /\bMade with Cursor\b/i,
   /Made with\s+\[Cursor\]/i,
   /Co-authored-by:\s*Cursor\s*<cursoragent@cursor\.com>/i,
@@ -53,7 +53,7 @@ export function stripCursorAttribution(message) {
   return kept.join("\n").concat(kept.length > 0 ? "\n" : "");
 }
 
-export function stripCursorPrAttribution(body) {
+function stripCursorPrAttribution(body) {
   const lines = body.split("\n");
   const kept = lines.filter((line) => !isCursorPrAttributionLine(line));
 
