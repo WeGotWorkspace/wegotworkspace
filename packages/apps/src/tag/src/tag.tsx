@@ -27,18 +27,16 @@ export function Tag({
   removeAriaLabel,
   colors,
 }: TagProps) {
+  const tagStyle: CSSProperties | undefined = colors
+    ? ({
+        "--tag-bg":
+          colors.backgroundColor ?? "color-mix(in oklab, var(--color-ink) 8%, transparent)",
+        "--tag-fg": colors.color ?? "var(--color-ink)",
+      } as CSSProperties)
+    : undefined;
+
   return (
-    <span
-      className="tag group"
-      style={
-        colors
-          ? {
-              backgroundColor: colors.backgroundColor,
-              color: colors.color,
-            }
-          : undefined
-      }
-    >
+    <span className="tag group" style={tagStyle}>
       {icon ? <span className="tag__icon">{icon}</span> : null}
       <span className="truncate">{label}</span>
       {removable && onRemove ? (
