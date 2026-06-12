@@ -10,6 +10,8 @@ type UseMeetControllerArgs = {
   defaultDisplayName: string;
   rtc: MeetRtcSettings;
   operations?: MeetAPIOperations;
+  buildCallLink?: (roomCode: string) => string;
+  onRoomChange?: (roomCode: string | null) => void;
 };
 
 /**
@@ -21,6 +23,8 @@ export function useMeetController({
   defaultDisplayName,
   rtc,
   operations,
+  buildCallLink,
+  onRoomChange,
 }: UseMeetControllerArgs) {
   const leaveRef = useRef<null | ((opts?: { preserveEndedMessage?: boolean }) => Promise<void>)>(
     null,
@@ -29,6 +33,8 @@ export function useMeetController({
   const room = useMeetRoomState({
     defaultDisplayName,
     sessionDisplayName: session.user.displayName || "Guest",
+    buildCallLink,
+    onRoomChange,
   });
   const isGuestSession = !session.user.username?.trim() && !session.user.email?.trim();
 

@@ -7,9 +7,16 @@ import type { PeerInboundSample } from "@/meet-core/src/meet-inbound-media-hints
 export type UseMeetRoomStateArgs = {
   defaultDisplayName: string;
   sessionDisplayName: string;
+  buildCallLink?: (roomCode: string) => string;
+  onRoomChange?: (roomCode: string | null) => void;
 };
 
-export function useMeetRoomState({ defaultDisplayName, sessionDisplayName }: UseMeetRoomStateArgs) {
+export function useMeetRoomState({
+  defaultDisplayName,
+  sessionDisplayName,
+  buildCallLink,
+  onRoomChange,
+}: UseMeetRoomStateArgs) {
   const [status, setStatus] = useState<MeetCallStatus>("idle");
   const [error, setError] = useState<string | null>(null);
   const [roomCode, setRoomCode] = useState<string | null>(null);
@@ -67,7 +74,9 @@ export function useMeetRoomState({ defaultDisplayName, sessionDisplayName }: Use
   }, [startedAt]);
 
   const callLink = useMemo(() => {
-    if (!roomCode || typeof window === "undefined") return "";
+    if (!roomCode) return "";
+    if (buildCallLink) return buildCallLink(roomCode);
+    if (typeof window === "undefined") return "";
     const url = new URL(window.location.href);
     if (/\/meet\/guest\/?$/.test(url.pathname)) {
       url.pathname = url.pathname.replace(/\/meet\/guest\/?$/, "/meet/guest");
@@ -78,7 +87,11 @@ export function useMeetRoomState({ defaultDisplayName, sessionDisplayName }: Use
     }
     url.searchParams.set("room", roomCode);
     return url.toString();
-  }, [roomCode]);
+  }, [buildCallLink, roomCode]);
+
+  useEffect(() => {
+    onRoomChange?.(roomCode);
+  }, [onRoomChange, roomCode]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
