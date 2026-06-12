@@ -10,7 +10,6 @@ import {
   meetStoryParameters,
   STORY_NOOP,
   storyBooleanControl,
-  renderInMeetScope,
 } from "@/meet-core/stories/meet-story-shared";
 
 const meta = {

@@ -132,14 +132,6 @@ function iconForResult(result: WgwUnifiedSearchResult): ReactNode {
   return <File className="size-4" />;
 }
 
-function accentColorForSource(sourceType: string): string {
-  if (sourceType === "file") return "var(--unified-search-accent-files, #2563eb)";
-  if (sourceType === "note") return "var(--unified-search-accent-notes, #f59e0b)";
-  if (sourceType === "caldav") return "var(--unified-search-accent-calendar, #8b5cf6)";
-  if (sourceType === "carddav") return "var(--unified-search-accent-contacts, #16a34a)";
-  return "var(--unified-search-accent-default, #475569)";
-}
-
 function groupItems(
   group: ResultGroup,
   onSelect?: (result: WgwUnifiedSearchResult) => void,

@@ -11,26 +11,11 @@ export function InstallDatabasePane({
 }: {
   controller: Pick<
     InstallControllerState,
-    | "dbType"
-    | "selectDbType"
-    | "sqlitePath"
-    | "setSqlitePath"
-    | "mysql"
-    | "setMysql"
-    | "mysqlTest"
-    | "setMysqlTest"
+    "dbType" | "selectDbType" | "sqlitePath" | "setSqlitePath" | "mysql" | "setMysql" | "mysqlTest"
   >;
 }) {
-  const {
-    dbType,
-    selectDbType,
-    sqlitePath,
-    setSqlitePath,
-    mysql,
-    setMysql,
-    mysqlTest,
-    setMysqlTest,
-  } = controller;
+  const { dbType, selectDbType, sqlitePath, setSqlitePath, mysql, setMysql, mysqlTest } =
+    controller;
 
   return (
     <>

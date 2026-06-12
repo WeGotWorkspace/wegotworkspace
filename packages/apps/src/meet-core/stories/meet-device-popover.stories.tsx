@@ -6,11 +6,7 @@ import {
   STORY_MEET_MICROPHONES,
   STORY_MEET_SPEAKERS,
 } from "@/meet-core/stories/meet-pane-stories.fixtures";
-import {
-  meetStoryParameters,
-  storyBooleanControl,
-  renderInMeetScope,
-} from "@/meet-core/stories/meet-story-shared";
+import { meetStoryParameters, storyBooleanControl } from "@/meet-core/stories/meet-story-shared";
 
 type MeetDevicePopoverStoryArgs = {
   defaultOpen: boolean;
