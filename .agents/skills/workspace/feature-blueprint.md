@@ -72,6 +72,7 @@ Structural refactors must still compose **existing** UI from `packages/apps/src/
 - Duplicating **`WorkspaceAppLayout`** scroll/header markup in a route instead of split props.
 - A second **mobile scrim** beside `AppSidebar` (scrim lives inside `AppSidebar`).
 - **`*Workspace`** importing routers or assigning `window.location` (belongs in **`*App`** or routes).
+- **`use*Controller`** reading/writing `window.location` or router search (belongs in **`*App`** via route-sync hooks and callbacks such as `onNavigate`, `onRoomChange`).
 - **Panes** importing **`use*API`** or holding section state (belongs in controller / shell hook).
 - **Read-only `Input`** styling via repeated one-off `className`s when the shell can scope **`:has(input[readonly])`** under the workspace root.
 - Product-prefixed **`InstallCard`**, **`InstallField`**, **`SettingsCard`**, etc. that duplicate **`Card`** / **`FieldLabelRow`** / **`Label`** — rename to shared imports and workspace-scoped CSS only.
