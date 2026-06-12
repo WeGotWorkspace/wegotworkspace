@@ -23,7 +23,7 @@ This lets each app swap backend providers while reusing the same controller/UI b
 
 ## Styling
 
-Pane and detail styling lives under `.mail-workspace` in `mail-workspace.css`, with class name fragments in `mail-workspace.styles.ts`. Portaled compose uses `.mail-compose-dialog-surface` in the same file. Storybook stories wrap components in `stories/mail-story-scope.tsx` inside `render` / harnesses so the same root classes apply as production.
+Pane and detail styling lives under `.mail-workspace` in `mail-workspace.css`; TSX uses semantic BEM class names defined in that sheet (for example `mail-detail-view`, `mail-compose-view`). Portaled compose uses `.mail-compose-dialog-surface` in the same file. Storybook stories wrap components in `stories/mail-story-scope.tsx` inside `render` / harnesses so the same root classes apply as production.
 
 ## Storybook
 
