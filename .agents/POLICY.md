@@ -16,7 +16,7 @@ Policies agents should follow for **new work**. Backlog gaps are tracked on GitH
 | **UI pane RTL tests** | Encouraged for interaction-heavy panes | jsdom project (`*.test.tsx`) | [testing/ui-architecture.md](skills/testing/ui-architecture.md) |
 | **UI e2e (Playwright apps)** | Out of scope | — | — |
 | **WCAG 2.2 AA** | Required for new/changed UI | CI: a11y `error` on `vitest-ci` smoke (`STORYBOOK_A11Y_GATE=1`); manual `todo` in dev | [storybook/a11y-testing.md](skills/storybook/a11y-testing.md) |
-| **Chromatic** | Optional visual regression | CI job when `CHROMATIC_ENABLED=true` + `CHROMATIC_PROJECT_TOKEN` | [testing/apps-done-gate.md](skills/testing/apps-done-gate.md) |
+| **Chromatic** | Optional visual regression; **dormant** until maintainers opt in ([#85](https://github.com/WeGotWorkspace/wegotworkspace/issues/85)) | CI publishes when `CHROMATIC_ENABLED=true` + `CHROMATIC_PROJECT_TOKEN`; **`exitZeroOnChanges`** — review-only, does not fail CI | [storybook/chromatic.md](skills/storybook/chromatic.md), [testing/apps-done-gate.md](skills/testing/apps-done-gate.md) |
 | **No auto-commits / PRs** | Always | User instruction | [git-workflow/SKILL.md](skills/git-workflow/SKILL.md) |
 | **Signed commits on `main`** | Required for merge | Branch protection | [git-workflow/pull-requests.md](skills/git-workflow/pull-requests.md) |
 
