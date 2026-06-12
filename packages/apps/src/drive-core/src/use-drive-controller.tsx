@@ -69,7 +69,6 @@ export function useDriveController({
     return () => window.removeEventListener("keydown", handler);
   }, [list.detailOpen, list.setDetailOpen, shell.searchInputRef]);
 
-
   useWorkspaceListKeyboardShortcuts({
     searchInputRef: shell.searchInputRef,
     selectedCount: list.selectedIds.length,

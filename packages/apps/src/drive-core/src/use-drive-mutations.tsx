@@ -18,7 +18,6 @@ import type { DriveListState } from "@/drive-core/src/use-drive-list";
 import type { DriveShellState } from "@/drive-core/src/use-drive-shell";
 import { joinFileNameForRename, splitFileNameForRename } from "@/lib/files/filename-rename";
 
-
 export type UseDriveMutationsArgs = {
   shell: DriveShellState;
   list: DriveListState;
