@@ -75,14 +75,12 @@
 .settings-workspace .settings-group-avatar {
   --user-avatar-bg: var(--settings-accent);
   --user-avatar-fg: var(--color-ink);
+  --user-avatar-label-color: var(--color-ink);
+  --user-avatar-subtitle-color: color-mix(in oklab, var(--color-ink) 55%, transparent);
 }
 
-.settings-workspace .settings-group-name {
-  @apply truncate text-sm font-medium;
-  color: var(--color-ink);
-}
-
-.settings-workspace .settings-group-meta {
-  @apply truncate text-xs;
-  color: color-mix(in oklab, var(--color-ink) 55%, transparent);
+/* Storybook scopes — mirror workspace chrome without inline presets */
+.settings-story-scope {
+  min-height: 100dvh;
+  background-color: var(--workspace-root-bg, var(--color-cream, #ffffff));
 }
