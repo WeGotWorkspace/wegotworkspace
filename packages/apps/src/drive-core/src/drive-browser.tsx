@@ -635,14 +635,7 @@ export function DriveDetailPanel({
           />
         </div>
         <div className="drive-detail-panel__path">
-          <Tag
-            label={file.parent}
-            icon={<HardDrive className="size-3.5 opacity-70" />}
-            colors={{
-              backgroundColor: "color-mix(in oklab, var(--drive-sidebar) 12%, transparent)",
-              color: "var(--drive-sidebar)",
-            }}
-          />
+          <Tag label={file.parent} icon={<HardDrive className="size-3.5 opacity-70" />} />
         </div>
         <h1 className="drive-detail-panel__title">{file.title}</h1>
         <dl className="space-y-2 text-sm mb-6">
@@ -651,11 +644,7 @@ export function DriveDetailPanel({
           <Row label="Modified" value={file.date} />
         </dl>
         {file.body.map((p, i) => (
-          <p
-            key={i}
-            className="text-sm leading-relaxed mb-3"
-            style={{ color: "color-mix(in oklab, var(--color-ink) 78%, transparent)" }}
-          >
+          <p key={i} className="drive-detail-panel__body">
             {p}
           </p>
         ))}
@@ -666,19 +655,9 @@ export function DriveDetailPanel({
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div
-      className="flex justify-between gap-4 py-1.5 border-b"
-      style={{ borderColor: "color-mix(in oklab, var(--color-ink) 8%, transparent)" }}
-    >
-      <dt
-        className="text-[11px] uppercase tracking-wider"
-        style={{ color: "color-mix(in oklab, var(--color-ink) 50%, transparent)" }}
-      >
-        {label}
-      </dt>
-      <dd className="capitalize" style={{ color: "var(--color-ink)" }}>
-        {value}
-      </dd>
+    <div className="drive-detail-panel__meta-row">
+      <dt className="drive-detail-panel__meta-label">{label}</dt>
+      <dd className="drive-detail-panel__meta-value">{value}</dd>
     </div>
   );
 }
