@@ -6,6 +6,7 @@ import {
   buildGroupMemberCountFromController,
   useAdminPaneStoryController,
 } from "@/admin-core/stories/admin-pane-stories.harness";
+import { AdminStoryScope } from "@/admin-core/stories/admin-story-scope";
 
 function UsersPaneHarness() {
   const controller = useAdminPaneStoryController();
