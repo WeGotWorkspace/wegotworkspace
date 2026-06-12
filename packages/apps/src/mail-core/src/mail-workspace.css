@@ -127,9 +127,21 @@
 .mail-workspace .mail-detail-view__body-frame {
   display: block;
   width: 100%;
+  min-height: 160px;
+  overflow: hidden;
   border-radius: 0.375rem;
   border: 1px solid color-mix(in oklab, var(--color-ink) 12%, transparent);
   background: transparent;
+}
+
+.mail-workspace .mail-detail-view__meta-tag .tag {
+  background-color: var(--mail-detail-tag-primary-bg);
+  color: var(--mail-detail-tag-primary-fg);
+}
+
+.mail-workspace .mail-detail-view__meta-tag--muted .tag {
+  background-color: var(--mail-detail-tag-muted-bg);
+  color: var(--mail-detail-tag-muted-fg);
 }
 
 /**
@@ -378,4 +390,31 @@
   align-items: center;
   justify-content: center;
   padding-block: 0.75rem;
+}
+
+/* Storybook scopes — mirror workspace chrome without inline presets */
+.mail-story-scope {
+  min-height: 100dvh;
+  background-color: var(--workspace-root-bg, var(--color-paper));
+}
+
+.mail-story-scope--list-column {
+  display: flex;
+  min-height: 100dvh;
+  justify-content: center;
+  background-color: var(--workspace-root-bg, var(--color-paper));
+}
+
+.mail-story-scope--detail {
+  min-height: 100dvh;
+  background-color: var(--color-cream, #ffffff);
+}
+
+.mail-story-scope--compose-dialog {
+  background-color: color-mix(in oklab, var(--color-ink) 20%, transparent);
+}
+
+.mail-story-scope__action-bar-shell {
+  border-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
+  background-color: var(--color-cream, #ffffff);
 }
