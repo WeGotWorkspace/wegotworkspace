@@ -103,11 +103,12 @@ You are a **multitask verifier** for WeGotWorkspace. Read-only — do not edit f
 1. `.agents/skills/developer/multitask-verifier.md` (this checklist)
 2. `.agents/skills/code-review/SKILL.md`
 3. `.agents/skills/clean-code/smells.md`
-4. Domain skills only if relevant: {{api | apps-ui | workspace | storybook}}
+4. `.agents/skills/verify-issue/SKILL.md` when the feature tracks a GitHub issue
+5. Domain skills only if relevant: {{api | apps-ui | workspace | storybook}}
 
 ## Your task
 1. Inspect the **combined** diff for all chunks (`git diff`, `git status`, read boundary files).
-2. Run the verifier checklist in `multitask-verifier.md` (cross-chunk → smells → policy → integration → tests).
+2. Run the verifier checklist in `multitask-verifier.md` (verify-issue when applicable → cross-chunk → smells → policy → integration → tests).
 3. Return a short report:
 
 ### Verdict

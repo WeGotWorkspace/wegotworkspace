@@ -75,6 +75,7 @@ Optional final chunk after parallel builds merge:
 
 Chunk `done-when` should reference:
 
+- [verify-issue](../verify-issue/SKILL.md) when work tracks a GitHub issue
 - [developer/done-checklist.md](../developer/done-checklist.md) commands where applicable
 - Domain skill requirements (e.g. API feature tests, apps-ui CSS rules)
 - [clean-code](../clean-code/SKILL.md) smells checklist on touched files

@@ -28,7 +28,7 @@ Agent skills live in [`.agents/skills/`](.agents/skills/) (tool-agnostic [Agent 
 | [testing](.agents/skills/testing/) | PHPUnit, Vitest, e2e, done-when checklists |
 | [document](.agents/skills/document/) | README, API docs, dev-layout updates |
 | [clean-code](.agents/skills/clean-code/) | Review checklist — [smells.md](.agents/skills/clean-code/smells.md) before handoff |
-| [code-review](.agents/skills/code-review/) | PR/handoff gate — smells, done-checklist, policy |
+| [code-review](.agents/skills/code-review/) | PR/handoff gate — issue AC, smells, done-checklist, policy |
 | [storybook](.agents/skills/storybook/) | Offline-first catalog, mock vs live tiers, `.stories.tsx` |
 | [accessibility](.agents/skills/accessibility/) | WCAG 2.x UI compliance |
 | [git-workflow](.agents/skills/git-workflow/) | Branching, commits, PRs, CI gates |
