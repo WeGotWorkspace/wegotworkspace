@@ -6,7 +6,6 @@ import type {
   WgwPluginsResponse,
   WgwAdminSettingsSaveRequest,
   WgwSearchReindexStateResponse,
-  WgwUpdateApplyResponse,
   WgwUpdateLogResponse,
   WgwUpdateStateResponse,
 } from "@/lib/api/wgw/types";

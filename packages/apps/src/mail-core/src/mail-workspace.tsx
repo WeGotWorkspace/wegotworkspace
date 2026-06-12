@@ -55,7 +55,7 @@ export function MailWorkspace({
 
   const {
     L,
-    allSystemMailboxes,
+    allSystemMailboxes: _allSystemMailboxes,
     secondarySystemMailboxes,
     moreMailboxes,
     mail,

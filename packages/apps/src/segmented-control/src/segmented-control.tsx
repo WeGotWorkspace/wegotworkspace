@@ -79,7 +79,7 @@ export const BooleanSegmentedControl = React.forwardRef<
     onChange,
     offLabel = "Off",
     onLabel = "On",
-    size = "sm",
+    size: _size = "sm",
     disabled = false,
     className,
     "aria-label": ariaLabel,

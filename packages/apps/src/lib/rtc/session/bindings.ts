@@ -1,4 +1,4 @@
-import type { IceMode, RtcLinkState } from "@/lib/rtc/types";
+import type { RtcLinkState } from "@/lib/rtc/types";
 
 export type MediaBindingOptions = {
   getLocalStream: () => MediaStream | null;

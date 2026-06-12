@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { Editor } from "@tiptap/react";
-import Collaboration, { isChangeOrigin } from "@tiptap/extension-collaboration";
+import { isChangeOrigin } from "@tiptap/extension-collaboration";
 import { useEditor } from "@tiptap/react";
 import type { Awareness } from "y-protocols/awareness";
 import type * as Y from "yjs";

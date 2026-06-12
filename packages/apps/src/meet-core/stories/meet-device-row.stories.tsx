@@ -9,7 +9,6 @@ import {
   meetStoryParameters,
   STORY_NOOP,
   storyTextControl,
-  renderInMeetScope,
 } from "@/meet-core/stories/meet-story-shared";
 
 type MeetDeviceRowStoryArgs = {

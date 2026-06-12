@@ -6,22 +6,14 @@ import { fetchRtcSettings } from "@/lib/api/wgw/rtc";
 import type { HttpSignalingFetch } from "@/lib/rtc/signaling/http-client";
 import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
 import type {
-  WgwMeetChatRequest,
   WgwMeetChatResponse,
-  WgwMeetJoinRequest,
   WgwMeetJoinResponse,
-  WgwMeetLeaveRequest,
   WgwMeetLeaveResponse,
   WgwMeetPollRequest,
   WgwMeetPollResponse,
-  WgwMeetSendRequest,
   WgwMeetSendResponse,
 } from "@/lib/api/wgw/types";
-import type {
-  MeetAPIOperations,
-  MeetAppBootstrap,
-  MeetRequestOptions,
-} from "@/meet-core/src/meet-types";
+import type { MeetAPIOperations, MeetAppBootstrap } from "@/meet-core/src/meet-types";
 
 async function readApiError(res: Response, fallback: string): Promise<string> {
   try {
