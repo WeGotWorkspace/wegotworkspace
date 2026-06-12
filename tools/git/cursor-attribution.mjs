@@ -7,6 +7,7 @@ export const CURSOR_COMMIT_ATTRIBUTION_LINE_PATTERNS = [
 
 export const CURSOR_PR_ATTRIBUTION_LINE_PATTERNS = [
   /^Made with Cursor\s*$/i,
+  /^Made with \[Cursor\]/i,
   ...CURSOR_COMMIT_ATTRIBUTION_LINE_PATTERNS,
 ];
 
@@ -26,6 +27,7 @@ export function containsCursorAttribution(message) {
 
 export const CURSOR_ATTRIBUTION_SUBSTRING_PATTERNS = [
   /\bMade with Cursor\b/i,
+  /Made with \[Cursor\]/i,
   /Co-authored-by:\s*Cursor\s*<cursoragent@cursor\.com>/i,
   /Made-with:\s*Cursor\b/i,
 ];

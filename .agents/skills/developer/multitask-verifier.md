@@ -2,7 +2,7 @@
 
 Read-only cross-chunk review after parallel build chunks merge. Complements per-chunk `done-when` and parent [done-checklist.md](done-checklist.md) — does not replace them.
 
-**Canonical multitask flow:** [multitask.md](multitask.md). **Review gate:** [code-review](../code-review/SKILL.md). **Smells:** [clean-code/smells.md](../clean-code/smells.md). **Policy vs CI:** [POLICY.md](../../POLICY.md).
+**Canonical multitask flow:** [multitask.md](multitask.md). **Review gate:** [code-review](../code-review/SKILL.md). **Issue AC:** [verify-issue](../verify-issue/SKILL.md) when work tracks a GitHub issue. **Smells:** [clean-code/smells.md](../clean-code/smells.md). **Policy vs CI:** [POLICY.md](../../POLICY.md).
 
 ## When to spawn a verifier
 
@@ -78,7 +78,8 @@ Use the host's subagent/task tool with **`readonly: true`** when available. One 
 2. Copy the [prompt template](#prompt-template) below; fill placeholders from the plan.
 3. Spawn verifier; wait for report.
 4. Parent triages: fix blockers, re-run affected chunk or verifier, then run full [done-checklist](done-checklist.md).
-5. Optional second verifier pass after fixes if blockers touched shared contracts.
+5. If the feature tracks a GitHub issue, run [verify-issue](../verify-issue/SKILL.md) before handoff.
+6. Optional second verifier pass after fixes if blockers touched shared contracts.
 
 ## Prompt template
 
@@ -102,11 +103,12 @@ You are a **multitask verifier** for WeGotWorkspace. Read-only — do not edit f
 1. `.agents/skills/developer/multitask-verifier.md` (this checklist)
 2. `.agents/skills/code-review/SKILL.md`
 3. `.agents/skills/clean-code/smells.md`
-4. Domain skills only if relevant: {{api | apps-ui | workspace | storybook}}
+4. `.agents/skills/verify-issue/SKILL.md` when the feature tracks a GitHub issue
+5. Domain skills only if relevant: {{api | apps-ui | workspace | storybook}}
 
 ## Your task
 1. Inspect the **combined** diff for all chunks (`git diff`, `git status`, read boundary files).
-2. Run the verifier checklist in `multitask-verifier.md` (cross-chunk → smells → policy → integration → tests).
+2. Run the verifier checklist in `multitask-verifier.md` (verify-issue when applicable → cross-chunk → smells → policy → integration → tests).
 3. Return a short report:
 
 ### Verdict

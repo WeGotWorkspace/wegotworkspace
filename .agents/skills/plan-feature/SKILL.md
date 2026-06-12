@@ -20,6 +20,7 @@ Skip formal planning for single-file fixes with obvious scope.
 
 Before writing the plan:
 
+- [ ] GitHub issue (if any): fetch with `gh issue view` and copy acceptance criteria into chunk `done-when` — verify later with [verify-issue](../verify-issue/SKILL.md)
 - [ ] Relevant domain skill (`api`, `apps-ui`, `workspace`)
 - [ ] OpenAPI contract if API involved: `packages/api/openapi/openapi.json`
 - [ ] Done gate if API involved: `packages/api/docs/api-done-gate.md`
@@ -74,6 +75,7 @@ Optional final chunk after parallel builds merge:
 
 Chunk `done-when` should reference:
 
+- [verify-issue](../verify-issue/SKILL.md) when work tracks a GitHub issue
 - [developer/done-checklist.md](../developer/done-checklist.md) commands where applicable
 - Domain skill requirements (e.g. API feature tests, apps-ui CSS rules)
 - [clean-code](../clean-code/SKILL.md) smells checklist on touched files

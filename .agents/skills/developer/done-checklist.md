@@ -2,6 +2,15 @@
 
 Run before declaring work complete or opening a PR (when the user asks). Policy context: [.agents/POLICY.md](../../POLICY.md).
 
+## When work tracks a GitHub issue
+
+If the task references an issue (`#N`, issue URL, or "fixes #N"):
+
+1. Load [verify-issue](../verify-issue/SKILL.md) — fetch issue, map acceptance criteria, run per-criterion checks, report verdict.
+2. Then run the package sections below (repo quality gate).
+
+Issue AC verification and done-checklist are both required; neither replaces the other.
+
 ## Always (any touched package)
 
 - [ ] Changes match the relevant domain skill (`api`, `apps-ui`, `workspace`, `meet`, …)
