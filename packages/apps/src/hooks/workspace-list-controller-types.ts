@@ -1,7 +1,13 @@
 import type { Dispatch, ReactNode, SetStateAction } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import type { IdentifiableItem } from "@/hooks/collection-controller-utils";
+import type { ListDropZoneProps } from "@/hooks/use-sidebar-list-drag";
 import type { DeferredApiWriteArgs } from "@/hooks/use-queued-mutation";
+
+export type ItemDragHandlers = {
+  onDragStart: (e: React.DragEvent) => void;
+  onDragEnd: () => void;
+};
 
 export type WorkspaceActionButton = {
   label: string;
@@ -33,11 +39,8 @@ export type WorkspaceListControllerResult<TItem> = {
   exitSelection: (activeId?: string) => void;
   selectSingle: (id: string) => void;
   isItemDragging: (id: string) => boolean;
-  itemDragHandlers: (id: string) => Record<string, unknown>;
-  sidebarDropZoneProps: (
-    targetKey: string,
-    onCommit: (ids: string[]) => void,
-  ) => Record<string, unknown>;
+  itemDragHandlers: (id: string) => ItemDragHandlers;
+  sidebarDropZoneProps: (targetKey: string, onCommit: (ids: string[]) => void) => ListDropZoneProps;
   beginOptimisticUpdate: ({ ids, updater }: { ids: string[]; updater: (item: TItem) => TItem }) => {
     snapshotById: Map<string, TItem>;
     affectedItems: TItem[];
