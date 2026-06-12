@@ -47,7 +47,7 @@ CI runs apps Vitest via `turbo run test` and Storybook smoke via `test:storybook
 |-------|----------|
 | **Typecheck** | TS contracts compile; OpenAPI-generated types (`@wgw-api-generated`) match consumers. |
 | **Contract (`test:contract`)** | Settings + list-app mappers preserve required OpenAPI fields; `expectTypeOf` documents UI-only vs API-derived shapes. |
-| **Vitest unit** | Pure parsers, mappers, RTC/session helpers — co-located `*.test.ts`. |
+| **Vitest unit** | Pure parsers, mappers, RTC/session helpers — co-located `*.test.ts`. Non-meet domains with unit coverage: `lib/api/wgw/*-utils`, `route-guard`, `mail-core/*-utils`, `drive-core/*-utils`, `notes-core/*-utils`, `admin-core/*-utils`, `hooks/collection-controller-utils`. |
 | **Vitest jsdom** | Hook and pane RTL with **mock `operations`** — co-located `*.test.tsx`. |
 | **Storybook `vitest-ci`** | Offline mock-tier stories render; `play` asserts critical interactions; a11y `error` via `STORYBOOK_A11Y_GATE=1` (set by gate and CI). |
 | **Storybook coverage** | Every exported pane/component has a mock-tier story ([storybook/offline-first.md](../storybook/offline-first.md)). |

@@ -52,7 +52,7 @@ export function WeGotWorkspaceHome() {
       id: "settings",
       label: "Settings",
       icon: <SettingsIcon className="size-4" />,
-      accent: "var(--settings-sidebar, #949dad)",
+      accent: "#949dad",
       fg: "var(--color-ink)",
       onSelect: () => void navigate({ to: "/settings" }),
     },
