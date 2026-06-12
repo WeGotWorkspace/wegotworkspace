@@ -27,7 +27,6 @@ export function useAdminMutations({ operations, shell }: UseAdminMutationsArgs) 
     setSettingsForm,
     updates,
     setUpdates,
-    searchReindex,
     setSearchReindex,
     updateLogLines,
     setUpdateLogLines,
