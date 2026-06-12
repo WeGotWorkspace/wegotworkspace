@@ -33,7 +33,7 @@ export function DriveGridView({
   starred,
   labels,
   inTrash,
-  selectionMode,
+  selectionMode: _selectionMode,
   isTouch,
   isItemDragging,
   itemDragHandlers,
@@ -46,7 +46,7 @@ export function DriveGridView({
   onRename,
   onMove,
   onTrash,
-  searchActive = false,
+  searchActive: _searchActive = false,
 }: {
   items: DriveFile[];
   imagePreviewUrls: Record<string, string>;

@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { expect, fn, userEvent, within } from "storybook/test";
 import { createMeetAppBootstrap } from "@/lib/api/mock/meet-bootstrap";
 import {
   WorkspaceShellHeader,
@@ -24,6 +25,7 @@ const meta = {
   component: WorkspaceShellHeader,
   parameters: {
     layout: "fullscreen",
+    routerPath: "/meet",
   },
 } satisfies Meta<typeof WorkspaceShellHeader>;
 
@@ -40,13 +42,19 @@ function MeetDarkHeader(args: WorkspaceShellHeaderProps) {
 
 export const MeetSignedIn: Story = {
   name: "Meet signed in",
+  tags: ["vitest-ci"],
   render: MeetDarkHeader,
   args: {
     session: signedInSession,
     displayName: signedInSession.user.displayName,
     appSwitchDisabled: false,
     showUserAccount: true,
-    onLogout: STORY_NOOP,
+    onLogout: fn(),
+  },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Log out" }));
+    await expect(args.onLogout).toHaveBeenCalledOnce();
   },
 };
 

@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { expect, userEvent, within } from "storybook/test";
 import { MeetRoomPane } from "@/meet-core/src/meet-room-pane";
 import {
   MeetRoomPaneStory,
@@ -80,7 +81,15 @@ export const WaitingAlone: Story = {
 
 export const WithPeers: Story = {
   name: "With peers",
+  tags: ["vitest-ci"],
   args: inCallBase,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "Show chat" }));
+    await expect(canvas.getByRole("button", { name: "Hide chat" })).toBeInTheDocument();
+    await userEvent.click(canvas.getByRole("button", { name: "Hide chat" }));
+    await expect(canvas.getByRole("button", { name: "Show chat" })).toBeInTheDocument();
+  },
 };
 
 export const WithKnockers: Story = {

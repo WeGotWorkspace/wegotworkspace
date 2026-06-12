@@ -1,4 +1,4 @@
-import { KeyRound, Pencil, Plus, Trash2, Users as UsersIcon } from "lucide-react";
+import { KeyRound, Pencil, Plus, Trash2 } from "lucide-react";
 import { Card } from "@/card/src/card";
 import { UserAvatar } from "@/user-avatar/src/user-avatar";
 import { isProtectedGroup } from "@/admin-core/src/admin-workspace-utils";

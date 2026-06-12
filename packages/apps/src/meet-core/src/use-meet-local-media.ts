@@ -34,7 +34,7 @@ export function useMeetLocalMedia({
   announceMediaPresence,
   micOnRef,
   videoOnRef,
-  screenOnRef,
+  screenOnRef: _screenOnRef,
 }: UseMeetLocalMediaArgs) {
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);

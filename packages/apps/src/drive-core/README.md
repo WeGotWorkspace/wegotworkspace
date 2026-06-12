@@ -17,7 +17,8 @@ Public (`src/drive-core/src/index.ts`):
 
 Internal composition (import from `@/drive-core/src/…` in stories or sibling packages):
 
-- `useDriveController` (`src/drive-core/src/use-drive-controller.tsx`)
+- `useDriveController` (`src/drive-core/src/use-drive-controller.tsx`) — thin composer (~200 lines)
+- `useDriveShell`, `useDriveList`, `useDriveMutations` — shell navigation, list/selection, and mutation slices
 - `useDriveAPI` (`src/drive-core/src/use-drive-api.ts`)
 - `DriveMainPane`, `DriveDetailActionBar`, `DriveNewMenu`
 - `DriveGridView`, `DriveListView`, `DriveDetailPanel` (`src/drive-core/src/drive-browser.tsx`)

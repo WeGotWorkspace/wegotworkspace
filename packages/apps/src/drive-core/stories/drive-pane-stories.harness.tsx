@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { createDriveAppBootstrap } from "@/lib/api/mock/drive-bootstrap";
 import type { DriveFile } from "@/drive-core/src/drive-models";
 import { useDriveController } from "@/drive-core/src/use-drive-controller";
@@ -23,11 +23,15 @@ export function useDrivePaneStoryController(options?: DrivePaneStoryHarnessOptio
   });
 
   const { setFiles, setView } = controller;
+  const lastFilesOverrideKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (options?.filesOverride) {
-      setFiles(options.filesOverride);
-    }
+    const filesOverride = options?.filesOverride;
+    if (!filesOverride) return;
+    const key = filesOverride.map((file) => file.id).join("|");
+    if (lastFilesOverrideKeyRef.current === key) return;
+    lastFilesOverrideKeyRef.current = key;
+    setFiles(filesOverride);
   }, [options?.filesOverride, setFiles]);
 
   useEffect(() => {

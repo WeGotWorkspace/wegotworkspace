@@ -133,7 +133,7 @@ Run `node packages/apps/scripts/check-storybook-coverage.mjs --update-baseline` 
 | `play` / `vitest-ci` breadth | **Good** — 14 `play`, 18 `vitest-ci` story files (37 smoke tests), all 7 product verticals; 83 story files still skipped in smoke |
 | WCAG gate in CI | **On** — a11y `error` for `vitest-ci` smoke in CI and done gate; violations fixed (labels, nested-interactive tiles, meet contrast) |
 | Chromatic | **Optional / dormant** — see [chromatic.md](chromatic.md); enable with `CHROMATIC_ENABLED` + token; no baselines yet ([#85](https://github.com/WeGotWorkspace/wegotworkspace/issues/85)) |
-| Apps done gate | **Built** (#80) — `pnpm test:apps-done-gate`; not yet part of `ci:quality` |
+| Apps done gate | **Built** (#80, #86) — `pnpm test:apps-done-gate`; wired into `ci:quality` |
 | Multitask verifier subagents | **Built** (#79) — [multitask-verifier.md](../developer/multitask-verifier.md) |
 
 Do not add live-only stories for components lacking offline coverage.
