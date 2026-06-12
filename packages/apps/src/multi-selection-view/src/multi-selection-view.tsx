@@ -41,27 +41,15 @@ export function MultiSelectionView({
         className,
       )}
     >
-      <div
-        className="mb-6 flex size-20 items-center justify-center rounded-full"
-        style={{
-          backgroundColor: "color-mix(in oklab, var(--color-ink) 8%, transparent)",
-          color: "color-mix(in oklab, var(--color-ink) 70%, transparent)",
-        }}
-      >
+      <div className="multi-selection-view__icon-ring mb-6 flex size-20 items-center justify-center rounded-full">
         {icon ?? <CheckSquare2 className="size-9" strokeWidth={1.5} />}
       </div>
 
-      <div
-        className="mb-3 text-[11px] uppercase tracking-[0.2em]"
-        style={{ color: "color-mix(in oklab, var(--color-ink) 55%, transparent)" }}
-      >
+      <div className="multi-selection-view__label mb-3 text-[11px] uppercase tracking-[0.2em]">
         {label}
       </div>
 
-      <h1
-        className="font-sans text-3xl font-semibold leading-[1.1] tracking-tight md:text-4xl"
-        style={{ color: "var(--color-ink)" }}
-      >
+      <h1 className="multi-selection-view__title font-sans text-3xl font-semibold leading-[1.1] tracking-tight md:text-4xl">
         {resolvedTitle}
       </h1>
 
