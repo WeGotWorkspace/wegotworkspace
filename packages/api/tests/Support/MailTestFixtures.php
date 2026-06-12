@@ -50,6 +50,8 @@ trait MailTestFixtures
 
     protected function tearDownMailFixtures(): void
     {
+        set_time_limit(0);
+
         if ($this->mailDataDir !== '' && File::isDirectory($this->mailDataDir)) {
             File::deleteDirectory($this->mailDataDir);
         }
