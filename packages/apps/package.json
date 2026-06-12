@@ -26,6 +26,8 @@
     "test:storybook": "vitest run --project storybook",
     "test:storybook:ci": "STORYBOOK_VITEST_SMOKE=1 vitest run --project storybook",
     "test:done-gate": "node scripts/done-gate.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "chromatic": "chromatic --build-script-name build-storybook",
     "test:watch": "vitest --project unit --project jsdom",
     "check:storybook-coverage": "node scripts/check-storybook-coverage.mjs"
@@ -109,6 +111,7 @@
     "@chromatic-com/storybook": "^5.1.2",
     "@eslint/js": "^9.32.0",
     "@ljcl/storybook-addon-cssprops": "^6.1.0",
+    "@playwright/test": "^1.60.0",
     "@storybook/addon-a11y": "^10.3.6",
     "@storybook/addon-docs": "^10.3.6",
     "@storybook/addon-vitest": "^10.3.6",
