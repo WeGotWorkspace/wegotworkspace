@@ -4,13 +4,20 @@ import { DetailViewHeader } from "@/detail-view-header/src/detail-view-header";
 import { UserAvatar } from "@/user-avatar/src/user-avatar";
 import { cn } from "@/lib/utils";
 import { mailboxIconForLabel } from "@/mail-core/src/mailbox-icons";
-import {
-  mailDetailTagColors,
-  mailWorkspacePaneClasses,
-} from "@/mail-core/src/mail-workspace.styles";
 import type { MailAttachment } from "@/types/mail";
 import { MailAttachments } from "./mail-attachments";
 import { MailBodyIframe } from "./mail-body-iframe";
+
+const mailDetailTagColors = {
+  primary: {
+    color: "var(--mail-detail-tag-primary-fg)",
+    backgroundColor: "var(--mail-detail-tag-primary-bg)",
+  },
+  muted: {
+    backgroundColor: "var(--mail-detail-tag-muted-bg)",
+    color: "var(--mail-detail-tag-muted-fg)",
+  },
+} as const;
 
 type MailDetailViewProps = {
   /** Used for stable keys on body paragraphs when switching messages. */
@@ -59,7 +66,7 @@ export function MailDetailView({
   const showPlainBody = detailLoaded && !hasHtmlBody;
 
   return (
-    <article className={cn(mailWorkspacePaneClasses.detailView, className)}>
+    <article className={cn("mail-detail-view", className)}>
       <DetailViewHeader
         topTags={[
           {
@@ -77,17 +84,17 @@ export function MailDetailView({
         ]}
         title={title}
         emptyTitleLabel={emptySubjectLabel}
-        titleClassName={mailWorkspacePaneClasses.detailTitle}
+        titleClassName="mail-detail-view__title"
       />
 
-      <div className={mailWorkspacePaneClasses.detailSenderRow}>
+      <div className="mail-detail-view__sender-row">
         <UserAvatar displayName={from} subtitle={senderMetaLine} size="md" />
       </div>
 
       {showIframe ? (
         <MailBodyIframe key={`${mailId}-body-frame`} bodyHtml={bodyHtml ?? ""} />
       ) : showPlainBody ? (
-        <div className={mailWorkspacePaneClasses.detailPlainBody}>{plainBodyFallback}</div>
+        <div className="mail-detail-view__body">{plainBodyFallback}</div>
       ) : null}
 
       {attachments && attachments.length > 0 ? (

@@ -3,7 +3,6 @@ import "react-swipeable-list/dist/styles.css";
 import { cn } from "@/lib/utils";
 import type { MailComposeMode } from "@/mail-core/src/mail-compose-view";
 import "@/mail-core/src/mail-workspace.css";
-import { mailWorkspacePaneClasses } from "@/mail-core/src/mail-workspace.styles";
 import { Button } from "@/button/src/button";
 import { MailMoveToDialog } from "@/mail-core/src/mail-move-to-dialog";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
@@ -275,10 +274,7 @@ export function MailWorkspace({
           }}
         >
           <DialogContent
-            className={cn(
-              mailWorkspacePaneClasses.composeDialog,
-              mailWorkspacePaneClasses.composeDialogSurface,
-            )}
+            className="mail-compose-dialog mail-compose-dialog-surface"
             onPointerDownOutside={(event) => event.preventDefault()}
             onInteractOutside={(event) => event.preventDefault()}
           >
