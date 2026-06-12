@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createMediaBinding } from "@/lib/rtc/session/bindings";
 import { RtcPeerMesh } from "@/lib/rtc/session/peer-mesh";
 import type { HttpSignalingClient, HttpSignalingPollResult } from "@/lib/rtc/signaling/http-client";
 import type { RtcSettings } from "@/lib/rtc/types";

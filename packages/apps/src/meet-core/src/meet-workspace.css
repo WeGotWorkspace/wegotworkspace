@@ -41,6 +41,9 @@
   --workspace-user-footer-avatar-color: var(--meet-text);
   --workspace-user-footer-link-color: var(--meet-text);
   --workspace-user-footer-link-bg: var(--meet-panel-soft);
+  --app-switch-label-color: var(--meet-text);
+  --app-switch-label-tagline-color: var(--meet-muted);
+  --app-switch-chevron-color: var(--meet-muted);
   --field-label-color: var(--meet-muted);
   --foreground: var(--meet-text);
   --color-foreground: var(--meet-text);
@@ -52,6 +55,10 @@
   background-color: var(--meet-surface);
   color: var(--meet-text);
   font-family: var(--font-sans);
+}
+
+.meet-workspace .workspace-shell-header .app-switch-button__trigger {
+  background-color: var(--meet-panel);
 }
 
 .meet-workspace--in-call {

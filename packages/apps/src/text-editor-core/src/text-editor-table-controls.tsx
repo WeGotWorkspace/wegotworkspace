@@ -151,8 +151,8 @@ export function TextEditorTableControls({ editor }: TextEditorTableControlsProps
   const [rows, setRows] = useState<Strip[]>([]);
   const [cols, setCols] = useState<Strip[]>([]);
   const [tableEl, setTableEl] = useState<HTMLTableElement | null>(null);
-  const [insertRow, setInsertRow] = useState(-1);
-  const [insertCol, setInsertCol] = useState(-1);
+  const [, setInsertRow] = useState(-1);
+  const [, setInsertCol] = useState(-1);
   const [handleRow, setHandleRow] = useState(-1);
   const [handleCol, setHandleCol] = useState(-1);
   const [drag, setDrag] = useState<{ type: "row" | "col"; from: number; gap: number } | null>(null);

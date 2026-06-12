@@ -44,7 +44,7 @@ export function useMailShell({
   encodeFolderToken,
   mailboxLoader,
   operations,
-  initialActiveId = "",
+  initialActiveId: _initialActiveId = "",
 }: UseMailShellArgs) {
   const L = useMemo(() => mergeMailLabels(labels), [labels]);
   const allSystemMailboxes = systemMailboxes;

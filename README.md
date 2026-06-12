@@ -69,7 +69,7 @@ Then use **https://wegotworkspace.localhost/** (see [`docker/README.md`](docker/
 
 Environment variables: [`docs/env.md`](docs/env.md).
 
-CI-quality checks locally: `pnpm run ci:quality` (typegen, lint, format, typecheck, API done gate).
+CI-quality checks locally: `pnpm run ci:quality` (typegen, lint, format, API + apps done gates).
 
 ## Security scanning
 

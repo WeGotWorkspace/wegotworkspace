@@ -207,7 +207,7 @@
   @apply flex-1 overflow-y-auto px-5 md:px-6 py-6;
 }
 
-.drive-workspace .drive-detail-panel__path .tag {
-  background-color: var(--drive-detail-tag-bg);
-  color: var(--drive-detail-tag-fg);
+.drive-workspace .drive-detail-panel__path {
+  --tag-bg: var(--drive-detail-tag-bg);
+  --tag-fg: var(--drive-detail-tag-fg);
 }
