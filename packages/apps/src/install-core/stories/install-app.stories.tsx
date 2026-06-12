@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { createInstallAppBootstrap } from "@/lib/api/mock/install-bootstrap";
+import { createInstallWorkspaceStoryArgs } from "@/lib/api/mock/install-bootstrap";
+import { InstallApp } from "@/install-core/src/install-app";
+import { createDefaultInstallApiSource } from "@/install-core/src/install-api-source";
 import { InstallWorkspace } from "@/install-core/src/install-workspace";
 
 const meta: Meta<typeof InstallWorkspace> = {
@@ -14,7 +16,10 @@ export default meta;
 type Story = StoryObj<typeof InstallWorkspace>;
 
 export const Default: Story = {
-  args: {
-    ...createInstallAppBootstrap(),
-  },
+  args: createInstallWorkspaceStoryArgs(),
+};
+
+/** Full app shell with injectable mock API source (offline Storybook / non-live routes). */
+export const AppShell: Story = {
+  render: () => <InstallApp apiSource={createDefaultInstallApiSource()} />,
 };

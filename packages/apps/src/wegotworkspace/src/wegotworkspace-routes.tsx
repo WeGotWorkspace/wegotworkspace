@@ -18,7 +18,7 @@ import { NotesApp } from "@/notes-core/src/notes-app";
 import { SettingsApp } from "@/settings-core/src/settings-app";
 import { createAdminAppBootstrap } from "@/lib/api/mock/admin-bootstrap";
 import { createDriveAppBootstrap } from "@/lib/api/mock/drive-bootstrap";
-import { createInstallAppBootstrap } from "@/lib/api/mock/install-bootstrap";
+import { createInstallWorkspaceStoryArgs } from "@/lib/api/mock/install-bootstrap";
 import { createMailAppBootstrap } from "@/lib/api/mock/mail-bootstrap";
 import { createMeetAppBootstrap } from "@/lib/api/mock/meet-bootstrap";
 import { createDocsAppBootstrap } from "@/lib/api/mock/docs-bootstrap";
@@ -136,7 +136,7 @@ function MockAdminRoute() {
 }
 
 function MockInstallRoute() {
-  const bootstrap = useMemo(() => createInstallAppBootstrap(), []);
+  const bootstrap = useMemo(() => createInstallWorkspaceStoryArgs(), []);
   return <InstallWorkspace {...bootstrap} />;
 }
 

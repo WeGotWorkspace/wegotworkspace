@@ -168,6 +168,10 @@ import "@/<product>-core/src/<product>-workspace.css";
 
 Additional split references: `admin-workspace.tsx`, `drive-workspace.tsx`, `install-workspace.tsx`, `docs-workspace.tsx`.
 
+### Install-specific deviations
+
+- **`useInstallAPI`** follows the shared `useWorkspaceApi` bootstrap (`data`, `session`, `operations`) like settings/admin, but **`InstallWorkspace` does not take `session`** — the installer runs before login, so sidebar chrome uses a **step progress footer** instead of `WorkspaceUserFooter`. Mock/live bootstraps still carry `mockWorkspaceSession` for API symmetry; stories use `createInstallWorkspaceStoryArgs()` to omit `session` from workspace args.
+
 ## Related docs
 
 - Split feature layers, panes, controller hooks: [feature-blueprint.md](../../.agents/skills/workspace/feature-blueprint.md)
