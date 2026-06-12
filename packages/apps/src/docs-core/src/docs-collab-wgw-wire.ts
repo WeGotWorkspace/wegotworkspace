@@ -1,9 +1,6 @@
 import { fetchWgwAuthToken } from "@/lib/api/wgw/auth-token";
 import { fetchRtcSettings } from "@/lib/api/wgw/rtc";
-import type {
-  DocsCollabAuthTokenInput,
-  DocsCollabWireOperations,
-} from "@/text-editor-core/docs-collab/docs-collab-wire";
+import type { DocsCollabWireOperations } from "@/text-editor-core/docs-collab/docs-collab-wire";
 
 export function createWgwDocsCollabWire(): DocsCollabWireOperations {
   return {

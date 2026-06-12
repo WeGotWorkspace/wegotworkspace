@@ -49,7 +49,7 @@ export function MailListPanel({
   searchQuery,
   setSearchQuery,
   searchInputRef,
-  inTrash,
+  inTrash: _inTrash,
   isTouch,
   starred,
   activeId,

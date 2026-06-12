@@ -34,7 +34,6 @@ import {
   TEXT_EDITOR_FORMAT_BAR_FULL,
   type TextEditorFormatBarConfig,
   type TextEditorFormatBarGroup,
-  resolveTextEditorFormatBarConfig,
 } from "@/text-editor-core/src/text-editor-format-bar-config";
 
 type EditorChain = ReturnType<Editor["chain"]>;

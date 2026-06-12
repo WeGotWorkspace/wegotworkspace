@@ -46,7 +46,7 @@ export function useDriveBatchActions({
   setFiles,
   selectedIds,
   setSelectedIds,
-  selectionMode,
+  selectionMode: _selectionMode,
   setSelectionMode,
   activeId,
   setActiveId,
