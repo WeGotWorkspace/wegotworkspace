@@ -19,7 +19,6 @@ export function useNotesList({ shell }: UseNotesListArgs) {
     setNotes,
     view,
     searchQuery,
-    searchInputRef,
     workspaceLayoutRef,
     starred,
     archived,
