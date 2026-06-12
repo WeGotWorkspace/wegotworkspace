@@ -17,6 +17,12 @@ export type MailComposeDraftFields = {
   attachments: MailComposeAttachment[];
 };
 
+export function randomDraftUid(): number {
+  const values = new Uint32Array(1);
+  crypto.getRandomValues(values);
+  return values[0]! % 1_000_000_000;
+}
+
 export function createComposeAttachment(file: File): MailComposeAttachment {
   return {
     id: `att-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
