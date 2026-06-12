@@ -29,13 +29,13 @@ This runs, in order:
 5. **Storybook Vitest smoke** — stories tagged `vitest-ci` (browser + `play` + a11y `error`)
 6. **Storybook coverage** — `check:storybook-coverage` (no new export gaps)
 
-Full CI-quality stack (typegen, lint, format, API + apps gates):
+Full CI-quality stack (typegen, lint, format, API done gate, apps done gate):
 
 ```bash
 pnpm run ci:quality
 ```
 
-CI runs apps Vitest via `turbo run test` and Storybook smoke via `test:storybook:ci` (see `.github/workflows/ci.yml`).
+`ci:quality` ends with `pnpm test:apps-done-gate` (same script as `pnpm run test:done-gate` in `packages/apps`). A green `ci:quality` implies a green apps done gate — no separate CI smoke step. Playwright Chromium must be installed first (CI does this before the quality gate; locally: `pnpm --filter @wgw/apps exec playwright install chromium`).
 
 ## Reading the output
 
