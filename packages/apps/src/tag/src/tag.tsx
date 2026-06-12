@@ -33,8 +33,9 @@ export function Tag({
       style={
         colors
           ? {
-              backgroundColor: colors.backgroundColor,
-              color: colors.color,
+              backgroundColor:
+                colors.backgroundColor ?? "color-mix(in oklab, var(--color-ink) 8%, transparent)",
+              color: colors.color ?? "var(--color-ink)",
             }
           : undefined
       }
