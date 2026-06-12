@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
+import { useWorkspaceListKeyboardShortcuts } from "@/hooks/use-workspace-list-keyboard-shortcuts";
 import type { ViewKey } from "@/drive-core/src/drive-models";
 import type { DriveAPIOperations, DriveUIData } from "@/drive-core/src/drive-types";
 import { useDriveList } from "@/drive-core/src/use-drive-list";
@@ -68,6 +69,15 @@ export function useDriveController({
     return () => window.removeEventListener("keydown", handler);
   }, [list.detailOpen, list.setDetailOpen, shell.searchInputRef]);
 
+
+  useWorkspaceListKeyboardShortcuts({
+    searchInputRef: shell.searchInputRef,
+    selectedCount: list.selectedIds.length,
+    onRequestDeleteSelection: mutations.requestDeleteSelected,
+    onNavigateList: list.navigateListByKeyboard,
+    onUndoQueuedAction: list.undoLatest,
+  });
+
   const handleUnifiedSearchSelect = useMemo(
     () =>
       shell.createUnifiedSearchSelectHandler(list.openFile, {
@@ -96,8 +106,6 @@ export function useDriveController({
     setActiveId: list.setActiveId,
     selectedIds: list.selectedIds,
     setSelectedIds: list.setSelectedIds,
-    lastClickedId: list.lastClickedId,
-    setLastClickedId: list.setLastClickedId,
     starred: shell.starred,
     setStarred: shell.setStarred,
     sidebarOpen: shell.sidebarOpen,

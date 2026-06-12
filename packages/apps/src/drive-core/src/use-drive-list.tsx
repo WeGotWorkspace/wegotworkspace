@@ -1,12 +1,17 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
+import { useAppToast } from "@/hooks/use-app-toast";
 import { useIsTouch } from "@/hooks/use-is-touch";
-import { useSidebarListDrag } from "@/hooks/use-sidebar-list-drag";
+import { useSelectionResetOnKeyChange } from "@/hooks/use-selection-reset-on-key-change";
+import { useWorkspaceListController } from "@/hooks/use-workspace-list-controller";
 import { findDrivePluginForExtension } from "@/drive-core/src/drive-plugin-utils";
 import { filterDriveVisibleItems } from "@/drive-core/src/drive-visible-items";
 import { extensionFromFileName } from "@/drive-core/src/drive-file-utils";
 import type { DriveFile } from "@/drive-core/src/drive-models";
 import { DOCS_EDITOR_EXTENSIONS } from "@/drive-core/src/drive-models";
 import type { DriveShellState } from "@/drive-core/src/use-drive-shell";
+
+const WRITE_QUEUE_DELAY_MS = 2500;
 
 export type UseDriveListArgs = {
   shell: DriveShellState;
@@ -16,6 +21,7 @@ export type UseDriveListArgs = {
 export function useDriveList({ shell, onOpenDocsFile }: UseDriveListArgs) {
   const {
     files,
+    setFiles,
     liveSearchResults,
     starredItems,
     starred,
@@ -29,11 +35,14 @@ export function useDriveList({ shell, onOpenDocsFile }: UseDriveListArgs) {
     ensurePluginSessionBeforeNavigate,
   } = shell;
 
+  const { showError } = useAppToast();
+  const showMutationError = useCallback(
+    (fallback = "Could not sync this change. Please try again.") => showError(fallback),
+    [showError],
+  );
+
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [lastClickedId, setLastClickedId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [selectionMode, setSelectionMode] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [imagePreviewUrls, setImagePreviewUrls] = useState<Record<string, string>>({});
   const imagePreviewUrlsRef = useRef<Record<string, string>>({});
@@ -65,10 +74,42 @@ export function useDriveList({ shell, onOpenDocsFile }: UseDriveListArgs) {
     ],
   );
 
+  const visibleIds = useMemo(() => visibleItems.map((file) => file.id), [visibleItems]);
+
+  const {
+    selectedIds,
+    setSelectedIds,
+    selectionMode,
+    setSelectionMode,
+    handleSelect: listHandleSelect,
+    enterSelectionFor,
+    exitSelection,
+    isItemDragging,
+    itemDragHandlers,
+    sidebarDropZoneProps,
+    beginOptimisticUpdate,
+    queueMutation,
+    undoLatest,
+    navigateListByKeyboard,
+  } = useWorkspaceListController<DriveFile>({
+    items: files,
+    setItems: setFiles,
+    visibleIds,
+    activeId: activeId ?? "",
+    setActiveId: (id) => setActiveId(id),
+    onPrimarySelect: (id) => setActiveId(id),
+    onMutationError: showMutationError,
+    queueDelayMs: WRITE_QUEUE_DELAY_MS,
+  });
+
+  useSelectionResetOnKeyChange({
+    resetKey: viewResetKey,
+    setSelectedIds,
+    setSelectionMode,
+  });
+
   useEffect(() => {
-    setSelectedIds([]);
     setActiveId(null);
-    setSelectionMode(false);
     setDetailOpen(false);
     lastTouchTapRef.current = null;
   }, [viewResetKey]);
@@ -241,71 +282,39 @@ export function useDriveList({ shell, onOpenDocsFile }: UseDriveListArgs) {
     }
   };
 
-  const handleSelect = (id: string, e: React.MouseEvent) => {
-    if (isTouch && !selectionMode && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
-      const now = Date.now();
-      const lastTap = lastTouchTapRef.current;
-      if (lastTap && lastTap.id === id && now - lastTap.at < 350) {
-        const tappedItem = visibleItems.find((file) => file.id === id);
-        if (tappedItem) {
-          lastTouchTapRef.current = null;
-          openFile(tappedItem);
-          return;
+  const handleSelect = useCallback(
+    (id: string, e: ReactMouseEvent) => {
+      if (isTouch && !selectionMode && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
+        const now = Date.now();
+        const lastTap = lastTouchTapRef.current;
+        if (lastTap && lastTap.id === id && now - lastTap.at < 350) {
+          const tappedItem = visibleItems.find((file) => file.id === id);
+          if (tappedItem) {
+            lastTouchTapRef.current = null;
+            openFile(tappedItem);
+            return;
+          }
         }
+        lastTouchTapRef.current = { id, at: now };
+      } else if (!isTouch) {
+        lastTouchTapRef.current = null;
       }
-      lastTouchTapRef.current = { id, at: now };
-    } else if (!isTouch) {
-      lastTouchTapRef.current = null;
-    }
-
-    if (selectionMode) {
-      setSelectedIds((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
-      setLastClickedId(id);
-      return;
-    }
-    if (e.shiftKey && lastClickedId) {
-      const ids = visibleItems.map((f) => f.id);
-      const a = ids.indexOf(lastClickedId);
-      const b = ids.indexOf(id);
-      if (a === -1 || b === -1) setSelectedIds([id]);
-      else {
-        const [s, eIdx] = a < b ? [a, b] : [b, a];
-        setSelectedIds(ids.slice(s, eIdx + 1));
-      }
-    } else if (e.metaKey || e.ctrlKey) {
-      setSelectedIds((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
-      setLastClickedId(id);
-    } else {
-      setSelectedIds([id]);
-      setLastClickedId(id);
-      setActiveId(id);
-    }
-  };
-
-  const enterSelectionFor = (id: string) => {
-    setSelectionMode(true);
-    setSelectedIds((p) => (p.includes(id) ? p : [...p, id]));
-  };
-
-  const exitSelection = () => {
-    setSelectionMode(false);
-    setSelectedIds(activeId ? [activeId] : []);
-  };
+      listHandleSelect(id, e);
+    },
+    [isTouch, listHandleSelect, openFile, selectionMode, visibleItems],
+  );
 
   const fileById = (id: string) =>
     (liveSearchResults?.find((file) => file.id === id) ?? files.find((file) => file.id === id)) ||
     null;
 
-  const { isItemDragging, itemDragHandlers, sidebarDropZoneProps, dropZoneProps } =
-    useSidebarListDrag(selectedIds);
+  const dropZoneProps = sidebarDropZoneProps;
 
   return {
     activeId,
     setActiveId,
     selectedIds,
     setSelectedIds,
-    lastClickedId,
-    setLastClickedId,
     detailOpen,
     setDetailOpen,
     selectionMode,
@@ -325,6 +334,10 @@ export function useDriveList({ shell, onOpenDocsFile }: UseDriveListArgs) {
     itemDragHandlers,
     sidebarDropZoneProps,
     dropZoneProps,
+    beginOptimisticUpdate,
+    queueMutation,
+    undoLatest,
+    navigateListByKeyboard,
   };
 }
 

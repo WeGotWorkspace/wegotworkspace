@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Star, StarOff, Upload, FolderPlus, Pencil, ScrollText } from "lucide-react";
 import { useAppToast } from "@/hooks/use-app-toast";
-import { useEntityBatchActions } from "@/hooks/use-entity-batch-actions";
-import { useQueuedMutation } from "@/hooks/use-queued-mutation";
 import { canMoveDriveItemsToFolder } from "@/drive-core/src/drive-item-path";
 import { resolveDriveFileApiPath } from "@/drive-core/src/drive-batch-utils";
 import type { DriveFile, FileKind } from "@/drive-core/src/drive-models";
@@ -20,7 +18,6 @@ import type { DriveListState } from "@/drive-core/src/use-drive-list";
 import type { DriveShellState } from "@/drive-core/src/use-drive-shell";
 import { joinFileNameForRename, splitFileNameForRename } from "@/lib/files/filename-rename";
 
-const WRITE_QUEUE_DELAY_MS = 2500;
 
 export type UseDriveMutationsArgs = {
   shell: DriveShellState;
@@ -29,11 +26,7 @@ export type UseDriveMutationsArgs = {
 };
 
 export function useDriveMutations({ shell, list, onOpenDocsFile }: UseDriveMutationsArgs) {
-  const { show, showError } = useAppToast();
-  const showMutationError = useCallback(
-    (fallback = "Could not sync this change. Please try again.") => showError(fallback),
-    [showError],
-  );
+  const { show } = useAppToast();
 
   const {
     labels,
@@ -66,6 +59,8 @@ export function useDriveMutations({ shell, list, onOpenDocsFile }: UseDriveMutat
     fileById,
     exitSelection,
     dropZoneProps,
+    queueMutation,
+    beginOptimisticUpdate,
   } = list;
 
   const [newFolderDialogOpen, setNewFolderDialogOpen] = useState(false);
@@ -91,17 +86,6 @@ export function useDriveMutations({ shell, list, onOpenDocsFile }: UseDriveMutat
     setRenameName("");
   }, []);
 
-  const { beginOptimisticUpdate } = useEntityBatchActions<DriveFile>({
-    items: files,
-    setItems: setFiles,
-    visibleIds: visibleItems.map((file) => file.id),
-    activeId: activeId ?? "",
-    setActiveId,
-  });
-  const { queueMutation } = useQueuedMutation({
-    delayMs: WRITE_QUEUE_DELAY_MS,
-    onMutationError: showMutationError,
-  });
   const { moveToTrash, reallyDelete, batchStar, moveToFolder } = useDriveBatchActions({
     files,
     setFiles,
