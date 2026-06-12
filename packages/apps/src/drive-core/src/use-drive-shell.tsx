@@ -34,6 +34,7 @@ export type UseDriveShellArgs = {
   listLoading?: boolean;
   view?: ViewKey;
   onViewChange?: (view: ViewKey) => void;
+  onNavigate?: (href: string) => void;
 };
 
 export type DriveShellOpenFileHandler = (file: DriveFile) => void;
@@ -51,6 +52,7 @@ export function useDriveShell({
   listLoading = false,
   view: controlledView,
   onViewChange,
+  onNavigate,
 }: UseDriveShellArgs) {
   const { showError } = useAppToast();
 
@@ -69,10 +71,10 @@ export function useDriveShell({
     (plugin: WgwPluginDescriptor, route: string, params: URLSearchParams) => {
       const target = `${route}?${params.toString()}`;
       ensurePluginSessionBeforeNavigate(plugin.integration?.sessionApiPath, () => {
-        window.location.assign(target);
+        onNavigate?.(target);
       });
     },
-    [ensurePluginSessionBeforeNavigate],
+    [ensurePluginSessionBeforeNavigate, onNavigate],
   );
 
   const templatePlugin = useMemo(() => findDrivePluginWithTemplates(data.plugins), [data.plugins]);

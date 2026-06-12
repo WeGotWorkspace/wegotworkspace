@@ -25,7 +25,7 @@ export type UseDriveMutationsArgs = {
 };
 
 export function useDriveMutations({ shell, list, onOpenDocsFile }: UseDriveMutationsArgs) {
-  const { show } = useAppToast();
+  const { show, showError } = useAppToast();
 
   const {
     labels,
