@@ -138,17 +138,17 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($filesS
     Route::post('mail/messages', [MailController::class, 'messagesStore']);
     Route::post('mail/drafts', [MailController::class, 'draftsStore']);
     Route::post('mail/move', [MailController::class, 'move']);
-    Route::get('mail/messages/{messageId}', [MailController::class, 'messageShowById'])
-        ->where('messageId', '.+');
-    Route::patch('mail/messages/{messageId}', [MailController::class, 'messageUpdateById'])
-        ->where('messageId', '.+');
-    Route::delete('mail/messages/{messageId}', [MailController::class, 'messageDestroyById'])
-        ->where('messageId', '.+');
-    Route::get('mail/messages/{messageId}/attachments', [MailController::class, 'messageAttachmentsById'])
-        ->where('messageId', '.+');
     Route::get('mail/messages/{messageId}/attachments/{attachmentId}', [MailController::class, 'messageAttachmentById'])
-        ->where('messageId', '.+')
+        ->where('messageId', '[^/]+')
         ->where('attachmentId', '[0-9.]+');
+    Route::get('mail/messages/{messageId}/attachments', [MailController::class, 'messageAttachmentsById'])
+        ->where('messageId', '[^/]+');
+    Route::get('mail/messages/{messageId}', [MailController::class, 'messageShowById'])
+        ->where('messageId', '[^/]+');
+    Route::patch('mail/messages/{messageId}', [MailController::class, 'messageUpdateById'])
+        ->where('messageId', '[^/]+');
+    Route::delete('mail/messages/{messageId}', [MailController::class, 'messageDestroyById'])
+        ->where('messageId', '[^/]+');
 
     Route::get('notes/capabilities', NotesCapabilitiesController::class);
     Route::get('notes/state', NotesStateController::class);
