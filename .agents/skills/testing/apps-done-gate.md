@@ -23,10 +23,11 @@ pnpm run test:done-gate
 This runs, in order:
 
 1. **`typecheck`** — `tsc -p tsconfig.typecheck.json`
-2. **Vitest unit** — pure logic (`*.test.ts`, Node)
-3. **Vitest jsdom** — hooks and RTL (`*.test.tsx`)
-4. **Storybook Vitest smoke** — stories tagged `vitest-ci` (browser + `play` + a11y `error`)
-5. **Storybook coverage** — `check:storybook-coverage` (no new export gaps)
+2. **`test:contract`** — UI ↔ OpenAPI adapter + type parity (`src/lib/api/contract/`)
+3. **Vitest unit** — pure logic (`*.test.ts`, Node)
+4. **Vitest jsdom** — hooks and RTL (`*.test.tsx`)
+5. **Storybook Vitest smoke** — stories tagged `vitest-ci` (browser + `play` + a11y `error`)
+6. **Storybook coverage** — `check:storybook-coverage` (no new export gaps)
 
 Full CI-quality stack (typegen, lint, format, API + apps gates):
 
@@ -45,6 +46,7 @@ CI runs apps Vitest via `turbo run test` and Storybook smoke via `test:storybook
 | Layer | Enforces |
 |-------|----------|
 | **Typecheck** | TS contracts compile; OpenAPI-generated types (`@wgw-api-generated`) match consumers. |
+| **Contract (`test:contract`)** | Settings + list-app mappers preserve required OpenAPI fields; `expectTypeOf` documents UI-only vs API-derived shapes. |
 | **Vitest unit** | Pure parsers, mappers, RTC/session helpers — co-located `*.test.ts`. Non-meet domains with unit coverage: `lib/api/wgw/*-utils`, `route-guard`, `mail-core/*-utils`, `drive-core/*-utils`, `notes-core/*-utils`, `admin-core/*-utils`, `hooks/collection-controller-utils`. |
 | **Vitest jsdom** | Hook and pane RTL with **mock `operations`** — co-located `*.test.tsx`. |
 | **Storybook `vitest-ci`** | Offline mock-tier stories render; `play` asserts critical interactions; a11y `error` via `STORYBOOK_A11Y_GATE=1` (set by gate and CI). |
@@ -69,6 +71,29 @@ Tag product-pane smoke stories at **meta** or **story** level with `vitest-ci`. 
 2. **Form → request** mappers must use OpenAPI Zod helpers (e.g. `settingsProfileRequestOpenapiSchema.parse`) — see `settings-profile-form-schema.ts`.
 3. After OpenAPI changes: `pnpm --filter @wgw/api run openapi:build-json` + apps `typecheck`.
 4. Do **not** hand-roll request types that duplicate generated schemas.
+
+### UI vs API shape policy
+
+| Layer | Role | Example |
+|-------|------|---------|
+| **`@wgw-api-generated/*`** | Canonical HTTP request/response types from OpenAPI | `SettingsStateResponse`, `MailMessageListItem` |
+| **`lib/api/wgw/types.ts`** | App narrowing on generated types (optional fields, wire aliases) | `WgwMailMessageListItem` adds required `folder` + `uid` |
+| **`*UIData` / `*Operations`** | Hand-maintained UI contract consumed by panes/hooks | `SettingsUIData`, `MailUIData` |
+| **Mappers** (`lib/api/wgw/*.ts`) | OpenAPI JSON → `*UIData`; must preserve every **required** API field | `mapWgwSettingsStateToUI`, `mailFromWgwListItem` |
+
+**When to narrow or rename**
+
+- **1:1 copy** — keep the OpenAPI field name on `*UIData` when the pane displays it directly (settings profile, mail server fields).
+- **Rename for UI** — allowed when the semantic mapping is stable and documented in contract tests (e.g. `subject` → `Mail.title`, `read` → inverted `Mail.unread`, `starred`/`flagged` → `Mail.starred`).
+- **UI-only fields** — enrich in the mapper (excerpt, wordCount, mailbox display label); document via `expectTypeOf` in `src/lib/api/contract/` so they are not mistaken for API fields.
+- **Request bodies** — always use generated types or OpenAPI Zod schemas; never duplicate with hand-rolled interfaces.
+
+**Contract tests** (`pnpm --filter @wgw/apps run test:contract`, also in done gate):
+
+- `expectTypeOf` / `satisfies` — API-derived slices of `*UIData` stay aligned with generated types.
+- Adapter round-trip — OpenAPI-shaped fixtures → mapper → `assertFieldMappings` on required fields; **CI fails if a mapper drops a listed field**.
+
+Add contract coverage when introducing a new `*UIData` mapper or changing OpenAPI response shapes for settings or list apps.
 
 ## When implementing UI
 

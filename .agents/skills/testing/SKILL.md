@@ -28,6 +28,7 @@ paths:
 |-------|---------|
 | API done gate | `pnpm test:api-done-gate` or `composer done-gate` in `packages/api` |
 | Apps done gate | `pnpm test:apps-done-gate` or `pnpm run test:done-gate` in `packages/apps` |
+| Apps UI ↔ OpenAPI contract | `pnpm --filter @wgw/apps run test:contract` |
 | API PHPUnit (package) | `composer test` in `packages/api` |
 | Apps Vitest (unit + jsdom) | `pnpm test` in `packages/apps` |
 | Storybook Vitest smoke (`vitest-ci`) | `pnpm test:storybook:ci` in `packages/apps` |
