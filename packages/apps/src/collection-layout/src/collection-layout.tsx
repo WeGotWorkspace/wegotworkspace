@@ -1,3 +1,5 @@
+import "./collection-layout.css";
+
 type CollectionPaneProps = {
   children: React.ReactNode;
   detailOpenMobile: boolean;
@@ -6,13 +8,9 @@ type CollectionPaneProps = {
 export function CollectionListPane({ children, detailOpenMobile }: CollectionPaneProps) {
   return (
     <section
-      className={`flex-1 md:flex-none md:w-96 shrink-0 flex flex-col border-r min-w-0 relative transition-transform duration-300 ease-out md:transition-none ${
+      className={`collection-list-pane flex-1 md:flex-none md:w-96 shrink-0 flex flex-col border-r min-w-0 relative transition-transform duration-300 ease-out md:transition-none ${
         detailOpenMobile ? "-translate-x-1/4 md:translate-x-0" : "translate-x-0"
       }`}
-      style={{
-        backgroundColor: "var(--color-cream, #ffffff)",
-        borderColor: "color-mix(in oklab, var(--color-ink) 8%, transparent)",
-      }}
     >
       {children}
     </section>
@@ -24,14 +22,7 @@ type CollectionHeaderProps = {
 };
 
 export function CollectionHeader({ children }: CollectionHeaderProps) {
-  return (
-    <header
-      className="p-4 md:p-6 border-b"
-      style={{ borderColor: "color-mix(in oklab, var(--color-ink) 10%, transparent)" }}
-    >
-      {children}
-    </header>
-  );
+  return <header className="collection-header p-4 md:p-6 border-b">{children}</header>;
 }
 
 type CollectionListWorkspaceProps = {
@@ -61,12 +52,7 @@ export function CollectionListWorkspace({
         {hasItems ? (
           listContent
         ) : (
-          <div
-            className="p-10 text-center text-sm"
-            style={{ color: "color-mix(in oklab, var(--color-ink) 50%, transparent)" }}
-          >
-            {emptyLabel}
-          </div>
+          <div className="collection-empty-state p-10 text-center text-sm">{emptyLabel}</div>
         )}
       </div>
 

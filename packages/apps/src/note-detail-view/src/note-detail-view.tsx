@@ -5,12 +5,6 @@ import { cn } from "@/lib/utils";
 import { noteBodyToMarkdown } from "@/lib/models/note-body-markdown";
 import { NoteTextEditorBody } from "@/note-detail-view/src/note-text-editor-body";
 
-const noteDetailTagColors = {
-  backgroundColor:
-    "var(--note-detail-tag-bg, color-mix(in oklab, var(--notes-accent, #fcd34d) 62%, transparent))",
-  color: "var(--note-detail-tag-fg, var(--color-ink))",
-};
-
 export type NoteDetailViewProps = {
   /** Used for React keys on editors when switching notes. */
   noteId: string;
@@ -65,8 +59,7 @@ export function NoteDetailView({
                   key: "notebook",
                   label: notebook,
                   icon: <BookOpen className="size-3.5 opacity-70" />,
-                  wrapperClassName: "max-w-[260px]",
-                  colors: noteDetailTagColors,
+                  wrapperClassName: "note-detail-view__meta-tag max-w-[260px]",
                 },
               ]
             : []),
@@ -76,10 +69,7 @@ export function NoteDetailView({
                   key: "edited",
                   label: `${editedLabel}${lastEdited}`,
                   icon: <CalendarDays className="size-3.5 opacity-70" />,
-                  colors: {
-                    backgroundColor: "color-mix(in oklab, var(--color-ink) 6%, transparent)",
-                    color: "color-mix(in oklab, var(--color-ink) 58%, transparent)",
-                  },
+                  wrapperClassName: "note-detail-view__meta-tag note-detail-view__meta-tag--edited",
                 },
               ]
             : []),
@@ -89,28 +79,19 @@ export function NoteDetailView({
         onTitleChange={onTitleChange}
         titleKey={`${noteId}-title`}
         titleClassName="note-detail-view__title font-serif text-3xl md:text-4xl font-semibold leading-[1.1] tracking-tight mb-8 md:mb-10"
-        titleStyle={{ color: "var(--color-ink)" }}
         titlePlaceholder="Untitled"
       />
 
       <TagGroup
-        className="py-6 border-y mb-6"
-        style={{ borderColor: "color-mix(in oklab, var(--color-ink) 10%, transparent)" }}
+        className="note-detail-view__tag-group py-6 border-y mb-6"
         tags={tags}
-        tagColors={noteDetailTagColors}
         readonly={readOnly}
         onAdd={readOnly ? undefined : onTagAdd}
         onRemoveTag={readOnly ? undefined : onTagRemove}
       />
 
       {pullQuote ? (
-        <p
-          className="text-xl leading-snug mb-8 font-medium"
-          style={{
-            fontFamily: "var(--font-sans)",
-            color: "color-mix(in oklab, var(--color-ink) 85%, transparent)",
-          }}
-        >
+        <p className="note-detail-view__pull-quote text-xl leading-snug mb-8 font-medium">
           “{pullQuote}”
         </p>
       ) : null}

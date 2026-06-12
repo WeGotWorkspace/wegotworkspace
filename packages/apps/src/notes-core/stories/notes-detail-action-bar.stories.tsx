@@ -35,13 +35,7 @@ function NotesDetailActionBarHarness({
 
   return (
     <NotesStoryScope variant="detail">
-      <div
-        className="sticky top-0 z-10 border-b px-2 py-2"
-        style={{
-          borderColor: "color-mix(in oklab, var(--color-ink) 10%, transparent)",
-          backgroundColor: "var(--color-cream, #ffffff)",
-        }}
-      >
+      <div className="notes-story-scope__action-bar-shell sticky top-0 z-10 border-b px-2 py-2">
         <NotesDetailActionBar
           active={active}
           labels={defaultNotesLabels}

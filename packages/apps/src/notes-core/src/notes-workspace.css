@@ -59,4 +59,52 @@
 
 .notes-workspace .note-detail-view__title {
   font-family: var(--note-detail-title-font-family);
+  color: var(--color-ink);
+}
+
+.notes-workspace .note-detail-view__meta-tag .tag {
+  background-color: var(--note-detail-tag-bg);
+  color: var(--note-detail-tag-fg);
+}
+
+.notes-workspace .note-detail-view__meta-tag--edited .tag {
+  background-color: color-mix(in oklab, var(--color-ink) 6%, transparent);
+  color: color-mix(in oklab, var(--color-ink) 58%, transparent);
+}
+
+.notes-workspace .note-detail-view__tag-group {
+  border-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
+}
+
+.notes-workspace .note-detail-view__tag-group .tag {
+  background-color: var(--note-detail-tag-bg);
+  color: var(--note-detail-tag-fg);
+}
+
+.notes-workspace .note-detail-view__pull-quote {
+  font-family: var(--font-sans);
+  color: color-mix(in oklab, var(--color-ink) 85%, transparent);
+}
+
+/* Storybook scopes — mirror workspace chrome without inline presets */
+.notes-story-scope {
+  min-height: 100dvh;
+  background-color: var(--workspace-root-bg, var(--color-cream, #ffffff));
+}
+
+.notes-story-scope--list-column {
+  display: flex;
+  min-height: 100dvh;
+  justify-content: center;
+  background-color: var(--workspace-root-bg, var(--color-cream, #ffffff));
+}
+
+.notes-story-scope--detail {
+  min-height: 100dvh;
+  background-color: var(--color-cream, #ffffff);
+}
+
+.notes-story-scope__action-bar-shell {
+  border-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
+  background-color: var(--color-cream, #ffffff);
 }

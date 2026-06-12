@@ -1,0 +1,14 @@
+@import "../../styles.css" reference;
+
+.collection-list-pane {
+  background-color: var(--workspace-root-bg, var(--color-cream, #ffffff));
+  border-color: color-mix(in oklab, var(--color-ink) 8%, transparent);
+}
+
+.collection-header {
+  border-color: color-mix(in oklab, var(--color-ink) 10%, transparent);
+}
+
+.collection-empty-state {
+  color: color-mix(in oklab, var(--color-ink) 50%, transparent);
+}

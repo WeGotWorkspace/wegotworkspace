@@ -30,11 +30,14 @@ export function Tag({
   return (
     <span
       className="tag group"
-      style={{
-        backgroundColor:
-          colors?.backgroundColor ?? "color-mix(in oklab, var(--color-ink) 8%, transparent)",
-        color: colors?.color ?? "var(--color-ink)",
-      }}
+      style={
+        colors
+          ? {
+              backgroundColor: colors.backgroundColor,
+              color: colors.color,
+            }
+          : undefined
+      }
     >
       {icon ? <span className="tag__icon">{icon}</span> : null}
       <span className="truncate">{label}</span>
