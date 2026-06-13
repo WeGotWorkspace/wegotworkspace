@@ -172,6 +172,105 @@ final class ConversionSupport
         'schedulingAddresses',
     ];
 
+    /** @var list<string> */
+    public const CARD_PATCH_ID_KEYED_MAP_FIELDS = [
+        ...self::CARD_ID_MAP_FIELDS,
+        'keywords',
+        'members',
+        'addressBookIds',
+        'relatedTo',
+    ];
+
+    /**
+     * Deep-merge a PATCH body into an existing JSContact Card shape.
+     *
+     * Id-keyed maps merge by entry id; null removes an entry. Nested objects (e.g. name)
+     * merge recursively. Scalar top-level fields are replaced.
+     *
+     * @param  array<string, mixed>  $existing
+     * @param  array<string, mixed>  $patch
+     * @return array<string, mixed>
+     */
+    public static function deepMergeContactCardPatch(array $existing, array $patch): array
+    {
+        $result = $existing;
+
+        foreach ($patch as $key => $value) {
+            if ($key === 'speakToAs' && is_array($value)) {
+                $baseSpeakToAs = is_array($result['speakToAs'] ?? null) ? $result['speakToAs'] : [];
+                if (isset($value['pronouns']) && is_array($value['pronouns'])) {
+                    $baseSpeakToAs['pronouns'] = self::mergeIdKeyedMap(
+                        is_array($baseSpeakToAs['pronouns'] ?? null) ? $baseSpeakToAs['pronouns'] : [],
+                        $value['pronouns'],
+                    );
+                    $rest = $value;
+                    unset($rest['pronouns']);
+                    $result['speakToAs'] = $rest === []
+                        ? $baseSpeakToAs
+                        : self::deepMergeContactCardPatch($baseSpeakToAs, $rest);
+                } else {
+                    $result['speakToAs'] = self::deepMergeContactCardPatch($baseSpeakToAs, $value);
+                }
+
+                continue;
+            }
+
+            if (self::isPatchIdKeyedMapField((string) $key) && is_array($value)) {
+                $result[$key] = self::mergeIdKeyedMap(
+                    is_array($result[$key] ?? null) ? $result[$key] : [],
+                    $value,
+                );
+
+                continue;
+            }
+
+            if (is_array($value)
+                && isset($result[$key])
+                && is_array($result[$key])
+                && ! array_is_list($value)) {
+                $result[$key] = self::deepMergeContactCardPatch($result[$key], $value);
+
+                continue;
+            }
+
+            $result[$key] = $value;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param  array<string, mixed>  $existing
+     * @param  array<string, mixed>  $patch
+     * @return array<string, mixed>
+     */
+    public static function mergeIdKeyedMap(array $existing, array $patch): array
+    {
+        $result = $existing;
+
+        foreach ($patch as $id => $entry) {
+            $mapKey = (string) $id;
+            if ($entry === null) {
+                unset($result[$mapKey]);
+
+                continue;
+            }
+
+            if (is_array($entry) && isset($result[$mapKey]) && is_array($result[$mapKey])) {
+                $result[$mapKey] = self::deepMergeContactCardPatch($result[$mapKey], $entry);
+            } else {
+                $result[$mapKey] = $entry;
+            }
+        }
+
+        return $result;
+    }
+
+    public static function isPatchIdKeyedMapField(string $field): bool
+    {
+        return in_array($field, self::CARD_PATCH_ID_KEYED_MAP_FIELDS, true);
+    }
+
     public static function isValidJsContactId(string $id): bool
     {
         return $id !== '' && preg_match('/^[A-Za-z0-9_-]+$/', $id) === 1;

@@ -192,4 +192,109 @@ final class ContactsCardsTest extends WgwDatabaseTestCase
             ->getJson('/api/v1/contacts/cards/'.$cardId)
             ->assertNotFound();
     }
+
+    public function test_patch_changes_single_email_leaving_others_unchanged(): void
+    {
+        $emailOne = '550e8400-e29b-41d4-a716-446655440001';
+        $emailTwo = '550e8400-e29b-41d4-a716-446655440002';
+
+        $create = $this->withBearer($this->userBearerToken())
+            ->postJson('/api/v1/contacts/cards', [
+                'addressBookIds' => ['default' => true],
+                'name' => ['full' => 'Patch Email Contact'],
+                'emails' => [
+                    $emailOne => ['address' => 'primary@example.com'],
+                    $emailTwo => ['address' => 'secondary@example.com'],
+                ],
+            ]);
+
+        $create->assertCreated();
+        $cardId = (string) $create->json('id');
+
+        $response = $this->withBearer($this->userBearerToken())
+            ->patchJson('/api/v1/contacts/cards/'.$cardId, [
+                'emails' => [
+                    $emailOne => ['address' => 'updated-primary@example.com'],
+                ],
+            ]);
+
+        $response->assertOk()
+            ->assertJsonPath('id', $cardId)
+            ->assertJsonPath('emails.'.$emailOne.'.address', 'updated-primary@example.com')
+            ->assertJsonPath('emails.'.$emailTwo.'.address', 'secondary@example.com');
+    }
+
+    public function test_patch_removes_phone_via_null_map_entry(): void
+    {
+        $phoneId = '550e8400-e29b-41d4-a716-446655440002';
+
+        $create = $this->withBearer($this->userBearerToken())
+            ->postJson('/api/v1/contacts/cards', [
+                'addressBookIds' => ['default' => true],
+                'name' => ['full' => 'Patch Phone Contact'],
+                'phones' => [
+                    $phoneId => ['number' => '+1-555-0100'],
+                ],
+            ]);
+
+        $create->assertCreated();
+        $cardId = (string) $create->json('id');
+
+        $response = $this->withBearer($this->userBearerToken())
+            ->patchJson('/api/v1/contacts/cards/'.$cardId, [
+                'phones' => [
+                    $phoneId => null,
+                ],
+            ]);
+
+        $response->assertOk()
+            ->assertJsonPath('id', $cardId)
+            ->assertJsonMissingPath('phones.'.$phoneId);
+    }
+
+    /**
+     * @dataProvider forbiddenCreateFieldProvider
+     */
+    public function test_patch_rejects_server_owned_fields(string $field, mixed $value): void
+    {
+        $cardId = $this->seedCardViaPdo('bob', 'jane-doe.vcf', $this->sampleVcard('Jane Doe'));
+
+        $this->withBearer($this->userBearerToken())
+            ->patchJson('/api/v1/contacts/cards/'.$cardId, [
+                $field => $value,
+            ])
+            ->assertStatus(400)
+            ->assertJsonPath('code', 'bad_request');
+    }
+
+    public function test_patch_preserves_fields_not_in_patch_body(): void
+    {
+        $emailId = '550e8400-e29b-41d4-a716-446655440001';
+        $phoneId = '550e8400-e29b-41d4-a716-446655440002';
+
+        $create = $this->withBearer($this->userBearerToken())
+            ->postJson('/api/v1/contacts/cards', [
+                'addressBookIds' => ['default' => true],
+                'name' => ['full' => 'Preserve Fields Contact'],
+                'emails' => [
+                    $emailId => ['address' => 'keep@example.com'],
+                ],
+                'phones' => [
+                    $phoneId => ['number' => '+1-555-0199'],
+                ],
+            ]);
+
+        $create->assertCreated();
+        $cardId = (string) $create->json('id');
+
+        $response = $this->withBearer($this->userBearerToken())
+            ->patchJson('/api/v1/contacts/cards/'.$cardId, [
+                'name' => ['full' => 'Renamed Contact'],
+            ]);
+
+        $response->assertOk()
+            ->assertJsonPath('name.full', 'Renamed Contact')
+            ->assertJsonPath('emails.'.$emailId.'.address', 'keep@example.com')
+            ->assertJsonPath('phones.'.$phoneId.'.number', '+1-555-0199');
+    }
 }
