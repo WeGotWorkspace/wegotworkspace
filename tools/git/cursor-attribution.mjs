@@ -52,14 +52,3 @@ export function stripCursorAttribution(message) {
 
   return kept.join("\n").concat(kept.length > 0 ? "\n" : "");
 }
-
-function stripCursorPrAttribution(body) {
-  const lines = body.split("\n");
-  const kept = lines.filter((line) => !isCursorPrAttributionLine(line));
-
-  while (kept.length > 0 && kept[kept.length - 1] === "") {
-    kept.pop();
-  }
-
-  return kept.join("\n").concat(kept.length > 0 ? "\n" : "");
-}
