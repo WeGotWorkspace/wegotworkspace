@@ -1,0 +1,32 @@
+{
+    "@type": "Card",
+    "version": "1.0",
+    "uid": "urn:uuid:19191919-1919-4191-8191-191919191919",
+    "name": {
+        "full": "Jane Doe",
+        "@type": "Name"
+    },
+    "media": {
+        "SOUND-1": {
+            "@type": "Media",
+            "kind": "sound",
+            "uri": "https://example.com/jane.wav"
+        }
+    },
+    "links": {
+        "LINK-1": {
+            "@type": "Link",
+            "uri": "https://example.com/~jane"
+        }
+    },
+    "vCardProps": [
+        [
+            "VERSION",
+            [],
+            "text",
+            [
+                "4.0"
+            ]
+        ]
+    ]
+}

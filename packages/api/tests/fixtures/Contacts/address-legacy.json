@@ -1,0 +1,55 @@
+{
+    "@type": "Card",
+    "version": "1.0",
+    "uid": "urn:uuid:55555555-5555-4555-8555-555555555555",
+    "name": {
+        "full": "Jane Doe",
+        "@type": "Name"
+    },
+    "addresses": {
+        "ADDR-1": {
+            "@type": "Address",
+            "components": [
+                {
+                    "@type": "AddressComponent",
+                    "kind": "name",
+                    "value": "123 Main St"
+                },
+                {
+                    "@type": "AddressComponent",
+                    "kind": "locality",
+                    "value": "Springfield"
+                },
+                {
+                    "@type": "AddressComponent",
+                    "kind": "region",
+                    "value": "IL"
+                },
+                {
+                    "@type": "AddressComponent",
+                    "kind": "postcode",
+                    "value": "62704"
+                },
+                {
+                    "@type": "AddressComponent",
+                    "kind": "country",
+                    "value": "USA"
+                }
+            ],
+            "isOrdered": false,
+            "contexts": {
+                "private": true
+            }
+        }
+    },
+    "vCardProps": [
+        [
+            "VERSION",
+            [],
+            "text",
+            [
+                "4.0"
+            ]
+        ]
+    ]
+}

@@ -1,0 +1,38 @@
+{
+    "@type": "Card",
+    "version": "1.0",
+    "uid": "urn:uuid:17171717-1717-4171-8171-171717171717",
+    "name": {
+        "full": "Jane Doe",
+        "@type": "Name"
+    },
+    "personalInfo": {
+        "EXP-1": {
+            "@type": "PersonalInfo",
+            "kind": "expertise",
+            "value": "JavaScript",
+            "level": "low"
+        },
+        "HOBBY-1": {
+            "@type": "PersonalInfo",
+            "kind": "hobby",
+            "value": "Reading",
+            "listAs": 2
+        },
+        "INT-1": {
+            "@type": "PersonalInfo",
+            "kind": "interest",
+            "value": "Open standards"
+        }
+    },
+    "vCardProps": [
+        [
+            "VERSION",
+            [],
+            "text",
+            [
+                "4.0"
+            ]
+        ]
+    ]
+}

@@ -1,0 +1,30 @@
+{
+    "@type": "Card",
+    "version": "1.0",
+    "uid": "urn:uuid:77777777-7777-4777-8777-777777777777",
+    "name": {
+        "full": "Jane Doe",
+        "@type": "Name"
+    },
+    "notes": {
+        "NOTE-1": {
+            "@type": "Note",
+            "note": "Office hours are from 0800 to 1715 EST, Mon-Fri.",
+            "created": "2022-11-23T15:01:32Z",
+            "author": {
+                "name": "John",
+                "@type": "Author"
+            }
+        }
+    },
+    "vCardProps": [
+        [
+            "VERSION",
+            [],
+            "text",
+            [
+                "4.0"
+            ]
+        ]
+    ]
+}

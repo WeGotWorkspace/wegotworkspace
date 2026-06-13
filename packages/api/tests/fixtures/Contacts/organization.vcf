@@ -1,0 +1,7 @@
+BEGIN:VCARD
+VERSION:4.0
+FN:Jane Doe
+UID:urn:uuid:66666666-6666-4666-8666-666666666666
+ORG;SORT-AS=ABC:ABC\, Inc.;North American Division;Marketing
+TITLE:Research Scientist
+END:VCARD

@@ -1,0 +1,77 @@
+{
+    "@type": "Card",
+    "version": "1.0",
+    "uid": "urn:uuid:23232323-2323-4232-8232-232323232323",
+    "name": {
+        "full": "Tel Features",
+        "@type": "Name"
+    },
+    "phones": {
+        "PHONE-1": {
+            "@type": "Phone",
+            "number": "tel:+1-555-0001",
+            "features": {
+                "mobile": true
+            }
+        },
+        "PHONE-2": {
+            "@type": "Phone",
+            "number": "tel:+1-555-0002",
+            "features": {
+                "fax": true
+            }
+        },
+        "PHONE-3": {
+            "@type": "Phone",
+            "number": "tel:+1-555-0003",
+            "features": {
+                "main-number": true
+            }
+        },
+        "PHONE-4": {
+            "@type": "Phone",
+            "number": "tel:+1-555-0004",
+            "features": {
+                "pager": true
+            }
+        },
+        "PHONE-5": {
+            "@type": "Phone",
+            "number": "tel:+1-555-0005",
+            "features": {
+                "text": true
+            }
+        },
+        "PHONE-6": {
+            "@type": "Phone",
+            "number": "tel:+1-555-0006",
+            "features": {
+                "textphone": true
+            }
+        },
+        "PHONE-7": {
+            "@type": "Phone",
+            "number": "tel:+1-555-0007",
+            "features": {
+                "video": true
+            }
+        },
+        "PHONE-8": {
+            "@type": "Phone",
+            "number": "tel:+1-555-0008",
+            "features": {
+                "voice": true
+            }
+        }
+    },
+    "vCardProps": [
+        [
+            "VERSION",
+            [],
+            "text",
+            [
+                "4.0"
+            ]
+        ]
+    ]
+}

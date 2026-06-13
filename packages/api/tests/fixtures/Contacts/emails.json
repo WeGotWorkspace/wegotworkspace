@@ -1,0 +1,33 @@
+{
+    "@type": "Card",
+    "version": "1.0",
+    "uid": "urn:uuid:22222222-2222-4222-8222-222222222222",
+    "name": {
+        "full": "Jane Doe",
+        "@type": "Name"
+    },
+    "emails": {
+        "EMAIL-1": {
+            "@type": "EmailAddress",
+            "address": "jqpublic@xyz.example.com",
+            "contexts": {
+                "work": true
+            }
+        },
+        "EMAIL-2": {
+            "@type": "EmailAddress",
+            "address": "jane_doe@example.com",
+            "pref": 1
+        }
+    },
+    "vCardProps": [
+        [
+            "VERSION",
+            [],
+            "text",
+            [
+                "4.0"
+            ]
+        ]
+    ]
+}

@@ -1,0 +1,65 @@
+{
+    "@type": "Card",
+    "version": "1.0",
+    "uid": "urn:uuid:15151515-1515-4151-8151-151515151515",
+    "name": {
+        "full": "Jane Doe",
+        "@type": "Name"
+    },
+    "media": {
+        "LOGO-1": {
+            "@type": "Media",
+            "kind": "logo",
+            "uri": "https://example.com/logo.png"
+        }
+    },
+    "titles": {
+        "ROLE-1": {
+            "@type": "Title",
+            "kind": "role",
+            "name": "Developer"
+        }
+    },
+    "links": {
+        "CONTACT-1": {
+            "@type": "Link",
+            "kind": "contact",
+            "uri": "mailto:jane@example.com"
+        }
+    },
+    "relatedTo": {
+        "urn:uuid:16161616-1616-4161-8161-161616161616": {
+            "@type": "Relation",
+            "relation": {
+                "friend": true
+            }
+        },
+        "My former manager": {
+            "@type": "Relation",
+            "relation": []
+        }
+    },
+    "directories": {
+        "SRC-1": {
+            "@type": "Directory",
+            "kind": "entry",
+            "uri": "https://example.com/source.vcf"
+        },
+        "ORGDIR-1": {
+            "@type": "Directory",
+            "kind": "directory",
+            "uri": "ldap://example.com/dc=example",
+            "listAs": 1
+        }
+    },
+    "vCardProps": [
+        [
+            "VERSION",
+            [],
+            "text",
+            [
+                "4.0"
+            ]
+        ]
+    ]
+}

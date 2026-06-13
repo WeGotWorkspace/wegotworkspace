@@ -1,0 +1,30 @@
+{
+    "@type": "Card",
+    "version": "1.0",
+    "uid": "urn:uuid:13131313-1313-4131-8131-131313131313",
+    "language": "fr-FR",
+    "name": {
+        "full": "Jean Dupont",
+        "@type": "Name"
+    },
+    "preferredLanguages": {
+        "LANG-1": {
+            "@type": "LanguagePref",
+            "language": "en",
+            "contexts": {
+                "work": true
+            },
+            "pref": 1
+        }
+    },
+    "vCardProps": [
+        [
+            "VERSION",
+            [],
+            "text",
+            [
+                "4.0"
+            ]
+        ]
+    ]
+}

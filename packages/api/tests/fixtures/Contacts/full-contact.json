@@ -1,0 +1,132 @@
+{
+    "@type": "Card",
+    "version": "1.0",
+    "uid": "urn:uuid:bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    "name": {
+        "full": "Jane Stevenson",
+        "components": [
+            {
+                "@type": "NameComponent",
+                "kind": "surname",
+                "value": "Stevenson"
+            },
+            {
+                "@type": "NameComponent",
+                "kind": "given",
+                "value": "Jane"
+            },
+            {
+                "@type": "NameComponent",
+                "kind": "credential",
+                "value": "PhD"
+            }
+        ],
+        "isOrdered": false,
+        "@type": "Name"
+    },
+    "emails": {
+        "EMAIL-1": {
+            "@type": "EmailAddress",
+            "address": "jane@example.com",
+            "contexts": {
+                "work": true
+            },
+            "pref": 1
+        }
+    },
+    "phones": {
+        "PHONE-1": {
+            "@type": "Phone",
+            "number": "tel:+1-555-0100",
+            "features": {
+                "mobile": true
+            },
+            "contexts": {
+                "work": true
+            }
+        }
+    },
+    "addresses": {
+        "ADDR-1": {
+            "@type": "Address",
+            "components": [
+                {
+                    "@type": "AddressComponent",
+                    "kind": "name",
+                    "value": "100 Market St"
+                },
+                {
+                    "@type": "AddressComponent",
+                    "kind": "locality",
+                    "value": "San Francisco"
+                },
+                {
+                    "@type": "AddressComponent",
+                    "kind": "region",
+                    "value": "CA"
+                },
+                {
+                    "@type": "AddressComponent",
+                    "kind": "postcode",
+                    "value": "94105"
+                },
+                {
+                    "@type": "AddressComponent",
+                    "kind": "country",
+                    "value": "USA"
+                }
+            ],
+            "isOrdered": false,
+            "countryCode": "US",
+            "contexts": {
+                "work": true
+            }
+        }
+    },
+    "organizations": {
+        "ORG-1": {
+            "@type": "Organization",
+            "name": "Example Corp",
+            "units": [
+                {
+                    "@type": "OrgUnit",
+                    "name": "Engineering"
+                }
+            ]
+        }
+    },
+    "notes": {
+        "NOTE-1": {
+            "@type": "Note",
+            "note": "Met at IETF 110."
+        }
+    },
+    "media": {
+        "PHOTO-1": {
+            "@type": "Media",
+            "kind": "photo",
+            "uri": "https://example.com/jane.jpg"
+        }
+    },
+    "keywords": {
+        "work": true,
+        "friend": true
+    },
+    "titles": {
+        "TITLE-1": {
+            "@type": "Title",
+            "kind": "title",
+            "name": "Engineer"
+        }
+    },
+    "vCardProps": [
+        [
+            "VERSION",
+            [],
+            "text",
+            [
+                "4.0"
+            ]
+        ]
+    ]
+}

@@ -1,0 +1,7 @@
+BEGIN:VCARD
+VERSION:4.0
+FN:Jane Doe
+UID:urn:uuid:22222222-2222-4222-8222-222222222222
+EMAIL;TYPE=work:jqpublic@xyz.example.com
+EMAIL;PREF=1:jane_doe@example.com
+END:VCARD

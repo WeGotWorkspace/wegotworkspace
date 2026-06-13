@@ -1,0 +1,25 @@
+{
+    "@type": "Card",
+    "version": "1.0",
+    "uid": "urn:uuid:99999999-9999-4999-8999-999999999999",
+    "name": {
+        "full": "Jane Doe",
+        "@type": "Name"
+    },
+    "keywords": {
+        "internet": true,
+        "IETF": true,
+        "Industry": true,
+        "Information Technology": true
+    },
+    "vCardProps": [
+        [
+            "VERSION",
+            [],
+            "text",
+            [
+                "4.0"
+            ]
+        ]
+    ]
+}

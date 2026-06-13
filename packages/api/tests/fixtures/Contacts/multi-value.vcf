@@ -1,0 +1,8 @@
+BEGIN:VCARD
+VERSION:4.0
+FN:Jane Doe
+UID:urn:uuid:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa
+item1.TEL;VALUE=uri:tel:+1-555-555-5555
+item1.X-ABLabel:Mobile
+NICKNAME:JD
+END:VCARD

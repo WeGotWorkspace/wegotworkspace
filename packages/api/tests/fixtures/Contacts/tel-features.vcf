@@ -1,0 +1,13 @@
+BEGIN:VCARD
+VERSION:4.0
+FN:Tel Features
+UID:urn:uuid:23232323-2323-4232-8232-232323232323
+TEL;TYPE=cell:tel:+1-555-0001
+TEL;TYPE=fax:tel:+1-555-0002
+TEL;TYPE=main-number:tel:+1-555-0003
+TEL;TYPE=pager:tel:+1-555-0004
+TEL;TYPE=text:tel:+1-555-0005
+TEL;TYPE=textphone:tel:+1-555-0006
+TEL;TYPE=video:tel:+1-555-0007
+TEL;TYPE=voice:tel:+1-555-0008
+END:VCARD

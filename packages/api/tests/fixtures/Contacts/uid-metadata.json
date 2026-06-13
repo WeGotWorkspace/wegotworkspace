@@ -1,0 +1,22 @@
+{
+    "@type": "Card",
+    "version": "1.0",
+    "uid": "urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6",
+    "prodId": "ACME Contacts App version 1.23.5",
+    "created": "1994-09-30T14:35:10Z",
+    "updated": "1995-10-31T22:27:10Z",
+    "name": {
+        "full": "Jane Doe",
+        "@type": "Name"
+    },
+    "vCardProps": [
+        [
+            "VERSION",
+            [],
+            "text",
+            [
+                "4.0"
+            ]
+        ]
+    ]
+}

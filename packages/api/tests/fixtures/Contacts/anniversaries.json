@@ -1,0 +1,57 @@
+{
+    "@type": "Card",
+    "version": "1.0",
+    "uid": "urn:uuid:eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+    "name": {
+        "full": "Jane Doe",
+        "@type": "Name"
+    },
+    "anniversaries": {
+        "BDAY-1": {
+            "@type": "Anniversary",
+            "kind": "birth",
+            "date": {
+                "@type": "PartialDate",
+                "year": 1980,
+                "month": 3,
+                "day": 15
+            },
+            "place": {
+                "@type": "Address",
+                "full": "Springfield, IL"
+            }
+        },
+        "DEATH-1": {
+            "@type": "Anniversary",
+            "kind": "death",
+            "date": {
+                "@type": "Timestamp",
+                "utc": "2020-01-15T12:00:00Z"
+            },
+            "place": {
+                "@type": "Address",
+                "coordinates": "geo:37.7749,-122.4194"
+            }
+        },
+        "WEDDING-1": {
+            "@type": "Anniversary",
+            "kind": "wedding",
+            "date": {
+                "@type": "PartialDate",
+                "year": 2010,
+                "month": 6,
+                "day": 21
+            }
+        }
+    },
+    "vCardProps": [
+        [
+            "VERSION",
+            [],
+            "text",
+            [
+                "4.0"
+            ]
+        ]
+    ]
+}

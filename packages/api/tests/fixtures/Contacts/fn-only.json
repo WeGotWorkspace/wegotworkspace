@@ -1,0 +1,19 @@
+{
+    "@type": "Card",
+    "version": "1.0",
+    "uid": "urn:uuid:f81d4fae-7dec-11d0-a765-00a0c91e6bf6",
+    "name": {
+        "full": "John Q. Public, Esq.",
+        "@type": "Name"
+    },
+    "vCardProps": [
+        [
+            "VERSION",
+            [],
+            "text",
+            [
+                "4.0"
+            ]
+        ]
+    ]
+}

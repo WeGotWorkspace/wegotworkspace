@@ -1,0 +1,7 @@
+BEGIN:VCARD
+VERSION:4.0
+FN:Alex Smith
+UID:urn:uuid:ffffffff-ffff-4fff-8fff-ffffffffffff
+GRAMGENDER:they
+PRONOUNS;TYPE=work:they/them
+END:VCARD

@@ -1,0 +1,66 @@
+{
+    "@type": "Card",
+    "version": "1.0",
+    "uid": "urn:uuid:44444444-4444-4444-8444-444444444444",
+    "name": {
+        "full": "Jane Doe",
+        "@type": "Name"
+    },
+    "addresses": {
+        "ADDR-1": {
+            "@type": "Address",
+            "components": [
+                {
+                    "@type": "AddressComponent",
+                    "kind": "name",
+                    "value": "54321 Oak St"
+                },
+                {
+                    "@type": "AddressComponent",
+                    "kind": "locality",
+                    "value": "Reston"
+                },
+                {
+                    "@type": "AddressComponent",
+                    "kind": "region",
+                    "value": "VA"
+                },
+                {
+                    "@type": "AddressComponent",
+                    "kind": "postcode",
+                    "value": "20190"
+                },
+                {
+                    "@type": "AddressComponent",
+                    "kind": "country",
+                    "value": "USA"
+                },
+                {
+                    "@type": "AddressComponent",
+                    "kind": "building",
+                    "value": "54321"
+                },
+                {
+                    "@type": "AddressComponent",
+                    "kind": "block",
+                    "value": "Oak St"
+                }
+            ],
+            "isOrdered": false,
+            "countryCode": "US",
+            "contexts": {
+                "work": true
+            }
+        }
+    },
+    "vCardProps": [
+        [
+            "VERSION",
+            [],
+            "text",
+            [
+                "4.0"
+            ]
+        ]
+    ]
+}

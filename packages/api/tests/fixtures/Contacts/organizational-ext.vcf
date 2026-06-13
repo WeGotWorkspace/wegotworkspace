@@ -1,0 +1,12 @@
+BEGIN:VCARD
+VERSION:4.0
+FN:Jane Doe
+UID:urn:uuid:15151515-1515-4151-8151-151515151515
+ROLE:Developer
+RELATED;TYPE=friend:urn:uuid:16161616-1616-4161-8161-161616161616
+RELATED:My former manager
+CONTACT-URI:mailto:jane@example.com
+LOGO:https://example.com/logo.png
+SOURCE:https://example.com/source.vcf
+ORG-DIRECTORY;INDEX=1:ldap://example.com/dc=example
+END:VCARD

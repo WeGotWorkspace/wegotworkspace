@@ -1,0 +1,64 @@
+{
+    "@type": "Card",
+    "version": "1.0",
+    "uid": "urn:uuid:14141414-1414-4141-8141-141414141414",
+    "name": {
+        "full": "Jane Doe",
+        "@type": "Name"
+    },
+    "addresses": {
+        "ADDR-1": {
+            "@type": "Address",
+            "components": [
+                {
+                    "@type": "AddressComponent",
+                    "kind": "name",
+                    "value": "1 Infinite Loop"
+                },
+                {
+                    "@type": "AddressComponent",
+                    "kind": "locality",
+                    "value": "Cupertino"
+                },
+                {
+                    "@type": "AddressComponent",
+                    "kind": "region",
+                    "value": "CA"
+                },
+                {
+                    "@type": "AddressComponent",
+                    "kind": "postcode",
+                    "value": "95014"
+                },
+                {
+                    "@type": "AddressComponent",
+                    "kind": "country",
+                    "value": "USA"
+                }
+            ],
+            "isOrdered": false
+        },
+        "GEO-1": {
+            "@type": "Address",
+            "coordinates": "geo:40.7128,-74.0060"
+        },
+        "TZ-1": {
+            "@type": "Address",
+            "timeZone": "Europe/Amsterdam"
+        },
+        "TZ-2": {
+            "@type": "Address",
+            "timeZone": "Etc/GMT+8"
+        }
+    },
+    "vCardProps": [
+        [
+            "VERSION",
+            [],
+            "text",
+            [
+                "4.0"
+            ]
+        ]
+    ]
+}
