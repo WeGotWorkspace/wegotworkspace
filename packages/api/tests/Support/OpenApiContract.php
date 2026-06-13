@@ -144,6 +144,8 @@ final class OpenApiContract
             '{cardId}' => 'demo-card',
             '{calendarId}' => 'default',
             '{eventId}' => 'demo-event',
+            '{taskListId}' => 'default',
+            '{taskId}' => 'demo-task',
         ];
 
         $path = $openApiPath;
@@ -185,6 +187,9 @@ final class OpenApiContract
         }
         if ($openApiPath === '/calendars/events' && $method === 'GET') {
             return 'calendarId=default';
+        }
+        if ($openApiPath === '/tasks/items' && $method === 'GET') {
+            return 'taskListId=default';
         }
 
         return '';

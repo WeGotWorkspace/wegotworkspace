@@ -5568,6 +5568,397 @@
             "JmapLocalDateTime": {
                 "type": "string",
                 "description": "Local or UTC date-time without required Z suffix."
+            },
+            "TasksCapabilitiesResponse": {
+                "type": "object",
+                "required": [
+                    "enabled",
+                    "jmapCapability",
+                    "supportedTaskProperties"
+                ],
+                "properties": {
+                    "enabled": {
+                        "type": "boolean"
+                    },
+                    "jmapCapability": {
+                        "type": "string"
+                    },
+                    "supportedTaskProperties": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskListRights": {
+                "type": "object",
+                "required": [
+                    "mayReadItems",
+                    "mayWriteAll",
+                    "mayWriteOwn",
+                    "mayUpdatePrivate",
+                    "mayRSVP",
+                    "mayAdmin",
+                    "mayDelete"
+                ],
+                "properties": {
+                    "mayReadItems": {
+                        "type": "boolean"
+                    },
+                    "mayWriteAll": {
+                        "type": "boolean"
+                    },
+                    "mayWriteOwn": {
+                        "type": "boolean"
+                    },
+                    "mayUpdatePrivate": {
+                        "type": "boolean"
+                    },
+                    "mayRSVP": {
+                        "type": "boolean"
+                    },
+                    "mayAdmin": {
+                        "type": "boolean"
+                    },
+                    "mayDelete": {
+                        "type": "boolean"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskList": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "name",
+                    "sortOrder",
+                    "isDefault",
+                    "isSubscribed",
+                    "myRights"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "color": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "sortOrder": {
+                        "type": "integer"
+                    },
+                    "isDefault": {
+                        "type": "boolean"
+                    },
+                    "isSubscribed": {
+                        "type": "boolean"
+                    },
+                    "shareWith": {
+                        "type": [
+                            "object",
+                            "null"
+                        ]
+                    },
+                    "myRights": {
+                        "$ref": "#/components/schemas/TaskListRights"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskTaskListListResponse": {
+                "type": "object",
+                "required": [
+                    "list"
+                ],
+                "properties": {
+                    "list": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/TaskList"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            },
+            "Task": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "id",
+                    "taskListId",
+                    "uid",
+                    "isDraft",
+                    "sortOrder"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "enum": [
+                            "Task"
+                        ]
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "taskListId": {
+                        "type": "string"
+                    },
+                    "uid": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "start": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "due": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "completed": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "workflowStatus": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "progress": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "priority": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "isDraft": {
+                        "type": "boolean"
+                    },
+                    "sortOrder": {
+                        "type": "integer"
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "privacy": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "created": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "updated": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "additionalProperties": true
+            },
+            "TaskListResponse": {
+                "type": "object",
+                "required": [
+                    "list"
+                ],
+                "properties": {
+                    "list": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Task"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskCreate": {
+                "type": "object",
+                "required": [
+                    "taskListIds",
+                    "title"
+                ],
+                "properties": {
+                    "taskListIds": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "boolean"
+                        }
+                    },
+                    "uid": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "start": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "due": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "completed": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "workflowStatus": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "progress": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "priority": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "privacy": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskPatch": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "start": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "due": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "completed": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "workflowStatus": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "progress": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "priority": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "privacy": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                },
+                "additionalProperties": false
             }
         }
     },

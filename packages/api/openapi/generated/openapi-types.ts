@@ -7011,6 +7011,89 @@ export interface components {
         JmapUTCDateTime: string;
         /** @description Local or UTC date-time without required Z suffix. */
         JmapLocalDateTime: string;
+        TasksCapabilitiesResponse: {
+            enabled: boolean;
+            jmapCapability: string;
+            supportedTaskProperties: string[];
+        };
+        TaskListRights: {
+            mayReadItems: boolean;
+            mayWriteAll: boolean;
+            mayWriteOwn: boolean;
+            mayUpdatePrivate: boolean;
+            mayRSVP: boolean;
+            mayAdmin: boolean;
+            mayDelete: boolean;
+        };
+        TaskList: {
+            id: string;
+            role?: string | null;
+            name: string;
+            description?: string | null;
+            color?: string | null;
+            sortOrder: number;
+            isDefault: boolean;
+            isSubscribed: boolean;
+            shareWith?: Record<string, never> | null;
+            myRights: components["schemas"]["TaskListRights"];
+        };
+        TaskTaskListListResponse: {
+            list: components["schemas"]["TaskList"][];
+        };
+        Task: {
+            /** @enum {string} */
+            "@type": "Task";
+            id: string;
+            taskListId: string;
+            uid: string;
+            title?: string | null;
+            description?: string | null;
+            start?: string | null;
+            due?: string | null;
+            completed?: string | null;
+            workflowStatus?: string | null;
+            progress?: number | null;
+            priority?: number | null;
+            isDraft: boolean;
+            sortOrder: number;
+            categories?: string[];
+            privacy?: string | null;
+            created?: string | null;
+            updated?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
+        TaskListResponse: {
+            list: components["schemas"]["Task"][];
+        };
+        TaskCreate: {
+            taskListIds: {
+                [key: string]: boolean;
+            };
+            uid?: string;
+            title: string;
+            description?: string | null;
+            start?: string | null;
+            due?: string | null;
+            completed?: string | null;
+            workflowStatus?: string | null;
+            progress?: number | null;
+            priority?: number | null;
+            categories?: string[];
+            privacy?: string | null;
+        };
+        TaskPatch: {
+            title?: string;
+            description?: string | null;
+            start?: string | null;
+            due?: string | null;
+            completed?: string | null;
+            workflowStatus?: string | null;
+            progress?: number | null;
+            priority?: number | null;
+            categories?: string[];
+            privacy?: string | null;
+        };
     };
     responses: never;
     parameters: never;

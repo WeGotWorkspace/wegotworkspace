@@ -1,0 +1,51 @@
+{
+  "TasksCapabilitiesResponse": {
+    "type": "object",
+    "required": ["enabled", "jmapCapability", "supportedTaskProperties"],
+    "properties": {
+      "enabled": { "type": "boolean" },
+      "jmapCapability": { "type": "string" },
+      "supportedTaskProperties": { "type": "array", "items": { "type": "string" } }
+    },
+    "additionalProperties": false
+  },
+  "TaskListRights": {
+    "type": "object",
+    "required": ["mayReadItems", "mayWriteAll", "mayWriteOwn", "mayUpdatePrivate", "mayRSVP", "mayAdmin", "mayDelete"],
+    "properties": {
+      "mayReadItems": { "type": "boolean" },
+      "mayWriteAll": { "type": "boolean" },
+      "mayWriteOwn": { "type": "boolean" },
+      "mayUpdatePrivate": { "type": "boolean" },
+      "mayRSVP": { "type": "boolean" },
+      "mayAdmin": { "type": "boolean" },
+      "mayDelete": { "type": "boolean" }
+    },
+    "additionalProperties": false
+  },
+  "TaskList": {
+    "type": "object",
+    "required": ["id", "name", "sortOrder", "isDefault", "isSubscribed", "myRights"],
+    "properties": {
+      "id": { "type": "string" },
+      "role": { "type": ["string", "null"] },
+      "name": { "type": "string" },
+      "description": { "type": ["string", "null"] },
+      "color": { "type": ["string", "null"] },
+      "sortOrder": { "type": "integer" },
+      "isDefault": { "type": "boolean" },
+      "isSubscribed": { "type": "boolean" },
+      "shareWith": { "type": ["object", "null"] },
+      "myRights": { "$ref": "#/components/schemas/TaskListRights" }
+    },
+    "additionalProperties": false
+  },
+  "TaskTaskListListResponse": {
+    "type": "object",
+    "required": ["list"],
+    "properties": {
+      "list": { "type": "array", "items": { "$ref": "#/components/schemas/TaskList" } }
+    },
+    "additionalProperties": false
+  }
+}
