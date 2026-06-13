@@ -18,7 +18,7 @@ final class VCardJsContactConverterTest extends TestCase
     {
         parent::setUp();
         $this->converter = new VCardJsContactConverter;
-        $this->fixturesDir = dirname(__DIR__, 2).'/Fixtures/Contacts';
+        $this->fixturesDir = dirname(__DIR__, 2).'/fixtures/Contacts';
     }
 
     /**
@@ -27,7 +27,7 @@ final class VCardJsContactConverterTest extends TestCase
     public static function goldenFixtureProvider(): array
     {
         $fixtures = [];
-        foreach (glob(dirname(__DIR__, 2).'/Fixtures/Contacts/*.vcf') ?: [] as $path) {
+        foreach (glob(dirname(__DIR__, 2).'/fixtures/Contacts/*.vcf') ?: [] as $path) {
             $name = basename($path, '.vcf');
             $fixtures[$name] = [$name];
         }
