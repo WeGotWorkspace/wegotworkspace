@@ -36,9 +36,10 @@ All models use [`UsesWgwConnection`](app/Models/Concerns/UsesWgwConnection.php) 
 | `drive_starred_items` | `App\Models\DriveStarredItem` | Per-user starred drive paths |
 | `calendarobjects` | `App\Models\CalendarObject` | CalDAV objects (search indexer joins) |
 | `cards` | `App\Models\Card` | CardDAV vCards (search indexer joins) |
+| `addressbooks` | `App\Models\Addressbook` | CardDAV address books (Contacts REST reads) |
 | `mail_user_credentials` | `App\Models\MailUserCredential` | Per-user IMAP/SMTP credentials |
 
-Sabre-owned tables (`calendars`, `addressbooks`, `locks`, `propertystorage`, …) have no app models yet; access them through Sabre backends or add models when a domain needs direct queries.
+Sabre-owned tables (`calendars`, `locks`, `propertystorage`, …) have no app models yet; access them through Sabre backends or add models when a domain needs direct queries.
 
 ## PDO exception boundaries
 
