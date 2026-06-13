@@ -46,7 +46,7 @@ use App\Http\Controllers\Api\V1\Settings\StateController as SettingsStateControl
 use App\Http\Controllers\Api\V1\System\CapabilitiesController;
 use App\Http\Controllers\Api\V1\System\HealthController;
 use App\Http\Controllers\Api\V1\Tasks\CapabilitiesController as TasksCapabilitiesController;
-use App\Http\Controllers\Api\V1\Tasks\TaskListsController as TasksTaskListsController;
+use App\Http\Controllers\Api\V1\Tasks\TaskCalendarsController;
 use App\Http\Controllers\Api\V1\Tasks\TasksController;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -169,10 +169,10 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($filesS
     Route::patch('notes/notebooks/{name}', [NotebooksController::class, 'update']);
     Route::delete('notes/notebooks/{name}', [NotebooksController::class, 'destroy']);
 
-    Route::middleware('wgw.tasks')->group(function (): void {
+    Route::middleware('wgw.calendars')->group(function (): void {
         Route::get('tasks/capabilities', TasksCapabilitiesController::class);
-        Route::get('tasks/tasklists', [TasksTaskListsController::class, 'index']);
-        Route::get('tasks/tasklists/{taskListId}', [TasksTaskListsController::class, 'show'])
+        Route::get('tasks/tasklists', [TaskCalendarsController::class, 'index']);
+        Route::get('tasks/tasklists/{taskListId}', [TaskCalendarsController::class, 'show'])
             ->where('taskListId', '[a-z0-9_-]+');
         Route::get('tasks/items', [TasksController::class, 'index']);
         Route::post('tasks/items', [TasksController::class, 'store']);
