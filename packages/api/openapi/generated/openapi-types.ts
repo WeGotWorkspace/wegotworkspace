@@ -825,7 +825,25 @@ export interface paths {
             };
         };
         put?: never;
-        post?: never;
+        /** Send message */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Sent */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -1727,7 +1745,27 @@ export interface paths {
         };
         options?: never;
         head?: never;
-        patch?: never;
+        /** Patch note (e.g. archive) */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         trace?: never;
     };
     "/notes/items/{id}/archive": {
@@ -4161,7 +4199,45 @@ export interface paths {
         };
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Partially update a contact card
+         * @description Deep-merge patch into the existing JSContact Card. Id-keyed map entries merge by key; null removes an entry.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    cardId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    /**
+                     * @example {
+                     *       "emails": {
+                     *         "550e8400-e29b-41d4-a716-446655440001": {
+                     *           "address": "updated@example.com"
+                     *         }
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ContactCardPatch"];
+                };
+            };
+            responses: {
+                /** @description Updated contact card */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ContactCard"];
+                    };
+                };
+            };
+        };
         trace?: never;
     };
     "/plugins/{id}/activation": {
@@ -6441,6 +6517,58 @@ export interface components {
             /** @description Primary language tag (RFC 5646). */
             language?: string;
             /** @description Group member uids when kind is group. */
+            members?: components["schemas"]["JsContactIdBooleanMap"];
+            prodId?: string;
+            relatedTo?: components["schemas"]["JsContactStringRelationMap"];
+            name?: components["schemas"]["JsContactName"];
+            nicknames?: components["schemas"]["JsContactIdNicknameMap"];
+            organizations?: components["schemas"]["JsContactIdOrganizationMap"];
+            speakToAs?: components["schemas"]["JsContactSpeakToAs"];
+            titles?: components["schemas"]["JsContactIdTitleMap"];
+            emails?: components["schemas"]["JsContactIdEmailAddressMap"];
+            onlineServices?: components["schemas"]["JsContactIdOnlineServiceMap"];
+            phones?: components["schemas"]["JsContactIdPhoneMap"];
+            preferredLanguages?: components["schemas"]["JsContactIdLanguagePrefMap"];
+            calendars?: components["schemas"]["JsContactIdCalendarMap"];
+            schedulingAddresses?: components["schemas"]["JsContactIdSchedulingAddressMap"];
+            addresses?: components["schemas"]["JsContactIdAddressMap"];
+            cryptoKeys?: components["schemas"]["JsContactIdCryptoKeyMap"];
+            directories?: components["schemas"]["JsContactIdDirectoryMap"];
+            links?: components["schemas"]["JsContactIdLinkMap"];
+            media?: components["schemas"]["JsContactIdMediaMap"];
+            localizations?: components["schemas"]["JsContactStringPatchObjectMap"];
+            anniversaries?: components["schemas"]["JsContactIdAnniversaryMap"];
+            keywords?: components["schemas"]["JsContactStringBooleanMap"];
+            notes?: components["schemas"]["JsContactIdNoteMap"];
+            personalInfo?: components["schemas"]["JsContactIdPersonalInfoMap"];
+            /** @description RFC 9555 unmapped vCard properties. */
+            vCardProps?: components["schemas"]["JsContactJCardProp"][];
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * @description PATCH request body for partial contact card updates. Omits server-owned `id`, `@type`, and `version`. Id-keyed map entries merge by key; null removes an entry. Nested objects (e.g. name) deep-merge.
+         * @example {
+         *       "emails": {
+         *         "550e8400-e29b-41d4-a716-446655440001": {
+         *           "address": "updated@example.com"
+         *         },
+         *         "550e8400-e29b-41d4-a716-446655440099": null
+         *       }
+         *     }
+         */
+        ContactCardPatch: {
+            /** @description Set of address book ids; each value MUST be true. Map entry null removes membership. */
+            addressBookIds?: components["schemas"]["JsContactIdBooleanMap"];
+            /** @description Cross-system card identifier (RFC 9553). */
+            uid?: string;
+            created?: components["schemas"]["JsContactUTCDateTime"];
+            updated?: components["schemas"]["JsContactUTCDateTime"];
+            /** @enum {string} */
+            kind?: "individual" | "group" | "org" | "location" | "device" | "application";
+            /** @description Primary language tag (RFC 5646). */
+            language?: string;
+            /** @description Group member uids when kind is group. Map entry null removes member. */
             members?: components["schemas"]["JsContactIdBooleanMap"];
             prodId?: string;
             relatedTo?: components["schemas"]["JsContactStringRelationMap"];
