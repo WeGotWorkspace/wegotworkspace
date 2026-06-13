@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Exceptions\ApiHttpException;
 use App\Http\Middleware\AuthenticateWgwApi;
+use App\Http\Middleware\EnsureCalendarsEnabled;
 use App\Http\Middleware\EnsureContactsEnabled;
 use App\Http\Middleware\RequireWgwRole;
 use App\Http\Middleware\WgwSecurityHeaders;
@@ -37,6 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'wgw.auth' => AuthenticateWgwApi::class,
             'wgw.role' => RequireWgwRole::class,
             'wgw.contacts' => EnsureContactsEnabled::class,
+            'wgw.calendars' => EnsureCalendarsEnabled::class,
         ]);
         $middleware->appendToGroup('web', [
             WgwSecurityHeaders::class,
