@@ -662,7 +662,7 @@ final class MailOperationService
 
     private function handleFolderDelete(string $username, array $j): array
     {
-        $enc = (string) ($query['folder'] ?? '');
+        $enc = (string) ($j['folder'] ?? '');
         $mb = self::folderIdDecode($enc);
         if ($mb === '' || strtoupper($mb) === 'INBOX' || $mb === '__starred__') {
             throw new MailResponseException(400, ['error' => 'cannot_delete']);
