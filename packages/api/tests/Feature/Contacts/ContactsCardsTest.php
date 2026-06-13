@@ -47,6 +47,80 @@ final class ContactsCardsTest extends WgwDatabaseTestCase
             ->assertJsonPath('addressBookIds.default', true);
     }
 
+    public function test_create_card_minimal_body_succeeds(): void
+    {
+        $response = $this->withBearer($this->userBearerToken())
+            ->postJson('/api/v1/contacts/cards', [
+                'addressBookIds' => ['default' => true],
+                'name' => ['full' => 'Minimal Contact'],
+                'emails' => [
+                    '550e8400-e29b-41d4-a716-446655440001' => ['address' => 'minimal@example.com'],
+                ],
+                'phones' => [
+                    '550e8400-e29b-41d4-a716-446655440002' => ['number' => '+1-555-0199'],
+                ],
+                'addresses' => [
+                    '550e8400-e29b-41d4-a716-446655440003' => ['full' => '1 Example St', 'countryCode' => 'US'],
+                ],
+            ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('@type', 'Card')
+            ->assertJsonPath('version', '1.0')
+            ->assertJsonPath('name.full', 'Minimal Contact');
+
+        $cardId = (string) $response->json('id');
+        $this->assertNotSame('', $cardId);
+
+        $emails = $response->json('emails');
+        $this->assertIsArray($emails);
+        $this->assertContains('minimal@example.com', array_column($emails, 'address'));
+
+        $phones = $response->json('phones');
+        $this->assertIsArray($phones);
+        $this->assertContains('+1-555-0199', array_column($phones, 'number'));
+
+        $addresses = $response->json('addresses');
+        $this->assertIsArray($addresses);
+        $this->assertContains('1 Example St', array_column($addresses, 'full'));
+
+        $show = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/contacts/cards/'.$cardId);
+        $show->assertOk()
+            ->assertJsonPath('id', $cardId)
+            ->assertJsonPath('@type', 'Card')
+            ->assertJsonPath('version', '1.0');
+    }
+
+    /**
+     * @dataProvider forbiddenCreateFieldProvider
+     */
+    public function test_create_card_rejects_server_owned_fields(string $field, mixed $value): void
+    {
+        $payload = [
+            'addressBookIds' => ['default' => true],
+            'name' => ['full' => 'Rejected Field'],
+            $field => $value,
+        ];
+
+        $this->withBearer($this->userBearerToken())
+            ->postJson('/api/v1/contacts/cards', $payload)
+            ->assertStatus(400)
+            ->assertJsonPath('code', 'bad_request');
+    }
+
+    /**
+     * @return array<string, array{0: string, 1: mixed}>
+     */
+    public static function forbiddenCreateFieldProvider(): array
+    {
+        return [
+            '@type' => ['@type', 'Card'],
+            'version' => ['version', '1.0'],
+            'id' => ['id', 'client-supplied-id'],
+        ];
+    }
+
     public function test_create_card_persists_and_returns_contact_card(): void
     {
         $payload = $this->sampleContactCardPayload();
@@ -75,13 +149,10 @@ final class ContactsCardsTest extends WgwDatabaseTestCase
 
         $response = $this->withBearer($this->userBearerToken())
             ->putJson('/api/v1/contacts/cards/'.$cardId, [
-                '@type' => 'Card',
-                'version' => '1.0',
-                'uid' => 'urn:uuid:550e8400-e29b-41d4-a716-446655440000',
                 'addressBookIds' => ['default' => true],
                 'name' => ['full' => 'Jane Smith'],
                 'emails' => [
-                    'email-1' => ['email' => 'jane.smith@example.com'],
+                    '550e8400-e29b-41d4-a716-446655440001' => ['address' => 'jane.smith@example.com'],
                 ],
             ]);
 

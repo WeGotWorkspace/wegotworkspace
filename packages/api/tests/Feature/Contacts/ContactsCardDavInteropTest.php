@@ -28,14 +28,11 @@ final class ContactsCardDavInteropTest extends WgwDatabaseTestCase
     {
         $uid = 'urn:uuid:'.Str::uuid()->toString();
         $payload = [
-            '@type' => 'Card',
-            'version' => '1.0',
             'uid' => $uid,
             'addressBookIds' => ['default' => true],
             'name' => ['full' => 'Interoperable Contact'],
             'emails' => [
-                'email-1' => [
-                    '@type' => 'EmailAddress',
+                '550e8400-e29b-41d4-a716-446655440001' => [
                     'address' => 'interop@test.example',
                 ],
             ],
@@ -65,14 +62,10 @@ final class ContactsCardDavInteropTest extends WgwDatabaseTestCase
     public function test_rest_create_updates_carddav_search_index(): void
     {
         $payload = [
-            '@type' => 'Card',
-            'version' => '1.0',
-            'uid' => 'urn:uuid:'.Str::uuid()->toString(),
             'addressBookIds' => ['default' => true],
             'name' => ['full' => 'Searchable Interop Contact'],
             'emails' => [
-                'email-1' => [
-                    '@type' => 'EmailAddress',
+                '550e8400-e29b-41d4-a716-446655440001' => [
                     'address' => 'searchinterop@example.com',
                 ],
             ],
@@ -163,6 +156,168 @@ final class ContactsCardDavInteropTest extends WgwDatabaseTestCase
         );
         $this->assertContains('after@example.com', $addresses);
         $this->assertNotContains('before@example.com', $addresses);
+    }
+
+    public function test_carddav_put_without_prop_id_backfills_prop_id_for_rest_get(): void
+    {
+        $uid = 'urn:uuid:'.Str::uuid()->toString();
+        $vcard = "BEGIN:VCARD\r\nVERSION:4.0\r\nUID:{$uid}\r\nFN:Prop Id Backfill\r\nEMAIL:backfill@example.com\r\nEND:VCARD\r\n";
+        $cardId = $this->seedCardViaPdo('bob', 'prop-id-backfill.vcf', $vcard);
+
+        $this->ensurePropIdsOnStoredCard('bob', 'prop-id-backfill.vcf');
+
+        $stored = $this->findBobCard($cardId);
+        $this->assertNotNull($stored);
+        $raw = is_string($stored->carddata) ? $stored->carddata : (string) $stored->carddata;
+        $this->assertStringContainsString('PROP-ID=', $raw);
+
+        $first = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/contacts/cards/'.$cardId);
+        $first->assertOk();
+        $emailKeys = array_keys($first->json('emails') ?? []);
+        $this->assertCount(1, $emailKeys);
+        $this->assertMatchesRegularExpression(
+            '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i',
+            $emailKeys[0],
+        );
+
+        $second = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/contacts/cards/'.$cardId);
+        $second->assertOk();
+        $this->assertSame($emailKeys, array_keys($second->json('emails') ?? []));
+    }
+
+    public function test_carddav_update_preserves_email_prop_id_key(): void
+    {
+        $uid = 'urn:uuid:'.Str::uuid()->toString();
+        $emailPropId = (string) Str::uuid();
+        $initial = "BEGIN:VCARD\r\nVERSION:4.0\r\nUID:{$uid}\r\nFN:Before\r\nEMAIL;PROP-ID={$emailPropId}:before@example.com\r\nEND:VCARD\r\n";
+        $cardId = $this->seedCardViaPdo('bob', 'prop-id-stable.vcf', $initial);
+
+        $updated = "BEGIN:VCARD\r\nVERSION:4.0\r\nUID:{$uid}\r\nFN:After\r\nEMAIL;PROP-ID={$emailPropId}:after@example.com\r\nEND:VCARD\r\n";
+        $this->updateCardViaPdo('bob', 'prop-id-stable.vcf', $updated);
+        $this->ensurePropIdsOnStoredCard('bob', 'prop-id-stable.vcf');
+
+        $response = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/contacts/cards/'.$cardId);
+
+        $response->assertOk()
+            ->assertJsonPath("emails.{$emailPropId}.address", 'after@example.com');
+        $this->assertSame([$emailPropId], array_keys($response->json('emails') ?? []));
+    }
+
+    public function test_rest_post_writes_prop_id_and_second_get_uses_same_keys(): void
+    {
+        $uid = 'urn:uuid:'.Str::uuid()->toString();
+        $payload = [
+            'uid' => $uid,
+            'addressBookIds' => ['default' => true],
+            'name' => ['full' => 'REST Prop Id'],
+            'emails' => [
+                '550e8400-e29b-41d4-a716-446655440001' => [
+                    'address' => 'rest-prop-id@example.com',
+                ],
+            ],
+        ];
+
+        $create = $this->withBearer($this->userBearerToken())
+            ->postJson('/api/v1/contacts/cards', $payload);
+        $create->assertCreated();
+        $cardId = (string) $create->json('id');
+        $firstKeys = array_keys($create->json('emails') ?? []);
+        $this->assertCount(1, $firstKeys);
+        $this->assertMatchesRegularExpression(
+            '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i',
+            $firstKeys[0],
+        );
+
+        $stored = $this->findBobCard($cardId);
+        $this->assertNotNull($stored);
+        $raw = is_string($stored->carddata) ? $stored->carddata : (string) $stored->carddata;
+        $this->assertStringContainsString('PROP-ID='.$firstKeys[0], $raw);
+
+        $second = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/contacts/cards/'.$cardId);
+        $second->assertOk();
+        $this->assertSame($firstKeys, array_keys($second->json('emails') ?? []));
+    }
+
+    public function test_rest_put_updates_email_value_but_preserves_prop_id_key(): void
+    {
+        $createPayload = [
+            'addressBookIds' => ['default' => true],
+            'name' => ['full' => 'Mutable Email'],
+            'emails' => [
+                '550e8400-e29b-41d4-a716-446655440001' => [
+                    'address' => 'before@example.com',
+                ],
+            ],
+        ];
+
+        $create = $this->withBearer($this->userBearerToken())
+            ->postJson('/api/v1/contacts/cards', $createPayload);
+        $create->assertCreated();
+        $cardId = (string) $create->json('id');
+        $emailKey = array_key_first($create->json('emails') ?? []);
+        $this->assertIsString($emailKey);
+
+        $updatePayload = $this->contactCardCreatePayloadFromResponse($create->json());
+        $updatePayload['emails'] = [
+            $emailKey => [
+                'address' => 'after@example.com',
+            ],
+        ];
+
+        $update = $this->withBearer($this->userBearerToken())
+            ->putJson('/api/v1/contacts/cards/'.$cardId, $updatePayload);
+        $update->assertOk()
+            ->assertJsonPath("emails.{$emailKey}.address", 'after@example.com');
+
+        $stored = $this->findBobCard($cardId);
+        $this->assertNotNull($stored);
+        $raw = is_string($stored->carddata) ? $stored->carddata : (string) $stored->carddata;
+        $this->assertStringContainsString('PROP-ID='.$emailKey, $raw);
+        $this->assertStringContainsString('after@example.com', $raw);
+        $this->assertStringNotContainsString('before@example.com', $raw);
+    }
+
+    public function test_carddav_write_after_rest_create_preserves_prop_ids(): void
+    {
+        $payload = [
+            'addressBookIds' => ['default' => true],
+            'name' => ['full' => 'CardDAV After REST'],
+            'emails' => [
+                '550e8400-e29b-41d4-a716-446655440001' => [
+                    'address' => 'preserve@example.com',
+                ],
+            ],
+        ];
+
+        $create = $this->withBearer($this->userBearerToken())
+            ->postJson('/api/v1/contacts/cards', $payload);
+        $create->assertCreated();
+        $cardId = (string) $create->json('id');
+        $emailKey = array_key_first($create->json('emails') ?? []);
+        $this->assertIsString($emailKey);
+
+        $stored = $this->findBobCard($cardId);
+        $this->assertNotNull($stored);
+        $raw = is_string($stored->carddata) ? $stored->carddata : (string) $stored->carddata;
+        $updated = str_replace(
+            'FN:CardDAV After REST',
+            'FN:CardDAV After REST Updated',
+            $raw,
+        );
+        $this->updateCardViaPdo('bob', (string) $stored->uri, $updated);
+        $this->ensurePropIdsOnStoredCard('bob', (string) $stored->uri);
+
+        $response = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/contacts/cards/'.$cardId);
+
+        $response->assertOk()
+            ->assertJsonPath('name.full', 'CardDAV After REST Updated')
+            ->assertJsonPath("emails.{$emailKey}.address", 'preserve@example.com');
+        $this->assertSame([$emailKey], array_keys($response->json('emails') ?? []));
     }
 
     private function findBobCard(string $cardId): ?Card

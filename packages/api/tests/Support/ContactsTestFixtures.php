@@ -131,19 +131,29 @@ trait ContactsTestFixtures
     protected function sampleContactCardPayload(string $bookId = 'default'): array
     {
         return [
-            '@type' => 'Card',
-            'version' => '1.0',
-            'uid' => 'urn:uuid:'.Str::uuid()->toString(),
             'addressBookIds' => [$bookId => true],
             'name' => [
                 'full' => 'New Contact',
             ],
             'emails' => [
-                'email-1' => [
-                    'email' => 'new@example.com',
+                '550e8400-e29b-41d4-a716-446655440001' => [
+                    'address' => 'new@example.com',
                 ],
             ],
         ];
+    }
+
+    /**
+     * Strip server-owned response fields before using a ContactCard as a PUT body.
+     *
+     * @param  array<string, mixed>  $card
+     * @return array<string, mixed>
+     */
+    protected function contactCardCreatePayloadFromResponse(array $card): array
+    {
+        unset($card['@type'], $card['version'], $card['id']);
+
+        return $card;
     }
 
     private function resolveAddressBookId(string $username, string $bookUri): int

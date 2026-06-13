@@ -6,6 +6,13 @@ namespace App\Http\Requests\Api\V1;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * POST/PUT body for ContactCard upsert.
+ *
+ * POST (create) forbids server-owned root fields `id`, `@type`, and `version`.
+ * PUT forbids `@type` and `version`; `id` may be sent but the path parameter wins.
+ * Nested JSContact map values may omit `@type` per RFC 9553 §1.3.4.
+ */
 final class ContactCardUpsertRequest extends FormRequest
 {
     public function authorize(): bool
@@ -18,11 +25,43 @@ final class ContactCardUpsertRequest extends FormRequest
      */
     public function rules(): array
     {
+        return $this->isMethod('POST')
+            ? $this->storeRules()
+            : $this->updateRules();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function storeRules(): array
+    {
+        return array_merge($this->writableFieldRules(), [
+            '@type' => ['prohibited'],
+            'version' => ['prohibited'],
+            'id' => ['prohibited'],
+        ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function updateRules(): array
+    {
+        return array_merge($this->writableFieldRules(), [
+            '@type' => ['prohibited'],
+            'version' => ['prohibited'],
+            'id' => ['sometimes', 'string', 'max:255'],
+        ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function writableFieldRules(): array
+    {
         return [
-            '@type' => ['required', 'string', 'in:Card'],
-            'version' => ['required', 'string', 'in:1.0'],
-            'uid' => ['required', 'string', 'max:255'],
             'addressBookIds' => ['required', 'array', 'min:1'],
+            'uid' => ['sometimes', 'string', 'max:255'],
             'name' => ['sometimes', 'array'],
             'name.full' => ['sometimes', 'string', 'max:4096'],
             'emails' => ['sometimes', 'array'],

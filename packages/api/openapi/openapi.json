@@ -2040,7 +2040,31 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ContactCard"
+                "$ref": "#/components/schemas/ContactCardCreate"
+              },
+              "example": {
+                "addressBookIds": {
+                  "default": true
+                },
+                "name": {
+                  "full": "Joe Example"
+                },
+                "emails": {
+                  "550e8400-e29b-41d4-a716-446655440001": {
+                    "address": "joe@example.com"
+                  }
+                },
+                "phones": {
+                  "550e8400-e29b-41d4-a716-446655440002": {
+                    "number": "+1-555-0100"
+                  }
+                },
+                "addresses": {
+                  "550e8400-e29b-41d4-a716-446655440003": {
+                    "full": "123 Main St",
+                    "countryCode": "US"
+                  }
+                }
               }
             }
           }
@@ -2120,7 +2144,31 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ContactCard"
+                "$ref": "#/components/schemas/ContactCardCreate"
+              },
+              "example": {
+                "addressBookIds": {
+                  "default": true
+                },
+                "name": {
+                  "full": "Joe Example"
+                },
+                "emails": {
+                  "550e8400-e29b-41d4-a716-446655440001": {
+                    "address": "joe@example.com"
+                  }
+                },
+                "phones": {
+                  "550e8400-e29b-41d4-a716-446655440002": {
+                    "number": "+1-555-0100"
+                  }
+                },
+                "addresses": {
+                  "550e8400-e29b-41d4-a716-446655440003": {
+                    "full": "123 Main St",
+                    "countryCode": "US"
+                  }
+                }
               }
             }
           }
