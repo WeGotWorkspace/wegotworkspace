@@ -47,5 +47,10 @@
     "husky": "^9.1.7",
     "lint-staged": "^15.5.2",
     "turbo": "^2.4.4"
+  },
+  "pnpm": {
+    "overrides": {
+      "esbuild": "0.28.1"
+    }
   }
 }
