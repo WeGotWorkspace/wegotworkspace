@@ -18,6 +18,7 @@ const driveTypesPath = path.resolve(generatedDir, "drive-types.ts");
 const meetTypesPath = path.resolve(generatedDir, "meet-types.ts");
 const installerTypesPath = path.resolve(generatedDir, "installer-types.ts");
 const contactsTypesPath = path.resolve(generatedDir, "contacts-types.ts");
+const calendarsTypesPath = path.resolve(generatedDir, "calendars-types.ts");
 
 function buildDomainTypesModule({
   domainName,
@@ -114,6 +115,12 @@ export async function generateOpenApiDomainTypes() {
     pathPrefix: "contacts",
     outputPath: contactsTypesPath,
   });
+  buildDomainTypesModule({
+    domainName: "Calendars",
+    domainPrefix: ["Calendar"],
+    pathPrefix: "calendars",
+    outputPath: calendarsTypesPath,
+  });
 
   generateSettingsRequestZod();
 }
@@ -130,6 +137,7 @@ if (import.meta.url === new URL(process.argv[1], "file://").href) {
   process.stdout.write(`Wrote ${meetTypesPath}\n`);
   process.stdout.write(`Wrote ${installerTypesPath}\n`);
   process.stdout.write(`Wrote ${contactsTypesPath}\n`);
+  process.stdout.write(`Wrote ${calendarsTypesPath}\n`);
   process.stdout.write(
     `Wrote ${path.resolve(packageRoot, "openapi/generated/settings-request-zod.ts")}\n`,
   );

@@ -142,6 +142,8 @@ final class OpenApiContract
             '{attachmentId}' => '1.1',
             '{addressBookId}' => 'default',
             '{cardId}' => 'demo-card',
+            '{calendarId}' => 'default',
+            '{eventId}' => 'demo-event',
         ];
 
         $path = $openApiPath;
@@ -180,6 +182,9 @@ final class OpenApiContract
         }
         if ($openApiPath === '/contacts/cards' && $method === 'GET') {
             return 'addressBookId=default';
+        }
+        if ($openApiPath === '/calendars/events' && $method === 'GET') {
+            return 'calendarId=default';
         }
 
         return '';
