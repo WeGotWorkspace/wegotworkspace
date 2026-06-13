@@ -13,6 +13,7 @@ export type ContactAddressBookListResponse = components["schemas"]["ContactAddre
 export type ContactCard = components["schemas"]["ContactCard"];
 export type ContactCardCreate = components["schemas"]["ContactCardCreate"];
 export type ContactCardListResponse = components["schemas"]["ContactCardListResponse"];
+export type ContactCardPatch = components["schemas"]["ContactCardPatch"];
 export type JsContactAddress = components["schemas"]["JsContactAddress"];
 export type JsContactAddressComponent = components["schemas"]["JsContactAddressComponent"];
 export type JsContactAnniversary = components["schemas"]["JsContactAnniversary"];

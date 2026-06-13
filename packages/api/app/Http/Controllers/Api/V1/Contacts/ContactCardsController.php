@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api\V1\Contacts;
 
 use App\Exceptions\ApiHttpException;
 use App\Http\Middleware\AuthenticateWgwApi;
+use App\Http\Requests\Api\V1\ContactCardPatchRequest;
 use App\Http\Requests\Api\V1\ContactCardUpsertRequest;
 use App\Services\Contacts\ContactCardRepository;
 use Illuminate\Http\JsonResponse;
@@ -54,6 +55,16 @@ final class ContactCardsController
 
         return response()->json(
             $this->cards->update($principal['username'], $cardId, $request->json()->all())
+        );
+    }
+
+    public function patch(ContactCardPatchRequest $request, string $cardId): JsonResponse
+    {
+        /** @var array{username: string, role: string} $principal */
+        $principal = $request->attributes->get(AuthenticateWgwApi::PRINCIPAL_ATTRIBUTE);
+
+        return response()->json(
+            $this->cards->patch($principal['username'], $cardId, $request->json()->all())
         );
     }
 

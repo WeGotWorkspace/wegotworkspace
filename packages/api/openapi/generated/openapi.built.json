@@ -4975,6 +4975,131 @@
                     }
                 }
             },
+            "ContactCardPatch": {
+                "type": "object",
+                "properties": {
+                    "addressBookIds": {
+                        "$ref": "#/components/schemas/JsContactIdBooleanMap",
+                        "description": "Set of address book ids; each value MUST be true. Map entry null removes membership."
+                    },
+                    "uid": {
+                        "type": "string",
+                        "description": "Cross-system card identifier (RFC 9553)."
+                    },
+                    "created": {
+                        "$ref": "#/components/schemas/JsContactUTCDateTime"
+                    },
+                    "updated": {
+                        "$ref": "#/components/schemas/JsContactUTCDateTime"
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "individual",
+                            "group",
+                            "org",
+                            "location",
+                            "device",
+                            "application"
+                        ]
+                    },
+                    "language": {
+                        "type": "string",
+                        "description": "Primary language tag (RFC 5646)."
+                    },
+                    "members": {
+                        "$ref": "#/components/schemas/JsContactIdBooleanMap",
+                        "description": "Group member uids when kind is group. Map entry null removes member."
+                    },
+                    "prodId": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "relatedTo": {
+                        "$ref": "#/components/schemas/JsContactStringRelationMap"
+                    },
+                    "name": {
+                        "$ref": "#/components/schemas/JsContactName"
+                    },
+                    "nicknames": {
+                        "$ref": "#/components/schemas/JsContactIdNicknameMap"
+                    },
+                    "organizations": {
+                        "$ref": "#/components/schemas/JsContactIdOrganizationMap"
+                    },
+                    "speakToAs": {
+                        "$ref": "#/components/schemas/JsContactSpeakToAs"
+                    },
+                    "titles": {
+                        "$ref": "#/components/schemas/JsContactIdTitleMap"
+                    },
+                    "emails": {
+                        "$ref": "#/components/schemas/JsContactIdEmailAddressMap"
+                    },
+                    "onlineServices": {
+                        "$ref": "#/components/schemas/JsContactIdOnlineServiceMap"
+                    },
+                    "phones": {
+                        "$ref": "#/components/schemas/JsContactIdPhoneMap"
+                    },
+                    "preferredLanguages": {
+                        "$ref": "#/components/schemas/JsContactIdLanguagePrefMap"
+                    },
+                    "calendars": {
+                        "$ref": "#/components/schemas/JsContactIdCalendarMap"
+                    },
+                    "schedulingAddresses": {
+                        "$ref": "#/components/schemas/JsContactIdSchedulingAddressMap"
+                    },
+                    "addresses": {
+                        "$ref": "#/components/schemas/JsContactIdAddressMap"
+                    },
+                    "cryptoKeys": {
+                        "$ref": "#/components/schemas/JsContactIdCryptoKeyMap"
+                    },
+                    "directories": {
+                        "$ref": "#/components/schemas/JsContactIdDirectoryMap"
+                    },
+                    "links": {
+                        "$ref": "#/components/schemas/JsContactIdLinkMap"
+                    },
+                    "media": {
+                        "$ref": "#/components/schemas/JsContactIdMediaMap"
+                    },
+                    "localizations": {
+                        "$ref": "#/components/schemas/JsContactStringPatchObjectMap"
+                    },
+                    "anniversaries": {
+                        "$ref": "#/components/schemas/JsContactIdAnniversaryMap"
+                    },
+                    "keywords": {
+                        "$ref": "#/components/schemas/JsContactStringBooleanMap"
+                    },
+                    "notes": {
+                        "$ref": "#/components/schemas/JsContactIdNoteMap"
+                    },
+                    "personalInfo": {
+                        "$ref": "#/components/schemas/JsContactIdPersonalInfoMap"
+                    },
+                    "vCardProps": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JsContactJCardProp"
+                        },
+                        "description": "RFC 9555 unmapped vCard properties."
+                    }
+                },
+                "additionalProperties": true,
+                "description": "PATCH request body for partial contact card updates. Omits server-owned `id`, `@type`, and `version`. Id-keyed map entries merge by key; null removes an entry. Nested objects (e.g. name) deep-merge.",
+                "example": {
+                    "emails": {
+                        "550e8400-e29b-41d4-a716-446655440001": {
+                            "address": "updated@example.com"
+                        },
+                        "550e8400-e29b-41d4-a716-446655440099": null
+                    }
+                }
+            },
             "CalendarRecurrenceRule": {
                 "type": "object",
                 "required": [
@@ -6179,6 +6304,23 @@
                         }
                     }
                 }
+            },
+            "post": {
+                "tags": [
+                    "Mail"
+                ],
+                "summary": "Send message",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sent"
+                    }
+                },
+                "x-wgw-access": "user"
             }
         },
         "/mail/messages/attachments": {
@@ -6970,6 +7112,33 @@
                         }
                     }
                 }
+            },
+            "patch": {
+                "tags": [
+                    "Notes"
+                ],
+                "summary": "Patch note (e.g. archive)",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated"
+                    }
+                },
+                "x-wgw-access": "user"
             }
         },
         "/notes/items/{id}/archive": {
@@ -8920,6 +9089,58 @@
                     }
                 },
                 "x-wgw-access": "user"
+            },
+            "patch": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Partially update a contact card",
+                "description": "Deep-merge patch into the existing JSContact Card. Id-keyed map entries merge by key; null removes an entry.",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "cardId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated contact card",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactCard"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ContactCardPatch"
+                            },
+                            "example": {
+                                "emails": {
+                                    "550e8400-e29b-41d4-a716-446655440001": {
+                                        "address": "updated@example.com"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-wgw-access": "user"
             }
         },
         "/plugins/{id}/activation": {
@@ -9397,68 +9618,6 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/OkResponse"
-                                }
-                            }
-                        }
-                    }
-                },
-                "x-wgw-access": "user"
-            }
-        },
-        "/calendars": {
-            "get": {
-                "tags": [
-                    "Calendars"
-                ],
-                "summary": "List user's calendars",
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Calendar list",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/CalendarListResponse"
-                                }
-                            }
-                        }
-                    }
-                },
-                "x-wgw-access": "user"
-            }
-        },
-        "/calendars/{calendarId}": {
-            "get": {
-                "tags": [
-                    "Calendars"
-                ],
-                "summary": "Fetch a single calendar",
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ],
-                "parameters": [
-                    {
-                        "name": "calendarId",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Calendar",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Calendar"
                                 }
                             }
                         }

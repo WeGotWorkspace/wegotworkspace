@@ -69,6 +69,24 @@ function mergePathsFromSource(baseDoc, sourceDoc) {
   for (const [pathKey, pathItem] of Object.entries(sourcePaths)) {
     if (!Object.prototype.hasOwnProperty.call(baseDoc.paths, pathKey)) {
       baseDoc.paths[pathKey] = pathItem;
+      continue;
+    }
+
+    const existing = baseDoc.paths[pathKey];
+    if (!existing || typeof existing !== "object" || Array.isArray(existing)) {
+      continue;
+    }
+    if (!pathItem || typeof pathItem !== "object" || Array.isArray(pathItem)) {
+      continue;
+    }
+
+    for (const [method, operation] of Object.entries(pathItem)) {
+      if (method.startsWith("x-") || method === "parameters" || method === "$ref") {
+        continue;
+      }
+      if (!Object.prototype.hasOwnProperty.call(existing, method)) {
+        existing[method] = operation;
+      }
     }
   }
 }

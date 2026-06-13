@@ -116,6 +116,43 @@ final class ContactCardRepository
     }
 
     /**
+     * @param  array<string, mixed>  $patch
+     * @return array<string, mixed>
+     */
+    public function patch(string $username, string $cardId, array $patch): array
+    {
+        $located = $this->findOwnedCard($username, $cardId);
+        if ($located === null) {
+            throw new ApiHttpException(404, 'Contact card not found.', 'not_found');
+        }
+
+        $book = $located['book'];
+        $card = $located['card'];
+        $cardUri = (string) $card->uri;
+        $existingContact = $this->mapper->toContactCard($card, (string) $book->uri);
+        $merged = ConversionSupport::deepMergeContactCardPatch($existingContact, $patch);
+        $cardPayload = $this->normalizeCardPayload($merged, $existingContact);
+        $cardPayload['id'] = ContactCardMapper::cardIdFromUri($cardUri);
+        if (! isset($cardPayload['addressBookIds']) || ! is_array($cardPayload['addressBookIds'])) {
+            $cardPayload['addressBookIds'] = [(string) $book->uri => true];
+        }
+
+        $vcard = $this->mapper->toVCard($cardPayload);
+        $addressBookId = (int) $card->addressbookid;
+        $this->cardBackend()->updateCard($addressBookId, $cardUri, $vcard);
+        $this->syncSearchIndex(fn () => $this->searchIndexer->indexCardObjectFromPath(
+            $this->cardDavPath($username, (string) $book->uri, $cardUri)
+        ));
+
+        $updated = $this->findCardInBook($addressBookId, $cardUri);
+        if ($updated === null) {
+            throw new ApiHttpException(500, 'Could not load patched contact card.', 'server_error');
+        }
+
+        return $this->mapper->toContactCard($updated, (string) $book->uri);
+    }
+
+    /**
      * @return array{ok: true}
      */
     public function delete(string $username, string $cardId): array

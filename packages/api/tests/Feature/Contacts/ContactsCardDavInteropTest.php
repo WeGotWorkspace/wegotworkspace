@@ -281,6 +281,43 @@ final class ContactsCardDavInteropTest extends WgwDatabaseTestCase
         $this->assertStringNotContainsString('before@example.com', $raw);
     }
 
+    public function test_rest_patch_persists_readable_vcard_with_prop_id_preservation(): void
+    {
+        $emailKey = '550e8400-e29b-41d4-a716-446655440001';
+        $createPayload = [
+            'addressBookIds' => ['default' => true],
+            'name' => ['full' => 'Patch Interop Contact'],
+            'emails' => [
+                $emailKey => [
+                    'address' => 'before@example.com',
+                ],
+            ],
+        ];
+
+        $create = $this->withBearer($this->userBearerToken())
+            ->postJson('/api/v1/contacts/cards', $createPayload);
+        $create->assertCreated();
+        $cardId = (string) $create->json('id');
+
+        $patch = $this->withBearer($this->userBearerToken())
+            ->patchJson('/api/v1/contacts/cards/'.$cardId, [
+                'emails' => [
+                    $emailKey => [
+                        'address' => 'patched@example.com',
+                    ],
+                ],
+            ]);
+        $patch->assertOk()
+            ->assertJsonPath("emails.{$emailKey}.address", 'patched@example.com');
+
+        $stored = $this->findBobCard($cardId);
+        $this->assertNotNull($stored);
+        $raw = is_string($stored->carddata) ? $stored->carddata : (string) $stored->carddata;
+        $this->assertStringContainsString('PROP-ID='.$emailKey, $raw);
+        $this->assertStringContainsString('patched@example.com', $raw);
+        $this->assertStringNotContainsString('before@example.com', $raw);
+    }
+
     public function test_carddav_write_after_rest_create_preserves_prop_ids(): void
     {
         $payload = [

@@ -2392,6 +2392,58 @@
         },
         "x-wgw-access": "user"
       },
+      "patch": {
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "Partially update a contact card",
+        "description": "Deep-merge patch into the existing JSContact Card. Id-keyed map entries merge by key; null removes an entry.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cardId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated contact card",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactCard"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactCardPatch"
+              },
+              "example": {
+                "emails": {
+                  "550e8400-e29b-41d4-a716-446655440001": {
+                    "address": "updated@example.com"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      },
       "delete": {
         "tags": [
           "Contacts"

@@ -176,6 +176,8 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($filesS
             ->where('cardId', '[a-z0-9_-]+');
         Route::put('contacts/cards/{cardId}', [ContactCardsController::class, 'update'])
             ->where('cardId', '[a-z0-9_-]+');
+        Route::patch('contacts/cards/{cardId}', [ContactCardsController::class, 'patch'])
+            ->where('cardId', '[a-z0-9_-]+');
         Route::delete('contacts/cards/{cardId}', [ContactCardsController::class, 'destroy'])
             ->where('cardId', '[a-z0-9_-]+');
     });
