@@ -132,26 +132,70 @@
   },
   "JsContactIdEmailAddressMap": {
     "type": "object",
+    "propertyNames": {
+      "$ref": "#/components/schemas/JsContactId"
+    },
     "additionalProperties": {
       "$ref": "#/components/schemas/JsContactEmailAddress"
+    },
+    "example": {
+      "email-1": {
+        "@type": "EmailAddress",
+        "address": "joe@example.com",
+        "contexts": {
+          "private": true
+        }
+      }
     }
   },
   "JsContactIdPhoneMap": {
     "type": "object",
+    "propertyNames": {
+      "$ref": "#/components/schemas/JsContactId"
+    },
     "additionalProperties": {
       "$ref": "#/components/schemas/JsContactPhone"
+    },
+    "example": {
+      "phone-1": {
+        "@type": "Phone",
+        "number": "+1-555-0100",
+        "features": {
+          "mobile": true,
+          "voice": true
+        }
+      }
     }
   },
   "JsContactIdOnlineServiceMap": {
     "type": "object",
+    "propertyNames": {
+      "$ref": "#/components/schemas/JsContactId"
+    },
     "additionalProperties": {
       "$ref": "#/components/schemas/JsContactOnlineService"
+    },
+    "example": {
+      "service-1": {
+        "@type": "OnlineService",
+        "service": "matrix",
+        "uri": "matrix:u/joe:example.com"
+      }
     }
   },
   "JsContactIdLanguagePrefMap": {
     "type": "object",
+    "propertyNames": {
+      "$ref": "#/components/schemas/JsContactId"
+    },
     "additionalProperties": {
       "$ref": "#/components/schemas/JsContactLanguagePref"
+    },
+    "example": {
+      "lang-1": {
+        "@type": "LanguagePref",
+        "language": "en"
+      }
     }
   }
 }

@@ -201,20 +201,53 @@
   },
   "JsContactIdAnniversaryMap": {
     "type": "object",
+    "propertyNames": {
+      "$ref": "#/components/schemas/JsContactId"
+    },
     "additionalProperties": {
       "$ref": "#/components/schemas/JsContactAnniversary"
+    },
+    "example": {
+      "anniv-1": {
+        "@type": "Anniversary",
+        "kind": "birth",
+        "date": {
+          "@type": "PartialDate",
+          "month": 6,
+          "day": 13
+        }
+      }
     }
   },
   "JsContactIdNoteMap": {
     "type": "object",
+    "propertyNames": {
+      "$ref": "#/components/schemas/JsContactId"
+    },
     "additionalProperties": {
       "$ref": "#/components/schemas/JsContactNote"
+    },
+    "example": {
+      "note-1": {
+        "@type": "Note",
+        "note": "Met at the 2024 conference."
+      }
     }
   },
   "JsContactIdPersonalInfoMap": {
     "type": "object",
+    "propertyNames": {
+      "$ref": "#/components/schemas/JsContactId"
+    },
     "additionalProperties": {
       "$ref": "#/components/schemas/JsContactPersonalInfo"
+    },
+    "example": {
+      "hobby-1": {
+        "@type": "PersonalInfo",
+        "kind": "hobby",
+        "value": "cycling"
+      }
     }
   }
 }

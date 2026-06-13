@@ -1929,7 +1929,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Address book list"
+            "description": "Address book list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactAddressBookListResponse"
+                }
+              }
+            }
           }
         },
         "x-wgw-access": "user"
@@ -1958,7 +1965,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Address book"
+            "description": "Address book",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddressBook"
+                }
+              }
+            }
           }
         },
         "x-wgw-access": "user"
@@ -1987,7 +2001,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Contact card list"
+            "description": "Contact card list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactCardListResponse"
+                }
+              }
+            }
           }
         },
         "x-wgw-access": "user"
@@ -2004,7 +2025,24 @@
         ],
         "responses": {
           "201": {
-            "description": "Created contact card"
+            "description": "Created contact card",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactCard"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactCard"
+              }
+            }
           }
         },
         "x-wgw-access": "user"
@@ -2033,7 +2071,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Contact card"
+            "description": "Contact card",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactCard"
+                }
+              }
+            }
           }
         },
         "x-wgw-access": "user"
@@ -2060,7 +2105,24 @@
         ],
         "responses": {
           "200": {
-            "description": "Updated contact card"
+            "description": "Updated contact card",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactCard"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactCard"
+              }
+            }
           }
         },
         "x-wgw-access": "user"
@@ -2087,7 +2149,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Deleted contact card"
+            "description": "Deleted contact card",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkResponse"
+                }
+              }
+            }
           }
         },
         "x-wgw-access": "user"

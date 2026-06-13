@@ -207,6 +207,9 @@
       },
       "pronouns": {
         "type": "object",
+        "propertyNames": {
+          "$ref": "#/components/schemas/JsContactId"
+        },
         "additionalProperties": {
           "$ref": "#/components/schemas/JsContactPronouns"
         }
@@ -252,20 +255,47 @@
   },
   "JsContactIdNicknameMap": {
     "type": "object",
+    "propertyNames": {
+      "$ref": "#/components/schemas/JsContactId"
+    },
     "additionalProperties": {
       "$ref": "#/components/schemas/JsContactNickname"
+    },
+    "example": {
+      "nick-1": {
+        "@type": "Nickname",
+        "name": "Joe"
+      }
     }
   },
   "JsContactIdOrganizationMap": {
     "type": "object",
+    "propertyNames": {
+      "$ref": "#/components/schemas/JsContactId"
+    },
     "additionalProperties": {
       "$ref": "#/components/schemas/JsContactOrganization"
+    },
+    "example": {
+      "org-1": {
+        "@type": "Organization",
+        "name": "Example Corp"
+      }
     }
   },
   "JsContactIdTitleMap": {
     "type": "object",
+    "propertyNames": {
+      "$ref": "#/components/schemas/JsContactId"
+    },
     "additionalProperties": {
       "$ref": "#/components/schemas/JsContactTitle"
+    },
+    "example": {
+      "title-1": {
+        "@type": "Title",
+        "name": "Engineer"
+      }
     }
   }
 }

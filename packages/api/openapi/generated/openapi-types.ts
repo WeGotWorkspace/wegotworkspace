@@ -3964,7 +3964,9 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["ContactAddressBookListResponse"];
+                    };
                 };
             };
         };
@@ -4000,7 +4002,9 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["AddressBook"];
+                    };
                 };
             };
         };
@@ -4036,7 +4040,9 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["ContactCardListResponse"];
+                    };
                 };
             };
         };
@@ -4049,14 +4055,20 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ContactCard"];
+                };
+            };
             responses: {
                 /** @description Created contact card */
                 201: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["ContactCard"];
+                    };
                 };
             };
         };
@@ -4090,7 +4102,9 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["ContactCard"];
+                    };
                 };
             };
         };
@@ -4104,14 +4118,20 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ContactCard"];
+                };
+            };
             responses: {
                 /** @description Updated contact card */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["ContactCard"];
+                    };
                 };
             };
         };
@@ -4133,7 +4153,9 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["OkResponse"];
+                    };
                 };
             };
         };
@@ -5514,7 +5536,24 @@ export interface components {
             /** @description May delete the address book itself. */
             mayDelete: boolean;
         };
-        /** @description RFC 9610 AddressBook. */
+        /**
+         * @description RFC 9610 AddressBook.
+         * @example {
+         *       "id": "default",
+         *       "name": "Default Address Book",
+         *       "description": null,
+         *       "sortOrder": 0,
+         *       "isDefault": true,
+         *       "isSubscribed": true,
+         *       "shareWith": null,
+         *       "myRights": {
+         *         "mayRead": true,
+         *         "mayWrite": true,
+         *         "mayShare": true,
+         *         "mayDelete": false
+         *       }
+         *     }
+         */
         AddressBook: {
             /** @description Immutable server-set address book identifier. */
             id: components["schemas"]["JsContactId"];
@@ -5535,11 +5574,66 @@ export interface components {
             /** @description Current user's access rights for this book. */
             myRights: components["schemas"]["AddressBookRights"];
         };
-        /** @description REST list response for GET /contacts/addressbooks. */
+        /**
+         * @description REST list response for GET /contacts/addressbooks.
+         * @example {
+         *       "list": [
+         *         {
+         *           "id": "default",
+         *           "name": "Default Address Book",
+         *           "description": null,
+         *           "sortOrder": 0,
+         *           "isDefault": true,
+         *           "isSubscribed": true,
+         *           "shareWith": null,
+         *           "myRights": {
+         *             "mayRead": true,
+         *             "mayWrite": true,
+         *             "mayShare": true,
+         *             "mayDelete": false
+         *           }
+         *         }
+         *       ]
+         *     }
+         */
         ContactAddressBookListResponse: {
             list: components["schemas"]["AddressBook"][];
         };
-        /** @description RFC 9610 ContactCard — JSContact Card plus JMAP id and addressBookIds. */
+        /**
+         * @description RFC 9610 ContactCard — JSContact Card plus JMAP id and addressBookIds.
+         * @example {
+         *       "@type": "Card",
+         *       "version": "1.0",
+         *       "id": "card-joe-example",
+         *       "uid": "urn:uuid:550e8400-e29b-41d4-a716-446655440000",
+         *       "addressBookIds": {
+         *         "default": true
+         *       },
+         *       "name": {
+         *         "@type": "Name",
+         *         "full": "Joe Example"
+         *       },
+         *       "emails": {
+         *         "email-1": {
+         *           "@type": "EmailAddress",
+         *           "address": "joe@example.com",
+         *           "contexts": {
+         *             "private": true
+         *           }
+         *         }
+         *       },
+         *       "phones": {
+         *         "phone-1": {
+         *           "@type": "Phone",
+         *           "number": "+1-555-0100",
+         *           "features": {
+         *             "mobile": true,
+         *             "voice": true
+         *           }
+         *         }
+         *       }
+         *     }
+         */
         ContactCard: {
             /**
              * @description JSContact Card type discriminator.
@@ -5596,7 +5690,35 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
-        /** @description REST list response for GET /contacts/cards. */
+        /**
+         * @description REST list response for GET /contacts/cards.
+         * @example {
+         *       "list": [
+         *         {
+         *           "@type": "Card",
+         *           "version": "1.0",
+         *           "id": "card-joe-example",
+         *           "uid": "urn:uuid:550e8400-e29b-41d4-a716-446655440000",
+         *           "addressBookIds": {
+         *             "default": true
+         *           },
+         *           "name": {
+         *             "@type": "Name",
+         *             "full": "Joe Example"
+         *           },
+         *           "emails": {
+         *             "email-1": {
+         *               "@type": "EmailAddress",
+         *               "address": "joe@example.com",
+         *               "contexts": {
+         *                 "private": true
+         *               }
+         *             }
+         *           }
+         *         }
+         *       ]
+         *     }
+         */
         ContactCardListResponse: {
             list: components["schemas"]["ContactCard"][];
         };
@@ -5638,6 +5760,18 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /**
+         * @example {
+         *       "addr-1": {
+         *         "@type": "Address",
+         *         "full": "123 Main St, Springfield, IL 62701, US",
+         *         "countryCode": "US",
+         *         "contexts": {
+         *           "home": true
+         *         }
+         *       }
+         *     }
+         */
         JsContactIdAddressMap: {
             [key: string]: components["schemas"]["JsContactAddress"];
         };
@@ -5655,6 +5789,14 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /**
+         * @example {
+         *       "sched-1": {
+         *         "@type": "SchedulingAddress",
+         *         "uri": "mailto:joe@example.com"
+         *       }
+         *     }
+         */
         JsContactIdSchedulingAddressMap: {
             [key: string]: components["schemas"]["JsContactSchedulingAddress"];
         };
@@ -5717,15 +5859,55 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /**
+         * @example {
+         *       "email-1": {
+         *         "@type": "EmailAddress",
+         *         "address": "joe@example.com",
+         *         "contexts": {
+         *           "private": true
+         *         }
+         *       }
+         *     }
+         */
         JsContactIdEmailAddressMap: {
             [key: string]: components["schemas"]["JsContactEmailAddress"];
         };
+        /**
+         * @example {
+         *       "phone-1": {
+         *         "@type": "Phone",
+         *         "number": "+1-555-0100",
+         *         "features": {
+         *           "mobile": true,
+         *           "voice": true
+         *         }
+         *       }
+         *     }
+         */
         JsContactIdPhoneMap: {
             [key: string]: components["schemas"]["JsContactPhone"];
         };
+        /**
+         * @example {
+         *       "service-1": {
+         *         "@type": "OnlineService",
+         *         "service": "matrix",
+         *         "uri": "matrix:u/joe:example.com"
+         *       }
+         *     }
+         */
         JsContactIdOnlineServiceMap: {
             [key: string]: components["schemas"]["JsContactOnlineService"];
         };
+        /**
+         * @example {
+         *       "lang-1": {
+         *         "@type": "LanguagePref",
+         *         "language": "en"
+         *       }
+         *     }
+         */
         JsContactIdLanguagePrefMap: {
             [key: string]: components["schemas"]["JsContactLanguagePref"];
         };
@@ -5819,12 +6001,42 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /**
+         * @example {
+         *       "anniv-1": {
+         *         "@type": "Anniversary",
+         *         "kind": "birth",
+         *         "date": {
+         *           "@type": "PartialDate",
+         *           "month": 6,
+         *           "day": 13
+         *         }
+         *       }
+         *     }
+         */
         JsContactIdAnniversaryMap: {
             [key: string]: components["schemas"]["JsContactAnniversary"];
         };
+        /**
+         * @example {
+         *       "note-1": {
+         *         "@type": "Note",
+         *         "note": "Met at the 2024 conference."
+         *       }
+         *     }
+         */
         JsContactIdNoteMap: {
             [key: string]: components["schemas"]["JsContactNote"];
         };
+        /**
+         * @example {
+         *       "hobby-1": {
+         *         "@type": "PersonalInfo",
+         *         "kind": "hobby",
+         *         "value": "cycling"
+         *       }
+         *     }
+         */
         JsContactIdPersonalInfoMap: {
             [key: string]: components["schemas"]["JsContactPersonalInfo"];
         };
@@ -5937,12 +6149,36 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /**
+         * @example {
+         *       "nick-1": {
+         *         "@type": "Nickname",
+         *         "name": "Joe"
+         *       }
+         *     }
+         */
         JsContactIdNicknameMap: {
             [key: string]: components["schemas"]["JsContactNickname"];
         };
+        /**
+         * @example {
+         *       "org-1": {
+         *         "@type": "Organization",
+         *         "name": "Example Corp"
+         *       }
+         *     }
+         */
         JsContactIdOrganizationMap: {
             [key: string]: components["schemas"]["JsContactOrganization"];
         };
+        /**
+         * @example {
+         *       "title-1": {
+         *         "@type": "Title",
+         *         "name": "Engineer"
+         *       }
+         *     }
+         */
         JsContactIdTitleMap: {
             [key: string]: components["schemas"]["JsContactTitle"];
         };
@@ -5998,18 +6234,63 @@ export interface components {
             /** @description JMAP blob id (RFC 9610); replaces data: URI on read. */
             blobId?: components["schemas"]["JsContactId"];
         };
+        /**
+         * @example {
+         *       "cal-1": {
+         *         "@type": "Calendar",
+         *         "kind": "calendar",
+         *         "uri": "https://example.com/calendars/joe"
+         *       }
+         *     }
+         */
         JsContactIdCalendarMap: {
             [key: string]: components["schemas"]["JsContactCalendar"];
         };
+        /**
+         * @example {
+         *       "key-1": {
+         *         "@type": "CryptoKey",
+         *         "uri": "data:application/pgp-keys;base64,..."
+         *       }
+         *     }
+         */
         JsContactIdCryptoKeyMap: {
             [key: string]: components["schemas"]["JsContactCryptoKey"];
         };
+        /**
+         * @example {
+         *       "dir-1": {
+         *         "@type": "Directory",
+         *         "kind": "directory",
+         *         "uri": "ldap://directory.example.com/cn=joe"
+         *       }
+         *     }
+         */
         JsContactIdDirectoryMap: {
             [key: string]: components["schemas"]["JsContactDirectory"];
         };
+        /**
+         * @example {
+         *       "link-1": {
+         *         "@type": "Link",
+         *         "kind": "contact",
+         *         "uri": "card:550e8400-e29b-41d4-a716-446655440000"
+         *       }
+         *     }
+         */
         JsContactIdLinkMap: {
             [key: string]: components["schemas"]["JsContactLink"];
         };
+        /**
+         * @example {
+         *       "photo-1": {
+         *         "@type": "Media",
+         *         "kind": "photo",
+         *         "uri": "https://example.com/photos/joe.jpg",
+         *         "mediaType": "image/jpeg"
+         *       }
+         *     }
+         */
         JsContactIdMediaMap: {
             [key: string]: components["schemas"]["JsContactMedia"];
         };
@@ -6026,7 +6307,12 @@ export interface components {
         JsContactStringBooleanMap: {
             [key: string]: true;
         };
-        /** @description RFC 9553 Id[Boolean] set keyed by JsContact Id. */
+        /**
+         * @description RFC 9553 Id[Boolean] set keyed by JsContact Id.
+         * @example {
+         *       "default": true
+         *     }
+         */
         JsContactIdBooleanMap: {
             [key: string]: true;
         };

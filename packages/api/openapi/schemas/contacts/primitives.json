@@ -27,11 +27,17 @@
   },
   "JsContactIdBooleanMap": {
     "type": "object",
+    "propertyNames": {
+      "$ref": "#/components/schemas/JsContactId"
+    },
     "additionalProperties": {
       "type": "boolean",
       "const": true
     },
-    "description": "RFC 9553 Id[Boolean] set keyed by JsContact Id."
+    "description": "RFC 9553 Id[Boolean] set keyed by JsContact Id.",
+    "example": {
+      "default": true
+    }
   },
   "JsContactStringStringMap": {
     "type": "object",

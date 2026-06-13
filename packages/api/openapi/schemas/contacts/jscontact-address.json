@@ -108,8 +108,21 @@
   },
   "JsContactIdAddressMap": {
     "type": "object",
+    "propertyNames": {
+      "$ref": "#/components/schemas/JsContactId"
+    },
     "additionalProperties": {
       "$ref": "#/components/schemas/JsContactAddress"
+    },
+    "example": {
+      "addr-1": {
+        "@type": "Address",
+        "full": "123 Main St, Springfield, IL 62701, US",
+        "countryCode": "US",
+        "contexts": {
+          "home": true
+        }
+      }
     }
   }
 }

@@ -141,32 +141,82 @@
   },
   "JsContactIdCalendarMap": {
     "type": "object",
+    "propertyNames": {
+      "$ref": "#/components/schemas/JsContactId"
+    },
     "additionalProperties": {
       "$ref": "#/components/schemas/JsContactCalendar"
+    },
+    "example": {
+      "cal-1": {
+        "@type": "Calendar",
+        "kind": "calendar",
+        "uri": "https://example.com/calendars/joe"
+      }
     }
   },
   "JsContactIdCryptoKeyMap": {
     "type": "object",
+    "propertyNames": {
+      "$ref": "#/components/schemas/JsContactId"
+    },
     "additionalProperties": {
       "$ref": "#/components/schemas/JsContactCryptoKey"
+    },
+    "example": {
+      "key-1": {
+        "@type": "CryptoKey",
+        "uri": "data:application/pgp-keys;base64,..."
+      }
     }
   },
   "JsContactIdDirectoryMap": {
     "type": "object",
+    "propertyNames": {
+      "$ref": "#/components/schemas/JsContactId"
+    },
     "additionalProperties": {
       "$ref": "#/components/schemas/JsContactDirectory"
+    },
+    "example": {
+      "dir-1": {
+        "@type": "Directory",
+        "kind": "directory",
+        "uri": "ldap://directory.example.com/cn=joe"
+      }
     }
   },
   "JsContactIdLinkMap": {
     "type": "object",
+    "propertyNames": {
+      "$ref": "#/components/schemas/JsContactId"
+    },
     "additionalProperties": {
       "$ref": "#/components/schemas/JsContactLink"
+    },
+    "example": {
+      "link-1": {
+        "@type": "Link",
+        "kind": "contact",
+        "uri": "card:550e8400-e29b-41d4-a716-446655440000"
+      }
     }
   },
   "JsContactIdMediaMap": {
     "type": "object",
+    "propertyNames": {
+      "$ref": "#/components/schemas/JsContactId"
+    },
     "additionalProperties": {
       "$ref": "#/components/schemas/JsContactMedia"
+    },
+    "example": {
+      "photo-1": {
+        "@type": "Media",
+        "kind": "photo",
+        "uri": "https://example.com/photos/joe.jpg",
+        "mediaType": "image/jpeg"
+      }
     }
   }
 }

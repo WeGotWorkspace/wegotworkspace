@@ -57,6 +57,9 @@
         "oneOf": [
           {
             "type": "object",
+            "propertyNames": {
+              "$ref": "#/components/schemas/JsContactId"
+            },
             "additionalProperties": {
               "$ref": "#/components/schemas/AddressBookRights"
             }
@@ -71,7 +74,22 @@
       }
     },
     "additionalProperties": false,
-    "description": "RFC 9610 AddressBook."
+    "description": "RFC 9610 AddressBook.",
+    "example": {
+      "id": "default",
+      "name": "Default Address Book",
+      "description": null,
+      "sortOrder": 0,
+      "isDefault": true,
+      "isSubscribed": true,
+      "shareWith": null,
+      "myRights": {
+        "mayRead": true,
+        "mayWrite": true,
+        "mayShare": true,
+        "mayDelete": false
+      }
+    }
   },
   "ContactAddressBookListResponse": {
     "type": "object",
@@ -85,6 +103,25 @@
       }
     },
     "additionalProperties": false,
-    "description": "REST list response for GET /contacts/addressbooks."
+    "description": "REST list response for GET /contacts/addressbooks.",
+    "example": {
+      "list": [
+        {
+          "id": "default",
+          "name": "Default Address Book",
+          "description": null,
+          "sortOrder": 0,
+          "isDefault": true,
+          "isSubscribed": true,
+          "shareWith": null,
+          "myRights": {
+            "mayRead": true,
+            "mayWrite": true,
+            "mayShare": true,
+            "mayDelete": false
+          }
+        }
+      ]
+    }
   }
 }

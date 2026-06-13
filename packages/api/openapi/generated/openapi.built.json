@@ -3114,6 +3114,9 @@
                         "oneOf": [
                             {
                                 "type": "object",
+                                "propertyNames": {
+                                    "$ref": "#/components/schemas/JsContactId"
+                                },
                                 "additionalProperties": {
                                     "$ref": "#/components/schemas/AddressBookRights"
                                 }
@@ -3130,7 +3133,22 @@
                     }
                 },
                 "additionalProperties": false,
-                "description": "RFC 9610 AddressBook."
+                "description": "RFC 9610 AddressBook.",
+                "example": {
+                    "id": "default",
+                    "name": "Default Address Book",
+                    "description": null,
+                    "sortOrder": 0,
+                    "isDefault": true,
+                    "isSubscribed": true,
+                    "shareWith": null,
+                    "myRights": {
+                        "mayRead": true,
+                        "mayWrite": true,
+                        "mayShare": true,
+                        "mayDelete": false
+                    }
+                }
             },
             "ContactAddressBookListResponse": {
                 "type": "object",
@@ -3146,7 +3164,26 @@
                     }
                 },
                 "additionalProperties": false,
-                "description": "REST list response for GET /contacts/addressbooks."
+                "description": "REST list response for GET /contacts/addressbooks.",
+                "example": {
+                    "list": [
+                        {
+                            "id": "default",
+                            "name": "Default Address Book",
+                            "description": null,
+                            "sortOrder": 0,
+                            "isDefault": true,
+                            "isSubscribed": true,
+                            "shareWith": null,
+                            "myRights": {
+                                "mayRead": true,
+                                "mayWrite": true,
+                                "mayShare": true,
+                                "mayDelete": false
+                            }
+                        }
+                    ]
+                }
             },
             "ContactCard": {
                 "type": "object",
@@ -3285,7 +3322,39 @@
                     }
                 },
                 "additionalProperties": true,
-                "description": "RFC 9610 ContactCard — JSContact Card plus JMAP id and addressBookIds."
+                "description": "RFC 9610 ContactCard — JSContact Card plus JMAP id and addressBookIds.",
+                "example": {
+                    "@type": "Card",
+                    "version": "1.0",
+                    "id": "card-joe-example",
+                    "uid": "urn:uuid:550e8400-e29b-41d4-a716-446655440000",
+                    "addressBookIds": {
+                        "default": true
+                    },
+                    "name": {
+                        "@type": "Name",
+                        "full": "Joe Example"
+                    },
+                    "emails": {
+                        "email-1": {
+                            "@type": "EmailAddress",
+                            "address": "joe@example.com",
+                            "contexts": {
+                                "private": true
+                            }
+                        }
+                    },
+                    "phones": {
+                        "phone-1": {
+                            "@type": "Phone",
+                            "number": "+1-555-0100",
+                            "features": {
+                                "mobile": true,
+                                "voice": true
+                            }
+                        }
+                    }
+                }
             },
             "ContactCardListResponse": {
                 "type": "object",
@@ -3301,7 +3370,33 @@
                     }
                 },
                 "additionalProperties": false,
-                "description": "REST list response for GET /contacts/cards."
+                "description": "REST list response for GET /contacts/cards.",
+                "example": {
+                    "list": [
+                        {
+                            "@type": "Card",
+                            "version": "1.0",
+                            "id": "card-joe-example",
+                            "uid": "urn:uuid:550e8400-e29b-41d4-a716-446655440000",
+                            "addressBookIds": {
+                                "default": true
+                            },
+                            "name": {
+                                "@type": "Name",
+                                "full": "Joe Example"
+                            },
+                            "emails": {
+                                "email-1": {
+                                    "@type": "EmailAddress",
+                                    "address": "joe@example.com",
+                                    "contexts": {
+                                        "private": true
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
             },
             "JsContactAddressComponent": {
                 "type": "object",
@@ -3422,8 +3517,21 @@
             },
             "JsContactIdAddressMap": {
                 "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
                 "additionalProperties": {
                     "$ref": "#/components/schemas/JsContactAddress"
+                },
+                "example": {
+                    "addr-1": {
+                        "@type": "Address",
+                        "full": "123 Main St, Springfield, IL 62701, US",
+                        "countryCode": "US",
+                        "contexts": {
+                            "home": true
+                        }
+                    }
                 }
             },
             "JsContactSchedulingAddress": {
@@ -3462,8 +3570,17 @@
             },
             "JsContactIdSchedulingAddressMap": {
                 "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
                 "additionalProperties": {
                     "$ref": "#/components/schemas/JsContactSchedulingAddress"
+                },
+                "example": {
+                    "sched-1": {
+                        "@type": "SchedulingAddress",
+                        "uri": "mailto:joe@example.com"
+                    }
                 }
             },
             "JsContactEmailAddress": {
@@ -3610,26 +3727,70 @@
             },
             "JsContactIdEmailAddressMap": {
                 "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
                 "additionalProperties": {
                     "$ref": "#/components/schemas/JsContactEmailAddress"
+                },
+                "example": {
+                    "email-1": {
+                        "@type": "EmailAddress",
+                        "address": "joe@example.com",
+                        "contexts": {
+                            "private": true
+                        }
+                    }
                 }
             },
             "JsContactIdPhoneMap": {
                 "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
                 "additionalProperties": {
                     "$ref": "#/components/schemas/JsContactPhone"
+                },
+                "example": {
+                    "phone-1": {
+                        "@type": "Phone",
+                        "number": "+1-555-0100",
+                        "features": {
+                            "mobile": true,
+                            "voice": true
+                        }
+                    }
                 }
             },
             "JsContactIdOnlineServiceMap": {
                 "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
                 "additionalProperties": {
                     "$ref": "#/components/schemas/JsContactOnlineService"
+                },
+                "example": {
+                    "service-1": {
+                        "@type": "OnlineService",
+                        "service": "matrix",
+                        "uri": "matrix:u/joe:example.com"
+                    }
                 }
             },
             "JsContactIdLanguagePrefMap": {
                 "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
                 "additionalProperties": {
                     "$ref": "#/components/schemas/JsContactLanguagePref"
+                },
+                "example": {
+                    "lang-1": {
+                        "@type": "LanguagePref",
+                        "language": "en"
+                    }
                 }
             },
             "JsContactRelation": {
@@ -3870,20 +4031,53 @@
             },
             "JsContactIdAnniversaryMap": {
                 "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
                 "additionalProperties": {
                     "$ref": "#/components/schemas/JsContactAnniversary"
+                },
+                "example": {
+                    "anniv-1": {
+                        "@type": "Anniversary",
+                        "kind": "birth",
+                        "date": {
+                            "@type": "PartialDate",
+                            "month": 6,
+                            "day": 13
+                        }
+                    }
                 }
             },
             "JsContactIdNoteMap": {
                 "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
                 "additionalProperties": {
                     "$ref": "#/components/schemas/JsContactNote"
+                },
+                "example": {
+                    "note-1": {
+                        "@type": "Note",
+                        "note": "Met at the 2024 conference."
+                    }
                 }
             },
             "JsContactIdPersonalInfoMap": {
                 "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
                 "additionalProperties": {
                     "$ref": "#/components/schemas/JsContactPersonalInfo"
+                },
+                "example": {
+                    "hobby-1": {
+                        "@type": "PersonalInfo",
+                        "kind": "hobby",
+                        "value": "cycling"
+                    }
                 }
             },
             "JsContactNameComponent": {
@@ -4124,6 +4318,9 @@
                     },
                     "pronouns": {
                         "type": "object",
+                        "propertyNames": {
+                            "$ref": "#/components/schemas/JsContactId"
+                        },
                         "additionalProperties": {
                             "$ref": "#/components/schemas/JsContactPronouns"
                         }
@@ -4175,20 +4372,47 @@
             },
             "JsContactIdNicknameMap": {
                 "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
                 "additionalProperties": {
                     "$ref": "#/components/schemas/JsContactNickname"
+                },
+                "example": {
+                    "nick-1": {
+                        "@type": "Nickname",
+                        "name": "Joe"
+                    }
                 }
             },
             "JsContactIdOrganizationMap": {
                 "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
                 "additionalProperties": {
                     "$ref": "#/components/schemas/JsContactOrganization"
+                },
+                "example": {
+                    "org-1": {
+                        "@type": "Organization",
+                        "name": "Example Corp"
+                    }
                 }
             },
             "JsContactIdTitleMap": {
                 "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
                 "additionalProperties": {
                     "$ref": "#/components/schemas/JsContactTitle"
+                },
+                "example": {
+                    "title-1": {
+                        "@type": "Title",
+                        "name": "Engineer"
+                    }
                 }
             },
             "JsContactResource": {
@@ -4371,32 +4595,82 @@
             },
             "JsContactIdCalendarMap": {
                 "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
                 "additionalProperties": {
                     "$ref": "#/components/schemas/JsContactCalendar"
+                },
+                "example": {
+                    "cal-1": {
+                        "@type": "Calendar",
+                        "kind": "calendar",
+                        "uri": "https://example.com/calendars/joe"
+                    }
                 }
             },
             "JsContactIdCryptoKeyMap": {
                 "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
                 "additionalProperties": {
                     "$ref": "#/components/schemas/JsContactCryptoKey"
+                },
+                "example": {
+                    "key-1": {
+                        "@type": "CryptoKey",
+                        "uri": "data:application/pgp-keys;base64,..."
+                    }
                 }
             },
             "JsContactIdDirectoryMap": {
                 "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
                 "additionalProperties": {
                     "$ref": "#/components/schemas/JsContactDirectory"
+                },
+                "example": {
+                    "dir-1": {
+                        "@type": "Directory",
+                        "kind": "directory",
+                        "uri": "ldap://directory.example.com/cn=joe"
+                    }
                 }
             },
             "JsContactIdLinkMap": {
                 "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
                 "additionalProperties": {
                     "$ref": "#/components/schemas/JsContactLink"
+                },
+                "example": {
+                    "link-1": {
+                        "@type": "Link",
+                        "kind": "contact",
+                        "uri": "card:550e8400-e29b-41d4-a716-446655440000"
+                    }
                 }
             },
             "JsContactIdMediaMap": {
                 "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
                 "additionalProperties": {
                     "$ref": "#/components/schemas/JsContactMedia"
+                },
+                "example": {
+                    "photo-1": {
+                        "@type": "Media",
+                        "kind": "photo",
+                        "uri": "https://example.com/photos/joe.jpg",
+                        "mediaType": "image/jpeg"
+                    }
                 }
             },
             "JsContactId": {
@@ -4427,11 +4701,17 @@
             },
             "JsContactIdBooleanMap": {
                 "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
                 "additionalProperties": {
                     "type": "boolean",
                     "const": true
                 },
-                "description": "RFC 9553 Id[Boolean] set keyed by JsContact Id."
+                "description": "RFC 9553 Id[Boolean] set keyed by JsContact Id.",
+                "example": {
+                    "default": true
+                }
             },
             "JsContactStringStringMap": {
                 "type": "object",
@@ -7740,7 +8020,14 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Address book list"
+                        "description": "Address book list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactAddressBookListResponse"
+                                }
+                            }
+                        }
                     }
                 },
                 "x-wgw-access": "user"
@@ -7769,7 +8056,14 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Address book"
+                        "description": "Address book",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AddressBook"
+                                }
+                            }
+                        }
                     }
                 },
                 "x-wgw-access": "user"
@@ -7798,7 +8092,14 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Contact card list"
+                        "description": "Contact card list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactCardListResponse"
+                                }
+                            }
+                        }
                     }
                 },
                 "x-wgw-access": "user"
@@ -7815,7 +8116,24 @@
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created contact card"
+                        "description": "Created contact card",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactCard"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ContactCard"
+                            }
+                        }
                     }
                 },
                 "x-wgw-access": "user"
@@ -7844,7 +8162,14 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Contact card"
+                        "description": "Contact card",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactCard"
+                                }
+                            }
+                        }
                     }
                 },
                 "x-wgw-access": "user"
@@ -7871,7 +8196,24 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Updated contact card"
+                        "description": "Updated contact card",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactCard"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ContactCard"
+                            }
+                        }
                     }
                 },
                 "x-wgw-access": "user"
@@ -7898,7 +8240,14 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Deleted contact card"
+                        "description": "Deleted contact card",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OkResponse"
+                                }
+                            }
+                        }
                     }
                 },
                 "x-wgw-access": "user"

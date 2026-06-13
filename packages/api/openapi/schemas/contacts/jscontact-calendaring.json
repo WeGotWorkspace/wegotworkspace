@@ -32,8 +32,17 @@
   },
   "JsContactIdSchedulingAddressMap": {
     "type": "object",
+    "propertyNames": {
+      "$ref": "#/components/schemas/JsContactId"
+    },
     "additionalProperties": {
       "$ref": "#/components/schemas/JsContactSchedulingAddress"
+    },
+    "example": {
+      "sched-1": {
+        "@type": "SchedulingAddress",
+        "uri": "mailto:joe@example.com"
+      }
     }
   }
 }

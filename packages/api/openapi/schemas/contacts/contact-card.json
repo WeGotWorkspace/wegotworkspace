@@ -123,7 +123,39 @@
       }
     },
     "additionalProperties": true,
-    "description": "RFC 9610 ContactCard — JSContact Card plus JMAP id and addressBookIds."
+    "description": "RFC 9610 ContactCard — JSContact Card plus JMAP id and addressBookIds.",
+    "example": {
+      "@type": "Card",
+      "version": "1.0",
+      "id": "card-joe-example",
+      "uid": "urn:uuid:550e8400-e29b-41d4-a716-446655440000",
+      "addressBookIds": {
+        "default": true
+      },
+      "name": {
+        "@type": "Name",
+        "full": "Joe Example"
+      },
+      "emails": {
+        "email-1": {
+          "@type": "EmailAddress",
+          "address": "joe@example.com",
+          "contexts": {
+            "private": true
+          }
+        }
+      },
+      "phones": {
+        "phone-1": {
+          "@type": "Phone",
+          "number": "+1-555-0100",
+          "features": {
+            "mobile": true,
+            "voice": true
+          }
+        }
+      }
+    }
   },
   "ContactCardListResponse": {
     "type": "object",
@@ -137,6 +169,32 @@
       }
     },
     "additionalProperties": false,
-    "description": "REST list response for GET /contacts/cards."
+    "description": "REST list response for GET /contacts/cards.",
+    "example": {
+      "list": [
+        {
+          "@type": "Card",
+          "version": "1.0",
+          "id": "card-joe-example",
+          "uid": "urn:uuid:550e8400-e29b-41d4-a716-446655440000",
+          "addressBookIds": {
+            "default": true
+          },
+          "name": {
+            "@type": "Name",
+            "full": "Joe Example"
+          },
+          "emails": {
+            "email-1": {
+              "@type": "EmailAddress",
+              "address": "joe@example.com",
+              "contexts": {
+                "private": true
+              }
+            }
+          }
+        }
+      ]
+    }
   }
 }
