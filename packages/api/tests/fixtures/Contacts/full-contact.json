@@ -25,7 +25,7 @@
         "@type": "Name"
     },
     "emails": {
-        "EMAIL-1": {
+        "p_eij2MSc7TV3YBXzh5MI3Wn2O": {
             "@type": "EmailAddress",
             "address": "jane@example.com",
             "contexts": {
@@ -35,7 +35,7 @@
         }
     },
     "phones": {
-        "PHONE-1": {
+        "p_AWDusucyC1yN8lkCzRZmkBBE": {
             "@type": "Phone",
             "number": "tel:+1-555-0100",
             "features": {
@@ -47,7 +47,7 @@
         }
     },
     "addresses": {
-        "ADDR-1": {
+        "p__T9nLGPJk4MRd2OVb64d4nzb": {
             "@type": "Address",
             "components": [
                 {
@@ -84,7 +84,7 @@
         }
     },
     "organizations": {
-        "ORG-1": {
+        "p_ioiyBkbeeLXH54dCouqYbH20": {
             "@type": "Organization",
             "name": "Example Corp",
             "units": [
@@ -96,13 +96,13 @@
         }
     },
     "notes": {
-        "NOTE-1": {
+        "p_c1HwQWClOYW9B43gj4knkiov": {
             "@type": "Note",
             "note": "Met at IETF 110."
         }
     },
     "media": {
-        "PHOTO-1": {
+        "p_yJkZGtx5gP7X_vPeCTqDGOZO": {
             "@type": "Media",
             "kind": "photo",
             "uri": "https://example.com/jane.jpg"
@@ -113,7 +113,7 @@
         "friend": true
     },
     "titles": {
-        "TITLE-1": {
+        "p_kDmy_VgdmCdSrMqGIBDQiEM-": {
             "@type": "Title",
             "kind": "title",
             "name": "Engineer"

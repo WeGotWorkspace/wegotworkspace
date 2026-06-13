@@ -7,14 +7,14 @@
         "@type": "Name"
     },
     "media": {
-        "SOUND-1": {
+        "p_NYNPo1oOu8z-FSSeHkMWm34i": {
             "@type": "Media",
             "kind": "sound",
             "uri": "https://example.com/jane.wav"
         }
     },
     "links": {
-        "LINK-1": {
+        "p_yJBSJcSPSEfASwnUgRMgIF0j": {
             "@type": "Link",
             "uri": "https://example.com/~jane"
         }

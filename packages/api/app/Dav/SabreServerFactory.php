@@ -11,8 +11,10 @@ use App\Dav\Server\AppCalendarRoot;
 use App\Dav\Server\AppFilesRootCollection;
 use App\Dav\Server\AppUserFilesHomeCollection;
 use App\Dav\Server\GroupFilesPrincipalCollection;
+use App\Dav\Server\PropIdEnsuringPlugin;
 use App\Dav\Server\SearchIndexPlugin;
 use App\Dav\Server\WebdavWriteGuardPlugin;
+use App\Services\Contacts\PropIdEnsurer;
 use App\Services\Search\SearchIndexerService;
 use App\Support\WgwInstallConfig;
 use App\Support\WgwSettings;
@@ -108,6 +110,10 @@ final class SabreServerFactory
         if ($card) {
             $server->addPlugin(new CardDAV\Plugin);
             $server->addPlugin(new CardDAV\VCFExportPlugin);
+            $server->addPlugin(new PropIdEnsuringPlugin(
+                new PropIdEnsurer,
+                PropIdEnsuringPlugin::cardBackendFromConnection(),
+            ));
         }
 
         return $server;

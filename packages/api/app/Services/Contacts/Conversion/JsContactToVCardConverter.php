@@ -14,6 +14,7 @@ final class JsContactToVCardConverter
 
     public function convert(array $card): string
     {
+        $card = ConversionSupport::normalizeCardMapKeys($card);
         $this->groupCounter = 0;
         $vcard = new VCard([], false);
 

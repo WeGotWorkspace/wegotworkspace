@@ -7,26 +7,26 @@
         "@type": "Name"
     },
     "cryptoKeys": {
-        "KEY-1": {
+        "p_MDpazH-rVmKherMprQWlPaBx": {
             "@type": "CryptoKey",
             "uri": "https://example.com/jane.asc",
             "mediaType": "application/pgp-keys"
         }
     },
     "calendars": {
-        "CALURI-1": {
+        "p_7dmZPGVX5LP1eqTmv-aXkUI_": {
             "@type": "Calendar",
             "kind": "calendar",
             "uri": "https://example.com/cal/jane.ics"
         },
-        "FBURL-1": {
+        "p_Ka8by8ibxZdpB2MLH67rRiN9": {
             "@type": "Calendar",
             "kind": "freeBusy",
             "uri": "https://example.com/freebusy/jane"
         }
     },
     "schedulingAddresses": {
-        "SCHED-1": {
+        "p_m9ZyF9wov4o122ockj08zSQX": {
             "@type": "SchedulingAddress",
             "uri": "mailto:jane@example.com"
         }

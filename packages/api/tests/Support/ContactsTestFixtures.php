@@ -7,6 +7,7 @@ namespace Tests\Support;
 use App\Models\Principal;
 use App\Models\User;
 use App\Services\Auth\AdminRoleResolver;
+use App\Services\Contacts\PropIdEnsurer;
 use App\Support\WgwSettings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -96,6 +97,25 @@ trait ContactsTestFixtures
         $bookId = $this->resolveAddressBookId($username, $bookUri);
         $cardUri = str_ends_with($cardUri, '.vcf') ? $cardUri : $cardUri.'.vcf';
         $carddav->updateCard($bookId, $cardUri, $vcard);
+    }
+
+    protected function ensurePropIdsOnStoredCard(
+        string $username,
+        string $cardUri,
+        string $bookUri = 'default',
+    ): void {
+        $carddav = new CardPDO(DB::connection('wgw')->getPdo());
+        $bookId = $this->resolveAddressBookId($username, $bookUri);
+        $cardUri = str_ends_with($cardUri, '.vcf') ? $cardUri : $cardUri.'.vcf';
+        $card = $carddav->getCard($bookId, $cardUri);
+        if ($card === null) {
+            throw new \RuntimeException("Card {$cardUri} not found for {$username}.");
+        }
+        $raw = is_string($card['carddata'] ?? null) ? $card['carddata'] : (string) ($card['carddata'] ?? '');
+        $result = (new PropIdEnsurer)->ensure($raw);
+        if ($result['changed']) {
+            $carddav->updateCard($bookId, $cardUri, $result['vcard']);
+        }
     }
 
     protected function sampleVcard(string $fullName = 'Jane Doe', ?string $uid = null): string

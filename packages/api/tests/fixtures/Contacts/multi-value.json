@@ -7,14 +7,14 @@
         "@type": "Name"
     },
     "phones": {
-        "PHONE-1": {
+        "p_MQuZp-s2zTUOOv0IHArUhSt7": {
             "@type": "Phone",
             "number": "tel:+1-555-555-5555",
             "label": "Mobile"
         }
     },
     "nicknames": {
-        "NICK-1": {
+        "p__wRC-k1dYWeoIBQXc3RSF6Df": {
             "@type": "Nickname",
             "name": "JD"
         }

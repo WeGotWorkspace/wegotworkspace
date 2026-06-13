@@ -147,7 +147,7 @@ final class VCardToJsContactConverter
             ];
             ConversionSupport::applySharedFields($entry, $property);
             $this->applyGroupLabel($entry, $property);
-            $emails[ConversionSupport::propertyId($property, 'EMAIL', $index)] = $entry;
+            $emails[ConversionSupport::propertyId($property, $index)] = $entry;
         }
         if ($emails !== []) {
             $card['emails'] = $emails;
@@ -171,7 +171,7 @@ final class VCardToJsContactConverter
             }
             ConversionSupport::applySharedFields($entry, $property);
             $this->applyGroupLabel($entry, $property);
-            $phones[ConversionSupport::propertyId($property, 'PHONE', $index)] = $entry;
+            $phones[ConversionSupport::propertyId($property, $index)] = $entry;
         }
         if ($phones !== []) {
             $card['phones'] = $phones;
@@ -206,7 +206,7 @@ final class VCardToJsContactConverter
             }
             ConversionSupport::applySharedFields($entry, $property);
             $this->applyGroupLabel($entry, $property);
-            $addresses[ConversionSupport::propertyId($property, 'ADDR', $index)] = $entry;
+            $addresses[ConversionSupport::propertyId($property, $index)] = $entry;
         }
 
         foreach ($document->select('GEO') as $index => $property) {
@@ -215,7 +215,7 @@ final class VCardToJsContactConverter
                 'coordinates' => $this->geoToCoordinates((string) $property->getValue()),
             ];
             ConversionSupport::applySharedFields($entry, $property);
-            $addresses[ConversionSupport::propertyId($property, 'GEO', $index)] = $entry;
+            $addresses[ConversionSupport::propertyId($property, $index)] = $entry;
         }
 
         foreach ($document->select('TZ') as $index => $property) {
@@ -230,7 +230,7 @@ final class VCardToJsContactConverter
                 'timeZone' => $timeZone,
             ];
             ConversionSupport::applySharedFields($entry, $property);
-            $addresses[ConversionSupport::propertyId($property, 'TZ', $index)] = $entry;
+            $addresses[ConversionSupport::propertyId($property, $index)] = $entry;
         }
 
         if ($addresses !== []) {
@@ -276,7 +276,7 @@ final class VCardToJsContactConverter
                 }
             }
             ConversionSupport::applySharedFields($entry, $property);
-            $organizations[ConversionSupport::propertyId($property, 'ORG', $index)] = $entry;
+            $organizations[ConversionSupport::propertyId($property, $index)] = $entry;
         }
         if ($organizations !== []) {
             $card['organizations'] = $organizations;
@@ -308,7 +308,7 @@ final class VCardToJsContactConverter
                 $author['@type'] = 'Author';
                 $entry['author'] = $author;
             }
-            $notes[ConversionSupport::propertyId($property, 'NOTE', $index)] = $entry;
+            $notes[ConversionSupport::propertyId($property, $index)] = $entry;
         }
         if ($notes !== []) {
             $card['notes'] = $notes;
@@ -331,7 +331,7 @@ final class VCardToJsContactConverter
                 $entry['mediaType'] = (string) $property['MEDIATYPE'];
             }
             ConversionSupport::applySharedFields($entry, $property);
-            $media[ConversionSupport::propertyId($property, 'PHOTO', $index)] = $entry;
+            $media[ConversionSupport::propertyId($property, $index)] = $entry;
         }
         foreach ($document->select('LOGO') as $index => $property) {
             $entry = [
@@ -340,7 +340,7 @@ final class VCardToJsContactConverter
                 'uri' => ConversionSupport::mediaUriFromProperty($property),
             ];
             ConversionSupport::applySharedFields($entry, $property);
-            $media[ConversionSupport::propertyId($property, 'LOGO', $index)] = $entry;
+            $media[ConversionSupport::propertyId($property, $index)] = $entry;
         }
         foreach ($document->select('SOUND') as $index => $property) {
             $entry = [
@@ -349,7 +349,7 @@ final class VCardToJsContactConverter
                 'uri' => ConversionSupport::mediaUriFromProperty($property),
             ];
             ConversionSupport::applySharedFields($entry, $property);
-            $media[ConversionSupport::propertyId($property, 'SOUND', $index)] = $entry;
+            $media[ConversionSupport::propertyId($property, $index)] = $entry;
         }
         if ($media !== []) {
             $card['media'] = $media;
@@ -404,7 +404,7 @@ final class VCardToJsContactConverter
                 'name' => trim((string) $property->getValue()),
             ];
             ConversionSupport::applySharedFields($entry, $property);
-            $nicknames[ConversionSupport::propertyId($property, 'NICK', $index)] = $entry;
+            $nicknames[ConversionSupport::propertyId($property, $index)] = $entry;
         }
         if ($nicknames !== []) {
             $card['nicknames'] = $nicknames;
@@ -424,7 +424,7 @@ final class VCardToJsContactConverter
                 'name' => trim((string) $property->getValue()),
             ];
             ConversionSupport::applySharedFields($entry, $property);
-            $titles[ConversionSupport::propertyId($property, 'TITLE', $index)] = $entry;
+            $titles[ConversionSupport::propertyId($property, $index)] = $entry;
         }
         foreach ($document->select('ROLE') as $index => $property) {
             $entry = [
@@ -433,7 +433,7 @@ final class VCardToJsContactConverter
                 'name' => trim((string) $property->getValue()),
             ];
             ConversionSupport::applySharedFields($entry, $property);
-            $titles[ConversionSupport::propertyId($property, 'ROLE', $index)] = $entry;
+            $titles[ConversionSupport::propertyId($property, $index)] = $entry;
         }
         if ($titles !== []) {
             $card['titles'] = $titles;
@@ -452,7 +452,7 @@ final class VCardToJsContactConverter
                 'uri' => trim((string) $property->getValue()),
             ];
             ConversionSupport::applySharedFields($entry, $property);
-            $links[ConversionSupport::propertyId($property, 'LINK', $index)] = $entry;
+            $links[ConversionSupport::propertyId($property, $index)] = $entry;
         }
         foreach ($document->select('CONTACT-URI') as $index => $property) {
             $entry = [
@@ -461,7 +461,7 @@ final class VCardToJsContactConverter
                 'uri' => trim((string) $property->getValue()),
             ];
             ConversionSupport::applySharedFields($entry, $property);
-            $links[ConversionSupport::propertyId($property, 'CONTACT', $index)] = $entry;
+            $links[ConversionSupport::propertyId($property, $index)] = $entry;
         }
         if ($links !== []) {
             $card['links'] = $links;
@@ -480,7 +480,7 @@ final class VCardToJsContactConverter
                 'language' => trim((string) $property->getValue()),
             ];
             ConversionSupport::applySharedFields($entry, $property);
-            $languages[ConversionSupport::propertyId($property, 'LANG', $index)] = $entry;
+            $languages[ConversionSupport::propertyId($property, $index)] = $entry;
         }
         if ($languages !== []) {
             $card['preferredLanguages'] = $languages;
@@ -506,7 +506,7 @@ final class VCardToJsContactConverter
                 $entry['user'] = (string) $property['USERNAME'];
             }
             ConversionSupport::applySharedFields($entry, $property);
-            $services[ConversionSupport::propertyId($property, 'IMPP', $index)] = $entry;
+            $services[ConversionSupport::propertyId($property, $index)] = $entry;
         }
         foreach ($document->select('SOCIALPROFILE') as $index => $property) {
             $value = trim((string) $property->getValue());
@@ -526,7 +526,7 @@ final class VCardToJsContactConverter
                 $entry['user'] = (string) $property['USERNAME'];
             }
             ConversionSupport::applySharedFields($entry, $property);
-            $services[ConversionSupport::propertyId($property, 'SOC', $index)] = $entry;
+            $services[ConversionSupport::propertyId($property, $index)] = $entry;
         }
         if ($services !== []) {
             $card['onlineServices'] = $services;
@@ -549,7 +549,7 @@ final class VCardToJsContactConverter
                 'pronouns' => trim((string) $property->getValue()),
             ];
             ConversionSupport::applySharedFields($entry, $property);
-            $pronouns[ConversionSupport::propertyId($property, 'PRONOUNS', $index)] = $entry;
+            $pronouns[ConversionSupport::propertyId($property, $index)] = $entry;
         }
         if ($pronouns !== []) {
             $speakToAs['pronouns'] = $pronouns;
@@ -579,7 +579,7 @@ final class VCardToJsContactConverter
                 'kind' => 'birth',
                 'date' => $date,
             ];
-            $anniversaries[ConversionSupport::propertyId($property, 'BDAY', $index)] = $entry;
+            $anniversaries[ConversionSupport::propertyId($property, $index)] = $entry;
         }
 
         foreach ($document->select('DEATHDATE') as $index => $property) {
@@ -594,7 +594,7 @@ final class VCardToJsContactConverter
                 'kind' => 'death',
                 'date' => $date,
             ];
-            $anniversaries[ConversionSupport::propertyId($property, 'DEATH', $index)] = $entry;
+            $anniversaries[ConversionSupport::propertyId($property, $index)] = $entry;
         }
 
         foreach ($document->select('ANNIVERSARY') as $index => $property) {
@@ -609,7 +609,7 @@ final class VCardToJsContactConverter
                 'kind' => 'wedding',
                 'date' => $date,
             ];
-            $anniversaries[ConversionSupport::propertyId($property, 'WEDDING', $index)] = $entry;
+            $anniversaries[ConversionSupport::propertyId($property, $index)] = $entry;
         }
 
         $this->mergeAnniversaryPlace($document, $anniversaries, 'BIRTHPLACE', 'birth');
@@ -680,7 +680,7 @@ final class VCardToJsContactConverter
                 'uri' => trim((string) $property->getValue()),
             ];
             ConversionSupport::applySharedFields($entry, $property);
-            $directories[ConversionSupport::propertyId($property, 'SRC', $index)] = $entry;
+            $directories[ConversionSupport::propertyId($property, $index)] = $entry;
         }
         foreach ($document->select('ORG-DIRECTORY') as $index => $property) {
             $entry = [
@@ -692,7 +692,7 @@ final class VCardToJsContactConverter
                 $entry['listAs'] = (int) (string) $property['INDEX'];
             }
             ConversionSupport::applySharedFields($entry, $property);
-            $directories[ConversionSupport::propertyId($property, 'ORGDIR', $index)] = $entry;
+            $directories[ConversionSupport::propertyId($property, $index)] = $entry;
         }
         if ($directories !== []) {
             $card['directories'] = $directories;
@@ -718,7 +718,7 @@ final class VCardToJsContactConverter
                 $entry['listAs'] = (int) (string) $property['INDEX'];
             }
             ConversionSupport::applySharedFields($entry, $property);
-            $personalInfo[ConversionSupport::propertyId($property, 'EXP', $index)] = $entry;
+            $personalInfo[ConversionSupport::propertyId($property, $index)] = $entry;
         }
         foreach ($document->select('HOBBY') as $index => $property) {
             $entry = [
@@ -730,7 +730,7 @@ final class VCardToJsContactConverter
                 $entry['listAs'] = (int) (string) $property['INDEX'];
             }
             ConversionSupport::applySharedFields($entry, $property);
-            $personalInfo[ConversionSupport::propertyId($property, 'HOBBY', $index)] = $entry;
+            $personalInfo[ConversionSupport::propertyId($property, $index)] = $entry;
         }
         foreach ($document->select('INTEREST') as $index => $property) {
             $entry = [
@@ -742,7 +742,7 @@ final class VCardToJsContactConverter
                 $entry['listAs'] = (int) (string) $property['INDEX'];
             }
             ConversionSupport::applySharedFields($entry, $property);
-            $personalInfo[ConversionSupport::propertyId($property, 'INT', $index)] = $entry;
+            $personalInfo[ConversionSupport::propertyId($property, $index)] = $entry;
         }
         if ($personalInfo !== []) {
             $card['personalInfo'] = $personalInfo;
@@ -764,7 +764,7 @@ final class VCardToJsContactConverter
                 $entry['mediaType'] = (string) $property['MEDIATYPE'];
             }
             ConversionSupport::applySharedFields($entry, $property);
-            $cryptoKeys[ConversionSupport::propertyId($property, 'KEY', $index)] = $entry;
+            $cryptoKeys[ConversionSupport::propertyId($property, $index)] = $entry;
         }
         if ($cryptoKeys !== []) {
             $card['cryptoKeys'] = $cryptoKeys;
@@ -784,7 +784,7 @@ final class VCardToJsContactConverter
                 'uri' => trim((string) $property->getValue()),
             ];
             ConversionSupport::applySharedFields($entry, $property);
-            $calendars[ConversionSupport::propertyId($property, 'CALURI', $index)] = $entry;
+            $calendars[ConversionSupport::propertyId($property, $index)] = $entry;
         }
         foreach ($document->select('FBURL') as $index => $property) {
             $entry = [
@@ -793,7 +793,7 @@ final class VCardToJsContactConverter
                 'uri' => trim((string) $property->getValue()),
             ];
             ConversionSupport::applySharedFields($entry, $property);
-            $calendars[ConversionSupport::propertyId($property, 'FBURL', $index)] = $entry;
+            $calendars[ConversionSupport::propertyId($property, $index)] = $entry;
         }
         if ($calendars !== []) {
             $card['calendars'] = $calendars;
@@ -812,7 +812,7 @@ final class VCardToJsContactConverter
                 'uri' => trim((string) $property->getValue()),
             ];
             ConversionSupport::applySharedFields($entry, $property);
-            $schedulingAddresses[ConversionSupport::propertyId($property, 'SCHED', $index)] = $entry;
+            $schedulingAddresses[ConversionSupport::propertyId($property, $index)] = $entry;
         }
         if ($schedulingAddresses !== []) {
             $card['schedulingAddresses'] = $schedulingAddresses;

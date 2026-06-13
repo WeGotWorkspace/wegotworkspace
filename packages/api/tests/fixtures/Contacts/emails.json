@@ -7,14 +7,14 @@
         "@type": "Name"
     },
     "emails": {
-        "EMAIL-1": {
+        "p_V5BjEuMdje_eLLrdGxeUndTE": {
             "@type": "EmailAddress",
             "address": "jqpublic@xyz.example.com",
             "contexts": {
                 "work": true
             }
         },
-        "EMAIL-2": {
+        "p_MU-lrjDkTGIKVgRLOwDJvdg2": {
             "@type": "EmailAddress",
             "address": "jane_doe@example.com",
             "pref": 1

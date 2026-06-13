@@ -7,7 +7,7 @@
         "@type": "Name"
     },
     "addresses": {
-        "ADDR-1": {
+        "p_UepU6uR5QWtQHZsIqu75LKY1": {
             "@type": "Address",
             "components": [
                 {
@@ -38,15 +38,15 @@
             ],
             "isOrdered": false
         },
-        "GEO-1": {
+        "p_NgmEZ1OMqrzgBAb2_41rhU0z": {
             "@type": "Address",
             "coordinates": "geo:40.7128,-74.0060"
         },
-        "TZ-1": {
+        "p_80sK10OqAxvVMebX4iPDgDq2": {
             "@type": "Address",
             "timeZone": "Europe/Amsterdam"
         },
-        "TZ-2": {
+        "p_idxJBW_ChNXtrejrh6Q8b9-p": {
             "@type": "Address",
             "timeZone": "Etc/GMT+8"
         }

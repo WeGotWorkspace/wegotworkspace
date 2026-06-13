@@ -7,13 +7,13 @@
         "@type": "Name"
     },
     "onlineServices": {
-        "IMPP-1": {
+        "p_k90TcSu3iMd-TjKHIBBvZET0": {
             "@type": "OnlineService",
             "uri": "xmpp:jane@example.org",
             "vCardName": "impp",
             "service": "matrix"
         },
-        "SOC-1": {
+        "p_g89j_9SuyQ_hAXS5buvkddiL": {
             "@type": "OnlineService",
             "vCardName": "socialprofile",
             "uri": "https://twitter.com/jane_doe",

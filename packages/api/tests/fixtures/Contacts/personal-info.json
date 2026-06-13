@@ -7,19 +7,19 @@
         "@type": "Name"
     },
     "personalInfo": {
-        "EXP-1": {
+        "p_n4obE-c8fTrrYTlEOOhBmhvG": {
             "@type": "PersonalInfo",
             "kind": "expertise",
             "value": "JavaScript",
             "level": "low"
         },
-        "HOBBY-1": {
+        "p_TVBxt8KnltLVyZuob-Kq_CCY": {
             "@type": "PersonalInfo",
             "kind": "hobby",
             "value": "Reading",
             "listAs": 2
         },
-        "INT-1": {
+        "p_vvAMnQaz8ATZ1cIxNGQuV4Xv": {
             "@type": "PersonalInfo",
             "kind": "interest",
             "value": "Open standards"

@@ -7,7 +7,7 @@
         "@type": "Name"
     },
     "phones": {
-        "PHONE-1": {
+        "p_qU-ja_hW1bASpI0-sBtQDeEb": {
             "@type": "Phone",
             "number": "tel:+1-555-555-5555;ext=5555",
             "features": {
@@ -18,7 +18,7 @@
             },
             "pref": 1
         },
-        "PHONE-2": {
+        "p_qbUQXnAwPsIOZLlU844w7mX5": {
             "@type": "Phone",
             "number": "tel:+33-01-23-45-67",
             "contexts": {

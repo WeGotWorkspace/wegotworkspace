@@ -7,7 +7,7 @@
         "@type": "Name"
     },
     "anniversaries": {
-        "BDAY-1": {
+        "p_ePd9_csbv2va_n2nRNjXi5HH": {
             "@type": "Anniversary",
             "kind": "birth",
             "date": {
@@ -21,7 +21,7 @@
                 "full": "Springfield, IL"
             }
         },
-        "DEATH-1": {
+        "p_YQcoKZNmztkOJQuSWH-OHxhC": {
             "@type": "Anniversary",
             "kind": "death",
             "date": {
@@ -33,7 +33,7 @@
                 "coordinates": "geo:37.7749,-122.4194"
             }
         },
-        "WEDDING-1": {
+        "p_WrRSDzt2sNwEIjN7yn-8Pknp": {
             "@type": "Anniversary",
             "kind": "wedding",
             "date": {

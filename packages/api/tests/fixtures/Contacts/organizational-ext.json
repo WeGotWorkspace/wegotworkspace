@@ -7,21 +7,21 @@
         "@type": "Name"
     },
     "media": {
-        "LOGO-1": {
+        "p_Ku_z5xyppLaLVWD_RrKo_0Di": {
             "@type": "Media",
             "kind": "logo",
             "uri": "https://example.com/logo.png"
         }
     },
     "titles": {
-        "ROLE-1": {
+        "p_R7BiMsstL9XmUJQh9hj60Lv1": {
             "@type": "Title",
             "kind": "role",
             "name": "Developer"
         }
     },
     "links": {
-        "CONTACT-1": {
+        "p_q9WMkKGnJzHK0ZCFsvB1Zr6X": {
             "@type": "Link",
             "kind": "contact",
             "uri": "mailto:jane@example.com"
@@ -40,12 +40,12 @@
         }
     },
     "directories": {
-        "SRC-1": {
+        "p_7gvMgKyZjtFVXw4g-zqpgs75": {
             "@type": "Directory",
             "kind": "entry",
             "uri": "https://example.com/source.vcf"
         },
-        "ORGDIR-1": {
+        "p_oVgl6mjhcGGVtp5FatZFHSni": {
             "@type": "Directory",
             "kind": "directory",
             "uri": "ldap://example.com/dc=example",

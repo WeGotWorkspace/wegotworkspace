@@ -7,6 +7,7 @@ namespace App\Services\Contacts;
 use App\Exceptions\ApiHttpException;
 use App\Models\Addressbook;
 use App\Models\Card;
+use App\Services\Contacts\Conversion\ConversionSupport;
 use App\Services\Search\SearchIndexerService;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -94,7 +95,8 @@ final class ContactCardRepository
         $book = $located['book'];
         $card = $located['card'];
         $cardUri = (string) $card->uri;
-        $cardPayload = $this->normalizeCardPayload($payload);
+        $existingContact = $this->mapper->toContactCard($card, (string) $book->uri);
+        $cardPayload = $this->normalizeCardPayload($payload, $existingContact);
         $cardPayload['id'] = ContactCardMapper::cardIdFromUri($cardUri);
         $cardPayload['addressBookIds'] = [(string) $book->uri => true];
 
@@ -166,9 +168,10 @@ final class ContactCardRepository
 
     /**
      * @param  array<string, mixed>  $payload
+     * @param  array<string, mixed>|null  $existingCard
      * @return array<string, mixed>
      */
-    private function normalizeCardPayload(array $payload): array
+    private function normalizeCardPayload(array $payload, ?array $existingCard = null): array
     {
         $card = $payload;
         unset($card['id']);
@@ -183,7 +186,7 @@ final class ContactCardRepository
             $card['uid'] = 'urn:uuid:'.Str::uuid()->toString();
         }
 
-        return $card;
+        return ConversionSupport::normalizeCardMapKeys($card, $existingCard);
     }
 
     /**

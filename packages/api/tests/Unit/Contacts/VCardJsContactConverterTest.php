@@ -353,7 +353,15 @@ VCARD;
     {
         $card = $this->converter->cardFromVCard((string) file_get_contents("{$this->fixturesDir}/personal-info.vcf"));
 
-        $this->assertSame('low', $card['personalInfo']['EXP-1']['level']);
+        $expertise = null;
+        foreach ($card['personalInfo'] ?? [] as $entry) {
+            if (is_array($entry) && ($entry['kind'] ?? '') === 'expertise') {
+                $expertise = $entry;
+                break;
+            }
+        }
+        $this->assertIsArray($expertise);
+        $this->assertSame('low', $expertise['level']);
         $vcard = $this->converter->vCardFromCard($card);
         $this->assertStringContainsStringIgnoringCase('LEVEL=beginner', $vcard);
     }
@@ -381,5 +389,68 @@ VCARD;
         $this->assertArrayNotHasKey('anniversaries', $card);
         $names = array_map(static fn (array $tuple): string => (string) $tuple[0], $card['vCardProps']);
         $this->assertContains('BDAY', $names);
+    }
+
+    public function test_vcard_with_prop_id_uses_prop_id_as_map_key(): void
+    {
+        $propId = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
+        $vcard = <<<VCARD
+BEGIN:VCARD
+VERSION:4.0
+FN:Prop Id Reader
+UID:urn:uuid:30303030-3030-4030-8030-303030303030
+EMAIL;PROP-ID={$propId}:reader@example.com
+END:VCARD
+VCARD;
+
+        $card = $this->converter->cardFromVCard($vcard);
+
+        $this->assertArrayHasKey($propId, $card['emails']);
+        $this->assertSame('reader@example.com', $card['emails'][$propId]['address']);
+    }
+
+    public function test_round_trip_preserves_prop_id_map_keys(): void
+    {
+        $propId = 'b2c3d4e5-f6a7-8901-bcde-f12345678901';
+        $card = [
+            '@type' => 'Card',
+            'version' => '1.0',
+            'uid' => 'urn:uuid:31313131-3131-4131-8131-313131313131',
+            'name' => ['@type' => 'Name', 'full' => 'Round Trip'],
+            'emails' => [
+                $propId => [
+                    '@type' => 'EmailAddress',
+                    'address' => 'roundtrip@example.com',
+                ],
+            ],
+        ];
+
+        $roundTripped = $this->converter->cardFromVCard($this->converter->vCardFromCard($card));
+
+        $this->assertArrayHasKey($propId, $roundTripped['emails']);
+        $this->assertSame('roundtrip@example.com', $roundTripped['emails'][$propId]['address']);
+        $this->assertStringContainsString('PROP-ID='.$propId, $this->converter->vCardFromCard($card));
+    }
+
+    public function test_vcard_without_prop_id_uses_stable_hash_fallback(): void
+    {
+        $vcard = <<<'VCARD'
+BEGIN:VCARD
+VERSION:4.0
+FN:Legacy Contact
+UID:urn:uuid:32323232-3232-4232-8232-323232323232
+EMAIL:legacy@example.com
+TEL;TYPE=cell:+1-555-0100
+END:VCARD
+VCARD;
+
+        $first = $this->converter->cardFromVCard($vcard);
+        $second = $this->converter->cardFromVCard($vcard);
+
+        $this->assertSame(array_keys($first['emails']), array_keys($second['emails']));
+        $this->assertSame(array_keys($first['phones']), array_keys($second['phones']));
+        foreach (array_keys($first['emails']) as $key) {
+            $this->assertStringStartsWith('p_', $key);
+        }
     }
 }
