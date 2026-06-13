@@ -6749,6 +6749,1406 @@
                     }
                 }
             }
+        },
+        "/admin/backups/{name}": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Download an update backup archive",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "name",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Backup ZIP stream"
+                    }
+                },
+                "x-wgw-access": "admin"
+            },
+            "delete": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Delete an update backup archive",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "name",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated backup state"
+                    }
+                },
+                "x-wgw-access": "admin"
+            }
+        },
+        "/admin/groups": {
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Create admin group",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Group created"
+                    },
+                    "400": {
+                        "description": "Invalid request"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "x-wgw-access": "admin"
+            }
+        },
+        "/admin/groups/{group}": {
+            "patch": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Update admin group",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "group",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Group updated"
+                    },
+                    "400": {
+                        "description": "Invalid request"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Group not found"
+                    }
+                },
+                "x-wgw-access": "admin"
+            },
+            "delete": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Delete admin group",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "group",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Group deleted"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Group not found"
+                    }
+                },
+                "x-wgw-access": "admin"
+            }
+        },
+        "/admin/plugins": {
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Install plugin",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Installed"
+                    }
+                },
+                "x-wgw-access": "admin"
+            }
+        },
+        "/admin/search/jobs": {
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Start search reindex",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Accepted"
+                    }
+                },
+                "x-wgw-access": "admin"
+            }
+        },
+        "/admin/search/jobs/{jobId}": {
+            "delete": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Cancel search job",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "jobId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cancelled"
+                    }
+                },
+                "x-wgw-access": "admin"
+            }
+        },
+        "/admin/search/jobs/current": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Search job state",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "State"
+                    }
+                },
+                "x-wgw-access": "admin"
+            }
+        },
+        "/admin/update-jobs": {
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Start update job",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Accepted"
+                    }
+                },
+                "x-wgw-access": "admin"
+            }
+        },
+        "/admin/update-jobs/{jobId}": {
+            "delete": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Cancel update job",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "jobId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cancelled"
+                    }
+                },
+                "x-wgw-access": "admin"
+            }
+        },
+        "/admin/users": {
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Create user account",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User created"
+                    },
+                    "400": {
+                        "description": "Invalid request"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "x-wgw-access": "admin"
+            }
+        },
+        "/admin/users/{username}": {
+            "patch": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Update user account",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "username",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User updated"
+                    },
+                    "400": {
+                        "description": "Invalid request"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                },
+                "x-wgw-access": "admin"
+            },
+            "delete": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Delete user account",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "username",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User deleted"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                },
+                "x-wgw-access": "admin"
+            }
+        },
+        "/files": {
+            "get": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Search files",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Results"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "patch": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Rename or move file or directory",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "destination": {
+                                        "type": "string",
+                                        "description": "Target parent directory; omit to rename in place"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Renamed"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "delete": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Delete files",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/files/children": {
+            "get": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "List directory children",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Listing"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/files/collaboration": {
+            "get": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Load collaboration document",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "format",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "markdown",
+                                "yjs"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Document"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "put": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Save collaboration document",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Saved"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/files/content": {
+            "get": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Download file content",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Stream"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "post": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Upload file content",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Accepted"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/files/context": {
+            "get": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "User file context",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/files/directories": {
+            "post": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Create directory",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/files/rooms": {
+            "post": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Resolve file collab room",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Room"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/files/star": {
+            "post": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Star path",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Starred"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "delete": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Unstar path",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Unstarred"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/files/starred": {
+            "get": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "List starred paths",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paths"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/mail/drafts": {
+            "post": {
+                "tags": [
+                    "Mail"
+                ],
+                "summary": "Save draft",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Saved"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/mail/messages/{messageId}": {
+            "get": {
+                "tags": [
+                    "Mail"
+                ],
+                "summary": "Get message",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "patch": {
+                "tags": [
+                    "Mail"
+                ],
+                "summary": "Patch message",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "delete": {
+                "tags": [
+                    "Mail"
+                ],
+                "summary": "Delete message",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/mail/messages/{messageId}/attachments": {
+            "get": {
+                "tags": [
+                    "Mail"
+                ],
+                "summary": "List attachments",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "messageId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Attachments"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/mail/messages/{messageId}/attachments/{attachmentId}": {
+            "get": {
+                "tags": [
+                    "Mail"
+                ],
+                "summary": "Download attachment",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "messageId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "attachmentId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Attachment"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/meetings/rooms": {
+            "post": {
+                "tags": [
+                    "Meetings"
+                ],
+                "summary": "Create meeting room",
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                },
+                "x-wgw-access": "guest"
+            }
+        },
+        "/meetings/rooms/{roomId}": {
+            "get": {
+                "tags": [
+                    "Meetings"
+                ],
+                "summary": "Meeting room status",
+                "parameters": [
+                    {
+                        "name": "roomId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Status"
+                    }
+                },
+                "x-wgw-access": "guest"
+            }
+        },
+        "/contacts/addressbooks": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "List user's address books",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Address book list"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/contacts/addressbooks/{addressBookId}": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Fetch a single address book",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "addressBookId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Address book"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/contacts/cards": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "List contact cards in an address book",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "addressBookId",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Contact card list"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "post": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Create a contact card",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created contact card"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/contacts/cards/{cardId}": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Fetch a single contact card",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "cardId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Contact card"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "put": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Replace a contact card",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "cardId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated contact card"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "delete": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Delete a contact card",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "cardId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted contact card"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/plugins/{id}/activation": {
+            "put": {
+                "tags": [
+                    "Plugins"
+                ],
+                "summary": "Set plugin activation",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/rooms/{roomId}/configuration": {
+            "get": {
+                "tags": [
+                    "Rooms"
+                ],
+                "summary": "RTC configuration",
+                "parameters": [
+                    {
+                        "name": "roomId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "x-wgw-access": "guest"
+            }
+        },
+        "/rooms/{roomId}/events": {
+            "get": {
+                "tags": [
+                    "Rooms"
+                ],
+                "summary": "Poll events",
+                "parameters": [
+                    {
+                        "name": "roomId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "x-wgw-access": "guest"
+            },
+            "post": {
+                "tags": [
+                    "Rooms"
+                ],
+                "summary": "Send event",
+                "parameters": [
+                    {
+                        "name": "roomId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "x-wgw-access": "guest"
+            }
+        },
+        "/rooms/{roomId}/messages": {
+            "post": {
+                "tags": [
+                    "Rooms"
+                ],
+                "summary": "Chat message",
+                "parameters": [
+                    {
+                        "name": "roomId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "x-wgw-access": "guest"
+            }
+        },
+        "/rooms/{roomId}/participants": {
+            "post": {
+                "tags": [
+                    "Rooms"
+                ],
+                "summary": "Join participant",
+                "parameters": [
+                    {
+                        "name": "roomId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "x-wgw-access": "guest"
+            }
+        },
+        "/rooms/{roomId}/participants/{participantId}": {
+            "delete": {
+                "tags": [
+                    "Rooms"
+                ],
+                "summary": "Leave room",
+                "parameters": [
+                    {
+                        "name": "roomId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "participantId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "x-wgw-access": "guest"
+            }
+        },
+        "/search/results": {
+            "get": {
+                "tags": [
+                    "Search"
+                ],
+                "summary": "Search results",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/search/results/{resultId}/content": {
+            "get": {
+                "tags": [
+                    "Search"
+                ],
+                "summary": "Download search result content",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "resultId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Content"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/workspace/state": {
+            "get": {
+                "tags": [
+                    "Workspace"
+                ],
+                "summary": "Workspace bootstrap",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
         }
     }
 }

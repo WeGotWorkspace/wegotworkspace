@@ -59,6 +59,20 @@ function loadModularSchemas() {
   return merged;
 }
 
+function mergePathsFromSource(baseDoc, sourceDoc) {
+  const sourcePaths = sourceDoc.paths;
+  if (!sourcePaths || typeof sourcePaths !== "object" || Array.isArray(sourcePaths)) {
+    return;
+  }
+
+  baseDoc.paths ??= {};
+  for (const [pathKey, pathItem] of Object.entries(sourcePaths)) {
+    if (!Object.prototype.hasOwnProperty.call(baseDoc.paths, pathKey)) {
+      baseDoc.paths[pathKey] = pathItem;
+    }
+  }
+}
+
 /**
  * Resolve the OpenAPI document used for TypeScript typegen.
  *
@@ -68,6 +82,9 @@ function loadModularSchemas() {
  * Modular schema fragments under `openapi/schemas/` are merged into
  * `components.schemas` on each build so domain types stay maintainable without
  * editing the monolithic built file by hand.
+ *
+ * New path entries from `openapi/openapi.json` are merged into `paths` when
+ * missing from the built spec so `/api/docs` stays aligned with the contract.
  */
 export function buildOpenApiBuiltJson() {
   mkdirSync(path.dirname(outputPath), { recursive: true });
@@ -80,6 +97,11 @@ export function buildOpenApiBuiltJson() {
     baseDoc = JSON.parse(readFileSync(outputPath, "utf8"));
   } else {
     throw new Error(`Missing OpenAPI source: ${sourcePath}`);
+  }
+
+  if (existsSync(sourcePath)) {
+    const sourceDoc = JSON.parse(readFileSync(sourcePath, "utf8"));
+    mergePathsFromSource(baseDoc, sourceDoc);
   }
 
   const modularSchemas = loadModularSchemas();
