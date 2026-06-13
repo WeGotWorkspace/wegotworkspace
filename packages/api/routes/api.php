@@ -18,6 +18,8 @@ use App\Http\Controllers\Api\V1\Auth\MeController;
 use App\Http\Controllers\Api\V1\Auth\RefreshController;
 use App\Http\Controllers\Api\V1\Auth\RevokeController;
 use App\Http\Controllers\Api\V1\Auth\TokenController;
+use App\Http\Controllers\Api\V1\Contacts\AddressBooksController as ContactsAddressBooksController;
+use App\Http\Controllers\Api\V1\Contacts\ContactCardsController;
 use App\Http\Controllers\Api\V1\Dav\CapabilitiesController as DavCapabilitiesController;
 use App\Http\Controllers\Api\V1\Files\FilesController;
 use App\Http\Controllers\Api\V1\Home\StateController as HomeStateController;
@@ -161,6 +163,20 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($filesS
     Route::post('notes/notebooks', [NotebooksController::class, 'store']);
     Route::patch('notes/notebooks/{name}', [NotebooksController::class, 'update']);
     Route::delete('notes/notebooks/{name}', [NotebooksController::class, 'destroy']);
+
+    Route::middleware('wgw.contacts')->group(function (): void {
+        Route::get('contacts/addressbooks', [ContactsAddressBooksController::class, 'index']);
+        Route::get('contacts/addressbooks/{addressBookId}', [ContactsAddressBooksController::class, 'show'])
+            ->where('addressBookId', '[a-z0-9_-]+');
+        Route::get('contacts/cards', [ContactCardsController::class, 'index']);
+        Route::post('contacts/cards', [ContactCardsController::class, 'store']);
+        Route::get('contacts/cards/{cardId}', [ContactCardsController::class, 'show'])
+            ->where('cardId', '[a-z0-9_-]+');
+        Route::put('contacts/cards/{cardId}', [ContactCardsController::class, 'update'])
+            ->where('cardId', '[a-z0-9_-]+');
+        Route::delete('contacts/cards/{cardId}', [ContactCardsController::class, 'destroy'])
+            ->where('cardId', '[a-z0-9_-]+');
+    });
 });
 
 Route::middleware(['wgw.auth', 'wgw.role:admin'])->prefix('admin')->group(function (): void {
