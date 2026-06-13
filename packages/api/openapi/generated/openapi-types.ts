@@ -3743,6 +3743,558 @@ export interface components {
             calendarEnabled?: boolean;
             contactsEnabled?: boolean;
         };
+        /** @description RFC 9610 AddressBookRights. */
+        AddressBookRights: {
+            /** @description May fetch cards in this address book. */
+            mayRead: boolean;
+            /** @description May create, update, delete, or move cards. */
+            mayWrite: boolean;
+            /** @description May modify shareWith. */
+            mayShare: boolean;
+            /** @description May delete the address book itself. */
+            mayDelete: boolean;
+        };
+        /** @description RFC 9610 AddressBook. */
+        AddressBook: {
+            /** @description Immutable server-set address book identifier. */
+            id: components["schemas"]["JsContactId"];
+            /** @description User-visible name. */
+            name: string;
+            /** @description Long-form description; null when unset. */
+            description?: string | null;
+            /** @description UI sort order; lower values appear first. */
+            sortOrder: components["schemas"]["JsContactUnsignedInt"];
+            /** @description Server-set default address book flag. */
+            isDefault: boolean;
+            /** @description Whether the book is shown in client UI. */
+            isSubscribed: boolean;
+            /** @description Principal id to rights map; null when not shared. */
+            shareWith?: {
+                [key: string]: components["schemas"]["AddressBookRights"];
+            } | null;
+            /** @description Current user's access rights for this book. */
+            myRights: components["schemas"]["AddressBookRights"];
+        };
+        /** @description REST list response for GET /contacts/addressbooks. */
+        ContactAddressBookListResponse: {
+            list: components["schemas"]["AddressBook"][];
+        };
+        /** @description RFC 9610 ContactCard — JSContact Card plus JMAP id and addressBookIds. */
+        ContactCard: {
+            /**
+             * @description JSContact Card type discriminator.
+             * @constant
+             */
+            "@type": "Card";
+            /**
+             * @description JSContact version.
+             * @constant
+             */
+            version: "1.0";
+            /** @description JMAP server-set card id (RFC 9610). */
+            id: components["schemas"]["JsContactId"];
+            /** @description Set of address book ids; each value MUST be true. */
+            addressBookIds: components["schemas"]["JsContactIdBooleanMap"];
+            /** @description Cross-system card identifier (RFC 9553; optional in JSContact 2.0 per RFC 9982). Required for JMAP Contacts (RFC 9610). */
+            uid: string;
+            created?: components["schemas"]["JsContactUTCDateTime"];
+            updated?: components["schemas"]["JsContactUTCDateTime"];
+            /**
+             * @default individual
+             * @enum {string}
+             */
+            kind: "individual" | "group" | "org" | "location" | "device" | "application";
+            /** @description Primary language tag (RFC 5646). */
+            language?: string;
+            /** @description Group member uids when kind is group. */
+            members?: components["schemas"]["JsContactIdBooleanMap"];
+            prodId?: string;
+            relatedTo?: components["schemas"]["JsContactStringRelationMap"];
+            name?: components["schemas"]["JsContactName"];
+            nicknames?: components["schemas"]["JsContactIdNicknameMap"];
+            organizations?: components["schemas"]["JsContactIdOrganizationMap"];
+            speakToAs?: components["schemas"]["JsContactSpeakToAs"];
+            titles?: components["schemas"]["JsContactIdTitleMap"];
+            emails?: components["schemas"]["JsContactIdEmailAddressMap"];
+            onlineServices?: components["schemas"]["JsContactIdOnlineServiceMap"];
+            phones?: components["schemas"]["JsContactIdPhoneMap"];
+            preferredLanguages?: components["schemas"]["JsContactIdLanguagePrefMap"];
+            calendars?: components["schemas"]["JsContactIdCalendarMap"];
+            schedulingAddresses?: components["schemas"]["JsContactIdSchedulingAddressMap"];
+            addresses?: components["schemas"]["JsContactIdAddressMap"];
+            cryptoKeys?: components["schemas"]["JsContactIdCryptoKeyMap"];
+            directories?: components["schemas"]["JsContactIdDirectoryMap"];
+            links?: components["schemas"]["JsContactIdLinkMap"];
+            media?: components["schemas"]["JsContactIdMediaMap"];
+            localizations?: components["schemas"]["JsContactStringPatchObjectMap"];
+            anniversaries?: components["schemas"]["JsContactIdAnniversaryMap"];
+            keywords?: components["schemas"]["JsContactStringBooleanMap"];
+            notes?: components["schemas"]["JsContactIdNoteMap"];
+            personalInfo?: components["schemas"]["JsContactIdPersonalInfoMap"];
+            /** @description RFC 9555 unmapped vCard properties (conversion base spec; uid rules updated by RFC 9982 for JSContact 2.0). */
+            vCardProps?: components["schemas"]["JsContactJCardProp"][];
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description REST list response for GET /contacts/cards. */
+        ContactCardListResponse: {
+            list: components["schemas"]["ContactCard"][];
+        };
+        /** @description RFC 9553 AddressComponent. */
+        JsContactAddressComponent: {
+            /** @constant */
+            "@type": "AddressComponent";
+            value: string;
+            /** @enum {string} */
+            kind: "room" | "apartment" | "floor" | "building" | "number" | "name" | "block" | "subdistrict" | "district" | "locality" | "region" | "postcode" | "country" | "direction" | "landmark" | "postOfficeBox" | "separator";
+            phonetic?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Address — at least one of components, coordinates, countryCode, full, or timeZone MUST be set. */
+        JsContactAddress: {
+            /** @constant */
+            "@type": "Address";
+            components?: components["schemas"]["JsContactAddressComponent"][];
+            /** @default false */
+            isOrdered: boolean;
+            /** @description ISO 3166-1 alpha-2 country code. */
+            countryCode?: string;
+            /** @description geo: URI per RFC 5870. */
+            coordinates?: string;
+            /** @description IANA time zone name. */
+            timeZone?: string;
+            contexts?: components["schemas"]["JsContactStringBooleanMap"];
+            full?: string;
+            defaultSeparator?: string;
+            pref?: components["schemas"]["JsContactUnsignedInt"];
+            phoneticScript?: string;
+            /** @enum {string} */
+            phoneticSystem?: "ipa" | "jyut" | "piny";
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        JsContactIdAddressMap: {
+            [key: string]: components["schemas"]["JsContactAddress"];
+        };
+        /** @description RFC 9553 SchedulingAddress. */
+        JsContactSchedulingAddress: {
+            /** @constant */
+            "@type": "SchedulingAddress";
+            /** Format: uri */
+            uri: string;
+            contexts?: components["schemas"]["JsContactStringBooleanMap"];
+            pref?: components["schemas"]["JsContactUnsignedInt"];
+            label?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        JsContactIdSchedulingAddressMap: {
+            [key: string]: components["schemas"]["JsContactSchedulingAddress"];
+        };
+        /** @description RFC 9553 EmailAddress. */
+        JsContactEmailAddress: {
+            /** @constant */
+            "@type": "EmailAddress";
+            /** @description RFC 5322 addr-spec. */
+            address: string;
+            contexts?: components["schemas"]["JsContactStringBooleanMap"];
+            pref?: components["schemas"]["JsContactUnsignedInt"];
+            label?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Phone. */
+        JsContactPhone: {
+            /** @constant */
+            "@type": "Phone";
+            /** @description tel:, sip:, or free-text phone number. */
+            number: string;
+            /** @description Feature flags: mobile, voice, text, video, main-number, textphone, fax, pager. */
+            features?: components["schemas"]["JsContactStringBooleanMap"];
+            contexts?: components["schemas"]["JsContactStringBooleanMap"];
+            pref?: components["schemas"]["JsContactUnsignedInt"];
+            label?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 OnlineService — at least one of uri or user MUST be set. */
+        JsContactOnlineService: {
+            /** @constant */
+            "@type": "OnlineService";
+            service?: string;
+            /** Format: uri */
+            uri?: string;
+            user?: string;
+            contexts?: components["schemas"]["JsContactStringBooleanMap"];
+            pref?: components["schemas"]["JsContactUnsignedInt"];
+            label?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 LanguagePref. */
+        JsContactLanguagePref: {
+            /** @constant */
+            "@type": "LanguagePref";
+            /** @description RFC 5646 language tag. */
+            language: string;
+            contexts?: components["schemas"]["JsContactStringBooleanMap"];
+            pref?: components["schemas"]["JsContactUnsignedInt"];
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        JsContactIdEmailAddressMap: {
+            [key: string]: components["schemas"]["JsContactEmailAddress"];
+        };
+        JsContactIdPhoneMap: {
+            [key: string]: components["schemas"]["JsContactPhone"];
+        };
+        JsContactIdOnlineServiceMap: {
+            [key: string]: components["schemas"]["JsContactOnlineService"];
+        };
+        JsContactIdLanguagePrefMap: {
+            [key: string]: components["schemas"]["JsContactLanguagePref"];
+        };
+        /** @description RFC 9553 Relation. */
+        JsContactRelation: {
+            /** @constant */
+            "@type": "Relation";
+            /** @description Relation types: acquaintance, agent, child, co-resident, co-worker, colleague, contact, crush, date, emergency, friend, kin, me, met, muse, neighbor, parent, sibling, spouse, sweetheart. */
+            relation?: components["schemas"]["JsContactStringBooleanMap"];
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 PartialDate. */
+        JsContactPartialDate: {
+            /** @constant */
+            "@type": "PartialDate";
+            year?: components["schemas"]["JsContactUnsignedInt"];
+            month?: number;
+            day?: number;
+            /** @description CLDR calendar name in lowercase. */
+            calendarScale?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Timestamp. */
+        JsContactTimestamp: {
+            /** @constant */
+            "@type": "Timestamp";
+            utc: components["schemas"]["JsContactUTCDateTime"];
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Anniversary.date — PartialDate (default) or Timestamp. */
+        JsContactAnniversaryDate: components["schemas"]["JsContactPartialDate"] | components["schemas"]["JsContactTimestamp"];
+        /** @description RFC 9553 Anniversary. */
+        JsContactAnniversary: {
+            /** @constant */
+            "@type": "Anniversary";
+            /** @enum {string} */
+            kind: "birth" | "death" | "wedding";
+            date: components["schemas"]["JsContactAnniversaryDate"];
+            place?: components["schemas"]["JsContactAddress"];
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Author — at least one of name or uri MUST be set. */
+        JsContactAuthor: {
+            /** @constant */
+            "@type": "Author";
+            name?: string;
+            /** Format: uri */
+            uri?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Note. */
+        JsContactNote: {
+            /** @constant */
+            "@type": "Note";
+            note: string;
+            created?: components["schemas"]["JsContactUTCDateTime"];
+            author?: components["schemas"]["JsContactAuthor"];
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 PersonalInfo. */
+        JsContactPersonalInfo: {
+            /** @constant */
+            "@type": "PersonalInfo";
+            /** @enum {string} */
+            kind: "expertise" | "hobby" | "interest";
+            value: string;
+            /** @enum {string} */
+            level?: "high" | "medium" | "low";
+            listAs?: components["schemas"]["JsContactUnsignedInt"];
+            label?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        JsContactIdAnniversaryMap: {
+            [key: string]: components["schemas"]["JsContactAnniversary"];
+        };
+        JsContactIdNoteMap: {
+            [key: string]: components["schemas"]["JsContactNote"];
+        };
+        JsContactIdPersonalInfoMap: {
+            [key: string]: components["schemas"]["JsContactPersonalInfo"];
+        };
+        /** @description RFC 9553 NameComponent. */
+        JsContactNameComponent: {
+            /** @constant */
+            "@type": "NameComponent";
+            value: string;
+            /** @enum {string} */
+            kind: "title" | "given" | "given2" | "surname" | "surname2" | "credential" | "generation" | "separator";
+            phonetic?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Name — at least one of components or full MUST be set. */
+        JsContactName: {
+            /** @constant */
+            "@type": "Name";
+            components?: components["schemas"]["JsContactNameComponent"][];
+            /** @default false */
+            isOrdered: boolean;
+            defaultSeparator?: string;
+            full?: string;
+            sortAs?: components["schemas"]["JsContactStringStringMap"];
+            phoneticScript?: string;
+            /** @enum {string} */
+            phoneticSystem?: "ipa" | "jyut" | "piny";
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Nickname. */
+        JsContactNickname: {
+            /** @constant */
+            "@type": "Nickname";
+            name: string;
+            contexts?: components["schemas"]["JsContactStringBooleanMap"];
+            pref?: components["schemas"]["JsContactUnsignedInt"];
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 OrgUnit. */
+        JsContactOrgUnit: {
+            /** @constant */
+            "@type": "OrgUnit";
+            name: string;
+            sortAs?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Organization — at least one of name or units MUST be set. */
+        JsContactOrganization: {
+            /** @constant */
+            "@type": "Organization";
+            name?: string;
+            units?: components["schemas"]["JsContactOrgUnit"][];
+            sortAs?: string;
+            contexts?: components["schemas"]["JsContactStringBooleanMap"];
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Pronouns. */
+        JsContactPronouns: {
+            /** @constant */
+            "@type": "Pronouns";
+            pronouns: string;
+            contexts?: components["schemas"]["JsContactStringBooleanMap"];
+            pref?: components["schemas"]["JsContactUnsignedInt"];
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 SpeakToAs — at least one of grammaticalGender or pronouns MUST be set. */
+        JsContactSpeakToAs: {
+            /** @constant */
+            "@type": "SpeakToAs";
+            /** @enum {string} */
+            grammaticalGender?: "animate" | "common" | "feminine" | "inanimate" | "masculine" | "neuter";
+            pronouns?: {
+                [key: string]: components["schemas"]["JsContactPronouns"];
+            };
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Title. */
+        JsContactTitle: {
+            /** @constant */
+            "@type": "Title";
+            name: string;
+            /**
+             * @default title
+             * @enum {string}
+             */
+            kind: "title" | "role";
+            organizationId?: components["schemas"]["JsContactId"];
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        JsContactIdNicknameMap: {
+            [key: string]: components["schemas"]["JsContactNickname"];
+        };
+        JsContactIdOrganizationMap: {
+            [key: string]: components["schemas"]["JsContactOrganization"];
+        };
+        JsContactIdTitleMap: {
+            [key: string]: components["schemas"]["JsContactTitle"];
+        };
+        /** @description RFC 9553 Resource base type. */
+        JsContactResource: {
+            /** @description Concrete resource type name (not Resource). */
+            "@type": string;
+            kind?: string;
+            /** Format: uri */
+            uri: string;
+            mediaType?: string;
+            contexts?: components["schemas"]["JsContactStringBooleanMap"];
+            pref?: components["schemas"]["JsContactUnsignedInt"];
+            label?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Calendar. */
+        JsContactCalendar: components["schemas"]["JsContactResource"] & {
+            /** @constant */
+            "@type": "Calendar";
+            /** @enum {string} */
+            kind: "calendar" | "freeBusy";
+        };
+        /** @description RFC 9553 CryptoKey. */
+        JsContactCryptoKey: components["schemas"]["JsContactResource"] & {
+            /** @constant */
+            "@type": "CryptoKey";
+        };
+        /** @description RFC 9553 Directory. */
+        JsContactDirectory: components["schemas"]["JsContactResource"] & {
+            /** @constant */
+            "@type": "Directory";
+            /** @enum {string} */
+            kind: "directory" | "entry";
+            listAs?: components["schemas"]["JsContactUnsignedInt"];
+        };
+        /** @description RFC 9553 Link. */
+        JsContactLink: components["schemas"]["JsContactResource"] & {
+            /** @constant */
+            "@type": "Link";
+            /** @enum {string} */
+            kind?: "contact";
+        };
+        /** @description RFC 9553 Media with JMAP blobId extension. */
+        JsContactMedia: components["schemas"]["JsContactResource"] & {
+            /** @constant */
+            "@type": "Media";
+            /** @enum {string} */
+            kind: "photo" | "sound" | "logo";
+            /** @description JMAP blob id (RFC 9610); replaces data: URI on read. */
+            blobId?: components["schemas"]["JsContactId"];
+        };
+        JsContactIdCalendarMap: {
+            [key: string]: components["schemas"]["JsContactCalendar"];
+        };
+        JsContactIdCryptoKeyMap: {
+            [key: string]: components["schemas"]["JsContactCryptoKey"];
+        };
+        JsContactIdDirectoryMap: {
+            [key: string]: components["schemas"]["JsContactDirectory"];
+        };
+        JsContactIdLinkMap: {
+            [key: string]: components["schemas"]["JsContactLink"];
+        };
+        JsContactIdMediaMap: {
+            [key: string]: components["schemas"]["JsContactMedia"];
+        };
+        /** @description RFC 9553 Id — base64url alphabet without padding. */
+        JsContactId: string;
+        /** @description RFC 9553 UnsignedInt. */
+        JsContactUnsignedInt: number;
+        /**
+         * Format: date-time
+         * @description RFC 9553 UTCDateTime — RFC 3339 date-time with Z offset.
+         */
+        JsContactUTCDateTime: string;
+        /** @description RFC 9553 String[Boolean] set. */
+        JsContactStringBooleanMap: {
+            [key: string]: true;
+        };
+        /** @description RFC 9553 Id[Boolean] set keyed by JsContact Id. */
+        JsContactIdBooleanMap: {
+            [key: string]: true;
+        };
+        /** @description RFC 9553 String[String] map. */
+        JsContactStringStringMap: {
+            [key: string]: string;
+        };
+        /** @description RFC 9553 String[Relation] map (relatedTo). */
+        JsContactStringRelationMap: {
+            [key: string]: components["schemas"]["JsContactRelation"];
+        };
+        /** @description RFC 9553 String[PatchObject] localizations map. */
+        JsContactStringPatchObjectMap: {
+            [key: string]: {
+                [key: string]: unknown;
+            };
+        };
+        /** @description RFC 9555 vCardParams — preserved vCard parameters. */
+        JsContactVCardParams: {
+            [key: string]: string | string[];
+        };
+        /** @description RFC 9555 JCardProp — jCard property tuple [name, params, valueType, value]. */
+        JsContactJCardProp: [
+            string,
+            components["schemas"]["JsContactVCardParams"],
+            string,
+            unknown
+        ];
     };
     responses: never;
     parameters: never;

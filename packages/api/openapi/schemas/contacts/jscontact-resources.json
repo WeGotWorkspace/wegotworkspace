@@ -1,0 +1,172 @@
+{
+  "JsContactResource": {
+    "type": "object",
+    "required": ["@type", "uri"],
+    "properties": {
+      "@type": {
+        "type": "string",
+        "description": "Concrete resource type name (not Resource)."
+      },
+      "kind": {
+        "type": "string"
+      },
+      "uri": {
+        "type": "string",
+        "format": "uri"
+      },
+      "mediaType": {
+        "type": "string"
+      },
+      "contexts": {
+        "$ref": "#/components/schemas/JsContactStringBooleanMap"
+      },
+      "pref": {
+        "$ref": "#/components/schemas/JsContactUnsignedInt"
+      },
+      "label": {
+        "type": "string"
+      },
+      "vCardParams": {
+        "$ref": "#/components/schemas/JsContactVCardParams"
+      },
+      "vCardName": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": true,
+    "description": "RFC 9553 Resource base type."
+  },
+  "JsContactCalendar": {
+    "allOf": [
+      { "$ref": "#/components/schemas/JsContactResource" },
+      {
+        "type": "object",
+        "required": ["@type", "kind"],
+        "properties": {
+          "@type": {
+            "type": "string",
+            "const": "Calendar"
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["calendar", "freeBusy"]
+          }
+        }
+      }
+    ],
+    "description": "RFC 9553 Calendar."
+  },
+  "JsContactCryptoKey": {
+    "allOf": [
+      { "$ref": "#/components/schemas/JsContactResource" },
+      {
+        "type": "object",
+        "required": ["@type"],
+        "properties": {
+          "@type": {
+            "type": "string",
+            "const": "CryptoKey"
+          }
+        }
+      }
+    ],
+    "description": "RFC 9553 CryptoKey."
+  },
+  "JsContactDirectory": {
+    "allOf": [
+      { "$ref": "#/components/schemas/JsContactResource" },
+      {
+        "type": "object",
+        "required": ["@type", "kind"],
+        "properties": {
+          "@type": {
+            "type": "string",
+            "const": "Directory"
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["directory", "entry"]
+          },
+          "listAs": {
+            "$ref": "#/components/schemas/JsContactUnsignedInt"
+          }
+        }
+      }
+    ],
+    "description": "RFC 9553 Directory."
+  },
+  "JsContactLink": {
+    "allOf": [
+      { "$ref": "#/components/schemas/JsContactResource" },
+      {
+        "type": "object",
+        "required": ["@type"],
+        "properties": {
+          "@type": {
+            "type": "string",
+            "const": "Link"
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["contact"]
+          }
+        }
+      }
+    ],
+    "description": "RFC 9553 Link."
+  },
+  "JsContactMedia": {
+    "allOf": [
+      { "$ref": "#/components/schemas/JsContactResource" },
+      {
+        "type": "object",
+        "required": ["@type", "kind"],
+        "properties": {
+          "@type": {
+            "type": "string",
+            "const": "Media"
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["photo", "sound", "logo"]
+          },
+          "blobId": {
+            "$ref": "#/components/schemas/JsContactId",
+            "description": "JMAP blob id (RFC 9610); replaces data: URI on read."
+          }
+        }
+      }
+    ],
+    "description": "RFC 9553 Media with JMAP blobId extension."
+  },
+  "JsContactIdCalendarMap": {
+    "type": "object",
+    "additionalProperties": {
+      "$ref": "#/components/schemas/JsContactCalendar"
+    }
+  },
+  "JsContactIdCryptoKeyMap": {
+    "type": "object",
+    "additionalProperties": {
+      "$ref": "#/components/schemas/JsContactCryptoKey"
+    }
+  },
+  "JsContactIdDirectoryMap": {
+    "type": "object",
+    "additionalProperties": {
+      "$ref": "#/components/schemas/JsContactDirectory"
+    }
+  },
+  "JsContactIdLinkMap": {
+    "type": "object",
+    "additionalProperties": {
+      "$ref": "#/components/schemas/JsContactLink"
+    }
+  },
+  "JsContactIdMediaMap": {
+    "type": "object",
+    "additionalProperties": {
+      "$ref": "#/components/schemas/JsContactMedia"
+    }
+  }
+}

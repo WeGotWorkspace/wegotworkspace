@@ -1,0 +1,84 @@
+{
+  "JsContactId": {
+    "type": "string",
+    "minLength": 1,
+    "maxLength": 255,
+    "pattern": "^[A-Za-z0-9_-]+$",
+    "description": "RFC 9553 Id — base64url alphabet without padding."
+  },
+  "JsContactUnsignedInt": {
+    "type": "integer",
+    "minimum": 0,
+    "maximum": 9007199254740991,
+    "description": "RFC 9553 UnsignedInt."
+  },
+  "JsContactUTCDateTime": {
+    "type": "string",
+    "format": "date-time",
+    "description": "RFC 9553 UTCDateTime — RFC 3339 date-time with Z offset."
+  },
+  "JsContactStringBooleanMap": {
+    "type": "object",
+    "additionalProperties": {
+      "type": "boolean",
+      "const": true
+    },
+    "description": "RFC 9553 String[Boolean] set."
+  },
+  "JsContactIdBooleanMap": {
+    "type": "object",
+    "additionalProperties": {
+      "type": "boolean",
+      "const": true
+    },
+    "description": "RFC 9553 Id[Boolean] set keyed by JsContact Id."
+  },
+  "JsContactStringStringMap": {
+    "type": "object",
+    "additionalProperties": {
+      "type": "string"
+    },
+    "description": "RFC 9553 String[String] map."
+  },
+  "JsContactStringRelationMap": {
+    "type": "object",
+    "additionalProperties": {
+      "$ref": "#/components/schemas/JsContactRelation"
+    },
+    "description": "RFC 9553 String[Relation] map (relatedTo)."
+  },
+  "JsContactStringPatchObjectMap": {
+    "type": "object",
+    "additionalProperties": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "RFC 9553 PatchObject (JSON Pointer patch subset)."
+    },
+    "description": "RFC 9553 String[PatchObject] localizations map."
+  },
+  "JsContactVCardParams": {
+    "type": "object",
+    "additionalProperties": {
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      ]
+    },
+    "description": "RFC 9555 vCardParams — preserved vCard parameters."
+  },
+  "JsContactJCardProp": {
+    "type": "array",
+    "minItems": 4,
+    "maxItems": 4,
+    "prefixItems": [
+      { "type": "string", "description": "vCard property name" },
+      { "$ref": "#/components/schemas/JsContactVCardParams" },
+      { "type": "string", "description": "jCard value type" },
+      { "description": "jCard property value" }
+    ],
+    "description": "RFC 9555 JCardProp — jCard property tuple [name, params, valueType, value]."
+  }
+}

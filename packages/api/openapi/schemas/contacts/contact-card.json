@@ -1,0 +1,142 @@
+{
+  "ContactCard": {
+    "type": "object",
+    "required": ["@type", "version", "uid", "id", "addressBookIds"],
+    "properties": {
+      "@type": {
+        "type": "string",
+        "const": "Card",
+        "description": "JSContact Card type discriminator."
+      },
+      "version": {
+        "type": "string",
+        "const": "1.0",
+        "description": "JSContact version."
+      },
+      "id": {
+        "$ref": "#/components/schemas/JsContactId",
+        "description": "JMAP server-set card id (RFC 9610)."
+      },
+      "addressBookIds": {
+        "$ref": "#/components/schemas/JsContactIdBooleanMap",
+        "description": "Set of address book ids; each value MUST be true."
+      },
+      "uid": {
+        "type": "string",
+        "description": "Cross-system card identifier (RFC 9553; optional in JSContact 2.0 per RFC 9982). Required for JMAP Contacts (RFC 9610)."
+      },
+      "created": {
+        "$ref": "#/components/schemas/JsContactUTCDateTime"
+      },
+      "updated": {
+        "$ref": "#/components/schemas/JsContactUTCDateTime"
+      },
+      "kind": {
+        "type": "string",
+        "enum": ["individual", "group", "org", "location", "device", "application"],
+        "default": "individual"
+      },
+      "language": {
+        "type": "string",
+        "description": "Primary language tag (RFC 5646)."
+      },
+      "members": {
+        "$ref": "#/components/schemas/JsContactIdBooleanMap",
+        "description": "Group member uids when kind is group."
+      },
+      "prodId": {
+        "type": "string",
+        "minLength": 1
+      },
+      "relatedTo": {
+        "$ref": "#/components/schemas/JsContactStringRelationMap"
+      },
+      "name": {
+        "$ref": "#/components/schemas/JsContactName"
+      },
+      "nicknames": {
+        "$ref": "#/components/schemas/JsContactIdNicknameMap"
+      },
+      "organizations": {
+        "$ref": "#/components/schemas/JsContactIdOrganizationMap"
+      },
+      "speakToAs": {
+        "$ref": "#/components/schemas/JsContactSpeakToAs"
+      },
+      "titles": {
+        "$ref": "#/components/schemas/JsContactIdTitleMap"
+      },
+      "emails": {
+        "$ref": "#/components/schemas/JsContactIdEmailAddressMap"
+      },
+      "onlineServices": {
+        "$ref": "#/components/schemas/JsContactIdOnlineServiceMap"
+      },
+      "phones": {
+        "$ref": "#/components/schemas/JsContactIdPhoneMap"
+      },
+      "preferredLanguages": {
+        "$ref": "#/components/schemas/JsContactIdLanguagePrefMap"
+      },
+      "calendars": {
+        "$ref": "#/components/schemas/JsContactIdCalendarMap"
+      },
+      "schedulingAddresses": {
+        "$ref": "#/components/schemas/JsContactIdSchedulingAddressMap"
+      },
+      "addresses": {
+        "$ref": "#/components/schemas/JsContactIdAddressMap"
+      },
+      "cryptoKeys": {
+        "$ref": "#/components/schemas/JsContactIdCryptoKeyMap"
+      },
+      "directories": {
+        "$ref": "#/components/schemas/JsContactIdDirectoryMap"
+      },
+      "links": {
+        "$ref": "#/components/schemas/JsContactIdLinkMap"
+      },
+      "media": {
+        "$ref": "#/components/schemas/JsContactIdMediaMap"
+      },
+      "localizations": {
+        "$ref": "#/components/schemas/JsContactStringPatchObjectMap"
+      },
+      "anniversaries": {
+        "$ref": "#/components/schemas/JsContactIdAnniversaryMap"
+      },
+      "keywords": {
+        "$ref": "#/components/schemas/JsContactStringBooleanMap"
+      },
+      "notes": {
+        "$ref": "#/components/schemas/JsContactIdNoteMap"
+      },
+      "personalInfo": {
+        "$ref": "#/components/schemas/JsContactIdPersonalInfoMap"
+      },
+      "vCardProps": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/JsContactJCardProp"
+        },
+        "description": "RFC 9555 unmapped vCard properties (conversion base spec; uid rules updated by RFC 9982 for JSContact 2.0)."
+      }
+    },
+    "additionalProperties": true,
+    "description": "RFC 9610 ContactCard — JSContact Card plus JMAP id and addressBookIds."
+  },
+  "ContactCardListResponse": {
+    "type": "object",
+    "required": ["list"],
+    "properties": {
+      "list": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/ContactCard"
+        }
+      }
+    },
+    "additionalProperties": false,
+    "description": "REST list response for GET /contacts/cards."
+  }
+}

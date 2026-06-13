@@ -1,0 +1,39 @@
+{
+  "JsContactSchedulingAddress": {
+    "type": "object",
+    "required": ["@type", "uri"],
+    "properties": {
+      "@type": {
+        "type": "string",
+        "const": "SchedulingAddress"
+      },
+      "uri": {
+        "type": "string",
+        "format": "uri"
+      },
+      "contexts": {
+        "$ref": "#/components/schemas/JsContactStringBooleanMap"
+      },
+      "pref": {
+        "$ref": "#/components/schemas/JsContactUnsignedInt"
+      },
+      "label": {
+        "type": "string"
+      },
+      "vCardParams": {
+        "$ref": "#/components/schemas/JsContactVCardParams"
+      },
+      "vCardName": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": true,
+    "description": "RFC 9553 SchedulingAddress."
+  },
+  "JsContactIdSchedulingAddressMap": {
+    "type": "object",
+    "additionalProperties": {
+      "$ref": "#/components/schemas/JsContactSchedulingAddress"
+    }
+  }
+}

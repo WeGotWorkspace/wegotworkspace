@@ -1,0 +1,115 @@
+{
+  "JsContactAddressComponent": {
+    "type": "object",
+    "required": ["@type", "value", "kind"],
+    "properties": {
+      "@type": {
+        "type": "string",
+        "const": "AddressComponent"
+      },
+      "value": {
+        "type": "string"
+      },
+      "kind": {
+        "type": "string",
+        "enum": [
+          "room",
+          "apartment",
+          "floor",
+          "building",
+          "number",
+          "name",
+          "block",
+          "subdistrict",
+          "district",
+          "locality",
+          "region",
+          "postcode",
+          "country",
+          "direction",
+          "landmark",
+          "postOfficeBox",
+          "separator"
+        ]
+      },
+      "phonetic": {
+        "type": "string"
+      },
+      "vCardParams": {
+        "$ref": "#/components/schemas/JsContactVCardParams"
+      },
+      "vCardName": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": true,
+    "description": "RFC 9553 AddressComponent."
+  },
+  "JsContactAddress": {
+    "type": "object",
+    "required": ["@type"],
+    "properties": {
+      "@type": {
+        "type": "string",
+        "const": "Address"
+      },
+      "components": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/JsContactAddressComponent"
+        }
+      },
+      "isOrdered": {
+        "type": "boolean",
+        "default": false
+      },
+      "countryCode": {
+        "type": "string",
+        "minLength": 2,
+        "maxLength": 2,
+        "description": "ISO 3166-1 alpha-2 country code."
+      },
+      "coordinates": {
+        "type": "string",
+        "description": "geo: URI per RFC 5870."
+      },
+      "timeZone": {
+        "type": "string",
+        "description": "IANA time zone name."
+      },
+      "contexts": {
+        "$ref": "#/components/schemas/JsContactStringBooleanMap"
+      },
+      "full": {
+        "type": "string"
+      },
+      "defaultSeparator": {
+        "type": "string"
+      },
+      "pref": {
+        "$ref": "#/components/schemas/JsContactUnsignedInt"
+      },
+      "phoneticScript": {
+        "type": "string"
+      },
+      "phoneticSystem": {
+        "type": "string",
+        "enum": ["ipa", "jyut", "piny"]
+      },
+      "vCardParams": {
+        "$ref": "#/components/schemas/JsContactVCardParams"
+      },
+      "vCardName": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": true,
+    "description": "RFC 9553 Address — at least one of components, coordinates, countryCode, full, or timeZone MUST be set."
+  },
+  "JsContactIdAddressMap": {
+    "type": "object",
+    "additionalProperties": {
+      "$ref": "#/components/schemas/JsContactAddress"
+    }
+  }
+}

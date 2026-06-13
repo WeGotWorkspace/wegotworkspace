@@ -1,0 +1,157 @@
+{
+  "JsContactEmailAddress": {
+    "type": "object",
+    "required": ["@type", "address"],
+    "properties": {
+      "@type": {
+        "type": "string",
+        "const": "EmailAddress"
+      },
+      "address": {
+        "type": "string",
+        "description": "RFC 5322 addr-spec."
+      },
+      "contexts": {
+        "$ref": "#/components/schemas/JsContactStringBooleanMap"
+      },
+      "pref": {
+        "$ref": "#/components/schemas/JsContactUnsignedInt"
+      },
+      "label": {
+        "type": "string"
+      },
+      "vCardParams": {
+        "$ref": "#/components/schemas/JsContactVCardParams"
+      },
+      "vCardName": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": true,
+    "description": "RFC 9553 EmailAddress."
+  },
+  "JsContactPhone": {
+    "type": "object",
+    "required": ["@type", "number"],
+    "properties": {
+      "@type": {
+        "type": "string",
+        "const": "Phone"
+      },
+      "number": {
+        "type": "string",
+        "description": "tel:, sip:, or free-text phone number."
+      },
+      "features": {
+        "$ref": "#/components/schemas/JsContactStringBooleanMap",
+        "description": "Feature flags: mobile, voice, text, video, main-number, textphone, fax, pager."
+      },
+      "contexts": {
+        "$ref": "#/components/schemas/JsContactStringBooleanMap"
+      },
+      "pref": {
+        "$ref": "#/components/schemas/JsContactUnsignedInt"
+      },
+      "label": {
+        "type": "string"
+      },
+      "vCardParams": {
+        "$ref": "#/components/schemas/JsContactVCardParams"
+      },
+      "vCardName": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": true,
+    "description": "RFC 9553 Phone."
+  },
+  "JsContactOnlineService": {
+    "type": "object",
+    "required": ["@type"],
+    "properties": {
+      "@type": {
+        "type": "string",
+        "const": "OnlineService"
+      },
+      "service": {
+        "type": "string"
+      },
+      "uri": {
+        "type": "string",
+        "format": "uri"
+      },
+      "user": {
+        "type": "string"
+      },
+      "contexts": {
+        "$ref": "#/components/schemas/JsContactStringBooleanMap"
+      },
+      "pref": {
+        "$ref": "#/components/schemas/JsContactUnsignedInt"
+      },
+      "label": {
+        "type": "string"
+      },
+      "vCardParams": {
+        "$ref": "#/components/schemas/JsContactVCardParams"
+      },
+      "vCardName": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": true,
+    "description": "RFC 9553 OnlineService — at least one of uri or user MUST be set."
+  },
+  "JsContactLanguagePref": {
+    "type": "object",
+    "required": ["@type", "language"],
+    "properties": {
+      "@type": {
+        "type": "string",
+        "const": "LanguagePref"
+      },
+      "language": {
+        "type": "string",
+        "description": "RFC 5646 language tag."
+      },
+      "contexts": {
+        "$ref": "#/components/schemas/JsContactStringBooleanMap"
+      },
+      "pref": {
+        "$ref": "#/components/schemas/JsContactUnsignedInt"
+      },
+      "vCardParams": {
+        "$ref": "#/components/schemas/JsContactVCardParams"
+      },
+      "vCardName": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": true,
+    "description": "RFC 9553 LanguagePref."
+  },
+  "JsContactIdEmailAddressMap": {
+    "type": "object",
+    "additionalProperties": {
+      "$ref": "#/components/schemas/JsContactEmailAddress"
+    }
+  },
+  "JsContactIdPhoneMap": {
+    "type": "object",
+    "additionalProperties": {
+      "$ref": "#/components/schemas/JsContactPhone"
+    }
+  },
+  "JsContactIdOnlineServiceMap": {
+    "type": "object",
+    "additionalProperties": {
+      "$ref": "#/components/schemas/JsContactOnlineService"
+    }
+  },
+  "JsContactIdLanguagePrefMap": {
+    "type": "object",
+    "additionalProperties": {
+      "$ref": "#/components/schemas/JsContactLanguagePref"
+    }
+  }
+}

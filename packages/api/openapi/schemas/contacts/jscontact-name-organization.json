@@ -1,0 +1,271 @@
+{
+  "JsContactNameComponent": {
+    "type": "object",
+    "required": ["@type", "value", "kind"],
+    "properties": {
+      "@type": {
+        "type": "string",
+        "const": "NameComponent"
+      },
+      "value": {
+        "type": "string"
+      },
+      "kind": {
+        "type": "string",
+        "enum": [
+          "title",
+          "given",
+          "given2",
+          "surname",
+          "surname2",
+          "credential",
+          "generation",
+          "separator"
+        ]
+      },
+      "phonetic": {
+        "type": "string"
+      },
+      "vCardParams": {
+        "$ref": "#/components/schemas/JsContactVCardParams"
+      },
+      "vCardName": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": true,
+    "description": "RFC 9553 NameComponent."
+  },
+  "JsContactName": {
+    "type": "object",
+    "required": ["@type"],
+    "properties": {
+      "@type": {
+        "type": "string",
+        "const": "Name"
+      },
+      "components": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/JsContactNameComponent"
+        },
+        "minItems": 1
+      },
+      "isOrdered": {
+        "type": "boolean",
+        "default": false
+      },
+      "defaultSeparator": {
+        "type": "string"
+      },
+      "full": {
+        "type": "string"
+      },
+      "sortAs": {
+        "$ref": "#/components/schemas/JsContactStringStringMap"
+      },
+      "phoneticScript": {
+        "type": "string"
+      },
+      "phoneticSystem": {
+        "type": "string",
+        "enum": ["ipa", "jyut", "piny"]
+      },
+      "vCardParams": {
+        "$ref": "#/components/schemas/JsContactVCardParams"
+      },
+      "vCardName": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": true,
+    "description": "RFC 9553 Name — at least one of components or full MUST be set."
+  },
+  "JsContactNickname": {
+    "type": "object",
+    "required": ["@type", "name"],
+    "properties": {
+      "@type": {
+        "type": "string",
+        "const": "Nickname"
+      },
+      "name": {
+        "type": "string"
+      },
+      "contexts": {
+        "$ref": "#/components/schemas/JsContactStringBooleanMap"
+      },
+      "pref": {
+        "$ref": "#/components/schemas/JsContactUnsignedInt"
+      },
+      "vCardParams": {
+        "$ref": "#/components/schemas/JsContactVCardParams"
+      },
+      "vCardName": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": true,
+    "description": "RFC 9553 Nickname."
+  },
+  "JsContactOrgUnit": {
+    "type": "object",
+    "required": ["@type", "name"],
+    "properties": {
+      "@type": {
+        "type": "string",
+        "const": "OrgUnit"
+      },
+      "name": {
+        "type": "string"
+      },
+      "sortAs": {
+        "type": "string"
+      },
+      "vCardParams": {
+        "$ref": "#/components/schemas/JsContactVCardParams"
+      },
+      "vCardName": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": true,
+    "description": "RFC 9553 OrgUnit."
+  },
+  "JsContactOrganization": {
+    "type": "object",
+    "required": ["@type"],
+    "properties": {
+      "@type": {
+        "type": "string",
+        "const": "Organization"
+      },
+      "name": {
+        "type": "string"
+      },
+      "units": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/JsContactOrgUnit"
+        },
+        "minItems": 1
+      },
+      "sortAs": {
+        "type": "string"
+      },
+      "contexts": {
+        "$ref": "#/components/schemas/JsContactStringBooleanMap"
+      },
+      "vCardParams": {
+        "$ref": "#/components/schemas/JsContactVCardParams"
+      },
+      "vCardName": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": true,
+    "description": "RFC 9553 Organization — at least one of name or units MUST be set."
+  },
+  "JsContactPronouns": {
+    "type": "object",
+    "required": ["@type", "pronouns"],
+    "properties": {
+      "@type": {
+        "type": "string",
+        "const": "Pronouns"
+      },
+      "pronouns": {
+        "type": "string"
+      },
+      "contexts": {
+        "$ref": "#/components/schemas/JsContactStringBooleanMap"
+      },
+      "pref": {
+        "$ref": "#/components/schemas/JsContactUnsignedInt"
+      },
+      "vCardParams": {
+        "$ref": "#/components/schemas/JsContactVCardParams"
+      },
+      "vCardName": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": true,
+    "description": "RFC 9553 Pronouns."
+  },
+  "JsContactSpeakToAs": {
+    "type": "object",
+    "required": ["@type"],
+    "properties": {
+      "@type": {
+        "type": "string",
+        "const": "SpeakToAs"
+      },
+      "grammaticalGender": {
+        "type": "string",
+        "enum": ["animate", "common", "feminine", "inanimate", "masculine", "neuter"]
+      },
+      "pronouns": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "#/components/schemas/JsContactPronouns"
+        }
+      },
+      "vCardParams": {
+        "$ref": "#/components/schemas/JsContactVCardParams"
+      },
+      "vCardName": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": true,
+    "description": "RFC 9553 SpeakToAs — at least one of grammaticalGender or pronouns MUST be set."
+  },
+  "JsContactTitle": {
+    "type": "object",
+    "required": ["@type", "name"],
+    "properties": {
+      "@type": {
+        "type": "string",
+        "const": "Title"
+      },
+      "name": {
+        "type": "string"
+      },
+      "kind": {
+        "type": "string",
+        "enum": ["title", "role"],
+        "default": "title"
+      },
+      "organizationId": {
+        "$ref": "#/components/schemas/JsContactId"
+      },
+      "vCardParams": {
+        "$ref": "#/components/schemas/JsContactVCardParams"
+      },
+      "vCardName": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": true,
+    "description": "RFC 9553 Title."
+  },
+  "JsContactIdNicknameMap": {
+    "type": "object",
+    "additionalProperties": {
+      "$ref": "#/components/schemas/JsContactNickname"
+    }
+  },
+  "JsContactIdOrganizationMap": {
+    "type": "object",
+    "additionalProperties": {
+      "$ref": "#/components/schemas/JsContactOrganization"
+    }
+  },
+  "JsContactIdTitleMap": {
+    "type": "object",
+    "additionalProperties": {
+      "$ref": "#/components/schemas/JsContactTitle"
+    }
+  }
+}
