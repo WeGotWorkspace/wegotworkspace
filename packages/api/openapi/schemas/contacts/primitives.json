@@ -23,7 +23,11 @@
       "type": "boolean",
       "const": true
     },
-    "description": "RFC 9553 String[Boolean] set."
+    "description": "RFC 9553 String[Boolean] set (keywords).",
+    "example": {
+      "vip": true,
+      "customer": true
+    }
   },
   "JsContactIdBooleanMap": {
     "type": "object",
@@ -34,7 +38,7 @@
       "type": "boolean",
       "const": true
     },
-    "description": "RFC 9553 Id[Boolean] set keyed by JsContact Id.",
+    "description": "RFC 9553 Id[Boolean] set keyed by JsContact Id (addressBookIds, members). Nested `@type` not applicable.",
     "example": {
       "default": true
     }
@@ -51,7 +55,14 @@
     "additionalProperties": {
       "$ref": "#/components/schemas/JsContactRelation"
     },
-    "description": "RFC 9553 String[Relation] map (relatedTo)."
+    "description": "RFC 9553 String[Relation] map (relatedTo) — nested `@type` on values is optional (RFC 9553 §1.3.4).",
+    "example": {
+      "550e8400-e29b-41d4-a716-446655440019": {
+        "relation": {
+          "spouse": true
+        }
+      }
+    }
   },
   "JsContactStringPatchObjectMap": {
     "type": "object",

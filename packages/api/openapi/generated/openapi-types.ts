@@ -5600,7 +5600,7 @@ export interface components {
             list: components["schemas"]["AddressBook"][];
         };
         /**
-         * @description RFC 9610 ContactCard — JSContact Card plus JMAP id and addressBookIds.
+         * @description RFC 9610 ContactCard — full JMAP ContactCard returned by GET/POST/PUT responses. Server-owned `id`, `@type`, and `version` are read-only; use ContactCardCreate for POST/PUT request bodies.
          * @example {
          *       "@type": "Card",
          *       "version": "1.0",
@@ -5610,12 +5610,10 @@ export interface components {
          *         "default": true
          *       },
          *       "name": {
-         *         "@type": "Name",
          *         "full": "Joe Example"
          *       },
          *       "emails": {
-         *         "email-1": {
-         *           "@type": "EmailAddress",
+         *         "550e8400-e29b-41d4-a716-446655440001": {
          *           "address": "joe@example.com",
          *           "contexts": {
          *             "private": true
@@ -5623,12 +5621,20 @@ export interface components {
          *         }
          *       },
          *       "phones": {
-         *         "phone-1": {
-         *           "@type": "Phone",
+         *         "550e8400-e29b-41d4-a716-446655440002": {
          *           "number": "+1-555-0100",
          *           "features": {
          *             "mobile": true,
          *             "voice": true
+         *           }
+         *         }
+         *       },
+         *       "addresses": {
+         *         "550e8400-e29b-41d4-a716-446655440003": {
+         *           "full": "123 Main St, Springfield, IL 62701, US",
+         *           "countryCode": "US",
+         *           "contexts": {
+         *             "home": true
          *           }
          *         }
          *       }
@@ -5636,17 +5642,17 @@ export interface components {
          */
         ContactCard: {
             /**
-             * @description JSContact Card type discriminator.
+             * @description JSContact Card type discriminator (server-set on responses).
              * @constant
              */
-            "@type": "Card";
+            readonly "@type": "Card";
             /**
-             * @description JSContact version.
+             * @description JSContact version (server-set on responses).
              * @constant
              */
-            version: "1.0";
+            readonly version: "1.0";
             /** @description JMAP server-set card id (RFC 9610). */
-            id: components["schemas"]["JsContactId"];
+            readonly id: components["schemas"]["JsContactId"];
             /** @description Set of address book ids; each value MUST be true. */
             addressBookIds: components["schemas"]["JsContactIdBooleanMap"];
             /** @description Cross-system card identifier (RFC 9553; optional in JSContact 2.0 per RFC 9982). Required for JMAP Contacts (RFC 9610). */
@@ -5703,12 +5709,10 @@ export interface components {
          *             "default": true
          *           },
          *           "name": {
-         *             "@type": "Name",
          *             "full": "Joe Example"
          *           },
          *           "emails": {
-         *             "email-1": {
-         *               "@type": "EmailAddress",
+         *             "550e8400-e29b-41d4-a716-446655440001": {
          *               "address": "joe@example.com",
          *               "contexts": {
          *                 "private": true
@@ -5761,10 +5765,19 @@ export interface components {
             [key: string]: unknown;
         };
         /**
+         * @description RFC 9553 addresses map — nested `@type` on values and AddressComponent entries is optional (RFC 9553 §1.3.4).
          * @example {
-         *       "addr-1": {
-         *         "@type": "Address",
-         *         "full": "123 Main St, Springfield, IL 62701, US",
+         *       "550e8400-e29b-41d4-a716-446655440003": {
+         *         "components": [
+         *           {
+         *             "value": "123",
+         *             "kind": "number"
+         *           },
+         *           {
+         *             "value": "Main St",
+         *             "kind": "name"
+         *           }
+         *         ],
          *         "countryCode": "US",
          *         "contexts": {
          *           "home": true
@@ -5790,9 +5803,9 @@ export interface components {
             [key: string]: unknown;
         };
         /**
+         * @description RFC 9553 schedulingAddresses map — nested `@type` on values is optional (RFC 9553 §1.3.4).
          * @example {
-         *       "sched-1": {
-         *         "@type": "SchedulingAddress",
+         *       "550e8400-e29b-41d4-a716-446655440010": {
          *         "uri": "mailto:joe@example.com"
          *       }
          *     }
@@ -5860,9 +5873,9 @@ export interface components {
             [key: string]: unknown;
         };
         /**
+         * @description RFC 9553 emails map — nested `@type` on values is optional (RFC 9553 §1.3.4).
          * @example {
-         *       "email-1": {
-         *         "@type": "EmailAddress",
+         *       "550e8400-e29b-41d4-a716-446655440001": {
          *         "address": "joe@example.com",
          *         "contexts": {
          *           "private": true
@@ -5874,9 +5887,9 @@ export interface components {
             [key: string]: components["schemas"]["JsContactEmailAddress"];
         };
         /**
+         * @description RFC 9553 phones map — nested `@type` on values is optional (RFC 9553 §1.3.4).
          * @example {
-         *       "phone-1": {
-         *         "@type": "Phone",
+         *       "550e8400-e29b-41d4-a716-446655440002": {
          *         "number": "+1-555-0100",
          *         "features": {
          *           "mobile": true,
@@ -5889,9 +5902,9 @@ export interface components {
             [key: string]: components["schemas"]["JsContactPhone"];
         };
         /**
+         * @description RFC 9553 onlineServices map — nested `@type` on values is optional (RFC 9553 §1.3.4).
          * @example {
-         *       "service-1": {
-         *         "@type": "OnlineService",
+         *       "550e8400-e29b-41d4-a716-446655440007": {
          *         "service": "matrix",
          *         "uri": "matrix:u/joe:example.com"
          *       }
@@ -5901,9 +5914,9 @@ export interface components {
             [key: string]: components["schemas"]["JsContactOnlineService"];
         };
         /**
+         * @description RFC 9553 preferredLanguages map — nested `@type` on values is optional (RFC 9553 §1.3.4).
          * @example {
-         *       "lang-1": {
-         *         "@type": "LanguagePref",
+         *       "550e8400-e29b-41d4-a716-446655440008": {
          *         "language": "en"
          *       }
          *     }
@@ -6002,14 +6015,16 @@ export interface components {
             [key: string]: unknown;
         };
         /**
+         * @description RFC 9553 anniversaries map — nested `@type` on values, date, and place is optional (RFC 9553 §1.3.4).
          * @example {
-         *       "anniv-1": {
-         *         "@type": "Anniversary",
+         *       "550e8400-e29b-41d4-a716-446655440015": {
          *         "kind": "birth",
          *         "date": {
-         *           "@type": "PartialDate",
          *           "month": 6,
          *           "day": 13
+         *         },
+         *         "place": {
+         *           "full": "Springfield, IL"
          *         }
          *       }
          *     }
@@ -6018,10 +6033,13 @@ export interface components {
             [key: string]: components["schemas"]["JsContactAnniversary"];
         };
         /**
+         * @description RFC 9553 notes map — nested `@type` on values and author is optional (RFC 9553 §1.3.4).
          * @example {
-         *       "note-1": {
-         *         "@type": "Note",
-         *         "note": "Met at the 2024 conference."
+         *       "550e8400-e29b-41d4-a716-446655440016": {
+         *         "note": "Met at the 2024 conference.",
+         *         "author": {
+         *           "name": "Alice Example"
+         *         }
          *       }
          *     }
          */
@@ -6029,9 +6047,9 @@ export interface components {
             [key: string]: components["schemas"]["JsContactNote"];
         };
         /**
+         * @description RFC 9553 personalInfo map — nested `@type` on values is optional (RFC 9553 §1.3.4).
          * @example {
-         *       "hobby-1": {
-         *         "@type": "PersonalInfo",
+         *       "550e8400-e29b-41d4-a716-446655440017": {
          *         "kind": "hobby",
          *         "value": "cycling"
          *       }
@@ -6119,7 +6137,17 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
-        /** @description RFC 9553 SpeakToAs — at least one of grammaticalGender or pronouns MUST be set. */
+        /**
+         * @description RFC 9553 SpeakToAs — at least one of grammaticalGender or pronouns MUST be set.
+         * @example {
+         *       "grammaticalGender": "masculine",
+         *       "pronouns": {
+         *         "550e8400-e29b-41d4-a716-446655440018": {
+         *           "pronouns": "he/him"
+         *         }
+         *       }
+         *     }
+         */
         JsContactSpeakToAs: {
             /** @constant */
             "@type": "SpeakToAs";
@@ -6150,9 +6178,9 @@ export interface components {
             [key: string]: unknown;
         };
         /**
+         * @description RFC 9553 nicknames map — nested `@type` on values is optional (RFC 9553 §1.3.4).
          * @example {
-         *       "nick-1": {
-         *         "@type": "Nickname",
+         *       "550e8400-e29b-41d4-a716-446655440004": {
          *         "name": "Joe"
          *       }
          *     }
@@ -6161,10 +6189,15 @@ export interface components {
             [key: string]: components["schemas"]["JsContactNickname"];
         };
         /**
+         * @description RFC 9553 organizations map — nested `@type` on values and OrgUnit entries is optional (RFC 9553 §1.3.4).
          * @example {
-         *       "org-1": {
-         *         "@type": "Organization",
-         *         "name": "Example Corp"
+         *       "550e8400-e29b-41d4-a716-446655440005": {
+         *         "name": "Example Corp",
+         *         "units": [
+         *           {
+         *             "name": "Engineering"
+         *           }
+         *         ]
          *       }
          *     }
          */
@@ -6172,9 +6205,9 @@ export interface components {
             [key: string]: components["schemas"]["JsContactOrganization"];
         };
         /**
+         * @description RFC 9553 titles map — nested `@type` on values is optional (RFC 9553 §1.3.4).
          * @example {
-         *       "title-1": {
-         *         "@type": "Title",
+         *       "550e8400-e29b-41d4-a716-446655440006": {
          *         "name": "Engineer"
          *       }
          *     }
@@ -6235,9 +6268,9 @@ export interface components {
             blobId?: components["schemas"]["JsContactId"];
         };
         /**
+         * @description RFC 9553 calendars map — nested `@type` on values is optional (RFC 9553 §1.3.4).
          * @example {
-         *       "cal-1": {
-         *         "@type": "Calendar",
+         *       "550e8400-e29b-41d4-a716-446655440009": {
          *         "kind": "calendar",
          *         "uri": "https://example.com/calendars/joe"
          *       }
@@ -6247,9 +6280,9 @@ export interface components {
             [key: string]: components["schemas"]["JsContactCalendar"];
         };
         /**
+         * @description RFC 9553 cryptoKeys map — nested `@type` on values is optional (RFC 9553 §1.3.4).
          * @example {
-         *       "key-1": {
-         *         "@type": "CryptoKey",
+         *       "550e8400-e29b-41d4-a716-446655440011": {
          *         "uri": "data:application/pgp-keys;base64,..."
          *       }
          *     }
@@ -6258,9 +6291,9 @@ export interface components {
             [key: string]: components["schemas"]["JsContactCryptoKey"];
         };
         /**
+         * @description RFC 9553 directories map — nested `@type` on values is optional (RFC 9553 §1.3.4).
          * @example {
-         *       "dir-1": {
-         *         "@type": "Directory",
+         *       "550e8400-e29b-41d4-a716-446655440012": {
          *         "kind": "directory",
          *         "uri": "ldap://directory.example.com/cn=joe"
          *       }
@@ -6270,9 +6303,9 @@ export interface components {
             [key: string]: components["schemas"]["JsContactDirectory"];
         };
         /**
+         * @description RFC 9553 links map — nested `@type` on values is optional (RFC 9553 §1.3.4).
          * @example {
-         *       "link-1": {
-         *         "@type": "Link",
+         *       "550e8400-e29b-41d4-a716-446655440013": {
          *         "kind": "contact",
          *         "uri": "card:550e8400-e29b-41d4-a716-446655440000"
          *       }
@@ -6282,9 +6315,9 @@ export interface components {
             [key: string]: components["schemas"]["JsContactLink"];
         };
         /**
+         * @description RFC 9553 media map — nested `@type` on values is optional (RFC 9553 §1.3.4).
          * @example {
-         *       "photo-1": {
-         *         "@type": "Media",
+         *       "550e8400-e29b-41d4-a716-446655440014": {
          *         "kind": "photo",
          *         "uri": "https://example.com/photos/joe.jpg",
          *         "mediaType": "image/jpeg"
@@ -6303,12 +6336,18 @@ export interface components {
          * @description RFC 9553 UTCDateTime — RFC 3339 date-time with Z offset.
          */
         JsContactUTCDateTime: string;
-        /** @description RFC 9553 String[Boolean] set. */
+        /**
+         * @description RFC 9553 String[Boolean] set (keywords).
+         * @example {
+         *       "vip": true,
+         *       "customer": true
+         *     }
+         */
         JsContactStringBooleanMap: {
             [key: string]: true;
         };
         /**
-         * @description RFC 9553 Id[Boolean] set keyed by JsContact Id.
+         * @description RFC 9553 Id[Boolean] set keyed by JsContact Id (addressBookIds, members). Nested `@type` not applicable.
          * @example {
          *       "default": true
          *     }
@@ -6320,7 +6359,16 @@ export interface components {
         JsContactStringStringMap: {
             [key: string]: string;
         };
-        /** @description RFC 9553 String[Relation] map (relatedTo). */
+        /**
+         * @description RFC 9553 String[Relation] map (relatedTo) — nested `@type` on values is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440019": {
+         *         "relation": {
+         *           "spouse": true
+         *         }
+         *       }
+         *     }
+         */
         JsContactStringRelationMap: {
             [key: string]: components["schemas"]["JsContactRelation"];
         };
@@ -6341,6 +6389,87 @@ export interface components {
             string,
             unknown
         ];
+        /**
+         * @description POST/PUT request body for contact cards. Omits server-owned `id`, `@type`, and `version`. Nested `@type` on map values is optional per RFC 9553 §1.3.4.
+         * @example {
+         *       "addressBookIds": {
+         *         "default": true
+         *       },
+         *       "name": {
+         *         "full": "Joe Example"
+         *       },
+         *       "emails": {
+         *         "550e8400-e29b-41d4-a716-446655440001": {
+         *           "address": "joe@example.com",
+         *           "contexts": {
+         *             "private": true
+         *           }
+         *         }
+         *       },
+         *       "phones": {
+         *         "550e8400-e29b-41d4-a716-446655440002": {
+         *           "number": "+1-555-0100",
+         *           "features": {
+         *             "mobile": true,
+         *             "voice": true
+         *           }
+         *         }
+         *       },
+         *       "addresses": {
+         *         "550e8400-e29b-41d4-a716-446655440003": {
+         *           "full": "123 Main St, Springfield, IL 62701, US",
+         *           "countryCode": "US",
+         *           "contexts": {
+         *             "home": true
+         *           }
+         *         }
+         *       }
+         *     }
+         */
+        ContactCardCreate: {
+            /** @description Set of address book ids; each value MUST be true. */
+            addressBookIds: components["schemas"]["JsContactIdBooleanMap"];
+            /** @description Cross-system card identifier (RFC 9553). Optional on create; server generates when omitted. */
+            uid?: string;
+            created?: components["schemas"]["JsContactUTCDateTime"];
+            updated?: components["schemas"]["JsContactUTCDateTime"];
+            /**
+             * @default individual
+             * @enum {string}
+             */
+            kind: "individual" | "group" | "org" | "location" | "device" | "application";
+            /** @description Primary language tag (RFC 5646). */
+            language?: string;
+            /** @description Group member uids when kind is group. */
+            members?: components["schemas"]["JsContactIdBooleanMap"];
+            prodId?: string;
+            relatedTo?: components["schemas"]["JsContactStringRelationMap"];
+            name?: components["schemas"]["JsContactName"];
+            nicknames?: components["schemas"]["JsContactIdNicknameMap"];
+            organizations?: components["schemas"]["JsContactIdOrganizationMap"];
+            speakToAs?: components["schemas"]["JsContactSpeakToAs"];
+            titles?: components["schemas"]["JsContactIdTitleMap"];
+            emails?: components["schemas"]["JsContactIdEmailAddressMap"];
+            onlineServices?: components["schemas"]["JsContactIdOnlineServiceMap"];
+            phones?: components["schemas"]["JsContactIdPhoneMap"];
+            preferredLanguages?: components["schemas"]["JsContactIdLanguagePrefMap"];
+            calendars?: components["schemas"]["JsContactIdCalendarMap"];
+            schedulingAddresses?: components["schemas"]["JsContactIdSchedulingAddressMap"];
+            addresses?: components["schemas"]["JsContactIdAddressMap"];
+            cryptoKeys?: components["schemas"]["JsContactIdCryptoKeyMap"];
+            directories?: components["schemas"]["JsContactIdDirectoryMap"];
+            links?: components["schemas"]["JsContactIdLinkMap"];
+            media?: components["schemas"]["JsContactIdMediaMap"];
+            localizations?: components["schemas"]["JsContactStringPatchObjectMap"];
+            anniversaries?: components["schemas"]["JsContactIdAnniversaryMap"];
+            keywords?: components["schemas"]["JsContactStringBooleanMap"];
+            notes?: components["schemas"]["JsContactIdNoteMap"];
+            personalInfo?: components["schemas"]["JsContactIdPersonalInfoMap"];
+            /** @description RFC 9555 unmapped vCard properties. */
+            vCardProps?: components["schemas"]["JsContactJCardProp"][];
+        } & {
+            [key: string]: unknown;
+        };
     };
     responses: never;
     parameters: never;

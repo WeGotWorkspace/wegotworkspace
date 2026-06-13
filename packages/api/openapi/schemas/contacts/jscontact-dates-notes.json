@@ -207,14 +207,16 @@
     "additionalProperties": {
       "$ref": "#/components/schemas/JsContactAnniversary"
     },
+    "description": "RFC 9553 anniversaries map — nested `@type` on values, date, and place is optional (RFC 9553 §1.3.4).",
     "example": {
-      "anniv-1": {
-        "@type": "Anniversary",
+      "550e8400-e29b-41d4-a716-446655440015": {
         "kind": "birth",
         "date": {
-          "@type": "PartialDate",
           "month": 6,
           "day": 13
+        },
+        "place": {
+          "full": "Springfield, IL"
         }
       }
     }
@@ -227,10 +229,13 @@
     "additionalProperties": {
       "$ref": "#/components/schemas/JsContactNote"
     },
+    "description": "RFC 9553 notes map — nested `@type` on values and author is optional (RFC 9553 §1.3.4).",
     "example": {
-      "note-1": {
-        "@type": "Note",
-        "note": "Met at the 2024 conference."
+      "550e8400-e29b-41d4-a716-446655440016": {
+        "note": "Met at the 2024 conference.",
+        "author": {
+          "name": "Alice Example"
+        }
       }
     }
   },
@@ -242,9 +247,9 @@
     "additionalProperties": {
       "$ref": "#/components/schemas/JsContactPersonalInfo"
     },
+    "description": "RFC 9553 personalInfo map — nested `@type` on values is optional (RFC 9553 §1.3.4).",
     "example": {
-      "hobby-1": {
-        "@type": "PersonalInfo",
+      "550e8400-e29b-41d4-a716-446655440017": {
         "kind": "hobby",
         "value": "cycling"
       }

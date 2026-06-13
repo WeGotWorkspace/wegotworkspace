@@ -114,10 +114,19 @@
     "additionalProperties": {
       "$ref": "#/components/schemas/JsContactAddress"
     },
+    "description": "RFC 9553 addresses map — nested `@type` on values and AddressComponent entries is optional (RFC 9553 §1.3.4).",
     "example": {
-      "addr-1": {
-        "@type": "Address",
-        "full": "123 Main St, Springfield, IL 62701, US",
+      "550e8400-e29b-41d4-a716-446655440003": {
+        "components": [
+          {
+            "value": "123",
+            "kind": "number"
+          },
+          {
+            "value": "Main St",
+            "kind": "name"
+          }
+        ],
         "countryCode": "US",
         "contexts": {
           "home": true

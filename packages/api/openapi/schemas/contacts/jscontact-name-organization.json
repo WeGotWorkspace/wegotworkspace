@@ -222,7 +222,15 @@
       }
     },
     "additionalProperties": true,
-    "description": "RFC 9553 SpeakToAs — at least one of grammaticalGender or pronouns MUST be set."
+    "description": "RFC 9553 SpeakToAs — at least one of grammaticalGender or pronouns MUST be set.",
+    "example": {
+      "grammaticalGender": "masculine",
+      "pronouns": {
+        "550e8400-e29b-41d4-a716-446655440018": {
+          "pronouns": "he/him"
+        }
+      }
+    }
   },
   "JsContactTitle": {
     "type": "object",
@@ -261,9 +269,9 @@
     "additionalProperties": {
       "$ref": "#/components/schemas/JsContactNickname"
     },
+    "description": "RFC 9553 nicknames map — nested `@type` on values is optional (RFC 9553 §1.3.4).",
     "example": {
-      "nick-1": {
-        "@type": "Nickname",
+      "550e8400-e29b-41d4-a716-446655440004": {
         "name": "Joe"
       }
     }
@@ -276,10 +284,15 @@
     "additionalProperties": {
       "$ref": "#/components/schemas/JsContactOrganization"
     },
+    "description": "RFC 9553 organizations map — nested `@type` on values and OrgUnit entries is optional (RFC 9553 §1.3.4).",
     "example": {
-      "org-1": {
-        "@type": "Organization",
-        "name": "Example Corp"
+      "550e8400-e29b-41d4-a716-446655440005": {
+        "name": "Example Corp",
+        "units": [
+          {
+            "name": "Engineering"
+          }
+        ]
       }
     }
   },
@@ -291,9 +304,9 @@
     "additionalProperties": {
       "$ref": "#/components/schemas/JsContactTitle"
     },
+    "description": "RFC 9553 titles map — nested `@type` on values is optional (RFC 9553 §1.3.4).",
     "example": {
-      "title-1": {
-        "@type": "Title",
+      "550e8400-e29b-41d4-a716-446655440006": {
         "name": "Engineer"
       }
     }

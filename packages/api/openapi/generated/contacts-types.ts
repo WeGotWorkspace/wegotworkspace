@@ -11,6 +11,7 @@ export type AddressBook = components["schemas"]["AddressBook"];
 export type AddressBookRights = components["schemas"]["AddressBookRights"];
 export type ContactAddressBookListResponse = components["schemas"]["ContactAddressBookListResponse"];
 export type ContactCard = components["schemas"]["ContactCard"];
+export type ContactCardCreate = components["schemas"]["ContactCardCreate"];
 export type ContactCardListResponse = components["schemas"]["ContactCardListResponse"];
 export type JsContactAddress = components["schemas"]["JsContactAddress"];
 export type JsContactAddressComponent = components["schemas"]["JsContactAddressComponent"];
