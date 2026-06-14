@@ -24,7 +24,7 @@ pnpm --filter @wgw/api typegen:check          # fail if generated files are stal
 
 **PHP:** `^8.3` (CI uses 8.3). PHP 8.5 is fine locally; API responses suppress deprecation display so `/api/v1/*` stays clean JSON.
 
-`openapi/openapi.json` is the hand-edited spec. `openapi/generated/openapi.built.json` is the enriched document used for typegen (committed). After editing `openapi.json`, update the built file in the same change (PHP enrichment was removed with the legacy runtime).
+`openapi/openapi.json` is the hand-edited spec (Swagger UI and route parity). `openapi/generated/openapi.built.json` syncs paths from source and keeps enriched schemas for typegen (committed). After editing `openapi.json`, run `pnpm --filter @wgw/api run openapi:build-json` and `typegen` in the same change; `openapi:check-drift` and `typegen:check` fail CI when built output is stale.
 
 ## Implementing the API
 

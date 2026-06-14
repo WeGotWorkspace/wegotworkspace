@@ -14,9 +14,9 @@ final class OpenApiDocumentService
      */
     public function build(string $webBase): array
     {
-        $path = base_path('openapi/generated/openapi.built.json');
+        $path = base_path('openapi/openapi.json');
         if (! is_readable($path)) {
-            $path = base_path('openapi/openapi.json');
+            $path = base_path('openapi/generated/openapi.built.json');
         }
         if (! is_readable($path)) {
             throw new \RuntimeException('OpenAPI spec file is missing.');
