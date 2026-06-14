@@ -6,6 +6,9 @@ import { containsCursorPrAttribution } from "../../tools/git/cursor-attribution.
 const input = JSON.parse(readFileSync(0, "utf8"));
 const command = input.command ?? "";
 
+/** Word boundaries do not precede `--`; match `--body`, `--body=`, or `--body `. */
+const BODY_FLAG_PATTERN = /--body(?:=|\s|$)/;
+
 /** Ignore gh pr substrings inside heredocs or quoted commit/PR bodies. */
 function ghPrCommandPrefix(command) {
   const heredocStart = command.search(/<<-?\s*['"]?\w*['"]?/);
@@ -17,54 +20,89 @@ function ghPrCommandPrefix(command) {
   return command.slice(0, cutAt);
 }
 
+function extractHeredocBody(command) {
+  const eofHeredoc = command.match(/<<-?\s*['"]?EOF['"]?\s*\r?\n([\s\S]*?)\r?\nEOF\b/);
+  if (eofHeredoc) {
+    return eofHeredoc[1];
+  }
+
+  const markedHeredoc = command.match(/<<-?\s*['"]?(\w+)['"]?\s*\r?\n([\s\S]*?)\r?\n\1\b/);
+  if (markedHeredoc) {
+    return markedHeredoc[2];
+  }
+
+  return "";
+}
+
+function extractQuotedBody(fromBody) {
+  const trimmed = fromBody.trimStart();
+  const quote = trimmed[0];
+  if (quote !== '"' && quote !== "'") {
+    return "";
+  }
+
+  let body = "";
+  let escaped = false;
+  for (let i = 1; i < trimmed.length; i += 1) {
+    const char = trimmed[i];
+    if (escaped) {
+      body += char;
+      escaped = false;
+      continue;
+    }
+    if (char === "\\") {
+      escaped = true;
+      continue;
+    }
+    if (char === quote) {
+      return body;
+    }
+    body += char;
+  }
+  return body;
+}
+
 function extractGhPrBody(command) {
-  const bodyFlag = command.match(/\b--body\b/);
+  const bodyFlag = command.match(BODY_FLAG_PATTERN);
   if (!bodyFlag) {
     return "";
   }
 
-  const heredoc = command.match(/<<-?\s*['"]?EOF['"]?\s*\n([\s\S]*?)\nEOF\b/);
-  if (heredoc) {
-    return heredoc[1];
+  const heredocBody = extractHeredocBody(command);
+  if (heredocBody) {
+    return heredocBody;
   }
 
-  const fromBody = command.slice(bodyFlag.index + bodyFlag[0].length);
+  const flagText = bodyFlag[0];
+  const fromBody = command.slice(bodyFlag.index + flagText.length);
+
+  if (flagText.endsWith("=")) {
+    const trimmed = fromBody.trimStart();
+    const quoted = extractQuotedBody(trimmed);
+    if (quoted) {
+      return quoted;
+    }
+    return trimmed.split(/\s+--/)[0] ?? trimmed;
+  }
+
   const trimmed = fromBody.trimStart();
 
   if (trimmed.startsWith("<<")) {
-    const heredoc = trimmed.match(/^<<-?\s*['"]?(\w*)['"]?\s*\n?([\s\S]*)$/);
-    if (!heredoc) {
+    const inlineHeredoc = trimmed.match(/^<<-?\s*['"]?(\w*)['"]?\s*\r?\n?([\s\S]*)$/);
+    if (!inlineHeredoc) {
       return trimmed;
     }
-    const marker = heredoc[1];
+    const marker = inlineHeredoc[1];
     if (marker) {
       const end = trimmed.indexOf(`\n${marker}`);
-      return end === -1 ? trimmed : trimmed.slice(heredoc[0].length, end);
+      return end === -1 ? trimmed : trimmed.slice(inlineHeredoc[0].length, end);
     }
-    return heredoc[2];
+    return inlineHeredoc[2];
   }
 
-  const quote = trimmed[0];
-  if (quote === '"' || quote === "'") {
-    let body = "";
-    let escaped = false;
-    for (let i = 1; i < trimmed.length; i += 1) {
-      const char = trimmed[i];
-      if (escaped) {
-        body += char;
-        escaped = false;
-        continue;
-      }
-      if (char === "\\") {
-        escaped = true;
-        continue;
-      }
-      if (char === quote) {
-        return body;
-      }
-      body += char;
-    }
-    return body;
+  const quoted = extractQuotedBody(trimmed);
+  if (quoted) {
+    return quoted;
   }
 
   return trimmed.split(/\s+--/)[0] ?? trimmed;
@@ -77,14 +115,14 @@ if (!/\bgh\s+pr\s+(create|edit)\b/.test(ghPrPrefix)) {
 }
 
 const prBody = extractGhPrBody(command);
-if (containsCursorPrAttribution(prBody)) {
+if (containsCursorPrAttribution(prBody) || containsCursorPrAttribution(command)) {
   console.log(
     JSON.stringify({
       permission: "deny",
       user_message:
-        "PR description cannot include Cursor attribution (e.g. \"Made with Cursor\"). Remove it before creating or editing the PR.",
+        'PR description cannot include Cursor attribution (e.g. "Made with Cursor"). Remove it before creating or editing the PR.',
       agent_message:
-        "Do not add \"Made with Cursor\", \"Made-with: Cursor\", or Co-authored-by Cursor lines to PR descriptions. Strip attribution from --body before running gh pr create or gh pr edit.",
+        'Do not add "Made with Cursor", "Made-with: Cursor", or Co-authored-by Cursor lines to PR descriptions. Strip attribution from --body before running gh pr create or gh pr edit.',
     }),
   );
   process.exit(0);
