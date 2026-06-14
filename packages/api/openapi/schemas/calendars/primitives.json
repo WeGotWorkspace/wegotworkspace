@@ -1,0 +1,28 @@
+{
+  "JmapId": {
+    "type": "string",
+    "minLength": 1,
+    "maxLength": 255,
+    "description": "JMAP id string (calendar uri, event id, map key)."
+  },
+  "JmapIdBooleanMap": {
+    "type": "object",
+    "propertyNames": {
+      "$ref": "#/components/schemas/JmapId"
+    },
+    "additionalProperties": {
+      "type": "boolean",
+      "const": true
+    },
+    "description": "Map of ids to true booleans."
+  },
+  "JmapUTCDateTime": {
+    "type": "string",
+    "format": "date-time",
+    "description": "UTC date-time (ISO 8601)."
+  },
+  "JmapLocalDateTime": {
+    "type": "string",
+    "description": "Local or UTC date-time without required Z suffix."
+  }
+}
