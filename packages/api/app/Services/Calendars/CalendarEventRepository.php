@@ -19,14 +19,20 @@ final class CalendarEventRepository
     public function __construct(
         private readonly CalendarEventMapper $mapper,
         private readonly SearchIndexerService $searchIndexer,
-        private readonly BestEffortSearchIndexSync $searchIndexSync = new BestEffortSearchIndexSync,
+        private readonly BestEffortSearchIndexSync $searchIndexSync,
+        private readonly CalendarEventExpansionService $expansion,
     ) {}
 
     /**
      * @return array{list: list<array<string, mixed>>}
      */
-    public function list(string $username, string $calendarId): array
-    {
+    public function list(
+        string $username,
+        string $calendarId,
+        ?string $after = null,
+        ?string $before = null,
+        bool $expandRecurrences = false,
+    ): array {
         $instance = $this->findOwnedCalendar($username, $calendarId);
         if ($instance === null) {
             throw new ApiHttpException(404, 'Calendar not found.', 'not_found');
@@ -40,8 +46,15 @@ final class CalendarEventRepository
 
         $events = [];
         foreach ($objects as $object) {
+            $raw = is_string($object->calendardata) ? $object->calendardata : (string) $object->calendardata;
             foreach ($this->mapper->toCalendarEvents($object, $calendarId) as $event) {
-                $events[] = $event;
+                if ($expandRecurrences && $after !== null && $before !== null && $this->expansion->isRecurring($event)) {
+                    foreach ($this->expansion->expandInWindow($event, $raw, $calendarId, $after, $before) as $instance) {
+                        $events[] = $instance;
+                    }
+                } else {
+                    $events[] = $event;
+                }
             }
         }
 

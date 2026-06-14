@@ -27,7 +27,20 @@ final class CalendarEventsController
             throw new ApiHttpException(400, 'calendarId is required.', 'bad_request');
         }
 
-        return response()->json($this->events->list($principal['username'], $calendarId));
+        $expandRecurrences = filter_var($request->query('expandRecurrences'), FILTER_VALIDATE_BOOLEAN);
+        $after = $request->query('after');
+        $before = $request->query('before');
+        if ($expandRecurrences && (! is_string($after) || trim($after) === '' || ! is_string($before) || trim($before) === '')) {
+            throw new ApiHttpException(400, 'after and before are required when expandRecurrences is true.', 'bad_request');
+        }
+
+        return response()->json($this->events->list(
+            $principal['username'],
+            $calendarId,
+            is_string($after) ? $after : null,
+            is_string($before) ? $before : null,
+            $expandRecurrences,
+        ));
     }
 
     public function show(Request $request, string $eventId): JsonResponse

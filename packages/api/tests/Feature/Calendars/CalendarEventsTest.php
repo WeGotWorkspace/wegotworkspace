@@ -159,6 +159,30 @@ final class CalendarEventsTest extends WgwDatabaseTestCase
         $this->assertArrayNotHasKey('instances', $response->json());
     }
 
+    public function test_expand_recurrences_requires_after_and_before(): void
+    {
+        $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/calendars/events?calendarId=default&expandRecurrences=true')
+            ->assertStatus(400)
+            ->assertJsonPath('code', 'bad_request');
+    }
+
+    public function test_expand_recurrences_returns_instances_in_window(): void
+    {
+        $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:expand-api\r\nSUMMARY:Daily\r\nDTSTART:20260601T090000Z\r\nDTEND:20260601T093000Z\r\nRRULE:FREQ=DAILY;COUNT=5\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+        $eventId = $this->seedEventViaPdo('bob', 'daily-expand.ics', $ics);
+
+        $response = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/calendars/events?calendarId=default&expandRecurrences=true&after=2026-06-01T00:00:00Z&before=2026-06-04T00:00:00Z');
+
+        $response->assertOk();
+        $list = $response->json('list');
+        $this->assertCount(3, $list);
+        $this->assertNull($list[0]['recurrenceRules']);
+        $this->assertSame('2026-06-01T09:00:00Z', $list[0]['recurrenceId']);
+        $this->assertStringStartsWith($eventId.'/', $list[0]['id']);
+    }
+
     public function test_multi_vevent_ics_yields_composite_event_ids(): void
     {
         $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:first\r\nSUMMARY:Primary Event\r\nDTSTART:20260610T090000Z\r\nDTEND:20260610T100000Z\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:second\r\nSUMMARY:Secondary Event\r\nDTSTART:20260611T090000Z\r\nDTEND:20260611T100000Z\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";

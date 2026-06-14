@@ -43,6 +43,27 @@
     },
     "additionalProperties": false
   },
+  "CalendarEventLink": {
+    "type": "object",
+    "required": ["@type", "href"],
+    "properties": {
+      "@type": { "type": "string", "const": "Link" },
+      "href": { "type": "string", "format": "uri" },
+      "rel": { "type": "string" },
+      "contentType": { "type": "string" }
+    },
+    "additionalProperties": false
+  },
+  "CalendarTimeZone": {
+    "type": "object",
+    "required": ["@type", "tzid"],
+    "properties": {
+      "@type": { "type": "string", "const": "TimeZone" },
+      "tzid": { "type": "string" },
+      "icsDefinition": { "type": "string", "description": "Serialized VTIMEZONE component for round-trip." }
+    },
+    "additionalProperties": false
+  },
   "CalendarRecurrenceRule": {
     "type": "object",
     "required": ["@type", "frequency"],
@@ -88,7 +109,10 @@
       "roles": { "type": "array", "items": { "type": "string" } },
       "participationStatus": { "type": "string" },
       "kind": { "type": "string" },
-      "language": { "type": "string" }
+      "language": { "type": "string" },
+      "expectReply": { "type": "boolean" },
+      "delegatedTo": { "type": "string", "format": "email" },
+      "delegatedFrom": { "type": "string", "format": "email" }
     },
     "additionalProperties": false
   },
@@ -152,19 +176,28 @@
       "duration": { "type": "string" },
       "showWithoutTime": { "type": "boolean" },
       "timeZone": { "type": ["string", "null"] },
+      "recurrenceId": {
+        "type": "string",
+        "description": "Original instance start for expanded or override rows; null on series masters."
+      },
       "locations": {
         "type": "object",
         "propertyNames": { "$ref": "#/components/schemas/JmapId" },
         "additionalProperties": { "$ref": "#/components/schemas/CalendarEventLocation" }
       },
       "recurrenceRules": {
-        "type": "array",
+        "type": ["array", "null"],
         "items": { "$ref": "#/components/schemas/CalendarRecurrenceRule" },
-        "description": "RRULE-only; clients expand instances per JMAP Calendars draft."
+        "description": "RRULE on series masters; null on expanded instances."
       },
       "excludedRecurrenceDates": {
         "type": "array",
         "items": { "type": "string" }
+      },
+      "excludedRecurrenceRules": {
+        "type": "array",
+        "items": { "$ref": "#/components/schemas/CalendarRecurrenceRule" },
+        "description": "EXRULE rule-based exclusions (legacy ICS)."
       },
       "recurrenceOverrides": {
         "type": "object",
@@ -194,6 +227,21 @@
         "description": "Reminder alarms mapped from iCalendar VALARM components.",
         "propertyNames": { "$ref": "#/components/schemas/JmapId" },
         "additionalProperties": { "$ref": "#/components/schemas/CalendarEventAlert" }
+      },
+      "links": {
+        "type": "object",
+        "propertyNames": { "$ref": "#/components/schemas/JmapId" },
+        "additionalProperties": { "$ref": "#/components/schemas/CalendarEventLink" }
+      },
+      "attachments": {
+        "type": "object",
+        "propertyNames": { "$ref": "#/components/schemas/JmapId" },
+        "additionalProperties": { "$ref": "#/components/schemas/CalendarEventLink" }
+      },
+      "timeZones": {
+        "type": "object",
+        "propertyNames": { "type": "string" },
+        "additionalProperties": { "$ref": "#/components/schemas/CalendarTimeZone" }
       },
       "categories": { "type": "array", "items": { "type": "string" } },
       "priority": { "type": "integer", "minimum": 0, "maximum": 9 },
@@ -256,6 +304,10 @@
       "excludedRecurrenceDates": {
         "type": "array",
         "items": { "type": "string" }
+      },
+      "excludedRecurrenceRules": {
+        "type": "array",
+        "items": { "$ref": "#/components/schemas/CalendarRecurrenceRule" }
       },
       "recurrenceOverrides": {
         "type": "object",

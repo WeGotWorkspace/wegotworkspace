@@ -89,6 +89,7 @@ final class JmapEventToVEventConverter
         $calendar = new VCalendar([], false);
         $calendar->add('VERSION', '2.0');
         $calendar->add('PRODID', '-//WeGotWorkspace//Calendars REST//EN');
+        TimeZoneSupport::writeTimeZonesToCalendar($calendar, $event);
         $this->appendSeriesVevents($calendar, $event);
 
         return $calendar;
@@ -114,8 +115,15 @@ final class JmapEventToVEventConverter
         }
 
         $masterEvent = CalendarConversionSupport::normalizeEventMapKeys($event);
+        $rdateValues = [];
         foreach ($overrides as $recurrenceIdKey => $patch) {
             if (! is_string($recurrenceIdKey) || $recurrenceIdKey === '' || ! is_array($patch)) {
+                continue;
+            }
+
+            if (self::isRdateOnlyOverride($patch)) {
+                $rdateValues[] = CalendarConversionSupport::utcDateTimeToIcs($recurrenceIdKey);
+
                 continue;
             }
 
@@ -152,6 +160,33 @@ final class JmapEventToVEventConverter
                 );
             }
         }
+
+        if ($rdateValues !== []) {
+            $masterVevent = CalendarConversionSupport::primaryVEvent($calendar);
+            if ($masterVevent !== null) {
+                $masterVevent->add('RDATE', implode(',', $rdateValues));
+            }
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $patch
+     */
+    private static function isRdateOnlyOverride(array $patch): bool
+    {
+        if (RecurrenceOverrideSupport::isExcludedOverride($patch)) {
+            return false;
+        }
+
+        foreach ($patch as $key => $value) {
+            if ($key === '@type') {
+                continue;
+            }
+
+            return false;
+        }
+
+        return true;
     }
 
     private function stripMasterOnlyProperties(VEvent $vevent): void
@@ -216,6 +251,14 @@ final class JmapEventToVEventConverter
             }
         }
 
+        if (isset($event['excludedRecurrenceRules']) && is_array($event['excludedRecurrenceRules'])) {
+            foreach ($event['excludedRecurrenceRules'] as $rule) {
+                if (is_array($rule)) {
+                    $vevent->add('EXRULE', CalendarConversionSupport::recurrenceRuleToIcs($rule));
+                }
+            }
+        }
+
         if (isset($event['excludedRecurrenceDates']) && is_array($event['excludedRecurrenceDates']) && $event['excludedRecurrenceDates'] !== []) {
             $values = array_map(
                 static fn (mixed $value): string => is_string($value)
@@ -229,39 +272,16 @@ final class JmapEventToVEventConverter
             }
         }
 
-        $this->writeLocations($vevent, $event);
+        LocationConversionSupport::writeLocationsAndLinks($vevent, $event);
         $this->writeStatusAndPrivacy($vevent, $event);
         $this->writeTimestamps($vevent, $event);
-        $this->writeParticipants($vevent, $event);
+        ParticipantConversionSupport::writeParticipants($vevent, $event);
         $this->writeAlerts($vevent, $event);
         $this->writeIcsProps($vevent, $event);
 
         $now = gmdate('Ymd\THis\Z');
         if (! isset($vevent->DTSTAMP)) {
             $vevent->add('DTSTAMP', $now);
-        }
-    }
-
-    /**
-     * @param  array<string, mixed>  $event
-     */
-    private function writeLocations(VEvent $vevent, array $event): void
-    {
-        $locations = $event['locations'] ?? null;
-        if (! is_array($locations)) {
-            return;
-        }
-
-        foreach ($locations as $entry) {
-            if (! is_array($entry)) {
-                continue;
-            }
-            $name = $entry['name'] ?? $entry['description'] ?? null;
-            if (is_string($name) && trim($name) !== '') {
-                $vevent->add('LOCATION', trim($name));
-
-                return;
-            }
         }
     }
 
@@ -275,7 +295,16 @@ final class JmapEventToVEventConverter
         }
 
         if (isset($event['freeBusyStatus']) && is_string($event['freeBusyStatus'])) {
-            $vevent->add('TRANSP', $event['freeBusyStatus'] === 'free' ? 'TRANSPARENT' : 'OPAQUE');
+            if ($event['freeBusyStatus'] === 'free') {
+                $vevent->add('TRANSP', 'TRANSPARENT');
+            } elseif ($event['freeBusyStatus'] === 'tentative') {
+                $vevent->add('TRANSP', 'OPAQUE');
+                if (! isset($event['status'])) {
+                    $vevent->add('STATUS', 'TENTATIVE');
+                }
+            } else {
+                $vevent->add('TRANSP', 'OPAQUE');
+            }
         }
 
         if (isset($event['privacy']) && is_string($event['privacy'])) {
@@ -307,41 +336,6 @@ final class JmapEventToVEventConverter
 
         if (isset($event['updated']) && is_string($event['updated'])) {
             $vevent->add('LAST-MODIFIED', CalendarConversionSupport::utcDateTimeToIcs($event['updated']));
-        }
-    }
-
-    /**
-     * @param  array<string, mixed>  $event
-     */
-    private function writeParticipants(VEvent $vevent, array $event): void
-    {
-        $participants = $event['participants'] ?? null;
-        if (! is_array($participants)) {
-            return;
-        }
-
-        foreach ($participants as $entry) {
-            if (! is_array($entry)) {
-                continue;
-            }
-            $email = $entry['email'] ?? null;
-            if (! is_string($email) || trim($email) === '') {
-                continue;
-            }
-            $roles = $entry['roles'] ?? [];
-            $params = ['CN' => $entry['name'] ?? $email];
-            $address = str_starts_with($email, 'mailto:') ? $email : 'mailto:'.$email;
-
-            if (is_array($roles) && in_array('owner', $roles, true)) {
-                $vevent->add('ORGANIZER', $address, $params);
-
-                continue;
-            }
-
-            if (isset($entry['participationStatus']) && is_string($entry['participationStatus'])) {
-                $params['PARTSTAT'] = strtoupper($entry['participationStatus']);
-            }
-            $vevent->add('ATTENDEE', $address, $params);
         }
     }
 

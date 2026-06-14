@@ -4005,6 +4005,36 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "expandRecurrences",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Expand recurring events into instances in the requested window (requires after and before)."
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Window start (required when expandRecurrences is true)."
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Window end (required when expandRecurrences is true)."
           }
         ],
         "responses": {

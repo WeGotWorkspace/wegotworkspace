@@ -5243,6 +5243,17 @@
                     },
                     "language": {
                         "type": "string"
+                    },
+                    "expectReply": {
+                        "type": "boolean"
+                    },
+                    "delegatedTo": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "delegatedFrom": {
+                        "type": "string",
+                        "format": "email"
                     }
                 },
                 "additionalProperties": false
@@ -5299,6 +5310,10 @@
                             "null"
                         ]
                     },
+                    "recurrenceId": {
+                        "type": "string",
+                        "description": "Original instance start for expanded or override rows; null on series masters."
+                    },
                     "locations": {
                         "type": "object",
                         "propertyNames": {
@@ -5309,17 +5324,27 @@
                         }
                     },
                     "recurrenceRules": {
-                        "type": "array",
+                        "type": [
+                            "array",
+                            "null"
+                        ],
                         "items": {
                             "$ref": "#/components/schemas/CalendarRecurrenceRule"
                         },
-                        "description": "RRULE-only; clients expand instances per JMAP Calendars draft."
+                        "description": "RRULE on series masters; null on expanded instances."
                     },
                     "excludedRecurrenceDates": {
                         "type": "array",
                         "items": {
                             "type": "string"
                         }
+                    },
+                    "excludedRecurrenceRules": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CalendarRecurrenceRule"
+                        },
+                        "description": "EXRULE rule-based exclusions (legacy ICS)."
                     },
                     "recurrenceOverrides": {
                         "type": "object",
@@ -5372,6 +5397,33 @@
                         },
                         "additionalProperties": {
                             "$ref": "#/components/schemas/CalendarEventAlert"
+                        }
+                    },
+                    "links": {
+                        "type": "object",
+                        "propertyNames": {
+                            "$ref": "#/components/schemas/JmapId"
+                        },
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/CalendarEventLink"
+                        }
+                    },
+                    "attachments": {
+                        "type": "object",
+                        "propertyNames": {
+                            "$ref": "#/components/schemas/JmapId"
+                        },
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/CalendarEventLink"
+                        }
+                    },
+                    "timeZones": {
+                        "type": "object",
+                        "propertyNames": {
+                            "type": "string"
+                        },
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/CalendarTimeZone"
                         }
                     },
                     "categories": {
@@ -6205,6 +6257,12 @@
                             "type": "string"
                         }
                     },
+                    "excludedRecurrenceRules": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CalendarRecurrenceRule"
+                        }
+                    },
                     "recurrenceOverrides": {
                         "type": "object",
                         "description": "Per-instance patches keyed by recurrence id (original instance start). Maps to RECURRENCE-ID override VEVENTs in ICS.",
@@ -6785,6 +6843,51 @@
                     },
                     "language": {
                         "type": "string"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "CalendarEventLink": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "href"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "Link"
+                    },
+                    "href": {
+                        "type": "string",
+                        "format": "uri"
+                    },
+                    "rel": {
+                        "type": "string"
+                    },
+                    "contentType": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "CalendarTimeZone": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "tzid"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "TimeZone"
+                    },
+                    "tzid": {
+                        "type": "string"
+                    },
+                    "icsDefinition": {
+                        "type": "string",
+                        "description": "Serialized VTIMEZONE component for round-trip."
                     }
                 },
                 "additionalProperties": false
@@ -10705,6 +10808,36 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "name": "expandRecurrences",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "default": false
+                        },
+                        "description": "Expand recurring events into instances in the requested window (requires after and before)."
+                    },
+                    {
+                        "name": "after",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        },
+                        "description": "Window start (required when expandRecurrences is true)."
+                    },
+                    {
+                        "name": "before",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        },
+                        "description": "Window end (required when expandRecurrences is true)."
                     }
                 ],
                 "responses": {

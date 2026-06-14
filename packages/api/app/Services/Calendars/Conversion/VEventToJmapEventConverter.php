@@ -118,6 +118,16 @@ final class VEventToJmapEventConverter
             }
         }
 
+        if (isset($vevent->EXRULE)) {
+            $excludedRules = [];
+            foreach ($vevent->select('EXRULE') as $property) {
+                $excludedRules[] = CalendarConversionSupport::recurrenceRuleFromProperty($property);
+            }
+            if ($excludedRules !== []) {
+                $event['excludedRecurrenceRules'] = $excludedRules;
+            }
+        }
+
         if (isset($vevent->EXDATE)) {
             $excluded = [];
             foreach ($vevent->select('EXDATE') as $property) {
@@ -133,17 +143,25 @@ final class VEventToJmapEventConverter
             }
         }
 
-        if (isset($vevent->LOCATION)) {
-            $location = trim((string) $vevent->LOCATION->getValue());
-            if ($location !== '') {
-                $event['locations'] = [
-                    'loc1' => [
-                        '@type' => 'Location',
-                        'name' => $location,
-                    ],
-                ];
+        if (isset($vevent->RDATE)) {
+            $overrides = $event['recurrenceOverrides'] ?? [];
+            foreach ($vevent->select('RDATE') as $property) {
+                foreach (explode(',', (string) $property->getValue()) as $part) {
+                    $part = trim($part);
+                    if ($part !== '') {
+                        $key = CalendarConversionSupport::normalizeUtcDateTime($part);
+                        if (! isset($overrides[$key])) {
+                            $overrides[$key] = [];
+                        }
+                    }
+                }
+            }
+            if ($overrides !== []) {
+                $event['recurrenceOverrides'] = $overrides;
             }
         }
+
+        LocationConversionSupport::readLocationsAndLinks($vevent, $event);
 
         if (isset($vevent->STATUS)) {
             $status = strtolower(trim((string) $vevent->STATUS->getValue()));
@@ -155,6 +173,10 @@ final class VEventToJmapEventConverter
         if (isset($vevent->TRANSP)) {
             $transp = strtolower(trim((string) $vevent->TRANSP->getValue()));
             $event['freeBusyStatus'] = $transp === 'transparent' ? 'free' : 'busy';
+        }
+
+        if (isset($event['status']) && $event['status'] === 'tentative') {
+            $event['freeBusyStatus'] = 'tentative';
         }
 
         if (isset($vevent->CLASS)) {
@@ -193,51 +215,12 @@ final class VEventToJmapEventConverter
             }
         }
 
-        $this->convertParticipants($vevent, $event);
+        ParticipantConversionSupport::readParticipants($vevent, $event);
         $this->convertAlerts($vevent, $event);
+        TimeZoneSupport::attachTimeZonesToEvent($document, $event);
         $this->convertIcsProps($document, $vevent, $event);
 
         return $event;
-    }
-
-    /**
-     * @param  array<string, mixed>  $event
-     */
-    private function convertParticipants(VEvent $vevent, array &$event): void
-    {
-        $participants = [];
-        $index = 0;
-
-        if (isset($vevent->ORGANIZER)) {
-            $participants['org'] = [
-                '@type' => 'Participant',
-                'name' => $this->participantNameFromProperty($vevent->ORGANIZER),
-                'email' => $this->emailFromCalAddress((string) $vevent->ORGANIZER->getValue()),
-                'roles' => ['owner'],
-            ];
-        }
-
-        if (isset($vevent->ATTENDEE)) {
-            foreach ($vevent->ATTENDEE as $attendee) {
-                $id = 'att'.(++$index);
-                $roles = ['attendee'];
-                $partstat = isset($attendee['PARTSTAT']) ? strtolower((string) $attendee['PARTSTAT']) : null;
-                $entry = [
-                    '@type' => 'Participant',
-                    'name' => $this->participantNameFromProperty($attendee),
-                    'email' => $this->emailFromCalAddress((string) $attendee->getValue()),
-                    'roles' => $roles,
-                ];
-                if ($partstat !== null && $partstat !== '') {
-                    $entry['participationStatus'] = $partstat;
-                }
-                $participants[$id] = $entry;
-            }
-        }
-
-        if ($participants !== []) {
-            $event['participants'] = $participants;
-        }
     }
 
     /**
@@ -269,8 +252,8 @@ final class VEventToJmapEventConverter
     private function convertIcsProps(VCalendar $document, VEvent $vevent, array &$event): void
     {
         $known = [
-            'UID', 'SUMMARY', 'DESCRIPTION', 'DTSTART', 'DTEND', 'DURATION', 'RRULE', 'EXDATE',
-            'LOCATION', 'STATUS', 'TRANSP', 'CLASS', 'CREATED', 'LAST-MODIFIED', 'DTSTAMP',
+            'UID', 'SUMMARY', 'DESCRIPTION', 'DTSTART', 'DTEND', 'DURATION', 'RRULE', 'EXRULE', 'EXDATE', 'RDATE',
+            'LOCATION', 'GEO', 'URL', 'ATTACH', 'STATUS', 'TRANSP', 'CLASS', 'CREATED', 'LAST-MODIFIED', 'DTSTAMP',
             'SEQUENCE', 'PRIORITY', 'CATEGORIES', 'ORGANIZER', 'ATTENDEE', 'RECURRENCE-ID',
         ];
 
@@ -289,27 +272,5 @@ final class VEventToJmapEventConverter
         if ($props !== []) {
             $event['icsProps'] = $props;
         }
-    }
-
-    private function participantNameFromProperty(Property $property): ?string
-    {
-        if (isset($property['CN'])) {
-            $name = trim((string) $property['CN']);
-            if ($name !== '') {
-                return $name;
-            }
-        }
-
-        return null;
-    }
-
-    private function emailFromCalAddress(string $value): ?string
-    {
-        $value = trim($value);
-        if (str_starts_with(strtolower($value), 'mailto:')) {
-            return substr($value, 7);
-        }
-
-        return $value !== '' ? $value : null;
     }
 }

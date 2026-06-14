@@ -116,6 +116,76 @@ final class ICalendarJmapEventConverterTest extends TestCase
         $this->assertSame('email', $event['alerts']['alert2']['action']);
     }
 
+    public function test_participant_scheduling_round_trip(): void
+    {
+        $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:sched-1\r\nSUMMARY:Meeting\r\nDTSTART:20260615T100000Z\r\nDTEND:20260615T110000Z\r\nORGANIZER;CN=Alice:mailto:alice@example.com\r\nATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;RSVP=TRUE;CN=Bob:mailto:bob@example.com\r\nATTENDEE;CUTYPE=RESOURCE;ROLE=OPT-PARTICIPANT;PARTSTAT=DECLINED;DELEGATED-TO=\"mailto:carol@example.com\";CN=Room A:mailto:room@example.com\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+
+        $event = $this->converter->eventFromIcs($ics);
+        $this->assertSame(['owner'], $event['participants']['org']['roles']);
+        $this->assertSame('individual', $event['participants']['att1']['kind']);
+        $this->assertTrue($event['participants']['att1']['expectReply']);
+        $this->assertSame('resource', $event['participants']['att2']['kind']);
+        $this->assertSame('optional', $event['participants']['att2']['roles'][0]);
+        $this->assertSame('carol@example.com', $event['participants']['att2']['delegatedTo']);
+
+        $roundTrip = $this->converter->icsFromEvent($event);
+        $defolded = str_replace("\r\n ", '', $roundTrip);
+        $this->assertStringContainsString('ROLE=REQ-PARTICIPANT', $defolded);
+        $this->assertStringContainsString('CUTYPE=INDIVIDUAL', $defolded);
+        $this->assertStringContainsString('RSVP=TRUE', $defolded);
+        $this->assertStringContainsString('mailto:carol@example.com', $defolded);
+    }
+
+    public function test_geo_url_and_virtual_location_round_trip(): void
+    {
+        $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:loc-1\r\nSUMMARY:Online\r\nDTSTART:20260615T100000Z\r\nDTEND:20260615T110000Z\r\nLOCATION:Zoom Room\r\nGEO:37.386013;-122.082932\r\nURL:https://meet.example.com/room\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+
+        $event = $this->converter->eventFromIcs($ics);
+        $this->assertSame('Zoom Room', $event['locations']['loc1']['name']);
+        $this->assertSame('geo:37.386013;-122.082932', $event['locations']['loc1']['coordinates']);
+        $this->assertSame('https://meet.example.com/room', $event['links']['link1']['href']);
+
+        $roundTrip = $this->converter->icsFromEvent($event);
+        $this->assertStringContainsString('GEO:37.386013;-122.082932', $roundTrip);
+        $this->assertStringContainsString('https://meet.example.com/room', $roundTrip);
+    }
+
+    public function test_rdate_and_exrule_round_trip(): void
+    {
+        $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:rdate-1\r\nSUMMARY:Series\r\nDTSTART:20260601T080000Z\r\nDTEND:20260601T083000Z\r\nRRULE:FREQ=WEEKLY;BYDAY=MO\r\nRDATE:20260615T080000Z\r\nEXRULE:FREQ=WEEKLY;BYDAY=MO;COUNT=1\r\nEXDATE:20260608T080000Z\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+
+        $event = $this->converter->eventFromIcs($ics);
+        $this->assertArrayHasKey('2026-06-15T08:00:00Z', $event['recurrenceOverrides']);
+        $this->assertSame([], $event['recurrenceOverrides']['2026-06-15T08:00:00Z']);
+        $this->assertCount(1, $event['excludedRecurrenceRules']);
+
+        $roundTrip = $this->converter->icsFromEvent($event);
+        $this->assertStringContainsString('RDATE:20260615T080000Z', $roundTrip);
+        $this->assertStringContainsString('EXRULE:', $roundTrip);
+    }
+
+    public function test_tentative_status_maps_to_free_busy_status(): void
+    {
+        $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:tent-1\r\nSUMMARY:Tentative\r\nDTSTART:20260615T100000Z\r\nDTEND:20260615T110000Z\r\nSTATUS:TENTATIVE\r\nTRANSP:OPAQUE\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+
+        $event = $this->converter->eventFromIcs($ics);
+        $this->assertSame('tentative', $event['status']);
+        $this->assertSame('tentative', $event['freeBusyStatus']);
+    }
+
+    public function test_rrule_by_set_position_round_trip(): void
+    {
+        $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:bypos\r\nSUMMARY:Last Friday\r\nDTSTART:20260601T080000Z\r\nDTEND:20260601T083000Z\r\nRRULE:FREQ=MONTHLY;BYSETPOS=-1;BYDAY=FR\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+
+        $event = $this->converter->eventFromIcs($ics);
+        $this->assertSame('monthly', $event['recurrenceRules'][0]['frequency']);
+        $this->assertSame(['FR'], $event['recurrenceRules'][0]['byDay']);
+        $this->assertSame([-1], $event['recurrenceRules'][0]['bySetPosition']);
+
+        $roundTrip = $this->converter->icsFromEvent($event);
+        $this->assertStringContainsString('RRULE:FREQ=MONTHLY;BYDAY=FR;BYSETPOS=-1', $roundTrip);
+    }
+
     public function test_alerts_round_trip_to_valarm(): void
     {
         $event = [
