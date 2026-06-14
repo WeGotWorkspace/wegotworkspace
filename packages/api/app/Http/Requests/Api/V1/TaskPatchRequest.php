@@ -60,6 +60,10 @@ final class TaskPatchRequest extends FormRequest
                 'string',
                 Rule::in(['public', 'private', 'secret']),
             ],
+            'recurrenceRules' => ['sometimes', 'array'],
+            'excludedRecurrenceDates' => ['sometimes', 'array'],
+            'recurrenceOverrides' => ['sometimes', 'array'],
+            'alerts' => ['sometimes', 'array'],
         ];
     }
 }

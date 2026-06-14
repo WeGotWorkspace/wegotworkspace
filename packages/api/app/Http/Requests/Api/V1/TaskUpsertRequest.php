@@ -88,6 +88,10 @@ final class TaskUpsertRequest extends FormRequest
             ],
             'created' => ['sometimes', 'nullable', 'string'],
             'updated' => ['sometimes', 'nullable', 'string'],
+            'recurrenceRules' => ['sometimes', 'array'],
+            'excludedRecurrenceDates' => ['sometimes', 'array'],
+            'recurrenceOverrides' => ['sometimes', 'array'],
+            'alerts' => ['sometimes', 'array'],
         ];
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Tasks\Conversion;
 
+use App\Services\Calendars\Conversion\CalendarConversionSupport;
 use Sabre\VObject\Component\VCalendar;
 use Sabre\VObject\Component\VTodo;
 use Sabre\VObject\Reader;
@@ -25,14 +26,87 @@ final class IcsToJmapTaskConverter
             return [];
         }
 
-        $tasks = [];
+        /** @var list<VTodo> $components */
+        $components = [];
         foreach ($vobject->getComponents('VTODO') as $component) {
             if ($component instanceof VTodo) {
-                $tasks[] = $this->convertComponent($component);
+                $components[] = $component;
             }
         }
 
+        return $this->tasksFromComponents($components);
+    }
+
+    /**
+     * @param  list<VTodo>  $components
+     * @return list<array<string, mixed>>
+     */
+    private function tasksFromComponents(array $components): array
+    {
+        /** @var array<string, list<VTodo>> $grouped */
+        $grouped = [];
+        foreach ($components as $index => $component) {
+            $uid = isset($component->UID) ? trim((string) $component->UID->getValue()) : '';
+            $key = $uid !== '' ? $uid : '__anonymous_'.$index;
+            $grouped[$key][] = $component;
+        }
+
+        $tasks = [];
+        foreach ($grouped as $group) {
+            $tasks[] = $this->convertGroupedComponents($group);
+        }
+
         return $tasks;
+    }
+
+    /**
+     * @param  list<VTodo>  $group
+     * @return array<string, mixed>
+     */
+    private function convertGroupedComponents(array $group): array
+    {
+        if (count($group) === 1) {
+            return $this->convertComponent($group[0]);
+        }
+
+        $master = null;
+        $overrides = [];
+        foreach ($group as $todo) {
+            if (isset($todo->{'RECURRENCE-ID'})) {
+                $overrides[] = $todo;
+
+                continue;
+            }
+            if ($master === null || isset($todo->RRULE)) {
+                $master = $todo;
+            }
+        }
+
+        if ($master === null) {
+            $master = $group[0];
+        }
+
+        $task = $this->convertComponent($master);
+        if ($overrides !== []) {
+            $recurrenceOverrides = [];
+            foreach ($overrides as $override) {
+                $recurrenceId = isset($override->{'RECURRENCE-ID'})
+                    ? TaskConversionSupport::formatIcalDateTime((string) $override->{'RECURRENCE-ID'}->getValue())
+                    : null;
+                if ($recurrenceId === null || $recurrenceId === '') {
+                    continue;
+                }
+                $patch = TaskConversionSupport::recurrenceOverrideFromVtodo($override);
+                if ($patch !== []) {
+                    $recurrenceOverrides[$recurrenceId] = $patch;
+                }
+            }
+            if ($recurrenceOverrides !== []) {
+                $task['recurrenceOverrides'] = $recurrenceOverrides;
+            }
+        }
+
+        return $task;
     }
 
     /**
@@ -84,7 +158,60 @@ final class IcsToJmapTaskConverter
                 : null,
         ];
 
+        $this->applyRecurrenceFromTodo($todo, $task);
+        $this->applyAlertsFromTodo($todo, $task);
+
         return $task;
+    }
+
+    /**
+     * @param  array<string, mixed>  $task
+     */
+    private function applyRecurrenceFromTodo(VTodo $todo, array &$task): void
+    {
+        if (isset($todo->RRULE)) {
+            $rules = [];
+            foreach ($todo->select('RRULE') as $property) {
+                $rules[] = CalendarConversionSupport::recurrenceRuleFromProperty($property);
+            }
+            if ($rules !== []) {
+                $task['recurrenceRules'] = $rules;
+            }
+        }
+
+        if (isset($todo->EXDATE)) {
+            $excluded = [];
+            foreach ($todo->select('EXDATE') as $property) {
+                foreach (explode(',', (string) $property->getValue()) as $part) {
+                    $part = trim($part);
+                    if ($part !== '') {
+                        $excluded[] = TaskConversionSupport::formatIcalDateTime($part) ?? CalendarConversionSupport::normalizeUtcDateTime($part);
+                    }
+                }
+            }
+            if ($excluded !== []) {
+                $task['excludedRecurrenceDates'] = array_values(array_unique($excluded));
+            }
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $task
+     */
+    private function applyAlertsFromTodo(VTodo $todo, array &$task): void
+    {
+        $alerts = [];
+        $index = 0;
+        foreach ($todo->getComponents('VALARM') as $valarm) {
+            $alert = CalendarConversionSupport::alertFromValarm($valarm);
+            if ($alert !== null) {
+                $alerts['alert'.(++$index)] = $alert;
+            }
+        }
+
+        if ($alerts !== []) {
+            $task['alerts'] = $alerts;
+        }
     }
 
     private static function normalizePriority(?int $priority): ?int

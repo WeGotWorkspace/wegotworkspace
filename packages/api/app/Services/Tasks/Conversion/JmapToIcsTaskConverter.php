@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Tasks\Conversion;
 
+use App\Services\Calendars\Conversion\CalendarConversionSupport;
 use Sabre\VObject\Component\VCalendar;
 use Sabre\VObject\Component\VTodo;
 use Sabre\VObject\Reader;
@@ -21,7 +22,7 @@ final class JmapToIcsTaskConverter
             'PRODID' => $prodId ?? '-//WeGotWorkspace//Tasks API//EN',
         ]);
 
-        $this->addTodoToCalendar($calendar, $task);
+        $this->writeTaskSeries($calendar, $task);
 
         return Writer::write($calendar);
     }
@@ -45,15 +46,11 @@ final class JmapToIcsTaskConverter
         $matchUid = $targetUid ?? $uid;
 
         if ($matchUid !== '') {
-            foreach ($calendar->getComponents('VTODO') as $existing) {
-                if ($existing instanceof VTodo && isset($existing->UID) && (string) $existing->UID->getValue() === $matchUid) {
-                    $calendar->remove($existing);
-                    break;
-                }
-            }
+            $this->removeVtodoComponents($calendar, static fn (VTodo $existing): bool => isset($existing->UID)
+                && (string) $existing->UID->getValue() === $matchUid);
         }
 
-        $this->addTodoToCalendar($calendar, $task);
+        $this->writeTaskSeries($calendar, $task);
 
         return Writer::write($calendar);
     }
@@ -73,12 +70,8 @@ final class JmapToIcsTaskConverter
             return null;
         }
 
-        foreach ($calendar->getComponents('VTODO') as $existing) {
-            if ($existing instanceof VTodo && isset($existing->UID) && (string) $existing->UID->getValue() === $uid) {
-                $calendar->remove($existing);
-                break;
-            }
-        }
+        $this->removeVtodoComponents($calendar, static fn (VTodo $existing): bool => isset($existing->UID)
+            && (string) $existing->UID->getValue() === $uid);
 
         if ($calendar->getComponents('VTODO') === []) {
             return null;
@@ -90,11 +83,38 @@ final class JmapToIcsTaskConverter
     /**
      * @param  array<string, mixed>  $task
      */
-    private function addTodoToCalendar(VCalendar $calendar, array $task): void
+    private function writeTaskSeries(VCalendar $calendar, array $task): void
     {
+        $task = TaskConversionSupport::normalizeTaskMapKeys($task);
+        $this->addTodoToCalendar($calendar, $task, includeRecurrence: true);
+
+        foreach (TaskConversionSupport::writableRecurrenceOverrides($task) as $recurrenceId => $patch) {
+            $overrideTask = TaskConversionSupport::mergeTaskPatch($task, $patch);
+            unset(
+                $overrideTask['recurrenceRules'],
+                $overrideTask['recurrenceOverrides'],
+                $overrideTask['excludedRecurrenceDates'],
+            );
+            $this->addTodoToCalendar($calendar, $overrideTask, includeRecurrence: false, recurrenceId: $recurrenceId);
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $task
+     */
+    private function addTodoToCalendar(
+        VCalendar $calendar,
+        array $task,
+        bool $includeRecurrence,
+        ?string $recurrenceId = null,
+    ): VTodo {
         $properties = [
             'UID' => (string) ($task['uid'] ?? ''),
         ];
+
+        if ($recurrenceId !== null) {
+            $properties['RECURRENCE-ID'] = TaskConversionSupport::toIcalDateTime($recurrenceId);
+        }
 
         if (isset($task['title']) && is_string($task['title']) && trim($task['title']) !== '') {
             $properties['SUMMARY'] = trim($task['title']);
@@ -144,6 +164,65 @@ final class JmapToIcsTaskConverter
 
         if (isset($task['categories']) && is_array($task['categories']) && $task['categories'] !== []) {
             $todo->add('CATEGORIES', implode(',', array_map('strval', $task['categories'])));
+        }
+
+        if ($includeRecurrence) {
+            $this->writeRecurrenceProperties($todo, $task);
+        }
+
+        if (isset($task['alerts']) && is_array($task['alerts']) && $task['alerts'] !== []) {
+            CalendarConversionSupport::writeValarmComponents($todo, $task['alerts']);
+        }
+
+        return $todo;
+    }
+
+    /**
+     * @param  array<string, mixed>  $task
+     */
+    private function writeRecurrenceProperties(VTodo $todo, array $task): void
+    {
+        if (isset($task['recurrenceRules']) && is_array($task['recurrenceRules'])) {
+            foreach ($task['recurrenceRules'] as $rule) {
+                if (is_array($rule)) {
+                    $todo->add('RRULE', CalendarConversionSupport::recurrenceRuleToIcs($rule));
+                }
+            }
+        }
+
+        $excluded = TaskConversionSupport::excludedDatesFromRecurrenceOverrides($task);
+        if ($excluded !== []) {
+            $values = array_values(array_filter(array_map(
+                static fn (mixed $value): string => is_string($value)
+                    ? (TaskConversionSupport::toIcalDateTime($value) ?? '')
+                    : '',
+                $excluded,
+            ), static fn (string $value): bool => $value !== ''));
+            if ($values !== []) {
+                $todo->add('EXDATE', implode(',', $values));
+            }
+        } elseif (isset($task['excludedRecurrenceDates']) && is_array($task['excludedRecurrenceDates']) && $task['excludedRecurrenceDates'] !== []) {
+            $values = array_values(array_filter(array_map(
+                static fn (mixed $value): string => is_string($value)
+                    ? (TaskConversionSupport::toIcalDateTime($value) ?? '')
+                    : '',
+                $task['excludedRecurrenceDates'],
+            ), static fn (string $value): bool => $value !== ''));
+            if ($values !== []) {
+                $todo->add('EXDATE', implode(',', $values));
+            }
+        }
+    }
+
+    /**
+     * @param  callable(VTodo): bool  $matcher
+     */
+    private function removeVtodoComponents(VCalendar $calendar, callable $matcher): void
+    {
+        foreach ($calendar->getComponents('VTODO') as $existing) {
+            if ($existing instanceof VTodo && $matcher($existing)) {
+                $calendar->remove($existing);
+            }
         }
     }
 }
