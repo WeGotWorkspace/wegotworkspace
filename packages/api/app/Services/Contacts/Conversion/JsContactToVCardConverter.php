@@ -12,10 +12,14 @@ final class JsContactToVCardConverter
     /** RFC 9555 §3 reverse conversion; optional uid per RFC 9982 when Card.version is "2.0"+. */
     private int $groupCounter = 0;
 
+    /** @var array<string, string> */
+    private array $organizationGroups = [];
+
     public function convert(array $card): string
     {
         $card = ConversionSupport::normalizeCardMapKeys($card);
         $this->groupCounter = 0;
+        $this->organizationGroups = [];
         $vcard = new VCard([], false);
 
         $version = $this->versionFromCard($card);
@@ -67,6 +71,7 @@ final class JsContactToVCardConverter
         $this->writeCryptoKeys($vcard, $card);
         $this->writeCalendars($vcard, $card);
         $this->writeSchedulingAddresses($vcard, $card);
+        LocalizationSupport::writeToVCard($vcard, $card);
         $this->writeVCardProps($vcard, $card);
 
         return $vcard->serialize();
@@ -110,6 +115,16 @@ final class JsContactToVCardConverter
             if ($sortAs !== []) {
                 $params['sort-as'] = implode(',', $sortAs);
             }
+        }
+        if (JscopmsSupport::shouldEmitJscopms($components, (bool) ($name['isOrdered'] ?? false), false)) {
+            $params = array_merge(
+                $params,
+                JscopmsSupport::jscopmsParamsFromComponents(
+                    $components,
+                    false,
+                    isset($name['defaultSeparator']) ? (string) $name['defaultSeparator'] : null,
+                ),
+            );
         }
         $vcard->add('N', $parts, $params);
     }
@@ -208,7 +223,25 @@ final class JsContactToVCardConverter
             if (isset($entry['timeZone'])) {
                 $params['tz'] = (string) $entry['timeZone'];
             }
-            $vcard->add('ADR', $parts, $params);
+            if (JscopmsSupport::shouldEmitJscopms(
+                is_array($components) ? $components : [],
+                (bool) ($entry['isOrdered'] ?? false),
+                $useRfc9554,
+            )) {
+                $params = array_merge(
+                    $params,
+                    JscopmsSupport::jscopmsParamsFromComponents(
+                        is_array($components) ? $components : [],
+                        $useRfc9554,
+                        isset($entry['defaultSeparator']) ? (string) $entry['defaultSeparator'] : null,
+                    ),
+                );
+            }
+            $group = $this->maybeWriteLabel($vcard, $entry, $params);
+            $property = $vcard->add('ADR', $parts, $params);
+            if ($group !== null) {
+                $property->group = $group;
+            }
         }
     }
 
@@ -241,7 +274,12 @@ final class JsContactToVCardConverter
                 }
                 $params['sort-as'] = implode(',', $sortAs);
             }
-            $vcard->add('ORG', $parts, $params);
+            $group = $this->maybeWriteLabel($vcard, $entry, $params);
+            $property = $vcard->add('ORG', $parts, $params);
+            if ($group !== null) {
+                $property->group = $group;
+                $this->organizationGroups[$id] = $group;
+            }
         }
     }
 
@@ -276,7 +314,10 @@ final class JsContactToVCardConverter
     private function writeMedia(VCard $vcard, array $card): void
     {
         foreach ($this->idMapEntries($card['media'] ?? null) as $id => $entry) {
-            if (! is_array($entry) || ! isset($entry['uri'], $entry['kind'])) {
+            if (! is_array($entry) || ! isset($entry['kind'])) {
+                continue;
+            }
+            if (! isset($entry['uri']) && ! isset($entry['blobId'])) {
                 continue;
             }
             $propertyName = match ((string) $entry['kind']) {
@@ -285,7 +326,10 @@ final class JsContactToVCardConverter
                 default => 'PHOTO',
             };
             $params = $this->sharedParams($entry, $id);
-            $uri = (string) $entry['uri'];
+            $uri = isset($entry['uri']) ? (string) $entry['uri'] : '';
+            if ($uri === '') {
+                continue;
+            }
             if (str_starts_with(strtolower($uri), 'data:')) {
                 if (preg_match('#^data:([^;]+);base64,(.+)$#i', $uri, $matches) === 1) {
                     $params['value'] = 'BINARY';
@@ -355,7 +399,18 @@ final class JsContactToVCardConverter
             }
             $kind = (string) ($entry['kind'] ?? 'title');
             $propertyName = $kind === 'role' ? 'ROLE' : 'TITLE';
-            $vcard->add($propertyName, (string) $entry['name'], $this->sharedParams($entry, $id));
+            $params = $this->sharedParams($entry, $id);
+            $group = null;
+            if (isset($entry['organizationId']) && is_string($entry['organizationId'])) {
+                $group = $this->organizationGroups[$entry['organizationId']] ?? null;
+            }
+            if ($group === null) {
+                $group = $this->maybeWriteLabel($vcard, $entry, $params);
+            }
+            $property = $vcard->add($propertyName, (string) $entry['name'], $params);
+            if ($group !== null) {
+                $property->group = $group;
+            }
         }
     }
 
@@ -667,9 +722,18 @@ final class JsContactToVCardConverter
     private function maybeWriteLabel(VCard $vcard, array $entry, array $params): ?string
     {
         if (! isset($entry['label']) || ! is_string($entry['label']) || $entry['label'] === '') {
+            $vCardParams = ConversionSupport::vCardParamsFromObject($entry);
+            if (is_array($vCardParams) && isset($vCardParams['group']) && is_string($vCardParams['group'])) {
+                return $vCardParams['group'];
+            }
+
             return null;
         }
-        $group = 'item'.(++$this->groupCounter);
+
+        $vCardParams = ConversionSupport::vCardParamsFromObject($entry);
+        $group = (is_array($vCardParams) && isset($vCardParams['group']) && is_string($vCardParams['group']))
+            ? $vCardParams['group']
+            : 'item'.(++$this->groupCounter);
         $labelProperty = $vcard->add('X-ABLABEL', $entry['label']);
         $labelProperty->group = $group;
 
