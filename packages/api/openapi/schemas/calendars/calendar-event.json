@@ -99,6 +99,7 @@
       "sequence": { "type": "integer", "minimum": 0 },
       "created": { "$ref": "#/components/schemas/JmapUTCDateTime" },
       "updated": { "$ref": "#/components/schemas/JmapUTCDateTime" },
+      "etag": { "$ref": "#/components/schemas/DavEtag" },
       "icsProps": {
         "type": "object",
         "additionalProperties": { "type": "string" }
