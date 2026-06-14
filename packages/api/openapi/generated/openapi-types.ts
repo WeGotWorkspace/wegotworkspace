@@ -7541,8 +7541,6 @@ export interface components {
             start?: string | null;
             due?: string | null;
             completed?: string | null;
-            showWithoutTime?: boolean;
-            timeZone?: string | null;
             workflowStatus?: string | null;
             progress?: number | null;
             priority?: number | null;
@@ -7565,14 +7563,6 @@ export interface components {
             alerts?: {
                 [key: string]: components["schemas"]["TaskAlert"];
             };
-            /** @description Task assignees mapped from ORGANIZER/ATTENDEE. */
-            participants?: {
-                [key: string]: components["schemas"]["TaskParticipant"];
-            };
-            /** @description Unmapped VTODO properties preserved for round-trip fidelity. */
-            icsProps?: {
-                [key: string]: string;
-            };
         };
         TaskListResponse: {
             list: components["schemas"]["Task"][];
@@ -7587,8 +7577,6 @@ export interface components {
             start?: string | null;
             due?: string | null;
             completed?: string | null;
-            showWithoutTime?: boolean;
-            timeZone?: string | null;
             workflowStatus?: string | null;
             progress?: number | null;
             priority?: number | null;
@@ -7601,12 +7589,6 @@ export interface components {
             };
             alerts?: {
                 [key: string]: components["schemas"]["TaskAlert"];
-            };
-            participants?: {
-                [key: string]: components["schemas"]["TaskParticipant"];
-            };
-            icsProps?: {
-                [key: string]: string;
             };
         };
         TaskPatch: {
@@ -7615,8 +7597,6 @@ export interface components {
             start?: string | null;
             due?: string | null;
             completed?: string | null;
-            showWithoutTime?: boolean;
-            timeZone?: string | null;
             workflowStatus?: string | null;
             progress?: number | null;
             priority?: number | null;
@@ -7629,12 +7609,6 @@ export interface components {
             };
             alerts?: {
                 [key: string]: components["schemas"]["TaskAlert"];
-            };
-            participants?: {
-                [key: string]: components["schemas"]["TaskParticipant"];
-            };
-            icsProps?: {
-                [key: string]: string;
             };
         };
         /** @description PATCH request body for partial calendar event updates. Omits server-owned id and @type. */
@@ -7707,8 +7681,6 @@ export interface components {
             start?: string | null;
             due?: string | null;
             completed?: string | null;
-            showWithoutTime?: boolean;
-            timeZone?: string | null;
             workflowStatus?: string | null;
             progress?: number | null;
             /** @description When true, exclude this recurrence instance (EXDATE) */
