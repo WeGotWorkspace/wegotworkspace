@@ -125,5 +125,5 @@ export function buildOpenApiBuiltJson() {
 
 if (import.meta.url === new URL(process.argv[1], "file://").href) {
   const filePath = buildOpenApiBuiltJson();
-  process.stdout.write(`Using ${filePath}\n`);
+  process.stdout.write(`Wrote ${filePath}\n`);
 }
