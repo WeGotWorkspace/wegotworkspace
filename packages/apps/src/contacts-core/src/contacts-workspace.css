@@ -1,0 +1,8 @@
+.contacts-workspace {
+  /* Full workspace layout lives in contacts-workspace.tsx (next chunk). */
+}
+
+.contacts-story-scope--list-column,
+.contacts-story-scope--detail {
+  min-height: 100dvh;
+}

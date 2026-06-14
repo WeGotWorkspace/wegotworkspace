@@ -1,0 +1,104 @@
+import type { AddressBook, ContactCard } from "@wgw-api-generated/contacts-types";
+import type { ContactsUIData } from "@/contacts-core/src/contacts-types";
+import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
+
+import { mockWorkspaceSession } from "./workspace-session-mock";
+
+export type ContactsAppBootstrap = {
+  data: ContactsUIData;
+  session: WorkspaceSession;
+};
+
+const fullRights: AddressBook["myRights"] = {
+  mayRead: true,
+  mayWrite: true,
+  mayShare: true,
+  mayDelete: false,
+};
+
+const mockAddressBooks: AddressBook[] = [
+  {
+    id: "default",
+    name: "Default Address Book",
+    description: null,
+    sortOrder: 0,
+    isDefault: true,
+    isSubscribed: true,
+    shareWith: null,
+    myRights: fullRights,
+  },
+  {
+    id: "work",
+    name: "Work",
+    description: null,
+    sortOrder: 1,
+    isDefault: false,
+    isSubscribed: true,
+    shareWith: null,
+    myRights: {
+      mayRead: true,
+      mayWrite: true,
+      mayShare: false,
+      mayDelete: true,
+    },
+  },
+];
+
+const mockCards = [
+  {
+    "@type": "Card",
+    version: "1.0",
+    id: "card-jane",
+    uid: "urn:uuid:550e8400-e29b-41d4-a716-446655440010",
+    addressBookIds: { default: true as const },
+    name: { "@type": "Name" as const, isOrdered: false, full: "Jane Doe" },
+    organizations: {
+      "550e8400-e29b-41d4-a716-446655440011": {
+        "@type": "Organization" as const,
+        name: "Acme Corp",
+      },
+    },
+    emails: {
+      "550e8400-e29b-41d4-a716-446655440012": {
+        "@type": "EmailAddress" as const,
+        address: "jane@example.com",
+      },
+    },
+    phones: {
+      "550e8400-e29b-41d4-a716-446655440013": {
+        "@type": "Phone" as const,
+        number: "+1-555-0101",
+      },
+    },
+  },
+  {
+    "@type": "Card",
+    version: "1.0",
+    id: "card-joe",
+    uid: "urn:uuid:550e8400-e29b-41d4-a716-446655440020",
+    addressBookIds: { work: true as const },
+    name: { "@type": "Name" as const, isOrdered: false, full: "Joe Example" },
+    emails: {
+      "550e8400-e29b-41d4-a716-446655440021": {
+        "@type": "EmailAddress" as const,
+        address: "joe@example.com",
+      },
+    },
+    phones: {
+      "550e8400-e29b-41d4-a716-446655440022": {
+        "@type": "Phone" as const,
+        number: "+1-555-0100",
+      },
+    },
+  },
+] as unknown as ContactCard[];
+
+export function createContactsAppBootstrap(overrides?: {
+  data?: ContactsUIData;
+  session?: WorkspaceSession;
+}): ContactsAppBootstrap {
+  return {
+    data: overrides?.data ?? { addressBooks: mockAddressBooks, cards: mockCards },
+    session: overrides?.session ?? mockWorkspaceSession,
+  };
+}
