@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Calendars\Conversion;
 
 use Illuminate\Support\Str;
+use Sabre\VObject\Component\VAlarm;
 use Sabre\VObject\Component\VCalendar;
 use Sabre\VObject\Component\VEvent;
 use Sabre\VObject\Property;
@@ -355,6 +356,143 @@ final class CalendarConversionSupport
     public static function compositeEventId(string $objectId, string $veventUid): string
     {
         return $objectId.'#'.$veventUid;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public static function alertFromValarm(VAlarm $valarm): ?array
+    {
+        if (! isset($valarm->TRIGGER)) {
+            return null;
+        }
+
+        $trigger = $valarm->TRIGGER;
+        $triggerValue = trim((string) $trigger->getValue());
+        if ($triggerValue === '') {
+            return null;
+        }
+
+        $action = isset($valarm->ACTION)
+            ? strtolower(trim((string) $valarm->ACTION->getValue()))
+            : 'display';
+        if (! in_array($action, ['display', 'audio', 'email'], true)) {
+            $action = 'display';
+        }
+
+        $alert = [
+            '@type' => 'Alert',
+            'action' => $action,
+        ];
+
+        $isDateTime = isset($trigger['VALUE'])
+            && strtoupper((string) $trigger['VALUE']) === 'DATE-TIME';
+        if ($isDateTime || preg_match('/^\d{8}T\d{6}Z?$/', $triggerValue) === 1) {
+            $alert['trigger'] = [
+                '@type' => 'AbsoluteAlert',
+                'when' => self::normalizeUtcDateTime($triggerValue),
+            ];
+
+            return $alert;
+        }
+
+        $relatedTo = isset($trigger['RELATED'])
+            && strtoupper((string) $trigger['RELATED']) === 'END'
+            ? 'end'
+            : 'start';
+
+        $relative = [
+            '@type' => 'RelativeAlert',
+            'offset' => $triggerValue,
+        ];
+        if ($relatedTo !== 'start') {
+            $relative['relatedTo'] = $relatedTo;
+        }
+        $alert['trigger'] = $relative;
+
+        return $alert;
+    }
+
+    /**
+     * @param  array<string, mixed>  $alert
+     */
+    public static function writeValarm(VEvent $vevent, array $alert, ?string $eventTitle = null): void
+    {
+        $triggerData = $alert['trigger'] ?? null;
+        if (! is_array($triggerData)) {
+            return;
+        }
+
+        $triggerProps = self::valarmTriggerFromJmap($triggerData);
+        if ($triggerProps === null) {
+            return;
+        }
+
+        $action = isset($alert['action']) && is_string($alert['action'])
+            ? strtoupper($alert['action'])
+            : 'DISPLAY';
+        if (! in_array($action, ['DISPLAY', 'AUDIO', 'EMAIL'], true)) {
+            $action = 'DISPLAY';
+        }
+
+        $valarm = $vevent->add('VALARM', []);
+        $valarm->add('ACTION', $action);
+        $valarm->add('TRIGGER', $triggerProps['value'], $triggerProps['params']);
+
+        if ($action === 'DISPLAY') {
+            $valarm->add('DESCRIPTION', 'Reminder');
+        }
+
+        if ($action === 'EMAIL') {
+            $summary = is_string($eventTitle) && trim($eventTitle) !== ''
+                ? trim($eventTitle)
+                : 'Reminder';
+            $valarm->add('SUMMARY', $summary);
+            $valarm->add('ATTENDEE', 'mailto:organizer@invalid');
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $trigger
+     * @return array{value: string, params: array<string, string>}|null
+     */
+    private static function valarmTriggerFromJmap(array $trigger): ?array
+    {
+        $type = $trigger['@type'] ?? '';
+
+        if ($type === 'AbsoluteAlert' || isset($trigger['when'])) {
+            $when = $trigger['when'] ?? null;
+            if (! is_string($when) || trim($when) === '') {
+                return null;
+            }
+
+            return [
+                'value' => self::utcDateTimeToIcs($when),
+                'params' => ['VALUE' => 'DATE-TIME'],
+            ];
+        }
+
+        if ($type === 'RelativeAlert' || isset($trigger['offset'])) {
+            $offset = $trigger['offset'] ?? null;
+            if (! is_string($offset) || trim($offset) === '') {
+                return null;
+            }
+
+            $params = [];
+            $relatedTo = isset($trigger['relatedTo']) && is_string($trigger['relatedTo'])
+                ? strtolower($trigger['relatedTo'])
+                : 'start';
+            if ($relatedTo === 'end') {
+                $params['RELATED'] = 'END';
+            }
+
+            return [
+                'value' => $offset,
+                'params' => $params,
+            ];
+        }
+
+        return null;
     }
 
     /**
