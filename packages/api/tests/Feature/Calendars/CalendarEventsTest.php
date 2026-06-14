@@ -221,4 +221,59 @@ final class CalendarEventsTest extends WgwDatabaseTestCase
             CalendarObject::query()->where('uri', 'solo-event.ics')->first()
         );
     }
+
+    public function test_recurring_with_override_returns_single_event_with_recurrence_overrides(): void
+    {
+        $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:series-api\r\nSUMMARY:Weekly Sync\r\nDTSTART:20260610T090000Z\r\nDTEND:20260610T093000Z\r\nRRULE:FREQ=WEEKLY;BYDAY=MO\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:series-api\r\nRECURRENCE-ID:20260617T090000Z\r\nDTSTART:20260617T140000Z\r\nDTEND:20260617T143000Z\r\nSUMMARY:Weekly Sync (moved)\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+        $eventId = $this->seedEventViaPdo('bob', 'weekly-sync.ics', $ics);
+
+        $response = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/calendars/events/'.$eventId);
+
+        $response->assertOk()
+            ->assertJsonPath('uid', 'series-api')
+            ->assertJsonPath('recurrenceOverrides.2026-06-17T09:00:00Z.start', '2026-06-17T14:00:00Z')
+            ->assertJsonPath('recurrenceOverrides.2026-06-17T09:00:00Z.title', 'Weekly Sync (moved)');
+
+        $list = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/calendars/events?calendarId=default')
+            ->assertOk()
+            ->json('list');
+
+        $this->assertCount(1, $list);
+        $this->assertSame($eventId, $list[0]['id']);
+    }
+
+    public function test_patch_recurrence_overrides_updates_single_instance_in_ics(): void
+    {
+        $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:series-patch\r\nSUMMARY:Daily Standup\r\nDTSTART:20260610T090000Z\r\nDTEND:20260610T093000Z\r\nRRULE:FREQ=DAILY\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+        $eventId = $this->seedEventViaPdo('bob', 'daily-standup.ics', $ics);
+
+        $this->withBearer($this->userBearerToken())
+            ->patchJson('/api/v1/calendars/events/'.$eventId, [
+                'recurrenceOverrides' => [
+                    '2026-06-12T09:00:00Z' => [
+                        'start' => '2026-06-12T14:00:00Z',
+                        'end' => '2026-06-12T14:30:00Z',
+                        'title' => 'Daily Standup (rescheduled)',
+                    ],
+                    '2026-06-13T09:00:00Z' => [
+                        'excluded' => true,
+                    ],
+                ],
+            ])
+            ->assertOk()
+            ->assertJsonPath('recurrenceOverrides.2026-06-12T09:00:00Z.start', '2026-06-12T14:00:00Z')
+            ->assertJsonPath('recurrenceOverrides.2026-06-13T09:00:00Z.excluded', true);
+
+        $stored = CalendarObject::query()->where('uri', 'daily-standup.ics')->first();
+        $this->assertNotNull($stored);
+        $blob = is_string($stored->calendardata) ? $stored->calendardata : (string) $stored->calendardata;
+        $this->assertStringContainsString('RRULE:FREQ=DAILY', $blob);
+        $this->assertStringContainsString('RECURRENCE-ID:20260612T090000Z', $blob);
+        $this->assertStringContainsString('DTSTART:20260612T140000Z', $blob);
+        $this->assertStringContainsString('SUMMARY:Daily Standup (rescheduled)', $blob);
+        $this->assertStringContainsString('RECURRENCE-ID:20260613T090000Z', $blob);
+        $this->assertStringContainsString('STATUS:CANCELLED', $blob);
+    }
 }

@@ -36,6 +36,7 @@ Returned by event endpoints. `@type` is always `"Event"`.
 | `timeZone` | string | TZID when floating/local |
 | `recurrenceRules` | array | Master RRULE — **not** expanded instances |
 | `excludedRecurrenceDates` | array | EXDATE values |
+| `recurrenceOverrides` | map | RECURRENCE-ID override VEVENTs keyed by instance start |
 | `locations` | map | LOCATION → `Location` |
 | `participants` | map | ORGANIZER / ATTENDEE |
 | `status` | string | `confirmed` \| `cancelled` \| `tentative` |
