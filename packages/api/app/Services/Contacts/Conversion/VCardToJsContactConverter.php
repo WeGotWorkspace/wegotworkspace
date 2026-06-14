@@ -10,7 +10,6 @@ use Sabre\VObject\Reader;
 
 final class VCardToJsContactConverter
 {
-
     /** @var array<string, string> */
     private array $groupLabels = [];
 
