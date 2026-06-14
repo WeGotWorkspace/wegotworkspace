@@ -3226,6 +3226,9 @@
                     "updated": {
                         "$ref": "#/components/schemas/JsContactUTCDateTime"
                     },
+                    "etag": {
+                        "$ref": "#/components/schemas/DavEtag"
+                    },
                     "kind": {
                         "type": "string",
                         "enum": [
@@ -5270,6 +5273,11 @@
                     }
                 },
                 "additionalProperties": false
+            },
+            "DavEtag": {
+                "type": "string",
+                "readOnly": true,
+                "description": "Quoted HTTP entity tag aligned with Cal/CardDAV storage (Sabre PDO etag)."
             }
         }
     },

@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Tests\Feature\Contacts;
 
 use Tests\Support\ContactsTestFixtures;
+use Tests\Support\OptimisticConcurrencyTestHelpers;
 use Tests\Support\WgwDatabaseTestCase;
 
 final class ContactsCardsTest extends WgwDatabaseTestCase
 {
     use ContactsTestFixtures;
+    use OptimisticConcurrencyTestHelpers;
 
     protected function setUp(): void
     {
@@ -146,15 +148,16 @@ final class ContactsCardsTest extends WgwDatabaseTestCase
     public function test_update_card_replaces_fields(): void
     {
         $cardId = $this->seedCardViaPdo('bob', 'jane-doe.vcf', $this->sampleVcard('Jane Doe'));
+        $url = '/api/v1/contacts/cards/'.$cardId;
 
         $response = $this->withBearer($this->userBearerToken())
-            ->putJson('/api/v1/contacts/cards/'.$cardId, [
+            ->putJson($url, [
                 'addressBookIds' => ['default' => true],
                 'name' => ['full' => 'Jane Smith'],
                 'emails' => [
                     '550e8400-e29b-41d4-a716-446655440001' => ['address' => 'jane.smith@example.com'],
                 ],
-            ]);
+            ], $this->withIfMatch($this->fetchEtagFromGet($url)));
 
         $response->assertOk()
             ->assertJsonPath('id', $cardId)
@@ -169,9 +172,10 @@ final class ContactsCardsTest extends WgwDatabaseTestCase
     public function test_delete_card_removes_from_list(): void
     {
         $cardId = $this->seedCardViaPdo('bob', 'jane-doe.vcf', $this->sampleVcard('Jane Doe'));
+        $url = '/api/v1/contacts/cards/'.$cardId;
 
         $this->withBearer($this->userBearerToken())
-            ->deleteJson('/api/v1/contacts/cards/'.$cardId)
+            ->deleteJson($url, [], $this->withIfMatch($this->fetchEtagFromGet($url)))
             ->assertOk()
             ->assertJsonPath('ok', true);
 
@@ -216,7 +220,7 @@ final class ContactsCardsTest extends WgwDatabaseTestCase
                 'emails' => [
                     $emailOne => ['address' => 'updated-primary@example.com'],
                 ],
-            ]);
+            ], $this->ifMatchFromResponse($create));
 
         $response->assertOk()
             ->assertJsonPath('id', $cardId)
@@ -245,7 +249,7 @@ final class ContactsCardsTest extends WgwDatabaseTestCase
                 'phones' => [
                     $phoneId => null,
                 ],
-            ]);
+            ], $this->ifMatchFromResponse($create));
 
         $response->assertOk()
             ->assertJsonPath('id', $cardId)
@@ -258,11 +262,12 @@ final class ContactsCardsTest extends WgwDatabaseTestCase
     public function test_patch_rejects_server_owned_fields(string $field, mixed $value): void
     {
         $cardId = $this->seedCardViaPdo('bob', 'jane-doe.vcf', $this->sampleVcard('Jane Doe'));
+        $url = '/api/v1/contacts/cards/'.$cardId;
 
         $this->withBearer($this->userBearerToken())
-            ->patchJson('/api/v1/contacts/cards/'.$cardId, [
+            ->patchJson($url, [
                 $field => $value,
-            ])
+            ], $this->withIfMatch($this->fetchEtagFromGet($url)))
             ->assertStatus(400)
             ->assertJsonPath('code', 'bad_request');
     }
@@ -290,7 +295,7 @@ final class ContactsCardsTest extends WgwDatabaseTestCase
         $response = $this->withBearer($this->userBearerToken())
             ->patchJson('/api/v1/contacts/cards/'.$cardId, [
                 'name' => ['full' => 'Renamed Contact'],
-            ]);
+            ], $this->ifMatchFromResponse($create));
 
         $response->assertOk()
             ->assertJsonPath('name.full', 'Renamed Contact')
