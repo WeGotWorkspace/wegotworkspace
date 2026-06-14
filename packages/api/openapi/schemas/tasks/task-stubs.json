@@ -1,0 +1,55 @@
+{
+  "TaskCapabilitiesResponse": {
+    "type": "object",
+    "additionalProperties": true,
+    "description": "Tasks API capabilities (stub until JMAP Tasks is implemented)."
+  },
+  "TaskList": {
+    "type": "object",
+    "required": ["id"],
+    "properties": {
+      "id": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": true,
+    "description": "Task list calendar resource (stub)."
+  },
+  "TaskListListResponse": {
+    "type": "object",
+    "required": ["list"],
+    "properties": {
+      "list": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/TaskList"
+        }
+      }
+    },
+    "additionalProperties": false
+  },
+  "TaskItem": {
+    "type": "object",
+    "required": ["id"],
+    "properties": {
+      "id": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": true,
+    "description": "Task item resource (stub)."
+  },
+  "TaskItemListResponse": {
+    "type": "object",
+    "required": ["list"],
+    "properties": {
+      "list": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/TaskItem"
+        }
+      }
+    },
+    "additionalProperties": false
+  }
+}

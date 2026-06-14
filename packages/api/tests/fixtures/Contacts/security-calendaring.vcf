@@ -1,0 +1,9 @@
+BEGIN:VCARD
+VERSION:4.0
+FN:Jane Doe
+UID:urn:uuid:18181818-1818-4181-8181-181818181818
+KEY;MEDIATYPE=application/pgp-keys:https://example.com/jane.asc
+CALADRURI:mailto:jane@example.com
+CALURI:https://example.com/cal/jane.ics
+FBURL:https://example.com/freebusy/jane
+END:VCARD

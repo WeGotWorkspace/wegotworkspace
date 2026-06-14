@@ -1,0 +1,42 @@
+{
+    "@type": "Card",
+    "version": "1.0",
+    "uid": "urn:uuid:33333333-3333-4333-8333-333333333333",
+    "name": {
+        "full": "Jane Doe",
+        "@type": "Name"
+    },
+    "phones": {
+        "p_qU-ja_hW1bASpI0-sBtQDeEb": {
+            "@type": "Phone",
+            "number": "tel:+1-555-555-5555;ext=5555",
+            "features": {
+                "voice": true
+            },
+            "contexts": {
+                "private": true
+            },
+            "pref": 1
+        },
+        "p_qbUQXnAwPsIOZLlU844w7mX5": {
+            "@type": "Phone",
+            "number": "tel:+33-01-23-45-67",
+            "features": {
+                "voice": true
+            },
+            "contexts": {
+                "private": true
+            }
+        }
+    },
+    "vCardProps": [
+        [
+            "VERSION",
+            [],
+            "text",
+            [
+                "4.0"
+            ]
+        ]
+    ]
+}

@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Models\Concerns\UsesWgwConnection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final class Card extends Model
 {
@@ -24,4 +25,10 @@ final class Card extends Model
         'etag',
         'size',
     ];
+
+    /** @return BelongsTo<Addressbook, $this> */
+    public function addressbook(): BelongsTo
+    {
+        return $this->belongsTo(Addressbook::class, 'addressbookid');
+    }
 }

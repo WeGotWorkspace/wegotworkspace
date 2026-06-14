@@ -1,0 +1,27 @@
+{
+    "@type": "Card",
+    "version": "1.0",
+    "uid": "urn:uuid:24242424-2424-4242-8242-242424242424",
+    "name": {
+        "full": "Jane Doe",
+        "@type": "Name"
+    },
+    "vCardProps": [
+        [
+            "VERSION",
+            [],
+            "text",
+            [
+                "4.0"
+            ]
+        ],
+        [
+            "X-CUSTOM-PROP",
+            [],
+            "unknown",
+            [
+                "custom-value"
+            ]
+        ]
+    ]
+}

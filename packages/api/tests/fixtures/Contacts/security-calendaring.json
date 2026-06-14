@@ -1,0 +1,44 @@
+{
+    "@type": "Card",
+    "version": "1.0",
+    "uid": "urn:uuid:18181818-1818-4181-8181-181818181818",
+    "name": {
+        "full": "Jane Doe",
+        "@type": "Name"
+    },
+    "cryptoKeys": {
+        "p_MDpazH-rVmKherMprQWlPaBx": {
+            "@type": "CryptoKey",
+            "uri": "https://example.com/jane.asc",
+            "mediaType": "application/pgp-keys"
+        }
+    },
+    "calendars": {
+        "p_7dmZPGVX5LP1eqTmv-aXkUI_": {
+            "@type": "Calendar",
+            "kind": "calendar",
+            "uri": "https://example.com/cal/jane.ics"
+        },
+        "p_Ka8by8ibxZdpB2MLH67rRiN9": {
+            "@type": "Calendar",
+            "kind": "freeBusy",
+            "uri": "https://example.com/freebusy/jane"
+        }
+    },
+    "schedulingAddresses": {
+        "p_m9ZyF9wov4o122ockj08zSQX": {
+            "@type": "SchedulingAddress",
+            "uri": "mailto:jane@example.com"
+        }
+    },
+    "vCardProps": [
+        [
+            "VERSION",
+            [],
+            "text",
+            [
+                "4.0"
+            ]
+        ]
+    ]
+}

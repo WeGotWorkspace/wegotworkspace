@@ -1,0 +1,73 @@
+{
+  "CalendarRights": {
+    "type": "object",
+    "required": ["mayRead", "mayWrite", "mayShare", "mayDelete"],
+    "properties": {
+      "mayRead": { "type": "boolean" },
+      "mayWrite": { "type": "boolean" },
+      "mayShare": { "type": "boolean" },
+      "mayDelete": { "type": "boolean" }
+    },
+    "additionalProperties": false,
+    "description": "JMAP CalendarRights."
+  },
+  "Calendar": {
+    "type": "object",
+    "required": ["id", "name", "sortOrder", "isDefault", "isSubscribed", "myRights"],
+    "properties": {
+      "id": {
+        "$ref": "#/components/schemas/JmapId",
+        "readOnly": true
+      },
+      "name": { "type": "string", "minLength": 1, "maxLength": 255 },
+      "description": { "type": ["string", "null"] },
+      "timeZone": { "type": ["string", "null"] },
+      "color": { "type": ["string", "null"] },
+      "sortOrder": { "type": "integer", "minimum": 0 },
+      "isDefault": { "type": "boolean" },
+      "isSubscribed": { "type": "boolean" },
+      "shareWith": {
+        "oneOf": [
+          {
+            "type": "object",
+            "propertyNames": { "$ref": "#/components/schemas/JmapId" },
+            "additionalProperties": { "$ref": "#/components/schemas/CalendarRights" }
+          },
+          { "type": "null" }
+        ]
+      },
+      "myRights": { "$ref": "#/components/schemas/CalendarRights" }
+    },
+    "additionalProperties": false,
+    "description": "JMAP Calendar resource.",
+    "example": {
+      "id": "default",
+      "name": "Calendar",
+      "description": null,
+      "timeZone": null,
+      "color": null,
+      "sortOrder": 0,
+      "isDefault": true,
+      "isSubscribed": true,
+      "shareWith": null,
+      "myRights": {
+        "mayRead": true,
+        "mayWrite": true,
+        "mayShare": false,
+        "mayDelete": false
+      }
+    }
+  },
+  "CalendarListResponse": {
+    "type": "object",
+    "required": ["list"],
+    "properties": {
+      "list": {
+        "type": "array",
+        "items": { "$ref": "#/components/schemas/Calendar" }
+      }
+    },
+    "additionalProperties": false,
+    "description": "REST list response for GET /calendars."
+  }
+}

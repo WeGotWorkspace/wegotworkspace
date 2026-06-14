@@ -1,0 +1,9 @@
+BEGIN:VCARD
+VERSION:4.0
+FN:Jane Doe
+UID:urn:uuid:14141414-1414-4141-8141-141414141414
+ADR:;;1 Infinite Loop;Cupertino;CA;95014;USA
+GEO:40.7128;-74.0060
+TZ;VALUE=text:Europe/Amsterdam
+TZ;VALUE=utc-offset:-0800
+END:VCARD

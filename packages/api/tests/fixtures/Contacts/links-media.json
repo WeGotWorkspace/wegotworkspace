@@ -1,0 +1,32 @@
+{
+    "@type": "Card",
+    "version": "1.0",
+    "uid": "urn:uuid:19191919-1919-4191-8191-191919191919",
+    "name": {
+        "full": "Jane Doe",
+        "@type": "Name"
+    },
+    "media": {
+        "p_NYNPo1oOu8z-FSSeHkMWm34i": {
+            "@type": "Media",
+            "kind": "sound",
+            "uri": "https://example.com/jane.wav"
+        }
+    },
+    "links": {
+        "p_yJBSJcSPSEfASwnUgRMgIF0j": {
+            "@type": "Link",
+            "uri": "https://example.com/~jane"
+        }
+    },
+    "vCardProps": [
+        [
+            "VERSION",
+            [],
+            "text",
+            [
+                "4.0"
+            ]
+        ]
+    ]
+}

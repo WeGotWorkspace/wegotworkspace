@@ -1,0 +1,77 @@
+{
+    "@type": "Card",
+    "version": "1.0",
+    "uid": "urn:uuid:23232323-2323-4232-8232-232323232323",
+    "name": {
+        "full": "Tel Features",
+        "@type": "Name"
+    },
+    "phones": {
+        "p_scBho4ro5eVW00l7S2fewyng": {
+            "@type": "Phone",
+            "number": "tel:+1-555-0001",
+            "features": {
+                "mobile": true
+            }
+        },
+        "p__gl0ScAxVmUQfyDZfdxjXB-3": {
+            "@type": "Phone",
+            "number": "tel:+1-555-0002",
+            "features": {
+                "fax": true
+            }
+        },
+        "p_1oKqh-n1HF3ICaAOuHqB-j6-": {
+            "@type": "Phone",
+            "number": "tel:+1-555-0003",
+            "features": {
+                "main-number": true
+            }
+        },
+        "p_1WgP2xfD7SqSlOm13d_r1MF9": {
+            "@type": "Phone",
+            "number": "tel:+1-555-0004",
+            "features": {
+                "pager": true
+            }
+        },
+        "p_LCTPDOcdWA8rRWfnDNUAmkfT": {
+            "@type": "Phone",
+            "number": "tel:+1-555-0005",
+            "features": {
+                "text": true
+            }
+        },
+        "p_gQtRn8rUjrNb7TOzOUEaiI7T": {
+            "@type": "Phone",
+            "number": "tel:+1-555-0006",
+            "features": {
+                "textphone": true
+            }
+        },
+        "p_uJPgRf2bF3fy803Wh7Y_kqu3": {
+            "@type": "Phone",
+            "number": "tel:+1-555-0007",
+            "features": {
+                "video": true
+            }
+        },
+        "p_sGqAhYrJWIN2m1ZgGWtO34la": {
+            "@type": "Phone",
+            "number": "tel:+1-555-0008",
+            "features": {
+                "voice": true
+            }
+        }
+    },
+    "vCardProps": [
+        [
+            "VERSION",
+            [],
+            "text",
+            [
+                "4.0"
+            ]
+        ]
+    ]
+}

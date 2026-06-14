@@ -4,6 +4,74 @@
  */
 
 export interface paths {
+    "/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Health check */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Service health */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/capabilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Platform capabilities and domains */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Capabilities response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/.well-known/jwks.json": {
         parameters: {
             query?: never;
@@ -22,6 +90,2542 @@ export interface paths {
             requestBody?: never;
             responses: {
                 /** @description JWK set */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Issue RS256 bearer token from username/password */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        username: string;
+                        password: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Token issued */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AuthTokenResponse"];
+                    };
+                };
+                /** @description Invalid request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Too many login attempts */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description JWT not configured */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Refresh access token using refresh token */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        refresh_token: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Refreshed token pair */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AuthTokenResponse"];
+                    };
+                };
+                /** @description Invalid request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Unauthorized */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revoke current access token and/or refresh token */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        refresh_token?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Revocation result */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Current authenticated principal */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Current principal */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Principal"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/state": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Admin aggregate state */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Admin state */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/updates/log": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read update process log lines */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Update log lines */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        /** Clear update process log */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Log cleared */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/updates/backups/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download an update backup archive */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    name: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Backup ZIP stream */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/octet-stream": components["schemas"]["BinaryPayload"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        /** Delete an update backup archive */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    name: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Updated backup state */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UpdateStateResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/groups/{group}/members/{username}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Add user to admin group */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    group: string;
+                    username: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Membership added */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        /** Remove user from admin group */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    group: string;
+                    username: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Membership removed */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/settings/state": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** User settings aggregate state */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Settings state */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/settings/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update profile details for current user */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Updated settings state */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/settings/mail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update personal mail credentials for current user */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Updated settings state */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/mail/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Mail runtime status */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Mail status */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/mail/folders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List mail folders */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Mail folder tree */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        /** Create mail folder */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Folder created */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        /** Delete mail folder */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Folder deleted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Move mail folder */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Folder moved */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/mail/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List messages in a folder */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Message list */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        /** Send message */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Sent */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/mail/messages/attachments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List attachment metadata for messages */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Attachment metadata */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MailAttachmentsResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/mail/message": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a single message */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Message payload */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MailMessageResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        /** Permanently delete a message */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Message deleted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Patch read/starred flags on a message */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["MailMessagePatchRequest"];
+                };
+            };
+            responses: {
+                /** @description Message updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OkResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/mail/message/attachment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download a message attachment */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Attachment stream */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/octet-stream": components["schemas"]["BinaryPayload"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/mail/move": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Move message to another folder */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        fromFolder: string;
+                        toFolder: string;
+                        uid: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Message moved */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/mail/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send an email */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["MailSendRequest"];
+                };
+            };
+            responses: {
+                /** @description Message sent */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MailSendResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/mail/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Save a message draft */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["MailDraftRequest"];
+                };
+            };
+            responses: {
+                /** @description Draft saved */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MailDraftResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drive/user": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Drive user context */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Drive user payload */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DriveUserResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drive/getdir": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Read directory listing */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["DriveGetDirRequest"];
+                };
+            };
+            responses: {
+                /** @description Directory listing */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DriveListingResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drive/searchfiles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Search files and directories */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["DriveSearchRequest"];
+                };
+            };
+            responses: {
+                /** @description Search results */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DriveListingResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drive/changedir": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Change current drive directory */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["DriveChangeDirRequest"];
+                };
+            };
+            responses: {
+                /** @description Current directory updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DriveCwdResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drive/createnew": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a new drive directory */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["DriveCreateRequest"];
+                };
+            };
+            responses: {
+                /** @description Item created */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DriveMutationResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drive/renameitem": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rename a drive item */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["DriveRenameRequest"];
+                };
+            };
+            responses: {
+                /** @description Item renamed */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DriveMutationResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drive/deleteitems": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Delete one or more drive items */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["DriveDeleteItemsRequest"];
+                };
+            };
+            responses: {
+                /** @description Items deleted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DriveMutationResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drive/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download a drive file */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description File stream */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/octet-stream": components["schemas"]["BinaryPayload"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drive/upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Drive upload readiness probe */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Upload is available */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Upload file chunk(s) to drive */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Upload accepted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/drive/stars": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List starred drive paths for current user */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Starred paths */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DriveStarsResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Set starred state for a drive path */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["DriveStarUpdateRequest"];
+                };
+            };
+            responses: {
+                /** @description Starred state updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DriveStarUpdateResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notes/capabilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Notes capabilities */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Notes capabilities */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notes/state": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Notes runtime boot state for authenticated user */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Notes state */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notes/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List notes with optional archive/notebook/search filters */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Notes list */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        /** Create a new note */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Created note */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notes/items/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Save/update a note */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Updated note */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        /** Delete a note */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Deleted note */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Patch note (e.g. archive) */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/notes/items/{id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Archive a note */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Archived note */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["NoteMutationResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notes/items/{id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restore an archived note */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Restored note */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["NoteMutationResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notes/notebooks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List notebooks with active/archive counts */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Notebook list */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        /** Create notebook */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Notebook created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notes/notebooks/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete notebook (archive, move, or purge) */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    name: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Notebook deleted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Rename notebook */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    name: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Notebook renamed */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/plugins": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List discovered plugins and capabilities */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Plugin registry snapshot */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/plugins/{id}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Activate a plugin */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Plugin activated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Plugin not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/plugins/{id}/deactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Deactivate a plugin */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Plugin deactivated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Plugin not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/plugins/{id}/session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Establish browser UI session cookie for a plugin surface */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Session established */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Plugin not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/meet/join": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Join meet room (guest or authenticated) */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["MeetJoinRequest"];
+                };
+            };
+            responses: {
+                /** @description Join response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MeetJoinResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/meet/poll": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Poll meet signaling messages */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["MeetPollRequest"];
+                };
+            };
+            responses: {
+                /** @description Poll response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MeetPollResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/meet/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send meet WebRTC signaling message */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["MeetSendRequest"];
+                };
+            };
+            responses: {
+                /** @description Send response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MeetSendResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/meet/leave": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Leave meet room */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["MeetLeaveRequest"];
+                };
+            };
+            responses: {
+                /** @description Leave response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MeetLeaveResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/meet/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Meet room chat message */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["MeetChatRequest"];
+                };
+            };
+            responses: {
+                /** @description Chat response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MeetChatResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/installer/state": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Installer summary and current state snapshot */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Installer state */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/installer/bootstrap": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Installer bootstrap payload (full state) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Installer bootstrap payload */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/installer/action": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Perform installer step action */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Installer action result */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/home/state": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Home app state */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Home state */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["HomeStateResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/dav/capabilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** DAV capabilities */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description DAV capabilities */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Save admin-managed app settings */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Settings saved */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/updates/state": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Update subsystem state snapshot */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Update state */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/updates/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Check release feed for updates */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Update state after check */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/updates/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Apply checked release update */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Apply result */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/updates/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Request cancellation of in-progress update */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Cancel acknowledged */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/meet/room": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Probe or resolve meet room metadata */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Room metadata */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/meet/rtc": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Meet WebRTC ICE settings */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Meet RTC ICE settings */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -233,64 +2837,6 @@ export interface paths {
         };
         trace?: never;
     };
-    "/admin/groups/{group}/members/{username}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /** Add user to admin group */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    group: string;
-                    username: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Membership added */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        post?: never;
-        /** Remove user from admin group */
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    group: string;
-                    username: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Membership removed */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/admin/plugins": {
         parameters: {
             query?: never;
@@ -429,74 +2975,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/admin/settings": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /** Save admin-managed app settings */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Settings saved */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/admin/state": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Admin aggregate state */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Admin state */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/admin/update-jobs": {
         parameters: {
             query?: never;
@@ -562,92 +3040,6 @@ export interface paths {
                 };
             };
         };
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/admin/updates/log": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Read update process log lines */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Update log lines */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        /** Clear update process log */
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Log cleared */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/admin/updates/state": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Update subsystem state snapshot */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Update state */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -790,241 +3182,6 @@ export interface paths {
                 };
             };
         };
-        trace?: never;
-    };
-    "/auth/refresh": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Refresh access token using refresh token */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        refresh_token: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description Refreshed token pair */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["AuthTokenResponse"];
-                    };
-                };
-                /** @description Invalid request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/auth/revoke": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Revoke current access token and/or refresh token */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": {
-                        refresh_token?: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description Revocation result */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/auth/token": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Issue RS256 bearer token from username/password */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        username: string;
-                        password: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description Token issued */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["AuthTokenResponse"];
-                    };
-                };
-                /** @description Invalid request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Too many login attempts */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description JWT not configured */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/capabilities": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Platform capabilities and domains */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Capabilities response */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/dav/capabilities": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** DAV capabilities */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description DAV capabilities */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
         trace?: never;
     };
     "/files": {
@@ -1457,142 +3614,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/health": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Health check */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Service health */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/installer/action": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Perform installer step action */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Installer action result */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/installer/bootstrap": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Installer bootstrap payload (full state) */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Installer bootstrap payload */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/installer/state": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Installer summary and current state snapshot */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Installer state */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/mail/drafts": {
         parameters: {
             query?: never;
@@ -1613,188 +3634,6 @@ export interface paths {
             requestBody?: never;
             responses: {
                 /** @description Saved */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/mail/folders": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List mail folders */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Mail folder tree */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        /** Create mail folder */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Folder created */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        /** Delete mail folder */
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Folder deleted */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        /** Move mail folder */
-        patch: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Folder moved */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        trace?: never;
-    };
-    "/mail/move": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Move message to another folder */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        fromFolder: string;
-                        toFolder: string;
-                        uid: number;
-                    };
-                };
-            };
-            responses: {
-                /** @description Message moved */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/mail/messages": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List messages in a folder */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Message list */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        /** Send message */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Sent */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -1952,76 +3791,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/mail/status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Mail runtime status */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Mail status */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/me": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Current authenticated principal */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Current principal */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Principal"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/meetings/rooms": {
         parameters: {
             query?: never;
@@ -2092,14 +3861,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/notes/capabilities": {
+    "/contacts/addressbooks": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Notes capabilities */
+        /** List user's address books */
         get: {
             parameters: {
                 query?: never;
@@ -2109,51 +3878,19 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Notes capabilities */
+                /** @description Address book list */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/notes/items": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List notes with optional archive/notebook/search filters */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Notes list */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
+                    content: {
+                        "application/json": components["schemas"]["ContactAddressBookListResponse"];
                     };
-                    content?: never;
                 };
             };
         };
         put?: never;
-        /** Create a new note */
+        /** Create an address book */
         post: {
             parameters: {
                 query?: never;
@@ -2161,14 +3898,20 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AddressBookCreate"];
+                };
+            };
             responses: {
-                /** @description Created note */
+                /** @description Created address book */
                 201: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["AddressBook"];
+                    };
                 };
             };
         };
@@ -2178,256 +3921,332 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/notes/items/{id}": {
+    "/contacts/addressbooks/{addressBookId}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
-        /** Save/update a note */
+        /** Fetch a single address book */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    addressBookId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Address book */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AddressBook"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        /** Delete an address book */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    addressBookId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AddressBookDeleteOptions"];
+                };
+            };
+            responses: {
+                /** @description Deleted address book */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OkResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Update an address book */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    addressBookId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AddressBookPatch"];
+                };
+            };
+            responses: {
+                /** @description Updated address book */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AddressBook"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/contacts/cards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List contact cards in an address book */
+        get: {
+            parameters: {
+                query: {
+                    addressBookId: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Contact card list */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ContactCardListResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Create a contact card */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    /**
+                     * @example {
+                     *       "addressBookIds": {
+                     *         "default": true
+                     *       },
+                     *       "name": {
+                     *         "full": "Joe Example"
+                     *       },
+                     *       "emails": {
+                     *         "550e8400-e29b-41d4-a716-446655440001": {
+                     *           "address": "joe@example.com"
+                     *         }
+                     *       },
+                     *       "phones": {
+                     *         "550e8400-e29b-41d4-a716-446655440002": {
+                     *           "number": "+1-555-0100"
+                     *         }
+                     *       },
+                     *       "addresses": {
+                     *         "550e8400-e29b-41d4-a716-446655440003": {
+                     *           "full": "123 Main St",
+                     *           "countryCode": "US"
+                     *         }
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ContactCardCreate"];
+                };
+            };
+            responses: {
+                /** @description Created contact card */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ContactCard"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/contacts/cards/{cardId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Fetch a single contact card */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    cardId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Contact card */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ContactCard"];
+                    };
+                };
+            };
+        };
+        /** Replace a contact card */
         put: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    id: string;
+                    cardId: string;
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody: {
+                content: {
+                    /**
+                     * @example {
+                     *       "addressBookIds": {
+                     *         "default": true
+                     *       },
+                     *       "name": {
+                     *         "full": "Joe Example"
+                     *       },
+                     *       "emails": {
+                     *         "550e8400-e29b-41d4-a716-446655440001": {
+                     *           "address": "joe@example.com"
+                     *         }
+                     *       },
+                     *       "phones": {
+                     *         "550e8400-e29b-41d4-a716-446655440002": {
+                     *           "number": "+1-555-0100"
+                     *         }
+                     *       },
+                     *       "addresses": {
+                     *         "550e8400-e29b-41d4-a716-446655440003": {
+                     *           "full": "123 Main St",
+                     *           "countryCode": "US"
+                     *         }
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ContactCardCreate"];
+                };
+            };
             responses: {
-                /** @description Updated note */
+                /** @description Updated contact card */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["ContactCard"];
+                    };
                 };
             };
         };
         post?: never;
-        /** Delete a note */
+        /** Delete a contact card */
         delete: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    id: string;
+                    cardId: string;
                 };
                 cookie?: never;
             };
             requestBody?: never;
             responses: {
-                /** @description Deleted note */
+                /** @description Deleted contact card */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["OkResponse"];
+                    };
                 };
             };
         };
         options?: never;
         head?: never;
-        /** Patch note (e.g. archive) */
+        /**
+         * Partially update a contact card
+         * @description Deep-merge patch into the existing JSContact Card. Id-keyed map entries merge by key; null removes an entry.
+         */
         patch: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    id: string;
+                    cardId: string;
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody: {
+                content: {
+                    /**
+                     * @example {
+                     *       "emails": {
+                     *         "550e8400-e29b-41d4-a716-446655440001": {
+                     *           "address": "updated@example.com"
+                     *         }
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ContactCardPatch"];
+                };
+            };
             responses: {
-                /** @description Updated */
+                /** @description Updated contact card */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
-                };
-            };
-        };
-        trace?: never;
-    };
-    "/notes/notebooks": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List notebooks with active/archive counts */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Notebook list */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
+                    content: {
+                        "application/json": components["schemas"]["ContactCard"];
                     };
-                    content?: never;
                 };
             };
         };
-        put?: never;
-        /** Create notebook */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Notebook created */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/notes/notebooks/{name}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** Delete notebook (archive, move, or purge) */
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    name: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Notebook deleted */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        /** Rename notebook */
-        patch: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    name: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Notebook renamed */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        trace?: never;
-    };
-    "/notes/state": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Notes runtime boot state for authenticated user */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Notes state */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/plugins": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List discovered plugins and capabilities */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Plugin registry snapshot */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
         trace?: never;
     };
     "/plugins/{id}/activation": {
@@ -2460,49 +4279,6 @@ export interface paths {
             };
         };
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/plugins/{id}/session": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Establish browser UI session cookie for a plugin surface */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Session established */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Plugin not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
         delete?: never;
         options?: never;
         head?: never;
@@ -2780,108 +4556,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/settings/mail": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /** Update personal mail credentials for current user */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Updated settings state */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/settings/profile": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /** Update profile details for current user */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Updated settings state */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/settings/state": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** User settings aggregate state */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Settings state */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/workspace/state": {
         parameters: {
             query?: never;
@@ -2905,6 +4579,783 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/contacts/blobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload contact media blob
+         * @description JMAP blob upload REST equivalent for contact photo/logo media (RFC 9610).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "multipart/form-data": {
+                        /** Format: binary */
+                        file: string;
+                    };
+                    "image/jpeg": string;
+                    "image/png": string;
+                    "image/gif": string;
+                    "image/webp": string;
+                };
+            };
+            responses: {
+                /** @description Blob uploaded */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ContactBlobUploadResponse"];
+                    };
+                };
+                /** @description Invalid request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Payload too large */
+                413: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/contacts/blobs/{blobId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download contact media blob */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    blobId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Blob bytes */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "image/jpeg": string;
+                        "image/png": string;
+                        "image/gif": string;
+                        "image/webp": string;
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/calendars/calendars": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List user's calendars */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Calendar list */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CalendarListResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/calendars/calendars/{calendarId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Fetch a single calendar */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    calendarId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Calendar */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Calendar"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/calendars/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List calendar events in a calendar */
+        get: {
+            parameters: {
+                query: {
+                    calendarId: string;
+                    /** @description Expand recurring events into instances in the requested window (requires after and before). */
+                    expandRecurrences?: boolean;
+                    /** @description Window start (required when expandRecurrences is true). */
+                    after?: string;
+                    /** @description Window end (required when expandRecurrences is true). */
+                    before?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Calendar event list */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CalendarEventListResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Create a calendar event */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    /**
+                     * @example {
+                     *       "calendarIds": {
+                     *         "default": true
+                     *       },
+                     *       "title": "Team sync",
+                     *       "start": "2026-06-15T10:00:00Z",
+                     *       "end": "2026-06-15T11:00:00Z"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["CalendarEventCreate"];
+                };
+            };
+            responses: {
+                /** @description Created calendar event */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CalendarEvent"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/calendars/events/{eventId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Fetch a single calendar event */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    eventId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Calendar event */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CalendarEvent"];
+                    };
+                };
+            };
+        };
+        /** Replace a calendar event */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    eventId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CalendarEventCreate"];
+                };
+            };
+            responses: {
+                /** @description Updated calendar event */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CalendarEvent"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        /** Delete a calendar event */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    eventId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Deleted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OkResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Partially update a calendar event */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    eventId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CalendarEventPatch"];
+                };
+            };
+            responses: {
+                /** @description Patched calendar event */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CalendarEvent"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/contacts/addressbooks/changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Incremental address book sync */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Previous sync state token. */
+                    since?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Address book changes */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["JmapChangesResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/contacts/cards/changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Incremental contact card sync */
+        get: {
+            parameters: {
+                query: {
+                    addressBookId: string;
+                    /** @description Previous sync state token. */
+                    since?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Contact card changes */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["JmapChangesResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/contacts/cards/query": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Query contact card ids */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ContactCardQueryRequest"];
+                };
+            };
+            responses: {
+                /** @description Query result */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ContactCardQueryResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tasks/capabilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tasks API capabilities */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Capabilities */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TaskCapabilitiesResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tasks/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List task items */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Task item list */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TaskItemListResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Create a task item */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Not implemented */
+                501: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tasks/items/{taskId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Fetch a task item */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    taskId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Task item */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TaskItem"];
+                    };
+                };
+            };
+        };
+        /** Replace a task item */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    taskId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Updated task item */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TaskItem"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        /** Delete a task item */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    taskId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Deleted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OkResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Partially update a task item */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    taskId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Patched task item */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TaskItem"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/tasks/tasklists": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List task lists */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Task list collection */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TaskListListResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tasks/tasklists/{taskListId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Fetch a task list */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    taskListId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Task list */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TaskList"];
+                    };
                 };
             };
         };
@@ -3935,6 +6386,1366 @@ export interface components {
             filesEnabled?: boolean;
             calendarEnabled?: boolean;
             contactsEnabled?: boolean;
+        };
+        /** @description RFC 9610 AddressBookRights. */
+        AddressBookRights: {
+            /** @description May fetch cards in this address book. */
+            mayRead: boolean;
+            /** @description May create, update, delete, or move cards. */
+            mayWrite: boolean;
+            /** @description May modify shareWith. */
+            mayShare: boolean;
+            /** @description May delete the address book itself. */
+            mayDelete: boolean;
+        };
+        /**
+         * @description RFC 9610 AddressBook.
+         * @example {
+         *       "id": "default",
+         *       "name": "Default Address Book",
+         *       "description": null,
+         *       "sortOrder": 0,
+         *       "isDefault": true,
+         *       "isSubscribed": true,
+         *       "shareWith": null,
+         *       "myRights": {
+         *         "mayRead": true,
+         *         "mayWrite": true,
+         *         "mayShare": true,
+         *         "mayDelete": false
+         *       }
+         *     }
+         */
+        AddressBook: {
+            /** @description Immutable server-set address book identifier. */
+            id: components["schemas"]["JsContactId"];
+            /** @description User-visible name. */
+            name: string;
+            /** @description Long-form description; null when unset. */
+            description?: string | null;
+            /** @description UI sort order; lower values appear first. */
+            sortOrder: components["schemas"]["JsContactUnsignedInt"];
+            /** @description Server-set default address book flag. */
+            isDefault: boolean;
+            /** @description Whether the book is shown in client UI. */
+            isSubscribed: boolean;
+            /** @description Principal id to rights map; null when not shared. */
+            shareWith?: {
+                [key: string]: components["schemas"]["AddressBookRights"];
+            } | null;
+            /** @description Current user's access rights for this book. */
+            myRights: components["schemas"]["AddressBookRights"];
+        };
+        /**
+         * @description REST list response for GET /contacts/addressbooks.
+         * @example {
+         *       "list": [
+         *         {
+         *           "id": "default",
+         *           "name": "Default Address Book",
+         *           "description": null,
+         *           "sortOrder": 0,
+         *           "isDefault": true,
+         *           "isSubscribed": true,
+         *           "shareWith": null,
+         *           "myRights": {
+         *             "mayRead": true,
+         *             "mayWrite": true,
+         *             "mayShare": true,
+         *             "mayDelete": false
+         *           }
+         *         }
+         *       ]
+         *     }
+         */
+        ContactAddressBookListResponse: {
+            list: components["schemas"]["AddressBook"][];
+        };
+        /**
+         * @description RFC 9610 ContactCard — full JMAP ContactCard returned by GET/POST/PUT responses. Server-owned `id`, `@type`, and `version` are read-only; use ContactCardCreate for POST/PUT request bodies.
+         * @example {
+         *       "@type": "Card",
+         *       "version": "1.0",
+         *       "id": "card-joe-example",
+         *       "uid": "urn:uuid:550e8400-e29b-41d4-a716-446655440000",
+         *       "addressBookIds": {
+         *         "default": true
+         *       },
+         *       "name": {
+         *         "full": "Joe Example"
+         *       },
+         *       "emails": {
+         *         "550e8400-e29b-41d4-a716-446655440001": {
+         *           "address": "joe@example.com",
+         *           "contexts": {
+         *             "private": true
+         *           }
+         *         }
+         *       },
+         *       "phones": {
+         *         "550e8400-e29b-41d4-a716-446655440002": {
+         *           "number": "+1-555-0100",
+         *           "features": {
+         *             "mobile": true,
+         *             "voice": true
+         *           }
+         *         }
+         *       },
+         *       "addresses": {
+         *         "550e8400-e29b-41d4-a716-446655440003": {
+         *           "full": "123 Main St, Springfield, IL 62701, US",
+         *           "countryCode": "US",
+         *           "contexts": {
+         *             "home": true
+         *           }
+         *         }
+         *       }
+         *     }
+         */
+        ContactCard: {
+            /**
+             * @description JSContact Card type discriminator (server-set on responses).
+             * @constant
+             */
+            readonly "@type": "Card";
+            /**
+             * @description JSContact version (server-set on responses).
+             * @constant
+             */
+            readonly version: "1.0";
+            /** @description JMAP server-set card id (RFC 9610). */
+            readonly id: components["schemas"]["JsContactId"];
+            /** @description Set of address book ids; each value MUST be true. */
+            addressBookIds: components["schemas"]["JsContactIdBooleanMap"];
+            /** @description Cross-system card identifier (RFC 9553; optional in JSContact 2.0 per RFC 9982). Required for JMAP Contacts (RFC 9610). */
+            uid: string;
+            created?: components["schemas"]["JsContactUTCDateTime"];
+            updated?: components["schemas"]["JsContactUTCDateTime"];
+            etag?: components["schemas"]["DavEtag"];
+            /**
+             * @default individual
+             * @enum {string}
+             */
+            kind: "individual" | "group" | "org" | "location" | "device" | "application";
+            /** @description Primary language tag (RFC 5646). */
+            language?: string;
+            /** @description Group member uids when kind is group. */
+            members?: components["schemas"]["JsContactIdBooleanMap"];
+            prodId?: string;
+            relatedTo?: components["schemas"]["JsContactStringRelationMap"];
+            name?: components["schemas"]["JsContactName"];
+            nicknames?: components["schemas"]["JsContactIdNicknameMap"];
+            organizations?: components["schemas"]["JsContactIdOrganizationMap"];
+            speakToAs?: components["schemas"]["JsContactSpeakToAs"];
+            titles?: components["schemas"]["JsContactIdTitleMap"];
+            emails?: components["schemas"]["JsContactIdEmailAddressMap"];
+            onlineServices?: components["schemas"]["JsContactIdOnlineServiceMap"];
+            phones?: components["schemas"]["JsContactIdPhoneMap"];
+            preferredLanguages?: components["schemas"]["JsContactIdLanguagePrefMap"];
+            calendars?: components["schemas"]["JsContactIdCalendarMap"];
+            schedulingAddresses?: components["schemas"]["JsContactIdSchedulingAddressMap"];
+            addresses?: components["schemas"]["JsContactIdAddressMap"];
+            cryptoKeys?: components["schemas"]["JsContactIdCryptoKeyMap"];
+            directories?: components["schemas"]["JsContactIdDirectoryMap"];
+            links?: components["schemas"]["JsContactIdLinkMap"];
+            media?: components["schemas"]["JsContactIdMediaMap"];
+            localizations?: components["schemas"]["JsContactStringPatchObjectMap"];
+            anniversaries?: components["schemas"]["JsContactIdAnniversaryMap"];
+            keywords?: components["schemas"]["JsContactStringBooleanMap"];
+            notes?: components["schemas"]["JsContactIdNoteMap"];
+            personalInfo?: components["schemas"]["JsContactIdPersonalInfoMap"];
+            /** @description RFC 9555 unmapped vCard properties (conversion base spec; uid rules updated by RFC 9982 for JSContact 2.0). */
+            vCardProps?: components["schemas"]["JsContactJCardProp"][];
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * @description REST list response for GET /contacts/cards.
+         * @example {
+         *       "list": [
+         *         {
+         *           "@type": "Card",
+         *           "version": "1.0",
+         *           "id": "card-joe-example",
+         *           "uid": "urn:uuid:550e8400-e29b-41d4-a716-446655440000",
+         *           "addressBookIds": {
+         *             "default": true
+         *           },
+         *           "name": {
+         *             "full": "Joe Example"
+         *           },
+         *           "emails": {
+         *             "550e8400-e29b-41d4-a716-446655440001": {
+         *               "address": "joe@example.com",
+         *               "contexts": {
+         *                 "private": true
+         *               }
+         *             }
+         *           }
+         *         }
+         *       ]
+         *     }
+         */
+        ContactCardListResponse: {
+            list: components["schemas"]["ContactCard"][];
+        };
+        /** @description RFC 9553 AddressComponent. */
+        JsContactAddressComponent: {
+            /** @constant */
+            "@type": "AddressComponent";
+            value: string;
+            /** @enum {string} */
+            kind: "room" | "apartment" | "floor" | "building" | "number" | "name" | "block" | "subdistrict" | "district" | "locality" | "region" | "postcode" | "country" | "direction" | "landmark" | "postOfficeBox" | "separator";
+            phonetic?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Address — at least one of components, coordinates, countryCode, full, or timeZone MUST be set. */
+        JsContactAddress: {
+            /** @constant */
+            "@type": "Address";
+            components?: components["schemas"]["JsContactAddressComponent"][];
+            /** @default false */
+            isOrdered: boolean;
+            /** @description ISO 3166-1 alpha-2 country code. */
+            countryCode?: string;
+            /** @description geo: URI per RFC 5870. */
+            coordinates?: string;
+            /** @description IANA time zone name. */
+            timeZone?: string;
+            contexts?: components["schemas"]["JsContactStringBooleanMap"];
+            full?: string;
+            defaultSeparator?: string;
+            pref?: components["schemas"]["JsContactUnsignedInt"];
+            phoneticScript?: string;
+            /** @enum {string} */
+            phoneticSystem?: "ipa" | "jyut" | "piny";
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * @description RFC 9553 addresses map — nested `@type` on values and AddressComponent entries is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440003": {
+         *         "components": [
+         *           {
+         *             "value": "123",
+         *             "kind": "number"
+         *           },
+         *           {
+         *             "value": "Main St",
+         *             "kind": "name"
+         *           }
+         *         ],
+         *         "countryCode": "US",
+         *         "contexts": {
+         *           "home": true
+         *         }
+         *       }
+         *     }
+         */
+        JsContactIdAddressMap: {
+            [key: string]: components["schemas"]["JsContactAddress"];
+        };
+        /** @description RFC 9553 SchedulingAddress. */
+        JsContactSchedulingAddress: {
+            /** @constant */
+            "@type": "SchedulingAddress";
+            /** Format: uri */
+            uri: string;
+            contexts?: components["schemas"]["JsContactStringBooleanMap"];
+            pref?: components["schemas"]["JsContactUnsignedInt"];
+            label?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * @description RFC 9553 schedulingAddresses map — nested `@type` on values is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440010": {
+         *         "uri": "mailto:joe@example.com"
+         *       }
+         *     }
+         */
+        JsContactIdSchedulingAddressMap: {
+            [key: string]: components["schemas"]["JsContactSchedulingAddress"];
+        };
+        /** @description RFC 9553 EmailAddress. */
+        JsContactEmailAddress: {
+            /** @constant */
+            "@type": "EmailAddress";
+            /** @description RFC 5322 addr-spec. */
+            address: string;
+            contexts?: components["schemas"]["JsContactStringBooleanMap"];
+            pref?: components["schemas"]["JsContactUnsignedInt"];
+            label?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Phone. */
+        JsContactPhone: {
+            /** @constant */
+            "@type": "Phone";
+            /** @description tel:, sip:, or free-text phone number. */
+            number: string;
+            /** @description Feature flags: mobile, voice, text, video, main-number, textphone, fax, pager. */
+            features?: components["schemas"]["JsContactStringBooleanMap"];
+            contexts?: components["schemas"]["JsContactStringBooleanMap"];
+            pref?: components["schemas"]["JsContactUnsignedInt"];
+            label?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 OnlineService — at least one of uri or user MUST be set. */
+        JsContactOnlineService: {
+            /** @constant */
+            "@type": "OnlineService";
+            service?: string;
+            /** Format: uri */
+            uri?: string;
+            user?: string;
+            contexts?: components["schemas"]["JsContactStringBooleanMap"];
+            pref?: components["schemas"]["JsContactUnsignedInt"];
+            label?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 LanguagePref. */
+        JsContactLanguagePref: {
+            /** @constant */
+            "@type": "LanguagePref";
+            /** @description RFC 5646 language tag. */
+            language: string;
+            contexts?: components["schemas"]["JsContactStringBooleanMap"];
+            pref?: components["schemas"]["JsContactUnsignedInt"];
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * @description RFC 9553 emails map — nested `@type` on values is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440001": {
+         *         "address": "joe@example.com",
+         *         "contexts": {
+         *           "private": true
+         *         }
+         *       }
+         *     }
+         */
+        JsContactIdEmailAddressMap: {
+            [key: string]: components["schemas"]["JsContactEmailAddress"];
+        };
+        /**
+         * @description RFC 9553 phones map — nested `@type` on values is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440002": {
+         *         "number": "+1-555-0100",
+         *         "features": {
+         *           "mobile": true,
+         *           "voice": true
+         *         }
+         *       }
+         *     }
+         */
+        JsContactIdPhoneMap: {
+            [key: string]: components["schemas"]["JsContactPhone"];
+        };
+        /**
+         * @description RFC 9553 onlineServices map — nested `@type` on values is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440007": {
+         *         "service": "matrix",
+         *         "uri": "matrix:u/joe:example.com"
+         *       }
+         *     }
+         */
+        JsContactIdOnlineServiceMap: {
+            [key: string]: components["schemas"]["JsContactOnlineService"];
+        };
+        /**
+         * @description RFC 9553 preferredLanguages map — nested `@type` on values is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440008": {
+         *         "language": "en"
+         *       }
+         *     }
+         */
+        JsContactIdLanguagePrefMap: {
+            [key: string]: components["schemas"]["JsContactLanguagePref"];
+        };
+        /** @description RFC 9553 Relation. */
+        JsContactRelation: {
+            /** @constant */
+            "@type": "Relation";
+            /** @description Relation types: acquaintance, agent, child, co-resident, co-worker, colleague, contact, crush, date, emergency, friend, kin, me, met, muse, neighbor, parent, sibling, spouse, sweetheart. */
+            relation?: components["schemas"]["JsContactStringBooleanMap"];
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 PartialDate. */
+        JsContactPartialDate: {
+            /** @constant */
+            "@type": "PartialDate";
+            year?: components["schemas"]["JsContactUnsignedInt"];
+            month?: number;
+            day?: number;
+            /** @description CLDR calendar name in lowercase. */
+            calendarScale?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Timestamp. */
+        JsContactTimestamp: {
+            /** @constant */
+            "@type": "Timestamp";
+            utc: components["schemas"]["JsContactUTCDateTime"];
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Anniversary.date — PartialDate (default) or Timestamp. */
+        JsContactAnniversaryDate: components["schemas"]["JsContactPartialDate"] | components["schemas"]["JsContactTimestamp"];
+        /** @description RFC 9553 Anniversary. */
+        JsContactAnniversary: {
+            /** @constant */
+            "@type": "Anniversary";
+            /** @enum {string} */
+            kind: "birth" | "death" | "wedding";
+            date: components["schemas"]["JsContactAnniversaryDate"];
+            place?: components["schemas"]["JsContactAddress"];
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Author — at least one of name or uri MUST be set. */
+        JsContactAuthor: {
+            /** @constant */
+            "@type": "Author";
+            name?: string;
+            /** Format: uri */
+            uri?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Note. */
+        JsContactNote: {
+            /** @constant */
+            "@type": "Note";
+            note: string;
+            created?: components["schemas"]["JsContactUTCDateTime"];
+            author?: components["schemas"]["JsContactAuthor"];
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 PersonalInfo. */
+        JsContactPersonalInfo: {
+            /** @constant */
+            "@type": "PersonalInfo";
+            /** @enum {string} */
+            kind: "expertise" | "hobby" | "interest";
+            value: string;
+            /** @enum {string} */
+            level?: "high" | "medium" | "low";
+            listAs?: components["schemas"]["JsContactUnsignedInt"];
+            label?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * @description RFC 9553 anniversaries map — nested `@type` on values, date, and place is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440015": {
+         *         "kind": "birth",
+         *         "date": {
+         *           "month": 6,
+         *           "day": 13
+         *         },
+         *         "place": {
+         *           "full": "Springfield, IL"
+         *         }
+         *       }
+         *     }
+         */
+        JsContactIdAnniversaryMap: {
+            [key: string]: components["schemas"]["JsContactAnniversary"];
+        };
+        /**
+         * @description RFC 9553 notes map — nested `@type` on values and author is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440016": {
+         *         "note": "Met at the 2024 conference.",
+         *         "author": {
+         *           "name": "Alice Example"
+         *         }
+         *       }
+         *     }
+         */
+        JsContactIdNoteMap: {
+            [key: string]: components["schemas"]["JsContactNote"];
+        };
+        /**
+         * @description RFC 9553 personalInfo map — nested `@type` on values is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440017": {
+         *         "kind": "hobby",
+         *         "value": "cycling"
+         *       }
+         *     }
+         */
+        JsContactIdPersonalInfoMap: {
+            [key: string]: components["schemas"]["JsContactPersonalInfo"];
+        };
+        /** @description RFC 9553 NameComponent. */
+        JsContactNameComponent: {
+            /** @constant */
+            "@type": "NameComponent";
+            value: string;
+            /** @enum {string} */
+            kind: "title" | "given" | "given2" | "surname" | "surname2" | "credential" | "generation" | "separator";
+            phonetic?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Name — at least one of components or full MUST be set. */
+        JsContactName: {
+            /** @constant */
+            "@type": "Name";
+            components?: components["schemas"]["JsContactNameComponent"][];
+            /** @default false */
+            isOrdered: boolean;
+            defaultSeparator?: string;
+            full?: string;
+            sortAs?: components["schemas"]["JsContactStringStringMap"];
+            phoneticScript?: string;
+            /** @enum {string} */
+            phoneticSystem?: "ipa" | "jyut" | "piny";
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Nickname. */
+        JsContactNickname: {
+            /** @constant */
+            "@type": "Nickname";
+            name: string;
+            contexts?: components["schemas"]["JsContactStringBooleanMap"];
+            pref?: components["schemas"]["JsContactUnsignedInt"];
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 OrgUnit. */
+        JsContactOrgUnit: {
+            /** @constant */
+            "@type": "OrgUnit";
+            name: string;
+            sortAs?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Organization — at least one of name or units MUST be set. */
+        JsContactOrganization: {
+            /** @constant */
+            "@type": "Organization";
+            name?: string;
+            units?: components["schemas"]["JsContactOrgUnit"][];
+            sortAs?: string;
+            contexts?: components["schemas"]["JsContactStringBooleanMap"];
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Pronouns. */
+        JsContactPronouns: {
+            /** @constant */
+            "@type": "Pronouns";
+            pronouns: string;
+            contexts?: components["schemas"]["JsContactStringBooleanMap"];
+            pref?: components["schemas"]["JsContactUnsignedInt"];
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * @description RFC 9553 SpeakToAs — at least one of grammaticalGender or pronouns MUST be set.
+         * @example {
+         *       "grammaticalGender": "masculine",
+         *       "pronouns": {
+         *         "550e8400-e29b-41d4-a716-446655440018": {
+         *           "pronouns": "he/him"
+         *         }
+         *       }
+         *     }
+         */
+        JsContactSpeakToAs: {
+            /** @constant */
+            "@type": "SpeakToAs";
+            /** @enum {string} */
+            grammaticalGender?: "animate" | "common" | "feminine" | "inanimate" | "masculine" | "neuter";
+            pronouns?: {
+                [key: string]: components["schemas"]["JsContactPronouns"];
+            };
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Title. */
+        JsContactTitle: {
+            /** @constant */
+            "@type": "Title";
+            name: string;
+            /**
+             * @default title
+             * @enum {string}
+             */
+            kind: "title" | "role";
+            organizationId?: components["schemas"]["JsContactId"];
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * @description RFC 9553 nicknames map — nested `@type` on values is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440004": {
+         *         "name": "Joe"
+         *       }
+         *     }
+         */
+        JsContactIdNicknameMap: {
+            [key: string]: components["schemas"]["JsContactNickname"];
+        };
+        /**
+         * @description RFC 9553 organizations map — nested `@type` on values and OrgUnit entries is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440005": {
+         *         "name": "Example Corp",
+         *         "units": [
+         *           {
+         *             "name": "Engineering"
+         *           }
+         *         ]
+         *       }
+         *     }
+         */
+        JsContactIdOrganizationMap: {
+            [key: string]: components["schemas"]["JsContactOrganization"];
+        };
+        /**
+         * @description RFC 9553 titles map — nested `@type` on values is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440006": {
+         *         "name": "Engineer"
+         *       }
+         *     }
+         */
+        JsContactIdTitleMap: {
+            [key: string]: components["schemas"]["JsContactTitle"];
+        };
+        /** @description RFC 9553 Resource base type. */
+        JsContactResource: {
+            /** @description Concrete resource type name (not Resource). */
+            "@type": string;
+            kind?: string;
+            /** Format: uri */
+            uri: string;
+            mediaType?: string;
+            contexts?: components["schemas"]["JsContactStringBooleanMap"];
+            pref?: components["schemas"]["JsContactUnsignedInt"];
+            label?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Calendar. */
+        JsContactCalendar: components["schemas"]["JsContactResource"] & {
+            /** @constant */
+            "@type": "Calendar";
+            /** @enum {string} */
+            kind: "calendar" | "freeBusy";
+        };
+        /** @description RFC 9553 CryptoKey. */
+        JsContactCryptoKey: components["schemas"]["JsContactResource"] & {
+            /** @constant */
+            "@type": "CryptoKey";
+        };
+        /** @description RFC 9553 Directory. */
+        JsContactDirectory: components["schemas"]["JsContactResource"] & {
+            /** @constant */
+            "@type": "Directory";
+            /** @enum {string} */
+            kind: "directory" | "entry";
+            listAs?: components["schemas"]["JsContactUnsignedInt"];
+        };
+        /** @description RFC 9553 Link. */
+        JsContactLink: components["schemas"]["JsContactResource"] & {
+            /** @constant */
+            "@type": "Link";
+            /** @enum {string} */
+            kind?: "contact";
+        };
+        /** @description RFC 9553 Media with JMAP blobId extension. */
+        JsContactMedia: components["schemas"]["JsContactResource"] & {
+            /** @constant */
+            "@type": "Media";
+            /** @enum {string} */
+            kind: "photo" | "sound" | "logo";
+            /** @description JMAP blob id (RFC 9610); replaces data: URI on read. */
+            blobId?: components["schemas"]["JsContactId"];
+        };
+        /**
+         * @description RFC 9553 calendars map — nested `@type` on values is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440009": {
+         *         "kind": "calendar",
+         *         "uri": "https://example.com/calendars/joe"
+         *       }
+         *     }
+         */
+        JsContactIdCalendarMap: {
+            [key: string]: components["schemas"]["JsContactCalendar"];
+        };
+        /**
+         * @description RFC 9553 cryptoKeys map — nested `@type` on values is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440011": {
+         *         "uri": "data:application/pgp-keys;base64,..."
+         *       }
+         *     }
+         */
+        JsContactIdCryptoKeyMap: {
+            [key: string]: components["schemas"]["JsContactCryptoKey"];
+        };
+        /**
+         * @description RFC 9553 directories map — nested `@type` on values is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440012": {
+         *         "kind": "directory",
+         *         "uri": "ldap://directory.example.com/cn=joe"
+         *       }
+         *     }
+         */
+        JsContactIdDirectoryMap: {
+            [key: string]: components["schemas"]["JsContactDirectory"];
+        };
+        /**
+         * @description RFC 9553 links map — nested `@type` on values is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440013": {
+         *         "kind": "contact",
+         *         "uri": "card:550e8400-e29b-41d4-a716-446655440000"
+         *       }
+         *     }
+         */
+        JsContactIdLinkMap: {
+            [key: string]: components["schemas"]["JsContactLink"];
+        };
+        /**
+         * @description RFC 9553 media map — nested `@type` on values is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440014": {
+         *         "kind": "photo",
+         *         "uri": "https://example.com/photos/joe.jpg",
+         *         "mediaType": "image/jpeg"
+         *       }
+         *     }
+         */
+        JsContactIdMediaMap: {
+            [key: string]: components["schemas"]["JsContactMedia"];
+        };
+        /** @description RFC 9553 Id — base64url alphabet without padding. */
+        JsContactId: string;
+        /** @description RFC 9553 UnsignedInt. */
+        JsContactUnsignedInt: number;
+        /**
+         * Format: date-time
+         * @description RFC 9553 UTCDateTime — RFC 3339 date-time with Z offset.
+         */
+        JsContactUTCDateTime: string;
+        /**
+         * @description RFC 9553 String[Boolean] set (keywords).
+         * @example {
+         *       "vip": true,
+         *       "customer": true
+         *     }
+         */
+        JsContactStringBooleanMap: {
+            [key: string]: true;
+        };
+        /**
+         * @description RFC 9553 Id[Boolean] set keyed by JsContact Id (addressBookIds, members). Nested `@type` not applicable.
+         * @example {
+         *       "default": true
+         *     }
+         */
+        JsContactIdBooleanMap: {
+            [key: string]: true;
+        };
+        /** @description RFC 9553 String[String] map. */
+        JsContactStringStringMap: {
+            [key: string]: string;
+        };
+        /**
+         * @description RFC 9553 String[Relation] map (relatedTo) — nested `@type` on values is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440019": {
+         *         "relation": {
+         *           "spouse": true
+         *         }
+         *       }
+         *     }
+         */
+        JsContactStringRelationMap: {
+            [key: string]: components["schemas"]["JsContactRelation"];
+        };
+        /** @description RFC 9553 String[PatchObject] localizations map. */
+        JsContactStringPatchObjectMap: {
+            [key: string]: {
+                [key: string]: unknown;
+            };
+        };
+        /** @description RFC 9555 vCardParams — preserved vCard parameters. */
+        JsContactVCardParams: {
+            [key: string]: string | string[];
+        };
+        /** @description RFC 9555 JCardProp — jCard property tuple [name, params, valueType, value]. */
+        JsContactJCardProp: [
+            string,
+            components["schemas"]["JsContactVCardParams"],
+            string,
+            unknown
+        ];
+        /**
+         * @description POST/PUT request body for contact cards. Omits server-owned `id`, `@type`, and `version`. Nested `@type` on map values is optional per RFC 9553 §1.3.4.
+         * @example {
+         *       "addressBookIds": {
+         *         "default": true
+         *       },
+         *       "name": {
+         *         "full": "Joe Example"
+         *       },
+         *       "emails": {
+         *         "550e8400-e29b-41d4-a716-446655440001": {
+         *           "address": "joe@example.com",
+         *           "contexts": {
+         *             "private": true
+         *           }
+         *         }
+         *       },
+         *       "phones": {
+         *         "550e8400-e29b-41d4-a716-446655440002": {
+         *           "number": "+1-555-0100",
+         *           "features": {
+         *             "mobile": true,
+         *             "voice": true
+         *           }
+         *         }
+         *       },
+         *       "addresses": {
+         *         "550e8400-e29b-41d4-a716-446655440003": {
+         *           "full": "123 Main St, Springfield, IL 62701, US",
+         *           "countryCode": "US",
+         *           "contexts": {
+         *             "home": true
+         *           }
+         *         }
+         *       }
+         *     }
+         */
+        ContactCardCreate: {
+            /** @description Set of address book ids; each value MUST be true. */
+            addressBookIds: components["schemas"]["JsContactIdBooleanMap"];
+            /** @description Cross-system card identifier (RFC 9553). Optional on create; server generates when omitted. */
+            uid?: string;
+            created?: components["schemas"]["JsContactUTCDateTime"];
+            updated?: components["schemas"]["JsContactUTCDateTime"];
+            /**
+             * @default individual
+             * @enum {string}
+             */
+            kind: "individual" | "group" | "org" | "location" | "device" | "application";
+            /** @description Primary language tag (RFC 5646). */
+            language?: string;
+            /** @description Group member uids when kind is group. */
+            members?: components["schemas"]["JsContactIdBooleanMap"];
+            prodId?: string;
+            relatedTo?: components["schemas"]["JsContactStringRelationMap"];
+            name?: components["schemas"]["JsContactName"];
+            nicknames?: components["schemas"]["JsContactIdNicknameMap"];
+            organizations?: components["schemas"]["JsContactIdOrganizationMap"];
+            speakToAs?: components["schemas"]["JsContactSpeakToAs"];
+            titles?: components["schemas"]["JsContactIdTitleMap"];
+            emails?: components["schemas"]["JsContactIdEmailAddressMap"];
+            onlineServices?: components["schemas"]["JsContactIdOnlineServiceMap"];
+            phones?: components["schemas"]["JsContactIdPhoneMap"];
+            preferredLanguages?: components["schemas"]["JsContactIdLanguagePrefMap"];
+            calendars?: components["schemas"]["JsContactIdCalendarMap"];
+            schedulingAddresses?: components["schemas"]["JsContactIdSchedulingAddressMap"];
+            addresses?: components["schemas"]["JsContactIdAddressMap"];
+            cryptoKeys?: components["schemas"]["JsContactIdCryptoKeyMap"];
+            directories?: components["schemas"]["JsContactIdDirectoryMap"];
+            links?: components["schemas"]["JsContactIdLinkMap"];
+            media?: components["schemas"]["JsContactIdMediaMap"];
+            localizations?: components["schemas"]["JsContactStringPatchObjectMap"];
+            anniversaries?: components["schemas"]["JsContactIdAnniversaryMap"];
+            keywords?: components["schemas"]["JsContactStringBooleanMap"];
+            notes?: components["schemas"]["JsContactIdNoteMap"];
+            personalInfo?: components["schemas"]["JsContactIdPersonalInfoMap"];
+            /** @description RFC 9555 unmapped vCard properties. */
+            vCardProps?: components["schemas"]["JsContactJCardProp"][];
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * @description PATCH request body for partial contact card updates. Omits server-owned `id`, `@type`, and `version`. Id-keyed map entries merge by key; null removes an entry. Nested objects (e.g. name) deep-merge.
+         * @example {
+         *       "emails": {
+         *         "550e8400-e29b-41d4-a716-446655440001": {
+         *           "address": "updated@example.com"
+         *         },
+         *         "550e8400-e29b-41d4-a716-446655440099": null
+         *       }
+         *     }
+         */
+        ContactCardPatch: {
+            /** @description Set of address book ids; each value MUST be true. Map entry null removes membership. */
+            addressBookIds?: components["schemas"]["JsContactIdBooleanMap"];
+            /** @description Cross-system card identifier (RFC 9553). */
+            uid?: string;
+            created?: components["schemas"]["JsContactUTCDateTime"];
+            updated?: components["schemas"]["JsContactUTCDateTime"];
+            /** @enum {string} */
+            kind?: "individual" | "group" | "org" | "location" | "device" | "application";
+            /** @description Primary language tag (RFC 5646). */
+            language?: string;
+            /** @description Group member uids when kind is group. Map entry null removes member. */
+            members?: components["schemas"]["JsContactIdBooleanMap"];
+            prodId?: string;
+            relatedTo?: components["schemas"]["JsContactStringRelationMap"];
+            name?: components["schemas"]["JsContactName"];
+            nicknames?: components["schemas"]["JsContactIdNicknameMap"];
+            organizations?: components["schemas"]["JsContactIdOrganizationMap"];
+            speakToAs?: components["schemas"]["JsContactSpeakToAs"];
+            titles?: components["schemas"]["JsContactIdTitleMap"];
+            emails?: components["schemas"]["JsContactIdEmailAddressMap"];
+            onlineServices?: components["schemas"]["JsContactIdOnlineServiceMap"];
+            phones?: components["schemas"]["JsContactIdPhoneMap"];
+            preferredLanguages?: components["schemas"]["JsContactIdLanguagePrefMap"];
+            calendars?: components["schemas"]["JsContactIdCalendarMap"];
+            schedulingAddresses?: components["schemas"]["JsContactIdSchedulingAddressMap"];
+            addresses?: components["schemas"]["JsContactIdAddressMap"];
+            cryptoKeys?: components["schemas"]["JsContactIdCryptoKeyMap"];
+            directories?: components["schemas"]["JsContactIdDirectoryMap"];
+            links?: components["schemas"]["JsContactIdLinkMap"];
+            media?: components["schemas"]["JsContactIdMediaMap"];
+            localizations?: components["schemas"]["JsContactStringPatchObjectMap"];
+            anniversaries?: components["schemas"]["JsContactIdAnniversaryMap"];
+            keywords?: components["schemas"]["JsContactStringBooleanMap"];
+            notes?: components["schemas"]["JsContactIdNoteMap"];
+            personalInfo?: components["schemas"]["JsContactIdPersonalInfoMap"];
+            /** @description RFC 9555 unmapped vCard properties. */
+            vCardProps?: components["schemas"]["JsContactJCardProp"][];
+        } & {
+            [key: string]: unknown;
+        };
+        ContactBlobUploadResponse: {
+            /** @description Opaque blob identifier for contact media (RFC 9610 blobId). */
+            blobId: string;
+            /** @description MIME media type of the uploaded blob. */
+            type: string;
+            /** @description Blob size in bytes. */
+            size: number;
+        };
+        AddressBookCreate: {
+            name: string;
+            description?: string | null;
+            /** @description Optional client-suggested address book id (uri slug). */
+            id?: components["schemas"]["JsContactId"];
+        };
+        AddressBookPatch: {
+            name?: string;
+            description?: string | null;
+            isSubscribed?: boolean;
+        };
+        AddressBookDeleteOptions: {
+            /**
+             * @description When true, delete all cards in the book before destroying it.
+             * @default false
+             */
+            onDestroyRemoveContents: boolean;
+        };
+        /** @description JMAP-shaped incremental sync response (RFC 8620 /changes mapping). */
+        JmapChangesResponse: {
+            /** @description Previous sync state token supplied by the client. */
+            oldState: string;
+            /** @description Current sync state token to store for the next request. */
+            newState: string;
+            created: components["schemas"]["JsContactId"][];
+            updated: components["schemas"]["JsContactId"][];
+            destroyed: components["schemas"]["JsContactId"][];
+        };
+        ContactCardQueryFilter: {
+            inAddressBook: components["schemas"]["JsContactId"];
+            /** @description Exact JSContact uid match (RFC 9610 ContactCard/query). */
+            uid?: string;
+        };
+        ContactCardQueryRequest: {
+            filter: components["schemas"]["ContactCardQueryFilter"];
+            limit?: number;
+        };
+        ContactCardQueryResponse: {
+            ids: components["schemas"]["JsContactId"][];
+            total: number;
+        };
+        /** @description Quoted HTTP entity tag aligned with Cal/CardDAV storage (Sabre PDO etag). */
+        DavEtag: string;
+        /** @description Per-instance patch keyed by recurrence id (original instance start). Use excluded:true to omit an instance. */
+        CalendarEventRecurrenceOverride: {
+            excluded?: boolean;
+            title?: string;
+            description?: string | null;
+            start?: components["schemas"]["JmapLocalDateTime"];
+            end?: components["schemas"]["JmapLocalDateTime"];
+            duration?: string;
+            showWithoutTime?: boolean;
+            timeZone?: string | null;
+            locations?: {
+                [key: string]: components["schemas"]["CalendarEventLocation"];
+            };
+            /** @enum {string} */
+            freeBusyStatus?: "busy" | "free" | "tentative";
+            /** @enum {string} */
+            privacy?: "public" | "private" | "secret";
+            /** @enum {string} */
+            status?: "confirmed" | "cancelled" | "tentative";
+            participants?: {
+                [key: string]: components["schemas"]["CalendarEventParticipant"];
+            };
+            categories?: string[];
+            priority?: number;
+            sequence?: number;
+            icsProps?: {
+                [key: string]: string;
+            };
+        };
+        CalendarEventLink: {
+            /** @constant */
+            "@type": "Link";
+            /** Format: uri */
+            href: string;
+            rel?: string;
+            contentType?: string;
+        };
+        CalendarTimeZone: {
+            /** @constant */
+            "@type": "TimeZone";
+            tzid: string;
+            /** @description Serialized VTIMEZONE component for round-trip. */
+            icsDefinition?: string;
+        };
+        CalendarRecurrenceRule: {
+            /** @constant */
+            "@type": "RecurrenceRule";
+            /** @enum {string} */
+            frequency: "secondly" | "minutely" | "hourly" | "daily" | "weekly" | "monthly" | "yearly";
+            interval?: number;
+            count?: number;
+            until?: string;
+            byDay?: string[];
+            byMonth?: number[];
+            byMonthDay?: number[];
+            byYearDay?: number[];
+            byWeekNo?: number[];
+            bySetPosition?: number[];
+            firstDayOfWeek?: string;
+        };
+        CalendarEventLocation: {
+            /** @constant */
+            "@type": "Location";
+            name?: string;
+            description?: string;
+            rel?: string;
+            timeZone?: string;
+            coordinates?: string;
+        };
+        CalendarEventParticipant: {
+            /** @constant */
+            "@type": "Participant";
+            name?: string | null;
+            email?: string | null;
+            roles?: string[];
+            participationStatus?: string;
+            kind?: string;
+            language?: string;
+            expectReply?: boolean;
+            /** Format: email */
+            delegatedTo?: string;
+            /** Format: email */
+            delegatedFrom?: string;
+        };
+        CalendarEventRelativeAlertTrigger: {
+            /** @constant */
+            "@type": "RelativeAlert";
+            /** @description Signed ISO 8601 duration relative to event start or end (e.g. -PT15M). */
+            offset: string;
+            /**
+             * @default start
+             * @enum {string}
+             */
+            relatedTo: "start" | "end";
+        };
+        CalendarEventAbsoluteAlertTrigger: {
+            /** @constant */
+            "@type": "AbsoluteAlert";
+            when: components["schemas"]["JmapLocalDateTime"];
+        };
+        CalendarEventAlert: {
+            /** @constant */
+            "@type": "Alert";
+            trigger: components["schemas"]["CalendarEventRelativeAlertTrigger"] | components["schemas"]["CalendarEventAbsoluteAlertTrigger"];
+            /**
+             * @default display
+             * @enum {string}
+             */
+            action: "display" | "audio" | "email";
+        };
+        /**
+         * @description JMAP CalendarEvent mapped from a single VEVENT ICS resource.
+         * @example {
+         *       "@type": "Event",
+         *       "id": "team-sync-a1b2c3d4",
+         *       "uid": "urn:uuid:550e8400-e29b-41d4-a716-446655440000",
+         *       "calendarIds": {
+         *         "default": true
+         *       },
+         *       "title": "Team sync",
+         *       "start": "2026-06-15T10:00:00Z",
+         *       "end": "2026-06-15T11:00:00Z",
+         *       "showWithoutTime": false
+         *     }
+         */
+        CalendarEvent: {
+            /** @constant */
+            readonly "@type": "Event";
+            readonly id: components["schemas"]["JmapId"];
+            uid: string;
+            calendarIds: components["schemas"]["JmapIdBooleanMap"];
+            title?: string;
+            description?: string | null;
+            start: components["schemas"]["JmapLocalDateTime"];
+            end?: components["schemas"]["JmapLocalDateTime"];
+            duration?: string;
+            showWithoutTime?: boolean;
+            timeZone?: string | null;
+            /** @description Original instance start for expanded or override rows; null on series masters. */
+            recurrenceId?: string;
+            locations?: {
+                [key: string]: components["schemas"]["CalendarEventLocation"];
+            };
+            /** @description RRULE on series masters; null on expanded instances. */
+            recurrenceRules?: components["schemas"]["CalendarRecurrenceRule"][] | null;
+            excludedRecurrenceDates?: string[];
+            /** @description EXRULE rule-based exclusions (legacy ICS). */
+            excludedRecurrenceRules?: components["schemas"]["CalendarRecurrenceRule"][];
+            /** @description Per-instance patches keyed by recurrence id (original instance start). Maps to RECURRENCE-ID override VEVENTs in ICS. */
+            recurrenceOverrides?: {
+                [key: string]: components["schemas"]["CalendarEventRecurrenceOverride"];
+            };
+            /** @enum {string} */
+            freeBusyStatus?: "busy" | "free" | "tentative";
+            /** @enum {string} */
+            privacy?: "public" | "private" | "secret";
+            /** @enum {string} */
+            status?: "confirmed" | "cancelled" | "tentative";
+            participants?: {
+                [key: string]: components["schemas"]["CalendarEventParticipant"];
+            };
+            /** @description Reminder alarms mapped from iCalendar VALARM components. */
+            alerts?: {
+                [key: string]: components["schemas"]["CalendarEventAlert"];
+            };
+            links?: {
+                [key: string]: components["schemas"]["CalendarEventLink"];
+            };
+            attachments?: {
+                [key: string]: components["schemas"]["CalendarEventLink"];
+            };
+            timeZones?: {
+                [key: string]: components["schemas"]["CalendarTimeZone"];
+            };
+            categories?: string[];
+            priority?: number;
+            sequence?: number;
+            created?: components["schemas"]["JmapUTCDateTime"];
+            updated?: components["schemas"]["JmapUTCDateTime"];
+            icsProps?: {
+                [key: string]: string;
+            };
+        };
+        /** @description POST body; server assigns id and @type. */
+        CalendarEventCreate: {
+            "@type"?: unknown;
+            id?: unknown;
+        } & components["schemas"]["CalendarEvent"];
+        /** @description PATCH request body for partial calendar event updates. Omits server-owned id and @type. */
+        CalendarEventPatch: {
+            title?: string;
+            description?: string | null;
+            start?: components["schemas"]["JmapLocalDateTime"];
+            end?: components["schemas"]["JmapLocalDateTime"];
+            duration?: string;
+            showWithoutTime?: boolean;
+            timeZone?: string | null;
+            locations?: {
+                [key: string]: components["schemas"]["CalendarEventLocation"];
+            };
+            recurrenceRules?: components["schemas"]["CalendarRecurrenceRule"][];
+            excludedRecurrenceDates?: string[];
+            excludedRecurrenceRules?: components["schemas"]["CalendarRecurrenceRule"][];
+            /** @description Per-instance patches keyed by recurrence id (original instance start). Maps to RECURRENCE-ID override VEVENTs in ICS. */
+            recurrenceOverrides?: {
+                [key: string]: components["schemas"]["CalendarEventRecurrenceOverride"];
+            };
+            /** @enum {string} */
+            freeBusyStatus?: "busy" | "free" | "tentative";
+            /** @enum {string} */
+            privacy?: "public" | "private" | "secret";
+            /** @enum {string} */
+            status?: "confirmed" | "cancelled" | "tentative";
+            participants?: {
+                [key: string]: components["schemas"]["CalendarEventParticipant"];
+            };
+            /** @description Reminder alarms mapped from iCalendar VALARM components. */
+            alerts?: {
+                [key: string]: components["schemas"]["CalendarEventAlert"];
+            };
+            categories?: string[];
+            priority?: number;
+            sequence?: number;
+            icsProps?: {
+                [key: string]: string;
+            };
+        };
+        /** @description REST list response for GET /calendars/events. */
+        CalendarEventListResponse: {
+            list: components["schemas"]["CalendarEvent"][];
+        };
+        /** @description JMAP CalendarRights. */
+        CalendarRights: {
+            mayRead: boolean;
+            mayWrite: boolean;
+            mayShare: boolean;
+            mayDelete: boolean;
+        };
+        /**
+         * @description JMAP Calendar resource.
+         * @example {
+         *       "id": "default",
+         *       "name": "Calendar",
+         *       "description": null,
+         *       "timeZone": null,
+         *       "color": null,
+         *       "sortOrder": 0,
+         *       "isDefault": true,
+         *       "isSubscribed": true,
+         *       "shareWith": null,
+         *       "myRights": {
+         *         "mayRead": true,
+         *         "mayWrite": true,
+         *         "mayShare": false,
+         *         "mayDelete": false
+         *       }
+         *     }
+         */
+        Calendar: {
+            readonly id: components["schemas"]["JmapId"];
+            name: string;
+            description?: string | null;
+            timeZone?: string | null;
+            color?: string | null;
+            sortOrder: number;
+            isDefault: boolean;
+            isSubscribed: boolean;
+            shareWith?: {
+                [key: string]: components["schemas"]["CalendarRights"];
+            } | null;
+            myRights: components["schemas"]["CalendarRights"];
+        };
+        /** @description REST list response for GET /calendars. */
+        CalendarListResponse: {
+            list: components["schemas"]["Calendar"][];
+        };
+        /** @description JMAP id string (calendar uri, event id, map key). */
+        JmapId: string;
+        /** @description Map of ids to true booleans. */
+        JmapIdBooleanMap: {
+            [key: string]: true;
+        };
+        /**
+         * Format: date-time
+         * @description UTC date-time (ISO 8601).
+         */
+        JmapUTCDateTime: string;
+        /** @description Local or UTC date-time without required Z suffix. */
+        JmapLocalDateTime: string;
+        /** @description Tasks API capabilities (stub until JMAP Tasks is implemented). */
+        TaskCapabilitiesResponse: {
+            [key: string]: unknown;
+        };
+        /** @description Task list calendar resource (stub). */
+        TaskList: {
+            id: string;
+        } & {
+            [key: string]: unknown;
+        };
+        TaskListListResponse: {
+            list: components["schemas"]["TaskList"][];
+        };
+        /** @description Task item resource (stub). */
+        TaskItem: {
+            id: string;
+        } & {
+            [key: string]: unknown;
+        };
+        TaskItemListResponse: {
+            list: components["schemas"]["TaskItem"][];
         };
     };
     responses: never;

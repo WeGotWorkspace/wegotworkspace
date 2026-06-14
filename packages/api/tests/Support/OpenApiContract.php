@@ -140,6 +140,13 @@ final class OpenApiContract
             '{jobId}' => 'current',
             '{resultId}' => '1',
             '{attachmentId}' => '1.1',
+            '{addressBookId}' => 'default',
+            '{cardId}' => 'demo-card',
+            '{blobId}' => '550e8400e29b41d4a716446655440000',
+            '{calendarId}' => 'default',
+            '{eventId}' => 'demo-event',
+            '{taskId}' => 'demo-task',
+            '{taskListId}' => 'default',
         ];
 
         $path = $openApiPath;
@@ -175,6 +182,15 @@ final class OpenApiContract
         }
         if ($openApiPath === '/rooms/{roomId}/events' && $method === 'GET') {
             return 'peerId=peer-alpha';
+        }
+        if ($openApiPath === '/contacts/cards' && $method === 'GET') {
+            return 'addressBookId=default';
+        }
+        if ($openApiPath === '/contacts/cards/changes' && $method === 'GET') {
+            return 'addressBookId=default';
+        }
+        if ($openApiPath === '/calendars/events' && $method === 'GET') {
+            return 'calendarId=default';
         }
 
         return '';

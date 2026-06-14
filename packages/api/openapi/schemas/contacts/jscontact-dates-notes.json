@@ -1,0 +1,258 @@
+{
+  "JsContactRelation": {
+    "type": "object",
+    "required": ["@type"],
+    "properties": {
+      "@type": {
+        "type": "string",
+        "const": "Relation"
+      },
+      "relation": {
+        "$ref": "#/components/schemas/JsContactStringBooleanMap",
+        "description": "Relation types: acquaintance, agent, child, co-resident, co-worker, colleague, contact, crush, date, emergency, friend, kin, me, met, muse, neighbor, parent, sibling, spouse, sweetheart."
+      },
+      "vCardParams": {
+        "$ref": "#/components/schemas/JsContactVCardParams"
+      },
+      "vCardName": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": true,
+    "description": "RFC 9553 Relation."
+  },
+  "JsContactPartialDate": {
+    "type": "object",
+    "required": ["@type"],
+    "properties": {
+      "@type": {
+        "type": "string",
+        "const": "PartialDate"
+      },
+      "year": {
+        "$ref": "#/components/schemas/JsContactUnsignedInt"
+      },
+      "month": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 12
+      },
+      "day": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 31
+      },
+      "calendarScale": {
+        "type": "string",
+        "description": "CLDR calendar name in lowercase."
+      },
+      "vCardParams": {
+        "$ref": "#/components/schemas/JsContactVCardParams"
+      },
+      "vCardName": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": true,
+    "description": "RFC 9553 PartialDate."
+  },
+  "JsContactTimestamp": {
+    "type": "object",
+    "required": ["@type", "utc"],
+    "properties": {
+      "@type": {
+        "type": "string",
+        "const": "Timestamp"
+      },
+      "utc": {
+        "$ref": "#/components/schemas/JsContactUTCDateTime"
+      },
+      "vCardParams": {
+        "$ref": "#/components/schemas/JsContactVCardParams"
+      },
+      "vCardName": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": true,
+    "description": "RFC 9553 Timestamp."
+  },
+  "JsContactAnniversaryDate": {
+    "oneOf": [
+      { "$ref": "#/components/schemas/JsContactPartialDate" },
+      { "$ref": "#/components/schemas/JsContactTimestamp" }
+    ],
+    "description": "RFC 9553 Anniversary.date — PartialDate (default) or Timestamp."
+  },
+  "JsContactAnniversary": {
+    "type": "object",
+    "required": ["@type", "kind", "date"],
+    "properties": {
+      "@type": {
+        "type": "string",
+        "const": "Anniversary"
+      },
+      "kind": {
+        "type": "string",
+        "enum": ["birth", "death", "wedding"]
+      },
+      "date": {
+        "$ref": "#/components/schemas/JsContactAnniversaryDate"
+      },
+      "place": {
+        "$ref": "#/components/schemas/JsContactAddress"
+      },
+      "vCardParams": {
+        "$ref": "#/components/schemas/JsContactVCardParams"
+      },
+      "vCardName": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": true,
+    "description": "RFC 9553 Anniversary."
+  },
+  "JsContactAuthor": {
+    "type": "object",
+    "required": ["@type"],
+    "properties": {
+      "@type": {
+        "type": "string",
+        "const": "Author"
+      },
+      "name": {
+        "type": "string"
+      },
+      "uri": {
+        "type": "string",
+        "format": "uri"
+      },
+      "vCardParams": {
+        "$ref": "#/components/schemas/JsContactVCardParams"
+      },
+      "vCardName": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": true,
+    "description": "RFC 9553 Author — at least one of name or uri MUST be set."
+  },
+  "JsContactNote": {
+    "type": "object",
+    "required": ["@type", "note"],
+    "properties": {
+      "@type": {
+        "type": "string",
+        "const": "Note"
+      },
+      "note": {
+        "type": "string"
+      },
+      "created": {
+        "$ref": "#/components/schemas/JsContactUTCDateTime"
+      },
+      "author": {
+        "$ref": "#/components/schemas/JsContactAuthor"
+      },
+      "vCardParams": {
+        "$ref": "#/components/schemas/JsContactVCardParams"
+      },
+      "vCardName": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": true,
+    "description": "RFC 9553 Note."
+  },
+  "JsContactPersonalInfo": {
+    "type": "object",
+    "required": ["@type", "kind", "value"],
+    "properties": {
+      "@type": {
+        "type": "string",
+        "const": "PersonalInfo"
+      },
+      "kind": {
+        "type": "string",
+        "enum": ["expertise", "hobby", "interest"]
+      },
+      "value": {
+        "type": "string"
+      },
+      "level": {
+        "type": "string",
+        "enum": ["high", "medium", "low"]
+      },
+      "listAs": {
+        "$ref": "#/components/schemas/JsContactUnsignedInt"
+      },
+      "label": {
+        "type": "string"
+      },
+      "vCardParams": {
+        "$ref": "#/components/schemas/JsContactVCardParams"
+      },
+      "vCardName": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": true,
+    "description": "RFC 9553 PersonalInfo."
+  },
+  "JsContactIdAnniversaryMap": {
+    "type": "object",
+    "propertyNames": {
+      "$ref": "#/components/schemas/JsContactId"
+    },
+    "additionalProperties": {
+      "$ref": "#/components/schemas/JsContactAnniversary"
+    },
+    "description": "RFC 9553 anniversaries map — nested `@type` on values, date, and place is optional (RFC 9553 §1.3.4).",
+    "example": {
+      "550e8400-e29b-41d4-a716-446655440015": {
+        "kind": "birth",
+        "date": {
+          "month": 6,
+          "day": 13
+        },
+        "place": {
+          "full": "Springfield, IL"
+        }
+      }
+    }
+  },
+  "JsContactIdNoteMap": {
+    "type": "object",
+    "propertyNames": {
+      "$ref": "#/components/schemas/JsContactId"
+    },
+    "additionalProperties": {
+      "$ref": "#/components/schemas/JsContactNote"
+    },
+    "description": "RFC 9553 notes map — nested `@type` on values and author is optional (RFC 9553 §1.3.4).",
+    "example": {
+      "550e8400-e29b-41d4-a716-446655440016": {
+        "note": "Met at the 2024 conference.",
+        "author": {
+          "name": "Alice Example"
+        }
+      }
+    }
+  },
+  "JsContactIdPersonalInfoMap": {
+    "type": "object",
+    "propertyNames": {
+      "$ref": "#/components/schemas/JsContactId"
+    },
+    "additionalProperties": {
+      "$ref": "#/components/schemas/JsContactPersonalInfo"
+    },
+    "description": "RFC 9553 personalInfo map — nested `@type` on values is optional (RFC 9553 §1.3.4).",
+    "example": {
+      "550e8400-e29b-41d4-a716-446655440017": {
+        "kind": "hobby",
+        "value": "cycling"
+      }
+    }
+  }
+}

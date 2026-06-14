@@ -1,0 +1,127 @@
+{
+  "AddressBookRights": {
+    "type": "object",
+    "required": ["mayRead", "mayWrite", "mayShare", "mayDelete"],
+    "properties": {
+      "mayRead": {
+        "type": "boolean",
+        "description": "May fetch cards in this address book."
+      },
+      "mayWrite": {
+        "type": "boolean",
+        "description": "May create, update, delete, or move cards."
+      },
+      "mayShare": {
+        "type": "boolean",
+        "description": "May modify shareWith."
+      },
+      "mayDelete": {
+        "type": "boolean",
+        "description": "May delete the address book itself."
+      }
+    },
+    "additionalProperties": false,
+    "description": "RFC 9610 AddressBookRights."
+  },
+  "AddressBook": {
+    "type": "object",
+    "required": ["id", "name", "sortOrder", "isDefault", "isSubscribed", "myRights"],
+    "properties": {
+      "id": {
+        "$ref": "#/components/schemas/JsContactId",
+        "description": "Immutable server-set address book identifier."
+      },
+      "name": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 255,
+        "description": "User-visible name."
+      },
+      "description": {
+        "type": ["string", "null"],
+        "description": "Long-form description; null when unset."
+      },
+      "sortOrder": {
+        "$ref": "#/components/schemas/JsContactUnsignedInt",
+        "description": "UI sort order; lower values appear first."
+      },
+      "isDefault": {
+        "type": "boolean",
+        "description": "Server-set default address book flag."
+      },
+      "isSubscribed": {
+        "type": "boolean",
+        "description": "Whether the book is shown in client UI."
+      },
+      "shareWith": {
+        "oneOf": [
+          {
+            "type": "object",
+            "propertyNames": {
+              "$ref": "#/components/schemas/JsContactId"
+            },
+            "additionalProperties": {
+              "$ref": "#/components/schemas/AddressBookRights"
+            }
+          },
+          { "type": "null" }
+        ],
+        "description": "Principal id to rights map; null when not shared."
+      },
+      "myRights": {
+        "$ref": "#/components/schemas/AddressBookRights",
+        "description": "Current user's access rights for this book."
+      }
+    },
+    "additionalProperties": false,
+    "description": "RFC 9610 AddressBook.",
+    "example": {
+      "id": "default",
+      "name": "Default Address Book",
+      "description": null,
+      "sortOrder": 0,
+      "isDefault": true,
+      "isSubscribed": true,
+      "shareWith": null,
+      "myRights": {
+        "mayRead": true,
+        "mayWrite": true,
+        "mayShare": true,
+        "mayDelete": false
+      }
+    }
+  },
+  "ContactAddressBookListResponse": {
+    "type": "object",
+    "required": ["list"],
+    "properties": {
+      "list": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/AddressBook"
+        }
+      }
+    },
+    "additionalProperties": false,
+    "description": "REST list response for GET /contacts/addressbooks.",
+    "example": {
+      "list": [
+        {
+          "id": "default",
+          "name": "Default Address Book",
+          "description": null,
+          "sortOrder": 0,
+          "isDefault": true,
+          "isSubscribed": true,
+          "shareWith": null,
+          "myRights": {
+            "mayRead": true,
+            "mayWrite": true,
+            "mayShare": true,
+            "mayDelete": false
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+    "@type": "Card",
+    "version": "1.0",
+    "uid": "urn:uuid:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "name": {
+        "full": "Jane Doe",
+        "@type": "Name"
+    },
+    "phones": {
+        "p_MQuZp-s2zTUOOv0IHArUhSt7": {
+            "@type": "Phone",
+            "number": "tel:+1-555-555-5555",
+            "features": {
+                "voice": true
+            },
+            "vCardParams": {
+                "group": "ITEM1"
+            },
+            "label": "Mobile"
+        }
+    },
+    "nicknames": {
+        "p__wRC-k1dYWeoIBQXc3RSF6Df": {
+            "@type": "Nickname",
+            "name": "JD"
+        }
+    },
+    "vCardProps": [
+        [
+            "VERSION",
+            [],
+            "text",
+            [
+                "4.0"
+            ]
+        ]
+    ]
+}

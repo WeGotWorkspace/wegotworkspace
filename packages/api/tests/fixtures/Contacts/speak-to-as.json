@@ -1,0 +1,32 @@
+{
+    "@type": "Card",
+    "version": "1.0",
+    "uid": "urn:uuid:ffffffff-ffff-4fff-8fff-ffffffffffff",
+    "name": {
+        "full": "Alex Smith",
+        "@type": "Name"
+    },
+    "speakToAs": {
+        "grammaticalGender": "they",
+        "pronouns": {
+            "p_KprGrAEIJQ5C8IfyXDjgQLqi": {
+                "@type": "Pronouns",
+                "pronouns": "they/them",
+                "contexts": {
+                    "work": true
+                }
+            }
+        },
+        "@type": "SpeakToAs"
+    },
+    "vCardProps": [
+        [
+            "VERSION",
+            [],
+            "text",
+            [
+                "4.0"
+            ]
+        ]
+    ]
+}
