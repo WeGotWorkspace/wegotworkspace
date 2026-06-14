@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Tasks;
 
+use Tests\Support\OptimisticConcurrencyTestHelpers;
 use Tests\Support\TasksTestFixtures;
 use Tests\Support\WgwDatabaseTestCase;
 
 final class TasksTasksTest extends WgwDatabaseTestCase
 {
+    use OptimisticConcurrencyTestHelpers;
     use TasksTestFixtures;
 
     protected function setUp(): void
@@ -69,13 +71,14 @@ final class TasksTasksTest extends WgwDatabaseTestCase
     public function test_update_task(): void
     {
         $taskId = $this->seedTaskViaPdo('bob', 'buy-milk.ics', $this->sampleTodoIcs('Buy milk'));
+        $url = '/api/v1/tasks/items/'.$taskId;
 
         $response = $this->withBearer($this->userBearerToken())
-            ->putJson('/api/v1/tasks/items/'.$taskId, [
+            ->putJson($url, [
                 'title' => 'Buy oat milk',
                 'workflowStatus' => 'completed',
                 'progress' => 100,
-            ]);
+            ], $this->withIfMatch($this->fetchEtagFromGet($url)));
 
         $response->assertOk()
             ->assertJsonPath('id', $taskId)
@@ -87,12 +90,13 @@ final class TasksTasksTest extends WgwDatabaseTestCase
     public function test_patch_task(): void
     {
         $taskId = $this->seedTaskViaPdo('bob', 'buy-milk.ics', $this->sampleTodoIcs('Buy milk'));
+        $url = '/api/v1/tasks/items/'.$taskId;
 
         $response = $this->withBearer($this->userBearerToken())
-            ->patchJson('/api/v1/tasks/items/'.$taskId, [
+            ->patchJson($url, [
                 'workflowStatus' => 'in-process',
                 'progress' => 25,
-            ]);
+            ], $this->withIfMatch($this->fetchEtagFromGet($url)));
 
         $response->assertOk()
             ->assertJsonPath('title', 'Buy milk')
@@ -103,9 +107,10 @@ final class TasksTasksTest extends WgwDatabaseTestCase
     public function test_delete_task(): void
     {
         $taskId = $this->seedTaskViaPdo('bob', 'buy-milk.ics', $this->sampleTodoIcs('Buy milk'));
+        $url = '/api/v1/tasks/items/'.$taskId;
 
         $this->withBearer($this->userBearerToken())
-            ->deleteJson('/api/v1/tasks/items/'.$taskId)
+            ->deleteJson($url, [], $this->withIfMatch($this->fetchEtagFromGet($url)))
             ->assertOk()
             ->assertJsonPath('ok', true);
 
@@ -133,5 +138,27 @@ final class TasksTasksTest extends WgwDatabaseTestCase
             ])
             ->assertStatus(400)
             ->assertJsonPath('code', 'bad_request');
+    }
+
+    public function test_create_task_with_recurrence_persists_rrule(): void
+    {
+        $response = $this->withBearer($this->userBearerToken())
+            ->postJson('/api/v1/tasks/items', [
+                'taskListIds' => ['default' => true],
+                'title' => 'Weekly review',
+                'due' => '2026-06-02T10:00:00',
+                'recurrenceRules' => [
+                    [
+                        '@type' => 'RecurrenceRule',
+                        'frequency' => 'weekly',
+                        'byDay' => ['MO'],
+                    ],
+                ],
+            ]);
+
+        $response->assertCreated()
+            ->assertJsonCount(1, 'recurrenceRules')
+            ->assertJsonPath('recurrenceRules.0.frequency', 'weekly')
+            ->assertJsonPath('recurrenceRules.0.byDay.0', 'MO');
     }
 }

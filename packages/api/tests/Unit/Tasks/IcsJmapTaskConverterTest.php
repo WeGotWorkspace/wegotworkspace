@@ -92,4 +92,71 @@ final class IcsJmapTaskConverterTest extends TestCase
         $this->assertSame(100, $tasks[0]['progress']);
         $this->assertSame('2026-06-10T12:00:00Z', $tasks[0]['completed']);
     }
+
+    public function test_recurring_task_preserves_rrule_and_exdate(): void
+    {
+        $ics = str_replace("\n", "\r\n", (string) file_get_contents("{$this->fixturesDir}/recurring-todo.ics"));
+        $tasks = $this->reader->tasksFromIcs($ics);
+
+        $this->assertCount(1, $tasks);
+        $this->assertSame('daily', $tasks[0]['recurrenceRules'][0]['frequency']);
+        $this->assertSame(5, $tasks[0]['recurrenceRules'][0]['count']);
+        $this->assertSame(['2026-06-03T09:00:00'], $tasks[0]['excludedRecurrenceDates']);
+
+        $roundTrip = $this->converter->tasksFromIcs($this->converter->icsFromTask($tasks[0]));
+        $this->assertSame('daily', $roundTrip[0]['recurrenceRules'][0]['frequency']);
+        $this->assertSame(['2026-06-03T09:00:00'], $roundTrip[0]['excludedRecurrenceDates']);
+    }
+
+    public function test_recurrence_override_from_recurrence_id(): void
+    {
+        $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VTODO\r\nUID:series-1\r\nSUMMARY:Weekly review\r\nDUE:20260602T100000\r\nRRULE:FREQ=WEEKLY\r\nEND:VTODO\r\nBEGIN:VTODO\r\nUID:series-1\r\nRECURRENCE-ID:20260609T100000\r\nSUMMARY:Weekly review (moved)\r\nDUE:20260609T140000\r\nSTATUS:NEEDS-ACTION\r\nEND:VTODO\r\nEND:VCALENDAR\r\n";
+
+        $tasks = $this->reader->tasksFromIcs($ics);
+        $this->assertCount(1, $tasks);
+        $this->assertSame('Weekly review', $tasks[0]['title']);
+        $this->assertSame('weekly', $tasks[0]['recurrenceRules'][0]['frequency']);
+        $this->assertSame('Weekly review (moved)', $tasks[0]['recurrenceOverrides']['2026-06-09T10:00:00']['title']);
+        $this->assertSame('2026-06-09T14:00:00', $tasks[0]['recurrenceOverrides']['2026-06-09T10:00:00']['due']);
+    }
+
+    public function test_valarm_maps_to_jmap_alerts(): void
+    {
+        $ics = str_replace("\n", "\r\n", (string) file_get_contents("{$this->fixturesDir}/todo-with-alarm.ics"));
+        $expected = json_decode((string) file_get_contents("{$this->fixturesDir}/todo-with-alarm.json"), true);
+
+        $tasks = $this->reader->tasksFromIcs($ics);
+        $this->assertCount(1, $tasks);
+        $this->assertSame($expected['alerts'], $tasks[0]['alerts']);
+    }
+
+    public function test_alert_round_trip_writes_valarm(): void
+    {
+        $task = [
+            '@type' => 'Task',
+            'uid' => 'urn:uuid:alert-roundtrip',
+            'title' => 'Reminder task',
+            'due' => '2026-06-15T17:00:00',
+            'isDraft' => false,
+            'sortOrder' => 0,
+            'alerts' => [
+                'a1' => [
+                    '@type' => 'Alert',
+                    'trigger' => [
+                        '@type' => 'OffsetTrigger',
+                        'offset' => '-PT30M',
+                        'relativeTo' => 'end',
+                    ],
+                ],
+            ],
+        ];
+
+        $ics = $this->converter->icsFromTask($task);
+        $this->assertStringContainsString('BEGIN:VALARM', $ics);
+        $this->assertStringContainsString('TRIGGER;RELATED=END:-PT30M', $ics);
+
+        $roundTrip = $this->reader->tasksFromIcs($ics);
+        $this->assertSame('-PT30M', $roundTrip[0]['alerts']['alert1']['trigger']['offset']);
+        $this->assertSame('end', $roundTrip[0]['alerts']['alert1']['trigger']['relativeTo']);
+    }
 }

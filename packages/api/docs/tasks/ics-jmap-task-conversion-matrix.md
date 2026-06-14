@@ -28,15 +28,37 @@
 | `CLASS: PUBLIC` | `privacy: public` |
 | `CLASS: PRIVATE` | `privacy: private` |
 | `CLASS: CONFIDENTIAL` | `privacy: secret` |
+| `RRULE` | `recurrenceRules[]` |
+| `EXDATE` | `excludedRecurrenceDates[]` |
+| `RECURRENCE-ID` override VTODO | `recurrenceOverrides[recurrenceId]` |
+| `VALARM` | `alerts` (IdMap) |
+
+## Recurrence
+
+| Direction | Rule |
+|-----------|------|
+| ICS → JMAP | Parse RRULE into `RecurrenceRule` objects; group VTODO components sharing a `UID` into one Task |
+| ICS → JMAP overrides | VTODO with `RECURRENCE-ID` become `recurrenceOverrides` patches; `STATUS:CANCELLED` → `excluded: true` |
+| JMAP → ICS | Serialize `recurrenceRules` to RRULE; `excludedRecurrenceDates` and `recurrenceOverrides.excluded` → EXDATE |
+| JMAP → ICS overrides | Each non-excluded `recurrenceOverrides` entry writes a sibling VTODO with `RECURRENCE-ID` |
+| Instance expansion | **Client responsibility** — server stores RRULE only, consistent with JMAP Tasks draft |
+
+## Alerts
+
+| Direction | Rule |
+|-----------|------|
+| ICS → JMAP | Each `VALARM` under VTODO → `alerts` entry with `OffsetTrigger` or `AbsoluteTrigger` |
+| Offset trigger | `TRIGGER` duration; `RELATED=END` → `relativeTo: end` (due), default → `relativeTo: start` |
+| JMAP → ICS | Each alert writes a `VALARM` sub-component under the master VTODO |
 
 ## Write semantics
 
-- **Create:** always writes a single-VTODO `.ics` object via CalPDO `createCalendarObject`.
-- **Update/PATCH:** replaces the targeted VTODO; preserves sibling components in multi-VTODO blobs.
-- **Delete:** removes one VTODO from a multi-component blob, or deletes the object when empty.
+- **Create:** always writes a single-VTODO `.ics` object via CalPDO `createCalendarObject` (plus override VTODOs when `recurrenceOverrides` present).
+- **Update/PATCH:** replaces all VTODO components with matching `UID`; preserves unrelated VTODO in multi-UID blobs.
+- **Delete:** removes all VTODO with matching `UID`, or deletes the object when empty.
 
 ## Deferred
 
-- `RRULE` / recurrence instance expansion
 - `VTIMEZONE` / custom time zones
-- JMAP extensions: assignees, alerts, multilingual titles
+- JMAP extensions: assignees, multilingual titles
+- `icsProps` escape hatch (#149)

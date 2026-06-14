@@ -18,8 +18,12 @@ REST endpoints under `/api/v1/tasks/*` expose a **JMAP Tasks-shaped** JSON contr
 | `priority` | `PRIORITY` (mapped 1↔10 scale) |
 | `categories` | `CATEGORIES` |
 | `privacy` | `CLASS` |
+| `recurrenceRules` | `RRULE` |
+| `excludedRecurrenceDates` | `EXDATE` |
+| `recurrenceOverrides` | `RECURRENCE-ID` override VTODOs |
+| `alerts` | `VALARM` |
 
-Deferred in v1: assignees, alerts, recurrence expansion, TaskList CRUD, JMAP protocol methods.
+Deferred in v1: assignees, TaskList CRUD, JMAP protocol methods, instance expansion (client-side).
 
 ## Access
 

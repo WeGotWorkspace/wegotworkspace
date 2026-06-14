@@ -125,6 +125,56 @@ final class TasksCalDavInteropTest extends WgwDatabaseTestCase
             ->assertJsonPath('workflowStatus', 'completed');
     }
 
+    public function test_caldav_recurring_task_readable_via_rest_get(): void
+    {
+        $uid = 'urn:uuid:'.Str::uuid()->toString();
+        $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VTODO\r\nUID:{$uid}\r\nSUMMARY:Daily standup\r\nDUE:20260601T090000\r\nRRULE:FREQ=DAILY;COUNT=3\r\nEND:VTODO\r\nEND:VCALENDAR\r\n";
+        $taskId = $this->seedTaskViaPdo('bob', 'recurring-caldav.ics', $ics);
+
+        $response = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/tasks/items/'.$taskId);
+
+        $response->assertOk()
+            ->assertJsonPath('uid', $uid)
+            ->assertJsonCount(1, 'recurrenceRules')
+            ->assertJsonPath('recurrenceRules.0.frequency', 'daily')
+            ->assertJsonPath('recurrenceRules.0.count', 3);
+    }
+
+    public function test_rest_create_with_alert_visible_in_caldav_storage(): void
+    {
+        $payload = [
+            'taskListIds' => ['default' => true],
+            'title' => 'Task with reminder',
+            'due' => '2026-06-15T17:00:00',
+            'alerts' => [
+                'reminder' => [
+                    '@type' => 'Alert',
+                    'trigger' => [
+                        '@type' => 'OffsetTrigger',
+                        'offset' => '-PT30M',
+                        'relativeTo' => 'end',
+                    ],
+                ],
+            ],
+        ];
+
+        $response = $this->withBearer($this->userBearerToken())
+            ->postJson('/api/v1/tasks/items', $payload);
+
+        $response->assertCreated()
+            ->assertJsonPath('alerts.alert1.trigger.offset', '-PT30M')
+            ->assertJsonPath('alerts.alert1.trigger.relativeTo', 'end');
+
+        $taskId = (string) $response->json('id');
+        $stored = $this->findBobTask($taskId);
+        $this->assertNotNull($stored);
+
+        $ics = is_string($stored->calendardata) ? $stored->calendardata : (string) $stored->calendardata;
+        $this->assertStringContainsString('BEGIN:VALARM', $ics);
+        $this->assertStringContainsString('TRIGGER;RELATED=END:-PT30M', $ics);
+    }
+
     private function findBobTask(string $taskId): ?CalendarObject
     {
         $parsed = IcsJmapTaskConverter::parseTaskId($taskId);
