@@ -187,9 +187,17 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($filesS
     });
 
     Route::middleware('wgw.contacts')->group(function (): void {
+        Route::get('contacts/addressbooks/changes', [ContactsAddressBooksController::class, 'changes']);
         Route::get('contacts/addressbooks', [ContactsAddressBooksController::class, 'index']);
+        Route::post('contacts/addressbooks', [ContactsAddressBooksController::class, 'store']);
         Route::get('contacts/addressbooks/{addressBookId}', [ContactsAddressBooksController::class, 'show'])
             ->where('addressBookId', '[a-z0-9_-]+');
+        Route::patch('contacts/addressbooks/{addressBookId}', [ContactsAddressBooksController::class, 'update'])
+            ->where('addressBookId', '[a-z0-9_-]+');
+        Route::delete('contacts/addressbooks/{addressBookId}', [ContactsAddressBooksController::class, 'destroy'])
+            ->where('addressBookId', '[a-z0-9_-]+');
+        Route::get('contacts/cards/changes', [ContactCardsController::class, 'changes']);
+        Route::post('contacts/cards/query', [ContactCardsController::class, 'query']);
         Route::get('contacts/cards', [ContactCardsController::class, 'index']);
         Route::post('contacts/cards', [ContactCardsController::class, 'store']);
         Route::get('contacts/cards/{cardId}', [ContactCardsController::class, 'show'])
