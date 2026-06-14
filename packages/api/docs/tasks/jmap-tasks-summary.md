@@ -26,7 +26,9 @@ REST endpoints under `/api/v1/tasks/*` expose a **JMAP Tasks-shaped** JSON contr
 | `showWithoutTime` / `timeZone` | `VALUE=DATE` / `TZID` on `DTSTART`/`DUE` |
 | `icsProps` | Unmapped VTODO properties (round-trip escape hatch) |
 
-Deferred in v1: TaskList CRUD, JMAP protocol methods, instance expansion (client-side).
+**Implemented (platform #157 / #158):** task list collection CRUD, `GET /tasks/tasklists/changes`, and `POST /tasks/items/query` (uid + inTaskList) — see `docs/contacts/jmap-collection-crud.md` and `docs/contacts/jmap-sync-rest-mapping.md`.
+
+Deferred in v1: task item `/changes`, JMAP protocol transport, instance expansion (client-side).
 
 ## Access
 

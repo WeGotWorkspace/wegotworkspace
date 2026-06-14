@@ -49,9 +49,9 @@ Returned by event endpoints. `@type` is always `"Event"`.
 
 ## Non-goals (v1)
 
-- Server-side recurrence instance expansion
+- Server-side recurrence instance expansion (except optional `expandRecurrences` query on list — see [#159](https://github.com/WeGotWorkspace/wegotworkspace/issues/159))
 - `VTODO`, `VJOURNAL`, scheduling inbox REST
-- Calendar CRUD (create/rename/delete calendars)
 - JMAP Sharing (`shareWith` always `null`)
-- Calendar collection CRUD over REST (use CalDAV `MKCALENDAR` / `PROPPATCH` — see `docs/contacts/jmap-collection-crud.md`)
-- Calendar/event incremental sync REST endpoints (use CalDAV synctoken or `etag` — see `docs/contacts/jmap-sync-rest-mapping.md`)
+- Calendar/event item `/changes` REST (use CalDAV synctoken or `etag` — see `docs/contacts/jmap-sync-rest-mapping.md`)
+
+**Implemented (platform #157 / #158):** calendar collection CRUD and `GET /calendars/calendars/changes` — see `docs/contacts/jmap-collection-crud.md` and `docs/contacts/jmap-sync-rest-mapping.md`.

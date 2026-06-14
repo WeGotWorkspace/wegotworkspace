@@ -6914,6 +6914,336 @@
                     }
                 },
                 "additionalProperties": false
+            },
+            "CalendarCreate": {
+                "type": "object",
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "timeZone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "color": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "id": {
+                        "$ref": "#/components/schemas/JmapId"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "CalendarPatch": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "timeZone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "color": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "isSubscribed": {
+                        "type": "boolean"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "CalendarDeleteOptions": {
+                "type": "object",
+                "properties": {
+                    "onDestroyRemoveContents": {
+                        "type": "boolean",
+                        "default": false
+                    }
+                },
+                "additionalProperties": false
+            },
+            "JmapCalendarChangesResponse": {
+                "type": "object",
+                "required": [
+                    "oldState",
+                    "newState",
+                    "created",
+                    "updated",
+                    "destroyed"
+                ],
+                "properties": {
+                    "oldState": {
+                        "type": "string"
+                    },
+                    "newState": {
+                        "type": "string"
+                    },
+                    "created": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JmapId"
+                        }
+                    },
+                    "updated": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JmapId"
+                        }
+                    },
+                    "destroyed": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JmapId"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskListCreate": {
+                "type": "object",
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "color": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "id": {
+                        "$ref": "#/components/schemas/JmapId"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskListPatch": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "color": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "isSubscribed": {
+                        "type": "boolean"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskListDeleteOptions": {
+                "type": "object",
+                "properties": {
+                    "onDestroyRemoveContents": {
+                        "type": "boolean",
+                        "default": false
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskItemQueryFilter": {
+                "type": "object",
+                "required": [
+                    "inTaskList"
+                ],
+                "properties": {
+                    "inTaskList": {
+                        "$ref": "#/components/schemas/JmapId"
+                    },
+                    "uid": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskItemQueryRequest": {
+                "type": "object",
+                "required": [
+                    "filter"
+                ],
+                "properties": {
+                    "filter": {
+                        "$ref": "#/components/schemas/TaskItemQueryFilter"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 500
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskItemQueryResponse": {
+                "type": "object",
+                "required": [
+                    "ids",
+                    "total"
+                ],
+                "properties": {
+                    "ids": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JmapId"
+                        }
+                    },
+                    "total": {
+                        "type": "integer",
+                        "minimum": 0
+                    }
+                },
+                "additionalProperties": false
+            },
+            "JmapTaskListChangesResponse": {
+                "type": "object",
+                "required": [
+                    "oldState",
+                    "newState",
+                    "created",
+                    "updated",
+                    "destroyed"
+                ],
+                "properties": {
+                    "oldState": {
+                        "type": "string"
+                    },
+                    "newState": {
+                        "type": "string"
+                    },
+                    "created": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JmapId"
+                        }
+                    },
+                    "updated": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JmapId"
+                        }
+                    },
+                    "destroyed": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JmapId"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            }
+        },
+        "responses": {
+            "JmapBadRequest": {
+                "description": "Invalid request",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
+            },
+            "JmapForbidden": {
+                "description": "Forbidden",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
+            },
+            "JmapNotFound": {
+                "description": "Resource not found",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
+            },
+            "JmapConflict": {
+                "description": "Conflict with current resource state",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
+            },
+            "JmapPayloadTooLarge": {
+                "description": "Payload too large",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
+            },
+            "JmapPreconditionFailed": {
+                "description": "Precondition failed",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
             }
         }
     },
@@ -9886,6 +10216,52 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "post": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Create an address book",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AddressBookCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created address book",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AddressBook"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9922,6 +10298,130 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "patch": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Update an address book",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "addressBookId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AddressBookPatch"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated address book",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AddressBook"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/JmapPreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "delete": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Delete an address book",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "addressBookId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AddressBookDeleteOptions"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Address book deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OkResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/JmapConflict"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/JmapPreconditionFailed"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9946,6 +10446,22 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "name": "uid",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "uid",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "responses": {
@@ -9958,6 +10474,15 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9982,6 +10507,15 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
                     }
                 },
                 "requestBody": {
@@ -10052,6 +10586,12 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
                     }
                 },
                 "x-wgw-access": "user"
@@ -10086,6 +10626,21 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/JmapPreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
                     }
                 },
                 "requestBody": {
@@ -10155,6 +10710,21 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/JmapPreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
                     }
                 },
                 "requestBody": {
@@ -10206,6 +10776,18 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/JmapPreconditionFailed"
                     }
                 },
                 "x-wgw-access": "user"
@@ -10524,13 +11106,13 @@
                         }
                     },
                     "400": {
-                        "description": "Invalid request"
+                        "$ref": "#/components/responses/JmapBadRequest"
                     },
                     "403": {
-                        "description": "Forbidden"
+                        "$ref": "#/components/responses/JmapForbidden"
                     },
                     "413": {
-                        "description": "Payload too large"
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
                     }
                 },
                 "x-wgw-access": "user"
@@ -10588,10 +11170,10 @@
                         }
                     },
                     "403": {
-                        "description": "Forbidden"
+                        "$ref": "#/components/responses/JmapForbidden"
                     },
                     "404": {
-                        "description": "Not found"
+                        "$ref": "#/components/responses/JmapNotFound"
                     }
                 },
                 "x-wgw-access": "user"
@@ -10658,6 +11240,15 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
                     }
                 },
                 "x-wgw-access": "user"
@@ -10700,6 +11291,15 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
                     }
                 },
                 "x-wgw-access": "user"
@@ -10736,6 +11336,12 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
                     }
                 },
                 "x-wgw-access": "user"
@@ -10780,6 +11386,21 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/JmapPreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
                     }
                 },
                 "x-wgw-access": "user"
@@ -10824,6 +11445,21 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/JmapPreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
                     }
                 },
                 "x-wgw-access": "user"
@@ -10858,6 +11494,18 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/JmapPreconditionFailed"
                     }
                 },
                 "x-wgw-access": "user"
@@ -10884,6 +11532,52 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "post": {
+                "tags": [
+                    "Calendars"
+                ],
+                "summary": "Create a calendar",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CalendarCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created calendar",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Calendar"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
                     }
                 },
                 "x-wgw-access": "user"
@@ -10920,6 +11614,951 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "patch": {
+                "tags": [
+                    "Calendars"
+                ],
+                "summary": "Update a calendar",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "calendarId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CalendarPatch"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated calendar",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Calendar"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/JmapPreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "delete": {
+                "tags": [
+                    "Calendars"
+                ],
+                "summary": "Delete a calendar",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "calendarId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CalendarDeleteOptions"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Calendar deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OkResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/JmapConflict"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/JmapPreconditionFailed"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/contacts/addressbooks/changes": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Incremental address book collection changes",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "since",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Address book changes",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/JmapChangesResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/contacts/cards/changes": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Incremental contact card changes",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "addressBookId",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "since",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Contact card changes",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/JmapChangesResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/contacts/cards/query": {
+            "post": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Query contact card ids",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ContactCardQueryRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Matching contact card ids",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactCardQueryResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/calendars/calendars/changes": {
+            "get": {
+                "tags": [
+                    "Calendars"
+                ],
+                "summary": "Incremental calendar collection changes",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "since",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Calendar collection changes",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/JmapCalendarChangesResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/tasks/capabilities": {
+            "get": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Tasks JMAP capability subset",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tasks capabilities",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TasksCapabilitiesResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/tasks/tasklists/changes": {
+            "get": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Incremental task list collection changes",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "since",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Task list changes",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/JmapTaskListChangesResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/tasks/tasklists": {
+            "get": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "List task lists",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Task list collection",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TaskTaskListListResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "post": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Create a task list",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TaskListCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created task list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TaskList"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/tasks/tasklists/{taskListId}": {
+            "get": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Fetch a task list",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "taskListId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Task list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TaskList"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "patch": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Update a task list",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "taskListId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TaskListPatch"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated task list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TaskList"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/JmapPreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "delete": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Delete a task list",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "taskListId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TaskListDeleteOptions"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Task list deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OkResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/JmapConflict"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/JmapPreconditionFailed"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/tasks/items/query": {
+            "post": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Query task item ids",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TaskItemQueryRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Matching task ids",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TaskItemQueryResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/tasks/items": {
+            "get": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "List tasks in a task list",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "taskListId",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Task list items",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TaskListResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "post": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Create a task",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TaskCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created task",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Task"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/tasks/items/{taskId}": {
+            "get": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Fetch a task",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "taskId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Task",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Task"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "put": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Replace a task",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "taskId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TaskCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated task",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Task"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/JmapPreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "patch": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Partially update a task",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "taskId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TaskPatch"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated task",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Task"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/JmapPreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "delete": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Delete a task",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "taskId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Task deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OkResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/JmapPreconditionFailed"
                     }
                 },
                 "x-wgw-access": "user"

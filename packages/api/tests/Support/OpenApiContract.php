@@ -232,11 +232,26 @@ final class OpenApiContract
         if ($openApiPath === '/contacts/cards' && $method === 'GET') {
             return 'addressBookId=default';
         }
+        if ($openApiPath === '/contacts/addressbooks/changes' && $method === 'GET') {
+            return 'since=0';
+        }
+        if ($openApiPath === '/contacts/cards/changes' && $method === 'GET') {
+            return 'addressBookId=default&since=0';
+        }
         if ($openApiPath === '/calendars/events' && $method === 'GET') {
             return 'calendarId=default';
         }
+        if ($openApiPath === '/calendars/calendars/changes' && $method === 'GET') {
+            return 'since=0';
+        }
         if ($openApiPath === '/tasks/items' && $method === 'GET') {
             return 'taskListId=default';
+        }
+        if ($openApiPath === '/tasks/tasklists/changes' && $method === 'GET') {
+            return 'since=0';
+        }
+        if ($openApiPath === '/tasks/items/query' && $method === 'POST') {
+            return '';
         }
 
         return '';
