@@ -1,4 +1,48 @@
 {
+  "CalendarEventRecurrenceOverride": {
+    "type": "object",
+    "description": "Per-instance patch keyed by recurrence id (original instance start). Use excluded:true to omit an instance.",
+    "properties": {
+      "excluded": { "type": "boolean" },
+      "title": { "type": "string" },
+      "description": { "type": ["string", "null"] },
+      "start": { "$ref": "#/components/schemas/JmapLocalDateTime" },
+      "end": { "$ref": "#/components/schemas/JmapLocalDateTime" },
+      "duration": { "type": "string" },
+      "showWithoutTime": { "type": "boolean" },
+      "timeZone": { "type": ["string", "null"] },
+      "locations": {
+        "type": "object",
+        "propertyNames": { "$ref": "#/components/schemas/JmapId" },
+        "additionalProperties": { "$ref": "#/components/schemas/CalendarEventLocation" }
+      },
+      "freeBusyStatus": {
+        "type": "string",
+        "enum": ["busy", "free", "tentative"]
+      },
+      "privacy": {
+        "type": "string",
+        "enum": ["public", "private", "secret"]
+      },
+      "status": {
+        "type": "string",
+        "enum": ["confirmed", "cancelled", "tentative"]
+      },
+      "participants": {
+        "type": "object",
+        "propertyNames": { "$ref": "#/components/schemas/JmapId" },
+        "additionalProperties": { "$ref": "#/components/schemas/CalendarEventParticipant" }
+      },
+      "categories": { "type": "array", "items": { "type": "string" } },
+      "priority": { "type": "integer", "minimum": 0, "maximum": 9 },
+      "sequence": { "type": "integer", "minimum": 0 },
+      "icsProps": {
+        "type": "object",
+        "additionalProperties": { "type": "string" }
+      }
+    },
+    "additionalProperties": false
+  },
   "CalendarRecurrenceRule": {
     "type": "object",
     "required": ["@type", "frequency"],
@@ -48,6 +92,51 @@
     },
     "additionalProperties": false
   },
+  "CalendarEventRelativeAlertTrigger": {
+    "type": "object",
+    "required": ["@type", "offset"],
+    "properties": {
+      "@type": { "type": "string", "const": "RelativeAlert" },
+      "offset": {
+        "type": "string",
+        "description": "Signed ISO 8601 duration relative to event start or end (e.g. -PT15M)."
+      },
+      "relatedTo": {
+        "type": "string",
+        "enum": ["start", "end"],
+        "default": "start"
+      }
+    },
+    "additionalProperties": false
+  },
+  "CalendarEventAbsoluteAlertTrigger": {
+    "type": "object",
+    "required": ["@type", "when"],
+    "properties": {
+      "@type": { "type": "string", "const": "AbsoluteAlert" },
+      "when": { "$ref": "#/components/schemas/JmapLocalDateTime" }
+    },
+    "additionalProperties": false
+  },
+  "CalendarEventAlert": {
+    "type": "object",
+    "required": ["@type", "trigger"],
+    "properties": {
+      "@type": { "type": "string", "const": "Alert" },
+      "trigger": {
+        "oneOf": [
+          { "$ref": "#/components/schemas/CalendarEventRelativeAlertTrigger" },
+          { "$ref": "#/components/schemas/CalendarEventAbsoluteAlertTrigger" }
+        ]
+      },
+      "action": {
+        "type": "string",
+        "enum": ["display", "audio", "email"],
+        "default": "display"
+      }
+    },
+    "additionalProperties": false
+  },
   "CalendarEvent": {
     "type": "object",
     "required": ["@type", "uid", "id", "calendarIds", "start"],
@@ -77,6 +166,12 @@
         "type": "array",
         "items": { "type": "string" }
       },
+      "recurrenceOverrides": {
+        "type": "object",
+        "description": "Per-instance patches keyed by recurrence id (original instance start). Maps to RECURRENCE-ID override VEVENTs in ICS.",
+        "propertyNames": { "$ref": "#/components/schemas/JmapLocalDateTime" },
+        "additionalProperties": { "$ref": "#/components/schemas/CalendarEventRecurrenceOverride" }
+      },
       "freeBusyStatus": {
         "type": "string",
         "enum": ["busy", "free", "tentative"]
@@ -93,6 +188,12 @@
         "type": "object",
         "propertyNames": { "$ref": "#/components/schemas/JmapId" },
         "additionalProperties": { "$ref": "#/components/schemas/CalendarEventParticipant" }
+      },
+      "alerts": {
+        "type": "object",
+        "description": "Reminder alarms mapped from iCalendar VALARM components.",
+        "propertyNames": { "$ref": "#/components/schemas/JmapId" },
+        "additionalProperties": { "$ref": "#/components/schemas/CalendarEventAlert" }
       },
       "categories": { "type": "array", "items": { "type": "string" } },
       "priority": { "type": "integer", "minimum": 0, "maximum": 9 },
@@ -155,6 +256,12 @@
         "type": "array",
         "items": { "type": "string" }
       },
+      "recurrenceOverrides": {
+        "type": "object",
+        "description": "Per-instance patches keyed by recurrence id (original instance start). Maps to RECURRENCE-ID override VEVENTs in ICS.",
+        "propertyNames": { "$ref": "#/components/schemas/JmapLocalDateTime" },
+        "additionalProperties": { "$ref": "#/components/schemas/CalendarEventRecurrenceOverride" }
+      },
       "freeBusyStatus": {
         "type": "string",
         "enum": ["busy", "free", "tentative"]
@@ -171,6 +278,12 @@
         "type": "object",
         "propertyNames": { "$ref": "#/components/schemas/JmapId" },
         "additionalProperties": { "$ref": "#/components/schemas/CalendarEventParticipant" }
+      },
+      "alerts": {
+        "type": "object",
+        "description": "Reminder alarms mapped from iCalendar VALARM components.",
+        "propertyNames": { "$ref": "#/components/schemas/JmapId" },
+        "additionalProperties": { "$ref": "#/components/schemas/CalendarEventAlert" }
       },
       "categories": { "type": "array", "items": { "type": "string" } },
       "priority": { "type": "integer", "minimum": 0, "maximum": 9 },

@@ -6858,6 +6858,10 @@ export interface components {
             /** @description RRULE-only; clients expand instances per JMAP Calendars draft. */
             recurrenceRules?: components["schemas"]["CalendarRecurrenceRule"][];
             excludedRecurrenceDates?: string[];
+            /** @description Per-instance patches keyed by recurrence id (original instance start). Maps to RECURRENCE-ID override VEVENTs in ICS. */
+            recurrenceOverrides?: {
+                [key: string]: components["schemas"]["CalendarEventRecurrenceOverride"];
+            };
             /** @enum {string} */
             freeBusyStatus?: "busy" | "free" | "tentative";
             /** @enum {string} */
@@ -6866,6 +6870,10 @@ export interface components {
             status?: "confirmed" | "cancelled" | "tentative";
             participants?: {
                 [key: string]: components["schemas"]["CalendarEventParticipant"];
+            };
+            /** @description Reminder alarms mapped from iCalendar VALARM components. */
+            alerts?: {
+                [key: string]: components["schemas"]["CalendarEventAlert"];
             };
             categories?: string[];
             priority?: number;
@@ -6957,6 +6965,69 @@ export interface components {
             };
             recurrenceRules?: components["schemas"]["CalendarRecurrenceRule"][];
             excludedRecurrenceDates?: string[];
+            /** @description Per-instance patches keyed by recurrence id (original instance start). Maps to RECURRENCE-ID override VEVENTs in ICS. */
+            recurrenceOverrides?: {
+                [key: string]: components["schemas"]["CalendarEventRecurrenceOverride"];
+            };
+            /** @enum {string} */
+            freeBusyStatus?: "busy" | "free" | "tentative";
+            /** @enum {string} */
+            privacy?: "public" | "private" | "secret";
+            /** @enum {string} */
+            status?: "confirmed" | "cancelled" | "tentative";
+            participants?: {
+                [key: string]: components["schemas"]["CalendarEventParticipant"];
+            };
+            /** @description Reminder alarms mapped from iCalendar VALARM components. */
+            alerts?: {
+                [key: string]: components["schemas"]["CalendarEventAlert"];
+            };
+            categories?: string[];
+            priority?: number;
+            sequence?: number;
+            icsProps?: {
+                [key: string]: string;
+            };
+        };
+        CalendarEventRelativeAlertTrigger: {
+            /** @constant */
+            "@type": "RelativeAlert";
+            /** @description Signed ISO 8601 duration relative to event start or end (e.g. -PT15M). */
+            offset: string;
+            /**
+             * @default start
+             * @enum {string}
+             */
+            relatedTo: "start" | "end";
+        };
+        CalendarEventAbsoluteAlertTrigger: {
+            /** @constant */
+            "@type": "AbsoluteAlert";
+            when: components["schemas"]["JmapLocalDateTime"];
+        };
+        CalendarEventAlert: {
+            /** @constant */
+            "@type": "Alert";
+            trigger: components["schemas"]["CalendarEventRelativeAlertTrigger"] | components["schemas"]["CalendarEventAbsoluteAlertTrigger"];
+            /**
+             * @default display
+             * @enum {string}
+             */
+            action: "display" | "audio" | "email";
+        };
+        /** @description Per-instance patch keyed by recurrence id (original instance start). Use excluded:true to omit an instance. */
+        CalendarEventRecurrenceOverride: {
+            excluded?: boolean;
+            title?: string;
+            description?: string | null;
+            start?: components["schemas"]["JmapLocalDateTime"];
+            end?: components["schemas"]["JmapLocalDateTime"];
+            duration?: string;
+            showWithoutTime?: boolean;
+            timeZone?: string | null;
+            locations?: {
+                [key: string]: components["schemas"]["CalendarEventLocation"];
+            };
             /** @enum {string} */
             freeBusyStatus?: "busy" | "free" | "tentative";
             /** @enum {string} */
