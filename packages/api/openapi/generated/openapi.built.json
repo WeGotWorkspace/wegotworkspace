@@ -3226,6 +3226,9 @@
                     "updated": {
                         "$ref": "#/components/schemas/JsContactUTCDateTime"
                     },
+                    "etag": {
+                        "$ref": "#/components/schemas/DavEtag"
+                    },
                     "kind": {
                         "type": "string",
                         "enum": [
@@ -5372,6 +5375,9 @@
                     "updated": {
                         "$ref": "#/components/schemas/JmapUTCDateTime"
                     },
+                    "etag": {
+                        "$ref": "#/components/schemas/DavEtag"
+                    },
                     "icsProps": {
                         "type": "object",
                         "additionalProperties": {
@@ -5817,6 +5823,9 @@
                             "string",
                             "null"
                         ]
+                    },
+                    "etag": {
+                        "$ref": "#/components/schemas/DavEtag"
                     },
                     "recurrenceRules": {
                         "type": "array",
@@ -6287,6 +6296,84 @@
                     }
                 },
                 "additionalProperties": false
+            },
+            "DavEtag": {
+                "type": "string",
+                "readOnly": true,
+                "description": "Quoted HTTP entity tag aligned with Cal/CardDAV storage (Sabre PDO etag)."
+            }
+        },
+        "parameters": {
+            "IfMatchHeader": {
+                "name": "If-Match",
+                "in": "header",
+                "required": true,
+                "schema": {
+                    "type": "string"
+                },
+                "description": "Concurrency token from the prior GET ETag header or etag response field."
+            },
+            "IfUnmodifiedSinceHeader": {
+                "name": "If-Unmodified-Since",
+                "in": "header",
+                "required": false,
+                "schema": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "description": "Optional fallback when If-Match is omitted; compared to stored lastmodified."
+            }
+        },
+        "responses": {
+            "PreconditionFailed": {
+                "description": "Precondition failed",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
+            },
+            "BadRequest": {
+                "description": "Invalid request",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
+            },
+            "Forbidden": {
+                "description": "Forbidden",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
+            },
+            "NotFound": {
+                "description": "Resource not found",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
+            },
+            "PayloadTooLarge": {
+                "description": "Payload too large",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
             }
         }
     },
@@ -9259,6 +9346,9 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9295,6 +9385,12 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9331,6 +9427,15 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9355,6 +9460,15 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/PayloadTooLarge"
                     }
                 },
                 "requestBody": {
@@ -9424,7 +9538,20 @@
                                     "$ref": "#/components/schemas/ContactCard"
                                 }
                             }
+                        },
+                        "headers": {
+                            "ETag": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
                         }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9447,6 +9574,12 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfMatchHeader"
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
                     }
                 ],
                 "responses": {
@@ -9458,7 +9591,29 @@
                                     "$ref": "#/components/schemas/ContactCard"
                                 }
                             }
+                        },
+                        "headers": {
+                            "ETag": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/PreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/PayloadTooLarge"
                     }
                 },
                 "requestBody": {
@@ -9516,6 +9671,12 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfMatchHeader"
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
                     }
                 ],
                 "responses": {
@@ -9527,7 +9688,29 @@
                                     "$ref": "#/components/schemas/ContactCard"
                                 }
                             }
+                        },
+                        "headers": {
+                            "ETag": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/PreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/PayloadTooLarge"
                     }
                 },
                 "requestBody": {
@@ -9567,6 +9750,12 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfMatchHeader"
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
                     }
                 ],
                 "responses": {
@@ -9579,6 +9768,18 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/PreconditionFailed"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9861,6 +10062,15 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9903,6 +10113,15 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/PayloadTooLarge"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9938,7 +10157,20 @@
                                     "$ref": "#/components/schemas/CalendarEvent"
                                 }
                             }
+                        },
+                        "headers": {
+                            "ETag": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
                         }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9961,6 +10193,12 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfMatchHeader"
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
                     }
                 ],
                 "requestBody": {
@@ -9982,7 +10220,29 @@
                                     "$ref": "#/components/schemas/CalendarEvent"
                                 }
                             }
+                        },
+                        "headers": {
+                            "ETag": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/PreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/PayloadTooLarge"
                     }
                 },
                 "x-wgw-access": "user"
@@ -10005,6 +10265,12 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfMatchHeader"
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
                     }
                 ],
                 "requestBody": {
@@ -10026,7 +10292,29 @@
                                     "$ref": "#/components/schemas/CalendarEvent"
                                 }
                             }
+                        },
+                        "headers": {
+                            "ETag": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/PreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/PayloadTooLarge"
                     }
                 },
                 "x-wgw-access": "user"
@@ -10049,6 +10337,12 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfMatchHeader"
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
                     }
                 ],
                 "responses": {
@@ -10061,6 +10355,18 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/PreconditionFailed"
                     }
                 },
                 "x-wgw-access": "user"
@@ -10087,6 +10393,9 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
                     }
                 },
                 "x-wgw-access": "user"
@@ -10123,6 +10432,12 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
                     }
                 },
                 "x-wgw-access": "user"
@@ -10149,6 +10464,9 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
                     }
                 },
                 "x-wgw-access": "user"
@@ -10175,6 +10493,9 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
                     }
                 },
                 "x-wgw-access": "user"
@@ -10211,6 +10532,12 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
                     }
                 },
                 "x-wgw-access": "user"
@@ -10247,6 +10574,15 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
                     }
                 },
                 "x-wgw-access": "user"
@@ -10271,6 +10607,15 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/PayloadTooLarge"
                     }
                 },
                 "requestBody": {
@@ -10323,7 +10668,20 @@
                                     "$ref": "#/components/schemas/Task"
                                 }
                             }
+                        },
+                        "headers": {
+                            "ETag": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
                         }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
                     }
                 },
                 "x-wgw-access": "user"
@@ -10346,6 +10704,12 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfMatchHeader"
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
                     }
                 ],
                 "responses": {
@@ -10357,7 +10721,29 @@
                                     "$ref": "#/components/schemas/Task"
                                 }
                             }
+                        },
+                        "headers": {
+                            "ETag": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/PreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/PayloadTooLarge"
                     }
                 },
                 "requestBody": {
@@ -10390,6 +10776,12 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfMatchHeader"
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
                     }
                 ],
                 "responses": {
@@ -10401,7 +10793,29 @@
                                     "$ref": "#/components/schemas/Task"
                                 }
                             }
+                        },
+                        "headers": {
+                            "ETag": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/PreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/PayloadTooLarge"
                     }
                 },
                 "requestBody": {
@@ -10434,6 +10848,12 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfMatchHeader"
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
                     }
                 ],
                 "responses": {
@@ -10446,6 +10866,18 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/PreconditionFailed"
                     }
                 },
                 "x-wgw-access": "user"

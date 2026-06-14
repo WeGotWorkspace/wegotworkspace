@@ -9,11 +9,15 @@ export type TasksPaths = {
 
 export type OkResponse = components["schemas"]["OkResponse"];
 export type Task = components["schemas"]["Task"];
+export type TaskAlert = components["schemas"]["TaskAlert"];
+export type TaskAlertAbsoluteTrigger = components["schemas"]["TaskAlertAbsoluteTrigger"];
+export type TaskAlertOffsetTrigger = components["schemas"]["TaskAlertOffsetTrigger"];
 export type TaskCreate = components["schemas"]["TaskCreate"];
 export type TaskList = components["schemas"]["TaskList"];
 export type TaskListResponse = components["schemas"]["TaskListResponse"];
 export type TaskListRights = components["schemas"]["TaskListRights"];
 export type TaskPatch = components["schemas"]["TaskPatch"];
+export type TaskRecurrenceOverride = components["schemas"]["TaskRecurrenceOverride"];
 export type TasksCapabilitiesResponse = components["schemas"]["TasksCapabilitiesResponse"];
 export type TaskTaskListListResponse = components["schemas"]["TaskTaskListListResponse"];
 
