@@ -70,6 +70,16 @@ const mockCards = [
         number: "+1-555-0101",
       },
     },
+    addresses: {
+      "550e8400-e29b-41d4-a716-446655440014": {
+        "@type": "Address" as const,
+        street: "123 Main St",
+        locality: "Springfield",
+        region: "IL",
+        postcode: "62701",
+        country: "US",
+      },
+    },
   },
   {
     "@type": "Card",

@@ -1,5 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import {
+  Contact,
   FileText,
   HardDrive,
   Mail as MailIcon,
@@ -31,6 +32,14 @@ export function WeGotWorkspaceHome() {
       accent: "var(--mail-sidebar, #d9254f)",
       fg: "var(--color-ink)",
       onSelect: () => void navigate({ to: "/mail" }),
+    },
+    {
+      id: "contacts",
+      label: "Contacts",
+      icon: <Contact className="size-4" />,
+      accent: "var(--contacts-sidebar, #16a34a)",
+      fg: "#ffffff",
+      onSelect: () => void navigate({ to: "/contacts" }),
     },
     {
       id: "drive",

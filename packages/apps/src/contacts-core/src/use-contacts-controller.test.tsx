@@ -50,6 +50,10 @@ describe("useContactsController", () => {
     expect(result.current.active?.id).toBe("card-jane");
 
     act(() => {
+      result.current.selectView("all");
+    });
+
+    act(() => {
       result.current.setSearchQuery("joe@");
     });
     expect(result.current.visibleCards.map((card) => card.id)).toEqual(["card-joe"]);

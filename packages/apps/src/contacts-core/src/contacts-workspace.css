@@ -6,7 +6,7 @@
  */
 .contacts-workspace {
   --contacts-accent: #0d9488;
-  --contacts-sidebar: var(--contacts-accent);
+  --contacts-sidebar: #0f766e;
   --workspace-accent: var(--contacts-accent);
   --color-emerald: var(--contacts-accent);
   --workspace-root-bg: var(--color-cream, #ffffff);
@@ -16,43 +16,79 @@
   --app-sidebar-color: #ffffff;
   --sidebar-logo-brand-fill: #ffffff;
   --sidebar-logo-close-button-color: #ffffff;
-  --sidebar-badge-fg: var(--contacts-accent);
+  --sidebar-badge-fg: #0f4f4a;
   --workspace-sidebar-toggle-color: var(--color-ink);
   --workspace-sidebar-toggle-bg: color-mix(in oklab, var(--color-ink) 8%, transparent);
   --workspace-user-footer-link-hover-bg: color-mix(in oklab, #ffffff 10%, transparent);
 
-  --workspace-user-footer-text-color: color-mix(in oklab, #ffffff 75%, transparent);
+  --workspace-user-footer-text-color: #ffffff;
   --workspace-user-footer-border-color: color-mix(in oklab, #ffffff 15%, transparent);
   --workspace-user-footer-avatar-bg: color-mix(in oklab, #ffffff 15%, transparent);
   --workspace-user-footer-avatar-color: #ffffff;
-  --workspace-user-footer-link-color: color-mix(in oklab, #ffffff 70%, transparent);
+  --workspace-user-footer-link-color: #ffffff;
   --workspace-user-footer-link-bg: color-mix(in oklab, #ffffff 8%, transparent);
 
-  --contacts-list-avatar-bg: color-mix(in oklab, var(--contacts-accent) 18%, transparent);
-  --contacts-list-avatar-color: var(--contacts-accent);
+  --contacts-list-avatar-bg: #0f766e;
+  --contacts-list-avatar-color: #ffffff;
   --contacts-detail-title-font-family: var(--font-serif);
   --loading-spinner-color: color-mix(in oklab, var(--color-ink) 45%, transparent);
 }
 
+.contacts-workspace .app-sidebar,
+.contacts-workspace .app-sidebar__scroll-surface {
+  background-color: var(--contacts-sidebar);
+  color: #ffffff;
+}
+
+.contacts-workspace .workspace-detail-pane .action-bar,
+.contacts-workspace .workspace-detail-pane {
+  --button-primary-bg: var(--contacts-accent);
+  --button-primary-fg: #ffffff;
+  --button-subtle-color: #0f4f4a;
+}
+
 .contacts-workspace .app-sidebar {
-  --field-label-color: color-mix(in oklab, #ffffff 72%, transparent);
+  --field-label-color: #ffffff;
   --app-switch-label-color: #ffffff;
-  --app-switch-label-tagline-color: color-mix(in oklab, #ffffff 72%, transparent);
-  --app-switch-chevron-color: color-mix(in oklab, #ffffff 70%, transparent);
+  --app-switch-label-tagline-color: #ffffff;
+  --app-switch-chevron-color: #ffffff;
 }
 
 .contacts-workspace .app-sidebar__scroll {
   --color-ink: #ffffff;
   --button-primary-bg: #ffffff;
-  --button-primary-fg: var(--contacts-accent);
+  --button-primary-fg: #0f4f4a;
   --button-subtle-color: #ffffff;
   --button-subtle-background: color-mix(in oklab, #ffffff 12%, transparent);
   --button-subtle-hover-background: color-mix(in oklab, #ffffff 20%, transparent);
 }
 
+.contacts-workspace .sidebar-section .menu-item--surface-idle {
+  color: #ffffff;
+}
+
+.contacts-workspace .sidebar-section .menu-item--surface-selected {
+  background-color: color-mix(in oklab, #ffffff 14%, transparent);
+  color: #ffffff;
+}
+
+.contacts-workspace .sidebar-section .menu-item--interactive:hover {
+  background-color: color-mix(in oklab, #ffffff 12%, transparent);
+}
+
+.contacts-workspace .sidebar-section .menu-item:not(.menu-item--selected) .menu-item__icon-slot,
+.contacts-workspace .sidebar-section .menu-item.menu-item--selected .menu-item__icon-slot {
+  color: #ffffff;
+  opacity: 1;
+}
+
+.contacts-workspace .sidebar-section__title {
+  color: #ffffff;
+}
+
 .contacts-workspace .app-sidebar__footer {
   --workspace-user-footer-text-color: #ffffff;
-  --workspace-user-footer-subtitle-color: color-mix(in oklab, #ffffff 72%, transparent);
+  --workspace-user-footer-subtitle-color: #ffffff;
   --workspace-user-footer-border-color: color-mix(in oklab, #ffffff 18%, transparent);
   --workspace-user-footer-avatar-bg: color-mix(in oklab, #ffffff 22%, transparent);
   --workspace-user-footer-avatar-color: var(--app-sidebar-color);
