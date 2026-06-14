@@ -1,0 +1,69 @@
+{
+  "TaskListCreate": {
+    "type": "object",
+    "required": ["name"],
+    "properties": {
+      "name": { "type": "string", "minLength": 1, "maxLength": 255 },
+      "description": { "type": ["string", "null"] },
+      "color": { "type": ["string", "null"] },
+      "id": { "$ref": "#/components/schemas/JmapId" }
+    },
+    "additionalProperties": false
+  },
+  "TaskListPatch": {
+    "type": "object",
+    "properties": {
+      "name": { "type": "string", "minLength": 1, "maxLength": 255 },
+      "description": { "type": ["string", "null"] },
+      "color": { "type": ["string", "null"] },
+      "isSubscribed": { "type": "boolean" }
+    },
+    "additionalProperties": false
+  },
+  "TaskListDeleteOptions": {
+    "type": "object",
+    "properties": {
+      "onDestroyRemoveContents": { "type": "boolean", "default": false }
+    },
+    "additionalProperties": false
+  },
+  "TaskItemQueryFilter": {
+    "type": "object",
+    "required": ["inTaskList"],
+    "properties": {
+      "inTaskList": { "$ref": "#/components/schemas/JmapId" },
+      "uid": { "type": "string" }
+    },
+    "additionalProperties": false
+  },
+  "TaskItemQueryRequest": {
+    "type": "object",
+    "required": ["filter"],
+    "properties": {
+      "filter": { "$ref": "#/components/schemas/TaskItemQueryFilter" },
+      "limit": { "type": "integer", "minimum": 1, "maximum": 500 }
+    },
+    "additionalProperties": false
+  },
+  "TaskItemQueryResponse": {
+    "type": "object",
+    "required": ["ids", "total"],
+    "properties": {
+      "ids": { "type": "array", "items": { "$ref": "#/components/schemas/JmapId" } },
+      "total": { "type": "integer", "minimum": 0 }
+    },
+    "additionalProperties": false
+  },
+  "JmapTaskListChangesResponse": {
+    "type": "object",
+    "required": ["oldState", "newState", "created", "updated", "destroyed"],
+    "properties": {
+      "oldState": { "type": "string" },
+      "newState": { "type": "string" },
+      "created": { "type": "array", "items": { "$ref": "#/components/schemas/JmapId" } },
+      "updated": { "type": "array", "items": { "$ref": "#/components/schemas/JmapId" } },
+      "destroyed": { "type": "array", "items": { "$ref": "#/components/schemas/JmapId" } }
+    },
+    "additionalProperties": false
+  }
+}

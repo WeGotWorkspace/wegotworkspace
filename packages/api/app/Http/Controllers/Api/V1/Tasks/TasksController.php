@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api\V1\Tasks;
 
 use App\Exceptions\ApiHttpException;
 use App\Http\Middleware\AuthenticateWgwApi;
+use App\Http\Requests\Api\V1\TaskItemQueryRequest;
 use App\Http\Requests\Api\V1\TaskPatchRequest;
 use App\Http\Requests\Api\V1\TaskUpsertRequest;
 use App\Http\Support\JmapResourceResponse;
@@ -28,6 +29,19 @@ final class TasksController
         }
 
         return response()->json($this->tasks->list($principal['username'], $taskListId));
+    }
+
+    public function query(TaskItemQueryRequest $request): JsonResponse
+    {
+        $principal = $request->attributes->get(AuthenticateWgwApi::PRINCIPAL_ATTRIBUTE);
+        $validated = $request->validated();
+        $filter = is_array($validated['filter'] ?? null) ? $validated['filter'] : [];
+
+        return response()->json($this->tasks->query(
+            $principal['username'],
+            $filter,
+            isset($validated['limit']) ? (int) $validated['limit'] : null,
+        ));
     }
 
     public function show(Request $request, string $taskId): JsonResponse

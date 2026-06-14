@@ -51,9 +51,44 @@ final class TaskRepository
         return ['list' => $tasks];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    public function query(string $username, array $filter, ?int $limit = null): array
+    {
+        $taskListId = $filter['inTaskList'] ?? null;
+        if (! is_string($taskListId) || trim($taskListId) === '') {
+            throw new ApiHttpException(400, 'filter.inTaskList is required.', 'bad_request');
+        }
+
+        $instance = $this->taskLists->findOwnedTaskList($username, $taskListId);
+        if ($instance === null) {
+            throw new ApiHttpException(404, 'Task list not found.', 'not_found');
+        }
+
+        $uidFilter = isset($filter['uid']) && is_string($filter['uid']) ? $filter['uid'] : null;
+        $objects = CalendarObject::query()
+            ->where('calendarid', (int) $instance->calendarid)
+            ->where('componenttype', 'VTODO')
+            ->orderBy('uri')
+            ->get();
+
+        $ids = [];
+        foreach ($objects as $object) {
+            foreach ($this->mapper->toTasks($object, $taskListId) as $task) {
+                if ($uidFilter !== null && ($task['uid'] ?? null) !== $uidFilter) {
+                    continue;
+                }
+                $id = (string) ($task['id'] ?? '');
+                if ($id !== '') {
+                    $ids[] = $id;
+                }
+                if ($limit !== null && count($ids) >= $limit) {
+                    break 2;
+                }
+            }
+        }
+
+        return ['ids' => $ids, 'total' => count($ids)];
+    }
+
     public function show(string $username, string $taskId): array
     {
         $located = $this->findOwnedTask($username, $taskId);
