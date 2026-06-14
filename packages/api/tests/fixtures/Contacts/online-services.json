@@ -1,0 +1,34 @@
+{
+    "@type": "Card",
+    "version": "1.0",
+    "uid": "urn:uuid:12121212-1212-4121-8121-121212121212",
+    "name": {
+        "full": "Jane Doe",
+        "@type": "Name"
+    },
+    "onlineServices": {
+        "p_k90TcSu3iMd-TjKHIBBvZET0": {
+            "@type": "OnlineService",
+            "uri": "xmpp:jane@example.org",
+            "vCardName": "impp",
+            "service": "matrix"
+        },
+        "p_g89j_9SuyQ_hAXS5buvkddiL": {
+            "@type": "OnlineService",
+            "vCardName": "socialprofile",
+            "uri": "https://twitter.com/jane_doe",
+            "service": "twitter",
+            "user": "jane_doe"
+        }
+    },
+    "vCardProps": [
+        [
+            "VERSION",
+            [],
+            "text",
+            [
+                "4.0"
+            ]
+        ]
+    ]
+}

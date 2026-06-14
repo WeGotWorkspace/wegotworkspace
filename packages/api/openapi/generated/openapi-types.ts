@@ -26,9 +26,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["HealthResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -62,9 +60,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["CapabilitiesResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -98,9 +94,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["GenericObject"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -131,7 +125,10 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["AuthTokenRequest"];
+                    "application/json": {
+                        username: string;
+                        password: string;
+                    };
                 };
             };
             responses: {
@@ -149,36 +146,28 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["GenericObject"];
-                    };
+                    content?: never;
                 };
                 /** @description Unauthorized */
                 401: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["GenericObject"];
-                    };
+                    content?: never;
                 };
                 /** @description Too many login attempts */
                 429: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["GenericObject"];
-                    };
+                    content?: never;
                 };
                 /** @description JWT not configured */
                 503: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["GenericObject"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -207,7 +196,9 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["AuthRefreshRequest"];
+                    "application/json": {
+                        refresh_token: string;
+                    };
                 };
             };
             responses: {
@@ -225,18 +216,14 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["GenericObject"];
-                    };
+                    content?: never;
                 };
                 /** @description Unauthorized */
                 401: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["GenericObject"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -265,7 +252,9 @@ export interface paths {
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["AuthRevokeRequest"];
+                    "application/json": {
+                        refresh_token?: string;
+                    };
                 };
             };
             responses: {
@@ -274,9 +263,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["OkResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -344,9 +331,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["AdminStateResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -380,9 +365,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["UpdateLogResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -403,9 +386,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["UpdateLogClearResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -500,9 +481,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["OkResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -525,9 +504,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["OkResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -558,9 +535,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["SettingsStateResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -588,20 +563,14 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["SettingsProfileRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Updated settings state */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["SettingsStateResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -628,20 +597,14 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["SettingsMailRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Updated settings state */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["SettingsStateResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -674,9 +637,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["MailStatusResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -710,9 +671,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["MailFoldersResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -725,20 +684,14 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["MailFolderCreateRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Folder created */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["MailFolderMutationResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -750,20 +703,14 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["MailFolderDeleteRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Folder deleted */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["OkResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -777,20 +724,14 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["MailFolderMoveRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Folder moved */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["MailFolderMutationResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -818,14 +759,30 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["MailMessagesResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
         put?: never;
-        post?: never;
+        /** Send message */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Sent */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -991,7 +948,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Move a message to another folder */
+        /** Move message to another folder */
         post: {
             parameters: {
                 query?: never;
@@ -999,9 +956,13 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
+            requestBody: {
                 content: {
-                    "application/json": components["schemas"]["MailMoveRequest"];
+                    "application/json": {
+                        fromFolder: string;
+                        toFolder: string;
+                        uid: number;
+                    };
                 };
             };
             responses: {
@@ -1010,9 +971,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["OkResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -1552,9 +1511,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["NotesCapabilitiesResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -1588,9 +1545,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["NotesStateResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -1624,9 +1579,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["NotesItemsResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -1639,20 +1592,14 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["NoteUpsertRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Created note */
                 201: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["NoteMutationResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -1680,20 +1627,14 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["NoteUpsertRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Updated note */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["NoteMutationResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -1708,26 +1649,40 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["NoteDeleteRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Deleted note */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["OkResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
         options?: never;
         head?: never;
-        patch?: never;
+        /** Patch note (e.g. archive) */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         trace?: never;
     };
     "/notes/items/{id}/archive": {
@@ -1828,9 +1783,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["NotebookListResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -1843,20 +1796,14 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["NotebookCreateRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Notebook created */
                 201: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["NotebookMutationResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -1886,20 +1833,14 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["NotebookDeleteRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Notebook deleted */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["NotebookMutationResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -1915,20 +1856,14 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["NotebookRenameRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Notebook renamed */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["NotebookMutationResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -1956,9 +1891,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["PluginsResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -2082,9 +2015,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["PluginSessionResponse"];
-                    };
+                    content?: never;
                 };
                 /** @description Plugin not found */
                 404: {
@@ -2323,9 +2254,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["InstallerStateResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -2359,9 +2288,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["InstallerBootstrapResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -2390,20 +2317,14 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["InstallerActionRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Installer action result */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["InstallerActionResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -2471,9 +2392,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["DavCapabilitiesResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -2707,6 +2626,1878 @@ export interface paths {
             requestBody?: never;
             responses: {
                 /** @description Meet RTC ICE settings */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/backups/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download an update backup archive */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    name: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Backup ZIP stream */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        /** Delete an update backup archive */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    name: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Updated backup state */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create admin group */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Group created */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Invalid request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/groups/{group}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete admin group */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    group: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Group deleted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Group not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Update admin group */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    group: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Group updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Invalid request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Group not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/admin/plugins": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Install plugin */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Installed */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/search/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start search reindex */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Accepted */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/search/jobs/{jobId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Cancel search job */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    jobId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Cancelled */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/search/jobs/current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search job state */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description State */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/update-jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start update job */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Accepted */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/update-jobs/{jobId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Cancel update job */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    jobId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Cancelled */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create user account */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description User created */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Invalid request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/users/{username}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete user account */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    username: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description User deleted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description User not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Update user account */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    username: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description User updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Invalid request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description User not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search files */
+        get: {
+            parameters: {
+                query: {
+                    search: string;
+                    path?: string;
+                    limit?: number;
+                    offset?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Results */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        /** Delete files */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Deleted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Rename or move file or directory */
+        patch: {
+            parameters: {
+                query: {
+                    path: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        name: string;
+                        /** @description Target parent directory; omit to rename in place */
+                        destination?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Renamed */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/files/children": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List directory children */
+        get: {
+            parameters: {
+                query: {
+                    path: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Listing */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/files/collaboration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Load collaboration document */
+        get: {
+            parameters: {
+                query: {
+                    path: string;
+                    format?: "markdown" | "yjs";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Document */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        /** Save collaboration document */
+        put: {
+            parameters: {
+                query: {
+                    path: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Saved */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/files/content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download file content */
+        get: {
+            parameters: {
+                query: {
+                    path: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Stream */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        /** Upload file content */
+        post: {
+            parameters: {
+                query?: {
+                    path?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Accepted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/files/context": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** User file context */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/files/directories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create directory */
+        post: {
+            parameters: {
+                query: {
+                    path: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/files/rooms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resolve file collab room */
+        post: {
+            parameters: {
+                query: {
+                    path: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Room */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/files/star": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Star path */
+        post: {
+            parameters: {
+                query: {
+                    path: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Starred */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        /** Unstar path */
+        delete: {
+            parameters: {
+                query: {
+                    path: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Unstarred */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/files/starred": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List starred paths */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Paths */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/mail/drafts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Save draft */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Saved */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/mail/messages/{messageId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get message */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        /** Delete message */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Patch message */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/mail/messages/{messageId}/attachments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List attachments */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    messageId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Attachments */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/mail/messages/{messageId}/attachments/{attachmentId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download attachment */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    messageId: string;
+                    attachmentId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Attachment */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/meetings/rooms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create meeting room */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/meetings/rooms/{roomId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Meeting room status */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    roomId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Status */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/contacts/addressbooks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List user's address books */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Address book list */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ContactAddressBookListResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/contacts/addressbooks/{addressBookId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Fetch a single address book */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    addressBookId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Address book */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AddressBook"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/contacts/cards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List contact cards in an address book */
+        get: {
+            parameters: {
+                query: {
+                    addressBookId: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Contact card list */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ContactCardListResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Create a contact card */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    /**
+                     * @example {
+                     *       "addressBookIds": {
+                     *         "default": true
+                     *       },
+                     *       "name": {
+                     *         "full": "Joe Example"
+                     *       },
+                     *       "emails": {
+                     *         "550e8400-e29b-41d4-a716-446655440001": {
+                     *           "address": "joe@example.com"
+                     *         }
+                     *       },
+                     *       "phones": {
+                     *         "550e8400-e29b-41d4-a716-446655440002": {
+                     *           "number": "+1-555-0100"
+                     *         }
+                     *       },
+                     *       "addresses": {
+                     *         "550e8400-e29b-41d4-a716-446655440003": {
+                     *           "full": "123 Main St",
+                     *           "countryCode": "US"
+                     *         }
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ContactCardCreate"];
+                };
+            };
+            responses: {
+                /** @description Created contact card */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ContactCard"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/contacts/cards/{cardId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Fetch a single contact card */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    cardId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Contact card */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ContactCard"];
+                    };
+                };
+            };
+        };
+        /** Replace a contact card */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    cardId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    /**
+                     * @example {
+                     *       "addressBookIds": {
+                     *         "default": true
+                     *       },
+                     *       "name": {
+                     *         "full": "Joe Example"
+                     *       },
+                     *       "emails": {
+                     *         "550e8400-e29b-41d4-a716-446655440001": {
+                     *           "address": "joe@example.com"
+                     *         }
+                     *       },
+                     *       "phones": {
+                     *         "550e8400-e29b-41d4-a716-446655440002": {
+                     *           "number": "+1-555-0100"
+                     *         }
+                     *       },
+                     *       "addresses": {
+                     *         "550e8400-e29b-41d4-a716-446655440003": {
+                     *           "full": "123 Main St",
+                     *           "countryCode": "US"
+                     *         }
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ContactCardCreate"];
+                };
+            };
+            responses: {
+                /** @description Updated contact card */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ContactCard"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        /** Delete a contact card */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    cardId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Deleted contact card */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OkResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /**
+         * Partially update a contact card
+         * @description Deep-merge patch into the existing JSContact Card. Id-keyed map entries merge by key; null removes an entry.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    cardId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    /**
+                     * @example {
+                     *       "emails": {
+                     *         "550e8400-e29b-41d4-a716-446655440001": {
+                     *           "address": "updated@example.com"
+                     *         }
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ContactCardPatch"];
+                };
+            };
+            responses: {
+                /** @description Updated contact card */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ContactCard"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/plugins/{id}/activation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set plugin activation */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/rooms/{roomId}/configuration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** RTC configuration */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    roomId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/rooms/{roomId}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Poll events */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    roomId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        /** Send event */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    roomId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/rooms/{roomId}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Chat message */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    roomId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/rooms/{roomId}/participants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Join participant */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    roomId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/rooms/{roomId}/participants/{participantId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Leave room */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    roomId: string;
+                    participantId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/search/results": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search results */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/search/results/{resultId}/content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download search result content */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    resultId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Content */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspace/state": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Workspace bootstrap */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -3742,6 +5533,1003 @@ export interface components {
             filesEnabled?: boolean;
             calendarEnabled?: boolean;
             contactsEnabled?: boolean;
+        };
+        /** @description RFC 9610 AddressBookRights. */
+        AddressBookRights: {
+            /** @description May fetch cards in this address book. */
+            mayRead: boolean;
+            /** @description May create, update, delete, or move cards. */
+            mayWrite: boolean;
+            /** @description May modify shareWith. */
+            mayShare: boolean;
+            /** @description May delete the address book itself. */
+            mayDelete: boolean;
+        };
+        /**
+         * @description RFC 9610 AddressBook.
+         * @example {
+         *       "id": "default",
+         *       "name": "Default Address Book",
+         *       "description": null,
+         *       "sortOrder": 0,
+         *       "isDefault": true,
+         *       "isSubscribed": true,
+         *       "shareWith": null,
+         *       "myRights": {
+         *         "mayRead": true,
+         *         "mayWrite": true,
+         *         "mayShare": true,
+         *         "mayDelete": false
+         *       }
+         *     }
+         */
+        AddressBook: {
+            /** @description Immutable server-set address book identifier. */
+            id: components["schemas"]["JsContactId"];
+            /** @description User-visible name. */
+            name: string;
+            /** @description Long-form description; null when unset. */
+            description?: string | null;
+            /** @description UI sort order; lower values appear first. */
+            sortOrder: components["schemas"]["JsContactUnsignedInt"];
+            /** @description Server-set default address book flag. */
+            isDefault: boolean;
+            /** @description Whether the book is shown in client UI. */
+            isSubscribed: boolean;
+            /** @description Principal id to rights map; null when not shared. */
+            shareWith?: {
+                [key: string]: components["schemas"]["AddressBookRights"];
+            } | null;
+            /** @description Current user's access rights for this book. */
+            myRights: components["schemas"]["AddressBookRights"];
+        };
+        /**
+         * @description REST list response for GET /contacts/addressbooks.
+         * @example {
+         *       "list": [
+         *         {
+         *           "id": "default",
+         *           "name": "Default Address Book",
+         *           "description": null,
+         *           "sortOrder": 0,
+         *           "isDefault": true,
+         *           "isSubscribed": true,
+         *           "shareWith": null,
+         *           "myRights": {
+         *             "mayRead": true,
+         *             "mayWrite": true,
+         *             "mayShare": true,
+         *             "mayDelete": false
+         *           }
+         *         }
+         *       ]
+         *     }
+         */
+        ContactAddressBookListResponse: {
+            list: components["schemas"]["AddressBook"][];
+        };
+        /**
+         * @description RFC 9610 ContactCard — full JMAP ContactCard returned by GET/POST/PUT responses. Server-owned `id`, `@type`, and `version` are read-only; use ContactCardCreate for POST/PUT request bodies.
+         * @example {
+         *       "@type": "Card",
+         *       "version": "1.0",
+         *       "id": "card-joe-example",
+         *       "uid": "urn:uuid:550e8400-e29b-41d4-a716-446655440000",
+         *       "addressBookIds": {
+         *         "default": true
+         *       },
+         *       "name": {
+         *         "full": "Joe Example"
+         *       },
+         *       "emails": {
+         *         "550e8400-e29b-41d4-a716-446655440001": {
+         *           "address": "joe@example.com",
+         *           "contexts": {
+         *             "private": true
+         *           }
+         *         }
+         *       },
+         *       "phones": {
+         *         "550e8400-e29b-41d4-a716-446655440002": {
+         *           "number": "+1-555-0100",
+         *           "features": {
+         *             "mobile": true,
+         *             "voice": true
+         *           }
+         *         }
+         *       },
+         *       "addresses": {
+         *         "550e8400-e29b-41d4-a716-446655440003": {
+         *           "full": "123 Main St, Springfield, IL 62701, US",
+         *           "countryCode": "US",
+         *           "contexts": {
+         *             "home": true
+         *           }
+         *         }
+         *       }
+         *     }
+         */
+        ContactCard: {
+            /**
+             * @description JSContact Card type discriminator (server-set on responses).
+             * @constant
+             */
+            readonly "@type": "Card";
+            /**
+             * @description JSContact version (server-set on responses).
+             * @constant
+             */
+            readonly version: "1.0";
+            /** @description JMAP server-set card id (RFC 9610). */
+            readonly id: components["schemas"]["JsContactId"];
+            /** @description Set of address book ids; each value MUST be true. */
+            addressBookIds: components["schemas"]["JsContactIdBooleanMap"];
+            /** @description Cross-system card identifier (RFC 9553; optional in JSContact 2.0 per RFC 9982). Required for JMAP Contacts (RFC 9610). */
+            uid: string;
+            created?: components["schemas"]["JsContactUTCDateTime"];
+            updated?: components["schemas"]["JsContactUTCDateTime"];
+            /**
+             * @default individual
+             * @enum {string}
+             */
+            kind: "individual" | "group" | "org" | "location" | "device" | "application";
+            /** @description Primary language tag (RFC 5646). */
+            language?: string;
+            /** @description Group member uids when kind is group. */
+            members?: components["schemas"]["JsContactIdBooleanMap"];
+            prodId?: string;
+            relatedTo?: components["schemas"]["JsContactStringRelationMap"];
+            name?: components["schemas"]["JsContactName"];
+            nicknames?: components["schemas"]["JsContactIdNicknameMap"];
+            organizations?: components["schemas"]["JsContactIdOrganizationMap"];
+            speakToAs?: components["schemas"]["JsContactSpeakToAs"];
+            titles?: components["schemas"]["JsContactIdTitleMap"];
+            emails?: components["schemas"]["JsContactIdEmailAddressMap"];
+            onlineServices?: components["schemas"]["JsContactIdOnlineServiceMap"];
+            phones?: components["schemas"]["JsContactIdPhoneMap"];
+            preferredLanguages?: components["schemas"]["JsContactIdLanguagePrefMap"];
+            calendars?: components["schemas"]["JsContactIdCalendarMap"];
+            schedulingAddresses?: components["schemas"]["JsContactIdSchedulingAddressMap"];
+            addresses?: components["schemas"]["JsContactIdAddressMap"];
+            cryptoKeys?: components["schemas"]["JsContactIdCryptoKeyMap"];
+            directories?: components["schemas"]["JsContactIdDirectoryMap"];
+            links?: components["schemas"]["JsContactIdLinkMap"];
+            media?: components["schemas"]["JsContactIdMediaMap"];
+            localizations?: components["schemas"]["JsContactStringPatchObjectMap"];
+            anniversaries?: components["schemas"]["JsContactIdAnniversaryMap"];
+            keywords?: components["schemas"]["JsContactStringBooleanMap"];
+            notes?: components["schemas"]["JsContactIdNoteMap"];
+            personalInfo?: components["schemas"]["JsContactIdPersonalInfoMap"];
+            /** @description RFC 9555 unmapped vCard properties (conversion base spec; uid rules updated by RFC 9982 for JSContact 2.0). */
+            vCardProps?: components["schemas"]["JsContactJCardProp"][];
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * @description REST list response for GET /contacts/cards.
+         * @example {
+         *       "list": [
+         *         {
+         *           "@type": "Card",
+         *           "version": "1.0",
+         *           "id": "card-joe-example",
+         *           "uid": "urn:uuid:550e8400-e29b-41d4-a716-446655440000",
+         *           "addressBookIds": {
+         *             "default": true
+         *           },
+         *           "name": {
+         *             "full": "Joe Example"
+         *           },
+         *           "emails": {
+         *             "550e8400-e29b-41d4-a716-446655440001": {
+         *               "address": "joe@example.com",
+         *               "contexts": {
+         *                 "private": true
+         *               }
+         *             }
+         *           }
+         *         }
+         *       ]
+         *     }
+         */
+        ContactCardListResponse: {
+            list: components["schemas"]["ContactCard"][];
+        };
+        /** @description RFC 9553 AddressComponent. */
+        JsContactAddressComponent: {
+            /** @constant */
+            "@type": "AddressComponent";
+            value: string;
+            /** @enum {string} */
+            kind: "room" | "apartment" | "floor" | "building" | "number" | "name" | "block" | "subdistrict" | "district" | "locality" | "region" | "postcode" | "country" | "direction" | "landmark" | "postOfficeBox" | "separator";
+            phonetic?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Address — at least one of components, coordinates, countryCode, full, or timeZone MUST be set. */
+        JsContactAddress: {
+            /** @constant */
+            "@type": "Address";
+            components?: components["schemas"]["JsContactAddressComponent"][];
+            /** @default false */
+            isOrdered: boolean;
+            /** @description ISO 3166-1 alpha-2 country code. */
+            countryCode?: string;
+            /** @description geo: URI per RFC 5870. */
+            coordinates?: string;
+            /** @description IANA time zone name. */
+            timeZone?: string;
+            contexts?: components["schemas"]["JsContactStringBooleanMap"];
+            full?: string;
+            defaultSeparator?: string;
+            pref?: components["schemas"]["JsContactUnsignedInt"];
+            phoneticScript?: string;
+            /** @enum {string} */
+            phoneticSystem?: "ipa" | "jyut" | "piny";
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * @description RFC 9553 addresses map — nested `@type` on values and AddressComponent entries is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440003": {
+         *         "components": [
+         *           {
+         *             "value": "123",
+         *             "kind": "number"
+         *           },
+         *           {
+         *             "value": "Main St",
+         *             "kind": "name"
+         *           }
+         *         ],
+         *         "countryCode": "US",
+         *         "contexts": {
+         *           "home": true
+         *         }
+         *       }
+         *     }
+         */
+        JsContactIdAddressMap: {
+            [key: string]: components["schemas"]["JsContactAddress"];
+        };
+        /** @description RFC 9553 SchedulingAddress. */
+        JsContactSchedulingAddress: {
+            /** @constant */
+            "@type": "SchedulingAddress";
+            /** Format: uri */
+            uri: string;
+            contexts?: components["schemas"]["JsContactStringBooleanMap"];
+            pref?: components["schemas"]["JsContactUnsignedInt"];
+            label?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * @description RFC 9553 schedulingAddresses map — nested `@type` on values is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440010": {
+         *         "uri": "mailto:joe@example.com"
+         *       }
+         *     }
+         */
+        JsContactIdSchedulingAddressMap: {
+            [key: string]: components["schemas"]["JsContactSchedulingAddress"];
+        };
+        /** @description RFC 9553 EmailAddress. */
+        JsContactEmailAddress: {
+            /** @constant */
+            "@type": "EmailAddress";
+            /** @description RFC 5322 addr-spec. */
+            address: string;
+            contexts?: components["schemas"]["JsContactStringBooleanMap"];
+            pref?: components["schemas"]["JsContactUnsignedInt"];
+            label?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Phone. */
+        JsContactPhone: {
+            /** @constant */
+            "@type": "Phone";
+            /** @description tel:, sip:, or free-text phone number. */
+            number: string;
+            /** @description Feature flags: mobile, voice, text, video, main-number, textphone, fax, pager. */
+            features?: components["schemas"]["JsContactStringBooleanMap"];
+            contexts?: components["schemas"]["JsContactStringBooleanMap"];
+            pref?: components["schemas"]["JsContactUnsignedInt"];
+            label?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 OnlineService — at least one of uri or user MUST be set. */
+        JsContactOnlineService: {
+            /** @constant */
+            "@type": "OnlineService";
+            service?: string;
+            /** Format: uri */
+            uri?: string;
+            user?: string;
+            contexts?: components["schemas"]["JsContactStringBooleanMap"];
+            pref?: components["schemas"]["JsContactUnsignedInt"];
+            label?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 LanguagePref. */
+        JsContactLanguagePref: {
+            /** @constant */
+            "@type": "LanguagePref";
+            /** @description RFC 5646 language tag. */
+            language: string;
+            contexts?: components["schemas"]["JsContactStringBooleanMap"];
+            pref?: components["schemas"]["JsContactUnsignedInt"];
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * @description RFC 9553 emails map — nested `@type` on values is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440001": {
+         *         "address": "joe@example.com",
+         *         "contexts": {
+         *           "private": true
+         *         }
+         *       }
+         *     }
+         */
+        JsContactIdEmailAddressMap: {
+            [key: string]: components["schemas"]["JsContactEmailAddress"];
+        };
+        /**
+         * @description RFC 9553 phones map — nested `@type` on values is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440002": {
+         *         "number": "+1-555-0100",
+         *         "features": {
+         *           "mobile": true,
+         *           "voice": true
+         *         }
+         *       }
+         *     }
+         */
+        JsContactIdPhoneMap: {
+            [key: string]: components["schemas"]["JsContactPhone"];
+        };
+        /**
+         * @description RFC 9553 onlineServices map — nested `@type` on values is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440007": {
+         *         "service": "matrix",
+         *         "uri": "matrix:u/joe:example.com"
+         *       }
+         *     }
+         */
+        JsContactIdOnlineServiceMap: {
+            [key: string]: components["schemas"]["JsContactOnlineService"];
+        };
+        /**
+         * @description RFC 9553 preferredLanguages map — nested `@type` on values is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440008": {
+         *         "language": "en"
+         *       }
+         *     }
+         */
+        JsContactIdLanguagePrefMap: {
+            [key: string]: components["schemas"]["JsContactLanguagePref"];
+        };
+        /** @description RFC 9553 Relation. */
+        JsContactRelation: {
+            /** @constant */
+            "@type": "Relation";
+            /** @description Relation types: acquaintance, agent, child, co-resident, co-worker, colleague, contact, crush, date, emergency, friend, kin, me, met, muse, neighbor, parent, sibling, spouse, sweetheart. */
+            relation?: components["schemas"]["JsContactStringBooleanMap"];
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 PartialDate. */
+        JsContactPartialDate: {
+            /** @constant */
+            "@type": "PartialDate";
+            year?: components["schemas"]["JsContactUnsignedInt"];
+            month?: number;
+            day?: number;
+            /** @description CLDR calendar name in lowercase. */
+            calendarScale?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Timestamp. */
+        JsContactTimestamp: {
+            /** @constant */
+            "@type": "Timestamp";
+            utc: components["schemas"]["JsContactUTCDateTime"];
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Anniversary.date — PartialDate (default) or Timestamp. */
+        JsContactAnniversaryDate: components["schemas"]["JsContactPartialDate"] | components["schemas"]["JsContactTimestamp"];
+        /** @description RFC 9553 Anniversary. */
+        JsContactAnniversary: {
+            /** @constant */
+            "@type": "Anniversary";
+            /** @enum {string} */
+            kind: "birth" | "death" | "wedding";
+            date: components["schemas"]["JsContactAnniversaryDate"];
+            place?: components["schemas"]["JsContactAddress"];
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Author — at least one of name or uri MUST be set. */
+        JsContactAuthor: {
+            /** @constant */
+            "@type": "Author";
+            name?: string;
+            /** Format: uri */
+            uri?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Note. */
+        JsContactNote: {
+            /** @constant */
+            "@type": "Note";
+            note: string;
+            created?: components["schemas"]["JsContactUTCDateTime"];
+            author?: components["schemas"]["JsContactAuthor"];
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 PersonalInfo. */
+        JsContactPersonalInfo: {
+            /** @constant */
+            "@type": "PersonalInfo";
+            /** @enum {string} */
+            kind: "expertise" | "hobby" | "interest";
+            value: string;
+            /** @enum {string} */
+            level?: "high" | "medium" | "low";
+            listAs?: components["schemas"]["JsContactUnsignedInt"];
+            label?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * @description RFC 9553 anniversaries map — nested `@type` on values, date, and place is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440015": {
+         *         "kind": "birth",
+         *         "date": {
+         *           "month": 6,
+         *           "day": 13
+         *         },
+         *         "place": {
+         *           "full": "Springfield, IL"
+         *         }
+         *       }
+         *     }
+         */
+        JsContactIdAnniversaryMap: {
+            [key: string]: components["schemas"]["JsContactAnniversary"];
+        };
+        /**
+         * @description RFC 9553 notes map — nested `@type` on values and author is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440016": {
+         *         "note": "Met at the 2024 conference.",
+         *         "author": {
+         *           "name": "Alice Example"
+         *         }
+         *       }
+         *     }
+         */
+        JsContactIdNoteMap: {
+            [key: string]: components["schemas"]["JsContactNote"];
+        };
+        /**
+         * @description RFC 9553 personalInfo map — nested `@type` on values is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440017": {
+         *         "kind": "hobby",
+         *         "value": "cycling"
+         *       }
+         *     }
+         */
+        JsContactIdPersonalInfoMap: {
+            [key: string]: components["schemas"]["JsContactPersonalInfo"];
+        };
+        /** @description RFC 9553 NameComponent. */
+        JsContactNameComponent: {
+            /** @constant */
+            "@type": "NameComponent";
+            value: string;
+            /** @enum {string} */
+            kind: "title" | "given" | "given2" | "surname" | "surname2" | "credential" | "generation" | "separator";
+            phonetic?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Name — at least one of components or full MUST be set. */
+        JsContactName: {
+            /** @constant */
+            "@type": "Name";
+            components?: components["schemas"]["JsContactNameComponent"][];
+            /** @default false */
+            isOrdered: boolean;
+            defaultSeparator?: string;
+            full?: string;
+            sortAs?: components["schemas"]["JsContactStringStringMap"];
+            phoneticScript?: string;
+            /** @enum {string} */
+            phoneticSystem?: "ipa" | "jyut" | "piny";
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Nickname. */
+        JsContactNickname: {
+            /** @constant */
+            "@type": "Nickname";
+            name: string;
+            contexts?: components["schemas"]["JsContactStringBooleanMap"];
+            pref?: components["schemas"]["JsContactUnsignedInt"];
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 OrgUnit. */
+        JsContactOrgUnit: {
+            /** @constant */
+            "@type": "OrgUnit";
+            name: string;
+            sortAs?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Organization — at least one of name or units MUST be set. */
+        JsContactOrganization: {
+            /** @constant */
+            "@type": "Organization";
+            name?: string;
+            units?: components["schemas"]["JsContactOrgUnit"][];
+            sortAs?: string;
+            contexts?: components["schemas"]["JsContactStringBooleanMap"];
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Pronouns. */
+        JsContactPronouns: {
+            /** @constant */
+            "@type": "Pronouns";
+            pronouns: string;
+            contexts?: components["schemas"]["JsContactStringBooleanMap"];
+            pref?: components["schemas"]["JsContactUnsignedInt"];
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * @description RFC 9553 SpeakToAs — at least one of grammaticalGender or pronouns MUST be set.
+         * @example {
+         *       "grammaticalGender": "masculine",
+         *       "pronouns": {
+         *         "550e8400-e29b-41d4-a716-446655440018": {
+         *           "pronouns": "he/him"
+         *         }
+         *       }
+         *     }
+         */
+        JsContactSpeakToAs: {
+            /** @constant */
+            "@type": "SpeakToAs";
+            /** @enum {string} */
+            grammaticalGender?: "animate" | "common" | "feminine" | "inanimate" | "masculine" | "neuter";
+            pronouns?: {
+                [key: string]: components["schemas"]["JsContactPronouns"];
+            };
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Title. */
+        JsContactTitle: {
+            /** @constant */
+            "@type": "Title";
+            name: string;
+            /**
+             * @default title
+             * @enum {string}
+             */
+            kind: "title" | "role";
+            organizationId?: components["schemas"]["JsContactId"];
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * @description RFC 9553 nicknames map — nested `@type` on values is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440004": {
+         *         "name": "Joe"
+         *       }
+         *     }
+         */
+        JsContactIdNicknameMap: {
+            [key: string]: components["schemas"]["JsContactNickname"];
+        };
+        /**
+         * @description RFC 9553 organizations map — nested `@type` on values and OrgUnit entries is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440005": {
+         *         "name": "Example Corp",
+         *         "units": [
+         *           {
+         *             "name": "Engineering"
+         *           }
+         *         ]
+         *       }
+         *     }
+         */
+        JsContactIdOrganizationMap: {
+            [key: string]: components["schemas"]["JsContactOrganization"];
+        };
+        /**
+         * @description RFC 9553 titles map — nested `@type` on values is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440006": {
+         *         "name": "Engineer"
+         *       }
+         *     }
+         */
+        JsContactIdTitleMap: {
+            [key: string]: components["schemas"]["JsContactTitle"];
+        };
+        /** @description RFC 9553 Resource base type. */
+        JsContactResource: {
+            /** @description Concrete resource type name (not Resource). */
+            "@type": string;
+            kind?: string;
+            /** Format: uri */
+            uri: string;
+            mediaType?: string;
+            contexts?: components["schemas"]["JsContactStringBooleanMap"];
+            pref?: components["schemas"]["JsContactUnsignedInt"];
+            label?: string;
+            vCardParams?: components["schemas"]["JsContactVCardParams"];
+            vCardName?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description RFC 9553 Calendar. */
+        JsContactCalendar: components["schemas"]["JsContactResource"] & {
+            /** @constant */
+            "@type": "Calendar";
+            /** @enum {string} */
+            kind: "calendar" | "freeBusy";
+        };
+        /** @description RFC 9553 CryptoKey. */
+        JsContactCryptoKey: components["schemas"]["JsContactResource"] & {
+            /** @constant */
+            "@type": "CryptoKey";
+        };
+        /** @description RFC 9553 Directory. */
+        JsContactDirectory: components["schemas"]["JsContactResource"] & {
+            /** @constant */
+            "@type": "Directory";
+            /** @enum {string} */
+            kind: "directory" | "entry";
+            listAs?: components["schemas"]["JsContactUnsignedInt"];
+        };
+        /** @description RFC 9553 Link. */
+        JsContactLink: components["schemas"]["JsContactResource"] & {
+            /** @constant */
+            "@type": "Link";
+            /** @enum {string} */
+            kind?: "contact";
+        };
+        /** @description RFC 9553 Media with JMAP blobId extension. */
+        JsContactMedia: components["schemas"]["JsContactResource"] & {
+            /** @constant */
+            "@type": "Media";
+            /** @enum {string} */
+            kind: "photo" | "sound" | "logo";
+            /** @description JMAP blob id (RFC 9610); replaces data: URI on read. */
+            blobId?: components["schemas"]["JsContactId"];
+        };
+        /**
+         * @description RFC 9553 calendars map — nested `@type` on values is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440009": {
+         *         "kind": "calendar",
+         *         "uri": "https://example.com/calendars/joe"
+         *       }
+         *     }
+         */
+        JsContactIdCalendarMap: {
+            [key: string]: components["schemas"]["JsContactCalendar"];
+        };
+        /**
+         * @description RFC 9553 cryptoKeys map — nested `@type` on values is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440011": {
+         *         "uri": "data:application/pgp-keys;base64,..."
+         *       }
+         *     }
+         */
+        JsContactIdCryptoKeyMap: {
+            [key: string]: components["schemas"]["JsContactCryptoKey"];
+        };
+        /**
+         * @description RFC 9553 directories map — nested `@type` on values is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440012": {
+         *         "kind": "directory",
+         *         "uri": "ldap://directory.example.com/cn=joe"
+         *       }
+         *     }
+         */
+        JsContactIdDirectoryMap: {
+            [key: string]: components["schemas"]["JsContactDirectory"];
+        };
+        /**
+         * @description RFC 9553 links map — nested `@type` on values is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440013": {
+         *         "kind": "contact",
+         *         "uri": "card:550e8400-e29b-41d4-a716-446655440000"
+         *       }
+         *     }
+         */
+        JsContactIdLinkMap: {
+            [key: string]: components["schemas"]["JsContactLink"];
+        };
+        /**
+         * @description RFC 9553 media map — nested `@type` on values is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440014": {
+         *         "kind": "photo",
+         *         "uri": "https://example.com/photos/joe.jpg",
+         *         "mediaType": "image/jpeg"
+         *       }
+         *     }
+         */
+        JsContactIdMediaMap: {
+            [key: string]: components["schemas"]["JsContactMedia"];
+        };
+        /** @description RFC 9553 Id — base64url alphabet without padding. */
+        JsContactId: string;
+        /** @description RFC 9553 UnsignedInt. */
+        JsContactUnsignedInt: number;
+        /**
+         * Format: date-time
+         * @description RFC 9553 UTCDateTime — RFC 3339 date-time with Z offset.
+         */
+        JsContactUTCDateTime: string;
+        /**
+         * @description RFC 9553 String[Boolean] set (keywords).
+         * @example {
+         *       "vip": true,
+         *       "customer": true
+         *     }
+         */
+        JsContactStringBooleanMap: {
+            [key: string]: true;
+        };
+        /**
+         * @description RFC 9553 Id[Boolean] set keyed by JsContact Id (addressBookIds, members). Nested `@type` not applicable.
+         * @example {
+         *       "default": true
+         *     }
+         */
+        JsContactIdBooleanMap: {
+            [key: string]: true;
+        };
+        /** @description RFC 9553 String[String] map. */
+        JsContactStringStringMap: {
+            [key: string]: string;
+        };
+        /**
+         * @description RFC 9553 String[Relation] map (relatedTo) — nested `@type` on values is optional (RFC 9553 §1.3.4).
+         * @example {
+         *       "550e8400-e29b-41d4-a716-446655440019": {
+         *         "relation": {
+         *           "spouse": true
+         *         }
+         *       }
+         *     }
+         */
+        JsContactStringRelationMap: {
+            [key: string]: components["schemas"]["JsContactRelation"];
+        };
+        /** @description RFC 9553 String[PatchObject] localizations map. */
+        JsContactStringPatchObjectMap: {
+            [key: string]: {
+                [key: string]: unknown;
+            };
+        };
+        /** @description RFC 9555 vCardParams — preserved vCard parameters. */
+        JsContactVCardParams: {
+            [key: string]: string | string[];
+        };
+        /** @description RFC 9555 JCardProp — jCard property tuple [name, params, valueType, value]. */
+        JsContactJCardProp: [
+            string,
+            components["schemas"]["JsContactVCardParams"],
+            string,
+            unknown
+        ];
+        /**
+         * @description POST/PUT request body for contact cards. Omits server-owned `id`, `@type`, and `version`. Nested `@type` on map values is optional per RFC 9553 §1.3.4.
+         * @example {
+         *       "addressBookIds": {
+         *         "default": true
+         *       },
+         *       "name": {
+         *         "full": "Joe Example"
+         *       },
+         *       "emails": {
+         *         "550e8400-e29b-41d4-a716-446655440001": {
+         *           "address": "joe@example.com",
+         *           "contexts": {
+         *             "private": true
+         *           }
+         *         }
+         *       },
+         *       "phones": {
+         *         "550e8400-e29b-41d4-a716-446655440002": {
+         *           "number": "+1-555-0100",
+         *           "features": {
+         *             "mobile": true,
+         *             "voice": true
+         *           }
+         *         }
+         *       },
+         *       "addresses": {
+         *         "550e8400-e29b-41d4-a716-446655440003": {
+         *           "full": "123 Main St, Springfield, IL 62701, US",
+         *           "countryCode": "US",
+         *           "contexts": {
+         *             "home": true
+         *           }
+         *         }
+         *       }
+         *     }
+         */
+        ContactCardCreate: {
+            /** @description Set of address book ids; each value MUST be true. */
+            addressBookIds: components["schemas"]["JsContactIdBooleanMap"];
+            /** @description Cross-system card identifier (RFC 9553). Optional on create; server generates when omitted. */
+            uid?: string;
+            created?: components["schemas"]["JsContactUTCDateTime"];
+            updated?: components["schemas"]["JsContactUTCDateTime"];
+            /**
+             * @default individual
+             * @enum {string}
+             */
+            kind: "individual" | "group" | "org" | "location" | "device" | "application";
+            /** @description Primary language tag (RFC 5646). */
+            language?: string;
+            /** @description Group member uids when kind is group. */
+            members?: components["schemas"]["JsContactIdBooleanMap"];
+            prodId?: string;
+            relatedTo?: components["schemas"]["JsContactStringRelationMap"];
+            name?: components["schemas"]["JsContactName"];
+            nicknames?: components["schemas"]["JsContactIdNicknameMap"];
+            organizations?: components["schemas"]["JsContactIdOrganizationMap"];
+            speakToAs?: components["schemas"]["JsContactSpeakToAs"];
+            titles?: components["schemas"]["JsContactIdTitleMap"];
+            emails?: components["schemas"]["JsContactIdEmailAddressMap"];
+            onlineServices?: components["schemas"]["JsContactIdOnlineServiceMap"];
+            phones?: components["schemas"]["JsContactIdPhoneMap"];
+            preferredLanguages?: components["schemas"]["JsContactIdLanguagePrefMap"];
+            calendars?: components["schemas"]["JsContactIdCalendarMap"];
+            schedulingAddresses?: components["schemas"]["JsContactIdSchedulingAddressMap"];
+            addresses?: components["schemas"]["JsContactIdAddressMap"];
+            cryptoKeys?: components["schemas"]["JsContactIdCryptoKeyMap"];
+            directories?: components["schemas"]["JsContactIdDirectoryMap"];
+            links?: components["schemas"]["JsContactIdLinkMap"];
+            media?: components["schemas"]["JsContactIdMediaMap"];
+            localizations?: components["schemas"]["JsContactStringPatchObjectMap"];
+            anniversaries?: components["schemas"]["JsContactIdAnniversaryMap"];
+            keywords?: components["schemas"]["JsContactStringBooleanMap"];
+            notes?: components["schemas"]["JsContactIdNoteMap"];
+            personalInfo?: components["schemas"]["JsContactIdPersonalInfoMap"];
+            /** @description RFC 9555 unmapped vCard properties. */
+            vCardProps?: components["schemas"]["JsContactJCardProp"][];
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * @description PATCH request body for partial contact card updates. Omits server-owned `id`, `@type`, and `version`. Id-keyed map entries merge by key; null removes an entry. Nested objects (e.g. name) deep-merge.
+         * @example {
+         *       "emails": {
+         *         "550e8400-e29b-41d4-a716-446655440001": {
+         *           "address": "updated@example.com"
+         *         },
+         *         "550e8400-e29b-41d4-a716-446655440099": null
+         *       }
+         *     }
+         */
+        ContactCardPatch: {
+            /** @description Set of address book ids; each value MUST be true. Map entry null removes membership. */
+            addressBookIds?: components["schemas"]["JsContactIdBooleanMap"];
+            /** @description Cross-system card identifier (RFC 9553). */
+            uid?: string;
+            created?: components["schemas"]["JsContactUTCDateTime"];
+            updated?: components["schemas"]["JsContactUTCDateTime"];
+            /** @enum {string} */
+            kind?: "individual" | "group" | "org" | "location" | "device" | "application";
+            /** @description Primary language tag (RFC 5646). */
+            language?: string;
+            /** @description Group member uids when kind is group. Map entry null removes member. */
+            members?: components["schemas"]["JsContactIdBooleanMap"];
+            prodId?: string;
+            relatedTo?: components["schemas"]["JsContactStringRelationMap"];
+            name?: components["schemas"]["JsContactName"];
+            nicknames?: components["schemas"]["JsContactIdNicknameMap"];
+            organizations?: components["schemas"]["JsContactIdOrganizationMap"];
+            speakToAs?: components["schemas"]["JsContactSpeakToAs"];
+            titles?: components["schemas"]["JsContactIdTitleMap"];
+            emails?: components["schemas"]["JsContactIdEmailAddressMap"];
+            onlineServices?: components["schemas"]["JsContactIdOnlineServiceMap"];
+            phones?: components["schemas"]["JsContactIdPhoneMap"];
+            preferredLanguages?: components["schemas"]["JsContactIdLanguagePrefMap"];
+            calendars?: components["schemas"]["JsContactIdCalendarMap"];
+            schedulingAddresses?: components["schemas"]["JsContactIdSchedulingAddressMap"];
+            addresses?: components["schemas"]["JsContactIdAddressMap"];
+            cryptoKeys?: components["schemas"]["JsContactIdCryptoKeyMap"];
+            directories?: components["schemas"]["JsContactIdDirectoryMap"];
+            links?: components["schemas"]["JsContactIdLinkMap"];
+            media?: components["schemas"]["JsContactIdMediaMap"];
+            localizations?: components["schemas"]["JsContactStringPatchObjectMap"];
+            anniversaries?: components["schemas"]["JsContactIdAnniversaryMap"];
+            keywords?: components["schemas"]["JsContactStringBooleanMap"];
+            notes?: components["schemas"]["JsContactIdNoteMap"];
+            personalInfo?: components["schemas"]["JsContactIdPersonalInfoMap"];
+            /** @description RFC 9555 unmapped vCard properties. */
+            vCardProps?: components["schemas"]["JsContactJCardProp"][];
+        } & {
+            [key: string]: unknown;
         };
     };
     responses: never;

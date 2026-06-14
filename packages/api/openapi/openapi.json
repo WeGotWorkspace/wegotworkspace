@@ -1916,6 +1916,352 @@
         "x-wgw-access": "user"
       }
     },
+    "/contacts/addressbooks": {
+      "get": {
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "List user's address books",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Address book list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactAddressBookListResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/contacts/addressbooks/{addressBookId}": {
+      "get": {
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "Fetch a single address book",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "addressBookId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Address book",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddressBook"
+                }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/contacts/cards": {
+      "get": {
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "List contact cards in an address book",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "addressBookId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contact card list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactCardListResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "post": {
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "Create a contact card",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created contact card",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactCard"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactCardCreate"
+              },
+              "example": {
+                "addressBookIds": {
+                  "default": true
+                },
+                "name": {
+                  "full": "Joe Example"
+                },
+                "emails": {
+                  "550e8400-e29b-41d4-a716-446655440001": {
+                    "address": "joe@example.com"
+                  }
+                },
+                "phones": {
+                  "550e8400-e29b-41d4-a716-446655440002": {
+                    "number": "+1-555-0100"
+                  }
+                },
+                "addresses": {
+                  "550e8400-e29b-41d4-a716-446655440003": {
+                    "full": "123 Main St",
+                    "countryCode": "US"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/contacts/cards/{cardId}": {
+      "get": {
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "Fetch a single contact card",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cardId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contact card",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactCard"
+                }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "put": {
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "Replace a contact card",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cardId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated contact card",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactCard"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactCardCreate"
+              },
+              "example": {
+                "addressBookIds": {
+                  "default": true
+                },
+                "name": {
+                  "full": "Joe Example"
+                },
+                "emails": {
+                  "550e8400-e29b-41d4-a716-446655440001": {
+                    "address": "joe@example.com"
+                  }
+                },
+                "phones": {
+                  "550e8400-e29b-41d4-a716-446655440002": {
+                    "number": "+1-555-0100"
+                  }
+                },
+                "addresses": {
+                  "550e8400-e29b-41d4-a716-446655440003": {
+                    "full": "123 Main St",
+                    "countryCode": "US"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "patch": {
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "Partially update a contact card",
+        "description": "Deep-merge patch into the existing JSContact Card. Id-keyed map entries merge by key; null removes an entry.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cardId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated contact card",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactCard"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactCardPatch"
+              },
+              "example": {
+                "emails": {
+                  "550e8400-e29b-41d4-a716-446655440001": {
+                    "address": "updated@example.com"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "delete": {
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "Delete a contact card",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cardId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted contact card",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
     "/plugins": {
       "get": {
         "tags": [

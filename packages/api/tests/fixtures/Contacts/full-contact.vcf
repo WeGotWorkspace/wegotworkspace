@@ -1,0 +1,14 @@
+BEGIN:VCARD
+VERSION:4.0
+FN:Jane Stevenson
+UID:urn:uuid:bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb
+N:Stevenson;Jane;;;PhD
+EMAIL;TYPE=work;PREF=1:jane@example.com
+TEL;TYPE=cell;TYPE=work:tel:+1-555-0100
+ADR;TYPE=work;CC=US:;;100 Market St;San Francisco;CA;94105;USA
+ORG:Example Corp;Engineering
+TITLE:Engineer
+NOTE:Met at IETF 110.
+PHOTO:https://example.com/jane.jpg
+CATEGORIES:work,friend
+END:VCARD

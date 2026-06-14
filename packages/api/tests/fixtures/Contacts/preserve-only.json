@@ -1,0 +1,48 @@
+{
+    "@type": "Card",
+    "version": "1.0",
+    "uid": "urn:uuid:21212121-2121-4212-8121-212121212121",
+    "name": {
+        "full": "Jane Doe",
+        "@type": "Name"
+    },
+    "vCardProps": [
+        [
+            "VERSION",
+            [],
+            "text",
+            [
+                "4.0"
+            ]
+        ],
+        [
+            "GENDER",
+            [],
+            "text",
+            [
+                [
+                    "F"
+                ]
+            ]
+        ],
+        [
+            "CLIENTPIDMAP",
+            [],
+            "text",
+            [
+                [
+                    "1",
+                    "urn:uuid:22222222-2222-4222-8222-222222222222"
+                ]
+            ]
+        ],
+        [
+            "XML",
+            [],
+            "text",
+            [
+                "<vcard xmlns=\"urn:ietf:params:xml:ns:vcard-4.0\"><fn><text>Jane</text></fn></vcard>"
+            ]
+        ]
+    ]
+}

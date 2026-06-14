@@ -1,0 +1,7 @@
+BEGIN:VCARD
+VERSION:4.0
+FN:Jane Doe
+UID:urn:uuid:12121212-1212-4121-8121-121212121212
+IMPP;SERVICE-TYPE=matrix:xmpp:jane@example.org
+SOCIALPROFILE;SERVICE-TYPE=twitter;USERNAME=jane_doe:https://twitter.com/jane_doe
+END:VCARD

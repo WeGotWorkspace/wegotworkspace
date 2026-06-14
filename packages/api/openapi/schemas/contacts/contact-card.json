@@ -1,0 +1,471 @@
+{
+  "ContactCard": {
+    "type": "object",
+    "required": ["@type", "version", "uid", "id", "addressBookIds"],
+    "properties": {
+      "@type": {
+        "type": "string",
+        "const": "Card",
+        "readOnly": true,
+        "description": "JSContact Card type discriminator (server-set on responses)."
+      },
+      "version": {
+        "type": "string",
+        "const": "1.0",
+        "readOnly": true,
+        "description": "JSContact version (server-set on responses)."
+      },
+      "id": {
+        "$ref": "#/components/schemas/JsContactId",
+        "readOnly": true,
+        "description": "JMAP server-set card id (RFC 9610)."
+      },
+      "addressBookIds": {
+        "$ref": "#/components/schemas/JsContactIdBooleanMap",
+        "description": "Set of address book ids; each value MUST be true."
+      },
+      "uid": {
+        "type": "string",
+        "description": "Cross-system card identifier (RFC 9553; optional in JSContact 2.0 per RFC 9982). Required for JMAP Contacts (RFC 9610)."
+      },
+      "created": {
+        "$ref": "#/components/schemas/JsContactUTCDateTime"
+      },
+      "updated": {
+        "$ref": "#/components/schemas/JsContactUTCDateTime"
+      },
+      "kind": {
+        "type": "string",
+        "enum": ["individual", "group", "org", "location", "device", "application"],
+        "default": "individual"
+      },
+      "language": {
+        "type": "string",
+        "description": "Primary language tag (RFC 5646)."
+      },
+      "members": {
+        "$ref": "#/components/schemas/JsContactIdBooleanMap",
+        "description": "Group member uids when kind is group."
+      },
+      "prodId": {
+        "type": "string",
+        "minLength": 1
+      },
+      "relatedTo": {
+        "$ref": "#/components/schemas/JsContactStringRelationMap"
+      },
+      "name": {
+        "$ref": "#/components/schemas/JsContactName"
+      },
+      "nicknames": {
+        "$ref": "#/components/schemas/JsContactIdNicknameMap"
+      },
+      "organizations": {
+        "$ref": "#/components/schemas/JsContactIdOrganizationMap"
+      },
+      "speakToAs": {
+        "$ref": "#/components/schemas/JsContactSpeakToAs"
+      },
+      "titles": {
+        "$ref": "#/components/schemas/JsContactIdTitleMap"
+      },
+      "emails": {
+        "$ref": "#/components/schemas/JsContactIdEmailAddressMap"
+      },
+      "onlineServices": {
+        "$ref": "#/components/schemas/JsContactIdOnlineServiceMap"
+      },
+      "phones": {
+        "$ref": "#/components/schemas/JsContactIdPhoneMap"
+      },
+      "preferredLanguages": {
+        "$ref": "#/components/schemas/JsContactIdLanguagePrefMap"
+      },
+      "calendars": {
+        "$ref": "#/components/schemas/JsContactIdCalendarMap"
+      },
+      "schedulingAddresses": {
+        "$ref": "#/components/schemas/JsContactIdSchedulingAddressMap"
+      },
+      "addresses": {
+        "$ref": "#/components/schemas/JsContactIdAddressMap"
+      },
+      "cryptoKeys": {
+        "$ref": "#/components/schemas/JsContactIdCryptoKeyMap"
+      },
+      "directories": {
+        "$ref": "#/components/schemas/JsContactIdDirectoryMap"
+      },
+      "links": {
+        "$ref": "#/components/schemas/JsContactIdLinkMap"
+      },
+      "media": {
+        "$ref": "#/components/schemas/JsContactIdMediaMap"
+      },
+      "localizations": {
+        "$ref": "#/components/schemas/JsContactStringPatchObjectMap"
+      },
+      "anniversaries": {
+        "$ref": "#/components/schemas/JsContactIdAnniversaryMap"
+      },
+      "keywords": {
+        "$ref": "#/components/schemas/JsContactStringBooleanMap"
+      },
+      "notes": {
+        "$ref": "#/components/schemas/JsContactIdNoteMap"
+      },
+      "personalInfo": {
+        "$ref": "#/components/schemas/JsContactIdPersonalInfoMap"
+      },
+      "vCardProps": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/JsContactJCardProp"
+        },
+        "description": "RFC 9555 unmapped vCard properties (conversion base spec; uid rules updated by RFC 9982 for JSContact 2.0)."
+      }
+    },
+    "additionalProperties": true,
+    "description": "RFC 9610 ContactCard — full JMAP ContactCard returned by GET/POST/PUT responses. Server-owned `id`, `@type`, and `version` are read-only; use ContactCardCreate for POST/PUT request bodies.",
+    "example": {
+      "@type": "Card",
+      "version": "1.0",
+      "id": "card-joe-example",
+      "uid": "urn:uuid:550e8400-e29b-41d4-a716-446655440000",
+      "addressBookIds": {
+        "default": true
+      },
+      "name": {
+        "full": "Joe Example"
+      },
+      "emails": {
+        "550e8400-e29b-41d4-a716-446655440001": {
+          "address": "joe@example.com",
+          "contexts": {
+            "private": true
+          }
+        }
+      },
+      "phones": {
+        "550e8400-e29b-41d4-a716-446655440002": {
+          "number": "+1-555-0100",
+          "features": {
+            "mobile": true,
+            "voice": true
+          }
+        }
+      },
+      "addresses": {
+        "550e8400-e29b-41d4-a716-446655440003": {
+          "full": "123 Main St, Springfield, IL 62701, US",
+          "countryCode": "US",
+          "contexts": {
+            "home": true
+          }
+        }
+      }
+    }
+  },
+  "ContactCardCreate": {
+    "type": "object",
+    "required": ["addressBookIds"],
+    "properties": {
+      "addressBookIds": {
+        "$ref": "#/components/schemas/JsContactIdBooleanMap",
+        "description": "Set of address book ids; each value MUST be true."
+      },
+      "uid": {
+        "type": "string",
+        "description": "Cross-system card identifier (RFC 9553). Optional on create; server generates when omitted."
+      },
+      "created": {
+        "$ref": "#/components/schemas/JsContactUTCDateTime"
+      },
+      "updated": {
+        "$ref": "#/components/schemas/JsContactUTCDateTime"
+      },
+      "kind": {
+        "type": "string",
+        "enum": ["individual", "group", "org", "location", "device", "application"],
+        "default": "individual"
+      },
+      "language": {
+        "type": "string",
+        "description": "Primary language tag (RFC 5646)."
+      },
+      "members": {
+        "$ref": "#/components/schemas/JsContactIdBooleanMap",
+        "description": "Group member uids when kind is group."
+      },
+      "prodId": {
+        "type": "string",
+        "minLength": 1
+      },
+      "relatedTo": {
+        "$ref": "#/components/schemas/JsContactStringRelationMap"
+      },
+      "name": {
+        "$ref": "#/components/schemas/JsContactName"
+      },
+      "nicknames": {
+        "$ref": "#/components/schemas/JsContactIdNicknameMap"
+      },
+      "organizations": {
+        "$ref": "#/components/schemas/JsContactIdOrganizationMap"
+      },
+      "speakToAs": {
+        "$ref": "#/components/schemas/JsContactSpeakToAs"
+      },
+      "titles": {
+        "$ref": "#/components/schemas/JsContactIdTitleMap"
+      },
+      "emails": {
+        "$ref": "#/components/schemas/JsContactIdEmailAddressMap"
+      },
+      "onlineServices": {
+        "$ref": "#/components/schemas/JsContactIdOnlineServiceMap"
+      },
+      "phones": {
+        "$ref": "#/components/schemas/JsContactIdPhoneMap"
+      },
+      "preferredLanguages": {
+        "$ref": "#/components/schemas/JsContactIdLanguagePrefMap"
+      },
+      "calendars": {
+        "$ref": "#/components/schemas/JsContactIdCalendarMap"
+      },
+      "schedulingAddresses": {
+        "$ref": "#/components/schemas/JsContactIdSchedulingAddressMap"
+      },
+      "addresses": {
+        "$ref": "#/components/schemas/JsContactIdAddressMap"
+      },
+      "cryptoKeys": {
+        "$ref": "#/components/schemas/JsContactIdCryptoKeyMap"
+      },
+      "directories": {
+        "$ref": "#/components/schemas/JsContactIdDirectoryMap"
+      },
+      "links": {
+        "$ref": "#/components/schemas/JsContactIdLinkMap"
+      },
+      "media": {
+        "$ref": "#/components/schemas/JsContactIdMediaMap"
+      },
+      "localizations": {
+        "$ref": "#/components/schemas/JsContactStringPatchObjectMap"
+      },
+      "anniversaries": {
+        "$ref": "#/components/schemas/JsContactIdAnniversaryMap"
+      },
+      "keywords": {
+        "$ref": "#/components/schemas/JsContactStringBooleanMap"
+      },
+      "notes": {
+        "$ref": "#/components/schemas/JsContactIdNoteMap"
+      },
+      "personalInfo": {
+        "$ref": "#/components/schemas/JsContactIdPersonalInfoMap"
+      },
+      "vCardProps": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/JsContactJCardProp"
+        },
+        "description": "RFC 9555 unmapped vCard properties."
+      }
+    },
+    "additionalProperties": true,
+    "description": "POST/PUT request body for contact cards. Omits server-owned `id`, `@type`, and `version`. Nested `@type` on map values is optional per RFC 9553 §1.3.4.",
+    "example": {
+      "addressBookIds": {
+        "default": true
+      },
+      "name": {
+        "full": "Joe Example"
+      },
+      "emails": {
+        "550e8400-e29b-41d4-a716-446655440001": {
+          "address": "joe@example.com",
+          "contexts": {
+            "private": true
+          }
+        }
+      },
+      "phones": {
+        "550e8400-e29b-41d4-a716-446655440002": {
+          "number": "+1-555-0100",
+          "features": {
+            "mobile": true,
+            "voice": true
+          }
+        }
+      },
+      "addresses": {
+        "550e8400-e29b-41d4-a716-446655440003": {
+          "full": "123 Main St, Springfield, IL 62701, US",
+          "countryCode": "US",
+          "contexts": {
+            "home": true
+          }
+        }
+      }
+    }
+  },
+  "ContactCardPatch": {
+    "type": "object",
+    "properties": {
+      "addressBookIds": {
+        "$ref": "#/components/schemas/JsContactIdBooleanMap",
+        "description": "Set of address book ids; each value MUST be true. Map entry null removes membership."
+      },
+      "uid": {
+        "type": "string",
+        "description": "Cross-system card identifier (RFC 9553)."
+      },
+      "created": {
+        "$ref": "#/components/schemas/JsContactUTCDateTime"
+      },
+      "updated": {
+        "$ref": "#/components/schemas/JsContactUTCDateTime"
+      },
+      "kind": {
+        "type": "string",
+        "enum": ["individual", "group", "org", "location", "device", "application"]
+      },
+      "language": {
+        "type": "string",
+        "description": "Primary language tag (RFC 5646)."
+      },
+      "members": {
+        "$ref": "#/components/schemas/JsContactIdBooleanMap",
+        "description": "Group member uids when kind is group. Map entry null removes member."
+      },
+      "prodId": {
+        "type": "string",
+        "minLength": 1
+      },
+      "relatedTo": {
+        "$ref": "#/components/schemas/JsContactStringRelationMap"
+      },
+      "name": {
+        "$ref": "#/components/schemas/JsContactName"
+      },
+      "nicknames": {
+        "$ref": "#/components/schemas/JsContactIdNicknameMap"
+      },
+      "organizations": {
+        "$ref": "#/components/schemas/JsContactIdOrganizationMap"
+      },
+      "speakToAs": {
+        "$ref": "#/components/schemas/JsContactSpeakToAs"
+      },
+      "titles": {
+        "$ref": "#/components/schemas/JsContactIdTitleMap"
+      },
+      "emails": {
+        "$ref": "#/components/schemas/JsContactIdEmailAddressMap"
+      },
+      "onlineServices": {
+        "$ref": "#/components/schemas/JsContactIdOnlineServiceMap"
+      },
+      "phones": {
+        "$ref": "#/components/schemas/JsContactIdPhoneMap"
+      },
+      "preferredLanguages": {
+        "$ref": "#/components/schemas/JsContactIdLanguagePrefMap"
+      },
+      "calendars": {
+        "$ref": "#/components/schemas/JsContactIdCalendarMap"
+      },
+      "schedulingAddresses": {
+        "$ref": "#/components/schemas/JsContactIdSchedulingAddressMap"
+      },
+      "addresses": {
+        "$ref": "#/components/schemas/JsContactIdAddressMap"
+      },
+      "cryptoKeys": {
+        "$ref": "#/components/schemas/JsContactIdCryptoKeyMap"
+      },
+      "directories": {
+        "$ref": "#/components/schemas/JsContactIdDirectoryMap"
+      },
+      "links": {
+        "$ref": "#/components/schemas/JsContactIdLinkMap"
+      },
+      "media": {
+        "$ref": "#/components/schemas/JsContactIdMediaMap"
+      },
+      "localizations": {
+        "$ref": "#/components/schemas/JsContactStringPatchObjectMap"
+      },
+      "anniversaries": {
+        "$ref": "#/components/schemas/JsContactIdAnniversaryMap"
+      },
+      "keywords": {
+        "$ref": "#/components/schemas/JsContactStringBooleanMap"
+      },
+      "notes": {
+        "$ref": "#/components/schemas/JsContactIdNoteMap"
+      },
+      "personalInfo": {
+        "$ref": "#/components/schemas/JsContactIdPersonalInfoMap"
+      },
+      "vCardProps": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/JsContactJCardProp"
+        },
+        "description": "RFC 9555 unmapped vCard properties."
+      }
+    },
+    "additionalProperties": true,
+    "description": "PATCH request body for partial contact card updates. Omits server-owned `id`, `@type`, and `version`. Id-keyed map entries merge by key; null removes an entry. Nested objects (e.g. name) deep-merge.",
+    "example": {
+      "emails": {
+        "550e8400-e29b-41d4-a716-446655440001": {
+          "address": "updated@example.com"
+        },
+        "550e8400-e29b-41d4-a716-446655440099": null
+      }
+    }
+  },
+  "ContactCardListResponse": {
+    "type": "object",
+    "required": ["list"],
+    "properties": {
+      "list": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/ContactCard"
+        }
+      }
+    },
+    "additionalProperties": false,
+    "description": "REST list response for GET /contacts/cards.",
+    "example": {
+      "list": [
+        {
+          "@type": "Card",
+          "version": "1.0",
+          "id": "card-joe-example",
+          "uid": "urn:uuid:550e8400-e29b-41d4-a716-446655440000",
+          "addressBookIds": {
+            "default": true
+          },
+          "name": {
+            "full": "Joe Example"
+          },
+          "emails": {
+            "550e8400-e29b-41d4-a716-446655440001": {
+              "address": "joe@example.com",
+              "contexts": {
+                "private": true
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -3040,6 +3040,2065 @@
                         "type": "boolean"
                     }
                 }
+            },
+            "AddressBookRights": {
+                "type": "object",
+                "required": [
+                    "mayRead",
+                    "mayWrite",
+                    "mayShare",
+                    "mayDelete"
+                ],
+                "properties": {
+                    "mayRead": {
+                        "type": "boolean",
+                        "description": "May fetch cards in this address book."
+                    },
+                    "mayWrite": {
+                        "type": "boolean",
+                        "description": "May create, update, delete, or move cards."
+                    },
+                    "mayShare": {
+                        "type": "boolean",
+                        "description": "May modify shareWith."
+                    },
+                    "mayDelete": {
+                        "type": "boolean",
+                        "description": "May delete the address book itself."
+                    }
+                },
+                "additionalProperties": false,
+                "description": "RFC 9610 AddressBookRights."
+            },
+            "AddressBook": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "name",
+                    "sortOrder",
+                    "isDefault",
+                    "isSubscribed",
+                    "myRights"
+                ],
+                "properties": {
+                    "id": {
+                        "$ref": "#/components/schemas/JsContactId",
+                        "description": "Immutable server-set address book identifier."
+                    },
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255,
+                        "description": "User-visible name."
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Long-form description; null when unset."
+                    },
+                    "sortOrder": {
+                        "$ref": "#/components/schemas/JsContactUnsignedInt",
+                        "description": "UI sort order; lower values appear first."
+                    },
+                    "isDefault": {
+                        "type": "boolean",
+                        "description": "Server-set default address book flag."
+                    },
+                    "isSubscribed": {
+                        "type": "boolean",
+                        "description": "Whether the book is shown in client UI."
+                    },
+                    "shareWith": {
+                        "oneOf": [
+                            {
+                                "type": "object",
+                                "propertyNames": {
+                                    "$ref": "#/components/schemas/JsContactId"
+                                },
+                                "additionalProperties": {
+                                    "$ref": "#/components/schemas/AddressBookRights"
+                                }
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "description": "Principal id to rights map; null when not shared."
+                    },
+                    "myRights": {
+                        "$ref": "#/components/schemas/AddressBookRights",
+                        "description": "Current user's access rights for this book."
+                    }
+                },
+                "additionalProperties": false,
+                "description": "RFC 9610 AddressBook.",
+                "example": {
+                    "id": "default",
+                    "name": "Default Address Book",
+                    "description": null,
+                    "sortOrder": 0,
+                    "isDefault": true,
+                    "isSubscribed": true,
+                    "shareWith": null,
+                    "myRights": {
+                        "mayRead": true,
+                        "mayWrite": true,
+                        "mayShare": true,
+                        "mayDelete": false
+                    }
+                }
+            },
+            "ContactAddressBookListResponse": {
+                "type": "object",
+                "required": [
+                    "list"
+                ],
+                "properties": {
+                    "list": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AddressBook"
+                        }
+                    }
+                },
+                "additionalProperties": false,
+                "description": "REST list response for GET /contacts/addressbooks.",
+                "example": {
+                    "list": [
+                        {
+                            "id": "default",
+                            "name": "Default Address Book",
+                            "description": null,
+                            "sortOrder": 0,
+                            "isDefault": true,
+                            "isSubscribed": true,
+                            "shareWith": null,
+                            "myRights": {
+                                "mayRead": true,
+                                "mayWrite": true,
+                                "mayShare": true,
+                                "mayDelete": false
+                            }
+                        }
+                    ]
+                }
+            },
+            "ContactCard": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "version",
+                    "uid",
+                    "id",
+                    "addressBookIds"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "Card",
+                        "readOnly": true,
+                        "description": "JSContact Card type discriminator (server-set on responses)."
+                    },
+                    "version": {
+                        "type": "string",
+                        "const": "1.0",
+                        "readOnly": true,
+                        "description": "JSContact version (server-set on responses)."
+                    },
+                    "id": {
+                        "$ref": "#/components/schemas/JsContactId",
+                        "readOnly": true,
+                        "description": "JMAP server-set card id (RFC 9610)."
+                    },
+                    "addressBookIds": {
+                        "$ref": "#/components/schemas/JsContactIdBooleanMap",
+                        "description": "Set of address book ids; each value MUST be true."
+                    },
+                    "uid": {
+                        "type": "string",
+                        "description": "Cross-system card identifier (RFC 9553; optional in JSContact 2.0 per RFC 9982). Required for JMAP Contacts (RFC 9610)."
+                    },
+                    "created": {
+                        "$ref": "#/components/schemas/JsContactUTCDateTime"
+                    },
+                    "updated": {
+                        "$ref": "#/components/schemas/JsContactUTCDateTime"
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "individual",
+                            "group",
+                            "org",
+                            "location",
+                            "device",
+                            "application"
+                        ],
+                        "default": "individual"
+                    },
+                    "language": {
+                        "type": "string",
+                        "description": "Primary language tag (RFC 5646)."
+                    },
+                    "members": {
+                        "$ref": "#/components/schemas/JsContactIdBooleanMap",
+                        "description": "Group member uids when kind is group."
+                    },
+                    "prodId": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "relatedTo": {
+                        "$ref": "#/components/schemas/JsContactStringRelationMap"
+                    },
+                    "name": {
+                        "$ref": "#/components/schemas/JsContactName"
+                    },
+                    "nicknames": {
+                        "$ref": "#/components/schemas/JsContactIdNicknameMap"
+                    },
+                    "organizations": {
+                        "$ref": "#/components/schemas/JsContactIdOrganizationMap"
+                    },
+                    "speakToAs": {
+                        "$ref": "#/components/schemas/JsContactSpeakToAs"
+                    },
+                    "titles": {
+                        "$ref": "#/components/schemas/JsContactIdTitleMap"
+                    },
+                    "emails": {
+                        "$ref": "#/components/schemas/JsContactIdEmailAddressMap"
+                    },
+                    "onlineServices": {
+                        "$ref": "#/components/schemas/JsContactIdOnlineServiceMap"
+                    },
+                    "phones": {
+                        "$ref": "#/components/schemas/JsContactIdPhoneMap"
+                    },
+                    "preferredLanguages": {
+                        "$ref": "#/components/schemas/JsContactIdLanguagePrefMap"
+                    },
+                    "calendars": {
+                        "$ref": "#/components/schemas/JsContactIdCalendarMap"
+                    },
+                    "schedulingAddresses": {
+                        "$ref": "#/components/schemas/JsContactIdSchedulingAddressMap"
+                    },
+                    "addresses": {
+                        "$ref": "#/components/schemas/JsContactIdAddressMap"
+                    },
+                    "cryptoKeys": {
+                        "$ref": "#/components/schemas/JsContactIdCryptoKeyMap"
+                    },
+                    "directories": {
+                        "$ref": "#/components/schemas/JsContactIdDirectoryMap"
+                    },
+                    "links": {
+                        "$ref": "#/components/schemas/JsContactIdLinkMap"
+                    },
+                    "media": {
+                        "$ref": "#/components/schemas/JsContactIdMediaMap"
+                    },
+                    "localizations": {
+                        "$ref": "#/components/schemas/JsContactStringPatchObjectMap"
+                    },
+                    "anniversaries": {
+                        "$ref": "#/components/schemas/JsContactIdAnniversaryMap"
+                    },
+                    "keywords": {
+                        "$ref": "#/components/schemas/JsContactStringBooleanMap"
+                    },
+                    "notes": {
+                        "$ref": "#/components/schemas/JsContactIdNoteMap"
+                    },
+                    "personalInfo": {
+                        "$ref": "#/components/schemas/JsContactIdPersonalInfoMap"
+                    },
+                    "vCardProps": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JsContactJCardProp"
+                        },
+                        "description": "RFC 9555 unmapped vCard properties (conversion base spec; uid rules updated by RFC 9982 for JSContact 2.0)."
+                    }
+                },
+                "additionalProperties": true,
+                "description": "RFC 9610 ContactCard — full JMAP ContactCard returned by GET/POST/PUT responses. Server-owned `id`, `@type`, and `version` are read-only; use ContactCardCreate for POST/PUT request bodies.",
+                "example": {
+                    "@type": "Card",
+                    "version": "1.0",
+                    "id": "card-joe-example",
+                    "uid": "urn:uuid:550e8400-e29b-41d4-a716-446655440000",
+                    "addressBookIds": {
+                        "default": true
+                    },
+                    "name": {
+                        "full": "Joe Example"
+                    },
+                    "emails": {
+                        "550e8400-e29b-41d4-a716-446655440001": {
+                            "address": "joe@example.com",
+                            "contexts": {
+                                "private": true
+                            }
+                        }
+                    },
+                    "phones": {
+                        "550e8400-e29b-41d4-a716-446655440002": {
+                            "number": "+1-555-0100",
+                            "features": {
+                                "mobile": true,
+                                "voice": true
+                            }
+                        }
+                    },
+                    "addresses": {
+                        "550e8400-e29b-41d4-a716-446655440003": {
+                            "full": "123 Main St, Springfield, IL 62701, US",
+                            "countryCode": "US",
+                            "contexts": {
+                                "home": true
+                            }
+                        }
+                    }
+                }
+            },
+            "ContactCardListResponse": {
+                "type": "object",
+                "required": [
+                    "list"
+                ],
+                "properties": {
+                    "list": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ContactCard"
+                        }
+                    }
+                },
+                "additionalProperties": false,
+                "description": "REST list response for GET /contacts/cards.",
+                "example": {
+                    "list": [
+                        {
+                            "@type": "Card",
+                            "version": "1.0",
+                            "id": "card-joe-example",
+                            "uid": "urn:uuid:550e8400-e29b-41d4-a716-446655440000",
+                            "addressBookIds": {
+                                "default": true
+                            },
+                            "name": {
+                                "full": "Joe Example"
+                            },
+                            "emails": {
+                                "550e8400-e29b-41d4-a716-446655440001": {
+                                    "address": "joe@example.com",
+                                    "contexts": {
+                                        "private": true
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            "JsContactAddressComponent": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "value",
+                    "kind"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "AddressComponent"
+                    },
+                    "value": {
+                        "type": "string"
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "room",
+                            "apartment",
+                            "floor",
+                            "building",
+                            "number",
+                            "name",
+                            "block",
+                            "subdistrict",
+                            "district",
+                            "locality",
+                            "region",
+                            "postcode",
+                            "country",
+                            "direction",
+                            "landmark",
+                            "postOfficeBox",
+                            "separator"
+                        ]
+                    },
+                    "phonetic": {
+                        "type": "string"
+                    },
+                    "vCardParams": {
+                        "$ref": "#/components/schemas/JsContactVCardParams"
+                    },
+                    "vCardName": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": true,
+                "description": "RFC 9553 AddressComponent."
+            },
+            "JsContactAddress": {
+                "type": "object",
+                "required": [
+                    "@type"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "Address"
+                    },
+                    "components": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JsContactAddressComponent"
+                        }
+                    },
+                    "isOrdered": {
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "countryCode": {
+                        "type": "string",
+                        "minLength": 2,
+                        "maxLength": 2,
+                        "description": "ISO 3166-1 alpha-2 country code."
+                    },
+                    "coordinates": {
+                        "type": "string",
+                        "description": "geo: URI per RFC 5870."
+                    },
+                    "timeZone": {
+                        "type": "string",
+                        "description": "IANA time zone name."
+                    },
+                    "contexts": {
+                        "$ref": "#/components/schemas/JsContactStringBooleanMap"
+                    },
+                    "full": {
+                        "type": "string"
+                    },
+                    "defaultSeparator": {
+                        "type": "string"
+                    },
+                    "pref": {
+                        "$ref": "#/components/schemas/JsContactUnsignedInt"
+                    },
+                    "phoneticScript": {
+                        "type": "string"
+                    },
+                    "phoneticSystem": {
+                        "type": "string",
+                        "enum": [
+                            "ipa",
+                            "jyut",
+                            "piny"
+                        ]
+                    },
+                    "vCardParams": {
+                        "$ref": "#/components/schemas/JsContactVCardParams"
+                    },
+                    "vCardName": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": true,
+                "description": "RFC 9553 Address — at least one of components, coordinates, countryCode, full, or timeZone MUST be set."
+            },
+            "JsContactIdAddressMap": {
+                "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
+                "additionalProperties": {
+                    "$ref": "#/components/schemas/JsContactAddress"
+                },
+                "description": "RFC 9553 addresses map — nested `@type` on values and AddressComponent entries is optional (RFC 9553 §1.3.4).",
+                "example": {
+                    "550e8400-e29b-41d4-a716-446655440003": {
+                        "components": [
+                            {
+                                "value": "123",
+                                "kind": "number"
+                            },
+                            {
+                                "value": "Main St",
+                                "kind": "name"
+                            }
+                        ],
+                        "countryCode": "US",
+                        "contexts": {
+                            "home": true
+                        }
+                    }
+                }
+            },
+            "JsContactSchedulingAddress": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "uri"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "SchedulingAddress"
+                    },
+                    "uri": {
+                        "type": "string",
+                        "format": "uri"
+                    },
+                    "contexts": {
+                        "$ref": "#/components/schemas/JsContactStringBooleanMap"
+                    },
+                    "pref": {
+                        "$ref": "#/components/schemas/JsContactUnsignedInt"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "vCardParams": {
+                        "$ref": "#/components/schemas/JsContactVCardParams"
+                    },
+                    "vCardName": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": true,
+                "description": "RFC 9553 SchedulingAddress."
+            },
+            "JsContactIdSchedulingAddressMap": {
+                "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
+                "additionalProperties": {
+                    "$ref": "#/components/schemas/JsContactSchedulingAddress"
+                },
+                "description": "RFC 9553 schedulingAddresses map — nested `@type` on values is optional (RFC 9553 §1.3.4).",
+                "example": {
+                    "550e8400-e29b-41d4-a716-446655440010": {
+                        "uri": "mailto:joe@example.com"
+                    }
+                }
+            },
+            "JsContactEmailAddress": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "address"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "EmailAddress"
+                    },
+                    "address": {
+                        "type": "string",
+                        "description": "RFC 5322 addr-spec."
+                    },
+                    "contexts": {
+                        "$ref": "#/components/schemas/JsContactStringBooleanMap"
+                    },
+                    "pref": {
+                        "$ref": "#/components/schemas/JsContactUnsignedInt"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "vCardParams": {
+                        "$ref": "#/components/schemas/JsContactVCardParams"
+                    },
+                    "vCardName": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": true,
+                "description": "RFC 9553 EmailAddress."
+            },
+            "JsContactPhone": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "number"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "Phone"
+                    },
+                    "number": {
+                        "type": "string",
+                        "description": "tel:, sip:, or free-text phone number."
+                    },
+                    "features": {
+                        "$ref": "#/components/schemas/JsContactStringBooleanMap",
+                        "description": "Feature flags: mobile, voice, text, video, main-number, textphone, fax, pager."
+                    },
+                    "contexts": {
+                        "$ref": "#/components/schemas/JsContactStringBooleanMap"
+                    },
+                    "pref": {
+                        "$ref": "#/components/schemas/JsContactUnsignedInt"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "vCardParams": {
+                        "$ref": "#/components/schemas/JsContactVCardParams"
+                    },
+                    "vCardName": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": true,
+                "description": "RFC 9553 Phone."
+            },
+            "JsContactOnlineService": {
+                "type": "object",
+                "required": [
+                    "@type"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "OnlineService"
+                    },
+                    "service": {
+                        "type": "string"
+                    },
+                    "uri": {
+                        "type": "string",
+                        "format": "uri"
+                    },
+                    "user": {
+                        "type": "string"
+                    },
+                    "contexts": {
+                        "$ref": "#/components/schemas/JsContactStringBooleanMap"
+                    },
+                    "pref": {
+                        "$ref": "#/components/schemas/JsContactUnsignedInt"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "vCardParams": {
+                        "$ref": "#/components/schemas/JsContactVCardParams"
+                    },
+                    "vCardName": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": true,
+                "description": "RFC 9553 OnlineService — at least one of uri or user MUST be set."
+            },
+            "JsContactLanguagePref": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "language"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "LanguagePref"
+                    },
+                    "language": {
+                        "type": "string",
+                        "description": "RFC 5646 language tag."
+                    },
+                    "contexts": {
+                        "$ref": "#/components/schemas/JsContactStringBooleanMap"
+                    },
+                    "pref": {
+                        "$ref": "#/components/schemas/JsContactUnsignedInt"
+                    },
+                    "vCardParams": {
+                        "$ref": "#/components/schemas/JsContactVCardParams"
+                    },
+                    "vCardName": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": true,
+                "description": "RFC 9553 LanguagePref."
+            },
+            "JsContactIdEmailAddressMap": {
+                "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
+                "additionalProperties": {
+                    "$ref": "#/components/schemas/JsContactEmailAddress"
+                },
+                "description": "RFC 9553 emails map — nested `@type` on values is optional (RFC 9553 §1.3.4).",
+                "example": {
+                    "550e8400-e29b-41d4-a716-446655440001": {
+                        "address": "joe@example.com",
+                        "contexts": {
+                            "private": true
+                        }
+                    }
+                }
+            },
+            "JsContactIdPhoneMap": {
+                "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
+                "additionalProperties": {
+                    "$ref": "#/components/schemas/JsContactPhone"
+                },
+                "description": "RFC 9553 phones map — nested `@type` on values is optional (RFC 9553 §1.3.4).",
+                "example": {
+                    "550e8400-e29b-41d4-a716-446655440002": {
+                        "number": "+1-555-0100",
+                        "features": {
+                            "mobile": true,
+                            "voice": true
+                        }
+                    }
+                }
+            },
+            "JsContactIdOnlineServiceMap": {
+                "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
+                "additionalProperties": {
+                    "$ref": "#/components/schemas/JsContactOnlineService"
+                },
+                "description": "RFC 9553 onlineServices map — nested `@type` on values is optional (RFC 9553 §1.3.4).",
+                "example": {
+                    "550e8400-e29b-41d4-a716-446655440007": {
+                        "service": "matrix",
+                        "uri": "matrix:u/joe:example.com"
+                    }
+                }
+            },
+            "JsContactIdLanguagePrefMap": {
+                "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
+                "additionalProperties": {
+                    "$ref": "#/components/schemas/JsContactLanguagePref"
+                },
+                "description": "RFC 9553 preferredLanguages map — nested `@type` on values is optional (RFC 9553 §1.3.4).",
+                "example": {
+                    "550e8400-e29b-41d4-a716-446655440008": {
+                        "language": "en"
+                    }
+                }
+            },
+            "JsContactRelation": {
+                "type": "object",
+                "required": [
+                    "@type"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "Relation"
+                    },
+                    "relation": {
+                        "$ref": "#/components/schemas/JsContactStringBooleanMap",
+                        "description": "Relation types: acquaintance, agent, child, co-resident, co-worker, colleague, contact, crush, date, emergency, friend, kin, me, met, muse, neighbor, parent, sibling, spouse, sweetheart."
+                    },
+                    "vCardParams": {
+                        "$ref": "#/components/schemas/JsContactVCardParams"
+                    },
+                    "vCardName": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": true,
+                "description": "RFC 9553 Relation."
+            },
+            "JsContactPartialDate": {
+                "type": "object",
+                "required": [
+                    "@type"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "PartialDate"
+                    },
+                    "year": {
+                        "$ref": "#/components/schemas/JsContactUnsignedInt"
+                    },
+                    "month": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 12
+                    },
+                    "day": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 31
+                    },
+                    "calendarScale": {
+                        "type": "string",
+                        "description": "CLDR calendar name in lowercase."
+                    },
+                    "vCardParams": {
+                        "$ref": "#/components/schemas/JsContactVCardParams"
+                    },
+                    "vCardName": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": true,
+                "description": "RFC 9553 PartialDate."
+            },
+            "JsContactTimestamp": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "utc"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "Timestamp"
+                    },
+                    "utc": {
+                        "$ref": "#/components/schemas/JsContactUTCDateTime"
+                    },
+                    "vCardParams": {
+                        "$ref": "#/components/schemas/JsContactVCardParams"
+                    },
+                    "vCardName": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": true,
+                "description": "RFC 9553 Timestamp."
+            },
+            "JsContactAnniversaryDate": {
+                "oneOf": [
+                    {
+                        "$ref": "#/components/schemas/JsContactPartialDate"
+                    },
+                    {
+                        "$ref": "#/components/schemas/JsContactTimestamp"
+                    }
+                ],
+                "description": "RFC 9553 Anniversary.date — PartialDate (default) or Timestamp."
+            },
+            "JsContactAnniversary": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "kind",
+                    "date"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "Anniversary"
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "birth",
+                            "death",
+                            "wedding"
+                        ]
+                    },
+                    "date": {
+                        "$ref": "#/components/schemas/JsContactAnniversaryDate"
+                    },
+                    "place": {
+                        "$ref": "#/components/schemas/JsContactAddress"
+                    },
+                    "vCardParams": {
+                        "$ref": "#/components/schemas/JsContactVCardParams"
+                    },
+                    "vCardName": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": true,
+                "description": "RFC 9553 Anniversary."
+            },
+            "JsContactAuthor": {
+                "type": "object",
+                "required": [
+                    "@type"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "Author"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "uri": {
+                        "type": "string",
+                        "format": "uri"
+                    },
+                    "vCardParams": {
+                        "$ref": "#/components/schemas/JsContactVCardParams"
+                    },
+                    "vCardName": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": true,
+                "description": "RFC 9553 Author — at least one of name or uri MUST be set."
+            },
+            "JsContactNote": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "note"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "Note"
+                    },
+                    "note": {
+                        "type": "string"
+                    },
+                    "created": {
+                        "$ref": "#/components/schemas/JsContactUTCDateTime"
+                    },
+                    "author": {
+                        "$ref": "#/components/schemas/JsContactAuthor"
+                    },
+                    "vCardParams": {
+                        "$ref": "#/components/schemas/JsContactVCardParams"
+                    },
+                    "vCardName": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": true,
+                "description": "RFC 9553 Note."
+            },
+            "JsContactPersonalInfo": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "kind",
+                    "value"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "PersonalInfo"
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "expertise",
+                            "hobby",
+                            "interest"
+                        ]
+                    },
+                    "value": {
+                        "type": "string"
+                    },
+                    "level": {
+                        "type": "string",
+                        "enum": [
+                            "high",
+                            "medium",
+                            "low"
+                        ]
+                    },
+                    "listAs": {
+                        "$ref": "#/components/schemas/JsContactUnsignedInt"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "vCardParams": {
+                        "$ref": "#/components/schemas/JsContactVCardParams"
+                    },
+                    "vCardName": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": true,
+                "description": "RFC 9553 PersonalInfo."
+            },
+            "JsContactIdAnniversaryMap": {
+                "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
+                "additionalProperties": {
+                    "$ref": "#/components/schemas/JsContactAnniversary"
+                },
+                "description": "RFC 9553 anniversaries map — nested `@type` on values, date, and place is optional (RFC 9553 §1.3.4).",
+                "example": {
+                    "550e8400-e29b-41d4-a716-446655440015": {
+                        "kind": "birth",
+                        "date": {
+                            "month": 6,
+                            "day": 13
+                        },
+                        "place": {
+                            "full": "Springfield, IL"
+                        }
+                    }
+                }
+            },
+            "JsContactIdNoteMap": {
+                "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
+                "additionalProperties": {
+                    "$ref": "#/components/schemas/JsContactNote"
+                },
+                "description": "RFC 9553 notes map — nested `@type` on values and author is optional (RFC 9553 §1.3.4).",
+                "example": {
+                    "550e8400-e29b-41d4-a716-446655440016": {
+                        "note": "Met at the 2024 conference.",
+                        "author": {
+                            "name": "Alice Example"
+                        }
+                    }
+                }
+            },
+            "JsContactIdPersonalInfoMap": {
+                "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
+                "additionalProperties": {
+                    "$ref": "#/components/schemas/JsContactPersonalInfo"
+                },
+                "description": "RFC 9553 personalInfo map — nested `@type` on values is optional (RFC 9553 §1.3.4).",
+                "example": {
+                    "550e8400-e29b-41d4-a716-446655440017": {
+                        "kind": "hobby",
+                        "value": "cycling"
+                    }
+                }
+            },
+            "JsContactNameComponent": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "value",
+                    "kind"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "NameComponent"
+                    },
+                    "value": {
+                        "type": "string"
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "title",
+                            "given",
+                            "given2",
+                            "surname",
+                            "surname2",
+                            "credential",
+                            "generation",
+                            "separator"
+                        ]
+                    },
+                    "phonetic": {
+                        "type": "string"
+                    },
+                    "vCardParams": {
+                        "$ref": "#/components/schemas/JsContactVCardParams"
+                    },
+                    "vCardName": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": true,
+                "description": "RFC 9553 NameComponent."
+            },
+            "JsContactName": {
+                "type": "object",
+                "required": [
+                    "@type"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "Name"
+                    },
+                    "components": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JsContactNameComponent"
+                        },
+                        "minItems": 1
+                    },
+                    "isOrdered": {
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "defaultSeparator": {
+                        "type": "string"
+                    },
+                    "full": {
+                        "type": "string"
+                    },
+                    "sortAs": {
+                        "$ref": "#/components/schemas/JsContactStringStringMap"
+                    },
+                    "phoneticScript": {
+                        "type": "string"
+                    },
+                    "phoneticSystem": {
+                        "type": "string",
+                        "enum": [
+                            "ipa",
+                            "jyut",
+                            "piny"
+                        ]
+                    },
+                    "vCardParams": {
+                        "$ref": "#/components/schemas/JsContactVCardParams"
+                    },
+                    "vCardName": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": true,
+                "description": "RFC 9553 Name — at least one of components or full MUST be set."
+            },
+            "JsContactNickname": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "name"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "Nickname"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "contexts": {
+                        "$ref": "#/components/schemas/JsContactStringBooleanMap"
+                    },
+                    "pref": {
+                        "$ref": "#/components/schemas/JsContactUnsignedInt"
+                    },
+                    "vCardParams": {
+                        "$ref": "#/components/schemas/JsContactVCardParams"
+                    },
+                    "vCardName": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": true,
+                "description": "RFC 9553 Nickname."
+            },
+            "JsContactOrgUnit": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "name"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "OrgUnit"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "sortAs": {
+                        "type": "string"
+                    },
+                    "vCardParams": {
+                        "$ref": "#/components/schemas/JsContactVCardParams"
+                    },
+                    "vCardName": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": true,
+                "description": "RFC 9553 OrgUnit."
+            },
+            "JsContactOrganization": {
+                "type": "object",
+                "required": [
+                    "@type"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "Organization"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "units": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JsContactOrgUnit"
+                        },
+                        "minItems": 1
+                    },
+                    "sortAs": {
+                        "type": "string"
+                    },
+                    "contexts": {
+                        "$ref": "#/components/schemas/JsContactStringBooleanMap"
+                    },
+                    "vCardParams": {
+                        "$ref": "#/components/schemas/JsContactVCardParams"
+                    },
+                    "vCardName": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": true,
+                "description": "RFC 9553 Organization — at least one of name or units MUST be set."
+            },
+            "JsContactPronouns": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "pronouns"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "Pronouns"
+                    },
+                    "pronouns": {
+                        "type": "string"
+                    },
+                    "contexts": {
+                        "$ref": "#/components/schemas/JsContactStringBooleanMap"
+                    },
+                    "pref": {
+                        "$ref": "#/components/schemas/JsContactUnsignedInt"
+                    },
+                    "vCardParams": {
+                        "$ref": "#/components/schemas/JsContactVCardParams"
+                    },
+                    "vCardName": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": true,
+                "description": "RFC 9553 Pronouns."
+            },
+            "JsContactSpeakToAs": {
+                "type": "object",
+                "required": [
+                    "@type"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "SpeakToAs"
+                    },
+                    "grammaticalGender": {
+                        "type": "string",
+                        "enum": [
+                            "animate",
+                            "common",
+                            "feminine",
+                            "inanimate",
+                            "masculine",
+                            "neuter"
+                        ]
+                    },
+                    "pronouns": {
+                        "type": "object",
+                        "propertyNames": {
+                            "$ref": "#/components/schemas/JsContactId"
+                        },
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/JsContactPronouns"
+                        }
+                    },
+                    "vCardParams": {
+                        "$ref": "#/components/schemas/JsContactVCardParams"
+                    },
+                    "vCardName": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": true,
+                "description": "RFC 9553 SpeakToAs — at least one of grammaticalGender or pronouns MUST be set.",
+                "example": {
+                    "grammaticalGender": "masculine",
+                    "pronouns": {
+                        "550e8400-e29b-41d4-a716-446655440018": {
+                            "pronouns": "he/him"
+                        }
+                    }
+                }
+            },
+            "JsContactTitle": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "name"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "Title"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "title",
+                            "role"
+                        ],
+                        "default": "title"
+                    },
+                    "organizationId": {
+                        "$ref": "#/components/schemas/JsContactId"
+                    },
+                    "vCardParams": {
+                        "$ref": "#/components/schemas/JsContactVCardParams"
+                    },
+                    "vCardName": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": true,
+                "description": "RFC 9553 Title."
+            },
+            "JsContactIdNicknameMap": {
+                "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
+                "additionalProperties": {
+                    "$ref": "#/components/schemas/JsContactNickname"
+                },
+                "description": "RFC 9553 nicknames map — nested `@type` on values is optional (RFC 9553 §1.3.4).",
+                "example": {
+                    "550e8400-e29b-41d4-a716-446655440004": {
+                        "name": "Joe"
+                    }
+                }
+            },
+            "JsContactIdOrganizationMap": {
+                "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
+                "additionalProperties": {
+                    "$ref": "#/components/schemas/JsContactOrganization"
+                },
+                "description": "RFC 9553 organizations map — nested `@type` on values and OrgUnit entries is optional (RFC 9553 §1.3.4).",
+                "example": {
+                    "550e8400-e29b-41d4-a716-446655440005": {
+                        "name": "Example Corp",
+                        "units": [
+                            {
+                                "name": "Engineering"
+                            }
+                        ]
+                    }
+                }
+            },
+            "JsContactIdTitleMap": {
+                "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
+                "additionalProperties": {
+                    "$ref": "#/components/schemas/JsContactTitle"
+                },
+                "description": "RFC 9553 titles map — nested `@type` on values is optional (RFC 9553 §1.3.4).",
+                "example": {
+                    "550e8400-e29b-41d4-a716-446655440006": {
+                        "name": "Engineer"
+                    }
+                }
+            },
+            "JsContactResource": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "uri"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "description": "Concrete resource type name (not Resource)."
+                    },
+                    "kind": {
+                        "type": "string"
+                    },
+                    "uri": {
+                        "type": "string",
+                        "format": "uri"
+                    },
+                    "mediaType": {
+                        "type": "string"
+                    },
+                    "contexts": {
+                        "$ref": "#/components/schemas/JsContactStringBooleanMap"
+                    },
+                    "pref": {
+                        "$ref": "#/components/schemas/JsContactUnsignedInt"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "vCardParams": {
+                        "$ref": "#/components/schemas/JsContactVCardParams"
+                    },
+                    "vCardName": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": true,
+                "description": "RFC 9553 Resource base type."
+            },
+            "JsContactCalendar": {
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/JsContactResource"
+                    },
+                    {
+                        "type": "object",
+                        "required": [
+                            "@type",
+                            "kind"
+                        ],
+                        "properties": {
+                            "@type": {
+                                "type": "string",
+                                "const": "Calendar"
+                            },
+                            "kind": {
+                                "type": "string",
+                                "enum": [
+                                    "calendar",
+                                    "freeBusy"
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "description": "RFC 9553 Calendar."
+            },
+            "JsContactCryptoKey": {
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/JsContactResource"
+                    },
+                    {
+                        "type": "object",
+                        "required": [
+                            "@type"
+                        ],
+                        "properties": {
+                            "@type": {
+                                "type": "string",
+                                "const": "CryptoKey"
+                            }
+                        }
+                    }
+                ],
+                "description": "RFC 9553 CryptoKey."
+            },
+            "JsContactDirectory": {
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/JsContactResource"
+                    },
+                    {
+                        "type": "object",
+                        "required": [
+                            "@type",
+                            "kind"
+                        ],
+                        "properties": {
+                            "@type": {
+                                "type": "string",
+                                "const": "Directory"
+                            },
+                            "kind": {
+                                "type": "string",
+                                "enum": [
+                                    "directory",
+                                    "entry"
+                                ]
+                            },
+                            "listAs": {
+                                "$ref": "#/components/schemas/JsContactUnsignedInt"
+                            }
+                        }
+                    }
+                ],
+                "description": "RFC 9553 Directory."
+            },
+            "JsContactLink": {
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/JsContactResource"
+                    },
+                    {
+                        "type": "object",
+                        "required": [
+                            "@type"
+                        ],
+                        "properties": {
+                            "@type": {
+                                "type": "string",
+                                "const": "Link"
+                            },
+                            "kind": {
+                                "type": "string",
+                                "enum": [
+                                    "contact"
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "description": "RFC 9553 Link."
+            },
+            "JsContactMedia": {
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/JsContactResource"
+                    },
+                    {
+                        "type": "object",
+                        "required": [
+                            "@type",
+                            "kind"
+                        ],
+                        "properties": {
+                            "@type": {
+                                "type": "string",
+                                "const": "Media"
+                            },
+                            "kind": {
+                                "type": "string",
+                                "enum": [
+                                    "photo",
+                                    "sound",
+                                    "logo"
+                                ]
+                            },
+                            "blobId": {
+                                "$ref": "#/components/schemas/JsContactId",
+                                "description": "JMAP blob id (RFC 9610); replaces data: URI on read."
+                            }
+                        }
+                    }
+                ],
+                "description": "RFC 9553 Media with JMAP blobId extension."
+            },
+            "JsContactIdCalendarMap": {
+                "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
+                "additionalProperties": {
+                    "$ref": "#/components/schemas/JsContactCalendar"
+                },
+                "description": "RFC 9553 calendars map — nested `@type` on values is optional (RFC 9553 §1.3.4).",
+                "example": {
+                    "550e8400-e29b-41d4-a716-446655440009": {
+                        "kind": "calendar",
+                        "uri": "https://example.com/calendars/joe"
+                    }
+                }
+            },
+            "JsContactIdCryptoKeyMap": {
+                "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
+                "additionalProperties": {
+                    "$ref": "#/components/schemas/JsContactCryptoKey"
+                },
+                "description": "RFC 9553 cryptoKeys map — nested `@type` on values is optional (RFC 9553 §1.3.4).",
+                "example": {
+                    "550e8400-e29b-41d4-a716-446655440011": {
+                        "uri": "data:application/pgp-keys;base64,..."
+                    }
+                }
+            },
+            "JsContactIdDirectoryMap": {
+                "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
+                "additionalProperties": {
+                    "$ref": "#/components/schemas/JsContactDirectory"
+                },
+                "description": "RFC 9553 directories map — nested `@type` on values is optional (RFC 9553 §1.3.4).",
+                "example": {
+                    "550e8400-e29b-41d4-a716-446655440012": {
+                        "kind": "directory",
+                        "uri": "ldap://directory.example.com/cn=joe"
+                    }
+                }
+            },
+            "JsContactIdLinkMap": {
+                "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
+                "additionalProperties": {
+                    "$ref": "#/components/schemas/JsContactLink"
+                },
+                "description": "RFC 9553 links map — nested `@type` on values is optional (RFC 9553 §1.3.4).",
+                "example": {
+                    "550e8400-e29b-41d4-a716-446655440013": {
+                        "kind": "contact",
+                        "uri": "card:550e8400-e29b-41d4-a716-446655440000"
+                    }
+                }
+            },
+            "JsContactIdMediaMap": {
+                "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
+                "additionalProperties": {
+                    "$ref": "#/components/schemas/JsContactMedia"
+                },
+                "description": "RFC 9553 media map — nested `@type` on values is optional (RFC 9553 §1.3.4).",
+                "example": {
+                    "550e8400-e29b-41d4-a716-446655440014": {
+                        "kind": "photo",
+                        "uri": "https://example.com/photos/joe.jpg",
+                        "mediaType": "image/jpeg"
+                    }
+                }
+            },
+            "JsContactId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255,
+                "pattern": "^[A-Za-z0-9_-]+$",
+                "description": "RFC 9553 Id — base64url alphabet without padding."
+            },
+            "JsContactUnsignedInt": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "RFC 9553 UnsignedInt."
+            },
+            "JsContactUTCDateTime": {
+                "type": "string",
+                "format": "date-time",
+                "description": "RFC 9553 UTCDateTime — RFC 3339 date-time with Z offset."
+            },
+            "JsContactStringBooleanMap": {
+                "type": "object",
+                "additionalProperties": {
+                    "type": "boolean",
+                    "const": true
+                },
+                "description": "RFC 9553 String[Boolean] set (keywords).",
+                "example": {
+                    "vip": true,
+                    "customer": true
+                }
+            },
+            "JsContactIdBooleanMap": {
+                "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JsContactId"
+                },
+                "additionalProperties": {
+                    "type": "boolean",
+                    "const": true
+                },
+                "description": "RFC 9553 Id[Boolean] set keyed by JsContact Id (addressBookIds, members). Nested `@type` not applicable.",
+                "example": {
+                    "default": true
+                }
+            },
+            "JsContactStringStringMap": {
+                "type": "object",
+                "additionalProperties": {
+                    "type": "string"
+                },
+                "description": "RFC 9553 String[String] map."
+            },
+            "JsContactStringRelationMap": {
+                "type": "object",
+                "additionalProperties": {
+                    "$ref": "#/components/schemas/JsContactRelation"
+                },
+                "description": "RFC 9553 String[Relation] map (relatedTo) — nested `@type` on values is optional (RFC 9553 §1.3.4).",
+                "example": {
+                    "550e8400-e29b-41d4-a716-446655440019": {
+                        "relation": {
+                            "spouse": true
+                        }
+                    }
+                }
+            },
+            "JsContactStringPatchObjectMap": {
+                "type": "object",
+                "additionalProperties": {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "description": "RFC 9553 PatchObject (JSON Pointer patch subset)."
+                },
+                "description": "RFC 9553 String[PatchObject] localizations map."
+            },
+            "JsContactVCardParams": {
+                "type": "object",
+                "additionalProperties": {
+                    "oneOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    ]
+                },
+                "description": "RFC 9555 vCardParams — preserved vCard parameters."
+            },
+            "JsContactJCardProp": {
+                "type": "array",
+                "minItems": 4,
+                "maxItems": 4,
+                "prefixItems": [
+                    {
+                        "type": "string",
+                        "description": "vCard property name"
+                    },
+                    {
+                        "$ref": "#/components/schemas/JsContactVCardParams"
+                    },
+                    {
+                        "type": "string",
+                        "description": "jCard value type"
+                    },
+                    {
+                        "description": "jCard property value"
+                    }
+                ],
+                "description": "RFC 9555 JCardProp — jCard property tuple [name, params, valueType, value]."
+            },
+            "ContactCardCreate": {
+                "type": "object",
+                "required": [
+                    "addressBookIds"
+                ],
+                "properties": {
+                    "addressBookIds": {
+                        "$ref": "#/components/schemas/JsContactIdBooleanMap",
+                        "description": "Set of address book ids; each value MUST be true."
+                    },
+                    "uid": {
+                        "type": "string",
+                        "description": "Cross-system card identifier (RFC 9553). Optional on create; server generates when omitted."
+                    },
+                    "created": {
+                        "$ref": "#/components/schemas/JsContactUTCDateTime"
+                    },
+                    "updated": {
+                        "$ref": "#/components/schemas/JsContactUTCDateTime"
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "individual",
+                            "group",
+                            "org",
+                            "location",
+                            "device",
+                            "application"
+                        ],
+                        "default": "individual"
+                    },
+                    "language": {
+                        "type": "string",
+                        "description": "Primary language tag (RFC 5646)."
+                    },
+                    "members": {
+                        "$ref": "#/components/schemas/JsContactIdBooleanMap",
+                        "description": "Group member uids when kind is group."
+                    },
+                    "prodId": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "relatedTo": {
+                        "$ref": "#/components/schemas/JsContactStringRelationMap"
+                    },
+                    "name": {
+                        "$ref": "#/components/schemas/JsContactName"
+                    },
+                    "nicknames": {
+                        "$ref": "#/components/schemas/JsContactIdNicknameMap"
+                    },
+                    "organizations": {
+                        "$ref": "#/components/schemas/JsContactIdOrganizationMap"
+                    },
+                    "speakToAs": {
+                        "$ref": "#/components/schemas/JsContactSpeakToAs"
+                    },
+                    "titles": {
+                        "$ref": "#/components/schemas/JsContactIdTitleMap"
+                    },
+                    "emails": {
+                        "$ref": "#/components/schemas/JsContactIdEmailAddressMap"
+                    },
+                    "onlineServices": {
+                        "$ref": "#/components/schemas/JsContactIdOnlineServiceMap"
+                    },
+                    "phones": {
+                        "$ref": "#/components/schemas/JsContactIdPhoneMap"
+                    },
+                    "preferredLanguages": {
+                        "$ref": "#/components/schemas/JsContactIdLanguagePrefMap"
+                    },
+                    "calendars": {
+                        "$ref": "#/components/schemas/JsContactIdCalendarMap"
+                    },
+                    "schedulingAddresses": {
+                        "$ref": "#/components/schemas/JsContactIdSchedulingAddressMap"
+                    },
+                    "addresses": {
+                        "$ref": "#/components/schemas/JsContactIdAddressMap"
+                    },
+                    "cryptoKeys": {
+                        "$ref": "#/components/schemas/JsContactIdCryptoKeyMap"
+                    },
+                    "directories": {
+                        "$ref": "#/components/schemas/JsContactIdDirectoryMap"
+                    },
+                    "links": {
+                        "$ref": "#/components/schemas/JsContactIdLinkMap"
+                    },
+                    "media": {
+                        "$ref": "#/components/schemas/JsContactIdMediaMap"
+                    },
+                    "localizations": {
+                        "$ref": "#/components/schemas/JsContactStringPatchObjectMap"
+                    },
+                    "anniversaries": {
+                        "$ref": "#/components/schemas/JsContactIdAnniversaryMap"
+                    },
+                    "keywords": {
+                        "$ref": "#/components/schemas/JsContactStringBooleanMap"
+                    },
+                    "notes": {
+                        "$ref": "#/components/schemas/JsContactIdNoteMap"
+                    },
+                    "personalInfo": {
+                        "$ref": "#/components/schemas/JsContactIdPersonalInfoMap"
+                    },
+                    "vCardProps": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JsContactJCardProp"
+                        },
+                        "description": "RFC 9555 unmapped vCard properties."
+                    }
+                },
+                "additionalProperties": true,
+                "description": "POST/PUT request body for contact cards. Omits server-owned `id`, `@type`, and `version`. Nested `@type` on map values is optional per RFC 9553 §1.3.4.",
+                "example": {
+                    "addressBookIds": {
+                        "default": true
+                    },
+                    "name": {
+                        "full": "Joe Example"
+                    },
+                    "emails": {
+                        "550e8400-e29b-41d4-a716-446655440001": {
+                            "address": "joe@example.com",
+                            "contexts": {
+                                "private": true
+                            }
+                        }
+                    },
+                    "phones": {
+                        "550e8400-e29b-41d4-a716-446655440002": {
+                            "number": "+1-555-0100",
+                            "features": {
+                                "mobile": true,
+                                "voice": true
+                            }
+                        }
+                    },
+                    "addresses": {
+                        "550e8400-e29b-41d4-a716-446655440003": {
+                            "full": "123 Main St, Springfield, IL 62701, US",
+                            "countryCode": "US",
+                            "contexts": {
+                                "home": true
+                            }
+                        }
+                    }
+                }
+            },
+            "ContactCardPatch": {
+                "type": "object",
+                "properties": {
+                    "addressBookIds": {
+                        "$ref": "#/components/schemas/JsContactIdBooleanMap",
+                        "description": "Set of address book ids; each value MUST be true. Map entry null removes membership."
+                    },
+                    "uid": {
+                        "type": "string",
+                        "description": "Cross-system card identifier (RFC 9553)."
+                    },
+                    "created": {
+                        "$ref": "#/components/schemas/JsContactUTCDateTime"
+                    },
+                    "updated": {
+                        "$ref": "#/components/schemas/JsContactUTCDateTime"
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "individual",
+                            "group",
+                            "org",
+                            "location",
+                            "device",
+                            "application"
+                        ]
+                    },
+                    "language": {
+                        "type": "string",
+                        "description": "Primary language tag (RFC 5646)."
+                    },
+                    "members": {
+                        "$ref": "#/components/schemas/JsContactIdBooleanMap",
+                        "description": "Group member uids when kind is group. Map entry null removes member."
+                    },
+                    "prodId": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "relatedTo": {
+                        "$ref": "#/components/schemas/JsContactStringRelationMap"
+                    },
+                    "name": {
+                        "$ref": "#/components/schemas/JsContactName"
+                    },
+                    "nicknames": {
+                        "$ref": "#/components/schemas/JsContactIdNicknameMap"
+                    },
+                    "organizations": {
+                        "$ref": "#/components/schemas/JsContactIdOrganizationMap"
+                    },
+                    "speakToAs": {
+                        "$ref": "#/components/schemas/JsContactSpeakToAs"
+                    },
+                    "titles": {
+                        "$ref": "#/components/schemas/JsContactIdTitleMap"
+                    },
+                    "emails": {
+                        "$ref": "#/components/schemas/JsContactIdEmailAddressMap"
+                    },
+                    "onlineServices": {
+                        "$ref": "#/components/schemas/JsContactIdOnlineServiceMap"
+                    },
+                    "phones": {
+                        "$ref": "#/components/schemas/JsContactIdPhoneMap"
+                    },
+                    "preferredLanguages": {
+                        "$ref": "#/components/schemas/JsContactIdLanguagePrefMap"
+                    },
+                    "calendars": {
+                        "$ref": "#/components/schemas/JsContactIdCalendarMap"
+                    },
+                    "schedulingAddresses": {
+                        "$ref": "#/components/schemas/JsContactIdSchedulingAddressMap"
+                    },
+                    "addresses": {
+                        "$ref": "#/components/schemas/JsContactIdAddressMap"
+                    },
+                    "cryptoKeys": {
+                        "$ref": "#/components/schemas/JsContactIdCryptoKeyMap"
+                    },
+                    "directories": {
+                        "$ref": "#/components/schemas/JsContactIdDirectoryMap"
+                    },
+                    "links": {
+                        "$ref": "#/components/schemas/JsContactIdLinkMap"
+                    },
+                    "media": {
+                        "$ref": "#/components/schemas/JsContactIdMediaMap"
+                    },
+                    "localizations": {
+                        "$ref": "#/components/schemas/JsContactStringPatchObjectMap"
+                    },
+                    "anniversaries": {
+                        "$ref": "#/components/schemas/JsContactIdAnniversaryMap"
+                    },
+                    "keywords": {
+                        "$ref": "#/components/schemas/JsContactStringBooleanMap"
+                    },
+                    "notes": {
+                        "$ref": "#/components/schemas/JsContactIdNoteMap"
+                    },
+                    "personalInfo": {
+                        "$ref": "#/components/schemas/JsContactIdPersonalInfoMap"
+                    },
+                    "vCardProps": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JsContactJCardProp"
+                        },
+                        "description": "RFC 9555 unmapped vCard properties."
+                    }
+                },
+                "additionalProperties": true,
+                "description": "PATCH request body for partial contact card updates. Omits server-owned `id`, `@type`, and `version`. Id-keyed map entries merge by key; null removes an entry. Nested objects (e.g. name) deep-merge.",
+                "example": {
+                    "emails": {
+                        "550e8400-e29b-41d4-a716-446655440001": {
+                            "address": "updated@example.com"
+                        },
+                        "550e8400-e29b-41d4-a716-446655440099": null
+                    }
+                }
             }
         }
     },
@@ -3052,16 +5111,10 @@
                 "summary": "Health check",
                 "responses": {
                     "200": {
-                        "description": "Service health",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/HealthResponse"
-                                }
-                            }
-                        }
+                        "description": "Service health"
                     }
-                }
+                },
+                "x-wgw-access": "guest"
             }
         },
         "/capabilities": {
@@ -3072,16 +5125,10 @@
                 "summary": "Platform capabilities and domains",
                 "responses": {
                     "200": {
-                        "description": "Capabilities response",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/CapabilitiesResponse"
-                                }
-                            }
-                        }
+                        "description": "Capabilities response"
                     }
-                }
+                },
+                "x-wgw-access": "guest"
             }
         },
         "/.well-known/jwks.json": {
@@ -3092,16 +5139,10 @@
                 "summary": "Public JWKS for JWT verification",
                 "responses": {
                     "200": {
-                        "description": "JWK set",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/GenericObject"
-                                }
-                            }
-                        }
+                        "description": "JWK set"
                     }
-                }
+                },
+                "x-wgw-access": "guest"
             }
         },
         "/auth/token": {
@@ -3115,7 +5156,19 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/AuthTokenRequest"
+                                "type": "object",
+                                "required": [
+                                    "username",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "username": {
+                                        "type": "string"
+                                    },
+                                    "password": {
+                                        "type": "string"
+                                    }
+                                }
                             }
                         }
                     }
@@ -3132,46 +5185,19 @@
                         }
                     },
                     "400": {
-                        "description": "Invalid request",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/GenericObject"
-                                }
-                            }
-                        }
+                        "description": "Invalid request"
                     },
                     "401": {
-                        "description": "Unauthorized",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/GenericObject"
-                                }
-                            }
-                        }
+                        "description": "Unauthorized"
                     },
                     "429": {
-                        "description": "Too many login attempts",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/GenericObject"
-                                }
-                            }
-                        }
+                        "description": "Too many login attempts"
                     },
                     "503": {
-                        "description": "JWT not configured",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/GenericObject"
-                                }
-                            }
-                        }
+                        "description": "JWT not configured"
                     }
-                }
+                },
+                "x-wgw-access": "guest"
             }
         },
         "/auth/refresh": {
@@ -3185,7 +5211,15 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/AuthRefreshRequest"
+                                "type": "object",
+                                "required": [
+                                    "refresh_token"
+                                ],
+                                "properties": {
+                                    "refresh_token": {
+                                        "type": "string"
+                                    }
+                                }
                             }
                         }
                     }
@@ -3202,26 +5236,13 @@
                         }
                     },
                     "400": {
-                        "description": "Invalid request",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/GenericObject"
-                                }
-                            }
-                        }
+                        "description": "Invalid request"
                     },
                     "401": {
-                        "description": "Unauthorized",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/GenericObject"
-                                }
-                            }
-                        }
+                        "description": "Unauthorized"
                     }
-                }
+                },
+                "x-wgw-access": "guest"
             }
         },
         "/auth/revoke": {
@@ -3240,23 +5261,22 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/AuthRevokeRequest"
+                                "type": "object",
+                                "properties": {
+                                    "refresh_token": {
+                                        "type": "string"
+                                    }
+                                }
                             }
                         }
                     }
                 },
                 "responses": {
                     "200": {
-                        "description": "Revocation result",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/OkResponse"
-                                }
-                            }
-                        }
+                        "description": "Revocation result"
                     }
-                }
+                },
+                "x-wgw-access": "guest"
             }
         },
         "/me": {
@@ -3281,7 +5301,8 @@
                             }
                         }
                     }
-                }
+                },
+                "x-wgw-access": "user"
             }
         },
         "/admin/state": {
@@ -3297,16 +5318,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Admin state",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/AdminStateResponse"
-                                }
-                            }
-                        }
+                        "description": "Admin state"
                     }
-                }
+                },
+                "x-wgw-access": "admin"
             }
         },
         "/admin/updates/log": {
@@ -3322,16 +5337,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Update log lines",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/UpdateLogResponse"
-                                }
-                            }
-                        }
+                        "description": "Update log lines"
                     }
-                }
+                },
+                "x-wgw-access": "admin"
             },
             "delete": {
                 "tags": [
@@ -3345,16 +5354,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Log cleared",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/UpdateLogClearResponse"
-                                }
-                            }
-                        }
+                        "description": "Log cleared"
                     }
-                }
+                },
+                "x-wgw-access": "admin"
             }
         },
         "/admin/updates/backups/{name}": {
@@ -3456,16 +5459,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Membership added",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/OkResponse"
-                                }
-                            }
-                        }
+                        "description": "Membership added"
                     }
-                }
+                },
+                "x-wgw-access": "admin"
             },
             "delete": {
                 "tags": [
@@ -3497,16 +5494,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Membership removed",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/OkResponse"
-                                }
-                            }
-                        }
+                        "description": "Membership removed"
                     }
-                }
+                },
+                "x-wgw-access": "admin"
             }
         },
         "/settings/state": {
@@ -3522,16 +5513,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Settings state",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/SettingsStateResponse"
-                                }
-                            }
-                        }
+                        "description": "Settings state"
                     }
-                }
+                },
+                "x-wgw-access": "user"
             }
         },
         "/settings/profile": {
@@ -3547,26 +5532,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Updated settings state",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/SettingsStateResponse"
-                                }
-                            }
-                        }
+                        "description": "Updated settings state"
                     }
                 },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/SettingsProfileRequest"
-                            }
-                        }
-                    }
-                }
+                "x-wgw-access": "user"
             }
         },
         "/settings/mail": {
@@ -3582,26 +5551,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Updated settings state",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/SettingsStateResponse"
-                                }
-                            }
-                        }
+                        "description": "Updated settings state"
                     }
                 },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/SettingsMailRequest"
-                            }
-                        }
-                    }
-                }
+                "x-wgw-access": "user"
             }
         },
         "/mail/status": {
@@ -3617,16 +5570,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Mail status",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/MailStatusResponse"
-                                }
-                            }
-                        }
+                        "description": "Mail status"
                     }
-                }
+                },
+                "x-wgw-access": "user"
             }
         },
         "/mail/folders": {
@@ -3642,16 +5589,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Mail folder tree",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/MailFoldersResponse"
-                                }
-                            }
-                        }
+                        "description": "Mail folder tree"
                     }
-                }
+                },
+                "x-wgw-access": "user"
             },
             "post": {
                 "tags": [
@@ -3665,26 +5606,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Folder created",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/MailFolderMutationResponse"
-                                }
-                            }
-                        }
+                        "description": "Folder created"
                     }
                 },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/MailFolderCreateRequest"
-                            }
-                        }
-                    }
-                }
+                "x-wgw-access": "user"
             },
             "patch": {
                 "tags": [
@@ -3698,26 +5623,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Folder moved",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/MailFolderMutationResponse"
-                                }
-                            }
-                        }
+                        "description": "Folder moved"
                     }
                 },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/MailFolderMoveRequest"
-                            }
-                        }
-                    }
-                }
+                "x-wgw-access": "user"
             },
             "delete": {
                 "tags": [
@@ -3731,26 +5640,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Folder deleted",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/OkResponse"
-                                }
-                            }
-                        }
+                        "description": "Folder deleted"
                     }
                 },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/MailFolderDeleteRequest"
-                            }
-                        }
-                    }
-                }
+                "x-wgw-access": "user"
             }
         },
         "/mail/messages": {
@@ -3766,16 +5659,27 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Message list",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/MailMessagesResponse"
-                                }
-                            }
-                        }
+                        "description": "Message list"
                     }
-                }
+                },
+                "x-wgw-access": "user"
+            },
+            "post": {
+                "tags": [
+                    "Mail"
+                ],
+                "summary": "Send message",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sent"
+                    }
+                },
+                "x-wgw-access": "user"
             }
         },
         "/mail/messages/attachments": {
@@ -3907,34 +5811,44 @@
                 "tags": [
                     "Mail"
                 ],
-                "summary": "Move a message to another folder",
+                "summary": "Move message to another folder",
                 "security": [
                     {
                         "bearerAuth": []
                     }
                 ],
-                "responses": {
-                    "200": {
-                        "description": "Message moved",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/OkResponse"
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "fromFolder",
+                                    "toFolder",
+                                    "uid"
+                                ],
+                                "properties": {
+                                    "fromFolder": {
+                                        "type": "string"
+                                    },
+                                    "toFolder": {
+                                        "type": "string"
+                                    },
+                                    "uid": {
+                                        "type": "integer"
+                                    }
                                 }
                             }
                         }
                     }
                 },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/MailMoveRequest"
-                            }
-                        }
+                "responses": {
+                    "200": {
+                        "description": "Message moved"
                     }
-                }
+                },
+                "x-wgw-access": "user"
             }
         },
         "/mail/send": {
@@ -4386,16 +6300,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Notes capabilities",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/NotesCapabilitiesResponse"
-                                }
-                            }
-                        }
+                        "description": "Notes capabilities"
                     }
-                }
+                },
+                "x-wgw-access": "user"
             }
         },
         "/notes/state": {
@@ -4411,16 +6319,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Notes state",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/NotesStateResponse"
-                                }
-                            }
-                        }
+                        "description": "Notes state"
                     }
-                }
+                },
+                "x-wgw-access": "user"
             }
         },
         "/notes/items": {
@@ -4436,16 +6338,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Notes list",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/NotesItemsResponse"
-                                }
-                            }
-                        }
+                        "description": "Notes list"
                     }
-                }
+                },
+                "x-wgw-access": "user"
             },
             "post": {
                 "tags": [
@@ -4459,26 +6355,10 @@
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created note",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/NoteMutationResponse"
-                                }
-                            }
-                        }
+                        "description": "Created note"
                     }
                 },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/NoteUpsertRequest"
-                            }
-                        }
-                    }
-                }
+                "x-wgw-access": "user"
             }
         },
         "/notes/items/{id}": {
@@ -4504,26 +6384,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Updated note",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/NoteMutationResponse"
-                                }
-                            }
-                        }
+                        "description": "Updated note"
                     }
                 },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/NoteUpsertRequest"
-                            }
-                        }
-                    }
-                }
+                "x-wgw-access": "user"
             },
             "delete": {
                 "tags": [
@@ -4547,26 +6411,37 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Deleted note",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/OkResponse"
-                                }
-                            }
-                        }
+                        "description": "Deleted note"
                     }
                 },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/NoteDeleteRequest"
-                            }
+                "x-wgw-access": "user"
+            },
+            "patch": {
+                "tags": [
+                    "Notes"
+                ],
+                "summary": "Patch note (e.g. archive)",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
                         }
                     }
-                }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated"
+                    }
+                },
+                "x-wgw-access": "user"
             }
         },
         "/notes/items/{id}/archive": {
@@ -4652,16 +6527,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Notebook list",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/NotebookListResponse"
-                                }
-                            }
-                        }
+                        "description": "Notebook list"
                     }
-                }
+                },
+                "x-wgw-access": "user"
             },
             "post": {
                 "tags": [
@@ -4675,26 +6544,10 @@
                 ],
                 "responses": {
                     "201": {
-                        "description": "Notebook created",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/NotebookMutationResponse"
-                                }
-                            }
-                        }
+                        "description": "Notebook created"
                     }
                 },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/NotebookCreateRequest"
-                            }
-                        }
-                    }
-                }
+                "x-wgw-access": "user"
             }
         },
         "/notes/notebooks/{name}": {
@@ -4720,26 +6573,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Notebook renamed",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/NotebookMutationResponse"
-                                }
-                            }
-                        }
+                        "description": "Notebook renamed"
                     }
                 },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/NotebookRenameRequest"
-                            }
-                        }
-                    }
-                }
+                "x-wgw-access": "user"
             },
             "delete": {
                 "tags": [
@@ -4763,26 +6600,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Notebook deleted",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/NotebookMutationResponse"
-                                }
-                            }
-                        }
+                        "description": "Notebook deleted"
                     }
                 },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/NotebookDeleteRequest"
-                            }
-                        }
-                    }
-                }
+                "x-wgw-access": "user"
             }
         },
         "/plugins": {
@@ -4798,16 +6619,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Plugin registry snapshot",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/PluginsResponse"
-                                }
-                            }
-                        }
+                        "description": "Plugin registry snapshot"
                     }
-                }
+                },
+                "x-wgw-access": "user"
             }
         },
         "/plugins/{id}/activate": {
@@ -4895,19 +6710,13 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Session established",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/PluginSessionResponse"
-                                }
-                            }
-                        }
+                        "description": "Session established"
                     },
                     "404": {
                         "description": "Plugin not found"
                     }
-                }
+                },
+                "x-wgw-access": "user"
             }
         },
         "/meet/join": {
@@ -5068,16 +6877,10 @@
                 "summary": "Installer summary and current state snapshot",
                 "responses": {
                     "200": {
-                        "description": "Installer state",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/InstallerStateResponse"
-                                }
-                            }
-                        }
+                        "description": "Installer state"
                     }
-                }
+                },
+                "x-wgw-access": "guest"
             }
         },
         "/installer/bootstrap": {
@@ -5088,16 +6891,10 @@
                 "summary": "Installer bootstrap payload (full state)",
                 "responses": {
                     "200": {
-                        "description": "Installer bootstrap payload",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/InstallerBootstrapResponse"
-                                }
-                            }
-                        }
+                        "description": "Installer bootstrap payload"
                     }
-                }
+                },
+                "x-wgw-access": "guest"
             }
         },
         "/installer/action": {
@@ -5108,26 +6905,10 @@
                 "summary": "Perform installer step action",
                 "responses": {
                     "200": {
-                        "description": "Installer action result",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/InstallerActionResponse"
-                                }
-                            }
-                        }
+                        "description": "Installer action result"
                     }
                 },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/InstallerActionRequest"
-                            }
-                        }
-                    }
-                }
+                "x-wgw-access": "guest"
             }
         },
         "/home/state": {
@@ -5168,16 +6949,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "DAV capabilities",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/DavCapabilitiesResponse"
-                                }
-                            }
-                        }
+                        "description": "DAV capabilities"
                     }
-                }
+                },
+                "x-wgw-access": "user"
             }
         },
         "/admin/settings": {
@@ -5195,7 +6970,8 @@
                     "200": {
                         "description": "Settings saved"
                     }
-                }
+                },
+                "x-wgw-access": "admin"
             }
         },
         "/admin/updates/state": {
@@ -5213,7 +6989,8 @@
                     "200": {
                         "description": "Update state"
                     }
-                }
+                },
+                "x-wgw-access": "admin"
             }
         },
         "/admin/updates/check": {
@@ -5294,6 +7071,1575 @@
                         "description": "Meet RTC ICE settings"
                     }
                 }
+            }
+        },
+        "/admin/backups/{name}": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Download an update backup archive",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "name",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Backup ZIP stream"
+                    }
+                },
+                "x-wgw-access": "admin"
+            },
+            "delete": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Delete an update backup archive",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "name",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated backup state"
+                    }
+                },
+                "x-wgw-access": "admin"
+            }
+        },
+        "/admin/groups": {
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Create admin group",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Group created"
+                    },
+                    "400": {
+                        "description": "Invalid request"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "x-wgw-access": "admin"
+            }
+        },
+        "/admin/groups/{group}": {
+            "patch": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Update admin group",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "group",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Group updated"
+                    },
+                    "400": {
+                        "description": "Invalid request"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Group not found"
+                    }
+                },
+                "x-wgw-access": "admin"
+            },
+            "delete": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Delete admin group",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "group",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Group deleted"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Group not found"
+                    }
+                },
+                "x-wgw-access": "admin"
+            }
+        },
+        "/admin/plugins": {
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Install plugin",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Installed"
+                    }
+                },
+                "x-wgw-access": "admin"
+            }
+        },
+        "/admin/search/jobs": {
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Start search reindex",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Accepted"
+                    }
+                },
+                "x-wgw-access": "admin"
+            }
+        },
+        "/admin/search/jobs/{jobId}": {
+            "delete": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Cancel search job",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "jobId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cancelled"
+                    }
+                },
+                "x-wgw-access": "admin"
+            }
+        },
+        "/admin/search/jobs/current": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Search job state",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "State"
+                    }
+                },
+                "x-wgw-access": "admin"
+            }
+        },
+        "/admin/update-jobs": {
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Start update job",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Accepted"
+                    }
+                },
+                "x-wgw-access": "admin"
+            }
+        },
+        "/admin/update-jobs/{jobId}": {
+            "delete": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Cancel update job",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "jobId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cancelled"
+                    }
+                },
+                "x-wgw-access": "admin"
+            }
+        },
+        "/admin/users": {
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Create user account",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User created"
+                    },
+                    "400": {
+                        "description": "Invalid request"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                },
+                "x-wgw-access": "admin"
+            }
+        },
+        "/admin/users/{username}": {
+            "patch": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Update user account",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "username",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User updated"
+                    },
+                    "400": {
+                        "description": "Invalid request"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                },
+                "x-wgw-access": "admin"
+            },
+            "delete": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Delete user account",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "username",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User deleted"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                },
+                "x-wgw-access": "admin"
+            }
+        },
+        "/files": {
+            "get": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Search files",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Results"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "patch": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Rename or move file or directory",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "destination": {
+                                        "type": "string",
+                                        "description": "Target parent directory; omit to rename in place"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Renamed"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "delete": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Delete files",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/files/children": {
+            "get": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "List directory children",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Listing"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/files/collaboration": {
+            "get": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Load collaboration document",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "format",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "markdown",
+                                "yjs"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Document"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "put": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Save collaboration document",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Saved"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/files/content": {
+            "get": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Download file content",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Stream"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "post": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Upload file content",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Accepted"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/files/context": {
+            "get": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "User file context",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/files/directories": {
+            "post": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Create directory",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/files/rooms": {
+            "post": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Resolve file collab room",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Room"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/files/star": {
+            "post": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Star path",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Starred"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "delete": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Unstar path",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Unstarred"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/files/starred": {
+            "get": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "List starred paths",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paths"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/mail/drafts": {
+            "post": {
+                "tags": [
+                    "Mail"
+                ],
+                "summary": "Save draft",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Saved"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/mail/messages/{messageId}": {
+            "get": {
+                "tags": [
+                    "Mail"
+                ],
+                "summary": "Get message",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "patch": {
+                "tags": [
+                    "Mail"
+                ],
+                "summary": "Patch message",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "delete": {
+                "tags": [
+                    "Mail"
+                ],
+                "summary": "Delete message",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/mail/messages/{messageId}/attachments": {
+            "get": {
+                "tags": [
+                    "Mail"
+                ],
+                "summary": "List attachments",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "messageId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Attachments"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/mail/messages/{messageId}/attachments/{attachmentId}": {
+            "get": {
+                "tags": [
+                    "Mail"
+                ],
+                "summary": "Download attachment",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "messageId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "attachmentId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Attachment"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/meetings/rooms": {
+            "post": {
+                "tags": [
+                    "Meetings"
+                ],
+                "summary": "Create meeting room",
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                },
+                "x-wgw-access": "guest"
+            }
+        },
+        "/meetings/rooms/{roomId}": {
+            "get": {
+                "tags": [
+                    "Meetings"
+                ],
+                "summary": "Meeting room status",
+                "parameters": [
+                    {
+                        "name": "roomId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Status"
+                    }
+                },
+                "x-wgw-access": "guest"
+            }
+        },
+        "/contacts/addressbooks": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "List user's address books",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Address book list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactAddressBookListResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/contacts/addressbooks/{addressBookId}": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Fetch a single address book",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "addressBookId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Address book",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AddressBook"
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/contacts/cards": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "List contact cards in an address book",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "addressBookId",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Contact card list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactCardListResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "post": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Create a contact card",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created contact card",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactCard"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ContactCardCreate"
+                            },
+                            "example": {
+                                "addressBookIds": {
+                                    "default": true
+                                },
+                                "name": {
+                                    "full": "Joe Example"
+                                },
+                                "emails": {
+                                    "550e8400-e29b-41d4-a716-446655440001": {
+                                        "address": "joe@example.com"
+                                    }
+                                },
+                                "phones": {
+                                    "550e8400-e29b-41d4-a716-446655440002": {
+                                        "number": "+1-555-0100"
+                                    }
+                                },
+                                "addresses": {
+                                    "550e8400-e29b-41d4-a716-446655440003": {
+                                        "full": "123 Main St",
+                                        "countryCode": "US"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/contacts/cards/{cardId}": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Fetch a single contact card",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "cardId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Contact card",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactCard"
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "put": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Replace a contact card",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "cardId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated contact card",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactCard"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ContactCardCreate"
+                            },
+                            "example": {
+                                "addressBookIds": {
+                                    "default": true
+                                },
+                                "name": {
+                                    "full": "Joe Example"
+                                },
+                                "emails": {
+                                    "550e8400-e29b-41d4-a716-446655440001": {
+                                        "address": "joe@example.com"
+                                    }
+                                },
+                                "phones": {
+                                    "550e8400-e29b-41d4-a716-446655440002": {
+                                        "number": "+1-555-0100"
+                                    }
+                                },
+                                "addresses": {
+                                    "550e8400-e29b-41d4-a716-446655440003": {
+                                        "full": "123 Main St",
+                                        "countryCode": "US"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "patch": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Partially update a contact card",
+                "description": "Deep-merge patch into the existing JSContact Card. Id-keyed map entries merge by key; null removes an entry.",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "cardId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated contact card",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactCard"
+                                }
+                            }
+                        }
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ContactCardPatch"
+                            },
+                            "example": {
+                                "emails": {
+                                    "550e8400-e29b-41d4-a716-446655440001": {
+                                        "address": "updated@example.com"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "delete": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Delete a contact card",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "cardId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted contact card",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OkResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/plugins/{id}/activation": {
+            "put": {
+                "tags": [
+                    "Plugins"
+                ],
+                "summary": "Set plugin activation",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/rooms/{roomId}/configuration": {
+            "get": {
+                "tags": [
+                    "Rooms"
+                ],
+                "summary": "RTC configuration",
+                "parameters": [
+                    {
+                        "name": "roomId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "x-wgw-access": "guest"
+            }
+        },
+        "/rooms/{roomId}/events": {
+            "get": {
+                "tags": [
+                    "Rooms"
+                ],
+                "summary": "Poll events",
+                "parameters": [
+                    {
+                        "name": "roomId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "x-wgw-access": "guest"
+            },
+            "post": {
+                "tags": [
+                    "Rooms"
+                ],
+                "summary": "Send event",
+                "parameters": [
+                    {
+                        "name": "roomId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "x-wgw-access": "guest"
+            }
+        },
+        "/rooms/{roomId}/messages": {
+            "post": {
+                "tags": [
+                    "Rooms"
+                ],
+                "summary": "Chat message",
+                "parameters": [
+                    {
+                        "name": "roomId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "x-wgw-access": "guest"
+            }
+        },
+        "/rooms/{roomId}/participants": {
+            "post": {
+                "tags": [
+                    "Rooms"
+                ],
+                "summary": "Join participant",
+                "parameters": [
+                    {
+                        "name": "roomId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "x-wgw-access": "guest"
+            }
+        },
+        "/rooms/{roomId}/participants/{participantId}": {
+            "delete": {
+                "tags": [
+                    "Rooms"
+                ],
+                "summary": "Leave room",
+                "parameters": [
+                    {
+                        "name": "roomId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "participantId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "x-wgw-access": "guest"
+            }
+        },
+        "/search/results": {
+            "get": {
+                "tags": [
+                    "Search"
+                ],
+                "summary": "Search results",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/search/results/{resultId}/content": {
+            "get": {
+                "tags": [
+                    "Search"
+                ],
+                "summary": "Download search result content",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "resultId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Content"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/workspace/state": {
+            "get": {
+                "tags": [
+                    "Workspace"
+                ],
+                "summary": "Workspace bootstrap",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                },
+                "x-wgw-access": "user"
             }
         }
     }

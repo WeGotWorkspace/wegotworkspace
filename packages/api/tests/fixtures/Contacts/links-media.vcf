@@ -1,0 +1,7 @@
+BEGIN:VCARD
+VERSION:4.0
+FN:Jane Doe
+UID:urn:uuid:19191919-1919-4191-8191-191919191919
+URL:https://example.com/~jane
+SOUND:https://example.com/jane.wav
+END:VCARD

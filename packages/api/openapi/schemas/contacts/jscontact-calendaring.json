@@ -1,0 +1,48 @@
+{
+  "JsContactSchedulingAddress": {
+    "type": "object",
+    "required": ["@type", "uri"],
+    "properties": {
+      "@type": {
+        "type": "string",
+        "const": "SchedulingAddress"
+      },
+      "uri": {
+        "type": "string",
+        "format": "uri"
+      },
+      "contexts": {
+        "$ref": "#/components/schemas/JsContactStringBooleanMap"
+      },
+      "pref": {
+        "$ref": "#/components/schemas/JsContactUnsignedInt"
+      },
+      "label": {
+        "type": "string"
+      },
+      "vCardParams": {
+        "$ref": "#/components/schemas/JsContactVCardParams"
+      },
+      "vCardName": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": true,
+    "description": "RFC 9553 SchedulingAddress."
+  },
+  "JsContactIdSchedulingAddressMap": {
+    "type": "object",
+    "propertyNames": {
+      "$ref": "#/components/schemas/JsContactId"
+    },
+    "additionalProperties": {
+      "$ref": "#/components/schemas/JsContactSchedulingAddress"
+    },
+    "description": "RFC 9553 schedulingAddresses map — nested `@type` on values is optional (RFC 9553 §1.3.4).",
+    "example": {
+      "550e8400-e29b-41d4-a716-446655440010": {
+        "uri": "mailto:joe@example.com"
+      }
+    }
+  }
+}

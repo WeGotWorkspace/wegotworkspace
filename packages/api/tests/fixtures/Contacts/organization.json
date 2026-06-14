@@ -1,0 +1,43 @@
+{
+    "@type": "Card",
+    "version": "1.0",
+    "uid": "urn:uuid:66666666-6666-4666-8666-666666666666",
+    "name": {
+        "full": "Jane Doe",
+        "@type": "Name"
+    },
+    "organizations": {
+        "p_VygCkWUYFsqysc8NsbsHqacZ": {
+            "@type": "Organization",
+            "name": "ABC, Inc.",
+            "units": [
+                {
+                    "@type": "OrgUnit",
+                    "name": "North American Division"
+                },
+                {
+                    "@type": "OrgUnit",
+                    "name": "Marketing"
+                }
+            ],
+            "sortAs": "ABC"
+        }
+    },
+    "titles": {
+        "p_VKkL-5jvUyvBr-C3DOs39_OV": {
+            "@type": "Title",
+            "kind": "title",
+            "name": "Research Scientist"
+        }
+    },
+    "vCardProps": [
+        [
+            "VERSION",
+            [],
+            "text",
+            [
+                "4.0"
+            ]
+        ]
+    ]
+}

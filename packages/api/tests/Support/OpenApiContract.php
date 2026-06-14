@@ -140,6 +140,8 @@ final class OpenApiContract
             '{jobId}' => 'current',
             '{resultId}' => '1',
             '{attachmentId}' => '1.1',
+            '{addressBookId}' => 'default',
+            '{cardId}' => 'demo-card',
         ];
 
         $path = $openApiPath;
@@ -175,6 +177,9 @@ final class OpenApiContract
         }
         if ($openApiPath === '/rooms/{roomId}/events' && $method === 'GET') {
             return 'peerId=peer-alpha';
+        }
+        if ($openApiPath === '/contacts/cards' && $method === 'GET') {
+            return 'addressBookId=default';
         }
 
         return '';
