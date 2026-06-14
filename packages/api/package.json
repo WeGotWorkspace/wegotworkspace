@@ -10,7 +10,7 @@
     "dev:php": "sh -c 'app_root=\"../../apps/wegotworkspace\"; env -u SABRE_BUILD_DIR php -S 127.0.0.1:9080 -t \"$app_root\" \"$app_root/index.php\"'",
     "openapi:build-json": "node scripts/build-openapi-built-json.mjs",
     "openapi:check-drift": "node scripts/build-openapi-built-json.mjs && git diff --exit-code -- openapi/generated/openapi.built.json",
-    "typegen": "pnpm run typegen:openapi",
+    "typegen": "pnpm run openapi:build-json && pnpm run typegen:openapi",
     "typegen:check": "pnpm run typegen:openapi:check",
     "typegen:watch": "pnpm run typegen:openapi:watch",
     "typegen:openapi": "node scripts/typegen-openapi-types.mjs",
