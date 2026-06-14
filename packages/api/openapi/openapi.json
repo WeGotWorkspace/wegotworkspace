@@ -1916,6 +1916,220 @@
         "x-wgw-access": "user"
       }
     },
+    "/calendars/events": {
+      "get": {
+        "tags": ["Calendars"],
+        "summary": "List calendar events in a calendar",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "calendarId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Calendar event list",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CalendarEventListResponse" }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "post": {
+        "tags": ["Calendars"],
+        "summary": "Create a calendar event",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CalendarEventCreate" },
+              "example": {
+                "calendarIds": { "default": true },
+                "title": "Team sync",
+                "start": "2026-06-15T10:00:00Z",
+                "end": "2026-06-15T11:00:00Z"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created calendar event",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CalendarEvent" }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/calendars/events/{eventId}": {
+      "get": {
+        "tags": ["Calendars"],
+        "summary": "Fetch a single calendar event",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Calendar event",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CalendarEvent" }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "put": {
+        "tags": ["Calendars"],
+        "summary": "Replace a calendar event",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CalendarEventCreate" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated calendar event",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CalendarEvent" }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "patch": {
+        "tags": ["Calendars"],
+        "summary": "Partially update a calendar event",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CalendarEventPatch" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Patched calendar event",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CalendarEvent" }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "delete": {
+        "tags": ["Calendars"],
+        "summary": "Delete a calendar event",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OkResponse" }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/calendars/calendars": {
+      "get": {
+        "tags": ["Calendars"],
+        "summary": "List user's calendars",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Calendar list",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CalendarListResponse" }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/calendars/calendars/{calendarId}": {
+      "get": {
+        "tags": ["Calendars"],
+        "summary": "Fetch a single calendar",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "calendarId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Calendar",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Calendar" }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
     "/contacts/addressbooks": {
       "get": {
         "tags": [

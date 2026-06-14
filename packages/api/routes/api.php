@@ -18,6 +18,8 @@ use App\Http\Controllers\Api\V1\Auth\MeController;
 use App\Http\Controllers\Api\V1\Auth\RefreshController;
 use App\Http\Controllers\Api\V1\Auth\RevokeController;
 use App\Http\Controllers\Api\V1\Auth\TokenController;
+use App\Http\Controllers\Api\V1\Calendars\CalendarEventsController;
+use App\Http\Controllers\Api\V1\Calendars\CalendarsController;
 use App\Http\Controllers\Api\V1\Contacts\AddressBooksController as ContactsAddressBooksController;
 use App\Http\Controllers\Api\V1\Contacts\ContactCardsController;
 use App\Http\Controllers\Api\V1\Dav\CapabilitiesController as DavCapabilitiesController;
@@ -178,6 +180,22 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($filesS
             ->where('cardId', '[a-z0-9_-]+');
         Route::delete('contacts/cards/{cardId}', [ContactCardsController::class, 'destroy'])
             ->where('cardId', '[a-z0-9_-]+');
+    });
+
+    Route::middleware('wgw.calendars')->group(function (): void {
+        Route::get('calendars/calendars', [CalendarsController::class, 'index']);
+        Route::get('calendars/calendars/{calendarId}', [CalendarsController::class, 'show'])
+            ->where('calendarId', '[a-z0-9_-]+');
+        Route::get('calendars/events', [CalendarEventsController::class, 'index']);
+        Route::post('calendars/events', [CalendarEventsController::class, 'store']);
+        Route::get('calendars/events/{eventId}', [CalendarEventsController::class, 'show'])
+            ->where('eventId', '[a-z0-9_#%-]+');
+        Route::put('calendars/events/{eventId}', [CalendarEventsController::class, 'update'])
+            ->where('eventId', '[a-z0-9_#%-]+');
+        Route::patch('calendars/events/{eventId}', [CalendarEventsController::class, 'patch'])
+            ->where('eventId', '[a-z0-9_#%-]+');
+        Route::delete('calendars/events/{eventId}', [CalendarEventsController::class, 'destroy'])
+            ->where('eventId', '[a-z0-9_#%-]+');
     });
 });
 
