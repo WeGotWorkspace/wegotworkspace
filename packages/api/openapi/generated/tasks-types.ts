@@ -16,6 +16,7 @@ export type TaskCreate = components["schemas"]["TaskCreate"];
 export type TaskList = components["schemas"]["TaskList"];
 export type TaskListResponse = components["schemas"]["TaskListResponse"];
 export type TaskListRights = components["schemas"]["TaskListRights"];
+export type TaskParticipant = components["schemas"]["TaskParticipant"];
 export type TaskPatch = components["schemas"]["TaskPatch"];
 export type TaskRecurrenceOverride = components["schemas"]["TaskRecurrenceOverride"];
 export type TasksCapabilitiesResponse = components["schemas"]["TasksCapabilitiesResponse"];

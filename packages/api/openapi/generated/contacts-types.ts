@@ -8,12 +8,18 @@ export type ContactsPaths = {
 };
 
 export type AddressBook = components["schemas"]["AddressBook"];
+export type AddressBookCreate = components["schemas"]["AddressBookCreate"];
+export type AddressBookDeleteOptions = components["schemas"]["AddressBookDeleteOptions"];
+export type AddressBookPatch = components["schemas"]["AddressBookPatch"];
 export type AddressBookRights = components["schemas"]["AddressBookRights"];
 export type ContactAddressBookListResponse = components["schemas"]["ContactAddressBookListResponse"];
 export type ContactCard = components["schemas"]["ContactCard"];
 export type ContactCardCreate = components["schemas"]["ContactCardCreate"];
 export type ContactCardListResponse = components["schemas"]["ContactCardListResponse"];
 export type ContactCardPatch = components["schemas"]["ContactCardPatch"];
+export type ContactCardQueryFilter = components["schemas"]["ContactCardQueryFilter"];
+export type ContactCardQueryRequest = components["schemas"]["ContactCardQueryRequest"];
+export type ContactCardQueryResponse = components["schemas"]["ContactCardQueryResponse"];
 export type JsContactAddress = components["schemas"]["JsContactAddress"];
 export type JsContactAddressComponent = components["schemas"]["JsContactAddressComponent"];
 export type JsContactAnniversary = components["schemas"]["JsContactAnniversary"];

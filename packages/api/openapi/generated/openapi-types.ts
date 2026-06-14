@@ -3891,7 +3891,34 @@ export interface paths {
             };
         };
         put?: never;
-        post?: never;
+        /** Create an address book */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AddressBookCreate"];
+                };
+            };
+            responses: {
+                /** @description Created address book */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AddressBook"];
+                    };
+                };
+                400: components["responses"]["BadRequest"];
+                403: components["responses"]["Forbidden"];
+                409: components["responses"]["Conflict"];
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -5193,6 +5220,104 @@ export interface paths {
                 413: components["responses"]["PayloadTooLarge"];
             };
         };
+        trace?: never;
+    };
+    "/contacts/addressbooks/changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Incremental address book collection changes
+         * @description JMAP AddressBook/changes REST mapping. See docs/contacts/jmap-sync-rest-mapping.md.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Previous state token; omit or `0` for initial sync. */
+                    since?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Address book changes */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["JmapChangesResponse"];
+                    };
+                };
+                400: components["responses"]["BadRequest"];
+                403: components["responses"]["Forbidden"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                addressBookId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                addressBookId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                addressBookId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
 }
@@ -7416,6 +7541,8 @@ export interface components {
             start?: string | null;
             due?: string | null;
             completed?: string | null;
+            showWithoutTime?: boolean;
+            timeZone?: string | null;
             workflowStatus?: string | null;
             progress?: number | null;
             priority?: number | null;
@@ -7438,6 +7565,14 @@ export interface components {
             alerts?: {
                 [key: string]: components["schemas"]["TaskAlert"];
             };
+            /** @description Task assignees mapped from ORGANIZER/ATTENDEE. */
+            participants?: {
+                [key: string]: components["schemas"]["TaskParticipant"];
+            };
+            /** @description Unmapped VTODO properties preserved for round-trip fidelity. */
+            icsProps?: {
+                [key: string]: string;
+            };
         };
         TaskListResponse: {
             list: components["schemas"]["Task"][];
@@ -7452,6 +7587,8 @@ export interface components {
             start?: string | null;
             due?: string | null;
             completed?: string | null;
+            showWithoutTime?: boolean;
+            timeZone?: string | null;
             workflowStatus?: string | null;
             progress?: number | null;
             priority?: number | null;
@@ -7464,6 +7601,12 @@ export interface components {
             };
             alerts?: {
                 [key: string]: components["schemas"]["TaskAlert"];
+            };
+            participants?: {
+                [key: string]: components["schemas"]["TaskParticipant"];
+            };
+            icsProps?: {
+                [key: string]: string;
             };
         };
         TaskPatch: {
@@ -7472,6 +7615,8 @@ export interface components {
             start?: string | null;
             due?: string | null;
             completed?: string | null;
+            showWithoutTime?: boolean;
+            timeZone?: string | null;
             workflowStatus?: string | null;
             progress?: number | null;
             priority?: number | null;
@@ -7484,6 +7629,12 @@ export interface components {
             };
             alerts?: {
                 [key: string]: components["schemas"]["TaskAlert"];
+            };
+            participants?: {
+                [key: string]: components["schemas"]["TaskParticipant"];
+            };
+            icsProps?: {
+                [key: string]: string;
             };
         };
         /** @description PATCH request body for partial calendar event updates. Omits server-owned id and @type. */
@@ -7556,6 +7707,8 @@ export interface components {
             start?: string | null;
             due?: string | null;
             completed?: string | null;
+            showWithoutTime?: boolean;
+            timeZone?: string | null;
             workflowStatus?: string | null;
             progress?: number | null;
             /** @description When true, exclude this recurrence instance (EXDATE) */
@@ -7618,6 +7771,57 @@ export interface components {
              */
             action: "display" | "audio" | "email";
         };
+        AddressBookCreate: {
+            name: string;
+            description?: string | null;
+            /** @description Optional client-suggested address book id (uri slug). */
+            id?: components["schemas"]["JsContactId"];
+        };
+        AddressBookPatch: {
+            name?: string;
+            description?: string | null;
+            isSubscribed?: boolean;
+        };
+        AddressBookDeleteOptions: {
+            /**
+             * @description When true, delete all cards in the book before destroying it.
+             * @default false
+             */
+            onDestroyRemoveContents: boolean;
+        };
+        /** @description JMAP-shaped incremental sync response (RFC 8620 /changes mapping). */
+        JmapChangesResponse: {
+            /** @description Previous sync state token supplied by the client. */
+            oldState: string;
+            /** @description Current sync state token to store for the next request. */
+            newState: string;
+            created: components["schemas"]["JsContactId"][];
+            updated: components["schemas"]["JsContactId"][];
+            destroyed: components["schemas"]["JsContactId"][];
+        };
+        ContactCardQueryFilter: {
+            inAddressBook: components["schemas"]["JsContactId"];
+            /** @description Exact JSContact uid match (RFC 9610 ContactCard/query). */
+            uid?: string;
+        };
+        ContactCardQueryRequest: {
+            filter: components["schemas"]["ContactCardQueryFilter"];
+            limit?: number;
+        };
+        ContactCardQueryResponse: {
+            ids: components["schemas"]["JsContactId"][];
+            total: number;
+        };
+        TaskParticipant: {
+            /** @constant */
+            "@type": "Participant";
+            name?: string | null;
+            email?: string | null;
+            roles?: string[];
+            participationStatus?: string;
+            kind?: string;
+            language?: string;
+        };
     };
     responses: {
         /** @description Precondition failed */
@@ -7658,6 +7862,15 @@ export interface components {
         };
         /** @description Payload too large */
         PayloadTooLarge: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Conflict with current resource state */
+        Conflict: {
             headers: {
                 [name: string]: unknown;
             };
