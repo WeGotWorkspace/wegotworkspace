@@ -110,6 +110,7 @@ final class ApiDocsController
             return;
           }
           window.ui.preauthorizeApiKey("bearerAuth", data.access_token);
+          window.ui.authActions.persistAuthorizationIfNeeded();
           setStatus("Authorized" + (data.username ? " as " + data.username : "") + ". Token saved for this browser.", "success");
         });
       })
