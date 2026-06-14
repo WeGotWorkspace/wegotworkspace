@@ -43,5 +43,6 @@ One CalDAV calendar object (`.ics` URI) ↔ one JMAP `CalendarEvent` backed by a
 |-----------|------|
 | ICS → JMAP | Parse RRULE into `RecurrenceRule` objects; do not expand |
 | JMAP → ICS | Serialize `recurrenceRules` to RRULE properties |
+| RECURRENCE-ID override VEVENT | Merged into master `recurrenceOverrides` |
 
 Clients are responsible for expanding recurrence to display instances.

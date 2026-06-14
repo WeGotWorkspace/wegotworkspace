@@ -54,6 +54,55 @@ final class CalendarsCalDavInteropTest extends WgwDatabaseTestCase
         );
     }
 
+    public function test_rest_create_with_alerts_persists_valarm_in_caldav_blob(): void
+    {
+        $uid = 'urn:uuid:'.Str::uuid()->toString();
+        $response = $this->withBearer($this->userBearerToken())
+            ->postJson('/api/v1/calendars/events', [
+                'uid' => $uid,
+                'calendarIds' => ['default' => true],
+                'title' => 'Reminder Event',
+                'start' => '2026-07-01T09:00:00Z',
+                'end' => '2026-07-01T10:00:00Z',
+                'alerts' => [
+                    'reminder' => [
+                        '@type' => 'Alert',
+                        'action' => 'display',
+                        'trigger' => [
+                            '@type' => 'RelativeAlert',
+                            'offset' => '-PT15M',
+                        ],
+                    ],
+                ],
+            ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('alerts.alert1.trigger.offset', '-PT15M');
+
+        $eventId = (string) $response->json('id');
+        $stored = $this->findBobEvent($eventId);
+        $this->assertNotNull($stored);
+
+        $ics = is_string($stored->calendardata) ? $stored->calendardata : (string) $stored->calendardata;
+        $this->assertStringContainsString('BEGIN:VALARM', $ics);
+        $this->assertStringContainsString('TRIGGER:-PT15M', $ics);
+        $this->assertStringContainsString('ACTION:DISPLAY', $ics);
+    }
+
+    public function test_caldav_valarm_readable_via_rest(): void
+    {
+        $uid = 'urn:uuid:'.Str::uuid()->toString();
+        $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:{$uid}\r\nSUMMARY:CalDAV Reminder\r\nDTSTART:20260701T090000Z\r\nDTEND:20260701T100000Z\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:-PT30M\r\nDESCRIPTION:Reminder\r\nEND:VALARM\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+        $eventId = $this->seedEventViaPdo('bob', 'caldav-reminder.ics', $ics);
+
+        $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/calendars/events/'.$eventId)
+            ->assertOk()
+            ->assertJsonPath('uid', $uid)
+            ->assertJsonPath('alerts.alert1.action', 'display')
+            ->assertJsonPath('alerts.alert1.trigger.offset', '-PT30M');
+    }
+
     public function test_rest_create_updates_caldav_search_index(): void
     {
         $uid = 'urn:uuid:'.Str::uuid()->toString();

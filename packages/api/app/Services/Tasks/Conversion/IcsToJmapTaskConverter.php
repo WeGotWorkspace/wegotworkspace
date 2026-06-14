@@ -205,7 +205,7 @@ final class IcsToJmapTaskConverter
         $alerts = [];
         $index = 0;
         foreach ($todo->getComponents('VALARM') as $valarm) {
-            $alert = CalendarConversionSupport::alertFromValarm($valarm);
+            $alert = CalendarConversionSupport::taskAlertFromValarm($valarm);
             if ($alert !== null) {
                 $alerts['alert'.(++$index)] = $alert;
             }

@@ -85,4 +85,73 @@ final class ICalendarJmapEventConverterTest extends TestCase
         $this->assertSame(1, substr_count($ics, 'BEGIN:VEVENT'));
         $this->assertSame(1, substr_count($ics, 'END:VEVENT'));
     }
+
+    public function test_relative_valarm_reads_as_jmap_alert(): void
+    {
+        $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:alarm-1\r\nSUMMARY:Meeting\r\nDTSTART:20260615T100000Z\r\nDTEND:20260615T110000Z\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:-PT15M\r\nDESCRIPTION:Reminder\r\nEND:VALARM\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+
+        $event = $this->converter->eventFromIcs($ics);
+        $this->assertArrayHasKey('alerts', $event);
+        $this->assertSame('display', $event['alerts']['alert1']['action']);
+        $this->assertSame('RelativeAlert', $event['alerts']['alert1']['trigger']['@type']);
+        $this->assertSame('-PT15M', $event['alerts']['alert1']['trigger']['offset']);
+    }
+
+    public function test_absolute_valarm_reads_as_jmap_alert(): void
+    {
+        $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:alarm-2\r\nSUMMARY:Meeting\r\nDTSTART:20260615T100000Z\r\nDTEND:20260615T110000Z\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER;VALUE=DATE-TIME:20260615T094500Z\r\nDESCRIPTION:Reminder\r\nEND:VALARM\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+
+        $event = $this->converter->eventFromIcs($ics);
+        $this->assertSame('AbsoluteAlert', $event['alerts']['alert1']['trigger']['@type']);
+        $this->assertSame('2026-06-15T09:45:00Z', $event['alerts']['alert1']['trigger']['when']);
+    }
+
+    public function test_valarm_action_types_map_to_jmap(): void
+    {
+        $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:alarm-3\r\nSUMMARY:Meeting\r\nDTSTART:20260615T100000Z\r\nDTEND:20260615T110000Z\r\nBEGIN:VALARM\r\nACTION:AUDIO\r\nTRIGGER;RELATED=END:-PT5M\r\nEND:VALARM\r\nBEGIN:VALARM\r\nACTION:EMAIL\r\nTRIGGER:-PT1H\r\nSUMMARY:Email reminder\r\nATTENDEE:mailto:bob@example.com\r\nEND:VALARM\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+
+        $event = $this->converter->eventFromIcs($ics);
+        $this->assertSame('audio', $event['alerts']['alert1']['action']);
+        $this->assertSame('end', $event['alerts']['alert1']['trigger']['relatedTo']);
+        $this->assertSame('email', $event['alerts']['alert2']['action']);
+    }
+
+    public function test_alerts_round_trip_to_valarm(): void
+    {
+        $event = [
+            '@type' => 'Event',
+            'uid' => 'alarm-rt',
+            'calendarIds' => ['default' => true],
+            'title' => 'Meeting',
+            'start' => '2026-06-15T10:00:00Z',
+            'end' => '2026-06-15T11:00:00Z',
+            'alerts' => [
+                'a1' => [
+                    '@type' => 'Alert',
+                    'action' => 'display',
+                    'trigger' => [
+                        '@type' => 'RelativeAlert',
+                        'offset' => '-PT15M',
+                    ],
+                ],
+                'a2' => [
+                    '@type' => 'Alert',
+                    'action' => 'display',
+                    'trigger' => [
+                        '@type' => 'AbsoluteAlert',
+                        'when' => '2026-06-15T09:45:00Z',
+                    ],
+                ],
+            ],
+        ];
+
+        $ics = $this->converter->icsFromEvent($event);
+        $this->assertStringContainsString('BEGIN:VALARM', $ics);
+        $this->assertStringContainsString('TRIGGER:-PT15M', $ics);
+        $this->assertStringContainsString('TRIGGER;VALUE=DATE-TIME:20260615T094500Z', $ics);
+
+        $roundTrip = $this->converter->eventFromIcs($ics);
+        $this->assertSame('-PT15M', $roundTrip['alerts']['alert1']['trigger']['offset']);
+        $this->assertSame('2026-06-15T09:45:00Z', $roundTrip['alerts']['alert2']['trigger']['when']);
+    }
 }
