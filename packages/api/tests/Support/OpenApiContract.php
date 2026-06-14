@@ -145,6 +145,8 @@ final class OpenApiContract
             '{blobId}' => '550e8400e29b41d4a716446655440000',
             '{calendarId}' => 'default',
             '{eventId}' => 'demo-event',
+            '{taskId}' => 'demo-task',
+            '{taskListId}' => 'default',
         ];
 
         $path = $openApiPath;
@@ -182,6 +184,9 @@ final class OpenApiContract
             return 'peerId=peer-alpha';
         }
         if ($openApiPath === '/contacts/cards' && $method === 'GET') {
+            return 'addressBookId=default';
+        }
+        if ($openApiPath === '/contacts/cards/changes' && $method === 'GET') {
             return 'addressBookId=default';
         }
         if ($openApiPath === '/calendars/events' && $method === 'GET') {

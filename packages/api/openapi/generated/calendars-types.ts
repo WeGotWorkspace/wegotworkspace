@@ -12,6 +12,7 @@ export type CalendarEvent = components["schemas"]["CalendarEvent"];
 export type CalendarEventAbsoluteAlertTrigger = components["schemas"]["CalendarEventAbsoluteAlertTrigger"];
 export type CalendarEventAlert = components["schemas"]["CalendarEventAlert"];
 export type CalendarEventCreate = components["schemas"]["CalendarEventCreate"];
+export type CalendarEventLink = components["schemas"]["CalendarEventLink"];
 export type CalendarEventListResponse = components["schemas"]["CalendarEventListResponse"];
 export type CalendarEventLocation = components["schemas"]["CalendarEventLocation"];
 export type CalendarEventParticipant = components["schemas"]["CalendarEventParticipant"];
@@ -21,6 +22,7 @@ export type CalendarEventRelativeAlertTrigger = components["schemas"]["CalendarE
 export type CalendarListResponse = components["schemas"]["CalendarListResponse"];
 export type CalendarRecurrenceRule = components["schemas"]["CalendarRecurrenceRule"];
 export type CalendarRights = components["schemas"]["CalendarRights"];
+export type CalendarTimeZone = components["schemas"]["CalendarTimeZone"];
 export type OkResponse = components["schemas"]["OkResponse"];
 
 export type { components, paths };
