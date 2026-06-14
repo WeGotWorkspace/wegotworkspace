@@ -3959,10 +3959,68 @@ export interface paths {
         };
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete an address book */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    addressBookId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AddressBookDeleteOptions"];
+                };
+            };
+            responses: {
+                /** @description Address book deleted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OkResponse"];
+                    };
+                };
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
+                409: components["responses"]["Conflict"];
+            };
+        };
         options?: never;
         head?: never;
-        patch?: never;
+        /** Update an address book */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    addressBookId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AddressBookPatch"];
+                };
+            };
+            responses: {
+                /** @description Updated address book */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AddressBook"];
+                    };
+                };
+                400: components["responses"]["BadRequest"];
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
+            };
+        };
         trace?: never;
     };
     "/contacts/cards": {
@@ -3977,6 +4035,8 @@ export interface paths {
             parameters: {
                 query: {
                     addressBookId: string;
+                    /** @description Optional exact uid filter (ContactCard/query subset). */
+                    uid?: string;
                 };
                 header?: never;
                 path?: never;
@@ -4596,6 +4656,12 @@ export interface paths {
             parameters: {
                 query: {
                     calendarId: string;
+                    /** @description Expand recurring events into instances in the requested window (requires after and before). */
+                    expandRecurrences?: boolean;
+                    /** @description Window start (required when expandRecurrences is true). */
+                    after?: string;
+                    /** @description Window end (required when expandRecurrences is true). */
+                    before?: string;
                 };
                 header?: never;
                 path?: never;
@@ -5314,6 +5380,98 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/contacts/cards/changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Incremental contact card changes in an address book
+         * @description JMAP ContactCard/changes REST mapping backed by CardDAV synctoken.
+         */
+        get: {
+            parameters: {
+                query: {
+                    addressBookId: string;
+                    /** @description Previous synctoken; omit or `0` for initial sync. */
+                    since?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Contact card changes */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["JmapChangesResponse"];
+                    };
+                };
+                400: components["responses"]["BadRequest"];
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/contacts/cards/query": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Query contact card ids by filter
+         * @description JMAP ContactCard/query REST mapping (MVP: inAddressBook + uid).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ContactCardQueryRequest"];
+                };
+            };
+            responses: {
+                /** @description Matching contact card ids */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ContactCardQueryResponse"];
+                    };
+                };
+                400: components["responses"]["BadRequest"];
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -7372,6 +7530,11 @@ export interface components {
             participationStatus?: string;
             kind?: string;
             language?: string;
+            expectReply?: boolean;
+            /** Format: email */
+            delegatedTo?: string;
+            /** Format: email */
+            delegatedFrom?: string;
         };
         /**
          * @description JMAP CalendarEvent mapped from a single VEVENT ICS resource.
@@ -7401,12 +7564,16 @@ export interface components {
             duration?: string;
             showWithoutTime?: boolean;
             timeZone?: string | null;
+            /** @description Original instance start for expanded or override rows; null on series masters. */
+            recurrenceId?: string;
             locations?: {
                 [key: string]: components["schemas"]["CalendarEventLocation"];
             };
-            /** @description RRULE-only; clients expand instances per JMAP Calendars draft. */
-            recurrenceRules?: components["schemas"]["CalendarRecurrenceRule"][];
+            /** @description RRULE on series masters; null on expanded instances. */
+            recurrenceRules?: components["schemas"]["CalendarRecurrenceRule"][] | null;
             excludedRecurrenceDates?: string[];
+            /** @description EXRULE rule-based exclusions (legacy ICS). */
+            excludedRecurrenceRules?: components["schemas"]["CalendarRecurrenceRule"][];
             /** @description Per-instance patches keyed by recurrence id (original instance start). Maps to RECURRENCE-ID override VEVENTs in ICS. */
             recurrenceOverrides?: {
                 [key: string]: components["schemas"]["CalendarEventRecurrenceOverride"];
@@ -7423,6 +7590,15 @@ export interface components {
             /** @description Reminder alarms mapped from iCalendar VALARM components. */
             alerts?: {
                 [key: string]: components["schemas"]["CalendarEventAlert"];
+            };
+            links?: {
+                [key: string]: components["schemas"]["CalendarEventLink"];
+            };
+            attachments?: {
+                [key: string]: components["schemas"]["CalendarEventLink"];
+            };
+            timeZones?: {
+                [key: string]: components["schemas"]["CalendarTimeZone"];
             };
             categories?: string[];
             priority?: number;
@@ -7541,6 +7717,8 @@ export interface components {
             start?: string | null;
             due?: string | null;
             completed?: string | null;
+            showWithoutTime?: boolean;
+            timeZone?: string | null;
             workflowStatus?: string | null;
             progress?: number | null;
             priority?: number | null;
@@ -7563,6 +7741,14 @@ export interface components {
             alerts?: {
                 [key: string]: components["schemas"]["TaskAlert"];
             };
+            /** @description Task assignees mapped from ORGANIZER/ATTENDEE. */
+            participants?: {
+                [key: string]: components["schemas"]["TaskParticipant"];
+            };
+            /** @description Unmapped VTODO properties preserved for round-trip fidelity. */
+            icsProps?: {
+                [key: string]: string;
+            };
         };
         TaskListResponse: {
             list: components["schemas"]["Task"][];
@@ -7577,6 +7763,8 @@ export interface components {
             start?: string | null;
             due?: string | null;
             completed?: string | null;
+            showWithoutTime?: boolean;
+            timeZone?: string | null;
             workflowStatus?: string | null;
             progress?: number | null;
             priority?: number | null;
@@ -7589,6 +7777,12 @@ export interface components {
             };
             alerts?: {
                 [key: string]: components["schemas"]["TaskAlert"];
+            };
+            participants?: {
+                [key: string]: components["schemas"]["TaskParticipant"];
+            };
+            icsProps?: {
+                [key: string]: string;
             };
         };
         TaskPatch: {
@@ -7597,6 +7791,8 @@ export interface components {
             start?: string | null;
             due?: string | null;
             completed?: string | null;
+            showWithoutTime?: boolean;
+            timeZone?: string | null;
             workflowStatus?: string | null;
             progress?: number | null;
             priority?: number | null;
@@ -7609,6 +7805,12 @@ export interface components {
             };
             alerts?: {
                 [key: string]: components["schemas"]["TaskAlert"];
+            };
+            participants?: {
+                [key: string]: components["schemas"]["TaskParticipant"];
+            };
+            icsProps?: {
+                [key: string]: string;
             };
         };
         /** @description PATCH request body for partial calendar event updates. Omits server-owned id and @type. */
@@ -7625,6 +7827,7 @@ export interface components {
             };
             recurrenceRules?: components["schemas"]["CalendarRecurrenceRule"][];
             excludedRecurrenceDates?: string[];
+            excludedRecurrenceRules?: components["schemas"]["CalendarRecurrenceRule"][];
             /** @description Per-instance patches keyed by recurrence id (original instance start). Maps to RECURRENCE-ID override VEVENTs in ICS. */
             recurrenceOverrides?: {
                 [key: string]: components["schemas"]["CalendarEventRecurrenceOverride"];
@@ -7681,6 +7884,8 @@ export interface components {
             start?: string | null;
             due?: string | null;
             completed?: string | null;
+            showWithoutTime?: boolean;
+            timeZone?: string | null;
             workflowStatus?: string | null;
             progress?: number | null;
             /** @description When true, exclude this recurrence instance (EXDATE) */
@@ -7793,6 +7998,21 @@ export interface components {
             participationStatus?: string;
             kind?: string;
             language?: string;
+        };
+        CalendarEventLink: {
+            /** @constant */
+            "@type": "Link";
+            /** Format: uri */
+            href: string;
+            rel?: string;
+            contentType?: string;
+        };
+        CalendarTimeZone: {
+            /** @constant */
+            "@type": "TimeZone";
+            tzid: string;
+            /** @description Serialized VTIMEZONE component for round-trip. */
+            icsDefinition?: string;
         };
     };
     responses: {
