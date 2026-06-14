@@ -9,6 +9,7 @@ use App\Services\Calendars\CalendarEventMapper;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Tests\Support\CalendarsTestFixtures;
+use Tests\Support\OptimisticConcurrencyTestHelpers;
 use Tests\Support\WgwDatabaseTestCase;
 
 /**
@@ -17,6 +18,7 @@ use Tests\Support\WgwDatabaseTestCase;
 final class CalendarsCalDavInteropTest extends WgwDatabaseTestCase
 {
     use CalendarsTestFixtures;
+    use OptimisticConcurrencyTestHelpers;
 
     protected function setUp(): void
     {
@@ -159,14 +161,15 @@ final class CalendarsCalDavInteropTest extends WgwDatabaseTestCase
     public function test_rest_update_rewrites_stored_ics(): void
     {
         $eventId = $this->seedEventViaPdo('bob', 'update-me.ics', $this->sampleIcs('Before Update'));
+        $url = '/api/v1/calendars/events/'.$eventId;
 
         $this->withBearer($this->userBearerToken())
-            ->putJson('/api/v1/calendars/events/'.$eventId, [
+            ->putJson($url, [
                 'calendarIds' => ['default' => true],
                 'title' => 'After Update',
                 'start' => '2026-08-01T09:00:00Z',
                 'end' => '2026-08-01T10:00:00Z',
-            ])
+            ], $this->withIfMatch($this->fetchEtagFromGet($url)))
             ->assertOk();
 
         $stored = $this->findBobEvent($eventId);

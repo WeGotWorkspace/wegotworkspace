@@ -34,6 +34,9 @@
       "updated": {
         "$ref": "#/components/schemas/JsContactUTCDateTime"
       },
+      "etag": {
+        "$ref": "#/components/schemas/DavEtag"
+      },
       "kind": {
         "type": "string",
         "enum": ["individual", "group", "org", "location", "device", "application"],

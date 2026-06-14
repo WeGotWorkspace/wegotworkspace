@@ -4,23 +4,24 @@ declare(strict_types=1);
 
 namespace App\Services\Calendars\Conversion;
 
+use App\Services\VObject\VObjectPayloadGuard;
 use Sabre\VObject\Component\VAlarm;
 use Sabre\VObject\Component\VCalendar;
 use Sabre\VObject\Component\VEvent;
 use Sabre\VObject\Property;
-use Sabre\VObject\Reader;
 
 final class VEventToJmapEventConverter
 {
+    public function __construct(
+        private readonly VObjectPayloadGuard $guard = new VObjectPayloadGuard,
+    ) {}
+
     /**
      * @return list<array<string, mixed>>
      */
     public function convertAll(string $ics): array
     {
-        $document = Reader::read($ics);
-        if (! $document instanceof VCalendar) {
-            throw new \InvalidArgumentException('Input is not an iCalendar document.');
-        }
+        $document = $this->guard->readICalendar($ics);
 
         $events = [];
         foreach (RecurrenceOverrideSupport::groupRecurrenceSeries(

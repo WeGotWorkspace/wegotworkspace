@@ -45,6 +45,9 @@ use App\Http\Controllers\Api\V1\Settings\ProfileController as SettingsProfileCon
 use App\Http\Controllers\Api\V1\Settings\StateController as SettingsStateController;
 use App\Http\Controllers\Api\V1\System\CapabilitiesController;
 use App\Http\Controllers\Api\V1\System\HealthController;
+use App\Http\Controllers\Api\V1\Tasks\CapabilitiesController as TasksCapabilitiesController;
+use App\Http\Controllers\Api\V1\Tasks\TaskCalendarsController;
+use App\Http\Controllers\Api\V1\Tasks\TasksController;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Session\Middleware\StartSession;
@@ -165,6 +168,23 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($filesS
     Route::post('notes/notebooks', [NotebooksController::class, 'store']);
     Route::patch('notes/notebooks/{name}', [NotebooksController::class, 'update']);
     Route::delete('notes/notebooks/{name}', [NotebooksController::class, 'destroy']);
+
+    Route::middleware('wgw.calendars')->group(function (): void {
+        Route::get('tasks/capabilities', TasksCapabilitiesController::class);
+        Route::get('tasks/tasklists', [TaskCalendarsController::class, 'index']);
+        Route::get('tasks/tasklists/{taskListId}', [TaskCalendarsController::class, 'show'])
+            ->where('taskListId', '[a-z0-9_-]+');
+        Route::get('tasks/items', [TasksController::class, 'index']);
+        Route::post('tasks/items', [TasksController::class, 'store']);
+        Route::get('tasks/items/{taskId}', [TasksController::class, 'show'])
+            ->where('taskId', '[a-z0-9_.#-]+');
+        Route::put('tasks/items/{taskId}', [TasksController::class, 'update'])
+            ->where('taskId', '[a-z0-9_.#-]+');
+        Route::patch('tasks/items/{taskId}', [TasksController::class, 'patch'])
+            ->where('taskId', '[a-z0-9_.#-]+');
+        Route::delete('tasks/items/{taskId}', [TasksController::class, 'destroy'])
+            ->where('taskId', '[a-z0-9_.#-]+');
+    });
 
     Route::middleware('wgw.contacts')->group(function (): void {
         Route::get('contacts/addressbooks', [ContactsAddressBooksController::class, 'index']);

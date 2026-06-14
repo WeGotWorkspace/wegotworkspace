@@ -8,6 +8,7 @@ use App\Exceptions\ApiHttpException;
 use App\Http\Middleware\AuthenticateWgwApi;
 use App\Http\Requests\Api\V1\ContactCardPatchRequest;
 use App\Http\Requests\Api\V1\ContactCardUpsertRequest;
+use App\Http\Support\JmapResourceResponse;
 use App\Services\Contacts\ContactCardRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -34,7 +35,7 @@ final class ContactCardsController
         /** @var array{username: string, role: string} $principal */
         $principal = $request->attributes->get(AuthenticateWgwApi::PRINCIPAL_ATTRIBUTE);
 
-        return response()->json($this->cards->show($principal['username'], $cardId));
+        return JmapResourceResponse::json($this->cards->show($principal['username'], $cardId));
     }
 
     public function store(ContactCardUpsertRequest $request): JsonResponse
@@ -42,9 +43,9 @@ final class ContactCardsController
         /** @var array{username: string, role: string} $principal */
         $principal = $request->attributes->get(AuthenticateWgwApi::PRINCIPAL_ATTRIBUTE);
 
-        return response()->json(
+        return JmapResourceResponse::json(
             $this->cards->create($principal['username'], $request->json()->all()),
-            201
+            201,
         );
     }
 
@@ -53,8 +54,14 @@ final class ContactCardsController
         /** @var array{username: string, role: string} $principal */
         $principal = $request->attributes->get(AuthenticateWgwApi::PRINCIPAL_ATTRIBUTE);
 
-        return response()->json(
-            $this->cards->update($principal['username'], $cardId, $request->json()->all())
+        return JmapResourceResponse::json(
+            $this->cards->update(
+                $principal['username'],
+                $cardId,
+                $request->json()->all(),
+                $this->ifMatch($request),
+                $this->ifUnmodifiedSince($request),
+            )
         );
     }
 
@@ -63,8 +70,14 @@ final class ContactCardsController
         /** @var array{username: string, role: string} $principal */
         $principal = $request->attributes->get(AuthenticateWgwApi::PRINCIPAL_ATTRIBUTE);
 
-        return response()->json(
-            $this->cards->patch($principal['username'], $cardId, $request->json()->all())
+        return JmapResourceResponse::json(
+            $this->cards->patch(
+                $principal['username'],
+                $cardId,
+                $request->json()->all(),
+                $this->ifMatch($request),
+                $this->ifUnmodifiedSince($request),
+            )
         );
     }
 
@@ -73,6 +86,27 @@ final class ContactCardsController
         /** @var array{username: string, role: string} $principal */
         $principal = $request->attributes->get(AuthenticateWgwApi::PRINCIPAL_ATTRIBUTE);
 
-        return response()->json($this->cards->delete($principal['username'], $cardId));
+        return response()->json(
+            $this->cards->delete(
+                $principal['username'],
+                $cardId,
+                $this->ifMatch($request),
+                $this->ifUnmodifiedSince($request),
+            )
+        );
+    }
+
+    private function ifMatch(Request $request): ?string
+    {
+        $value = $request->header('If-Match');
+
+        return is_string($value) && $value !== '' ? $value : null;
+    }
+
+    private function ifUnmodifiedSince(Request $request): ?string
+    {
+        $value = $request->header('If-Unmodified-Since');
+
+        return is_string($value) && $value !== '' ? $value : null;
     }
 }

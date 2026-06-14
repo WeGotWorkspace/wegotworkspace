@@ -3226,6 +3226,9 @@
                     "updated": {
                         "$ref": "#/components/schemas/JsContactUTCDateTime"
                     },
+                    "etag": {
+                        "$ref": "#/components/schemas/DavEtag"
+                    },
                     "kind": {
                         "type": "string",
                         "enum": [
@@ -5392,6 +5395,9 @@
                     "updated": {
                         "$ref": "#/components/schemas/JmapUTCDateTime"
                     },
+                    "etag": {
+                        "$ref": "#/components/schemas/DavEtag"
+                    },
                     "icsProps": {
                         "type": "object",
                         "additionalProperties": {
@@ -5604,6 +5610,476 @@
                 "type": "string",
                 "description": "Local or UTC date-time without required Z suffix."
             },
+            "TasksCapabilitiesResponse": {
+                "type": "object",
+                "required": [
+                    "enabled",
+                    "jmapCapability",
+                    "supportedTaskProperties"
+                ],
+                "properties": {
+                    "enabled": {
+                        "type": "boolean"
+                    },
+                    "jmapCapability": {
+                        "type": "string"
+                    },
+                    "supportedTaskProperties": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskListRights": {
+                "type": "object",
+                "required": [
+                    "mayReadItems",
+                    "mayWriteAll",
+                    "mayWriteOwn",
+                    "mayUpdatePrivate",
+                    "mayRSVP",
+                    "mayAdmin",
+                    "mayDelete"
+                ],
+                "properties": {
+                    "mayReadItems": {
+                        "type": "boolean"
+                    },
+                    "mayWriteAll": {
+                        "type": "boolean"
+                    },
+                    "mayWriteOwn": {
+                        "type": "boolean"
+                    },
+                    "mayUpdatePrivate": {
+                        "type": "boolean"
+                    },
+                    "mayRSVP": {
+                        "type": "boolean"
+                    },
+                    "mayAdmin": {
+                        "type": "boolean"
+                    },
+                    "mayDelete": {
+                        "type": "boolean"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskList": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "name",
+                    "sortOrder",
+                    "isDefault",
+                    "isSubscribed",
+                    "myRights"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "color": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "sortOrder": {
+                        "type": "integer"
+                    },
+                    "isDefault": {
+                        "type": "boolean"
+                    },
+                    "isSubscribed": {
+                        "type": "boolean"
+                    },
+                    "shareWith": {
+                        "type": [
+                            "object",
+                            "null"
+                        ]
+                    },
+                    "myRights": {
+                        "$ref": "#/components/schemas/TaskListRights"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskTaskListListResponse": {
+                "type": "object",
+                "required": [
+                    "list"
+                ],
+                "properties": {
+                    "list": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/TaskList"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            },
+            "Task": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "id",
+                    "taskListId",
+                    "uid",
+                    "isDraft",
+                    "sortOrder"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "enum": [
+                            "Task"
+                        ]
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "taskListId": {
+                        "type": "string"
+                    },
+                    "uid": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "start": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "due": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "completed": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "workflowStatus": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "progress": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "priority": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "isDraft": {
+                        "type": "boolean"
+                    },
+                    "sortOrder": {
+                        "type": "integer"
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "privacy": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "created": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "updated": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "etag": {
+                        "$ref": "#/components/schemas/DavEtag"
+                    },
+                    "recurrenceRules": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CalendarRecurrenceRule"
+                        },
+                        "description": "RRULE-only; clients expand instances per JMAP Tasks draft."
+                    },
+                    "excludedRecurrenceDates": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "EXDATE values for excluded recurrence instances."
+                    },
+                    "recurrenceOverrides": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/TaskRecurrenceOverride"
+                        },
+                        "description": "Per-instance patches keyed by recurrence id (RECURRENCE-ID)."
+                    },
+                    "alerts": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/TaskAlert"
+                        },
+                        "description": "Task reminders mapped from VALARM components."
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskListResponse": {
+                "type": "object",
+                "required": [
+                    "list"
+                ],
+                "properties": {
+                    "list": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Task"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskCreate": {
+                "type": "object",
+                "required": [
+                    "taskListIds",
+                    "title"
+                ],
+                "properties": {
+                    "taskListIds": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "boolean"
+                        }
+                    },
+                    "uid": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "start": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "due": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "completed": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "workflowStatus": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "progress": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "priority": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "privacy": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "recurrenceRules": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CalendarRecurrenceRule"
+                        }
+                    },
+                    "excludedRecurrenceDates": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "recurrenceOverrides": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/TaskRecurrenceOverride"
+                        }
+                    },
+                    "alerts": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/TaskAlert"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskPatch": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "start": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "due": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "completed": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "workflowStatus": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "progress": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "priority": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "privacy": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "recurrenceRules": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CalendarRecurrenceRule"
+                        }
+                    },
+                    "excludedRecurrenceDates": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "recurrenceOverrides": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/TaskRecurrenceOverride"
+                        }
+                    },
+                    "alerts": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/TaskAlert"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            },
             "CalendarEventPatch": {
                 "type": "object",
                 "properties": {
@@ -5733,7 +6209,7 @@
                 "additionalProperties": false,
                 "description": "PATCH request body for partial calendar event updates. Omits server-owned id and @type."
             },
-            "CalendarEventRelativeAlertTrigger": {
+            "TaskAlertOffsetTrigger": {
                 "type": "object",
                 "required": [
                     "@type",
@@ -5742,24 +6218,25 @@
                 "properties": {
                     "@type": {
                         "type": "string",
-                        "const": "RelativeAlert"
+                        "const": "OffsetTrigger"
                     },
                     "offset": {
                         "type": "string",
-                        "description": "Signed ISO 8601 duration relative to event start or end (e.g. -PT15M)."
+                        "description": "Signed ISO 8601 duration (e.g. -PT30M)"
                     },
-                    "relatedTo": {
+                    "relativeTo": {
                         "type": "string",
                         "enum": [
                             "start",
                             "end"
                         ],
-                        "default": "start"
+                        "default": "start",
+                        "description": "Relative to task start (DTSTART) or end/due (DUE)"
                     }
                 },
                 "additionalProperties": false
             },
-            "CalendarEventAbsoluteAlertTrigger": {
+            "TaskAlertAbsoluteTrigger": {
                 "type": "object",
                 "required": [
                     "@type",
@@ -5768,15 +6245,16 @@
                 "properties": {
                     "@type": {
                         "type": "string",
-                        "const": "AbsoluteAlert"
+                        "const": "AbsoluteTrigger"
                     },
                     "when": {
-                        "$ref": "#/components/schemas/JmapLocalDateTime"
+                        "type": "string",
+                        "description": "UTC date-time when the alert fires"
                     }
                 },
                 "additionalProperties": false
             },
-            "CalendarEventAlert": {
+            "TaskAlert": {
                 "type": "object",
                 "required": [
                     "@type",
@@ -5790,10 +6268,10 @@
                     "trigger": {
                         "oneOf": [
                             {
-                                "$ref": "#/components/schemas/CalendarEventRelativeAlertTrigger"
+                                "$ref": "#/components/schemas/TaskAlertOffsetTrigger"
                             },
                             {
-                                "$ref": "#/components/schemas/CalendarEventAbsoluteAlertTrigger"
+                                "$ref": "#/components/schemas/TaskAlertAbsoluteTrigger"
                             }
                         ]
                     },
@@ -5801,13 +6279,68 @@
                         "type": "string",
                         "enum": [
                             "display",
-                            "audio",
                             "email"
-                        ],
-                        "default": "display"
+                        ]
+                    },
+                    "acknowledged": {
+                        "type": "string"
                     }
                 },
                 "additionalProperties": false
+            },
+            "TaskRecurrenceOverride": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "start": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "due": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "completed": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "workflowStatus": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "progress": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "excluded": {
+                        "type": "boolean",
+                        "description": "When true, exclude this recurrence instance (EXDATE)"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "DavEtag": {
+                "type": "string",
+                "readOnly": true,
+                "description": "Quoted HTTP entity tag aligned with Cal/CardDAV storage (Sabre PDO etag)."
             },
             "CalendarEventRecurrenceOverride": {
                 "type": "object",
@@ -5908,6 +6441,155 @@
                     }
                 },
                 "additionalProperties": false
+            },
+            "CalendarEventRelativeAlertTrigger": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "offset"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "RelativeAlert"
+                    },
+                    "offset": {
+                        "type": "string",
+                        "description": "Signed ISO 8601 duration relative to event start or end (e.g. -PT15M)."
+                    },
+                    "relatedTo": {
+                        "type": "string",
+                        "enum": [
+                            "start",
+                            "end"
+                        ],
+                        "default": "start"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "CalendarEventAbsoluteAlertTrigger": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "when"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "AbsoluteAlert"
+                    },
+                    "when": {
+                        "$ref": "#/components/schemas/JmapLocalDateTime"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "CalendarEventAlert": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "trigger"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "Alert"
+                    },
+                    "trigger": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/CalendarEventRelativeAlertTrigger"
+                            },
+                            {
+                                "$ref": "#/components/schemas/CalendarEventAbsoluteAlertTrigger"
+                            }
+                        ]
+                    },
+                    "action": {
+                        "type": "string",
+                        "enum": [
+                            "display",
+                            "audio",
+                            "email"
+                        ],
+                        "default": "display"
+                    }
+                },
+                "additionalProperties": false
+            }
+        },
+        "parameters": {
+            "IfMatchHeader": {
+                "name": "If-Match",
+                "in": "header",
+                "required": true,
+                "schema": {
+                    "type": "string"
+                },
+                "description": "Concurrency token from the prior GET ETag header or etag response field."
+            },
+            "IfUnmodifiedSinceHeader": {
+                "name": "If-Unmodified-Since",
+                "in": "header",
+                "required": false,
+                "schema": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "description": "Optional fallback when If-Match is omitted; compared to stored lastmodified."
+            }
+        },
+        "responses": {
+            "PreconditionFailed": {
+                "description": "Precondition failed",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
+            },
+            "BadRequest": {
+                "description": "Invalid request",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
+            },
+            "Forbidden": {
+                "description": "Forbidden",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
+            },
+            "NotFound": {
+                "description": "Resource not found",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
+            },
+            "PayloadTooLarge": {
+                "description": "Payload too large",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
             }
         }
     },
@@ -8880,6 +9562,9 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
                     }
                 },
                 "x-wgw-access": "user"
@@ -8916,6 +9601,12 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
                     }
                 },
                 "x-wgw-access": "user"
@@ -8952,6 +9643,15 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
                     }
                 },
                 "x-wgw-access": "user"
@@ -8976,6 +9676,15 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/PayloadTooLarge"
                     }
                 },
                 "requestBody": {
@@ -9045,7 +9754,20 @@
                                     "$ref": "#/components/schemas/ContactCard"
                                 }
                             }
+                        },
+                        "headers": {
+                            "ETag": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
                         }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9068,6 +9790,12 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfMatchHeader"
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
                     }
                 ],
                 "responses": {
@@ -9079,7 +9807,29 @@
                                     "$ref": "#/components/schemas/ContactCard"
                                 }
                             }
+                        },
+                        "headers": {
+                            "ETag": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/PreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/PayloadTooLarge"
                     }
                 },
                 "requestBody": {
@@ -9137,6 +9887,12 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfMatchHeader"
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
                     }
                 ],
                 "responses": {
@@ -9148,7 +9904,29 @@
                                     "$ref": "#/components/schemas/ContactCard"
                                 }
                             }
+                        },
+                        "headers": {
+                            "ETag": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/PreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/PayloadTooLarge"
                     }
                 },
                 "requestBody": {
@@ -9188,6 +9966,12 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfMatchHeader"
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
                     }
                 ],
                 "responses": {
@@ -9200,6 +9984,18 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/PreconditionFailed"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9482,6 +10278,15 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9524,6 +10329,15 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/PayloadTooLarge"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9559,7 +10373,20 @@
                                     "$ref": "#/components/schemas/CalendarEvent"
                                 }
                             }
+                        },
+                        "headers": {
+                            "ETag": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
                         }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9582,6 +10409,12 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfMatchHeader"
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
                     }
                 ],
                 "requestBody": {
@@ -9603,7 +10436,29 @@
                                     "$ref": "#/components/schemas/CalendarEvent"
                                 }
                             }
+                        },
+                        "headers": {
+                            "ETag": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/PreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/PayloadTooLarge"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9626,6 +10481,12 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfMatchHeader"
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
                     }
                 ],
                 "requestBody": {
@@ -9647,7 +10508,29 @@
                                     "$ref": "#/components/schemas/CalendarEvent"
                                 }
                             }
+                        },
+                        "headers": {
+                            "ETag": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/PreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/PayloadTooLarge"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9670,6 +10553,12 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfMatchHeader"
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
                     }
                 ],
                 "responses": {
@@ -9682,6 +10571,18 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/PreconditionFailed"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9708,6 +10609,9 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9744,6 +10648,452 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/tasks/capabilities": {
+            "get": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Tasks feature capabilities",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tasks capabilities",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TasksCapabilitiesResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/tasks/tasklists": {
+            "get": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "List user's task lists",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Task list collection",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TaskTaskListListResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/tasks/tasklists/{taskListId}": {
+            "get": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Fetch a single task list",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "taskListId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Task list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TaskList"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/tasks/items": {
+            "get": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "List tasks in a task list",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "taskListId",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Task list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TaskListResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "post": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Create a task",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created task",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Task"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/PayloadTooLarge"
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TaskCreate"
+                            },
+                            "example": {
+                                "taskListIds": {
+                                    "default": true
+                                },
+                                "title": "Buy milk",
+                                "due": "2026-06-15T09:00:00"
+                            }
+                        }
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/tasks/items/{taskId}": {
+            "get": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Fetch a single task",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "taskId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Task",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Task"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "ETag": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "put": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Replace a task",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "taskId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfMatchHeader"
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated task",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Task"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "ETag": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/PreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/PayloadTooLarge"
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TaskCreate"
+                            }
+                        }
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "patch": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Partially update a task",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "taskId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfMatchHeader"
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated task",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Task"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "ETag": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/PreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/PayloadTooLarge"
+                    }
+                },
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TaskPatch"
+                            }
+                        }
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "delete": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Delete a task",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "taskId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfMatchHeader"
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted task",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OkResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/PreconditionFailed"
                     }
                 },
                 "x-wgw-access": "user"

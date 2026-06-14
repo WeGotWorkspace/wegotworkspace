@@ -5,15 +5,18 @@ declare(strict_types=1);
 namespace App\Services\Contacts;
 
 use App\Services\Contacts\Conversion\ConversionSupport;
-use Sabre\VObject\Component\VCard;
+use App\Services\VObject\VObjectPayloadGuard;
 use Sabre\VObject\Property;
-use Sabre\VObject\Reader;
 
 /**
  * Ensures RFC 9554 PROP-ID parameters exist on multivalue vCard properties.
  */
 final class PropIdEnsurer
 {
+    public function __construct(
+        private readonly VObjectPayloadGuard $guard = new VObjectPayloadGuard,
+    ) {}
+
     /** @var list<string> */
     private const MULTI_VALUE_PROPERTIES = [
         'EMAIL',
@@ -56,10 +59,7 @@ final class PropIdEnsurer
      */
     public function ensure(string $vcard): array
     {
-        $document = Reader::read($vcard);
-        if (! $document instanceof VCard) {
-            return ['vcard' => $vcard, 'changed' => false];
-        }
+        $document = $this->guard->readVCard($vcard);
 
         $changed = false;
         foreach (self::MULTI_VALUE_PROPERTIES as $propertyName) {

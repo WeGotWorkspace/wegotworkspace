@@ -3887,6 +3887,7 @@ export interface paths {
                         "application/json": components["schemas"]["ContactAddressBookListResponse"];
                     };
                 };
+                403: components["responses"]["Forbidden"];
             };
         };
         put?: never;
@@ -3925,6 +3926,8 @@ export interface paths {
                         "application/json": components["schemas"]["AddressBook"];
                     };
                 };
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
             };
         };
         put?: never;
@@ -3963,6 +3966,9 @@ export interface paths {
                         "application/json": components["schemas"]["ContactCardListResponse"];
                     };
                 };
+                400: components["responses"]["BadRequest"];
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
             };
         };
         put?: never;
@@ -4015,6 +4021,9 @@ export interface paths {
                         "application/json": components["schemas"]["ContactCard"];
                     };
                 };
+                400: components["responses"]["BadRequest"];
+                403: components["responses"]["Forbidden"];
+                413: components["responses"]["PayloadTooLarge"];
             };
         };
         delete?: never;
@@ -4045,19 +4054,27 @@ export interface paths {
                 /** @description Contact card */
                 200: {
                     headers: {
+                        ETag?: string;
                         [name: string]: unknown;
                     };
                     content: {
                         "application/json": components["schemas"]["ContactCard"];
                     };
                 };
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
             };
         };
         /** Replace a contact card */
         put: {
             parameters: {
                 query?: never;
-                header?: never;
+                header: {
+                    /** @description Concurrency token from the prior GET ETag header or etag response field. */
+                    "If-Match": components["parameters"]["IfMatchHeader"];
+                    /** @description Optional fallback when If-Match is omitted; compared to stored lastmodified. */
+                    "If-Unmodified-Since"?: components["parameters"]["IfUnmodifiedSinceHeader"];
+                };
                 path: {
                     cardId: string;
                 };
@@ -4098,12 +4115,18 @@ export interface paths {
                 /** @description Updated contact card */
                 200: {
                     headers: {
+                        ETag?: string;
                         [name: string]: unknown;
                     };
                     content: {
                         "application/json": components["schemas"]["ContactCard"];
                     };
                 };
+                400: components["responses"]["BadRequest"];
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
+                412: components["responses"]["PreconditionFailed"];
+                413: components["responses"]["PayloadTooLarge"];
             };
         };
         post?: never;
@@ -4111,7 +4134,12 @@ export interface paths {
         delete: {
             parameters: {
                 query?: never;
-                header?: never;
+                header: {
+                    /** @description Concurrency token from the prior GET ETag header or etag response field. */
+                    "If-Match": components["parameters"]["IfMatchHeader"];
+                    /** @description Optional fallback when If-Match is omitted; compared to stored lastmodified. */
+                    "If-Unmodified-Since"?: components["parameters"]["IfUnmodifiedSinceHeader"];
+                };
                 path: {
                     cardId: string;
                 };
@@ -4128,6 +4156,10 @@ export interface paths {
                         "application/json": components["schemas"]["OkResponse"];
                     };
                 };
+                400: components["responses"]["BadRequest"];
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
+                412: components["responses"]["PreconditionFailed"];
             };
         };
         options?: never;
@@ -4139,7 +4171,12 @@ export interface paths {
         patch: {
             parameters: {
                 query?: never;
-                header?: never;
+                header: {
+                    /** @description Concurrency token from the prior GET ETag header or etag response field. */
+                    "If-Match": components["parameters"]["IfMatchHeader"];
+                    /** @description Optional fallback when If-Match is omitted; compared to stored lastmodified. */
+                    "If-Unmodified-Since"?: components["parameters"]["IfUnmodifiedSinceHeader"];
+                };
                 path: {
                     cardId: string;
                 };
@@ -4163,12 +4200,18 @@ export interface paths {
                 /** @description Updated contact card */
                 200: {
                     headers: {
+                        ETag?: string;
                         [name: string]: unknown;
                     };
                     content: {
                         "application/json": components["schemas"]["ContactCard"];
                     };
                 };
+                400: components["responses"]["BadRequest"];
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
+                412: components["responses"]["PreconditionFailed"];
+                413: components["responses"]["PayloadTooLarge"];
             };
         };
         trace?: never;
@@ -4542,6 +4585,9 @@ export interface paths {
                         "application/json": components["schemas"]["CalendarEventListResponse"];
                     };
                 };
+                400: components["responses"]["BadRequest"];
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
             };
         };
         put?: never;
@@ -4578,6 +4624,9 @@ export interface paths {
                         "application/json": components["schemas"]["CalendarEvent"];
                     };
                 };
+                400: components["responses"]["BadRequest"];
+                403: components["responses"]["Forbidden"];
+                413: components["responses"]["PayloadTooLarge"];
             };
         };
         delete?: never;
@@ -4608,19 +4657,27 @@ export interface paths {
                 /** @description Calendar event */
                 200: {
                     headers: {
+                        ETag?: string;
                         [name: string]: unknown;
                     };
                     content: {
                         "application/json": components["schemas"]["CalendarEvent"];
                     };
                 };
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
             };
         };
         /** Replace a calendar event */
         put: {
             parameters: {
                 query?: never;
-                header?: never;
+                header: {
+                    /** @description Concurrency token from the prior GET ETag header or etag response field. */
+                    "If-Match": components["parameters"]["IfMatchHeader"];
+                    /** @description Optional fallback when If-Match is omitted; compared to stored lastmodified. */
+                    "If-Unmodified-Since"?: components["parameters"]["IfUnmodifiedSinceHeader"];
+                };
                 path: {
                     eventId: string;
                 };
@@ -4635,12 +4692,18 @@ export interface paths {
                 /** @description Updated calendar event */
                 200: {
                     headers: {
+                        ETag?: string;
                         [name: string]: unknown;
                     };
                     content: {
                         "application/json": components["schemas"]["CalendarEvent"];
                     };
                 };
+                400: components["responses"]["BadRequest"];
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
+                412: components["responses"]["PreconditionFailed"];
+                413: components["responses"]["PayloadTooLarge"];
             };
         };
         post?: never;
@@ -4648,7 +4711,12 @@ export interface paths {
         delete: {
             parameters: {
                 query?: never;
-                header?: never;
+                header: {
+                    /** @description Concurrency token from the prior GET ETag header or etag response field. */
+                    "If-Match": components["parameters"]["IfMatchHeader"];
+                    /** @description Optional fallback when If-Match is omitted; compared to stored lastmodified. */
+                    "If-Unmodified-Since"?: components["parameters"]["IfUnmodifiedSinceHeader"];
+                };
                 path: {
                     eventId: string;
                 };
@@ -4665,6 +4733,10 @@ export interface paths {
                         "application/json": components["schemas"]["OkResponse"];
                     };
                 };
+                400: components["responses"]["BadRequest"];
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
+                412: components["responses"]["PreconditionFailed"];
             };
         };
         options?: never;
@@ -4673,7 +4745,12 @@ export interface paths {
         patch: {
             parameters: {
                 query?: never;
-                header?: never;
+                header: {
+                    /** @description Concurrency token from the prior GET ETag header or etag response field. */
+                    "If-Match": components["parameters"]["IfMatchHeader"];
+                    /** @description Optional fallback when If-Match is omitted; compared to stored lastmodified. */
+                    "If-Unmodified-Since"?: components["parameters"]["IfUnmodifiedSinceHeader"];
+                };
                 path: {
                     eventId: string;
                 };
@@ -4688,12 +4765,18 @@ export interface paths {
                 /** @description Patched calendar event */
                 200: {
                     headers: {
+                        ETag?: string;
                         [name: string]: unknown;
                     };
                     content: {
                         "application/json": components["schemas"]["CalendarEvent"];
                     };
                 };
+                400: components["responses"]["BadRequest"];
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
+                412: components["responses"]["PreconditionFailed"];
+                413: components["responses"]["PayloadTooLarge"];
             };
         };
         trace?: never;
@@ -4724,6 +4807,7 @@ export interface paths {
                         "application/json": components["schemas"]["CalendarListResponse"];
                     };
                 };
+                403: components["responses"]["Forbidden"];
             };
         };
         put?: never;
@@ -4762,6 +4846,8 @@ export interface paths {
                         "application/json": components["schemas"]["Calendar"];
                     };
                 };
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
             };
         };
         put?: never;
@@ -4770,6 +4856,343 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/tasks/capabilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tasks feature capabilities */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Tasks capabilities */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TasksCapabilitiesResponse"];
+                    };
+                };
+                403: components["responses"]["Forbidden"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tasks/tasklists": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List user's task lists */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Task list collection */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TaskTaskListListResponse"];
+                    };
+                };
+                403: components["responses"]["Forbidden"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tasks/tasklists/{taskListId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Fetch a single task list */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    taskListId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Task list */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TaskList"];
+                    };
+                };
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tasks/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List tasks in a task list */
+        get: {
+            parameters: {
+                query: {
+                    taskListId: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Task list */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TaskListResponse"];
+                    };
+                };
+                400: components["responses"]["BadRequest"];
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
+            };
+        };
+        put?: never;
+        /** Create a task */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    /**
+                     * @example {
+                     *       "taskListIds": {
+                     *         "default": true
+                     *       },
+                     *       "title": "Buy milk",
+                     *       "due": "2026-06-15T09:00:00"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["TaskCreate"];
+                };
+            };
+            responses: {
+                /** @description Created task */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Task"];
+                    };
+                };
+                400: components["responses"]["BadRequest"];
+                403: components["responses"]["Forbidden"];
+                413: components["responses"]["PayloadTooLarge"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tasks/items/{taskId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Fetch a single task */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    taskId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Task */
+                200: {
+                    headers: {
+                        ETag?: string;
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Task"];
+                    };
+                };
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
+            };
+        };
+        /** Replace a task */
+        put: {
+            parameters: {
+                query?: never;
+                header: {
+                    /** @description Concurrency token from the prior GET ETag header or etag response field. */
+                    "If-Match": components["parameters"]["IfMatchHeader"];
+                    /** @description Optional fallback when If-Match is omitted; compared to stored lastmodified. */
+                    "If-Unmodified-Since"?: components["parameters"]["IfUnmodifiedSinceHeader"];
+                };
+                path: {
+                    taskId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["TaskCreate"];
+                };
+            };
+            responses: {
+                /** @description Updated task */
+                200: {
+                    headers: {
+                        ETag?: string;
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Task"];
+                    };
+                };
+                400: components["responses"]["BadRequest"];
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
+                412: components["responses"]["PreconditionFailed"];
+                413: components["responses"]["PayloadTooLarge"];
+            };
+        };
+        post?: never;
+        /** Delete a task */
+        delete: {
+            parameters: {
+                query?: never;
+                header: {
+                    /** @description Concurrency token from the prior GET ETag header or etag response field. */
+                    "If-Match": components["parameters"]["IfMatchHeader"];
+                    /** @description Optional fallback when If-Match is omitted; compared to stored lastmodified. */
+                    "If-Unmodified-Since"?: components["parameters"]["IfUnmodifiedSinceHeader"];
+                };
+                path: {
+                    taskId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Deleted task */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OkResponse"];
+                    };
+                };
+                400: components["responses"]["BadRequest"];
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
+                412: components["responses"]["PreconditionFailed"];
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Partially update a task */
+        patch: {
+            parameters: {
+                query?: never;
+                header: {
+                    /** @description Concurrency token from the prior GET ETag header or etag response field. */
+                    "If-Match": components["parameters"]["IfMatchHeader"];
+                    /** @description Optional fallback when If-Match is omitted; compared to stored lastmodified. */
+                    "If-Unmodified-Since"?: components["parameters"]["IfUnmodifiedSinceHeader"];
+                };
+                path: {
+                    taskId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["TaskPatch"];
+                };
+            };
+            responses: {
+                /** @description Updated task */
+                200: {
+                    headers: {
+                        ETag?: string;
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Task"];
+                    };
+                };
+                400: components["responses"]["BadRequest"];
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
+                412: components["responses"]["PreconditionFailed"];
+                413: components["responses"]["PayloadTooLarge"];
+            };
+        };
         trace?: never;
     };
 }
@@ -5926,6 +6349,7 @@ export interface components {
             uid: string;
             created?: components["schemas"]["JsContactUTCDateTime"];
             updated?: components["schemas"]["JsContactUTCDateTime"];
+            etag?: components["schemas"]["DavEtag"];
             /**
              * @default individual
              * @enum {string}
@@ -6880,6 +7304,7 @@ export interface components {
             sequence?: number;
             created?: components["schemas"]["JmapUTCDateTime"];
             updated?: components["schemas"]["JmapUTCDateTime"];
+            etag?: components["schemas"]["DavEtag"];
             icsProps?: {
                 [key: string]: string;
             };
@@ -6951,6 +7376,116 @@ export interface components {
         JmapUTCDateTime: string;
         /** @description Local or UTC date-time without required Z suffix. */
         JmapLocalDateTime: string;
+        TasksCapabilitiesResponse: {
+            enabled: boolean;
+            jmapCapability: string;
+            supportedTaskProperties: string[];
+        };
+        TaskListRights: {
+            mayReadItems: boolean;
+            mayWriteAll: boolean;
+            mayWriteOwn: boolean;
+            mayUpdatePrivate: boolean;
+            mayRSVP: boolean;
+            mayAdmin: boolean;
+            mayDelete: boolean;
+        };
+        TaskList: {
+            id: string;
+            role?: string | null;
+            name: string;
+            description?: string | null;
+            color?: string | null;
+            sortOrder: number;
+            isDefault: boolean;
+            isSubscribed: boolean;
+            shareWith?: Record<string, never> | null;
+            myRights: components["schemas"]["TaskListRights"];
+        };
+        TaskTaskListListResponse: {
+            list: components["schemas"]["TaskList"][];
+        };
+        Task: {
+            /** @enum {string} */
+            "@type": "Task";
+            id: string;
+            taskListId: string;
+            uid: string;
+            title?: string | null;
+            description?: string | null;
+            start?: string | null;
+            due?: string | null;
+            completed?: string | null;
+            workflowStatus?: string | null;
+            progress?: number | null;
+            priority?: number | null;
+            isDraft: boolean;
+            sortOrder: number;
+            categories?: string[];
+            privacy?: string | null;
+            created?: string | null;
+            updated?: string | null;
+            etag?: components["schemas"]["DavEtag"];
+            /** @description RRULE-only; clients expand instances per JMAP Tasks draft. */
+            recurrenceRules?: components["schemas"]["CalendarRecurrenceRule"][];
+            /** @description EXDATE values for excluded recurrence instances. */
+            excludedRecurrenceDates?: string[];
+            /** @description Per-instance patches keyed by recurrence id (RECURRENCE-ID). */
+            recurrenceOverrides?: {
+                [key: string]: components["schemas"]["TaskRecurrenceOverride"];
+            };
+            /** @description Task reminders mapped from VALARM components. */
+            alerts?: {
+                [key: string]: components["schemas"]["TaskAlert"];
+            };
+        };
+        TaskListResponse: {
+            list: components["schemas"]["Task"][];
+        };
+        TaskCreate: {
+            taskListIds: {
+                [key: string]: boolean;
+            };
+            uid?: string;
+            title: string;
+            description?: string | null;
+            start?: string | null;
+            due?: string | null;
+            completed?: string | null;
+            workflowStatus?: string | null;
+            progress?: number | null;
+            priority?: number | null;
+            categories?: string[];
+            privacy?: string | null;
+            recurrenceRules?: components["schemas"]["CalendarRecurrenceRule"][];
+            excludedRecurrenceDates?: string[];
+            recurrenceOverrides?: {
+                [key: string]: components["schemas"]["TaskRecurrenceOverride"];
+            };
+            alerts?: {
+                [key: string]: components["schemas"]["TaskAlert"];
+            };
+        };
+        TaskPatch: {
+            title?: string;
+            description?: string | null;
+            start?: string | null;
+            due?: string | null;
+            completed?: string | null;
+            workflowStatus?: string | null;
+            progress?: number | null;
+            priority?: number | null;
+            categories?: string[];
+            privacy?: string | null;
+            recurrenceRules?: components["schemas"]["CalendarRecurrenceRule"][];
+            excludedRecurrenceDates?: string[];
+            recurrenceOverrides?: {
+                [key: string]: components["schemas"]["TaskRecurrenceOverride"];
+            };
+            alerts?: {
+                [key: string]: components["schemas"]["TaskAlert"];
+            };
+        };
         /** @description PATCH request body for partial calendar event updates. Omits server-owned id and @type. */
         CalendarEventPatch: {
             title?: string;
@@ -6989,32 +7524,45 @@ export interface components {
                 [key: string]: string;
             };
         };
-        CalendarEventRelativeAlertTrigger: {
+        TaskAlertOffsetTrigger: {
             /** @constant */
-            "@type": "RelativeAlert";
-            /** @description Signed ISO 8601 duration relative to event start or end (e.g. -PT15M). */
+            "@type": "OffsetTrigger";
+            /** @description Signed ISO 8601 duration (e.g. -PT30M) */
             offset: string;
             /**
+             * @description Relative to task start (DTSTART) or end/due (DUE)
              * @default start
              * @enum {string}
              */
-            relatedTo: "start" | "end";
+            relativeTo: "start" | "end";
         };
-        CalendarEventAbsoluteAlertTrigger: {
+        TaskAlertAbsoluteTrigger: {
             /** @constant */
-            "@type": "AbsoluteAlert";
-            when: components["schemas"]["JmapLocalDateTime"];
+            "@type": "AbsoluteTrigger";
+            /** @description UTC date-time when the alert fires */
+            when: string;
         };
-        CalendarEventAlert: {
+        TaskAlert: {
             /** @constant */
             "@type": "Alert";
-            trigger: components["schemas"]["CalendarEventRelativeAlertTrigger"] | components["schemas"]["CalendarEventAbsoluteAlertTrigger"];
-            /**
-             * @default display
-             * @enum {string}
-             */
-            action: "display" | "audio" | "email";
+            trigger: components["schemas"]["TaskAlertOffsetTrigger"] | components["schemas"]["TaskAlertAbsoluteTrigger"];
+            /** @enum {string} */
+            action?: "display" | "email";
+            acknowledged?: string;
         };
+        TaskRecurrenceOverride: {
+            title?: string;
+            description?: string | null;
+            start?: string | null;
+            due?: string | null;
+            completed?: string | null;
+            workflowStatus?: string | null;
+            progress?: number | null;
+            /** @description When true, exclude this recurrence instance (EXDATE) */
+            excluded?: boolean;
+        };
+        /** @description Quoted HTTP entity tag aligned with Cal/CardDAV storage (Sabre PDO etag). */
+        DavEtag: string;
         /** @description Per-instance patch keyed by recurrence id (original instance start). Use excluded:true to omit an instance. */
         CalendarEventRecurrenceOverride: {
             excluded?: boolean;
@@ -7044,9 +7592,86 @@ export interface components {
                 [key: string]: string;
             };
         };
+        CalendarEventRelativeAlertTrigger: {
+            /** @constant */
+            "@type": "RelativeAlert";
+            /** @description Signed ISO 8601 duration relative to event start or end (e.g. -PT15M). */
+            offset: string;
+            /**
+             * @default start
+             * @enum {string}
+             */
+            relatedTo: "start" | "end";
+        };
+        CalendarEventAbsoluteAlertTrigger: {
+            /** @constant */
+            "@type": "AbsoluteAlert";
+            when: components["schemas"]["JmapLocalDateTime"];
+        };
+        CalendarEventAlert: {
+            /** @constant */
+            "@type": "Alert";
+            trigger: components["schemas"]["CalendarEventRelativeAlertTrigger"] | components["schemas"]["CalendarEventAbsoluteAlertTrigger"];
+            /**
+             * @default display
+             * @enum {string}
+             */
+            action: "display" | "audio" | "email";
+        };
     };
-    responses: never;
-    parameters: never;
+    responses: {
+        /** @description Precondition failed */
+        PreconditionFailed: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Invalid request */
+        BadRequest: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Forbidden */
+        Forbidden: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Resource not found */
+        NotFound: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Payload too large */
+        PayloadTooLarge: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+    };
+    parameters: {
+        /** @description Concurrency token from the prior GET ETag header or etag response field. */
+        IfMatchHeader: string;
+        /** @description Optional fallback when If-Match is omitted; compared to stored lastmodified. */
+        IfUnmodifiedSinceHeader: string;
+    };
     requestBodies: never;
     headers: never;
     pathItems: never;

@@ -9,6 +9,7 @@ use App\Models\Card;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Tests\Support\ContactsTestFixtures;
+use Tests\Support\OptimisticConcurrencyTestHelpers;
 use Tests\Support\WgwDatabaseTestCase;
 
 /**
@@ -17,6 +18,7 @@ use Tests\Support\WgwDatabaseTestCase;
 final class ContactsCardDavInteropTest extends WgwDatabaseTestCase
 {
     use ContactsTestFixtures;
+    use OptimisticConcurrencyTestHelpers;
 
     protected function setUp(): void
     {
@@ -269,7 +271,7 @@ final class ContactsCardDavInteropTest extends WgwDatabaseTestCase
         ];
 
         $update = $this->withBearer($this->userBearerToken())
-            ->putJson('/api/v1/contacts/cards/'.$cardId, $updatePayload);
+            ->putJson('/api/v1/contacts/cards/'.$cardId, $updatePayload, $this->ifMatchFromResponse($create));
         $update->assertOk()
             ->assertJsonPath("emails.{$emailKey}.address", 'after@example.com');
 
@@ -306,7 +308,7 @@ final class ContactsCardDavInteropTest extends WgwDatabaseTestCase
                         'address' => 'patched@example.com',
                     ],
                 ],
-            ]);
+            ], $this->ifMatchFromResponse($create));
         $patch->assertOk()
             ->assertJsonPath("emails.{$emailKey}.address", 'patched@example.com');
 

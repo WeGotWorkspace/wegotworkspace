@@ -1,0 +1,29 @@
+{
+  "@type": "Task",
+  "uid": "urn:uuid:recurring-task-001",
+  "title": "Daily standup",
+  "description": null,
+  "start": null,
+  "due": "2026-06-01T09:00:00",
+  "completed": null,
+  "workflowStatus": "needs-action",
+  "progress": null,
+  "priority": null,
+  "isDraft": false,
+  "sortOrder": 0,
+  "categories": [],
+  "privacy": null,
+  "created": null,
+  "updated": null,
+  "recurrenceRules": [
+    {
+      "@type": "RecurrenceRule",
+      "frequency": "daily",
+      "interval": 1,
+      "count": 5
+    }
+  ],
+  "excludedRecurrenceDates": [
+    "2026-06-03T09:00:00"
+  ]
+}

@@ -125,6 +125,52 @@ final class OpenApiContract
     }
 
     /**
+     * @return list<array{method: string, path: string, responses: array<string, mixed>}>
+     */
+    public static function jmapRestOperations(): array
+    {
+        $prefixes = ['/contacts/', '/calendars/', '/tasks/'];
+        $operations = [];
+
+        foreach (self::paths() as $path => $pathItem) {
+            if (! is_string($path) || ! is_array($pathItem)) {
+                continue;
+            }
+            $matched = false;
+            foreach ($prefixes as $prefix) {
+                if (str_starts_with($path, $prefix)) {
+                    $matched = true;
+                    break;
+                }
+            }
+            if (! $matched) {
+                continue;
+            }
+            foreach ($pathItem as $op => $definition) {
+                if (! is_string($op) || ! is_array($definition)) {
+                    continue;
+                }
+                if (in_array(strtolower($op), ['parameters', 'summary', 'description', 'servers'], true)) {
+                    continue;
+                }
+                $responses = $definition['responses'] ?? null;
+                if (! is_array($responses)) {
+                    continue;
+                }
+                $operations[] = [
+                    'method' => strtoupper($op),
+                    'path' => $path,
+                    'responses' => $responses,
+                ];
+            }
+        }
+
+        usort($operations, static fn (array $a, array $b): int => [$a['path'], $a['method']] <=> [$b['path'], $b['method']]);
+
+        return $operations;
+    }
+
+    /**
      * Replace OpenAPI path placeholders with stable sample values for smoke requests.
      */
     public static function sampleRequestPath(string $openApiPath): string
@@ -144,6 +190,8 @@ final class OpenApiContract
             '{cardId}' => 'demo-card',
             '{calendarId}' => 'default',
             '{eventId}' => 'demo-event',
+            '{taskListId}' => 'default',
+            '{taskId}' => 'demo-task',
         ];
 
         $path = $openApiPath;
@@ -185,6 +233,9 @@ final class OpenApiContract
         }
         if ($openApiPath === '/calendars/events' && $method === 'GET') {
             return 'calendarId=default';
+        }
+        if ($openApiPath === '/tasks/items' && $method === 'GET') {
+            return 'taskListId=default';
         }
 
         return '';

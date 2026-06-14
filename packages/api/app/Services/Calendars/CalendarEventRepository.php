@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace App\Services\Calendars;
 
 use App\Exceptions\ApiHttpException;
+use App\Http\Support\OptimisticConcurrency;
 use App\Models\CalendarInstance;
 use App\Models\CalendarObject;
 use App\Services\Calendars\Conversion\CalendarConversionSupport;
+use App\Services\Search\BestEffortSearchIndexSync;
 use App\Services\Search\SearchIndexerService;
-use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Sabre\CalDAV\Backend\PDO as CalPDO;
 
@@ -18,6 +19,7 @@ final class CalendarEventRepository
     public function __construct(
         private readonly CalendarEventMapper $mapper,
         private readonly SearchIndexerService $searchIndexer,
+        private readonly BestEffortSearchIndexSync $searchIndexSync = new BestEffortSearchIndexSync,
     ) {}
 
     /**
@@ -75,9 +77,13 @@ final class CalendarEventRepository
         $ics = $this->mapper->toIcs($eventPayload);
 
         $this->calBackend()->createCalendarObject($this->calBackendCalendarId($instance), $eventUri, $ics);
-        $this->syncSearchIndex(fn () => $this->searchIndexer->indexCalendarObjectFromPath(
-            $this->calDavPath($username, (string) $instance->uri, $eventUri)
-        ));
+        $davPath = $this->calDavPath($username, (string) $instance->uri, $eventUri);
+        $this->searchIndexSync->sync(
+            'calendars',
+            fn () => $this->searchIndexer->indexCalendarObjectFromPath($davPath),
+            $davPath,
+            $username,
+        );
 
         $object = $this->findObjectInCalendar((int) $instance->calendarid, $eventUri, fresh: true);
         if ($object === null) {
@@ -91,29 +97,45 @@ final class CalendarEventRepository
      * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
-    public function update(string $username, string $eventId, array $payload): array
-    {
-        return $this->persistEventMutation($username, $eventId, $payload, deepMerge: false);
+    public function update(
+        string $username,
+        string $eventId,
+        array $payload,
+        ?string $ifMatch = null,
+        ?string $ifUnmodifiedSince = null,
+    ): array {
+        return $this->persistEventMutation($username, $eventId, $payload, false, $ifMatch, $ifUnmodifiedSince);
     }
 
     /**
      * @param  array<string, mixed>  $patch
      * @return array<string, mixed>
      */
-    public function patch(string $username, string $eventId, array $patch): array
-    {
-        return $this->persistEventMutation($username, $eventId, $patch, deepMerge: true);
+    public function patch(
+        string $username,
+        string $eventId,
+        array $patch,
+        ?string $ifMatch = null,
+        ?string $ifUnmodifiedSince = null,
+    ): array {
+        return $this->persistEventMutation($username, $eventId, $patch, true, $ifMatch, $ifUnmodifiedSince);
     }
 
     /**
      * @return array{ok: true}
      */
-    public function delete(string $username, string $eventId): array
-    {
+    public function delete(
+        string $username,
+        string $eventId,
+        ?string $ifMatch = null,
+        ?string $ifUnmodifiedSince = null,
+    ): array {
         $located = $this->findOwnedEvent($username, $eventId);
         if ($located === null) {
             throw new ApiHttpException(404, 'Calendar event not found.', 'not_found');
         }
+
+        $this->assertObjectPreconditions($located['object'], $ifMatch, $ifUnmodifiedSince);
 
         $instance = $located['instance'];
         $object = $located['object'];
@@ -126,20 +148,32 @@ final class CalendarEventRepository
             $remaining = $this->mapper->removeVEventFromIcs($raw, $veventUid);
             if ($remaining === null) {
                 $this->calBackend()->deleteCalendarObject($this->calBackendCalendarId($instance), $eventUri);
-                $this->syncSearchIndex(fn () => $this->searchIndexer->deleteDavPath(
-                    $this->calDavPath($username, (string) $instance->uri, $eventUri)
-                ));
+                $davPath = $this->calDavPath($username, (string) $instance->uri, $eventUri);
+                $this->searchIndexSync->sync(
+                    'calendars',
+                    fn () => $this->searchIndexer->deleteDavPath($davPath),
+                    $davPath,
+                    $username,
+                );
             } else {
                 $this->calBackend()->updateCalendarObject($this->calBackendCalendarId($instance), $eventUri, $remaining);
-                $this->syncSearchIndex(fn () => $this->searchIndexer->indexCalendarObjectFromPath(
-                    $this->calDavPath($username, (string) $instance->uri, $eventUri)
-                ));
+                $davPath = $this->calDavPath($username, (string) $instance->uri, $eventUri);
+                $this->searchIndexSync->sync(
+                    'calendars',
+                    fn () => $this->searchIndexer->indexCalendarObjectFromPath($davPath),
+                    $davPath,
+                    $username,
+                );
             }
         } else {
             $this->calBackend()->deleteCalendarObject($this->calBackendCalendarId($instance), $eventUri);
-            $this->syncSearchIndex(fn () => $this->searchIndexer->deleteDavPath(
-                $this->calDavPath($username, (string) $instance->uri, $eventUri)
-            ));
+            $davPath = $this->calDavPath($username, (string) $instance->uri, $eventUri);
+            $this->searchIndexSync->sync(
+                'calendars',
+                fn () => $this->searchIndexer->deleteDavPath($davPath),
+                $davPath,
+                $username,
+            );
         }
 
         return ['ok' => true];
@@ -154,11 +188,15 @@ final class CalendarEventRepository
         string $eventId,
         array $payload,
         bool $deepMerge,
+        ?string $ifMatch = null,
+        ?string $ifUnmodifiedSince = null,
     ): array {
         $located = $this->findOwnedEvent($username, $eventId);
         if ($located === null) {
             throw new ApiHttpException(404, 'Calendar event not found.', 'not_found');
         }
+
+        $this->assertObjectPreconditions($located['object'], $ifMatch, $ifUnmodifiedSince);
 
         $instance = $located['instance'];
         $object = $located['object'];
@@ -187,9 +225,13 @@ final class CalendarEventRepository
         $ics = $this->mapper->updateIcs($raw, $eventPayload, $located['veventUid']);
         $calendarId = (int) $object->calendarid;
         $this->calBackend()->updateCalendarObject($this->calBackendCalendarId($instance), $eventUri, $ics);
-        $this->syncSearchIndex(fn () => $this->searchIndexer->indexCalendarObjectFromPath(
-            $this->calDavPath($username, (string) $instance->uri, $eventUri)
-        ));
+        $davPath = $this->calDavPath($username, (string) $instance->uri, $eventUri);
+        $this->searchIndexSync->sync(
+            'calendars',
+            fn () => $this->searchIndexer->indexCalendarObjectFromPath($davPath),
+            $davPath,
+            $username,
+        );
 
         $updated = $this->findObjectInCalendar($calendarId, $eventUri, fresh: true);
         if ($updated === null) {
@@ -355,6 +397,16 @@ final class CalendarEventRepository
         return 'principals/'.$username;
     }
 
+    private function assertObjectPreconditions(CalendarObject $object, ?string $ifMatch, ?string $ifUnmodifiedSince): void
+    {
+        OptimisticConcurrency::assertPreconditions(
+            $ifMatch,
+            $ifUnmodifiedSince,
+            is_string($object->etag) ? $object->etag : null,
+            (int) ($object->lastmodified ?? 0),
+        );
+    }
+
     private function calBackend(): CalPDO
     {
         return new CalPDO(DB::connection('wgw')->getPdo());
@@ -366,16 +418,5 @@ final class CalendarEventRepository
     private function calBackendCalendarId(CalendarInstance $instance): array
     {
         return [(int) $instance->calendarid, (int) $instance->id];
-    }
-
-    private function syncSearchIndex(callable $callback): void
-    {
-        try {
-            $callback();
-        } catch (QueryException) {
-            // Search index is optional in some test and bootstrap contexts.
-        } catch (\Throwable) {
-            // Search sync should never block calendar writes.
-        }
     }
 }

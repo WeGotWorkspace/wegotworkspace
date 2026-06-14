@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Calendars\Conversion;
 
 use Illuminate\Support\Str;
+use Sabre\VObject\Component;
 use Sabre\VObject\Component\VAlarm;
 use Sabre\VObject\Component\VCalendar;
 use Sabre\VObject\Component\VEvent;
@@ -493,6 +494,102 @@ final class CalendarConversionSupport
         }
 
         return null;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public static function taskAlertFromValarm(Component $valarm): ?array
+    {
+        if (! isset($valarm->TRIGGER)) {
+            return null;
+        }
+
+        $triggerValue = trim((string) $valarm->TRIGGER->getValue());
+        if ($triggerValue === '') {
+            return null;
+        }
+
+        $related = isset($valarm->TRIGGER['RELATED'])
+            ? strtoupper(trim((string) $valarm->TRIGGER['RELATED']))
+            : 'START';
+        $relativeTo = $related === 'END' ? 'end' : 'start';
+
+        if (preg_match('/^-?P/i', $triggerValue) === 1) {
+            $trigger = [
+                '@type' => 'OffsetTrigger',
+                'offset' => $triggerValue,
+                'relativeTo' => $relativeTo,
+            ];
+        } else {
+            $trigger = [
+                '@type' => 'AbsoluteTrigger',
+                'when' => self::normalizeUtcDateTime($triggerValue),
+            ];
+        }
+
+        $alert = [
+            '@type' => 'Alert',
+            'trigger' => $trigger,
+        ];
+
+        if (isset($valarm->ACTION)) {
+            $action = strtolower(trim((string) $valarm->ACTION->getValue()));
+            if (in_array($action, ['display', 'email'], true)) {
+                $alert['action'] = $action;
+            }
+        }
+
+        if (isset($valarm->ACKNOWLEDGED)) {
+            $alert['acknowledged'] = self::normalizeUtcDateTime((string) $valarm->ACKNOWLEDGED->getValue());
+        }
+
+        return $alert;
+    }
+
+    /**
+     * @param  array<string, mixed>  $alerts
+     */
+    public static function writeValarmComponents(Component $parent, array $alerts): void
+    {
+        foreach ($alerts as $entry) {
+            if (! is_array($entry)) {
+                continue;
+            }
+
+            $trigger = $entry['trigger'] ?? null;
+            if (! is_array($trigger)) {
+                continue;
+            }
+
+            $valarm = $parent->add('VALARM');
+            $action = isset($entry['action']) && is_string($entry['action'])
+                ? strtoupper($entry['action'])
+                : 'DISPLAY';
+            $valarm->add('ACTION', $action);
+
+            if (($trigger['@type'] ?? '') === 'OffsetTrigger' && isset($trigger['offset']) && is_string($trigger['offset'])) {
+                $params = [];
+                $relativeTo = strtolower((string) ($trigger['relativeTo'] ?? 'start'));
+                if ($relativeTo === 'end') {
+                    $params['RELATED'] = 'END';
+                }
+                $valarm->add('TRIGGER', $trigger['offset'], $params);
+            } elseif (($trigger['@type'] ?? '') === 'AbsoluteTrigger'
+                && isset($trigger['when'])
+                && is_string($trigger['when'])
+                && trim($trigger['when']) !== '') {
+                $valarm->add('TRIGGER', self::utcDateTimeToIcs($trigger['when']));
+            } else {
+                $parent->remove($valarm);
+
+                continue;
+            }
+
+            if (isset($entry['acknowledged']) && is_string($entry['acknowledged']) && trim($entry['acknowledged']) !== '') {
+                $valarm->add('ACKNOWLEDGED', self::utcDateTimeToIcs($entry['acknowledged']));
+            }
+        }
     }
 
     /**

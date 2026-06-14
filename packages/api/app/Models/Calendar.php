@@ -33,4 +33,11 @@ final class Calendar extends Model
     {
         return $this->hasMany(CalendarObject::class, 'calendarid');
     }
+
+    public function supportsVtodo(): bool
+    {
+        $components = (string) ($this->components ?? '');
+
+        return str_contains($components, 'VTODO');
+    }
 }
