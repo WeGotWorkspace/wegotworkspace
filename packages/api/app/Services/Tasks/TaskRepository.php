@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace App\Services\Tasks;
 
 use App\Exceptions\ApiHttpException;
+use App\Http\Support\OptimisticConcurrency;
 use App\Models\CalendarInstance;
 use App\Models\CalendarObject;
+use App\Services\Search\BestEffortSearchIndexSync;
 use App\Services\Search\SearchIndexerService;
 use App\Services\Tasks\Conversion\ConversionSupport;
 use App\Services\Tasks\Conversion\IcsJmapTaskConverter;
-use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Sabre\CalDAV\Backend\PDO as CalPDO;
@@ -21,6 +22,7 @@ final class TaskRepository
         private readonly TaskMapper $mapper,
         private readonly TaskListRepository $taskLists,
         private readonly SearchIndexerService $searchIndexer,
+        private readonly BestEffortSearchIndexSync $searchIndexSync = new BestEffortSearchIndexSync,
     ) {}
 
     /**
@@ -87,9 +89,13 @@ final class TaskRepository
             $objectUri,
             $ics,
         );
-        $this->syncSearchIndex(fn () => $this->searchIndexer->indexCalendarObjectFromPath(
-            $this->calendarDavPath($username, (string) $instance->uri, $objectUri)
-        ));
+        $davPath = $this->calendarDavPath($username, (string) $instance->uri, $objectUri);
+        $this->searchIndexSync->sync(
+            'tasks',
+            fn () => $this->searchIndexer->indexCalendarObjectFromPath($davPath),
+            $davPath,
+            $username,
+        );
 
         $object = $this->findObjectInCalendar((int) $instance->calendarid, $objectUri);
         if ($object === null) {
@@ -108,12 +114,19 @@ final class TaskRepository
      * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
-    public function update(string $username, string $taskId, array $payload): array
-    {
+    public function update(
+        string $username,
+        string $taskId,
+        array $payload,
+        ?string $ifMatch = null,
+        ?string $ifUnmodifiedSince = null,
+    ): array {
         $located = $this->findOwnedTask($username, $taskId);
         if ($located === null) {
             throw new ApiHttpException(404, 'Task not found.', 'not_found');
         }
+
+        $this->assertObjectPreconditions($located['object'], $ifMatch, $ifUnmodifiedSince);
 
         $instance = $located['instance'];
         $object = $located['object'];
@@ -138,9 +151,13 @@ final class TaskRepository
             $objectUri,
             $ics,
         );
-        $this->syncSearchIndex(fn () => $this->searchIndexer->indexCalendarObjectFromPath(
-            $this->calendarDavPath($username, (string) $instance->uri, $objectUri)
-        ));
+        $davPath = $this->calendarDavPath($username, (string) $instance->uri, $objectUri);
+        $this->searchIndexSync->sync(
+            'tasks',
+            fn () => $this->searchIndexer->indexCalendarObjectFromPath($davPath),
+            $davPath,
+            $username,
+        );
 
         $updated = $this->findObjectInCalendar((int) $instance->calendarid, $objectUri);
         if ($updated === null) {
@@ -159,12 +176,19 @@ final class TaskRepository
      * @param  array<string, mixed>  $patch
      * @return array<string, mixed>
      */
-    public function patch(string $username, string $taskId, array $patch): array
-    {
+    public function patch(
+        string $username,
+        string $taskId,
+        array $patch,
+        ?string $ifMatch = null,
+        ?string $ifUnmodifiedSince = null,
+    ): array {
         $located = $this->findOwnedTask($username, $taskId);
         if ($located === null) {
             throw new ApiHttpException(404, 'Task not found.', 'not_found');
         }
+
+        $this->assertObjectPreconditions($located['object'], $ifMatch, $ifUnmodifiedSince);
 
         $instance = $located['instance'];
         $object = $located['object'];
@@ -190,9 +214,13 @@ final class TaskRepository
             $objectUri,
             $ics,
         );
-        $this->syncSearchIndex(fn () => $this->searchIndexer->indexCalendarObjectFromPath(
-            $this->calendarDavPath($username, (string) $instance->uri, $objectUri)
-        ));
+        $davPath = $this->calendarDavPath($username, (string) $instance->uri, $objectUri);
+        $this->searchIndexSync->sync(
+            'tasks',
+            fn () => $this->searchIndexer->indexCalendarObjectFromPath($davPath),
+            $davPath,
+            $username,
+        );
 
         $updated = $this->findObjectInCalendar((int) $instance->calendarid, $objectUri);
         if ($updated === null) {
@@ -210,12 +238,18 @@ final class TaskRepository
     /**
      * @return array{ok: true}
      */
-    public function delete(string $username, string $taskId): array
-    {
+    public function delete(
+        string $username,
+        string $taskId,
+        ?string $ifMatch = null,
+        ?string $ifUnmodifiedSince = null,
+    ): array {
         $located = $this->findOwnedTask($username, $taskId);
         if ($located === null) {
             throw new ApiHttpException(404, 'Task not found.', 'not_found');
         }
+
+        $this->assertObjectPreconditions($located['object'], $ifMatch, $ifUnmodifiedSince);
 
         $instance = $located['instance'];
         $object = $located['object'];
@@ -228,14 +262,29 @@ final class TaskRepository
             $remaining = $this->mapper->removeVtodoFromIcs($raw, $located['vtodoUid']);
             if ($remaining === null) {
                 $this->calBackend()->deleteCalendarObject($calendarIdPair, $objectUri);
-                $this->syncSearchIndex(fn () => $this->searchIndexer->deleteDavPath($davPath));
+                $this->searchIndexSync->sync(
+                    'tasks',
+                    fn () => $this->searchIndexer->deleteDavPath($davPath),
+                    $davPath,
+                    $username,
+                );
             } else {
                 $this->calBackend()->updateCalendarObject($calendarIdPair, $objectUri, $remaining);
-                $this->syncSearchIndex(fn () => $this->searchIndexer->indexCalendarObjectFromPath($davPath));
+                $this->searchIndexSync->sync(
+                    'tasks',
+                    fn () => $this->searchIndexer->indexCalendarObjectFromPath($davPath),
+                    $davPath,
+                    $username,
+                );
             }
         } else {
             $this->calBackend()->deleteCalendarObject($calendarIdPair, $objectUri);
-            $this->syncSearchIndex(fn () => $this->searchIndexer->deleteDavPath($davPath));
+            $this->searchIndexSync->sync(
+                'tasks',
+                fn () => $this->searchIndexer->deleteDavPath($davPath),
+                $davPath,
+                $username,
+            );
         }
 
         return ['ok' => true];
@@ -393,19 +442,18 @@ final class TaskRepository
         return 'principals/'.$username;
     }
 
+    private function assertObjectPreconditions(CalendarObject $object, ?string $ifMatch, ?string $ifUnmodifiedSince): void
+    {
+        OptimisticConcurrency::assertPreconditions(
+            $ifMatch,
+            $ifUnmodifiedSince,
+            is_string($object->etag) ? $object->etag : null,
+            (int) ($object->lastmodified ?? 0),
+        );
+    }
+
     private function calBackend(): CalPDO
     {
         return new CalPDO(DB::connection('wgw')->getPdo());
-    }
-
-    private function syncSearchIndex(callable $callback): void
-    {
-        try {
-            $callback();
-        } catch (QueryException) {
-            // Search index is optional in some test and bootstrap contexts.
-        } catch (\Throwable) {
-            // Search sync should never block task writes.
-        }
     }
 }

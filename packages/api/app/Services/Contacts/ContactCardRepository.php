@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace App\Services\Contacts;
 
 use App\Exceptions\ApiHttpException;
+use App\Http\Support\OptimisticConcurrency;
 use App\Models\Addressbook;
 use App\Models\Card;
 use App\Services\Contacts\Conversion\ConversionSupport;
+use App\Services\Search\BestEffortSearchIndexSync;
 use App\Services\Search\SearchIndexerService;
-use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Sabre\CardDAV\Backend\PDO as CardPDO;
@@ -19,6 +20,7 @@ final class ContactCardRepository
     public function __construct(
         private readonly ContactCardMapper $mapper,
         private readonly SearchIndexerService $searchIndexer,
+        private readonly BestEffortSearchIndexSync $searchIndexSync = new BestEffortSearchIndexSync,
     ) {}
 
     /**
@@ -69,9 +71,13 @@ final class ContactCardRepository
         $vcard = $this->mapper->toVCard($cardPayload);
 
         $this->cardBackend()->createCard((int) $book->id, $cardUri, $vcard);
-        $this->syncSearchIndex(fn () => $this->searchIndexer->indexCardObjectFromPath(
-            $this->cardDavPath($username, (string) $book->uri, $cardUri)
-        ));
+        $davPath = $this->cardDavPath($username, (string) $book->uri, $cardUri);
+        $this->searchIndexSync->sync(
+            'contacts',
+            fn () => $this->searchIndexer->indexCardObjectFromPath($davPath),
+            $davPath,
+            $username,
+        );
 
         $card = $this->findCardInBook((int) $book->id, $cardUri);
         if ($card === null) {
@@ -85,12 +91,19 @@ final class ContactCardRepository
      * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
-    public function update(string $username, string $cardId, array $payload): array
-    {
+    public function update(
+        string $username,
+        string $cardId,
+        array $payload,
+        ?string $ifMatch = null,
+        ?string $ifUnmodifiedSince = null,
+    ): array {
         $located = $this->findOwnedCard($username, $cardId);
         if ($located === null) {
             throw new ApiHttpException(404, 'Contact card not found.', 'not_found');
         }
+
+        $this->assertCardPreconditions($located['card'], $ifMatch, $ifUnmodifiedSince);
 
         $book = $located['book'];
         $card = $located['card'];
@@ -103,9 +116,13 @@ final class ContactCardRepository
         $vcard = $this->mapper->toVCard($cardPayload);
         $addressBookId = (int) $card->addressbookid;
         $this->cardBackend()->updateCard($addressBookId, $cardUri, $vcard);
-        $this->syncSearchIndex(fn () => $this->searchIndexer->indexCardObjectFromPath(
-            $this->cardDavPath($username, (string) $book->uri, $cardUri)
-        ));
+        $davPath = $this->cardDavPath($username, (string) $book->uri, $cardUri);
+        $this->searchIndexSync->sync(
+            'contacts',
+            fn () => $this->searchIndexer->indexCardObjectFromPath($davPath),
+            $davPath,
+            $username,
+        );
 
         $updated = $this->findCardInBook($addressBookId, $cardUri);
         if ($updated === null) {
@@ -119,12 +136,19 @@ final class ContactCardRepository
      * @param  array<string, mixed>  $patch
      * @return array<string, mixed>
      */
-    public function patch(string $username, string $cardId, array $patch): array
-    {
+    public function patch(
+        string $username,
+        string $cardId,
+        array $patch,
+        ?string $ifMatch = null,
+        ?string $ifUnmodifiedSince = null,
+    ): array {
         $located = $this->findOwnedCard($username, $cardId);
         if ($located === null) {
             throw new ApiHttpException(404, 'Contact card not found.', 'not_found');
         }
+
+        $this->assertCardPreconditions($located['card'], $ifMatch, $ifUnmodifiedSince);
 
         $book = $located['book'];
         $card = $located['card'];
@@ -140,9 +164,13 @@ final class ContactCardRepository
         $vcard = $this->mapper->toVCard($cardPayload);
         $addressBookId = (int) $card->addressbookid;
         $this->cardBackend()->updateCard($addressBookId, $cardUri, $vcard);
-        $this->syncSearchIndex(fn () => $this->searchIndexer->indexCardObjectFromPath(
-            $this->cardDavPath($username, (string) $book->uri, $cardUri)
-        ));
+        $davPath = $this->cardDavPath($username, (string) $book->uri, $cardUri);
+        $this->searchIndexSync->sync(
+            'contacts',
+            fn () => $this->searchIndexer->indexCardObjectFromPath($davPath),
+            $davPath,
+            $username,
+        );
 
         $updated = $this->findCardInBook($addressBookId, $cardUri);
         if ($updated === null) {
@@ -155,20 +183,30 @@ final class ContactCardRepository
     /**
      * @return array{ok: true}
      */
-    public function delete(string $username, string $cardId): array
-    {
+    public function delete(
+        string $username,
+        string $cardId,
+        ?string $ifMatch = null,
+        ?string $ifUnmodifiedSince = null,
+    ): array {
         $located = $this->findOwnedCard($username, $cardId);
         if ($located === null) {
             throw new ApiHttpException(404, 'Contact card not found.', 'not_found');
         }
 
+        $this->assertCardPreconditions($located['card'], $ifMatch, $ifUnmodifiedSince);
+
         $book = $located['book'];
         $card = $located['card'];
         $cardUri = (string) $card->uri;
         $this->cardBackend()->deleteCard((int) $card->addressbookid, $cardUri);
-        $this->syncSearchIndex(fn () => $this->searchIndexer->deleteDavPath(
-            $this->cardDavPath($username, (string) $book->uri, $cardUri)
-        ));
+        $davPath = $this->cardDavPath($username, (string) $book->uri, $cardUri);
+        $this->searchIndexSync->sync(
+            'contacts',
+            fn () => $this->searchIndexer->deleteDavPath($davPath),
+            $davPath,
+            $username,
+        );
 
         return ['ok' => true];
     }
@@ -295,19 +333,18 @@ final class ContactCardRepository
         return 'principals/'.$username;
     }
 
+    private function assertCardPreconditions(Card $card, ?string $ifMatch, ?string $ifUnmodifiedSince): void
+    {
+        OptimisticConcurrency::assertPreconditions(
+            $ifMatch,
+            $ifUnmodifiedSince,
+            is_string($card->etag) ? $card->etag : null,
+            (int) ($card->lastmodified ?? 0),
+        );
+    }
+
     private function cardBackend(): CardPDO
     {
         return new CardPDO(DB::connection('wgw')->getPdo());
-    }
-
-    private function syncSearchIndex(callable $callback): void
-    {
-        try {
-            $callback();
-        } catch (QueryException) {
-            // Search index is optional in some test and bootstrap contexts.
-        } catch (\Throwable) {
-            // Search sync should never block contact writes.
-        }
     }
 }
