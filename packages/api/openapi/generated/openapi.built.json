@@ -10056,6 +10056,68 @@
                 "x-wgw-access": "user"
             }
         },
+        "/calendars/calendars": {
+            "get": {
+                "tags": [
+                    "Calendars"
+                ],
+                "summary": "List user's calendars",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Calendar list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CalendarListResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/calendars/calendars/{calendarId}": {
+            "get": {
+                "tags": [
+                    "Calendars"
+                ],
+                "summary": "Fetch a single calendar",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "calendarId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Calendar",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Calendar"
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
         "/calendars/events": {
             "get": {
                 "tags": [
@@ -10314,68 +10376,6 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/OkResponse"
-                                }
-                            }
-                        }
-                    }
-                },
-                "x-wgw-access": "user"
-            }
-        },
-        "/calendars/calendars": {
-            "get": {
-                "tags": [
-                    "Calendars"
-                ],
-                "summary": "List user's calendars",
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Calendar list",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/CalendarListResponse"
-                                }
-                            }
-                        }
-                    }
-                },
-                "x-wgw-access": "user"
-            }
-        },
-        "/calendars/calendars/{calendarId}": {
-            "get": {
-                "tags": [
-                    "Calendars"
-                ],
-                "summary": "Fetch a single calendar",
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ],
-                "parameters": [
-                    {
-                        "name": "calendarId",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Calendar",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Calendar"
                                 }
                             }
                         }
