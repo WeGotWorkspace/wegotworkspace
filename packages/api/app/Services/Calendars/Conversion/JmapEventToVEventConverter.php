@@ -15,9 +15,7 @@ final class JmapEventToVEventConverter
      */
     public function convert(array $event): string
     {
-        $calendar = $this->buildCalendar($event);
-
-        return $calendar->serialize();
+        return $this->buildCalendar($event)->serialize();
     }
 
     /**
@@ -36,7 +34,6 @@ final class JmapEventToVEventConverter
             if ($uid === $targetUid) {
                 $document->remove($vevent);
                 $replaced = true;
-                break;
             }
         }
 
@@ -44,9 +41,8 @@ final class JmapEventToVEventConverter
             throw new \InvalidArgumentException('VEVENT with UID '.$targetUid.' not found.');
         }
 
-        $vevent = $document->add('VEVENT', []);
         $event['uid'] = $targetUid;
-        $this->populateVEvent($vevent, $event);
+        $this->appendSeriesVevents($document, $event);
 
         return $document->serialize();
     }
@@ -64,7 +60,6 @@ final class JmapEventToVEventConverter
             if ($uid === $targetUid) {
                 $document->remove($vevent);
                 $removed = true;
-                break;
             }
         }
 
@@ -87,9 +82,78 @@ final class JmapEventToVEventConverter
         $calendar = new VCalendar([], false);
         $calendar->add('VERSION', '2.0');
         $calendar->add('PRODID', '-//WeGotWorkspace//Calendars REST//EN');
-        $this->populateVEvent($calendar->add('VEVENT', []), $event);
+        $this->appendSeriesVevents($calendar, $event);
 
         return $calendar;
+    }
+
+    /**
+     * @param  array<string, mixed>  $event
+     */
+    private function appendSeriesVevents(VCalendar $calendar, array $event): void
+    {
+        $this->populateVEvent($calendar->add('VEVENT', []), $event);
+        $this->appendOverrideVevents($calendar, $event);
+    }
+
+    /**
+     * @param  array<string, mixed>  $event
+     */
+    private function appendOverrideVevents(VCalendar $calendar, array $event): void
+    {
+        $overrides = $event['recurrenceOverrides'] ?? null;
+        if (! is_array($overrides) || $overrides === []) {
+            return;
+        }
+
+        $masterEvent = CalendarConversionSupport::normalizeEventMapKeys($event);
+        foreach ($overrides as $recurrenceIdKey => $patch) {
+            if (! is_string($recurrenceIdKey) || $recurrenceIdKey === '' || ! is_array($patch)) {
+                continue;
+            }
+
+            $overrideVevent = $calendar->add('VEVENT', []);
+            if (RecurrenceOverrideSupport::isExcludedOverride($patch)) {
+                RecurrenceOverrideSupport::populateExcludedOverrideVEvent(
+                    $overrideVevent,
+                    $masterEvent,
+                    $recurrenceIdKey,
+                );
+
+                continue;
+            }
+
+            $merged = CalendarConversionSupport::deepMergeEventPatch($masterEvent, $patch);
+            $merged['uid'] = $masterEvent['uid'];
+            $this->populateVEvent($overrideVevent, $merged);
+            $this->stripMasterOnlyProperties($overrideVevent);
+            RecurrenceOverrideSupport::writeRecurrenceIdProperty(
+                $overrideVevent,
+                $recurrenceIdKey,
+                $masterEvent,
+            );
+            if (! isset($patch['start'])) {
+                if (isset($overrideVevent->DTSTART)) {
+                    $overrideVevent->remove('DTSTART');
+                }
+                CalendarConversionSupport::writeDateTimeProperty(
+                    $overrideVevent,
+                    'DTSTART',
+                    $recurrenceIdKey,
+                    (bool) ($masterEvent['showWithoutTime'] ?? false),
+                    isset($masterEvent['timeZone']) && is_string($masterEvent['timeZone']) ? $masterEvent['timeZone'] : null,
+                );
+            }
+        }
+    }
+
+    private function stripMasterOnlyProperties(VEvent $vevent): void
+    {
+        foreach (['RRULE', 'EXDATE', 'RDATE'] as $name) {
+            if (isset($vevent->{$name})) {
+                $vevent->remove($name);
+            }
+        }
     }
 
     /**
@@ -162,6 +226,7 @@ final class JmapEventToVEventConverter
         $this->writeStatusAndPrivacy($vevent, $event);
         $this->writeTimestamps($vevent, $event);
         $this->writeParticipants($vevent, $event);
+        $this->writeAlerts($vevent, $event);
         $this->writeIcsProps($vevent, $event);
 
         $now = gmdate('Ymd\THis\Z');
@@ -270,6 +335,25 @@ final class JmapEventToVEventConverter
                 $params['PARTSTAT'] = strtoupper($entry['participationStatus']);
             }
             $vevent->add('ATTENDEE', $address, $params);
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $event
+     */
+    private function writeAlerts(VEvent $vevent, array $event): void
+    {
+        $alerts = $event['alerts'] ?? null;
+        if (! is_array($alerts)) {
+            return;
+        }
+
+        $title = isset($event['title']) && is_string($event['title']) ? $event['title'] : null;
+        foreach ($alerts as $entry) {
+            if (! is_array($entry)) {
+                continue;
+            }
+            CalendarConversionSupport::writeValarm($vevent, $entry, $title);
         }
     }
 

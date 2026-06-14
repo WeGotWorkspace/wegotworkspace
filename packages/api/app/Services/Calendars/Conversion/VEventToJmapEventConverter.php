@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Calendars\Conversion;
 
+use Sabre\VObject\Component\VAlarm;
 use Sabre\VObject\Component\VCalendar;
 use Sabre\VObject\Component\VEvent;
 use Sabre\VObject\Property;
@@ -22,8 +23,20 @@ final class VEventToJmapEventConverter
         }
 
         $events = [];
-        foreach (CalendarConversionSupport::veventsFromCalendar($document) as $vevent) {
-            $events[] = $this->convertVEvent($vevent, $document);
+        foreach (RecurrenceOverrideSupport::groupRecurrenceSeries(
+            CalendarConversionSupport::veventsFromCalendar($document)
+        ) as $series) {
+            $event = $this->convertVEvent($series['master'], $document);
+            if ($series['overrides'] !== []) {
+                $overrides = RecurrenceOverrideSupport::recurrenceOverridesFromVevents(
+                    $series['master'],
+                    $series['overrides'],
+                );
+                if ($overrides !== []) {
+                    $event['recurrenceOverrides'] = $overrides;
+                }
+            }
+            $events[] = $event;
         }
 
         if ($events === []) {
@@ -180,6 +193,7 @@ final class VEventToJmapEventConverter
         }
 
         $this->convertParticipants($vevent, $event);
+        $this->convertAlerts($vevent, $event);
         $this->convertIcsProps($document, $vevent, $event);
 
         return $event;
@@ -222,6 +236,29 @@ final class VEventToJmapEventConverter
 
         if ($participants !== []) {
             $event['participants'] = $participants;
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $event
+     */
+    private function convertAlerts(VEvent $vevent, array &$event): void
+    {
+        $alerts = [];
+        $index = 0;
+
+        foreach ($vevent->select('VALARM') as $valarm) {
+            if (! $valarm instanceof VAlarm) {
+                continue;
+            }
+            $alert = CalendarConversionSupport::alertFromValarm($valarm);
+            if ($alert !== null) {
+                $alerts['alert'.(++$index)] = $alert;
+            }
+        }
+
+        if ($alerts !== []) {
+            $event['alerts'] = $alerts;
         }
     }
 
