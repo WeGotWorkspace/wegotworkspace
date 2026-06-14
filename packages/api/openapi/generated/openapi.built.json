@@ -8983,52 +8983,6 @@
                                 }
                             }
                         }
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    }
-                },
-                "x-wgw-access": "user"
-            },
-            "post": {
-                "tags": [
-                    "Contacts"
-                ],
-                "summary": "Create an address book",
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/AddressBookCreate"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Created address book",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/AddressBook"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/BadRequest"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "409": {
-                        "$ref": "#/components/responses/Conflict"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9661,15 +9615,6 @@
                                 }
                             }
                         }
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/BadRequest"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/NotFound"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9712,15 +9657,6 @@
                                 }
                             }
                         }
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/BadRequest"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "413": {
-                        "$ref": "#/components/responses/PayloadTooLarge"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9756,20 +9692,7 @@
                                     "$ref": "#/components/schemas/CalendarEvent"
                                 }
                             }
-                        },
-                        "headers": {
-                            "ETag": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
                         }
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/NotFound"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9792,12 +9715,6 @@
                         "schema": {
                             "type": "string"
                         }
-                    },
-                    {
-                        "$ref": "#/components/parameters/IfMatchHeader"
-                    },
-                    {
-                        "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
                     }
                 ],
                 "requestBody": {
@@ -9819,29 +9736,7 @@
                                     "$ref": "#/components/schemas/CalendarEvent"
                                 }
                             }
-                        },
-                        "headers": {
-                            "ETag": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
                         }
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/BadRequest"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/NotFound"
-                    },
-                    "412": {
-                        "$ref": "#/components/responses/PreconditionFailed"
-                    },
-                    "413": {
-                        "$ref": "#/components/responses/PayloadTooLarge"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9864,12 +9759,6 @@
                         "schema": {
                             "type": "string"
                         }
-                    },
-                    {
-                        "$ref": "#/components/parameters/IfMatchHeader"
-                    },
-                    {
-                        "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
                     }
                 ],
                 "requestBody": {
@@ -9891,29 +9780,7 @@
                                     "$ref": "#/components/schemas/CalendarEvent"
                                 }
                             }
-                        },
-                        "headers": {
-                            "ETag": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
                         }
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/BadRequest"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/NotFound"
-                    },
-                    "412": {
-                        "$ref": "#/components/responses/PreconditionFailed"
-                    },
-                    "413": {
-                        "$ref": "#/components/responses/PayloadTooLarge"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9936,12 +9803,6 @@
                         "schema": {
                             "type": "string"
                         }
-                    },
-                    {
-                        "$ref": "#/components/parameters/IfMatchHeader"
-                    },
-                    {
-                        "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
                     }
                 ],
                 "responses": {
@@ -9954,18 +9815,6 @@
                                 }
                             }
                         }
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/BadRequest"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/NotFound"
-                    },
-                    "412": {
-                        "$ref": "#/components/responses/PreconditionFailed"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9992,9 +9841,6 @@
                                 }
                             }
                         }
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
                     }
                 },
                 "x-wgw-access": "user"
@@ -10031,206 +9877,10 @@
                                 }
                             }
                         }
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/NotFound"
                     }
                 },
                 "x-wgw-access": "user"
             }
-        },
-        "/contacts/addressbooks/changes": {
-            "get": {
-                "tags": [
-                    "Contacts"
-                ],
-                "summary": "Incremental address book collection changes",
-                "description": "JMAP AddressBook/changes REST mapping. See docs/contacts/jmap-sync-rest-mapping.md.",
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ],
-                "parameters": [
-                    {
-                        "name": "since",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Previous state token; omit or `0` for initial sync."
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Address book changes",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/JmapChangesResponse"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "$ref": "#/components/responses/BadRequest"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    }
-                },
-                "x-wgw-access": "user"
-            }
-        },
-        "get": {
-            "tags": [
-                "Contacts"
-            ],
-            "summary": "Fetch a single address book",
-            "security": [
-                {
-                    "bearerAuth": []
-                }
-            ],
-            "parameters": [
-                {
-                    "name": "addressBookId",
-                    "in": "path",
-                    "required": true,
-                    "schema": {
-                        "type": "string"
-                    }
-                }
-            ],
-            "responses": {
-                "200": {
-                    "description": "Address book",
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/AddressBook"
-                            }
-                        }
-                    }
-                },
-                "403": {
-                    "$ref": "#/components/responses/Forbidden"
-                },
-                "404": {
-                    "$ref": "#/components/responses/NotFound"
-                }
-            },
-            "x-wgw-access": "user"
-        },
-        "patch": {
-            "tags": [
-                "Contacts"
-            ],
-            "summary": "Update an address book",
-            "security": [
-                {
-                    "bearerAuth": []
-                }
-            ],
-            "parameters": [
-                {
-                    "name": "addressBookId",
-                    "in": "path",
-                    "required": true,
-                    "schema": {
-                        "type": "string"
-                    }
-                }
-            ],
-            "requestBody": {
-                "required": true,
-                "content": {
-                    "application/json": {
-                        "schema": {
-                            "$ref": "#/components/schemas/AddressBookPatch"
-                        }
-                    }
-                }
-            },
-            "responses": {
-                "200": {
-                    "description": "Updated address book",
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/AddressBook"
-                            }
-                        }
-                    }
-                },
-                "400": {
-                    "$ref": "#/components/responses/BadRequest"
-                },
-                "403": {
-                    "$ref": "#/components/responses/Forbidden"
-                },
-                "404": {
-                    "$ref": "#/components/responses/NotFound"
-                }
-            },
-            "x-wgw-access": "user"
-        },
-        "delete": {
-            "tags": [
-                "Contacts"
-            ],
-            "summary": "Delete an address book",
-            "security": [
-                {
-                    "bearerAuth": []
-                }
-            ],
-            "parameters": [
-                {
-                    "name": "addressBookId",
-                    "in": "path",
-                    "required": true,
-                    "schema": {
-                        "type": "string"
-                    }
-                }
-            ],
-            "requestBody": {
-                "required": false,
-                "content": {
-                    "application/json": {
-                        "schema": {
-                            "$ref": "#/components/schemas/AddressBookDeleteOptions"
-                        }
-                    }
-                }
-            },
-            "responses": {
-                "200": {
-                    "description": "Address book deleted",
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/OkResponse"
-                            }
-                        }
-                    }
-                },
-                "403": {
-                    "$ref": "#/components/responses/Forbidden"
-                },
-                "404": {
-                    "$ref": "#/components/responses/NotFound"
-                },
-                "409": {
-                    "$ref": "#/components/responses/Conflict"
-                }
-            },
-            "x-wgw-access": "user"
         }
     }
 }
