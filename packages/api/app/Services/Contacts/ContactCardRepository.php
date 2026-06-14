@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace App\Services\Contacts;
 
 use App\Exceptions\ApiHttpException;
+use App\Http\Support\OptimisticConcurrency;
 use App\Models\Addressbook;
 use App\Models\Card;
 use App\Services\Contacts\Conversion\ConversionSupport;
+use App\Services\Search\BestEffortSearchIndexSync;
 use App\Services\Search\SearchIndexerService;
-use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Sabre\CardDAV\Backend\PDO as CardPDO;
@@ -19,6 +20,7 @@ final class ContactCardRepository
     public function __construct(
         private readonly ContactCardMapper $mapper,
         private readonly SearchIndexerService $searchIndexer,
+        private readonly BestEffortSearchIndexSync $searchIndexSync = new BestEffortSearchIndexSync,
     ) {}
 
     /**
@@ -38,7 +40,7 @@ final class ContactCardRepository
 
         return [
             'list' => $cards
-                ->map(fn (Card $card): array => $this->mapper->toContactCard($card, $addressBookId))
+                ->map(fn (Card $card): array => $this->mapper->toContactCard($card, $addressBookId, $username))
                 ->values()
                 ->all(),
         ];
@@ -54,7 +56,7 @@ final class ContactCardRepository
             throw new ApiHttpException(404, 'Contact card not found.', 'not_found');
         }
 
-        return $this->mapper->toContactCard($located['card'], $located['bookUri']);
+        return $this->mapper->toContactCard($located['card'], $located['bookUri'], $username);
     }
 
     /**
@@ -66,70 +68,92 @@ final class ContactCardRepository
         $book = $this->resolveAddressBookFromPayload($username, $payload);
         $cardPayload = $this->normalizeCardPayload($payload);
         $cardUri = $this->allocateCardUri((int) $book->id, $cardPayload);
-        $vcard = $this->mapper->toVCard($cardPayload);
+        $vcard = $this->mapper->toVCard($username, $cardPayload);
 
         $this->cardBackend()->createCard((int) $book->id, $cardUri, $vcard);
-        $this->syncSearchIndex(fn () => $this->searchIndexer->indexCardObjectFromPath(
-            $this->cardDavPath($username, (string) $book->uri, $cardUri)
-        ));
+        $davPath = $this->cardDavPath($username, (string) $book->uri, $cardUri);
+        $this->searchIndexSync->sync(
+            'contacts',
+            fn () => $this->searchIndexer->indexCardObjectFromPath($davPath),
+            $davPath,
+            $username,
+        );
 
         $card = $this->findCardInBook((int) $book->id, $cardUri);
         if ($card === null) {
             throw new ApiHttpException(500, 'Could not load created contact card.', 'server_error');
         }
 
-        return $this->mapper->toContactCard($card, (string) $book->uri);
+        return $this->mapper->toContactCard($card, (string) $book->uri, $username);
     }
 
     /**
      * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
-    public function update(string $username, string $cardId, array $payload): array
-    {
+    public function update(
+        string $username,
+        string $cardId,
+        array $payload,
+        ?string $ifMatch = null,
+        ?string $ifUnmodifiedSince = null,
+    ): array {
         $located = $this->findOwnedCard($username, $cardId);
         if ($located === null) {
             throw new ApiHttpException(404, 'Contact card not found.', 'not_found');
         }
 
+        $this->assertCardPreconditions($located['card'], $ifMatch, $ifUnmodifiedSince);
+
         $book = $located['book'];
         $card = $located['card'];
         $cardUri = (string) $card->uri;
-        $existingContact = $this->mapper->toContactCard($card, (string) $book->uri);
+        $existingContact = $this->mapper->toContactCard($card, (string) $book->uri, $username);
         $cardPayload = $this->normalizeCardPayload($payload, $existingContact);
         $cardPayload['id'] = ContactCardMapper::cardIdFromUri($cardUri);
         $cardPayload['addressBookIds'] = [(string) $book->uri => true];
 
-        $vcard = $this->mapper->toVCard($cardPayload);
+        $vcard = $this->mapper->toVCard($username, $cardPayload);
         $addressBookId = (int) $card->addressbookid;
         $this->cardBackend()->updateCard($addressBookId, $cardUri, $vcard);
-        $this->syncSearchIndex(fn () => $this->searchIndexer->indexCardObjectFromPath(
-            $this->cardDavPath($username, (string) $book->uri, $cardUri)
-        ));
+        $davPath = $this->cardDavPath($username, (string) $book->uri, $cardUri);
+        $this->searchIndexSync->sync(
+            'contacts',
+            fn () => $this->searchIndexer->indexCardObjectFromPath($davPath),
+            $davPath,
+            $username,
+        );
 
         $updated = $this->findCardInBook($addressBookId, $cardUri);
         if ($updated === null) {
             throw new ApiHttpException(500, 'Could not load updated contact card.', 'server_error');
         }
 
-        return $this->mapper->toContactCard($updated, (string) $book->uri);
+        return $this->mapper->toContactCard($updated, (string) $book->uri, $username);
     }
 
     /**
      * @param  array<string, mixed>  $patch
      * @return array<string, mixed>
      */
-    public function patch(string $username, string $cardId, array $patch): array
-    {
+    public function patch(
+        string $username,
+        string $cardId,
+        array $patch,
+        ?string $ifMatch = null,
+        ?string $ifUnmodifiedSince = null,
+    ): array {
         $located = $this->findOwnedCard($username, $cardId);
         if ($located === null) {
             throw new ApiHttpException(404, 'Contact card not found.', 'not_found');
         }
 
+        $this->assertCardPreconditions($located['card'], $ifMatch, $ifUnmodifiedSince);
+
         $book = $located['book'];
         $card = $located['card'];
         $cardUri = (string) $card->uri;
-        $existingContact = $this->mapper->toContactCard($card, (string) $book->uri);
+        $existingContact = $this->mapper->toContactCard($card, (string) $book->uri, $username);
         $merged = ConversionSupport::deepMergeContactCardPatch($existingContact, $patch);
         $cardPayload = $this->normalizeCardPayload($merged, $existingContact);
         $cardPayload['id'] = ContactCardMapper::cardIdFromUri($cardUri);
@@ -137,38 +161,52 @@ final class ContactCardRepository
             $cardPayload['addressBookIds'] = [(string) $book->uri => true];
         }
 
-        $vcard = $this->mapper->toVCard($cardPayload);
+        $vcard = $this->mapper->toVCard($username, $cardPayload);
         $addressBookId = (int) $card->addressbookid;
         $this->cardBackend()->updateCard($addressBookId, $cardUri, $vcard);
-        $this->syncSearchIndex(fn () => $this->searchIndexer->indexCardObjectFromPath(
-            $this->cardDavPath($username, (string) $book->uri, $cardUri)
-        ));
+        $davPath = $this->cardDavPath($username, (string) $book->uri, $cardUri);
+        $this->searchIndexSync->sync(
+            'contacts',
+            fn () => $this->searchIndexer->indexCardObjectFromPath($davPath),
+            $davPath,
+            $username,
+        );
 
         $updated = $this->findCardInBook($addressBookId, $cardUri);
         if ($updated === null) {
             throw new ApiHttpException(500, 'Could not load patched contact card.', 'server_error');
         }
 
-        return $this->mapper->toContactCard($updated, (string) $book->uri);
+        return $this->mapper->toContactCard($updated, (string) $book->uri, $username);
     }
 
     /**
      * @return array{ok: true}
      */
-    public function delete(string $username, string $cardId): array
-    {
+    public function delete(
+        string $username,
+        string $cardId,
+        ?string $ifMatch = null,
+        ?string $ifUnmodifiedSince = null,
+    ): array {
         $located = $this->findOwnedCard($username, $cardId);
         if ($located === null) {
             throw new ApiHttpException(404, 'Contact card not found.', 'not_found');
         }
 
+        $this->assertCardPreconditions($located['card'], $ifMatch, $ifUnmodifiedSince);
+
         $book = $located['book'];
         $card = $located['card'];
         $cardUri = (string) $card->uri;
         $this->cardBackend()->deleteCard((int) $card->addressbookid, $cardUri);
-        $this->syncSearchIndex(fn () => $this->searchIndexer->deleteDavPath(
-            $this->cardDavPath($username, (string) $book->uri, $cardUri)
-        ));
+        $davPath = $this->cardDavPath($username, (string) $book->uri, $cardUri);
+        $this->searchIndexSync->sync(
+            'contacts',
+            fn () => $this->searchIndexer->deleteDavPath($davPath),
+            $davPath,
+            $username,
+        );
 
         return ['ok' => true];
     }
@@ -295,19 +333,18 @@ final class ContactCardRepository
         return 'principals/'.$username;
     }
 
+    private function assertCardPreconditions(Card $card, ?string $ifMatch, ?string $ifUnmodifiedSince): void
+    {
+        OptimisticConcurrency::assertPreconditions(
+            $ifMatch,
+            $ifUnmodifiedSince,
+            is_string($card->etag) ? $card->etag : null,
+            (int) ($card->lastmodified ?? 0),
+        );
+    }
+
     private function cardBackend(): CardPDO
     {
         return new CardPDO(DB::connection('wgw')->getPdo());
-    }
-
-    private function syncSearchIndex(callable $callback): void
-    {
-        try {
-            $callback();
-        } catch (QueryException) {
-            // Search index is optional in some test and bootstrap contexts.
-        } catch (\Throwable) {
-            // Search sync should never block contact writes.
-        }
     }
 }

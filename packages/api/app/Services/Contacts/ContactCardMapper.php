@@ -12,16 +12,20 @@ use Illuminate\Support\Str;
 final class ContactCardMapper
 {
     public function __construct(
-        private readonly VCardJsContactConverter $converter = new VCardJsContactConverter,
+        private readonly VCardJsContactConverter $converter,
+        private readonly ContactMediaBlobResolver $mediaBlobs,
+        private readonly ContactMemberResolver $members,
     ) {}
 
     /**
      * @return array<string, mixed>
      */
-    public function toContactCard(Card $card, string $addressBookUri): array
+    public function toContactCard(Card $card, string $addressBookUri, string $username): array
     {
         $raw = is_string($card->carddata) ? $card->carddata : (string) $card->carddata;
         $contact = $this->converter->cardFromVCard($raw);
+        $contact = $this->mediaBlobs->exposeBlobsOnRead($username, $contact);
+        $contact = $this->members->apply($username, $contact);
 
         $contact['id'] = self::cardIdFromUri((string) $card->uri);
         $contact['addressBookIds'] = [$addressBookUri => true];
@@ -43,8 +47,10 @@ final class ContactCardMapper
     /**
      * @param  array<string, mixed>  $payload
      */
-    public function toVCard(array $payload): string
+    public function toVCard(string $username, array $payload): string
     {
+        $payload = $this->mediaBlobs->resolveBlobsOnWrite($username, $payload);
+
         return $this->converter->vCardFromCard($payload);
     }
 
