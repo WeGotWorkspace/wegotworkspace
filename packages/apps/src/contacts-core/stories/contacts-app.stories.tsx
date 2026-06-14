@@ -12,9 +12,6 @@ const meta: Meta<typeof ContactsWorkspace> = {
   component: ContactsWorkspace,
   parameters: {
     layout: "fullscreen",
-    viewport: {
-      defaultViewport: "desktop",
-    },
   },
 };
 
