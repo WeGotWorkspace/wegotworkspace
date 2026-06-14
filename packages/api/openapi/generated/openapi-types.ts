@@ -26,9 +26,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["HealthResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -62,9 +60,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["CapabilitiesResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -98,9 +94,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["GenericObject"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -131,7 +125,10 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["AuthTokenRequest"];
+                    "application/json": {
+                        username: string;
+                        password: string;
+                    };
                 };
             };
             responses: {
@@ -149,36 +146,28 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["GenericObject"];
-                    };
+                    content?: never;
                 };
                 /** @description Unauthorized */
                 401: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["GenericObject"];
-                    };
+                    content?: never;
                 };
                 /** @description Too many login attempts */
                 429: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["GenericObject"];
-                    };
+                    content?: never;
                 };
                 /** @description JWT not configured */
                 503: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["GenericObject"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -207,7 +196,9 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["AuthRefreshRequest"];
+                    "application/json": {
+                        refresh_token: string;
+                    };
                 };
             };
             responses: {
@@ -225,18 +216,14 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["GenericObject"];
-                    };
+                    content?: never;
                 };
                 /** @description Unauthorized */
                 401: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["GenericObject"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -265,7 +252,9 @@ export interface paths {
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["AuthRevokeRequest"];
+                    "application/json": {
+                        refresh_token?: string;
+                    };
                 };
             };
             responses: {
@@ -274,9 +263,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["OkResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -344,9 +331,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["AdminStateResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -380,9 +365,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["UpdateLogResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -403,9 +386,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["UpdateLogClearResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -500,9 +481,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["OkResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -525,9 +504,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["OkResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -558,9 +535,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["SettingsStateResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -588,20 +563,14 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["SettingsProfileRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Updated settings state */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["SettingsStateResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -628,20 +597,14 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["SettingsMailRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Updated settings state */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["SettingsStateResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -674,9 +637,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["MailStatusResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -710,9 +671,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["MailFoldersResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -725,20 +684,14 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["MailFolderCreateRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Folder created */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["MailFolderMutationResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -750,20 +703,14 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["MailFolderDeleteRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Folder deleted */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["OkResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -777,20 +724,14 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["MailFolderMoveRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Folder moved */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["MailFolderMutationResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -818,9 +759,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["MailMessagesResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -1009,7 +948,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Move a message to another folder */
+        /** Move message to another folder */
         post: {
             parameters: {
                 query?: never;
@@ -1017,9 +956,13 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
+            requestBody: {
                 content: {
-                    "application/json": components["schemas"]["MailMoveRequest"];
+                    "application/json": {
+                        fromFolder: string;
+                        toFolder: string;
+                        uid: number;
+                    };
                 };
             };
             responses: {
@@ -1028,9 +971,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["OkResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -1570,9 +1511,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["NotesCapabilitiesResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -1606,9 +1545,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["NotesStateResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -1642,9 +1579,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["NotesItemsResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -1657,20 +1592,14 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["NoteUpsertRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Created note */
                 201: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["NoteMutationResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -1698,20 +1627,14 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["NoteUpsertRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Updated note */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["NoteMutationResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -1726,20 +1649,14 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["NoteDeleteRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Deleted note */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["OkResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -1866,9 +1783,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["NotebookListResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -1881,20 +1796,14 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["NotebookCreateRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Notebook created */
                 201: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["NotebookMutationResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -1924,20 +1833,14 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["NotebookDeleteRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Notebook deleted */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["NotebookMutationResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -1953,20 +1856,14 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["NotebookRenameRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Notebook renamed */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["NotebookMutationResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -1994,9 +1891,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["PluginsResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -2120,9 +2015,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["PluginSessionResponse"];
-                    };
+                    content?: never;
                 };
                 /** @description Plugin not found */
                 404: {
@@ -2361,9 +2254,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["InstallerStateResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -2397,9 +2288,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["InstallerBootstrapResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -2428,20 +2317,14 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["InstallerActionRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Installer action result */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["InstallerActionResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -2509,9 +2392,7 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["DavCapabilitiesResponse"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -4095,7 +3976,33 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["ContactCard"];
+                    /**
+                     * @example {
+                     *       "addressBookIds": {
+                     *         "default": true
+                     *       },
+                     *       "name": {
+                     *         "full": "Joe Example"
+                     *       },
+                     *       "emails": {
+                     *         "550e8400-e29b-41d4-a716-446655440001": {
+                     *           "address": "joe@example.com"
+                     *         }
+                     *       },
+                     *       "phones": {
+                     *         "550e8400-e29b-41d4-a716-446655440002": {
+                     *           "number": "+1-555-0100"
+                     *         }
+                     *       },
+                     *       "addresses": {
+                     *         "550e8400-e29b-41d4-a716-446655440003": {
+                     *           "full": "123 Main St",
+                     *           "countryCode": "US"
+                     *         }
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ContactCardCreate"];
                 };
             };
             responses: {
@@ -4158,7 +4065,33 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["ContactCard"];
+                    /**
+                     * @example {
+                     *       "addressBookIds": {
+                     *         "default": true
+                     *       },
+                     *       "name": {
+                     *         "full": "Joe Example"
+                     *       },
+                     *       "emails": {
+                     *         "550e8400-e29b-41d4-a716-446655440001": {
+                     *           "address": "joe@example.com"
+                     *         }
+                     *       },
+                     *       "phones": {
+                     *         "550e8400-e29b-41d4-a716-446655440002": {
+                     *           "number": "+1-555-0100"
+                     *         }
+                     *       },
+                     *       "addresses": {
+                     *         "550e8400-e29b-41d4-a716-446655440003": {
+                     *           "full": "123 Main St",
+                     *           "countryCode": "US"
+                     *         }
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ContactCardCreate"];
                 };
             };
             responses: {
@@ -4748,9 +4681,7 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["CalendarEventPatch"];
                 };
             };
             responses: {
@@ -6879,8 +6810,9 @@ export interface components {
             "@type": "Location";
             name?: string;
             description?: string;
-        } & {
-            [key: string]: unknown;
+            rel?: string;
+            timeZone?: string;
+            coordinates?: string;
         };
         CalendarEventParticipant: {
             /** @constant */
@@ -6889,8 +6821,8 @@ export interface components {
             email?: string | null;
             roles?: string[];
             participationStatus?: string;
-        } & {
-            [key: string]: unknown;
+            kind?: string;
+            language?: string;
         };
         /**
          * @description JMAP CalendarEvent mapped from a single VEVENT ICS resource.
@@ -7011,6 +6943,36 @@ export interface components {
         JmapUTCDateTime: string;
         /** @description Local or UTC date-time without required Z suffix. */
         JmapLocalDateTime: string;
+        /** @description PATCH request body for partial calendar event updates. Omits server-owned id and @type. */
+        CalendarEventPatch: {
+            title?: string;
+            description?: string | null;
+            start?: components["schemas"]["JmapLocalDateTime"];
+            end?: components["schemas"]["JmapLocalDateTime"];
+            duration?: string;
+            showWithoutTime?: boolean;
+            timeZone?: string | null;
+            locations?: {
+                [key: string]: components["schemas"]["CalendarEventLocation"];
+            };
+            recurrenceRules?: components["schemas"]["CalendarRecurrenceRule"][];
+            excludedRecurrenceDates?: string[];
+            /** @enum {string} */
+            freeBusyStatus?: "busy" | "free" | "tentative";
+            /** @enum {string} */
+            privacy?: "public" | "private" | "secret";
+            /** @enum {string} */
+            status?: "confirmed" | "cancelled" | "tentative";
+            participants?: {
+                [key: string]: components["schemas"]["CalendarEventParticipant"];
+            };
+            categories?: string[];
+            priority?: number;
+            sequence?: number;
+            icsProps?: {
+                [key: string]: string;
+            };
+        };
     };
     responses: never;
     parameters: never;
