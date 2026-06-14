@@ -1,0 +1,11 @@
+BEGIN:VCARD
+VERSION:3.0
+PRODID:-//Sabre//Sabre VObject 4.5.3//EN
+UID:sabre-vobject-028652c3-e8c5-4bc1-8d09-b40aaca75e01
+N:Baumus;Maximilian;;;
+EMAIL;TYPE=other:baum@max.ilius
+FN;DERIVED=1:Baumus Maximilian
+X-SOCIALPROFILE;TYPE=GITHUB:https://github.com/apache/james-project
+X-SOCIALPROFILE;TYPE=TWITTER:https://twitter.com/ApacheJames
+REV;VALUE=DATE-AND-OR-TIME:20230227T143855Z
+END:VCARD

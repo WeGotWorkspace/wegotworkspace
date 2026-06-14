@@ -1,0 +1,14 @@
+BEGIN:VCARD
+VERSION:3.0
+REV:2016-05-30T10:36:13Z
+N:MyLastName;MyFirstName;MyMiddlename;MyPrefixes;MySuff
+FN:Full Name
+NICKNAME:MyNickname
+ROLE:myRole
+X-SPOUSE:mySpouse
+X-WV-ID:IM1
+ORG:MyCompany;MyDepartment
+BDAY:2021-09-16
+X-ANNIVERSARY:1912-10-15
+URL:MyURL
+END:VCARD
