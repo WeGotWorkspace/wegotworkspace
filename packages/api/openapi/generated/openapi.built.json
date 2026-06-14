@@ -5100,447 +5100,35 @@
                     }
                 }
             },
-            "CalendarRecurrenceRule": {
+            "ContactBlobUploadResponse": {
                 "type": "object",
                 "required": [
-                    "@type",
-                    "frequency"
+                    "blobId",
+                    "type",
+                    "size"
                 ],
                 "properties": {
-                    "@type": {
+                    "blobId": {
                         "type": "string",
-                        "const": "RecurrenceRule"
+                        "description": "Opaque blob identifier for contact media (RFC 9610 blobId)."
                     },
-                    "frequency": {
+                    "type": {
                         "type": "string",
-                        "enum": [
-                            "secondly",
-                            "minutely",
-                            "hourly",
-                            "daily",
-                            "weekly",
-                            "monthly",
-                            "yearly"
-                        ]
+                        "description": "MIME media type of the uploaded blob."
                     },
-                    "interval": {
-                        "type": "integer",
-                        "minimum": 1
-                    },
-                    "count": {
-                        "type": "integer",
-                        "minimum": 1
-                    },
-                    "until": {
-                        "type": "string"
-                    },
-                    "byDay": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "byMonth": {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        }
-                    },
-                    "byMonthDay": {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        }
-                    },
-                    "byYearDay": {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        }
-                    },
-                    "byWeekNo": {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        }
-                    },
-                    "bySetPosition": {
-                        "type": "array",
-                        "items": {
-                            "type": "integer"
-                        }
-                    },
-                    "firstDayOfWeek": {
-                        "type": "string"
-                    }
-                },
-                "additionalProperties": false
-            },
-            "CalendarEventLocation": {
-                "type": "object",
-                "required": [
-                    "@type"
-                ],
-                "properties": {
-                    "@type": {
-                        "type": "string",
-                        "const": "Location"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": "string"
-                    },
-                    "rel": {
-                        "type": "string"
-                    },
-                    "timeZone": {
-                        "type": "string"
-                    },
-                    "coordinates": {
-                        "type": "string"
-                    }
-                },
-                "additionalProperties": false
-            },
-            "CalendarEventParticipant": {
-                "type": "object",
-                "required": [
-                    "@type"
-                ],
-                "properties": {
-                    "@type": {
-                        "type": "string",
-                        "const": "Participant"
-                    },
-                    "name": {
-                        "type": [
-                            "string",
-                            "null"
-                        ]
-                    },
-                    "email": {
-                        "type": [
-                            "string",
-                            "null"
-                        ]
-                    },
-                    "roles": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "participationStatus": {
-                        "type": "string"
-                    },
-                    "kind": {
-                        "type": "string"
-                    },
-                    "language": {
-                        "type": "string"
-                    },
-                    "expectReply": {
-                        "type": "boolean"
-                    },
-                    "delegatedTo": {
-                        "type": "string",
-                        "format": "email"
-                    },
-                    "delegatedFrom": {
-                        "type": "string",
-                        "format": "email"
-                    }
-                },
-                "additionalProperties": false
-            },
-            "CalendarEvent": {
-                "type": "object",
-                "required": [
-                    "@type",
-                    "uid",
-                    "id",
-                    "calendarIds",
-                    "start"
-                ],
-                "properties": {
-                    "@type": {
-                        "type": "string",
-                        "const": "Event",
-                        "readOnly": true
-                    },
-                    "id": {
-                        "$ref": "#/components/schemas/JmapId",
-                        "readOnly": true
-                    },
-                    "uid": {
-                        "type": "string"
-                    },
-                    "calendarIds": {
-                        "$ref": "#/components/schemas/JmapIdBooleanMap"
-                    },
-                    "title": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": [
-                            "string",
-                            "null"
-                        ]
-                    },
-                    "start": {
-                        "$ref": "#/components/schemas/JmapLocalDateTime"
-                    },
-                    "end": {
-                        "$ref": "#/components/schemas/JmapLocalDateTime"
-                    },
-                    "duration": {
-                        "type": "string"
-                    },
-                    "showWithoutTime": {
-                        "type": "boolean"
-                    },
-                    "timeZone": {
-                        "type": [
-                            "string",
-                            "null"
-                        ]
-                    },
-                    "recurrenceId": {
-                        "type": "string",
-                        "description": "Original instance start for expanded or override rows; null on series masters."
-                    },
-                    "locations": {
-                        "type": "object",
-                        "propertyNames": {
-                            "$ref": "#/components/schemas/JmapId"
-                        },
-                        "additionalProperties": {
-                            "$ref": "#/components/schemas/CalendarEventLocation"
-                        }
-                    },
-                    "recurrenceRules": {
-                        "type": [
-                            "array",
-                            "null"
-                        ],
-                        "items": {
-                            "$ref": "#/components/schemas/CalendarRecurrenceRule"
-                        },
-                        "description": "RRULE on series masters; null on expanded instances."
-                    },
-                    "excludedRecurrenceDates": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "excludedRecurrenceRules": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/CalendarRecurrenceRule"
-                        },
-                        "description": "EXRULE rule-based exclusions (legacy ICS)."
-                    },
-                    "recurrenceOverrides": {
-                        "type": "object",
-                        "description": "Per-instance patches keyed by recurrence id (original instance start). Maps to RECURRENCE-ID override VEVENTs in ICS.",
-                        "propertyNames": {
-                            "$ref": "#/components/schemas/JmapLocalDateTime"
-                        },
-                        "additionalProperties": {
-                            "$ref": "#/components/schemas/CalendarEventRecurrenceOverride"
-                        }
-                    },
-                    "freeBusyStatus": {
-                        "type": "string",
-                        "enum": [
-                            "busy",
-                            "free",
-                            "tentative"
-                        ]
-                    },
-                    "privacy": {
-                        "type": "string",
-                        "enum": [
-                            "public",
-                            "private",
-                            "secret"
-                        ]
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "confirmed",
-                            "cancelled",
-                            "tentative"
-                        ]
-                    },
-                    "participants": {
-                        "type": "object",
-                        "propertyNames": {
-                            "$ref": "#/components/schemas/JmapId"
-                        },
-                        "additionalProperties": {
-                            "$ref": "#/components/schemas/CalendarEventParticipant"
-                        }
-                    },
-                    "alerts": {
-                        "type": "object",
-                        "description": "Reminder alarms mapped from iCalendar VALARM components.",
-                        "propertyNames": {
-                            "$ref": "#/components/schemas/JmapId"
-                        },
-                        "additionalProperties": {
-                            "$ref": "#/components/schemas/CalendarEventAlert"
-                        }
-                    },
-                    "links": {
-                        "type": "object",
-                        "propertyNames": {
-                            "$ref": "#/components/schemas/JmapId"
-                        },
-                        "additionalProperties": {
-                            "$ref": "#/components/schemas/CalendarEventLink"
-                        }
-                    },
-                    "attachments": {
-                        "type": "object",
-                        "propertyNames": {
-                            "$ref": "#/components/schemas/JmapId"
-                        },
-                        "additionalProperties": {
-                            "$ref": "#/components/schemas/CalendarEventLink"
-                        }
-                    },
-                    "timeZones": {
-                        "type": "object",
-                        "propertyNames": {
-                            "type": "string"
-                        },
-                        "additionalProperties": {
-                            "$ref": "#/components/schemas/CalendarTimeZone"
-                        }
-                    },
-                    "categories": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "priority": {
+                    "size": {
                         "type": "integer",
                         "minimum": 0,
-                        "maximum": 9
-                    },
-                    "sequence": {
-                        "type": "integer",
-                        "minimum": 0
-                    },
-                    "created": {
-                        "$ref": "#/components/schemas/JmapUTCDateTime"
-                    },
-                    "updated": {
-                        "$ref": "#/components/schemas/JmapUTCDateTime"
-                    },
-                    "icsProps": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "type": "string"
-                        }
+                        "description": "Blob size in bytes."
                     }
-                },
-                "additionalProperties": false,
-                "description": "JMAP CalendarEvent mapped from a single VEVENT ICS resource.",
-                "example": {
-                    "@type": "Event",
-                    "id": "team-sync-a1b2c3d4",
-                    "uid": "urn:uuid:550e8400-e29b-41d4-a716-446655440000",
-                    "calendarIds": {
-                        "default": true
-                    },
-                    "title": "Team sync",
-                    "start": "2026-06-15T10:00:00Z",
-                    "end": "2026-06-15T11:00:00Z",
-                    "showWithoutTime": false
                 }
             },
-            "CalendarEventCreate": {
-                "allOf": [
-                    {
-                        "type": "object",
-                        "properties": {
-                            "@type": {
-                                "not": {}
-                            },
-                            "id": {
-                                "not": {}
-                            }
-                        }
-                    },
-                    {
-                        "$ref": "#/components/schemas/CalendarEvent"
-                    }
-                ],
-                "description": "POST body; server assigns id and @type."
-            },
-            "CalendarEventListResponse": {
+            "AddressBookCreate": {
                 "type": "object",
                 "required": [
-                    "list"
+                    "name"
                 ],
                 "properties": {
-                    "list": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/CalendarEvent"
-                        }
-                    }
-                },
-                "additionalProperties": false,
-                "description": "REST list response for GET /calendars/events."
-            },
-            "CalendarRights": {
-                "type": "object",
-                "required": [
-                    "mayRead",
-                    "mayWrite",
-                    "mayShare",
-                    "mayDelete"
-                ],
-                "properties": {
-                    "mayRead": {
-                        "type": "boolean"
-                    },
-                    "mayWrite": {
-                        "type": "boolean"
-                    },
-                    "mayShare": {
-                        "type": "boolean"
-                    },
-                    "mayDelete": {
-                        "type": "boolean"
-                    }
-                },
-                "additionalProperties": false,
-                "description": "JMAP CalendarRights."
-            },
-            "Calendar": {
-                "type": "object",
-                "required": [
-                    "id",
-                    "name",
-                    "sortOrder",
-                    "isDefault",
-                    "isSubscribed",
-                    "myRights"
-                ],
-                "properties": {
-                    "id": {
-                        "$ref": "#/components/schemas/JmapId",
-                        "readOnly": true
-                    },
                     "name": {
                         "type": "string",
                         "minLength": 1,
@@ -5552,462 +5140,133 @@
                             "null"
                         ]
                     },
-                    "timeZone": {
+                    "id": {
+                        "$ref": "#/components/schemas/JsContactId",
+                        "description": "Optional client-suggested address book id (uri slug)."
+                    }
+                },
+                "additionalProperties": false
+            },
+            "AddressBookPatch": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "description": {
                         "type": [
                             "string",
                             "null"
                         ]
-                    },
-                    "color": {
-                        "type": [
-                            "string",
-                            "null"
-                        ]
-                    },
-                    "sortOrder": {
-                        "type": "integer",
-                        "minimum": 0
-                    },
-                    "isDefault": {
-                        "type": "boolean"
                     },
                     "isSubscribed": {
                         "type": "boolean"
-                    },
-                    "shareWith": {
-                        "oneOf": [
-                            {
-                                "type": "object",
-                                "propertyNames": {
-                                    "$ref": "#/components/schemas/JmapId"
-                                },
-                                "additionalProperties": {
-                                    "$ref": "#/components/schemas/CalendarRights"
-                                }
-                            },
-                            {
-                                "type": "null"
-                            }
-                        ]
-                    },
-                    "myRights": {
-                        "$ref": "#/components/schemas/CalendarRights"
                     }
                 },
-                "additionalProperties": false,
-                "description": "JMAP Calendar resource.",
-                "example": {
-                    "id": "default",
-                    "name": "Calendar",
-                    "description": null,
-                    "timeZone": null,
-                    "color": null,
-                    "sortOrder": 0,
-                    "isDefault": true,
-                    "isSubscribed": true,
-                    "shareWith": null,
-                    "myRights": {
-                        "mayRead": true,
-                        "mayWrite": true,
-                        "mayShare": false,
-                        "mayDelete": false
-                    }
-                }
+                "additionalProperties": false
             },
-            "CalendarListResponse": {
+            "AddressBookDeleteOptions": {
+                "type": "object",
+                "properties": {
+                    "onDestroyRemoveContents": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "When true, delete all cards in the book before destroying it."
+                    }
+                },
+                "additionalProperties": false
+            },
+            "JmapChangesResponse": {
                 "type": "object",
                 "required": [
-                    "list"
+                    "oldState",
+                    "newState",
+                    "created",
+                    "updated",
+                    "destroyed"
                 ],
                 "properties": {
-                    "list": {
+                    "oldState": {
+                        "type": "string",
+                        "description": "Previous sync state token supplied by the client."
+                    },
+                    "newState": {
+                        "type": "string",
+                        "description": "Current sync state token to store for the next request."
+                    },
+                    "created": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/Calendar"
+                            "$ref": "#/components/schemas/JsContactId"
+                        }
+                    },
+                    "updated": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JsContactId"
+                        }
+                    },
+                    "destroyed": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JsContactId"
                         }
                     }
                 },
                 "additionalProperties": false,
-                "description": "REST list response for GET /calendars."
+                "description": "JMAP-shaped incremental sync response (RFC 8620 /changes mapping)."
             },
-            "JmapId": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 255,
-                "description": "JMAP id string (calendar uri, event id, map key)."
-            },
-            "JmapIdBooleanMap": {
+            "ContactCardQueryFilter": {
                 "type": "object",
-                "propertyNames": {
-                    "$ref": "#/components/schemas/JmapId"
-                },
-                "additionalProperties": {
-                    "type": "boolean",
-                    "const": true
-                },
-                "description": "Map of ids to true booleans."
-            },
-            "JmapUTCDateTime": {
-                "type": "string",
-                "format": "date-time",
-                "description": "UTC date-time (ISO 8601)."
-            },
-            "JmapLocalDateTime": {
-                "type": "string",
-                "description": "Local or UTC date-time without required Z suffix."
-            },
-            "CalendarEventPatch": {
-                "type": "object",
+                "required": [
+                    "inAddressBook"
+                ],
                 "properties": {
-                    "title": {
-                        "type": "string"
+                    "inAddressBook": {
+                        "$ref": "#/components/schemas/JsContactId"
                     },
-                    "description": {
-                        "type": [
-                            "string",
-                            "null"
-                        ]
-                    },
-                    "start": {
-                        "$ref": "#/components/schemas/JmapLocalDateTime"
-                    },
-                    "end": {
-                        "$ref": "#/components/schemas/JmapLocalDateTime"
-                    },
-                    "duration": {
-                        "type": "string"
-                    },
-                    "showWithoutTime": {
-                        "type": "boolean"
-                    },
-                    "timeZone": {
-                        "type": [
-                            "string",
-                            "null"
-                        ]
-                    },
-                    "locations": {
-                        "type": "object",
-                        "propertyNames": {
-                            "$ref": "#/components/schemas/JmapId"
-                        },
-                        "additionalProperties": {
-                            "$ref": "#/components/schemas/CalendarEventLocation"
-                        }
-                    },
-                    "recurrenceRules": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/CalendarRecurrenceRule"
-                        }
-                    },
-                    "excludedRecurrenceDates": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "excludedRecurrenceRules": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/CalendarRecurrenceRule"
-                        }
-                    },
-                    "recurrenceOverrides": {
-                        "type": "object",
-                        "description": "Per-instance patches keyed by recurrence id (original instance start). Maps to RECURRENCE-ID override VEVENTs in ICS.",
-                        "propertyNames": {
-                            "$ref": "#/components/schemas/JmapLocalDateTime"
-                        },
-                        "additionalProperties": {
-                            "$ref": "#/components/schemas/CalendarEventRecurrenceOverride"
-                        }
-                    },
-                    "freeBusyStatus": {
+                    "uid": {
                         "type": "string",
-                        "enum": [
-                            "busy",
-                            "free",
-                            "tentative"
-                        ]
+                        "description": "Exact JSContact uid match (RFC 9610 ContactCard/query)."
+                    }
+                },
+                "additionalProperties": false
+            },
+            "ContactCardQueryRequest": {
+                "type": "object",
+                "required": [
+                    "filter"
+                ],
+                "properties": {
+                    "filter": {
+                        "$ref": "#/components/schemas/ContactCardQueryFilter"
                     },
-                    "privacy": {
-                        "type": "string",
-                        "enum": [
-                            "public",
-                            "private",
-                            "secret"
-                        ]
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "confirmed",
-                            "cancelled",
-                            "tentative"
-                        ]
-                    },
-                    "participants": {
-                        "type": "object",
-                        "propertyNames": {
-                            "$ref": "#/components/schemas/JmapId"
-                        },
-                        "additionalProperties": {
-                            "$ref": "#/components/schemas/CalendarEventParticipant"
-                        }
-                    },
-                    "alerts": {
-                        "type": "object",
-                        "description": "Reminder alarms mapped from iCalendar VALARM components.",
-                        "propertyNames": {
-                            "$ref": "#/components/schemas/JmapId"
-                        },
-                        "additionalProperties": {
-                            "$ref": "#/components/schemas/CalendarEventAlert"
-                        }
-                    },
-                    "categories": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "priority": {
+                    "limit": {
                         "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9
+                        "minimum": 1,
+                        "maximum": 500
+                    }
+                },
+                "additionalProperties": false
+            },
+            "ContactCardQueryResponse": {
+                "type": "object",
+                "required": [
+                    "ids",
+                    "total"
+                ],
+                "properties": {
+                    "ids": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JsContactId"
+                        }
                     },
-                    "sequence": {
+                    "total": {
                         "type": "integer",
                         "minimum": 0
-                    },
-                    "icsProps": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "type": "string"
-                        }
-                    }
-                },
-                "additionalProperties": false,
-                "description": "PATCH request body for partial calendar event updates. Omits server-owned id and @type."
-            },
-            "CalendarEventRelativeAlertTrigger": {
-                "type": "object",
-                "required": [
-                    "@type",
-                    "offset"
-                ],
-                "properties": {
-                    "@type": {
-                        "type": "string",
-                        "const": "RelativeAlert"
-                    },
-                    "offset": {
-                        "type": "string",
-                        "description": "Signed ISO 8601 duration relative to event start or end (e.g. -PT15M)."
-                    },
-                    "relatedTo": {
-                        "type": "string",
-                        "enum": [
-                            "start",
-                            "end"
-                        ],
-                        "default": "start"
-                    }
-                },
-                "additionalProperties": false
-            },
-            "CalendarEventAbsoluteAlertTrigger": {
-                "type": "object",
-                "required": [
-                    "@type",
-                    "when"
-                ],
-                "properties": {
-                    "@type": {
-                        "type": "string",
-                        "const": "AbsoluteAlert"
-                    },
-                    "when": {
-                        "$ref": "#/components/schemas/JmapLocalDateTime"
-                    }
-                },
-                "additionalProperties": false
-            },
-            "CalendarEventAlert": {
-                "type": "object",
-                "required": [
-                    "@type",
-                    "trigger"
-                ],
-                "properties": {
-                    "@type": {
-                        "type": "string",
-                        "const": "Alert"
-                    },
-                    "trigger": {
-                        "oneOf": [
-                            {
-                                "$ref": "#/components/schemas/CalendarEventRelativeAlertTrigger"
-                            },
-                            {
-                                "$ref": "#/components/schemas/CalendarEventAbsoluteAlertTrigger"
-                            }
-                        ]
-                    },
-                    "action": {
-                        "type": "string",
-                        "enum": [
-                            "display",
-                            "audio",
-                            "email"
-                        ],
-                        "default": "display"
-                    }
-                },
-                "additionalProperties": false
-            },
-            "CalendarEventRecurrenceOverride": {
-                "type": "object",
-                "description": "Per-instance patch keyed by recurrence id (original instance start). Use excluded:true to omit an instance.",
-                "properties": {
-                    "excluded": {
-                        "type": "boolean"
-                    },
-                    "title": {
-                        "type": "string"
-                    },
-                    "description": {
-                        "type": [
-                            "string",
-                            "null"
-                        ]
-                    },
-                    "start": {
-                        "$ref": "#/components/schemas/JmapLocalDateTime"
-                    },
-                    "end": {
-                        "$ref": "#/components/schemas/JmapLocalDateTime"
-                    },
-                    "duration": {
-                        "type": "string"
-                    },
-                    "showWithoutTime": {
-                        "type": "boolean"
-                    },
-                    "timeZone": {
-                        "type": [
-                            "string",
-                            "null"
-                        ]
-                    },
-                    "locations": {
-                        "type": "object",
-                        "propertyNames": {
-                            "$ref": "#/components/schemas/JmapId"
-                        },
-                        "additionalProperties": {
-                            "$ref": "#/components/schemas/CalendarEventLocation"
-                        }
-                    },
-                    "freeBusyStatus": {
-                        "type": "string",
-                        "enum": [
-                            "busy",
-                            "free",
-                            "tentative"
-                        ]
-                    },
-                    "privacy": {
-                        "type": "string",
-                        "enum": [
-                            "public",
-                            "private",
-                            "secret"
-                        ]
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "confirmed",
-                            "cancelled",
-                            "tentative"
-                        ]
-                    },
-                    "participants": {
-                        "type": "object",
-                        "propertyNames": {
-                            "$ref": "#/components/schemas/JmapId"
-                        },
-                        "additionalProperties": {
-                            "$ref": "#/components/schemas/CalendarEventParticipant"
-                        }
-                    },
-                    "categories": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "priority": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9
-                    },
-                    "sequence": {
-                        "type": "integer",
-                        "minimum": 0
-                    },
-                    "icsProps": {
-                        "type": "object",
-                        "additionalProperties": {
-                            "type": "string"
-                        }
-                    }
-                },
-                "additionalProperties": false
-            },
-            "CalendarEventLink": {
-                "type": "object",
-                "required": [
-                    "@type",
-                    "href"
-                ],
-                "properties": {
-                    "@type": {
-                        "type": "string",
-                        "const": "Link"
-                    },
-                    "href": {
-                        "type": "string",
-                        "format": "uri"
-                    },
-                    "rel": {
-                        "type": "string"
-                    },
-                    "contentType": {
-                        "type": "string"
-                    }
-                },
-                "additionalProperties": false
-            },
-            "CalendarTimeZone": {
-                "type": "object",
-                "required": [
-                    "@type",
-                    "tzid"
-                ],
-                "properties": {
-                    "@type": {
-                        "type": "string",
-                        "const": "TimeZone"
-                    },
-                    "tzid": {
-                        "type": "string"
-                    },
-                    "icsDefinition": {
-                        "type": "string",
-                        "description": "Serialized VTIMEZONE component for round-trip."
                     }
                 },
                 "additionalProperties": false
@@ -9554,76 +8813,13 @@
                 "x-wgw-access": "user"
             }
         },
-        "/calendars/events": {
-            "get": {
-                "tags": [
-                    "Calendars"
-                ],
-                "summary": "List calendar events in a calendar",
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ],
-                "parameters": [
-                    {
-                        "name": "calendarId",
-                        "in": "query",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "expandRecurrences",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "boolean",
-                            "default": false
-                        },
-                        "description": "Expand recurring events into instances in the requested window (requires after and before)."
-                    },
-                    {
-                        "name": "after",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "format": "date-time"
-                        },
-                        "description": "Window start (required when expandRecurrences is true)."
-                    },
-                    {
-                        "name": "before",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "format": "date-time"
-                        },
-                        "description": "Window end (required when expandRecurrences is true)."
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Calendar event list",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/CalendarEventListResponse"
-                                }
-                            }
-                        }
-                    }
-                },
-                "x-wgw-access": "user"
-            },
+        "/contacts/blobs": {
             "post": {
                 "tags": [
-                    "Calendars"
+                    "Contacts"
                 ],
-                "summary": "Create a calendar event",
+                "summary": "Upload contact media blob",
+                "description": "JMAP blob upload REST equivalent for contact photo/logo media (RFC 9610).",
                 "security": [
                     {
                         "bearerAuth": []
@@ -9632,42 +8828,76 @@
                 "requestBody": {
                     "required": true,
                     "content": {
-                        "application/json": {
+                        "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/CalendarEventCreate"
-                            },
-                            "example": {
-                                "calendarIds": {
-                                    "default": true
-                                },
-                                "title": "Team sync",
-                                "start": "2026-06-15T10:00:00Z",
-                                "end": "2026-06-15T11:00:00Z"
+                                "type": "object",
+                                "required": [
+                                    "file"
+                                ],
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                }
+                            }
+                        },
+                        "image/jpeg": {
+                            "schema": {
+                                "type": "string",
+                                "format": "binary"
+                            }
+                        },
+                        "image/png": {
+                            "schema": {
+                                "type": "string",
+                                "format": "binary"
+                            }
+                        },
+                        "image/gif": {
+                            "schema": {
+                                "type": "string",
+                                "format": "binary"
+                            }
+                        },
+                        "image/webp": {
+                            "schema": {
+                                "type": "string",
+                                "format": "binary"
                             }
                         }
                     }
                 },
                 "responses": {
                     "201": {
-                        "description": "Created calendar event",
+                        "description": "Blob uploaded",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/CalendarEvent"
+                                    "$ref": "#/components/schemas/ContactBlobUploadResponse"
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "description": "Invalid request"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "413": {
+                        "description": "Payload too large"
                     }
                 },
                 "x-wgw-access": "user"
             }
         },
-        "/calendars/events/{eventId}": {
+        "/contacts/blobs/{blobId}": {
             "get": {
                 "tags": [
-                    "Calendars"
+                    "Contacts"
                 ],
-                "summary": "Fetch a single calendar event",
+                "summary": "Download contact media blob",
                 "security": [
                     {
                         "bearerAuth": []
@@ -9675,7 +8905,7 @@
                 ],
                 "parameters": [
                     {
-                        "name": "eventId",
+                        "name": "blobId",
                         "in": "path",
                         "required": true,
                         "schema": {
@@ -9685,198 +8915,39 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Calendar event",
+                        "description": "Blob bytes",
                         "content": {
-                            "application/json": {
+                            "image/jpeg": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/CalendarEvent"
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            },
+                            "image/png": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            },
+                            "image/gif": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            },
+                            "image/webp": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
                                 }
                             }
                         }
-                    }
-                },
-                "x-wgw-access": "user"
-            },
-            "put": {
-                "tags": [
-                    "Calendars"
-                ],
-                "summary": "Replace a calendar event",
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ],
-                "parameters": [
-                    {
-                        "name": "eventId",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/CalendarEventCreate"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Updated calendar event",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/CalendarEvent"
-                                }
-                            }
-                        }
-                    }
-                },
-                "x-wgw-access": "user"
-            },
-            "patch": {
-                "tags": [
-                    "Calendars"
-                ],
-                "summary": "Partially update a calendar event",
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ],
-                "parameters": [
-                    {
-                        "name": "eventId",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/CalendarEventPatch"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Patched calendar event",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/CalendarEvent"
-                                }
-                            }
-                        }
-                    }
-                },
-                "x-wgw-access": "user"
-            },
-            "delete": {
-                "tags": [
-                    "Calendars"
-                ],
-                "summary": "Delete a calendar event",
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ],
-                "parameters": [
-                    {
-                        "name": "eventId",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Deleted",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/OkResponse"
-                                }
-                            }
-                        }
-                    }
-                },
-                "x-wgw-access": "user"
-            }
-        },
-        "/calendars/calendars": {
-            "get": {
-                "tags": [
-                    "Calendars"
-                ],
-                "summary": "List user's calendars",
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Calendar list",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/CalendarListResponse"
-                                }
-                            }
-                        }
-                    }
-                },
-                "x-wgw-access": "user"
-            }
-        },
-        "/calendars/calendars/{calendarId}": {
-            "get": {
-                "tags": [
-                    "Calendars"
-                ],
-                "summary": "Fetch a single calendar",
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ],
-                "parameters": [
-                    {
-                        "name": "calendarId",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Calendar",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Calendar"
-                                }
-                            }
-                        }
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Not found"
                     }
                 },
                 "x-wgw-access": "user"

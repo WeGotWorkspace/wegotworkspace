@@ -2213,6 +2213,75 @@
         "x-wgw-access": "user"
       }
     },
+    "/contacts/blobs": {
+      "post": {
+        "tags": ["Contacts"],
+        "summary": "Upload contact media blob",
+        "description": "JMAP blob upload REST equivalent for contact photo/logo media (RFC 9610).",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file"],
+                "properties": {
+                  "file": { "type": "string", "format": "binary" }
+                }
+              }
+            },
+            "image/jpeg": { "schema": { "type": "string", "format": "binary" } },
+            "image/png": { "schema": { "type": "string", "format": "binary" } },
+            "image/gif": { "schema": { "type": "string", "format": "binary" } },
+            "image/webp": { "schema": { "type": "string", "format": "binary" } }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Blob uploaded",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ContactBlobUploadResponse" }
+              }
+            }
+          },
+          "400": { "description": "Invalid request" },
+          "403": { "description": "Forbidden" },
+          "413": { "description": "Payload too large" }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/contacts/blobs/{blobId}": {
+      "get": {
+        "tags": ["Contacts"],
+        "summary": "Download contact media blob",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "blobId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Blob bytes",
+            "content": {
+              "image/jpeg": { "schema": { "type": "string", "format": "binary" } },
+              "image/png": { "schema": { "type": "string", "format": "binary" } },
+              "image/gif": { "schema": { "type": "string", "format": "binary" } },
+              "image/webp": { "schema": { "type": "string", "format": "binary" } }
+            }
+          },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "Not found" }
+        },
+        "x-wgw-access": "user"
+      }
+    },
     "/contacts/cards": {
       "get": {
         "tags": [

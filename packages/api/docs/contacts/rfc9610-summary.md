@@ -92,16 +92,15 @@ Extends JSContact `Card` (RFC 9553 §2) with:
 
 ### Media / blob handling
 
-- On **read**: `Media` with `data:` URI SHOULD return `blobId` + `mediaType`, omit `uri`.
+- On **read**: `Media` with `data:` URI returns `blobId` + `mediaType`, omits `uri` (content-addressed blob id for stability).
 - On **write**: client MAY send `blobId` instead of `uri`.
-- Photo upload: use JMAP blob upload (RFC 8620 §6.1); server MUST reject non-image types for photos.
+- Photo upload: `POST /contacts/blobs` (RFC 8620 §6.1 REST equivalent); server rejects non-image types for photos.
 
 ### Group cards
 
 - `kind: "group"` — clients often present separately.
 - `members`: map of member `uid` → `true`.
-- Resolve members across all accessible accounts with `urn:ietf:params:jmap:contacts`.
-- Unresolvable uids: ignore but preserve.
+- **Member resolution:** REST read adds optional `memberCardIds` (uid → card id) when a matching card exists in the user's address books; unresolvable uids are preserved in `members` only.
 
 ### ContactCard API methods
 
@@ -191,14 +190,16 @@ This plan exposes a subset of JMAP via REST; mapping to Sabre CardDAV:
 | `AddressBook.description` | `addressbooks.description` |
 | `AddressBook.isDefault` | `uri === 'default'` |
 | `AddressBook.isSubscribed` | always `true` (owned books) |
-| `AddressBook.shareWith` | `null` (deferred) |
-| `AddressBook.myRights` | static read/write, no share/delete |
+| `AddressBook.shareWith` | `null` (deferred — see `jmap-collection-crud.md`) |
+| `AddressBook.myRights` | ownership-derived; `mayDelete` true for non-default owned books |
 | `ContactCard.id` | card `uri` without `.vcf` |
 | `ContactCard.addressBookIds` | `{ [book.uri]: true }` |
 | JSContact `uid` | vCard `UID` |
 | `created` / `updated` | `lastmodified` + vCard metadata |
 
-**Deferred from full JMAP:** `/changes`, `/query`, `/queryChanges`, `/copy`, blob upload API, address book CRUD, sharing (RFC 9670).
+**Deferred from full JMAP:** `/queryChanges`, `/copy`, sharing (RFC 9670), advanced query filters (`text`, `name`, …).
+
+**Implemented (platform #157 / #158, #151):** address book CRUD — see `jmap-collection-crud.md`; contacts `/changes` + `/query` (uid + inAddressBook) — see `jmap-sync-rest-mapping.md`; contact photo blob upload — `POST /contacts/blobs`.
 
 ---
 

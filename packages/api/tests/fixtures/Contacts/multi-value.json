@@ -10,6 +10,12 @@
         "p_MQuZp-s2zTUOOv0IHArUhSt7": {
             "@type": "Phone",
             "number": "tel:+1-555-555-5555",
+            "features": {
+                "voice": true
+            },
+            "vCardParams": {
+                "group": "ITEM1"
+            },
             "label": "Mobile"
         }
     },

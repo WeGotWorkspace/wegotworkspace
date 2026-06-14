@@ -4514,38 +4514,19 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/calendars/events": {
+    "/contacts/blobs": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** List calendar events in a calendar */
-        get: {
-            parameters: {
-                query: {
-                    calendarId: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Calendar event list */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["CalendarEventListResponse"];
-                    };
-                };
-            };
-        };
+        get?: never;
         put?: never;
-        /** Create a calendar event */
+        /**
+         * Upload contact media blob
+         * @description JMAP blob upload REST equivalent for contact photo/logo media (RFC 9610).
+         */
         post: {
             parameters: {
                 query?: never;
@@ -4555,28 +4536,46 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    /**
-                     * @example {
-                     *       "calendarIds": {
-                     *         "default": true
-                     *       },
-                     *       "title": "Team sync",
-                     *       "start": "2026-06-15T10:00:00Z",
-                     *       "end": "2026-06-15T11:00:00Z"
-                     *     }
-                     */
-                    "application/json": components["schemas"]["CalendarEventCreate"];
+                    "multipart/form-data": {
+                        /** Format: binary */
+                        file: string;
+                    };
+                    "image/jpeg": string;
+                    "image/png": string;
+                    "image/gif": string;
+                    "image/webp": string;
                 };
             };
             responses: {
-                /** @description Created calendar event */
+                /** @description Blob uploaded */
                 201: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["CalendarEvent"];
+                        "application/json": components["schemas"]["ContactBlobUploadResponse"];
                     };
+                };
+                /** @description Invalid request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Payload too large */
+                413: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
             };
         };
@@ -4586,181 +4585,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/calendars/events/{eventId}": {
+    "/contacts/blobs/{blobId}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Fetch a single calendar event */
+        /** Download contact media blob */
         get: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    eventId: string;
+                    blobId: string;
                 };
                 cookie?: never;
             };
             requestBody?: never;
             responses: {
-                /** @description Calendar event */
+                /** @description Blob bytes */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["CalendarEvent"];
+                        "image/jpeg": string;
+                        "image/png": string;
+                        "image/gif": string;
+                        "image/webp": string;
                     };
                 };
-            };
-        };
-        /** Replace a calendar event */
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    eventId: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["CalendarEventCreate"];
-                };
-            };
-            responses: {
-                /** @description Updated calendar event */
-                200: {
+                /** @description Forbidden */
+                403: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["CalendarEvent"];
-                    };
+                    content?: never;
                 };
-            };
-        };
-        post?: never;
-        /** Delete a calendar event */
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    eventId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Deleted */
-                200: {
+                /** @description Not found */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content: {
-                        "application/json": components["schemas"]["OkResponse"];
-                    };
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        /** Partially update a calendar event */
-        patch: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    eventId: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["CalendarEventPatch"];
-                };
-            };
-            responses: {
-                /** @description Patched calendar event */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["CalendarEvent"];
-                    };
-                };
-            };
-        };
-        trace?: never;
-    };
-    "/calendars/calendars": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List user's calendars */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Calendar list */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["CalendarListResponse"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/calendars/calendars/{calendarId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Fetch a single calendar */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    calendarId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Calendar */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Calendar"];
-                    };
+                    content?: never;
                 };
             };
         };
@@ -6789,260 +6657,54 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
-        CalendarRecurrenceRule: {
-            /** @constant */
-            "@type": "RecurrenceRule";
-            /** @enum {string} */
-            frequency: "secondly" | "minutely" | "hourly" | "daily" | "weekly" | "monthly" | "yearly";
-            interval?: number;
-            count?: number;
-            until?: string;
-            byDay?: string[];
-            byMonth?: number[];
-            byMonthDay?: number[];
-            byYearDay?: number[];
-            byWeekNo?: number[];
-            bySetPosition?: number[];
-            firstDayOfWeek?: string;
+        ContactBlobUploadResponse: {
+            /** @description Opaque blob identifier for contact media (RFC 9610 blobId). */
+            blobId: string;
+            /** @description MIME media type of the uploaded blob. */
+            type: string;
+            /** @description Blob size in bytes. */
+            size: number;
         };
-        CalendarEventLocation: {
-            /** @constant */
-            "@type": "Location";
-            name?: string;
-            description?: string;
-            rel?: string;
-            timeZone?: string;
-            coordinates?: string;
-        };
-        CalendarEventParticipant: {
-            /** @constant */
-            "@type": "Participant";
-            name?: string | null;
-            email?: string | null;
-            roles?: string[];
-            participationStatus?: string;
-            kind?: string;
-            language?: string;
-        };
-        /**
-         * @description JMAP CalendarEvent mapped from a single VEVENT ICS resource.
-         * @example {
-         *       "@type": "Event",
-         *       "id": "team-sync-a1b2c3d4",
-         *       "uid": "urn:uuid:550e8400-e29b-41d4-a716-446655440000",
-         *       "calendarIds": {
-         *         "default": true
-         *       },
-         *       "title": "Team sync",
-         *       "start": "2026-06-15T10:00:00Z",
-         *       "end": "2026-06-15T11:00:00Z",
-         *       "showWithoutTime": false
-         *     }
-         */
-        CalendarEvent: {
-            /** @constant */
-            readonly "@type": "Event";
-            readonly id: components["schemas"]["JmapId"];
-            uid: string;
-            calendarIds: components["schemas"]["JmapIdBooleanMap"];
-            title?: string;
-            description?: string | null;
-            start: components["schemas"]["JmapLocalDateTime"];
-            end?: components["schemas"]["JmapLocalDateTime"];
-            duration?: string;
-            showWithoutTime?: boolean;
-            timeZone?: string | null;
-            locations?: {
-                [key: string]: components["schemas"]["CalendarEventLocation"];
-            };
-            /** @description RRULE-only; clients expand instances per JMAP Calendars draft. */
-            recurrenceRules?: components["schemas"]["CalendarRecurrenceRule"][];
-            excludedRecurrenceDates?: string[];
-            /** @description Per-instance patches keyed by recurrence id (original instance start). Maps to RECURRENCE-ID override VEVENTs in ICS. */
-            recurrenceOverrides?: {
-                [key: string]: components["schemas"]["CalendarEventRecurrenceOverride"];
-            };
-            /** @enum {string} */
-            freeBusyStatus?: "busy" | "free" | "tentative";
-            /** @enum {string} */
-            privacy?: "public" | "private" | "secret";
-            /** @enum {string} */
-            status?: "confirmed" | "cancelled" | "tentative";
-            participants?: {
-                [key: string]: components["schemas"]["CalendarEventParticipant"];
-            };
-            /** @description Reminder alarms mapped from iCalendar VALARM components. */
-            alerts?: {
-                [key: string]: components["schemas"]["CalendarEventAlert"];
-            };
-            categories?: string[];
-            priority?: number;
-            sequence?: number;
-            created?: components["schemas"]["JmapUTCDateTime"];
-            updated?: components["schemas"]["JmapUTCDateTime"];
-            icsProps?: {
-                [key: string]: string;
-            };
-        };
-        /** @description POST body; server assigns id and @type. */
-        CalendarEventCreate: {
-            "@type"?: unknown;
-            id?: unknown;
-        } & components["schemas"]["CalendarEvent"];
-        /** @description REST list response for GET /calendars/events. */
-        CalendarEventListResponse: {
-            list: components["schemas"]["CalendarEvent"][];
-        };
-        /** @description JMAP CalendarRights. */
-        CalendarRights: {
-            mayRead: boolean;
-            mayWrite: boolean;
-            mayShare: boolean;
-            mayDelete: boolean;
-        };
-        /**
-         * @description JMAP Calendar resource.
-         * @example {
-         *       "id": "default",
-         *       "name": "Calendar",
-         *       "description": null,
-         *       "timeZone": null,
-         *       "color": null,
-         *       "sortOrder": 0,
-         *       "isDefault": true,
-         *       "isSubscribed": true,
-         *       "shareWith": null,
-         *       "myRights": {
-         *         "mayRead": true,
-         *         "mayWrite": true,
-         *         "mayShare": false,
-         *         "mayDelete": false
-         *       }
-         *     }
-         */
-        Calendar: {
-            readonly id: components["schemas"]["JmapId"];
+        AddressBookCreate: {
             name: string;
             description?: string | null;
-            timeZone?: string | null;
-            color?: string | null;
-            sortOrder: number;
-            isDefault: boolean;
-            isSubscribed: boolean;
-            shareWith?: {
-                [key: string]: components["schemas"]["CalendarRights"];
-            } | null;
-            myRights: components["schemas"]["CalendarRights"];
+            /** @description Optional client-suggested address book id (uri slug). */
+            id?: components["schemas"]["JsContactId"];
         };
-        /** @description REST list response for GET /calendars. */
-        CalendarListResponse: {
-            list: components["schemas"]["Calendar"][];
-        };
-        /** @description JMAP id string (calendar uri, event id, map key). */
-        JmapId: string;
-        /** @description Map of ids to true booleans. */
-        JmapIdBooleanMap: {
-            [key: string]: true;
-        };
-        /**
-         * Format: date-time
-         * @description UTC date-time (ISO 8601).
-         */
-        JmapUTCDateTime: string;
-        /** @description Local or UTC date-time without required Z suffix. */
-        JmapLocalDateTime: string;
-        /** @description PATCH request body for partial calendar event updates. Omits server-owned id and @type. */
-        CalendarEventPatch: {
-            title?: string;
+        AddressBookPatch: {
+            name?: string;
             description?: string | null;
-            start?: components["schemas"]["JmapLocalDateTime"];
-            end?: components["schemas"]["JmapLocalDateTime"];
-            duration?: string;
-            showWithoutTime?: boolean;
-            timeZone?: string | null;
-            locations?: {
-                [key: string]: components["schemas"]["CalendarEventLocation"];
-            };
-            recurrenceRules?: components["schemas"]["CalendarRecurrenceRule"][];
-            excludedRecurrenceDates?: string[];
-            /** @description Per-instance patches keyed by recurrence id (original instance start). Maps to RECURRENCE-ID override VEVENTs in ICS. */
-            recurrenceOverrides?: {
-                [key: string]: components["schemas"]["CalendarEventRecurrenceOverride"];
-            };
-            /** @enum {string} */
-            freeBusyStatus?: "busy" | "free" | "tentative";
-            /** @enum {string} */
-            privacy?: "public" | "private" | "secret";
-            /** @enum {string} */
-            status?: "confirmed" | "cancelled" | "tentative";
-            participants?: {
-                [key: string]: components["schemas"]["CalendarEventParticipant"];
-            };
-            /** @description Reminder alarms mapped from iCalendar VALARM components. */
-            alerts?: {
-                [key: string]: components["schemas"]["CalendarEventAlert"];
-            };
-            categories?: string[];
-            priority?: number;
-            sequence?: number;
-            icsProps?: {
-                [key: string]: string;
-            };
+            isSubscribed?: boolean;
         };
-        CalendarEventRelativeAlertTrigger: {
-            /** @constant */
-            "@type": "RelativeAlert";
-            /** @description Signed ISO 8601 duration relative to event start or end (e.g. -PT15M). */
-            offset: string;
+        AddressBookDeleteOptions: {
             /**
-             * @default start
-             * @enum {string}
+             * @description When true, delete all cards in the book before destroying it.
+             * @default false
              */
-            relatedTo: "start" | "end";
+            onDestroyRemoveContents: boolean;
         };
-        CalendarEventAbsoluteAlertTrigger: {
-            /** @constant */
-            "@type": "AbsoluteAlert";
-            when: components["schemas"]["JmapLocalDateTime"];
+        /** @description JMAP-shaped incremental sync response (RFC 8620 /changes mapping). */
+        JmapChangesResponse: {
+            /** @description Previous sync state token supplied by the client. */
+            oldState: string;
+            /** @description Current sync state token to store for the next request. */
+            newState: string;
+            created: components["schemas"]["JsContactId"][];
+            updated: components["schemas"]["JsContactId"][];
+            destroyed: components["schemas"]["JsContactId"][];
         };
-        CalendarEventAlert: {
-            /** @constant */
-            "@type": "Alert";
-            trigger: components["schemas"]["CalendarEventRelativeAlertTrigger"] | components["schemas"]["CalendarEventAbsoluteAlertTrigger"];
-            /**
-             * @default display
-             * @enum {string}
-             */
-            action: "display" | "audio" | "email";
+        ContactCardQueryFilter: {
+            inAddressBook: components["schemas"]["JsContactId"];
+            /** @description Exact JSContact uid match (RFC 9610 ContactCard/query). */
+            uid?: string;
         };
-        /** @description Per-instance patch keyed by recurrence id (original instance start). Use excluded:true to omit an instance. */
-        CalendarEventRecurrenceOverride: {
-            excluded?: boolean;
-            title?: string;
-            description?: string | null;
-            start?: components["schemas"]["JmapLocalDateTime"];
-            end?: components["schemas"]["JmapLocalDateTime"];
-            duration?: string;
-            showWithoutTime?: boolean;
-            timeZone?: string | null;
-            locations?: {
-                [key: string]: components["schemas"]["CalendarEventLocation"];
-            };
-            /** @enum {string} */
-            freeBusyStatus?: "busy" | "free" | "tentative";
-            /** @enum {string} */
-            privacy?: "public" | "private" | "secret";
-            /** @enum {string} */
-            status?: "confirmed" | "cancelled" | "tentative";
-            participants?: {
-                [key: string]: components["schemas"]["CalendarEventParticipant"];
-            };
-            categories?: string[];
-            priority?: number;
-            sequence?: number;
-            icsProps?: {
-                [key: string]: string;
-            };
+        ContactCardQueryRequest: {
+            filter: components["schemas"]["ContactCardQueryFilter"];
+            limit?: number;
+        };
+        ContactCardQueryResponse: {
+            ids: components["schemas"]["JsContactId"][];
+            total: number;
         };
     };
     responses: never;
