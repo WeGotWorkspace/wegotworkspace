@@ -5111,16 +5111,10 @@
                 "summary": "Health check",
                 "responses": {
                     "200": {
-                        "description": "Service health",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/HealthResponse"
-                                }
-                            }
-                        }
+                        "description": "Service health"
                     }
-                }
+                },
+                "x-wgw-access": "guest"
             }
         },
         "/capabilities": {
@@ -5131,16 +5125,10 @@
                 "summary": "Platform capabilities and domains",
                 "responses": {
                     "200": {
-                        "description": "Capabilities response",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/CapabilitiesResponse"
-                                }
-                            }
-                        }
+                        "description": "Capabilities response"
                     }
-                }
+                },
+                "x-wgw-access": "guest"
             }
         },
         "/.well-known/jwks.json": {
@@ -5151,16 +5139,10 @@
                 "summary": "Public JWKS for JWT verification",
                 "responses": {
                     "200": {
-                        "description": "JWK set",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/GenericObject"
-                                }
-                            }
-                        }
+                        "description": "JWK set"
                     }
-                }
+                },
+                "x-wgw-access": "guest"
             }
         },
         "/auth/token": {
@@ -5174,7 +5156,19 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/AuthTokenRequest"
+                                "type": "object",
+                                "required": [
+                                    "username",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "username": {
+                                        "type": "string"
+                                    },
+                                    "password": {
+                                        "type": "string"
+                                    }
+                                }
                             }
                         }
                     }
@@ -5191,46 +5185,19 @@
                         }
                     },
                     "400": {
-                        "description": "Invalid request",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/GenericObject"
-                                }
-                            }
-                        }
+                        "description": "Invalid request"
                     },
                     "401": {
-                        "description": "Unauthorized",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/GenericObject"
-                                }
-                            }
-                        }
+                        "description": "Unauthorized"
                     },
                     "429": {
-                        "description": "Too many login attempts",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/GenericObject"
-                                }
-                            }
-                        }
+                        "description": "Too many login attempts"
                     },
                     "503": {
-                        "description": "JWT not configured",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/GenericObject"
-                                }
-                            }
-                        }
+                        "description": "JWT not configured"
                     }
-                }
+                },
+                "x-wgw-access": "guest"
             }
         },
         "/auth/refresh": {
@@ -5244,7 +5211,15 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/AuthRefreshRequest"
+                                "type": "object",
+                                "required": [
+                                    "refresh_token"
+                                ],
+                                "properties": {
+                                    "refresh_token": {
+                                        "type": "string"
+                                    }
+                                }
                             }
                         }
                     }
@@ -5261,26 +5236,13 @@
                         }
                     },
                     "400": {
-                        "description": "Invalid request",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/GenericObject"
-                                }
-                            }
-                        }
+                        "description": "Invalid request"
                     },
                     "401": {
-                        "description": "Unauthorized",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/GenericObject"
-                                }
-                            }
-                        }
+                        "description": "Unauthorized"
                     }
-                }
+                },
+                "x-wgw-access": "guest"
             }
         },
         "/auth/revoke": {
@@ -5299,23 +5261,22 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/AuthRevokeRequest"
+                                "type": "object",
+                                "properties": {
+                                    "refresh_token": {
+                                        "type": "string"
+                                    }
+                                }
                             }
                         }
                     }
                 },
                 "responses": {
                     "200": {
-                        "description": "Revocation result",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/OkResponse"
-                                }
-                            }
-                        }
+                        "description": "Revocation result"
                     }
-                }
+                },
+                "x-wgw-access": "guest"
             }
         },
         "/me": {
@@ -5340,7 +5301,8 @@
                             }
                         }
                     }
-                }
+                },
+                "x-wgw-access": "user"
             }
         },
         "/admin/state": {
@@ -5356,16 +5318,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Admin state",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/AdminStateResponse"
-                                }
-                            }
-                        }
+                        "description": "Admin state"
                     }
-                }
+                },
+                "x-wgw-access": "admin"
             }
         },
         "/admin/updates/log": {
@@ -5381,16 +5337,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Update log lines",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/UpdateLogResponse"
-                                }
-                            }
-                        }
+                        "description": "Update log lines"
                     }
-                }
+                },
+                "x-wgw-access": "admin"
             },
             "delete": {
                 "tags": [
@@ -5404,16 +5354,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Log cleared",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/UpdateLogClearResponse"
-                                }
-                            }
-                        }
+                        "description": "Log cleared"
                     }
-                }
+                },
+                "x-wgw-access": "admin"
             }
         },
         "/admin/updates/backups/{name}": {
@@ -5515,16 +5459,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Membership added",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/OkResponse"
-                                }
-                            }
-                        }
+                        "description": "Membership added"
                     }
-                }
+                },
+                "x-wgw-access": "admin"
             },
             "delete": {
                 "tags": [
@@ -5556,16 +5494,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Membership removed",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/OkResponse"
-                                }
-                            }
-                        }
+                        "description": "Membership removed"
                     }
-                }
+                },
+                "x-wgw-access": "admin"
             }
         },
         "/settings/state": {
@@ -5581,16 +5513,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Settings state",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/SettingsStateResponse"
-                                }
-                            }
-                        }
+                        "description": "Settings state"
                     }
-                }
+                },
+                "x-wgw-access": "user"
             }
         },
         "/settings/profile": {
@@ -5606,26 +5532,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Updated settings state",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/SettingsStateResponse"
-                                }
-                            }
-                        }
+                        "description": "Updated settings state"
                     }
                 },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/SettingsProfileRequest"
-                            }
-                        }
-                    }
-                }
+                "x-wgw-access": "user"
             }
         },
         "/settings/mail": {
@@ -5641,26 +5551,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Updated settings state",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/SettingsStateResponse"
-                                }
-                            }
-                        }
+                        "description": "Updated settings state"
                     }
                 },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/SettingsMailRequest"
-                            }
-                        }
-                    }
-                }
+                "x-wgw-access": "user"
             }
         },
         "/mail/status": {
@@ -5676,16 +5570,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Mail status",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/MailStatusResponse"
-                                }
-                            }
-                        }
+                        "description": "Mail status"
                     }
-                }
+                },
+                "x-wgw-access": "user"
             }
         },
         "/mail/folders": {
@@ -5701,16 +5589,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Mail folder tree",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/MailFoldersResponse"
-                                }
-                            }
-                        }
+                        "description": "Mail folder tree"
                     }
-                }
+                },
+                "x-wgw-access": "user"
             },
             "post": {
                 "tags": [
@@ -5724,26 +5606,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Folder created",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/MailFolderMutationResponse"
-                                }
-                            }
-                        }
+                        "description": "Folder created"
                     }
                 },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/MailFolderCreateRequest"
-                            }
-                        }
-                    }
-                }
+                "x-wgw-access": "user"
             },
             "patch": {
                 "tags": [
@@ -5757,26 +5623,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Folder moved",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/MailFolderMutationResponse"
-                                }
-                            }
-                        }
+                        "description": "Folder moved"
                     }
                 },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/MailFolderMoveRequest"
-                            }
-                        }
-                    }
-                }
+                "x-wgw-access": "user"
             },
             "delete": {
                 "tags": [
@@ -5790,26 +5640,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Folder deleted",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/OkResponse"
-                                }
-                            }
-                        }
+                        "description": "Folder deleted"
                     }
                 },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/MailFolderDeleteRequest"
-                            }
-                        }
-                    }
-                }
+                "x-wgw-access": "user"
             }
         },
         "/mail/messages": {
@@ -5825,16 +5659,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Message list",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/MailMessagesResponse"
-                                }
-                            }
-                        }
+                        "description": "Message list"
                     }
-                }
+                },
+                "x-wgw-access": "user"
             },
             "post": {
                 "tags": [
@@ -5983,34 +5811,44 @@
                 "tags": [
                     "Mail"
                 ],
-                "summary": "Move a message to another folder",
+                "summary": "Move message to another folder",
                 "security": [
                     {
                         "bearerAuth": []
                     }
                 ],
-                "responses": {
-                    "200": {
-                        "description": "Message moved",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/OkResponse"
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "fromFolder",
+                                    "toFolder",
+                                    "uid"
+                                ],
+                                "properties": {
+                                    "fromFolder": {
+                                        "type": "string"
+                                    },
+                                    "toFolder": {
+                                        "type": "string"
+                                    },
+                                    "uid": {
+                                        "type": "integer"
+                                    }
                                 }
                             }
                         }
                     }
                 },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/MailMoveRequest"
-                            }
-                        }
+                "responses": {
+                    "200": {
+                        "description": "Message moved"
                     }
-                }
+                },
+                "x-wgw-access": "user"
             }
         },
         "/mail/send": {
@@ -6462,16 +6300,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Notes capabilities",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/NotesCapabilitiesResponse"
-                                }
-                            }
-                        }
+                        "description": "Notes capabilities"
                     }
-                }
+                },
+                "x-wgw-access": "user"
             }
         },
         "/notes/state": {
@@ -6487,16 +6319,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Notes state",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/NotesStateResponse"
-                                }
-                            }
-                        }
+                        "description": "Notes state"
                     }
-                }
+                },
+                "x-wgw-access": "user"
             }
         },
         "/notes/items": {
@@ -6512,16 +6338,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Notes list",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/NotesItemsResponse"
-                                }
-                            }
-                        }
+                        "description": "Notes list"
                     }
-                }
+                },
+                "x-wgw-access": "user"
             },
             "post": {
                 "tags": [
@@ -6535,26 +6355,10 @@
                 ],
                 "responses": {
                     "201": {
-                        "description": "Created note",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/NoteMutationResponse"
-                                }
-                            }
-                        }
+                        "description": "Created note"
                     }
                 },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/NoteUpsertRequest"
-                            }
-                        }
-                    }
-                }
+                "x-wgw-access": "user"
             }
         },
         "/notes/items/{id}": {
@@ -6580,26 +6384,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Updated note",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/NoteMutationResponse"
-                                }
-                            }
-                        }
+                        "description": "Updated note"
                     }
                 },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/NoteUpsertRequest"
-                            }
-                        }
-                    }
-                }
+                "x-wgw-access": "user"
             },
             "delete": {
                 "tags": [
@@ -6623,26 +6411,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Deleted note",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/OkResponse"
-                                }
-                            }
-                        }
+                        "description": "Deleted note"
                     }
                 },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/NoteDeleteRequest"
-                            }
-                        }
-                    }
-                }
+                "x-wgw-access": "user"
             },
             "patch": {
                 "tags": [
@@ -6755,16 +6527,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Notebook list",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/NotebookListResponse"
-                                }
-                            }
-                        }
+                        "description": "Notebook list"
                     }
-                }
+                },
+                "x-wgw-access": "user"
             },
             "post": {
                 "tags": [
@@ -6778,26 +6544,10 @@
                 ],
                 "responses": {
                     "201": {
-                        "description": "Notebook created",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/NotebookMutationResponse"
-                                }
-                            }
-                        }
+                        "description": "Notebook created"
                     }
                 },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/NotebookCreateRequest"
-                            }
-                        }
-                    }
-                }
+                "x-wgw-access": "user"
             }
         },
         "/notes/notebooks/{name}": {
@@ -6823,26 +6573,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Notebook renamed",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/NotebookMutationResponse"
-                                }
-                            }
-                        }
+                        "description": "Notebook renamed"
                     }
                 },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/NotebookRenameRequest"
-                            }
-                        }
-                    }
-                }
+                "x-wgw-access": "user"
             },
             "delete": {
                 "tags": [
@@ -6866,26 +6600,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Notebook deleted",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/NotebookMutationResponse"
-                                }
-                            }
-                        }
+                        "description": "Notebook deleted"
                     }
                 },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/NotebookDeleteRequest"
-                            }
-                        }
-                    }
-                }
+                "x-wgw-access": "user"
             }
         },
         "/plugins": {
@@ -6901,16 +6619,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Plugin registry snapshot",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/PluginsResponse"
-                                }
-                            }
-                        }
+                        "description": "Plugin registry snapshot"
                     }
-                }
+                },
+                "x-wgw-access": "user"
             }
         },
         "/plugins/{id}/activate": {
@@ -6998,19 +6710,13 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Session established",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/PluginSessionResponse"
-                                }
-                            }
-                        }
+                        "description": "Session established"
                     },
                     "404": {
                         "description": "Plugin not found"
                     }
-                }
+                },
+                "x-wgw-access": "user"
             }
         },
         "/meet/join": {
@@ -7171,16 +6877,10 @@
                 "summary": "Installer summary and current state snapshot",
                 "responses": {
                     "200": {
-                        "description": "Installer state",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/InstallerStateResponse"
-                                }
-                            }
-                        }
+                        "description": "Installer state"
                     }
-                }
+                },
+                "x-wgw-access": "guest"
             }
         },
         "/installer/bootstrap": {
@@ -7191,16 +6891,10 @@
                 "summary": "Installer bootstrap payload (full state)",
                 "responses": {
                     "200": {
-                        "description": "Installer bootstrap payload",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/InstallerBootstrapResponse"
-                                }
-                            }
-                        }
+                        "description": "Installer bootstrap payload"
                     }
-                }
+                },
+                "x-wgw-access": "guest"
             }
         },
         "/installer/action": {
@@ -7211,26 +6905,10 @@
                 "summary": "Perform installer step action",
                 "responses": {
                     "200": {
-                        "description": "Installer action result",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/InstallerActionResponse"
-                                }
-                            }
-                        }
+                        "description": "Installer action result"
                     }
                 },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/InstallerActionRequest"
-                            }
-                        }
-                    }
-                }
+                "x-wgw-access": "guest"
             }
         },
         "/home/state": {
@@ -7271,16 +6949,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "DAV capabilities",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/DavCapabilitiesResponse"
-                                }
-                            }
-                        }
+                        "description": "DAV capabilities"
                     }
-                }
+                },
+                "x-wgw-access": "user"
             }
         },
         "/admin/settings": {
@@ -7298,7 +6970,8 @@
                     "200": {
                         "description": "Settings saved"
                     }
-                }
+                },
+                "x-wgw-access": "admin"
             }
         },
         "/admin/updates/state": {
@@ -7316,7 +6989,8 @@
                     "200": {
                         "description": "Update state"
                     }
-                }
+                },
+                "x-wgw-access": "admin"
             }
         },
         "/admin/updates/check": {
@@ -8500,7 +8174,31 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/ContactCard"
+                                "$ref": "#/components/schemas/ContactCardCreate"
+                            },
+                            "example": {
+                                "addressBookIds": {
+                                    "default": true
+                                },
+                                "name": {
+                                    "full": "Joe Example"
+                                },
+                                "emails": {
+                                    "550e8400-e29b-41d4-a716-446655440001": {
+                                        "address": "joe@example.com"
+                                    }
+                                },
+                                "phones": {
+                                    "550e8400-e29b-41d4-a716-446655440002": {
+                                        "number": "+1-555-0100"
+                                    }
+                                },
+                                "addresses": {
+                                    "550e8400-e29b-41d4-a716-446655440003": {
+                                        "full": "123 Main St",
+                                        "countryCode": "US"
+                                    }
+                                }
                             }
                         }
                     }
@@ -8580,40 +8278,30 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/ContactCard"
-                            }
-                        }
-                    }
-                },
-                "x-wgw-access": "user"
-            },
-            "delete": {
-                "tags": [
-                    "Contacts"
-                ],
-                "summary": "Delete a contact card",
-                "security": [
-                    {
-                        "bearerAuth": []
-                    }
-                ],
-                "parameters": [
-                    {
-                        "name": "cardId",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Deleted contact card",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/OkResponse"
+                                "$ref": "#/components/schemas/ContactCardCreate"
+                            },
+                            "example": {
+                                "addressBookIds": {
+                                    "default": true
+                                },
+                                "name": {
+                                    "full": "Joe Example"
+                                },
+                                "emails": {
+                                    "550e8400-e29b-41d4-a716-446655440001": {
+                                        "address": "joe@example.com"
+                                    }
+                                },
+                                "phones": {
+                                    "550e8400-e29b-41d4-a716-446655440002": {
+                                        "number": "+1-555-0100"
+                                    }
+                                },
+                                "addresses": {
+                                    "550e8400-e29b-41d4-a716-446655440003": {
+                                        "full": "123 Main St",
+                                        "countryCode": "US"
+                                    }
                                 }
                             }
                         }
@@ -8666,6 +8354,40 @@
                                     "550e8400-e29b-41d4-a716-446655440001": {
                                         "address": "updated@example.com"
                                     }
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "delete": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Delete a contact card",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "cardId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted contact card",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OkResponse"
                                 }
                             }
                         }
