@@ -92,6 +92,10 @@ final class TaskUpsertRequest extends FormRequest
             'excludedRecurrenceDates' => ['sometimes', 'array'],
             'recurrenceOverrides' => ['sometimes', 'array'],
             'alerts' => ['sometimes', 'array'],
+            'showWithoutTime' => ['sometimes', 'boolean'],
+            'timeZone' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'participants' => ['sometimes', 'array'],
+            'icsProps' => ['sometimes', 'array'],
         ];
     }
 }

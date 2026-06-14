@@ -47,9 +47,25 @@
       "start": { "type": ["string", "null"] },
       "due": { "type": ["string", "null"] },
       "completed": { "type": ["string", "null"] },
+      "showWithoutTime": { "type": "boolean" },
+      "timeZone": { "type": ["string", "null"] },
       "workflowStatus": { "type": ["string", "null"] },
       "progress": { "type": ["integer", "null"] },
       "excluded": { "type": "boolean", "description": "When true, exclude this recurrence instance (EXDATE)" }
+    },
+    "additionalProperties": false
+  },
+  "TaskParticipant": {
+    "type": "object",
+    "required": ["@type"],
+    "properties": {
+      "@type": { "type": "string", "const": "Participant" },
+      "name": { "type": ["string", "null"] },
+      "email": { "type": ["string", "null"] },
+      "roles": { "type": "array", "items": { "type": "string" } },
+      "participationStatus": { "type": "string" },
+      "kind": { "type": "string" },
+      "language": { "type": "string" }
     },
     "additionalProperties": false
   },
@@ -66,6 +82,8 @@
       "start": { "type": ["string", "null"] },
       "due": { "type": ["string", "null"] },
       "completed": { "type": ["string", "null"] },
+      "showWithoutTime": { "type": "boolean" },
+      "timeZone": { "type": ["string", "null"] },
       "workflowStatus": { "type": ["string", "null"] },
       "progress": { "type": ["integer", "null"] },
       "priority": { "type": ["integer", "null"] },
@@ -95,6 +113,17 @@
         "type": "object",
         "additionalProperties": { "$ref": "#/components/schemas/TaskAlert" },
         "description": "Task reminders mapped from VALARM components."
+      },
+      "participants": {
+        "type": "object",
+        "propertyNames": { "$ref": "#/components/schemas/JmapId" },
+        "additionalProperties": { "$ref": "#/components/schemas/TaskParticipant" },
+        "description": "Task assignees mapped from ORGANIZER/ATTENDEE."
+      },
+      "icsProps": {
+        "type": "object",
+        "additionalProperties": { "type": "string" },
+        "description": "Unmapped VTODO properties preserved for round-trip fidelity."
       }
     },
     "additionalProperties": false
@@ -118,6 +147,8 @@
       "start": { "type": ["string", "null"] },
       "due": { "type": ["string", "null"] },
       "completed": { "type": ["string", "null"] },
+      "showWithoutTime": { "type": "boolean" },
+      "timeZone": { "type": ["string", "null"] },
       "workflowStatus": { "type": ["string", "null"] },
       "progress": { "type": ["integer", "null"] },
       "priority": { "type": ["integer", "null"] },
@@ -135,6 +166,15 @@
       "alerts": {
         "type": "object",
         "additionalProperties": { "$ref": "#/components/schemas/TaskAlert" }
+      },
+      "participants": {
+        "type": "object",
+        "propertyNames": { "$ref": "#/components/schemas/JmapId" },
+        "additionalProperties": { "$ref": "#/components/schemas/TaskParticipant" }
+      },
+      "icsProps": {
+        "type": "object",
+        "additionalProperties": { "type": "string" }
       }
     },
     "additionalProperties": false
@@ -147,6 +187,8 @@
       "start": { "type": ["string", "null"] },
       "due": { "type": ["string", "null"] },
       "completed": { "type": ["string", "null"] },
+      "showWithoutTime": { "type": "boolean" },
+      "timeZone": { "type": ["string", "null"] },
       "workflowStatus": { "type": ["string", "null"] },
       "progress": { "type": ["integer", "null"] },
       "priority": { "type": ["integer", "null"] },
@@ -164,6 +206,15 @@
       "alerts": {
         "type": "object",
         "additionalProperties": { "$ref": "#/components/schemas/TaskAlert" }
+      },
+      "participants": {
+        "type": "object",
+        "propertyNames": { "$ref": "#/components/schemas/JmapId" },
+        "additionalProperties": { "$ref": "#/components/schemas/TaskParticipant" }
+      },
+      "icsProps": {
+        "type": "object",
+        "additionalProperties": { "type": "string" }
       }
     },
     "additionalProperties": false
