@@ -63,6 +63,12 @@ This document summarizes what the v1 JMAP-shaped REST layers implement versus fu
 | Address book / calendar / task list CRUD + sharing | [#157](https://github.com/WeGotWorkspace/wegotworkspace/issues/157) |
 | JMAP `changes` / `query` sync | [#158](https://github.com/WeGotWorkspace/wegotworkspace/issues/158) |
 
+## External interop fixtures
+
+Adopt **Fastmail** (Text::JSCalendar / Text::JSContact normative goldens) and **Audriga** (real-world PHP/Sabre stack exports) as complementary conversion conformance fixtures alongside WGW’s 27 contact golden pairs. Fastmail cases use strict golden match where WGW owns expected JSON; Audriga/cozy cases assert parse + round-trip stability only.
+
+**Tracking:** [#160](https://github.com/WeGotWorkspace/wegotworkspace/issues/160) — feat(api): adopt Fastmail + Audriga conversion interop fixtures (parent epic [#137](https://github.com/WeGotWorkspace/wegotworkspace/issues/137)).
+
 ## v1 explicitly implemented (reference)
 
 ### Contacts
