@@ -142,6 +142,7 @@ final class OpenApiContract
             '{attachmentId}' => '1.1',
             '{addressBookId}' => 'default',
             '{cardId}' => 'demo-card',
+            '{blobId}' => '550e8400e29b41d4a716446655440000',
         ];
 
         $path = $openApiPath;
