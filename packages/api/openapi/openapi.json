@@ -89,120 +89,9 @@
           }
         }
       }
-    },
-    "parameters": {
-      "IfMatchHeader": {
-        "name": "If-Match",
-        "in": "header",
-        "required": true,
-        "schema": {
-          "type": "string"
-        },
-        "description": "Concurrency token from the prior GET ETag header or etag response field."
-      },
-      "IfUnmodifiedSinceHeader": {
-        "name": "If-Unmodified-Since",
-        "in": "header",
-        "required": false,
-        "schema": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "description": "Optional fallback when If-Match is omitted; compared to stored lastmodified."
-      }
-    },
-    "responses": {
-      "PreconditionFailed": {
-        "description": "Precondition failed",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            }
-          }
-        }
-      },
-      "BadRequest": {
-        "description": "Invalid request",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            }
-          }
-        }
-      },
-      "Forbidden": {
-        "description": "Forbidden",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            }
-          }
-        }
-      },
-      "NotFound": {
-        "description": "Resource not found",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            }
-          }
-        }
-      },
-      "Conflict": {
-        "description": "Conflict with current resource state",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            }
-          }
-        }
-      },
-      "PayloadTooLarge": {
-        "description": "Payload too large",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            }
-          }
-        }
-      }
     }
   },
   "paths": {
-    "/health": {
-      "get": {
-        "tags": [
-          "System"
-        ],
-        "summary": "Health check",
-        "responses": {
-          "200": {
-            "description": "Service health"
-          }
-        },
-        "x-wgw-access": "guest"
-      }
-    },
-    "/capabilities": {
-      "get": {
-        "tags": [
-          "System"
-        ],
-        "summary": "Platform capabilities and domains",
-        "responses": {
-          "200": {
-            "description": "Capabilities response"
-          }
-        },
-        "x-wgw-access": "guest"
-      }
-    },
     "/.well-known/jwks.json": {
       "get": {
         "tags": [
@@ -215,1934 +104,6 @@
           }
         },
         "x-wgw-access": "guest"
-      }
-    },
-    "/auth/token": {
-      "post": {
-        "tags": [
-          "Auth"
-        ],
-        "summary": "Issue RS256 bearer token from username/password",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "username",
-                  "password"
-                ],
-                "properties": {
-                  "username": {
-                    "type": "string"
-                  },
-                  "password": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Token issued",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthTokenResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "429": {
-            "description": "Too many login attempts"
-          },
-          "503": {
-            "description": "JWT not configured"
-          }
-        },
-        "x-wgw-access": "guest"
-      }
-    },
-    "/auth/refresh": {
-      "post": {
-        "tags": [
-          "Auth"
-        ],
-        "summary": "Refresh access token using refresh token",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "refresh_token"
-                ],
-                "properties": {
-                  "refresh_token": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Refreshed token pair",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthTokenResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request"
-          },
-          "401": {
-            "description": "Unauthorized"
-          }
-        },
-        "x-wgw-access": "guest"
-      }
-    },
-    "/auth/revoke": {
-      "post": {
-        "tags": [
-          "Auth"
-        ],
-        "summary": "Revoke current access token and/or refresh token",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "refresh_token": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Revocation result"
-          }
-        },
-        "x-wgw-access": "guest"
-      }
-    },
-    "/me": {
-      "get": {
-        "tags": [
-          "Auth"
-        ],
-        "summary": "Current authenticated principal",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Current principal",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Principal"
-                }
-              }
-            }
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
-    "/admin/state": {
-      "get": {
-        "tags": [
-          "Admin"
-        ],
-        "summary": "Admin aggregate state",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Admin state"
-          }
-        },
-        "x-wgw-access": "admin"
-      }
-    },
-    "/admin/updates/log": {
-      "get": {
-        "tags": [
-          "Admin"
-        ],
-        "summary": "Read update process log lines",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Update log lines"
-          }
-        },
-        "x-wgw-access": "admin"
-      },
-      "delete": {
-        "tags": [
-          "Admin"
-        ],
-        "summary": "Clear update process log",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Log cleared"
-          }
-        },
-        "x-wgw-access": "admin"
-      }
-    },
-    "/admin/updates/backups/{name}": {
-      "get": {
-        "tags": [
-          "Admin"
-        ],
-        "summary": "Download an update backup archive",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "name",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Backup ZIP stream",
-            "content": {
-              "application/octet-stream": {
-                "schema": {
-                  "$ref": "#/components/schemas/BinaryPayload"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Admin"
-        ],
-        "summary": "Delete an update backup archive",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "name",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Updated backup state",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UpdateStateResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/admin/groups/{group}/members/{username}": {
-      "put": {
-        "tags": [
-          "Admin"
-        ],
-        "summary": "Add user to admin group",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "group",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "username",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Membership added"
-          }
-        },
-        "x-wgw-access": "admin"
-      },
-      "delete": {
-        "tags": [
-          "Admin"
-        ],
-        "summary": "Remove user from admin group",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "group",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "username",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Membership removed"
-          }
-        },
-        "x-wgw-access": "admin"
-      }
-    },
-    "/settings/state": {
-      "get": {
-        "tags": [
-          "Settings"
-        ],
-        "summary": "User settings aggregate state",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Settings state"
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
-    "/settings/profile": {
-      "put": {
-        "tags": [
-          "Settings"
-        ],
-        "summary": "Update profile details for current user",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Updated settings state"
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
-    "/settings/mail": {
-      "put": {
-        "tags": [
-          "Settings"
-        ],
-        "summary": "Update personal mail credentials for current user",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Updated settings state"
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
-    "/mail/status": {
-      "get": {
-        "tags": [
-          "Mail"
-        ],
-        "summary": "Mail runtime status",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Mail status"
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
-    "/mail/folders": {
-      "get": {
-        "tags": [
-          "Mail"
-        ],
-        "summary": "List mail folders",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Mail folder tree"
-          }
-        },
-        "x-wgw-access": "user"
-      },
-      "post": {
-        "tags": [
-          "Mail"
-        ],
-        "summary": "Create mail folder",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Folder created"
-          }
-        },
-        "x-wgw-access": "user"
-      },
-      "patch": {
-        "tags": [
-          "Mail"
-        ],
-        "summary": "Move mail folder",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Folder moved"
-          }
-        },
-        "x-wgw-access": "user"
-      },
-      "delete": {
-        "tags": [
-          "Mail"
-        ],
-        "summary": "Delete mail folder",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Folder deleted"
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
-    "/mail/messages": {
-      "get": {
-        "tags": [
-          "Mail"
-        ],
-        "summary": "List messages in a folder",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Message list"
-          }
-        },
-        "x-wgw-access": "user"
-      },
-      "post": {
-        "tags": [
-          "Mail"
-        ],
-        "summary": "Send message",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Sent"
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
-    "/mail/messages/attachments": {
-      "get": {
-        "tags": [
-          "Mail"
-        ],
-        "summary": "List attachment metadata for messages",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Attachment metadata",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MailAttachmentsResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/mail/message": {
-      "get": {
-        "tags": [
-          "Mail"
-        ],
-        "summary": "Get a single message",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Message payload",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MailMessageResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Mail"
-        ],
-        "summary": "Patch read/starred flags on a message",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Message updated",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OkResponse"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MailMessagePatchRequest"
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Mail"
-        ],
-        "summary": "Permanently delete a message",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Message deleted"
-          }
-        }
-      }
-    },
-    "/mail/message/attachment": {
-      "get": {
-        "tags": [
-          "Mail"
-        ],
-        "summary": "Download a message attachment",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Attachment stream",
-            "content": {
-              "application/octet-stream": {
-                "schema": {
-                  "$ref": "#/components/schemas/BinaryPayload"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/mail/move": {
-      "post": {
-        "tags": [
-          "Mail"
-        ],
-        "summary": "Move message to another folder",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "fromFolder",
-                  "toFolder",
-                  "uid"
-                ],
-                "properties": {
-                  "fromFolder": {
-                    "type": "string"
-                  },
-                  "toFolder": {
-                    "type": "string"
-                  },
-                  "uid": {
-                    "type": "integer"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Message moved"
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
-    "/mail/send": {
-      "post": {
-        "tags": [
-          "Mail"
-        ],
-        "summary": "Send an email",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Message sent",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MailSendResponse"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MailSendRequest"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/mail/draft": {
-      "post": {
-        "tags": [
-          "Mail"
-        ],
-        "summary": "Save a message draft",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Draft saved",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MailDraftResponse"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MailDraftRequest"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/drive/user": {
-      "get": {
-        "tags": [
-          "Drive"
-        ],
-        "summary": "Drive user context",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Drive user payload",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DriveUserResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/drive/getdir": {
-      "post": {
-        "tags": [
-          "Drive"
-        ],
-        "summary": "Read directory listing",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Directory listing",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DriveListingResponse"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DriveGetDirRequest"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/drive/searchfiles": {
-      "post": {
-        "tags": [
-          "Drive"
-        ],
-        "summary": "Search files and directories",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Search results",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DriveListingResponse"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DriveSearchRequest"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/drive/changedir": {
-      "post": {
-        "tags": [
-          "Drive"
-        ],
-        "summary": "Change current drive directory",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Current directory updated",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DriveCwdResponse"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DriveChangeDirRequest"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/drive/createnew": {
-      "post": {
-        "tags": [
-          "Drive"
-        ],
-        "summary": "Create a new drive directory",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Item created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DriveMutationResponse"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DriveCreateRequest"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/drive/renameitem": {
-      "post": {
-        "tags": [
-          "Drive"
-        ],
-        "summary": "Rename a drive item",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Item renamed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DriveMutationResponse"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DriveRenameRequest"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/drive/deleteitems": {
-      "post": {
-        "tags": [
-          "Drive"
-        ],
-        "summary": "Delete one or more drive items",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Items deleted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DriveMutationResponse"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DriveDeleteItemsRequest"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/drive/download": {
-      "get": {
-        "tags": [
-          "Drive"
-        ],
-        "summary": "Download a drive file",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "File stream",
-            "content": {
-              "application/octet-stream": {
-                "schema": {
-                  "$ref": "#/components/schemas/BinaryPayload"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/drive/upload": {
-      "get": {
-        "tags": [
-          "Drive"
-        ],
-        "summary": "Drive upload readiness probe",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Upload is available",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Drive"
-        ],
-        "summary": "Upload file chunk(s) to drive",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Upload accepted",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/drive/stars": {
-      "get": {
-        "tags": [
-          "Drive"
-        ],
-        "summary": "List starred drive paths for current user",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Starred paths",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DriveStarsResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Drive"
-        ],
-        "summary": "Set starred state for a drive path",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Starred state updated",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DriveStarUpdateResponse"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DriveStarUpdateRequest"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/notes/capabilities": {
-      "get": {
-        "tags": [
-          "Notes"
-        ],
-        "summary": "Notes capabilities",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Notes capabilities"
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
-    "/notes/state": {
-      "get": {
-        "tags": [
-          "Notes"
-        ],
-        "summary": "Notes runtime boot state for authenticated user",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Notes state"
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
-    "/notes/items": {
-      "get": {
-        "tags": [
-          "Notes"
-        ],
-        "summary": "List notes with optional archive/notebook/search filters",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Notes list"
-          }
-        },
-        "x-wgw-access": "user"
-      },
-      "post": {
-        "tags": [
-          "Notes"
-        ],
-        "summary": "Create a new note",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Created note"
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
-    "/notes/items/{id}": {
-      "put": {
-        "tags": [
-          "Notes"
-        ],
-        "summary": "Save/update a note",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Updated note"
-          }
-        },
-        "x-wgw-access": "user"
-      },
-      "delete": {
-        "tags": [
-          "Notes"
-        ],
-        "summary": "Delete a note",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Deleted note"
-          }
-        },
-        "x-wgw-access": "user"
-      },
-      "patch": {
-        "tags": [
-          "Notes"
-        ],
-        "summary": "Patch note (e.g. archive)",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Updated"
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
-    "/notes/items/{id}/archive": {
-      "post": {
-        "tags": [
-          "Notes"
-        ],
-        "summary": "Archive a note",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Archived note",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NoteMutationResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/notes/items/{id}/restore": {
-      "post": {
-        "tags": [
-          "Notes"
-        ],
-        "summary": "Restore an archived note",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Restored note",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NoteMutationResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/notes/notebooks": {
-      "get": {
-        "tags": [
-          "Notes"
-        ],
-        "summary": "List notebooks with active/archive counts",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Notebook list"
-          }
-        },
-        "x-wgw-access": "user"
-      },
-      "post": {
-        "tags": [
-          "Notes"
-        ],
-        "summary": "Create notebook",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Notebook created"
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
-    "/notes/notebooks/{name}": {
-      "patch": {
-        "tags": [
-          "Notes"
-        ],
-        "summary": "Rename notebook",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "name",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Notebook renamed"
-          }
-        },
-        "x-wgw-access": "user"
-      },
-      "delete": {
-        "tags": [
-          "Notes"
-        ],
-        "summary": "Delete notebook (archive, move, or purge)",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "name",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Notebook deleted"
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
-    "/plugins": {
-      "get": {
-        "tags": [
-          "Plugins"
-        ],
-        "summary": "List discovered plugins and capabilities",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Plugin registry snapshot"
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
-    "/plugins/{id}/activate": {
-      "post": {
-        "tags": [
-          "Plugins"
-        ],
-        "summary": "Activate a plugin",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Plugin activated"
-          },
-          "404": {
-            "description": "Plugin not found"
-          }
-        }
-      }
-    },
-    "/plugins/{id}/deactivate": {
-      "post": {
-        "tags": [
-          "Plugins"
-        ],
-        "summary": "Deactivate a plugin",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Plugin deactivated"
-          },
-          "404": {
-            "description": "Plugin not found"
-          }
-        }
-      }
-    },
-    "/plugins/{id}/session": {
-      "post": {
-        "tags": [
-          "Plugins"
-        ],
-        "summary": "Establish browser UI session cookie for a plugin surface",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Session established"
-          },
-          "404": {
-            "description": "Plugin not found"
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
-    "/meet/join": {
-      "post": {
-        "tags": [
-          "Meet"
-        ],
-        "summary": "Join meet room (guest or authenticated)",
-        "responses": {
-          "200": {
-            "description": "Join response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MeetJoinResponse"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MeetJoinRequest"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/meet/poll": {
-      "post": {
-        "tags": [
-          "Meet"
-        ],
-        "summary": "Poll meet signaling messages",
-        "responses": {
-          "200": {
-            "description": "Poll response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MeetPollResponse"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MeetPollRequest"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/meet/send": {
-      "post": {
-        "tags": [
-          "Meet"
-        ],
-        "summary": "Send meet WebRTC signaling message",
-        "responses": {
-          "200": {
-            "description": "Send response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MeetSendResponse"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MeetSendRequest"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/meet/leave": {
-      "post": {
-        "tags": [
-          "Meet"
-        ],
-        "summary": "Leave meet room",
-        "responses": {
-          "200": {
-            "description": "Leave response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MeetLeaveResponse"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MeetLeaveRequest"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/meet/chat": {
-      "post": {
-        "tags": [
-          "Meet"
-        ],
-        "summary": "Meet room chat message",
-        "responses": {
-          "200": {
-            "description": "Chat response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MeetChatResponse"
-                }
-              }
-            }
-          }
-        },
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MeetChatRequest"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/installer/state": {
-      "get": {
-        "tags": [
-          "Installer"
-        ],
-        "summary": "Installer summary and current state snapshot",
-        "responses": {
-          "200": {
-            "description": "Installer state"
-          }
-        },
-        "x-wgw-access": "guest"
-      }
-    },
-    "/installer/bootstrap": {
-      "get": {
-        "tags": [
-          "Installer"
-        ],
-        "summary": "Installer bootstrap payload (full state)",
-        "responses": {
-          "200": {
-            "description": "Installer bootstrap payload"
-          }
-        },
-        "x-wgw-access": "guest"
-      }
-    },
-    "/installer/action": {
-      "post": {
-        "tags": [
-          "Installer"
-        ],
-        "summary": "Perform installer step action",
-        "responses": {
-          "200": {
-            "description": "Installer action result"
-          }
-        },
-        "x-wgw-access": "guest"
-      }
-    },
-    "/home/state": {
-      "get": {
-        "tags": [
-          "Home"
-        ],
-        "summary": "Home app state",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Home state",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HomeStateResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/dav/capabilities": {
-      "get": {
-        "tags": [
-          "Dav"
-        ],
-        "summary": "DAV capabilities",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "DAV capabilities"
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
-    "/admin/settings": {
-      "put": {
-        "tags": [
-          "Admin"
-        ],
-        "summary": "Save admin-managed app settings",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Settings saved"
-          }
-        },
-        "x-wgw-access": "admin"
-      }
-    },
-    "/admin/updates/state": {
-      "get": {
-        "tags": [
-          "Admin"
-        ],
-        "summary": "Update subsystem state snapshot",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Update state"
-          }
-        },
-        "x-wgw-access": "admin"
-      }
-    },
-    "/admin/updates/check": {
-      "post": {
-        "tags": [
-          "Admin"
-        ],
-        "summary": "Check release feed for updates",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Update state after check"
-          }
-        }
-      }
-    },
-    "/admin/updates/apply": {
-      "post": {
-        "tags": [
-          "Admin"
-        ],
-        "summary": "Apply checked release update",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Apply result"
-          }
-        }
-      }
-    },
-    "/admin/updates/cancel": {
-      "post": {
-        "tags": [
-          "Admin"
-        ],
-        "summary": "Request cancellation of in-progress update",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Cancel acknowledged"
-          }
-        }
-      }
-    },
-    "/meet/room": {
-      "post": {
-        "tags": [
-          "Meet"
-        ],
-        "summary": "Probe or resolve meet room metadata",
-        "responses": {
-          "200": {
-            "description": "Room metadata"
-          }
-        }
-      }
-    },
-    "/meet/rtc": {
-      "get": {
-        "tags": [
-          "Meet"
-        ],
-        "summary": "Get Meet WebRTC ICE settings",
-        "responses": {
-          "200": {
-            "description": "Meet RTC ICE settings"
-          }
-        }
       }
     },
     "/admin/backups/{name}": {
@@ -2297,6 +258,78 @@
         "x-wgw-access": "admin"
       }
     },
+    "/admin/groups/{group}/members/{username}": {
+      "put": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Add user to admin group",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Membership added"
+          }
+        },
+        "x-wgw-access": "admin"
+      },
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Remove user from admin group",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Membership removed"
+          }
+        },
+        "x-wgw-access": "admin"
+      }
+    },
     "/admin/plugins": {
       "post": {
         "tags": [
@@ -2383,6 +416,44 @@
         "x-wgw-access": "admin"
       }
     },
+    "/admin/settings": {
+      "put": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Save admin-managed app settings",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Settings saved"
+          }
+        },
+        "x-wgw-access": "admin"
+      }
+    },
+    "/admin/state": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Admin aggregate state",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Admin state"
+          }
+        },
+        "x-wgw-access": "admin"
+      }
+    },
     "/admin/update-jobs": {
       "post": {
         "tags": [
@@ -2426,6 +497,61 @@
         "responses": {
           "200": {
             "description": "Cancelled"
+          }
+        },
+        "x-wgw-access": "admin"
+      }
+    },
+    "/admin/updates/log": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Read update process log lines",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Update log lines"
+          }
+        },
+        "x-wgw-access": "admin"
+      },
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Clear update process log",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Log cleared"
+          }
+        },
+        "x-wgw-access": "admin"
+      }
+    },
+    "/admin/updates/state": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Update subsystem state snapshot",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Update state"
           }
         },
         "x-wgw-access": "admin"
@@ -2525,6 +651,173 @@
           }
         },
         "x-wgw-access": "admin"
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Refresh access token using refresh token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "refresh_token"
+                ],
+                "properties": {
+                  "refresh_token": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Refreshed token pair",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "x-wgw-access": "guest"
+      }
+    },
+    "/auth/revoke": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Revoke current access token and/or refresh token",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "refresh_token": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Revocation result"
+          }
+        },
+        "x-wgw-access": "guest"
+      }
+    },
+    "/auth/token": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Issue RS256 bearer token from username/password",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "username",
+                  "password"
+                ],
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token issued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "429": {
+            "description": "Too many login attempts"
+          },
+          "503": {
+            "description": "JWT not configured"
+          }
+        },
+        "x-wgw-access": "guest"
+      }
+    },
+    "/capabilities": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Platform capabilities and domains",
+        "responses": {
+          "200": {
+            "description": "Capabilities response"
+          }
+        },
+        "x-wgw-access": "guest"
+      }
+    },
+    "/dav/capabilities": {
+      "get": {
+        "tags": [
+          "Dav"
+        ],
+        "summary": "DAV capabilities",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "DAV capabilities"
+          }
+        },
+        "x-wgw-access": "user"
       }
     },
     "/files": {
@@ -2946,6 +1239,62 @@
         "x-wgw-access": "user"
       }
     },
+    "/health": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Health check",
+        "responses": {
+          "200": {
+            "description": "Service health"
+          }
+        },
+        "x-wgw-access": "guest"
+      }
+    },
+    "/installer/action": {
+      "post": {
+        "tags": [
+          "Installer"
+        ],
+        "summary": "Perform installer step action",
+        "responses": {
+          "200": {
+            "description": "Installer action result"
+          }
+        },
+        "x-wgw-access": "guest"
+      }
+    },
+    "/installer/bootstrap": {
+      "get": {
+        "tags": [
+          "Installer"
+        ],
+        "summary": "Installer bootstrap payload (full state)",
+        "responses": {
+          "200": {
+            "description": "Installer bootstrap payload"
+          }
+        },
+        "x-wgw-access": "guest"
+      }
+    },
+    "/installer/state": {
+      "get": {
+        "tags": [
+          "Installer"
+        ],
+        "summary": "Installer summary and current state snapshot",
+        "responses": {
+          "200": {
+            "description": "Installer state"
+          }
+        },
+        "x-wgw-access": "guest"
+      }
+    },
     "/mail/drafts": {
       "post": {
         "tags": [
@@ -2960,6 +1309,157 @@
         "responses": {
           "200": {
             "description": "Saved"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/mail/folders": {
+      "get": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "List mail folders",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mail folder tree"
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "post": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "Create mail folder",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Folder created"
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "patch": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "Move mail folder",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Folder moved"
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "delete": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "Delete mail folder",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Folder deleted"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/mail/move": {
+      "post": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "Move message to another folder",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "fromFolder",
+                  "toFolder",
+                  "uid"
+                ],
+                "properties": {
+                  "fromFolder": {
+                    "type": "string"
+                  },
+                  "toFolder": {
+                    "type": "string"
+                  },
+                  "uid": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Message moved"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/mail/messages": {
+      "get": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "List messages in a folder",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message list"
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "post": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "Send message",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sent"
           }
         },
         "x-wgw-access": "user"
@@ -3084,6 +1584,51 @@
         "x-wgw-access": "user"
       }
     },
+    "/mail/status": {
+      "get": {
+        "tags": [
+          "Mail"
+        ],
+        "summary": "Mail runtime status",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mail status"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/me": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Current authenticated principal",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current principal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Principal"
+                }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
     "/meetings/rooms": {
       "post": {
         "tags": [
@@ -3122,6 +1667,490 @@
         "x-wgw-access": "guest"
       }
     },
+    "/notes/capabilities": {
+      "get": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Notes capabilities",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notes capabilities"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/notes/items": {
+      "get": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "List notes with optional archive/notebook/search filters",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notes list"
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "post": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Create a new note",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created note"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/notes/items/{id}": {
+      "put": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Save/update a note",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated note"
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "delete": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Delete a note",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted note"
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "patch": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Patch note (e.g. archive)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/notes/notebooks": {
+      "get": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "List notebooks with active/archive counts",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notebook list"
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "post": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Create notebook",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Notebook created"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/notes/notebooks/{name}": {
+      "patch": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Rename notebook",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notebook renamed"
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "delete": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Delete notebook (archive, move, or purge)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notebook deleted"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/notes/state": {
+      "get": {
+        "tags": [
+          "Notes"
+        ],
+        "summary": "Notes runtime boot state for authenticated user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notes state"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/calendars/events": {
+      "get": {
+        "tags": ["Calendars"],
+        "summary": "List calendar events in a calendar",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "calendarId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "expandRecurrences",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "boolean", "default": false },
+            "description": "Expand recurring events into instances in the requested window (requires after and before)."
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "format": "date-time" },
+            "description": "Window start (required when expandRecurrences is true)."
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "format": "date-time" },
+            "description": "Window end (required when expandRecurrences is true)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Calendar event list",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CalendarEventListResponse" }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "post": {
+        "tags": ["Calendars"],
+        "summary": "Create a calendar event",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CalendarEventCreate" },
+              "example": {
+                "calendarIds": { "default": true },
+                "title": "Team sync",
+                "start": "2026-06-15T10:00:00Z",
+                "end": "2026-06-15T11:00:00Z"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created calendar event",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CalendarEvent" }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/calendars/events/{eventId}": {
+      "get": {
+        "tags": ["Calendars"],
+        "summary": "Fetch a single calendar event",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Calendar event",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CalendarEvent" }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "put": {
+        "tags": ["Calendars"],
+        "summary": "Replace a calendar event",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CalendarEventCreate" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated calendar event",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CalendarEvent" }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "patch": {
+        "tags": ["Calendars"],
+        "summary": "Partially update a calendar event",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CalendarEventPatch" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Patched calendar event",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CalendarEvent" }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "delete": {
+        "tags": ["Calendars"],
+        "summary": "Delete a calendar event",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OkResponse" }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/calendars/calendars": {
+      "get": {
+        "tags": ["Calendars"],
+        "summary": "List user's calendars",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Calendar list",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CalendarListResponse" }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/calendars/calendars/{calendarId}": {
+      "get": {
+        "tags": ["Calendars"],
+        "summary": "Fetch a single calendar",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "calendarId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Calendar",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Calendar" }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
     "/contacts/addressbooks": {
       "get": {
         "tags": [
@@ -3143,52 +2172,6 @@
                 }
               }
             }
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          }
-        },
-        "x-wgw-access": "user"
-      },
-      "post": {
-        "tags": [
-          "Contacts"
-        ],
-        "summary": "Create an address book",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AddressBookCreate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Created address book",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AddressBook"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "409": {
-            "$ref": "#/components/responses/Conflict"
           }
         },
         "x-wgw-access": "user"
@@ -3225,119 +2208,76 @@
                 }
               }
             }
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
           }
         },
         "x-wgw-access": "user"
-      },
-      "patch": {
-        "tags": [
-          "Contacts"
-        ],
-        "summary": "Update an address book",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "addressBookId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+      }
+    },
+    "/contacts/blobs": {
+      "post": {
+        "tags": ["Contacts"],
+        "summary": "Upload contact media blob",
+        "description": "JMAP blob upload REST equivalent for contact photo/logo media (RFC 9610).",
+        "security": [{ "bearerAuth": [] }],
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/AddressBookPatch"
+                "type": "object",
+                "required": ["file"],
+                "properties": {
+                  "file": { "type": "string", "format": "binary" }
+                }
               }
-            }
+            },
+            "image/jpeg": { "schema": { "type": "string", "format": "binary" } },
+            "image/png": { "schema": { "type": "string", "format": "binary" } },
+            "image/gif": { "schema": { "type": "string", "format": "binary" } },
+            "image/webp": { "schema": { "type": "string", "format": "binary" } }
           }
         },
         "responses": {
-          "200": {
-            "description": "Updated address book",
+          "201": {
+            "description": "Blob uploaded",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AddressBook"
-                }
+                "schema": { "$ref": "#/components/schemas/ContactBlobUploadResponse" }
               }
             }
           },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          }
+          "400": { "description": "Invalid request" },
+          "403": { "description": "Forbidden" },
+          "413": { "description": "Payload too large" }
         },
         "x-wgw-access": "user"
-      },
-      "delete": {
-        "tags": [
-          "Contacts"
-        ],
-        "summary": "Delete an address book",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+      }
+    },
+    "/contacts/blobs/{blobId}": {
+      "get": {
+        "tags": ["Contacts"],
+        "summary": "Download contact media blob",
+        "security": [{ "bearerAuth": [] }],
         "parameters": [
           {
-            "name": "addressBookId",
+            "name": "blobId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "schema": { "type": "string" }
           }
         ],
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AddressBookDeleteOptions"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
-            "description": "Address book deleted",
+            "description": "Blob bytes",
             "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OkResponse"
-                }
-              }
+              "image/jpeg": { "schema": { "type": "string", "format": "binary" } },
+              "image/png": { "schema": { "type": "string", "format": "binary" } },
+              "image/gif": { "schema": { "type": "string", "format": "binary" } },
+              "image/webp": { "schema": { "type": "string", "format": "binary" } }
             }
           },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "409": {
-            "$ref": "#/components/responses/Conflict"
-          }
+          "403": { "description": "Forbidden" },
+          "404": { "description": "Not found" }
         },
         "x-wgw-access": "user"
       }
@@ -3361,15 +2301,6 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "name": "uid",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Optional exact uid filter (ContactCard/query subset)."
           }
         ],
         "responses": {
@@ -3382,15 +2313,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
           }
         },
         "x-wgw-access": "user"
@@ -3415,15 +2337,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "413": {
-            "$ref": "#/components/responses/PayloadTooLarge"
           }
         },
         "requestBody": {
@@ -3493,20 +2406,7 @@
                   "$ref": "#/components/schemas/ContactCard"
                 }
               }
-            },
-            "headers": {
-              "ETag": {
-                "schema": {
-                  "type": "string"
-                }
-              }
             }
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
           }
         },
         "x-wgw-access": "user"
@@ -3529,12 +2429,6 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "$ref": "#/components/parameters/IfMatchHeader"
-          },
-          {
-            "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
           }
         ],
         "responses": {
@@ -3546,29 +2440,7 @@
                   "$ref": "#/components/schemas/ContactCard"
                 }
               }
-            },
-            "headers": {
-              "ETag": {
-                "schema": {
-                  "type": "string"
-                }
-              }
             }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "412": {
-            "$ref": "#/components/responses/PreconditionFailed"
-          },
-          "413": {
-            "$ref": "#/components/responses/PayloadTooLarge"
           }
         },
         "requestBody": {
@@ -3626,12 +2498,6 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "$ref": "#/components/parameters/IfMatchHeader"
-          },
-          {
-            "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
           }
         ],
         "responses": {
@@ -3643,29 +2509,7 @@
                   "$ref": "#/components/schemas/ContactCard"
                 }
               }
-            },
-            "headers": {
-              "ETag": {
-                "schema": {
-                  "type": "string"
-                }
-              }
             }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "412": {
-            "$ref": "#/components/responses/PreconditionFailed"
-          },
-          "413": {
-            "$ref": "#/components/responses/PayloadTooLarge"
           }
         },
         "requestBody": {
@@ -3705,12 +2549,6 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "$ref": "#/components/parameters/IfMatchHeader"
-          },
-          {
-            "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
           }
         ],
         "responses": {
@@ -3723,18 +2561,25 @@
                 }
               }
             }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "412": {
-            "$ref": "#/components/responses/PreconditionFailed"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/plugins": {
+      "get": {
+        "tags": [
+          "Plugins"
+        ],
+        "summary": "List discovered plugins and capabilities",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plugin registry snapshot"
           }
         },
         "x-wgw-access": "user"
@@ -3764,6 +2609,38 @@
         "responses": {
           "200": {
             "description": "Updated"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/plugins/{id}/session": {
+      "post": {
+        "tags": [
+          "Plugins"
+        ],
+        "summary": "Establish browser UI session cookie for a plugin surface",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session established"
+          },
+          "404": {
+            "description": "Plugin not found"
           }
         },
         "x-wgw-access": "user"
@@ -3967,6 +2844,63 @@
         "x-wgw-access": "user"
       }
     },
+    "/settings/mail": {
+      "put": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Update personal mail credentials for current user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated settings state"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/settings/profile": {
+      "put": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Update profile details for current user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated settings state"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/settings/state": {
+      "get": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "User settings aggregate state",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Settings state"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
     "/workspace/state": {
       "get": {
         "tags": [
@@ -3981,1033 +2915,6 @@
         "responses": {
           "200": {
             "description": "OK"
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
-    "/calendars/events": {
-      "get": {
-        "tags": [
-          "Calendars"
-        ],
-        "summary": "List calendar events in a calendar",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "calendarId",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "expandRecurrences",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": false
-            },
-            "description": "Expand recurring events into instances in the requested window (requires after and before)."
-          },
-          {
-            "name": "after",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "description": "Window start (required when expandRecurrences is true)."
-          },
-          {
-            "name": "before",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "description": "Window end (required when expandRecurrences is true)."
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Calendar event list",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CalendarEventListResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          }
-        },
-        "x-wgw-access": "user"
-      },
-      "post": {
-        "tags": [
-          "Calendars"
-        ],
-        "summary": "Create a calendar event",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CalendarEventCreate"
-              },
-              "example": {
-                "calendarIds": {
-                  "default": true
-                },
-                "title": "Team sync",
-                "start": "2026-06-15T10:00:00Z",
-                "end": "2026-06-15T11:00:00Z"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Created calendar event",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CalendarEvent"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "413": {
-            "$ref": "#/components/responses/PayloadTooLarge"
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
-    "/calendars/events/{eventId}": {
-      "get": {
-        "tags": [
-          "Calendars"
-        ],
-        "summary": "Fetch a single calendar event",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "eventId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Calendar event",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CalendarEvent"
-                }
-              }
-            },
-            "headers": {
-              "ETag": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          }
-        },
-        "x-wgw-access": "user"
-      },
-      "put": {
-        "tags": [
-          "Calendars"
-        ],
-        "summary": "Replace a calendar event",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "eventId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "$ref": "#/components/parameters/IfMatchHeader"
-          },
-          {
-            "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CalendarEventCreate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Updated calendar event",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CalendarEvent"
-                }
-              }
-            },
-            "headers": {
-              "ETag": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "412": {
-            "$ref": "#/components/responses/PreconditionFailed"
-          },
-          "413": {
-            "$ref": "#/components/responses/PayloadTooLarge"
-          }
-        },
-        "x-wgw-access": "user"
-      },
-      "patch": {
-        "tags": [
-          "Calendars"
-        ],
-        "summary": "Partially update a calendar event",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "eventId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "$ref": "#/components/parameters/IfMatchHeader"
-          },
-          {
-            "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CalendarEventPatch"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Patched calendar event",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CalendarEvent"
-                }
-              }
-            },
-            "headers": {
-              "ETag": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "412": {
-            "$ref": "#/components/responses/PreconditionFailed"
-          },
-          "413": {
-            "$ref": "#/components/responses/PayloadTooLarge"
-          }
-        },
-        "x-wgw-access": "user"
-      },
-      "delete": {
-        "tags": [
-          "Calendars"
-        ],
-        "summary": "Delete a calendar event",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "eventId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "$ref": "#/components/parameters/IfMatchHeader"
-          },
-          {
-            "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Deleted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OkResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "412": {
-            "$ref": "#/components/responses/PreconditionFailed"
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
-    "/calendars/calendars": {
-      "get": {
-        "tags": [
-          "Calendars"
-        ],
-        "summary": "List user's calendars",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Calendar list",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CalendarListResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
-    "/calendars/calendars/{calendarId}": {
-      "get": {
-        "tags": [
-          "Calendars"
-        ],
-        "summary": "Fetch a single calendar",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "calendarId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Calendar",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Calendar"
-                }
-              }
-            }
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
-    "/tasks/capabilities": {
-      "get": {
-        "tags": [
-          "Tasks"
-        ],
-        "summary": "Tasks feature capabilities",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Tasks capabilities",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TasksCapabilitiesResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
-    "/tasks/tasklists": {
-      "get": {
-        "tags": [
-          "Tasks"
-        ],
-        "summary": "List user's task lists",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Task list collection",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TaskTaskListListResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
-    "/tasks/tasklists/{taskListId}": {
-      "get": {
-        "tags": [
-          "Tasks"
-        ],
-        "summary": "Fetch a single task list",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "taskListId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Task list",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TaskList"
-                }
-              }
-            }
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
-    "/tasks/items": {
-      "get": {
-        "tags": [
-          "Tasks"
-        ],
-        "summary": "List tasks in a task list",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "taskListId",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Task list",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TaskListResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          }
-        },
-        "x-wgw-access": "user"
-      },
-      "post": {
-        "tags": [
-          "Tasks"
-        ],
-        "summary": "Create a task",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Created task",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Task"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "413": {
-            "$ref": "#/components/responses/PayloadTooLarge"
-          }
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TaskCreate"
-              },
-              "example": {
-                "taskListIds": {
-                  "default": true
-                },
-                "title": "Buy milk",
-                "due": "2026-06-15T09:00:00"
-              }
-            }
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
-    "/tasks/items/{taskId}": {
-      "get": {
-        "tags": [
-          "Tasks"
-        ],
-        "summary": "Fetch a single task",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "taskId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Task",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Task"
-                }
-              }
-            },
-            "headers": {
-              "ETag": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          }
-        },
-        "x-wgw-access": "user"
-      },
-      "put": {
-        "tags": [
-          "Tasks"
-        ],
-        "summary": "Replace a task",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "taskId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "$ref": "#/components/parameters/IfMatchHeader"
-          },
-          {
-            "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Updated task",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Task"
-                }
-              }
-            },
-            "headers": {
-              "ETag": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "412": {
-            "$ref": "#/components/responses/PreconditionFailed"
-          },
-          "413": {
-            "$ref": "#/components/responses/PayloadTooLarge"
-          }
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TaskCreate"
-              }
-            }
-          }
-        },
-        "x-wgw-access": "user"
-      },
-      "patch": {
-        "tags": [
-          "Tasks"
-        ],
-        "summary": "Partially update a task",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "taskId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "$ref": "#/components/parameters/IfMatchHeader"
-          },
-          {
-            "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Updated task",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Task"
-                }
-              }
-            },
-            "headers": {
-              "ETag": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "412": {
-            "$ref": "#/components/responses/PreconditionFailed"
-          },
-          "413": {
-            "$ref": "#/components/responses/PayloadTooLarge"
-          }
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TaskPatch"
-              }
-            }
-          }
-        },
-        "x-wgw-access": "user"
-      },
-      "delete": {
-        "tags": [
-          "Tasks"
-        ],
-        "summary": "Delete a task",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "taskId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "$ref": "#/components/parameters/IfMatchHeader"
-          },
-          {
-            "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Deleted task",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OkResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          },
-          "412": {
-            "$ref": "#/components/responses/PreconditionFailed"
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
-    "/contacts/addressbooks/changes": {
-      "get": {
-        "tags": [
-          "Contacts"
-        ],
-        "summary": "Incremental address book collection changes",
-        "description": "JMAP AddressBook/changes REST mapping. See docs/contacts/jmap-sync-rest-mapping.md.",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "since",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Previous state token; omit or `0` for initial sync."
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Address book changes",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/JmapChangesResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
-    "/contacts/cards/changes": {
-      "get": {
-        "tags": [
-          "Contacts"
-        ],
-        "summary": "Incremental contact card changes in an address book",
-        "description": "JMAP ContactCard/changes REST mapping backed by CardDAV synctoken.",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "addressBookId",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "since",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Previous synctoken; omit or `0` for initial sync."
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Contact card changes",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/JmapChangesResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          }
-        },
-        "x-wgw-access": "user"
-      }
-    },
-    "/contacts/cards/query": {
-      "post": {
-        "tags": [
-          "Contacts"
-        ],
-        "summary": "Query contact card ids by filter",
-        "description": "JMAP ContactCard/query REST mapping (MVP: inAddressBook + uid).",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ContactCardQueryRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Matching contact card ids",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ContactCardQueryResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "403": {
-            "$ref": "#/components/responses/Forbidden"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
           }
         },
         "x-wgw-access": "user"

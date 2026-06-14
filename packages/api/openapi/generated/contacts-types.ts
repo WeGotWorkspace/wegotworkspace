@@ -13,6 +13,7 @@ export type AddressBookDeleteOptions = components["schemas"]["AddressBookDeleteO
 export type AddressBookPatch = components["schemas"]["AddressBookPatch"];
 export type AddressBookRights = components["schemas"]["AddressBookRights"];
 export type ContactAddressBookListResponse = components["schemas"]["ContactAddressBookListResponse"];
+export type ContactBlobUploadResponse = components["schemas"]["ContactBlobUploadResponse"];
 export type ContactCard = components["schemas"]["ContactCard"];
 export type ContactCardCreate = components["schemas"]["ContactCardCreate"];
 export type ContactCardListResponse = components["schemas"]["ContactCardListResponse"];

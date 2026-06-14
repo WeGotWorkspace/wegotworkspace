@@ -215,7 +215,7 @@ VCARD;
         $this->assertSame($card['uid'], $this->converter->cardFromVCard($vcard)['uid']);
     }
 
-    public function test_voice_tel_without_explicit_features_is_non_reversible(): void
+    public function test_voice_tel_without_explicit_type_defaults_to_voice_feature(): void
     {
         $vcard = <<<'VCARD'
 BEGIN:VCARD
@@ -229,12 +229,12 @@ VCARD;
         $card = $this->converter->cardFromVCard($vcard);
         $phone = reset($card['phones']);
         $this->assertIsArray($phone);
-        $this->assertArrayNotHasKey('features', $phone);
+        $this->assertSame(['voice' => true], $phone['features'] ?? null);
 
         $roundTripped = $this->converter->cardFromVCard($this->converter->vCardFromCard($card));
         $roundTrippedPhone = reset($roundTripped['phones']);
         $this->assertIsArray($roundTrippedPhone);
-        $this->assertArrayNotHasKey('features', $roundTrippedPhone);
+        $this->assertSame(['voice' => true], $roundTrippedPhone['features'] ?? null);
     }
 
     public function test_version_preserved_in_vcard_props(): void

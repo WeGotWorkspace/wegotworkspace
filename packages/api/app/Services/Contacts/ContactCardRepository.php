@@ -26,7 +26,7 @@ final class ContactCardRepository
     /**
      * @return array{list: list<array<string, mixed>>}
      */
-    public function list(string $username, string $addressBookId, ?string $uid = null): array
+    public function list(string $username, string $addressBookId): array
     {
         $book = $this->findOwnedBook($username, $addressBookId);
         if ($book === null) {
@@ -38,85 +38,11 @@ final class ContactCardRepository
             ->orderBy('uri')
             ->get();
 
-        $list = [];
-        foreach ($cards as $card) {
-            if ($uid !== null && $this->extractUid($card) !== $uid) {
-                continue;
-            }
-            $list[] = $this->mapper->toContactCard($card, $addressBookId);
-        }
-
-        return ['list' => $list];
-    }
-
-    /**
-     * @param  array<string, mixed>  $filter
-     * @return array{ids: list<string>, total: int}
-     */
-    public function query(string $username, array $filter, ?int $limit = null): array
-    {
-        $addressBookId = $filter['inAddressBook'] ?? null;
-        if (! is_string($addressBookId) || trim($addressBookId) === '') {
-            throw new ApiHttpException(400, 'filter.inAddressBook is required.', 'bad_request');
-        }
-
-        $book = $this->findOwnedBook($username, $addressBookId);
-        if ($book === null) {
-            throw new ApiHttpException(404, 'Address book not found.', 'not_found');
-        }
-
-        $uidFilter = isset($filter['uid']) && is_string($filter['uid']) ? $filter['uid'] : null;
-
-        $cards = Card::query()
-            ->where('addressbookid', (int) $book->id)
-            ->orderBy('uri')
-            ->get();
-
-        $ids = [];
-        foreach ($cards as $card) {
-            if ($uidFilter !== null && $this->extractUid($card) !== $uidFilter) {
-                continue;
-            }
-            $ids[] = ContactCardMapper::cardIdFromUri((string) $card->uri);
-            if ($limit !== null && count($ids) >= $limit) {
-                break;
-            }
-        }
-
         return [
-            'ids' => $ids,
-            'total' => count($ids),
-        ];
-    }
-
-    /**
-     * @return array{
-     *     oldState: string,
-     *     newState: string,
-     *     created: list<string>,
-     *     updated: list<string>,
-     *     destroyed: list<string>
-     * }
-     */
-    public function changes(string $username, string $addressBookId, ?string $since): array
-    {
-        $book = $this->findOwnedBook($username, $addressBookId);
-        if ($book === null) {
-            throw new ApiHttpException(404, 'Address book not found.', 'not_found');
-        }
-
-        $syncToken = ($since === null || $since === '' || $since === '0') ? null : $since;
-        $changes = $this->cardBackend()->getChangesForAddressBook((int) $book->id, $syncToken, 1);
-        if ($changes === null) {
-            throw new ApiHttpException(400, 'Sync state is invalid or expired.', 'cannotCalculateChanges');
-        }
-
-        return [
-            'oldState' => $since ?? '0',
-            'newState' => (string) $changes['syncToken'],
-            'created' => $this->mapChangeUris($changes['added'] ?? []),
-            'updated' => $this->mapChangeUris($changes['modified'] ?? []),
-            'destroyed' => $this->mapChangeUris($changes['deleted'] ?? []),
+            'list' => $cards
+                ->map(fn (Card $card): array => $this->mapper->toContactCard($card, $addressBookId, $username))
+                ->values()
+                ->all(),
         ];
     }
 
@@ -130,7 +56,7 @@ final class ContactCardRepository
             throw new ApiHttpException(404, 'Contact card not found.', 'not_found');
         }
 
-        return $this->mapper->toContactCard($located['card'], $located['bookUri']);
+        return $this->mapper->toContactCard($located['card'], $located['bookUri'], $username);
     }
 
     /**
@@ -142,7 +68,7 @@ final class ContactCardRepository
         $book = $this->resolveAddressBookFromPayload($username, $payload);
         $cardPayload = $this->normalizeCardPayload($payload);
         $cardUri = $this->allocateCardUri((int) $book->id, $cardPayload);
-        $vcard = $this->mapper->toVCard($cardPayload);
+        $vcard = $this->mapper->toVCard($username, $cardPayload);
 
         $this->cardBackend()->createCard((int) $book->id, $cardUri, $vcard);
         $davPath = $this->cardDavPath($username, (string) $book->uri, $cardUri);
@@ -158,7 +84,7 @@ final class ContactCardRepository
             throw new ApiHttpException(500, 'Could not load created contact card.', 'server_error');
         }
 
-        return $this->mapper->toContactCard($card, (string) $book->uri);
+        return $this->mapper->toContactCard($card, (string) $book->uri, $username);
     }
 
     /**
@@ -182,12 +108,12 @@ final class ContactCardRepository
         $book = $located['book'];
         $card = $located['card'];
         $cardUri = (string) $card->uri;
-        $existingContact = $this->mapper->toContactCard($card, (string) $book->uri);
+        $existingContact = $this->mapper->toContactCard($card, (string) $book->uri, $username);
         $cardPayload = $this->normalizeCardPayload($payload, $existingContact);
         $cardPayload['id'] = ContactCardMapper::cardIdFromUri($cardUri);
         $cardPayload['addressBookIds'] = [(string) $book->uri => true];
 
-        $vcard = $this->mapper->toVCard($cardPayload);
+        $vcard = $this->mapper->toVCard($username, $cardPayload);
         $addressBookId = (int) $card->addressbookid;
         $this->cardBackend()->updateCard($addressBookId, $cardUri, $vcard);
         $davPath = $this->cardDavPath($username, (string) $book->uri, $cardUri);
@@ -203,7 +129,7 @@ final class ContactCardRepository
             throw new ApiHttpException(500, 'Could not load updated contact card.', 'server_error');
         }
 
-        return $this->mapper->toContactCard($updated, (string) $book->uri);
+        return $this->mapper->toContactCard($updated, (string) $book->uri, $username);
     }
 
     /**
@@ -227,7 +153,7 @@ final class ContactCardRepository
         $book = $located['book'];
         $card = $located['card'];
         $cardUri = (string) $card->uri;
-        $existingContact = $this->mapper->toContactCard($card, (string) $book->uri);
+        $existingContact = $this->mapper->toContactCard($card, (string) $book->uri, $username);
         $merged = ConversionSupport::deepMergeContactCardPatch($existingContact, $patch);
         $cardPayload = $this->normalizeCardPayload($merged, $existingContact);
         $cardPayload['id'] = ContactCardMapper::cardIdFromUri($cardUri);
@@ -235,7 +161,7 @@ final class ContactCardRepository
             $cardPayload['addressBookIds'] = [(string) $book->uri => true];
         }
 
-        $vcard = $this->mapper->toVCard($cardPayload);
+        $vcard = $this->mapper->toVCard($username, $cardPayload);
         $addressBookId = (int) $card->addressbookid;
         $this->cardBackend()->updateCard($addressBookId, $cardUri, $vcard);
         $davPath = $this->cardDavPath($username, (string) $book->uri, $cardUri);
@@ -251,7 +177,7 @@ final class ContactCardRepository
             throw new ApiHttpException(500, 'Could not load patched contact card.', 'server_error');
         }
 
-        return $this->mapper->toContactCard($updated, (string) $book->uri);
+        return $this->mapper->toContactCard($updated, (string) $book->uri, $username);
     }
 
     /**
@@ -420,31 +346,5 @@ final class ContactCardRepository
     private function cardBackend(): CardPDO
     {
         return new CardPDO(DB::connection('wgw')->getPdo());
-    }
-
-    /**
-     * @param  list<string>  $uris
-     * @return list<string>
-     */
-    private function mapChangeUris(array $uris): array
-    {
-        return array_values(array_map(
-            fn (string $uri): string => ContactCardMapper::cardIdFromUri($uri),
-            $uris,
-        ));
-    }
-
-    private function extractUid(Card $card): ?string
-    {
-        $raw = $card->carddata;
-        if (! is_string($raw) || $raw === '') {
-            return null;
-        }
-
-        if (preg_match('/^UID(?:;[^:]*)?:(.+)$/mi', $raw, $matches) !== 1) {
-            return null;
-        }
-
-        return trim($matches[1]);
     }
 }

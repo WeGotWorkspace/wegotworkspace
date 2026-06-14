@@ -21,6 +21,9 @@
         "p_qbUQXnAwPsIOZLlU844w7mX5": {
             "@type": "Phone",
             "number": "tel:+33-01-23-45-67",
+            "features": {
+                "voice": true
+            },
             "contexts": {
                 "private": true
             }

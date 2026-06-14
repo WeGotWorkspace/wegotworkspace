@@ -17,8 +17,14 @@ final class VCardToJsContactConverter
     /** @var array<string, string> */
     private array $groupLabels = [];
 
+    /** @var array<string, string> */
+    private array $organizationIdsByGroup = [];
+
     /** @var list<Property> */
     private array $deferredKnownProperties = [];
+
+    /** @var list<Property> */
+    private array $extraFnProperties = [];
 
     /**
      * @return array<string, mixed>
@@ -28,7 +34,9 @@ final class VCardToJsContactConverter
         $document = $this->guard->readVCard($vcard);
 
         $this->groupLabels = [];
+        $this->organizationIdsByGroup = [];
         $this->deferredKnownProperties = [];
+        $this->extraFnProperties = LocalizationSupport::extraFnProperties($document);
         foreach ($document->select('X-ABLABEL') as $labelProperty) {
             $group = $this->groupNameFromProperty($labelProperty);
             if ($group !== null) {
@@ -90,6 +98,7 @@ final class VCardToJsContactConverter
         $this->convertCryptoKeys($document, $card);
         $this->convertCalendars($document, $card);
         $this->convertSchedulingAddresses($document, $card);
+        LocalizationSupport::applyFromVCard($document, $card);
         $this->convertVCardProps($document, $card);
 
         return $card;
@@ -107,10 +116,14 @@ final class VCardToJsContactConverter
         }
 
         if (isset($document->N)) {
-            $components = ConversionSupport::nameComponentsFromProperty($document->N);
+            $parsed = JscopmsSupport::nameComponentsFromProperty($document->N);
+            $components = $parsed['components'];
             if ($components !== []) {
                 $name['components'] = $components;
-                $name['isOrdered'] = false;
+                $name['isOrdered'] = $parsed['isOrdered'];
+                if (isset($parsed['defaultSeparator'])) {
+                    $name['defaultSeparator'] = $parsed['defaultSeparator'];
+                }
             }
             if (isset($document->N['SORT-AS'])) {
                 $sortParts = $document->N->getParts();
@@ -167,6 +180,9 @@ final class VCardToJsContactConverter
                 'number' => trim((string) $property->getValue()),
             ];
             $features = ConversionSupport::telFeaturesFromProperty($property);
+            if ($features === null && ConversionSupport::telTypeValues($property) === []) {
+                $features = ['voice' => true];
+            }
             if ($features !== null) {
                 $entry['features'] = $features;
             }
@@ -184,59 +200,206 @@ final class VCardToJsContactConverter
      */
     private function convertAddresses(VCard $document, array &$card): void
     {
+        /** @var array<string, array{adr?: Property, geos: list<Property>, tzs: list<Property>}> $buckets */
+        $buckets = [];
+        $hasGrouped = false;
+
+        foreach ($document->select('ADR') as $property) {
+            $group = $this->groupKeyFromProperty($property);
+            if ($group !== '') {
+                $hasGrouped = true;
+            }
+            $buckets[$group]['adr'] = $property;
+            $buckets[$group]['geos'] ??= [];
+            $buckets[$group]['tzs'] ??= [];
+        }
+
+        foreach ($document->select('GEO') as $property) {
+            $group = $this->groupKeyFromProperty($property);
+            if ($group !== '') {
+                $hasGrouped = true;
+            }
+            $buckets[$group]['geos'] ??= [];
+            $buckets[$group]['geos'][] = $property;
+            $buckets[$group]['tzs'] ??= [];
+        }
+
+        foreach ($document->select('TZ') as $property) {
+            $group = $this->groupKeyFromProperty($property);
+            if ($group !== '') {
+                $hasGrouped = true;
+            }
+            $buckets[$group]['tzs'] ??= [];
+            $buckets[$group]['tzs'][] = $property;
+            $buckets[$group]['geos'] ??= [];
+        }
+
+        if ($buckets === []) {
+            return;
+        }
+
+        if (! $hasGrouped && count($buckets) > 1) {
+            $merged = ['geos' => [], 'tzs' => []];
+            foreach ($buckets as $bucket) {
+                if (isset($bucket['adr'])) {
+                    $merged['adr'] = $bucket['adr'];
+                }
+                $merged['geos'] = array_merge($merged['geos'], $bucket['geos'] ?? []);
+                $merged['tzs'] = array_merge($merged['tzs'], $bucket['tzs'] ?? []);
+            }
+            $buckets = ['' => $merged];
+        }
+
+        if (! $hasGrouped && isset($buckets['']['adr'])) {
+            $buckets = ['' => $buckets['']];
+        }
+
         $addresses = [];
-        foreach ($document->select('ADR') as $index => $property) {
-            $parts = ConversionSupport::structuredParts($property);
-            $components = ConversionSupport::addressComponentsFromParts($parts);
-            $entry = [
-                '@type' => 'Address',
-                'components' => $components,
-                'isOrdered' => false,
-            ];
-            if (isset($property['CC'])) {
-                $entry['countryCode'] = (string) $property['CC'];
-            }
-            if (isset($property['LABEL'])) {
-                $entry['full'] = (string) $property['LABEL'];
-            }
-            if (isset($property['GEO'])) {
-                $entry['coordinates'] = $this->geoToCoordinates((string) $property['GEO']);
-            }
-            if (isset($property['TZ'])) {
-                $entry['timeZone'] = $this->tzToTimeZone($property);
-            }
-            ConversionSupport::applySharedFields($entry, $property);
-            $this->applyGroupLabel($entry, $property);
-            $addresses[ConversionSupport::propertyId($property, $index)] = $entry;
-        }
-
-        foreach ($document->select('GEO') as $index => $property) {
-            $entry = [
-                '@type' => 'Address',
-                'coordinates' => $this->geoToCoordinates((string) $property->getValue()),
-            ];
-            ConversionSupport::applySharedFields($entry, $property);
-            $addresses[ConversionSupport::propertyId($property, $index)] = $entry;
-        }
-
-        foreach ($document->select('TZ') as $index => $property) {
-            $timeZone = $this->tzToTimeZone($property);
-            if ($timeZone === null) {
-                $this->deferredKnownProperties[] = $property;
+        foreach ($buckets as $bucket) {
+            if (isset($bucket['adr'])) {
+                $geos = $bucket['geos'] ?? [];
+                $tzs = $bucket['tzs'] ?? [];
+                $mergeTzIntoAdr = ! isset($bucket['adr']['TZ']);
+                $addresses[] = $this->addressEntryFromAdr(
+                    $bucket['adr'],
+                    $geos,
+                    $mergeTzIntoAdr ? $tzs : [],
+                );
+                foreach (array_slice($geos, 1) as $index => $property) {
+                    $addresses[] = $this->minimalAddressFromGeo($property, $index + 1);
+                }
+                $remainingTzs = $mergeTzIntoAdr ? array_slice($tzs, 1) : $tzs;
+                foreach ($remainingTzs as $index => $property) {
+                    $entry = $this->minimalAddressFromTz($property, $index + 1);
+                    if ($entry !== null) {
+                        $addresses[] = $entry;
+                    }
+                }
 
                 continue;
             }
-            $entry = [
-                '@type' => 'Address',
-                'timeZone' => $timeZone,
-            ];
-            ConversionSupport::applySharedFields($entry, $property);
-            $addresses[ConversionSupport::propertyId($property, $index)] = $entry;
+
+            foreach ($bucket['geos'] ?? [] as $index => $property) {
+                $addresses[] = $this->minimalAddressFromGeo($property, $index);
+            }
+
+            foreach ($bucket['tzs'] ?? [] as $index => $property) {
+                $entry = $this->minimalAddressFromTz($property, $index);
+                if ($entry !== null) {
+                    $addresses[] = $entry;
+                }
+            }
         }
 
-        if ($addresses !== []) {
-            $card['addresses'] = $addresses;
+        if ($addresses === []) {
+            return;
         }
+
+        $mapped = [];
+        foreach ($addresses as $entry) {
+            $property = $entry['__property'];
+            unset($entry['__property']);
+            $id = $entry['__propId'];
+            unset($entry['__propId']);
+            $mapped[$id] = $entry;
+        }
+
+        $card['addresses'] = $mapped;
+    }
+
+    /**
+     * @param  list<Property>  $geos
+     * @param  list<Property>  $tzs
+     * @return array<string, mixed>
+     */
+    private function addressEntryFromAdr(Property $property, array $geos, array $tzs): array
+    {
+        $parsed = JscopmsSupport::addressComponentsFromProperty($property);
+        $components = $parsed['components'];
+        $entry = [
+            '@type' => 'Address',
+            'components' => $components,
+            'isOrdered' => $parsed['isOrdered'],
+            '__propId' => ConversionSupport::propertyId($property, 0),
+            '__property' => $property,
+        ];
+        if (isset($parsed['defaultSeparator'])) {
+            $entry['defaultSeparator'] = $parsed['defaultSeparator'];
+        }
+        if (isset($property['CC'])) {
+            $entry['countryCode'] = (string) $property['CC'];
+        }
+        if (isset($property['LABEL'])) {
+            $entry['full'] = (string) $property['LABEL'];
+        }
+        if (isset($property['GEO'])) {
+            $entry['coordinates'] = $this->geoToCoordinates((string) $property['GEO']);
+        } elseif ($geos !== []) {
+            $entry['coordinates'] = $this->geoToCoordinates((string) $geos[0]->getValue());
+        }
+        if (isset($property['TZ'])) {
+            $entry['timeZone'] = trim((string) $property['TZ']);
+        } elseif ($tzs !== []) {
+            foreach ($tzs as $tzProperty) {
+                $timeZone = $this->tzToTimeZone($tzProperty);
+                if ($timeZone !== null) {
+                    $entry['timeZone'] = $timeZone;
+                    break;
+                }
+            }
+        }
+        ConversionSupport::applySharedFields($entry, $property);
+        $this->applyGroupLabel($entry, $property);
+
+        return $entry;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function minimalAddressFromGeo(Property $property, int $index): array
+    {
+        $entry = [
+            '@type' => 'Address',
+            'coordinates' => $this->geoToCoordinates((string) $property->getValue()),
+            '__propId' => ConversionSupport::propertyId($property, $index),
+            '__property' => $property,
+        ];
+        ConversionSupport::applySharedFields($entry, $property);
+        $this->applyGroupLabel($entry, $property);
+
+        return $entry;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function minimalAddressFromTz(Property $property, int $index): ?array
+    {
+        $timeZone = $this->tzToTimeZone($property);
+        if ($timeZone === null) {
+            $this->deferredKnownProperties[] = $property;
+
+            return null;
+        }
+
+        $entry = [
+            '@type' => 'Address',
+            'timeZone' => $timeZone,
+            '__propId' => ConversionSupport::propertyId($property, $index),
+            '__property' => $property,
+        ];
+        ConversionSupport::applySharedFields($entry, $property);
+        $this->applyGroupLabel($entry, $property);
+
+        return $entry;
+    }
+
+    private function groupKeyFromProperty(Property $property): string
+    {
+        $group = $property->group;
+
+        return ($group === null || $group === '') ? '' : (string) $group;
     }
 
     /**
@@ -277,6 +440,10 @@ final class VCardToJsContactConverter
                 }
             }
             ConversionSupport::applySharedFields($entry, $property);
+            $group = $this->groupNameFromProperty($property);
+            if ($group !== null) {
+                $this->organizationIdsByGroup[$group] = ConversionSupport::propertyId($property, $index);
+            }
             $organizations[ConversionSupport::propertyId($property, $index)] = $entry;
         }
         if ($organizations !== []) {
@@ -425,6 +592,7 @@ final class VCardToJsContactConverter
                 'name' => trim((string) $property->getValue()),
             ];
             ConversionSupport::applySharedFields($entry, $property);
+            $this->applyOrganizationId($entry, $property);
             $titles[ConversionSupport::propertyId($property, $index)] = $entry;
         }
         foreach ($document->select('ROLE') as $index => $property) {
@@ -434,6 +602,7 @@ final class VCardToJsContactConverter
                 'name' => trim((string) $property->getValue()),
             ];
             ConversionSupport::applySharedFields($entry, $property);
+            $this->applyOrganizationId($entry, $property);
             $titles[ConversionSupport::propertyId($property, $index)] = $entry;
         }
         if ($titles !== []) {
@@ -830,6 +999,9 @@ final class VCardToJsContactConverter
         foreach ($this->deferredKnownProperties as $property) {
             $deferredKeys[$this->propertyIdentity($property)] = true;
         }
+        foreach ($this->extraFnProperties as $property) {
+            $props[] = ConversionSupport::jCardTupleFromProperty($property);
+        }
         foreach ($document->children() as $child) {
             if (! $child instanceof Property) {
                 continue;
@@ -862,8 +1034,27 @@ final class VCardToJsContactConverter
     private function applyGroupLabel(array &$entry, Property $property): void
     {
         $group = $this->groupNameFromProperty($property);
-        if ($group !== null && isset($this->groupLabels[$group])) {
+        if ($group === null) {
+            return;
+        }
+
+        $params = ConversionSupport::vCardParamsFromObject($entry) ?? [];
+        $params['group'] = $group;
+        $entry['vCardParams'] = $params;
+
+        if (isset($this->groupLabels[$group])) {
             $entry['label'] = $this->groupLabels[$group];
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $entry
+     */
+    private function applyOrganizationId(array &$entry, Property $property): void
+    {
+        $group = $this->groupNameFromProperty($property);
+        if ($group !== null && isset($this->organizationIdsByGroup[$group])) {
+            $entry['organizationId'] = $this->organizationIdsByGroup[$group];
         }
     }
 

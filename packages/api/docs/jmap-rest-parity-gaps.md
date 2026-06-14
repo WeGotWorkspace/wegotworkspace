@@ -9,7 +9,7 @@ This document summarizes what the v1 JMAP-shaped REST layers implement versus fu
 
 | Domain | v1 scope | Biggest gaps | Issues |
 |--------|----------|--------------|--------|
-| **Contacts** (CardDAV) | JSContact conversion ~90%; REST CRUD | blobId upload, localizations, JSCOMPS, partial matrix | [#151](https://github.com/WeGotWorkspace/wegotworkspace/issues/151)–[#156](https://github.com/WeGotWorkspace/wegotworkspace/issues/156) |
+| **Contacts** (CardDAV) | JSContact conversion; REST CRUD; blob upload; localizations; JSCOMPS; matrix gaps closed in [#151](https://github.com/WeGotWorkspace/wegotworkspace/issues/151)–[#156](https://github.com/WeGotWorkspace/wegotworkspace/issues/156) | `/queryChanges`, advanced query filters | — |
 | **Calendars** (VEVENT) | Event CRUD, RRULE read, basic participants | **Alerts**, **recurrenceOverrides**, RRULE write parity, rich locations | [#138](https://github.com/WeGotWorkspace/wegotworkspace/issues/138)–[#145](https://github.com/WeGotWorkspace/wegotworkspace/issues/145) |
 | **Tasks** (VTODO) | Title, dates, status, priority | **Recurrence**, **alerts**, participants, `icsProps` | [#146](https://github.com/WeGotWorkspace/wegotworkspace/issues/146)–[#150](https://github.com/WeGotWorkspace/wegotworkspace/issues/150) |
 | **Platform** | List/get + item CRUD | Collection CRUD, sharing, incremental sync | [#157](https://github.com/WeGotWorkspace/wegotworkspace/issues/157), [#158](https://github.com/WeGotWorkspace/wegotworkspace/issues/158) |

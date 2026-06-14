@@ -1,0 +1,21 @@
+{
+  "ContactBlobUploadResponse": {
+    "type": "object",
+    "required": ["blobId", "type", "size"],
+    "properties": {
+      "blobId": {
+        "type": "string",
+        "description": "Opaque blob identifier for contact media (RFC 9610 blobId)."
+      },
+      "type": {
+        "type": "string",
+        "description": "MIME media type of the uploaded blob."
+      },
+      "size": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "Blob size in bytes."
+      }
+    }
+  }
+}

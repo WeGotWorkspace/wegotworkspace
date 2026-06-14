@@ -36,14 +36,8 @@
                     "value": "USA"
                 }
             ],
-            "isOrdered": false
-        },
-        "p_NgmEZ1OMqrzgBAb2_41rhU0z": {
-            "@type": "Address",
-            "coordinates": "geo:40.7128,-74.0060"
-        },
-        "p_80sK10OqAxvVMebX4iPDgDq2": {
-            "@type": "Address",
+            "isOrdered": false,
+            "coordinates": "geo:40.7128,-74.0060",
             "timeZone": "Europe/Amsterdam"
         },
         "p_idxJBW_ChNXtrejrh6Q8b9-p": {
