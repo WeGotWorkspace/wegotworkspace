@@ -175,6 +175,59 @@ final class TasksCalDavInteropTest extends WgwDatabaseTestCase
         $this->assertStringContainsString('TRIGGER;RELATED=END:-PT30M', $ics);
     }
 
+    public function test_caldav_all_day_task_readable_via_rest_get(): void
+    {
+        $uid = 'urn:uuid:'.Str::uuid()->toString();
+        $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VTODO\r\nUID:{$uid}\r\nSUMMARY:All day from CalDAV\r\nDUE;VALUE=DATE:20260620\r\nSTATUS:NEEDS-ACTION\r\nEND:VTODO\r\nEND:VCALENDAR\r\n";
+        $taskId = $this->seedTaskViaPdo('bob', 'all-day-caldav.ics', $ics);
+
+        $response = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/tasks/items/'.$taskId);
+
+        $response->assertOk()
+            ->assertJsonPath('showWithoutTime', true)
+            ->assertJsonPath('due', '2026-06-20');
+    }
+
+    public function test_caldav_participants_readable_via_rest_get(): void
+    {
+        $uid = 'urn:uuid:'.Str::uuid()->toString();
+        $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VTODO\r\nUID:{$uid}\r\nSUMMARY:Delegated\r\nDUE:20260615T090000\r\nORGANIZER;CN=Alice:mailto:alice@example.com\r\nATTENDEE;CN=Bob;PARTSTAT=NEEDS-ACTION:mailto:bob@example.com\r\nEND:VTODO\r\nEND:VCALENDAR\r\n";
+        $taskId = $this->seedTaskViaPdo('bob', 'participants-caldav.ics', $ics);
+
+        $response = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/tasks/items/'.$taskId);
+
+        $response->assertOk()
+            ->assertJsonPath('participants.org.email', 'alice@example.com')
+            ->assertJsonPath('participants.att1.email', 'bob@example.com');
+    }
+
+    public function test_rest_create_with_ics_props_persists_to_caldav(): void
+    {
+        $payload = [
+            'taskListIds' => ['default' => true],
+            'title' => 'Custom props task',
+            'due' => '2026-06-15T09:00:00',
+            'icsProps' => [
+                'X-CUSTOM-PROP' => 'client-extension',
+            ],
+        ];
+
+        $response = $this->withBearer($this->userBearerToken())
+            ->postJson('/api/v1/tasks/items', $payload);
+
+        $response->assertCreated()
+            ->assertJsonPath('icsProps.X-CUSTOM-PROP', 'client-extension');
+
+        $taskId = (string) $response->json('id');
+        $stored = $this->findBobTask($taskId);
+        $this->assertNotNull($stored);
+
+        $ics = is_string($stored->calendardata) ? $stored->calendardata : (string) $stored->calendardata;
+        $this->assertStringContainsString('X-CUSTOM-PROP:client-extension', $ics);
+    }
+
     private function findBobTask(string $taskId): ?CalendarObject
     {
         $parsed = IcsJmapTaskConverter::parseTaskId($taskId);

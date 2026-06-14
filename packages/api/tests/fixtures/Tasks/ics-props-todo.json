@@ -1,0 +1,21 @@
+{
+  "@type": "Task",
+  "uid": "urn:uuid:ics-props-task-001",
+  "title": "Custom extension task",
+  "description": null,
+  "start": null,
+  "due": "2026-06-15T09:00:00",
+  "completed": null,
+  "workflowStatus": "needs-action",
+  "progress": null,
+  "priority": null,
+  "isDraft": false,
+  "sortOrder": 0,
+  "categories": [],
+  "privacy": null,
+  "created": null,
+  "updated": null,
+  "icsProps": {
+    "X-CUSTOM-PROP": "preserved-value"
+  }
+}

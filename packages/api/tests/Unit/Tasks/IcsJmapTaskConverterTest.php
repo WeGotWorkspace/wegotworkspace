@@ -159,4 +159,75 @@ final class IcsJmapTaskConverterTest extends TestCase
         $this->assertSame('-PT30M', $roundTrip[0]['alerts']['alert1']['trigger']['offset']);
         $this->assertSame('end', $roundTrip[0]['alerts']['alert1']['trigger']['relativeTo']);
     }
+
+    public function test_all_day_due_preserves_value_date(): void
+    {
+        $ics = str_replace("\n", "\r\n", (string) file_get_contents("{$this->fixturesDir}/all-day-todo.ics"));
+        $expected = json_decode((string) file_get_contents("{$this->fixturesDir}/all-day-todo.json"), true);
+
+        $tasks = $this->reader->tasksFromIcs($ics);
+        $this->assertSame($expected, $tasks[0]);
+
+        $roundTripIcs = $this->converter->icsFromTask($tasks[0]);
+        $this->assertStringContainsString('DUE;VALUE=DATE:20260620', $roundTripIcs);
+
+        $roundTrip = $this->reader->tasksFromIcs($roundTripIcs);
+        $this->assertTrue($roundTrip[0]['showWithoutTime']);
+        $this->assertSame('2026-06-20', $roundTrip[0]['due']);
+    }
+
+    public function test_tzid_round_trip_on_start_and_due(): void
+    {
+        $ics = str_replace("\n", "\r\n", (string) file_get_contents("{$this->fixturesDir}/tzid-todo.ics"));
+        $expected = json_decode((string) file_get_contents("{$this->fixturesDir}/tzid-todo.json"), true);
+
+        $tasks = $this->reader->tasksFromIcs($ics);
+        $this->assertSame($expected, $tasks[0]);
+
+        $roundTripIcs = $this->converter->icsFromTask($tasks[0]);
+        $this->assertStringContainsString('TZID=Europe/Amsterdam', $roundTripIcs);
+
+        $roundTrip = $this->reader->tasksFromIcs($roundTripIcs);
+        $this->assertSame('Europe/Amsterdam', $roundTrip[0]['timeZone']);
+    }
+
+    public function test_ics_props_survives_round_trip(): void
+    {
+        $ics = str_replace("\n", "\r\n", (string) file_get_contents("{$this->fixturesDir}/ics-props-todo.ics"));
+        $expected = json_decode((string) file_get_contents("{$this->fixturesDir}/ics-props-todo.json"), true);
+
+        $tasks = $this->reader->tasksFromIcs($ics);
+        $this->assertSame($expected, $tasks[0]);
+
+        $roundTrip = $this->reader->tasksFromIcs($this->converter->icsFromTask($tasks[0]));
+        $this->assertSame(['X-CUSTOM-PROP' => 'preserved-value'], $roundTrip[0]['icsProps']);
+    }
+
+    public function test_participants_round_trip(): void
+    {
+        $ics = str_replace("\n", "\r\n", (string) file_get_contents("{$this->fixturesDir}/participants-todo.ics"));
+        $expected = json_decode((string) file_get_contents("{$this->fixturesDir}/participants-todo.json"), true);
+
+        $tasks = $this->reader->tasksFromIcs($ics);
+        $this->assertSame($expected['participants'], $tasks[0]['participants']);
+
+        $roundTripIcs = $this->converter->icsFromTask($tasks[0]);
+        $this->assertStringContainsString('ORGANIZER;CN=Alice:mailto:alice@example.com', $roundTripIcs);
+        $this->assertStringContainsString('ATTENDEE;CN=Bob;PARTSTAT=ACCEPTED:mailto:bob@example.com', $roundTripIcs);
+
+        $roundTrip = $this->reader->tasksFromIcs($roundTripIcs);
+        $this->assertSame('Alice', $roundTrip[0]['participants']['org']['name']);
+        $this->assertSame('accepted', $roundTrip[0]['participants']['att1']['participationStatus']);
+    }
+
+    public function test_completed_always_normalized_to_utc_z(): void
+    {
+        $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VTODO\r\nUID:completed-tz\r\nSUMMARY:Done\r\nCOMPLETED:20260610T120000\r\nSTATUS:COMPLETED\r\nEND:VTODO\r\nEND:VCALENDAR\r\n";
+
+        $tasks = $this->reader->tasksFromIcs($ics);
+        $this->assertSame('2026-06-10T12:00:00Z', $tasks[0]['completed']);
+
+        $roundTripIcs = $this->converter->icsFromTask($tasks[0]);
+        $this->assertStringContainsString('COMPLETED:20260610T120000Z', $roundTripIcs);
+    }
 }

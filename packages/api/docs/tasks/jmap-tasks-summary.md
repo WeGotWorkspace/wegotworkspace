@@ -22,8 +22,11 @@ REST endpoints under `/api/v1/tasks/*` expose a **JMAP Tasks-shaped** JSON contr
 | `excludedRecurrenceDates` | `EXDATE` |
 | `recurrenceOverrides` | `RECURRENCE-ID` override VTODOs |
 | `alerts` | `VALARM` |
+| `participants` | `ORGANIZER` / `ATTENDEE` |
+| `showWithoutTime` / `timeZone` | `VALUE=DATE` / `TZID` on `DTSTART`/`DUE` |
+| `icsProps` | Unmapped VTODO properties (round-trip escape hatch) |
 
-Deferred in v1: assignees, TaskList CRUD, JMAP protocol methods, instance expansion (client-side).
+Deferred in v1: TaskList CRUD, JMAP protocol methods, instance expansion (client-side).
 
 ## Access
 

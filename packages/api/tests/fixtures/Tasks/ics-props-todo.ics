@@ -1,0 +1,11 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//WeGotWorkspace//Tasks Test//EN
+BEGIN:VTODO
+UID:urn:uuid:ics-props-task-001
+SUMMARY:Custom extension task
+DUE:20260615T090000
+STATUS:NEEDS-ACTION
+X-CUSTOM-PROP:preserved-value
+END:VTODO
+END:VCALENDAR

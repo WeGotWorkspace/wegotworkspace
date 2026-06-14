@@ -17,7 +17,9 @@
 | `DESCRIPTION` | `description` |
 | `DTSTART` | `start` (LocalDateTime) |
 | `DUE` | `due` (LocalDateTime) |
-| `COMPLETED` | `completed` (UTCDateTime) |
+| `DTSTART`/`DUE;VALUE=DATE` | `showWithoutTime: true` + date-only value |
+| `DTSTART`/`DUE;TZID=` | `timeZone` |
+| `COMPLETED` | `completed` (UTCDateTime, always `Z` suffix) |
 | `STATUS: NEEDS-ACTION` | `workflowStatus: needs-action` |
 | `STATUS: IN-PROCESS` | `workflowStatus: in-process` |
 | `STATUS: COMPLETED` | `workflowStatus: completed` |
@@ -32,6 +34,35 @@
 | `EXDATE` | `excludedRecurrenceDates[]` |
 | `RECURRENCE-ID` override VTODO | `recurrenceOverrides[recurrenceId]` |
 | `VALARM` | `alerts` (IdMap) |
+| `ORGANIZER` / `ATTENDEE` | `participants` (IdMap) |
+| Unmapped VTODO properties | `icsProps` map |
+
+## Date/time semantics
+
+| Direction | Rule |
+|-----------|------|
+| ICS → JMAP | `VALUE=DATE` on `DTSTART`/`DUE` sets `showWithoutTime: true` and date-only JMAP value |
+| ICS → JMAP | `TZID` parameter captured in `timeZone` |
+| JMAP → ICS | `showWithoutTime: true` emits `VALUE=DATE` (`YYYYMMDD`) |
+| JMAP → ICS | `timeZone` written as `TZID` on floating date-times |
+| `COMPLETED` | Always normalized to UTC with `Z` suffix on read and write |
+
+## Participants
+
+| Direction | Rule |
+|-----------|------|
+| ICS → JMAP | `ORGANIZER` → `participants.org` with `roles: [owner]` |
+| ICS → JMAP | Each `ATTENDEE` → `participants.attN` with `roles: [attendee]` |
+| ICS → JMAP | `PARTSTAT` → `participationStatus` (lowercase) |
+| JMAP → ICS | `roles` containing `owner` writes `ORGANIZER`; others write `ATTENDEE` |
+
+## icsProps escape hatch
+
+| Direction | Rule |
+|-----------|------|
+| ICS → JMAP | Any VTODO property not in the known mapped set → `icsProps[name]` |
+| JMAP → ICS | Each `icsProps` entry merged into VTODO on upsert |
+| Known (excluded) | `UID`, `SUMMARY`, `DESCRIPTION`, `DTSTART`, `DUE`, `COMPLETED`, `STATUS`, `PERCENT-COMPLETE`, `PRIORITY`, `CATEGORIES`, `CLASS`, `CREATED`, `LAST-MODIFIED`, `RRULE`, `EXDATE`, `RECURRENCE-ID`, `ORGANIZER`, `ATTENDEE`, `DTSTAMP`, `SEQUENCE` |
 
 ## Recurrence
 
@@ -59,6 +90,5 @@
 
 ## Deferred
 
-- `VTIMEZONE` / custom time zones
-- JMAP extensions: assignees, multilingual titles
-- `icsProps` escape hatch (#149)
+- `VTIMEZONE` component definitions
+- JMAP extensions: multilingual titles
