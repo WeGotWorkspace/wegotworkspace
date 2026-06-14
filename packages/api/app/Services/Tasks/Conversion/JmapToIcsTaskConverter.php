@@ -5,13 +5,17 @@ declare(strict_types=1);
 namespace App\Services\Tasks\Conversion;
 
 use App\Services\Calendars\Conversion\CalendarConversionSupport;
+use App\Services\VObject\VObjectPayloadGuard;
 use Sabre\VObject\Component\VCalendar;
 use Sabre\VObject\Component\VTodo;
-use Sabre\VObject\Reader;
 use Sabre\VObject\Writer;
 
 final class JmapToIcsTaskConverter
 {
+    public function __construct(
+        private readonly VObjectPayloadGuard $guard = new VObjectPayloadGuard,
+    ) {}
+
     /**
      * @param  array<string, mixed>  $task
      */
@@ -24,7 +28,7 @@ final class JmapToIcsTaskConverter
 
         $this->writeTaskSeries($calendar, $task);
 
-        return Writer::write($calendar);
+        return $this->writeCalendar($calendar);
     }
 
     /**
@@ -33,12 +37,8 @@ final class JmapToIcsTaskConverter
     public function upsertTaskInIcs(string $ics, array $task, ?string $targetUid = null): string
     {
         try {
-            $calendar = Reader::read($ics);
+            $calendar = $this->guard->readICalendar($ics, 'tasks');
         } catch (\Throwable) {
-            $calendar = new VCalendar(['VERSION' => '2.0', 'PRODID' => '-//WeGotWorkspace//Tasks API//EN']);
-        }
-
-        if (! $calendar instanceof VCalendar) {
             $calendar = new VCalendar(['VERSION' => '2.0', 'PRODID' => '-//WeGotWorkspace//Tasks API//EN']);
         }
 
@@ -52,7 +52,7 @@ final class JmapToIcsTaskConverter
 
         $this->writeTaskSeries($calendar, $task);
 
-        return Writer::write($calendar);
+        return $this->writeCalendar($calendar);
     }
 
     /**
@@ -61,12 +61,8 @@ final class JmapToIcsTaskConverter
     public function removeTaskFromIcs(string $ics, string $uid): ?string
     {
         try {
-            $calendar = Reader::read($ics);
+            $calendar = $this->guard->readICalendar($ics, 'tasks');
         } catch (\Throwable) {
-            return null;
-        }
-
-        if (! $calendar instanceof VCalendar) {
             return null;
         }
 
@@ -77,7 +73,15 @@ final class JmapToIcsTaskConverter
             return null;
         }
 
-        return Writer::write($calendar);
+        return $this->writeCalendar($calendar);
+    }
+
+    private function writeCalendar(VCalendar $calendar): string
+    {
+        $ics = Writer::write($calendar);
+        $this->guard->assertIcsSize($ics, 'tasks');
+
+        return $ics;
     }
 
     /**

@@ -4,20 +4,26 @@ declare(strict_types=1);
 
 namespace App\Services\Calendars\Conversion;
 
+use App\Services\VObject\VObjectPayloadGuard;
 use Sabre\VObject\Component\VCalendar;
 use Sabre\VObject\Component\VEvent;
-use Sabre\VObject\Reader;
 
 final class JmapEventToVEventConverter
 {
+    public function __construct(
+        private readonly VObjectPayloadGuard $guard = new VObjectPayloadGuard,
+    ) {}
+
     /**
      * @param  array<string, mixed>  $event
      */
     public function convert(array $event): string
     {
         $calendar = $this->buildCalendar($event);
+        $ics = $calendar->serialize();
+        $this->guard->assertIcsSize($ics);
 
-        return $calendar->serialize();
+        return $ics;
     }
 
     /**
@@ -25,10 +31,7 @@ final class JmapEventToVEventConverter
      */
     public function updateVEventInIcs(string $ics, array $event, string $targetUid): string
     {
-        $document = Reader::read($ics);
-        if (! $document instanceof VCalendar) {
-            throw new \InvalidArgumentException('Input is not an iCalendar document.');
-        }
+        $document = $this->guard->readICalendar($ics);
 
         $replaced = false;
         foreach (CalendarConversionSupport::veventsFromCalendar($document) as $vevent) {
@@ -48,15 +51,15 @@ final class JmapEventToVEventConverter
         $event['uid'] = $targetUid;
         $this->populateVEvent($vevent, $event);
 
-        return $document->serialize();
+        $updated = $document->serialize();
+        $this->guard->assertIcsSize($updated);
+
+        return $updated;
     }
 
     public function removeVEventFromIcs(string $ics, string $targetUid): ?string
     {
-        $document = Reader::read($ics);
-        if (! $document instanceof VCalendar) {
-            throw new \InvalidArgumentException('Input is not an iCalendar document.');
-        }
+        $document = $this->guard->readICalendar($ics);
 
         $removed = false;
         foreach (CalendarConversionSupport::veventsFromCalendar($document) as $vevent) {
@@ -76,7 +79,10 @@ final class JmapEventToVEventConverter
             return null;
         }
 
-        return $document->serialize();
+        $updated = $document->serialize();
+        $this->guard->assertIcsSize($updated);
+
+        return $updated;
     }
 
     /**

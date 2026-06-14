@@ -4,25 +4,27 @@ declare(strict_types=1);
 
 namespace App\Services\Tasks\Conversion;
 
+use App\Exceptions\ApiHttpException;
 use App\Services\Calendars\Conversion\CalendarConversionSupport;
-use Sabre\VObject\Component\VCalendar;
+use App\Services\VObject\VObjectPayloadGuard;
 use Sabre\VObject\Component\VTodo;
-use Sabre\VObject\Reader;
 
 final class IcsToJmapTaskConverter
 {
+    public function __construct(
+        private readonly VObjectPayloadGuard $guard = new VObjectPayloadGuard,
+    ) {}
+
     /**
      * @return list<array<string, mixed>>
      */
     public function tasksFromIcs(string $ics): array
     {
         try {
-            $vobject = Reader::read($ics);
+            $vobject = $this->guard->readICalendar($ics, 'tasks');
+        } catch (ApiHttpException $e) {
+            throw $e;
         } catch (\Throwable) {
-            return [];
-        }
-
-        if (! $vobject instanceof VCalendar) {
             return [];
         }
 
