@@ -5794,6 +5794,7 @@ export interface components {
             uid: string;
             created?: components["schemas"]["JsContactUTCDateTime"];
             updated?: components["schemas"]["JsContactUTCDateTime"];
+            etag?: components["schemas"]["DavEtag"];
             /**
              * @default individual
              * @enum {string}
@@ -6706,6 +6707,8 @@ export interface components {
             ids: components["schemas"]["JsContactId"][];
             total: number;
         };
+        /** @description Quoted HTTP entity tag aligned with Cal/CardDAV storage (Sabre PDO etag). */
+        DavEtag: string;
     };
     responses: never;
     parameters: never;

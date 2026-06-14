@@ -41,6 +41,7 @@ final class ContactsCardsSyncTest extends WgwDatabaseTestCase
             ->assertCreated();
 
         $cardId = $create->json('id');
+        $cardUrl = '/api/v1/contacts/cards/'.$cardId;
 
         $afterCreate = $this->withBearer($this->userBearerToken())
             ->getJson('/api/v1/contacts/cards/changes?addressBookId=default&since='.$state)
@@ -49,7 +50,6 @@ final class ContactsCardsSyncTest extends WgwDatabaseTestCase
         $afterCreate->assertJsonPath('created.0', $cardId);
         $newState = $afterCreate->json('newState');
 
-        $cardUrl = '/api/v1/contacts/cards/'.$cardId;
         $this->withBearer($this->userBearerToken())
             ->deleteJson($cardUrl, [], $this->withIfMatch($this->fetchEtagFromGet($cardUrl)))
             ->assertOk();

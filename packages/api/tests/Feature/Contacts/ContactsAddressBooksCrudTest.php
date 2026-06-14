@@ -116,6 +116,7 @@ final class ContactsAddressBooksCrudTest extends WgwDatabaseTestCase
             ->patchJson('/api/v1/contacts/addressbooks/default', [
                 'shareWith' => ['alice' => ['mayRead' => true]],
             ])
-            ->assertBadRequest();
+            ->assertStatus(400)
+            ->assertJsonPath('code', 'bad_request');
     }
 }

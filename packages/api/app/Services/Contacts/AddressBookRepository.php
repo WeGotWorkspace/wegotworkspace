@@ -6,10 +6,12 @@ namespace App\Services\Contacts;
 
 use App\Exceptions\ApiHttpException;
 use App\Models\Addressbook;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Sabre\CardDAV\Backend\PDO as CardPDO;
 use Sabre\CardDAV\Plugin as CardDAVPlugin;
+use Sabre\DAV\Exception\BadRequest;
 use Sabre\DAV\PropPatch;
 
 final class AddressBookRepository
@@ -75,7 +77,7 @@ final class AddressBookRepository
 
         try {
             $this->cardBackend()->createAddressBook($this->principalUri($username), $uri, $properties);
-        } catch (\Sabre\DAV\Exception\BadRequest $exception) {
+        } catch (BadRequest $exception) {
             throw new ApiHttpException(400, $exception->getMessage(), 'invalidProperties');
         }
 
@@ -207,6 +209,7 @@ final class AddressBookRepository
         foreach ($currentMap as $uri => $token) {
             if (! array_key_exists($uri, $previous)) {
                 $created[] = $uri;
+
                 continue;
             }
             if ($previous[$uri] !== $token) {
@@ -267,7 +270,7 @@ final class AddressBookRepository
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, Addressbook>  $books
+     * @param  Collection<int, Addressbook>  $books
      */
     private function computeBooksState($books): string
     {
