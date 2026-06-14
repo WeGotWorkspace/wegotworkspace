@@ -27,9 +27,12 @@
     "properties": {
       "@type": { "type": "string", "const": "Location" },
       "name": { "type": "string" },
-      "description": { "type": "string" }
+      "description": { "type": "string" },
+      "rel": { "type": "string" },
+      "timeZone": { "type": "string" },
+      "coordinates": { "type": "string" }
     },
-    "additionalProperties": true
+    "additionalProperties": false
   },
   "CalendarEventParticipant": {
     "type": "object",
@@ -39,9 +42,11 @@
       "name": { "type": ["string", "null"] },
       "email": { "type": ["string", "null"] },
       "roles": { "type": "array", "items": { "type": "string" } },
-      "participationStatus": { "type": "string" }
+      "participationStatus": { "type": "string" },
+      "kind": { "type": "string" },
+      "language": { "type": "string" }
     },
-    "additionalProperties": true
+    "additionalProperties": false
   },
   "CalendarEvent": {
     "type": "object",
@@ -126,6 +131,57 @@
       }
     ],
     "description": "POST body; server assigns id and @type."
+  },
+  "CalendarEventPatch": {
+    "type": "object",
+    "properties": {
+      "title": { "type": "string" },
+      "description": { "type": ["string", "null"] },
+      "start": { "$ref": "#/components/schemas/JmapLocalDateTime" },
+      "end": { "$ref": "#/components/schemas/JmapLocalDateTime" },
+      "duration": { "type": "string" },
+      "showWithoutTime": { "type": "boolean" },
+      "timeZone": { "type": ["string", "null"] },
+      "locations": {
+        "type": "object",
+        "propertyNames": { "$ref": "#/components/schemas/JmapId" },
+        "additionalProperties": { "$ref": "#/components/schemas/CalendarEventLocation" }
+      },
+      "recurrenceRules": {
+        "type": "array",
+        "items": { "$ref": "#/components/schemas/CalendarRecurrenceRule" }
+      },
+      "excludedRecurrenceDates": {
+        "type": "array",
+        "items": { "type": "string" }
+      },
+      "freeBusyStatus": {
+        "type": "string",
+        "enum": ["busy", "free", "tentative"]
+      },
+      "privacy": {
+        "type": "string",
+        "enum": ["public", "private", "secret"]
+      },
+      "status": {
+        "type": "string",
+        "enum": ["confirmed", "cancelled", "tentative"]
+      },
+      "participants": {
+        "type": "object",
+        "propertyNames": { "$ref": "#/components/schemas/JmapId" },
+        "additionalProperties": { "$ref": "#/components/schemas/CalendarEventParticipant" }
+      },
+      "categories": { "type": "array", "items": { "type": "string" } },
+      "priority": { "type": "integer", "minimum": 0, "maximum": 9 },
+      "sequence": { "type": "integer", "minimum": 0 },
+      "icsProps": {
+        "type": "object",
+        "additionalProperties": { "type": "string" }
+      }
+    },
+    "additionalProperties": false,
+    "description": "PATCH request body for partial calendar event updates. Omits server-owned id and @type."
   },
   "CalendarEventListResponse": {
     "type": "object",

@@ -22,7 +22,7 @@
       "created": { "type": ["string", "null"] },
       "updated": { "type": ["string", "null"] }
     },
-    "additionalProperties": true
+    "additionalProperties": false
   },
   "TaskListResponse": {
     "type": "object",
