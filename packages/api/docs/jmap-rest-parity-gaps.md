@@ -9,7 +9,7 @@ This document summarizes what the v1 JMAP-shaped REST layers implement versus fu
 
 | Domain | v1 scope | Biggest gaps | Issues |
 |--------|----------|--------------|--------|
-| **Contacts** (CardDAV) | JSContact conversion ~90%; REST CRUD | blobId upload, localizations, JSCOMPS, partial matrix | [#151](https://github.com/WeGotWorkspace/wegotworkspace/issues/151)–[#156](https://github.com/WeGotWorkspace/wegotworkspace/issues/156) |
+| **Contacts** (CardDAV) | JSContact conversion; REST CRUD; blob upload; localizations; JSCOMPS; matrix gaps closed in [#151](https://github.com/WeGotWorkspace/wegotworkspace/issues/151)–[#156](https://github.com/WeGotWorkspace/wegotworkspace/issues/156) | `/queryChanges`, advanced query filters | — |
 | **Calendars** (VEVENT) | Event CRUD, RRULE read, basic participants | **Alerts**, **recurrenceOverrides**, RRULE write parity, rich locations | [#138](https://github.com/WeGotWorkspace/wegotworkspace/issues/138)–[#145](https://github.com/WeGotWorkspace/wegotworkspace/issues/145) |
 | **Tasks** (VTODO) | Title, dates, status, priority | **Recurrence**, **alerts**, participants, `icsProps` | [#146](https://github.com/WeGotWorkspace/wegotworkspace/issues/146)–[#150](https://github.com/WeGotWorkspace/wegotworkspace/issues/150) |
 | **Platform** | List/get + item CRUD | Collection CRUD, sharing, incremental sync | [#157](https://github.com/WeGotWorkspace/wegotworkspace/issues/157), [#158](https://github.com/WeGotWorkspace/wegotworkspace/issues/158) |
@@ -60,8 +60,8 @@ This document summarizes what the v1 JMAP-shaped REST layers implement versus fu
 
 | Gap | Issue |
 |-----|-------|
-| Address book / calendar / task list CRUD + sharing | [#157](https://github.com/WeGotWorkspace/wegotworkspace/issues/157) |
-| JMAP `changes` / `query` sync | [#158](https://github.com/WeGotWorkspace/wegotworkspace/issues/158) |
+| Address book / calendar / task list CRUD + sharing | [#157](https://github.com/WeGotWorkspace/wegotworkspace/issues/157) — **contacts CRUD done**; calendars/tasks CalDAV-only (documented) |
+| JMAP `changes` / `query` sync | [#158](https://github.com/WeGotWorkspace/wegotworkspace/issues/158) — **contacts pilot done**; calendars/tasks documented |
 
 ## External interop fixtures
 
@@ -84,3 +84,12 @@ Adopt **Fastmail** (Text::JSCalendar / Text::JSContact normative goldens) and **
 ### Tasks
 - Task list list, task CRUD, multi-VTODO composite ids
 - STATUS, PRIORITY, PERCENT-COMPLETE, CLASS, CATEGORIES, DTSTART/DUE/COMPLETED
+
+## Platform hardening (v1)
+
+| Area | Status | Notes |
+|------|--------|-------|
+| ICS/vCard payload bounds | Done ([#162](https://github.com/WeGotWorkspace/wegotworkspace/issues/162)) | 512 KiB max serialized size; component/property caps before VObject parse |
+| Cross-user ACL tests | Done ([#163](https://github.com/WeGotWorkspace/wegotworkspace/issues/163)) | `JmapRestCrossUserAclTest` matrix for contacts/calendars/tasks |
+| Search index on CRUD | Done ([#164](https://github.com/WeGotWorkspace/wegotworkspace/issues/164)) | Best-effort sync with structured `search_index_sync_failed` logs; admin reindex for recovery |
+| OpenAPI Error responses | Done ([#165](https://github.com/WeGotWorkspace/wegotworkspace/issues/165)) | 400/403/404/412/413 on `/contacts/*`, `/calendars/*`, `/tasks/*` |
