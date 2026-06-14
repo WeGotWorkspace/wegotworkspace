@@ -5796,6 +5796,15 @@
                             "null"
                         ]
                     },
+                    "showWithoutTime": {
+                        "type": "boolean"
+                    },
+                    "timeZone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
                     "workflowStatus": {
                         "type": [
                             "string",
@@ -5874,6 +5883,23 @@
                             "$ref": "#/components/schemas/TaskAlert"
                         },
                         "description": "Task reminders mapped from VALARM components."
+                    },
+                    "participants": {
+                        "type": "object",
+                        "propertyNames": {
+                            "$ref": "#/components/schemas/JmapId"
+                        },
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/TaskParticipant"
+                        },
+                        "description": "Task assignees mapped from ORGANIZER/ATTENDEE."
+                    },
+                    "icsProps": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "description": "Unmapped VTODO properties preserved for round-trip fidelity."
                     }
                 },
                 "additionalProperties": false
@@ -5936,6 +5962,15 @@
                             "null"
                         ]
                     },
+                    "showWithoutTime": {
+                        "type": "boolean"
+                    },
+                    "timeZone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
                     "workflowStatus": {
                         "type": [
                             "string",
@@ -5988,6 +6023,21 @@
                         "type": "object",
                         "additionalProperties": {
                             "$ref": "#/components/schemas/TaskAlert"
+                        }
+                    },
+                    "participants": {
+                        "type": "object",
+                        "propertyNames": {
+                            "$ref": "#/components/schemas/JmapId"
+                        },
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/TaskParticipant"
+                        }
+                    },
+                    "icsProps": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
                         }
                     }
                 },
@@ -6023,6 +6073,15 @@
                             "null"
                         ]
                     },
+                    "showWithoutTime": {
+                        "type": "boolean"
+                    },
+                    "timeZone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
                     "workflowStatus": {
                         "type": [
                             "string",
@@ -6075,6 +6134,21 @@
                         "type": "object",
                         "additionalProperties": {
                             "$ref": "#/components/schemas/TaskAlert"
+                        }
+                    },
+                    "participants": {
+                        "type": "object",
+                        "propertyNames": {
+                            "$ref": "#/components/schemas/JmapId"
+                        },
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/TaskParticipant"
+                        }
+                    },
+                    "icsProps": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
                         }
                     }
                 },
@@ -6318,6 +6392,15 @@
                             "null"
                         ]
                     },
+                    "showWithoutTime": {
+                        "type": "boolean"
+                    },
+                    "timeZone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
                     "workflowStatus": {
                         "type": [
                             "string",
@@ -6517,6 +6600,194 @@
                     }
                 },
                 "additionalProperties": false
+            },
+            "AddressBookCreate": {
+                "type": "object",
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "id": {
+                        "$ref": "#/components/schemas/JsContactId",
+                        "description": "Optional client-suggested address book id (uri slug)."
+                    }
+                },
+                "additionalProperties": false
+            },
+            "AddressBookPatch": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "isSubscribed": {
+                        "type": "boolean"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "AddressBookDeleteOptions": {
+                "type": "object",
+                "properties": {
+                    "onDestroyRemoveContents": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "When true, delete all cards in the book before destroying it."
+                    }
+                },
+                "additionalProperties": false
+            },
+            "JmapChangesResponse": {
+                "type": "object",
+                "required": [
+                    "oldState",
+                    "newState",
+                    "created",
+                    "updated",
+                    "destroyed"
+                ],
+                "properties": {
+                    "oldState": {
+                        "type": "string",
+                        "description": "Previous sync state token supplied by the client."
+                    },
+                    "newState": {
+                        "type": "string",
+                        "description": "Current sync state token to store for the next request."
+                    },
+                    "created": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JsContactId"
+                        }
+                    },
+                    "updated": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JsContactId"
+                        }
+                    },
+                    "destroyed": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JsContactId"
+                        }
+                    }
+                },
+                "additionalProperties": false,
+                "description": "JMAP-shaped incremental sync response (RFC 8620 /changes mapping)."
+            },
+            "ContactCardQueryFilter": {
+                "type": "object",
+                "required": [
+                    "inAddressBook"
+                ],
+                "properties": {
+                    "inAddressBook": {
+                        "$ref": "#/components/schemas/JsContactId"
+                    },
+                    "uid": {
+                        "type": "string",
+                        "description": "Exact JSContact uid match (RFC 9610 ContactCard/query)."
+                    }
+                },
+                "additionalProperties": false
+            },
+            "ContactCardQueryRequest": {
+                "type": "object",
+                "required": [
+                    "filter"
+                ],
+                "properties": {
+                    "filter": {
+                        "$ref": "#/components/schemas/ContactCardQueryFilter"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 500
+                    }
+                },
+                "additionalProperties": false
+            },
+            "ContactCardQueryResponse": {
+                "type": "object",
+                "required": [
+                    "ids",
+                    "total"
+                ],
+                "properties": {
+                    "ids": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JsContactId"
+                        }
+                    },
+                    "total": {
+                        "type": "integer",
+                        "minimum": 0
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskParticipant": {
+                "type": "object",
+                "required": [
+                    "@type"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "Participant"
+                    },
+                    "name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "email": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "roles": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "participationStatus": {
+                        "type": "string"
+                    },
+                    "kind": {
+                        "type": "string"
+                    },
+                    "language": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": false
             }
         },
         "parameters": {
@@ -6583,6 +6854,16 @@
             },
             "PayloadTooLarge": {
                 "description": "Payload too large",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
+            },
+            "Conflict": {
+                "description": "Conflict with current resource state",
                 "content": {
                     "application/json": {
                         "schema": {
@@ -9568,6 +9849,49 @@
                     }
                 },
                 "x-wgw-access": "user"
+            },
+            "post": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Create an address book",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AddressBookCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created address book",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AddressBook"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/Conflict"
+                    }
+                },
+                "x-wgw-access": "user"
             }
         },
         "/contacts/addressbooks/{addressBookId}": {
@@ -11098,6 +11422,196 @@
                 },
                 "x-wgw-access": "user"
             }
+        },
+        "/contacts/addressbooks/changes": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Incremental address book collection changes",
+                "description": "JMAP AddressBook/changes REST mapping. See docs/contacts/jmap-sync-rest-mapping.md.",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "since",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Previous state token; omit or `0` for initial sync."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Address book changes",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/JmapChangesResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "get": {
+            "tags": [
+                "Contacts"
+            ],
+            "summary": "Fetch a single address book",
+            "security": [
+                {
+                    "bearerAuth": []
+                }
+            ],
+            "parameters": [
+                {
+                    "name": "addressBookId",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ],
+            "responses": {
+                "200": {
+                    "description": "Address book",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AddressBook"
+                            }
+                        }
+                    }
+                },
+                "403": {
+                    "$ref": "#/components/responses/Forbidden"
+                },
+                "404": {
+                    "$ref": "#/components/responses/NotFound"
+                }
+            },
+            "x-wgw-access": "user"
+        },
+        "patch": {
+            "tags": [
+                "Contacts"
+            ],
+            "summary": "Update an address book",
+            "security": [
+                {
+                    "bearerAuth": []
+                }
+            ],
+            "parameters": [
+                {
+                    "name": "addressBookId",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ],
+            "requestBody": {
+                "required": true,
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/AddressBookPatch"
+                        }
+                    }
+                }
+            },
+            "responses": {
+                "200": {
+                    "description": "Updated address book",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AddressBook"
+                            }
+                        }
+                    }
+                },
+                "400": {
+                    "$ref": "#/components/responses/BadRequest"
+                },
+                "403": {
+                    "$ref": "#/components/responses/Forbidden"
+                },
+                "404": {
+                    "$ref": "#/components/responses/NotFound"
+                }
+            },
+            "x-wgw-access": "user"
+        },
+        "delete": {
+            "tags": [
+                "Contacts"
+            ],
+            "summary": "Delete an address book",
+            "security": [
+                {
+                    "bearerAuth": []
+                }
+            ],
+            "parameters": [
+                {
+                    "name": "addressBookId",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ],
+            "requestBody": {
+                "required": false,
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/AddressBookDeleteOptions"
+                        }
+                    }
+                }
+            },
+            "responses": {
+                "200": {
+                    "description": "Address book deleted",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OkResponse"
+                            }
+                        }
+                    }
+                },
+                "403": {
+                    "$ref": "#/components/responses/Forbidden"
+                },
+                "404": {
+                    "$ref": "#/components/responses/NotFound"
+                },
+                "409": {
+                    "$ref": "#/components/responses/Conflict"
+                }
+            },
+            "x-wgw-access": "user"
         }
     }
 }

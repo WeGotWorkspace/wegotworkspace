@@ -152,6 +152,16 @@
           }
         }
       },
+      "Conflict": {
+        "description": "Conflict with current resource state",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
       "PayloadTooLarge": {
         "description": "Payload too large",
         "content": {
@@ -2401,6 +2411,36 @@
         "x-wgw-access": "user"
       }
     },
+    "/contacts/addressbooks/changes": {
+      "get": {
+        "tags": ["Contacts"],
+        "summary": "Incremental address book collection changes",
+        "description": "JMAP AddressBook/changes REST mapping. See docs/contacts/jmap-sync-rest-mapping.md.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "Previous state token; omit or `0` for initial sync."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Address book changes",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/JmapChangesResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        },
+        "x-wgw-access": "user"
+      }
+    },
     "/contacts/addressbooks": {
       "get": {
         "tags": [
@@ -2428,9 +2468,35 @@
           }
         },
         "x-wgw-access": "user"
+      },
+      "post": {
+        "tags": ["Contacts"],
+        "summary": "Create an address book",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AddressBookCreate" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created address book",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AddressBook" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        },
+        "x-wgw-access": "user"
       }
     },
-    "/contacts/addressbooks/{addressBookId}": {
       "get": {
         "tags": [
           "Contacts"
@@ -2470,6 +2536,143 @@
           }
         },
         "x-wgw-access": "user"
+      },
+      "patch": {
+        "tags": ["Contacts"],
+        "summary": "Update an address book",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "addressBookId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AddressBookPatch" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated address book",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AddressBook" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        },
+        "x-wgw-access": "user"
+      },
+      "delete": {
+        "tags": ["Contacts"],
+        "summary": "Delete an address book",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "addressBookId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AddressBookDeleteOptions" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Address book deleted",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OkResponse" }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/contacts/cards/changes": {
+      "get": {
+        "tags": ["Contacts"],
+        "summary": "Incremental contact card changes in an address book",
+        "description": "JMAP ContactCard/changes REST mapping backed by CardDAV synctoken.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "addressBookId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "Previous synctoken; omit or `0` for initial sync."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contact card changes",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/JmapChangesResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/contacts/cards/query": {
+      "post": {
+        "tags": ["Contacts"],
+        "summary": "Query contact card ids by filter",
+        "description": "JMAP ContactCard/query REST mapping (MVP: inAddressBook + uid).",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ContactCardQueryRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Matching contact card ids",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ContactCardQueryResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        },
+        "x-wgw-access": "user"
       }
     },
     "/contacts/cards": {
@@ -2491,6 +2694,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "uid",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Optional exact uid filter (ContactCard/query subset)."
           }
         ],
         "responses": {
@@ -3656,4 +3868,3 @@
       }
     }
   }
-}

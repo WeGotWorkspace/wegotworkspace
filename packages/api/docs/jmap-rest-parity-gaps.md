@@ -60,8 +60,8 @@ This document summarizes what the v1 JMAP-shaped REST layers implement versus fu
 
 | Gap | Issue |
 |-----|-------|
-| Address book / calendar / task list CRUD + sharing | [#157](https://github.com/WeGotWorkspace/wegotworkspace/issues/157) |
-| JMAP `changes` / `query` sync | [#158](https://github.com/WeGotWorkspace/wegotworkspace/issues/158) |
+| Address book / calendar / task list CRUD + sharing | [#157](https://github.com/WeGotWorkspace/wegotworkspace/issues/157) — **contacts CRUD done**; calendars/tasks CalDAV-only (documented) |
+| JMAP `changes` / `query` sync | [#158](https://github.com/WeGotWorkspace/wegotworkspace/issues/158) — **contacts pilot done**; calendars/tasks documented |
 
 ## External interop fixtures
 

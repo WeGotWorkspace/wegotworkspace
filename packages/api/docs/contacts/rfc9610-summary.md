@@ -191,14 +191,16 @@ This plan exposes a subset of JMAP via REST; mapping to Sabre CardDAV:
 | `AddressBook.description` | `addressbooks.description` |
 | `AddressBook.isDefault` | `uri === 'default'` |
 | `AddressBook.isSubscribed` | always `true` (owned books) |
-| `AddressBook.shareWith` | `null` (deferred) |
-| `AddressBook.myRights` | static read/write, no share/delete |
+| `AddressBook.shareWith` | `null` (deferred — see `jmap-collection-crud.md`) |
+| `AddressBook.myRights` | ownership-derived; `mayDelete` true for non-default owned books |
 | `ContactCard.id` | card `uri` without `.vcf` |
 | `ContactCard.addressBookIds` | `{ [book.uri]: true }` |
 | JSContact `uid` | vCard `UID` |
 | `created` / `updated` | `lastmodified` + vCard metadata |
 
-**Deferred from full JMAP:** `/changes`, `/query`, `/queryChanges`, `/copy`, blob upload API, address book CRUD, sharing (RFC 9670).
+**Deferred from full JMAP:** `/queryChanges`, `/copy`, blob upload API, sharing (RFC 9670), advanced query filters (`text`, `name`, …).
+
+**Implemented (platform #157 / #158):** address book CRUD — see `jmap-collection-crud.md`; contacts `/changes` + `/query` (uid + inAddressBook) — see `jmap-sync-rest-mapping.md`.
 
 ---
 
