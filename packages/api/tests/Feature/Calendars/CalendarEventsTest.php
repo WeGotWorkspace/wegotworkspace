@@ -257,8 +257,9 @@ final class CalendarEventsTest extends WgwDatabaseTestCase
         $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:series-patch\r\nSUMMARY:Daily Standup\r\nDTSTART:20260610T090000Z\r\nDTEND:20260610T093000Z\r\nRRULE:FREQ=DAILY\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
         $eventId = $this->seedEventViaPdo('bob', 'daily-standup.ics', $ics);
 
+        $url = '/api/v1/calendars/events/'.$eventId;
         $this->withBearer($this->userBearerToken())
-            ->patchJson('/api/v1/calendars/events/'.$eventId, [
+            ->patchJson($url, [
                 'recurrenceOverrides' => [
                     '2026-06-12T09:00:00Z' => [
                         'start' => '2026-06-12T14:00:00Z',
@@ -269,7 +270,7 @@ final class CalendarEventsTest extends WgwDatabaseTestCase
                         'excluded' => true,
                     ],
                 ],
-            ])
+            ], $this->withIfMatch($this->fetchEtagFromGet($url)))
             ->assertOk()
             ->assertJsonPath('recurrenceOverrides.2026-06-12T09:00:00Z.start', '2026-06-12T14:00:00Z')
             ->assertJsonPath('recurrenceOverrides.2026-06-13T09:00:00Z.excluded', true);
