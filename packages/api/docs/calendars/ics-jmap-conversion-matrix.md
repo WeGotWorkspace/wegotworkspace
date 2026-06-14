@@ -26,12 +26,14 @@ CalDAV stores one `.ics` blob per `calendarobjects` row. The REST API maps each 
 | DURATION | duration (when no DTEND) |
 | RRULE | recurrenceRules[] |
 | EXDATE | excludedRecurrenceDates[] |
+| RECURRENCE-ID override VEVENT | recurrenceOverrides (key = RECURRENCE-ID) |
 | LOCATION | locations (single entry) |
 | STATUS | status |
 | TRANSP | freeBusyStatus |
 | CLASS | privacy |
 | CATEGORIES | categories |
 | ORGANIZER / ATTENDEE | participants |
+| VALARM | alerts |
 | CREATED | created |
 | LAST-MODIFIED / DTSTAMP | updated |
 | SEQUENCE | sequence |
@@ -44,12 +46,33 @@ CalDAV stores one `.ics` blob per `calendarobjects` row. The REST API maps each 
 |-----------|------|
 | ICS → JMAP | Parse RRULE into `RecurrenceRule` objects; **do not** expand instances |
 | JMAP → ICS | Serialize `recurrenceRules` to RRULE properties |
-| RDATE / RECURRENCE-ID | Not mapped in v1; document if encountered in `icsProps` |
+| RECURRENCE-ID override VEVENT | Merged into master `recurrenceOverrides` (key = RECURRENCE-ID datetime) |
+| `recurrenceOverrides.excluded: true` | STATUS:CANCELLED override VEVENT |
+| `recurrenceOverrides` time/title patch | Override VEVENT with RECURRENCE-ID + patched fields |
+| RDATE | Not mapped in v1 |
 
-Clients expand recurrence locally for display.
+Clients expand recurrence locally for display. Server-side `expandRecurrences` is #159.
+
+## Recurrence overrides vs multi-VEVENT
+
+| Case | REST `CalendarEvent.id` |
+|------|-------------------------|
+| Master + RECURRENCE-ID overrides (same UID) | Single event `{objectUri}` |
+| Unrelated VEVENTs (different UID, no RECURRENCE-ID link) | `{objectUri}#{veventUid}` per component |
+| Master + overrides + unrelated VEVENT | Multiple logical events; composite ids when N>1 |
+
+## Alerts (VALARM)
+
+| iCalendar VALARM | JMAP Alert |
+|------------------|------------|
+| TRIGGER duration (e.g. `-PT15M`) | `trigger` → `RelativeAlert` with `offset` |
+| TRIGGER;VALUE=DATE-TIME | `trigger` → `AbsoluteAlert` with `when` |
+| TRIGGER;RELATED=END | `trigger.relatedTo: "end"` |
+| ACTION: DISPLAY / AUDIO / EMAIL | `action: display / audio / email` |
+
+**Non-reversible:** VALARM `DESCRIPTION`, EMAIL `ATTENDEE`/`SUMMARY`, and AUDIO `ATTACH` are not preserved on read beyond action/trigger mapping.
 
 ## Non-reversible cases
 
 - Multiple `VEVENT` in one ICS collapsed to composite ids on read — write path always single-VEVENT for POST
 - Unknown iCalendar parameters may be dropped unless preserved in `icsProps`
-- JMAP `recurrenceOverrides` not supported in v1
