@@ -1,0 +1,7 @@
+{
+  "DavEtag": {
+    "type": "string",
+    "readOnly": true,
+    "description": "Quoted HTTP entity tag aligned with Cal/CardDAV storage (Sabre PDO etag)."
+  }
+}

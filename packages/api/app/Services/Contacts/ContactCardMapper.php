@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Contacts;
 
+use App\Http\Support\OptimisticConcurrency;
 use App\Models\Card;
 use App\Services\Contacts\Conversion\ConversionSupport;
 use App\Services\Contacts\Conversion\VCardJsContactConverter;
@@ -29,6 +30,11 @@ final class ContactCardMapper
 
         $contact['id'] = self::cardIdFromUri((string) $card->uri);
         $contact['addressBookIds'] = [$addressBookUri => true];
+
+        $etag = OptimisticConcurrency::formatEtag(is_string($card->etag) ? $card->etag : null);
+        if ($etag !== null) {
+            $contact['etag'] = $etag;
+        }
 
         $lastModified = (int) ($card->lastmodified ?? 0);
         if ($lastModified > 0) {

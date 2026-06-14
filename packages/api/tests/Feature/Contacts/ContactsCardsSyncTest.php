@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Tests\Feature\Contacts;
 
 use Tests\Support\ContactsTestFixtures;
+use Tests\Support\OptimisticConcurrencyTestHelpers;
 use Tests\Support\WgwDatabaseTestCase;
 
 final class ContactsCardsSyncTest extends WgwDatabaseTestCase
 {
     use ContactsTestFixtures;
+    use OptimisticConcurrencyTestHelpers;
 
     private const TEST_UID = 'urn:uuid:550e8400-e29b-41d4-a716-446655440099';
 
@@ -39,6 +41,7 @@ final class ContactsCardsSyncTest extends WgwDatabaseTestCase
             ->assertCreated();
 
         $cardId = $create->json('id');
+        $cardUrl = '/api/v1/contacts/cards/'.$cardId;
 
         $afterCreate = $this->withBearer($this->userBearerToken())
             ->getJson('/api/v1/contacts/cards/changes?addressBookId=default&since='.$state)
@@ -48,7 +51,7 @@ final class ContactsCardsSyncTest extends WgwDatabaseTestCase
         $newState = $afterCreate->json('newState');
 
         $this->withBearer($this->userBearerToken())
-            ->deleteJson('/api/v1/contacts/cards/'.$cardId)
+            ->deleteJson($cardUrl, [], $this->withIfMatch($this->fetchEtagFromGet($cardUrl)))
             ->assertOk();
 
         $afterDelete = $this->withBearer($this->userBearerToken())
