@@ -80,8 +80,9 @@ php vendor/bin/phpunit --display-deprecations --display-phpunit-deprecations
 Regenerate types when the spec changes:
 
 ```bash
-pnpm --filter @wgw/api run openapi:build-json
+pnpm --filter @wgw/api run openapi:build-json   # sync paths into openapi.built.json
 pnpm --filter @wgw/api run typegen
+pnpm --filter @wgw/api run openapi:check-drift  # fail if built JSON still stale vs source
 ```
 
 ## Out of scope for this gate
