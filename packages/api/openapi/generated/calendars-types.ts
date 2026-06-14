@@ -13,6 +13,7 @@ export type CalendarEventCreate = components["schemas"]["CalendarEventCreate"];
 export type CalendarEventListResponse = components["schemas"]["CalendarEventListResponse"];
 export type CalendarEventLocation = components["schemas"]["CalendarEventLocation"];
 export type CalendarEventParticipant = components["schemas"]["CalendarEventParticipant"];
+export type CalendarEventPatch = components["schemas"]["CalendarEventPatch"];
 export type CalendarListResponse = components["schemas"]["CalendarListResponse"];
 export type CalendarRecurrenceRule = components["schemas"]["CalendarRecurrenceRule"];
 export type CalendarRights = components["schemas"]["CalendarRights"];
