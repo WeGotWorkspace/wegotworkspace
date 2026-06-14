@@ -4514,6 +4514,132 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/contacts/blobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload contact media blob
+         * @description JMAP blob upload REST equivalent for contact photo/logo media (RFC 9610).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "multipart/form-data": {
+                        /** Format: binary */
+                        file: string;
+                    };
+                    "image/jpeg": string;
+                    "image/png": string;
+                    "image/gif": string;
+                    "image/webp": string;
+                };
+            };
+            responses: {
+                /** @description Blob uploaded */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ContactBlobUploadResponse"];
+                    };
+                };
+                /** @description Invalid request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Payload too large */
+                413: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/contacts/blobs/{blobId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download contact media blob */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    blobId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Blob bytes */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "image/jpeg": string;
+                        "image/png": string;
+                        "image/gif": string;
+                        "image/webp": string;
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -6530,6 +6656,55 @@ export interface components {
             vCardProps?: components["schemas"]["JsContactJCardProp"][];
         } & {
             [key: string]: unknown;
+        };
+        ContactBlobUploadResponse: {
+            /** @description Opaque blob identifier for contact media (RFC 9610 blobId). */
+            blobId: string;
+            /** @description MIME media type of the uploaded blob. */
+            type: string;
+            /** @description Blob size in bytes. */
+            size: number;
+        };
+        AddressBookCreate: {
+            name: string;
+            description?: string | null;
+            /** @description Optional client-suggested address book id (uri slug). */
+            id?: components["schemas"]["JsContactId"];
+        };
+        AddressBookPatch: {
+            name?: string;
+            description?: string | null;
+            isSubscribed?: boolean;
+        };
+        AddressBookDeleteOptions: {
+            /**
+             * @description When true, delete all cards in the book before destroying it.
+             * @default false
+             */
+            onDestroyRemoveContents: boolean;
+        };
+        /** @description JMAP-shaped incremental sync response (RFC 8620 /changes mapping). */
+        JmapChangesResponse: {
+            /** @description Previous sync state token supplied by the client. */
+            oldState: string;
+            /** @description Current sync state token to store for the next request. */
+            newState: string;
+            created: components["schemas"]["JsContactId"][];
+            updated: components["schemas"]["JsContactId"][];
+            destroyed: components["schemas"]["JsContactId"][];
+        };
+        ContactCardQueryFilter: {
+            inAddressBook: components["schemas"]["JsContactId"];
+            /** @description Exact JSContact uid match (RFC 9610 ContactCard/query). */
+            uid?: string;
+        };
+        ContactCardQueryRequest: {
+            filter: components["schemas"]["ContactCardQueryFilter"];
+            limit?: number;
+        };
+        ContactCardQueryResponse: {
+            ids: components["schemas"]["JsContactId"][];
+            total: number;
         };
     };
     responses: never;

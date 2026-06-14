@@ -5099,6 +5099,177 @@
                         "550e8400-e29b-41d4-a716-446655440099": null
                     }
                 }
+            },
+            "ContactBlobUploadResponse": {
+                "type": "object",
+                "required": [
+                    "blobId",
+                    "type",
+                    "size"
+                ],
+                "properties": {
+                    "blobId": {
+                        "type": "string",
+                        "description": "Opaque blob identifier for contact media (RFC 9610 blobId)."
+                    },
+                    "type": {
+                        "type": "string",
+                        "description": "MIME media type of the uploaded blob."
+                    },
+                    "size": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "Blob size in bytes."
+                    }
+                }
+            },
+            "AddressBookCreate": {
+                "type": "object",
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "id": {
+                        "$ref": "#/components/schemas/JsContactId",
+                        "description": "Optional client-suggested address book id (uri slug)."
+                    }
+                },
+                "additionalProperties": false
+            },
+            "AddressBookPatch": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "isSubscribed": {
+                        "type": "boolean"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "AddressBookDeleteOptions": {
+                "type": "object",
+                "properties": {
+                    "onDestroyRemoveContents": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "When true, delete all cards in the book before destroying it."
+                    }
+                },
+                "additionalProperties": false
+            },
+            "JmapChangesResponse": {
+                "type": "object",
+                "required": [
+                    "oldState",
+                    "newState",
+                    "created",
+                    "updated",
+                    "destroyed"
+                ],
+                "properties": {
+                    "oldState": {
+                        "type": "string",
+                        "description": "Previous sync state token supplied by the client."
+                    },
+                    "newState": {
+                        "type": "string",
+                        "description": "Current sync state token to store for the next request."
+                    },
+                    "created": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JsContactId"
+                        }
+                    },
+                    "updated": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JsContactId"
+                        }
+                    },
+                    "destroyed": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JsContactId"
+                        }
+                    }
+                },
+                "additionalProperties": false,
+                "description": "JMAP-shaped incremental sync response (RFC 8620 /changes mapping)."
+            },
+            "ContactCardQueryFilter": {
+                "type": "object",
+                "required": [
+                    "inAddressBook"
+                ],
+                "properties": {
+                    "inAddressBook": {
+                        "$ref": "#/components/schemas/JsContactId"
+                    },
+                    "uid": {
+                        "type": "string",
+                        "description": "Exact JSContact uid match (RFC 9610 ContactCard/query)."
+                    }
+                },
+                "additionalProperties": false
+            },
+            "ContactCardQueryRequest": {
+                "type": "object",
+                "required": [
+                    "filter"
+                ],
+                "properties": {
+                    "filter": {
+                        "$ref": "#/components/schemas/ContactCardQueryFilter"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 500
+                    }
+                },
+                "additionalProperties": false
+            },
+            "ContactCardQueryResponse": {
+                "type": "object",
+                "required": [
+                    "ids",
+                    "total"
+                ],
+                "properties": {
+                    "ids": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JsContactId"
+                        }
+                    },
+                    "total": {
+                        "type": "integer",
+                        "minimum": 0
+                    }
+                },
+                "additionalProperties": false
             }
         }
     },
@@ -8637,6 +8808,146 @@
                 "responses": {
                     "200": {
                         "description": "OK"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/contacts/blobs": {
+            "post": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Upload contact media blob",
+                "description": "JMAP blob upload REST equivalent for contact photo/logo media (RFC 9610).",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "file"
+                                ],
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                }
+                            }
+                        },
+                        "image/jpeg": {
+                            "schema": {
+                                "type": "string",
+                                "format": "binary"
+                            }
+                        },
+                        "image/png": {
+                            "schema": {
+                                "type": "string",
+                                "format": "binary"
+                            }
+                        },
+                        "image/gif": {
+                            "schema": {
+                                "type": "string",
+                                "format": "binary"
+                            }
+                        },
+                        "image/webp": {
+                            "schema": {
+                                "type": "string",
+                                "format": "binary"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Blob uploaded",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactBlobUploadResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "413": {
+                        "description": "Payload too large"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/contacts/blobs/{blobId}": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Download contact media blob",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "blobId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Blob bytes",
+                        "content": {
+                            "image/jpeg": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            },
+                            "image/png": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            },
+                            "image/gif": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            },
+                            "image/webp": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Not found"
                     }
                 },
                 "x-wgw-access": "user"

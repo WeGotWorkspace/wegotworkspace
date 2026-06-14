@@ -344,17 +344,17 @@ Full property-path → vCard section mapping (175 rows in RFC 9555 Table 8). Sum
 | Multiple `FN` without `LANGUAGE` | Only one → `name.full`; rest → `vCardProps` |
 | `MEMBER` `PREF` | Not mapped to JSContact |
 | `CATEGORIES` `PREF` | Order not preserved in `keywords` |
-| `TEL` default `voice` TYPE | JSContact omits `features` by default — voice flag may be lost |
-| `GEO`/`TZ` without `ADR` grouping | Target address instance is implementation-specific |
+| `TEL` default `voice` TYPE | **Implemented:** default vCard voice → `features.voice` on read |
+| `GEO`/`TZ` without `ADR` grouping | **Implemented:** merge by matching `GROUP`; ungrouped GEO/TZ attach to first address when grouped ADR exists |
 | Legacy ADR 7-component format | Rich components collapsed; `JSCOMPS` needed for round-trip |
 | Legacy N 5-component format | `surname2`/`generation` merged into vCard suffix fields |
 | `TZ` URI or non-standard UTC-OFFSET | Falls through to `vCardProps` |
 | `BIRTHPLACE`/`DEATHPLACE` non-TEXT/non-geo URI | `vCardProps` only |
 | DATE month-only or day-only (anniversaries) | No `PartialDate`; §2.15 |
 | `TIME`, `DATE-TIME`, `DATE-AND-OR-TIME` values | Property-specific; often §2.15 |
-| `X-ABLabel` group names | Not preserved; label value only |
-| `localizations` | vCard `LANGUAGE` patch strategy is implementation-specific |
-| `organizationId` on `Title` | Only inferred from vCard `GROUP`; may be lost without grouping |
+| `X-ABLabel` group names | **Implemented:** `vCardParams.group` preserved on round-trip |
+| `localizations` | **Implemented:** `LANGUAGE` → `localizations` patches; write back localized FN/ADR/NOTE |
+| `organizationId` on `Title` | **Implemented:** inferred from grouped `ORG` via `GROUP` param |
 | JMAP `id`, `addressBookIds`, `blobId` | Not in vCard; server metadata only |
 | Semantic equivalence | RFC 9553 notes URL case, etc. may differ between representations |
 
