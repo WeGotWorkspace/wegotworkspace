@@ -79,7 +79,11 @@ final class TimeZoneSupport
                 continue;
             }
 
-            $parsed = Reader::read($definition);
+            $ics = str_contains($definition, 'BEGIN:VCALENDAR')
+                ? $definition
+                : "BEGIN:VCALENDAR\r\nVERSION:2.0\r\n{$definition}\r\nEND:VCALENDAR";
+
+            $parsed = Reader::read($ics);
             if (! $parsed instanceof VCalendar) {
                 continue;
             }
