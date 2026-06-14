@@ -1,0 +1,19 @@
+{
+  "@type": "Task",
+  "uid": "urn:uuid:all-day-task-001",
+  "title": "All-day deadline",
+  "description": null,
+  "start": null,
+  "due": "2026-06-20",
+  "completed": null,
+  "showWithoutTime": true,
+  "workflowStatus": "needs-action",
+  "progress": null,
+  "priority": null,
+  "isDraft": false,
+  "sortOrder": 0,
+  "categories": [],
+  "privacy": null,
+  "created": null,
+  "updated": null
+}

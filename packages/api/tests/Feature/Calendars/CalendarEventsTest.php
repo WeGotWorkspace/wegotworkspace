@@ -6,11 +6,13 @@ namespace Tests\Feature\Calendars;
 
 use App\Models\CalendarObject;
 use Tests\Support\CalendarsTestFixtures;
+use Tests\Support\OptimisticConcurrencyTestHelpers;
 use Tests\Support\WgwDatabaseTestCase;
 
 final class CalendarEventsTest extends WgwDatabaseTestCase
 {
     use CalendarsTestFixtures;
+    use OptimisticConcurrencyTestHelpers;
 
     protected function setUp(): void
     {
@@ -88,14 +90,15 @@ final class CalendarEventsTest extends WgwDatabaseTestCase
     public function test_update_event_replaces_fields(): void
     {
         $eventId = $this->seedEventViaPdo('bob', 'team-meeting.ics', $this->sampleIcs('Team Meeting'));
+        $url = '/api/v1/calendars/events/'.$eventId;
 
         $response = $this->withBearer($this->userBearerToken())
-            ->putJson('/api/v1/calendars/events/'.$eventId, [
+            ->putJson($url, [
                 'calendarIds' => ['default' => true],
                 'title' => 'Updated Meeting',
                 'start' => '2026-06-21T10:00:00Z',
                 'end' => '2026-06-21T11:00:00Z',
-            ]);
+            ], $this->withIfMatch($this->fetchEtagFromGet($url)));
 
         $response->assertOk()
             ->assertJsonPath('title', 'Updated Meeting');
@@ -104,11 +107,12 @@ final class CalendarEventsTest extends WgwDatabaseTestCase
     public function test_patch_event_merges_fields(): void
     {
         $eventId = $this->seedEventViaPdo('bob', 'team-meeting.ics', $this->sampleIcs('Team Meeting'));
+        $url = '/api/v1/calendars/events/'.$eventId;
 
         $response = $this->withBearer($this->userBearerToken())
-            ->patchJson('/api/v1/calendars/events/'.$eventId, [
+            ->patchJson($url, [
                 'title' => 'Patched Title',
-            ]);
+            ], $this->withIfMatch($this->fetchEtagFromGet($url)));
 
         $response->assertOk()
             ->assertJsonPath('title', 'Patched Title')
@@ -118,9 +122,10 @@ final class CalendarEventsTest extends WgwDatabaseTestCase
     public function test_delete_event_returns_ok(): void
     {
         $eventId = $this->seedEventViaPdo('bob', 'team-meeting.ics', $this->sampleIcs('Team Meeting'));
+        $url = '/api/v1/calendars/events/'.$eventId;
 
         $this->withBearer($this->userBearerToken())
-            ->deleteJson('/api/v1/calendars/events/'.$eventId)
+            ->deleteJson($url, [], $this->withIfMatch($this->fetchEtagFromGet($url)))
             ->assertOk()
             ->assertJsonPath('ok', true);
 
@@ -198,11 +203,12 @@ final class CalendarEventsTest extends WgwDatabaseTestCase
     {
         $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:first\r\nSUMMARY:Primary Event\r\nDTSTART:20260610T090000Z\r\nDTEND:20260610T100000Z\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:second\r\nSUMMARY:Secondary Event\r\nDTSTART:20260611T090000Z\r\nDTEND:20260611T100000Z\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
         $this->seedEventViaPdo('bob', 'multi-event.ics', $ics);
+        $secondUrl = '/api/v1/calendars/events/'.rawurlencode('multi-event#second');
 
         $this->withBearer($this->userBearerToken())
-            ->patchJson('/api/v1/calendars/events/'.rawurlencode('multi-event#second'), [
+            ->patchJson($secondUrl, [
                 'title' => 'Patched Secondary',
-            ])
+            ], $this->withIfMatch($this->fetchEtagFromGet($secondUrl)))
             ->assertOk()
             ->assertJsonPath('title', 'Patched Secondary')
             ->assertJsonPath('id', 'multi-event#second');
@@ -219,9 +225,10 @@ final class CalendarEventsTest extends WgwDatabaseTestCase
     {
         $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:first\r\nSUMMARY:Primary Event\r\nDTSTART:20260610T090000Z\r\nDTEND:20260610T100000Z\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:second\r\nSUMMARY:Secondary Event\r\nDTSTART:20260611T090000Z\r\nDTEND:20260611T100000Z\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
         $this->seedEventViaPdo('bob', 'multi-event.ics', $ics);
+        $secondUrl = '/api/v1/calendars/events/'.rawurlencode('multi-event#second');
 
         $this->withBearer($this->userBearerToken())
-            ->deleteJson('/api/v1/calendars/events/'.rawurlencode('multi-event#second'))
+            ->deleteJson($secondUrl, [], $this->withIfMatch($this->fetchEtagFromGet($secondUrl)))
             ->assertOk()
             ->assertJsonPath('ok', true);
 
@@ -236,9 +243,10 @@ final class CalendarEventsTest extends WgwDatabaseTestCase
     {
         $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:only\r\nSUMMARY:Solo Event\r\nDTSTART:20260610T090000Z\r\nDTEND:20260610T100000Z\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
         $eventId = $this->seedEventViaPdo('bob', 'solo-event.ics', $ics);
+        $url = '/api/v1/calendars/events/'.$eventId;
 
         $this->withBearer($this->userBearerToken())
-            ->deleteJson('/api/v1/calendars/events/'.$eventId)
+            ->deleteJson($url, [], $this->withIfMatch($this->fetchEtagFromGet($url)))
             ->assertOk();
 
         $this->assertNull(
@@ -273,8 +281,9 @@ final class CalendarEventsTest extends WgwDatabaseTestCase
         $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:series-patch\r\nSUMMARY:Daily Standup\r\nDTSTART:20260610T090000Z\r\nDTEND:20260610T093000Z\r\nRRULE:FREQ=DAILY\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
         $eventId = $this->seedEventViaPdo('bob', 'daily-standup.ics', $ics);
 
+        $url = '/api/v1/calendars/events/'.$eventId;
         $this->withBearer($this->userBearerToken())
-            ->patchJson('/api/v1/calendars/events/'.$eventId, [
+            ->patchJson($url, [
                 'recurrenceOverrides' => [
                     '2026-06-12T09:00:00Z' => [
                         'start' => '2026-06-12T14:00:00Z',
@@ -285,7 +294,7 @@ final class CalendarEventsTest extends WgwDatabaseTestCase
                         'excluded' => true,
                     ],
                 ],
-            ])
+            ], $this->withIfMatch($this->fetchEtagFromGet($url)))
             ->assertOk()
             ->assertJsonPath('recurrenceOverrides.2026-06-12T09:00:00Z.start', '2026-06-12T14:00:00Z')
             ->assertJsonPath('recurrenceOverrides.2026-06-13T09:00:00Z.excluded', true);

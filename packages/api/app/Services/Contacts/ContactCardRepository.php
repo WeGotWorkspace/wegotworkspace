@@ -414,6 +414,7 @@ final class ContactCardRepository
             $ifUnmodifiedSince,
             is_string($card->etag) ? $card->etag : null,
             (int) ($card->lastmodified ?? 0),
+            requirePrecondition: false,
         );
     }
 

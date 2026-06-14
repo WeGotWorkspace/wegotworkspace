@@ -34,9 +34,9 @@ All models use [`UsesWgwConnection`](app/Models/Concerns/UsesWgwConnection.php) 
 | `search_documents` | `App\Models\SearchDocument` | Unified search index documents |
 | `search_terms` | `App\Models\SearchTerm` | Search token weights (FK → `search_documents`) |
 | `drive_starred_items` | `App\Models\DriveStarredItem` | Per-user starred drive paths |
-| `calendarobjects` | `App\Models\CalendarObject` | CalDAV event blobs (Calendars REST + search indexer) |
-| `calendars` | `App\Models\Calendar` | CalDAV calendar collection root |
-| `calendarinstances` | `App\Models\CalendarInstance` | Per-principal calendar instances (Calendars REST reads) |
+| `calendarobjects` | `App\Models\CalendarObject` | CalDAV objects (`VEVENT`/`VTODO` blobs; Calendars REST + Tasks REST; search indexer) |
+| `calendars` | `App\Models\Calendar` | CalDAV calendar collection root (`components` includes `VTODO` for task lists) |
+| `calendarinstances` | `App\Models\CalendarInstance` | Per-principal calendar instances (Calendars REST reads; Tasks REST `TaskList.id` = instance `uri`) |
 | `cards` | `App\Models\Card` | CardDAV vCards (search indexer joins) |
 | `addressbooks` | `App\Models\Addressbook` | CardDAV address books (Contacts REST reads) |
 | `mail_user_credentials` | `App\Models\MailUserCredential` | Per-user IMAP/SMTP credentials |

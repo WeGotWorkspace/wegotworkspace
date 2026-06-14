@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace App\Services\Contacts\Conversion;
 
+use App\Services\VObject\VObjectPayloadGuard;
 use Sabre\VObject\Component\VCard;
 use Sabre\VObject\Property;
-use Sabre\VObject\Reader;
 
 final class VCardToJsContactConverter
 {
+    public function __construct(
+        private readonly VObjectPayloadGuard $guard = new VObjectPayloadGuard,
+    ) {}
+
     /** @var array<string, string> */
     private array $groupLabels = [];
 
@@ -27,10 +31,7 @@ final class VCardToJsContactConverter
      */
     public function convert(string $vcard): array
     {
-        $document = Reader::read($vcard);
-        if (! $document instanceof VCard) {
-            throw new \InvalidArgumentException('Input is not a vCard document.');
-        }
+        $document = $this->guard->readVCard($vcard);
 
         $this->groupLabels = [];
         $this->organizationIdsByGroup = [];

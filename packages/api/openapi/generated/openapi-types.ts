@@ -3887,10 +3887,38 @@ export interface paths {
                         "application/json": components["schemas"]["ContactAddressBookListResponse"];
                     };
                 };
+                403: components["responses"]["JmapForbidden"];
             };
         };
         put?: never;
-        post?: never;
+        /** Create an address book */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AddressBookCreate"];
+                };
+            };
+            responses: {
+                /** @description Created address book */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AddressBook"];
+                    };
+                };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+                413: components["responses"]["JmapPayloadTooLarge"];
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -3925,14 +3953,78 @@ export interface paths {
                         "application/json": components["schemas"]["AddressBook"];
                     };
                 };
+                403: components["responses"]["JmapForbidden"];
+                404: components["responses"]["JmapNotFound"];
             };
         };
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete an address book */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    addressBookId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AddressBookDeleteOptions"];
+                };
+            };
+            responses: {
+                /** @description Address book deleted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OkResponse"];
+                    };
+                };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+                404: components["responses"]["JmapNotFound"];
+                409: components["responses"]["JmapConflict"];
+                412: components["responses"]["JmapPreconditionFailed"];
+            };
+        };
         options?: never;
         head?: never;
-        patch?: never;
+        /** Update an address book */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    addressBookId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AddressBookPatch"];
+                };
+            };
+            responses: {
+                /** @description Updated address book */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AddressBook"];
+                    };
+                };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+                404: components["responses"]["JmapNotFound"];
+                412: components["responses"]["JmapPreconditionFailed"];
+                413: components["responses"]["JmapPayloadTooLarge"];
+            };
+        };
         trace?: never;
     };
     "/contacts/cards": {
@@ -3947,6 +4039,7 @@ export interface paths {
             parameters: {
                 query: {
                     addressBookId: string;
+                    uid?: string;
                 };
                 header?: never;
                 path?: never;
@@ -3963,6 +4056,9 @@ export interface paths {
                         "application/json": components["schemas"]["ContactCardListResponse"];
                     };
                 };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+                404: components["responses"]["JmapNotFound"];
             };
         };
         put?: never;
@@ -4015,6 +4111,9 @@ export interface paths {
                         "application/json": components["schemas"]["ContactCard"];
                     };
                 };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+                413: components["responses"]["JmapPayloadTooLarge"];
             };
         };
         delete?: never;
@@ -4051,6 +4150,8 @@ export interface paths {
                         "application/json": components["schemas"]["ContactCard"];
                     };
                 };
+                403: components["responses"]["JmapForbidden"];
+                404: components["responses"]["JmapNotFound"];
             };
         };
         /** Replace a contact card */
@@ -4104,6 +4205,11 @@ export interface paths {
                         "application/json": components["schemas"]["ContactCard"];
                     };
                 };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+                404: components["responses"]["JmapNotFound"];
+                412: components["responses"]["JmapPreconditionFailed"];
+                413: components["responses"]["JmapPayloadTooLarge"];
             };
         };
         post?: never;
@@ -4128,6 +4234,10 @@ export interface paths {
                         "application/json": components["schemas"]["OkResponse"];
                     };
                 };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+                404: components["responses"]["JmapNotFound"];
+                412: components["responses"]["JmapPreconditionFailed"];
             };
         };
         options?: never;
@@ -4169,6 +4279,11 @@ export interface paths {
                         "application/json": components["schemas"]["ContactCard"];
                     };
                 };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+                404: components["responses"]["JmapNotFound"];
+                412: components["responses"]["JmapPreconditionFailed"];
+                413: components["responses"]["JmapPayloadTooLarge"];
             };
         };
         trace?: never;
@@ -4556,27 +4671,9 @@ export interface paths {
                         "application/json": components["schemas"]["ContactBlobUploadResponse"];
                     };
                 };
-                /** @description Invalid request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Payload too large */
-                413: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+                413: components["responses"]["JmapPayloadTooLarge"];
             };
         };
         delete?: never;
@@ -4616,20 +4713,8 @@ export interface paths {
                         "image/webp": string;
                     };
                 };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-                /** @description Not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
+                403: components["responses"]["JmapForbidden"];
+                404: components["responses"]["JmapNotFound"];
             };
         };
         put?: never;
@@ -4638,6 +4723,1030 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/calendars/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List calendar events in a calendar */
+        get: {
+            parameters: {
+                query: {
+                    calendarId: string;
+                    /** @description Expand recurring events into instances in the requested window (requires after and before). */
+                    expandRecurrences?: boolean;
+                    /** @description Window start (required when expandRecurrences is true). */
+                    after?: string;
+                    /** @description Window end (required when expandRecurrences is true). */
+                    before?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Calendar event list */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CalendarEventListResponse"];
+                    };
+                };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+                404: components["responses"]["JmapNotFound"];
+            };
+        };
+        put?: never;
+        /** Create a calendar event */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    /**
+                     * @example {
+                     *       "calendarIds": {
+                     *         "default": true
+                     *       },
+                     *       "title": "Team sync",
+                     *       "start": "2026-06-15T10:00:00Z",
+                     *       "end": "2026-06-15T11:00:00Z"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["CalendarEventCreate"];
+                };
+            };
+            responses: {
+                /** @description Created calendar event */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CalendarEvent"];
+                    };
+                };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+                413: components["responses"]["JmapPayloadTooLarge"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/calendars/events/{eventId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Fetch a single calendar event */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    eventId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Calendar event */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CalendarEvent"];
+                    };
+                };
+                403: components["responses"]["JmapForbidden"];
+                404: components["responses"]["JmapNotFound"];
+            };
+        };
+        /** Replace a calendar event */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    eventId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CalendarEventCreate"];
+                };
+            };
+            responses: {
+                /** @description Updated calendar event */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CalendarEvent"];
+                    };
+                };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+                404: components["responses"]["JmapNotFound"];
+                412: components["responses"]["JmapPreconditionFailed"];
+                413: components["responses"]["JmapPayloadTooLarge"];
+            };
+        };
+        post?: never;
+        /** Delete a calendar event */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    eventId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Deleted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OkResponse"];
+                    };
+                };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+                404: components["responses"]["JmapNotFound"];
+                412: components["responses"]["JmapPreconditionFailed"];
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Partially update a calendar event */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    eventId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CalendarEventPatch"];
+                };
+            };
+            responses: {
+                /** @description Patched calendar event */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CalendarEvent"];
+                    };
+                };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+                404: components["responses"]["JmapNotFound"];
+                412: components["responses"]["JmapPreconditionFailed"];
+                413: components["responses"]["JmapPayloadTooLarge"];
+            };
+        };
+        trace?: never;
+    };
+    "/calendars/calendars": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List user's calendars */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Calendar list */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CalendarListResponse"];
+                    };
+                };
+                403: components["responses"]["JmapForbidden"];
+            };
+        };
+        put?: never;
+        /** Create a calendar */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CalendarCreate"];
+                };
+            };
+            responses: {
+                /** @description Created calendar */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Calendar"];
+                    };
+                };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+                413: components["responses"]["JmapPayloadTooLarge"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/calendars/calendars/{calendarId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Fetch a single calendar */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    calendarId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Calendar */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Calendar"];
+                    };
+                };
+                403: components["responses"]["JmapForbidden"];
+                404: components["responses"]["JmapNotFound"];
+            };
+        };
+        put?: never;
+        post?: never;
+        /** Delete a calendar */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    calendarId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CalendarDeleteOptions"];
+                };
+            };
+            responses: {
+                /** @description Calendar deleted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OkResponse"];
+                    };
+                };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+                404: components["responses"]["JmapNotFound"];
+                409: components["responses"]["JmapConflict"];
+                412: components["responses"]["JmapPreconditionFailed"];
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Update a calendar */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    calendarId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CalendarPatch"];
+                };
+            };
+            responses: {
+                /** @description Updated calendar */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Calendar"];
+                    };
+                };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+                404: components["responses"]["JmapNotFound"];
+                412: components["responses"]["JmapPreconditionFailed"];
+                413: components["responses"]["JmapPayloadTooLarge"];
+            };
+        };
+        trace?: never;
+    };
+    "/contacts/addressbooks/changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Incremental address book collection changes */
+        get: {
+            parameters: {
+                query?: {
+                    since?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Address book changes */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["JmapChangesResponse"];
+                    };
+                };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/contacts/cards/changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Incremental contact card changes */
+        get: {
+            parameters: {
+                query: {
+                    addressBookId: string;
+                    since?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Contact card changes */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["JmapChangesResponse"];
+                    };
+                };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/contacts/cards/query": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Query contact card ids */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ContactCardQueryRequest"];
+                };
+            };
+            responses: {
+                /** @description Matching contact card ids */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ContactCardQueryResponse"];
+                    };
+                };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+                413: components["responses"]["JmapPayloadTooLarge"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/calendars/calendars/changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Incremental calendar collection changes */
+        get: {
+            parameters: {
+                query?: {
+                    since?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Calendar collection changes */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["JmapCalendarChangesResponse"];
+                    };
+                };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tasks/capabilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tasks JMAP capability subset */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Tasks capabilities */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TasksCapabilitiesResponse"];
+                    };
+                };
+                403: components["responses"]["JmapForbidden"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tasks/tasklists/changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Incremental task list collection changes */
+        get: {
+            parameters: {
+                query?: {
+                    since?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Task list changes */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["JmapTaskListChangesResponse"];
+                    };
+                };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tasks/tasklists": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List task lists */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Task list collection */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TaskTaskListListResponse"];
+                    };
+                };
+                403: components["responses"]["JmapForbidden"];
+            };
+        };
+        put?: never;
+        /** Create a task list */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["TaskListCreate"];
+                };
+            };
+            responses: {
+                /** @description Created task list */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TaskList"];
+                    };
+                };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+                413: components["responses"]["JmapPayloadTooLarge"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tasks/tasklists/{taskListId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Fetch a task list */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    taskListId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Task list */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TaskList"];
+                    };
+                };
+                403: components["responses"]["JmapForbidden"];
+                404: components["responses"]["JmapNotFound"];
+            };
+        };
+        put?: never;
+        post?: never;
+        /** Delete a task list */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    taskListId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["TaskListDeleteOptions"];
+                };
+            };
+            responses: {
+                /** @description Task list deleted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OkResponse"];
+                    };
+                };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+                404: components["responses"]["JmapNotFound"];
+                409: components["responses"]["JmapConflict"];
+                412: components["responses"]["JmapPreconditionFailed"];
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Update a task list */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    taskListId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["TaskListPatch"];
+                };
+            };
+            responses: {
+                /** @description Updated task list */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TaskList"];
+                    };
+                };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+                404: components["responses"]["JmapNotFound"];
+                412: components["responses"]["JmapPreconditionFailed"];
+                413: components["responses"]["JmapPayloadTooLarge"];
+            };
+        };
+        trace?: never;
+    };
+    "/tasks/items/query": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Query task item ids */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["TaskItemQueryRequest"];
+                };
+            };
+            responses: {
+                /** @description Matching task ids */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TaskItemQueryResponse"];
+                    };
+                };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+                413: components["responses"]["JmapPayloadTooLarge"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tasks/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List tasks in a task list */
+        get: {
+            parameters: {
+                query: {
+                    taskListId: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Task list items */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["TaskListResponse"];
+                    };
+                };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+                404: components["responses"]["JmapNotFound"];
+            };
+        };
+        put?: never;
+        /** Create a task */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["TaskCreate"];
+                };
+            };
+            responses: {
+                /** @description Created task */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Task"];
+                    };
+                };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+                413: components["responses"]["JmapPayloadTooLarge"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/tasks/items/{taskId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Fetch a task */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    taskId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Task */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Task"];
+                    };
+                };
+                403: components["responses"]["JmapForbidden"];
+                404: components["responses"]["JmapNotFound"];
+            };
+        };
+        /** Replace a task */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    taskId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["TaskCreate"];
+                };
+            };
+            responses: {
+                /** @description Updated task */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Task"];
+                    };
+                };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+                404: components["responses"]["JmapNotFound"];
+                412: components["responses"]["JmapPreconditionFailed"];
+                413: components["responses"]["JmapPayloadTooLarge"];
+            };
+        };
+        post?: never;
+        /** Delete a task */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    taskId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Task deleted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["OkResponse"];
+                    };
+                };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+                404: components["responses"]["JmapNotFound"];
+                412: components["responses"]["JmapPreconditionFailed"];
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Partially update a task */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    taskId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["TaskPatch"];
+                };
+            };
+            responses: {
+                /** @description Updated task */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Task"];
+                    };
+                };
+                400: components["responses"]["JmapBadRequest"];
+                403: components["responses"]["JmapForbidden"];
+                404: components["responses"]["JmapNotFound"];
+                412: components["responses"]["JmapPreconditionFailed"];
+                413: components["responses"]["JmapPayloadTooLarge"];
+            };
+        };
         trace?: never;
     };
 }
@@ -6709,8 +7818,598 @@ export interface components {
         };
         /** @description Quoted HTTP entity tag aligned with Cal/CardDAV storage (Sabre PDO etag). */
         DavEtag: string;
+        /** @description Per-instance patch keyed by recurrence id (original instance start). Use excluded:true to omit an instance. */
+        CalendarEventRecurrenceOverride: {
+            excluded?: boolean;
+            title?: string;
+            description?: string | null;
+            start?: components["schemas"]["JmapLocalDateTime"];
+            end?: components["schemas"]["JmapLocalDateTime"];
+            duration?: string;
+            showWithoutTime?: boolean;
+            timeZone?: string | null;
+            locations?: {
+                [key: string]: components["schemas"]["CalendarEventLocation"];
+            };
+            /** @enum {string} */
+            freeBusyStatus?: "busy" | "free" | "tentative";
+            /** @enum {string} */
+            privacy?: "public" | "private" | "secret";
+            /** @enum {string} */
+            status?: "confirmed" | "cancelled" | "tentative";
+            participants?: {
+                [key: string]: components["schemas"]["CalendarEventParticipant"];
+            };
+            categories?: string[];
+            priority?: number;
+            sequence?: number;
+            icsProps?: {
+                [key: string]: string;
+            };
+        };
+        CalendarEventLink: {
+            /** @constant */
+            "@type": "Link";
+            /** Format: uri */
+            href: string;
+            rel?: string;
+            contentType?: string;
+        };
+        CalendarTimeZone: {
+            /** @constant */
+            "@type": "TimeZone";
+            tzid: string;
+            /** @description Serialized VTIMEZONE component for round-trip. */
+            icsDefinition?: string;
+        };
+        CalendarRecurrenceRule: {
+            /** @constant */
+            "@type": "RecurrenceRule";
+            /** @enum {string} */
+            frequency: "secondly" | "minutely" | "hourly" | "daily" | "weekly" | "monthly" | "yearly";
+            interval?: number;
+            count?: number;
+            until?: string;
+            byDay?: string[];
+            byMonth?: number[];
+            byMonthDay?: number[];
+            byYearDay?: number[];
+            byWeekNo?: number[];
+            bySetPosition?: number[];
+            firstDayOfWeek?: string;
+        };
+        CalendarEventLocation: {
+            /** @constant */
+            "@type": "Location";
+            name?: string;
+            description?: string;
+            rel?: string;
+            timeZone?: string;
+            coordinates?: string;
+        };
+        CalendarEventParticipant: {
+            /** @constant */
+            "@type": "Participant";
+            name?: string | null;
+            email?: string | null;
+            roles?: string[];
+            participationStatus?: string;
+            kind?: string;
+            language?: string;
+            expectReply?: boolean;
+            /** Format: email */
+            delegatedTo?: string;
+            /** Format: email */
+            delegatedFrom?: string;
+        };
+        CalendarEventRelativeAlertTrigger: {
+            /** @constant */
+            "@type": "RelativeAlert";
+            /** @description Signed ISO 8601 duration relative to event start or end (e.g. -PT15M). */
+            offset: string;
+            /**
+             * @default start
+             * @enum {string}
+             */
+            relatedTo: "start" | "end";
+        };
+        CalendarEventAbsoluteAlertTrigger: {
+            /** @constant */
+            "@type": "AbsoluteAlert";
+            when: components["schemas"]["JmapLocalDateTime"];
+        };
+        CalendarEventAlert: {
+            /** @constant */
+            "@type": "Alert";
+            trigger: components["schemas"]["CalendarEventRelativeAlertTrigger"] | components["schemas"]["CalendarEventAbsoluteAlertTrigger"];
+            /**
+             * @default display
+             * @enum {string}
+             */
+            action: "display" | "audio" | "email";
+        };
+        /**
+         * @description JMAP CalendarEvent mapped from a single VEVENT ICS resource.
+         * @example {
+         *       "@type": "Event",
+         *       "id": "team-sync-a1b2c3d4",
+         *       "uid": "urn:uuid:550e8400-e29b-41d4-a716-446655440000",
+         *       "calendarIds": {
+         *         "default": true
+         *       },
+         *       "title": "Team sync",
+         *       "start": "2026-06-15T10:00:00Z",
+         *       "end": "2026-06-15T11:00:00Z",
+         *       "showWithoutTime": false
+         *     }
+         */
+        CalendarEvent: {
+            /** @constant */
+            readonly "@type": "Event";
+            readonly id: components["schemas"]["JmapId"];
+            uid: string;
+            calendarIds: components["schemas"]["JmapIdBooleanMap"];
+            title?: string;
+            description?: string | null;
+            start: components["schemas"]["JmapLocalDateTime"];
+            end?: components["schemas"]["JmapLocalDateTime"];
+            duration?: string;
+            showWithoutTime?: boolean;
+            timeZone?: string | null;
+            /** @description Original instance start for expanded or override rows; null on series masters. */
+            recurrenceId?: string;
+            locations?: {
+                [key: string]: components["schemas"]["CalendarEventLocation"];
+            };
+            /** @description RRULE on series masters; null on expanded instances. */
+            recurrenceRules?: components["schemas"]["CalendarRecurrenceRule"][] | null;
+            excludedRecurrenceDates?: string[];
+            /** @description EXRULE rule-based exclusions (legacy ICS). */
+            excludedRecurrenceRules?: components["schemas"]["CalendarRecurrenceRule"][];
+            /** @description Per-instance patches keyed by recurrence id (original instance start). Maps to RECURRENCE-ID override VEVENTs in ICS. */
+            recurrenceOverrides?: {
+                [key: string]: components["schemas"]["CalendarEventRecurrenceOverride"];
+            };
+            /** @enum {string} */
+            freeBusyStatus?: "busy" | "free" | "tentative";
+            /** @enum {string} */
+            privacy?: "public" | "private" | "secret";
+            /** @enum {string} */
+            status?: "confirmed" | "cancelled" | "tentative";
+            participants?: {
+                [key: string]: components["schemas"]["CalendarEventParticipant"];
+            };
+            /** @description Reminder alarms mapped from iCalendar VALARM components. */
+            alerts?: {
+                [key: string]: components["schemas"]["CalendarEventAlert"];
+            };
+            links?: {
+                [key: string]: components["schemas"]["CalendarEventLink"];
+            };
+            attachments?: {
+                [key: string]: components["schemas"]["CalendarEventLink"];
+            };
+            timeZones?: {
+                [key: string]: components["schemas"]["CalendarTimeZone"];
+            };
+            categories?: string[];
+            priority?: number;
+            sequence?: number;
+            created?: components["schemas"]["JmapUTCDateTime"];
+            updated?: components["schemas"]["JmapUTCDateTime"];
+            etag?: components["schemas"]["DavEtag"];
+            icsProps?: {
+                [key: string]: string;
+            };
+        };
+        /** @description POST body; server assigns id and @type. */
+        CalendarEventCreate: {
+            "@type"?: unknown;
+            id?: unknown;
+        } & components["schemas"]["CalendarEvent"];
+        /** @description PATCH request body for partial calendar event updates. Omits server-owned id and @type. */
+        CalendarEventPatch: {
+            title?: string;
+            description?: string | null;
+            start?: components["schemas"]["JmapLocalDateTime"];
+            end?: components["schemas"]["JmapLocalDateTime"];
+            duration?: string;
+            showWithoutTime?: boolean;
+            timeZone?: string | null;
+            locations?: {
+                [key: string]: components["schemas"]["CalendarEventLocation"];
+            };
+            recurrenceRules?: components["schemas"]["CalendarRecurrenceRule"][];
+            excludedRecurrenceDates?: string[];
+            excludedRecurrenceRules?: components["schemas"]["CalendarRecurrenceRule"][];
+            /** @description Per-instance patches keyed by recurrence id (original instance start). Maps to RECURRENCE-ID override VEVENTs in ICS. */
+            recurrenceOverrides?: {
+                [key: string]: components["schemas"]["CalendarEventRecurrenceOverride"];
+            };
+            /** @enum {string} */
+            freeBusyStatus?: "busy" | "free" | "tentative";
+            /** @enum {string} */
+            privacy?: "public" | "private" | "secret";
+            /** @enum {string} */
+            status?: "confirmed" | "cancelled" | "tentative";
+            participants?: {
+                [key: string]: components["schemas"]["CalendarEventParticipant"];
+            };
+            /** @description Reminder alarms mapped from iCalendar VALARM components. */
+            alerts?: {
+                [key: string]: components["schemas"]["CalendarEventAlert"];
+            };
+            categories?: string[];
+            priority?: number;
+            sequence?: number;
+            icsProps?: {
+                [key: string]: string;
+            };
+        };
+        /** @description REST list response for GET /calendars/events. */
+        CalendarEventListResponse: {
+            list: components["schemas"]["CalendarEvent"][];
+        };
+        /** @description JMAP CalendarRights. */
+        CalendarRights: {
+            mayRead: boolean;
+            mayWrite: boolean;
+            mayShare: boolean;
+            mayDelete: boolean;
+        };
+        /**
+         * @description JMAP Calendar resource.
+         * @example {
+         *       "id": "default",
+         *       "name": "Calendar",
+         *       "description": null,
+         *       "timeZone": null,
+         *       "color": null,
+         *       "sortOrder": 0,
+         *       "isDefault": true,
+         *       "isSubscribed": true,
+         *       "shareWith": null,
+         *       "myRights": {
+         *         "mayRead": true,
+         *         "mayWrite": true,
+         *         "mayShare": false,
+         *         "mayDelete": false
+         *       }
+         *     }
+         */
+        Calendar: {
+            readonly id: components["schemas"]["JmapId"];
+            name: string;
+            description?: string | null;
+            timeZone?: string | null;
+            color?: string | null;
+            sortOrder: number;
+            isDefault: boolean;
+            isSubscribed: boolean;
+            shareWith?: {
+                [key: string]: components["schemas"]["CalendarRights"];
+            } | null;
+            myRights: components["schemas"]["CalendarRights"];
+        };
+        /** @description REST list response for GET /calendars. */
+        CalendarListResponse: {
+            list: components["schemas"]["Calendar"][];
+        };
+        /** @description JMAP id string (calendar uri, event id, map key). */
+        JmapId: string;
+        /** @description Map of ids to true booleans. */
+        JmapIdBooleanMap: {
+            [key: string]: true;
+        };
+        /**
+         * Format: date-time
+         * @description UTC date-time (ISO 8601).
+         */
+        JmapUTCDateTime: string;
+        /** @description Local or UTC date-time without required Z suffix. */
+        JmapLocalDateTime: string;
+        TasksCapabilitiesResponse: {
+            enabled: boolean;
+            jmapCapability: string;
+            supportedTaskProperties: string[];
+        };
+        TaskListRights: {
+            mayReadItems: boolean;
+            mayWriteAll: boolean;
+            mayWriteOwn: boolean;
+            mayUpdatePrivate: boolean;
+            mayRSVP: boolean;
+            mayAdmin: boolean;
+            mayDelete: boolean;
+        };
+        TaskList: {
+            id: string;
+            role?: string | null;
+            name: string;
+            description?: string | null;
+            color?: string | null;
+            sortOrder: number;
+            isDefault: boolean;
+            isSubscribed: boolean;
+            shareWith?: Record<string, never> | null;
+            myRights: components["schemas"]["TaskListRights"];
+        };
+        TaskTaskListListResponse: {
+            list: components["schemas"]["TaskList"][];
+        };
+        TaskAlertOffsetTrigger: {
+            /** @constant */
+            "@type": "OffsetTrigger";
+            /** @description Signed ISO 8601 duration (e.g. -PT30M) */
+            offset: string;
+            /**
+             * @description Relative to task start (DTSTART) or end/due (DUE)
+             * @default start
+             * @enum {string}
+             */
+            relativeTo: "start" | "end";
+        };
+        TaskAlertAbsoluteTrigger: {
+            /** @constant */
+            "@type": "AbsoluteTrigger";
+            /** @description UTC date-time when the alert fires */
+            when: string;
+        };
+        TaskAlert: {
+            /** @constant */
+            "@type": "Alert";
+            trigger: components["schemas"]["TaskAlertOffsetTrigger"] | components["schemas"]["TaskAlertAbsoluteTrigger"];
+            /** @enum {string} */
+            action?: "display" | "email";
+            acknowledged?: string;
+        };
+        TaskRecurrenceOverride: {
+            title?: string;
+            description?: string | null;
+            start?: string | null;
+            due?: string | null;
+            completed?: string | null;
+            showWithoutTime?: boolean;
+            timeZone?: string | null;
+            workflowStatus?: string | null;
+            progress?: number | null;
+            /** @description When true, exclude this recurrence instance (EXDATE) */
+            excluded?: boolean;
+        };
+        TaskParticipant: {
+            /** @constant */
+            "@type": "Participant";
+            name?: string | null;
+            email?: string | null;
+            roles?: string[];
+            participationStatus?: string;
+            kind?: string;
+            language?: string;
+        };
+        Task: {
+            /** @enum {string} */
+            "@type": "Task";
+            id: string;
+            taskListId: string;
+            uid: string;
+            title?: string | null;
+            description?: string | null;
+            start?: string | null;
+            due?: string | null;
+            completed?: string | null;
+            showWithoutTime?: boolean;
+            timeZone?: string | null;
+            workflowStatus?: string | null;
+            progress?: number | null;
+            priority?: number | null;
+            isDraft: boolean;
+            sortOrder: number;
+            categories?: string[];
+            privacy?: string | null;
+            created?: string | null;
+            updated?: string | null;
+            etag?: components["schemas"]["DavEtag"];
+            /** @description RRULE-only; clients expand instances per JMAP Tasks draft. */
+            recurrenceRules?: components["schemas"]["CalendarRecurrenceRule"][];
+            /** @description EXDATE values for excluded recurrence instances. */
+            excludedRecurrenceDates?: string[];
+            /** @description Per-instance patches keyed by recurrence id (RECURRENCE-ID). */
+            recurrenceOverrides?: {
+                [key: string]: components["schemas"]["TaskRecurrenceOverride"];
+            };
+            /** @description Task reminders mapped from VALARM components. */
+            alerts?: {
+                [key: string]: components["schemas"]["TaskAlert"];
+            };
+            /** @description Task assignees mapped from ORGANIZER/ATTENDEE. */
+            participants?: {
+                [key: string]: components["schemas"]["TaskParticipant"];
+            };
+            /** @description Unmapped VTODO properties preserved for round-trip fidelity. */
+            icsProps?: {
+                [key: string]: string;
+            };
+        };
+        TaskListResponse: {
+            list: components["schemas"]["Task"][];
+        };
+        TaskCreate: {
+            taskListIds: {
+                [key: string]: boolean;
+            };
+            uid?: string;
+            title: string;
+            description?: string | null;
+            start?: string | null;
+            due?: string | null;
+            completed?: string | null;
+            showWithoutTime?: boolean;
+            timeZone?: string | null;
+            workflowStatus?: string | null;
+            progress?: number | null;
+            priority?: number | null;
+            categories?: string[];
+            privacy?: string | null;
+            recurrenceRules?: components["schemas"]["CalendarRecurrenceRule"][];
+            excludedRecurrenceDates?: string[];
+            recurrenceOverrides?: {
+                [key: string]: components["schemas"]["TaskRecurrenceOverride"];
+            };
+            alerts?: {
+                [key: string]: components["schemas"]["TaskAlert"];
+            };
+            participants?: {
+                [key: string]: components["schemas"]["TaskParticipant"];
+            };
+            icsProps?: {
+                [key: string]: string;
+            };
+        };
+        TaskPatch: {
+            title?: string;
+            description?: string | null;
+            start?: string | null;
+            due?: string | null;
+            completed?: string | null;
+            showWithoutTime?: boolean;
+            timeZone?: string | null;
+            workflowStatus?: string | null;
+            progress?: number | null;
+            priority?: number | null;
+            categories?: string[];
+            privacy?: string | null;
+            recurrenceRules?: components["schemas"]["CalendarRecurrenceRule"][];
+            excludedRecurrenceDates?: string[];
+            recurrenceOverrides?: {
+                [key: string]: components["schemas"]["TaskRecurrenceOverride"];
+            };
+            alerts?: {
+                [key: string]: components["schemas"]["TaskAlert"];
+            };
+            participants?: {
+                [key: string]: components["schemas"]["TaskParticipant"];
+            };
+            icsProps?: {
+                [key: string]: string;
+            };
+        };
+        CalendarCreate: {
+            name: string;
+            description?: string | null;
+            timeZone?: string | null;
+            color?: string | null;
+            id?: components["schemas"]["JmapId"];
+        };
+        CalendarPatch: {
+            name?: string;
+            description?: string | null;
+            timeZone?: string | null;
+            color?: string | null;
+            isSubscribed?: boolean;
+        };
+        CalendarDeleteOptions: {
+            /** @default false */
+            onDestroyRemoveContents: boolean;
+        };
+        JmapCalendarChangesResponse: {
+            oldState: string;
+            newState: string;
+            created: components["schemas"]["JmapId"][];
+            updated: components["schemas"]["JmapId"][];
+            destroyed: components["schemas"]["JmapId"][];
+        };
+        TaskListCreate: {
+            name: string;
+            description?: string | null;
+            color?: string | null;
+            id?: components["schemas"]["JmapId"];
+        };
+        TaskListPatch: {
+            name?: string;
+            description?: string | null;
+            color?: string | null;
+            isSubscribed?: boolean;
+        };
+        TaskListDeleteOptions: {
+            /** @default false */
+            onDestroyRemoveContents: boolean;
+        };
+        TaskItemQueryFilter: {
+            inTaskList: components["schemas"]["JmapId"];
+            uid?: string;
+        };
+        TaskItemQueryRequest: {
+            filter: components["schemas"]["TaskItemQueryFilter"];
+            limit?: number;
+        };
+        TaskItemQueryResponse: {
+            ids: components["schemas"]["JmapId"][];
+            total: number;
+        };
+        JmapTaskListChangesResponse: {
+            oldState: string;
+            newState: string;
+            created: components["schemas"]["JmapId"][];
+            updated: components["schemas"]["JmapId"][];
+            destroyed: components["schemas"]["JmapId"][];
+        };
     };
-    responses: never;
+    responses: {
+        /** @description Invalid request */
+        JmapBadRequest: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Forbidden */
+        JmapForbidden: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Resource not found */
+        JmapNotFound: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Conflict with current resource state */
+        JmapConflict: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Payload too large */
+        JmapPayloadTooLarge: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Precondition failed */
+        JmapPreconditionFailed: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+    };
     parameters: never;
     requestBodies: never;
     headers: never;

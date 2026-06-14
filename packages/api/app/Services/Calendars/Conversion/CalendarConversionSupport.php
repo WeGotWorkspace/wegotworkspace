@@ -136,7 +136,7 @@ final class CalendarConversionSupport
     /**
      * @param  array<string, mixed>  $event
      */
-    public static function writeDateTimeProperty(VEvent $vevent, string $name, mixed $value, bool $showWithoutTime, ?string $timeZone): void
+    public static function writeDateTimeProperty(Component $component, string $name, mixed $value, bool $showWithoutTime, ?string $timeZone): void
     {
         if (! is_string($value) || trim($value) === '') {
             return;
@@ -153,7 +153,7 @@ final class CalendarConversionSupport
             }
         }
 
-        $vevent->add($name, $icsValue, $params);
+        $component->add($name, $icsValue, $params);
     }
 
     /**

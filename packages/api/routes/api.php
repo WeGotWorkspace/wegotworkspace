@@ -172,9 +172,16 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($filesS
 
     Route::middleware('wgw.calendars')->group(function (): void {
         Route::get('tasks/capabilities', TasksCapabilitiesController::class);
+        Route::get('tasks/tasklists/changes', [TaskCalendarsController::class, 'changes']);
         Route::get('tasks/tasklists', [TaskCalendarsController::class, 'index']);
+        Route::post('tasks/tasklists', [TaskCalendarsController::class, 'store']);
         Route::get('tasks/tasklists/{taskListId}', [TaskCalendarsController::class, 'show'])
             ->where('taskListId', '[a-z0-9_-]+');
+        Route::patch('tasks/tasklists/{taskListId}', [TaskCalendarsController::class, 'update'])
+            ->where('taskListId', '[a-z0-9_-]+');
+        Route::delete('tasks/tasklists/{taskListId}', [TaskCalendarsController::class, 'destroy'])
+            ->where('taskListId', '[a-z0-9_-]+');
+        Route::post('tasks/items/query', [TasksController::class, 'query']);
         Route::get('tasks/items', [TasksController::class, 'index']);
         Route::post('tasks/items', [TasksController::class, 'store']);
         Route::get('tasks/items/{taskId}', [TasksController::class, 'show'])
@@ -215,24 +222,14 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($filesS
     });
 
     Route::middleware('wgw.calendars')->group(function (): void {
+        Route::get('calendars/calendars/changes', [CalendarsController::class, 'changes']);
         Route::get('calendars/calendars', [CalendarsController::class, 'index']);
+        Route::post('calendars/calendars', [CalendarsController::class, 'store']);
         Route::get('calendars/calendars/{calendarId}', [CalendarsController::class, 'show'])
             ->where('calendarId', '[a-z0-9_-]+');
-        Route::get('calendars/events', [CalendarEventsController::class, 'index']);
-        Route::post('calendars/events', [CalendarEventsController::class, 'store']);
-        Route::get('calendars/events/{eventId}', [CalendarEventsController::class, 'show'])
-            ->where('eventId', '[a-z0-9_#%-]+');
-        Route::put('calendars/events/{eventId}', [CalendarEventsController::class, 'update'])
-            ->where('eventId', '[a-z0-9_#%-]+');
-        Route::patch('calendars/events/{eventId}', [CalendarEventsController::class, 'patch'])
-            ->where('eventId', '[a-z0-9_#%-]+');
-        Route::delete('calendars/events/{eventId}', [CalendarEventsController::class, 'destroy'])
-            ->where('eventId', '[a-z0-9_#%-]+');
-    });
-
-    Route::middleware('wgw.calendars')->group(function (): void {
-        Route::get('calendars/calendars', [CalendarsController::class, 'index']);
-        Route::get('calendars/calendars/{calendarId}', [CalendarsController::class, 'show'])
+        Route::patch('calendars/calendars/{calendarId}', [CalendarsController::class, 'update'])
+            ->where('calendarId', '[a-z0-9_-]+');
+        Route::delete('calendars/calendars/{calendarId}', [CalendarsController::class, 'destroy'])
             ->where('calendarId', '[a-z0-9_-]+');
         Route::get('calendars/events', [CalendarEventsController::class, 'index']);
         Route::post('calendars/events', [CalendarEventsController::class, 'store']);

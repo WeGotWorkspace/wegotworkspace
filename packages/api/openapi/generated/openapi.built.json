@@ -5278,6 +5278,1972 @@
                 "type": "string",
                 "readOnly": true,
                 "description": "Quoted HTTP entity tag aligned with Cal/CardDAV storage (Sabre PDO etag)."
+            },
+            "CalendarEventRecurrenceOverride": {
+                "type": "object",
+                "description": "Per-instance patch keyed by recurrence id (original instance start). Use excluded:true to omit an instance.",
+                "properties": {
+                    "excluded": {
+                        "type": "boolean"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "start": {
+                        "$ref": "#/components/schemas/JmapLocalDateTime"
+                    },
+                    "end": {
+                        "$ref": "#/components/schemas/JmapLocalDateTime"
+                    },
+                    "duration": {
+                        "type": "string"
+                    },
+                    "showWithoutTime": {
+                        "type": "boolean"
+                    },
+                    "timeZone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "locations": {
+                        "type": "object",
+                        "propertyNames": {
+                            "$ref": "#/components/schemas/JmapId"
+                        },
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/CalendarEventLocation"
+                        }
+                    },
+                    "freeBusyStatus": {
+                        "type": "string",
+                        "enum": [
+                            "busy",
+                            "free",
+                            "tentative"
+                        ]
+                    },
+                    "privacy": {
+                        "type": "string",
+                        "enum": [
+                            "public",
+                            "private",
+                            "secret"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "confirmed",
+                            "cancelled",
+                            "tentative"
+                        ]
+                    },
+                    "participants": {
+                        "type": "object",
+                        "propertyNames": {
+                            "$ref": "#/components/schemas/JmapId"
+                        },
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/CalendarEventParticipant"
+                        }
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "priority": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9
+                    },
+                    "sequence": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "icsProps": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            },
+            "CalendarEventLink": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "href"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "Link"
+                    },
+                    "href": {
+                        "type": "string",
+                        "format": "uri"
+                    },
+                    "rel": {
+                        "type": "string"
+                    },
+                    "contentType": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "CalendarTimeZone": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "tzid"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "TimeZone"
+                    },
+                    "tzid": {
+                        "type": "string"
+                    },
+                    "icsDefinition": {
+                        "type": "string",
+                        "description": "Serialized VTIMEZONE component for round-trip."
+                    }
+                },
+                "additionalProperties": false
+            },
+            "CalendarRecurrenceRule": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "frequency"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "RecurrenceRule"
+                    },
+                    "frequency": {
+                        "type": "string",
+                        "enum": [
+                            "secondly",
+                            "minutely",
+                            "hourly",
+                            "daily",
+                            "weekly",
+                            "monthly",
+                            "yearly"
+                        ]
+                    },
+                    "interval": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "count": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "until": {
+                        "type": "string"
+                    },
+                    "byDay": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "byMonth": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "byMonthDay": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "byYearDay": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "byWeekNo": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "bySetPosition": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "firstDayOfWeek": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "CalendarEventLocation": {
+                "type": "object",
+                "required": [
+                    "@type"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "Location"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "rel": {
+                        "type": "string"
+                    },
+                    "timeZone": {
+                        "type": "string"
+                    },
+                    "coordinates": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "CalendarEventParticipant": {
+                "type": "object",
+                "required": [
+                    "@type"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "Participant"
+                    },
+                    "name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "email": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "roles": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "participationStatus": {
+                        "type": "string"
+                    },
+                    "kind": {
+                        "type": "string"
+                    },
+                    "language": {
+                        "type": "string"
+                    },
+                    "expectReply": {
+                        "type": "boolean"
+                    },
+                    "delegatedTo": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "delegatedFrom": {
+                        "type": "string",
+                        "format": "email"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "CalendarEventRelativeAlertTrigger": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "offset"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "RelativeAlert"
+                    },
+                    "offset": {
+                        "type": "string",
+                        "description": "Signed ISO 8601 duration relative to event start or end (e.g. -PT15M)."
+                    },
+                    "relatedTo": {
+                        "type": "string",
+                        "enum": [
+                            "start",
+                            "end"
+                        ],
+                        "default": "start"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "CalendarEventAbsoluteAlertTrigger": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "when"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "AbsoluteAlert"
+                    },
+                    "when": {
+                        "$ref": "#/components/schemas/JmapLocalDateTime"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "CalendarEventAlert": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "trigger"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "Alert"
+                    },
+                    "trigger": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/CalendarEventRelativeAlertTrigger"
+                            },
+                            {
+                                "$ref": "#/components/schemas/CalendarEventAbsoluteAlertTrigger"
+                            }
+                        ]
+                    },
+                    "action": {
+                        "type": "string",
+                        "enum": [
+                            "display",
+                            "audio",
+                            "email"
+                        ],
+                        "default": "display"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "CalendarEvent": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "uid",
+                    "id",
+                    "calendarIds",
+                    "start"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "Event",
+                        "readOnly": true
+                    },
+                    "id": {
+                        "$ref": "#/components/schemas/JmapId",
+                        "readOnly": true
+                    },
+                    "uid": {
+                        "type": "string"
+                    },
+                    "calendarIds": {
+                        "$ref": "#/components/schemas/JmapIdBooleanMap"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "start": {
+                        "$ref": "#/components/schemas/JmapLocalDateTime"
+                    },
+                    "end": {
+                        "$ref": "#/components/schemas/JmapLocalDateTime"
+                    },
+                    "duration": {
+                        "type": "string"
+                    },
+                    "showWithoutTime": {
+                        "type": "boolean"
+                    },
+                    "timeZone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "recurrenceId": {
+                        "type": "string",
+                        "description": "Original instance start for expanded or override rows; null on series masters."
+                    },
+                    "locations": {
+                        "type": "object",
+                        "propertyNames": {
+                            "$ref": "#/components/schemas/JmapId"
+                        },
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/CalendarEventLocation"
+                        }
+                    },
+                    "recurrenceRules": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "$ref": "#/components/schemas/CalendarRecurrenceRule"
+                        },
+                        "description": "RRULE on series masters; null on expanded instances."
+                    },
+                    "excludedRecurrenceDates": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "excludedRecurrenceRules": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CalendarRecurrenceRule"
+                        },
+                        "description": "EXRULE rule-based exclusions (legacy ICS)."
+                    },
+                    "recurrenceOverrides": {
+                        "type": "object",
+                        "description": "Per-instance patches keyed by recurrence id (original instance start). Maps to RECURRENCE-ID override VEVENTs in ICS.",
+                        "propertyNames": {
+                            "$ref": "#/components/schemas/JmapLocalDateTime"
+                        },
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/CalendarEventRecurrenceOverride"
+                        }
+                    },
+                    "freeBusyStatus": {
+                        "type": "string",
+                        "enum": [
+                            "busy",
+                            "free",
+                            "tentative"
+                        ]
+                    },
+                    "privacy": {
+                        "type": "string",
+                        "enum": [
+                            "public",
+                            "private",
+                            "secret"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "confirmed",
+                            "cancelled",
+                            "tentative"
+                        ]
+                    },
+                    "participants": {
+                        "type": "object",
+                        "propertyNames": {
+                            "$ref": "#/components/schemas/JmapId"
+                        },
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/CalendarEventParticipant"
+                        }
+                    },
+                    "alerts": {
+                        "type": "object",
+                        "description": "Reminder alarms mapped from iCalendar VALARM components.",
+                        "propertyNames": {
+                            "$ref": "#/components/schemas/JmapId"
+                        },
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/CalendarEventAlert"
+                        }
+                    },
+                    "links": {
+                        "type": "object",
+                        "propertyNames": {
+                            "$ref": "#/components/schemas/JmapId"
+                        },
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/CalendarEventLink"
+                        }
+                    },
+                    "attachments": {
+                        "type": "object",
+                        "propertyNames": {
+                            "$ref": "#/components/schemas/JmapId"
+                        },
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/CalendarEventLink"
+                        }
+                    },
+                    "timeZones": {
+                        "type": "object",
+                        "propertyNames": {
+                            "type": "string"
+                        },
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/CalendarTimeZone"
+                        }
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "priority": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9
+                    },
+                    "sequence": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "created": {
+                        "$ref": "#/components/schemas/JmapUTCDateTime"
+                    },
+                    "updated": {
+                        "$ref": "#/components/schemas/JmapUTCDateTime"
+                    },
+                    "etag": {
+                        "$ref": "#/components/schemas/DavEtag"
+                    },
+                    "icsProps": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "additionalProperties": false,
+                "description": "JMAP CalendarEvent mapped from a single VEVENT ICS resource.",
+                "example": {
+                    "@type": "Event",
+                    "id": "team-sync-a1b2c3d4",
+                    "uid": "urn:uuid:550e8400-e29b-41d4-a716-446655440000",
+                    "calendarIds": {
+                        "default": true
+                    },
+                    "title": "Team sync",
+                    "start": "2026-06-15T10:00:00Z",
+                    "end": "2026-06-15T11:00:00Z",
+                    "showWithoutTime": false
+                }
+            },
+            "CalendarEventCreate": {
+                "allOf": [
+                    {
+                        "type": "object",
+                        "properties": {
+                            "@type": {
+                                "not": {}
+                            },
+                            "id": {
+                                "not": {}
+                            }
+                        }
+                    },
+                    {
+                        "$ref": "#/components/schemas/CalendarEvent"
+                    }
+                ],
+                "description": "POST body; server assigns id and @type."
+            },
+            "CalendarEventPatch": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "start": {
+                        "$ref": "#/components/schemas/JmapLocalDateTime"
+                    },
+                    "end": {
+                        "$ref": "#/components/schemas/JmapLocalDateTime"
+                    },
+                    "duration": {
+                        "type": "string"
+                    },
+                    "showWithoutTime": {
+                        "type": "boolean"
+                    },
+                    "timeZone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "locations": {
+                        "type": "object",
+                        "propertyNames": {
+                            "$ref": "#/components/schemas/JmapId"
+                        },
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/CalendarEventLocation"
+                        }
+                    },
+                    "recurrenceRules": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CalendarRecurrenceRule"
+                        }
+                    },
+                    "excludedRecurrenceDates": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "excludedRecurrenceRules": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CalendarRecurrenceRule"
+                        }
+                    },
+                    "recurrenceOverrides": {
+                        "type": "object",
+                        "description": "Per-instance patches keyed by recurrence id (original instance start). Maps to RECURRENCE-ID override VEVENTs in ICS.",
+                        "propertyNames": {
+                            "$ref": "#/components/schemas/JmapLocalDateTime"
+                        },
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/CalendarEventRecurrenceOverride"
+                        }
+                    },
+                    "freeBusyStatus": {
+                        "type": "string",
+                        "enum": [
+                            "busy",
+                            "free",
+                            "tentative"
+                        ]
+                    },
+                    "privacy": {
+                        "type": "string",
+                        "enum": [
+                            "public",
+                            "private",
+                            "secret"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "confirmed",
+                            "cancelled",
+                            "tentative"
+                        ]
+                    },
+                    "participants": {
+                        "type": "object",
+                        "propertyNames": {
+                            "$ref": "#/components/schemas/JmapId"
+                        },
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/CalendarEventParticipant"
+                        }
+                    },
+                    "alerts": {
+                        "type": "object",
+                        "description": "Reminder alarms mapped from iCalendar VALARM components.",
+                        "propertyNames": {
+                            "$ref": "#/components/schemas/JmapId"
+                        },
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/CalendarEventAlert"
+                        }
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "priority": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9
+                    },
+                    "sequence": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "icsProps": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "additionalProperties": false,
+                "description": "PATCH request body for partial calendar event updates. Omits server-owned id and @type."
+            },
+            "CalendarEventListResponse": {
+                "type": "object",
+                "required": [
+                    "list"
+                ],
+                "properties": {
+                    "list": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CalendarEvent"
+                        }
+                    }
+                },
+                "additionalProperties": false,
+                "description": "REST list response for GET /calendars/events."
+            },
+            "CalendarRights": {
+                "type": "object",
+                "required": [
+                    "mayRead",
+                    "mayWrite",
+                    "mayShare",
+                    "mayDelete"
+                ],
+                "properties": {
+                    "mayRead": {
+                        "type": "boolean"
+                    },
+                    "mayWrite": {
+                        "type": "boolean"
+                    },
+                    "mayShare": {
+                        "type": "boolean"
+                    },
+                    "mayDelete": {
+                        "type": "boolean"
+                    }
+                },
+                "additionalProperties": false,
+                "description": "JMAP CalendarRights."
+            },
+            "Calendar": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "name",
+                    "sortOrder",
+                    "isDefault",
+                    "isSubscribed",
+                    "myRights"
+                ],
+                "properties": {
+                    "id": {
+                        "$ref": "#/components/schemas/JmapId",
+                        "readOnly": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "timeZone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "color": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "sortOrder": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "isDefault": {
+                        "type": "boolean"
+                    },
+                    "isSubscribed": {
+                        "type": "boolean"
+                    },
+                    "shareWith": {
+                        "oneOf": [
+                            {
+                                "type": "object",
+                                "propertyNames": {
+                                    "$ref": "#/components/schemas/JmapId"
+                                },
+                                "additionalProperties": {
+                                    "$ref": "#/components/schemas/CalendarRights"
+                                }
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "myRights": {
+                        "$ref": "#/components/schemas/CalendarRights"
+                    }
+                },
+                "additionalProperties": false,
+                "description": "JMAP Calendar resource.",
+                "example": {
+                    "id": "default",
+                    "name": "Calendar",
+                    "description": null,
+                    "timeZone": null,
+                    "color": null,
+                    "sortOrder": 0,
+                    "isDefault": true,
+                    "isSubscribed": true,
+                    "shareWith": null,
+                    "myRights": {
+                        "mayRead": true,
+                        "mayWrite": true,
+                        "mayShare": false,
+                        "mayDelete": false
+                    }
+                }
+            },
+            "CalendarListResponse": {
+                "type": "object",
+                "required": [
+                    "list"
+                ],
+                "properties": {
+                    "list": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Calendar"
+                        }
+                    }
+                },
+                "additionalProperties": false,
+                "description": "REST list response for GET /calendars."
+            },
+            "JmapId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255,
+                "description": "JMAP id string (calendar uri, event id, map key)."
+            },
+            "JmapIdBooleanMap": {
+                "type": "object",
+                "propertyNames": {
+                    "$ref": "#/components/schemas/JmapId"
+                },
+                "additionalProperties": {
+                    "type": "boolean",
+                    "const": true
+                },
+                "description": "Map of ids to true booleans."
+            },
+            "JmapUTCDateTime": {
+                "type": "string",
+                "format": "date-time",
+                "description": "UTC date-time (ISO 8601)."
+            },
+            "JmapLocalDateTime": {
+                "type": "string",
+                "description": "Local or UTC date-time without required Z suffix."
+            },
+            "TasksCapabilitiesResponse": {
+                "type": "object",
+                "required": [
+                    "enabled",
+                    "jmapCapability",
+                    "supportedTaskProperties"
+                ],
+                "properties": {
+                    "enabled": {
+                        "type": "boolean"
+                    },
+                    "jmapCapability": {
+                        "type": "string"
+                    },
+                    "supportedTaskProperties": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskListRights": {
+                "type": "object",
+                "required": [
+                    "mayReadItems",
+                    "mayWriteAll",
+                    "mayWriteOwn",
+                    "mayUpdatePrivate",
+                    "mayRSVP",
+                    "mayAdmin",
+                    "mayDelete"
+                ],
+                "properties": {
+                    "mayReadItems": {
+                        "type": "boolean"
+                    },
+                    "mayWriteAll": {
+                        "type": "boolean"
+                    },
+                    "mayWriteOwn": {
+                        "type": "boolean"
+                    },
+                    "mayUpdatePrivate": {
+                        "type": "boolean"
+                    },
+                    "mayRSVP": {
+                        "type": "boolean"
+                    },
+                    "mayAdmin": {
+                        "type": "boolean"
+                    },
+                    "mayDelete": {
+                        "type": "boolean"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskList": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "name",
+                    "sortOrder",
+                    "isDefault",
+                    "isSubscribed",
+                    "myRights"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "color": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "sortOrder": {
+                        "type": "integer"
+                    },
+                    "isDefault": {
+                        "type": "boolean"
+                    },
+                    "isSubscribed": {
+                        "type": "boolean"
+                    },
+                    "shareWith": {
+                        "type": [
+                            "object",
+                            "null"
+                        ]
+                    },
+                    "myRights": {
+                        "$ref": "#/components/schemas/TaskListRights"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskTaskListListResponse": {
+                "type": "object",
+                "required": [
+                    "list"
+                ],
+                "properties": {
+                    "list": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/TaskList"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskAlertOffsetTrigger": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "offset"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "OffsetTrigger"
+                    },
+                    "offset": {
+                        "type": "string",
+                        "description": "Signed ISO 8601 duration (e.g. -PT30M)"
+                    },
+                    "relativeTo": {
+                        "type": "string",
+                        "enum": [
+                            "start",
+                            "end"
+                        ],
+                        "default": "start",
+                        "description": "Relative to task start (DTSTART) or end/due (DUE)"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskAlertAbsoluteTrigger": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "when"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "AbsoluteTrigger"
+                    },
+                    "when": {
+                        "type": "string",
+                        "description": "UTC date-time when the alert fires"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskAlert": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "trigger"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "Alert"
+                    },
+                    "trigger": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/TaskAlertOffsetTrigger"
+                            },
+                            {
+                                "$ref": "#/components/schemas/TaskAlertAbsoluteTrigger"
+                            }
+                        ]
+                    },
+                    "action": {
+                        "type": "string",
+                        "enum": [
+                            "display",
+                            "email"
+                        ]
+                    },
+                    "acknowledged": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskRecurrenceOverride": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "start": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "due": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "completed": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "showWithoutTime": {
+                        "type": "boolean"
+                    },
+                    "timeZone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "workflowStatus": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "progress": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "excluded": {
+                        "type": "boolean",
+                        "description": "When true, exclude this recurrence instance (EXDATE)"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskParticipant": {
+                "type": "object",
+                "required": [
+                    "@type"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "Participant"
+                    },
+                    "name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "email": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "roles": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "participationStatus": {
+                        "type": "string"
+                    },
+                    "kind": {
+                        "type": "string"
+                    },
+                    "language": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "Task": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "id",
+                    "taskListId",
+                    "uid",
+                    "isDraft",
+                    "sortOrder"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "enum": [
+                            "Task"
+                        ]
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "taskListId": {
+                        "type": "string"
+                    },
+                    "uid": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "start": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "due": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "completed": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "showWithoutTime": {
+                        "type": "boolean"
+                    },
+                    "timeZone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "workflowStatus": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "progress": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "priority": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "isDraft": {
+                        "type": "boolean"
+                    },
+                    "sortOrder": {
+                        "type": "integer"
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "privacy": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "created": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "updated": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "etag": {
+                        "$ref": "#/components/schemas/DavEtag"
+                    },
+                    "recurrenceRules": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CalendarRecurrenceRule"
+                        },
+                        "description": "RRULE-only; clients expand instances per JMAP Tasks draft."
+                    },
+                    "excludedRecurrenceDates": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "EXDATE values for excluded recurrence instances."
+                    },
+                    "recurrenceOverrides": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/TaskRecurrenceOverride"
+                        },
+                        "description": "Per-instance patches keyed by recurrence id (RECURRENCE-ID)."
+                    },
+                    "alerts": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/TaskAlert"
+                        },
+                        "description": "Task reminders mapped from VALARM components."
+                    },
+                    "participants": {
+                        "type": "object",
+                        "propertyNames": {
+                            "$ref": "#/components/schemas/JmapId"
+                        },
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/TaskParticipant"
+                        },
+                        "description": "Task assignees mapped from ORGANIZER/ATTENDEE."
+                    },
+                    "icsProps": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "description": "Unmapped VTODO properties preserved for round-trip fidelity."
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskListResponse": {
+                "type": "object",
+                "required": [
+                    "list"
+                ],
+                "properties": {
+                    "list": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Task"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskCreate": {
+                "type": "object",
+                "required": [
+                    "taskListIds",
+                    "title"
+                ],
+                "properties": {
+                    "taskListIds": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "boolean"
+                        }
+                    },
+                    "uid": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "start": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "due": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "completed": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "showWithoutTime": {
+                        "type": "boolean"
+                    },
+                    "timeZone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "workflowStatus": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "progress": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "priority": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "privacy": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "recurrenceRules": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CalendarRecurrenceRule"
+                        }
+                    },
+                    "excludedRecurrenceDates": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "recurrenceOverrides": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/TaskRecurrenceOverride"
+                        }
+                    },
+                    "alerts": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/TaskAlert"
+                        }
+                    },
+                    "participants": {
+                        "type": "object",
+                        "propertyNames": {
+                            "$ref": "#/components/schemas/JmapId"
+                        },
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/TaskParticipant"
+                        }
+                    },
+                    "icsProps": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskPatch": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "start": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "due": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "completed": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "showWithoutTime": {
+                        "type": "boolean"
+                    },
+                    "timeZone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "workflowStatus": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "progress": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "priority": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "categories": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "privacy": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "recurrenceRules": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CalendarRecurrenceRule"
+                        }
+                    },
+                    "excludedRecurrenceDates": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "recurrenceOverrides": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/TaskRecurrenceOverride"
+                        }
+                    },
+                    "alerts": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/TaskAlert"
+                        }
+                    },
+                    "participants": {
+                        "type": "object",
+                        "propertyNames": {
+                            "$ref": "#/components/schemas/JmapId"
+                        },
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/TaskParticipant"
+                        }
+                    },
+                    "icsProps": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            },
+            "CalendarCreate": {
+                "type": "object",
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "timeZone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "color": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "id": {
+                        "$ref": "#/components/schemas/JmapId"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "CalendarPatch": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "timeZone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "color": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "isSubscribed": {
+                        "type": "boolean"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "CalendarDeleteOptions": {
+                "type": "object",
+                "properties": {
+                    "onDestroyRemoveContents": {
+                        "type": "boolean",
+                        "default": false
+                    }
+                },
+                "additionalProperties": false
+            },
+            "JmapCalendarChangesResponse": {
+                "type": "object",
+                "required": [
+                    "oldState",
+                    "newState",
+                    "created",
+                    "updated",
+                    "destroyed"
+                ],
+                "properties": {
+                    "oldState": {
+                        "type": "string"
+                    },
+                    "newState": {
+                        "type": "string"
+                    },
+                    "created": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JmapId"
+                        }
+                    },
+                    "updated": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JmapId"
+                        }
+                    },
+                    "destroyed": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JmapId"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskListCreate": {
+                "type": "object",
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "color": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "id": {
+                        "$ref": "#/components/schemas/JmapId"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskListPatch": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "color": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "isSubscribed": {
+                        "type": "boolean"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskListDeleteOptions": {
+                "type": "object",
+                "properties": {
+                    "onDestroyRemoveContents": {
+                        "type": "boolean",
+                        "default": false
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskItemQueryFilter": {
+                "type": "object",
+                "required": [
+                    "inTaskList"
+                ],
+                "properties": {
+                    "inTaskList": {
+                        "$ref": "#/components/schemas/JmapId"
+                    },
+                    "uid": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskItemQueryRequest": {
+                "type": "object",
+                "required": [
+                    "filter"
+                ],
+                "properties": {
+                    "filter": {
+                        "$ref": "#/components/schemas/TaskItemQueryFilter"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 500
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TaskItemQueryResponse": {
+                "type": "object",
+                "required": [
+                    "ids",
+                    "total"
+                ],
+                "properties": {
+                    "ids": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JmapId"
+                        }
+                    },
+                    "total": {
+                        "type": "integer",
+                        "minimum": 0
+                    }
+                },
+                "additionalProperties": false
+            },
+            "JmapTaskListChangesResponse": {
+                "type": "object",
+                "required": [
+                    "oldState",
+                    "newState",
+                    "created",
+                    "updated",
+                    "destroyed"
+                ],
+                "properties": {
+                    "oldState": {
+                        "type": "string"
+                    },
+                    "newState": {
+                        "type": "string"
+                    },
+                    "created": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JmapId"
+                        }
+                    },
+                    "updated": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JmapId"
+                        }
+                    },
+                    "destroyed": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JmapId"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            }
+        },
+        "responses": {
+            "JmapBadRequest": {
+                "description": "Invalid request",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
+            },
+            "JmapForbidden": {
+                "description": "Forbidden",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
+            },
+            "JmapNotFound": {
+                "description": "Resource not found",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
+            },
+            "JmapConflict": {
+                "description": "Conflict with current resource state",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
+            },
+            "JmapPayloadTooLarge": {
+                "description": "Payload too large",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
+            },
+            "JmapPreconditionFailed": {
+                "description": "Precondition failed",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/Error"
+                        }
+                    }
+                }
             }
         }
     },
@@ -8250,6 +10216,52 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "post": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Create an address book",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AddressBookCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created address book",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AddressBook"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
                     }
                 },
                 "x-wgw-access": "user"
@@ -8286,6 +10298,130 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "patch": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Update an address book",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "addressBookId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AddressBookPatch"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated address book",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AddressBook"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/JmapPreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "delete": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Delete an address book",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "addressBookId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AddressBookDeleteOptions"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Address book deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OkResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/JmapConflict"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/JmapPreconditionFailed"
                     }
                 },
                 "x-wgw-access": "user"
@@ -8310,6 +10446,22 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "name": "uid",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "uid",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "responses": {
@@ -8322,6 +10474,15 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
                     }
                 },
                 "x-wgw-access": "user"
@@ -8346,6 +10507,15 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
                     }
                 },
                 "requestBody": {
@@ -8416,6 +10586,12 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
                     }
                 },
                 "x-wgw-access": "user"
@@ -8450,6 +10626,21 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/JmapPreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
                     }
                 },
                 "requestBody": {
@@ -8519,6 +10710,21 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/JmapPreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
                     }
                 },
                 "requestBody": {
@@ -8570,6 +10776,18 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/JmapPreconditionFailed"
                     }
                 },
                 "x-wgw-access": "user"
@@ -8888,13 +11106,13 @@
                         }
                     },
                     "400": {
-                        "description": "Invalid request"
+                        "$ref": "#/components/responses/JmapBadRequest"
                     },
                     "403": {
-                        "description": "Forbidden"
+                        "$ref": "#/components/responses/JmapForbidden"
                     },
                     "413": {
-                        "description": "Payload too large"
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
                     }
                 },
                 "x-wgw-access": "user"
@@ -8952,10 +11170,1395 @@
                         }
                     },
                     "403": {
-                        "description": "Forbidden"
+                        "$ref": "#/components/responses/JmapForbidden"
                     },
                     "404": {
-                        "description": "Not found"
+                        "$ref": "#/components/responses/JmapNotFound"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/calendars/events": {
+            "get": {
+                "tags": [
+                    "Calendars"
+                ],
+                "summary": "List calendar events in a calendar",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "calendarId",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "expandRecurrences",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "default": false
+                        },
+                        "description": "Expand recurring events into instances in the requested window (requires after and before)."
+                    },
+                    {
+                        "name": "after",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        },
+                        "description": "Window start (required when expandRecurrences is true)."
+                    },
+                    {
+                        "name": "before",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        },
+                        "description": "Window end (required when expandRecurrences is true)."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Calendar event list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CalendarEventListResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "post": {
+                "tags": [
+                    "Calendars"
+                ],
+                "summary": "Create a calendar event",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CalendarEventCreate"
+                            },
+                            "example": {
+                                "calendarIds": {
+                                    "default": true
+                                },
+                                "title": "Team sync",
+                                "start": "2026-06-15T10:00:00Z",
+                                "end": "2026-06-15T11:00:00Z"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created calendar event",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CalendarEvent"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/calendars/events/{eventId}": {
+            "get": {
+                "tags": [
+                    "Calendars"
+                ],
+                "summary": "Fetch a single calendar event",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "eventId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Calendar event",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CalendarEvent"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "put": {
+                "tags": [
+                    "Calendars"
+                ],
+                "summary": "Replace a calendar event",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "eventId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CalendarEventCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated calendar event",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CalendarEvent"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/JmapPreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "patch": {
+                "tags": [
+                    "Calendars"
+                ],
+                "summary": "Partially update a calendar event",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "eventId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CalendarEventPatch"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Patched calendar event",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CalendarEvent"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/JmapPreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "delete": {
+                "tags": [
+                    "Calendars"
+                ],
+                "summary": "Delete a calendar event",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "eventId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OkResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/JmapPreconditionFailed"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/calendars/calendars": {
+            "get": {
+                "tags": [
+                    "Calendars"
+                ],
+                "summary": "List user's calendars",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Calendar list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CalendarListResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "post": {
+                "tags": [
+                    "Calendars"
+                ],
+                "summary": "Create a calendar",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CalendarCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created calendar",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Calendar"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/calendars/calendars/{calendarId}": {
+            "get": {
+                "tags": [
+                    "Calendars"
+                ],
+                "summary": "Fetch a single calendar",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "calendarId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Calendar",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Calendar"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "patch": {
+                "tags": [
+                    "Calendars"
+                ],
+                "summary": "Update a calendar",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "calendarId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CalendarPatch"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated calendar",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Calendar"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/JmapPreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "delete": {
+                "tags": [
+                    "Calendars"
+                ],
+                "summary": "Delete a calendar",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "calendarId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CalendarDeleteOptions"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Calendar deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OkResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/JmapConflict"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/JmapPreconditionFailed"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/contacts/addressbooks/changes": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Incremental address book collection changes",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "since",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Address book changes",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/JmapChangesResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/contacts/cards/changes": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Incremental contact card changes",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "addressBookId",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "since",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Contact card changes",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/JmapChangesResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/contacts/cards/query": {
+            "post": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Query contact card ids",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ContactCardQueryRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Matching contact card ids",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactCardQueryResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/calendars/calendars/changes": {
+            "get": {
+                "tags": [
+                    "Calendars"
+                ],
+                "summary": "Incremental calendar collection changes",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "since",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Calendar collection changes",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/JmapCalendarChangesResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/tasks/capabilities": {
+            "get": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Tasks JMAP capability subset",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tasks capabilities",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TasksCapabilitiesResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/tasks/tasklists/changes": {
+            "get": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Incremental task list collection changes",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "since",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Task list changes",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/JmapTaskListChangesResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/tasks/tasklists": {
+            "get": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "List task lists",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Task list collection",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TaskTaskListListResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "post": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Create a task list",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TaskListCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created task list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TaskList"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/tasks/tasklists/{taskListId}": {
+            "get": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Fetch a task list",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "taskListId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Task list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TaskList"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "patch": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Update a task list",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "taskListId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TaskListPatch"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated task list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TaskList"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/JmapPreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "delete": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Delete a task list",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "taskListId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TaskListDeleteOptions"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Task list deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OkResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/JmapConflict"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/JmapPreconditionFailed"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/tasks/items/query": {
+            "post": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Query task item ids",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TaskItemQueryRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Matching task ids",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TaskItemQueryResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/tasks/items": {
+            "get": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "List tasks in a task list",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "taskListId",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Task list items",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TaskListResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "post": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Create a task",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TaskCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created task",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Task"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/tasks/items/{taskId}": {
+            "get": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Fetch a task",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "taskId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Task",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Task"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "put": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Replace a task",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "taskId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TaskCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated task",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Task"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/JmapPreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "patch": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Partially update a task",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "taskId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TaskPatch"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated task",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Task"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/JmapPreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/JmapPayloadTooLarge"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "delete": {
+                "tags": [
+                    "Tasks"
+                ],
+                "summary": "Delete a task",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "taskId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Task deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OkResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/JmapBadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/JmapForbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/JmapNotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/JmapPreconditionFailed"
                     }
                 },
                 "x-wgw-access": "user"
