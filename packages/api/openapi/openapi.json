@@ -89,6 +89,89 @@
           }
         }
       }
+    },
+    "parameters": {
+      "IfMatchHeader": {
+        "name": "If-Match",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "description": "Concurrency token from the prior GET ETag header or etag response field."
+      },
+      "IfUnmodifiedSinceHeader": {
+        "name": "If-Unmodified-Since",
+        "in": "header",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "description": "Optional fallback when If-Match is omitted; compared to stored lastmodified."
+      }
+    },
+    "responses": {
+      "PreconditionFailed": {
+        "description": "Precondition failed",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "BadRequest": {
+        "description": "Invalid request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Forbidden",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "Conflict with current resource state",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "PayloadTooLarge": {
+        "description": "Payload too large",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
     }
   },
   "paths": {
@@ -1918,15 +2001,44 @@
     },
     "/calendars/events": {
       "get": {
-        "tags": ["Calendars"],
+        "tags": [
+          "Calendars"
+        ],
         "summary": "List calendar events in a calendar",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "calendarId",
             "in": "query",
             "required": true,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "expandRecurrences",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "boolean", "default": false },
+            "description": "Expand recurring events into instances in the requested window (requires after and before)."
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "format": "date-time" },
+            "description": "Window start (required when expandRecurrences is true)."
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "format": "date-time" },
+            "description": "Window end (required when expandRecurrences is true)."
           }
         ],
         "responses": {
@@ -1934,24 +2046,45 @@
             "description": "Calendar event list",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/CalendarEventListResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarEventListResponse"
+                }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
           }
         },
         "x-wgw-access": "user"
       },
       "post": {
-        "tags": ["Calendars"],
+        "tags": [
+          "Calendars"
+        ],
         "summary": "Create a calendar event",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/CalendarEventCreate" },
+              "schema": {
+                "$ref": "#/components/schemas/CalendarEventCreate"
+              },
               "example": {
-                "calendarIds": { "default": true },
+                "calendarIds": {
+                  "default": true
+                },
                 "title": "Team sync",
                 "start": "2026-06-15T10:00:00Z",
                 "end": "2026-06-15T11:00:00Z"
@@ -1964,9 +2097,20 @@
             "description": "Created calendar event",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/CalendarEvent" }
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarEvent"
+                }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
           }
         },
         "x-wgw-access": "user"
@@ -1974,15 +2118,23 @@
     },
     "/calendars/events/{eventId}": {
       "get": {
-        "tags": ["Calendars"],
+        "tags": [
+          "Calendars"
+        ],
         "summary": "Fetch a single calendar event",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "eventId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -1990,30 +2142,61 @@
             "description": "Calendar event",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/CalendarEvent" }
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarEvent"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
           }
         },
         "x-wgw-access": "user"
       },
       "put": {
-        "tags": ["Calendars"],
+        "tags": [
+          "Calendars"
+        ],
         "summary": "Replace a calendar event",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "eventId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatchHeader"
+          },
+          {
+            "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
           }
         ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/CalendarEventCreate" }
+              "schema": {
+                "$ref": "#/components/schemas/CalendarEventCreate"
+              }
             }
           }
         },
@@ -2022,30 +2205,70 @@
             "description": "Updated calendar event",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/CalendarEvent" }
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarEvent"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
           }
         },
         "x-wgw-access": "user"
       },
       "patch": {
-        "tags": ["Calendars"],
+        "tags": [
+          "Calendars"
+        ],
         "summary": "Partially update a calendar event",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "eventId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatchHeader"
+          },
+          {
+            "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
           }
         ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/CalendarEventPatch" }
+              "schema": {
+                "$ref": "#/components/schemas/CalendarEventPatch"
+              }
             }
           }
         },
@@ -2054,23 +2277,61 @@
             "description": "Patched calendar event",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/CalendarEvent" }
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarEvent"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
           }
         },
         "x-wgw-access": "user"
       },
       "delete": {
-        "tags": ["Calendars"],
+        "tags": [
+          "Calendars"
+        ],
         "summary": "Delete a calendar event",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "eventId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatchHeader"
+          },
+          {
+            "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
           }
         ],
         "responses": {
@@ -2078,9 +2339,23 @@
             "description": "Deleted",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/OkResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/OkResponse"
+                }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
           }
         },
         "x-wgw-access": "user"
@@ -2088,17 +2363,28 @@
     },
     "/calendars/calendars": {
       "get": {
-        "tags": ["Calendars"],
+        "tags": [
+          "Calendars"
+        ],
         "summary": "List user's calendars",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Calendar list",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/CalendarListResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarListResponse"
+                }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           }
         },
         "x-wgw-access": "user"
@@ -2106,15 +2392,23 @@
     },
     "/calendars/calendars/{calendarId}": {
       "get": {
-        "tags": ["Calendars"],
+        "tags": [
+          "Calendars"
+        ],
         "summary": "Fetch a single calendar",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "calendarId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -2122,10 +2416,48 @@
             "description": "Calendar",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/Calendar" }
+                "schema": {
+                  "$ref": "#/components/schemas/Calendar"
+                }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
           }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/contacts/addressbooks/changes": {
+      "get": {
+        "tags": ["Contacts"],
+        "summary": "Incremental address book collection changes",
+        "description": "JMAP AddressBook/changes REST mapping. See docs/contacts/jmap-sync-rest-mapping.md.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "Previous state token; omit or `0` for initial sync."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Address book changes",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/JmapChangesResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
         },
         "x-wgw-access": "user"
       }
@@ -2151,12 +2483,41 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
           }
+        },
+        "x-wgw-access": "user"
+      },
+      "post": {
+        "tags": ["Contacts"],
+        "summary": "Create an address book",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AddressBookCreate" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created address book",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AddressBook" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "409": { "$ref": "#/components/responses/Conflict" }
         },
         "x-wgw-access": "user"
       }
     },
-    "/contacts/addressbooks/{addressBookId}": {
       "get": {
         "tags": [
           "Contacts"
@@ -2187,7 +2548,150 @@
                 }
               }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
           }
+        },
+        "x-wgw-access": "user"
+      },
+      "patch": {
+        "tags": ["Contacts"],
+        "summary": "Update an address book",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "addressBookId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AddressBookPatch" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated address book",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AddressBook" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        },
+        "x-wgw-access": "user"
+      },
+      "delete": {
+        "tags": ["Contacts"],
+        "summary": "Delete an address book",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "addressBookId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AddressBookDeleteOptions" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Address book deleted",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OkResponse" }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/contacts/cards/changes": {
+      "get": {
+        "tags": ["Contacts"],
+        "summary": "Incremental contact card changes in an address book",
+        "description": "JMAP ContactCard/changes REST mapping backed by CardDAV synctoken.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "addressBookId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "Previous synctoken; omit or `0` for initial sync."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contact card changes",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/JmapChangesResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/contacts/cards/query": {
+      "post": {
+        "tags": ["Contacts"],
+        "summary": "Query contact card ids by filter",
+        "description": "JMAP ContactCard/query REST mapping (MVP: inAddressBook + uid).",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ContactCardQueryRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Matching contact card ids",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ContactCardQueryResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" }
         },
         "x-wgw-access": "user"
       }
@@ -2211,6 +2715,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "uid",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Optional exact uid filter (ContactCard/query subset)."
           }
         ],
         "responses": {
@@ -2223,6 +2736,15 @@
                 }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
           }
         },
         "x-wgw-access": "user"
@@ -2247,6 +2769,15 @@
                 }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
           }
         },
         "requestBody": {
@@ -2316,7 +2847,20 @@
                   "$ref": "#/components/schemas/ContactCard"
                 }
               }
+            },
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
           }
         },
         "x-wgw-access": "user"
@@ -2339,6 +2883,12 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatchHeader"
+          },
+          {
+            "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
           }
         ],
         "responses": {
@@ -2350,7 +2900,29 @@
                   "$ref": "#/components/schemas/ContactCard"
                 }
               }
+            },
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
           }
         },
         "requestBody": {
@@ -2408,6 +2980,12 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatchHeader"
+          },
+          {
+            "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
           }
         ],
         "responses": {
@@ -2419,7 +2997,29 @@
                   "$ref": "#/components/schemas/ContactCard"
                 }
               }
+            },
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
           }
         },
         "requestBody": {
@@ -2459,6 +3059,12 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatchHeader"
+          },
+          {
+            "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
           }
         ],
         "responses": {
@@ -2471,6 +3077,458 @@
                 }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/tasks/capabilities": {
+      "get": {
+        "tags": [
+          "Tasks"
+        ],
+        "summary": "Tasks feature capabilities",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tasks capabilities",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TasksCapabilitiesResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/tasks/tasklists": {
+      "get": {
+        "tags": [
+          "Tasks"
+        ],
+        "summary": "List user's task lists",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Task list collection",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskTaskListListResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/tasks/tasklists/{taskListId}": {
+      "get": {
+        "tags": [
+          "Tasks"
+        ],
+        "summary": "Fetch a single task list",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "taskListId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Task list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskList"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/tasks/items": {
+      "get": {
+        "tags": [
+          "Tasks"
+        ],
+        "summary": "List tasks in a task list",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "taskListId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Task list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "post": {
+        "tags": [
+          "Tasks"
+        ],
+        "summary": "Create a task",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created task",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Task"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskCreate"
+              },
+              "example": {
+                "taskListIds": {
+                  "default": true
+                },
+                "title": "Buy milk",
+                "due": "2026-06-15T09:00:00"
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
+    "/tasks/items/{taskId}": {
+      "get": {
+        "tags": [
+          "Tasks"
+        ],
+        "summary": "Fetch a single task",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Task",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Task"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "put": {
+        "tags": [
+          "Tasks"
+        ],
+        "summary": "Replace a task",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatchHeader"
+          },
+          {
+            "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated task",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Task"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskCreate"
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "patch": {
+        "tags": [
+          "Tasks"
+        ],
+        "summary": "Partially update a task",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatchHeader"
+          },
+          {
+            "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated task",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Task"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskPatch"
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      },
+      "delete": {
+        "tags": [
+          "Tasks"
+        ],
+        "summary": "Delete a task",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatchHeader"
+          },
+          {
+            "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deleted task",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "412": {
+            "$ref": "#/components/responses/PreconditionFailed"
           }
         },
         "x-wgw-access": "user"
@@ -2831,4 +3889,3 @@
       }
     }
   }
-}

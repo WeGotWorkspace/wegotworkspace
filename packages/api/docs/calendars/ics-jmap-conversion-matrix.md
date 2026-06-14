@@ -49,9 +49,15 @@ CalDAV stores one `.ics` blob per `calendarobjects` row. The REST API maps each 
 | RECURRENCE-ID override VEVENT | Merged into master `recurrenceOverrides` (key = RECURRENCE-ID datetime) |
 | `recurrenceOverrides.excluded: true` | STATUS:CANCELLED override VEVENT |
 | `recurrenceOverrides` time/title patch | Override VEVENT with RECURRENCE-ID + patched fields |
-| RDATE | Not mapped in v1 |
+| RDATE | `recurrenceOverrides` empty patch (key = RDATE datetime) |
+| EXRULE | `excludedRecurrenceRules` |
+| GEO | `locations.coordinates` |
+| URL | `links` |
+| ATTACH | `attachments` (href) + `icsProps` fallback |
+| VTIMEZONE | `timeZones` map (`icsDefinition` for round-trip) |
+| ATTENDEE ROLE/CUTYPE/RSVP/DELEGATED | `participants` scheduling fields |
 
-Clients expand recurrence locally for display. Server-side `expandRecurrences` is #159.
+Clients expand recurrence locally for display unless `expandRecurrences=true` on list (#159).
 
 ## Recurrence overrides vs multi-VEVENT
 

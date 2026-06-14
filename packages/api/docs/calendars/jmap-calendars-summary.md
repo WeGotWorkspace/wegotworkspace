@@ -53,3 +53,5 @@ Returned by event endpoints. `@type` is always `"Event"`.
 - `VTODO`, `VJOURNAL`, scheduling inbox REST
 - Calendar CRUD (create/rename/delete calendars)
 - JMAP Sharing (`shareWith` always `null`)
+- Calendar collection CRUD over REST (use CalDAV `MKCALENDAR` / `PROPPATCH` — see `docs/contacts/jmap-collection-crud.md`)
+- Calendar/event incremental sync REST endpoints (use CalDAV synctoken or `etag` — see `docs/contacts/jmap-sync-rest-mapping.md`)

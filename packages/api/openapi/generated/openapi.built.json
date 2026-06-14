@@ -5240,6 +5240,17 @@
                     },
                     "language": {
                         "type": "string"
+                    },
+                    "expectReply": {
+                        "type": "boolean"
+                    },
+                    "delegatedTo": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "delegatedFrom": {
+                        "type": "string",
+                        "format": "email"
                     }
                 },
                 "additionalProperties": false
@@ -5296,6 +5307,10 @@
                             "null"
                         ]
                     },
+                    "recurrenceId": {
+                        "type": "string",
+                        "description": "Original instance start for expanded or override rows; null on series masters."
+                    },
                     "locations": {
                         "type": "object",
                         "propertyNames": {
@@ -5306,17 +5321,27 @@
                         }
                     },
                     "recurrenceRules": {
-                        "type": "array",
+                        "type": [
+                            "array",
+                            "null"
+                        ],
                         "items": {
                             "$ref": "#/components/schemas/CalendarRecurrenceRule"
                         },
-                        "description": "RRULE-only; clients expand instances per JMAP Calendars draft."
+                        "description": "RRULE on series masters; null on expanded instances."
                     },
                     "excludedRecurrenceDates": {
                         "type": "array",
                         "items": {
                             "type": "string"
                         }
+                    },
+                    "excludedRecurrenceRules": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CalendarRecurrenceRule"
+                        },
+                        "description": "EXRULE rule-based exclusions (legacy ICS)."
                     },
                     "recurrenceOverrides": {
                         "type": "object",
@@ -5369,6 +5394,33 @@
                         },
                         "additionalProperties": {
                             "$ref": "#/components/schemas/CalendarEventAlert"
+                        }
+                    },
+                    "links": {
+                        "type": "object",
+                        "propertyNames": {
+                            "$ref": "#/components/schemas/JmapId"
+                        },
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/CalendarEventLink"
+                        }
+                    },
+                    "attachments": {
+                        "type": "object",
+                        "propertyNames": {
+                            "$ref": "#/components/schemas/JmapId"
+                        },
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/CalendarEventLink"
+                        }
+                    },
+                    "timeZones": {
+                        "type": "object",
+                        "propertyNames": {
+                            "type": "string"
+                        },
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/CalendarTimeZone"
                         }
                     },
                     "categories": {
@@ -5655,6 +5707,12 @@
                             "type": "string"
                         }
                     },
+                    "excludedRecurrenceRules": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CalendarRecurrenceRule"
+                        }
+                    },
                     "recurrenceOverrides": {
                         "type": "object",
                         "description": "Per-instance patches keyed by recurrence id (original instance start). Maps to RECURRENCE-ID override VEVENTs in ICS.",
@@ -5905,6 +5963,51 @@
                         "additionalProperties": {
                             "type": "string"
                         }
+                    }
+                },
+                "additionalProperties": false
+            },
+            "CalendarEventLink": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "href"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "Link"
+                    },
+                    "href": {
+                        "type": "string",
+                        "format": "uri"
+                    },
+                    "rel": {
+                        "type": "string"
+                    },
+                    "contentType": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "CalendarTimeZone": {
+                "type": "object",
+                "required": [
+                    "@type",
+                    "tzid"
+                ],
+                "properties": {
+                    "@type": {
+                        "type": "string",
+                        "const": "TimeZone"
+                    },
+                    "tzid": {
+                        "type": "string"
+                    },
+                    "icsDefinition": {
+                        "type": "string",
+                        "description": "Serialized VTIMEZONE component for round-trip."
                     }
                 },
                 "additionalProperties": false
@@ -8880,6 +8983,52 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "post": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Create an address book",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AddressBookCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created address book",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AddressBook"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "409": {
+                        "$ref": "#/components/responses/Conflict"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9470,6 +9619,36 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "name": "expandRecurrences",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "default": false
+                        },
+                        "description": "Expand recurring events into instances in the requested window (requires after and before)."
+                    },
+                    {
+                        "name": "after",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        },
+                        "description": "Window start (required when expandRecurrences is true)."
+                    },
+                    {
+                        "name": "before",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        },
+                        "description": "Window end (required when expandRecurrences is true)."
                     }
                 ],
                 "responses": {
@@ -9482,6 +9661,15 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9524,6 +9712,15 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/PayloadTooLarge"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9559,7 +9756,20 @@
                                     "$ref": "#/components/schemas/CalendarEvent"
                                 }
                             }
+                        },
+                        "headers": {
+                            "ETag": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
                         }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9582,6 +9792,12 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfMatchHeader"
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
                     }
                 ],
                 "requestBody": {
@@ -9603,7 +9819,29 @@
                                     "$ref": "#/components/schemas/CalendarEvent"
                                 }
                             }
+                        },
+                        "headers": {
+                            "ETag": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/PreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/PayloadTooLarge"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9626,6 +9864,12 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfMatchHeader"
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
                     }
                 ],
                 "requestBody": {
@@ -9647,7 +9891,29 @@
                                     "$ref": "#/components/schemas/CalendarEvent"
                                 }
                             }
+                        },
+                        "headers": {
+                            "ETag": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/PreconditionFailed"
+                    },
+                    "413": {
+                        "$ref": "#/components/responses/PayloadTooLarge"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9670,6 +9936,12 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfMatchHeader"
+                    },
+                    {
+                        "$ref": "#/components/parameters/IfUnmodifiedSinceHeader"
                     }
                 ],
                 "responses": {
@@ -9682,6 +9954,18 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    },
+                    "412": {
+                        "$ref": "#/components/responses/PreconditionFailed"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9708,6 +9992,9 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
                     }
                 },
                 "x-wgw-access": "user"
@@ -9744,10 +10031,206 @@
                                 }
                             }
                         }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
                     }
                 },
                 "x-wgw-access": "user"
             }
+        },
+        "/contacts/addressbooks/changes": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Incremental address book collection changes",
+                "description": "JMAP AddressBook/changes REST mapping. See docs/contacts/jmap-sync-rest-mapping.md.",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "since",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Previous state token; omit or `0` for initial sync."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Address book changes",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/JmapChangesResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "$ref": "#/components/responses/BadRequest"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "get": {
+            "tags": [
+                "Contacts"
+            ],
+            "summary": "Fetch a single address book",
+            "security": [
+                {
+                    "bearerAuth": []
+                }
+            ],
+            "parameters": [
+                {
+                    "name": "addressBookId",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ],
+            "responses": {
+                "200": {
+                    "description": "Address book",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AddressBook"
+                            }
+                        }
+                    }
+                },
+                "403": {
+                    "$ref": "#/components/responses/Forbidden"
+                },
+                "404": {
+                    "$ref": "#/components/responses/NotFound"
+                }
+            },
+            "x-wgw-access": "user"
+        },
+        "patch": {
+            "tags": [
+                "Contacts"
+            ],
+            "summary": "Update an address book",
+            "security": [
+                {
+                    "bearerAuth": []
+                }
+            ],
+            "parameters": [
+                {
+                    "name": "addressBookId",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ],
+            "requestBody": {
+                "required": true,
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/AddressBookPatch"
+                        }
+                    }
+                }
+            },
+            "responses": {
+                "200": {
+                    "description": "Updated address book",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AddressBook"
+                            }
+                        }
+                    }
+                },
+                "400": {
+                    "$ref": "#/components/responses/BadRequest"
+                },
+                "403": {
+                    "$ref": "#/components/responses/Forbidden"
+                },
+                "404": {
+                    "$ref": "#/components/responses/NotFound"
+                }
+            },
+            "x-wgw-access": "user"
+        },
+        "delete": {
+            "tags": [
+                "Contacts"
+            ],
+            "summary": "Delete an address book",
+            "security": [
+                {
+                    "bearerAuth": []
+                }
+            ],
+            "parameters": [
+                {
+                    "name": "addressBookId",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ],
+            "requestBody": {
+                "required": false,
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/AddressBookDeleteOptions"
+                        }
+                    }
+                }
+            },
+            "responses": {
+                "200": {
+                    "description": "Address book deleted",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/OkResponse"
+                            }
+                        }
+                    }
+                },
+                "403": {
+                    "$ref": "#/components/responses/Forbidden"
+                },
+                "404": {
+                    "$ref": "#/components/responses/NotFound"
+                },
+                "409": {
+                    "$ref": "#/components/responses/Conflict"
+                }
+            },
+            "x-wgw-access": "user"
         }
     }
 }
