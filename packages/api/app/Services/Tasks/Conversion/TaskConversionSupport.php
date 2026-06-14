@@ -6,6 +6,7 @@ namespace App\Services\Tasks\Conversion;
 
 use App\Services\Calendars\Conversion\CalendarConversionSupport;
 use Sabre\VObject\Component\VTodo;
+use Sabre\VObject\Property;
 
 /**
  * VTODO → JMAP Task field mapping helpers.
@@ -54,10 +55,21 @@ final class TaskConversionSupport
         'progress',
         'priority',
         'privacy',
+        'showWithoutTime',
+        'timeZone',
         'recurrenceRules',
         'excludedRecurrenceDates',
         'recurrenceOverrides',
         'alerts',
+        'participants',
+        'icsProps',
+    ];
+
+    /** @var list<string> */
+    private const KNOWN_VTODO_PROPERTIES = [
+        'UID', 'SUMMARY', 'DESCRIPTION', 'DTSTART', 'DUE', 'COMPLETED', 'STATUS',
+        'PERCENT-COMPLETE', 'PRIORITY', 'CATEGORIES', 'CLASS', 'CREATED', 'LAST-MODIFIED',
+        'RRULE', 'EXDATE', 'RECURRENCE-ID', 'ORGANIZER', 'ATTENDEE', 'DTSTAMP', 'SEQUENCE',
     ];
 
     public static function workflowFromStatus(?string $status): ?string
@@ -110,10 +122,15 @@ final class TaskConversionSupport
 
                 continue;
             }
-            if (in_array($key, ['recurrenceOverrides', 'alerts'], true)
+            if (in_array($key, ['recurrenceOverrides', 'alerts', 'participants'], true)
                 && is_array($value)
                 && isset($merged[$key])
                 && is_array($merged[$key])) {
+                $merged[$key] = array_replace($merged[$key], $value);
+
+                continue;
+            }
+            if ($key === 'icsProps' && is_array($value) && isset($merged[$key]) && is_array($merged[$key])) {
                 $merged[$key] = array_replace($merged[$key], $value);
 
                 continue;
@@ -133,27 +150,232 @@ final class TaskConversionSupport
             $task['@type'] = 'Task';
         }
 
-        if (! isset($task['alerts']) || ! is_array($task['alerts'])) {
-            return $task;
-        }
-
-        $normalized = [];
-        foreach ($task['alerts'] as $id => $entry) {
-            if (! is_array($entry)) {
+        foreach (['alerts', 'participants'] as $mapKey) {
+            if (! isset($task[$mapKey]) || ! is_array($task[$mapKey])) {
                 continue;
             }
-            if (! isset($entry['@type'])) {
-                $entry['@type'] = 'Alert';
+            $normalized = [];
+            foreach ($task[$mapKey] as $id => $entry) {
+                if (! is_array($entry)) {
+                    continue;
+                }
+                if (! isset($entry['@type'])) {
+                    $entry['@type'] = match ($mapKey) {
+                        'participants' => 'Participant',
+                        default => 'Alert',
+                    };
+                }
+                $normalized[(string) $id] = $entry;
             }
-            $normalized[(string) $id] = $entry;
-        }
-        if ($normalized !== []) {
-            $task['alerts'] = $normalized;
-        } else {
-            unset($task['alerts']);
+            if ($normalized !== []) {
+                $task[$mapKey] = $normalized;
+            } else {
+                unset($task[$mapKey]);
+            }
         }
 
         return $task;
+    }
+
+    /**
+     * @param  array<string, mixed>  $task
+     */
+    public static function applyDateTimesFromVtodo(VTodo $todo, array &$task): void
+    {
+        $showWithoutTime = false;
+        $timeZone = null;
+
+        if (isset($todo->DTSTART)) {
+            $start = CalendarConversionSupport::jmapDateTimeFromProperty($todo->DTSTART);
+            $task['start'] = $start['value'];
+            $showWithoutTime = $start['showWithoutTime'];
+            $timeZone = $start['timeZone'];
+        }
+
+        if (isset($todo->DUE)) {
+            $due = CalendarConversionSupport::jmapDateTimeFromProperty($todo->DUE);
+            $task['due'] = $due['value'];
+            $showWithoutTime = $showWithoutTime || $due['showWithoutTime'];
+            $timeZone ??= $due['timeZone'];
+        }
+
+        if ($showWithoutTime) {
+            $task['showWithoutTime'] = true;
+        }
+
+        if ($timeZone !== null && $timeZone !== '') {
+            $task['timeZone'] = $timeZone;
+        }
+
+        if (isset($todo->COMPLETED)) {
+            $task['completed'] = self::formatCompletedUtc((string) $todo->COMPLETED->getValue());
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $task
+     */
+    public static function writeDateTimesToVtodo(VTodo $todo, array $task): void
+    {
+        $showWithoutTime = (bool) ($task['showWithoutTime'] ?? false);
+        $timeZone = isset($task['timeZone']) && is_string($task['timeZone']) ? $task['timeZone'] : null;
+
+        if (isset($task['start']) && is_string($task['start']) && trim($task['start']) !== '') {
+            CalendarConversionSupport::writeDateTimeProperty(
+                $todo,
+                'DTSTART',
+                $task['start'],
+                $showWithoutTime,
+                $timeZone,
+            );
+        }
+
+        if (isset($task['due']) && is_string($task['due']) && trim($task['due']) !== '') {
+            CalendarConversionSupport::writeDateTimeProperty(
+                $todo,
+                'DUE',
+                $task['due'],
+                $showWithoutTime,
+                $timeZone,
+            );
+        }
+
+        if (isset($task['completed']) && is_string($task['completed']) && trim($task['completed']) !== '') {
+            $todo->add('COMPLETED', self::completedToIcs($task['completed']));
+        }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function participantsFromVtodo(VTodo $todo): array
+    {
+        $participants = [];
+        $index = 0;
+
+        if (isset($todo->ORGANIZER)) {
+            $participants['org'] = [
+                '@type' => 'Participant',
+                'name' => self::participantNameFromProperty($todo->ORGANIZER),
+                'email' => self::emailFromCalAddress((string) $todo->ORGANIZER->getValue()),
+                'roles' => ['owner'],
+            ];
+        }
+
+        if (isset($todo->ATTENDEE)) {
+            foreach ($todo->ATTENDEE as $attendee) {
+                $id = 'att'.(++$index);
+                $partstat = isset($attendee['PARTSTAT']) ? strtolower((string) $attendee['PARTSTAT']) : null;
+                $entry = [
+                    '@type' => 'Participant',
+                    'name' => self::participantNameFromProperty($attendee),
+                    'email' => self::emailFromCalAddress((string) $attendee->getValue()),
+                    'roles' => ['attendee'],
+                ];
+                if ($partstat !== null && $partstat !== '') {
+                    $entry['participationStatus'] = $partstat;
+                }
+                $participants[$id] = $entry;
+            }
+        }
+
+        return $participants;
+    }
+
+    /**
+     * @param  array<string, mixed>  $task
+     */
+    public static function writeParticipantsToVtodo(VTodo $todo, array $task): void
+    {
+        $participants = $task['participants'] ?? null;
+        if (! is_array($participants)) {
+            return;
+        }
+
+        foreach ($participants as $entry) {
+            if (! is_array($entry)) {
+                continue;
+            }
+            $email = $entry['email'] ?? null;
+            if (! is_string($email) || trim($email) === '') {
+                continue;
+            }
+            $roles = $entry['roles'] ?? [];
+            $params = ['CN' => $entry['name'] ?? $email];
+            $address = str_starts_with($email, 'mailto:') ? $email : 'mailto:'.$email;
+
+            if (is_array($roles) && in_array('owner', $roles, true)) {
+                $todo->add('ORGANIZER', $address, $params);
+
+                continue;
+            }
+
+            if (isset($entry['participationStatus']) && is_string($entry['participationStatus'])) {
+                $params['PARTSTAT'] = strtoupper($entry['participationStatus']);
+            }
+            $todo->add('ATTENDEE', $address, $params);
+        }
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function icsPropsFromVtodo(VTodo $todo): array
+    {
+        $props = [];
+        foreach ($todo->children() as $child) {
+            if (! $child instanceof Property) {
+                continue;
+            }
+            $name = strtoupper($child->name);
+            if (in_array($name, self::KNOWN_VTODO_PROPERTIES, true)) {
+                continue;
+            }
+            $props[$name] = trim((string) $child->getValue());
+        }
+
+        return $props;
+    }
+
+    /**
+     * @param  array<string, mixed>  $task
+     */
+    public static function writeIcsPropsToVtodo(VTodo $todo, array $task): void
+    {
+        $props = $task['icsProps'] ?? null;
+        if (! is_array($props)) {
+            return;
+        }
+
+        foreach ($props as $name => $value) {
+            if (! is_string($name) || ! is_string($value) || trim($value) === '') {
+                continue;
+            }
+            $todo->add(strtoupper($name), $value);
+        }
+    }
+
+    public static function formatCompletedUtc(?string $value): ?string
+    {
+        if ($value === null || trim($value) === '') {
+            return null;
+        }
+
+        $normalized = CalendarConversionSupport::normalizeUtcDateTime(trim($value));
+        if (str_ends_with($normalized, 'Z')) {
+            return $normalized;
+        }
+
+        $dt = new \DateTimeImmutable($normalized);
+
+        return $dt->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d\TH:i:s\Z');
+    }
+
+    public static function completedToIcs(string $value): string
+    {
+        $utc = self::formatCompletedUtc($value);
+
+        return CalendarConversionSupport::utcDateTimeToIcs($utc ?? $value);
     }
 
     /**
@@ -176,13 +398,27 @@ final class TaskConversionSupport
             }
         }
         if (isset($todo->DTSTART)) {
-            $override['start'] = self::formatIcalDateTime((string) $todo->DTSTART->getValue());
+            $start = CalendarConversionSupport::jmapDateTimeFromProperty($todo->DTSTART);
+            $override['start'] = $start['value'];
+            if ($start['showWithoutTime']) {
+                $override['showWithoutTime'] = true;
+            }
+            if ($start['timeZone'] !== null && $start['timeZone'] !== '') {
+                $override['timeZone'] = $start['timeZone'];
+            }
         }
         if (isset($todo->DUE)) {
-            $override['due'] = self::formatIcalDateTime((string) $todo->DUE->getValue());
+            $due = CalendarConversionSupport::jmapDateTimeFromProperty($todo->DUE);
+            $override['due'] = $due['value'];
+            if ($due['showWithoutTime']) {
+                $override['showWithoutTime'] = true;
+            }
+            if ($due['timeZone'] !== null && $due['timeZone'] !== '') {
+                $override['timeZone'] = $due['timeZone'];
+            }
         }
         if (isset($todo->COMPLETED)) {
-            $override['completed'] = self::formatIcalDateTime((string) $todo->COMPLETED->getValue());
+            $override['completed'] = self::formatCompletedUtc((string) $todo->COMPLETED->getValue());
         }
 
         $status = isset($todo->STATUS) ? strtoupper(trim((string) $todo->STATUS->getValue())) : null;
@@ -296,5 +532,27 @@ final class TaskConversionSupport
         $dt = new \DateTimeImmutable($trimmed);
 
         return $dt->format('Ymd\THis');
+    }
+
+    private static function participantNameFromProperty(Property $property): ?string
+    {
+        if (isset($property['CN'])) {
+            $name = trim((string) $property['CN']);
+            if ($name !== '') {
+                return $name;
+            }
+        }
+
+        return null;
+    }
+
+    private static function emailFromCalAddress(string $value): ?string
+    {
+        $value = trim($value);
+        if (str_starts_with(strtolower($value), 'mailto:')) {
+            return substr($value, 7);
+        }
+
+        return $value !== '' ? $value : null;
     }
 }

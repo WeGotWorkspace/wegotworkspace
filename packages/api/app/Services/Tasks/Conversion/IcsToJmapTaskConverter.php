@@ -131,20 +131,27 @@ final class IcsToJmapTaskConverter
             }
         }
 
+        $dateFields = [];
+        TaskConversionSupport::applyDateTimesFromVtodo($todo, $dateFields);
+
         $task = [
             '@type' => 'Task',
             'uid' => $uid !== '' ? $uid : null,
             'title' => $summary !== '' ? $summary : null,
             'description' => $description !== '' ? $description : null,
-            'start' => isset($todo->DTSTART)
-                ? TaskConversionSupport::formatIcalDateTime((string) $todo->DTSTART->getValue())
-                : null,
-            'due' => isset($todo->DUE)
-                ? TaskConversionSupport::formatIcalDateTime((string) $todo->DUE->getValue())
-                : null,
-            'completed' => isset($todo->COMPLETED)
-                ? TaskConversionSupport::formatIcalDateTime((string) $todo->COMPLETED->getValue())
-                : null,
+            'start' => $dateFields['start'] ?? null,
+            'due' => $dateFields['due'] ?? null,
+            'completed' => $dateFields['completed'] ?? null,
+        ];
+
+        if (($dateFields['showWithoutTime'] ?? false) === true) {
+            $task['showWithoutTime'] = true;
+        }
+        if (isset($dateFields['timeZone']) && is_string($dateFields['timeZone']) && $dateFields['timeZone'] !== '') {
+            $task['timeZone'] = $dateFields['timeZone'];
+        }
+
+        $task += [
             'workflowStatus' => TaskConversionSupport::workflowFromStatus($status),
             'progress' => $progress,
             'priority' => self::normalizePriority($priority),
@@ -153,12 +160,22 @@ final class IcsToJmapTaskConverter
             'categories' => array_values(array_filter(array_map('trim', $categories), static fn (string $v): bool => $v !== '')),
             'privacy' => TaskConversionSupport::privacyFromClass($class),
             'created' => isset($todo->CREATED)
-                ? TaskConversionSupport::formatIcalDateTime((string) $todo->CREATED->getValue())
+                ? CalendarConversionSupport::normalizeUtcDateTime((string) $todo->CREATED->getValue())
                 : null,
             'updated' => isset($todo->{'LAST-MODIFIED'})
-                ? TaskConversionSupport::formatIcalDateTime((string) $todo->{'LAST-MODIFIED'}->getValue())
+                ? CalendarConversionSupport::normalizeUtcDateTime((string) $todo->{'LAST-MODIFIED'}->getValue())
                 : null,
         ];
+
+        $participants = TaskConversionSupport::participantsFromVtodo($todo);
+        if ($participants !== []) {
+            $task['participants'] = $participants;
+        }
+
+        $icsProps = TaskConversionSupport::icsPropsFromVtodo($todo);
+        if ($icsProps !== []) {
+            $task['icsProps'] = $icsProps;
+        }
 
         $this->applyRecurrenceFromTodo($todo, $task);
         $this->applyAlertsFromTodo($todo, $task);

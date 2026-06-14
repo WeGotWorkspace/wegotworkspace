@@ -148,23 +148,16 @@ final class JmapToIcsTaskConverter
             $properties['PERCENT-COMPLETE'] = (string) max(0, min(100, $task['progress']));
         }
 
-        if (isset($task['start']) && is_string($task['start']) && trim($task['start']) !== '') {
-            $properties['DTSTART'] = TaskConversionSupport::toIcalDateTime($task['start']);
-        }
-        if (isset($task['due']) && is_string($task['due']) && trim($task['due']) !== '') {
-            $properties['DUE'] = TaskConversionSupport::toIcalDateTime($task['due']);
-        }
-        if (isset($task['completed']) && is_string($task['completed']) && trim($task['completed']) !== '') {
-            $properties['COMPLETED'] = TaskConversionSupport::toIcalDateTime($task['completed']);
-        }
         if (isset($task['created']) && is_string($task['created']) && trim($task['created']) !== '') {
-            $properties['CREATED'] = TaskConversionSupport::toIcalDateTime($task['created']);
+            $properties['CREATED'] = CalendarConversionSupport::utcDateTimeToIcs($task['created']);
         }
         if (isset($task['updated']) && is_string($task['updated']) && trim($task['updated']) !== '') {
-            $properties['LAST-MODIFIED'] = TaskConversionSupport::toIcalDateTime($task['updated']);
+            $properties['LAST-MODIFIED'] = CalendarConversionSupport::utcDateTimeToIcs($task['updated']);
         }
 
         $todo = $calendar->add('VTODO', $properties);
+
+        TaskConversionSupport::writeDateTimesToVtodo($todo, $task);
 
         if (isset($task['categories']) && is_array($task['categories']) && $task['categories'] !== []) {
             $todo->add('CATEGORIES', implode(',', array_map('strval', $task['categories'])));
@@ -177,6 +170,9 @@ final class JmapToIcsTaskConverter
         if (isset($task['alerts']) && is_array($task['alerts']) && $task['alerts'] !== []) {
             CalendarConversionSupport::writeValarmComponents($todo, $task['alerts']);
         }
+
+        TaskConversionSupport::writeParticipantsToVtodo($todo, $task);
+        TaskConversionSupport::writeIcsPropsToVtodo($todo, $task);
 
         return $todo;
     }
