@@ -116,6 +116,19 @@ final class ICalendarJmapEventConverterTest extends TestCase
         $this->assertSame('email', $event['alerts']['alert2']['action']);
     }
 
+    public function test_rrule_by_set_position_round_trip(): void
+    {
+        $ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:bypos\r\nSUMMARY:Last Friday\r\nDTSTART:20260601T080000Z\r\nDTEND:20260601T083000Z\r\nRRULE:FREQ=MONTHLY;BYSETPOS=-1;BYDAY=FR\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+
+        $event = $this->converter->eventFromIcs($ics);
+        $this->assertSame('monthly', $event['recurrenceRules'][0]['frequency']);
+        $this->assertSame(['FR'], $event['recurrenceRules'][0]['byDay']);
+        $this->assertSame([-1], $event['recurrenceRules'][0]['bySetPosition']);
+
+        $roundTrip = $this->converter->icsFromEvent($event);
+        $this->assertStringContainsString('RRULE:FREQ=MONTHLY;BYDAY=FR;BYSETPOS=-1', $roundTrip);
+    }
+
     public function test_alerts_round_trip_to_valarm(): void
     {
         $event = [

@@ -236,6 +236,15 @@ final class CalendarConversionSupport
         if (isset($rule['byMonthDay']) && is_array($rule['byMonthDay']) && $rule['byMonthDay'] !== []) {
             $parts[] = 'BYMONTHDAY='.implode(',', array_map('strval', $rule['byMonthDay']));
         }
+        if (isset($rule['byYearDay']) && is_array($rule['byYearDay']) && $rule['byYearDay'] !== []) {
+            $parts[] = 'BYYEARDAY='.implode(',', array_map('strval', $rule['byYearDay']));
+        }
+        if (isset($rule['byWeekNo']) && is_array($rule['byWeekNo']) && $rule['byWeekNo'] !== []) {
+            $parts[] = 'BYWEEKNO='.implode(',', array_map('strval', $rule['byWeekNo']));
+        }
+        if (isset($rule['bySetPosition']) && is_array($rule['bySetPosition']) && $rule['bySetPosition'] !== []) {
+            $parts[] = 'BYSETPOS='.implode(',', array_map('strval', $rule['bySetPosition']));
+        }
         if (isset($rule['firstDayOfWeek']) && is_string($rule['firstDayOfWeek']) && $rule['firstDayOfWeek'] !== '') {
             $parts[] = 'WKST='.strtoupper($rule['firstDayOfWeek']);
         }
