@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Calendars;
 
+use App\Http\Support\OptimisticConcurrency;
 use App\Models\CalendarObject;
 use App\Services\Calendars\Conversion\CalendarConversionSupport;
 use App\Services\Calendars\Conversion\ICalendarJmapEventConverter;
@@ -24,13 +25,18 @@ final class CalendarEventMapper
         $events = $this->converter->eventsFromIcs($raw);
         $objectId = self::eventIdFromUri((string) $object->uri);
         $multi = count($events) > 1;
+        $etag = OptimisticConcurrency::formatEtag(is_string($object->etag) ? $object->etag : null);
 
-        return array_map(function (array $event) use ($object, $calendarUri, $objectId, $multi): array {
+        return array_map(function (array $event) use ($object, $calendarUri, $objectId, $multi, $etag): array {
             $uid = is_string($event['uid'] ?? null) ? $event['uid'] : '';
             $event['id'] = $multi && $uid !== ''
                 ? CalendarConversionSupport::compositeEventId($objectId, $uid)
                 : $objectId;
             $event['calendarIds'] = [$calendarUri => true];
+
+            if ($etag !== null) {
+                $event['etag'] = $etag;
+            }
 
             $lastModified = (int) ($object->lastmodified ?? 0);
             if ($lastModified > 0) {

@@ -8,6 +8,7 @@ use App\Exceptions\ApiHttpException;
 use App\Http\Middleware\AuthenticateWgwApi;
 use App\Http\Requests\Api\V1\TaskPatchRequest;
 use App\Http\Requests\Api\V1\TaskUpsertRequest;
+use App\Http\Support\JmapResourceResponse;
 use App\Services\Tasks\TaskRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -34,7 +35,7 @@ final class TasksController
         /** @var array{username: string, role: string} $principal */
         $principal = $request->attributes->get(AuthenticateWgwApi::PRINCIPAL_ATTRIBUTE);
 
-        return response()->json($this->tasks->show($principal['username'], $taskId));
+        return JmapResourceResponse::json($this->tasks->show($principal['username'], $taskId));
     }
 
     public function store(TaskUpsertRequest $request): JsonResponse
@@ -42,9 +43,9 @@ final class TasksController
         /** @var array{username: string, role: string} $principal */
         $principal = $request->attributes->get(AuthenticateWgwApi::PRINCIPAL_ATTRIBUTE);
 
-        return response()->json(
+        return JmapResourceResponse::json(
             $this->tasks->create($principal['username'], $request->json()->all()),
-            201
+            201,
         );
     }
 
@@ -53,8 +54,14 @@ final class TasksController
         /** @var array{username: string, role: string} $principal */
         $principal = $request->attributes->get(AuthenticateWgwApi::PRINCIPAL_ATTRIBUTE);
 
-        return response()->json(
-            $this->tasks->update($principal['username'], $taskId, $request->json()->all())
+        return JmapResourceResponse::json(
+            $this->tasks->update(
+                $principal['username'],
+                $taskId,
+                $request->json()->all(),
+                $this->ifMatch($request),
+                $this->ifUnmodifiedSince($request),
+            )
         );
     }
 
@@ -63,8 +70,14 @@ final class TasksController
         /** @var array{username: string, role: string} $principal */
         $principal = $request->attributes->get(AuthenticateWgwApi::PRINCIPAL_ATTRIBUTE);
 
-        return response()->json(
-            $this->tasks->patch($principal['username'], $taskId, $request->json()->all())
+        return JmapResourceResponse::json(
+            $this->tasks->patch(
+                $principal['username'],
+                $taskId,
+                $request->json()->all(),
+                $this->ifMatch($request),
+                $this->ifUnmodifiedSince($request),
+            )
         );
     }
 
@@ -73,6 +86,27 @@ final class TasksController
         /** @var array{username: string, role: string} $principal */
         $principal = $request->attributes->get(AuthenticateWgwApi::PRINCIPAL_ATTRIBUTE);
 
-        return response()->json($this->tasks->delete($principal['username'], $taskId));
+        return response()->json(
+            $this->tasks->delete(
+                $principal['username'],
+                $taskId,
+                $this->ifMatch($request),
+                $this->ifUnmodifiedSince($request),
+            )
+        );
+    }
+
+    private function ifMatch(Request $request): ?string
+    {
+        $value = $request->header('If-Match');
+
+        return is_string($value) && $value !== '' ? $value : null;
+    }
+
+    private function ifUnmodifiedSince(Request $request): ?string
+    {
+        $value = $request->header('If-Unmodified-Since');
+
+        return is_string($value) && $value !== '' ? $value : null;
     }
 }

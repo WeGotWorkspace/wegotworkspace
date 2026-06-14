@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Tasks;
 
+use App\Http\Support\OptimisticConcurrency;
 use App\Models\CalendarObject;
 use App\Services\Tasks\Conversion\ConversionSupport;
 use App\Services\Tasks\Conversion\IcsJmapTaskConverter;
@@ -22,19 +23,25 @@ final class TaskMapper
     {
         $raw = is_string($object->calendardata) ? $object->calendardata : (string) $object->calendardata;
         $tasks = $this->converter->tasksFromIcs($raw, (string) $object->uri, $taskListUri);
+        $etag = OptimisticConcurrency::formatEtag(is_string($object->etag) ? $object->etag : null);
         $lastModified = (int) ($object->lastmodified ?? 0);
-        if ($lastModified <= 0) {
+        if ($lastModified <= 0 && $etag === null) {
             return $tasks;
         }
 
-        $timestamp = gmdate('Y-m-d\TH:i:s\Z', $lastModified);
+        $timestamp = $lastModified > 0 ? gmdate('Y-m-d\TH:i:s\Z', $lastModified) : null;
 
-        return array_map(function (array $task) use ($timestamp): array {
-            if (! isset($task['updated']) || ! is_string($task['updated']) || $task['updated'] === '') {
-                $task['updated'] = $timestamp;
+        return array_map(function (array $task) use ($timestamp, $etag): array {
+            if ($etag !== null) {
+                $task['etag'] = $etag;
             }
-            if (! isset($task['created']) || ! is_string($task['created']) || $task['created'] === '') {
-                $task['created'] = $timestamp;
+            if ($timestamp !== null) {
+                if (! isset($task['updated']) || ! is_string($task['updated']) || $task['updated'] === '') {
+                    $task['updated'] = $timestamp;
+                }
+                if (! isset($task['created']) || ! is_string($task['created']) || $task['created'] === '') {
+                    $task['created'] = $timestamp;
+                }
             }
 
             return $task;
@@ -50,6 +57,11 @@ final class TaskMapper
         $task = $this->converter->taskFromIcsComponent($raw, (string) $object->uri, $taskListUri, $vtodoUid);
         if ($task === null) {
             return null;
+        }
+
+        $etag = OptimisticConcurrency::formatEtag(is_string($object->etag) ? $object->etag : null);
+        if ($etag !== null) {
+            $task['etag'] = $etag;
         }
 
         $lastModified = (int) ($object->lastmodified ?? 0);
