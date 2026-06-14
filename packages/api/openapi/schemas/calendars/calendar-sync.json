@@ -1,0 +1,44 @@
+{
+  "CalendarCreate": {
+    "type": "object",
+    "required": ["name"],
+    "properties": {
+      "name": { "type": "string", "minLength": 1, "maxLength": 255 },
+      "description": { "type": ["string", "null"] },
+      "timeZone": { "type": ["string", "null"] },
+      "color": { "type": ["string", "null"] },
+      "id": { "$ref": "#/components/schemas/JmapId" }
+    },
+    "additionalProperties": false
+  },
+  "CalendarPatch": {
+    "type": "object",
+    "properties": {
+      "name": { "type": "string", "minLength": 1, "maxLength": 255 },
+      "description": { "type": ["string", "null"] },
+      "timeZone": { "type": ["string", "null"] },
+      "color": { "type": ["string", "null"] },
+      "isSubscribed": { "type": "boolean" }
+    },
+    "additionalProperties": false
+  },
+  "CalendarDeleteOptions": {
+    "type": "object",
+    "properties": {
+      "onDestroyRemoveContents": { "type": "boolean", "default": false }
+    },
+    "additionalProperties": false
+  },
+  "JmapCalendarChangesResponse": {
+    "type": "object",
+    "required": ["oldState", "newState", "created", "updated", "destroyed"],
+    "properties": {
+      "oldState": { "type": "string" },
+      "newState": { "type": "string" },
+      "created": { "type": "array", "items": { "$ref": "#/components/schemas/JmapId" } },
+      "updated": { "type": "array", "items": { "$ref": "#/components/schemas/JmapId" } },
+      "destroyed": { "type": "array", "items": { "$ref": "#/components/schemas/JmapId" } }
+    },
+    "additionalProperties": false
+  }
+}
