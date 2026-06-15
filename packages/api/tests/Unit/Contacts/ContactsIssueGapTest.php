@@ -112,6 +112,37 @@ VCARD;
         $this->assertSame($card['members'], $roundTripped['members']);
     }
 
+    public function test_apple_addressbookserver_group_converts_to_kind_and_members(): void
+    {
+        $vcard = <<<'VCARD'
+BEGIN:VCARD
+VERSION:3.0
+PRODID:-//Apple Inc.//AddressBookCore 1.0//EN
+N:Friends;;;;
+FN:Friends
+X-ADDRESSBOOKSERVER-KIND:group
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:c4cf6038-5da0-41be-9c2d-d8cb9b4af90f
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:07d442ce-49b5-4a59-bc01-d75b17b92c9a
+UID:08430ef3-a2ce-4568-9d6c-f50a6cfd32ae
+END:VCARD
+VCARD;
+
+        $card = $this->converter->cardFromVCard($vcard);
+
+        $this->assertSame('group', $card['kind']);
+        $this->assertSame([
+            'urn:uuid:c4cf6038-5da0-41be-9c2d-d8cb9b4af90f' => true,
+            'urn:uuid:07d442ce-49b5-4a59-bc01-d75b17b92c9a' => true,
+        ], $card['members']);
+
+        $propNames = array_map(
+            static fn (array $tuple): string => (string) $tuple[0],
+            $card['vCardProps'] ?? [],
+        );
+        $this->assertNotContains('X-ADDRESSBOOKSERVER-KIND', $propNames);
+        $this->assertNotContains('X-ADDRESSBOOKSERVER-MEMBER', $propNames);
+    }
+
     public function test_multiple_fn_without_language_preserved_in_vcard_props(): void
     {
         $vcard = <<<'VCARD'

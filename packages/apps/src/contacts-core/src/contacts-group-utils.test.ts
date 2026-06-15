@@ -64,6 +64,37 @@ describe("contacts-group-utils", () => {
     expect(isContactGroupCard(jane)).toBe(false);
   });
 
+  it("detects Apple group cards without kind field", () => {
+    const appleFriends = {
+      "@type": "Card",
+      version: "1.0",
+      id: "card-apple-friends",
+      uid: "08430ef3-a2ce-4568-9d6c-f50a6cfd32ae",
+      addressBookIds: { default: true },
+      name: { full: "Friends" },
+      members: {
+        [janeUid]: true,
+        [joeUid]: true,
+      },
+    } as unknown as ContactCard;
+
+    const appleViaVCardProps = {
+      "@type": "Card",
+      version: "1.0",
+      id: "card-apple-vcardprops",
+      uid: "08430ef3-a2ce-4568-9d6c-f50a6cfd32ae",
+      addressBookIds: { default: true },
+      name: { full: "Friends" },
+      vCardProps: [["X-ADDRESSBOOKSERVER-KIND", [], "unknown", ["group"]]],
+    } as unknown as ContactCard;
+
+    expect(isContactGroupCard(appleFriends)).toBe(true);
+    expect(isContactGroupCard(appleViaVCardProps)).toBe(true);
+    expect(listContactGroups([jane, appleFriends]).map((c) => c.id)).toEqual([
+      "card-apple-friends",
+    ]);
+  });
+
   it("lists group cards sorted by display name", () => {
     expect(listContactGroups(cards).map((card) => card.id)).toEqual([
       "card-group-family",

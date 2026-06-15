@@ -13,8 +13,30 @@ export type ContactCardWithResolvedMembers = ContactCard & {
   memberCardIds?: Record<string, string>;
 };
 
+function vCardPropIndicatesGroup(card: ContactCard): boolean {
+  const props = card.vCardProps;
+  if (!props?.length) return false;
+  for (const tuple of props) {
+    if (!Array.isArray(tuple) || tuple.length < 4) continue;
+    const name = String(tuple[0]).toUpperCase();
+    if (name !== "KIND" && name !== "X-ADDRESSBOOKSERVER-KIND") continue;
+    const raw = tuple[3];
+    const value = Array.isArray(raw) ? raw[0] : raw;
+    if (String(value).toLowerCase() === "group") return true;
+  }
+  return false;
+}
+
+function hasGroupMembers(card: ContactCard): boolean {
+  const members = card.members;
+  if (!members) return false;
+  return Object.values(members).some(Boolean);
+}
+
 export function isContactGroupCard(card: ContactCard): boolean {
-  return card.kind === "group";
+  if (card.kind === "group") return true;
+  if (hasGroupMembers(card)) return true;
+  return vCardPropIndicatesGroup(card);
 }
 
 export function listContactGroups(cards: ContactCard[]): ContactCard[] {
