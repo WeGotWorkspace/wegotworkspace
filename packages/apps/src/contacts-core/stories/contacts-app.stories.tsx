@@ -53,7 +53,8 @@ export const Default: Story = {
 
     const createButtons = canvas.getAllByRole("button", { name: "New contact" });
     await userEvent.click(createButtons[0]);
-    await userEvent.type(canvas.getByLabelText("Full name"), "Pat Example");
+    await userEvent.type(canvas.getByLabelText("First name"), "Pat");
+    await userEvent.type(canvas.getByLabelText("Last name"), "Example");
     await userEvent.click(canvas.getByRole("button", { name: "Save" }));
 
     await waitFor(
@@ -67,6 +68,13 @@ export const Default: Story = {
     expect(createBody).not.toHaveProperty("@type");
     expect(createBody).not.toHaveProperty("version");
     expect(createBody).not.toHaveProperty("id");
-    expect(createBody?.name).toEqual({ full: "Pat Example" });
+    expect(createBody?.name).toEqual({
+      isOrdered: false,
+      components: [
+        { kind: "given", value: "Pat" },
+        { kind: "surname", value: "Example" },
+      ],
+      full: "",
+    });
   },
 };
