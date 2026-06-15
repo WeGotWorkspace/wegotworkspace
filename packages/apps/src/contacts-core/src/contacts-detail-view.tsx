@@ -7,6 +7,7 @@ import { Input } from "@/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
 import { Switch } from "@/ui/switch";
 import { cn } from "@/lib/utils";
+import { Tag } from "@/tag/src/tag";
 import type { ContactCard } from "@/contacts-core/src/contacts-types";
 import {
   CONTACT_CHANNEL_CONTEXTS,
@@ -151,9 +152,9 @@ function ChannelReadRow({
   return (
     <li className="contacts-detail-view__channel-row">
       {contextLabel ? (
-        <span className="contacts-detail-view__channel-type contacts-detail-view__channel-type-label">
-          {contextLabel}
-        </span>
+        <div className="contacts-detail-view__channel-type">
+          <Tag label={contextLabel} />
+        </div>
       ) : (
         <span className="contacts-detail-view__channel-type" aria-hidden="true" />
       )}
