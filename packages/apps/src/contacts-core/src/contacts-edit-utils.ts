@@ -85,7 +85,7 @@ export function readContactContext(
   contexts?: Record<string, boolean | undefined>,
 ): ContactChannelContext {
   if (contexts?.work) return "work";
-  if (contexts?.private) return "home";
+  if (contexts?.private || contexts?.home) return "home";
   if (contexts?.school) return "school";
   return "";
 }

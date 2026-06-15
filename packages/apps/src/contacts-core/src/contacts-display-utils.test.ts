@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { ContactCard } from "@/contacts-core/src/contacts-types";
+import { defaultContactsLabels } from "./contacts-labels";
 import {
+  channelDisplayLabel,
   contactDisplayName,
   contactInitials,
   contactListSubtitle,
@@ -88,5 +90,16 @@ describe("contacts-display-utils", () => {
     expect(filterCardsBySearch(cards, "555").map((card) => card.id)).toEqual(["card-jane"]);
     expect(filterCardsBySearch(cards, "joe@").map((card) => card.id)).toEqual(["card-joe"]);
     expect(filterCardsBySearch(cards, "")).toEqual(cards);
+  });
+
+  it("resolves channel display labels from phone contexts and custom labels", () => {
+    const labels = defaultContactsLabels;
+    expect(channelDisplayLabel({ private: true }, labels)).toBe("Home");
+    expect(channelDisplayLabel({ home: true }, labels)).toBe("Home");
+    expect(channelDisplayLabel({ work: true }, labels)).toBe("Work");
+    expect(channelDisplayLabel({ school: true }, labels)).toBe("School");
+    expect(channelDisplayLabel(undefined, labels, "  Assistant  ")).toBe("Assistant");
+    expect(channelDisplayLabel({ voice: true }, labels)).toBeUndefined();
+    expect(channelDisplayLabel(undefined, labels)).toBeUndefined();
   });
 });

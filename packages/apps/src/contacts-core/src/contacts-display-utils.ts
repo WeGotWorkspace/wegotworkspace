@@ -1,4 +1,29 @@
 import type { ContactCard } from "@/contacts-core/src/contacts-types";
+import {
+  readContactContext,
+  type ContactChannelContext,
+} from "@/contacts-core/src/contacts-edit-utils";
+import type { ContactsUILabels } from "@/contacts-core/src/contacts-labels";
+
+function channelTypeLabel(contextType: ContactChannelContext, labels: ContactsUILabels): string {
+  if (contextType === "work") return labels.channelTypeWork;
+  if (contextType === "home") return labels.channelTypeHome;
+  if (contextType === "school") return labels.channelTypeSchool;
+  return labels.channelTypeNone;
+}
+
+/** Read-mode label for phones, emails, addresses, and links from JSContact contexts or custom label. */
+export function channelDisplayLabel(
+  contexts: Record<string, boolean | undefined> | undefined,
+  labels: ContactsUILabels,
+  customLabel?: string,
+): string | undefined {
+  const contextType = readContactContext(contexts);
+  if (contextType !== "") return channelTypeLabel(contextType, labels);
+  const trimmed = customLabel?.trim();
+  if (trimmed) return trimmed;
+  return undefined;
+}
 
 export function mapEntriesSorted<T>(map: Record<string, T> | undefined): [string, T][] {
   if (!map) return [];

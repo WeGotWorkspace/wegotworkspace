@@ -10,12 +10,15 @@ import { cn } from "@/lib/utils";
 import type { ContactCard } from "@/contacts-core/src/contacts-types";
 import {
   CONTACT_CHANNEL_CONTEXTS,
-  readContactContext,
   type ContactAddressDraft,
   type ContactChannelContext,
   type ContactEditDraft,
 } from "@/contacts-core/src/contacts-edit-utils";
-import { contactDisplayName, mapEntriesSorted } from "@/contacts-core/src/contacts-display-utils";
+import {
+  contactDisplayName,
+  channelDisplayLabel,
+  mapEntriesSorted,
+} from "@/contacts-core/src/contacts-display-utils";
 import type { ContactsUILabels } from "@/contacts-core/src/contacts-labels";
 
 type ContactsDetailViewProps = {
@@ -138,23 +141,32 @@ function AddressDisplayBlock({ lines }: { lines: AddressDisplayLines }) {
   );
 }
 
+function ChannelReadRow({
+  contextLabel,
+  children,
+}: {
+  contextLabel?: string;
+  children: ReactNode;
+}) {
+  return (
+    <li className="contacts-detail-view__channel-row">
+      {contextLabel ? (
+        <span className="contacts-detail-view__channel-type contacts-detail-view__channel-type-label">
+          {contextLabel}
+        </span>
+      ) : (
+        <span className="contacts-detail-view__channel-type" aria-hidden="true" />
+      )}
+      <div className="contacts-detail-view__channel-value">{children}</div>
+    </li>
+  );
+}
+
 function channelTypeLabel(contextType: ContactChannelContext, labels: ContactsUILabels): string {
   if (contextType === "work") return labels.channelTypeWork;
   if (contextType === "home") return labels.channelTypeHome;
   if (contextType === "school") return labels.channelTypeSchool;
   return labels.channelTypeNone;
-}
-
-function channelDisplayLabel(
-  contexts: Record<string, boolean | undefined> | undefined,
-  labels: ContactsUILabels,
-  customLabel?: string,
-): string | undefined {
-  const contextType = readContactContext(contexts);
-  if (contextType !== "") return channelTypeLabel(contextType, labels);
-  const trimmed = customLabel?.trim();
-  if (trimmed) return trimmed;
-  return undefined;
 }
 
 function ContextTypeSelect({
@@ -353,13 +365,18 @@ export function ContactsDetailView({
         {isEditing && editDraft ? (
           <div className="contacts-detail-view__editable-list">
             {editDraft.phones.map((row) => (
-              <div key={row.id} className="contacts-detail-view__editable-row">
-                <ContextTypeSelect
-                  labels={labels}
-                  value={row.contextType}
-                  ariaLabel={`${labels.channelType} ${labels.phoneNumber}`}
-                  onChange={(contextType) => onUpdatePhoneContext(row.id, contextType)}
-                />
+              <div
+                key={row.id}
+                className="contacts-detail-view__channel-row contacts-detail-view__channel-row--editable"
+              >
+                <div className="contacts-detail-view__channel-type">
+                  <ContextTypeSelect
+                    labels={labels}
+                    value={row.contextType}
+                    ariaLabel={`${labels.channelType} ${labels.phoneNumber}`}
+                    onChange={(contextType) => onUpdatePhoneContext(row.id, contextType)}
+                  />
+                </div>
                 <Input
                   aria-label={labels.phoneNumber}
                   value={row.number}
@@ -383,14 +400,14 @@ export function ContactsDetailView({
             />
           </div>
         ) : (
-          <ul className="contacts-detail-view__value-list">
+          <ul className="contacts-detail-view__channel-list">
             {readPhones.map((row) => (
-              <li key={row.id} className="contacts-detail-view__value-item">
+              <ChannelReadRow
+                key={row.id}
+                contextLabel={"contextLabel" in row ? row.contextLabel : undefined}
+              >
                 <span>{"number" in row ? row.number : ""}</span>
-                {"contextLabel" in row && row.contextLabel ? (
-                  <span className="contacts-detail-view__meta">{row.contextLabel}</span>
-                ) : null}
-              </li>
+              </ChannelReadRow>
             ))}
           </ul>
         )}
@@ -400,13 +417,18 @@ export function ContactsDetailView({
         {isEditing && editDraft ? (
           <div className="contacts-detail-view__editable-list">
             {editDraft.emails.map((row) => (
-              <div key={row.id} className="contacts-detail-view__editable-row">
-                <ContextTypeSelect
-                  labels={labels}
-                  value={row.contextType}
-                  ariaLabel={`${labels.channelType} ${labels.emailAddress}`}
-                  onChange={(contextType) => onUpdateEmailContext(row.id, contextType)}
-                />
+              <div
+                key={row.id}
+                className="contacts-detail-view__channel-row contacts-detail-view__channel-row--editable"
+              >
+                <div className="contacts-detail-view__channel-type">
+                  <ContextTypeSelect
+                    labels={labels}
+                    value={row.contextType}
+                    ariaLabel={`${labels.channelType} ${labels.emailAddress}`}
+                    onChange={(contextType) => onUpdateEmailContext(row.id, contextType)}
+                  />
+                </div>
                 <Input
                   aria-label={labels.emailAddress}
                   value={row.address}
@@ -430,14 +452,14 @@ export function ContactsDetailView({
             />
           </div>
         ) : (
-          <ul className="contacts-detail-view__value-list">
+          <ul className="contacts-detail-view__channel-list">
             {readEmails.map((row) => (
-              <li key={row.id} className="contacts-detail-view__value-item">
+              <ChannelReadRow
+                key={row.id}
+                contextLabel={"contextLabel" in row ? row.contextLabel : undefined}
+              >
                 <span>{"address" in row ? row.address : ""}</span>
-                {"contextLabel" in row && row.contextLabel ? (
-                  <span className="contacts-detail-view__meta">{row.contextLabel}</span>
-                ) : null}
-              </li>
+              </ChannelReadRow>
             ))}
           </ul>
         )}
@@ -450,8 +472,11 @@ export function ContactsDetailView({
         {isEditing && editDraft ? (
           <div className="contacts-detail-view__editable-list contacts-detail-view__address-list">
             {editDraft.addresses.map((row) => (
-              <div key={row.id} className="contacts-detail-view__address-row">
-                <div className="contacts-detail-view__address-type">
+              <div
+                key={row.id}
+                className="contacts-detail-view__channel-row contacts-detail-view__channel-row--editable contacts-detail-view__channel-row--address"
+              >
+                <div className="contacts-detail-view__channel-type">
                   <ContextTypeSelect
                     labels={labels}
                     value={row.contextType}
@@ -514,18 +539,14 @@ export function ContactsDetailView({
             />
           </div>
         ) : (
-          <ul className="contacts-detail-view__address-list">
+          <ul className="contacts-detail-view__channel-list">
             {readAddresses.map((row) => (
-              <li key={row.id} className="contacts-detail-view__address-row">
-                {"contextLabel" in row && row.contextLabel ? (
-                  <span className="contacts-detail-view__address-type contacts-detail-view__address-type-label">
-                    {row.contextLabel}
-                  </span>
-                ) : (
-                  <span className="contacts-detail-view__address-type" aria-hidden="true" />
-                )}
+              <ChannelReadRow
+                key={row.id}
+                contextLabel={"contextLabel" in row ? row.contextLabel : undefined}
+              >
                 {"lines" in row ? <AddressDisplayBlock lines={row.lines} /> : null}
-              </li>
+              </ChannelReadRow>
             ))}
           </ul>
         )}
@@ -535,13 +556,18 @@ export function ContactsDetailView({
         {isEditing && editDraft ? (
           <div className="contacts-detail-view__editable-list">
             {editDraft.urls.map((row) => (
-              <div key={row.id} className="contacts-detail-view__editable-row">
-                <ContextTypeSelect
-                  labels={labels}
-                  value={row.contextType}
-                  ariaLabel={`${labels.channelType} ${labels.urlAddress}`}
-                  onChange={(contextType) => onUpdateUrlContext(row.id, contextType)}
-                />
+              <div
+                key={row.id}
+                className="contacts-detail-view__channel-row contacts-detail-view__channel-row--editable"
+              >
+                <div className="contacts-detail-view__channel-type">
+                  <ContextTypeSelect
+                    labels={labels}
+                    value={row.contextType}
+                    ariaLabel={`${labels.channelType} ${labels.urlAddress}`}
+                    onChange={(contextType) => onUpdateUrlContext(row.id, contextType)}
+                  />
+                </div>
                 <Input
                   aria-label={labels.urlAddress}
                   value={row.uri}
@@ -565,9 +591,12 @@ export function ContactsDetailView({
             />
           </div>
         ) : (
-          <ul className="contacts-detail-view__value-list">
+          <ul className="contacts-detail-view__channel-list">
             {readUrls.map((row) => (
-              <li key={row.id} className="contacts-detail-view__value-item">
+              <ChannelReadRow
+                key={row.id}
+                contextLabel={"contextLabel" in row ? row.contextLabel : undefined}
+              >
                 <a
                   className="contacts-detail-view__link"
                   href={row.uri}
@@ -576,10 +605,7 @@ export function ContactsDetailView({
                 >
                   {row.uri}
                 </a>
-                {"contextLabel" in row && row.contextLabel ? (
-                  <span className="contacts-detail-view__meta">{row.contextLabel}</span>
-                ) : null}
-              </li>
+              </ChannelReadRow>
             ))}
           </ul>
         )}
