@@ -82,6 +82,7 @@ export function ContactsWorkspace({
     updateUrlContext,
     removeUrl,
     addressBooks,
+    contactGroups,
   } = useContactsController({
     data,
     labels,
@@ -89,12 +90,14 @@ export function ContactsWorkspace({
     operations,
   });
 
-  const { primarySidebarItems, addressBookSidebarItems } = useContactsSidebarModel({
-    labels: L,
-    view,
-    addressBooks,
-    selectView,
-  });
+  const { primarySidebarItems, addressBookSidebarItems, groupSidebarItems } =
+    useContactsSidebarModel({
+      labels: L,
+      view,
+      addressBooks,
+      contactGroups,
+      selectView,
+    });
 
   return (
     <>
@@ -133,6 +136,9 @@ export function ContactsWorkspace({
           >
             <SidebarSection items={primarySidebarItems} />
             <SidebarSection title={L.sectionAddressBooks} items={addressBookSidebarItems} />
+            {groupSidebarItems.length > 0 ? (
+              <SidebarSection title={L.sectionGroups} items={groupSidebarItems} />
+            ) : null}
           </AppSidebar>
         )}
         list={(c) =>

@@ -2,6 +2,7 @@ import { act, renderHook } from "@testing-library/react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { createContactsAppBootstrap } from "@/lib/api/mock/contacts-bootstrap";
+import { contactsGroupViewKey } from "./contacts-group-utils";
 import { useContactsController } from "./use-contacts-controller";
 
 vi.mock("@/hooks/use-app-toast", () => ({
@@ -85,5 +86,38 @@ describe("useContactsController", () => {
     expect(result.current.editMode).toBe(false);
     expect(result.current.editDraft).toBeNull();
     expect(result.current.active?.name?.full).toBe("Jane Doe");
+  });
+
+  it("hides group cards from the default address book list", () => {
+    const { result } = renderHook(() =>
+      useContactsController({
+        data: bootstrap.data,
+        listLoading: false,
+      }),
+    );
+
+    expect(result.current.visibleCards.map((card) => card.id)).not.toContain("card-group-friends");
+    expect(result.current.visibleCards.map((card) => card.id)).not.toContain("card-group-family");
+    expect(result.current.contactGroups.map((card) => card.id)).toEqual([
+      "card-group-family",
+      "card-group-friends",
+    ]);
+  });
+
+  it("shows group members when a group sidebar view is selected", () => {
+    const { result } = renderHook(() =>
+      useContactsController({
+        data: bootstrap.data,
+        listLoading: false,
+      }),
+    );
+
+    act(() => {
+      result.current.selectView(contactsGroupViewKey("card-group-friends"));
+    });
+
+    expect(result.current.viewLabel).toBe("Friends");
+    expect(result.current.visibleCards.map((card) => card.id)).toEqual(["card-jane", "card-joe"]);
+    expect(result.current.canCreateContact).toBe(false);
   });
 });

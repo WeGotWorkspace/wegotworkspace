@@ -9,6 +9,7 @@ export type ContactsUILabels = {
   searchPlaceholder: string;
   sidebarAllContacts: string;
   sectionAddressBooks: string;
+  sectionGroups: string;
   listSelected: (count: number) => string;
   listContacts: (count: number) => string;
   emptyList: string;
@@ -67,6 +68,7 @@ export const defaultContactsLabels: ContactsUILabels = {
   searchPlaceholder: "Search contacts...",
   sidebarAllContacts: "All contacts",
   sectionAddressBooks: "Address books",
+  sectionGroups: "Groups",
   listSelected: (count) => `${count} Selected`,
   listContacts: (count) => `${count} Contacts`,
   emptyList: "No contacts",

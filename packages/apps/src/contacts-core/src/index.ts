@@ -38,6 +38,14 @@ export {
   type ChannelDisplayLabelOptions,
 } from "./contacts-display-utils";
 export {
+  contactsGroupViewKey,
+  filterCardsByView,
+  isContactGroupCard,
+  listContactGroups,
+  resolveGroupMemberCardIds,
+  type ContactCardWithResolvedMembers,
+} from "./contacts-group-utils";
+export {
   CONTACTS_CREATE_ID,
   contactCardToEditDraft,
   editDraftToCreateBody,

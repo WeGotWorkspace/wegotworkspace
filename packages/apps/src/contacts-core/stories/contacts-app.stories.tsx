@@ -34,6 +34,21 @@ export const Default: Story = {
       expect(canvas.getByRole("heading", { level: 1, name: "Jane Doe" })).toBeInTheDocument();
     });
 
+    await userEvent.click(canvas.getByRole("button", { name: "Friends" }));
+    await waitFor(() => {
+      expect(canvas.getByText("2 Contacts")).toBeInTheDocument();
+      expect(canvasElement.querySelector('[data-list-item-id="card-group-friends"]')).toBeNull();
+      expect(canvasElement.querySelector('[data-list-item-id="card-jane"]')).toBeTruthy();
+      expect(canvasElement.querySelector('[data-list-item-id="card-joe"]')).toBeTruthy();
+    });
+
+    await userEvent.click(
+      canvasElement.querySelector('[data-list-item-id="card-jane"]') as HTMLElement,
+    );
+    await waitFor(() => {
+      expect(canvas.getByRole("heading", { level: 1, name: "Jane Doe" })).toBeInTheDocument();
+    });
+
     await userEvent.click(canvas.getByRole("button", { name: "Edit" }));
     const phoneInput = canvas.getByDisplayValue("+1-555-0101");
     await userEvent.clear(phoneInput);
@@ -55,6 +70,8 @@ export const Default: Story = {
       },
     });
     expect(patch).not.toHaveProperty("@type");
+
+    await userEvent.click(canvas.getByRole("button", { name: "Default Address Book" }));
 
     const createButtons = canvas.getAllByRole("button", { name: "New contact" });
     await userEvent.click(createButtons[0]);

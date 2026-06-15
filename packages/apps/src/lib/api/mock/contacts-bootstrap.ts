@@ -139,6 +139,31 @@ const mockCards = [
       },
     },
   },
+  {
+    "@type": "Card",
+    version: "1.0",
+    id: "card-group-friends",
+    uid: "urn:uuid:550e8400-e29b-41d4-a716-446655440100",
+    kind: "group" as const,
+    addressBookIds: { default: true as const },
+    name: { "@type": "Name" as const, isOrdered: false, full: "Friends" },
+    members: {
+      "urn:uuid:550e8400-e29b-41d4-a716-446655440010": true,
+      "urn:uuid:550e8400-e29b-41d4-a716-446655440020": true,
+    },
+  },
+  {
+    "@type": "Card",
+    version: "1.0",
+    id: "card-group-family",
+    uid: "urn:uuid:550e8400-e29b-41d4-a716-446655440101",
+    kind: "group" as const,
+    addressBookIds: { default: true as const },
+    name: { "@type": "Name" as const, isOrdered: false, full: "Family" },
+    members: {
+      "urn:uuid:550e8400-e29b-41d4-a716-446655440010": true,
+    },
+  },
 ] as unknown as ContactCard[];
 
 export function createContactsAppBootstrap(overrides?: {

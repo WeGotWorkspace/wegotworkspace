@@ -13,6 +13,7 @@ import {
   contactDisplayName,
   filterCardsBySearch,
 } from "@/contacts-core/src/contacts-display-utils";
+import { filterCardsByView, listContactGroups } from "@/contacts-core/src/contacts-group-utils";
 import { mergeContactsLabels, type ContactsUILabels } from "@/contacts-core/src/contacts-labels";
 import {
   CONTACTS_CREATE_ID,
@@ -40,15 +41,6 @@ type UseContactsControllerArgs = {
 };
 
 const WRITE_QUEUE_DELAY_MS = 2500;
-
-function filterCardsByView(cards: ContactCard[], view: string): ContactCard[] {
-  if (view === "all") return cards;
-  if (view.startsWith("book:")) {
-    const bookId = view.slice(5);
-    return cards.filter((card) => Boolean(card.addressBookIds?.[bookId]));
-  }
-  return cards;
-}
 
 function draftDisplayName(draft: ContactEditDraft, unknownLabel: string): string {
   const name = [draft.nameGiven, draft.nameGiven2, draft.nameSurname]
@@ -90,6 +82,8 @@ export function useContactsController({
     setCards(data.cards);
     setAddressBooks(data.addressBooks);
   }, [data.addressBooks, data.cards]);
+
+  const contactGroups = useMemo(() => listContactGroups(cards), [cards]);
 
   const visibleCards = useMemo(() => {
     const byView = filterCardsByView(cards, view);
@@ -148,10 +142,16 @@ export function useContactsController({
       const bookId = view.slice(5);
       return addressBooks.find((book) => book.id === bookId)?.name ?? bookId;
     }
+    if (view.startsWith("group:")) {
+      const groupId = view.slice("group:".length);
+      const group = contactGroups.find((card) => card.id === groupId);
+      return group ? contactDisplayName(group) : L.sidebarAllContacts;
+    }
     return L.sidebarAllContacts;
-  }, [L.sidebarAllContacts, addressBooks, view]);
+  }, [L.sidebarAllContacts, addressBooks, contactGroups, view]);
 
-  const canCreateContact = view !== "all" || addressBooks.length > 0;
+  const canCreateContact =
+    !view.startsWith("group:") && (view !== "all" || addressBooks.length > 0);
 
   const canEdit = useMemo(() => {
     if (createMode) return true;
@@ -603,6 +603,7 @@ export function useContactsController({
   return {
     L,
     cards,
+    contactGroups,
     addressBooks,
     active,
     activeId,
