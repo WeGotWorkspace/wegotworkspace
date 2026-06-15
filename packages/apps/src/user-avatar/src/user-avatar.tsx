@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 import "@/user-avatar/src/user-avatar.css";
@@ -9,6 +9,8 @@ export type UserAvatarProps = {
   displayName: string;
   /** Shown under the display name (e.g. email, handle). Ignored when `compact` is true. */
   subtitle?: ReactNode;
+  /** When set, show profile photo; falls back to initials on load error or when omitted. */
+  imageSrc?: string;
   /** Avatar + label only; no text column. */
   compact?: boolean;
   /** `sm` = sidebar/footer chip; `md` = mail sender row; `lg` / `xl` = meet tiles and lobby preview. */
@@ -28,12 +30,20 @@ function initialsFromDisplayName(displayName: string) {
 export function UserAvatar({
   displayName,
   subtitle,
+  imageSrc,
   compact = false,
   size = "sm",
   onClick,
   className,
 }: UserAvatarProps) {
+  const [imageFailed, setImageFailed] = useState(false);
   const initials = initialsFromDisplayName(displayName) || "?";
+  const showImage = Boolean(imageSrc) && !imageFailed;
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [imageSrc]);
+
   const sizeClass =
     size === "md"
       ? "user-avatar--md"
@@ -43,6 +53,17 @@ export function UserAvatar({
           ? "user-avatar--xl"
           : "user-avatar--sm";
 
+  const markContent = showImage ? (
+    <img
+      src={imageSrc}
+      alt=""
+      className="user-avatar__image"
+      onError={() => setImageFailed(true)}
+    />
+  ) : (
+    initials
+  );
+
   const circle = onClick ? (
     <button
       type="button"
@@ -50,11 +71,11 @@ export function UserAvatar({
       aria-label={`${displayName} avatar`}
       className="user-avatar__mark"
     >
-      {initials}
+      {markContent}
     </button>
   ) : (
     <div className="user-avatar__mark" role="img" aria-label={`${displayName} avatar`}>
-      {initials}
+      {markContent}
     </div>
   );
 

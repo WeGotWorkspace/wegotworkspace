@@ -26,6 +26,15 @@ export const Compact: Story = {
   },
 };
 
+export const WithImage: Story = {
+  args: {
+    displayName: "Jane Doe",
+    imageSrc: "https://www.example.com/pub/photos/jqpublic.gif",
+    compact: true,
+    size: "lg",
+  },
+};
+
 export const CustomColors: Story = {
   render: () => (
     <div
