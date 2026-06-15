@@ -17,7 +17,7 @@ import {
 } from "@/contacts-core/src/contacts-edit-utils";
 import {
   contactDisplayName,
-  channelDisplayLabel,
+  channelDisplayLabels,
   contactPhotoUrl,
   mapEntriesSorted,
 } from "@/contacts-core/src/contacts-display-utils";
@@ -144,17 +144,20 @@ function AddressDisplayBlock({ lines }: { lines: AddressDisplayLines }) {
 }
 
 function ChannelReadRow({
-  contextLabel,
+  contextLabels,
   children,
 }: {
-  contextLabel?: string;
+  contextLabels?: string[];
   children: ReactNode;
 }) {
+  const hasLabels = Boolean(contextLabels?.length);
   return (
     <li className="contacts-detail-view__channel-row">
-      {contextLabel ? (
+      {hasLabels ? (
         <div className="contacts-detail-view__channel-type">
-          <Tag label={contextLabel} />
+          {contextLabels?.map((label, index) => (
+            <Tag key={`${label}-${index}`} label={label} />
+          ))}
         </div>
       ) : (
         <span className="contacts-detail-view__channel-type" aria-hidden="true" />
@@ -252,7 +255,10 @@ export function ContactsDetailView({
     : mapEntriesSorted(card?.phones).map(([id, phone]) => ({
         id,
         number: phoneDisplayValue(phone),
-        contextLabel: channelDisplayLabel(phone.contexts, labels, phone.label),
+        contextLabels: channelDisplayLabels(phone.contexts, labels, {
+          features: phone.features,
+          customLabel: phone.label,
+        }),
       }));
 
   const readEmails = isEditing
@@ -260,7 +266,9 @@ export function ContactsDetailView({
     : mapEntriesSorted(card?.emails).map(([id, email]) => ({
         id,
         address: email.address?.trim() || "",
-        contextLabel: channelDisplayLabel(email.contexts, labels, email.label),
+        contextLabels: channelDisplayLabels(email.contexts, labels, {
+          customLabel: email.label,
+        }),
       }));
 
   const readAddresses = isEditing
@@ -268,11 +276,9 @@ export function ContactsDetailView({
     : mapEntriesSorted(card?.addresses).map(([id, address]) => ({
         id,
         lines: addressDisplayFromCard(address),
-        contextLabel: channelDisplayLabel(
-          address.contexts,
-          labels,
-          typeof address.label === "string" ? address.label : undefined,
-        ),
+        contextLabels: channelDisplayLabels(address.contexts, labels, {
+          customLabel: typeof address.label === "string" ? address.label : undefined,
+        }),
       }));
 
   const readUrls = isEditing
@@ -282,7 +288,9 @@ export function ContactsDetailView({
         .map(([id, link]) => ({
           id,
           uri: link.uri?.trim() ?? "",
-          contextLabel: channelDisplayLabel(link.contexts, labels, link.label),
+          contextLabels: channelDisplayLabels(link.contexts, labels, {
+            customLabel: link.label,
+          }),
         }));
 
   const organization = isEditing
@@ -411,7 +419,7 @@ export function ContactsDetailView({
             {readPhones.map((row) => (
               <ChannelReadRow
                 key={row.id}
-                contextLabel={"contextLabel" in row ? row.contextLabel : undefined}
+                contextLabels={"contextLabels" in row ? row.contextLabels : undefined}
               >
                 <span>{"number" in row ? row.number : ""}</span>
               </ChannelReadRow>
@@ -463,7 +471,7 @@ export function ContactsDetailView({
             {readEmails.map((row) => (
               <ChannelReadRow
                 key={row.id}
-                contextLabel={"contextLabel" in row ? row.contextLabel : undefined}
+                contextLabels={"contextLabels" in row ? row.contextLabels : undefined}
               >
                 <span>{"address" in row ? row.address : ""}</span>
               </ChannelReadRow>
@@ -550,7 +558,7 @@ export function ContactsDetailView({
             {readAddresses.map((row) => (
               <ChannelReadRow
                 key={row.id}
-                contextLabel={"contextLabel" in row ? row.contextLabel : undefined}
+                contextLabels={"contextLabels" in row ? row.contextLabels : undefined}
               >
                 {"lines" in row ? <AddressDisplayBlock lines={row.lines} /> : null}
               </ChannelReadRow>
@@ -602,7 +610,7 @@ export function ContactsDetailView({
             {readUrls.map((row) => (
               <ChannelReadRow
                 key={row.id}
-                contextLabel={"contextLabel" in row ? row.contextLabel : undefined}
+                contextLabels={"contextLabels" in row ? row.contextLabels : undefined}
               >
                 <a
                   className="contacts-detail-view__link"

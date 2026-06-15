@@ -25,6 +25,7 @@ export {
   type ContactsUILabels,
 } from "./contacts-labels";
 export {
+  channelDisplayLabels,
   contactDisplayName,
   contactInitials,
   contactListDetail,
@@ -33,6 +34,7 @@ export {
   CONTACT_MEDIA_BLOB_PATH,
   filterCardsBySearch,
   mapEntriesSorted,
+  type ChannelDisplayLabelOptions,
 } from "./contacts-display-utils";
 export {
   CONTACTS_CREATE_ID,

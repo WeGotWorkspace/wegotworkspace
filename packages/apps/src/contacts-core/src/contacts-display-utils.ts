@@ -12,17 +12,74 @@ function channelTypeLabel(contextType: ContactChannelContext, labels: ContactsUI
   return labels.channelTypeNone;
 }
 
-/** Read-mode label for phones, emails, addresses, and links from JSContact contexts or custom label. */
-export function channelDisplayLabel(
+const PHONE_FEATURE_KEYS = [
+  "mobile",
+  "fax",
+  "main-number",
+  "pager",
+  "text",
+  "textphone",
+  "video",
+  "voice",
+] as const;
+
+type PhoneFeatureKey = (typeof PHONE_FEATURE_KEYS)[number];
+
+/** vCard TYPE names for JSContact `Phone.features` keys (RFC 9555 TEL table). */
+function phoneFeatureDisplayLabel(featureKey: PhoneFeatureKey): string {
+  if (featureKey === "mobile") return "cell";
+  return featureKey;
+}
+
+function collectPhoneFeatureLabels(
+  features?: Record<string, boolean | undefined>,
+  contexts?: Record<string, boolean | undefined>,
+): PhoneFeatureKey[] {
+  const active = new Set<PhoneFeatureKey>();
+  for (const source of [features, contexts]) {
+    if (!source) continue;
+    for (const key of PHONE_FEATURE_KEYS) {
+      if (source[key]) active.add(key);
+    }
+  }
+  return PHONE_FEATURE_KEYS.filter((key) => active.has(key));
+}
+
+export type ChannelDisplayLabelOptions = {
+  features?: Record<string, boolean | undefined>;
+  customLabel?: string;
+};
+
+/**
+ * Read-mode labels for phones, emails, addresses, and links.
+ * Phones may emit multiple tags (feature + context); other channels emit at most one context/custom tag.
+ */
+export function channelDisplayLabels(
   contexts: Record<string, boolean | undefined> | undefined,
   labels: ContactsUILabels,
-  customLabel?: string,
-): string | undefined {
+  options?: ChannelDisplayLabelOptions,
+): string[] {
+  const featureLabels = collectPhoneFeatureLabels(options?.features, contexts).map(
+    phoneFeatureDisplayLabel,
+  );
+
   const contextType = readContactContext(contexts);
-  if (contextType !== "") return channelTypeLabel(contextType, labels);
-  const trimmed = customLabel?.trim();
-  if (trimmed) return trimmed;
-  return undefined;
+  const contextLabel = contextType !== "" ? channelTypeLabel(contextType, labels) : undefined;
+
+  const trimmedCustom = options?.customLabel?.trim();
+  const customLabel = trimmedCustom && !contextLabel ? trimmedCustom : undefined;
+
+  const resolved = [
+    ...featureLabels,
+    ...(contextLabel ? [contextLabel] : []),
+    ...(customLabel ? [customLabel] : []),
+  ];
+
+  if (resolved.length === 1 && resolved[0] === "voice") {
+    return [];
+  }
+
+  return resolved;
 }
 
 export function mapEntriesSorted<T>(map: Record<string, T> | undefined): [string, T][] {

@@ -209,8 +209,16 @@
 }
 
 .contacts-detail-view__channel-type {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
   flex-shrink: 0;
-  padding-top: 0.125rem;
+  min-height: calc(0.9375rem * 1.35);
+}
+
+.contacts-detail-view__channel-type .tag {
+  margin-block: calc((0.9375rem * 1.35 - var(--tag-height, 1.5rem)) / 2);
 }
 
 .contacts-detail-view__channel-row--editable .contacts-detail-view__channel-type {

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { ContactCard } from "@/contacts-core/src/contacts-types";
 import { defaultContactsLabels } from "./contacts-labels";
 import {
-  channelDisplayLabel,
+  channelDisplayLabels,
   contactDisplayName,
   contactInitials,
   contactListDetail,
@@ -141,7 +141,7 @@ describe("contacts-display-utils", () => {
     };
     expect(contactPhotoUrl(withPhotoUri)).toBe("https://example.com/photos/jane.jpg");
 
-    const withBlob: ContactCard = {
+    const withBlob = {
       ...janeCard,
       media: {
         "media-1": {
@@ -150,7 +150,7 @@ describe("contacts-display-utils", () => {
           blobId: "550e8400-e29b-41d4-a716-446655440099",
         },
       },
-    };
+    } as unknown as ContactCard;
     expect(contactPhotoUrl(withBlob)).toBe(
       `${CONTACT_MEDIA_BLOB_PATH}/550e8400-e29b-41d4-a716-446655440099`,
     );
@@ -227,14 +227,40 @@ describe("contacts-display-utils", () => {
     expect(filterCardsBySearch(cards, "")).toEqual(cards);
   });
 
-  it("resolves channel display labels from phone contexts and custom labels", () => {
+  it("resolves channel display labels from contexts and custom labels", () => {
     const labels = defaultContactsLabels;
-    expect(channelDisplayLabel({ private: true }, labels)).toBe("Home");
-    expect(channelDisplayLabel({ home: true }, labels)).toBe("Home");
-    expect(channelDisplayLabel({ work: true }, labels)).toBe("Work");
-    expect(channelDisplayLabel({ school: true }, labels)).toBe("School");
-    expect(channelDisplayLabel(undefined, labels, "  Assistant  ")).toBe("Assistant");
-    expect(channelDisplayLabel({ voice: true }, labels)).toBeUndefined();
-    expect(channelDisplayLabel(undefined, labels)).toBeUndefined();
+    expect(channelDisplayLabels({ private: true }, labels)).toEqual(["Home"]);
+    expect(channelDisplayLabels({ home: true }, labels)).toEqual(["Home"]);
+    expect(channelDisplayLabels({ work: true }, labels)).toEqual(["Work"]);
+    expect(channelDisplayLabels({ school: true }, labels)).toEqual(["School"]);
+    expect(channelDisplayLabels(undefined, labels, { customLabel: "  Assistant  " })).toEqual([
+      "Assistant",
+    ]);
+    expect(channelDisplayLabels({ voice: true }, labels)).toEqual([]);
+    expect(channelDisplayLabels(undefined, labels)).toEqual([]);
+  });
+
+  it("returns multiple phone feature and context tags in stable order", () => {
+    const labels = defaultContactsLabels;
+    expect(
+      channelDisplayLabels({ private: true }, labels, {
+        features: { voice: true },
+      }),
+    ).toEqual(["voice", "Home"]);
+    expect(
+      channelDisplayLabels(undefined, labels, {
+        features: { mobile: true, voice: true },
+      }),
+    ).toEqual(["cell", "voice"]);
+    expect(
+      channelDisplayLabels(undefined, labels, {
+        features: { mobile: true },
+      }),
+    ).toEqual(["cell"]);
+    expect(
+      channelDisplayLabels({ work: true }, labels, {
+        features: { fax: true, voice: true },
+      }),
+    ).toEqual(["fax", "voice", "Work"]);
   });
 });
