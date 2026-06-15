@@ -59,6 +59,13 @@ final class VCardToJsContactConverter
             $card['kind'] = strtolower(trim((string) $document->KIND->getValue()));
         }
 
+        foreach ($document->select('X-ABSHOWAS') as $showAsProperty) {
+            if (strtoupper(trim((string) $showAsProperty->getValue())) === 'COMPANY') {
+                $card['kind'] = 'org';
+                break;
+            }
+        }
+
         if (isset($document->LANGUAGE)) {
             $card['language'] = trim((string) $document->LANGUAGE->getValue());
         }
@@ -1012,6 +1019,9 @@ final class VCardToJsContactConverter
             $isKnown = ConversionSupport::isKnownVCardProperty($name);
             $isPreserveOnly = ConversionSupport::shouldPreserveVCardProperty($name);
             $isDeferred = isset($deferredKeys[$this->propertyIdentity($child)]);
+            if ($name === 'X-ABSHOWAS') {
+                continue;
+            }
             if ($isKnown && ! $isPreserveOnly && ! $isDeferred) {
                 continue;
             }

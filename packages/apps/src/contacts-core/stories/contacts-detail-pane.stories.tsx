@@ -51,6 +51,12 @@ function ContactsDetailPaneHarness({ readOnly = false }: { readOnly?: boolean })
             ],
           }))
         }
+        onAddUrl={() =>
+          setEditDraft((prev) => ({
+            ...prev,
+            urls: [...prev.urls, { id: "url-new", uri: "", contextType: "" }],
+          }))
+        }
         onUpdatePhone={(id, number) =>
           setEditDraft((prev) => ({
             ...prev,
@@ -87,6 +93,24 @@ function ContactsDetailPaneHarness({ readOnly = false }: { readOnly?: boolean })
           setEditDraft((prev) => ({
             ...prev,
             addresses: prev.addresses.map((row) => (row.id === id ? { ...row, contextType } : row)),
+          }))
+        }
+        onUpdateUrl={(id, uri) =>
+          setEditDraft((prev) => ({
+            ...prev,
+            urls: prev.urls.map((row) => (row.id === id ? { ...row, uri } : row)),
+          }))
+        }
+        onUpdateUrlContext={(id, contextType) =>
+          setEditDraft((prev) => ({
+            ...prev,
+            urls: prev.urls.map((row) => (row.id === id ? { ...row, contextType } : row)),
+          }))
+        }
+        onRemoveUrl={(id) =>
+          setEditDraft((prev) => ({
+            ...prev,
+            urls: prev.urls.filter((row) => row.id !== id),
           }))
         }
         onRemovePhone={(id) =>
@@ -142,4 +166,9 @@ export const Editable: Story = {
 
 export const ReadOnly: Story = {
   args: { readOnly: true },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByText("Home")).toBeInTheDocument();
+    expect(canvas.getAllByText("Work").length).toBeGreaterThan(0);
+  },
 };

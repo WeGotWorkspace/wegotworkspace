@@ -5,10 +5,12 @@ import { UserAvatar } from "@/user-avatar/src/user-avatar";
 import { FieldLabelRow } from "@/ui/field-label-row";
 import { Input } from "@/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
+import { Switch } from "@/ui/switch";
 import { cn } from "@/lib/utils";
 import type { ContactCard } from "@/contacts-core/src/contacts-types";
 import {
   CONTACT_CHANNEL_CONTEXTS,
+  readContactContext,
   type ContactAddressDraft,
   type ContactChannelContext,
   type ContactEditDraft,
@@ -37,6 +39,10 @@ type ContactsDetailViewProps = {
     value: string,
   ) => void;
   onUpdateAddressContext: (id: string, contextType: ContactChannelContext) => void;
+  onAddUrl: () => void;
+  onUpdateUrl: (id: string, uri: string) => void;
+  onUpdateUrlContext: (id: string, contextType: ContactChannelContext) => void;
+  onRemoveUrl: (id: string) => void;
   onRemovePhone: (id: string) => void;
   onRemoveEmail: (id: string) => void;
   onRemoveAddress: (id: string) => void;
@@ -69,19 +75,23 @@ function formatAddressLine(address: NonNullable<ContactCard["addresses"]>[string
   return legacy.join(", ");
 }
 
-function contextLabel(
-  contexts: Record<string, boolean | undefined> | undefined,
-  labels: ContactsUILabels,
-): string | undefined {
-  if (contexts?.work) return labels.channelTypeWork;
-  if (contexts?.private) return labels.channelTypeHome;
-  return undefined;
-}
-
-function contextTypeLabel(contextType: ContactChannelContext, labels: ContactsUILabels): string {
+function channelTypeLabel(contextType: ContactChannelContext, labels: ContactsUILabels): string {
   if (contextType === "work") return labels.channelTypeWork;
   if (contextType === "home") return labels.channelTypeHome;
+  if (contextType === "school") return labels.channelTypeSchool;
   return labels.channelTypeNone;
+}
+
+function channelDisplayLabel(
+  contexts: Record<string, boolean | undefined> | undefined,
+  labels: ContactsUILabels,
+  customLabel?: string,
+): string | undefined {
+  const contextType = readContactContext(contexts);
+  if (contextType !== "") return channelTypeLabel(contextType, labels);
+  const trimmed = customLabel?.trim();
+  if (trimmed) return trimmed;
+  return undefined;
 }
 
 function ContextTypeSelect({
@@ -106,7 +116,7 @@ function ContextTypeSelect({
       <SelectContent>
         {CONTACT_CHANNEL_CONTEXTS.map((contextType) => (
           <SelectItem key={contextType || "none"} value={contextType || "none"}>
-            {contextTypeLabel(contextType, labels)}
+            {channelTypeLabel(contextType, labels)}
           </SelectItem>
         ))}
       </SelectContent>
@@ -149,6 +159,10 @@ export function ContactsDetailView({
   onUpdateEmailContext,
   onUpdateAddress,
   onUpdateAddressContext,
+  onAddUrl,
+  onUpdateUrl,
+  onUpdateUrlContext,
+  onRemoveUrl,
   onRemovePhone,
   onRemoveEmail,
   onRemoveAddress,
@@ -161,7 +175,7 @@ export function ContactsDetailView({
     : mapEntriesSorted(card?.phones).map(([id, phone]) => ({
         id,
         number: phoneDisplayValue(phone),
-        contextLabel: contextLabel(phone.contexts, labels),
+        contextLabel: channelDisplayLabel(phone.contexts, labels, phone.label),
       }));
 
   const readEmails = isEditing
@@ -169,7 +183,7 @@ export function ContactsDetailView({
     : mapEntriesSorted(card?.emails).map(([id, email]) => ({
         id,
         address: email.address?.trim() || "",
-        contextLabel: contextLabel(email.contexts, labels),
+        contextLabel: channelDisplayLabel(email.contexts, labels, email.label),
       }));
 
   const readAddresses = isEditing
@@ -177,8 +191,22 @@ export function ContactsDetailView({
     : mapEntriesSorted(card?.addresses).map(([id, address]) => ({
         id,
         line: formatAddressLine(address),
-        contextLabel: contextLabel(address.contexts, labels),
+        contextLabel: channelDisplayLabel(
+          address.contexts,
+          labels,
+          typeof address.label === "string" ? address.label : undefined,
+        ),
       }));
+
+  const readUrls = isEditing
+    ? (editDraft?.urls ?? [])
+    : mapEntriesSorted(card?.links)
+        .filter(([, link]) => link.kind !== "contact")
+        .map(([id, link]) => ({
+          id,
+          uri: link.uri?.trim() ?? "",
+          contextLabel: channelDisplayLabel(link.contexts, labels, link.label),
+        }));
 
   const organization = isEditing
     ? (editDraft?.organization ?? "")
@@ -237,6 +265,13 @@ export function ContactsDetailView({
                 id="contact-organization"
                 value={editDraft.organization}
                 onChange={(event) => onDraftChange({ organization: event.target.value })}
+              />
+            </FieldLabelRow>
+            <FieldLabelRow label={labels.companyContact}>
+              <Switch
+                checked={editDraft.showAsCompany}
+                onCheckedChange={(checked) => onDraftChange({ showAsCompany: checked })}
+                aria-label={labels.companyContact}
               />
             </FieldLabelRow>
           </div>
@@ -442,6 +477,60 @@ export function ContactsDetailView({
             {readAddresses.map((row) => (
               <li key={row.id} className="contacts-detail-view__value-item">
                 <span>{"line" in row ? row.line : ""}</span>
+                {"contextLabel" in row && row.contextLabel ? (
+                  <span className="contacts-detail-view__meta">{row.contextLabel}</span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        )}
+      </DetailSection>
+
+      <DetailSection title={labels.sectionUrls} hidden={!isEditing && readUrls.length === 0}>
+        {isEditing && editDraft ? (
+          <div className="contacts-detail-view__editable-list">
+            {editDraft.urls.map((row) => (
+              <div key={row.id} className="contacts-detail-view__editable-row">
+                <ContextTypeSelect
+                  labels={labels}
+                  value={row.contextType}
+                  ariaLabel={`${labels.channelType} ${labels.urlAddress}`}
+                  onChange={(contextType) => onUpdateUrlContext(row.id, contextType)}
+                />
+                <Input
+                  aria-label={labels.urlAddress}
+                  value={row.uri}
+                  onChange={(event) => onUpdateUrl(row.id, event.target.value)}
+                />
+                <IconButton
+                  label={labels.removeRow}
+                  icon={<X className="size-4" />}
+                  variant="subtle"
+                  size="sm"
+                  onClick={() => onRemoveUrl(row.id)}
+                />
+              </div>
+            ))}
+            <Button
+              label={labels.addUrl}
+              icon={<Plus className="size-4" />}
+              variant="subtle"
+              size="sm"
+              onClick={onAddUrl}
+            />
+          </div>
+        ) : (
+          <ul className="contacts-detail-view__value-list">
+            {readUrls.map((row) => (
+              <li key={row.id} className="contacts-detail-view__value-item">
+                <a
+                  className="contacts-detail-view__link"
+                  href={row.uri}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {row.uri}
+                </a>
                 {"contextLabel" in row && row.contextLabel ? (
                   <span className="contacts-detail-view__meta">{row.contextLabel}</span>
                 ) : null}

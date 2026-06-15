@@ -8,8 +8,8 @@ import type {
 
 export const CONTACTS_CREATE_ID = "__contacts_create__";
 
-/** JSContact channel context values exposed in the edit UI (maps to `contexts` on phones/emails/addresses). */
-export const CONTACT_CHANNEL_CONTEXTS = ["", "home", "work"] as const;
+/** JSContact channel context values exposed in the edit UI (maps to `contexts` on phones/emails/addresses/links). */
+export const CONTACT_CHANNEL_CONTEXTS = ["", "home", "work", "school"] as const;
 export type ContactChannelContext = (typeof CONTACT_CHANNEL_CONTEXTS)[number];
 
 export type ContactAddressDraft = {
@@ -27,9 +27,11 @@ export type ContactEditDraft = {
   nameGiven2: string;
   nameSurname: string;
   showGiven2: boolean;
+  showAsCompany: boolean;
   phones: Array<{ id: string; number: string; contextType: ContactChannelContext }>;
   emails: Array<{ id: string; address: string; contextType: ContactChannelContext }>;
   addresses: ContactAddressDraft[];
+  urls: Array<{ id: string; uri: string; contextType: ContactChannelContext }>;
   organization: string;
   notes: string;
   organizationId?: string;
@@ -69,9 +71,11 @@ export function emptyContactEditDraft(): ContactEditDraft {
     nameGiven2: "",
     nameSurname: "",
     showGiven2: false,
+    showAsCompany: false,
     phones: [],
     emails: [],
     addresses: [],
+    urls: [],
     organization: "",
     notes: "",
   };
@@ -82,6 +86,7 @@ export function readContactContext(
 ): ContactChannelContext {
   if (contexts?.work) return "work";
   if (contexts?.private) return "home";
+  if (contexts?.school) return "school";
   return "";
 }
 
@@ -90,6 +95,7 @@ export function contactContextToPatch(
 ): Record<string, true> | undefined {
   if (contextType === "work") return { work: true };
   if (contextType === "home") return { private: true };
+  if (contextType === "school") return { school: true };
   return undefined;
 }
 
@@ -260,6 +266,14 @@ export function contactCardToEditDraft(card: ContactCard): ContactEditDraft {
     addresses: mapEntriesSorted(card.addresses).map(([id]) => ({
       ...addressValue(card, id),
     })),
+    urls: mapEntriesSorted(card.links)
+      .filter(([, link]) => link.kind !== "contact")
+      .map(([id, link]) => ({
+        id,
+        uri: link.uri?.trim() ?? "",
+        contextType: readContactContext(link.contexts),
+      })),
+    showAsCompany: card.kind === "org",
     organization: organizationEntry?.name?.trim() ?? "",
     organizationId,
     notes: notesEntry?.note?.trim() ?? "",
@@ -325,13 +339,28 @@ function buildAddressesFromDraft(
   return addresses;
 }
 
+function buildLinksFromDraft(
+  rows: ContactEditDraft["urls"],
+): NonNullable<ContactCardCreate["links"]> {
+  const links: NonNullable<ContactCardCreate["links"]> = {};
+  for (const row of rows) {
+    const uri = row.uri.trim();
+    if (!uri) continue;
+    const entry: Record<string, unknown> = { uri };
+    const contexts = contactContextToPatch(row.contextType);
+    if (contexts) entry.contexts = contexts;
+    links[row.id] = entry as NonNullable<ContactCardCreate["links"]>[string];
+  }
+  return links;
+}
+
 export function editDraftToCreateBody(
   draft: ContactEditDraft,
   addressBookIds: Record<string, true>,
 ): ContactCardCreate {
   const body: ContactCardCreate = {
     addressBookIds,
-    kind: "individual",
+    kind: draft.showAsCompany ? "org" : "individual",
   };
 
   const name = buildNameFromDraft(draft);
@@ -345,6 +374,9 @@ export function editDraftToCreateBody(
 
   const addresses = buildAddressesFromDraft(draft.addresses);
   if (Object.keys(addresses).length > 0) body.addresses = addresses;
+
+  const links = buildLinksFromDraft(draft.urls);
+  if (Object.keys(links).length > 0) body.links = links;
 
   if (draft.organization.trim()) {
     body.organizations = {
@@ -526,6 +558,40 @@ export function editDraftToPatch(draft: ContactEditDraft, active: ContactCard): 
     (row) => addressDraftToPatchValue(row),
   );
   if (addresses) patch.addresses = addresses;
+
+  const activeUrlIds = new Set(
+    mapEntriesSorted(active.links)
+      .filter(([, link]) => link.kind !== "contact")
+      .map(([id]) => id),
+  );
+  const urls = patchChannelMapField<
+    NonNullable<ContactCardPatch["links"]>,
+    ContactEditDraft["urls"][number]
+  >(
+    activeUrlIds,
+    draft.urls,
+    (id) => {
+      const link = active.links?.[id];
+      return {
+        value: link?.uri?.trim() ?? "",
+        contextType: readContactContext(link?.contexts),
+      };
+    },
+    (row) => row.uri,
+    (row) => {
+      const entry: Record<string, unknown> = { uri: row.uri.trim() };
+      const contexts = contactContextToPatch(row.contextType);
+      if (contexts) entry.contexts = contexts;
+      return entry;
+    },
+  );
+  if (urls) patch.links = urls;
+
+  const nextKind = draft.showAsCompany ? "org" : "individual";
+  const currentKind = active.kind ?? "individual";
+  if (nextKind !== currentKind) {
+    patch.kind = nextKind;
+  }
 
   const [activeOrgId, activeOrg] = mapEntriesSorted(active.organizations)[0] ?? [];
   const orgName = draft.organization.trim();

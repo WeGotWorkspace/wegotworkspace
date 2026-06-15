@@ -235,6 +235,104 @@ VCARD;
         $roundTrippedPhone = reset($roundTripped['phones']);
         $this->assertIsArray($roundTrippedPhone);
         $this->assertSame(['voice' => true], $roundTrippedPhone['features'] ?? null);
+
+        $vcard = $this->converter->vCardFromCard($card);
+        $this->assertStringNotContainsStringIgnoringCase('TYPE=voice', $vcard);
+    }
+
+    public function test_phone_home_work_context_round_trips_without_voice_type(): void
+    {
+        $card = [
+            '@type' => 'Card',
+            'version' => '1.0',
+            'uid' => 'urn:uuid:eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
+            'name' => ['@type' => 'Name', 'full' => 'Context Phones'],
+            'phones' => [
+                'home-phone' => [
+                    '@type' => 'Phone',
+                    'number' => '+1-555-0100',
+                    'contexts' => ['private' => true],
+                ],
+                'work-phone' => [
+                    '@type' => 'Phone',
+                    'number' => '+1-555-0200',
+                    'contexts' => ['work' => true],
+                ],
+                'school-phone' => [
+                    '@type' => 'Phone',
+                    'number' => '+1-555-0300',
+                    'contexts' => ['school' => true],
+                ],
+            ],
+        ];
+
+        $vcard = $this->converter->vCardFromCard($card);
+        $this->assertStringContainsStringIgnoringCase('TYPE=home', $vcard);
+        $this->assertStringContainsStringIgnoringCase('TYPE=work', $vcard);
+        $this->assertStringContainsStringIgnoringCase('TYPE=school', $vcard);
+        $this->assertStringNotContainsStringIgnoringCase('TYPE=voice', $vcard);
+
+        $roundTripped = $this->converter->cardFromVCard($vcard);
+        $homePhone = null;
+        $workPhone = null;
+        $schoolPhone = null;
+        foreach ($roundTripped['phones'] ?? [] as $phone) {
+            if (! is_array($phone)) {
+                continue;
+            }
+            $contexts = $phone['contexts'] ?? null;
+            if ($contexts === ['private' => true]) {
+                $homePhone = $phone;
+            } elseif ($contexts === ['work' => true]) {
+                $workPhone = $phone;
+            } elseif ($contexts === ['school' => true]) {
+                $schoolPhone = $phone;
+            }
+        }
+        $this->assertIsArray($homePhone);
+        $this->assertIsArray($workPhone);
+        $this->assertIsArray($schoolPhone);
+    }
+
+    public function test_company_card_round_trips_kind_org_and_x_abshowas(): void
+    {
+        $vcard = <<<'VCARD'
+BEGIN:VCARD
+VERSION:4.0
+FN:Acme Corp
+UID:urn:uuid:ffffffff-ffff-4fff-8fff-ffffffffffff
+ORG:Acme Corp
+X-ABShowAs:COMPANY
+END:VCARD
+VCARD;
+
+        $card = $this->converter->cardFromVCard($vcard);
+        $this->assertSame('org', $card['kind'] ?? null);
+
+        $names = array_map(static fn (array $tuple): string => (string) $tuple[0], $card['vCardProps'] ?? []);
+        $this->assertNotContains('X-ABShowAs', $names);
+
+        $out = $this->converter->vCardFromCard($card);
+        $this->assertStringContainsString('KIND:org', $out);
+        $this->assertStringContainsStringIgnoringCase('X-ABSHOWAS:COMPANY', $out);
+    }
+
+    public function test_kind_org_writes_x_abshowas_company(): void
+    {
+        $card = [
+            '@type' => 'Card',
+            'version' => '1.0',
+            'uid' => 'urn:uuid:12121212-1212-4212-8212-121212121212',
+            'kind' => 'org',
+            'name' => ['@type' => 'Name', 'full' => 'Widgets Inc'],
+            'organizations' => [
+                'org-1' => ['@type' => 'Organization', 'name' => 'Widgets Inc'],
+            ],
+        ];
+
+        $vcard = $this->converter->vCardFromCard($card);
+        $this->assertStringContainsString('KIND:org', $vcard);
+        $this->assertStringContainsStringIgnoringCase('X-ABSHOWAS:COMPANY', $vcard);
     }
 
     public function test_version_preserved_in_vcard_props(): void

@@ -448,6 +448,8 @@ final class ConversionSupport
                 $contexts['billing'] = true;
             } elseif ($normalized === 'delivery') {
                 $contexts['delivery'] = true;
+            } elseif ($normalized === 'school') {
+                $contexts['school'] = true;
             }
         }
 
@@ -494,7 +496,9 @@ final class ConversionSupport
     {
         $types = [];
         foreach ($features as $feature => $enabled) {
-            if ($enabled && isset(self::TEL_FEATURES[$feature])) {
+            // RFC 6350 §6.4.1: voice is the default TEL type — omit on write so Apple
+            // Address Book does not show a spurious "voice" label alongside home/work.
+            if ($enabled && $feature !== 'voice' && isset(self::TEL_FEATURES[$feature])) {
                 $types[] = self::TEL_FEATURES[$feature];
             }
         }
@@ -504,6 +508,9 @@ final class ConversionSupport
             }
             if (isset($contexts['work'])) {
                 $types[] = 'work';
+            }
+            if (isset($contexts['school'])) {
+                $types[] = 'school';
             }
         }
 

@@ -47,7 +47,10 @@ export const Default: Story = {
 
     const patch = contactsStorySpies.patchCalls.at(-1)?.patch;
     expect(patch?.phones).toEqual({
-      "550e8400-e29b-41d4-a716-446655440013": { number: "+1-555-0199" },
+      "550e8400-e29b-41d4-a716-446655440013": {
+        number: "+1-555-0199",
+        contexts: { private: true },
+      },
     });
     expect(patch).not.toHaveProperty("@type");
 

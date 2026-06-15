@@ -62,12 +62,21 @@ const mockCards = [
       "550e8400-e29b-41d4-a716-446655440012": {
         "@type": "EmailAddress" as const,
         address: "jane@example.com",
+        contexts: { work: true },
       },
     },
     phones: {
       "550e8400-e29b-41d4-a716-446655440013": {
         "@type": "Phone" as const,
         number: "+1-555-0101",
+        contexts: { private: true },
+      },
+    },
+    links: {
+      "550e8400-e29b-41d4-a716-446655440015": {
+        "@type": "Link" as const,
+        uri: "https://example.com/jane",
+        contexts: { work: true },
       },
     },
     addresses: {

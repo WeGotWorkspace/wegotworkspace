@@ -31,6 +31,11 @@ final class JsContactToVCardConverter
 
         if (isset($card['kind']) && is_string($card['kind'])) {
             $vcard->add('KIND', $card['kind']);
+            // Apple Address Book uses X-ABShowAs:COMPANY (not standard vCard) for company cards.
+            // JSContact kind "org" (RFC 9553) is canonical; emit X-ABShowAs on write for CardDAV parity.
+            if (strtolower($card['kind']) === 'org') {
+                $vcard->add('X-ABShowAs', 'COMPANY');
+            }
         }
 
         if (isset($card['language']) && is_string($card['language'])) {
@@ -656,6 +661,9 @@ final class JsContactToVCardConverter
             if ($name === 'VERSION') {
                 continue;
             }
+            if ($name === 'X-ABSHOWAS' && strtolower((string) ($card['kind'] ?? 'individual')) !== 'org') {
+                continue;
+            }
             $params = is_array($tuple[1]) ? $tuple[1] : [];
             $valueType = isset($tuple[2]) ? (string) $tuple[2] : 'text';
             $value = $tuple[3];
@@ -692,6 +700,9 @@ final class JsContactToVCardConverter
             }
             if (isset($entry['contexts']['delivery'])) {
                 $types[] = 'delivery';
+            }
+            if (isset($entry['contexts']['school'])) {
+                $types[] = 'school';
             }
             if ($types !== []) {
                 $params['type'] = implode(',', $types);

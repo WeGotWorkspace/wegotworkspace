@@ -77,6 +77,10 @@ export function ContactsWorkspace({
     removePhone,
     removeEmail,
     removeAddress,
+    addUrl,
+    updateUrl,
+    updateUrlContext,
+    removeUrl,
     addressBooks,
   } = useContactsController({
     data,
@@ -200,6 +204,10 @@ export function ContactsWorkspace({
               onUpdateEmailContext={updateEmailContext}
               onUpdateAddress={updateAddress}
               onUpdateAddressContext={updateAddressContext}
+              onAddUrl={addUrl}
+              onUpdateUrl={updateUrl}
+              onUpdateUrlContext={updateUrlContext}
+              onRemoveUrl={removeUrl}
               onRemovePhone={removePhone}
               onRemoveEmail={removeEmail}
               onRemoveAddress={removeAddress}

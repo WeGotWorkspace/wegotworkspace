@@ -345,6 +345,45 @@ export function useContactsController({
     );
   }, []);
 
+  const addUrl = useCallback(() => {
+    setEditDraft((prev) =>
+      prev
+        ? {
+            ...prev,
+            urls: [...prev.urls, { id: newContactMapId(), uri: "", contextType: "" }],
+          }
+        : prev,
+    );
+  }, []);
+
+  const updateUrl = useCallback((id: string, uri: string) => {
+    setEditDraft((prev) =>
+      prev
+        ? {
+            ...prev,
+            urls: prev.urls.map((row) => (row.id === id ? { ...row, uri } : row)),
+          }
+        : prev,
+    );
+  }, []);
+
+  const updateUrlContext = useCallback((id: string, contextType: ContactChannelContext) => {
+    setEditDraft((prev) =>
+      prev
+        ? {
+            ...prev,
+            urls: prev.urls.map((row) => (row.id === id ? { ...row, contextType } : row)),
+          }
+        : prev,
+    );
+  }, []);
+
+  const removeUrl = useCallback((id: string) => {
+    setEditDraft((prev) =>
+      prev ? { ...prev, urls: prev.urls.filter((row) => row.id !== id) } : prev,
+    );
+  }, []);
+
   const deleteCards = useCallback(
     (ids: string[]) => {
       if (ids.length === 0) return;
@@ -608,6 +647,10 @@ export function useContactsController({
     updateEmailContext,
     updateAddress,
     updateAddressContext,
+    addUrl,
+    updateUrl,
+    updateUrlContext,
+    removeUrl,
     removePhone,
     removeEmail,
     removeAddress,

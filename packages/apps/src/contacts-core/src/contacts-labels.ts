@@ -24,6 +24,8 @@ export type ContactsUILabels = {
   sectionAddresses: string;
   sectionOrganization: string;
   sectionNotes: string;
+  sectionUrls: string;
+  companyContact: string;
   nameFull: string;
   nameGiven: string;
   nameGiven2: string;
@@ -32,6 +34,7 @@ export type ContactsUILabels = {
   channelTypeNone: string;
   channelTypeHome: string;
   channelTypeWork: string;
+  channelTypeSchool: string;
   phoneNumber: string;
   emailAddress: string;
   organizationName: string;
@@ -39,6 +42,8 @@ export type ContactsUILabels = {
   addPhone: string;
   addEmail: string;
   addAddress: string;
+  addUrl: string;
+  urlAddress: string;
   addressStreet: string;
   addressLocality: string;
   addressRegion: string;
@@ -77,6 +82,8 @@ export const defaultContactsLabels: ContactsUILabels = {
   sectionAddresses: "Addresses",
   sectionOrganization: "Organization",
   sectionNotes: "Notes",
+  sectionUrls: "URLs",
+  companyContact: "Company contact",
   nameFull: "Full name",
   nameGiven: "First name",
   nameGiven2: "Middle name",
@@ -85,6 +92,7 @@ export const defaultContactsLabels: ContactsUILabels = {
   channelTypeNone: "Other",
   channelTypeHome: "Home",
   channelTypeWork: "Work",
+  channelTypeSchool: "School",
   phoneNumber: "Phone number",
   emailAddress: "Email address",
   organizationName: "Organization",
@@ -92,6 +100,8 @@ export const defaultContactsLabels: ContactsUILabels = {
   addPhone: "Add phone",
   addEmail: "Add email",
   addAddress: "Add address",
+  addUrl: "Add URL",
+  urlAddress: "URL",
   addressStreet: "Street",
   addressLocality: "City / locality",
   addressRegion: "State / region",

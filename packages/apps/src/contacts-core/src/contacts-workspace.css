@@ -256,6 +256,15 @@
   color: color-mix(in oklab, var(--color-ink) 50%, transparent);
 }
 
+.contacts-detail-view__link {
+  color: var(--contacts-accent, #0d9488);
+  text-decoration: none;
+}
+
+.contacts-detail-view__link:hover {
+  text-decoration: underline;
+}
+
 .contacts-detail-view__text {
   margin: 0;
   font-size: 0.9375rem;

@@ -91,6 +91,50 @@ describe("contacts-edit-utils", () => {
     expect(patch).not.toHaveProperty("@type");
   });
 
+  it("maps school context in patch", () => {
+    const draft = contactCardToEditDraft(janeCard);
+    draft.phones = [{ id: "phone-1", number: "+1-555-0101", contextType: "school" }];
+    const patch = editDraftToPatch(draft, janeCard);
+    expect(patch.phones).toEqual({
+      "phone-1": { number: "+1-555-0101", contexts: { school: true } },
+    });
+  });
+
+  it("round-trips links as urls in edit draft", () => {
+    const cardWithLinks = {
+      ...janeCard,
+      links: {
+        "link-1": {
+          "@type": "Link" as const,
+          uri: "https://example.com",
+          contexts: { work: true },
+        },
+      },
+    } as unknown as ContactCard;
+    const draft = contactCardToEditDraft(cardWithLinks);
+    expect(draft.urls).toEqual([{ id: "link-1", uri: "https://example.com", contextType: "work" }]);
+  });
+
+  it("patches company contact kind", () => {
+    const draft = contactCardToEditDraft(janeCard);
+    draft.showAsCompany = true;
+    const patch = editDraftToPatch(draft, janeCard);
+    expect(patch.kind).toBe("org");
+  });
+
+  it("builds create body with company kind and urls", () => {
+    const draft = {
+      ...emptyContactEditDraft(),
+      showAsCompany: true,
+      urls: [{ id: "url-1", uri: "https://example.com", contextType: "home" as const }],
+    };
+    const body = editDraftToCreateBody(draft, { default: true });
+    expect(body.kind).toBe("org");
+    expect(body.links).toEqual({
+      "url-1": { uri: "https://example.com", contexts: { private: true } },
+    });
+  });
+
   it("builds notes patch with note key per OpenAPI JsContactNote", () => {
     const draft = contactCardToEditDraft(janeCard);
     draft.notes = "Updated note text";
