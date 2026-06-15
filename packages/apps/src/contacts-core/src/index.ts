@@ -27,7 +27,10 @@ export {
 export {
   contactDisplayName,
   contactInitials,
+  contactListDetail,
   contactListSubtitle,
+  contactPhotoUrl,
+  CONTACT_MEDIA_BLOB_PATH,
   filterCardsBySearch,
   mapEntriesSorted,
 } from "./contacts-display-utils";

@@ -18,6 +18,7 @@ import {
 import {
   contactDisplayName,
   channelDisplayLabel,
+  contactPhotoUrl,
   mapEntriesSorted,
 } from "@/contacts-core/src/contacts-display-utils";
 import type { ContactsUILabels } from "@/contacts-core/src/contacts-labels";
@@ -301,7 +302,12 @@ export function ContactsDetailView({
   return (
     <article className={cn("contacts-detail-view", className)}>
       <header className="contacts-detail-view__header">
-        <UserAvatar displayName={displayName} size="lg" compact />
+        <UserAvatar
+          displayName={displayName}
+          imageSrc={card ? contactPhotoUrl(card) : undefined}
+          size="lg"
+          compact
+        />
         {!isEditing && card ? (
           <h1 className="contacts-detail-view__title">{contactDisplayName(card)}</h1>
         ) : null}

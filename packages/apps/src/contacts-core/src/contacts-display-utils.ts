@@ -64,6 +64,9 @@ export function contactDisplayName(card: ContactCard): string {
   const fromComponents = nameFromComponents(card);
   if (fromComponents) return fromComponents;
 
+  const organizationName = firstOrganizationName(card);
+  if (organizationName) return organizationName;
+
   return "Unknown contact";
 }
 
@@ -85,7 +88,25 @@ function firstPhoneNumber(card: ContactCard): string | undefined {
 }
 
 export function contactListSubtitle(card: ContactCard): string {
-  return firstOrganizationName(card) ?? firstEmailAddress(card) ?? firstPhoneNumber(card) ?? "";
+  const organizationName = firstOrganizationName(card);
+  const displayName = contactDisplayName(card);
+
+  if (organizationName && organizationName !== displayName) {
+    return organizationName;
+  }
+
+  return firstEmailAddress(card) ?? firstPhoneNumber(card) ?? "";
+}
+
+/** Secondary list line — contact detail not already shown in the subtitle. */
+export function contactListDetail(card: ContactCard): string {
+  const subtitle = contactListSubtitle(card);
+  const email = firstEmailAddress(card);
+  const phone = firstPhoneNumber(card);
+
+  if (email && email !== subtitle) return email;
+  if (phone && phone !== subtitle) return phone;
+  return "";
 }
 
 export function contactInitials(name: string): string {
@@ -93,6 +114,57 @@ export function contactInitials(name: string): string {
   if (parts.length === 0) return "?";
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+/** Default REST path for contact media blobs (RFC 9610); appended with blobId. */
+export const CONTACT_MEDIA_BLOB_PATH = "/api/v1/contacts/blobs";
+
+type ContactPhotoUrlOptions = {
+  /** Base path for blob download URLs; defaults to {@link CONTACT_MEDIA_BLOB_PATH}. */
+  blobBaseUrl?: string;
+};
+
+function resolveMediaEntryUrl(
+  entry: NonNullable<ContactCard["media"]>[string],
+  blobBaseUrl: string,
+): string | undefined {
+  const uri = typeof entry.uri === "string" ? entry.uri.trim() : "";
+  if (uri.startsWith("http://") || uri.startsWith("https://") || uri.startsWith("data:")) {
+    return uri;
+  }
+
+  const blobId = typeof entry.blobId === "string" ? entry.blobId.trim() : "";
+  if (blobId) {
+    return `${blobBaseUrl.replace(/\/$/, "")}/${blobId}`;
+  }
+
+  return undefined;
+}
+
+/**
+ * Photo URL from JSContact `media` (RFC 9553). CardDAV PHOTO/LOGO is mapped server-side
+ * into `media` entries; inline vCard binary becomes `uri` (data:) or `blobId` on GET.
+ */
+export function contactPhotoUrl(
+  card: ContactCard,
+  options?: ContactPhotoUrlOptions,
+): string | undefined {
+  const media = card.media;
+  if (!media) return undefined;
+
+  const blobBaseUrl = options?.blobBaseUrl ?? CONTACT_MEDIA_BLOB_PATH;
+  const preferredKinds =
+    card.kind === "org" ? (["logo", "photo"] as const) : (["photo", "logo"] as const);
+
+  for (const kind of preferredKinds) {
+    for (const [, entry] of mapEntriesSorted(media)) {
+      if (entry.kind !== kind) continue;
+      const url = resolveMediaEntryUrl(entry, blobBaseUrl);
+      if (url) return url;
+    }
+  }
+
+  return undefined;
 }
 
 function collectEmails(card: ContactCard): string[] {
@@ -115,6 +187,7 @@ export function filterCardsBySearch(cards: ContactCard[], query: string): Contac
     const haystack = [
       contactDisplayName(card),
       contactListSubtitle(card),
+      contactListDetail(card),
       ...collectEmails(card),
       ...collectPhones(card),
     ]

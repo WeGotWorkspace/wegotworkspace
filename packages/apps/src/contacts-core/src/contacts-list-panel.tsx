@@ -9,7 +9,9 @@ import { WorkspaceSwipeList } from "@/workspace-swipe-list/src/workspace-swipe-l
 import type { ContactCard } from "@/contacts-core/src/contacts-types";
 import {
   contactDisplayName,
+  contactListDetail,
   contactListSubtitle,
+  contactPhotoUrl,
 } from "@/contacts-core/src/contacts-display-utils";
 import type { ContactsUILabels } from "@/contacts-core/src/contacts-labels";
 
@@ -100,35 +102,35 @@ export function ContactsListPanel({
           };
           const name = contactDisplayName(card);
           return (
-            <div key={card.id} className="contacts-list-panel__item">
-              <UserAvatar
-                displayName={name}
-                compact
-                size="sm"
-                className="contacts-list-panel__avatar"
-              />
-              <div className="contacts-list-panel__item-body">
-                <ListItem
-                  id={card.id}
-                  title={name}
-                  subtitle={contactListSubtitle(card)}
-                  date=""
-                  text={contactListSubtitle(card)}
-                  icons={[]}
-                  isActive={card.id === activeId}
-                  isSelected={selectedIds.includes(card.id)}
-                  selectionMode={selectionMode}
-                  isTouch={isTouch}
-                  isDragging={isItemDragging(card.id)}
-                  onClick={(e: ReactMouseEvent) => handleSelect(card.id, e)}
-                  onLongPress={() => enterSelectionFor(card.id)}
-                  {...dragHandlers}
-                  onDragStart={dragHandlers.onDragStart ?? (() => {})}
-                  onDragEnd={dragHandlers.onDragEnd ?? (() => {})}
-                  emptyTitle={L.unknownContact}
+            <ListItem
+              key={card.id}
+              id={card.id}
+              title={name}
+              subtitle={contactListSubtitle(card)}
+              date=""
+              text={contactListDetail(card)}
+              icons={[]}
+              leading={
+                <UserAvatar
+                  displayName={name}
+                  imageSrc={contactPhotoUrl(card)}
+                  compact
+                  size="sm"
+                  className="contacts-list-panel__avatar"
                 />
-              </div>
-            </div>
+              }
+              isActive={card.id === activeId}
+              isSelected={selectedIds.includes(card.id)}
+              selectionMode={selectionMode}
+              isTouch={isTouch}
+              isDragging={isItemDragging(card.id)}
+              onClick={(e: ReactMouseEvent) => handleSelect(card.id, e)}
+              onLongPress={() => enterSelectionFor(card.id)}
+              {...dragHandlers}
+              onDragStart={dragHandlers.onDragStart ?? (() => {})}
+              onDragEnd={dragHandlers.onDragEnd ?? (() => {})}
+              emptyTitle={L.unknownContact}
+            />
           );
         })}
       </WorkspaceSwipeList>

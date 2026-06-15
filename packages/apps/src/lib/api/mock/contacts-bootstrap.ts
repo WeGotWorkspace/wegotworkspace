@@ -89,6 +89,14 @@ const mockCards = [
         country: "US",
       },
     },
+    media: {
+      "550e8400-e29b-41d4-a716-446655440016": {
+        "@type": "Media" as const,
+        kind: "photo" as const,
+        uri: "https://www.example.com/pub/photos/jqpublic.gif",
+        mediaType: "image/gif",
+      },
+    },
   },
   {
     "@type": "Card",
@@ -107,6 +115,26 @@ const mockCards = [
       "550e8400-e29b-41d4-a716-446655440022": {
         "@type": "Phone" as const,
         number: "+1-555-0100",
+      },
+    },
+  },
+  {
+    "@type": "Card",
+    version: "1.0",
+    id: "card-acme",
+    uid: "urn:uuid:550e8400-e29b-41d4-a716-446655440030",
+    kind: "org" as const,
+    addressBookIds: { default: true as const },
+    organizations: {
+      "550e8400-e29b-41d4-a716-446655440031": {
+        "@type": "Organization" as const,
+        name: "Acme Corp",
+      },
+    },
+    emails: {
+      "550e8400-e29b-41d4-a716-446655440032": {
+        "@type": "EmailAddress" as const,
+        address: "info@acme.com",
       },
     },
   },

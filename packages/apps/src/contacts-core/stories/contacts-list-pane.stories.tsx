@@ -75,6 +75,7 @@ export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getByText("Jane Doe")).toBeInTheDocument();
+    await expect(canvas.getByText("info@acme.com")).toBeInTheDocument();
     const input = canvas.getByPlaceholderText("Search contacts...");
     await userEvent.type(input, "joe@");
     await expect(input).toHaveValue("joe@");
