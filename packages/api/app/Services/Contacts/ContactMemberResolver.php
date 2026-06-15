@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Contacts;
 
 use App\Models\Card;
+use App\Services\Contacts\Conversion\ConversionSupport;
 use App\Services\Contacts\Conversion\VCardJsContactConverter;
 
 /**
@@ -44,6 +45,7 @@ final class ContactMemberResolver
 
     private function findCardIdByUid(string $username, string $uid): ?string
     {
+        $normalizedUid = ConversionSupport::normalizeContactUidForMatch($uid);
         $cards = Card::query()
             ->whereHas('addressbook', function ($query) use ($username): void {
                 $query->where('principaluri', 'principals/'.$username);
@@ -57,7 +59,11 @@ final class ContactMemberResolver
             } catch (\Throwable) {
                 continue;
             }
-            if (($parsed['uid'] ?? null) === $uid) {
+            $cardUid = $parsed['uid'] ?? null;
+            if (! is_string($cardUid) || $cardUid === '') {
+                continue;
+            }
+            if (ConversionSupport::normalizeContactUidForMatch($cardUid) === $normalizedUid) {
                 return ContactCardMapper::cardIdFromUri((string) $card->uri);
             }
         }

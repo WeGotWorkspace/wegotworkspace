@@ -848,6 +848,20 @@ final class ConversionSupport
     }
 
     /**
+     * Case-insensitive uid comparison key — Apple CardDAV often uses bare UUIDs on cards
+     * while group MEMBER / X-ADDRESSBOOKSERVER-MEMBER values use urn:uuid: prefixes.
+     */
+    public static function normalizeContactUidForMatch(string $uid): string
+    {
+        $uid = trim($uid);
+        if (str_starts_with(strtolower($uid), 'urn:uuid:')) {
+            $uid = substr($uid, 9);
+        }
+
+        return strtolower($uid);
+    }
+
+    /**
      * @param  array<string, mixed>  $card
      */
     public static function deriveFullName(array $card): string

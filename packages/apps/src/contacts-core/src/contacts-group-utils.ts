@@ -54,6 +54,24 @@ function enabledMemberUids(members: ContactCard["members"]): string[] {
     .map(([uid]) => uid);
 }
 
+/** Apple CardDAV: group members often use urn:uuid: while card uid is bare UUID. */
+function normalizeContactUidForMatch(uid: string): string {
+  const trimmed = uid.trim();
+  if (trimmed.toLowerCase().startsWith("urn:uuid:")) {
+    return trimmed.slice("urn:uuid:".length).toLowerCase();
+  }
+  return trimmed.toLowerCase();
+}
+
+function indexCardsByNormalizedUid(cards: ContactCard[]): Map<string, ContactCard> {
+  const byUid = new Map<string, ContactCard>();
+  for (const card of cards) {
+    if (!card.uid) continue;
+    byUid.set(normalizeContactUidForMatch(card.uid), card);
+  }
+  return byUid;
+}
+
 /** Resolve group member uids to loaded card ids (API memberCardIds first, then uid scan). */
 export function resolveGroupMemberCardIds(
   groupCard: ContactCard,
@@ -63,7 +81,7 @@ export function resolveGroupMemberCardIds(
   if (memberUids.length === 0) return [];
 
   const cardById = new Map(allCards.map((card) => [card.id, card]));
-  const cardByUid = new Map(allCards.map((card) => [card.uid, card]));
+  const cardByNormalizedUid = indexCardsByNormalizedUid(allCards);
   const memberCardIds = (groupCard as ContactCardWithResolvedMembers).memberCardIds;
 
   const resolved: string[] = [];
@@ -74,7 +92,7 @@ export function resolveGroupMemberCardIds(
       continue;
     }
 
-    const byUid = cardByUid.get(uid);
+    const byUid = cardByNormalizedUid.get(normalizeContactUidForMatch(uid));
     if (byUid && !isContactGroupCard(byUid)) {
       resolved.push(byUid.id);
     }

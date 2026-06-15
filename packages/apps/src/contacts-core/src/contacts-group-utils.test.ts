@@ -113,6 +113,54 @@ describe("contacts-group-utils", () => {
     ]);
   });
 
+  it("resolves Apple group members when card uids omit urn prefix", () => {
+    const appleJaneUid = "c4cf6038-5da0-41be-9c2d-d8cb9b4af90f";
+    const appleJoeUid = "07d442ce-49b5-4a59-bc01-d75b17b92c9a";
+
+    const appleJane = {
+      "@type": "Card",
+      version: "1.0",
+      id: "card-apple-jane",
+      uid: appleJaneUid,
+      addressBookIds: { default: true },
+      name: { full: "Jane Doe" },
+    } as unknown as ContactCard;
+
+    const appleJoe = {
+      "@type": "Card",
+      version: "1.0",
+      id: "card-apple-joe",
+      uid: appleJoeUid,
+      addressBookIds: { default: true },
+      name: { full: "Joe Example" },
+    } as unknown as ContactCard;
+
+    const appleFriendsGroup = {
+      "@type": "Card",
+      version: "1.0",
+      id: "card-apple-friends-group",
+      uid: "08430ef3-a2ce-4568-9d6c-f50a6cfd32ae",
+      addressBookIds: { default: true },
+      name: { full: "Friends" },
+      members: {
+        [`urn:uuid:${appleJaneUid}`]: true,
+        [`urn:uuid:${appleJoeUid}`]: true,
+      },
+    } as unknown as ContactCard;
+
+    const appleCards = [appleJane, appleJoe, appleFriendsGroup];
+
+    expect(resolveGroupMemberCardIds(appleFriendsGroup, appleCards)).toEqual([
+      "card-apple-jane",
+      "card-apple-joe",
+    ]);
+    expect(
+      filterCardsByView(appleCards, contactsGroupViewKey("card-apple-friends-group")).map(
+        (c) => c.id,
+      ),
+    ).toEqual(["card-apple-jane", "card-apple-joe"]);
+  });
+
   it("prefers server memberCardIds when present", () => {
     const groupWithApiIds = {
       ...friendsGroup,
