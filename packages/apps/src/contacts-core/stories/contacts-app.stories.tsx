@@ -27,7 +27,9 @@ export const Default: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await userEvent.click(canvas.getByText("Jane Doe"));
+    const janeListItem = canvasElement.querySelector('[data-list-item-id="card-jane"]');
+    expect(janeListItem).toBeTruthy();
+    await userEvent.click(janeListItem as HTMLElement);
     await waitFor(() => {
       expect(canvas.getByRole("heading", { level: 1, name: "Jane Doe" })).toBeInTheDocument();
     });

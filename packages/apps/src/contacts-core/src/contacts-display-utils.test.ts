@@ -111,15 +111,14 @@ describe("contacts-display-utils", () => {
   });
 
   it("avoids repeating organization in subtitle when it is the display name", () => {
-    const companyWithName = {
+    const companyWithPerson = {
       ...janeCard,
       kind: "org" as const,
-      name: { "@type": "Name" as const, isOrdered: false, full: "Acme Corp" },
     } as unknown as ContactCard;
 
-    expect(contactDisplayName(companyWithName)).toBe("Acme Corp");
-    expect(contactListSubtitle(companyWithName)).toBe("jane@example.com");
-    expect(contactListDetail(companyWithName)).toBe("+1-555-0101");
+    expect(contactDisplayName(companyWithPerson)).toBe("Acme Corp");
+    expect(contactListSubtitle(companyWithPerson)).toBe("Jane Doe");
+    expect(contactListDetail(companyWithPerson)).toBe("jane@example.com");
   });
 
   it("computes initials from a display name", () => {
@@ -262,5 +261,33 @@ describe("contacts-display-utils", () => {
         features: { fax: true, voice: true },
       }),
     ).toEqual(["fax", "voice", "Work"]);
+  });
+
+  it("splits comma-separated custom labels into separate tags", () => {
+    const labels = defaultContactsLabels;
+    expect(channelDisplayLabels(undefined, labels, { customLabel: "voice,home" })).toEqual([
+      "voice",
+      "Home",
+    ]);
+    expect(channelDisplayLabels(undefined, labels, { customLabel: "voice, home" })).toEqual([
+      "voice",
+      "Home",
+    ]);
+    expect(
+      channelDisplayLabels(undefined, labels, {
+        features: { voice: true },
+        customLabel: "voice,home",
+      }),
+    ).toEqual(["voice", "Home"]);
+    expect(channelDisplayLabels(undefined, labels, { customLabel: "cell,voice" })).toEqual([
+      "cell",
+      "voice",
+    ]);
+    expect(
+      channelDisplayLabels(undefined, labels, {
+        features: { mobile: true, voice: true },
+        customLabel: "cell,voice",
+      }),
+    ).toEqual(["cell", "voice"]);
   });
 });

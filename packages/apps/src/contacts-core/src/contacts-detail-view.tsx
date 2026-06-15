@@ -17,6 +17,7 @@ import {
 } from "@/contacts-core/src/contacts-edit-utils";
 import {
   contactDisplayName,
+  contactPersonName,
   channelDisplayLabels,
   contactPhotoUrl,
   mapEntriesSorted,
@@ -293,6 +294,13 @@ export function ContactsDetailView({
           }),
         }));
 
+  const personName = isEditing
+    ? ""
+    : (() => {
+        if (!card) return "";
+        return contactPersonName(card);
+      })();
+
   const organization = isEditing
     ? (editDraft?.organization ?? "")
     : (() => {
@@ -324,7 +332,7 @@ export function ContactsDetailView({
         ) : null}
       </header>
 
-      <DetailSection title={labels.sectionName} hidden={!isEditing && !card?.name}>
+      <DetailSection title={labels.sectionName} hidden={!isEditing && !personName}>
         {isEditing && editDraft ? (
           <div className="contacts-detail-view__field-stack">
             <FieldLabelRow label={labels.nameGiven} htmlFor="contact-given-name">
@@ -366,11 +374,11 @@ export function ContactsDetailView({
             </FieldLabelRow>
           </div>
         ) : (
-          <p className="contacts-detail-view__text">{card ? contactDisplayName(card) : ""}</p>
+          <p className="contacts-detail-view__text">{personName}</p>
         )}
       </DetailSection>
 
-      {!isEditing && organization ? (
+      {!isEditing && organization && card?.kind !== "org" ? (
         <DetailSection title={labels.sectionOrganization}>
           <p className="contacts-detail-view__text">{organization}</p>
         </DetailSection>

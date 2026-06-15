@@ -27,6 +27,7 @@ export {
 export {
   channelDisplayLabels,
   contactDisplayName,
+  contactPersonName,
   contactInitials,
   contactListDetail,
   contactListSubtitle,

@@ -125,6 +125,7 @@ const mockCards = [
     uid: "urn:uuid:550e8400-e29b-41d4-a716-446655440030",
     kind: "org" as const,
     addressBookIds: { default: true as const },
+    name: { "@type": "Name" as const, isOrdered: false, full: "Jane Doe" },
     organizations: {
       "550e8400-e29b-41d4-a716-446655440031": {
         "@type": "Organization" as const,

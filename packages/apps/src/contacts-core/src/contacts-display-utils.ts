@@ -45,6 +45,35 @@ function collectPhoneFeatureLabels(
   return PHONE_FEATURE_KEYS.filter((key) => active.has(key));
 }
 
+function splitCommaSeparatedLabel(label: string): string[] {
+  return label
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+function normalizeCustomLabelToken(token: string, labels: ContactsUILabels): string {
+  const key = token.toLowerCase();
+  if (key === "home") return labels.channelTypeHome;
+  if (key === "work") return labels.channelTypeWork;
+  if (key === "school") return labels.channelTypeSchool;
+  if (key === "cell" || key === "mobile") return "cell";
+  if ((PHONE_FEATURE_KEYS as readonly string[]).includes(key)) {
+    return phoneFeatureDisplayLabel(key as PhoneFeatureKey);
+  }
+  return token.trim();
+}
+
+function customLabelsFromString(
+  customLabel: string,
+  labels: ContactsUILabels,
+  existing: Set<string>,
+): string[] {
+  return splitCommaSeparatedLabel(customLabel)
+    .map((part) => normalizeCustomLabelToken(part, labels))
+    .filter((label) => !existing.has(label));
+}
+
 export type ChannelDisplayLabelOptions = {
   features?: Record<string, boolean | undefined>;
   customLabel?: string;
@@ -67,13 +96,12 @@ export function channelDisplayLabels(
   const contextLabel = contextType !== "" ? channelTypeLabel(contextType, labels) : undefined;
 
   const trimmedCustom = options?.customLabel?.trim();
-  const customLabel = trimmedCustom && !contextLabel ? trimmedCustom : undefined;
+  const existingLabels = new Set([...featureLabels, ...(contextLabel ? [contextLabel] : [])]);
+  const customLabels = trimmedCustom
+    ? customLabelsFromString(trimmedCustom, labels, existingLabels)
+    : [];
 
-  const resolved = [
-    ...featureLabels,
-    ...(contextLabel ? [contextLabel] : []),
-    ...(customLabel ? [customLabel] : []),
-  ];
+  const resolved = [...featureLabels, ...(contextLabel ? [contextLabel] : []), ...customLabels];
 
   if (resolved.length === 1 && resolved[0] === "voice") {
     return [];
@@ -114,14 +142,24 @@ function nameFromComponents(card: ContactCard): string {
     .trim();
 }
 
-export function contactDisplayName(card: ContactCard): string {
+/** Person name from `name.full` or name components — not organization. */
+export function contactPersonName(card: ContactCard): string {
   const full = card.name?.full?.trim();
   if (full) return full;
+  return nameFromComponents(card);
+}
 
-  const fromComponents = nameFromComponents(card);
-  if (fromComponents) return fromComponents;
-
+export function contactDisplayName(card: ContactCard): string {
   const organizationName = firstOrganizationName(card);
+  const personName = contactPersonName(card);
+
+  if (card.kind === "org") {
+    if (organizationName) return organizationName;
+    if (personName) return personName;
+    return "Unknown contact";
+  }
+
+  if (personName) return personName;
   if (organizationName) return organizationName;
 
   return "Unknown contact";
@@ -146,7 +184,15 @@ function firstPhoneNumber(card: ContactCard): string | undefined {
 
 export function contactListSubtitle(card: ContactCard): string {
   const organizationName = firstOrganizationName(card);
+  const personName = contactPersonName(card);
   const displayName = contactDisplayName(card);
+
+  if (card.kind === "org") {
+    if (personName && personName !== displayName) {
+      return personName;
+    }
+    return firstEmailAddress(card) ?? firstPhoneNumber(card) ?? "";
+  }
 
   if (organizationName && organizationName !== displayName) {
     return organizationName;
