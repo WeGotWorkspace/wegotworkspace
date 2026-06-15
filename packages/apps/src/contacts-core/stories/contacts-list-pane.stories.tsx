@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { useEffect } from "react";
 import { expect, userEvent, within } from "storybook/test";
 import { CollectionListWorkspace } from "@/collection-layout/src/collection-layout";
 import { ContactsListPanel } from "@/contacts-core/src/contacts-list-panel";
+import { contactsGroupViewKey } from "@/contacts-core/src/contacts-group-utils";
 import { useContactsPaneStoryController } from "./contacts-pane-stories.harness";
 import { ContactsStoryScope } from "./contacts-story-scope";
 
@@ -10,7 +12,7 @@ const storyChrome = {
   toggleSidebar: () => {},
 } as const;
 
-export type ContactsListPanePreset = "default" | "empty" | "loading";
+export type ContactsListPanePreset = "default" | "empty" | "loading" | "inGroup";
 
 function ContactsListPaneHarness({ preset = "default" }: { preset?: ContactsListPanePreset }) {
   const controller = useContactsPaneStoryController(
@@ -21,11 +23,23 @@ function ContactsListPaneHarness({ preset = "default" }: { preset?: ContactsList
         : undefined,
   );
 
+  useEffect(() => {
+    if (preset === "inGroup") {
+      controller.selectView(contactsGroupViewKey("card-group-friends"));
+    }
+    // Storybook: apply group filter when preset changes, not on every controller churn.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional
+  }, [preset]);
+
   const listProps = ContactsListPanel({
     L: controller.L,
     sidebarOpen: storyChrome.sidebarOpen,
     onToggleSidebar: storyChrome.toggleSidebar,
     viewLabel: controller.viewLabel,
+    view: controller.view,
+    selectedGroupId: controller.selectedGroup?.id ?? null,
+    canRenameGroup: controller.canRenameGroup,
+    openGroupRenameDialog: (groupId, name) => controller.setGroupRenameDialog({ groupId, name }),
     selectedIds: controller.selectedIds,
     selectionMode: controller.selectionMode || controller.selectedIds.length > 1,
     listLoading: controller.listLoading,
@@ -61,7 +75,7 @@ const meta = {
   argTypes: {
     preset: {
       control: "select",
-      options: ["default", "empty", "loading"],
+      options: ["default", "empty", "loading", "inGroup"],
     },
   },
 } satisfies Meta<typeof ContactsListPaneHarness>;
@@ -89,4 +103,19 @@ export const Empty: Story = {
 
 export const Loading: Story = {
   args: { preset: "loading" },
+};
+
+export const ActiveGroup: Story = {
+  tags: ["vitest-ci"],
+  args: { preset: "inGroup" },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByText("Friends")).toBeInTheDocument();
+    await expect(canvas.getByText("2 Contacts")).toBeInTheDocument();
+    await expect(canvas.getByRole("button", { name: "Rename group" })).toBeInTheDocument();
+    await expect(canvas.getByRole("heading", { level: 3, name: "Jane Doe" })).toBeInTheDocument();
+    await expect(
+      canvas.getByRole("heading", { level: 3, name: "Joe Example" }),
+    ).toBeInTheDocument();
+  },
 };

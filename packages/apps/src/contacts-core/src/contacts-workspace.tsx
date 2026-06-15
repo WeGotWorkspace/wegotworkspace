@@ -1,6 +1,7 @@
 import { UserPlus } from "lucide-react";
 import "react-swipeable-list/dist/styles.css";
 import { Button } from "@/button/src/button";
+import { EditDialog } from "@/dialogs/src/dialogs";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
 import { MultiSelectionView } from "@/multi-selection-view/src/multi-selection-view";
@@ -49,8 +50,11 @@ export function ContactsWorkspace({
     editDraft,
     displayName,
     canCreateContact,
+    canRenameGroup,
     canEdit,
     confirmDialog,
+    groupRenameDialog,
+    selectedGroup,
     selectionBar,
     selectionBarButtons,
     isItemDragging,
@@ -83,6 +87,8 @@ export function ContactsWorkspace({
     removeUrl,
     addressBooks,
     contactGroups,
+    renameGroup,
+    setGroupRenameDialog,
   } = useContactsController({
     data,
     labels,
@@ -147,6 +153,10 @@ export function ContactsWorkspace({
             sidebarOpen: c.sidebarOpen,
             onToggleSidebar: c.toggleSidebar,
             viewLabel,
+            view,
+            selectedGroupId: selectedGroup?.id ?? null,
+            canRenameGroup,
+            openGroupRenameDialog: (groupId, name) => setGroupRenameDialog({ groupId, name }),
             selectedIds,
             selectionMode: selectionMode || selectedIds.length > 1,
             listLoading,
@@ -223,6 +233,17 @@ export function ContactsWorkspace({
       />
 
       {confirmDialog}
+
+      <EditDialog
+        item={groupRenameDialog ? { kind: "group", name: groupRenameDialog.name } : null}
+        onClose={() => setGroupRenameDialog(null)}
+        onConfirm={(newName) => {
+          if (!groupRenameDialog) return;
+          renameGroup(groupRenameDialog.groupId, newName);
+          setGroupRenameDialog(null);
+        }}
+        contentClassName="contacts-dialog-surface"
+      />
     </>
   );
 }

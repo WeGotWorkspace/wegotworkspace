@@ -3,9 +3,11 @@ import type { ContactCard } from "@/contacts-core/src/contacts-types";
 import {
   contactsGroupViewKey,
   filterCardsByView,
+  groupRenamePatch,
   isContactGroupCard,
   listContactGroups,
   resolveGroupMemberCardIds,
+  resolveGroupMemberCards,
 } from "./contacts-group-utils";
 
 const janeUid = "urn:uuid:550e8400-e29b-41d4-a716-446655440010";
@@ -105,6 +107,10 @@ describe("contacts-group-utils", () => {
   it("resolves member uids to card ids", () => {
     expect(resolveGroupMemberCardIds(friendsGroup, cards)).toEqual(["card-jane", "card-joe"]);
     expect(resolveGroupMemberCardIds(familyGroup, cards)).toEqual(["card-jane"]);
+    expect(resolveGroupMemberCards(friendsGroup, cards).map((card) => card.id)).toEqual([
+      "card-jane",
+      "card-joe",
+    ]);
   });
 
   it("prefers server memberCardIds when present", () => {
@@ -137,5 +143,25 @@ describe("contacts-group-utils", () => {
     expect(
       filterCardsByView(cards, contactsGroupViewKey("card-group-family")).map((c) => c.id),
     ).toEqual(["card-jane"]);
+  });
+
+  it("builds group rename patch with trimmed name.full", () => {
+    expect(groupRenamePatch("  Close Friends  ")).toEqual({
+      name: { "@type": "Name", isOrdered: false, full: "Close Friends" },
+    });
+  });
+
+  it("returns empty list for group with no resolved members", () => {
+    const emptyGroup = {
+      ...friendsGroup,
+      id: "card-group-empty",
+      members: { "urn:uuid:missing-member": true },
+    } as unknown as ContactCard;
+
+    expect(
+      filterCardsByView([...cards, emptyGroup], contactsGroupViewKey("card-group-empty")).map(
+        (c) => c.id,
+      ),
+    ).toEqual([]);
   });
 });

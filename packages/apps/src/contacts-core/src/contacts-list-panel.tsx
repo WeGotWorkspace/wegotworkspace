@@ -1,5 +1,5 @@
 import type { MouseEvent as ReactMouseEvent, ReactNode, RefObject } from "react";
-import { UserPlus } from "lucide-react";
+import { Pencil, UserPlus } from "lucide-react";
 import { IconButton } from "@/button/src/button";
 import { ListItem } from "@/list-item/src/list-item";
 import { ViewHeader } from "@/view-header/src/view-header";
@@ -20,6 +20,10 @@ type ContactsListPanelProps = {
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
   viewLabel: string;
+  view: string;
+  selectedGroupId: string | null;
+  canRenameGroup: boolean;
+  openGroupRenameDialog: (groupId: string, name: string) => void;
   selectedIds: string[];
   selectionMode: boolean;
   listLoading: boolean;
@@ -43,6 +47,10 @@ export function ContactsListPanel({
   sidebarOpen,
   onToggleSidebar,
   viewLabel,
+  view,
+  selectedGroupId,
+  canRenameGroup,
+  openGroupRenameDialog,
   selectedIds,
   selectionMode,
   listLoading,
@@ -73,6 +81,15 @@ export function ContactsListPanel({
         }
         actions={
           <div className="contacts-list-panel__header-actions flex items-center gap-2">
+            {canRenameGroup && selectedGroupId ? (
+              <IconButton
+                label={L.renameGroup}
+                onClick={() => openGroupRenameDialog(selectedGroupId, viewLabel)}
+                icon={<Pencil />}
+                size="sm"
+                variant="subtle"
+              />
+            ) : null}
             <IconButton
               label={L.newContact}
               onClick={createContact}
@@ -136,7 +153,7 @@ export function ContactsListPanel({
       </WorkspaceSwipeList>
     ),
     hasItems: listLoading || visibleCards.length > 0,
-    emptyLabel: L.emptyList,
+    emptyLabel: view.startsWith("group:") ? L.emptyGroupMembers : L.emptyList,
     floatingActionBar: selectionBar,
   };
 }

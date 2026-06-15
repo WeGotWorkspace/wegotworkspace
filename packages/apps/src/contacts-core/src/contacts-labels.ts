@@ -13,6 +13,9 @@ export type ContactsUILabels = {
   listSelected: (count: number) => string;
   listContacts: (count: number) => string;
   emptyList: string;
+  emptyGroupMembers: string;
+  renameGroup: string;
+  toastGroupRenamed: (name: string) => string;
   newContact: string;
   unknownContact: string;
   edit: string;
@@ -72,6 +75,9 @@ export const defaultContactsLabels: ContactsUILabels = {
   listSelected: (count) => `${count} Selected`,
   listContacts: (count) => `${count} Contacts`,
   emptyList: "No contacts",
+  emptyGroupMembers: "No members in this group",
+  renameGroup: "Rename group",
+  toastGroupRenamed: (name) => `Renamed to “${name}”`,
   newContact: "New contact",
   unknownContact: "Unknown contact",
   edit: "Edit",

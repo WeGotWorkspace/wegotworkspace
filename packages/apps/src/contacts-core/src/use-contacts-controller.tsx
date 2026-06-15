@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, Trash2 } from "lucide-react";
+import { Check, Tag, Trash2 } from "lucide-react";
 import { useAppToast } from "@/hooks/use-app-toast";
 import { useConfirmDialog } from "@/hooks/use-confirm-dialog";
 import { useIsTouch } from "@/hooks/use-is-touch";
@@ -13,7 +13,11 @@ import {
   contactDisplayName,
   filterCardsBySearch,
 } from "@/contacts-core/src/contacts-display-utils";
-import { filterCardsByView, listContactGroups } from "@/contacts-core/src/contacts-group-utils";
+import {
+  filterCardsByView,
+  groupRenamePatch,
+  listContactGroups,
+} from "@/contacts-core/src/contacts-group-utils";
 import { mergeContactsLabels, type ContactsUILabels } from "@/contacts-core/src/contacts-labels";
 import {
   CONTACTS_CREATE_ID,
@@ -67,6 +71,10 @@ export function useContactsController({
   const [editMode, setEditMode] = useState(false);
   const [createMode, setCreateMode] = useState(false);
   const [editDraft, setEditDraft] = useState<ContactEditDraft | null>(null);
+  const [groupRenameDialog, setGroupRenameDialog] = useState<null | {
+    groupId: string;
+    name: string;
+  }>(null);
 
   const { show, showError } = useAppToast();
   const showMutationError = useCallback(
@@ -84,6 +92,12 @@ export function useContactsController({
   }, [data.addressBooks, data.cards]);
 
   const contactGroups = useMemo(() => listContactGroups(cards), [cards]);
+
+  const selectedGroup = useMemo(() => {
+    if (!view.startsWith("group:")) return undefined;
+    const groupId = view.slice("group:".length);
+    return contactGroups.find((card) => card.id === groupId);
+  }, [contactGroups, view]);
 
   const visibleCards = useMemo(() => {
     const byView = filterCardsByView(cards, view);
@@ -152,6 +166,16 @@ export function useContactsController({
 
   const canCreateContact =
     !view.startsWith("group:") && (view !== "all" || addressBooks.length > 0);
+
+  const canRenameGroup = useMemo(() => {
+    if (!selectedGroup) return false;
+    const bookIds = Object.keys(selectedGroup.addressBookIds ?? {});
+    if (bookIds.length === 0) return Boolean(operations);
+    return bookIds.some((bookId) => {
+      const book = addressBooks.find((row) => row.id === bookId);
+      return book?.myRights?.mayWrite !== false;
+    });
+  }, [addressBooks, operations, selectedGroup]);
 
   const canEdit = useMemo(() => {
     if (createMode) return true;
@@ -466,6 +490,48 @@ export function useContactsController({
     openDeleteConfirm(selectedIds);
   }, [openDeleteConfirm, selectedIds]);
 
+  const renameGroup = useCallback(
+    (groupId: string, newName: string) => {
+      const value = newName.trim();
+      const group = cards.find((card) => card.id === groupId);
+      if (!value || !group || value === contactDisplayName(group)) return;
+
+      const patch = groupRenamePatch(value);
+      const previousCard = group;
+      const merged: ContactCard = {
+        ...group,
+        name: {
+          ...(group.name ?? { "@type": "Name", isOrdered: false }),
+          full: value,
+        },
+      };
+
+      setCards((prev) => prev.map((card) => (card.id === groupId ? merged : card)));
+      show(L.toastGroupRenamed(value), { icon: <Tag className="size-4" /> });
+
+      const rollback = () => {
+        setCards((prev) => prev.map((card) => (card.id === groupId ? previousCard : card)));
+      };
+
+      queueMutation({
+        key: `contacts:rename-group:${groupId}`,
+        toastMessage: L.toastGroupRenamed(value),
+        execute: (signal) =>
+          operations
+            ? operations
+                .patchCard(groupId, patch, { signal, ifMatch: group.etag })
+                .then((saved) => {
+                  setCards((prev) => prev.map((card) => (card.id === groupId ? saved : card)));
+                })
+            : Promise.resolve(),
+        undo: rollback,
+        onError: rollback,
+        undoToastMessage: "Rename undone.",
+      });
+    },
+    [L.toastGroupRenamed, cards, operations, queueMutation, show],
+  );
+
   const saveEdit = useCallback(() => {
     if (!editDraft) return;
 
@@ -622,8 +688,11 @@ export function useContactsController({
     editDraft,
     displayName,
     canCreateContact,
+    canRenameGroup,
     canEdit,
     confirmDialog,
+    groupRenameDialog,
+    selectedGroup,
     selectionBar,
     selectionBarButtons,
     isItemDragging,
@@ -656,6 +725,8 @@ export function useContactsController({
     removeEmail,
     removeAddress,
     requestDeleteSelected,
+    renameGroup,
+    setGroupRenameDialog,
   };
 }
 

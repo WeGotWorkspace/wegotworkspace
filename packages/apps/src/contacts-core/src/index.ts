@@ -43,6 +43,8 @@ export {
   isContactGroupCard,
   listContactGroups,
   resolveGroupMemberCardIds,
+  groupRenamePatch,
+  resolveGroupMemberCards,
   type ContactCardWithResolvedMembers,
 } from "./contacts-group-utils";
 export {

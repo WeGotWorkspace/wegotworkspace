@@ -1,5 +1,5 @@
 import { contactDisplayName } from "@/contacts-core/src/contacts-display-utils";
-import type { ContactCard } from "@/contacts-core/src/contacts-types";
+import type { ContactCard, ContactCardPatch } from "@/contacts-core/src/contacts-types";
 
 /**
  * JSContact / CardDAV group mapping (RFC 9553 + RFC 9610):
@@ -83,6 +83,28 @@ export function resolveGroupMemberCardIds(
   return resolved;
 }
 
+/** Resolve group member uids to loaded contact cards (members + memberCardIds). */
+export function resolveGroupMemberCards(
+  groupCard: ContactCard,
+  allCards: ContactCard[],
+): ContactCard[] {
+  const cardById = new Map(allCards.map((card) => [card.id, card]));
+  return resolveGroupMemberCardIds(groupCard, allCards)
+    .map((id) => cardById.get(id))
+    .filter((card): card is ContactCard => card !== undefined);
+}
+
+/** PATCH body for renaming a group card (JSContact name.full). */
+export function groupRenamePatch(name: string): ContactCardPatch {
+  return {
+    name: {
+      "@type": "Name",
+      isOrdered: false,
+      full: name.trim(),
+    },
+  };
+}
+
 /** Sidebar/list view key for a group card. */
 export function contactsGroupViewKey(groupCardId: string): string {
   return `group:${groupCardId}`;
@@ -93,8 +115,7 @@ export function filterCardsByView(cards: ContactCard[], view: string): ContactCa
     const groupId = view.slice("group:".length);
     const groupCard = cards.find((card) => card.id === groupId);
     if (!groupCard || !isContactGroupCard(groupCard)) return [];
-    const memberIds = new Set(resolveGroupMemberCardIds(groupCard, cards));
-    return cards.filter((card) => memberIds.has(card.id));
+    return resolveGroupMemberCards(groupCard, cards);
   }
 
   let scoped = cards;
