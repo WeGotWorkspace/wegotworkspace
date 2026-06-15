@@ -109,18 +109,98 @@ describe("contacts-edit-utils", () => {
     expect(noteEntry).toEqual({ note: "Brand new note" });
   });
 
-  it("builds address patch with full line and context", () => {
+  it("builds structured address patch with JSContact components", () => {
     const cardWithAddress = {
       ...janeCard,
       addresses: {
-        "addr-1": { "@type": "Address" as const, full: "123 Main St", contexts: { private: true } },
+        "addr-1": {
+          "@type": "Address" as const,
+          components: [
+            { kind: "name" as const, value: "123 Main St" },
+            { kind: "locality" as const, value: "Springfield" },
+            { kind: "region" as const, value: "IL" },
+            { kind: "postcode" as const, value: "62704" },
+            { kind: "country" as const, value: "USA" },
+          ],
+          contexts: { private: true },
+        },
       },
     } as unknown as ContactCard;
     const draft = contactCardToEditDraft(cardWithAddress);
-    draft.addresses = [{ id: "addr-1", full: "456 Oak Ave", contextType: "home" }];
+    expect(draft.addresses[0]).toMatchObject({
+      id: "addr-1",
+      street: "123 Main St",
+      locality: "Springfield",
+      region: "IL",
+      postalCode: "62704",
+      country: "USA",
+      contextType: "home",
+    });
+    draft.addresses = [
+      {
+        id: "addr-1",
+        street: "456 Oak Ave",
+        locality: "Shelbyville",
+        region: "IL",
+        postalCode: "62565",
+        country: "USA",
+        contextType: "home",
+      },
+    ];
     const patch = editDraftToPatch(draft, cardWithAddress);
     expect(patch.addresses).toEqual({
-      "addr-1": { full: "456 Oak Ave", contexts: { private: true } },
+      "addr-1": {
+        components: [
+          { kind: "name", value: "456 Oak Ave" },
+          { kind: "locality", value: "Shelbyville" },
+          { kind: "region", value: "IL" },
+          { kind: "postcode", value: "62565" },
+          { kind: "country", value: "USA" },
+        ],
+        isOrdered: false,
+        contexts: { private: true },
+      },
+    });
+  });
+
+  it("maps label-only address full to street in edit draft", () => {
+    const cardWithLabelOnlyAddress = {
+      ...janeCard,
+      addresses: {
+        "addr-1": { "@type": "Address" as const, full: "Main Street 123" },
+      },
+    } as unknown as ContactCard;
+    const draft = contactCardToEditDraft(cardWithLabelOnlyAddress);
+    expect(draft.addresses[0]?.street).toBe("Main Street 123");
+  });
+
+  it("builds create body with structured address components", () => {
+    const draft = {
+      ...emptyContactEditDraft(),
+      addresses: [
+        {
+          id: "addr-new",
+          street: "1 Example St",
+          locality: "Amsterdam",
+          region: "",
+          postalCode: "1011",
+          country: "Netherlands",
+          contextType: "work" as const,
+        },
+      ],
+    };
+    const body = editDraftToCreateBody(draft, { default: true });
+    expect(body.addresses).toEqual({
+      "addr-new": {
+        components: [
+          { kind: "name", value: "1 Example St" },
+          { kind: "locality", value: "Amsterdam" },
+          { kind: "postcode", value: "1011" },
+          { kind: "country", value: "Netherlands" },
+        ],
+        isOrdered: false,
+        contexts: { work: true },
+      },
     });
   });
 });

@@ -235,7 +235,18 @@ export function useContactsController({
       prev
         ? {
             ...prev,
-            addresses: [...prev.addresses, { id: newContactMapId(), full: "", contextType: "" }],
+            addresses: [
+              ...prev.addresses,
+              {
+                id: newContactMapId(),
+                street: "",
+                locality: "",
+                region: "",
+                postalCode: "",
+                country: "",
+                contextType: "",
+              },
+            ],
           }
         : prev,
     );
@@ -285,16 +296,25 @@ export function useContactsController({
     );
   }, []);
 
-  const updateAddress = useCallback((id: string, full: string) => {
-    setEditDraft((prev) =>
-      prev
-        ? {
-            ...prev,
-            addresses: prev.addresses.map((row) => (row.id === id ? { ...row, full } : row)),
-          }
-        : prev,
-    );
-  }, []);
+  const updateAddress = useCallback(
+    (
+      id: string,
+      field: "street" | "locality" | "region" | "postalCode" | "country",
+      value: string,
+    ) => {
+      setEditDraft((prev) =>
+        prev
+          ? {
+              ...prev,
+              addresses: prev.addresses.map((row) =>
+                row.id === id ? { ...row, [field]: value } : row,
+              ),
+            }
+          : prev,
+      );
+    },
+    [],
+  );
 
   const updateAddressContext = useCallback((id: string, contextType: ContactChannelContext) => {
     setEditDraft((prev) =>

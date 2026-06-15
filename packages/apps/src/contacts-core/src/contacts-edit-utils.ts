@@ -12,6 +12,16 @@ export const CONTACTS_CREATE_ID = "__contacts_create__";
 export const CONTACT_CHANNEL_CONTEXTS = ["", "home", "work"] as const;
 export type ContactChannelContext = (typeof CONTACT_CHANNEL_CONTEXTS)[number];
 
+export type ContactAddressDraft = {
+  id: string;
+  street: string;
+  locality: string;
+  region: string;
+  postalCode: string;
+  country: string;
+  contextType: ContactChannelContext;
+};
+
 export type ContactEditDraft = {
   nameGiven: string;
   nameGiven2: string;
@@ -19,7 +29,7 @@ export type ContactEditDraft = {
   showGiven2: boolean;
   phones: Array<{ id: string; number: string; contextType: ContactChannelContext }>;
   emails: Array<{ id: string; address: string; contextType: ContactChannelContext }>;
-  addresses: Array<{ id: string; full: string; contextType: ContactChannelContext }>;
+  addresses: ContactAddressDraft[];
   organization: string;
   notes: string;
   organizationId?: string;
@@ -89,27 +99,61 @@ function readPhoneNumber(phone: NonNullable<ContactCard["phones"]>[string]): str
   return "";
 }
 
-function readAddressLine(address: NonNullable<ContactCard["addresses"]>[string]): string {
+function readAddressComponent(
+  components: NonNullable<ContactCard["addresses"]>[string]["components"],
+  kind: string,
+): string {
+  return (components ?? [])
+    .filter((component) => component.kind === kind)
+    .map((component) => component.value?.trim() ?? "")
+    .filter(Boolean)
+    .join(" ");
+}
+
+function readAddressStreet(address: NonNullable<ContactCard["addresses"]>[string]): string {
+  const components = address.components ?? [];
+  const name = readAddressComponent(components, "name");
+  const number = readAddressComponent(components, "number");
+  if (number && name) return `${number} ${name}`.trim();
+  if (name) return name;
+  if (number) return number;
   if (typeof address.full === "string" && address.full.trim()) {
     return address.full.trim();
   }
-  const components = address.components ?? [];
-  const fromComponents = components
-    .map((part) => part.value?.trim())
-    .filter(Boolean)
-    .join(", ");
-  if (fromComponents) return fromComponents;
+  return "";
+}
 
-  const legacy = [
-    (address as { street?: string }).street,
-    (address as { locality?: string }).locality,
-    (address as { region?: string }).region,
-    (address as { postcode?: string }).postcode,
-    (address as { country?: string }).country,
-  ]
-    .map((part) => (typeof part === "string" ? part.trim() : ""))
-    .filter(Boolean);
-  return legacy.join(", ");
+function addressDraftHasContent(row: ContactAddressDraft): boolean {
+  return [row.street, row.locality, row.region, row.postalCode, row.country].some((part) =>
+    part.trim(),
+  );
+}
+
+function addressDraftToComponents(
+  row: ContactAddressDraft,
+): Array<{ kind: string; value: string }> {
+  const components: Array<{ kind: string; value: string }> = [];
+  const street = row.street.trim();
+  const locality = row.locality.trim();
+  const region = row.region.trim();
+  const postalCode = row.postalCode.trim();
+  const country = row.country.trim();
+  if (street) components.push({ kind: "name", value: street });
+  if (locality) components.push({ kind: "locality", value: locality });
+  if (region) components.push({ kind: "region", value: region });
+  if (postalCode) components.push({ kind: "postcode", value: postalCode });
+  if (country) components.push({ kind: "country", value: country });
+  return components;
+}
+
+function addressDraftToPatchValue(row: ContactAddressDraft): Record<string, unknown> {
+  const entry: Record<string, unknown> = {
+    components: addressDraftToComponents(row),
+    isOrdered: false,
+  };
+  const contexts = contactContextToPatch(row.contextType);
+  if (contexts) entry.contexts = contexts;
+  return entry;
 }
 
 function componentValue(
@@ -157,14 +201,27 @@ function emailValue(
   };
 }
 
-function addressValue(
-  card: ContactCard,
-  id: string,
-): { full: string; contextType: ContactChannelContext } {
+function addressValue(card: ContactCard, id: string): ContactAddressDraft {
   const address = card.addresses?.[id];
-  if (!address) return { full: "", contextType: "" };
+  if (!address) {
+    return {
+      id,
+      street: "",
+      locality: "",
+      region: "",
+      postalCode: "",
+      country: "",
+      contextType: "",
+    };
+  }
+  const components = address.components ?? [];
   return {
-    full: readAddressLine(address),
+    id,
+    street: readAddressStreet(address),
+    locality: readAddressComponent(components, "locality"),
+    region: readAddressComponent(components, "region"),
+    postalCode: readAddressComponent(components, "postcode"),
+    country: readAddressComponent(components, "country"),
     contextType: readContactContext(address.contexts),
   };
 }
@@ -200,10 +257,8 @@ export function contactCardToEditDraft(card: ContactCard): ContactEditDraft {
       address: email.address?.trim() ?? "",
       contextType: readContactContext(email.contexts),
     })),
-    addresses: mapEntriesSorted(card.addresses).map(([id, address]) => ({
-      id,
-      full: readAddressLine(address),
-      contextType: readContactContext(address.contexts),
+    addresses: mapEntriesSorted(card.addresses).map(([id]) => ({
+      ...addressValue(card, id),
     })),
     organization: organizationEntry?.name?.trim() ?? "",
     organizationId,
@@ -262,12 +317,10 @@ function buildAddressesFromDraft(
 ): NonNullable<ContactCardCreate["addresses"]> {
   const addresses: NonNullable<ContactCardCreate["addresses"]> = {};
   for (const row of rows) {
-    const full = row.full.trim();
-    if (!full) continue;
-    const entry: Record<string, unknown> = { full };
-    const contexts = contactContextToPatch(row.contextType);
-    if (contexts) entry.contexts = contexts;
-    addresses[row.id] = entry as NonNullable<ContactCardCreate["addresses"]>[string];
+    if (!addressDraftHasContent(row)) continue;
+    addresses[row.id] = addressDraftToPatchValue(row) as NonNullable<
+      ContactCardCreate["addresses"]
+    >[string];
   }
   return addresses;
 }
@@ -451,15 +504,26 @@ export function editDraftToPatch(draft: ContactEditDraft, active: ContactCard): 
     draft.addresses,
     (id) => {
       const address = addressValue(active, id);
-      return { value: address.full, contextType: address.contextType };
+      return {
+        value: [
+          address.street,
+          address.locality,
+          address.region,
+          address.postalCode,
+          address.country,
+        ]
+          .map((part) => part.trim())
+          .filter(Boolean)
+          .join("\0"),
+        contextType: address.contextType,
+      };
     },
-    (row) => row.full,
-    (row) => {
-      const entry: Record<string, unknown> = { full: row.full.trim() };
-      const contexts = contactContextToPatch(row.contextType);
-      if (contexts) entry.contexts = contexts;
-      return entry;
-    },
+    (row) =>
+      [row.street, row.locality, row.region, row.postalCode, row.country]
+        .map((part) => part.trim())
+        .filter(Boolean)
+        .join("\0"),
+    (row) => addressDraftToPatchValue(row),
   );
   if (addresses) patch.addresses = addresses;
 

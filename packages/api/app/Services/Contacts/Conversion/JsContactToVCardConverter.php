@@ -180,7 +180,10 @@ final class JsContactToVCardConverter
                 continue;
             }
             $components = $entry['components'] ?? [];
-            $hasComponents = is_array($components) && $components !== [];
+            if (! is_array($components) || $components === []) {
+                $components = ConversionSupport::addressComponentsFromEntry($entry);
+            }
+            $hasComponents = $components !== [];
             $hasCoordinates = isset($entry['coordinates']);
             $hasTimeZone = isset($entry['timeZone']);
 

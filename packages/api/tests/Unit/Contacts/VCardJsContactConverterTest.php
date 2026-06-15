@@ -453,4 +453,91 @@ VCARD;
             $this->assertStringStartsWith('p_', $key);
         }
     }
+
+    public function test_full_only_address_emits_populated_legacy_adr(): void
+    {
+        $propId = '927a78e8-b83e-467b-aecd-f0bb80a309c5';
+        $card = [
+            '@type' => 'Card',
+            'version' => '1.0',
+            'uid' => 'urn:uuid:c4cf6038-5da0-41be-9c2d-d8cb9b4af90f',
+            'name' => ['@type' => 'Name', 'full' => 'Mike Ackermans'],
+            'addresses' => [
+                $propId => [
+                    '@type' => 'Address',
+                    'full' => 'Main Street 123',
+                ],
+            ],
+        ];
+
+        $vcard = $this->converter->vCardFromCard($card);
+        $unfolded = str_replace(["\r\n ", "\n "], '', $vcard);
+
+        $this->assertStringContainsString('ADR;PROP-ID='.$propId, $unfolded);
+        $this->assertStringContainsString(';;Main Street 123', $unfolded);
+        $this->assertStringNotContainsString('ADR;PROP-ID='.$propId.':;;;;;;', $unfolded);
+    }
+
+    public function test_structured_address_patch_round_trips_to_legacy_adr(): void
+    {
+        $propId = '550e8400-e29b-41d4-a716-446655440003';
+        $card = [
+            '@type' => 'Card',
+            'version' => '1.0',
+            'uid' => 'urn:uuid:55555555-5555-4555-8555-555555555555',
+            'name' => ['@type' => 'Name', 'full' => 'Jane Doe'],
+            'addresses' => [
+                $propId => [
+                    '@type' => 'Address',
+                    'components' => [
+                        ['@type' => 'AddressComponent', 'kind' => 'name', 'value' => '123 Main St'],
+                        ['@type' => 'AddressComponent', 'kind' => 'locality', 'value' => 'Springfield'],
+                        ['@type' => 'AddressComponent', 'kind' => 'region', 'value' => 'IL'],
+                        ['@type' => 'AddressComponent', 'kind' => 'postcode', 'value' => '62704'],
+                        ['@type' => 'AddressComponent', 'kind' => 'country', 'value' => 'USA'],
+                    ],
+                    'isOrdered' => false,
+                    'contexts' => ['private' => true],
+                ],
+            ],
+        ];
+
+        $vcard = $this->converter->vCardFromCard($card);
+        $unfolded = str_replace(["\r\n ", "\n "], '', $vcard);
+
+        $this->assertStringContainsString('ADR;PROP-ID='.$propId, $unfolded);
+        $this->assertStringContainsString(';;123 Main St;Springfield;IL;62704;USA', $unfolded);
+        $roundTripped = $this->converter->cardFromVCard($vcard);
+        $this->assertSame($card['addresses'][$propId]['components'], $roundTripped['addresses'][$propId]['components']);
+    }
+
+    public function test_apple_label_only_adr_import_maps_full_to_street_on_round_trip(): void
+    {
+        $propId = '927a78e8-b83e-467b-aecd-f0bb80a309c5';
+        $vcard = <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Mike Ackermans
+UID:urn:uuid:c4cf6038-5da0-41be-9c2d-d8cb9b4af90f
+item1.X-ABLABEL:Main Street 123
+item1.ADR;PROP-ID={$propId};LABEL=Main Street 123:;;;;;;
+END:VCARD
+VCARD;
+
+        $card = $this->converter->cardFromVCard($vcard);
+        $this->assertSame('Main Street 123', $card['addresses'][$propId]['full']);
+
+        $card['addresses'][$propId] = [
+            '@type' => 'Address',
+            'components' => [
+                ['@type' => 'AddressComponent', 'kind' => 'name', 'value' => 'Main Street 123'],
+            ],
+            'isOrdered' => false,
+        ];
+
+        $rewritten = $this->converter->vCardFromCard($card);
+        $unfolded = str_replace(["\r\n ", "\n "], '', $rewritten);
+        $this->assertStringContainsString(';;Main Street 123', $unfolded);
+        $this->assertStringNotContainsString('ADR;PROP-ID='.$propId.':;;;;;;', $unfolded);
+    }
 }

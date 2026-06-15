@@ -37,7 +37,18 @@ function ContactsDetailPaneHarness({ readOnly = false }: { readOnly?: boolean })
         onAddAddress={() =>
           setEditDraft((prev) => ({
             ...prev,
-            addresses: [...prev.addresses, { id: "address-new", full: "", contextType: "" }],
+            addresses: [
+              ...prev.addresses,
+              {
+                id: "address-new",
+                street: "",
+                locality: "",
+                region: "",
+                postalCode: "",
+                country: "",
+                contextType: "",
+              },
+            ],
           }))
         }
         onUpdatePhone={(id, number) =>
@@ -64,10 +75,12 @@ function ContactsDetailPaneHarness({ readOnly = false }: { readOnly?: boolean })
             emails: prev.emails.map((row) => (row.id === id ? { ...row, contextType } : row)),
           }))
         }
-        onUpdateAddress={(id, full) =>
+        onUpdateAddress={(id, field, value) =>
           setEditDraft((prev) => ({
             ...prev,
-            addresses: prev.addresses.map((row) => (row.id === id ? { ...row, full } : row)),
+            addresses: prev.addresses.map((row) =>
+              row.id === id ? { ...row, [field]: value } : row,
+            ),
           }))
         }
         onUpdateAddressContext={(id, contextType) =>

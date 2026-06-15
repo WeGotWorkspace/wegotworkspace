@@ -689,6 +689,43 @@ final class ConversionSupport
     }
 
     /**
+     * Build legacy ADR components when a JSContact address has no `components` array.
+     *
+     * @param  array<string, mixed>  $entry
+     * @return list<array{@type: string, kind: string, value: string}>
+     */
+    public static function addressComponentsFromEntry(array $entry): array
+    {
+        $components = [];
+        foreach (self::ADR_LEGACY_KINDS as $kind) {
+            if ($kind === 'postOfficeBox' || $kind === 'apartment') {
+                continue;
+            }
+            if (! isset($entry[$kind]) || ! is_string($entry[$kind])) {
+                continue;
+            }
+            $value = trim($entry[$kind]);
+            if ($value === '') {
+                continue;
+            }
+            $components[] = ['@type' => 'AddressComponent', 'kind' => $kind, 'value' => $value];
+        }
+
+        if ($components !== []) {
+            return $components;
+        }
+
+        if (isset($entry['full']) && is_string($entry['full'])) {
+            $full = trim($entry['full']);
+            if ($full !== '') {
+                return [['@type' => 'AddressComponent', 'kind' => 'name', 'value' => $full]];
+            }
+        }
+
+        return [];
+    }
+
+    /**
      * @return list<array{@type: string, kind: string, value: string}>
      */
     public static function nameComponentsFromProperty(Property $property): array

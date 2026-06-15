@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import type { ContactCard } from "@/contacts-core/src/contacts-types";
 import {
   CONTACT_CHANNEL_CONTEXTS,
+  type ContactAddressDraft,
   type ContactChannelContext,
   type ContactEditDraft,
 } from "@/contacts-core/src/contacts-edit-utils";
@@ -30,7 +31,11 @@ type ContactsDetailViewProps = {
   onUpdateEmail: (id: string, address: string) => void;
   onUpdatePhoneContext: (id: string, contextType: ContactChannelContext) => void;
   onUpdateEmailContext: (id: string, contextType: ContactChannelContext) => void;
-  onUpdateAddress: (id: string, full: string) => void;
+  onUpdateAddress: (
+    id: string,
+    field: keyof Omit<ContactAddressDraft, "id" | "contextType">,
+    value: string,
+  ) => void;
   onUpdateAddressContext: (id: string, contextType: ContactChannelContext) => void;
   onRemovePhone: (id: string) => void;
   onRemoveEmail: (id: string) => void;
@@ -347,25 +352,81 @@ export function ContactsDetailView({
         {isEditing && editDraft ? (
           <div className="contacts-detail-view__editable-list">
             {editDraft.addresses.map((row) => (
-              <div key={row.id} className="contacts-detail-view__editable-row">
-                <ContextTypeSelect
-                  labels={labels}
-                  value={row.contextType}
-                  ariaLabel={`${labels.channelType} ${labels.addressLine}`}
-                  onChange={(contextType) => onUpdateAddressContext(row.id, contextType)}
-                />
-                <Input
-                  aria-label={labels.addressLine}
-                  value={row.full}
-                  onChange={(event) => onUpdateAddress(row.id, event.target.value)}
-                />
-                <IconButton
-                  label={labels.removeRow}
-                  icon={<X className="size-4" />}
-                  variant="subtle"
-                  size="sm"
-                  onClick={() => onRemoveAddress(row.id)}
-                />
+              <div key={row.id} className="contacts-detail-view__address-block">
+                <div className="contacts-detail-view__editable-row">
+                  <ContextTypeSelect
+                    labels={labels}
+                    value={row.contextType}
+                    ariaLabel={`${labels.channelType} ${labels.sectionAddresses}`}
+                    onChange={(contextType) => onUpdateAddressContext(row.id, contextType)}
+                  />
+                  <IconButton
+                    label={labels.removeRow}
+                    icon={<X className="size-4" />}
+                    variant="subtle"
+                    size="sm"
+                    onClick={() => onRemoveAddress(row.id)}
+                  />
+                </div>
+                <div className="contacts-detail-view__field-stack">
+                  <FieldLabelRow
+                    label={labels.addressStreet}
+                    htmlFor={`contact-address-street-${row.id}`}
+                  >
+                    <Input
+                      id={`contact-address-street-${row.id}`}
+                      aria-label={labels.addressStreet}
+                      value={row.street}
+                      onChange={(event) => onUpdateAddress(row.id, "street", event.target.value)}
+                    />
+                  </FieldLabelRow>
+                  <FieldLabelRow
+                    label={labels.addressLocality}
+                    htmlFor={`contact-address-locality-${row.id}`}
+                  >
+                    <Input
+                      id={`contact-address-locality-${row.id}`}
+                      aria-label={labels.addressLocality}
+                      value={row.locality}
+                      onChange={(event) => onUpdateAddress(row.id, "locality", event.target.value)}
+                    />
+                  </FieldLabelRow>
+                  <FieldLabelRow
+                    label={labels.addressRegion}
+                    htmlFor={`contact-address-region-${row.id}`}
+                  >
+                    <Input
+                      id={`contact-address-region-${row.id}`}
+                      aria-label={labels.addressRegion}
+                      value={row.region}
+                      onChange={(event) => onUpdateAddress(row.id, "region", event.target.value)}
+                    />
+                  </FieldLabelRow>
+                  <FieldLabelRow
+                    label={labels.addressPostalCode}
+                    htmlFor={`contact-address-postal-${row.id}`}
+                  >
+                    <Input
+                      id={`contact-address-postal-${row.id}`}
+                      aria-label={labels.addressPostalCode}
+                      value={row.postalCode}
+                      onChange={(event) =>
+                        onUpdateAddress(row.id, "postalCode", event.target.value)
+                      }
+                    />
+                  </FieldLabelRow>
+                  <FieldLabelRow
+                    label={labels.addressCountry}
+                    htmlFor={`contact-address-country-${row.id}`}
+                  >
+                    <Input
+                      id={`contact-address-country-${row.id}`}
+                      aria-label={labels.addressCountry}
+                      value={row.country}
+                      onChange={(event) => onUpdateAddress(row.id, "country", event.target.value)}
+                    />
+                  </FieldLabelRow>
+                </div>
               </div>
             ))}
             <Button

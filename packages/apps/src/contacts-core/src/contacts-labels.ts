@@ -39,6 +39,11 @@ export type ContactsUILabels = {
   addPhone: string;
   addEmail: string;
   addAddress: string;
+  addressStreet: string;
+  addressLocality: string;
+  addressRegion: string;
+  addressPostalCode: string;
+  addressCountry: string;
   addressLine: string;
   removeRow: string;
   toastCreated: string;
@@ -87,6 +92,11 @@ export const defaultContactsLabels: ContactsUILabels = {
   addPhone: "Add phone",
   addEmail: "Add email",
   addAddress: "Add address",
+  addressStreet: "Street",
+  addressLocality: "City / locality",
+  addressRegion: "State / region",
+  addressPostalCode: "Postal code",
+  addressCountry: "Country",
   addressLine: "Street address",
   removeRow: "Remove",
   toastCreated: "Contact created",
