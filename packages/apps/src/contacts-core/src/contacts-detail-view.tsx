@@ -55,24 +55,87 @@ function phoneDisplayValue(phone: NonNullable<ContactCard["phones"]>[string]): s
   return "";
 }
 
-function formatAddressLine(address: NonNullable<ContactCard["addresses"]>[string]): string {
+type AddressDisplayLines = {
+  street: string;
+  localityLine: string;
+  region: string;
+  country: string;
+};
+
+function readAddressComponentValue(
+  components: NonNullable<ContactCard["addresses"]>[string]["components"],
+  kind: string,
+): string {
+  return (components ?? [])
+    .filter((component) => component.kind === kind)
+    .map((component) => component.value?.trim() ?? "")
+    .filter(Boolean)
+    .join(" ");
+}
+
+function readLegacyAddressField(
+  address: NonNullable<ContactCard["addresses"]>[string],
+  field: "street" | "locality" | "region" | "postcode" | "country",
+): string {
+  const value = (address as Record<string, unknown>)[field];
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function readCardAddressStreet(address: NonNullable<ContactCard["addresses"]>[string]): string {
   const components = address.components ?? [];
+  const name = readAddressComponentValue(components, "name");
+  const number = readAddressComponentValue(components, "number");
+  if (number && name) return `${number} ${name}`.trim();
+  if (name) return name;
+  if (number) return number;
+  const legacyStreet = readLegacyAddressField(address, "street");
+  if (legacyStreet) return legacyStreet;
+  if (typeof address.full === "string" && address.full.trim()) return address.full.trim();
   const fromComponents = components
     .map((part) => part.value?.trim())
     .filter(Boolean)
     .join(", ");
-  if (fromComponents) return fromComponents;
-  if (typeof address.full === "string" && address.full.trim()) return address.full.trim();
-  const legacy = [
-    (address as { street?: string }).street,
-    (address as { locality?: string }).locality,
-    (address as { region?: string }).region,
-    (address as { postcode?: string }).postcode,
-    (address as { country?: string }).country,
-  ]
-    .map((part) => (typeof part === "string" ? part.trim() : ""))
-    .filter(Boolean);
-  return legacy.join(", ");
+  return fromComponents;
+}
+
+function formatLocalityLine(postalCode: string, locality: string): string {
+  return [postalCode, locality]
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(" ");
+}
+
+function addressDisplayFromCard(
+  address: NonNullable<ContactCard["addresses"]>[string],
+): AddressDisplayLines {
+  const components = address.components ?? [];
+  return {
+    street: readCardAddressStreet(address),
+    localityLine: formatLocalityLine(
+      readAddressComponentValue(components, "postcode") ||
+        readLegacyAddressField(address, "postcode"),
+      readAddressComponentValue(components, "locality") ||
+        readLegacyAddressField(address, "locality"),
+    ),
+    region:
+      readAddressComponentValue(components, "region") || readLegacyAddressField(address, "region"),
+    country:
+      readAddressComponentValue(components, "country") ||
+      readLegacyAddressField(address, "country"),
+  };
+}
+
+function AddressDisplayBlock({ lines }: { lines: AddressDisplayLines }) {
+  const rows = [lines.street, lines.localityLine, lines.region, lines.country].filter(Boolean);
+  if (rows.length === 0) return null;
+  return (
+    <div className="contacts-detail-view__address-lines">
+      {lines.street ? <span>{lines.street}</span> : null}
+      {lines.localityLine ? <span>{lines.localityLine}</span> : null}
+      {lines.region ? <span>{lines.region}</span> : null}
+      {lines.country ? <span>{lines.country}</span> : null}
+    </div>
+  );
 }
 
 function channelTypeLabel(contextType: ContactChannelContext, labels: ContactsUILabels): string {
@@ -190,7 +253,7 @@ export function ContactsDetailView({
     ? (editDraft?.addresses ?? [])
     : mapEntriesSorted(card?.addresses).map(([id, address]) => ({
         id,
-        line: formatAddressLine(address),
+        lines: addressDisplayFromCard(address),
         contextLabel: channelDisplayLabel(
           address.contexts,
           labels,
@@ -385,62 +448,25 @@ export function ContactsDetailView({
         hidden={!isEditing && readAddresses.length === 0}
       >
         {isEditing && editDraft ? (
-          <div className="contacts-detail-view__editable-list">
+          <div className="contacts-detail-view__editable-list contacts-detail-view__address-list">
             {editDraft.addresses.map((row) => (
-              <div key={row.id} className="contacts-detail-view__address-block">
-                <div className="contacts-detail-view__editable-row">
+              <div key={row.id} className="contacts-detail-view__address-row">
+                <div className="contacts-detail-view__address-type">
                   <ContextTypeSelect
                     labels={labels}
                     value={row.contextType}
                     ariaLabel={`${labels.channelType} ${labels.sectionAddresses}`}
                     onChange={(contextType) => onUpdateAddressContext(row.id, contextType)}
                   />
-                  <IconButton
-                    label={labels.removeRow}
-                    icon={<X className="size-4" />}
-                    variant="subtle"
-                    size="sm"
-                    onClick={() => onRemoveAddress(row.id)}
-                  />
                 </div>
-                <div className="contacts-detail-view__field-stack">
-                  <FieldLabelRow
-                    label={labels.addressStreet}
-                    htmlFor={`contact-address-street-${row.id}`}
-                  >
-                    <Input
-                      id={`contact-address-street-${row.id}`}
-                      aria-label={labels.addressStreet}
-                      value={row.street}
-                      onChange={(event) => onUpdateAddress(row.id, "street", event.target.value)}
-                    />
-                  </FieldLabelRow>
-                  <FieldLabelRow
-                    label={labels.addressLocality}
-                    htmlFor={`contact-address-locality-${row.id}`}
-                  >
-                    <Input
-                      id={`contact-address-locality-${row.id}`}
-                      aria-label={labels.addressLocality}
-                      value={row.locality}
-                      onChange={(event) => onUpdateAddress(row.id, "locality", event.target.value)}
-                    />
-                  </FieldLabelRow>
-                  <FieldLabelRow
-                    label={labels.addressRegion}
-                    htmlFor={`contact-address-region-${row.id}`}
-                  >
-                    <Input
-                      id={`contact-address-region-${row.id}`}
-                      aria-label={labels.addressRegion}
-                      value={row.region}
-                      onChange={(event) => onUpdateAddress(row.id, "region", event.target.value)}
-                    />
-                  </FieldLabelRow>
-                  <FieldLabelRow
-                    label={labels.addressPostalCode}
-                    htmlFor={`contact-address-postal-${row.id}`}
-                  >
+                <div className="contacts-detail-view__address-fields">
+                  <Input
+                    id={`contact-address-street-${row.id}`}
+                    aria-label={labels.addressStreet}
+                    value={row.street}
+                    onChange={(event) => onUpdateAddress(row.id, "street", event.target.value)}
+                  />
+                  <div className="contacts-detail-view__address-locality-row">
                     <Input
                       id={`contact-address-postal-${row.id}`}
                       aria-label={labels.addressPostalCode}
@@ -449,19 +475,34 @@ export function ContactsDetailView({
                         onUpdateAddress(row.id, "postalCode", event.target.value)
                       }
                     />
-                  </FieldLabelRow>
-                  <FieldLabelRow
-                    label={labels.addressCountry}
-                    htmlFor={`contact-address-country-${row.id}`}
-                  >
                     <Input
-                      id={`contact-address-country-${row.id}`}
-                      aria-label={labels.addressCountry}
-                      value={row.country}
-                      onChange={(event) => onUpdateAddress(row.id, "country", event.target.value)}
+                      id={`contact-address-locality-${row.id}`}
+                      aria-label={labels.addressLocality}
+                      value={row.locality}
+                      onChange={(event) => onUpdateAddress(row.id, "locality", event.target.value)}
                     />
-                  </FieldLabelRow>
+                  </div>
+                  <Input
+                    id={`contact-address-region-${row.id}`}
+                    aria-label={labels.addressRegion}
+                    value={row.region}
+                    onChange={(event) => onUpdateAddress(row.id, "region", event.target.value)}
+                  />
+                  <Input
+                    id={`contact-address-country-${row.id}`}
+                    aria-label={labels.addressCountry}
+                    value={row.country}
+                    onChange={(event) => onUpdateAddress(row.id, "country", event.target.value)}
+                  />
                 </div>
+                <IconButton
+                  className="contacts-detail-view__address-remove"
+                  label={labels.removeRow}
+                  icon={<X className="size-4" />}
+                  variant="subtle"
+                  size="sm"
+                  onClick={() => onRemoveAddress(row.id)}
+                />
               </div>
             ))}
             <Button
@@ -473,13 +514,17 @@ export function ContactsDetailView({
             />
           </div>
         ) : (
-          <ul className="contacts-detail-view__value-list">
+          <ul className="contacts-detail-view__address-list">
             {readAddresses.map((row) => (
-              <li key={row.id} className="contacts-detail-view__value-item">
-                <span>{"line" in row ? row.line : ""}</span>
+              <li key={row.id} className="contacts-detail-view__address-row">
                 {"contextLabel" in row && row.contextLabel ? (
-                  <span className="contacts-detail-view__meta">{row.contextLabel}</span>
-                ) : null}
+                  <span className="contacts-detail-view__address-type contacts-detail-view__address-type-label">
+                    {row.contextLabel}
+                  </span>
+                ) : (
+                  <span className="contacts-detail-view__address-type" aria-hidden="true" />
+                )}
+                {"lines" in row ? <AddressDisplayBlock lines={row.lines} /> : null}
               </li>
             ))}
           </ul>
