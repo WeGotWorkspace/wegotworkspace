@@ -12,6 +12,12 @@ export type ContactsUIData = {
   cards: ContactCard[];
 };
 
+export type ContactsMutationOpts = {
+  signal?: AbortSignal;
+  /** CardDAV etag from ContactCard — required for PATCH/DELETE against the live API. */
+  ifMatch?: string;
+};
+
 /**
  * Backend-agnostic contacts operations consumed by contacts UI/controller.
  * Implement this for any provider (WGW, custom API, local-only, etc).
@@ -24,7 +30,7 @@ export type ContactsAPIOperations = {
   patchCard: (
     cardId: string,
     patch: ContactCardPatch,
-    opts?: { signal?: AbortSignal },
+    opts?: ContactsMutationOpts,
   ) => Promise<ContactCard>;
-  deleteCard: (cardId: string, opts?: { signal?: AbortSignal }) => Promise<void>;
+  deleteCard: (cardId: string, opts?: ContactsMutationOpts) => Promise<void>;
 };

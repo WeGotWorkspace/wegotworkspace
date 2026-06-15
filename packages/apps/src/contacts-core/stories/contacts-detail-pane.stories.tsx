@@ -25,13 +25,19 @@ function ContactsDetailPaneHarness({ readOnly = false }: { readOnly?: boolean })
         onAddPhone={() =>
           setEditDraft((prev) => ({
             ...prev,
-            phones: [...prev.phones, { id: "phone-new", number: "" }],
+            phones: [...prev.phones, { id: "phone-new", number: "", contextType: "" }],
           }))
         }
         onAddEmail={() =>
           setEditDraft((prev) => ({
             ...prev,
-            emails: [...prev.emails, { id: "email-new", address: "" }],
+            emails: [...prev.emails, { id: "email-new", address: "", contextType: "" }],
+          }))
+        }
+        onAddAddress={() =>
+          setEditDraft((prev) => ({
+            ...prev,
+            addresses: [...prev.addresses, { id: "address-new", full: "", contextType: "" }],
           }))
         }
         onUpdatePhone={(id, number) =>
@@ -46,6 +52,30 @@ function ContactsDetailPaneHarness({ readOnly = false }: { readOnly?: boolean })
             emails: prev.emails.map((row) => (row.id === id ? { ...row, address } : row)),
           }))
         }
+        onUpdatePhoneContext={(id, contextType) =>
+          setEditDraft((prev) => ({
+            ...prev,
+            phones: prev.phones.map((row) => (row.id === id ? { ...row, contextType } : row)),
+          }))
+        }
+        onUpdateEmailContext={(id, contextType) =>
+          setEditDraft((prev) => ({
+            ...prev,
+            emails: prev.emails.map((row) => (row.id === id ? { ...row, contextType } : row)),
+          }))
+        }
+        onUpdateAddress={(id, full) =>
+          setEditDraft((prev) => ({
+            ...prev,
+            addresses: prev.addresses.map((row) => (row.id === id ? { ...row, full } : row)),
+          }))
+        }
+        onUpdateAddressContext={(id, contextType) =>
+          setEditDraft((prev) => ({
+            ...prev,
+            addresses: prev.addresses.map((row) => (row.id === id ? { ...row, contextType } : row)),
+          }))
+        }
         onRemovePhone={(id) =>
           setEditDraft((prev) => ({
             ...prev,
@@ -56,6 +86,12 @@ function ContactsDetailPaneHarness({ readOnly = false }: { readOnly?: boolean })
           setEditDraft((prev) => ({
             ...prev,
             emails: prev.emails.filter((row) => row.id !== id),
+          }))
+        }
+        onRemoveAddress={(id) =>
+          setEditDraft((prev) => ({
+            ...prev,
+            addresses: prev.addresses.filter((row) => row.id !== id),
           }))
         }
       />
@@ -84,7 +120,7 @@ export const Editable: Story = {
   args: {},
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const nameInput = canvas.getByLabelText("Full name");
+    const nameInput = canvas.getByLabelText("First name");
     await userEvent.clear(nameInput);
     await userEvent.type(nameInput, "Jane Updated");
     await expect(nameInput).toHaveValue("Jane Updated");

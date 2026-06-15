@@ -8,13 +8,18 @@ import type {
 
 export const CONTACTS_CREATE_ID = "__contacts_create__";
 
+/** JSContact channel context values exposed in the edit UI (maps to `contexts` on phones/emails/addresses). */
+export const CONTACT_CHANNEL_CONTEXTS = ["", "home", "work"] as const;
+export type ContactChannelContext = (typeof CONTACT_CHANNEL_CONTEXTS)[number];
+
 export type ContactEditDraft = {
-  useComponentName: boolean;
-  nameFull: string;
   nameGiven: string;
+  nameGiven2: string;
   nameSurname: string;
-  phones: Array<{ id: string; number: string }>;
-  emails: Array<{ id: string; address: string }>;
+  showGiven2: boolean;
+  phones: Array<{ id: string; number: string; contextType: ContactChannelContext }>;
+  emails: Array<{ id: string; address: string; contextType: ContactChannelContext }>;
+  addresses: Array<{ id: string; full: string; contextType: ContactChannelContext }>;
   organization: string;
   notes: string;
   organizationId?: string;
@@ -50,15 +55,32 @@ export function resolveCreateAddressBookIds(
 
 export function emptyContactEditDraft(): ContactEditDraft {
   return {
-    useComponentName: false,
-    nameFull: "",
     nameGiven: "",
+    nameGiven2: "",
     nameSurname: "",
+    showGiven2: false,
     phones: [],
     emails: [],
+    addresses: [],
     organization: "",
     notes: "",
   };
+}
+
+export function readContactContext(
+  contexts?: Record<string, boolean | undefined>,
+): ContactChannelContext {
+  if (contexts?.work) return "work";
+  if (contexts?.private) return "home";
+  return "";
+}
+
+export function contactContextToPatch(
+  contextType: ContactChannelContext,
+): Record<string, true> | undefined {
+  if (contextType === "work") return { work: true };
+  if (contextType === "home") return { private: true };
+  return undefined;
 }
 
 function readPhoneNumber(phone: NonNullable<ContactCard["phones"]>[string]): string {
@@ -67,45 +89,121 @@ function readPhoneNumber(phone: NonNullable<ContactCard["phones"]>[string]): str
   return "";
 }
 
-function phoneValue(card: ContactCard, id: string): string {
-  const phone = card.phones?.[id];
-  if (!phone) return "";
-  return readPhoneNumber(phone);
+function readAddressLine(address: NonNullable<ContactCard["addresses"]>[string]): string {
+  if (typeof address.full === "string" && address.full.trim()) {
+    return address.full.trim();
+  }
+  const components = address.components ?? [];
+  const fromComponents = components
+    .map((part) => part.value?.trim())
+    .filter(Boolean)
+    .join(", ");
+  if (fromComponents) return fromComponents;
+
+  const legacy = [
+    (address as { street?: string }).street,
+    (address as { locality?: string }).locality,
+    (address as { region?: string }).region,
+    (address as { postcode?: string }).postcode,
+    (address as { country?: string }).country,
+  ]
+    .map((part) => (typeof part === "string" ? part.trim() : ""))
+    .filter(Boolean);
+  return legacy.join(", ");
 }
 
-function emailValue(card: ContactCard, id: string): string {
-  return card.emails?.[id]?.address?.trim() ?? "";
+function componentValue(
+  components: NonNullable<ContactCard["name"]>["components"],
+  kind: "given" | "given2" | "surname" | "surname2",
+): string {
+  return (components ?? [])
+    .filter((component) => component.kind === kind)
+    .map((component) => component.value.trim())
+    .filter(Boolean)
+    .join(" ");
+}
+
+function splitFullName(fullName: string): { given: string; surname: string } {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return {
+      given: parts.slice(0, -1).join(" "),
+      surname: parts[parts.length - 1] ?? "",
+    };
+  }
+  return { given: fullName.trim(), surname: "" };
+}
+
+function phoneValue(
+  card: ContactCard,
+  id: string,
+): { number: string; contextType: ContactChannelContext } {
+  const phone = card.phones?.[id];
+  if (!phone) return { number: "", contextType: "" };
+  return {
+    number: readPhoneNumber(phone),
+    contextType: readContactContext(phone.contexts),
+  };
+}
+
+function emailValue(
+  card: ContactCard,
+  id: string,
+): { address: string; contextType: ContactChannelContext } {
+  const email = card.emails?.[id];
+  return {
+    address: email?.address?.trim() ?? "",
+    contextType: readContactContext(email?.contexts),
+  };
+}
+
+function addressValue(
+  card: ContactCard,
+  id: string,
+): { full: string; contextType: ContactChannelContext } {
+  const address = card.addresses?.[id];
+  if (!address) return { full: "", contextType: "" };
+  return {
+    full: readAddressLine(address),
+    contextType: readContactContext(address.contexts),
+  };
 }
 
 export function contactCardToEditDraft(card: ContactCard): ContactEditDraft {
-  const hasComponents = Boolean(card.name?.components?.length);
+  const components = card.name?.components ?? [];
+  let nameGiven = componentValue(components, "given");
+  const nameGiven2 = componentValue(components, "given2");
+  let nameSurname = componentValue(components, "surname");
   const fullName = card.name?.full?.trim() ?? "";
-  const given = (card.name?.components ?? [])
-    .filter((component) => component.kind === "given" || component.kind === "given2")
-    .map((component) => component.value.trim())
-    .filter(Boolean)
-    .join(" ");
-  const surname = (card.name?.components ?? [])
-    .filter((component) => component.kind === "surname" || component.kind === "surname2")
-    .map((component) => component.value.trim())
-    .filter(Boolean)
-    .join(" ");
+
+  if (!nameGiven && !nameGiven2 && !nameSurname && fullName) {
+    const split = splitFullName(fullName);
+    nameGiven = split.given;
+    nameSurname = split.surname;
+  }
 
   const [organizationId, organizationEntry] = mapEntriesSorted(card.organizations)[0] ?? [];
   const [notesId, notesEntry] = mapEntriesSorted(card.notes)[0] ?? [];
 
   return {
-    useComponentName: hasComponents && !fullName,
-    nameFull: fullName,
-    nameGiven: given,
-    nameSurname: surname,
+    nameGiven,
+    nameGiven2,
+    nameSurname,
+    showGiven2: Boolean(nameGiven2),
     phones: mapEntriesSorted(card.phones).map(([id, phone]) => ({
       id,
       number: readPhoneNumber(phone),
+      contextType: readContactContext(phone.contexts),
     })),
     emails: mapEntriesSorted(card.emails).map(([id, email]) => ({
       id,
       address: email.address?.trim() ?? "",
+      contextType: readContactContext(email.contexts),
+    })),
+    addresses: mapEntriesSorted(card.addresses).map(([id, address]) => ({
+      id,
+      full: readAddressLine(address),
+      contextType: readContactContext(address.contexts),
     })),
     organization: organizationEntry?.name?.trim() ?? "",
     organizationId,
@@ -115,19 +213,18 @@ export function contactCardToEditDraft(card: ContactCard): ContactEditDraft {
 }
 
 function buildNameFromDraft(draft: ContactEditDraft): ContactCardCreate["name"] | undefined {
-  if (draft.useComponentName) {
-    const components = [];
-    if (draft.nameGiven.trim()) {
-      components.push({ kind: "given" as const, value: draft.nameGiven.trim() });
-    }
-    if (draft.nameSurname.trim()) {
-      components.push({ kind: "surname" as const, value: draft.nameSurname.trim() });
-    }
-    if (components.length === 0) return undefined;
-    return { isOrdered: false, components } as ContactCardCreate["name"];
+  const components = [];
+  if (draft.nameGiven.trim()) {
+    components.push({ kind: "given" as const, value: draft.nameGiven.trim() });
   }
-  if (!draft.nameFull.trim()) return undefined;
-  return { full: draft.nameFull.trim() } as ContactCardCreate["name"];
+  if (draft.nameGiven2.trim()) {
+    components.push({ kind: "given2" as const, value: draft.nameGiven2.trim() });
+  }
+  if (draft.nameSurname.trim()) {
+    components.push({ kind: "surname" as const, value: draft.nameSurname.trim() });
+  }
+  if (components.length === 0) return undefined;
+  return { isOrdered: false, components, full: "" } as ContactCardCreate["name"];
 }
 
 function buildPhonesFromDraft(
@@ -137,7 +234,10 @@ function buildPhonesFromDraft(
   for (const row of rows) {
     const number = row.number.trim();
     if (!number) continue;
-    phones[row.id] = { number } as NonNullable<ContactCardCreate["phones"]>[string];
+    const entry: Record<string, unknown> = { number };
+    const contexts = contactContextToPatch(row.contextType);
+    if (contexts) entry.contexts = contexts;
+    phones[row.id] = entry as NonNullable<ContactCardCreate["phones"]>[string];
   }
   return phones;
 }
@@ -149,9 +249,27 @@ function buildEmailsFromDraft(
   for (const row of rows) {
     const address = row.address.trim();
     if (!address) continue;
-    emails[row.id] = { address } as NonNullable<ContactCardCreate["emails"]>[string];
+    const entry: Record<string, unknown> = { address };
+    const contexts = contactContextToPatch(row.contextType);
+    if (contexts) entry.contexts = contexts;
+    emails[row.id] = entry as NonNullable<ContactCardCreate["emails"]>[string];
   }
   return emails;
+}
+
+function buildAddressesFromDraft(
+  rows: ContactEditDraft["addresses"],
+): NonNullable<ContactCardCreate["addresses"]> {
+  const addresses: NonNullable<ContactCardCreate["addresses"]> = {};
+  for (const row of rows) {
+    const full = row.full.trim();
+    if (!full) continue;
+    const entry: Record<string, unknown> = { full };
+    const contexts = contactContextToPatch(row.contextType);
+    if (contexts) entry.contexts = contexts;
+    addresses[row.id] = entry as NonNullable<ContactCardCreate["addresses"]>[string];
+  }
+  return addresses;
 }
 
 export function editDraftToCreateBody(
@@ -172,6 +290,9 @@ export function editDraftToCreateBody(
   const emails = buildEmailsFromDraft(draft.emails);
   if (Object.keys(emails).length > 0) body.emails = emails;
 
+  const addresses = buildAddressesFromDraft(draft.addresses);
+  if (Object.keys(addresses).length > 0) body.addresses = addresses;
+
   if (draft.organization.trim()) {
     body.organizations = {
       [draft.organizationId ?? newContactMapId()]: { name: draft.organization.trim() },
@@ -187,42 +308,62 @@ export function editDraftToCreateBody(
   return body;
 }
 
+function currentNameComponents(card: ContactCard): {
+  given: string;
+  given2: string;
+  surname: string;
+  full: string;
+} {
+  const components = card.name?.components ?? [];
+  return {
+    given: componentValue(components, "given"),
+    given2: componentValue(components, "given2"),
+    surname: componentValue(components, "surname"),
+    full: card.name?.full?.trim() ?? "",
+  };
+}
+
 function patchName(
   draft: ContactEditDraft,
   active: ContactCard,
 ): ContactCardPatch["name"] | undefined {
   const next = buildNameFromDraft(draft);
-  const current = active.name;
-  if (!next && !current) return undefined;
+  const current = currentNameComponents(active);
 
-  if (draft.useComponentName) {
-    const currentGiven = (current?.components ?? [])
-      .filter((component) => component.kind === "given" || component.kind === "given2")
-      .map((component) => component.value.trim())
-      .join(" ");
-    const currentSurname = (current?.components ?? [])
-      .filter((component) => component.kind === "surname" || component.kind === "surname2")
-      .map((component) => component.value.trim())
-      .join(" ");
-    if (
-      currentGiven === draft.nameGiven.trim() &&
-      currentSurname === draft.nameSurname.trim() &&
-      !current?.full?.trim()
-    ) {
-      return undefined;
-    }
-    return next;
+  const draftGiven = draft.nameGiven.trim();
+  const draftGiven2 = draft.nameGiven2.trim();
+  const draftSurname = draft.nameSurname.trim();
+
+  if (!next && !current.given && !current.given2 && !current.surname && !current.full) {
+    return undefined;
   }
 
-  if ((current?.full?.trim() ?? "") === draft.nameFull.trim()) return undefined;
-  return next;
+  const componentsChanged =
+    current.given !== draftGiven ||
+    current.given2 !== draftGiven2 ||
+    current.surname !== draftSurname;
+
+  if (!componentsChanged && !current.full) return undefined;
+
+  if (!componentsChanged && current.full) {
+    const split = splitFullName(current.full);
+    if (split.given === draftGiven && split.surname === draftSurname && !draftGiven2) {
+      return undefined;
+    }
+  }
+
+  return next ?? ({ full: "" } as ContactCardPatch["name"]);
 }
 
-function patchMapField<T extends Record<string, unknown | null>>(
+function patchChannelMapField<
+  T extends Record<string, unknown | null>,
+  Row extends { id: string; contextType: ContactChannelContext },
+>(
   activeIds: Set<string>,
-  draftRows: Array<{ id: string; value: string }>,
-  readValue: (id: string) => string,
-  toPatchValue: (value: string) => unknown,
+  draftRows: Row[],
+  readRow: (id: string) => { value: string; contextType: ContactChannelContext },
+  getValue: (row: Row) => string,
+  toPatchValue: (row: Row) => unknown,
 ): T | undefined {
   const patch = {} as T;
   let changed = false;
@@ -235,7 +376,7 @@ function patchMapField<T extends Record<string, unknown | null>>(
   }
 
   for (const row of draftRows) {
-    const value = row.value.trim();
+    const value = getValue(row).trim();
     if (!value) {
       if (activeIds.has(row.id)) {
         (patch as Record<string, unknown | null>)[row.id] = null;
@@ -243,8 +384,9 @@ function patchMapField<T extends Record<string, unknown | null>>(
       }
       continue;
     }
-    if (readValue(row.id) !== value) {
-      (patch as Record<string, unknown>)[row.id] = toPatchValue(value);
+    const current = readRow(row.id);
+    if (current.value !== value || current.contextType !== row.contextType) {
+      (patch as Record<string, unknown>)[row.id] = toPatchValue(row);
       changed = true;
     }
   }
@@ -259,22 +401,67 @@ export function editDraftToPatch(draft: ContactEditDraft, active: ContactCard): 
   if (name) patch.name = name;
 
   const activePhoneIds = new Set(mapEntriesSorted(active.phones).map(([id]) => id));
-  const phones = patchMapField<NonNullable<ContactCardPatch["phones"]>>(
+  const phones = patchChannelMapField<
+    NonNullable<ContactCardPatch["phones"]>,
+    ContactEditDraft["phones"][number]
+  >(
     activePhoneIds,
-    draft.phones.map((row) => ({ id: row.id, value: row.number })),
-    (id) => phoneValue(active, id),
-    (value) => ({ number: value }),
+    draft.phones,
+    (id) => {
+      const phone = phoneValue(active, id);
+      return { value: phone.number, contextType: phone.contextType };
+    },
+    (row) => row.number,
+    (row) => {
+      const entry: Record<string, unknown> = { number: row.number.trim() };
+      const contexts = contactContextToPatch(row.contextType);
+      if (contexts) entry.contexts = contexts;
+      return entry;
+    },
   );
   if (phones) patch.phones = phones;
 
   const activeEmailIds = new Set(mapEntriesSorted(active.emails).map(([id]) => id));
-  const emails = patchMapField<NonNullable<ContactCardPatch["emails"]>>(
+  const emails = patchChannelMapField<
+    NonNullable<ContactCardPatch["emails"]>,
+    ContactEditDraft["emails"][number]
+  >(
     activeEmailIds,
-    draft.emails.map((row) => ({ id: row.id, value: row.address })),
-    (id) => emailValue(active, id),
-    (value) => ({ address: value }),
+    draft.emails,
+    (id) => {
+      const email = emailValue(active, id);
+      return { value: email.address, contextType: email.contextType };
+    },
+    (row) => row.address,
+    (row) => {
+      const entry: Record<string, unknown> = { address: row.address.trim() };
+      const contexts = contactContextToPatch(row.contextType);
+      if (contexts) entry.contexts = contexts;
+      return entry;
+    },
   );
   if (emails) patch.emails = emails;
+
+  const activeAddressIds = new Set(mapEntriesSorted(active.addresses).map(([id]) => id));
+  const addresses = patchChannelMapField<
+    NonNullable<ContactCardPatch["addresses"]>,
+    ContactEditDraft["addresses"][number]
+  >(
+    activeAddressIds,
+    draft.addresses,
+    (id) => {
+      const address = addressValue(active, id);
+      return { value: address.full, contextType: address.contextType };
+    },
+    (row) => row.full,
+    (row) => {
+      const entry: Record<string, unknown> = { full: row.full.trim() };
+      const contexts = contactContextToPatch(row.contextType);
+      if (contexts) entry.contexts = contexts;
+      return entry;
+    },
+  );
+  if (addresses) patch.addresses = addresses;
 
   const [activeOrgId, activeOrg] = mapEntriesSorted(active.organizations)[0] ?? [];
   const orgName = draft.organization.trim();

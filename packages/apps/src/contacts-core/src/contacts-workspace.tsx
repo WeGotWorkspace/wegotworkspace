@@ -67,10 +67,16 @@ export function ContactsWorkspace({
     updateEditDraft,
     addPhone,
     addEmail,
+    addAddress,
     updatePhone,
     updateEmail,
+    updatePhoneContext,
+    updateEmailContext,
+    updateAddress,
+    updateAddressContext,
     removePhone,
     removeEmail,
+    removeAddress,
     addressBooks,
   } = useContactsController({
     data,
@@ -187,10 +193,16 @@ export function ContactsWorkspace({
               onDraftChange={updateEditDraft}
               onAddPhone={addPhone}
               onAddEmail={addEmail}
+              onAddAddress={addAddress}
               onUpdatePhone={updatePhone}
               onUpdateEmail={updateEmail}
+              onUpdatePhoneContext={updatePhoneContext}
+              onUpdateEmailContext={updateEmailContext}
+              onUpdateAddress={updateAddress}
+              onUpdateAddressContext={updateAddressContext}
               onRemovePhone={removePhone}
               onRemoveEmail={removeEmail}
+              onRemoveAddress={removeAddress}
             />
           );
         }}

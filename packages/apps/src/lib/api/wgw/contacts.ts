@@ -18,6 +18,12 @@ export class ContactsRequestError extends Error {
   }
 }
 
+type ContactsRequestOpts = {
+  signal?: AbortSignal;
+  /** CardDAV etag from ContactCard — required for PATCH/DELETE per optimistic concurrency. */
+  ifMatch?: string;
+};
+
 function parseAddressBooksPayload(json: unknown): AddressBook[] {
   if (!json || typeof json !== "object") return [];
   const payload = json as ContactAddressBookListResponse | Record<string, unknown>;
@@ -36,11 +42,18 @@ async function requestContactsJson(
   path: string,
   method: "GET" | "POST" | "PATCH" | "DELETE",
   body?: unknown,
-  opts?: { signal?: AbortSignal },
+  opts?: ContactsRequestOpts,
 ): Promise<unknown> {
-  const init: RequestInit = { method, signal: opts?.signal };
+  const headers = new Headers();
   if (body !== undefined) {
-    init.headers = { "Content-Type": "application/json" };
+    headers.set("Content-Type", "application/json");
+  }
+  if (opts?.ifMatch) {
+    headers.set("If-Match", opts.ifMatch);
+  }
+
+  const init: RequestInit = { method, signal: opts?.signal, headers };
+  if (body !== undefined) {
     init.body = JSON.stringify(body);
   }
 
@@ -106,7 +119,7 @@ export async function createCard(
 export async function patchCard(
   cardId: string,
   patch: ContactCardPatch,
-  opts?: { signal?: AbortSignal },
+  opts?: ContactsRequestOpts,
 ): Promise<ContactCard> {
   const json = await requestContactsJson(
     `/contacts/cards/${encodeURIComponent(cardId)}`,
@@ -117,7 +130,7 @@ export async function patchCard(
   return json as ContactCard;
 }
 
-export async function deleteCard(cardId: string, opts?: { signal?: AbortSignal }): Promise<void> {
+export async function deleteCard(cardId: string, opts?: ContactsRequestOpts): Promise<void> {
   await requestContactsJson(
     `/contacts/cards/${encodeURIComponent(cardId)}`,
     "DELETE",

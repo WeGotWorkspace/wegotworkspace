@@ -23,6 +23,7 @@ import {
   newContactMapId,
   resolveCreateAddressBookIds,
   resolveDefaultContactsView,
+  type ContactChannelContext,
   type ContactEditDraft,
 } from "@/contacts-core/src/contacts-edit-utils";
 import type {
@@ -50,14 +51,11 @@ function filterCardsByView(cards: ContactCard[], view: string): ContactCard[] {
 }
 
 function draftDisplayName(draft: ContactEditDraft, unknownLabel: string): string {
-  if (draft.useComponentName) {
-    const name = [draft.nameGiven, draft.nameSurname]
-      .map((part) => part.trim())
-      .filter(Boolean)
-      .join(" ");
-    return name || unknownLabel;
-  }
-  return draft.nameFull.trim() || unknownLabel;
+  const name = [draft.nameGiven, draft.nameGiven2, draft.nameSurname]
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(" ");
+  return name || unknownLabel;
 }
 
 export function useContactsController({
@@ -215,7 +213,7 @@ export function useContactsController({
       prev
         ? {
             ...prev,
-            phones: [...prev.phones, { id: newContactMapId(), number: "" }],
+            phones: [...prev.phones, { id: newContactMapId(), number: "", contextType: "" }],
           }
         : prev,
     );
@@ -226,7 +224,18 @@ export function useContactsController({
       prev
         ? {
             ...prev,
-            emails: [...prev.emails, { id: newContactMapId(), address: "" }],
+            emails: [...prev.emails, { id: newContactMapId(), address: "", contextType: "" }],
+          }
+        : prev,
+    );
+  }, []);
+
+  const addAddress = useCallback(() => {
+    setEditDraft((prev) =>
+      prev
+        ? {
+            ...prev,
+            addresses: [...prev.addresses, { id: newContactMapId(), full: "", contextType: "" }],
           }
         : prev,
     );
@@ -254,6 +263,50 @@ export function useContactsController({
     );
   }, []);
 
+  const updatePhoneContext = useCallback((id: string, contextType: ContactChannelContext) => {
+    setEditDraft((prev) =>
+      prev
+        ? {
+            ...prev,
+            phones: prev.phones.map((row) => (row.id === id ? { ...row, contextType } : row)),
+          }
+        : prev,
+    );
+  }, []);
+
+  const updateEmailContext = useCallback((id: string, contextType: ContactChannelContext) => {
+    setEditDraft((prev) =>
+      prev
+        ? {
+            ...prev,
+            emails: prev.emails.map((row) => (row.id === id ? { ...row, contextType } : row)),
+          }
+        : prev,
+    );
+  }, []);
+
+  const updateAddress = useCallback((id: string, full: string) => {
+    setEditDraft((prev) =>
+      prev
+        ? {
+            ...prev,
+            addresses: prev.addresses.map((row) => (row.id === id ? { ...row, full } : row)),
+          }
+        : prev,
+    );
+  }, []);
+
+  const updateAddressContext = useCallback((id: string, contextType: ContactChannelContext) => {
+    setEditDraft((prev) =>
+      prev
+        ? {
+            ...prev,
+            addresses: prev.addresses.map((row) => (row.id === id ? { ...row, contextType } : row)),
+          }
+        : prev,
+    );
+  }, []);
+
   const removePhone = useCallback((id: string) => {
     setEditDraft((prev) =>
       prev ? { ...prev, phones: prev.phones.filter((row) => row.id !== id) } : prev,
@@ -263,6 +316,12 @@ export function useContactsController({
   const removeEmail = useCallback((id: string) => {
     setEditDraft((prev) =>
       prev ? { ...prev, emails: prev.emails.filter((row) => row.id !== id) } : prev,
+    );
+  }, []);
+
+  const removeAddress = useCallback((id: string) => {
+    setEditDraft((prev) =>
+      prev ? { ...prev, addresses: prev.addresses.filter((row) => row.id !== id) } : prev,
     );
   }, []);
 
@@ -299,7 +358,12 @@ export function useContactsController({
         toastMessage: L.toastDeleted,
         execute: (signal) =>
           operations
-            ? Promise.all(ids.map((id) => operations.deleteCard(id, { signal }))).then(() => {})
+            ? Promise.all(
+                ids.map((id) => {
+                  const card = previousCards.find((row) => row.id === id);
+                  return operations.deleteCard(id, { signal, ifMatch: card?.etag });
+                }),
+              ).then(() => {})
             : Promise.resolve(),
         undo: rollback,
         onError: rollback,
@@ -398,6 +462,7 @@ export function useContactsController({
       name: patch.name ?? active.name,
       phones: { ...active.phones, ...patch.phones },
       emails: { ...active.emails, ...patch.emails },
+      addresses: { ...active.addresses, ...patch.addresses },
       organizations: { ...active.organizations, ...patch.organizations },
       notes: { ...active.notes, ...patch.notes },
     };
@@ -406,6 +471,9 @@ export function useContactsController({
     }
     for (const [key, value] of Object.entries(patch.emails ?? {})) {
       if (value === null) delete merged.emails?.[key];
+    }
+    for (const [key, value] of Object.entries(patch.addresses ?? {})) {
+      if (value === null) delete merged.addresses?.[key];
     }
     for (const [key, value] of Object.entries(patch.organizations ?? {})) {
       if (value === null) delete merged.organizations?.[key];
@@ -428,9 +496,11 @@ export function useContactsController({
       toastMessage: L.toastSaved,
       execute: (signal) =>
         operations
-          ? operations.patchCard(active.id, patch, { signal }).then((saved) => {
-              setCards((prev) => prev.map((card) => (card.id === active.id ? saved : card)));
-            })
+          ? operations
+              .patchCard(active.id, patch, { signal, ifMatch: active.etag })
+              .then((saved) => {
+                setCards((prev) => prev.map((card) => (card.id === active.id ? saved : card)));
+              })
           : Promise.resolve(),
       undo: rollback,
       onError: rollback,
@@ -511,10 +581,16 @@ export function useContactsController({
     updateEditDraft,
     addPhone,
     addEmail,
+    addAddress,
     updatePhone,
     updateEmail,
+    updatePhoneContext,
+    updateEmailContext,
+    updateAddress,
+    updateAddressContext,
     removePhone,
     removeEmail,
+    removeAddress,
     requestDeleteSelected,
   };
 }

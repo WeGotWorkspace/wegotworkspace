@@ -210,6 +210,11 @@
   gap: 0.5rem;
 }
 
+.contacts-detail-view__context-select {
+  width: 7rem;
+  flex-shrink: 0;
+}
+
 .contacts-detail-view__editable-row .input,
 .contacts-detail-view__editable-row input {
   flex: 1;

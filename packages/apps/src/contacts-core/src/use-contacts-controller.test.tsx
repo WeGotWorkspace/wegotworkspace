@@ -75,7 +75,7 @@ describe("useContactsController", () => {
     expect(result.current.editDraft).not.toBeNull();
 
     act(() => {
-      result.current.updateEditDraft({ nameFull: "Changed Name" });
+      result.current.updateEditDraft({ nameGiven: "Changed Name" });
     });
 
     act(() => {

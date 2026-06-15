@@ -23,7 +23,7 @@ const janeCard = {
     "email-1": { "@type": "EmailAddress" as const, address: "jane@example.com" },
   },
   phones: {
-    "phone-1": { "@type": "Phone" as const, number: "+1-555-0101" },
+    "phone-1": { "@type": "Phone" as const, number: "+1-555-0101", contexts: { work: true } },
   },
   notes: {
     "note-1": { "@type": "Note" as const, note: "Met at conference" },
@@ -53,27 +53,74 @@ describe("contacts-edit-utils", () => {
     expect(resolveCreateAddressBookIds("all", books)).toEqual({ default: true });
   });
 
-  it("builds create body without server-owned envelope fields", () => {
+  it("builds create body with JSContact name components", () => {
     const draft = {
       ...emptyContactEditDraft(),
-      nameFull: "New Person",
-      phones: [{ id: "phone-new", number: "+1-555-9999" }],
-      emails: [{ id: "email-new", address: "new@example.com" }],
+      nameGiven: "New",
+      nameSurname: "Person",
+      phones: [{ id: "phone-new", number: "+1-555-9999", contextType: "work" as const }],
+      emails: [{ id: "email-new", address: "new@example.com", contextType: "" as const }],
     };
     const body = editDraftToCreateBody(draft, { default: true });
     expect(body).not.toHaveProperty("@type");
     expect(body).not.toHaveProperty("version");
     expect(body).not.toHaveProperty("id");
     expect(body.addressBookIds).toEqual({ default: true });
-    expect(body.name).toEqual({ full: "New Person" });
-    expect(body.phones).toEqual({ "phone-new": { number: "+1-555-9999" } });
+    expect(body.name).toEqual({
+      isOrdered: false,
+      components: [
+        { kind: "given", value: "New" },
+        { kind: "surname", value: "Person" },
+      ],
+      full: "",
+    });
+    expect(body.phones).toEqual({
+      "phone-new": { number: "+1-555-9999", contexts: { work: true } },
+    });
   });
 
   it("round-trips card to draft and builds patch for changed phone", () => {
     const draft = contactCardToEditDraft(janeCard);
-    draft.phones = [{ id: "phone-1", number: "+1-555-0199" }];
+    expect(draft.nameGiven).toBe("Jane");
+    expect(draft.nameSurname).toBe("Doe");
+    draft.phones = [{ id: "phone-1", number: "+1-555-0199", contextType: "work" }];
     const patch = editDraftToPatch(draft, janeCard);
-    expect(patch.phones).toEqual({ "phone-1": { number: "+1-555-0199" } });
+    expect(patch.phones).toEqual({
+      "phone-1": { number: "+1-555-0199", contexts: { work: true } },
+    });
     expect(patch).not.toHaveProperty("@type");
+  });
+
+  it("builds notes patch with note key per OpenAPI JsContactNote", () => {
+    const draft = contactCardToEditDraft(janeCard);
+    draft.notes = "Updated note text";
+    const patch = editDraftToPatch(draft, janeCard);
+    expect(patch.notes).toEqual({ "note-1": { note: "Updated note text" } });
+  });
+
+  it("builds notes patch when adding a note to a card without notes", () => {
+    const cardWithoutNotes = { ...janeCard, notes: undefined };
+    const draft = contactCardToEditDraft(cardWithoutNotes);
+    draft.notes = "Brand new note";
+    const patch = editDraftToPatch(draft, cardWithoutNotes);
+    expect(patch.notes).toBeDefined();
+    const [noteId, noteEntry] = Object.entries(patch.notes ?? {})[0] ?? [];
+    expect(noteId).toBeTruthy();
+    expect(noteEntry).toEqual({ note: "Brand new note" });
+  });
+
+  it("builds address patch with full line and context", () => {
+    const cardWithAddress = {
+      ...janeCard,
+      addresses: {
+        "addr-1": { "@type": "Address" as const, full: "123 Main St", contexts: { private: true } },
+      },
+    } as unknown as ContactCard;
+    const draft = contactCardToEditDraft(cardWithAddress);
+    draft.addresses = [{ id: "addr-1", full: "456 Oak Ave", contextType: "home" }];
+    const patch = editDraftToPatch(draft, cardWithAddress);
+    expect(patch.addresses).toEqual({
+      "addr-1": { full: "456 Oak Ave", contexts: { private: true } },
+    });
   });
 });

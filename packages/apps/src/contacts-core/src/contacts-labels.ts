@@ -26,13 +26,20 @@ export type ContactsUILabels = {
   sectionNotes: string;
   nameFull: string;
   nameGiven: string;
+  nameGiven2: string;
   nameSurname: string;
+  channelType: string;
+  channelTypeNone: string;
+  channelTypeHome: string;
+  channelTypeWork: string;
   phoneNumber: string;
   emailAddress: string;
   organizationName: string;
   notesText: string;
   addPhone: string;
   addEmail: string;
+  addAddress: string;
+  addressLine: string;
   removeRow: string;
   toastCreated: string;
   toastSaved: string;
@@ -66,14 +73,21 @@ export const defaultContactsLabels: ContactsUILabels = {
   sectionOrganization: "Organization",
   sectionNotes: "Notes",
   nameFull: "Full name",
-  nameGiven: "Given name",
-  nameSurname: "Surname",
+  nameGiven: "First name",
+  nameGiven2: "Middle name",
+  nameSurname: "Last name",
+  channelType: "Type",
+  channelTypeNone: "Other",
+  channelTypeHome: "Home",
+  channelTypeWork: "Work",
   phoneNumber: "Phone number",
   emailAddress: "Email address",
   organizationName: "Organization",
   notesText: "Notes",
   addPhone: "Add phone",
   addEmail: "Add email",
+  addAddress: "Add address",
+  addressLine: "Street address",
   removeRow: "Remove",
   toastCreated: "Contact created",
   toastSaved: "Contact saved",
