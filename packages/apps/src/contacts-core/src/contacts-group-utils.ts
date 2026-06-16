@@ -66,6 +66,41 @@ function normalizeContactUidForMatch(uid: string): string {
   return trimmed.toLowerCase();
 }
 
+function memberCardIdFromApi(
+  memberCardIds: ContactCardWithResolvedMembers["memberCardIds"],
+  uid: string,
+): string | undefined {
+  if (!memberCardIds) return undefined;
+  const direct = memberCardIds[uid];
+  if (direct) return direct;
+  const normalized = normalizeContactUidForMatch(uid);
+  for (const [key, cardId] of Object.entries(memberCardIds)) {
+    if (normalizeContactUidForMatch(key) === normalized) {
+      return cardId;
+    }
+  }
+  return undefined;
+}
+
+function resolvedMemberCardIdsFromApiOnly(
+  groupCard: ContactCard,
+  allCards: ContactCard[],
+): string[] {
+  const memberCardIds = (groupCard as ContactCardWithResolvedMembers).memberCardIds;
+  if (!memberCardIds) return [];
+
+  const cardById = new Map(allCards.map((card) => [card.id, card]));
+  const resolved: string[] = [];
+  const seenIds = new Set<string>();
+  for (const cardId of Object.values(memberCardIds)) {
+    const card = cardById.get(cardId);
+    if (!card || isContactGroupCard(card) || seenIds.has(cardId)) continue;
+    seenIds.add(cardId);
+    resolved.push(cardId);
+  }
+  return resolved;
+}
+
 function indexCardsByNormalizedUid(cards: ContactCard[]): Map<string, ContactCard> {
   const byUid = new Map<string, ContactCard>();
   for (const card of cards) {
@@ -81,7 +116,9 @@ export function resolveGroupMemberCardIds(
   allCards: ContactCard[],
 ): string[] {
   const memberUids = enabledMemberUids(groupCard.members);
-  if (memberUids.length === 0) return [];
+  if (memberUids.length === 0) {
+    return resolvedMemberCardIdsFromApiOnly(groupCard, allCards);
+  }
 
   const cardById = new Map(allCards.map((card) => [card.id, card]));
   const cardByNormalizedUid = indexCardsByNormalizedUid(allCards);
@@ -90,7 +127,7 @@ export function resolveGroupMemberCardIds(
   const resolved: string[] = [];
   const seenIds = new Set<string>();
   for (const uid of memberUids) {
-    const fromApi = memberCardIds?.[uid];
+    const fromApi = memberCardIdFromApi(memberCardIds, uid);
     if (fromApi && cardById.has(fromApi) && !isContactGroupCard(cardById.get(fromApi)!)) {
       if (!seenIds.has(fromApi)) {
         seenIds.add(fromApi);
@@ -177,7 +214,7 @@ export function groupRemoveMembersPatch(
   for (const [uid, enabled] of Object.entries(groupCard.members)) {
     if (!enabled) continue;
 
-    const fromApi = memberCardIds?.[uid];
+    const fromApi = memberCardIdFromApi(memberCardIds, uid);
     let resolvedId: string | undefined;
     if (fromApi && cardById.has(fromApi)) {
       resolvedId = fromApi;

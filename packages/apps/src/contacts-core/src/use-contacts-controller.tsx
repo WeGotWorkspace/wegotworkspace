@@ -60,6 +60,8 @@ type UseContactsControllerArgs = {
   labels?: Partial<ContactsUILabels>;
   listLoading?: boolean;
   operations?: ContactsAPIOperations;
+  /** Refetch cards after vCard import so group membership resolves against the full list. */
+  onRefreshList?: () => void;
   /**
    * Initial view restored from a deep-link URL (e.g. `"all"`, `"group:{id}"`).
    * Only applied on mount; falls back to address-book default when absent.
@@ -117,6 +119,7 @@ export function useContactsController({
   labels,
   listLoading = false,
   operations,
+  onRefreshList,
   initialView,
   initialContactId,
   onViewChange,
@@ -437,6 +440,7 @@ export function useContactsController({
 
         if (result.list.length > 0) {
           show(L.toastImported(result.list.length), { icon: <Upload className="size-4" /> });
+          onRefreshList?.();
         }
         if (skippedCount > 0) {
           showError(L.importFilesSkipped(skippedCount));
@@ -454,7 +458,7 @@ export function useContactsController({
         showError(L.importFailed);
       }
     },
-    [L, operations, resolveImportAddressBookId, show, showError],
+    [L, onRefreshList, operations, resolveImportAddressBookId, show, showError],
   );
 
   const addPhone = useCallback(() => {

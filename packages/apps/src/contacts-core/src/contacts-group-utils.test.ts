@@ -197,6 +197,42 @@ describe("contacts-group-utils", () => {
     expect(resolveGroupMemberCardIds(groupWithApiIds, cards)).toEqual(["card-jane", "card-joe"]);
   });
 
+  it("resolves from server memberCardIds when members map is absent", () => {
+    const groupWithApiIdsOnly = {
+      ...friendsGroup,
+      members: undefined,
+      memberCardIds: {
+        [janeUid]: "card-jane",
+        [joeUid]: "card-joe",
+      },
+    } as unknown as ContactCard;
+
+    expect(resolveGroupMemberCardIds(groupWithApiIdsOnly, cards)).toEqual([
+      "card-jane",
+      "card-joe",
+    ]);
+    expect(
+      filterCardsByView(
+        [groupWithApiIdsOnly, ...cards],
+        contactsGroupViewKey("card-group-friends"),
+      ).map((card) => card.id),
+    ).toEqual(["card-jane", "card-joe"]);
+  });
+
+  it("matches memberCardIds when uid key casing differs", () => {
+    const groupWithMixedCase = {
+      ...friendsGroup,
+      members: {
+        "urn:uuid:550E8400-E29B-41D4-A716-446655440010": true,
+      },
+      memberCardIds: {
+        [janeUid]: "card-jane",
+      },
+    } as unknown as ContactCard;
+
+    expect(resolveGroupMemberCardIds(groupWithMixedCase, cards)).toEqual(["card-jane"]);
+  });
+
   it("excludes group cards from all and address book views", () => {
     expect(filterCardsByView(cards, "all").map((card) => card.id)).toEqual([
       "card-jane",

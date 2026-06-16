@@ -115,6 +115,7 @@ export function ContactsWorkspace({
     labels,
     listLoading,
     operations,
+    onRefreshList,
     initialView,
     initialContactId,
     onViewChange,

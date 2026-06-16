@@ -527,6 +527,54 @@ describe("useContactsController vCard import", () => {
     );
   });
 
+  it("refreshes the contact list after a successful import", async () => {
+    const onRefreshList = vi.fn();
+    const importVcards = vi.fn().mockResolvedValue({
+      list: [
+        {
+          ...bootstrap.data.cards[0],
+          id: "card-imported-one",
+          name: { full: "Imported One" },
+        },
+      ],
+      errors: [],
+    });
+
+    const { result } = renderHook(() =>
+      useContactsController({
+        data: bootstrap.data,
+        listLoading: false,
+        onRefreshList,
+        operations: {
+          listAddressBooks: vi.fn(),
+          listCards: vi.fn(),
+          getCard: vi.fn(),
+          createCard: vi.fn(),
+          patchCard: vi.fn(),
+          deleteCard: vi.fn(),
+          importVcards,
+        },
+      }),
+    );
+
+    const fileList = {
+      0: new File(["BEGIN:VCARD\nFN:One\nEND:VCARD"], "one.vcf"),
+      length: 1,
+      item(index: number) {
+        return this[index as 0];
+      },
+      [Symbol.iterator]() {
+        return [this[0]][Symbol.iterator]();
+      },
+    } as FileList;
+
+    await act(async () => {
+      await result.current.handleImportVcf(fileList);
+    });
+
+    expect(onRefreshList).toHaveBeenCalledTimes(1);
+  });
+
   it("shows an error when no vCard files are selected", async () => {
     const { result } = renderHook(() =>
       useContactsController({
