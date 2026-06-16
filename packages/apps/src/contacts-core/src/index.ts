@@ -17,6 +17,7 @@ export type {
   AddressBook,
   ContactCard,
   ContactCardCreate,
+  ContactCardImportResponse,
   ContactCardPatch,
 } from "./contacts-types";
 export {

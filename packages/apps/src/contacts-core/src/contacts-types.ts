@@ -12,6 +12,16 @@ export type ContactsUIData = {
   cards: ContactCard[];
 };
 
+export type ContactCardImportError = {
+  index: number;
+  message: string;
+};
+
+export type ContactCardImportResponse = {
+  list: ContactCard[];
+  errors: ContactCardImportError[];
+};
+
 export type ContactsMutationOpts = {
   signal?: AbortSignal;
   /** CardDAV etag from ContactCard — required for PATCH/DELETE against the live API. */
@@ -38,4 +48,12 @@ export type ContactsAPIOperations = {
    * When absent, the controller falls back to client-side conversion from JSContact.
    */
   downloadCardVcf?: (cardId: string, opts?: { signal?: AbortSignal }) => Promise<string>;
+  /**
+   * Import one or more vCard blocks from file text. Server converts vCard → JSContact
+   * and creates contacts before groups so member uids resolve within the same file.
+   */
+  importVcards?: (
+    vcardText: string,
+    opts?: { addressBookId: string; signal?: AbortSignal },
+  ) => Promise<ContactCardImportResponse>;
 };

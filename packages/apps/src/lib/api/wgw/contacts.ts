@@ -3,6 +3,7 @@ import type {
   ContactAddressBookListResponse,
   ContactCard,
   ContactCardCreate,
+  ContactCardImportResponse,
   ContactCardListResponse,
   ContactCardPatch,
 } from "@wgw-api-generated/contacts-types";
@@ -158,6 +159,26 @@ export async function downloadCardVcf(
     );
   }
   return res.text();
+}
+
+export async function importVcards(
+  vcardText: string,
+  opts: { addressBookId: string; signal?: AbortSignal },
+): Promise<ContactCardImportResponse> {
+  const query = `?addressBookId=${encodeURIComponent(opts.addressBookId)}`;
+  const res = await wgwFetch(`/contacts/cards/import${query}`, {
+    method: "POST",
+    headers: { "Content-Type": "text/vcard" },
+    body: vcardText,
+    signal: opts.signal,
+  });
+  if (!res.ok) {
+    throw new ContactsRequestError(
+      `POST /contacts/cards/import failed (${res.status})`,
+      res.status,
+    );
+  }
+  return (await wgwReadJson(res)) as ContactCardImportResponse;
 }
 
 /** Load address books and cards from the configured WeGotWorkspace API. */

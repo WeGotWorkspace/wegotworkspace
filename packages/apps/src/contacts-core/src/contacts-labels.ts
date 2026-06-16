@@ -18,6 +18,14 @@ export type ContactsUILabels = {
   newGroup: string;
   toastGroupRenamed: (name: string) => string;
   newContact: string;
+  createContact: string;
+  importVcf: string;
+  dropImportHint: string;
+  toastImported: (count: number) => string;
+  importInvalidFile: string;
+  importRequiresApi: string;
+  importFailed: string;
+  importPartialFailure: (count: number) => string;
   unknownContact: string;
   edit: string;
   save: string;
@@ -94,6 +102,15 @@ export const defaultContactsLabels: ContactsUILabels = {
   newGroup: "New group",
   toastGroupRenamed: (name) => `Renamed to “${name}”`,
   newContact: "New contact",
+  createContact: "Create contact",
+  importVcf: "Import vCard",
+  dropImportHint: "Drop vCard files to import",
+  toastImported: (count) => `Imported ${count} contact${count === 1 ? "" : "s"}`,
+  importInvalidFile: "Choose a .vcf vCard file to import.",
+  importRequiresApi: "vCard import requires a connected contacts API.",
+  importFailed: "Could not import vCard file.",
+  importPartialFailure: (count) =>
+    `${count} contact${count === 1 ? "" : "s"} could not be imported.`,
   unknownContact: "Unknown contact",
   edit: "Edit",
   save: "Save",

@@ -1,6 +1,3 @@
-import { UserPlus } from "lucide-react";
-import "react-swipeable-list/dist/styles.css";
-import { Button } from "@/button/src/button";
 import { EditDialog } from "@/dialogs/src/dialogs";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
@@ -8,13 +5,16 @@ import { MultiSelectionView } from "@/multi-selection-view/src/multi-selection-v
 import { WorkspaceApp } from "@/workspace-app/src/workspace-app";
 import { WorkspaceUserFooter } from "@/workspace-shell/src/workspace-app-layout";
 import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
+import { FileDropOverlay } from "@/file-drop-overlay/src/file-drop-overlay";
 import { cn } from "@/lib/utils";
 import { ContactsDetailActionBar } from "@/contacts-core/src/contacts-detail-action-bar";
 import { ContactsDetailView } from "@/contacts-core/src/contacts-detail-view";
 import { ContactsListPanel } from "@/contacts-core/src/contacts-list-panel";
+import { ContactsNewMenu } from "@/contacts-core/src/contacts-new-menu";
 import type { ContactsWorkspaceProps } from "@/contacts-core/src/contacts-workspace-props";
 import { useContactsController } from "@/contacts-core/src/use-contacts-controller";
 import { useContactsSidebarModel } from "@/contacts-core/src/use-contacts-sidebar-model";
+import "react-swipeable-list/dist/styles.css";
 import "@/contacts-core/src/contacts-workspace.css";
 
 export function ContactsWorkspace({
@@ -54,6 +54,7 @@ export function ContactsWorkspace({
     editDraft,
     displayName,
     canCreateContact,
+    canImportVcf,
     canCreateGroup,
     canRenameGroup,
     canDeleteGroup,
@@ -76,6 +77,10 @@ export function ContactsWorkspace({
     selectView,
     setSearchQuery,
     createContact,
+    handleImportVcf,
+    dropImportActive,
+    setDropImportActive,
+    fileInputRef,
     startEdit,
     cancelEdit,
     saveEdit,
@@ -144,18 +149,14 @@ export function ContactsWorkspace({
               />
             }
             primaryButton={
-              <Button
-                label={L.newContact}
-                icon={<UserPlus />}
-                onClick={() => {
+              <ContactsNewMenu
+                labels={L}
+                disabled={!canCreateContact}
+                onCreateContact={() => {
                   createContact();
                   closeSidebarOnMobile(c.closeSidebar);
                 }}
-                size="lg"
-                pill
-                variant="primary"
-                disabled={!canCreateContact}
-                className="w-full"
+                onImportVcf={() => fileInputRef.current?.click()}
               />
             }
           >
@@ -170,8 +171,8 @@ export function ContactsWorkspace({
             ) : null}
           </AppSidebar>
         )}
-        list={(c) =>
-          ContactsListPanel({
+        list={(c) => {
+          const panel = ContactsListPanel({
             L,
             sidebarOpen: c.sidebarOpen,
             onToggleSidebar: c.toggleSidebar,
@@ -198,8 +199,34 @@ export function ContactsWorkspace({
             onSwipeDelete: (id) => openDeleteConfirm([id]),
             onSwipeRemoveFromGroup: (id) => removeFromGroup([id]),
             selectionBar,
-          })
-        }
+          });
+
+          return {
+            ...panel,
+            dropZone: canImportVcf
+              ? {
+                  active: dropImportActive,
+                  overlay: <FileDropOverlay>{L.dropImportHint}</FileDropOverlay>,
+                  onDragOver: (event) => {
+                    if (!event.dataTransfer.types.includes("Files")) return;
+                    event.preventDefault();
+                    setDropImportActive(true);
+                  },
+                  onDragLeave: (event) => {
+                    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                      setDropImportActive(false);
+                    }
+                  },
+                  onDrop: (event) => {
+                    if (!event.dataTransfer.types.includes("Files")) return;
+                    event.preventDefault();
+                    setDropImportActive(false);
+                    void handleImportVcf(event.dataTransfer.files);
+                  },
+                }
+              : undefined,
+          };
+        }}
         actionBar={(c) =>
           selectedIds.length > 1 ? null : (
             <ContactsDetailActionBar
@@ -256,6 +283,18 @@ export function ContactsWorkspace({
               onRemoveAddress={removeAddress}
             />
           );
+        }}
+      />
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".vcf,text/vcard,text/x-vcard"
+        multiple
+        className="hidden"
+        onChange={(event) => {
+          void handleImportVcf(event.target.files);
+          event.target.value = "";
         }}
       />
 

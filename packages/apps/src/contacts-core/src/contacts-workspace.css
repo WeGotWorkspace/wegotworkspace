@@ -117,6 +117,10 @@
   min-height: 12rem;
 }
 
+.contacts-workspace .collection-list-drop-zone .file-drop-overlay {
+  z-index: 20;
+}
+
 .contacts-list-panel__avatar .user-avatar__mark {
   background-color: var(--contacts-list-avatar-bg);
   color: var(--contacts-list-avatar-color);

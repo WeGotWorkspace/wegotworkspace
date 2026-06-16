@@ -8,6 +8,7 @@ import type {
   ContactsUIData,
 } from "@/contacts-core/src/contacts-types";
 import { useContactsController } from "@/contacts-core/src/use-contacts-controller";
+import { splitVcardBlocks } from "@/contacts-core/src/contacts-vcard-import";
 
 export type ContactsStorySpies = {
   patchCalls: Array<{ cardId: string; patch: ContactCardPatch }>;
@@ -62,6 +63,22 @@ export function createContactsStoryOperations(cards: ContactCard[]): ContactsAPI
       } as ContactCard;
     },
     deleteCard: async () => {},
+    importVcards: async (vcardText) => {
+      const blocks = splitVcardBlocks(vcardText);
+      const list = blocks.map((block, index) => {
+        const fnMatch = /(?:^|\n)FN[^:]*:(.+)/i.exec(block);
+        const name = fnMatch?.[1]?.trim() || `Imported ${index + 1}`;
+        return {
+          "@type": "Card",
+          version: "1.0",
+          id: `card-imported-${index}`,
+          uid: `urn:uuid:imported-${index}`,
+          addressBookIds: { default: true },
+          name: { full: name },
+        } as ContactCard;
+      });
+      return { list, errors: [] };
+    },
   };
 }
 

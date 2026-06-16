@@ -4,6 +4,7 @@ import {
   useImperativeHandle,
   useMemo,
   useState,
+  type DragEvent,
   type ReactNode,
 } from "react";
 
@@ -42,6 +43,13 @@ export type WorkspaceAppProps = {
     hasItems: boolean;
     emptyLabel: string;
     floatingActionBar?: ReactNode;
+    dropZone?: {
+      active: boolean;
+      overlay: ReactNode;
+      onDragOver: (event: DragEvent) => void;
+      onDragLeave: (event: DragEvent) => void;
+      onDrop: (event: DragEvent) => void;
+    };
   };
   /** Fixed toolbar above the scrollable detail body (e.g. back + item actions). */
   actionBar?: (chrome: WorkspaceAppChrome) => ReactNode;
@@ -122,6 +130,7 @@ export const WorkspaceApp = forwardRef<WorkspaceAppHandle, WorkspaceAppProps>(fu
           hasItems={listProps.hasItems}
           emptyLabel={listProps.emptyLabel}
           floatingActionBar={listProps.floatingActionBar}
+          dropZone={listProps.dropZone}
         />
         <main
           className={cn(

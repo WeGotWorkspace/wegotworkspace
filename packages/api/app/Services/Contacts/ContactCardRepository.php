@@ -8,7 +8,9 @@ use App\Exceptions\ApiHttpException;
 use App\Http\Support\OptimisticConcurrency;
 use App\Models\Addressbook;
 use App\Models\Card;
+use App\Services\Contacts\Conversion\ContactCardVcfImportSupport;
 use App\Services\Contacts\Conversion\ConversionSupport;
+use App\Services\Contacts\Conversion\VCardJsContactConverter;
 use App\Services\Search\BestEffortSearchIndexSync;
 use App\Services\Search\SearchIndexerService;
 use Illuminate\Support\Facades\DB;
@@ -20,6 +22,7 @@ final class ContactCardRepository
     public function __construct(
         private readonly ContactCardMapper $mapper,
         private readonly SearchIndexerService $searchIndexer,
+        private readonly VCardJsContactConverter $vcardConverter,
         private readonly BestEffortSearchIndexSync $searchIndexSync = new BestEffortSearchIndexSync,
     ) {}
 
@@ -132,6 +135,59 @@ final class ContactCardRepository
         }
 
         return $this->mapper->toContactCard($located['card'], $located['bookUri'], $username);
+    }
+
+    /**
+     * Import one or more vCard blocks from a file. Contacts are created before groups so
+     * member uids from the same file resolve when groups are persisted.
+     *
+     * @return array{list: list<array<string, mixed>>, errors: list<array{index: int, message: string}>}
+     */
+    public function importVcards(string $username, string $vcardText, string $addressBookId): array
+    {
+        $book = $this->findOwnedBook($username, $addressBookId);
+        if ($book === null) {
+            throw new ApiHttpException(404, 'Address book not found.', 'not_found');
+        }
+
+        $chunks = ContactCardVcfImportSupport::splitVcards($vcardText);
+        if ($chunks === []) {
+            throw new ApiHttpException(400, 'No vCard data found.', 'bad_request');
+        }
+
+        $individuals = [];
+        $groups = [];
+        $errors = [];
+
+        foreach ($chunks as $index => $chunk) {
+            try {
+                $card = $this->vcardConverter->cardFromVCard($chunk);
+                if (ContactCardVcfImportSupport::isGroupCard($card)) {
+                    $groups[] = $card;
+                } else {
+                    $individuals[] = $card;
+                }
+            } catch (\Throwable) {
+                $errors[] = ['index' => $index, 'message' => 'Invalid vCard block.'];
+            }
+        }
+
+        $created = [];
+        $bookUri = (string) $book->uri;
+
+        foreach ([...$individuals, ...$groups] as $card) {
+            try {
+                $payload = ContactCardVcfImportSupport::createPayload($card, $bookUri);
+                $created[] = $this->create($username, $payload);
+            } catch (\Throwable) {
+                $errors[] = [
+                    'index' => count($created) + count($errors),
+                    'message' => 'Could not import contact.',
+                ];
+            }
+        }
+
+        return ['list' => $created, 'errors' => $errors];
     }
 
     /**

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, Download, Tag, Trash2, UserMinus, UserPlus } from "lucide-react";
+import { Check, Download, Tag, Trash2, Upload, UserMinus, UserPlus } from "lucide-react";
 import { useAppToast } from "@/hooks/use-app-toast";
 import { useConfirmDialog } from "@/hooks/use-confirm-dialog";
 import { useIsTouch } from "@/hooks/use-is-touch";
@@ -52,6 +52,7 @@ import {
   downloadMultipleContactsVCard,
   vcardFilename,
 } from "@/contacts-core/src/contacts-vcard-export";
+import { filterVcfFiles, readVcfFiles } from "@/contacts-core/src/contacts-vcard-import";
 
 type UseContactsControllerArgs = {
   data: ContactsUIData;
@@ -138,6 +139,8 @@ export function useContactsController({
     name: string;
   }>(null);
   const [createGroupDialog, setCreateGroupDialog] = useState(false);
+  const [dropImportActive, setDropImportActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const cardsRef = useRef(cards);
   const activeIdRef = useRef(activeId);
@@ -148,7 +151,7 @@ export function useContactsController({
     (contactId: string, draft: ContactEditDraft) => Promise<void>
   >(async () => {});
 
-  const { showError } = useAppToast();
+  const { show, showError } = useAppToast();
   const showMutationError = useCallback(
     (fallback = "Could not sync this change. Please try again.") => showError(fallback),
     [showError],
@@ -287,6 +290,8 @@ export function useContactsController({
   const canCreateContact =
     !view.startsWith("group:") && (view !== "all" || addressBooks.length > 0);
 
+  const canImportVcf = canCreateContact;
+
   const canCreateGroup = addressBooks.length > 0;
 
   const canRenameGroup = useMemo(() => {
@@ -372,6 +377,64 @@ export function useContactsController({
     setSelectionMode(false);
     workspaceLayoutRef.current?.openMobileDetail();
   }, [setSelectedIds, setSelectionMode]);
+
+  const resolveImportAddressBookId = useCallback((): string | null => {
+    if (addressBooks.length === 0) return null;
+    try {
+      const ids = resolveCreateAddressBookIds(view, addressBooks);
+      return Object.keys(ids).find((id) => ids[id]) ?? null;
+    } catch {
+      return null;
+    }
+  }, [addressBooks, view]);
+
+  const handleImportVcf = useCallback(
+    async (fileList: FileList | null) => {
+      const files = filterVcfFiles(fileList);
+      if (files.length === 0) {
+        showError(L.importInvalidFile);
+        return;
+      }
+      if (!operations?.importVcards) {
+        showError(L.importRequiresApi);
+        return;
+      }
+
+      const addressBookId = resolveImportAddressBookId();
+      if (!addressBookId) {
+        showError(L.importFailed);
+        return;
+      }
+
+      try {
+        const vcardText = await readVcfFiles(files);
+        const result = await operations.importVcards(vcardText, { addressBookId });
+        if (result.list.length > 0) {
+          setCards((prev) => {
+            const byId = new Map(prev.map((card) => [card.id, card]));
+            for (const card of result.list) {
+              byId.set(card.id, card);
+            }
+            return [...byId.values()];
+          });
+        }
+
+        const errorCount = result.errors?.length ?? 0;
+        if (result.list.length > 0) {
+          show(L.toastImported(result.list.length), { icon: <Upload className="size-4" /> });
+        }
+        if (errorCount > 0) {
+          showError(L.importPartialFailure(errorCount));
+        }
+        if (result.list.length === 0) {
+          showError(L.importFailed);
+        }
+      } catch {
+        showError(L.importFailed);
+      }
+    },
+    [L, operations, resolveImportAddressBookId, show, showError],
+  );
 
   const addPhone = useCallback(() => {
     setEditDraft((prev) =>
@@ -1157,6 +1220,7 @@ export function useContactsController({
     editDraft,
     displayName,
     canCreateContact,
+    canImportVcf,
     canCreateGroup,
     canRenameGroup,
     canDeleteGroup,
@@ -1177,6 +1241,10 @@ export function useContactsController({
     selectView,
     setSearchQuery,
     createContact,
+    handleImportVcf,
+    dropImportActive,
+    setDropImportActive,
+    fileInputRef,
     startEdit,
     cancelEdit,
     saveEdit,

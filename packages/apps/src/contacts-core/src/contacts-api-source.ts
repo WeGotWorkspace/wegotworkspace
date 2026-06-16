@@ -10,6 +10,7 @@ import {
   downloadCardVcf,
   fetchContactsLiveBootstrap,
   getCard,
+  importVcards,
   listAddressBooks,
   listCards,
   patchCard,
@@ -30,6 +31,7 @@ function createWgwOperations(): ContactsAPIOperations {
     patchCard,
     deleteCard,
     downloadCardVcf,
+    importVcards,
   };
 }
 
