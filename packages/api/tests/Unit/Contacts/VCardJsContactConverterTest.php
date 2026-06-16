@@ -60,6 +60,7 @@ final class VCardJsContactConverterTest extends TestCase
             'organization',
             'note',
             'photo-uri',
+            'photo-binary',
             'uid-metadata',
             'categories',
             'group',
@@ -76,6 +77,8 @@ final class VCardJsContactConverterTest extends TestCase
             'links-media',
             'kind-individual',
             'tel-features',
+            'x-custom',
+            'vendor-x-props',
         ];
         $fixtures = [];
         foreach ($reversible as $name) {
@@ -235,6 +238,104 @@ VCARD;
         $roundTrippedPhone = reset($roundTripped['phones']);
         $this->assertIsArray($roundTrippedPhone);
         $this->assertSame(['voice' => true], $roundTrippedPhone['features'] ?? null);
+
+        $vcard = $this->converter->vCardFromCard($card);
+        $this->assertStringNotContainsStringIgnoringCase('TYPE=voice', $vcard);
+    }
+
+    public function test_phone_home_work_context_round_trips_without_voice_type(): void
+    {
+        $card = [
+            '@type' => 'Card',
+            'version' => '1.0',
+            'uid' => 'urn:uuid:eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
+            'name' => ['@type' => 'Name', 'full' => 'Context Phones'],
+            'phones' => [
+                'home-phone' => [
+                    '@type' => 'Phone',
+                    'number' => '+1-555-0100',
+                    'contexts' => ['private' => true],
+                ],
+                'work-phone' => [
+                    '@type' => 'Phone',
+                    'number' => '+1-555-0200',
+                    'contexts' => ['work' => true],
+                ],
+                'school-phone' => [
+                    '@type' => 'Phone',
+                    'number' => '+1-555-0300',
+                    'contexts' => ['school' => true],
+                ],
+            ],
+        ];
+
+        $vcard = $this->converter->vCardFromCard($card);
+        $this->assertStringContainsStringIgnoringCase('TYPE=home', $vcard);
+        $this->assertStringContainsStringIgnoringCase('TYPE=work', $vcard);
+        $this->assertStringContainsStringIgnoringCase('TYPE=school', $vcard);
+        $this->assertStringNotContainsStringIgnoringCase('TYPE=voice', $vcard);
+
+        $roundTripped = $this->converter->cardFromVCard($vcard);
+        $homePhone = null;
+        $workPhone = null;
+        $schoolPhone = null;
+        foreach ($roundTripped['phones'] ?? [] as $phone) {
+            if (! is_array($phone)) {
+                continue;
+            }
+            $contexts = $phone['contexts'] ?? null;
+            if ($contexts === ['private' => true]) {
+                $homePhone = $phone;
+            } elseif ($contexts === ['work' => true]) {
+                $workPhone = $phone;
+            } elseif ($contexts === ['school' => true]) {
+                $schoolPhone = $phone;
+            }
+        }
+        $this->assertIsArray($homePhone);
+        $this->assertIsArray($workPhone);
+        $this->assertIsArray($schoolPhone);
+    }
+
+    public function test_company_card_round_trips_kind_org_and_x_abshowas(): void
+    {
+        $vcard = <<<'VCARD'
+BEGIN:VCARD
+VERSION:4.0
+FN:Acme Corp
+UID:urn:uuid:ffffffff-ffff-4fff-8fff-ffffffffffff
+ORG:Acme Corp
+X-ABShowAs:COMPANY
+END:VCARD
+VCARD;
+
+        $card = $this->converter->cardFromVCard($vcard);
+        $this->assertSame('org', $card['kind'] ?? null);
+
+        $names = array_map(static fn (array $tuple): string => (string) $tuple[0], $card['vCardProps'] ?? []);
+        $this->assertNotContains('X-ABShowAs', $names);
+
+        $out = $this->converter->vCardFromCard($card);
+        $this->assertStringContainsString('KIND:org', $out);
+        $this->assertStringContainsStringIgnoringCase('X-ABSHOWAS:COMPANY', $out);
+    }
+
+    public function test_kind_org_writes_x_abshowas_company(): void
+    {
+        $card = [
+            '@type' => 'Card',
+            'version' => '1.0',
+            'uid' => 'urn:uuid:12121212-1212-4212-8212-121212121212',
+            'kind' => 'org',
+            'name' => ['@type' => 'Name', 'full' => 'Widgets Inc'],
+            'organizations' => [
+                'org-1' => ['@type' => 'Organization', 'name' => 'Widgets Inc'],
+            ],
+        ];
+
+        $vcard = $this->converter->vCardFromCard($card);
+        $this->assertStringContainsString('KIND:org', $vcard);
+        $this->assertStringContainsStringIgnoringCase('X-ABSHOWAS:COMPANY', $vcard);
     }
 
     public function test_version_preserved_in_vcard_props(): void
@@ -373,7 +474,7 @@ VCARD;
         $this->assertSame([], $card['relatedTo']['My former manager']['relation']);
     }
 
-    public function test_anniversary_month_only_preserved_in_vcard_props(): void
+    public function test_bday_no_year_maps_to_birth_anniversary(): void
     {
         $vcard = <<<'VCARD'
 BEGIN:VCARD
@@ -386,9 +487,101 @@ VCARD;
 
         $card = $this->converter->cardFromVCard($vcard);
 
-        $this->assertArrayNotHasKey('anniversaries', $card);
-        $names = array_map(static fn (array $tuple): string => (string) $tuple[0], $card['vCardProps']);
-        $this->assertContains('BDAY', $names);
+        $this->assertArrayHasKey('anniversaries', $card);
+        $birth = array_values(
+            array_filter($card['anniversaries'], static fn (array $a): bool => ($a['kind'] ?? '') === 'birth'),
+        );
+        $this->assertCount(1, $birth);
+        $this->assertSame('PartialDate', $birth[0]['date']['@type']);
+        $this->assertSame(3, $birth[0]['date']['month']);
+        $this->assertSame(15, $birth[0]['date']['day']);
+        $this->assertArrayNotHasKey('year', $birth[0]['date']);
+    }
+
+    /** Apple Contacts writes BDAY with hyphens (YYYY-MM-DD) — vCard 3.0 extended format. */
+    public function test_apple_bday_with_year_hyphenated_maps_to_birth_anniversary(): void
+    {
+        $vcard = <<<'VCARD'
+BEGIN:VCARD
+VERSION:3.0
+FN:Thomas Copier
+UID:urn:uuid:apple-thomas-copier-0000-000000000001
+BDAY:1985-03-15
+END:VCARD
+VCARD;
+
+        $card = $this->converter->cardFromVCard($vcard);
+
+        $this->assertArrayHasKey('anniversaries', $card);
+        $birth = array_values(
+            array_filter($card['anniversaries'], static fn (array $a): bool => ($a['kind'] ?? '') === 'birth'),
+        );
+        $this->assertCount(1, $birth);
+        $this->assertSame('PartialDate', $birth[0]['date']['@type']);
+        $this->assertSame(1985, $birth[0]['date']['year']);
+        $this->assertSame(3, $birth[0]['date']['month']);
+        $this->assertSame(15, $birth[0]['date']['day']);
+    }
+
+    /** Apple Contacts writes no-year BDAY as --MM-DD (extended no-year format). */
+    public function test_apple_bday_without_year_hyphenated_maps_to_birth_anniversary(): void
+    {
+        $vcard = <<<'VCARD'
+BEGIN:VCARD
+VERSION:3.0
+FN:Thomas Copier
+UID:urn:uuid:apple-thomas-copier-0000-000000000002
+BDAY:--03-15
+END:VCARD
+VCARD;
+
+        $card = $this->converter->cardFromVCard($vcard);
+
+        $this->assertArrayHasKey('anniversaries', $card);
+        $birth = array_values(
+            array_filter($card['anniversaries'], static fn (array $a): bool => ($a['kind'] ?? '') === 'birth'),
+        );
+        $this->assertCount(1, $birth);
+        $this->assertSame('PartialDate', $birth[0]['date']['@type']);
+        $this->assertSame(3, $birth[0]['date']['month']);
+        $this->assertSame(15, $birth[0]['date']['day']);
+        $this->assertArrayNotHasKey('year', $birth[0]['date']);
+    }
+
+    /** Apple BDAY with year round-trips without data loss. */
+    public function test_apple_bday_with_year_round_trips(): void
+    {
+        $vcard = <<<'VCARD'
+BEGIN:VCARD
+VERSION:3.0
+FN:Thomas Copier
+UID:urn:uuid:apple-thomas-copier-0000-000000000003
+BDAY:1985-03-15
+END:VCARD
+VCARD;
+
+        $card = $this->converter->cardFromVCard($vcard);
+        $roundTripped = $this->converter->cardFromVCard($this->converter->vCardFromCard($card));
+
+        $this->assertSame($card['anniversaries'], $roundTripped['anniversaries']);
+    }
+
+    /** Apple no-year BDAY round-trips without data loss (writes --MMDD per RFC 6350). */
+    public function test_apple_bday_without_year_round_trips(): void
+    {
+        $vcard = <<<'VCARD'
+BEGIN:VCARD
+VERSION:3.0
+FN:Thomas Copier
+UID:urn:uuid:apple-thomas-copier-0000-000000000004
+BDAY:--03-15
+END:VCARD
+VCARD;
+
+        $card = $this->converter->cardFromVCard($vcard);
+        $roundTripped = $this->converter->cardFromVCard($this->converter->vCardFromCard($card));
+
+        $this->assertSame($card['anniversaries'], $roundTripped['anniversaries']);
     }
 
     public function test_vcard_with_prop_id_uses_prop_id_as_map_key(): void
@@ -452,5 +645,118 @@ VCARD;
         foreach (array_keys($first['emails']) as $key) {
             $this->assertStringStartsWith('p_', $key);
         }
+    }
+
+    public function test_full_only_address_emits_populated_legacy_adr(): void
+    {
+        $propId = '927a78e8-b83e-467b-aecd-f0bb80a309c5';
+        $card = [
+            '@type' => 'Card',
+            'version' => '1.0',
+            'uid' => 'urn:uuid:c4cf6038-5da0-41be-9c2d-d8cb9b4af90f',
+            'name' => ['@type' => 'Name', 'full' => 'Mike Ackermans'],
+            'addresses' => [
+                $propId => [
+                    '@type' => 'Address',
+                    'full' => 'Main Street 123',
+                ],
+            ],
+        ];
+
+        $vcard = $this->converter->vCardFromCard($card);
+        $unfolded = str_replace(["\r\n ", "\n "], '', $vcard);
+
+        $this->assertStringContainsString('ADR;PROP-ID='.$propId, $unfolded);
+        $this->assertStringContainsString(';;Main Street 123', $unfolded);
+        $this->assertStringNotContainsString('ADR;PROP-ID='.$propId.':;;;;;;', $unfolded);
+    }
+
+    public function test_structured_address_patch_round_trips_to_legacy_adr(): void
+    {
+        $propId = '550e8400-e29b-41d4-a716-446655440003';
+        $card = [
+            '@type' => 'Card',
+            'version' => '1.0',
+            'uid' => 'urn:uuid:55555555-5555-4555-8555-555555555555',
+            'name' => ['@type' => 'Name', 'full' => 'Jane Doe'],
+            'addresses' => [
+                $propId => [
+                    '@type' => 'Address',
+                    'components' => [
+                        ['@type' => 'AddressComponent', 'kind' => 'name', 'value' => '123 Main St'],
+                        ['@type' => 'AddressComponent', 'kind' => 'locality', 'value' => 'Springfield'],
+                        ['@type' => 'AddressComponent', 'kind' => 'region', 'value' => 'IL'],
+                        ['@type' => 'AddressComponent', 'kind' => 'postcode', 'value' => '62704'],
+                        ['@type' => 'AddressComponent', 'kind' => 'country', 'value' => 'USA'],
+                    ],
+                    'isOrdered' => false,
+                    'contexts' => ['private' => true],
+                ],
+            ],
+        ];
+
+        $vcard = $this->converter->vCardFromCard($card);
+        $unfolded = str_replace(["\r\n ", "\n "], '', $vcard);
+
+        $this->assertStringContainsString('ADR;PROP-ID='.$propId, $unfolded);
+        $this->assertStringContainsString(';;123 Main St;Springfield;IL;62704;USA', $unfolded);
+        $roundTripped = $this->converter->cardFromVCard($vcard);
+        $this->assertSame($card['addresses'][$propId]['components'], $roundTripped['addresses'][$propId]['components']);
+    }
+
+    public function test_vendor_x_props_round_trip_preserves_all_props(): void
+    {
+        $vcard = (string) file_get_contents("{$this->fixturesDir}/vendor-x-props.vcf");
+        $card = $this->converter->cardFromVCard($vcard);
+
+        $propNames = array_map(static fn (array $tuple): string => (string) $tuple[0], $card['vCardProps'] ?? []);
+        $this->assertContains('X-PHONETIC-FIRST-NAME', $propNames);
+        $this->assertContains('X-PHONETIC-LAST-NAME', $propNames);
+        $this->assertContains('X-MS-IMADDRESS', $propNames);
+        $this->assertContains('X-MOZILLA-HTML', $propNames);
+        $this->assertContains('X-EVOLUTION-FILE-AS', $propNames);
+        $this->assertContains('X-SOCIALPROFILE', $propNames);
+
+        $written = $this->converter->vCardFromCard($card);
+
+        $this->assertStringContainsString('X-PHONETIC-FIRST-NAME:Jane', $written);
+        $this->assertStringContainsString('X-PHONETIC-LAST-NAME:Doe', $written);
+        $this->assertStringContainsString('X-MS-IMADDRESS:jane@msn.com', $written);
+        $this->assertStringContainsString('X-MOZILLA-HTML:FALSE', $written);
+        $this->assertStringContainsString('X-EVOLUTION-FILE-AS:Doe Jane', $written);
+        $this->assertStringNotContainsStringIgnoringCase('VALUE=UNKNOWN', $written);
+
+        $roundTripped = $this->converter->cardFromVCard($written);
+        $this->assertSame($card['vCardProps'], $roundTripped['vCardProps']);
+    }
+
+    public function test_apple_label_only_adr_import_maps_full_to_street_on_round_trip(): void
+    {
+        $propId = '927a78e8-b83e-467b-aecd-f0bb80a309c5';
+        $vcard = <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Mike Ackermans
+UID:urn:uuid:c4cf6038-5da0-41be-9c2d-d8cb9b4af90f
+item1.X-ABLABEL:Main Street 123
+item1.ADR;PROP-ID={$propId};LABEL=Main Street 123:;;;;;;
+END:VCARD
+VCARD;
+
+        $card = $this->converter->cardFromVCard($vcard);
+        $this->assertSame('Main Street 123', $card['addresses'][$propId]['full']);
+
+        $card['addresses'][$propId] = [
+            '@type' => 'Address',
+            'components' => [
+                ['@type' => 'AddressComponent', 'kind' => 'name', 'value' => 'Main Street 123'],
+            ],
+            'isOrdered' => false,
+        ];
+
+        $rewritten = $this->converter->vCardFromCard($card);
+        $unfolded = str_replace(["\r\n ", "\n "], '', $rewritten);
+        $this->assertStringContainsString(';;Main Street 123', $unfolded);
+        $this->assertStringNotContainsString('ADR;PROP-ID='.$propId.':;;;;;;', $unfolded);
     }
 }

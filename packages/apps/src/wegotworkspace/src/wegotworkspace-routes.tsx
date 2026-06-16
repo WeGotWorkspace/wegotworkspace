@@ -2,10 +2,12 @@ import { useMemo } from "react";
 import {
   createRoute,
   createRouter,
+  redirect,
   type AnyRouter,
   type RouterHistory,
 } from "@tanstack/react-router";
 import { AdminApp } from "@/admin-core/src/admin-app";
+import { ContactsApp } from "@/contacts-core/src/contacts-app";
 import { DocsApp } from "@/docs-core/src/docs-app";
 import { validateDocsRouteSearch } from "@/docs-core/src/docs-route-search";
 import { DriveApp } from "@/drive-core/src/drive-app";
@@ -18,6 +20,7 @@ import { createWgwMeetGuestApiSource } from "@/meet-core/src/meet-api-source";
 import { NotesApp } from "@/notes-core/src/notes-app";
 import { SettingsApp } from "@/settings-core/src/settings-app";
 import { createAdminAppBootstrap } from "@/lib/api/mock/admin-bootstrap";
+import { createContactsAppBootstrap } from "@/lib/api/mock/contacts-bootstrap";
 import { createDriveAppBootstrap } from "@/lib/api/mock/drive-bootstrap";
 import { createInstallWorkspaceStoryArgs } from "@/lib/api/mock/install-bootstrap";
 import { createMailAppBootstrap } from "@/lib/api/mock/mail-bootstrap";
@@ -27,6 +30,7 @@ import { createNotesAppBootstrap } from "@/lib/api/mock/notes-bootstrap";
 import { createSettingsAppBootstrap } from "@/lib/api/mock/settings-bootstrap";
 import { folderTokenFromMailboxLabel } from "@/lib/mail/folder-token";
 import { AdminWorkspace } from "@/admin-core/src/admin-workspace";
+import { ContactsWorkspace } from "@/contacts-core/src/contacts-workspace";
 import { DriveWorkspace } from "@/drive-core/src/drive-workspace";
 import { InstallWorkspace } from "@/install-core/src/install-workspace";
 import { MailWorkspace } from "@/mail-core/src/mail-workspace";
@@ -122,6 +126,19 @@ function MockMeetRoute() {
   const bootstrap = useMemo(() => createMeetAppBootstrap(), []);
   return (
     <MeetWorkspace
+      data={bootstrap.data}
+      session={bootstrap.session}
+      listLoading={false}
+      onLogout={onLogout}
+    />
+  );
+}
+
+function MockContactsRoute() {
+  const onLogout = useWeGotWorkspaceLogout();
+  const bootstrap = useMemo(() => createContactsAppBootstrap(), []);
+  return (
+    <ContactsWorkspace
       data={bootstrap.data}
       session={bootstrap.session}
       listLoading={false}
@@ -230,6 +247,42 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
     component: isLive ? withWeGotWorkspaceAuth(AdminApp) : MockAdminRoute,
   });
 
+  const ContactsComponent = isLive ? withWeGotWorkspaceAuth(ContactsApp) : MockContactsRoute;
+
+  // Each contacts path is a root-level route with its own component so `useParams` in
+  // ContactsApp resolves leaf params (contactId, groupCardId) on direct page loads.
+  const contactsIndexRoute = createRoute({
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/contacts",
+    beforeLoad: () => {
+      throw redirect({ to: "/contacts/all" });
+    },
+  });
+
+  const contactsAllRoute = createRoute({
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/contacts/all",
+    component: ContactsComponent,
+  });
+
+  const contactsAllContactRoute = createRoute({
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/contacts/all/$contactId",
+    component: ContactsComponent,
+  });
+
+  const contactsGroupRoute = createRoute({
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/contacts/groups/$groupCardId",
+    component: ContactsComponent,
+  });
+
+  const contactsGroupContactRoute = createRoute({
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/contacts/groups/$groupCardId/$contactId",
+    component: ContactsComponent,
+  });
+
   const installRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/install",
@@ -249,6 +302,11 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
     meetGuestRoute,
     meetJoinRoute,
     adminRoute,
+    contactsIndexRoute,
+    contactsAllRoute,
+    contactsAllContactRoute,
+    contactsGroupRoute,
+    contactsGroupContactRoute,
     installRoute,
   ]);
 }

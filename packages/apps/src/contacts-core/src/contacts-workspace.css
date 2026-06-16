@@ -1,0 +1,380 @@
+@import "../../workspace-shell/src/workspace-split-app.css";
+
+/**
+ * Contacts product shell: cream main pane + cyan sidebar accent.
+ * Import only from {@link ContactsWorkspace}.
+ */
+.contacts-workspace {
+  --contacts-accent: #0891b2;
+  --contacts-sidebar: #164e63;
+  --workspace-accent: var(--contacts-accent);
+  --color-emerald: var(--contacts-accent);
+  --workspace-root-bg: var(--color-cream, #ffffff);
+  --workspace-detail-bg: var(--color-cream, #ffffff);
+  --app-sidebar-bg: var(--contacts-sidebar);
+  --app-sidebar-border-color: color-mix(in oklab, #ffffff 18%, transparent);
+  --app-sidebar-color: #ffffff;
+  --sidebar-logo-brand-fill: #ffffff;
+  --sidebar-logo-close-button-color: #ffffff;
+  --sidebar-badge-fg: #164e63;
+  --workspace-sidebar-toggle-color: var(--color-ink);
+  --workspace-sidebar-toggle-bg: color-mix(in oklab, var(--color-ink) 8%, transparent);
+  --workspace-user-footer-link-hover-bg: color-mix(in oklab, #ffffff 10%, transparent);
+
+  --workspace-user-footer-text-color: #ffffff;
+  --workspace-user-footer-border-color: color-mix(in oklab, #ffffff 15%, transparent);
+  --workspace-user-footer-avatar-bg: color-mix(in oklab, #ffffff 15%, transparent);
+  --workspace-user-footer-avatar-color: #ffffff;
+  --workspace-user-footer-link-color: #ffffff;
+  --workspace-user-footer-link-bg: color-mix(in oklab, #ffffff 8%, transparent);
+
+  --contacts-list-avatar-bg: #0e7490;
+  --contacts-list-avatar-color: #ffffff;
+  --contacts-swipe-delete-color: #dc2626;
+  --contacts-swipe-remove-color: var(--contacts-accent);
+  --contacts-detail-title-font-family: var(--font-serif);
+  --loading-spinner-color: color-mix(in oklab, var(--color-ink) 45%, transparent);
+}
+
+.contacts-workspace .app-sidebar,
+.contacts-workspace .app-sidebar__header,
+.contacts-workspace .app-sidebar__scroll-surface {
+  background-color: var(--contacts-sidebar);
+  color: #ffffff;
+}
+
+.contacts-workspace .app-sidebar .app-switch-button__trigger {
+  background-color: var(--contacts-sidebar);
+}
+
+.contacts-workspace .app-sidebar .app-switch-button__trigger:hover {
+  background-color: color-mix(in oklab, #ffffff 10%, var(--contacts-sidebar));
+}
+
+.contacts-workspace .sidebar-section .menu-item--surface-idle {
+  color: #ffffff;
+  background-color: var(--contacts-sidebar);
+}
+
+.contacts-workspace .workspace-detail-pane .action-bar,
+.contacts-workspace .workspace-detail-pane {
+  --button-primary-bg: var(--contacts-accent);
+  --button-primary-fg: #ffffff;
+  --button-subtle-color: #164e63;
+}
+
+.contacts-workspace .app-sidebar {
+  --field-label-color: #ffffff;
+  --app-switch-label-color: #ffffff;
+  --app-switch-label-tagline-color: #ffffff;
+  --app-switch-chevron-color: #ffffff;
+}
+
+.contacts-workspace .app-sidebar__scroll {
+  --color-ink: #ffffff;
+  --button-primary-bg: #ffffff;
+  --button-primary-fg: #164e63;
+  --button-subtle-color: #ffffff;
+  --button-subtle-background: color-mix(in oklab, #ffffff 12%, transparent);
+  --button-subtle-hover-background: color-mix(in oklab, #ffffff 20%, transparent);
+}
+
+.contacts-workspace .sidebar-section .menu-item--surface-selected {
+  background-color: color-mix(in oklab, #ffffff 14%, var(--contacts-sidebar));
+  color: #ffffff;
+}
+
+.contacts-workspace .sidebar-section .menu-item--interactive:hover {
+  background-color: color-mix(in oklab, #ffffff 12%, var(--contacts-sidebar));
+}
+
+.contacts-workspace .sidebar-section .menu-item:not(.menu-item--selected) .menu-item__icon-slot,
+.contacts-workspace .sidebar-section .menu-item.menu-item--selected .menu-item__icon-slot {
+  color: #ffffff;
+  opacity: 1;
+}
+
+.contacts-workspace .sidebar-section__title {
+  color: #ffffff;
+}
+
+.contacts-workspace .app-sidebar__footer {
+  --workspace-user-footer-text-color: #ffffff;
+  --workspace-user-footer-subtitle-color: #ffffff;
+  --workspace-user-footer-border-color: color-mix(in oklab, #ffffff 18%, transparent);
+  --workspace-user-footer-avatar-bg: color-mix(in oklab, #ffffff 22%, transparent);
+  --workspace-user-footer-avatar-color: var(--app-sidebar-color);
+  --workspace-user-footer-link-color: #ffffff;
+  --button-subtle-color: #ffffff;
+  --button-subtle-background: color-mix(in oklab, #ffffff 10%, transparent);
+  --button-subtle-hover-background: color-mix(in oklab, #ffffff 18%, transparent);
+}
+
+.contacts-list-panel__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 12rem;
+}
+
+.contacts-workspace .collection-list-drop-zone .file-drop-overlay {
+  z-index: 20;
+}
+
+.contacts-list-panel__avatar .user-avatar__mark {
+  background-color: var(--contacts-list-avatar-bg);
+  color: var(--contacts-list-avatar-color);
+}
+
+.contacts-detail-view {
+  max-width: 680px;
+  margin-inline: auto;
+  padding: 1.5rem 1.5rem 2.5rem;
+}
+
+@media (min-width: 768px) {
+  .contacts-detail-view {
+    padding: 2.5rem 3rem 3rem;
+  }
+}
+
+.contacts-detail-view__header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.contacts-detail-view__title {
+  font-family: var(--contacts-detail-title-font-family);
+  font-size: 1.75rem;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--color-ink);
+  margin: 0;
+}
+
+.contacts-detail-view__section + .contacts-detail-view__section {
+  margin-top: 1.75rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid color-mix(in oklab, var(--color-ink) 10%, transparent);
+}
+
+.contacts-detail-view__section-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--color-ink) 55%, transparent);
+  margin: 0 0 0.75rem;
+}
+
+.contacts-detail-view__section-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.contacts-detail-view__field-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.contacts-detail-view__editable-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.contacts-detail-view__channel-list,
+.contacts-detail-view__address-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.contacts-detail-view__channel-row {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  column-gap: 1rem;
+  align-items: start;
+}
+
+.contacts-detail-view__channel-row--editable {
+  grid-template-columns: 7rem minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.contacts-detail-view__channel-row--address {
+  align-items: start;
+}
+
+.contacts-detail-view__channel-type {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  flex-shrink: 0;
+  min-height: calc(0.9375rem * 1.35);
+}
+
+.contacts-detail-view__channel-type .tag {
+  margin-block: calc((0.9375rem * 1.35 - var(--tag-height, 1.5rem)) / 2);
+}
+
+.contacts-detail-view__channel-row--editable .contacts-detail-view__channel-type {
+  padding-top: 0;
+}
+
+.contacts-detail-view__channel-value {
+  min-width: 0;
+  font-size: 0.9375rem;
+  line-height: 1.35;
+  color: var(--color-ink);
+}
+
+.contacts-detail-view__label--none {
+  font-style: italic;
+  font-size: 0.9375rem;
+  color: color-mix(in oklab, var(--color-ink) 45%, transparent);
+}
+
+.contacts-detail-view__channel-row--editable .input,
+.contacts-detail-view__channel-row--editable input {
+  min-width: 0;
+}
+
+.contacts-detail-view__channel-row .contacts-detail-view__context-select {
+  width: 100%;
+}
+
+.contacts-detail-view__address-row {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr) auto;
+  column-gap: 1rem;
+  align-items: start;
+}
+
+.contacts-detail-view__address-type {
+  flex-shrink: 0;
+  padding-top: 0.125rem;
+}
+
+.contacts-detail-view__address-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+  font-size: 0.9375rem;
+  line-height: 1.35;
+  color: var(--color-ink);
+}
+
+.contacts-detail-view__address-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.contacts-detail-view__address-locality-row {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, 7rem) minmax(0, 1fr);
+  gap: 0.5rem;
+}
+
+.contacts-detail-view__address-remove {
+  margin-top: 0.125rem;
+}
+
+.contacts-detail-view__address-row .contacts-detail-view__context-select {
+  width: 100%;
+}
+
+.contacts-detail-view__editable-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.contacts-detail-view__context-select {
+  width: 7rem;
+  flex-shrink: 0;
+}
+
+.contacts-detail-view__editable-row .input,
+.contacts-detail-view__editable-row input {
+  flex: 1;
+}
+
+.contacts-detail-view__value-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.contacts-detail-view__value-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.9375rem;
+  color: var(--color-ink);
+}
+
+.contacts-detail-view__meta {
+  font-size: 0.75rem;
+  color: color-mix(in oklab, var(--color-ink) 50%, transparent);
+}
+
+.contacts-detail-view__link {
+  color: var(--contacts-accent, #0891b2);
+  text-decoration: none;
+}
+
+.contacts-detail-view__link:hover {
+  text-decoration: underline;
+}
+
+.contacts-detail-view__text {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--color-ink);
+}
+
+.contacts-dialog-surface {
+  --contacts-accent: #0891b2;
+  --color-emerald: var(--contacts-accent);
+  --button-primary-bg: var(--contacts-accent);
+  --button-primary-fg: #ffffff;
+  --primary: var(--contacts-accent);
+  --primary-foreground: #ffffff;
+  --field-label-color: color-mix(in oklab, var(--color-ink) 60%, transparent);
+  --segmented-control-track-active-bg: var(--color-ink);
+}
+
+.contacts-story-scope {
+  min-height: 100dvh;
+  background-color: var(--workspace-root-bg, var(--color-cream, #ffffff));
+}
+
+.contacts-story-scope--list-column {
+  display: flex;
+  min-height: 100dvh;
+  justify-content: center;
+  background-color: var(--workspace-root-bg, var(--color-cream, #ffffff));
+}
+
+.contacts-story-scope--detail {
+  min-height: 100dvh;
+  background-color: var(--color-cream, #ffffff);
+}

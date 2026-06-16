@@ -1,0 +1,70 @@
+{
+    "@type": "Card",
+    "version": "1.0",
+    "uid": "urn:uuid:33333333-3333-4333-8333-333333333333",
+    "name": {
+        "full": "Jane Doe",
+        "@type": "Name"
+    },
+    "vCardProps": [
+        [
+            "VERSION",
+            [],
+            "text",
+            [
+                "4.0"
+            ]
+        ],
+        [
+            "X-PHONETIC-FIRST-NAME",
+            [],
+            "unknown",
+            [
+                "Jane"
+            ]
+        ],
+        [
+            "X-PHONETIC-LAST-NAME",
+            [],
+            "unknown",
+            [
+                "Doe"
+            ]
+        ],
+        [
+            "X-MS-IMADDRESS",
+            [],
+            "unknown",
+            [
+                "jane@msn.com"
+            ]
+        ],
+        [
+            "X-MOZILLA-HTML",
+            [],
+            "unknown",
+            [
+                "FALSE"
+            ]
+        ],
+        [
+            "X-EVOLUTION-FILE-AS",
+            [],
+            "unknown",
+            [
+                "Doe Jane"
+            ]
+        ],
+        [
+            "X-SOCIALPROFILE",
+            {
+                "type": "twitter",
+                "x-user": "janedoe"
+            },
+            "unknown",
+            [
+                "http://twitter.com/janedoe"
+            ]
+        ]
+    ]
+}

@@ -22,7 +22,9 @@ use App\Http\Controllers\Api\V1\Calendars\CalendarEventsController;
 use App\Http\Controllers\Api\V1\Calendars\CalendarsController;
 use App\Http\Controllers\Api\V1\Contacts\AddressBooksController as ContactsAddressBooksController;
 use App\Http\Controllers\Api\V1\Contacts\ContactBlobsController;
+use App\Http\Controllers\Api\V1\Contacts\ContactCardImportController;
 use App\Http\Controllers\Api\V1\Contacts\ContactCardsController;
+use App\Http\Controllers\Api\V1\Contacts\ContactCardVcfController;
 use App\Http\Controllers\Api\V1\Dav\CapabilitiesController as DavCapabilitiesController;
 use App\Http\Controllers\Api\V1\Files\FilesController;
 use App\Http\Controllers\Api\V1\Home\StateController as HomeStateController;
@@ -199,8 +201,11 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($filesS
             ->where('addressBookId', '[a-z0-9_-]+');
         Route::get('contacts/cards/changes', [ContactCardsController::class, 'changes']);
         Route::post('contacts/cards/query', [ContactCardsController::class, 'query']);
+        Route::post('contacts/cards/import', ContactCardImportController::class);
         Route::get('contacts/cards', [ContactCardsController::class, 'index']);
         Route::post('contacts/cards', [ContactCardsController::class, 'store']);
+        Route::get('contacts/cards/{cardId}/vcf', ContactCardVcfController::class)
+            ->where('cardId', '[a-z0-9_-]+');
         Route::get('contacts/cards/{cardId}', [ContactCardsController::class, 'show'])
             ->where('cardId', '[a-z0-9_-]+');
         Route::put('contacts/cards/{cardId}', [ContactCardsController::class, 'update'])

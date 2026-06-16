@@ -1,5 +1,7 @@
 /** Shared detection for Cursor-injected commit trailers and PR description footers. */
 
+export const CURSOR_AGENT_AUTHOR_EMAIL = "cursoragent@cursor.com";
+
 const CURSOR_COMMIT_ATTRIBUTION_LINE_PATTERNS = [
   /^Co-authored-by:\s*Cursor\s*<cursoragent@cursor\.com>\s*$/i,
   /^Made-with:\s*Cursor\s*$/i,
@@ -10,6 +12,10 @@ const CURSOR_PR_ATTRIBUTION_LINE_PATTERNS = [
   /^Made with \[Cursor\](?:\([^)]*\))?\s*$/i,
   ...CURSOR_COMMIT_ATTRIBUTION_LINE_PATTERNS,
 ];
+
+export function isCursorAgentAuthorEmail(email) {
+  return email?.trim().toLowerCase() === CURSOR_AGENT_AUTHOR_EMAIL;
+}
 
 function isCursorCommitAttributionLine(line) {
   const trimmed = line.trim();

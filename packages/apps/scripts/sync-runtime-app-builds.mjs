@@ -25,6 +25,7 @@ const modules = [
   { name: "drive", title: "Drive - WeGotWorkspace" },
   { name: "install", title: "WeGotWorkspace Installer" },
   { name: "mail", title: "Mail - WeGotWorkspace" },
+  { name: "contacts", title: "Contacts - WeGotWorkspace" },
   { name: "notes", title: "Notes - WeGotWorkspace" },
   { name: "settings", title: "Settings - WeGotWorkspace" },
   { name: "meet", title: "Meet - WeGotWorkspace" },

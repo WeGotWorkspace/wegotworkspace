@@ -6251,6 +6251,46 @@
                     }
                 },
                 "additionalProperties": false
+            },
+            "ContactCardImportError": {
+                "type": "object",
+                "required": [
+                    "index",
+                    "message"
+                ],
+                "properties": {
+                    "index": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "ContactCardImportResponse": {
+                "type": "object",
+                "required": [
+                    "list",
+                    "errors"
+                ],
+                "properties": {
+                    "list": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ContactCard"
+                        }
+                    },
+                    "errors": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ContactCardImportError"
+                        }
+                    }
+                },
+                "additionalProperties": false,
+                "description": "REST response for POST /contacts/cards/import."
             }
         }
     },
@@ -10766,6 +10806,95 @@
                                 }
                             }
                         }
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/contacts/cards/{cardId}/vcf": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Download raw vCard file for a contact",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "cardId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Raw vCard file",
+                        "content": {
+                            "text/vcard": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Card not found"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/contacts/cards/import": {
+            "post": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Import contact cards from a vCard file",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "addressBookId",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "text/vcard": {
+                            "schema": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Imported contact cards",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactCardImportResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid or empty vCard payload"
                     }
                 },
                 "x-wgw-access": "user"

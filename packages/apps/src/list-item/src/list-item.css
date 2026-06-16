@@ -12,6 +12,12 @@
     background-color 150ms ease;
 }
 
+.list-item__button--with-leading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .list-item__button[data-active="true"]:not([data-selected="true"]) {
   background-color: var(
     --list-item-active-bg,

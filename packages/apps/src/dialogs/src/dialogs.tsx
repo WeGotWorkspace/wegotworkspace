@@ -189,25 +189,30 @@ export function EditDialog({
   onClose,
   onConfirm,
   contentClassName,
+  title: titleProp,
 }: {
-  item: null | { kind: "notebook" | "tag"; name: string };
+  item: null | { kind: "notebook" | "tag" | "group"; name: string };
   onClose: () => void;
   onConfirm: (newName: string) => void;
   contentClassName?: string;
+  title?: string;
 }) {
   const [value, setValue] = useState("");
   useEffect(() => {
     if (item) setValue(item.name);
   }, [item]);
   const v = value.trim();
+  const kindLabel = item?.kind === "group" ? "group" : item?.kind;
+  const description =
+    item?.kind === "group"
+      ? "The group name will update in your address books and sidebar."
+      : `All items currently in this ${item?.kind} will keep their assignment.`;
   return (
     <Dialog open={!!item} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className={contentClassName}>
         <DialogHeader>
-          <DialogTitle>Rename {item?.kind}</DialogTitle>
-          <DialogDescription>
-            All items currently in this {item?.kind} will keep their assignment.
-          </DialogDescription>
+          <DialogTitle>{titleProp ?? `Rename ${kindLabel}`}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <form
           onSubmit={(e) => {

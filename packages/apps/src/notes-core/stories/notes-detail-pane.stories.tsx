@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { expect, userEvent, within } from "storybook/test";
+import { expect, userEvent, waitFor, within } from "storybook/test";
 import { NoteDetailView } from "@/note-detail-view/src/note-detail-view";
 import { getNotesDetailStoryProps } from "./notes-pane-stories.fixtures";
 import { NotesStoryScope } from "./notes-story-scope";
@@ -59,7 +59,9 @@ export const Editable: Story = {
     const title = canvas.getByRole("heading", { name: /Architecture of Quiet/i });
     await userEvent.clear(title);
     await userEvent.type(title, "Updated note title");
-    await expect(title).toHaveTextContent("Updated note title");
+    await waitFor(() => {
+      expect(title).toHaveTextContent("Updated note title");
+    });
   },
 };
 

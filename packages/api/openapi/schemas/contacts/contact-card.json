@@ -470,5 +470,39 @@
         }
       ]
     }
+  },
+  "ContactCardImportError": {
+    "type": "object",
+    "required": ["index", "message"],
+    "properties": {
+      "index": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "message": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "ContactCardImportResponse": {
+    "type": "object",
+    "required": ["list", "errors"],
+    "properties": {
+      "list": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/ContactCard"
+        }
+      },
+      "errors": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/ContactCardImportError"
+        }
+      }
+    },
+    "additionalProperties": false,
+    "description": "REST response for POST /contacts/cards/import."
   }
 }

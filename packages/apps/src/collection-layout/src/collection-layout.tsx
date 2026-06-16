@@ -1,3 +1,4 @@
+import type { DragEvent, ReactNode } from "react";
 import "./collection-layout.css";
 
 type CollectionPaneProps = {
@@ -32,6 +33,13 @@ type CollectionListWorkspaceProps = {
   hasItems: boolean;
   emptyLabel: string;
   floatingActionBar?: React.ReactNode;
+  dropZone?: {
+    active: boolean;
+    overlay: ReactNode;
+    onDragOver: (event: DragEvent) => void;
+    onDragLeave: (event: DragEvent) => void;
+    onDrop: (event: DragEvent) => void;
+  };
 };
 
 export function CollectionListWorkspace({
@@ -41,11 +49,10 @@ export function CollectionListWorkspace({
   hasItems,
   emptyLabel,
   floatingActionBar,
+  dropZone,
 }: CollectionListWorkspaceProps) {
-  return (
-    <CollectionListPane detailOpenMobile={detailOpenMobile}>
-      <CollectionHeader>{header}</CollectionHeader>
-
+  const listBody = (
+    <>
       <div
         className={`flex-1 notes-swipe-list ${hasItems ? "overflow-y-auto" : "overflow-y-hidden"}`}
       >
@@ -55,8 +62,27 @@ export function CollectionListWorkspace({
           <div className="collection-empty-state p-10 text-center text-sm">{emptyLabel}</div>
         )}
       </div>
-
       {floatingActionBar}
+    </>
+  );
+
+  return (
+    <CollectionListPane detailOpenMobile={detailOpenMobile}>
+      <CollectionHeader>{header}</CollectionHeader>
+
+      {dropZone ? (
+        <div
+          className="collection-list-drop-zone relative flex min-h-0 flex-1 flex-col"
+          onDragOver={dropZone.onDragOver}
+          onDragLeave={dropZone.onDragLeave}
+          onDrop={dropZone.onDrop}
+        >
+          {dropZone.active ? dropZone.overlay : null}
+          {listBody}
+        </div>
+      ) : (
+        listBody
+      )}
     </CollectionListPane>
   );
 }

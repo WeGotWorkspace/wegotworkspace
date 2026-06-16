@@ -1,6 +1,7 @@
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   ChevronDown,
+  Contact,
   FileText,
   HardDrive,
   Mail as MailIcon,
@@ -30,6 +31,12 @@ const WORKSPACE_APPS = [
     label: "Mail",
     icon: MailIcon,
     to: "/mail",
+  },
+  {
+    id: "contacts",
+    label: "Contacts",
+    icon: Contact,
+    to: "/contacts",
   },
   {
     id: "drive",

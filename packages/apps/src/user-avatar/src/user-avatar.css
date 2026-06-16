@@ -12,10 +12,17 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  overflow: hidden;
   border-radius: 9999px;
   font-weight: 500;
   background-color: var(--user-avatar-bg, color-mix(in oklab, var(--color-ink) 12%, transparent));
   color: var(--user-avatar-fg, var(--color-ink));
+}
+
+.user-avatar__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 button.user-avatar__mark {

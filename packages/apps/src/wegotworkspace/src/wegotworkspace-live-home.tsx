@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
+  Contact,
   FileText,
   HardDrive,
   Mail as MailIcon,
@@ -49,6 +50,18 @@ export function WeGotWorkspaceLiveHome() {
       fg: "var(--color-ink)",
       onSelect: () => void navigate({ to: "/mail" }),
     },
+    ...(homeState.showContacts
+      ? [
+          {
+            id: "contacts",
+            label: "Contacts",
+            icon: <Contact className="size-4" />,
+            accent: "var(--contacts-sidebar, #16a34a)",
+            fg: "#ffffff",
+            onSelect: () => void navigate({ to: "/contacts" }),
+          } satisfies AppsHomeScreenItem,
+        ]
+      : []),
     {
       id: "drive",
       label: "Drive",

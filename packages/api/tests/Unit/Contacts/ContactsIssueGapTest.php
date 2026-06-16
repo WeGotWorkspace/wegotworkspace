@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Contacts;
 
+use App\Services\Contacts\Conversion\ConversionSupport;
 use App\Services\Contacts\Conversion\VCardJsContactConverter;
 use PHPUnit\Framework\TestCase;
+use Sabre\VObject\Reader;
 
 /** Covers GitHub issues #151–#156 acceptance criteria. */
 final class ContactsIssueGapTest extends TestCase
@@ -112,6 +114,148 @@ VCARD;
         $this->assertSame($card['members'], $roundTripped['members']);
     }
 
+    public function test_apple_addressbookserver_group_converts_to_kind_and_members(): void
+    {
+        $vcard = <<<'VCARD'
+BEGIN:VCARD
+VERSION:3.0
+PRODID:-//Apple Inc.//AddressBookCore 1.0//EN
+N:Friends;;;;
+FN:Friends
+X-ADDRESSBOOKSERVER-KIND:group
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:c4cf6038-5da0-41be-9c2d-d8cb9b4af90f
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:07d442ce-49b5-4a59-bc01-d75b17b92c9a
+UID:08430ef3-a2ce-4568-9d6c-f50a6cfd32ae
+END:VCARD
+VCARD;
+
+        $card = $this->converter->cardFromVCard($vcard);
+
+        $this->assertSame('group', $card['kind']);
+        $this->assertSame([
+            'urn:uuid:c4cf6038-5da0-41be-9c2d-d8cb9b4af90f' => true,
+            'urn:uuid:07d442ce-49b5-4a59-bc01-d75b17b92c9a' => true,
+        ], $card['members']);
+
+        $propNames = array_map(
+            static fn (array $tuple): string => (string) $tuple[0],
+            $card['vCardProps'] ?? [],
+        );
+        $this->assertNotContains('X-ADDRESSBOOKSERVER-KIND', $propNames);
+        $this->assertNotContains('X-ADDRESSBOOKSERVER-MEMBER', $propNames);
+    }
+
+    public function test_group_rename_patch_syncs_fn_and_structured_n(): void
+    {
+        $vcard = <<<'VCARD'
+BEGIN:VCARD
+VERSION:3.0
+PRODID:-//Apple Inc.//AddressBookCore 1.0//EN
+N:Friends;;;;
+FN:Friends
+X-ADDRESSBOOKSERVER-KIND:group
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:c4cf6038-5da0-41be-9c2d-d8cb9b4af90f
+UID:08430ef3-a2ce-4568-9d6c-f50a6cfd32ae
+END:VCARD
+VCARD;
+
+        $card = $this->converter->cardFromVCard($vcard);
+        $merged = ConversionSupport::deepMergeContactCardPatch($card, [
+            'name' => [
+                '@type' => 'Name',
+                'isOrdered' => false,
+                'full' => 'Close Friends',
+            ],
+        ]);
+        $merged = ConversionSupport::syncGroupDisplayName($merged);
+
+        $this->assertSame('Close Friends', $merged['name']['full']);
+        $this->assertSame('Close Friends', $merged['name']['components'][0]['value'] ?? null);
+
+        $written = $this->converter->vCardFromCard($merged);
+        $this->assertStringContainsString('FN:Close Friends', $written);
+        $this->assertStringContainsString('N:Close Friends', $written);
+        $this->assertStringNotContainsString('N:Friends', $written);
+        $this->assertStringNotContainsString('FN:Friends', $written);
+    }
+
+    public function test_apple_group_write_emits_x_addressbookserver_kind_and_member(): void
+    {
+        $vcard = <<<'VCARD'
+BEGIN:VCARD
+VERSION:3.0
+PRODID:-//Apple Inc.//AddressBookCore 1.0//EN
+N:Friends;;;;
+FN:Friends
+X-ADDRESSBOOKSERVER-KIND:group
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:c4cf6038-5da0-41be-9c2d-d8cb9b4af90f
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:07d442ce-49b5-4a59-bc01-d75b17b92c9a
+UID:08430ef3-a2ce-4568-9d6c-f50a6cfd32ae
+END:VCARD
+VCARD;
+
+        $card = $this->converter->cardFromVCard($vcard);
+        $written = $this->converter->vCardFromCard($card);
+
+        // Apple round-trip: X-ADDRESSBOOKSERVER-KIND must be present so Apple Contacts.app
+        // recognises the card as a group after a server-side write.
+        $this->assertStringContainsStringIgnoringCase('X-ADDRESSBOOKSERVER-KIND:group', $written);
+        // Members must also be written in Apple format alongside standard MEMBER.
+        $this->assertStringContainsString('X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:c4cf6038-5da0-41be-9c2d-d8cb9b4af90f', $written);
+        $this->assertStringContainsString('X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:07d442ce-49b5-4a59-bc01-d75b17b92c9a', $written);
+        // Standard RFC 6350 properties must also be present.
+        $this->assertStringContainsStringIgnoringCase('KIND:group', $written);
+        $this->assertStringContainsString('MEMBER:urn:uuid:c4cf6038-5da0-41be-9c2d-d8cb9b4af90f', $written);
+    }
+
+    public function test_rfc6350_group_write_emits_x_addressbookserver_kind_and_member(): void
+    {
+        $card = [
+            '@type' => 'Card',
+            'version' => '1.0',
+            'uid' => 'urn:uuid:eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
+            'kind' => 'group',
+            'name' => ['@type' => 'Name', 'full' => 'Test Group'],
+            'members' => [
+                'urn:uuid:11111111-1111-4111-8111-111111111111' => true,
+                'urn:uuid:22222222-2222-4222-8222-222222222222' => true,
+            ],
+        ];
+
+        $written = $this->converter->vCardFromCard($card);
+
+        // Both RFC 6350 and Apple-style properties must be written.
+        $this->assertStringContainsStringIgnoringCase('KIND:group', $written);
+        $this->assertStringContainsStringIgnoringCase('X-ADDRESSBOOKSERVER-KIND:group', $written);
+        $this->assertStringContainsString('MEMBER:urn:uuid:11111111-1111-4111-8111-111111111111', $written);
+        $this->assertStringContainsString('X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:11111111-1111-4111-8111-111111111111', $written);
+        $this->assertStringContainsString('MEMBER:urn:uuid:22222222-2222-4222-8222-222222222222', $written);
+        $this->assertStringContainsString('X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:22222222-2222-4222-8222-222222222222', $written);
+    }
+
+    public function test_apple_group_round_trip_preserves_kind_and_members(): void
+    {
+        $vcard = <<<'VCARD'
+BEGIN:VCARD
+VERSION:3.0
+FN:My Group
+X-ADDRESSBOOKSERVER-KIND:group
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa
+UID:ffffffff-ffff-4fff-8fff-ffffffffffff
+END:VCARD
+VCARD;
+
+        $card = $this->converter->cardFromVCard($vcard);
+        $this->assertSame('group', $card['kind'] ?? null);
+        $this->assertSame(['urn:uuid:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' => true], $card['members'] ?? null);
+
+        // Full round-trip: written → re-read must still be a group with the same members.
+        $written = $this->converter->vCardFromCard($card);
+        $roundTripped = $this->converter->cardFromVCard($written);
+        $this->assertSame('group', $roundTripped['kind'] ?? null);
+        $this->assertSame(['urn:uuid:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' => true], $roundTripped['members'] ?? null);
+    }
+
     public function test_multiple_fn_without_language_preserved_in_vcard_props(): void
     {
         $vcard = <<<'VCARD'
@@ -127,5 +271,127 @@ VCARD;
         $this->assertSame('Primary Name', $card['name']['full']);
         $names = array_map(static fn (array $tuple): string => (string) $tuple[0], $card['vCardProps']);
         $this->assertContains('FN', $names);
+    }
+
+    /**
+     * Apple-synced contacts use vCard 3.0 PHOTO;ENCODING=b;TYPE=JPEG which differs
+     * from vCard 4.0 PHOTO;MEDIATYPE=image/jpeg. Without mapping TYPE→MIME the
+     * photo is stored as application/octet-stream and the browser cannot display it.
+     */
+    public function test_apple_vcard3_binary_photo_type_maps_to_image_mime(): void
+    {
+        $vcard = <<<'VCARD'
+BEGIN:VCARD
+VERSION:3.0
+FN:Fadi Alset
+UID:urn:uuid:fad1fad1-fad1-4fad-8fad-fad1fad1fad1
+PHOTO;ENCODING=b;TYPE=JPEG:/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJ
+ CQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wA
+ ALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/
+ 2gAIAQEAAD8AVIP/2Q==
+END:VCARD
+VCARD;
+
+        $card = $this->converter->cardFromVCard($vcard);
+
+        $media = $card['media'] ?? [];
+        $this->assertNotEmpty($media, 'media map must not be empty');
+        $entry = reset($media);
+        $this->assertSame('photo', $entry['kind']);
+        $this->assertStringStartsWith(
+            'data:image/jpeg;base64,',
+            $entry['uri'],
+            'vCard 3.0 TYPE=JPEG must be resolved to image/jpeg MIME type',
+        );
+    }
+
+    public function test_apple_vcard3_binary_photo_png_type_maps_to_image_mime(): void
+    {
+        // Minimal 1×1 transparent PNG
+        $pngB64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+        $vcard = "BEGIN:VCARD\r\nVERSION:3.0\r\nFN:Test User\r\nUID:urn:uuid:12345678-0000-4000-8000-000000000001\r\nPHOTO;ENCODING=b;TYPE=PNG:{$pngB64}\r\nEND:VCARD\r\n";
+
+        $card = $this->converter->cardFromVCard($vcard);
+
+        $media = $card['media'] ?? [];
+        $this->assertNotEmpty($media);
+        $entry = reset($media);
+        $this->assertStringStartsWith('data:image/png;base64,', $entry['uri']);
+    }
+
+    /**
+     * When a vCard 3.0 contact (Apple-synced) is written back via JMAP, the binary
+     * PHOTO must keep vCard 3.0 parameters (ENCODING=b;TYPE=JPEG), not the vCard 4.0
+     * VALUE=BINARY;MEDIATYPE form. Apple Contacts cannot read the 4.0 parameters in
+     * a VERSION:3.0 document, causing the avatar to disappear after any JMAP write.
+     */
+    public function test_vcard3_binary_photo_write_back_uses_encoding_b_not_mediatype(): void
+    {
+        $b64 = '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0a'
+            .'HBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/'
+            .'EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AVIP/2Q==';
+
+        $vcard = implode("\r\n", [
+            'BEGIN:VCARD',
+            'VERSION:3.0',
+            'FN:Test User',
+            'UID:urn:uuid:aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+            'PHOTO;ENCODING=b;TYPE=JPEG:'.$b64,
+            'END:VCARD',
+            '',
+        ]);
+
+        // Read → JSContact → write back
+        $jscontact = $this->converter->cardFromVCard($vcard);
+        $written = $this->converter->vCardFromCard($jscontact);
+
+        // The written vCard must be valid vCard 3.0 binary photo
+        $this->assertStringContainsString('VERSION:3.0', $written, 'vCard version must be preserved');
+        $this->assertStringContainsStringIgnoringCase('ENCODING=b', $written,
+            'vCard 3.0 write-back must use ENCODING=b, not VALUE=BINARY');
+        $this->assertStringContainsStringIgnoringCase('TYPE=JPEG', $written,
+            'vCard 3.0 write-back must use TYPE=JPEG, not MEDIATYPE=image/jpeg');
+        $this->assertStringNotContainsStringIgnoringCase('MEDIATYPE', $written,
+            'vCard 3.0 write-back must not emit MEDIATYPE (vCard 4.0 only)');
+        $this->assertStringNotContainsStringIgnoringCase('VALUE=BINARY', $written,
+            'vCard 3.0 write-back must not emit VALUE=BINARY (vCard 4.0 only)');
+
+        // Binary payload must survive the round-trip intact
+        $doc = Reader::read($written);
+        $photo = $doc->PHOTO;
+        $this->assertNotNull($photo, 'PHOTO property must be present after write-back');
+        $binaryFromOriginal = base64_decode(str_replace([' ', "\r", "\n"], '', $b64));
+        $this->assertSame(
+            $binaryFromOriginal,
+            (string) $photo->getValue(),
+            'Binary pixel data must survive the JSContact round-trip unchanged',
+        );
+    }
+
+    /**
+     * vCard 4.0 contacts must still emit VALUE=BINARY;MEDIATYPE (unchanged behaviour).
+     */
+    public function test_vcard4_binary_photo_write_back_uses_mediatype(): void
+    {
+        $b64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+        $dataUri = 'data:image/png;base64,'.$b64;
+
+        $jscontact = [
+            '@type' => 'Card',
+            'version' => '1.0',
+            'uid' => 'urn:uuid:11111111-2222-3333-4444-555555555555',
+            'name' => ['full' => 'Test User', '@type' => 'Name'],
+            'media' => [
+                'p_test' => ['@type' => 'Media', 'kind' => 'photo', 'uri' => $dataUri],
+            ],
+        ];
+
+        $written = $this->converter->vCardFromCard($jscontact);
+
+        $this->assertStringContainsString('VERSION:4.0', $written, 'vCard version must default to 4.0');
+        $this->assertStringContainsStringIgnoringCase('MEDIATYPE=image/png', $written,
+            'vCard 4.0 binary photo must emit MEDIATYPE');
+        $this->assertStringNotContainsStringIgnoringCase('ENCODING=b', $written,
+            'vCard 4.0 must not emit vCard 3.0 ENCODING=b');
     }
 }

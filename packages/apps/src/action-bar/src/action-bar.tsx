@@ -11,6 +11,7 @@ export type ActionBarAction = {
   icon: ReactNode;
   onClick?: () => void;
   active?: boolean;
+  disabled?: boolean;
 };
 
 export type ActionBarProps = {
@@ -43,6 +44,7 @@ function renderActionItems(actions: ActionBarAction[]) {
       label={action.label}
       onClick={action.onClick}
       active={action.active}
+      disabled={action.disabled}
       icon={action.icon}
       variant="subtle"
     />
@@ -67,6 +69,7 @@ function renderCompactDropdown(
           icon: <span className="action-bar__menu-item-icon">{action.icon}</span>,
           onClick: action.onClick,
           checked: action.active,
+          disabled: action.disabled,
         }))}
         contentClassName="min-w-[11rem] p-1.5"
         trigger={

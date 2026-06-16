@@ -59,6 +59,20 @@ final class VCardToJsContactConverter
             $card['kind'] = strtolower(trim((string) $document->KIND->getValue()));
         }
 
+        foreach ($document->select('X-ADDRESSBOOKSERVER-KIND') as $kindProperty) {
+            if (strtolower(trim((string) $kindProperty->getValue())) === 'group') {
+                $card['kind'] = 'group';
+                break;
+            }
+        }
+
+        foreach ($document->select('X-ABSHOWAS') as $showAsProperty) {
+            if (strtoupper(trim((string) $showAsProperty->getValue())) === 'COMPANY') {
+                $card['kind'] = 'org';
+                break;
+            }
+        }
+
         if (isset($document->LANGUAGE)) {
             $card['language'] = trim((string) $document->LANGUAGE->getValue());
         }
@@ -548,14 +562,19 @@ final class VCardToJsContactConverter
     private function convertMembers(VCard $document, array &$card): void
     {
         $members = [];
-        foreach ($document->select('MEMBER') as $property) {
-            $uid = trim((string) $property->getValue());
-            if ($uid !== '') {
-                $members[$uid] = true;
+        foreach (['MEMBER', 'X-ADDRESSBOOKSERVER-MEMBER', 'X-ABGROUPMEMBER'] as $propertyName) {
+            foreach ($document->select($propertyName) as $property) {
+                $uid = trim((string) $property->getValue());
+                if ($uid !== '') {
+                    $members[$uid] = true;
+                }
             }
         }
         if ($members !== []) {
             $card['members'] = $members;
+            if (! isset($card['kind'])) {
+                $card['kind'] = 'group';
+            }
         }
     }
 
@@ -1012,6 +1031,15 @@ final class VCardToJsContactConverter
             $isKnown = ConversionSupport::isKnownVCardProperty($name);
             $isPreserveOnly = ConversionSupport::shouldPreserveVCardProperty($name);
             $isDeferred = isset($deferredKeys[$this->propertyIdentity($child)]);
+            if ($name === 'X-ABSHOWAS') {
+                continue;
+            }
+            if ($name === 'X-ADDRESSBOOKSERVER-KIND' && ($card['kind'] ?? '') === 'group') {
+                continue;
+            }
+            if (in_array($name, ['X-ADDRESSBOOKSERVER-MEMBER', 'X-ABGROUPMEMBER'], true) && isset($card['members'])) {
+                continue;
+            }
             if ($isKnown && ! $isPreserveOnly && ! $isDeferred) {
                 continue;
             }

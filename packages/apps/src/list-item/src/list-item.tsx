@@ -49,6 +49,8 @@ type ListItemProps = {
   emptyTitle?: string;
   emptyText?: string;
   theme?: Partial<ListItemTheme>;
+  /** Optional leading slot (e.g. avatar) rendered inside the row highlight area. */
+  leading?: React.ReactNode;
 };
 
 const defaultTheme: ListItemTheme = {
@@ -101,6 +103,7 @@ export function ListItem({
   emptyTitle = "Untitled",
   emptyText = "Empty item",
   theme,
+  leading,
 }: ListItemProps) {
   const palette = { ...defaultTheme, ...theme };
   const themeVars = theme ? themeToCssVars(palette) : undefined;
@@ -174,7 +177,7 @@ export function ListItem({
       onDragEnd={onDragEnd}
       className={`list-item__button relative w-full text-left px-4 py-3 md:px-6 md:py-4 border-b block select-none outline-none focus:outline-none ${
         isDragging ? "opacity-40" : ""
-      } ${selectionMode ? "pl-9 md:pl-11" : ""}`}
+      } ${selectionMode ? "pl-9 md:pl-11" : ""} ${leading ? "list-item__button--with-leading" : ""}`}
       style={themeVars}
     >
       <span
@@ -186,30 +189,34 @@ export function ListItem({
         </span>
       </span>
 
-      <div className="flex justify-between items-baseline mb-1 gap-3">
-        <span className="list-item__subtitle text-sm font-semibold truncate min-w-0 font-sans">
-          {subtitle}
-        </span>
-        <span className="flex items-center gap-1.5 shrink-0">
-          {icons.map((icon, index) => (
-            <span key={`${id}-icon-${index}`} className="inline-flex items-center">
-              {icon}
-            </span>
-          ))}
-          <span className="list-item__date text-xs tabular-nums">{date}</span>
-        </span>
+      {leading ? <span className="list-item__leading shrink-0">{leading}</span> : null}
+
+      <div className="list-item__content min-w-0">
+        <div className="flex justify-between items-baseline mb-1 gap-3">
+          <span className="list-item__subtitle text-sm font-semibold truncate min-w-0 font-sans">
+            {subtitle}
+          </span>
+          <span className="flex items-center gap-1.5 shrink-0">
+            {icons.map((icon, index) => (
+              <span key={`${id}-icon-${index}`} className="inline-flex items-center">
+                {icon}
+              </span>
+            ))}
+            <span className="list-item__date text-xs tabular-nums">{date}</span>
+          </span>
+        </div>
+
+        <h3
+          className="list-item__title text-base font-medium leading-tight mb-1 tracking-tight truncate"
+          data-empty={title ? "false" : "true"}
+        >
+          {title || emptyTitle}
+        </h3>
+
+        <p className="list-item__body text-sm leading-relaxed line-clamp-1">
+          {text || (!title ? emptyText : "")}
+        </p>
       </div>
-
-      <h3
-        className="list-item__title text-base font-medium leading-tight mb-1 tracking-tight truncate"
-        data-empty={title ? "false" : "true"}
-      >
-        {title || emptyTitle}
-      </h3>
-
-      <p className="list-item__body text-sm leading-relaxed line-clamp-1">
-        {text || (!title ? emptyText : "")}
-      </p>
     </button>
   );
 

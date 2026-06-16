@@ -1,0 +1,46 @@
+import type { ContactEditDraft } from "@/contacts-core/src/contacts-edit-utils";
+
+/** Delay after the last edit before flushing a debounced contact save (ms). */
+export const CONTACTS_AUTOSAVE_DEBOUNCE_MS = 600;
+
+type PersistFn = (contactId: string, draft: ContactEditDraft) => void;
+
+/**
+ * Per-contact debounced save scheduler.
+ *
+ * Call `schedule(contactId, draft, persist)` on each edit; the actual persist call
+ * fires only after `delayMs` of inactivity for that contact.
+ * Call `flushAll(persist)` to immediately fire any pending saves (e.g. on unmount).
+ */
+export function createContactSaveDebouncer(delayMs: number) {
+  const timers = new Map<string, ReturnType<typeof setTimeout>>();
+  const pending = new Map<string, ContactEditDraft>();
+
+  function schedule(contactId: string, draft: ContactEditDraft, persist: PersistFn): void {
+    const existing = timers.get(contactId);
+    if (existing) clearTimeout(existing);
+    pending.set(contactId, draft);
+    const timer = setTimeout(() => {
+      const d = pending.get(contactId);
+      if (d) {
+        persist(contactId, d);
+        pending.delete(contactId);
+      }
+      timers.delete(contactId);
+    }, delayMs);
+    timers.set(contactId, timer);
+  }
+
+  function flushAll(persist: PersistFn): void {
+    for (const timer of timers.values()) {
+      clearTimeout(timer);
+    }
+    for (const [contactId, draft] of pending.entries()) {
+      persist(contactId, draft);
+    }
+    timers.clear();
+    pending.clear();
+  }
+
+  return { schedule, flushAll };
+}

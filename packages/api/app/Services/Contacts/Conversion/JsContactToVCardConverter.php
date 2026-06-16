@@ -31,6 +31,17 @@ final class JsContactToVCardConverter
 
         if (isset($card['kind']) && is_string($card['kind'])) {
             $vcard->add('KIND', $card['kind']);
+            // Apple Address Book uses X-ABShowAs:COMPANY (not standard vCard) for company cards.
+            // JSContact kind "org" (RFC 9553) is canonical; emit X-ABShowAs on write for CardDAV parity.
+            if (strtolower($card['kind']) === 'org') {
+                $vcard->add('X-ABShowAs', 'COMPANY');
+            }
+            // Apple CardDAV (AddressBook Server / Contacts.app) uses X-ADDRESSBOOKSERVER-KIND:group
+            // instead of (or in addition to) the RFC 6350 KIND:group property. Emit both so that
+            // Apple clients recognise the card as a group after any server-side write.
+            if (strtolower($card['kind']) === 'group') {
+                $vcard->add('X-ADDRESSBOOKSERVER-KIND', 'group');
+            }
         }
 
         if (isset($card['language']) && is_string($card['language'])) {
@@ -180,7 +191,10 @@ final class JsContactToVCardConverter
                 continue;
             }
             $components = $entry['components'] ?? [];
-            $hasComponents = is_array($components) && $components !== [];
+            if (! is_array($components) || $components === []) {
+                $components = ConversionSupport::addressComponentsFromEntry($entry);
+            }
+            $hasComponents = $components !== [];
             $hasCoordinates = isset($entry['coordinates']);
             $hasTimeZone = isset($entry['timeZone']);
 
@@ -332,9 +346,25 @@ final class JsContactToVCardConverter
             }
             if (str_starts_with(strtolower($uri), 'data:')) {
                 if (preg_match('#^data:([^;]+);base64,(.+)$#i', $uri, $matches) === 1) {
-                    $params['value'] = 'BINARY';
-                    $params['mediatype'] = $matches[1];
-                    $vcard->add($propertyName, $matches[2], $params);
+                    $mimeType = $matches[1];
+                    if ($vcard->getDocumentType() === VCard::VCARD30) {
+                        // vCard 3.0 (RFC 2426): Apple Contacts and other 3.0 clients expect
+                        // ENCODING=b;TYPE=<ext> — the 4.0 VALUE=BINARY;MEDIATYPE params are
+                        // not understood by Apple Contacts in a vCard 3.0 document.
+                        // Property\Binary::setValue() stores the value as-is and
+                        // getRawMimeDirValue() base64-encodes it, so pass raw binary bytes
+                        // to avoid double-encoding the base64 payload.
+                        $params['encoding'] = 'b';
+                        $ext = $this->mimeTypeToVCard3Type($mimeType);
+                        if ($ext !== null) {
+                            $params['type'] = $ext;
+                        }
+                        $vcard->add($propertyName, base64_decode($matches[2]), $params);
+                    } else {
+                        $params['value'] = 'BINARY';
+                        $params['mediatype'] = $mimeType;
+                        $vcard->add($propertyName, $matches[2], $params);
+                    }
 
                     continue;
                 }
@@ -344,6 +374,24 @@ final class JsContactToVCardConverter
             }
             $vcard->add($propertyName, $uri, $params);
         }
+    }
+
+    /**
+     * Map an image/* MIME type to the TYPE parameter value used by vCard 3.0.
+     * Returns null when no well-known mapping exists.
+     */
+    private function mimeTypeToVCard3Type(string $mimeType): ?string
+    {
+        return match (strtolower($mimeType)) {
+            'image/jpeg' => 'JPEG',
+            'image/png' => 'PNG',
+            'image/gif' => 'GIF',
+            'image/webp' => 'WEBP',
+            'image/bmp' => 'BMP',
+            'image/tiff' => 'TIFF',
+            'image/svg+xml' => 'SVG',
+            default => null,
+        };
     }
 
     /**
@@ -372,6 +420,10 @@ final class JsContactToVCardConverter
         }
         foreach (array_keys(array_filter($members, static fn ($enabled): bool => (bool) $enabled)) as $memberUid) {
             $vcard->add('MEMBER', (string) $memberUid);
+            // Apple CardDAV uses X-ADDRESSBOOKSERVER-MEMBER instead of (or alongside) the RFC 6350
+            // MEMBER property. Emit both so Apple Contacts.app shows the correct membership after any
+            // server-side write.
+            $vcard->add('X-ADDRESSBOOKSERVER-MEMBER', (string) $memberUid);
         }
     }
 
@@ -653,6 +705,9 @@ final class JsContactToVCardConverter
             if ($name === 'VERSION') {
                 continue;
             }
+            if ($name === 'X-ABSHOWAS' && strtolower((string) ($card['kind'] ?? 'individual')) !== 'org') {
+                continue;
+            }
             $params = is_array($tuple[1]) ? $tuple[1] : [];
             $valueType = isset($tuple[2]) ? (string) $tuple[2] : 'text';
             $value = $tuple[3];
@@ -660,7 +715,7 @@ final class JsContactToVCardConverter
             foreach ($params as $paramName => $paramValue) {
                 $vparams[strtolower((string) $paramName)] = $paramValue;
             }
-            if ($valueType !== '' && strtolower($valueType) !== 'text') {
+            if ($valueType !== '' && strtolower($valueType) !== 'text' && strtolower($valueType) !== 'unknown') {
                 $vparams['value'] = strtoupper($valueType);
             }
             $property = $vcard->add($name, $value, $vparams);
@@ -689,6 +744,9 @@ final class JsContactToVCardConverter
             }
             if (isset($entry['contexts']['delivery'])) {
                 $types[] = 'delivery';
+            }
+            if (isset($entry['contexts']['school'])) {
+                $types[] = 'school';
             }
             if ($types !== []) {
                 $params['type'] = implode(',', $types);

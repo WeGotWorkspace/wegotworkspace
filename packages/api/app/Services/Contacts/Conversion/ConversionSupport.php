@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Services\Contacts\Conversion;
 
 use Illuminate\Support\Str;
+use Sabre\VObject\DateTimeParser;
+use Sabre\VObject\InvalidDataException;
 use Sabre\VObject\Property;
 
 /**
@@ -180,6 +182,42 @@ final class ConversionSupport
         'addressBookIds',
         'relatedTo',
     ];
+
+    /**
+     * Apple-style group vCards use `FN` plus `N:GroupName;;;;`. After a partial
+     * name patch (`name.full` only), stale `name.components` would otherwise
+     * round-trip as an outdated structured `N` while `FN` updates.
+     *
+     * @param  array<string, mixed>  $card
+     * @return array<string, mixed>
+     */
+    public static function syncGroupDisplayName(array $card): array
+    {
+        if (strtolower((string) ($card['kind'] ?? '')) !== 'group') {
+            return $card;
+        }
+
+        if (! is_array($card['name'] ?? null)) {
+            return $card;
+        }
+
+        $full = trim((string) ($card['name']['full'] ?? ''));
+        if ($full === '') {
+            return $card;
+        }
+
+        $card['name']['@type'] = 'Name';
+        $card['name']['isOrdered'] = false;
+        $card['name']['components'] = [
+            [
+                '@type' => 'NameComponent',
+                'kind' => 'surname',
+                'value' => $full,
+            ],
+        ];
+
+        return $card;
+    }
 
     /**
      * Deep-merge a PATCH body into an existing JSContact Card shape.
@@ -448,6 +486,8 @@ final class ConversionSupport
                 $contexts['billing'] = true;
             } elseif ($normalized === 'delivery') {
                 $contexts['delivery'] = true;
+            } elseif ($normalized === 'school') {
+                $contexts['school'] = true;
             }
         }
 
@@ -494,7 +534,9 @@ final class ConversionSupport
     {
         $types = [];
         foreach ($features as $feature => $enabled) {
-            if ($enabled && isset(self::TEL_FEATURES[$feature])) {
+            // RFC 6350 §6.4.1: voice is the default TEL type — omit on write so Apple
+            // Address Book does not show a spurious "voice" label alongside home/work.
+            if ($enabled && $feature !== 'voice' && isset(self::TEL_FEATURES[$feature])) {
                 $types[] = self::TEL_FEATURES[$feature];
             }
         }
@@ -504,6 +546,9 @@ final class ConversionSupport
             }
             if (isset($contexts['work'])) {
                 $types[] = 'work';
+            }
+            if (isset($contexts['school'])) {
+                $types[] = 'school';
             }
         }
 
@@ -689,6 +734,43 @@ final class ConversionSupport
     }
 
     /**
+     * Build legacy ADR components when a JSContact address has no `components` array.
+     *
+     * @param  array<string, mixed>  $entry
+     * @return list<array{@type: string, kind: string, value: string}>
+     */
+    public static function addressComponentsFromEntry(array $entry): array
+    {
+        $components = [];
+        foreach (self::ADR_LEGACY_KINDS as $kind) {
+            if ($kind === 'postOfficeBox' || $kind === 'apartment') {
+                continue;
+            }
+            if (! isset($entry[$kind]) || ! is_string($entry[$kind])) {
+                continue;
+            }
+            $value = trim($entry[$kind]);
+            if ($value === '') {
+                continue;
+            }
+            $components[] = ['@type' => 'AddressComponent', 'kind' => $kind, 'value' => $value];
+        }
+
+        if ($components !== []) {
+            return $components;
+        }
+
+        if (isset($entry['full']) && is_string($entry['full'])) {
+            $full = trim($entry['full']);
+            if ($full !== '') {
+                return [['@type' => 'AddressComponent', 'kind' => 'name', 'value' => $full]];
+            }
+        }
+
+        return [];
+    }
+
+    /**
      * @return list<array{@type: string, kind: string, value: string}>
      */
     public static function nameComponentsFromProperty(Property $property): array
@@ -751,13 +833,44 @@ final class ConversionSupport
     public static function mediaUriFromProperty(Property $property): string
     {
         if ($property instanceof Property\Binary) {
-            $mime = isset($property['MEDIATYPE']) ? (string) $property['MEDIATYPE'] : 'application/octet-stream';
+            $mime = self::mimeTypeFromMediaProperty($property);
             $encoded = base64_encode((string) $property->getValue());
 
             return 'data:'.$mime.';base64,'.$encoded;
         }
 
         return trim((string) $property->getValue());
+    }
+
+    /**
+     * Resolve the MIME type for a binary media property.
+     *
+     * vCard 4.0 uses MEDIATYPE=image/jpeg; vCard 3.0 (Apple) uses TYPE=JPEG.
+     */
+    private static function mimeTypeFromMediaProperty(Property $property): string
+    {
+        if (isset($property['MEDIATYPE'])) {
+            return (string) $property['MEDIATYPE'];
+        }
+
+        if (isset($property['TYPE'])) {
+            $type = strtolower(trim((string) $property['TYPE']));
+            $known = [
+                'jpeg' => 'image/jpeg',
+                'jpg' => 'image/jpeg',
+                'gif' => 'image/gif',
+                'png' => 'image/png',
+                'webp' => 'image/webp',
+                'bmp' => 'image/bmp',
+                'tiff' => 'image/tiff',
+                'tif' => 'image/tiff',
+                'svg' => 'image/svg+xml',
+            ];
+
+            return $known[$type] ?? 'application/octet-stream';
+        }
+
+        return 'application/octet-stream';
     }
 
     /**
@@ -804,6 +917,20 @@ final class ConversionSupport
     }
 
     /**
+     * Case-insensitive uid comparison key — Apple CardDAV often uses bare UUIDs on cards
+     * while group MEMBER / X-ADDRESSBOOKSERVER-MEMBER values use urn:uuid: prefixes.
+     */
+    public static function normalizeContactUidForMatch(string $uid): string
+    {
+        $uid = trim($uid);
+        if (str_starts_with(strtolower($uid), 'urn:uuid:')) {
+            $uid = substr($uid, 9);
+        }
+
+        return strtolower($uid);
+    }
+
+    /**
      * @param  array<string, mixed>  $card
      */
     public static function deriveFullName(array $card): string
@@ -820,6 +947,17 @@ final class ConversionSupport
             return '';
         }
         $pieces = [];
+        $isOrdered = (bool) ($name['isOrdered'] ?? false);
+        $unorderedBuckets = [
+            'title' => [],
+            'given' => [],
+            'given2' => [],
+            'surname' => [],
+            'surname2' => [],
+            'generation' => [],
+            'credential' => [],
+        ];
+        $unorderedRemainder = [];
         foreach ($components as $component) {
             if (! is_array($component)) {
                 continue;
@@ -829,6 +967,28 @@ final class ConversionSupport
             }
             $value = trim((string) ($component['value'] ?? ''));
             if ($value !== '') {
+                if ($isOrdered) {
+                    $pieces[] = $value;
+
+                    continue;
+                }
+
+                $kind = (string) ($component['kind'] ?? '');
+                if (isset($unorderedBuckets[$kind])) {
+                    $unorderedBuckets[$kind][] = $value;
+                } else {
+                    $unorderedRemainder[] = $value;
+                }
+            }
+        }
+
+        if (! $isOrdered) {
+            foreach ($unorderedBuckets as $bucket) {
+                foreach ($bucket as $value) {
+                    $pieces[] = $value;
+                }
+            }
+            foreach ($unorderedRemainder as $value) {
                 $pieces[] = $value;
             }
         }
@@ -898,23 +1058,39 @@ final class ConversionSupport
             }
         }
 
-        if ($valueType === 'date' || preg_match('/^\d{8}$/', $value) === 1) {
-            if (strlen($value) === 8 && ctype_digit($value)) {
-                $date = [
-                    '@type' => 'PartialDate',
-                    'year' => (int) substr($value, 0, 4),
-                    'month' => (int) substr($value, 4, 2),
-                    'day' => (int) substr($value, 6, 2),
-                ];
-                if ($calendarScale !== null && $calendarScale !== '') {
-                    $date['calendarScale'] = $calendarScale;
-                }
-
-                return $date;
-            }
+        // Parse all vCard date formats: YYYYMMDD, YYYY-MM-DD (Apple/vCard 3.0),
+        // --MMDD, --MM-DD (no-year, RFC 6350 §4.3.1 and Apple extended format).
+        try {
+            $parts = DateTimeParser::parseVCardDateTime($value);
+        } catch (InvalidDataException) {
+            return null;
         }
 
-        return null;
+        // Skip values that carry a time component (handled by timestamp branch above).
+        if ($parts['hour'] !== null || $parts['minute'] !== null || $parts['second'] !== null) {
+            return null;
+        }
+
+        // Must have at least month or day to be a useful date entry.
+        if ($parts['month'] === null && $parts['date'] === null) {
+            return null;
+        }
+
+        $date = ['@type' => 'PartialDate'];
+        if ($parts['year'] !== null) {
+            $date['year'] = (int) $parts['year'];
+        }
+        if ($parts['month'] !== null) {
+            $date['month'] = (int) $parts['month'];
+        }
+        if ($parts['date'] !== null) {
+            $date['day'] = (int) $parts['date'];
+        }
+        if ($calendarScale !== null && $calendarScale !== '') {
+            $date['calendarScale'] = $calendarScale;
+        }
+
+        return $date;
     }
 
     /**
@@ -936,9 +1112,16 @@ final class ConversionSupport
         if (isset($date['calendarScale']) && is_string($date['calendarScale'])) {
             $params['calscale'] = $date['calendarScale'];
         }
-        $year = str_pad((string) ($date['year'] ?? ''), 4, '0', STR_PAD_LEFT);
+
         $month = str_pad((string) ($date['month'] ?? ''), 2, '0', STR_PAD_LEFT);
         $day = str_pad((string) ($date['day'] ?? ''), 2, '0', STR_PAD_LEFT);
+
+        if (! isset($date['year'])) {
+            // No-year date: emit --MMDD per RFC 6350 §4.3.1.
+            return ['--'.$month.$day, $params];
+        }
+
+        $year = str_pad((string) $date['year'], 4, '0', STR_PAD_LEFT);
 
         return [$year.$month.$day, $params];
     }

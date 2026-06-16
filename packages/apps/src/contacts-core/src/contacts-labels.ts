@@ -1,0 +1,188 @@
+import { workspaceDestructiveDialogLabels } from "@/lib/workspace/destructive-dialog";
+
+/**
+ * User-visible copy for the contacts workspace (sidebar, list chrome, dialogs, toasts).
+ * Override via {@link ContactsWorkspaceProps.labels} in stories/tests.
+ */
+export type ContactsUILabels = {
+  listLoading: string;
+  refreshList: string;
+  searchPlaceholder: string;
+  sidebarAllContacts: string;
+  sectionGroups: string;
+  listSelected: (count: number) => string;
+  listContacts: (count: number) => string;
+  emptyList: string;
+  emptyGroupMembers: string;
+  renameGroup: string;
+  deleteGroup: string;
+  newGroup: string;
+  toastGroupRenamed: (name: string) => string;
+  newContact: string;
+  createContact: string;
+  importVcf: string;
+  dropImportHint: string;
+  toastImported: (count: number) => string;
+  importInvalidFile: string;
+  importFilesSkipped: (count: number) => string;
+  importRequiresApi: string;
+  importFailed: string;
+  importPartialFailure: (count: number) => string;
+  importFilesFailed: (count: number) => string;
+  unknownContact: string;
+  edit: string;
+  save: string;
+  cancel: string;
+  delete: string;
+  sectionName: string;
+  sectionPhones: string;
+  sectionEmails: string;
+  sectionAddresses: string;
+  sectionOrganization: string;
+  sectionNotes: string;
+  sectionUrls: string;
+  sectionBirthday: string;
+  companyContact: string;
+  nameFull: string;
+  nameGiven: string;
+  nameGiven2: string;
+  nameSurname: string;
+  channelType: string;
+  channelTypeNone: string;
+  channelLabelNone: string;
+  channelTypeHome: string;
+  channelTypeWork: string;
+  channelTypeSchool: string;
+  phoneNumber: string;
+  emailAddress: string;
+  organizationName: string;
+  notesText: string;
+  addPhone: string;
+  addEmail: string;
+  addAddress: string;
+  addUrl: string;
+  urlAddress: string;
+  addressStreet: string;
+  addressLocality: string;
+  addressRegion: string;
+  addressPostalCode: string;
+  addressCountry: string;
+  addressLine: string;
+  removeRow: string;
+  toastCreated: string;
+  toastSaved: string;
+  toastDeleted: string;
+  downloadVCard: string;
+  selectionDelete: string;
+  selectionRemoveFromGroup: string;
+  selectionDownload: string;
+  selectionDone: string;
+  swipeDelete: string;
+  swipeRemoveFromGroup: string;
+  toastRemovedFromGroup: (count: number) => string;
+  toastGroupCreated: (name: string) => string;
+  toastMembersAdded: (count: number, groupName: string) => string;
+  deleteContactTitle: string;
+  deleteContactDescription: (count: number) => string;
+  deleteGroupTitle: string;
+  deleteGroupDescription: (name: string) => string;
+  toastGroupDeleted: (name: string) => string;
+  deleteConfirm: string;
+  deleteCancel: string;
+};
+
+export const defaultContactsLabels: ContactsUILabels = {
+  listLoading: "Loading contacts…",
+  refreshList: "Refresh contacts",
+  searchPlaceholder: "Search contacts...",
+  sidebarAllContacts: "All contacts",
+  sectionGroups: "Groups",
+  listSelected: (count) => `${count} Selected`,
+  listContacts: (count) => `${count} Contacts`,
+  emptyList: "No contacts",
+  emptyGroupMembers: "No members in this group",
+  renameGroup: "Rename group",
+  deleteGroup: "Delete group",
+  newGroup: "New group",
+  toastGroupRenamed: (name) => `Renamed to “${name}”`,
+  newContact: "New contact",
+  createContact: "Create contact",
+  importVcf: "Import vCards",
+  dropImportHint: "Drop vCard files to import",
+  toastImported: (count) => `Imported ${count} contact${count === 1 ? "" : "s"}`,
+  importInvalidFile: "Choose one or more .vcf or .vcard files to import.",
+  importFilesSkipped: (count) => `Skipped ${count} non-vCard file${count === 1 ? "" : "s"}.`,
+  importRequiresApi: "vCard import requires a connected contacts API.",
+  importFailed: "Could not import vCard files.",
+  importPartialFailure: (count) =>
+    `${count} contact${count === 1 ? "" : "s"} could not be imported.`,
+  importFilesFailed: (count) => `${count} file${count === 1 ? "" : "s"} could not be imported.`,
+  unknownContact: "Unknown contact",
+  edit: "Edit",
+  save: "Save",
+  cancel: "Cancel",
+  delete: "Delete",
+  sectionName: "Name",
+  sectionPhones: "Phones",
+  sectionEmails: "Emails",
+  sectionAddresses: "Addresses",
+  sectionOrganization: "Organization",
+  sectionNotes: "Notes",
+  sectionUrls: "URLs",
+  sectionBirthday: "Birthday",
+  companyContact: "Company contact",
+  nameFull: "Full name",
+  nameGiven: "First name",
+  nameGiven2: "Middle name",
+  nameSurname: "Last name",
+  channelType: "Type",
+  channelTypeNone: "Other",
+  channelLabelNone: "None",
+  channelTypeHome: "Home",
+  channelTypeWork: "Work",
+  channelTypeSchool: "School",
+  phoneNumber: "Phone number",
+  emailAddress: "Email address",
+  organizationName: "Organization",
+  notesText: "Notes",
+  addPhone: "Add phone",
+  addEmail: "Add email",
+  addAddress: "Add address",
+  addUrl: "Add URL",
+  urlAddress: "URL",
+  addressStreet: "Street",
+  addressLocality: "City / locality",
+  addressRegion: "State / region",
+  addressPostalCode: "Postal code",
+  addressCountry: "Country",
+  addressLine: "Street address",
+  removeRow: "Remove",
+  toastCreated: "Contact created",
+  toastSaved: "Contact saved",
+  toastDeleted: "Contact deleted",
+  downloadVCard: "Download vCard",
+  selectionDelete: "Delete",
+  selectionRemoveFromGroup: "Remove from group",
+  selectionDownload: "Download",
+  selectionDone: "Done",
+  swipeDelete: "Delete",
+  swipeRemoveFromGroup: "Remove from group",
+  toastRemovedFromGroup: (count) => `Removed ${count} contact${count === 1 ? "" : "s"} from group`,
+  toastGroupCreated: (name) => `Group "${name}" created`,
+  toastMembersAdded: (count, groupName) =>
+    `Added ${count} contact${count === 1 ? "" : "s"} to ${groupName}`,
+  deleteContactTitle: "Delete contact?",
+  deleteContactDescription: (count) =>
+    `This will permanently delete ${count} contact${count === 1 ? "" : "s"}.`,
+  deleteGroupTitle: "Delete group?",
+  deleteGroupDescription: (name) =>
+    `Delete "${name}"? The group will be permanently deleted. Its contacts will not be affected.`,
+  toastGroupDeleted: (name) => `Group "${name}" deleted`,
+  deleteConfirm: workspaceDestructiveDialogLabels.dialogDelete,
+  deleteCancel: workspaceDestructiveDialogLabels.dialogCancel,
+};
+
+export function mergeContactsLabels(overrides?: Partial<ContactsUILabels>): ContactsUILabels {
+  if (!overrides) return defaultContactsLabels;
+  return { ...defaultContactsLabels, ...overrides };
+}

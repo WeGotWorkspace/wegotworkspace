@@ -1,0 +1,49 @@
+{
+    "@type": "Card",
+    "version": "1.0",
+    "uid": "urn:uuid:thomas-boo-photo-test-0001",
+    "name": {
+        "full": "Thomas Boo",
+        "components": [
+            {
+                "@type": "NameComponent",
+                "kind": "surname",
+                "value": "Boo"
+            },
+            {
+                "@type": "NameComponent",
+                "kind": "given",
+                "value": "Thomas"
+            }
+        ],
+        "isOrdered": false,
+        "@type": "Name"
+    },
+    "phones": {
+        "p_eYQhAighslhbMe-OtYrlxcmd": {
+            "@type": "Phone",
+            "number": "+31 6 12 34 56 78",
+            "features": {
+                "mobile": true,
+                "voice": true
+            }
+        }
+    },
+    "media": {
+        "p_UcPV6BbDSZCamxRfB6urVtYD": {
+            "@type": "Media",
+            "kind": "photo",
+            "uri": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AVIP/2Q=="
+        }
+    },
+    "vCardProps": [
+        [
+            "VERSION",
+            [],
+            "text",
+            [
+                "3.0"
+            ]
+        ]
+    ]
+}

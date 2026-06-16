@@ -92,8 +92,7 @@ export const BooleanSegmentedControl = React.forwardRef<
     <div
       ref={ref}
       className={cn("segmented-control", "segmented-control--boolean", className)}
-      role="switch"
-      aria-checked={value}
+      role="group"
       aria-label={ariaLabel}
       aria-disabled={disabled || undefined}
       data-state={state}

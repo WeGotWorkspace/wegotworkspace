@@ -1,7 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  AUTOSAVE_WRITE_DEBOUNCE_MS,
   computeExcerpt,
   computeWordCount,
+  createNoteSaveDebouncer,
   enrichNote,
   filterVisibleNotes,
   normalizeTag,
@@ -42,6 +44,11 @@ describe("notes-note-utils", () => {
     expect(enriched.wordCount).toBeGreaterThan(0);
   });
 
+  it("AUTOSAVE_WRITE_DEBOUNCE_MS is at least 500ms and at most 3000ms", () => {
+    expect(AUTOSAVE_WRITE_DEBOUNCE_MS).toBeGreaterThanOrEqual(500);
+    expect(AUTOSAVE_WRITE_DEBOUNCE_MS).toBeLessThanOrEqual(3000);
+  });
+
   it("filters notes by view and search query", () => {
     const notes: Note[] = [
       { ...sampleNote, id: "n-1", starred: true, archived: false },
@@ -62,5 +69,90 @@ describe("notes-note-utils", () => {
       searchQuery: "other",
     });
     expect(searchMatch).toHaveLength(0);
+  });
+});
+
+describe("createNoteSaveDebouncer", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("does not persist immediately when schedule is called", () => {
+    vi.useFakeTimers();
+    const persist = vi.fn();
+    const { schedule } = createNoteSaveDebouncer(500);
+    schedule("n-1", sampleNote, persist);
+    expect(persist).not.toHaveBeenCalled();
+  });
+
+  it("persists the note after the debounce delay", () => {
+    vi.useFakeTimers();
+    const persist = vi.fn();
+    const { schedule } = createNoteSaveDebouncer(500);
+    schedule("n-1", sampleNote, persist);
+    vi.advanceTimersByTime(500);
+    expect(persist).toHaveBeenCalledOnce();
+    expect(persist).toHaveBeenCalledWith(sampleNote);
+  });
+
+  it("resets the timer when schedule is called again before delay elapses", () => {
+    vi.useFakeTimers();
+    const persist = vi.fn();
+    const { schedule } = createNoteSaveDebouncer(500);
+    const updatedNote = { ...sampleNote, title: "Updated" };
+    schedule("n-1", sampleNote, persist);
+    vi.advanceTimersByTime(300);
+    schedule("n-1", updatedNote, persist);
+    vi.advanceTimersByTime(300);
+    expect(persist).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(200);
+    expect(persist).toHaveBeenCalledOnce();
+    expect(persist).toHaveBeenCalledWith(updatedNote);
+  });
+
+  it("persists the latest note value when rapid edits arrive", () => {
+    vi.useFakeTimers();
+    const persist = vi.fn();
+    const { schedule } = createNoteSaveDebouncer(500);
+    const v1 = { ...sampleNote, title: "v1" };
+    const v2 = { ...sampleNote, title: "v2" };
+    const v3 = { ...sampleNote, title: "v3" };
+    schedule("n-1", v1, persist);
+    schedule("n-1", v2, persist);
+    schedule("n-1", v3, persist);
+    vi.advanceTimersByTime(500);
+    expect(persist).toHaveBeenCalledOnce();
+    expect(persist).toHaveBeenCalledWith(v3);
+  });
+
+  it("tracks different notes independently", () => {
+    vi.useFakeTimers();
+    const persist = vi.fn();
+    const { schedule } = createNoteSaveDebouncer(500);
+    const note2 = { ...sampleNote, id: "n-2", title: "Note 2" };
+    schedule("n-1", sampleNote, persist);
+    schedule("n-2", note2, persist);
+    vi.advanceTimersByTime(500);
+    expect(persist).toHaveBeenCalledTimes(2);
+  });
+
+  it("flushAll immediately persists all pending notes and cancels timers", () => {
+    vi.useFakeTimers();
+    const persist = vi.fn();
+    const { schedule, flushAll } = createNoteSaveDebouncer(500);
+    const note2 = { ...sampleNote, id: "n-2", title: "Note 2" };
+    schedule("n-1", sampleNote, persist);
+    schedule("n-2", note2, persist);
+    flushAll(persist);
+    expect(persist).toHaveBeenCalledTimes(2);
+    vi.advanceTimersByTime(500);
+    expect(persist).toHaveBeenCalledTimes(2);
+  });
+
+  it("flushAll does nothing when there are no pending saves", () => {
+    const persist = vi.fn();
+    const { flushAll } = createNoteSaveDebouncer(500);
+    flushAll(persist);
+    expect(persist).not.toHaveBeenCalled();
   });
 });
