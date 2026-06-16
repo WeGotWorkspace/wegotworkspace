@@ -917,6 +917,23 @@ final class ConversionSupport
     }
 
     /**
+     * Apple CardDAV group members use urn:uuid: URIs; contact cards often store bare UUIDs.
+     * Normalize member references on write so Apple Contacts.app reconciles membership correctly.
+     */
+    public static function memberUidForVCardWrite(string $memberUid): string
+    {
+        $memberUid = trim($memberUid);
+        if ($memberUid === '') {
+            return $memberUid;
+        }
+        if (str_starts_with(strtolower($memberUid), 'urn:uuid:')) {
+            return $memberUid;
+        }
+
+        return 'urn:uuid:'.$memberUid;
+    }
+
+    /**
      * Case-insensitive uid comparison key — Apple CardDAV often uses bare UUIDs on cards
      * while group MEMBER / X-ADDRESSBOOKSERVER-MEMBER values use urn:uuid: prefixes.
      */
