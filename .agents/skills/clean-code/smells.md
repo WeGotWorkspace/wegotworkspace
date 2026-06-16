@@ -18,7 +18,7 @@ Use when reviewing diffs or before multitask chunk handoff. Not every item requi
 ## Duplication
 
 - [ ] Copy-pasted blocks (DRY violation)
-- [ ] Repeated Tailwind/CSS that belongs in workspace stylesheet ([apps-ui](../apps-ui/SKILL.md))
+- [ ] Long Tailwind strings in TSX or raw CSS properties where `@apply` belongs ([apps-ui](../apps-ui/SKILL.md))
 
 ## Coupling
 

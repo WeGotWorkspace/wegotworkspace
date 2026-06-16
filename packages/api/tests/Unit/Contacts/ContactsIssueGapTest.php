@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Contacts;
 
+use App\Services\Contacts\Conversion\ContactCardVcfImportSupport;
 use App\Services\Contacts\Conversion\ConversionSupport;
 use App\Services\Contacts\Conversion\VCardJsContactConverter;
 use PHPUnit\Framework\TestCase;
@@ -115,6 +116,30 @@ VCARD;
     }
 
     public function test_apple_addressbookserver_group_converts_to_kind_and_members(): void
+    {
+        $vcard = (string) file_get_contents(
+            dirname(__DIR__, 2).'/fixtures/Contacts/apple-group-with-members.vcf',
+        );
+        $groupChunk = ContactCardVcfImportSupport::splitVcards($vcard)[2];
+
+        $card = $this->converter->cardFromVCard($groupChunk);
+
+        $this->assertSame('group', $card['kind']);
+        $this->assertSame([
+            'urn:uuid:a1111111-1111-4111-8111-111111111111' => true,
+            'urn:uuid:a2222222-2222-4222-8222-222222222222' => true,
+        ], $card['members']);
+
+        $propNames = array_map(
+            static fn (array $tuple): string => (string) $tuple[0],
+            $card['vCardProps'] ?? [],
+        );
+        $this->assertNotContains('X-ADDRESSBOOKSERVER-KIND', $propNames);
+        $this->assertNotContains('X-ADDRESSBOOKSERVER-MEMBER', $propNames);
+        $this->assertNotContains('MEMBER', $propNames);
+    }
+
+    public function test_apple_addressbookserver_group_converts_to_kind_and_members_legacy(): void
     {
         $vcard = <<<'VCARD'
 BEGIN:VCARD
@@ -231,6 +256,50 @@ VCARD;
         $this->assertStringContainsString('X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:11111111-1111-4111-8111-111111111111', $written);
         $this->assertStringContainsString('MEMBER:urn:uuid:22222222-2222-4222-8222-222222222222', $written);
         $this->assertStringContainsString('X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:22222222-2222-4222-8222-222222222222', $written);
+    }
+
+    public function test_group_write_normalizes_bare_member_uids_to_urn_uuid(): void
+    {
+        $card = [
+            '@type' => 'Card',
+            'version' => '1.0',
+            'uid' => '08430ef3-a2ce-4568-9d6c-f50a6cfd32ae',
+            'kind' => 'group',
+            'name' => ['@type' => 'Name', 'full' => 'Friends'],
+            'members' => [
+                'c4cf6038-5da0-41be-9c2d-d8cb9b4af90f' => true,
+                'urn:uuid:07d442ce-49b5-4a59-bc01-d75b17b92c9a' => true,
+            ],
+        ];
+
+        $written = $this->converter->vCardFromCard($card);
+
+        $this->assertStringContainsString('MEMBER:urn:uuid:c4cf6038-5da0-41be-9c2d-d8cb9b4af90f', $written);
+        $this->assertStringContainsString('X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:c4cf6038-5da0-41be-9c2d-d8cb9b4af90f', $written);
+        $this->assertStringContainsString('MEMBER:urn:uuid:07d442ce-49b5-4a59-bc01-d75b17b92c9a', $written);
+        $this->assertStringNotContainsString('X-ADDRESSBOOKSERVER-MEMBER:c4cf6038-5da0-41be-9c2d-d8cb9b4af90f', $written);
+    }
+
+    public function test_group_write_deduplicates_mixed_member_uid_key_formats(): void
+    {
+        $card = [
+            '@type' => 'Card',
+            'version' => '1.0',
+            'uid' => '08430ef3-a2ce-4568-9d6c-f50a6cfd32ae',
+            'kind' => 'group',
+            'name' => ['@type' => 'Name', 'full' => 'Friends'],
+            'members' => [
+                'c4cf6038-5da0-41be-9c2d-d8cb9b4af90f' => true,
+                'urn:uuid:c4cf6038-5da0-41be-9c2d-d8cb9b4af90f' => true,
+            ],
+        ];
+
+        $written = $this->converter->vCardFromCard($card);
+        $memberLines = preg_match_all('/^MEMBER:/m', $written, $matches) ? count($matches[0]) : 0;
+        $appleMemberLines = preg_match_all('/^X-ADDRESSBOOKSERVER-MEMBER:/m', $written, $appleMatches) ? count($appleMatches[0]) : 0;
+
+        $this->assertSame(1, $memberLines);
+        $this->assertSame(1, $appleMemberLines);
     }
 
     public function test_apple_group_round_trip_preserves_kind_and_members(): void

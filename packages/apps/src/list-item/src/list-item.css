@@ -1,6 +1,7 @@
 @import "../../styles.css" reference;
 
 .list-item__button {
+  @apply relative w-full text-left px-4 py-3 md:px-6 md:py-4 border-b block select-none outline-none focus:outline-none;
   background-color: var(--list-item-bg, var(--list-item-base-bg, var(--color-cream, #ffffff)));
   border-color: var(
     --list-item-border-color,
@@ -10,6 +11,14 @@
   transition:
     padding 180ms ease,
     background-color 150ms ease;
+}
+
+.list-item__button[data-selection-mode="true"] {
+  @apply pl-9 md:pl-11;
+}
+
+.list-item__button[data-dragging="true"] {
+  @apply opacity-40;
 }
 
 .list-item__button--with-leading {
@@ -33,6 +42,7 @@
 }
 
 .list-item__checkbox-wrap {
+  @apply absolute left-3 md:left-4 top-1/2 -translate-y-1/2;
   opacity: 0;
   transition: opacity 150ms ease;
 }
@@ -42,6 +52,7 @@
 }
 
 .list-item__checkbox {
+  @apply inline-flex size-4 items-center justify-center rounded-[4px] border;
   border-color: color-mix(in oklab, var(--color-ink) 30%, transparent);
   background-color: transparent;
 }
@@ -51,17 +62,56 @@
   background-color: var(--list-item-accent-color, var(--color-emerald));
 }
 
+.list-item__checkbox-icon {
+  @apply size-3 text-white;
+}
+
+.list-item__leading {
+  @apply shrink-0;
+}
+
+.list-item__content {
+  @apply min-w-0;
+}
+
+.list-item__header-row {
+  @apply flex justify-between items-baseline mb-1 gap-3;
+}
+
+.list-item__meta-trailing {
+  @apply flex items-center gap-1.5 shrink-0;
+}
+
+.list-item__icon-slot {
+  @apply inline-flex items-center;
+}
+
 .list-item__subtitle {
+  @apply text-sm font-semibold truncate min-w-0 font-sans;
   color: var(--list-item-body-color, color-mix(in oklab, var(--color-ink) 60%, transparent));
 }
 
+.list-item__subtitle--below {
+  @apply mb-1;
+}
+
 .list-item__date {
+  @apply text-xs tabular-nums;
   color: var(--list-item-muted-color, color-mix(in oklab, var(--color-ink) 45%, transparent));
 }
 
 .list-item__title {
+  @apply text-base font-medium leading-tight tracking-tight truncate;
   font-family: var(--font-sans);
   color: var(--list-item-title-color, var(--color-ink));
+}
+
+.list-item__title--in-header {
+  @apply min-w-0;
+}
+
+.list-item__title--standalone {
+  @apply mb-1;
 }
 
 .list-item__title[data-empty="true"] {
@@ -69,10 +119,12 @@
 }
 
 .list-item__body {
+  @apply text-sm leading-relaxed line-clamp-1;
   color: var(--list-item-body-color, color-mix(in oklab, var(--color-ink) 60%, transparent));
 }
 
 .list-item__swipe-action {
+  @apply flex items-center justify-center text-white text-xs font-medium gap-1 flex-col w-full;
   min-width: 5rem;
   background-color: var(--list-item-swipe-bg);
 }

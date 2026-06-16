@@ -4,8 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Contacts;
 
+use App\Dav\Server\PropIdEnsuringPlugin;
 use App\Models\Addressbook;
 use App\Models\Card;
+use App\Services\Contacts\MemberUriSanitizer;
+use App\Services\Contacts\PropIdEnsurer;
+use Illuminate\Support\Facades\Artisan;
+use Sabre\HTTP\Request;
+use Sabre\HTTP\Response;
 use Tests\Support\ContactsTestFixtures;
 use Tests\Support\OptimisticConcurrencyTestHelpers;
 use Tests\Support\WgwDatabaseTestCase;
@@ -62,6 +68,324 @@ VCARD);
         $response->assertJsonPath('memberCardIds.urn:uuid:'.$joeUid, $joeId);
     }
 
+    public function test_carddav_put_adding_group_member_persists(): void
+    {
+        $janeUid = 'c4cf6038-5da0-41be-9c2d-d8cb9b4af90f';
+        $joeUid = '07d442ce-49b5-4a59-bc01-d75b17b92c9a';
+        $newUid = 'a9c0941e-ddf9-4c98-a1da-ee1b241a7e2d';
+
+        $this->seedCardViaPdo('bob', 'jane-doe.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Jane Doe
+UID:{$janeUid}
+END:VCARD
+VCARD);
+
+        $this->seedCardViaPdo('bob', 'joe-example.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Joe Example
+UID:{$joeUid}
+END:VCARD
+VCARD);
+
+        $this->seedCardViaPdo('bob', 'new-contact.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:New Contact
+UID:{$newUid}
+END:VCARD
+VCARD);
+
+        $groupId = $this->seedCardViaPdo('bob', 'friends-group.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Friends
+X-ADDRESSBOOKSERVER-KIND:group
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:{$janeUid}
+UID:08430ef3-a2ce-4568-9d6c-f50a6cfd32ae
+END:VCARD
+VCARD);
+
+        // Simulate Apple Contacts.app updating the group vCard after adding a member.
+        $this->updateCardViaPdo('bob', 'friends-group.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+PRODID:-//Apple Inc.//AddressBookCore 1.0//EN
+N:Friends;;;;
+FN:Friends
+X-ADDRESSBOOKSERVER-KIND:group
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:{$janeUid}
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:{$joeUid}
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:{$newUid}
+UID:08430ef3-a2ce-4568-9d6c-f50a6cfd32ae
+END:VCARD
+VCARD);
+
+        $this->ensurePropIdsOnStoredCard('bob', 'friends-group.vcf');
+
+        $stored = $this->findBobCard($groupId);
+        $this->assertNotNull($stored);
+        $raw = is_string($stored->carddata) ? $stored->carddata : (string) $stored->carddata;
+        $this->assertStringContainsString('X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:'.$joeUid, $raw);
+        $this->assertStringContainsString('X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:'.$newUid, $raw);
+
+        $response = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/contacts/cards/'.$groupId)
+            ->assertOk();
+
+        $response->assertJsonPath('kind', 'group');
+        $this->assertCount(3, $response->json('members') ?? []);
+        $this->assertCount(3, $response->json('memberCardIds') ?? []);
+    }
+
+    public function test_rest_name_patch_after_carddav_member_add_preserves_members(): void
+    {
+        $janeUid = 'c4cf6038-5da0-41be-9c2d-d8cb9b4af90f';
+        $joeUid = '07d442ce-49b5-4a59-bc01-d75b17b92c9a';
+
+        $this->seedCardViaPdo('bob', 'jane-doe.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Jane Doe
+UID:{$janeUid}
+END:VCARD
+VCARD);
+
+        $this->seedCardViaPdo('bob', 'joe-example.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Joe Example
+UID:{$joeUid}
+END:VCARD
+VCARD);
+
+        $groupId = $this->seedCardViaPdo('bob', 'friends-group.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Friends
+X-ADDRESSBOOKSERVER-KIND:group
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:{$janeUid}
+UID:08430ef3-a2ce-4568-9d6c-f50a6cfd32ae
+END:VCARD
+VCARD);
+
+        $stale = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/contacts/cards/'.$groupId)
+            ->assertOk();
+
+        $this->updateCardViaPdo('bob', 'friends-group.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Friends
+X-ADDRESSBOOKSERVER-KIND:group
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:{$janeUid}
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:{$joeUid}
+UID:08430ef3-a2ce-4568-9d6c-f50a6cfd32ae
+END:VCARD
+VCARD);
+
+        $this->withBearer($this->userBearerToken())
+            ->patchJson('/api/v1/contacts/cards/'.$groupId, [
+                'name' => [
+                    '@type' => 'Name',
+                    'isOrdered' => false,
+                    'full' => 'Close Friends',
+                ],
+            ], $this->ifMatchFromResponse($stale))
+            ->assertStatus(412);
+
+        $current = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/contacts/cards/'.$groupId)
+            ->assertOk();
+
+        $this->withBearer($this->userBearerToken())
+            ->patchJson('/api/v1/contacts/cards/'.$groupId, [
+                'name' => [
+                    '@type' => 'Name',
+                    'isOrdered' => false,
+                    'full' => 'Close Friends',
+                ],
+            ], $this->ifMatchFromResponse($current))
+            ->assertOk()
+            ->assertJsonPath('name.full', 'Close Friends')
+            ->assertJsonCount(2, 'members')
+            ->assertJsonCount(2, 'memberCardIds');
+    }
+
+    public function test_macos_corrupt_group_members_resolve_to_member_card_ids(): void
+    {
+        $janeUid = 'c4cf6038-5da0-41be-9c2d-d8cb9b4af90f';
+        $joeUid = '07d442ce-49b5-4a59-bc01-d75b17b92c9a';
+
+        $janeId = $this->seedCardViaPdo('bob', 'jane-doe.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Jane Doe
+UID:{$janeUid}
+END:VCARD
+VCARD);
+
+        $joeId = $this->seedCardViaPdo('bob', 'joe-example.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Joe Example
+UID:{$joeUid}
+END:VCARD
+VCARD);
+
+        $groupId = $this->seedCardViaPdo('bob', 'friends-group.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Friends
+X-ADDRESSBOOKSERVER-KIND:group
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:"urn:uuid:{$janeUid}"
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:"urn:uuid:{$joeUid}"
+UID:08430ef3-a2ce-4568-9d6c-f50a6cfd32ae
+END:VCARD
+VCARD);
+
+        $response = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/contacts/cards/'.$groupId)
+            ->assertOk();
+
+        $response->assertJsonPath('kind', 'group');
+        $response->assertJsonPath('memberCardIds.urn:uuid:'.$janeUid, $janeId);
+        $response->assertJsonPath('memberCardIds.urn:uuid:'.$joeUid, $joeId);
+    }
+
+    public function test_carddav_put_sanitizes_macos_corrupt_group_member_uris(): void
+    {
+        $janeUid = 'c4cf6038-5da0-41be-9c2d-d8cb9b4af90f';
+
+        $this->seedCardViaPdo('bob', 'jane-doe.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Jane Doe
+UID:{$janeUid}
+END:VCARD
+VCARD);
+
+        $groupId = $this->seedCardViaPdo('bob', 'friends-group.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Friends
+X-ADDRESSBOOKSERVER-KIND:group
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:{$janeUid}
+UID:08430ef3-a2ce-4568-9d6c-f50a6cfd32ae
+END:VCARD
+VCARD);
+
+        $this->updateCardViaPdo('bob', 'friends-group.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+PRODID:-//Apple Inc.//AddressBookCore 1.0//EN
+N:Friends;;;;
+FN:Friends
+X-ADDRESSBOOKSERVER-KIND:group
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:"urn:uuid:{$janeUid}"
+UID:08430ef3-a2ce-4568-9d6c-f50a6cfd32ae
+END:VCARD
+VCARD);
+
+        $this->ensurePropIdsOnStoredCard('bob', 'friends-group.vcf');
+
+        $stored = $this->findBobCard($groupId);
+        $this->assertNotNull($stored);
+        $raw = is_string($stored->carddata) ? $stored->carddata : (string) $stored->carddata;
+        $this->assertStringContainsString('X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:'.$janeUid, $raw);
+        $this->assertStringNotContainsString('"urn:uuid:', $raw);
+
+        $response = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/contacts/cards/'.$groupId)
+            ->assertOk();
+
+        $response->assertJsonPath('kind', 'group');
+        $this->assertCount(1, $response->json('memberCardIds') ?? []);
+    }
+
+    public function test_carddav_get_sanitizes_corrupt_group_member_uris_without_persisting(): void
+    {
+        $janeUid = 'c4cf6038-5da0-41be-9c2d-d8cb9b4af90f';
+
+        $this->seedCardViaPdo('bob', 'jane-doe.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Jane Doe
+UID:{$janeUid}
+END:VCARD
+VCARD);
+
+        $corrupt = <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Friends
+X-ADDRESSBOOKSERVER-KIND:group
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:"urn:uuid:{$janeUid}"
+UID:08430ef3-a2ce-4568-9d6c-f50a6cfd32ae
+END:VCARD
+VCARD;
+
+        $groupId = $this->seedCardViaPdo('bob', 'friends-group.vcf', $corrupt);
+
+        $stored = $this->findBobCard($groupId);
+        $this->assertNotNull($stored);
+        $etagBefore = (string) $stored->etag;
+        $rawBefore = is_string($stored->carddata) ? $stored->carddata : (string) $stored->carddata;
+
+        $plugin = new PropIdEnsuringPlugin(
+            new PropIdEnsurer,
+            new MemberUriSanitizer,
+            PropIdEnsuringPlugin::cardBackendFromConnection(),
+        );
+        $request = new Request('GET', '/addressbooks/bob/default/friends-group.vcf');
+        $response = new Response(200);
+        $response->setBody($rawBefore);
+        $plugin->afterCardMethod($request, $response);
+
+        $body = (string) $response->getBody();
+        $this->assertStringContainsString('X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:'.$janeUid, $body);
+        $this->assertStringNotContainsString('"urn:uuid:', $body);
+
+        $storedAfter = $this->findBobCard($groupId);
+        $this->assertNotNull($storedAfter);
+        $rawAfter = is_string($storedAfter->carddata) ? $storedAfter->carddata : (string) $storedAfter->carddata;
+        $this->assertSame($etagBefore, (string) $storedAfter->etag);
+        $this->assertSame($rawBefore, $rawAfter);
+    }
+
+    public function test_backfill_command_sanitizes_corrupt_group_member_uris_in_database(): void
+    {
+        $janeUid = 'c4cf6038-5da0-41be-9c2d-d8cb9b4af90f';
+
+        $this->seedCardViaPdo('bob', 'jane-doe.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Jane Doe
+UID:{$janeUid}
+END:VCARD
+VCARD);
+
+        $groupId = $this->seedCardViaPdo('bob', 'friends-group.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Friends
+X-ADDRESSBOOKSERVER-KIND:group
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:"urn:uuid:{$janeUid}"
+UID:08430ef3-a2ce-4568-9d6c-f50a6cfd32ae
+END:VCARD
+VCARD);
+
+        $this->assertSame(0, Artisan::call('wgw:contacts:sanitize-group-member-uris'));
+
+        $stored = $this->findBobCard($groupId);
+        $this->assertNotNull($stored);
+        $raw = is_string($stored->carddata) ? $stored->carddata : (string) $stored->carddata;
+        $this->assertStringContainsString('X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:'.$janeUid, $raw);
+        $this->assertStringNotContainsString('"urn:uuid:', $raw);
+    }
+
     public function test_patch_group_name_updates_vcard_fn_and_n(): void
     {
         $groupId = $this->seedCardViaPdo('bob', 'friends-group.vcf', <<<'VCARD'
@@ -100,6 +424,128 @@ VCARD);
         $this->assertStringContainsString('N:Close Friends', $raw);
         $this->assertStringNotContainsString('FN:Friends', $raw);
         $this->assertStringNotContainsString('N:Friends', $raw);
+    }
+
+    public function test_rest_patch_adding_group_member_persists_vcard_and_member_card_ids(): void
+    {
+        $janeUid = 'c4cf6038-5da0-41be-9c2d-d8cb9b4af90f';
+        $joeUid = '07d442ce-49b5-4a59-bc01-d75b17b92c9a';
+
+        $janeId = $this->seedCardViaPdo('bob', 'jane-doe.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Jane Doe
+UID:{$janeUid}
+END:VCARD
+VCARD);
+
+        $joeId = $this->seedCardViaPdo('bob', 'joe-example.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Joe Example
+UID:{$joeUid}
+END:VCARD
+VCARD);
+
+        $groupId = $this->seedCardViaPdo('bob', 'friends-group.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Friends
+X-ADDRESSBOOKSERVER-KIND:group
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:{$janeUid}
+UID:08430ef3-a2ce-4568-9d6c-f50a6cfd32ae
+END:VCARD
+VCARD);
+
+        $show = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/contacts/cards/'.$groupId)
+            ->assertOk()
+            ->assertJsonPath('kind', 'group')
+            ->assertJsonCount(1, 'members');
+
+        $patch = $this->withBearer($this->userBearerToken())
+            ->patchJson('/api/v1/contacts/cards/'.$groupId, [
+                'members' => [
+                    'urn:uuid:'.$joeUid => true,
+                ],
+            ], $this->ifMatchFromResponse($show));
+
+        $patch->assertOk()
+            ->assertJsonPath('kind', 'group')
+            ->assertJsonCount(2, 'members')
+            ->assertJsonCount(2, 'memberCardIds')
+            ->assertJsonPath('memberCardIds.urn:uuid:'.$janeUid, $janeId)
+            ->assertJsonPath('memberCardIds.urn:uuid:'.$joeUid, $joeId);
+
+        $stored = $this->findBobCard($groupId);
+        $this->assertNotNull($stored);
+        $raw = is_string($stored->carddata) ? $stored->carddata : (string) $stored->carddata;
+        $this->assertStringContainsString('X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:'.$janeUid, $raw);
+        $this->assertStringContainsString('X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:'.$joeUid, $raw);
+    }
+
+    public function test_rest_patch_add_member_with_stale_etag_returns_412(): void
+    {
+        $janeUid = 'c4cf6038-5da0-41be-9c2d-d8cb9b4af90f';
+        $joeUid = '07d442ce-49b5-4a59-bc01-d75b17b92c9a';
+        $newUid = 'a9c0941e-ddf9-4c98-a1da-ee1b241a7e2d';
+
+        $this->seedCardViaPdo('bob', 'jane-doe.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Jane Doe
+UID:{$janeUid}
+END:VCARD
+VCARD);
+
+        $this->seedCardViaPdo('bob', 'joe-example.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Joe Example
+UID:{$joeUid}
+END:VCARD
+VCARD);
+
+        $this->seedCardViaPdo('bob', 'new-contact.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:New Contact
+UID:{$newUid}
+END:VCARD
+VCARD);
+
+        $groupId = $this->seedCardViaPdo('bob', 'friends-group.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Friends
+X-ADDRESSBOOKSERVER-KIND:group
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:{$janeUid}
+UID:08430ef3-a2ce-4568-9d6c-f50a6cfd32ae
+END:VCARD
+VCARD);
+
+        $stale = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/contacts/cards/'.$groupId)
+            ->assertOk();
+
+        $this->updateCardViaPdo('bob', 'friends-group.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Friends
+X-ADDRESSBOOKSERVER-KIND:group
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:{$janeUid}
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:{$joeUid}
+UID:08430ef3-a2ce-4568-9d6c-f50a6cfd32ae
+END:VCARD
+VCARD);
+
+        $this->withBearer($this->userBearerToken())
+            ->patchJson('/api/v1/contacts/cards/'.$groupId, [
+                'members' => [
+                    'urn:uuid:'.$newUid => true,
+                ],
+            ], $this->ifMatchFromResponse($stale))
+            ->assertStatus(412);
     }
 
     private function findBobCard(string $cardId): ?Card

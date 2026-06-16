@@ -59,10 +59,13 @@ Example:
 
 ### Tailwind and `className` in workspace panes
 
-- Repeated pane layout, typography, list chrome, tables, and tone MUST NOT be expressed as long duplicated Tailwind utility stacks or ad hoc `style={{ color: ... }}` in TSX.
-- Those concerns MUST live in the workspace stylesheet (for example `settings-workspace.css` under `.settings-workspace`, or `admin-panes.css` included from `admin-workspace.css` and scoped with `:is(.admin-workspace, .admin-dialog-surface)` where portaled surfaces need the same tokens).
-- Pane TSX MUST use semantic class names tied to that stylesheet for those contracts.
-- TSX MAY keep Tailwind only for true one-offs or layout that is not part of a repeated visual contract; anything copied across rows/cards/sections MUST move to CSS.
+**TSX:** use semantic BEM class names (for example `contacts-list-panel__section-header`). Do **not** put long Tailwind utility strings in TSX. One-offs are OK inline (icon size, `animate-spin`, truly unique layout).
+
+**CSS:** define those classes in co-located `*.css` or `*-workspace.css` with `@apply` and Tailwind utilities. Do **not** hand-write raw layout/typography properties (`margin`, `padding`, `font-size`, `display`, etc.) when a Tailwind utility exists — same rule as TSX, but the utilities live in CSS via `@apply`.
+
+Keep CSS variables, `color-mix`, and other token-driven values as normal properties alongside `@apply` (see `menu-item.css`, `list-item.css`, `drive-workspace.css`).
+
+Scope repeated pane layout, typography, list chrome, tables, and tone in the workspace stylesheet (for example `settings-workspace.css` under `.settings-workspace`, or `admin-panes.css` included from `admin-workspace.css` and scoped with `:is(.admin-workspace, .admin-dialog-surface)` where portaled surfaces need the same tokens).
 
 Dynamic values that depend on runtime data (for example `style={{ width: \`${percent}%\` }}`) MUST stay in TSX.
 

@@ -13,6 +13,7 @@ import type { WorkspaceAppHandle } from "@/workspace-app/src/workspace-app";
 import {
   contactDisplayName,
   filterCardsBySearch,
+  sortContactCardsForList,
 } from "@/contacts-core/src/contacts-display-utils";
 import {
   filterCardsByView,
@@ -59,6 +60,8 @@ type UseContactsControllerArgs = {
   labels?: Partial<ContactsUILabels>;
   listLoading?: boolean;
   operations?: ContactsAPIOperations;
+  /** Refetch cards after vCard import so group membership resolves against the full list. */
+  onRefreshList?: () => void;
   /**
    * Initial view restored from a deep-link URL (e.g. `"all"`, `"group:{id}"`).
    * Only applied on mount; falls back to address-book default when absent.
@@ -73,6 +76,36 @@ type UseContactsControllerArgs = {
 };
 
 const WRITE_QUEUE_DELAY_MS = 2500;
+
+function isPreconditionFailed(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "status" in error &&
+    (error as { status: number }).status === 412
+  );
+}
+
+async function patchGroupWithFreshEtag(
+  operations: ContactsAPIOperations,
+  groupId: string,
+  buildPatch: (freshGroup: ContactCard) => ContactCardPatch | null,
+  signal: AbortSignal,
+): Promise<ContactCard> {
+  const run = async (): Promise<ContactCard> => {
+    const fresh = await operations.getCard(groupId, { signal });
+    const patch = buildPatch(fresh);
+    if (!patch) return fresh;
+    return operations.patchCard(groupId, patch, { signal, ifMatch: fresh.etag });
+  };
+
+  try {
+    return await run();
+  } catch (error) {
+    if (!isPreconditionFailed(error)) throw error;
+    return run();
+  }
+}
 
 function draftDisplayName(draft: ContactEditDraft, unknownLabel: string): string {
   const name = [draft.nameGiven, draft.nameGiven2, draft.nameSurname]
@@ -116,6 +149,7 @@ export function useContactsController({
   labels,
   listLoading = false,
   operations,
+  onRefreshList,
   initialView,
   initialContactId,
   onViewChange,
@@ -167,6 +201,11 @@ export function useContactsController({
   }, [data.addressBooks, data.cards]);
 
   useEffect(() => {
+    if (initialContactId === undefined) return;
+    setActiveId(initialContactId);
+  }, [initialContactId]);
+
+  useEffect(() => {
     if (!initialContactId) return;
     workspaceLayoutRef.current?.openMobileDetail();
   }, [initialContactId]);
@@ -213,7 +252,10 @@ export function useContactsController({
     return filterCardsBySearch(byView, searchQuery);
   }, [cards, searchQuery, view]);
 
-  const visibleIds = useMemo(() => visibleCards.map((card) => card.id), [visibleCards]);
+  const visibleIds = useMemo(
+    () => sortContactCardsForList(visibleCards).map((card) => card.id),
+    [visibleCards],
+  );
 
   const stashActiveEditDraft = useCallback(() => {
     if (!editMode || createMode || !editDraft || !activeId || activeId === CONTACTS_CREATE_ID)
@@ -428,6 +470,7 @@ export function useContactsController({
 
         if (result.list.length > 0) {
           show(L.toastImported(result.list.length), { icon: <Upload className="size-4" /> });
+          onRefreshList?.();
         }
         if (skippedCount > 0) {
           showError(L.importFilesSkipped(skippedCount));
@@ -445,7 +488,7 @@ export function useContactsController({
         showError(L.importFailed);
       }
     },
-    [L, operations, resolveImportAddressBookId, show, showError],
+    [L, onRefreshList, operations, resolveImportAddressBookId, show, showError],
   );
 
   const addPhone = useCallback(() => {
@@ -812,14 +855,16 @@ export function useContactsController({
         key: `contacts:remove-from-group:${groupId}:${cardIds.slice().sort().join(",")}`,
         toastMessage: L.toastRemovedFromGroup(removedCount),
         icon: <UserMinus className="size-4" />,
-        execute: (signal) =>
-          operations
-            ? operations
-                .patchCard(groupId, patch, { signal, ifMatch: group.etag })
-                .then((saved) => {
-                  setCards((prev) => prev.map((card) => (card.id === groupId ? saved : card)));
-                })
-            : Promise.resolve(),
+        execute: async (signal) => {
+          if (!operations) return;
+          const saved = await patchGroupWithFreshEtag(
+            operations,
+            groupId,
+            (fresh) => groupRemoveMembersPatch(fresh, cardIds, cardsRef.current),
+            signal,
+          );
+          setCards((prev) => prev.map((card) => (card.id === groupId ? saved : card)));
+        },
         undo: rollback,
         onError: rollback,
         undoToastMessage: "Removal undone.",
@@ -849,7 +894,6 @@ export function useContactsController({
       const group = cards.find((card) => card.id === groupId);
       if (!value || !group || value === contactDisplayName(group)) return;
 
-      const patch = groupRenamePatch(value);
       const previousCard = group;
       const merged: ContactCard = {
         ...group,
@@ -868,14 +912,16 @@ export function useContactsController({
         key: `contacts:rename-group:${groupId}`,
         toastMessage: L.toastGroupRenamed(value),
         icon: <Tag className="size-4" />,
-        execute: (signal) =>
-          operations
-            ? operations
-                .patchCard(groupId, patch, { signal, ifMatch: group.etag })
-                .then((saved) => {
-                  setCards((prev) => prev.map((card) => (card.id === groupId ? saved : card)));
-                })
-            : Promise.resolve(),
+        execute: async (signal) => {
+          if (!operations) return;
+          const saved = await patchGroupWithFreshEtag(
+            operations,
+            groupId,
+            () => groupRenamePatch(value),
+            signal,
+          );
+          setCards((prev) => prev.map((card) => (card.id === groupId ? saved : card)));
+        },
         undo: rollback,
         onError: rollback,
         undoToastMessage: "Rename undone.",
@@ -1014,14 +1060,21 @@ export function useContactsController({
         key: `contacts:add-members:${groupId}:${cardIds.slice().sort().join(",")}`,
         toastMessage: L.toastMembersAdded(addedCount, groupName),
         icon: <UserPlus className="size-4" />,
-        execute: (signal) =>
-          operations
-            ? operations
-                .patchCard(groupId, patch, { signal, ifMatch: group.etag })
-                .then((saved) => {
-                  setCards((prev) => prev.map((card) => (card.id === groupId ? saved : card)));
-                })
-            : Promise.resolve(),
+        execute: async (signal) => {
+          if (!operations) return;
+          const saved = await patchGroupWithFreshEtag(
+            operations,
+            groupId,
+            (fresh) => {
+              const cardsToAdd = cardIds
+                .map((id) => cardsRef.current.find((card) => card.id === id))
+                .filter((card): card is ContactCard => card !== undefined);
+              return groupAddMembersPatch(fresh, cardsToAdd);
+            },
+            signal,
+          );
+          setCards((prev) => prev.map((card) => (card.id === groupId ? saved : card)));
+        },
         undo: rollback,
         onError: rollback,
         undoToastMessage: "Add members undone.",

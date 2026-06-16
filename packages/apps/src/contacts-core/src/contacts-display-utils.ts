@@ -150,6 +150,60 @@ function nameFromComponents(card: ContactCard): string {
   return synthesizeNameFromComponents(card.name?.components);
 }
 
+function nameComponentValue(
+  components: NameComponentLike[] | undefined,
+  kind: "given" | "given2" | "surname" | "surname2",
+): string {
+  return (components ?? [])
+    .filter((component) => component.kind === kind)
+    .map((component) => component.value.trim())
+    .filter(Boolean)
+    .join(" ");
+}
+
+/** Last token as surname when only `name.full` is available (matches edit draft parsing). */
+function splitFullNameForSort(fullName: string): { given: string; surname: string } {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return {
+      given: parts.slice(0, -1).join(" "),
+      surname: parts[parts.length - 1] ?? "",
+    };
+  }
+  return { given: fullName.trim(), surname: "" };
+}
+
+function personSortNameParts(card: ContactCard): { given: string; surname: string } {
+  const components = card.name?.components;
+  let given = [nameComponentValue(components, "given"), nameComponentValue(components, "given2")]
+    .filter(Boolean)
+    .join(" ");
+  let surname = [
+    nameComponentValue(components, "surname"),
+    nameComponentValue(components, "surname2"),
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const fullName = card.name?.full?.trim() ?? "";
+  if (!given && !surname && fullName) {
+    const split = splitFullNameForSort(fullName);
+    given = split.given;
+    surname = split.surname;
+  }
+
+  return { given, surname };
+}
+
+function formatPersonListSortName(given: string, surname: string): string {
+  const givenTrimmed = given.trim();
+  const surnameTrimmed = surname.trim();
+  if (surnameTrimmed && givenTrimmed) return `${surnameTrimmed}, ${givenTrimmed}`;
+  if (surnameTrimmed) return surnameTrimmed;
+  if (givenTrimmed) return givenTrimmed;
+  return "";
+}
+
 /** Person name from `name.full` or name components — not organization. */
 export function contactPersonName(card: ContactCard): string {
   const full = card.name?.full?.trim();
@@ -349,6 +403,70 @@ function collectPhones(card: ContactCard): string[] {
 export function phoneToTelHref(number: string): string {
   const stripped = number.replace(/\s/g, "");
   return stripped ? `tel:${stripped}` : "";
+}
+
+/** Sort key for contact lists: surname-first for people, display name for orgs/groups. */
+export function contactListSortName(card: ContactCard): string {
+  const organizationName = firstOrganizationName(card);
+  const { given, surname } = personSortNameParts(card);
+  const personSortName = formatPersonListSortName(given, surname);
+  const displayName = contactDisplayName(card);
+
+  if (card.kind === "org") {
+    if (organizationName) return organizationName.trim();
+    if (personSortName) return personSortName;
+    return displayName.trim();
+  }
+
+  if (card.kind === "group") {
+    const groupName = contactPersonName(card).trim() || organizationName?.trim() || "";
+    if (groupName) return groupName;
+    return displayName.trim();
+  }
+
+  if (personSortName) return personSortName;
+  if (organizationName) return organizationName.trim();
+  return displayName.trim();
+}
+
+/** First letter bucket for alphabetical list sections (A–Z or #). */
+export function contactListSectionLetter(name: string): string {
+  const trimmed = name.trim();
+  if (!trimmed) return "#";
+
+  const first = trimmed.charAt(0).toLocaleUpperCase();
+  if (/\p{L}/u.test(first)) return first;
+  return "#";
+}
+
+export function sortContactCardsForList(cards: ContactCard[]): ContactCard[] {
+  return [...cards].sort((left, right) =>
+    contactListSortName(left).localeCompare(contactListSortName(right), undefined, {
+      sensitivity: "base",
+    }),
+  );
+}
+
+export type ContactListSection = {
+  letter: string;
+  cards: ContactCard[];
+};
+
+export function groupContactCardsBySection(cards: ContactCard[]): ContactListSection[] {
+  const sorted = sortContactCardsForList(cards);
+  const sections: ContactListSection[] = [];
+
+  for (const card of sorted) {
+    const letter = contactListSectionLetter(contactListSortName(card));
+    const last = sections[sections.length - 1];
+    if (last?.letter === letter) {
+      last.cards.push(card);
+    } else {
+      sections.push({ letter, cards: [card] });
+    }
+  }
+
+  return sections;
 }
 
 /**

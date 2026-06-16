@@ -187,6 +187,19 @@ final class ContactCardRepository
             }
         }
 
+        // Re-read group cards after the full batch is persisted so member uids from
+        // the same import (or contacts imported earlier in this request) resolve.
+        foreach ($created as $index => $card) {
+            if (($card['kind'] ?? null) !== 'group') {
+                continue;
+            }
+            $cardId = $card['id'] ?? null;
+            if (! is_string($cardId) || $cardId === '') {
+                continue;
+            }
+            $created[$index] = $this->show($username, $cardId);
+        }
+
         return ['list' => $created, 'errors' => $errors];
     }
 

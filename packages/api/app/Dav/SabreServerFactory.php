@@ -14,6 +14,7 @@ use App\Dav\Server\GroupFilesPrincipalCollection;
 use App\Dav\Server\PropIdEnsuringPlugin;
 use App\Dav\Server\SearchIndexPlugin;
 use App\Dav\Server\WebdavWriteGuardPlugin;
+use App\Services\Contacts\MemberUriSanitizer;
 use App\Services\Contacts\PropIdEnsurer;
 use App\Services\Search\SearchIndexerService;
 use App\Support\WgwInstallConfig;
@@ -112,6 +113,7 @@ final class SabreServerFactory
             $server->addPlugin(new CardDAV\VCFExportPlugin);
             $server->addPlugin(new PropIdEnsuringPlugin(
                 new PropIdEnsurer,
+                new MemberUriSanitizer,
                 PropIdEnsuringPlugin::cardBackendFromConnection(),
             ));
         }

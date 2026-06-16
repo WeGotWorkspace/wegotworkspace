@@ -35,18 +35,40 @@ vi.mock("@/hooks/use-is-touch", () => ({
 
 const bootstrap = createContactsAppBootstrap();
 
-function clickSelect(result: { current: ReturnType<typeof useContactsController> }, id: string) {
+function clickSelect(
+  result: { current: ReturnType<typeof useContactsController> },
+  id: string,
+  options: { shiftKey?: boolean } = {},
+) {
   act(() => {
     result.current.handleSelect(id, {
       detail: 1,
       metaKey: false,
       ctrlKey: false,
-      shiftKey: false,
+      shiftKey: options.shiftKey ?? false,
     } as ReactMouseEvent);
   });
 }
 
 describe("useContactsController", () => {
+  it("shift-clicks a range in visible list sort order", () => {
+    const { result } = renderHook(() =>
+      useContactsController({
+        data: bootstrap.data,
+        listLoading: false,
+      }),
+    );
+
+    act(() => {
+      result.current.selectView("all");
+    });
+
+    clickSelect(result, "card-joe");
+    clickSelect(result, "card-acme", { shiftKey: true });
+
+    expect(result.current.selectedIds).toEqual(["card-acme", "card-jane", "card-joe"]);
+  });
+
   it("selects a contact and filters the list by search query", () => {
     const { result } = renderHook(() =>
       useContactsController({
@@ -434,6 +456,81 @@ describe("useContactsController", () => {
   });
 });
 
+describe("useContactsController group etag refetch", () => {
+  const WRITE_QUEUE_MS = 2500;
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("addMembersToGroup refetches group etag before patchCard", async () => {
+    vi.useFakeTimers();
+    const staleEtag = "etag-stale-from-bootstrap";
+    const freshEtag = "etag-fresh-from-server";
+    const bootstrapGroup = bootstrap.data.cards.find((card) => card.id === "card-group-friends")!;
+    const acmeCard = bootstrap.data.cards.find((card) => card.id === "card-acme")!;
+    const groupCard = { ...bootstrapGroup, etag: staleEtag };
+    const data = {
+      ...bootstrap.data,
+      cards: bootstrap.data.cards.map((card) =>
+        card.id === "card-group-friends" ? groupCard : card,
+      ),
+    };
+    const freshGroup = { ...groupCard, etag: freshEtag };
+
+    const getCard = vi.fn(() => Promise.resolve(freshGroup));
+    const patchCard = vi.fn(() =>
+      Promise.resolve({
+        ...freshGroup,
+        members: {
+          ...freshGroup.members,
+          [acmeCard.uid!]: true as const,
+        },
+      }),
+    );
+
+    const { result } = renderHook(() =>
+      useContactsController({
+        data,
+        listLoading: false,
+        operations: {
+          listAddressBooks: vi.fn(),
+          listCards: vi.fn(),
+          getCard,
+          createCard: vi.fn(),
+          patchCard,
+          deleteCard: vi.fn(),
+        },
+      }),
+    );
+
+    act(() => {
+      result.current.addMembersToGroup("card-group-friends", ["card-acme"]);
+    });
+
+    await act(async () => {
+      vi.advanceTimersByTime(WRITE_QUEUE_MS);
+      await Promise.resolve();
+    });
+
+    expect(getCard).toHaveBeenCalledWith(
+      "card-group-friends",
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+    expect(patchCard).toHaveBeenCalledWith(
+      "card-group-friends",
+      expect.objectContaining({ members: expect.any(Object) }),
+      expect.objectContaining({ ifMatch: freshEtag }),
+    );
+    expect(patchCard).not.toHaveBeenCalledWith(
+      "card-group-friends",
+      expect.anything(),
+      expect.objectContaining({ ifMatch: staleEtag }),
+    );
+    expect(getCard.mock.invocationCallOrder[0]).toBeLessThan(patchCard.mock.invocationCallOrder[0]);
+  });
+});
+
 describe("useContactsController vCard import", () => {
   beforeEach(() => {
     mockShow.mockClear();
@@ -503,6 +600,54 @@ describe("useContactsController vCard import", () => {
       expect.stringContaining("Imported 2 contacts"),
       expect.any(Object),
     );
+  });
+
+  it("refreshes the contact list after a successful import", async () => {
+    const onRefreshList = vi.fn();
+    const importVcards = vi.fn().mockResolvedValue({
+      list: [
+        {
+          ...bootstrap.data.cards[0],
+          id: "card-imported-one",
+          name: { full: "Imported One" },
+        },
+      ],
+      errors: [],
+    });
+
+    const { result } = renderHook(() =>
+      useContactsController({
+        data: bootstrap.data,
+        listLoading: false,
+        onRefreshList,
+        operations: {
+          listAddressBooks: vi.fn(),
+          listCards: vi.fn(),
+          getCard: vi.fn(),
+          createCard: vi.fn(),
+          patchCard: vi.fn(),
+          deleteCard: vi.fn(),
+          importVcards,
+        },
+      }),
+    );
+
+    const fileList = {
+      0: new File(["BEGIN:VCARD\nFN:One\nEND:VCARD"], "one.vcf"),
+      length: 1,
+      item(index: number) {
+        return this[index as 0];
+      },
+      [Symbol.iterator]() {
+        return [this[0]][Symbol.iterator]();
+      },
+    } as FileList;
+
+    await act(async () => {
+      await result.current.handleImportVcf(fileList);
+    });
+
+    expect(onRefreshList).toHaveBeenCalledTimes(1);
   });
 
   it("shows an error when no vCard files are selected", async () => {
@@ -822,6 +967,26 @@ describe("useContactsController keyboard shortcuts", () => {
         }),
       );
       unmountHook = unmount;
+      expect(result.current.activeId).toBe("card-jane");
+      expect(result.current.active?.id).toBe("card-jane");
+    });
+
+    it("syncs activeId when initialContactId changes from the URL", () => {
+      const { result, rerender, unmount } = renderHook(
+        ({ initialContactId }: { initialContactId: string }) =>
+          useContactsController({
+            data: bootstrap.data,
+            listLoading: false,
+            initialContactId,
+          }),
+        { initialProps: { initialContactId: "" } },
+      );
+      unmountHook = unmount;
+
+      expect(result.current.activeId).toBe("");
+
+      rerender({ initialContactId: "card-jane" });
+
       expect(result.current.activeId).toBe("card-jane");
       expect(result.current.active?.id).toBe("card-jane");
     });

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Dav\Server;
 
+use App\Services\Contacts\MemberUriSanitizer;
 use App\Services\Contacts\PropIdEnsurer;
 use Illuminate\Support\Facades\DB;
 use Sabre\CardDAV\Backend\PDO as CardPDO;
@@ -23,18 +24,19 @@ final class PropIdEnsuringPlugin extends ServerPlugin
 
     public function __construct(
         private readonly PropIdEnsurer $propIdEnsurer,
+        private readonly MemberUriSanitizer $memberUriSanitizer,
         private readonly CardPDO $cardBackend,
     ) {}
 
     public function initialize(Server $server): void
     {
         $this->server = $server;
-        foreach (['PUT', 'PATCH'] as $method) {
-            $server->on('afterMethod:'.$method, [$this, 'afterWriteMethod']);
+        foreach (['PUT', 'PATCH', 'GET'] as $method) {
+            $server->on('afterMethod:'.$method, [$this, 'afterCardMethod']);
         }
     }
 
-    public function afterWriteMethod(RequestInterface $request, ResponseInterface $response): void
+    public function afterCardMethod(RequestInterface $request, ResponseInterface $response): void
     {
         if ($this->reentrant) {
             return;
@@ -51,6 +53,12 @@ final class PropIdEnsuringPlugin extends ServerPlugin
             return;
         }
 
+        if (strtoupper($request->getMethod()) === 'GET') {
+            $this->afterCardGet($location, $response);
+
+            return;
+        }
+
         $card = $this->cardBackend->getCard($location['addressBookId'], $location['cardUri']);
         if ($card === null) {
             return;
@@ -61,21 +69,60 @@ final class PropIdEnsuringPlugin extends ServerPlugin
             return;
         }
 
-        $result = $this->propIdEnsurer->ensure($raw);
-        if (! $result['changed']) {
+        $this->sanitizeAndPersistCard($location['addressBookId'], $location['cardUri'], $raw, true);
+    }
+
+    private function afterCardGet(array $location, ResponseInterface $response): void
+    {
+        $raw = (string) $response->getBody();
+        if ($raw === '') {
+            $card = $this->cardBackend->getCard($location['addressBookId'], $location['cardUri']);
+            if ($card === null) {
+                return;
+            }
+            $raw = is_string($card['carddata'] ?? null) ? $card['carddata'] : (string) ($card['carddata'] ?? '');
+        }
+        if ($raw === '') {
             return;
+        }
+
+        $memberResult = $this->memberUriSanitizer->sanitize($raw);
+        if ($memberResult['changed']) {
+            $response->setBody($memberResult['vcard']);
+        }
+    }
+
+    private function sanitizeAndPersistCard(
+        int $addressBookId,
+        string $cardUri,
+        string $raw,
+        bool $ensurePropIds,
+    ): ?string {
+        $memberResult = $this->memberUriSanitizer->sanitize($raw);
+        if ($memberResult['changed']) {
+            $raw = $memberResult['vcard'];
+        }
+
+        $propResult = ['vcard' => $raw, 'changed' => false];
+        if ($ensurePropIds) {
+            $propResult = $this->propIdEnsurer->ensure($raw);
+            if ($propResult['changed']) {
+                $raw = $propResult['vcard'];
+            }
+        }
+
+        if (! $memberResult['changed'] && ! $propResult['changed']) {
+            return null;
         }
 
         $this->reentrant = true;
         try {
-            $this->cardBackend->updateCard(
-                $location['addressBookId'],
-                $location['cardUri'],
-                $result['vcard'],
-            );
+            $this->cardBackend->updateCard($addressBookId, $cardUri, $raw);
         } finally {
             $this->reentrant = false;
         }
+
+        return $raw;
     }
 
     /**

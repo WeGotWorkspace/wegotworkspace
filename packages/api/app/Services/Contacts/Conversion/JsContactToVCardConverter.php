@@ -418,12 +418,19 @@ final class JsContactToVCardConverter
         if (! is_array($members)) {
             return;
         }
+        $seen = [];
         foreach (array_keys(array_filter($members, static fn ($enabled): bool => (bool) $enabled)) as $memberUid) {
-            $vcard->add('MEMBER', (string) $memberUid);
+            $normalized = ConversionSupport::normalizeContactUidForMatch((string) $memberUid);
+            if ($normalized === '' || isset($seen[$normalized])) {
+                continue;
+            }
+            $seen[$normalized] = true;
+            $uri = ConversionSupport::memberUidForVCardWrite((string) $memberUid);
+            $vcard->add('MEMBER', $uri);
             // Apple CardDAV uses X-ADDRESSBOOKSERVER-MEMBER instead of (or alongside) the RFC 6350
             // MEMBER property. Emit both so Apple Contacts.app shows the correct membership after any
             // server-side write.
-            $vcard->add('X-ADDRESSBOOKSERVER-MEMBER', (string) $memberUid);
+            $vcard->add('X-ADDRESSBOOKSERVER-MEMBER', $uri);
         }
     }
 

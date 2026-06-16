@@ -562,12 +562,19 @@ final class VCardToJsContactConverter
     private function convertMembers(VCard $document, array &$card): void
     {
         $members = [];
+        $seen = [];
         foreach (['MEMBER', 'X-ADDRESSBOOKSERVER-MEMBER', 'X-ABGROUPMEMBER'] as $propertyName) {
             foreach ($document->select($propertyName) as $property) {
-                $uid = trim((string) $property->getValue());
-                if ($uid !== '') {
-                    $members[$uid] = true;
+                $uid = ConversionSupport::normalizeMemberUid((string) $property->getValue());
+                if ($uid === '') {
+                    continue;
                 }
+                $matchKey = ConversionSupport::normalizeContactUidForMatch($uid);
+                if (isset($seen[$matchKey])) {
+                    continue;
+                }
+                $seen[$matchKey] = true;
+                $members[$uid] = true;
             }
         }
         if ($members !== []) {
@@ -1037,7 +1044,7 @@ final class VCardToJsContactConverter
             if ($name === 'X-ADDRESSBOOKSERVER-KIND' && ($card['kind'] ?? '') === 'group') {
                 continue;
             }
-            if (in_array($name, ['X-ADDRESSBOOKSERVER-MEMBER', 'X-ABGROUPMEMBER'], true) && isset($card['members'])) {
+            if (in_array($name, ['MEMBER', 'X-ADDRESSBOOKSERVER-MEMBER', 'X-ABGROUPMEMBER'], true) && isset($card['members'])) {
                 continue;
             }
             if ($isKnown && ! $isPreserveOnly && ! $isDeferred) {
