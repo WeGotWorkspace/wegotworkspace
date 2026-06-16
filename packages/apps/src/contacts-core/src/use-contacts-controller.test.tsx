@@ -1,22 +1,29 @@
 import { act, renderHook } from "@testing-library/react";
 import type { MouseEvent as ReactMouseEvent } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createContactsAppBootstrap } from "@/lib/api/mock/contacts-bootstrap";
 import { contactsGroupViewKey } from "./contacts-group-utils";
 import { useContactsController } from "./use-contacts-controller";
 
+const { mockRequestConfirm, mockShow, mockDismiss } = vi.hoisted(() => ({
+  mockRequestConfirm: vi.fn(),
+  mockShow: vi.fn(),
+  mockDismiss: vi.fn(),
+}));
+
 vi.mock("@/hooks/use-app-toast", () => ({
   useAppToast: () => ({
-    show: vi.fn(),
+    show: mockShow,
     showError: vi.fn(),
     showSuccess: vi.fn(),
+    dismiss: mockDismiss,
   }),
 }));
 
 vi.mock("@/hooks/use-confirm-dialog", () => ({
   useConfirmDialog: () => ({
     confirmDialog: null,
-    requestConfirm: vi.fn(),
+    requestConfirm: mockRequestConfirm,
   }),
 }));
 
@@ -175,5 +182,525 @@ describe("useContactsController", () => {
       result.current.contactGroups.find((group) => group.id === "card-group-friends")?.name?.full,
     ).toBe("Close Friends");
     expect(result.current.viewLabel).toBe("Close Friends");
+  });
+
+  it("removeFromGroup optimistically removes a member from the current group", () => {
+    const { result } = renderHook(() =>
+      useContactsController({
+        data: bootstrap.data,
+        listLoading: false,
+      }),
+    );
+
+    act(() => {
+      result.current.selectView(contactsGroupViewKey("card-group-friends"));
+    });
+
+    expect(result.current.visibleCards.map((c) => c.id)).toContain("card-jane");
+
+    act(() => {
+      result.current.removeFromGroup(["card-jane"]);
+    });
+
+    const friendsGroup = result.current.cards.find((c) => c.id === "card-group-friends");
+    const janeUid = bootstrap.data.cards.find((c) => c.id === "card-jane")?.uid;
+    expect(friendsGroup?.members?.[janeUid!]).toBe(false);
+  });
+
+  it("removeFromGroup has no effect when not in a group view", () => {
+    const { result } = renderHook(() =>
+      useContactsController({
+        data: bootstrap.data,
+        listLoading: false,
+      }),
+    );
+
+    const cardsBefore = result.current.cards;
+
+    act(() => {
+      result.current.removeFromGroup(["card-jane"]);
+    });
+
+    expect(result.current.cards).toBe(cardsBefore);
+  });
+
+  it("selectionActionButtons uses remove-from-group in group view", () => {
+    const { result } = renderHook(() =>
+      useContactsController({
+        data: bootstrap.data,
+        listLoading: false,
+      }),
+    );
+
+    act(() => {
+      result.current.selectView(contactsGroupViewKey("card-group-friends"));
+    });
+
+    const buttonLabels = result.current.selectionBarButtons.map((b) => b.label);
+    expect(buttonLabels).toContain("Remove from group");
+    expect(buttonLabels).not.toContain("Delete");
+  });
+
+  it("selectionActionButtons uses delete outside group view", () => {
+    const { result } = renderHook(() =>
+      useContactsController({
+        data: bootstrap.data,
+        listLoading: false,
+      }),
+    );
+
+    const buttonLabels = result.current.selectionBarButtons.map((b) => b.label);
+    expect(buttonLabels).toContain("Delete");
+    expect(buttonLabels).not.toContain("Remove from group");
+  });
+
+  it("openDeleteGroupConfirm opens destructive confirm dialog for the selected group", () => {
+    const { result } = renderHook(() =>
+      useContactsController({
+        data: bootstrap.data,
+        listLoading: false,
+      }),
+    );
+
+    act(() => {
+      result.current.selectView(contactsGroupViewKey("card-group-friends"));
+    });
+
+    act(() => {
+      result.current.openDeleteGroupConfirm("card-group-friends");
+    });
+
+    expect(mockRequestConfirm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variant: "destructive",
+        title: "Delete group?",
+      }),
+    );
+  });
+
+  it("deleteGroup optimistically removes group card and navigates to all-contacts view", () => {
+    const { result } = renderHook(() =>
+      useContactsController({
+        data: bootstrap.data,
+        listLoading: false,
+      }),
+    );
+
+    act(() => {
+      result.current.selectView(contactsGroupViewKey("card-group-friends"));
+    });
+
+    expect(result.current.view).toBe(contactsGroupViewKey("card-group-friends"));
+    expect(result.current.contactGroups.map((g) => g.id)).toContain("card-group-friends");
+
+    act(() => {
+      result.current.deleteGroup("card-group-friends");
+    });
+
+    expect(result.current.view).toBe("all");
+    expect(result.current.contactGroups.map((g) => g.id)).not.toContain("card-group-friends");
+  });
+
+  it("deleteGroup does nothing when given an unknown group id", () => {
+    const { result } = renderHook(() =>
+      useContactsController({
+        data: bootstrap.data,
+        listLoading: false,
+      }),
+    );
+
+    const cardsBefore = result.current.cards;
+
+    act(() => {
+      result.current.deleteGroup("card-does-not-exist");
+    });
+
+    expect(result.current.cards).toBe(cardsBefore);
+  });
+
+  it("canDeleteGroup is true when the selected group has write access", () => {
+    const { result } = renderHook(() =>
+      useContactsController({
+        data: bootstrap.data,
+        listLoading: false,
+      }),
+    );
+
+    act(() => {
+      result.current.selectView(contactsGroupViewKey("card-group-friends"));
+    });
+
+    expect(result.current.canDeleteGroup).toBe(true);
+  });
+
+  it("canDeleteGroup is false when no group is selected", () => {
+    const { result } = renderHook(() =>
+      useContactsController({
+        data: bootstrap.data,
+        listLoading: false,
+      }),
+    );
+
+    expect(result.current.canDeleteGroup).toBe(false);
+  });
+});
+
+describe("useContactsController download", () => {
+  let mockCreateObjectURL: ReturnType<typeof vi.fn>;
+  let mockRevokeObjectURL: ReturnType<typeof vi.fn>;
+  let mockAnchorClick: ReturnType<typeof vi.fn<() => void>>;
+
+  beforeEach(() => {
+    mockCreateObjectURL = vi.fn(() => "blob:mock-url");
+    mockRevokeObjectURL = vi.fn();
+    mockAnchorClick = vi.fn<() => void>();
+
+    Object.defineProperty(URL, "createObjectURL", { value: mockCreateObjectURL, writable: true });
+    Object.defineProperty(URL, "revokeObjectURL", { value: mockRevokeObjectURL, writable: true });
+
+    const realCreateElement = document.createElement.bind(document);
+    vi.spyOn(document, "createElement").mockImplementation((tag: string) => {
+      const el = realCreateElement(tag);
+      if (tag === "a") {
+        vi.spyOn(el as HTMLAnchorElement, "click").mockImplementation(mockAnchorClick);
+      }
+      return el;
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("downloadActive calls operations.downloadCardVcf with the active card id and triggers blob download", async () => {
+    const downloadCardVcf = vi.fn(() => Promise.resolve("BEGIN:VCARD\r\nEND:VCARD"));
+    const { result } = renderHook(() =>
+      useContactsController({
+        data: bootstrap.data,
+        listLoading: false,
+        operations: {
+          listAddressBooks: vi.fn(),
+          listCards: vi.fn(),
+          getCard: vi.fn(),
+          createCard: vi.fn(),
+          patchCard: vi.fn(),
+          deleteCard: vi.fn(),
+          downloadCardVcf,
+        },
+      }),
+    );
+
+    clickSelect(result, "card-jane");
+
+    await act(async () => {
+      result.current.downloadActive();
+    });
+
+    expect(downloadCardVcf).toHaveBeenCalledWith("card-jane");
+    expect(mockCreateObjectURL).toHaveBeenCalled();
+    expect(mockAnchorClick).toHaveBeenCalled();
+    expect(mockRevokeObjectURL).toHaveBeenCalledWith("blob:mock-url");
+  });
+
+  it("downloadActive does nothing when no active card is selected", async () => {
+    const downloadCardVcf = vi.fn(() => Promise.resolve("BEGIN:VCARD\r\nEND:VCARD"));
+    const { result } = renderHook(() =>
+      useContactsController({
+        data: bootstrap.data,
+        listLoading: false,
+        operations: {
+          listAddressBooks: vi.fn(),
+          listCards: vi.fn(),
+          getCard: vi.fn(),
+          createCard: vi.fn(),
+          patchCard: vi.fn(),
+          deleteCard: vi.fn(),
+          downloadCardVcf,
+        },
+      }),
+    );
+
+    await act(async () => {
+      result.current.downloadActive();
+    });
+
+    expect(downloadCardVcf).not.toHaveBeenCalled();
+  });
+
+  it("downloadSelected calls downloadCardVcf for each selected card and triggers blob download", async () => {
+    const downloadCardVcf = vi.fn((id: string) =>
+      Promise.resolve(`BEGIN:VCARD\r\nUID:${id}\r\nEND:VCARD`),
+    );
+    const { result } = renderHook(() =>
+      useContactsController({
+        data: bootstrap.data,
+        listLoading: false,
+        operations: {
+          listAddressBooks: vi.fn(),
+          listCards: vi.fn(),
+          getCard: vi.fn(),
+          createCard: vi.fn(),
+          patchCard: vi.fn(),
+          deleteCard: vi.fn(),
+          downloadCardVcf,
+        },
+      }),
+    );
+
+    act(() => {
+      result.current.enterSelectionFor("card-jane");
+    });
+    act(() => {
+      result.current.handleSelect("card-joe", {
+        detail: 1,
+        metaKey: false,
+        ctrlKey: false,
+        shiftKey: false,
+      } as import("react").MouseEvent);
+    });
+
+    await act(async () => {
+      result.current.downloadSelected();
+    });
+
+    expect(downloadCardVcf).toHaveBeenCalledWith("card-jane");
+    expect(downloadCardVcf).toHaveBeenCalledWith("card-joe");
+    expect(mockCreateObjectURL).toHaveBeenCalled();
+    expect(mockAnchorClick).toHaveBeenCalled();
+  });
+});
+
+describe("useContactsController keyboard shortcuts", () => {
+  let originalPlatform: PropertyDescriptor | undefined;
+  let unmountHook: (() => void) | undefined;
+
+  beforeEach(() => {
+    originalPlatform = Object.getOwnPropertyDescriptor(navigator, "platform");
+    Object.defineProperty(navigator, "platform", {
+      value: "MacIntel",
+      configurable: true,
+      writable: true,
+    });
+    mockRequestConfirm.mockClear();
+  });
+
+  afterEach(() => {
+    // Unmount to remove window event listeners and prevent stale handler cross-test pollution.
+    unmountHook?.();
+    unmountHook = undefined;
+    if (originalPlatform) {
+      Object.defineProperty(navigator, "platform", originalPlatform);
+    }
+  });
+
+  it("Backspace triggers delete confirm dialog in all-contacts view", () => {
+    const { result, unmount } = renderHook(() =>
+      useContactsController({ data: bootstrap.data, listLoading: false }),
+    );
+    unmountHook = unmount;
+
+    clickSelect(result, "card-jane");
+
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Backspace", bubbles: true }));
+    });
+
+    expect(mockRequestConfirm).toHaveBeenCalledWith(
+      expect.objectContaining({ variant: "destructive" }),
+    );
+  });
+
+  it("Delete key triggers delete confirm dialog in all-contacts view (cross-platform)", () => {
+    Object.defineProperty(navigator, "platform", {
+      value: "Win32",
+      configurable: true,
+      writable: true,
+    });
+
+    const { result, unmount } = renderHook(() =>
+      useContactsController({ data: bootstrap.data, listLoading: false }),
+    );
+    unmountHook = unmount;
+
+    clickSelect(result, "card-jane");
+
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Delete", bubbles: true }));
+    });
+
+    expect(mockRequestConfirm).toHaveBeenCalledWith(
+      expect.objectContaining({ variant: "destructive" }),
+    );
+  });
+
+  it("Backspace in group view removes contact without confirm dialog", () => {
+    const { result, unmount } = renderHook(() =>
+      useContactsController({ data: bootstrap.data, listLoading: false }),
+    );
+    unmountHook = unmount;
+
+    act(() => {
+      result.current.selectView(contactsGroupViewKey("card-group-friends"));
+    });
+
+    clickSelect(result, "card-jane");
+
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Backspace", bubbles: true }));
+    });
+
+    expect(mockRequestConfirm).not.toHaveBeenCalled();
+
+    const friendsGroup = result.current.cards.find((c) => c.id === "card-group-friends");
+    const janeUid = bootstrap.data.cards.find((c) => c.id === "card-jane")?.uid;
+    expect(friendsGroup?.members?.[janeUid!]).toBe(false);
+  });
+
+  it("Backspace does nothing when no contact is selected", () => {
+    const { unmount } = renderHook(() =>
+      useContactsController({ data: bootstrap.data, listLoading: false }),
+    );
+    unmountHook = unmount;
+
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Backspace", bubbles: true }));
+    });
+
+    expect(mockRequestConfirm).not.toHaveBeenCalled();
+  });
+
+  it("Cmd+Z triggers undo of queued mutation", () => {
+    const { result, unmount } = renderHook(() =>
+      useContactsController({ data: bootstrap.data, listLoading: false }),
+    );
+    unmountHook = unmount;
+
+    // Navigate to group view and select Jane
+    act(() => {
+      result.current.selectView(contactsGroupViewKey("card-group-friends"));
+    });
+    clickSelect(result, "card-jane");
+
+    // Remove Jane from group — queues a mutation
+    act(() => {
+      result.current.removeFromGroup(["card-jane"]);
+    });
+
+    const janeUid = bootstrap.data.cards.find((c) => c.id === "card-jane")?.uid;
+    const friendsGroupAfterRemove = result.current.cards.find((c) => c.id === "card-group-friends");
+    expect(friendsGroupAfterRemove?.members?.[janeUid!]).toBe(false);
+
+    // Undo via Cmd+Z
+    act(() => {
+      window.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "z", metaKey: true, bubbles: true }),
+      );
+    });
+
+    const friendsGroupAfterUndo = result.current.cards.find((c) => c.id === "card-group-friends");
+    expect(friendsGroupAfterUndo?.members?.[janeUid!]).toBe(true);
+  });
+
+  describe("URL routing — initialView / initialContactId / onViewChange / onContactChange", () => {
+    it("initialView seeds the controller view on mount", () => {
+      const groupView = contactsGroupViewKey("card-group-friends");
+      const { result, unmount } = renderHook(() =>
+        useContactsController({
+          data: bootstrap.data,
+          listLoading: false,
+          initialView: groupView,
+        }),
+      );
+      unmountHook = unmount;
+      expect(result.current.view).toBe(groupView);
+    });
+
+    it("initialContactId selects the contact on mount", () => {
+      const { result, unmount } = renderHook(() =>
+        useContactsController({
+          data: bootstrap.data,
+          listLoading: false,
+          initialContactId: "card-jane",
+        }),
+      );
+      unmountHook = unmount;
+      expect(result.current.activeId).toBe("card-jane");
+      expect(result.current.active?.id).toBe("card-jane");
+    });
+
+    it("onViewChange is called when selectView is invoked (not on mount)", () => {
+      const onViewChange = vi.fn();
+      const { result, unmount } = renderHook(() =>
+        useContactsController({ data: bootstrap.data, listLoading: false, onViewChange }),
+      );
+      unmountHook = unmount;
+
+      expect(onViewChange).not.toHaveBeenCalled();
+
+      act(() => {
+        result.current.selectView(contactsGroupViewKey("card-group-friends"));
+      });
+
+      expect(onViewChange).toHaveBeenCalledTimes(1);
+      expect(onViewChange).toHaveBeenCalledWith(contactsGroupViewKey("card-group-friends"));
+    });
+
+    it("onContactChange is called when a contact is selected (not on mount)", () => {
+      const onContactChange = vi.fn();
+      const { result, unmount } = renderHook(() =>
+        useContactsController({ data: bootstrap.data, listLoading: false, onContactChange }),
+      );
+      unmountHook = unmount;
+
+      expect(onContactChange).not.toHaveBeenCalled();
+
+      clickSelect(result, "card-jane");
+
+      expect(onContactChange).toHaveBeenCalledTimes(1);
+      expect(onContactChange).toHaveBeenCalledWith("card-jane");
+    });
+
+    it("onContactChange is called with empty string when view changes (contact cleared)", () => {
+      const onContactChange = vi.fn();
+      const { result, unmount } = renderHook(() =>
+        useContactsController({
+          data: bootstrap.data,
+          listLoading: false,
+          initialContactId: "card-jane",
+          onContactChange,
+        }),
+      );
+      unmountHook = unmount;
+
+      act(() => {
+        result.current.selectView("all");
+      });
+
+      const calls = onContactChange.mock.calls.map(([id]) => id);
+      expect(calls).toContain("");
+    });
+
+    it("onViewChange fires once per view change, not on mount", () => {
+      const onViewChange = vi.fn();
+      const groupView = contactsGroupViewKey("card-group-friends");
+      const { result, unmount } = renderHook(() =>
+        useContactsController({
+          data: bootstrap.data,
+          listLoading: false,
+          initialView: groupView,
+          onViewChange,
+        }),
+      );
+      unmountHook = unmount;
+
+      expect(onViewChange).not.toHaveBeenCalled();
+
+      act(() => {
+        result.current.selectView("all");
+      });
+
+      expect(onViewChange).toHaveBeenCalledTimes(1);
+      expect(onViewChange).toHaveBeenCalledWith("all");
+    });
   });
 });

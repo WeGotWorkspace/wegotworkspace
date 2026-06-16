@@ -1,12 +1,12 @@
 @import "../../workspace-shell/src/workspace-split-app.css";
 
 /**
- * Contacts product shell: cream main pane + teal sidebar accent.
+ * Contacts product shell: cream main pane + cyan sidebar accent.
  * Import only from {@link ContactsWorkspace}.
  */
 .contacts-workspace {
-  --contacts-accent: #0d9488;
-  --contacts-sidebar: #115e59;
+  --contacts-accent: #0891b2;
+  --contacts-sidebar: #164e63;
   --workspace-accent: var(--contacts-accent);
   --color-emerald: var(--contacts-accent);
   --workspace-root-bg: var(--color-cream, #ffffff);
@@ -16,7 +16,7 @@
   --app-sidebar-color: #ffffff;
   --sidebar-logo-brand-fill: #ffffff;
   --sidebar-logo-close-button-color: #ffffff;
-  --sidebar-badge-fg: #0f4f4a;
+  --sidebar-badge-fg: #164e63;
   --workspace-sidebar-toggle-color: var(--color-ink);
   --workspace-sidebar-toggle-bg: color-mix(in oklab, var(--color-ink) 8%, transparent);
   --workspace-user-footer-link-hover-bg: color-mix(in oklab, #ffffff 10%, transparent);
@@ -28,8 +28,10 @@
   --workspace-user-footer-link-color: #ffffff;
   --workspace-user-footer-link-bg: color-mix(in oklab, #ffffff 8%, transparent);
 
-  --contacts-list-avatar-bg: #0f766e;
+  --contacts-list-avatar-bg: #0e7490;
   --contacts-list-avatar-color: #ffffff;
+  --contacts-swipe-delete-color: #dc2626;
+  --contacts-swipe-remove-color: var(--contacts-accent);
   --contacts-detail-title-font-family: var(--font-serif);
   --loading-spinner-color: color-mix(in oklab, var(--color-ink) 45%, transparent);
 }
@@ -58,7 +60,7 @@
 .contacts-workspace .workspace-detail-pane {
   --button-primary-bg: var(--contacts-accent);
   --button-primary-fg: #ffffff;
-  --button-subtle-color: #0f4f4a;
+  --button-subtle-color: #164e63;
 }
 
 .contacts-workspace .app-sidebar {
@@ -71,7 +73,7 @@
 .contacts-workspace .app-sidebar__scroll {
   --color-ink: #ffffff;
   --button-primary-bg: #ffffff;
-  --button-primary-fg: #0f4f4a;
+  --button-primary-fg: #164e63;
   --button-subtle-color: #ffffff;
   --button-subtle-background: color-mix(in oklab, #ffffff 12%, transparent);
   --button-subtle-hover-background: color-mix(in oklab, #ffffff 20%, transparent);
@@ -232,6 +234,12 @@
   color: var(--color-ink);
 }
 
+.contacts-detail-view__label--none {
+  font-style: italic;
+  font-size: 0.9375rem;
+  color: color-mix(in oklab, var(--color-ink) 45%, transparent);
+}
+
 .contacts-detail-view__channel-row--editable .input,
 .contacts-detail-view__channel-row--editable input {
   min-width: 0;
@@ -324,7 +332,7 @@
 }
 
 .contacts-detail-view__link {
-  color: var(--contacts-accent, #0d9488);
+  color: var(--contacts-accent, #0891b2);
   text-decoration: none;
 }
 
@@ -340,7 +348,7 @@
 }
 
 .contacts-dialog-surface {
-  --contacts-accent: #0d9488;
+  --contacts-accent: #0891b2;
   --color-emerald: var(--contacts-accent);
   --button-primary-bg: var(--contacts-accent);
   --button-primary-fg: #ffffff;

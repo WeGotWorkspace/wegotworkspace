@@ -71,10 +71,9 @@ export const Default: Story = {
     });
     expect(patch).not.toHaveProperty("@type");
 
-    await userEvent.click(canvas.getByRole("button", { name: "Default Address Book" }));
+    await userEvent.click(canvas.getByRole("button", { name: "All contacts" }));
 
-    const createButtons = canvas.getAllByRole("button", { name: "New contact" });
-    await userEvent.click(createButtons[0]);
+    await userEvent.click(canvas.getByRole("button", { name: "New contact" }));
     await userEvent.type(canvas.getByLabelText("First name"), "Pat");
     await userEvent.type(canvas.getByLabelText("Last name"), "Example");
     await userEvent.click(canvas.getByRole("button", { name: "Save" }));
@@ -96,7 +95,7 @@ export const Default: Story = {
         { kind: "given", value: "Pat" },
         { kind: "surname", value: "Example" },
       ],
-      full: "",
+      full: "Pat Example",
     });
   },
 };

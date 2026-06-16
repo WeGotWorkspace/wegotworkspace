@@ -189,11 +189,13 @@ export function EditDialog({
   onClose,
   onConfirm,
   contentClassName,
+  title: titleProp,
 }: {
   item: null | { kind: "notebook" | "tag" | "group"; name: string };
   onClose: () => void;
   onConfirm: (newName: string) => void;
   contentClassName?: string;
+  title?: string;
 }) {
   const [value, setValue] = useState("");
   useEffect(() => {
@@ -209,7 +211,7 @@ export function EditDialog({
     <Dialog open={!!item} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className={contentClassName}>
         <DialogHeader>
-          <DialogTitle>Rename {kindLabel}</DialogTitle>
+          <DialogTitle>{titleProp ?? `Rename ${kindLabel}`}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <form

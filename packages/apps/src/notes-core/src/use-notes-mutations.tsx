@@ -1,11 +1,13 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Archive, ArchiveRestore, BookOpen, Plus, Star, StarOff, Tag, Trash2 } from "lucide-react";
 import { useConfirmDialog } from "@/hooks/use-confirm-dialog";
 import { useWorkspaceSelectionPresentation } from "@/hooks/use-workspace-list-controller";
 import type { Note } from "@/lib/models/note";
 import {
+  AUTOSAVE_WRITE_DEBOUNCE_MS,
   computeExcerpt,
   computeWordCount,
+  createNoteSaveDebouncer,
   normalizeTag,
   persistBestEffort,
 } from "./notes-note-utils";
@@ -51,6 +53,17 @@ export function useNotesMutations({ shell, list }: UseNotesMutationsArgs) {
     beginOptimisticUpdate,
   } = list;
 
+  const debouncerRef = useRef(createNoteSaveDebouncer(AUTOSAVE_WRITE_DEBOUNCE_MS));
+
+  useEffect(() => {
+    const debouncer = debouncerRef.current;
+    return () => {
+      if (operations) {
+        debouncer.flushAll((note) => persistBestEffort(operations.upsertNote(note)));
+      }
+    };
+  }, [operations]);
+
   const [moveDialog, setMoveDialog] = useState<{ ids: string[] } | null>(null);
   const [editDialog, setEditDialog] = useState<null | { kind: "notebook" | "tag"; name: string }>(
     null,
@@ -80,7 +93,10 @@ export function useNotesMutations({ shell, list }: UseNotesMutationsArgs) {
           queueAutoSaveToast();
         }
         if (operations) {
-          persistBestEffort(operations.upsertNote(updated));
+          const ops = operations;
+          debouncerRef.current.schedule(noteId, updated, (note) =>
+            persistBestEffort(ops.upsertNote(note)),
+          );
         }
       }
     },

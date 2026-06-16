@@ -145,6 +145,111 @@ final class ContactsCardsTest extends WgwDatabaseTestCase
         $this->assertContains($cardId, array_column($list->json('list'), 'id'));
     }
 
+    public function test_create_card_accepts_name_components_without_full(): void
+    {
+        $response = $this->withBearer($this->userBearerToken())
+            ->postJson('/api/v1/contacts/cards', [
+                'addressBookIds' => ['default' => true],
+                'kind' => 'individual',
+                'name' => [
+                    'isOrdered' => false,
+                    'components' => [
+                        ['kind' => 'given', 'value' => 'Wouter'],
+                        ['kind' => 'surname', 'value' => 'Vendrik'],
+                    ],
+                ],
+            ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('name.full', 'Wouter Vendrik')
+            ->assertJsonPath('name.components.0.value', 'Wouter')
+            ->assertJsonPath('name.components.1.value', 'Vendrik');
+    }
+
+    public function test_create_card_accepts_empty_name_full_with_components(): void
+    {
+        $response = $this->withBearer($this->userBearerToken())
+            ->postJson('/api/v1/contacts/cards', [
+                'addressBookIds' => ['default' => true],
+                'kind' => 'individual',
+                'name' => [
+                    'isOrdered' => false,
+                    'components' => [
+                        ['kind' => 'given', 'value' => 'Jane'],
+                        ['kind' => 'surname', 'value' => 'Doe'],
+                    ],
+                    'full' => '',
+                ],
+            ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('name.full', 'Jane Doe');
+    }
+
+    /**
+     * @dataProvider sparseCreateCardProvider
+     *
+     * @param  array<string, mixed>  $extra
+     */
+    public function test_create_card_accepts_sparse_body(array $extra, string $assertPath, mixed $assertValue): void
+    {
+        $response = $this->withBearer($this->userBearerToken())
+            ->postJson('/api/v1/contacts/cards', array_merge(
+                ['addressBookIds' => ['default' => true]],
+                $extra,
+            ));
+
+        $response->assertCreated()
+            ->assertJsonPath('@type', 'Card')
+            ->assertJsonPath($assertPath, $assertValue);
+    }
+
+    /**
+     * @return array<string, array{0: array<string, mixed>, 1: string, 2: mixed}>
+     */
+    public static function sparseCreateCardProvider(): array
+    {
+        $phoneId = '550e8400-e29b-41d4-a716-446655440010';
+        $emailId = '550e8400-e29b-41d4-a716-446655440011';
+        $noteId = '550e8400-e29b-41d4-a716-446655440012';
+        $orgId = '550e8400-e29b-41d4-a716-446655440013';
+        $linkId = '550e8400-e29b-41d4-a716-446655440014';
+        $addrId = '550e8400-e29b-41d4-a716-446655440015';
+
+        return [
+            'phone only' => [
+                ['phones' => [$phoneId => ['number' => '+1-555-0200']]],
+                'phones.'.$phoneId.'.number',
+                '+1-555-0200',
+            ],
+            'email only' => [
+                ['emails' => [$emailId => ['address' => 'solo@example.com']]],
+                'emails.'.$emailId.'.address',
+                'solo@example.com',
+            ],
+            'note only' => [
+                ['notes' => [$noteId => ['note' => 'Just a note']]],
+                'notes.'.$noteId.'.note',
+                'Just a note',
+            ],
+            'organization only' => [
+                ['organizations' => [$orgId => ['name' => 'Acme Inc']]],
+                'organizations.'.$orgId.'.name',
+                'Acme Inc',
+            ],
+            'url only' => [
+                ['links' => [$linkId => ['uri' => 'https://example.org']]],
+                'links.'.$linkId.'.uri',
+                'https://example.org',
+            ],
+            'address only' => [
+                ['addresses' => [$addrId => ['full' => '42 Sparse Lane']]],
+                'addresses.'.$addrId.'.full',
+                '42 Sparse Lane',
+            ],
+        ];
+    }
+
     public function test_update_card_replaces_fields(): void
     {
         $cardId = $this->seedCardViaPdo('bob', 'jane-doe.vcf', $this->sampleVcard('Jane Doe'));
@@ -301,5 +406,139 @@ final class ContactsCardsTest extends WgwDatabaseTestCase
             ->assertJsonPath('name.full', 'Renamed Contact')
             ->assertJsonPath('emails.'.$emailId.'.address', 'keep@example.com')
             ->assertJsonPath('phones.'.$phoneId.'.number', '+1-555-0199');
+    }
+
+    public function test_patch_returns_fresh_etag_and_updated_timestamp(): void
+    {
+        $create = $this->withBearer($this->userBearerToken())
+            ->postJson('/api/v1/contacts/cards', [
+                'addressBookIds' => ['default' => true],
+                'name' => ['full' => 'ETag Test Contact'],
+            ]);
+
+        $create->assertCreated();
+        $cardId = (string) $create->json('id');
+        $createEtag = (string) $create->json('etag');
+        $createUpdated = (string) $create->json('updated');
+
+        $this->assertNotEmpty($createEtag, 'Create response must include etag');
+        $this->assertNotEmpty($createUpdated, 'Create response must include updated');
+
+        // Ensure at least 1 second passes so lastmodified differs
+        sleep(1);
+
+        $patch = $this->withBearer($this->userBearerToken())
+            ->patchJson('/api/v1/contacts/cards/'.$cardId, [
+                'name' => ['full' => 'ETag Test Contact Renamed'],
+            ], $this->ifMatchFromResponse($create));
+
+        $patch->assertOk();
+
+        $patchEtag = (string) $patch->json('etag');
+        $patchUpdated = (string) $patch->json('updated');
+
+        $this->assertNotEmpty($patchEtag, 'Patch response must include etag');
+        $this->assertNotSame($createEtag, $patchEtag, 'etag must change after PATCH');
+
+        $this->assertNotEmpty($patchUpdated, 'Patch response must include updated');
+        $this->assertGreaterThan(
+            strtotime($createUpdated),
+            strtotime($patchUpdated),
+            'updated timestamp must advance after PATCH',
+        );
+
+        // Subsequent patch must accept the new etag from the previous patch response
+        $patch2 = $this->withBearer($this->userBearerToken())
+            ->patchJson('/api/v1/contacts/cards/'.$cardId, [
+                'name' => ['full' => 'ETag Test Contact Final'],
+            ], $this->withIfMatch($patchEtag));
+
+        $patch2->assertOk()
+            ->assertJsonPath('name.full', 'ETag Test Contact Final');
+    }
+
+    public function test_put_returns_fresh_etag_and_updated_timestamp(): void
+    {
+        $create = $this->withBearer($this->userBearerToken())
+            ->postJson('/api/v1/contacts/cards', [
+                'addressBookIds' => ['default' => true],
+                'name' => ['full' => 'PUT ETag Contact'],
+                'emails' => [
+                    '550e8400-e29b-41d4-a716-446655440020' => ['address' => 'put@example.com'],
+                ],
+            ]);
+
+        $create->assertCreated();
+        $cardId = (string) $create->json('id');
+        $createEtag = (string) $create->json('etag');
+        $createUpdated = (string) $create->json('updated');
+
+        $this->assertNotEmpty($createEtag, 'Create response must include etag');
+        $this->assertNotEmpty($createUpdated, 'Create response must include updated');
+
+        sleep(1);
+
+        $putBody = $this->contactCardCreatePayloadFromResponse((array) $create->json());
+        $putBody['name'] = ['full' => 'PUT ETag Contact Updated'];
+
+        $put = $this->withBearer($this->userBearerToken())
+            ->putJson('/api/v1/contacts/cards/'.$cardId, $putBody, $this->ifMatchFromResponse($create));
+
+        $put->assertOk();
+
+        $putEtag = (string) $put->json('etag');
+        $putUpdated = (string) $put->json('updated');
+
+        $this->assertNotEmpty($putEtag, 'PUT response must include etag');
+        $this->assertNotSame($createEtag, $putEtag, 'etag must change after PUT');
+
+        $this->assertNotEmpty($putUpdated, 'PUT response must include updated');
+        $this->assertGreaterThan(
+            strtotime($createUpdated),
+            strtotime($putUpdated),
+            'updated timestamp must advance after PUT',
+        );
+    }
+
+    public function test_patch_vcard_with_existing_rev_returns_fresh_updated(): void
+    {
+        // Seed a card that already has a REV property (e.g. from an external CalDAV client)
+        $oldRev = '20200101T000000Z';
+        $vcard = "BEGIN:VCARD\r\nVERSION:4.0\r\nUID:urn:uuid:rev-test-001\r\nFN:REV Test\r\nREV:{$oldRev}\r\nEND:VCARD\r\n";
+        $cardId = $this->seedCardViaPdo('bob', 'rev-test.vcf', $vcard);
+
+        $url = '/api/v1/contacts/cards/'.$cardId;
+        $etag = $this->fetchEtagFromGet($url);
+
+        // The existing card's updated should not be the old REV value — it must come from DB lastmodified
+        $show = $this->withBearer($this->userBearerToken())->getJson($url);
+        $show->assertOk();
+        $this->assertNotSame(
+            '2020-01-01T00:00:00Z',
+            $show->json('updated'),
+            'updated must reflect DB lastmodified, not a stale vCard REV',
+        );
+
+        sleep(1);
+
+        $patch = $this->withBearer($this->userBearerToken())
+            ->patchJson($url, [
+                'name' => ['full' => 'REV Test Patched'],
+            ], $this->withIfMatch($etag));
+
+        $patch->assertOk();
+
+        $patchUpdated = (string) $patch->json('updated');
+        $this->assertNotSame(
+            '2020-01-01T00:00:00Z',
+            $patchUpdated,
+            'updated must not return the stale vCard REV after PATCH',
+        );
+        // updated after patch must be later than what was stored before
+        $this->assertGreaterThan(
+            strtotime($show->json('updated')),
+            strtotime($patchUpdated),
+            'updated must advance after PATCH even when vCard had a legacy REV',
+        );
     }
 }

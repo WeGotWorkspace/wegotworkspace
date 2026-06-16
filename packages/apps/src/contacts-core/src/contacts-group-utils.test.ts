@@ -3,6 +3,8 @@ import type { ContactCard } from "@/contacts-core/src/contacts-types";
 import {
   contactsGroupViewKey,
   filterCardsByView,
+  groupAddMembersPatch,
+  groupRemoveMembersPatch,
   groupRenamePatch,
   isContactGroupCard,
   listContactGroups,
@@ -161,6 +163,28 @@ describe("contacts-group-utils", () => {
     ).toEqual(["card-apple-jane", "card-apple-joe"]);
   });
 
+  it("deduplicates resolved card ids when members map has both bare and urn:uuid: forms of the same uid", () => {
+    const bareJaneUid = "550e8400-e29b-41d4-a716-446655440010";
+    const groupWithDuplicateUidForms = {
+      ...familyGroup,
+      id: "card-group-dup",
+      // both forms resolve to the same card
+      members: {
+        [bareJaneUid]: true,
+        [`urn:uuid:${bareJaneUid}`]: true,
+      },
+    } as unknown as ContactCard;
+    const janeWithBareUid = { ...jane, uid: bareJaneUid } as unknown as ContactCard;
+
+    const resolved = resolveGroupMemberCardIds(groupWithDuplicateUidForms, [
+      janeWithBareUid,
+      joe,
+      groupWithDuplicateUidForms,
+    ]);
+    // jane must appear only once even though two member entries resolve to her
+    expect(resolved).toEqual(["card-jane"]);
+  });
+
   it("prefers server memberCardIds when present", () => {
     const groupWithApiIds = {
       ...friendsGroup,
@@ -199,6 +223,35 @@ describe("contacts-group-utils", () => {
     });
   });
 
+  it("returns group members sorted by display name regardless of members insertion order", () => {
+    const zoeUid = "urn:uuid:550e8400-e29b-41d4-a716-446655440030";
+    const zoe = {
+      "@type": "Card",
+      version: "1.0",
+      id: "card-zoe",
+      uid: zoeUid,
+      addressBookIds: { default: true },
+      name: { full: "Zoe Last" },
+    } as unknown as ContactCard;
+
+    // members map with Zoe inserted before Jane (would appear first without sort)
+    const groupUnsortedInsertionOrder = {
+      ...friendsGroup,
+      id: "card-group-unsorted",
+      members: {
+        [zoeUid]: true,
+        [janeUid]: true,
+      },
+    } as unknown as ContactCard;
+
+    const result = filterCardsByView(
+      [...cards, zoe, groupUnsortedInsertionOrder],
+      contactsGroupViewKey("card-group-unsorted"),
+    );
+    // Jane (J) < Zoe (Z) alphabetically
+    expect(result.map((c) => c.id)).toEqual(["card-jane", "card-zoe"]);
+  });
+
   it("returns empty list for group with no resolved members", () => {
     const emptyGroup = {
       ...friendsGroup,
@@ -211,5 +264,112 @@ describe("contacts-group-utils", () => {
         (c) => c.id,
       ),
     ).toEqual([]);
+  });
+});
+
+describe("groupAddMembersPatch", () => {
+  it("adds new members by uid", () => {
+    const patch = groupAddMembersPatch(familyGroup, [joe]);
+    expect(patch).toEqual({ members: { [joeUid]: true } });
+  });
+
+  it("returns null when all cards are already members", () => {
+    expect(groupAddMembersPatch(friendsGroup, [jane, joe])).toBeNull();
+  });
+
+  it("returns null when card list is empty", () => {
+    expect(groupAddMembersPatch(friendsGroup, [])).toBeNull();
+  });
+
+  it("skips cards without a uid", () => {
+    const noUid = { ...jane, uid: undefined } as unknown as ContactCard;
+    expect(groupAddMembersPatch(familyGroup, [noUid])).toBeNull();
+  });
+
+  it("skips group cards to prevent nesting", () => {
+    expect(groupAddMembersPatch(familyGroup, [friendsGroup])).toBeNull();
+  });
+
+  it("adds only the cards not yet in the group", () => {
+    const patch = groupAddMembersPatch(familyGroup, [jane, joe]);
+    // jane is already a member of familyGroup; only joe is new
+    expect(patch).toEqual({ members: { [joeUid]: true } });
+  });
+
+  it("skips cards already in group even when UID format differs (bare uuid vs urn:uuid:)", () => {
+    // Group stores member with bare UUID key (Apple CardDAV format)
+    const bareJaneUid = "550e8400-e29b-41d4-a716-446655440010";
+    const groupWithBareUid = {
+      ...familyGroup,
+      members: { [bareJaneUid]: true },
+    } as unknown as ContactCard;
+    // jane's uid is in urn:uuid: form — must not be added as a second entry
+    const janeWithUrnUid = { ...jane, uid: `urn:uuid:${bareJaneUid}` } as unknown as ContactCard;
+    expect(groupAddMembersPatch(groupWithBareUid, [janeWithUrnUid])).toBeNull();
+  });
+
+  it("skips cards already in group even when group key uses urn:uuid: but card uid is bare", () => {
+    // Group stores member with full urn:uuid: key
+    const fullUid = "urn:uuid:550e8400-e29b-41d4-a716-446655440010";
+    const groupWithUrnKey = {
+      ...familyGroup,
+      members: { [fullUid]: true },
+    } as unknown as ContactCard;
+    const janeWithBareUid = {
+      ...jane,
+      uid: "550e8400-e29b-41d4-a716-446655440010",
+    } as unknown as ContactCard;
+    expect(groupAddMembersPatch(groupWithUrnKey, [janeWithBareUid])).toBeNull();
+  });
+});
+
+describe("groupRemoveMembersPatch", () => {
+  it("removes a member by resolving card id to uid", () => {
+    const patch = groupRemoveMembersPatch(friendsGroup, ["card-jane"], cards);
+    expect(patch).toEqual({ members: { [janeUid]: false } });
+  });
+
+  it("removes multiple members at once", () => {
+    const patch = groupRemoveMembersPatch(friendsGroup, ["card-jane", "card-joe"], cards);
+    expect(patch).toEqual({ members: { [janeUid]: false, [joeUid]: false } });
+  });
+
+  it("returns null when card id is not a member", () => {
+    const stranger = {
+      "@type": "Card",
+      version: "1.0",
+      id: "card-stranger",
+      uid: "urn:uuid:550e8400-e29b-41d4-a716-446655440099",
+      addressBookIds: { default: true },
+      name: { full: "Stranger" },
+    } as unknown as ContactCard;
+    expect(
+      groupRemoveMembersPatch(friendsGroup, ["card-stranger"], [...cards, stranger]),
+    ).toBeNull();
+  });
+
+  it("returns null when card list is empty", () => {
+    expect(groupRemoveMembersPatch(friendsGroup, [], cards)).toBeNull();
+  });
+
+  it("returns null when group has no members", () => {
+    const emptyGroup = {
+      ...friendsGroup,
+      id: "card-group-empty",
+      members: {},
+    } as unknown as ContactCard;
+    expect(groupRemoveMembersPatch(emptyGroup, ["card-jane"], cards)).toBeNull();
+  });
+
+  it("resolves via server memberCardIds when present", () => {
+    const groupWithApiIds = {
+      ...friendsGroup,
+      memberCardIds: {
+        [janeUid]: "card-jane",
+        [joeUid]: "card-joe",
+      },
+    } as unknown as ContactCard;
+    const patch = groupRemoveMembersPatch(groupWithApiIds, ["card-jane"], cards);
+    expect(patch).toEqual({ members: { [janeUid]: false } });
   });
 });

@@ -21,6 +21,7 @@ function ContactsDetailActionBarHarness({
           closeMobileDetail={() => {}}
           onEdit={() => {}}
           onDelete={() => {}}
+          onDownload={() => {}}
           onSave={() => {}}
           onCancel={() => {}}
         />

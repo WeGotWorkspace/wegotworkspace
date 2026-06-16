@@ -139,6 +139,27 @@ export async function deleteCard(cardId: string, opts?: ContactsRequestOpts): Pr
   );
 }
 
+/**
+ * Fetch the raw vCard bytes for a single contact card from the server.
+ * Returns the raw vCard text as a string (UTF-8).
+ */
+export async function downloadCardVcf(
+  cardId: string,
+  opts?: { signal?: AbortSignal },
+): Promise<string> {
+  const res = await wgwFetch(`/contacts/cards/${encodeURIComponent(cardId)}/vcf`, {
+    method: "GET",
+    signal: opts?.signal,
+  });
+  if (!res.ok) {
+    throw new ContactsRequestError(
+      `GET /contacts/cards/${cardId}/vcf failed (${res.status})`,
+      res.status,
+    );
+  }
+  return res.text();
+}
+
 /** Load address books and cards from the configured WeGotWorkspace API. */
 export async function fetchContactsLiveBootstrap(): Promise<ContactsAppBootstrap> {
   const session = await wgwFetchPrincipal();

@@ -8,13 +8,14 @@ export type ContactsUILabels = {
   listLoading: string;
   searchPlaceholder: string;
   sidebarAllContacts: string;
-  sectionAddressBooks: string;
   sectionGroups: string;
   listSelected: (count: number) => string;
   listContacts: (count: number) => string;
   emptyList: string;
   emptyGroupMembers: string;
   renameGroup: string;
+  deleteGroup: string;
+  newGroup: string;
   toastGroupRenamed: (name: string) => string;
   newContact: string;
   unknownContact: string;
@@ -29,6 +30,7 @@ export type ContactsUILabels = {
   sectionOrganization: string;
   sectionNotes: string;
   sectionUrls: string;
+  sectionBirthday: string;
   companyContact: string;
   nameFull: string;
   nameGiven: string;
@@ -36,6 +38,7 @@ export type ContactsUILabels = {
   nameSurname: string;
   channelType: string;
   channelTypeNone: string;
+  channelLabelNone: string;
   channelTypeHome: string;
   channelTypeWork: string;
   channelTypeSchool: string;
@@ -58,10 +61,21 @@ export type ContactsUILabels = {
   toastCreated: string;
   toastSaved: string;
   toastDeleted: string;
+  downloadVCard: string;
   selectionDelete: string;
+  selectionRemoveFromGroup: string;
+  selectionDownload: string;
   selectionDone: string;
+  swipeDelete: string;
+  swipeRemoveFromGroup: string;
+  toastRemovedFromGroup: (count: number) => string;
+  toastGroupCreated: (name: string) => string;
+  toastMembersAdded: (count: number, groupName: string) => string;
   deleteContactTitle: string;
   deleteContactDescription: (count: number) => string;
+  deleteGroupTitle: string;
+  deleteGroupDescription: (name: string) => string;
+  toastGroupDeleted: (name: string) => string;
   deleteConfirm: string;
   deleteCancel: string;
 };
@@ -70,13 +84,14 @@ export const defaultContactsLabels: ContactsUILabels = {
   listLoading: "Loading contacts…",
   searchPlaceholder: "Search contacts...",
   sidebarAllContacts: "All contacts",
-  sectionAddressBooks: "Address books",
   sectionGroups: "Groups",
   listSelected: (count) => `${count} Selected`,
   listContacts: (count) => `${count} Contacts`,
   emptyList: "No contacts",
   emptyGroupMembers: "No members in this group",
   renameGroup: "Rename group",
+  deleteGroup: "Delete group",
+  newGroup: "New group",
   toastGroupRenamed: (name) => `Renamed to “${name}”`,
   newContact: "New contact",
   unknownContact: "Unknown contact",
@@ -91,6 +106,7 @@ export const defaultContactsLabels: ContactsUILabels = {
   sectionOrganization: "Organization",
   sectionNotes: "Notes",
   sectionUrls: "URLs",
+  sectionBirthday: "Birthday",
   companyContact: "Company contact",
   nameFull: "Full name",
   nameGiven: "First name",
@@ -98,6 +114,7 @@ export const defaultContactsLabels: ContactsUILabels = {
   nameSurname: "Last name",
   channelType: "Type",
   channelTypeNone: "Other",
+  channelLabelNone: "None",
   channelTypeHome: "Home",
   channelTypeWork: "Work",
   channelTypeSchool: "School",
@@ -120,11 +137,24 @@ export const defaultContactsLabels: ContactsUILabels = {
   toastCreated: "Contact created",
   toastSaved: "Contact saved",
   toastDeleted: "Contact deleted",
+  downloadVCard: "Download vCard",
   selectionDelete: "Delete",
+  selectionRemoveFromGroup: "Remove from group",
+  selectionDownload: "Download",
   selectionDone: "Done",
+  swipeDelete: "Delete",
+  swipeRemoveFromGroup: "Remove from group",
+  toastRemovedFromGroup: (count) => `Removed ${count} contact${count === 1 ? "" : "s"} from group`,
+  toastGroupCreated: (name) => `Group "${name}" created`,
+  toastMembersAdded: (count, groupName) =>
+    `Added ${count} contact${count === 1 ? "" : "s"} to ${groupName}`,
   deleteContactTitle: "Delete contact?",
   deleteContactDescription: (count) =>
     `This will permanently delete ${count} contact${count === 1 ? "" : "s"}.`,
+  deleteGroupTitle: "Delete group?",
+  deleteGroupDescription: (name) =>
+    `Delete "${name}"? The group will be permanently deleted. Its contacts will not be affected.`,
+  toastGroupDeleted: (name) => `Group "${name}" deleted`,
   deleteConfirm: workspaceDestructiveDialogLabels.dialogDelete,
   deleteCancel: workspaceDestructiveDialogLabels.dialogCancel,
 };

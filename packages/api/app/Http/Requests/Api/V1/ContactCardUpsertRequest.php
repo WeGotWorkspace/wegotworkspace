@@ -63,7 +63,7 @@ final class ContactCardUpsertRequest extends FormRequest
             'addressBookIds' => ['required', 'array', 'min:1'],
             'uid' => ['sometimes', 'string', 'max:255'],
             'name' => ['sometimes', 'array'],
-            'name.full' => ['sometimes', 'string', 'max:4096'],
+            'name.full' => ['sometimes', 'nullable', 'string', 'max:4096'],
             'emails' => ['sometimes', 'array'],
             'phones' => ['sometimes', 'array'],
             'addresses' => ['sometimes', 'array'],

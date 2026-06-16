@@ -5367,6 +5367,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/contacts/cards/{cardId}/vcf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download raw vCard file for a contact */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    cardId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Raw vCard file */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/vcard": string;
+                    };
+                };
+                /** @description Card not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {

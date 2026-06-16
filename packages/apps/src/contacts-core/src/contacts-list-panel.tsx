@@ -1,5 +1,5 @@
 import type { MouseEvent as ReactMouseEvent, ReactNode, RefObject } from "react";
-import { Pencil, UserPlus } from "lucide-react";
+import { Pencil, Trash2, UserMinus } from "lucide-react";
 import { IconButton } from "@/button/src/button";
 import { ListItem } from "@/list-item/src/list-item";
 import { ViewHeader } from "@/view-header/src/view-header";
@@ -24,6 +24,8 @@ type ContactsListPanelProps = {
   selectedGroupId: string | null;
   canRenameGroup: boolean;
   openGroupRenameDialog: (groupId: string, name: string) => void;
+  canDeleteGroup: boolean;
+  onDeleteGroup: (groupId: string) => void;
   selectedIds: string[];
   selectionMode: boolean;
   listLoading: boolean;
@@ -31,14 +33,14 @@ type ContactsListPanelProps = {
   searchQuery: string;
   setSearchQuery: (value: string) => void;
   searchInputRef: RefObject<HTMLInputElement | null>;
-  canCreateContact: boolean;
   isTouch: boolean;
   activeId: string;
   isItemDragging: (id: string) => boolean;
   handleSelect: (id: string, e: ReactMouseEvent) => void;
   enterSelectionFor: (id: string) => void;
   itemDragHandlers: (id: string) => Record<string, unknown>;
-  createContact: () => void;
+  onSwipeDelete: (id: string) => void;
+  onSwipeRemoveFromGroup: (id: string) => void;
   selectionBar: ReactNode;
 };
 
@@ -51,6 +53,8 @@ export function ContactsListPanel({
   selectedGroupId,
   canRenameGroup,
   openGroupRenameDialog,
+  canDeleteGroup,
+  onDeleteGroup,
   selectedIds,
   selectionMode,
   listLoading,
@@ -58,14 +62,14 @@ export function ContactsListPanel({
   searchQuery,
   setSearchQuery,
   searchInputRef,
-  canCreateContact,
   isTouch,
   activeId,
   isItemDragging,
   handleSelect,
   enterSelectionFor,
   itemDragHandlers,
-  createContact,
+  onSwipeDelete,
+  onSwipeRemoveFromGroup,
   selectionBar,
 }: ContactsListPanelProps) {
   return {
@@ -80,25 +84,28 @@ export function ContactsListPanel({
             : L.listContacts(visibleCards.length)
         }
         actions={
-          <div className="contacts-list-panel__header-actions flex items-center gap-2">
-            {canRenameGroup && selectedGroupId ? (
-              <IconButton
-                label={L.renameGroup}
-                onClick={() => openGroupRenameDialog(selectedGroupId, viewLabel)}
-                icon={<Pencil />}
-                size="sm"
-                variant="subtle"
-              />
-            ) : null}
-            <IconButton
-              label={L.newContact}
-              onClick={createContact}
-              icon={<UserPlus />}
-              size="sm"
-              variant="subtle"
-              disabled={!canCreateContact}
-            />
-          </div>
+          selectedGroupId ? (
+            <>
+              {canRenameGroup ? (
+                <IconButton
+                  label={L.renameGroup}
+                  onClick={() => openGroupRenameDialog(selectedGroupId, viewLabel)}
+                  icon={<Pencil />}
+                  size="sm"
+                  variant="subtle"
+                />
+              ) : null}
+              {canDeleteGroup ? (
+                <IconButton
+                  label={L.deleteGroup}
+                  onClick={() => onDeleteGroup(selectedGroupId)}
+                  icon={<Trash2 />}
+                  size="sm"
+                  variant="subtle"
+                />
+              ) : null}
+            </>
+          ) : null
         }
         searchPlaceholder={L.searchPlaceholder}
         searchValue={searchQuery}
@@ -147,6 +154,26 @@ export function ContactsListPanel({
               onDragStart={dragHandlers.onDragStart ?? (() => {})}
               onDragEnd={dragHandlers.onDragEnd ?? (() => {})}
               emptyTitle={L.unknownContact}
+              {...(isTouch
+                ? selectedGroupId
+                  ? {
+                      swipeRightAction: {
+                        icon: <UserMinus className="size-5" />,
+                        color: "var(--contacts-swipe-remove-color)",
+                        label: L.swipeRemoveFromGroup,
+                        onActivate: () => onSwipeRemoveFromGroup(card.id),
+                      },
+                    }
+                  : {
+                      swipeRightAction: {
+                        icon: <Trash2 className="size-5" />,
+                        color: "var(--contacts-swipe-delete-color)",
+                        label: L.swipeDelete,
+                        destructive: true,
+                        onActivate: () => onSwipeDelete(card.id),
+                      },
+                    }
+                : {})}
             />
           );
         })}

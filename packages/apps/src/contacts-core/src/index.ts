@@ -44,11 +44,13 @@ export {
   listContactGroups,
   resolveGroupMemberCardIds,
   groupRenamePatch,
+  groupAddMembersPatch,
   resolveGroupMemberCards,
   type ContactCardWithResolvedMembers,
 } from "./contacts-group-utils";
 export {
   CONTACTS_CREATE_ID,
+  contactEditDraftHasContent,
   contactCardToEditDraft,
   editDraftToCreateBody,
   editDraftToPatch,

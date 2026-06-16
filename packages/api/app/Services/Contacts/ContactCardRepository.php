@@ -255,6 +255,29 @@ final class ContactCardRepository
     }
 
     /**
+     * Return the raw vCard bytes stored by SabreDAV for the given card.
+     *
+     * @return array{carddata: string, uri: string}
+     */
+    public function rawVcard(string $username, string $cardId): array
+    {
+        $located = $this->findOwnedCard($username, $cardId);
+        if ($located === null) {
+            throw new ApiHttpException(404, 'Contact card not found.', 'not_found');
+        }
+
+        $carddata = $located['card']->carddata;
+        if (! is_string($carddata) || $carddata === '') {
+            throw new ApiHttpException(404, 'Contact card has no vCard data.', 'not_found');
+        }
+
+        return [
+            'carddata' => $carddata,
+            'uri' => (string) $located['card']->uri,
+        ];
+    }
+
+    /**
      * @return array{ok: true}
      */
     public function delete(

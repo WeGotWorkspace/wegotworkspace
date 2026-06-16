@@ -7,6 +7,7 @@ import { wgwLiveApiEnabled } from "@/lib/api/wgw/http";
 import {
   createCard,
   deleteCard,
+  downloadCardVcf,
   fetchContactsLiveBootstrap,
   getCard,
   listAddressBooks,
@@ -28,6 +29,7 @@ function createWgwOperations(): ContactsAPIOperations {
     createCard,
     patchCard,
     deleteCard,
+    downloadCardVcf,
   };
 }
 

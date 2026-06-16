@@ -10770,6 +10770,46 @@
                 },
                 "x-wgw-access": "user"
             }
+        },
+        "/contacts/cards/{cardId}/vcf": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Download raw vCard file for a contact",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "cardId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Raw vCard file",
+                        "content": {
+                            "text/vcard": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Card not found"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
         }
     }
 }

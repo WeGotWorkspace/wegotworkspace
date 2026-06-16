@@ -89,6 +89,13 @@ const mockCards = [
         country: "US",
       },
     },
+    anniversaries: {
+      "550e8400-e29b-41d4-a716-446655440017": {
+        "@type": "Anniversary" as const,
+        kind: "birth" as const,
+        date: { "@type": "PartialDate" as const, year: 1985, month: 4, day: 23 },
+      },
+    },
     media: {
       "550e8400-e29b-41d4-a716-446655440016": {
         "@type": "Media" as const,

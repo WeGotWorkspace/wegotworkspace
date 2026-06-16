@@ -47,14 +47,14 @@ function ContactsListPaneHarness({ preset = "default" }: { preset?: ContactsList
     searchQuery: controller.searchQuery,
     setSearchQuery: controller.setSearchQuery,
     searchInputRef: controller.searchInputRef,
-    canCreateContact: controller.canCreateContact,
     isTouch: controller.isTouch,
     activeId: controller.activeId,
     isItemDragging: controller.isItemDragging,
     handleSelect: controller.handleSelect,
     enterSelectionFor: controller.enterSelectionFor,
     itemDragHandlers: controller.itemDragHandlers,
-    createContact: controller.createContact,
+    onSwipeDelete: (id) => controller.openDeleteConfirm([id]),
+    onSwipeRemoveFromGroup: (id) => controller.removeFromGroup([id]),
     selectionBar: controller.selectionBar,
   });
 
@@ -90,7 +90,7 @@ export const Default: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.getByRole("heading", { level: 3, name: "Jane Doe" })).toBeInTheDocument();
     await expect(canvas.getByRole("heading", { level: 3, name: "Acme Corp" })).toBeInTheDocument();
-    await expect(canvas.getByText("info@acme.com")).toBeInTheDocument();
+    await expect(canvas.queryByText("info@acme.com")).not.toBeInTheDocument();
     const input = canvas.getByPlaceholderText("Search contacts...");
     await userEvent.type(input, "joe@");
     await expect(input).toHaveValue("joe@");

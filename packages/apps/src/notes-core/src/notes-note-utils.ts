@@ -5,6 +5,51 @@ export function persistBestEffort(promise: Promise<unknown>) {
   promise.catch(() => {});
 }
 
+/** Delay after the last edit before flushing a debounced API save (ms). */
+export const AUTOSAVE_WRITE_DEBOUNCE_MS = 1200;
+
+type PersistFn = (note: Note) => void;
+
+/**
+ * Per-note debounced save scheduler.
+ *
+ * Call `schedule(noteId, note, persist)` on each edit; the actual persist call
+ * fires only after `delayMs` of inactivity for that note.
+ * Call `flushAll(persist)` to immediately fire any pending saves (e.g. on unmount).
+ */
+export function createNoteSaveDebouncer(delayMs: number) {
+  const timers = new Map<string, ReturnType<typeof setTimeout>>();
+  const pending = new Map<string, Note>();
+
+  function schedule(noteId: string, note: Note, persist: PersistFn): void {
+    const existing = timers.get(noteId);
+    if (existing) clearTimeout(existing);
+    pending.set(noteId, note);
+    const timer = setTimeout(() => {
+      const p = pending.get(noteId);
+      if (p) {
+        persist(p);
+        pending.delete(noteId);
+      }
+      timers.delete(noteId);
+    }, delayMs);
+    timers.set(noteId, timer);
+  }
+
+  function flushAll(persist: PersistFn): void {
+    for (const timer of timers.values()) {
+      clearTimeout(timer);
+    }
+    for (const note of pending.values()) {
+      persist(note);
+    }
+    timers.clear();
+    pending.clear();
+  }
+
+  return { schedule, flushAll };
+}
+
 export function plainTextFromBody(body: string[]): string {
   return markdownToPlainText(noteBodyToMarkdown(body));
 }

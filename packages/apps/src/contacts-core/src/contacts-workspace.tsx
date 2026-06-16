@@ -25,6 +25,10 @@ export function ContactsWorkspace({
   listLoading = false,
   onLogout,
   className,
+  initialView,
+  initialContactId,
+  onViewChange,
+  onContactChange,
 }: ContactsWorkspaceProps) {
   const closeSidebarOnMobile = (closeSidebar: () => void) => {
     if (typeof window === "undefined") return;
@@ -50,15 +54,23 @@ export function ContactsWorkspace({
     editDraft,
     displayName,
     canCreateContact,
+    canCreateGroup,
     canRenameGroup,
+    canDeleteGroup,
     canEdit,
+    canSaveCreate,
     confirmDialog,
     groupRenameDialog,
+    createGroupDialog,
+    setCreateGroupDialog,
+    createGroup,
     selectedGroup,
     selectionBar,
     selectionBarButtons,
     isItemDragging,
     itemDragHandlers,
+    sidebarDropZoneProps,
+    addMembersToGroup,
     handleSelect,
     enterSelectionFor,
     selectView,
@@ -68,6 +80,7 @@ export function ContactsWorkspace({
     cancelEdit,
     saveEdit,
     deleteActive,
+    downloadActive,
     updateEditDraft,
     addPhone,
     addEmail,
@@ -85,25 +98,31 @@ export function ContactsWorkspace({
     updateUrl,
     updateUrlContext,
     removeUrl,
-    addressBooks,
     contactGroups,
     renameGroup,
+    openDeleteConfirm,
+    openDeleteGroupConfirm,
+    removeFromGroup,
     setGroupRenameDialog,
   } = useContactsController({
     data,
     labels,
     listLoading,
     operations,
+    initialView,
+    initialContactId,
+    onViewChange,
+    onContactChange,
   });
 
-  const { primarySidebarItems, addressBookSidebarItems, groupSidebarItems } =
-    useContactsSidebarModel({
-      labels: L,
-      view,
-      addressBooks,
-      contactGroups,
-      selectView,
-    });
+  const { primarySidebarItems, groupSidebarItems } = useContactsSidebarModel({
+    labels: L,
+    view,
+    contactGroups,
+    selectView,
+    sidebarDropZoneProps,
+    addMembersToGroup,
+  });
 
   return (
     <>
@@ -141,9 +160,13 @@ export function ContactsWorkspace({
             }
           >
             <SidebarSection items={primarySidebarItems} />
-            <SidebarSection title={L.sectionAddressBooks} items={addressBookSidebarItems} />
-            {groupSidebarItems.length > 0 ? (
-              <SidebarSection title={L.sectionGroups} items={groupSidebarItems} />
+            {canCreateGroup || groupSidebarItems.length > 0 ? (
+              <SidebarSection
+                title={L.sectionGroups}
+                items={groupSidebarItems}
+                onAdd={canCreateGroup ? () => setCreateGroupDialog(true) : undefined}
+                addLabel={L.newGroup}
+              />
             ) : null}
           </AppSidebar>
         )}
@@ -157,6 +180,8 @@ export function ContactsWorkspace({
             selectedGroupId: selectedGroup?.id ?? null,
             canRenameGroup,
             openGroupRenameDialog: (groupId, name) => setGroupRenameDialog({ groupId, name }),
+            canDeleteGroup,
+            onDeleteGroup: openDeleteGroupConfirm,
             selectedIds,
             selectionMode: selectionMode || selectedIds.length > 1,
             listLoading,
@@ -164,14 +189,14 @@ export function ContactsWorkspace({
             searchQuery,
             setSearchQuery,
             searchInputRef,
-            canCreateContact,
             isTouch,
             activeId,
             isItemDragging,
             handleSelect,
             enterSelectionFor,
             itemDragHandlers,
-            createContact,
+            onSwipeDelete: (id) => openDeleteConfirm([id]),
+            onSwipeRemoveFromGroup: (id) => removeFromGroup([id]),
             selectionBar,
           })
         }
@@ -182,9 +207,11 @@ export function ContactsWorkspace({
               canEdit={canEdit}
               editMode={editMode}
               createMode={createMode}
+              canSaveCreate={canSaveCreate}
               closeMobileDetail={c.closeMobileDetail}
               onEdit={startEdit}
               onDelete={deleteActive}
+              onDownload={downloadActive}
               onSave={saveEdit}
               onCancel={cancelEdit}
             />
@@ -241,6 +268,17 @@ export function ContactsWorkspace({
           if (!groupRenameDialog) return;
           renameGroup(groupRenameDialog.groupId, newName);
           setGroupRenameDialog(null);
+        }}
+        contentClassName="contacts-dialog-surface"
+      />
+
+      <EditDialog
+        item={createGroupDialog ? { kind: "group", name: "" } : null}
+        title={L.newGroup}
+        onClose={() => setCreateGroupDialog(false)}
+        onConfirm={(name) => {
+          createGroup(name);
+          setCreateGroupDialog(false);
         }}
         contentClassName="contacts-dialog-surface"
       />

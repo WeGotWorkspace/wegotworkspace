@@ -1,4 +1,4 @@
-import { Check, Pencil, Trash2, X } from "lucide-react";
+import { Check, Download, Pencil, Trash2, X } from "lucide-react";
 import { ActionBar } from "@/action-bar/src/action-bar";
 import type { ContactsUILabels } from "@/contacts-core/src/contacts-labels";
 
@@ -7,11 +7,13 @@ type ContactsDetailActionBarProps = {
   canEdit: boolean;
   editMode: boolean;
   createMode: boolean;
+  canSaveCreate?: boolean;
   closeMobileDetail: () => void;
   onEdit: () => void;
   onDelete: () => void;
   onSave: () => void;
   onCancel: () => void;
+  onDownload: () => void;
 };
 
 export function ContactsDetailActionBar({
@@ -19,11 +21,13 @@ export function ContactsDetailActionBar({
   canEdit,
   editMode,
   createMode,
+  canSaveCreate = true,
   closeMobileDetail,
   onEdit,
   onDelete,
   onSave,
   onCancel,
+  onDownload,
 }: ContactsDetailActionBarProps) {
   if (createMode || editMode) {
     return (
@@ -41,6 +45,7 @@ export function ContactsDetailActionBar({
             label: labels.save,
             onClick: onSave,
             icon: <Check className="size-4" />,
+            disabled: createMode && !canSaveCreate,
           },
         ]}
       />
@@ -48,6 +53,12 @@ export function ContactsDetailActionBar({
   }
 
   const rightActions = [
+    {
+      id: "download",
+      label: labels.downloadVCard,
+      onClick: onDownload,
+      icon: <Download className="size-4" />,
+    },
     ...(canEdit
       ? [
           {

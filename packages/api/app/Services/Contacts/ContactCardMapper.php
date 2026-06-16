@@ -39,9 +39,9 @@ final class ContactCardMapper
         $lastModified = (int) ($card->lastmodified ?? 0);
         if ($lastModified > 0) {
             $timestamp = gmdate('Y-m-d\TH:i:s\Z', $lastModified);
-            if (! isset($contact['updated']) || ! is_string($contact['updated']) || $contact['updated'] === '') {
-                $contact['updated'] = $timestamp;
-            }
+            // DB lastmodified is the authoritative modification time; always override
+            // any stale REV value that was preserved in the vCard data on a previous write.
+            $contact['updated'] = $timestamp;
             if (! isset($contact['created']) || ! is_string($contact['created']) || $contact['created'] === '') {
                 $contact['created'] = $timestamp;
             }
@@ -56,6 +56,7 @@ final class ContactCardMapper
     public function toVCard(string $username, array $payload): string
     {
         $payload = $this->mediaBlobs->resolveBlobsOnWrite($username, $payload);
+        $payload = ConversionSupport::syncGroupDisplayName($payload);
 
         return $this->converter->vCardFromCard($payload);
     }

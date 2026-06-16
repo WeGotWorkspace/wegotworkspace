@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import {
   createRoute,
   createRouter,
+  redirect,
   type AnyRouter,
   type RouterHistory,
 } from "@tanstack/react-router";
@@ -246,10 +247,48 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
     component: isLive ? withWeGotWorkspaceAuth(AdminApp) : MockAdminRoute,
   });
 
+  const ContactsComponent = isLive ? withWeGotWorkspaceAuth(ContactsApp) : MockContactsRoute;
+
+  // Layout route: renders ContactsApp (or mock) for all /contacts/** paths.
+  // Child routes define path segments and params; they carry no component of their own,
+  // so ContactsApp reads params via useParams({ strict: false }).
   const contactsRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/contacts",
-    component: isLive ? withWeGotWorkspaceAuth(ContactsApp) : MockContactsRoute,
+    component: ContactsComponent,
+  });
+
+  // /contacts → redirect to /contacts/all (also handles legacy ?view=&contact= in ContactsApp)
+  const contactsIndexRoute = createRoute({
+    getParentRoute: () => contactsRoute,
+    path: "/",
+    beforeLoad: () => {
+      throw redirect({ to: "/contacts/all" });
+    },
+  });
+
+  // /contacts/all
+  const contactsAllRoute = createRoute({
+    getParentRoute: () => contactsRoute,
+    path: "/all",
+  });
+
+  // /contacts/all/:contactId
+  const contactsAllContactRoute = createRoute({
+    getParentRoute: () => contactsRoute,
+    path: "/all/$contactId",
+  });
+
+  // /contacts/groups/:groupCardId
+  const contactsGroupRoute = createRoute({
+    getParentRoute: () => contactsRoute,
+    path: "/groups/$groupCardId",
+  });
+
+  // /contacts/groups/:groupCardId/:contactId
+  const contactsGroupContactRoute = createRoute({
+    getParentRoute: () => contactsRoute,
+    path: "/groups/$groupCardId/$contactId",
   });
 
   const installRoute = createRoute({
@@ -271,7 +310,13 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
     meetGuestRoute,
     meetJoinRoute,
     adminRoute,
-    contactsRoute,
+    contactsRoute.addChildren([
+      contactsIndexRoute,
+      contactsAllRoute,
+      contactsAllContactRoute,
+      contactsGroupRoute,
+      contactsGroupContactRoute,
+    ]),
     installRoute,
   ]);
 }

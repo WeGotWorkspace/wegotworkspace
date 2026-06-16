@@ -3,6 +3,7 @@ import type { ContactCard } from "@/contacts-core/src/contacts-types";
 import { defaultContactsLabels } from "./contacts-labels";
 import {
   channelDisplayLabels,
+  contactBirthdayDisplay,
   contactDisplayName,
   contactInitials,
   contactListDetail,
@@ -11,6 +12,7 @@ import {
   CONTACT_MEDIA_BLOB_PATH,
   filterCardsBySearch,
   mapEntriesSorted,
+  phoneToTelHref,
 } from "./contacts-display-utils";
 
 const janeCard = {
@@ -56,37 +58,20 @@ describe("contacts-display-utils", () => {
     expect(contactDisplayName(joeCard)).toBe("Joe Example");
   });
 
-  it("prefers organization, then email, then phone for list subtitles", () => {
+  it("shows org name in subtitle for individual cards; no email or phone", () => {
     expect(contactListSubtitle(janeCard)).toBe("Acme Corp");
-    expect(contactListDetail(janeCard)).toBe("jane@example.com");
+    expect(contactListDetail(janeCard)).toBe("");
 
-    const emailOnly: ContactCard = {
-      ...joeCard,
-      organizations: undefined,
-    };
-    expect(contactListSubtitle(emailOnly)).toBe("joe@example.com");
-    expect(contactListDetail(emailOnly)).toBe("");
+    const noOrg: ContactCard = { ...joeCard, organizations: undefined };
+    expect(contactListSubtitle(noOrg)).toBe("");
+    expect(contactListDetail(noOrg)).toBe("");
 
-    const phoneOnly: ContactCard = {
-      ...janeCard,
-      organizations: undefined,
-      emails: undefined,
-    };
-    expect(contactListSubtitle(phoneOnly)).toBe("+1-555-0101");
-    expect(contactListDetail(phoneOnly)).toBe("");
-  });
-
-  it("does not repeat subtitle content in the list detail line", () => {
-    const orgOnly: ContactCard = {
-      ...janeCard,
-      emails: undefined,
-      phones: undefined,
-    };
+    const orgOnly: ContactCard = { ...janeCard, emails: undefined, phones: undefined };
     expect(contactListSubtitle(orgOnly)).toBe("Acme Corp");
     expect(contactListDetail(orgOnly)).toBe("");
   });
 
-  it("uses organization name for org cards without a person name", () => {
+  it("shows only person name in subtitle for org cards; no email or phone", () => {
     const companyCard = {
       "@type": "Card",
       version: "1.0",
@@ -106,19 +91,43 @@ describe("contacts-display-utils", () => {
     } as unknown as ContactCard;
 
     expect(contactDisplayName(companyCard)).toBe("Acme Corp");
-    expect(contactListSubtitle(companyCard)).toBe("info@acme.com");
-    expect(contactListDetail(companyCard)).toBe("+1-555-0199");
+    expect(contactListSubtitle(companyCard)).toBe("");
+    expect(contactListDetail(companyCard)).toBe("");
   });
 
-  it("avoids repeating organization in subtitle when it is the display name", () => {
-    const companyWithPerson = {
-      ...janeCard,
-      kind: "org" as const,
-    } as unknown as ContactCard;
+  it("shows person name in subtitle for org card that has a person name", () => {
+    const companyWithPerson = { ...janeCard, kind: "org" as const } as unknown as ContactCard;
 
     expect(contactDisplayName(companyWithPerson)).toBe("Acme Corp");
     expect(contactListSubtitle(companyWithPerson)).toBe("Jane Doe");
-    expect(contactListDetail(companyWithPerson)).toBe("jane@example.com");
+    expect(contactListDetail(companyWithPerson)).toBe("");
+  });
+
+  it("shows group name first for group cards; org name in subtitle if present", () => {
+    const groupNoOrg = {
+      "@type": "Card",
+      version: "1.0",
+      id: "card-group-friends",
+      uid: "urn:uuid:group-friends",
+      kind: "group" as const,
+      addressBookIds: { default: true as const },
+      name: { "@type": "Name" as const, isOrdered: false, full: "Friends" },
+      members: {},
+    } as unknown as ContactCard;
+
+    expect(contactDisplayName(groupNoOrg)).toBe("Friends");
+    expect(contactListSubtitle(groupNoOrg)).toBe("");
+
+    const groupWithOrg = {
+      ...groupNoOrg,
+      organizations: {
+        "org-1": { "@type": "Organization" as const, name: "Acme Corp" },
+      },
+    } as unknown as ContactCard;
+
+    expect(contactDisplayName(groupWithOrg)).toBe("Friends");
+    expect(contactListSubtitle(groupWithOrg)).toBe("Acme Corp");
+    expect(contactListDetail(groupWithOrg)).toBe("");
   });
 
   it("computes initials from a display name", () => {
@@ -167,6 +176,26 @@ describe("contacts-display-utils", () => {
     expect(contactPhotoUrl(withDataUri)).toBe("data:image/png;base64,abc");
 
     expect(contactPhotoUrl(janeCard)).toBeUndefined();
+  });
+
+  it("resolves Apple-synced vCard 3.0 binary JPEG photo via blobId URL", () => {
+    // Apple CardDAV pushes PHOTO;ENCODING=b;TYPE=JPEG — the server converts the
+    // embedded bytes to a blob and returns blobId. The frontend must build a
+    // display URL from that blobId so the avatar shows up in the contact list.
+    const applePhotoCard = {
+      ...janeCard,
+      media: {
+        "media-apple": {
+          "@type": "Media" as const,
+          kind: "photo" as const,
+          blobId: "aabbccdd-1122-4aab-8aab-aabbccdd0001",
+          mediaType: "image/jpeg",
+        },
+      },
+    } as unknown as ContactCard;
+    expect(contactPhotoUrl(applePhotoCard)).toBe(
+      `${CONTACT_MEDIA_BLOB_PATH}/aabbccdd-1122-4aab-8aab-aabbccdd0001`,
+    );
   });
 
   it("prefers logo over photo for organization cards", () => {
@@ -263,6 +292,14 @@ describe("contacts-display-utils", () => {
     ).toEqual(["fax", "voice", "Work"]);
   });
 
+  it("builds tel: href from phone number string", () => {
+    expect(phoneToTelHref("+1-555-0101")).toBe("tel:+1-555-0101");
+    expect(phoneToTelHref("+31 20 123 4567")).toBe("tel:+31201234567");
+    expect(phoneToTelHref("  ")).toBe("");
+    expect(phoneToTelHref("")).toBe("");
+    expect(phoneToTelHref("(555) 867-5309")).toBe("tel:(555)867-5309");
+  });
+
   it("splits comma-separated custom labels into separate tags", () => {
     const labels = defaultContactsLabels;
     expect(channelDisplayLabels(undefined, labels, { customLabel: "voice,home" })).toEqual([
@@ -289,5 +326,137 @@ describe("contacts-display-utils", () => {
         customLabel: "cell,voice",
       }),
     ).toEqual(["cell", "voice"]);
+  });
+
+  describe("contactBirthdayDisplay", () => {
+    it("returns empty string when no anniversaries", () => {
+      expect(contactBirthdayDisplay(janeCard)).toBe("");
+    });
+
+    it("returns empty string when no birth kind anniversary", () => {
+      const card: ContactCard = {
+        ...janeCard,
+        anniversaries: {
+          "ann-1": {
+            "@type": "Anniversary" as const,
+            kind: "wedding" as const,
+            date: { "@type": "PartialDate" as const, year: 2010, month: 6, day: 15 },
+          },
+        },
+      };
+      expect(contactBirthdayDisplay(card)).toBe("");
+    });
+
+    it("formats PartialDate with year, month, and day", () => {
+      const card: ContactCard = {
+        ...janeCard,
+        anniversaries: {
+          "ann-1": {
+            "@type": "Anniversary" as const,
+            kind: "birth" as const,
+            date: { "@type": "PartialDate" as const, year: 1990, month: 6, day: 13 },
+          },
+        },
+      };
+      const result = contactBirthdayDisplay(card, "en-US");
+      expect(result).toBe("June 13, 1990");
+    });
+
+    it("formats PartialDate with only month and day (no year)", () => {
+      const card: ContactCard = {
+        ...janeCard,
+        anniversaries: {
+          "ann-1": {
+            "@type": "Anniversary" as const,
+            kind: "birth" as const,
+            date: { "@type": "PartialDate" as const, month: 3, day: 7 },
+          },
+        },
+      };
+      const result = contactBirthdayDisplay(card, "en-US");
+      expect(result).toBe("March 7");
+    });
+
+    it("formats PartialDate with only year", () => {
+      const card: ContactCard = {
+        ...janeCard,
+        anniversaries: {
+          "ann-1": {
+            "@type": "Anniversary" as const,
+            kind: "birth" as const,
+            date: { "@type": "PartialDate" as const, year: 1985 },
+          },
+        },
+      };
+      expect(contactBirthdayDisplay(card, "en-US")).toBe("1985");
+    });
+
+    it("formats Timestamp date", () => {
+      const card: ContactCard = {
+        ...janeCard,
+        anniversaries: {
+          "ann-1": {
+            "@type": "Anniversary" as const,
+            kind: "birth" as const,
+            date: { "@type": "Timestamp" as const, utc: "1990-06-13T00:00:00Z" },
+          },
+        },
+      };
+      const result = contactBirthdayDisplay(card, "en-US");
+      expect(result).toMatch(/June/);
+      expect(result).toMatch(/1990/);
+    });
+
+    it("displays Apple-synced BDAY with year (YYYY-MM-DD parsed server-side to PartialDate)", () => {
+      // Apple Contacts stores BDAY:1985-03-15 (hyphenated). The server converts this to a
+      // PartialDate with year/month/day and the frontend must display it — verifies the full fix.
+      const card: ContactCard = {
+        ...janeCard,
+        anniversaries: {
+          "ann-1": {
+            "@type": "Anniversary" as const,
+            kind: "birth" as const,
+            date: { "@type": "PartialDate" as const, year: 1985, month: 3, day: 15 },
+          },
+        },
+      };
+      expect(contactBirthdayDisplay(card, "en-US")).toBe("March 15, 1985");
+    });
+
+    it("displays Apple-synced BDAY without year (--MM-DD parsed server-side to no-year PartialDate)", () => {
+      // Apple Contacts stores BDAY:--03-15 for birthdays without year.
+      // The server converts this to a PartialDate with month/day but no year.
+      const card: ContactCard = {
+        ...janeCard,
+        anniversaries: {
+          "ann-1": {
+            "@type": "Anniversary" as const,
+            kind: "birth" as const,
+            date: { "@type": "PartialDate" as const, month: 3, day: 15 },
+          },
+        },
+      };
+      expect(contactBirthdayDisplay(card, "en-US")).toBe("March 15");
+    });
+
+    it("picks first birth entry when multiple anniversaries exist", () => {
+      const card: ContactCard = {
+        ...janeCard,
+        anniversaries: {
+          "ann-wedding": {
+            "@type": "Anniversary" as const,
+            kind: "wedding" as const,
+            date: { "@type": "PartialDate" as const, year: 2010, month: 6, day: 15 },
+          },
+          "ann-birth": {
+            "@type": "Anniversary" as const,
+            kind: "birth" as const,
+            date: { "@type": "PartialDate" as const, year: 1990, month: 3, day: 7 },
+          },
+        },
+      };
+      const result = contactBirthdayDisplay(card, "en-US");
+      expect(result).toBe("March 7, 1990");
+    });
   });
 });

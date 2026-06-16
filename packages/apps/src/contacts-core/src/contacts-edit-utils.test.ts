@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { ContactCard } from "@/contacts-core/src/contacts-types";
 import {
   contactCardToEditDraft,
+  contactEditDraftHasContent,
   editDraftToCreateBody,
   editDraftToPatch,
   emptyContactEditDraft,
@@ -31,16 +32,16 @@ const janeCard = {
 } as unknown as ContactCard;
 
 describe("contacts-edit-utils", () => {
-  it("resolves default view from isDefault book, else first book, else all", () => {
+  it("resolves default view as all contacts regardless of address books", () => {
     expect(
       resolveDefaultContactsView([
         { id: "work", name: "Work", isDefault: false } as never,
         { id: "default", name: "Default", isDefault: true } as never,
       ]),
-    ).toBe("book:default");
+    ).toBe("all");
     expect(
       resolveDefaultContactsView([{ id: "work", name: "Work", isDefault: false } as never]),
-    ).toBe("book:work");
+    ).toBe("all");
     expect(resolveDefaultContactsView([])).toBe("all");
   });
 
@@ -72,7 +73,7 @@ describe("contacts-edit-utils", () => {
         { kind: "given", value: "New" },
         { kind: "surname", value: "Person" },
       ],
-      full: "",
+      full: "New Person",
     });
     expect(body.phones).toEqual({
       "phone-new": { number: "+1-555-9999", contexts: { work: true } },
@@ -120,6 +121,49 @@ describe("contacts-edit-utils", () => {
     draft.showAsCompany = true;
     const patch = editDraftToPatch(draft, janeCard);
     expect(patch.kind).toBe("org");
+  });
+
+  it("does not overwrite group kind when editing a group card", () => {
+    const groupCard = {
+      "@type": "Card",
+      version: "1.0",
+      id: "card-friends",
+      uid: "urn:uuid:08430ef3-a2ce-4568-9d6c-f50a6cfd32ae",
+      kind: "group" as const,
+      addressBookIds: { default: true as const },
+      name: { "@type": "Name" as const, isOrdered: false, full: "Friends" },
+      members: { "urn:uuid:c4cf6038-5da0-41be-9c2d-d8cb9b4af90f": true as const },
+    } as unknown as ContactCard;
+
+    // Simulate what happens when the user opens the edit form for a group card
+    // and saves without making any changes.
+    const draft = contactCardToEditDraft(groupCard);
+    const patch = editDraftToPatch(draft, groupCard);
+
+    // The patch must NOT include kind — that would silently downgrade the group to "individual".
+    expect(patch).not.toHaveProperty("kind");
+  });
+
+  it("does not include kind in patch when group card edit form showAsCompany is false", () => {
+    const groupCard = {
+      "@type": "Card",
+      version: "1.0",
+      id: "card-coworkers",
+      uid: "urn:uuid:ffffffff-ffff-4fff-8fff-ffffffffffff",
+      kind: "group" as const,
+      addressBookIds: { work: true as const },
+      name: { "@type": "Name" as const, isOrdered: false, full: "Coworkers" },
+      members: {},
+    } as unknown as ContactCard;
+
+    const draft = contactCardToEditDraft(groupCard);
+    // showAsCompany will be false for group cards (they are not "org" kind)
+    expect(draft.showAsCompany).toBe(false);
+
+    const patch = editDraftToPatch(draft, groupCard);
+    // Even though showAsCompany=false would compute nextKind="individual",
+    // the patch must not touch kind for a group card.
+    expect(patch).not.toHaveProperty("kind");
   });
 
   it("builds create body with company kind and urls", () => {
@@ -218,7 +262,7 @@ describe("contacts-edit-utils", () => {
     expect(draft.addresses[0]?.street).toBe("Main Street 123");
   });
 
-  it("builds create body with structured address components", () => {
+  it("builds structured address components", () => {
     const draft = {
       ...emptyContactEditDraft(),
       addresses: [
@@ -246,5 +290,47 @@ describe("contacts-edit-utils", () => {
         contexts: { work: true },
       },
     });
+  });
+
+  it("detects empty vs non-empty create drafts", () => {
+    expect(contactEditDraftHasContent(emptyContactEditDraft())).toBe(false);
+    expect(contactEditDraftHasContent({ ...emptyContactEditDraft(), nameSurname: "Only" })).toBe(
+      true,
+    );
+    expect(
+      contactEditDraftHasContent({
+        ...emptyContactEditDraft(),
+        phones: [{ id: "p1", number: "+1-555-0100", contextType: "" }],
+      }),
+    ).toBe(true);
+  });
+
+  it("builds minimal create body with only surname (no empty name.full)", () => {
+    const draft = { ...emptyContactEditDraft(), nameSurname: "Vendrik" };
+    const body = editDraftToCreateBody(draft, { default: true });
+    expect(body.name).toEqual({
+      isOrdered: false,
+      components: [{ kind: "surname", value: "Vendrik" }],
+      full: "Vendrik",
+    });
+    expect(body).not.toHaveProperty("phones");
+    expect(body).not.toHaveProperty("emails");
+  });
+
+  it("builds sparse create body with phone only", () => {
+    const draft = {
+      ...emptyContactEditDraft(),
+      phones: [{ id: "phone-only", number: "+31-6-12345678", contextType: "" as const }],
+    };
+    const body = editDraftToCreateBody(draft, { default: true });
+    expect(body).not.toHaveProperty("name");
+    expect(body.phones).toEqual({ "phone-only": { number: "+31-6-12345678" } });
+  });
+
+  it("builds sparse create body with note only", () => {
+    const draft = { ...emptyContactEditDraft(), notes: "Met at conference" };
+    const body = editDraftToCreateBody(draft, { default: true });
+    expect(body).not.toHaveProperty("name");
+    expect(Object.values(body.notes ?? {})[0]).toEqual({ note: "Met at conference" });
   });
 });

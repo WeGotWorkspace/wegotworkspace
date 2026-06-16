@@ -33,4 +33,9 @@ export type ContactsAPIOperations = {
     opts?: ContactsMutationOpts,
   ) => Promise<ContactCard>;
   deleteCard: (cardId: string, opts?: ContactsMutationOpts) => Promise<void>;
+  /**
+   * Fetch the raw vCard bytes (text/vcard) for a single card from the server.
+   * When absent, the controller falls back to client-side conversion from JSContact.
+   */
+  downloadCardVcf?: (cardId: string, opts?: { signal?: AbortSignal }) => Promise<string>;
 };

@@ -41,7 +41,7 @@ final class ContactCardPatchRequest extends FormRequest
             'addressBookIds.*' => ['nullable', 'boolean'],
             'uid' => ['sometimes', 'string', 'max:255'],
             'name' => ['sometimes', 'array'],
-            'name.full' => ['sometimes', 'string', 'max:4096'],
+            'name.full' => ['sometimes', 'nullable', 'string', 'max:4096'],
             'emails' => ['sometimes', 'array'],
             'emails.*' => ['nullable', 'array'],
             'phones' => ['sometimes', 'array'],

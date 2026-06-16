@@ -85,15 +85,20 @@ export function resolveGroupMemberCardIds(
   const memberCardIds = (groupCard as ContactCardWithResolvedMembers).memberCardIds;
 
   const resolved: string[] = [];
+  const seenIds = new Set<string>();
   for (const uid of memberUids) {
     const fromApi = memberCardIds?.[uid];
     if (fromApi && cardById.has(fromApi) && !isContactGroupCard(cardById.get(fromApi)!)) {
-      resolved.push(fromApi);
+      if (!seenIds.has(fromApi)) {
+        seenIds.add(fromApi);
+        resolved.push(fromApi);
+      }
       continue;
     }
 
     const byUid = cardByNormalizedUid.get(normalizeContactUidForMatch(uid));
-    if (byUid && !isContactGroupCard(byUid)) {
+    if (byUid && !isContactGroupCard(byUid) && !seenIds.has(byUid.id)) {
+      seenIds.add(byUid.id);
       resolved.push(byUid.id);
     }
   }
@@ -123,6 +128,70 @@ export function groupRenamePatch(name: string): ContactCardPatch {
   };
 }
 
+/**
+ * Build a PATCH that adds contacts to a group's `members` map.
+ * Filters out cards that are already members and group cards (no nesting).
+ * Returns null when there is nothing new to add.
+ */
+export function groupAddMembersPatch(
+  groupCard: ContactCard,
+  cardsToAdd: ContactCard[],
+): ContactCardPatch | null {
+  const existingNormalizedUids = new Set(
+    Object.entries(groupCard.members ?? {})
+      .filter(([, enabled]) => Boolean(enabled))
+      .map(([uid]) => normalizeContactUidForMatch(uid)),
+  );
+
+  const newMembers: Record<string, true> = {};
+  for (const card of cardsToAdd) {
+    if (!card.uid) continue;
+    if (isContactGroupCard(card)) continue;
+    if (existingNormalizedUids.has(normalizeContactUidForMatch(card.uid))) continue;
+    newMembers[card.uid] = true;
+  }
+  if (Object.keys(newMembers).length === 0) return null;
+  return { members: newMembers };
+}
+
+/**
+ * Build a PATCH that removes contacts from a group's `members` map.
+ * Resolves card IDs to their member-map UIDs and sets those entries to false.
+ * Returns null when none of the given card IDs are currently active members.
+ */
+export function groupRemoveMembersPatch(
+  groupCard: ContactCard,
+  cardIds: string[],
+  allCards: ContactCard[],
+): ContactCardPatch | null {
+  if (!groupCard.members || cardIds.length === 0) return null;
+
+  const cardById = new Map(allCards.map((card) => [card.id, card]));
+  const cardByNormalizedUid = indexCardsByNormalizedUid(allCards);
+  const memberCardIds = (groupCard as ContactCardWithResolvedMembers).memberCardIds;
+
+  const removedMembers: Record<string, boolean> = {};
+  for (const [uid, enabled] of Object.entries(groupCard.members)) {
+    if (!enabled) continue;
+
+    const fromApi = memberCardIds?.[uid];
+    let resolvedId: string | undefined;
+    if (fromApi && cardById.has(fromApi)) {
+      resolvedId = fromApi;
+    } else {
+      const byUid = cardByNormalizedUid.get(normalizeContactUidForMatch(uid));
+      if (byUid) resolvedId = byUid.id;
+    }
+
+    if (resolvedId && cardIds.includes(resolvedId)) {
+      removedMembers[uid] = false;
+    }
+  }
+
+  if (Object.keys(removedMembers).length === 0) return null;
+  return { members: removedMembers as ContactCardPatch["members"] };
+}
+
 /** Sidebar/list view key for a group card. */
 export function contactsGroupViewKey(groupCardId: string): string {
   return `group:${groupCardId}`;
@@ -133,7 +202,11 @@ export function filterCardsByView(cards: ContactCard[], view: string): ContactCa
     const groupId = view.slice("group:".length);
     const groupCard = cards.find((card) => card.id === groupId);
     if (!groupCard || !isContactGroupCard(groupCard)) return [];
-    return resolveGroupMemberCards(groupCard, cards);
+    return resolveGroupMemberCards(groupCard, cards).sort((a, b) =>
+      contactDisplayName(a).localeCompare(contactDisplayName(b), undefined, {
+        sensitivity: "base",
+      }),
+    );
   }
 
   let scoped = cards;

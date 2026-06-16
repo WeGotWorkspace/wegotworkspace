@@ -1,0 +1,26 @@
+{
+    "@type": "Card",
+    "version": "1.0",
+    "uid": "urn:uuid:fad1fad1-fad1-4fad-8fad-fad1fad1fad1",
+    "name": {
+        "full": "Fadi Alset",
+        "@type": "Name"
+    },
+    "media": {
+        "p_UcPV6BbDSZCamxRfB6urVtYD": {
+            "@type": "Media",
+            "kind": "photo",
+            "uri": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AVIP/2Q=="
+        }
+    },
+    "vCardProps": [
+        [
+            "VERSION",
+            [],
+            "text",
+            [
+                "3.0"
+            ]
+        ]
+    ]
+}

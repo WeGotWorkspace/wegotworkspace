@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, Tag, Trash2 } from "lucide-react";
+import { Check, Download, Tag, Trash2, UserMinus, UserPlus } from "lucide-react";
 import { useAppToast } from "@/hooks/use-app-toast";
 import { useConfirmDialog } from "@/hooks/use-confirm-dialog";
 import { useIsTouch } from "@/hooks/use-is-touch";
 import { useSelectionResetOnKeyChange } from "@/hooks/use-selection-reset-on-key-change";
+import { useWorkspaceListKeyboardShortcuts } from "@/hooks/use-workspace-list-keyboard-shortcuts";
 import {
   useWorkspaceListController,
   useWorkspaceSelectionPresentation,
@@ -15,6 +16,8 @@ import {
 } from "@/contacts-core/src/contacts-display-utils";
 import {
   filterCardsByView,
+  groupAddMembersPatch,
+  groupRemoveMembersPatch,
   groupRenamePatch,
   listContactGroups,
 } from "@/contacts-core/src/contacts-group-utils";
@@ -22,6 +25,7 @@ import { mergeContactsLabels, type ContactsUILabels } from "@/contacts-core/src/
 import {
   CONTACTS_CREATE_ID,
   contactCardToEditDraft,
+  contactEditDraftHasContent,
   editDraftToCreateBody,
   editDraftToPatch,
   emptyContactEditDraft,
@@ -33,15 +37,32 @@ import {
 } from "@/contacts-core/src/contacts-edit-utils";
 import type {
   ContactCard,
+  ContactCardCreate,
   ContactsAPIOperations,
   ContactsUIData,
 } from "@/contacts-core/src/contacts-types";
+import {
+  downloadContactVCard,
+  downloadMultipleContactsVCard,
+  vcardFilename,
+} from "@/contacts-core/src/contacts-vcard-export";
 
 type UseContactsControllerArgs = {
   data: ContactsUIData;
   labels?: Partial<ContactsUILabels>;
   listLoading?: boolean;
   operations?: ContactsAPIOperations;
+  /**
+   * Initial view restored from a deep-link URL (e.g. `"all"`, `"group:{id}"`).
+   * Only applied on mount; falls back to address-book default when absent.
+   */
+  initialView?: string;
+  /** Initial contact card id to select on mount (e.g. from a deep-link URL). */
+  initialContactId?: string;
+  /** Called when the active view changes so the caller can sync the URL. */
+  onViewChange?: (view: string) => void;
+  /** Called when the active contact changes so the caller can sync the URL. */
+  onContactChange?: (contactId: string) => void;
 };
 
 const WRITE_QUEUE_DELAY_MS = 2500;
@@ -59,15 +80,21 @@ export function useContactsController({
   labels,
   listLoading = false,
   operations,
+  initialView,
+  initialContactId,
+  onViewChange,
+  onContactChange,
 }: UseContactsControllerArgs) {
   const L = useMemo(() => mergeContactsLabels(labels), [labels]);
   const [cards, setCards] = useState<ContactCard[]>(() => data.cards);
   const [addressBooks, setAddressBooks] = useState(() => data.addressBooks);
-  const [view, setView] = useState(() => resolveDefaultContactsView(data.addressBooks));
+  const [view, setView] = useState(
+    () => initialView ?? resolveDefaultContactsView(data.addressBooks),
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const workspaceLayoutRef = useRef<WorkspaceAppHandle>(null);
-  const [activeId, setActiveId] = useState("");
+  const [activeId, setActiveId] = useState(initialContactId ?? "");
   const [editMode, setEditMode] = useState(false);
   const [createMode, setCreateMode] = useState(false);
   const [editDraft, setEditDraft] = useState<ContactEditDraft | null>(null);
@@ -75,6 +102,7 @@ export function useContactsController({
     groupId: string;
     name: string;
   }>(null);
+  const [createGroupDialog, setCreateGroupDialog] = useState(false);
 
   const { show, showError } = useAppToast();
   const showMutationError = useCallback(
@@ -90,6 +118,27 @@ export function useContactsController({
     setCards(data.cards);
     setAddressBooks(data.addressBooks);
   }, [data.addressBooks, data.cards]);
+
+  // Skip the initial render so mount doesn't trigger unnecessary URL writes.
+  const viewSyncedRef = useRef(false);
+  useEffect(() => {
+    if (!viewSyncedRef.current) {
+      viewSyncedRef.current = true;
+      return;
+    }
+    onViewChange?.(view);
+  }, [view, onViewChange]);
+
+  const contactSyncedRef = useRef(false);
+  useEffect(() => {
+    if (!contactSyncedRef.current) {
+      contactSyncedRef.current = true;
+      return;
+    }
+    // Don't write the transient create-mode placeholder to the URL.
+    if (activeId === CONTACTS_CREATE_ID) return;
+    onContactChange?.(activeId);
+  }, [activeId, onContactChange]);
 
   const contactGroups = useMemo(() => listContactGroups(cards), [cards]);
 
@@ -118,6 +167,8 @@ export function useContactsController({
     itemDragHandlers,
     sidebarDropZoneProps,
     queueMutation,
+    undoLatest,
+    navigateListByKeyboard,
   } = useWorkspaceListController<ContactCard>({
     items: cards,
     setItems: setCards,
@@ -167,6 +218,8 @@ export function useContactsController({
   const canCreateContact =
     !view.startsWith("group:") && (view !== "all" || addressBooks.length > 0);
 
+  const canCreateGroup = addressBooks.length > 0;
+
   const canRenameGroup = useMemo(() => {
     if (!selectedGroup) return false;
     const bookIds = Object.keys(selectedGroup.addressBookIds ?? {});
@@ -176,6 +229,21 @@ export function useContactsController({
       return book?.myRights?.mayWrite !== false;
     });
   }, [addressBooks, operations, selectedGroup]);
+
+  const canDeleteGroup = useMemo(() => {
+    if (!selectedGroup) return false;
+    const bookIds = Object.keys(selectedGroup.addressBookIds ?? {});
+    if (bookIds.length === 0) return Boolean(operations);
+    return bookIds.some((bookId) => {
+      const book = addressBooks.find((row) => row.id === bookId);
+      return book?.myRights?.mayWrite !== false;
+    });
+  }, [addressBooks, operations, selectedGroup]);
+
+  const canSaveCreate = useMemo(
+    () => createMode && editDraft !== null && contactEditDraftHasContent(editDraft),
+    [createMode, editDraft],
+  );
 
   const canEdit = useMemo(() => {
     if (createMode) return true;
@@ -485,10 +553,146 @@ export function useContactsController({
     openDeleteConfirm([active.id]);
   }, [active, openDeleteConfirm]);
 
+  const downloadActive = useCallback(() => {
+    if (!active) return;
+    if (operations?.downloadCardVcf) {
+      const cardId = active.id;
+      const filename = vcardFilename(contactDisplayName(active));
+      operations.downloadCardVcf(cardId).then((vcfText) => {
+        const blob = new Blob([vcfText], { type: "text/vcard;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        try {
+          const anchor = document.createElement("a");
+          anchor.href = url;
+          anchor.download = filename;
+          anchor.style.display = "none";
+          document.body.appendChild(anchor);
+          anchor.click();
+          anchor.remove();
+        } finally {
+          URL.revokeObjectURL(url);
+        }
+      });
+    } else {
+      downloadContactVCard(active);
+    }
+  }, [active, operations]);
+
+  const downloadSelected = useCallback(() => {
+    if (selectedIds.length === 0) return;
+    const cardsToDownload = selectedIds
+      .map((id) => cards.find((card) => card.id === id))
+      .filter((card): card is ContactCard => card !== undefined);
+
+    if (operations?.downloadCardVcf && cardsToDownload.length > 0) {
+      const downloadVcf = operations.downloadCardVcf;
+      Promise.all(cardsToDownload.map((card) => downloadVcf(card.id))).then((vcfParts) => {
+        const vcfText = vcfParts.join("\r\n");
+        const filename =
+          cardsToDownload.length === 1
+            ? vcardFilename(contactDisplayName(cardsToDownload[0]))
+            : `${cardsToDownload.length}-contacts.vcf`;
+        const blob = new Blob([vcfText], { type: "text/vcard;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        try {
+          const anchor = document.createElement("a");
+          anchor.href = url;
+          anchor.download = filename;
+          anchor.style.display = "none";
+          document.body.appendChild(anchor);
+          anchor.click();
+          anchor.remove();
+        } finally {
+          URL.revokeObjectURL(url);
+        }
+      });
+    } else {
+      downloadMultipleContactsVCard(cardsToDownload);
+    }
+  }, [cards, operations, selectedIds]);
+
   const requestDeleteSelected = useCallback(() => {
     if (selectedIds.length === 0) return;
     openDeleteConfirm(selectedIds);
   }, [openDeleteConfirm, selectedIds]);
+
+  const removeFromGroup = useCallback(
+    (cardIds: string[]) => {
+      if (!selectedGroup || cardIds.length === 0) return;
+      const groupId = selectedGroup.id;
+      const group = cards.find((card) => card.id === groupId);
+      if (!group) return;
+
+      const patch = groupRemoveMembersPatch(group, cardIds, cards);
+      if (!patch) return;
+
+      const removedCount = Object.keys(patch.members ?? {}).length;
+      const previousCard = group;
+      const merged: ContactCard = {
+        ...group,
+        members: { ...group.members, ...patch.members } as ContactCard["members"],
+      };
+
+      const previousSelectedIds = selectedIds;
+      const previousActiveId = activeId;
+      const shouldExitSelection =
+        cardIds.length === selectedIds.length &&
+        selectedIds.length > 0 &&
+        cardIds.every((id) => selectedIds.includes(id));
+
+      setCards((prev) => prev.map((card) => (card.id === groupId ? merged : card)));
+      setSelectedIds((prev) => prev.filter((id) => !cardIds.includes(id)));
+      if (cardIds.includes(activeId)) {
+        setActiveId("");
+        setEditMode(false);
+        setEditDraft(null);
+        setCreateMode(false);
+      }
+      if (shouldExitSelection) setSelectionMode(false);
+
+      show(L.toastRemovedFromGroup(removedCount), { icon: <UserMinus className="size-4" /> });
+
+      const rollback = () => {
+        setCards((prev) => prev.map((card) => (card.id === groupId ? previousCard : card)));
+        setSelectedIds(previousSelectedIds);
+        setActiveId(previousActiveId);
+        if (previousSelectedIds.length > 0) setSelectionMode(true);
+      };
+
+      queueMutation({
+        key: `contacts:remove-from-group:${groupId}:${cardIds.slice().sort().join(",")}`,
+        toastMessage: L.toastRemovedFromGroup(removedCount),
+        execute: (signal) =>
+          operations
+            ? operations
+                .patchCard(groupId, patch, { signal, ifMatch: group.etag })
+                .then((saved) => {
+                  setCards((prev) => prev.map((card) => (card.id === groupId ? saved : card)));
+                })
+            : Promise.resolve(),
+        undo: rollback,
+        onError: rollback,
+        undoToastMessage: "Removal undone.",
+      });
+    },
+    [
+      L.toastRemovedFromGroup,
+      activeId,
+      cards,
+      operations,
+      queueMutation,
+      selectedGroup,
+      selectedIds,
+      setSelectedIds,
+      setSelectionMode,
+      show,
+    ],
+  );
+
+  const requestRemoveSelectedFromGroup = useCallback(() => {
+    if (selectedIds.length === 0) return;
+    removeFromGroup(selectedIds);
+  }, [removeFromGroup, selectedIds]);
 
   const renameGroup = useCallback(
     (groupId: string, newName: string) => {
@@ -532,10 +736,159 @@ export function useContactsController({
     [L.toastGroupRenamed, cards, operations, queueMutation, show],
   );
 
+  const deleteGroup = useCallback(
+    (groupId: string) => {
+      const group = cards.find((card) => card.id === groupId);
+      if (!group) return;
+
+      const groupName = contactDisplayName(group);
+      const previousCards = cards;
+      const previousView = view;
+
+      setCards((prev) => prev.filter((card) => card.id !== groupId));
+      // Navigate away from the deleted group to the all-contacts view.
+      setView("all");
+      setSearchQuery("");
+      setEditMode(false);
+      setCreateMode(false);
+      setEditDraft(null);
+      setActiveId("");
+
+      const rollback = () => {
+        setCards(previousCards);
+        setView(previousView);
+      };
+
+      queueMutation({
+        key: `contacts:delete-group:${groupId}`,
+        toastMessage: L.toastGroupDeleted(groupName),
+        execute: (signal) =>
+          operations
+            ? operations.deleteCard(groupId, { signal, ifMatch: group.etag }).then(() => {})
+            : Promise.resolve(),
+        undo: rollback,
+        onError: rollback,
+        undoToastMessage: "Group deletion undone.",
+      });
+    },
+    [L.toastGroupDeleted, cards, operations, queueMutation, view],
+  );
+
+  const openDeleteGroupConfirm = useCallback(
+    (groupId: string) => {
+      const group = cards.find((card) => card.id === groupId);
+      if (!group) return;
+      const groupName = contactDisplayName(group);
+      requestConfirm({
+        title: L.deleteGroupTitle,
+        description: L.deleteGroupDescription(groupName),
+        confirmLabel: L.deleteConfirm,
+        cancelLabel: L.deleteCancel,
+        variant: "destructive",
+        onConfirm: () => deleteGroup(groupId),
+      });
+    },
+    [L, cards, deleteGroup, requestConfirm],
+  );
+
+  const createGroup = useCallback(
+    (name: string) => {
+      const value = name.trim();
+      if (!value || addressBooks.length === 0) return;
+
+      const addressBookIds = resolveCreateAddressBookIds("all", addressBooks) as Record<
+        string,
+        true
+      >;
+      const body: ContactCardCreate = {
+        addressBookIds,
+        kind: "group",
+        name: { "@type": "Name", isOrdered: false, full: value },
+      };
+      const optimisticId = `card-${newContactMapId()}`;
+      const optimisticCard: ContactCard = {
+        "@type": "Card",
+        version: "1.0",
+        id: optimisticId,
+        uid: `urn:uuid:${newContactMapId()}`,
+        ...body,
+      };
+      const previousCards = cards;
+
+      setCards((prev) => [...prev, optimisticCard]);
+      show(L.toastGroupCreated(value), { icon: <Check className="size-4" /> });
+
+      const rollback = () => {
+        setCards(previousCards);
+      };
+
+      queueMutation({
+        key: `contacts:create-group:${optimisticId}`,
+        toastMessage: L.toastGroupCreated(value),
+        execute: async (signal) => {
+          if (!operations) return;
+          const created = await operations.createCard(body, { signal });
+          setCards((prev) => prev.map((card) => (card.id === optimisticId ? created : card)));
+        },
+        undo: rollback,
+        onError: rollback,
+        undoToastMessage: "Group creation undone.",
+      });
+    },
+    [L.toastGroupCreated, addressBooks, cards, operations, queueMutation, show],
+  );
+
+  const addMembersToGroup = useCallback(
+    (groupId: string, cardIds: string[]) => {
+      const group = cards.find((card) => card.id === groupId);
+      if (!group) return;
+
+      const cardsToAdd = cardIds
+        .map((id) => cards.find((card) => card.id === id))
+        .filter((card): card is ContactCard => card !== undefined);
+
+      const patch = groupAddMembersPatch(group, cardsToAdd);
+      if (!patch) return;
+
+      const groupName = contactDisplayName(group);
+      const addedCount = Object.keys(patch.members ?? {}).length;
+      const previousCard = group;
+      const merged: ContactCard = {
+        ...group,
+        members: { ...group.members, ...patch.members } as ContactCard["members"],
+      };
+
+      setCards((prev) => prev.map((card) => (card.id === groupId ? merged : card)));
+      show(L.toastMembersAdded(addedCount, groupName), { icon: <UserPlus className="size-4" /> });
+
+      const rollback = () => {
+        setCards((prev) => prev.map((card) => (card.id === groupId ? previousCard : card)));
+      };
+
+      queueMutation({
+        key: `contacts:add-members:${groupId}:${cardIds.slice().sort().join(",")}`,
+        toastMessage: L.toastMembersAdded(addedCount, groupName),
+        execute: (signal) =>
+          operations
+            ? operations
+                .patchCard(groupId, patch, { signal, ifMatch: group.etag })
+                .then((saved) => {
+                  setCards((prev) => prev.map((card) => (card.id === groupId ? saved : card)));
+                })
+            : Promise.resolve(),
+        undo: rollback,
+        onError: rollback,
+        undoToastMessage: "Add members undone.",
+      });
+    },
+    [L, cards, operations, queueMutation, show],
+  );
+
   const saveEdit = useCallback(() => {
     if (!editDraft) return;
 
     if (createMode) {
+      if (!contactEditDraftHasContent(editDraft)) return;
       const body = editDraftToCreateBody(
         editDraft,
         resolveCreateAddressBookIds(view, addressBooks),
@@ -645,15 +998,52 @@ export function useContactsController({
     view,
   ]);
 
+  useWorkspaceListKeyboardShortcuts({
+    searchInputRef,
+    selectedCount: selectedIds.length,
+    onRequestDeleteSelection: selectedGroup
+      ? requestRemoveSelectedFromGroup
+      : requestDeleteSelected,
+    onNavigateList: navigateListByKeyboard,
+    onUndoQueuedAction: undoLatest,
+  });
+
   const selectionActionButtons = useMemo(
-    () => [
-      {
-        label: L.selectionDelete,
-        icon: <Trash2 className="size-4" />,
-        onClick: requestDeleteSelected,
-      },
+    () =>
+      selectedGroup
+        ? [
+            {
+              label: L.selectionDownload,
+              icon: <Download className="size-4" />,
+              onClick: downloadSelected,
+            },
+            {
+              label: L.selectionRemoveFromGroup,
+              icon: <UserMinus className="size-4" />,
+              onClick: requestRemoveSelectedFromGroup,
+            },
+          ]
+        : [
+            {
+              label: L.selectionDownload,
+              icon: <Download className="size-4" />,
+              onClick: downloadSelected,
+            },
+            {
+              label: L.selectionDelete,
+              icon: <Trash2 className="size-4" />,
+              onClick: requestDeleteSelected,
+            },
+          ],
+    [
+      L.selectionDelete,
+      L.selectionDownload,
+      L.selectionRemoveFromGroup,
+      downloadSelected,
+      requestDeleteSelected,
+      requestRemoveSelectedFromGroup,
+      selectedGroup,
     ],
-    [L.selectionDelete, requestDeleteSelected],
   );
 
   const { selectionBarButtons, selectionBar } = useWorkspaceSelectionPresentation({
@@ -688,10 +1078,15 @@ export function useContactsController({
     editDraft,
     displayName,
     canCreateContact,
+    canCreateGroup,
     canRenameGroup,
+    canDeleteGroup,
     canEdit,
+    canSaveCreate,
     confirmDialog,
     groupRenameDialog,
+    createGroupDialog,
+    setCreateGroupDialog,
     selectedGroup,
     selectionBar,
     selectionBarButtons,
@@ -707,6 +1102,9 @@ export function useContactsController({
     cancelEdit,
     saveEdit,
     deleteActive,
+    downloadActive,
+    downloadSelected,
+    openDeleteConfirm,
     updateEditDraft,
     addPhone,
     addEmail,
@@ -725,8 +1123,13 @@ export function useContactsController({
     removeEmail,
     removeAddress,
     requestDeleteSelected,
+    removeFromGroup,
     renameGroup,
+    deleteGroup,
+    openDeleteGroupConfirm,
+    createGroup,
     setGroupRenameDialog,
+    addMembersToGroup,
   };
 }
 

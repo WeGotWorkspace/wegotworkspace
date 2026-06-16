@@ -1,4 +1,7 @@
-import { mapEntriesSorted } from "@/contacts-core/src/contacts-display-utils";
+import {
+  mapEntriesSorted,
+  synthesizeNameFromComponents,
+} from "@/contacts-core/src/contacts-display-utils";
 import type {
   AddressBook,
   ContactCard,
@@ -45,9 +48,8 @@ export function newContactMapId(): string {
   return `contact-${Math.random().toString(36).slice(2, 11)}`;
 }
 
-export function resolveDefaultContactsView(addressBooks: AddressBook[]): string {
-  const defaultBook = addressBooks.find((book) => book.isDefault) ?? addressBooks[0];
-  return defaultBook ? `book:${defaultBook.id}` : "all";
+export function resolveDefaultContactsView(_addressBooks: AddressBook[]): string {
+  return "all";
 }
 
 export function resolveCreateAddressBookIds(
@@ -133,6 +135,18 @@ function addressDraftHasContent(row: ContactAddressDraft): boolean {
   return [row.street, row.locality, row.region, row.postalCode, row.country].some((part) =>
     part.trim(),
   );
+}
+
+/** True when the draft has at least one non-empty create field (any section). */
+export function contactEditDraftHasContent(draft: ContactEditDraft): boolean {
+  if (draft.nameGiven.trim() || draft.nameGiven2.trim() || draft.nameSurname.trim()) return true;
+  if (draft.organization.trim()) return true;
+  if (draft.notes.trim()) return true;
+  if (draft.phones.some((row) => row.number.trim())) return true;
+  if (draft.emails.some((row) => row.address.trim())) return true;
+  if (draft.urls.some((row) => row.uri.trim())) return true;
+  if (draft.addresses.some(addressDraftHasContent)) return true;
+  return false;
 }
 
 function addressDraftToComponents(
@@ -293,7 +307,13 @@ function buildNameFromDraft(draft: ContactEditDraft): ContactCardCreate["name"] 
     components.push({ kind: "surname" as const, value: draft.nameSurname.trim() });
   }
   if (components.length === 0) return undefined;
-  return { isOrdered: false, components, full: "" } as ContactCardCreate["name"];
+
+  const full = synthesizeNameFromComponents(components);
+  return {
+    isOrdered: false,
+    components,
+    ...(full ? { full } : {}),
+  } as ContactCardCreate["name"];
 }
 
 function buildPhonesFromDraft(
@@ -437,7 +457,9 @@ function patchName(
     }
   }
 
-  return next ?? ({ full: "" } as ContactCardPatch["name"]);
+  if (next) return next;
+
+  return { isOrdered: false, components: [] } as unknown as ContactCardPatch["name"];
 }
 
 function patchChannelMapField<
@@ -587,10 +609,14 @@ export function editDraftToPatch(draft: ContactEditDraft, active: ContactCard): 
   );
   if (urls) patch.links = urls;
 
-  const nextKind = draft.showAsCompany ? "org" : "individual";
-  const currentKind = active.kind ?? "individual";
-  if (nextKind !== currentKind) {
-    patch.kind = nextKind;
+  // Group kind is managed separately (rename dialog, CardDAV); the edit form only
+  // controls org vs individual via the showAsCompany toggle, so never overwrite "group".
+  if (active.kind !== "group") {
+    const nextKind = draft.showAsCompany ? "org" : "individual";
+    const currentKind = active.kind ?? "individual";
+    if (nextKind !== currentKind) {
+      patch.kind = nextKind;
+    }
   }
 
   const [activeOrgId, activeOrg] = mapEntriesSorted(active.organizations)[0] ?? [];

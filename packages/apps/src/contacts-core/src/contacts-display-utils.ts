@@ -120,8 +120,10 @@ function firstMapValue<T>(map: Record<string, T> | undefined): T | undefined {
   return entry?.[1];
 }
 
-function nameFromComponents(card: ContactCard): string {
-  const components = card.name?.components;
+type NameComponentLike = { kind: string; value: string };
+
+/** Derive display / `name.full` from JSContact name components (given before surname). */
+export function synthesizeNameFromComponents(components: NameComponentLike[] | undefined): string {
   if (!components?.length) return "";
 
   const given = components
@@ -142,6 +144,10 @@ function nameFromComponents(card: ContactCard): string {
     .trim();
 }
 
+function nameFromComponents(card: ContactCard): string {
+  return synthesizeNameFromComponents(card.name?.components);
+}
+
 /** Person name from `name.full` or name components — not organization. */
 export function contactPersonName(card: ContactCard): string {
   const full = card.name?.full?.trim();
@@ -159,6 +165,12 @@ export function contactDisplayName(card: ContactCard): string {
     return "Unknown contact";
   }
 
+  if (card.kind === "group") {
+    if (personName) return personName;
+    if (organizationName) return organizationName;
+    return "Unknown contact";
+  }
+
   if (personName) return personName;
   if (organizationName) return organizationName;
 
@@ -171,17 +183,6 @@ function firstOrganizationName(card: ContactCard): string | undefined {
   if (name) return name;
   return organization?.units?.[0]?.name?.trim() || undefined;
 }
-
-function firstEmailAddress(card: ContactCard): string | undefined {
-  return firstMapValue(card.emails)?.address?.trim() || undefined;
-}
-
-function firstPhoneNumber(card: ContactCard): string | undefined {
-  const phone = firstMapValue(card.phones);
-  const number = phone?.number;
-  return typeof number === "string" ? number.trim() : undefined;
-}
-
 export function contactListSubtitle(card: ContactCard): string {
   const organizationName = firstOrganizationName(card);
   const personName = contactPersonName(card);
@@ -191,24 +192,25 @@ export function contactListSubtitle(card: ContactCard): string {
     if (personName && personName !== displayName) {
       return personName;
     }
-    return firstEmailAddress(card) ?? firstPhoneNumber(card) ?? "";
+    return "";
+  }
+
+  if (card.kind === "group") {
+    if (organizationName && organizationName !== displayName) {
+      return organizationName;
+    }
+    return "";
   }
 
   if (organizationName && organizationName !== displayName) {
     return organizationName;
   }
 
-  return firstEmailAddress(card) ?? firstPhoneNumber(card) ?? "";
+  return "";
 }
 
-/** Secondary list line — contact detail not already shown in the subtitle. */
-export function contactListDetail(card: ContactCard): string {
-  const subtitle = contactListSubtitle(card);
-  const email = firstEmailAddress(card);
-  const phone = firstPhoneNumber(card);
-
-  if (email && email !== subtitle) return email;
-  if (phone && phone !== subtitle) return phone;
+/** Secondary list line — always empty; email/phone are not shown in the list view. */
+export function contactListDetail(_card: ContactCard): string {
   return "";
 }
 
@@ -270,6 +272,41 @@ export function contactPhotoUrl(
   return undefined;
 }
 
+function formatAnniversaryDate(
+  date: NonNullable<NonNullable<ContactCard["anniversaries"]>[string]>["date"],
+  locale: string | undefined,
+): string {
+  if (date["@type"] === "Timestamp") {
+    const d = new Date(date.utc);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleDateString(locale, { year: "numeric", month: "long", day: "numeric" });
+  }
+  const { year, month, day } = date;
+  if (month !== undefined && day !== undefined && year !== undefined) {
+    return new Date(year, month - 1, day).toLocaleDateString(locale, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  }
+  if (month !== undefined && day !== undefined) {
+    return new Date(2000, month - 1, day).toLocaleDateString(locale, {
+      month: "long",
+      day: "numeric",
+    });
+  }
+  if (year !== undefined) return String(year);
+  return "";
+}
+
+/** Birthday string from the card's first `birth` anniversary, or empty string when not set. */
+export function contactBirthdayDisplay(card: ContactCard, locale?: string): string {
+  const entries = mapEntriesSorted(card.anniversaries);
+  const birth = entries.find(([, ann]) => ann.kind === "birth")?.[1];
+  if (!birth) return "";
+  return formatAnniversaryDate(birth.date, locale);
+}
+
 function collectEmails(card: ContactCard): string[] {
   return mapEntriesSorted(card.emails)
     .map(([, email]) => email.address?.trim())
@@ -280,6 +317,17 @@ function collectPhones(card: ContactCard): string[] {
   return mapEntriesSorted(card.phones)
     .map(([, phone]) => (typeof phone.number === "string" ? phone.number.trim() : ""))
     .filter(Boolean);
+}
+
+/**
+ * Produces a `tel:` href from a raw phone number string.
+ * Strips whitespace; keeps +, digits, dashes, parentheses and other
+ * characters that are valid tel-URI visual-separators (RFC 3966).
+ * Returns an empty string when the number is blank.
+ */
+export function phoneToTelHref(number: string): string {
+  const stripped = number.replace(/\s/g, "");
+  return stripped ? `tel:${stripped}` : "";
 }
 
 export function filterCardsBySearch(cards: ContactCard[], query: string): ContactCard[] {
