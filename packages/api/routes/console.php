@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\Contacts\GroupMemberUriBackfill;
 use App\Services\Installer\WgwSchemaMigrator;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -23,3 +24,14 @@ Artisan::command('wgw:schema-migrate', function (WgwSchemaMigrator $migrator): i
 
     return self::SUCCESS;
 })->purpose('Apply pending database/migrations/wgw migrations on the wgw connection');
+
+Artisan::command('wgw:contacts:sanitize-group-member-uris', function (GroupMemberUriBackfill $backfill): int {
+    $result = $backfill->run();
+    $this->info(sprintf(
+        'Scanned %d group card(s); updated %d with normalized member URIs.',
+        $result['scanned'],
+        $result['updated'],
+    ));
+
+    return self::SUCCESS;
+})->purpose('Repair macOS-corrupt group member URIs in stored contact vCards');

@@ -6,6 +6,7 @@ namespace Tests\Feature\Contacts;
 
 use App\Models\Addressbook;
 use App\Models\Card;
+use Illuminate\Support\Facades\Artisan;
 use Tests\Support\ContactsTestFixtures;
 use Tests\Support\OptimisticConcurrencyTestHelpers;
 use Tests\Support\WgwDatabaseTestCase;
@@ -297,6 +298,37 @@ VCARD);
 
         $response->assertJsonPath('kind', 'group');
         $this->assertCount(1, $response->json('memberCardIds') ?? []);
+    }
+
+    public function test_backfill_command_sanitizes_corrupt_group_members_in_database(): void
+    {
+        $janeUid = 'c4cf6038-5da0-41be-9c2d-d8cb9b4af90f';
+
+        $this->seedCardViaPdo('bob', 'jane-doe.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Jane Doe
+UID:{$janeUid}
+END:VCARD
+VCARD);
+
+        $groupId = $this->seedCardViaPdo('bob', 'friends-group.vcf', <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Friends
+X-ADDRESSBOOKSERVER-KIND:group
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:"urn:uuid:{$janeUid}"
+UID:08430ef3-a2ce-4568-9d6c-f50a6cfd32ae
+END:VCARD
+VCARD);
+
+        $this->assertSame(0, Artisan::call('wgw:contacts:sanitize-group-member-uris'));
+
+        $stored = $this->findBobCard($groupId);
+        $this->assertNotNull($stored);
+        $raw = is_string($stored->carddata) ? $stored->carddata : (string) $stored->carddata;
+        $this->assertStringContainsString('X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:'.$janeUid, $raw);
+        $this->assertStringNotContainsString('"urn:uuid:', $raw);
     }
 
     public function test_patch_group_name_updates_vcard_fn_and_n(): void
