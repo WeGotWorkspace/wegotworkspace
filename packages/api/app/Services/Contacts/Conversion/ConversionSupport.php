@@ -947,6 +947,17 @@ final class ConversionSupport
             return '';
         }
         $pieces = [];
+        $isOrdered = (bool) ($name['isOrdered'] ?? false);
+        $unorderedBuckets = [
+            'title' => [],
+            'given' => [],
+            'given2' => [],
+            'surname' => [],
+            'surname2' => [],
+            'generation' => [],
+            'credential' => [],
+        ];
+        $unorderedRemainder = [];
         foreach ($components as $component) {
             if (! is_array($component)) {
                 continue;
@@ -956,6 +967,28 @@ final class ConversionSupport
             }
             $value = trim((string) ($component['value'] ?? ''));
             if ($value !== '') {
+                if ($isOrdered) {
+                    $pieces[] = $value;
+
+                    continue;
+                }
+
+                $kind = (string) ($component['kind'] ?? '');
+                if (isset($unorderedBuckets[$kind])) {
+                    $unorderedBuckets[$kind][] = $value;
+                } else {
+                    $unorderedRemainder[] = $value;
+                }
+            }
+        }
+
+        if (! $isOrdered) {
+            foreach ($unorderedBuckets as $bucket) {
+                foreach ($bucket as $value) {
+                    $pieces[] = $value;
+                }
+            }
+            foreach ($unorderedRemainder as $value) {
                 $pieces[] = $value;
             }
         }
