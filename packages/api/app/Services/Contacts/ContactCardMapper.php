@@ -27,6 +27,7 @@ final class ContactCardMapper
         $contact = $this->converter->cardFromVCard($raw);
         $contact = $this->mediaBlobs->exposeBlobsOnRead($username, $contact);
         $contact = $this->members->apply($username, $contact);
+        $contact = self::hydrateDerivedNameFull($contact);
 
         $contact['id'] = self::cardIdFromUri((string) $card->uri);
         $contact['addressBookIds'] = [$addressBookUri => true];
@@ -46,6 +47,34 @@ final class ContactCardMapper
                 $contact['created'] = $timestamp;
             }
         }
+
+        return $contact;
+    }
+
+    /**
+     * API responses should always include a user-facing display name when one can
+     * be derived from structured name components.
+     *
+     * @param  array<string, mixed>  $contact
+     * @return array<string, mixed>
+     */
+    private static function hydrateDerivedNameFull(array $contact): array
+    {
+        if (! is_array($contact['name'] ?? null)) {
+            return $contact;
+        }
+
+        $existingFull = trim((string) ($contact['name']['full'] ?? ''));
+        if ($existingFull !== '') {
+            return $contact;
+        }
+
+        $derivedFull = ConversionSupport::deriveFullName($contact);
+        if ($derivedFull === '') {
+            return $contact;
+        }
+
+        $contact['name']['full'] = $derivedFull;
 
         return $contact;
     }
