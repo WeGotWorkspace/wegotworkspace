@@ -147,7 +147,7 @@ function discoverSurfaces() {
       continue;
     }
     const primaryTsx = walkFiles(full, (file) => {
-      if (!file.endsWith(".tsx")) {
+      if (!file.endsWith(".tsx") || file.endsWith(".test.tsx")) {
         return false;
       }
       if (file.includes("/stories/")) {
