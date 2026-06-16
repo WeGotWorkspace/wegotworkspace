@@ -1,0 +1,323 @@
+@import "../../styles.css" reference;
+@import "../../workspace-shell/src/workspace-split-app.css";
+@import "@glideapps/glide-data-grid/dist/index.css";
+
+.spreadsheet-workspace {
+  @apply min-w-0 overflow-x-hidden;
+
+  /* Teal/green family — distinct from Docs (blue) and Drive. */
+  --spreadsheet-accent: #0d9488;
+  --spreadsheet-sidebar: var(--spreadsheet-accent);
+  --spreadsheet-surface: var(--color-cream, #ffffff);
+  --spreadsheet-canvas: oklch(96% 0.006 170);
+  --spreadsheet-text: var(--color-ink);
+  --spreadsheet-muted: color-mix(in oklab, var(--color-ink) 55%, transparent);
+  --spreadsheet-border: color-mix(in oklab, var(--color-ink) 12%, transparent);
+  --spreadsheet-error: #dc2626;
+  --spreadsheet-formula: #2563eb;
+
+  --app-sidebar-bg: var(--spreadsheet-sidebar);
+  --app-sidebar-border-color: color-mix(in oklab, #ffffff 18%, transparent);
+  --app-sidebar-color: #ffffff;
+  --sidebar-logo-close-button-color: var(--app-sidebar-color);
+  --sidebar-badge-fg: var(--spreadsheet-accent);
+  --workspace-main-content-max-width: none;
+  --workspace-sidebar-toggle-color: var(--color-ink);
+  --workspace-sidebar-toggle-bg: color-mix(in oklab, var(--color-ink) 6%, transparent);
+
+  --button-primary-bg: var(--spreadsheet-accent);
+  --button-primary-fg: #ffffff;
+  --foreground: var(--spreadsheet-text);
+  --color-foreground: var(--spreadsheet-text);
+
+  background-color: var(--spreadsheet-surface);
+  color: var(--spreadsheet-text);
+  font-family: var(--font-sans);
+}
+
+.spreadsheet-workspace .workspace-app-layout__main-scroll {
+  @apply flex flex-col;
+}
+
+.spreadsheet-workspace .workspace-app-layout__main-content {
+  @apply mx-0 flex min-h-full w-full max-w-none flex-1 flex-col overflow-hidden px-0 py-0;
+}
+
+.spreadsheet-workspace .app-sidebar__scroll {
+  --color-ink: #ffffff;
+  --button-subtle-color: #ffffff;
+  --button-subtle-background: color-mix(in oklab, #ffffff 12%, transparent);
+  --button-subtle-hover-background: color-mix(in oklab, #ffffff 20%, transparent);
+}
+
+.spreadsheet-workspace .app-sidebar__footer {
+  --workspace-user-footer-text-color: #ffffff;
+  --workspace-user-footer-subtitle-color: color-mix(in oklab, #ffffff 72%, transparent);
+  --workspace-user-footer-border-color: color-mix(in oklab, #ffffff 18%, transparent);
+  --workspace-user-footer-avatar-bg: color-mix(in oklab, #ffffff 22%, transparent);
+  --workspace-user-footer-avatar-color: var(--app-sidebar-color);
+  --workspace-user-footer-link-color: #ffffff;
+}
+
+.spreadsheet-workspace__header-actions {
+  @apply flex shrink-0 flex-wrap items-center justify-end gap-1.5;
+}
+
+.spreadsheet-workspace__header-actions .button.spreadsheet-workspace__source-toggle--active {
+  color: var(--spreadsheet-accent);
+  background-color: color-mix(in oklab, var(--spreadsheet-accent) 16%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--spreadsheet-accent) 28%, transparent);
+}
+
+/* ── Main pane layout ─────────────────────────────────────────────────── */
+
+.spreadsheet-workspace__pane {
+  @apply flex min-h-0 flex-1 overflow-hidden;
+}
+
+.spreadsheet-workspace__grid-area {
+  @apply flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden;
+}
+
+.spreadsheet-workspace__grid-wrap {
+  @apply min-h-0 flex-1 overflow-hidden;
+  background-color: var(--spreadsheet-canvas);
+}
+
+.spreadsheet-workspace__source {
+  @apply hidden min-h-0 flex-col overflow-hidden;
+  border-left: 1px solid var(--spreadsheet-border);
+  background-color: var(--spreadsheet-surface);
+}
+
+.spreadsheet-workspace--view-source .spreadsheet-workspace__source {
+  @apply flex;
+}
+
+/* Wide landscape: grid + source side by side. Narrow: source only. */
+@media (max-width: 900px) {
+  .spreadsheet-workspace--view-source .spreadsheet-workspace__grid-area {
+    @apply hidden;
+  }
+  .spreadsheet-workspace--view-source .spreadsheet-workspace__source {
+    @apply flex-1;
+  }
+}
+
+@media (min-width: 901px) {
+  .spreadsheet-workspace--view-source .spreadsheet-workspace__source {
+    flex: 0 0 clamp(20rem, 40%, 36rem);
+  }
+}
+
+.spreadsheet-workspace__source .text-editor-source {
+  @apply min-h-0 flex-1;
+}
+
+.spreadsheet-workspace__parse-banner {
+  @apply px-3 py-2 text-sm;
+  color: var(--spreadsheet-error);
+  background-color: color-mix(in oklab, var(--spreadsheet-error) 10%, transparent);
+  border-bottom: 1px solid color-mix(in oklab, var(--spreadsheet-error) 30%, transparent);
+}
+
+.spreadsheet-workspace__empty,
+.spreadsheet-workspace__error {
+  @apply flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center;
+}
+
+.spreadsheet-workspace__empty-title {
+  @apply text-base font-medium;
+}
+
+.spreadsheet-workspace__empty-description,
+.spreadsheet-workspace__error {
+  @apply text-sm;
+  color: var(--spreadsheet-muted);
+}
+
+.spreadsheet-workspace__loading {
+  @apply flex flex-1 items-center justify-center text-sm;
+  color: var(--spreadsheet-muted);
+}
+
+/* ── Grid ─────────────────────────────────────────────────────────────── */
+
+.spreadsheet-grid {
+  @apply h-full w-full;
+}
+
+.spreadsheet-grid--picking {
+  cursor: cell;
+}
+
+/* ── Formula bar ──────────────────────────────────────────────────────── */
+
+.spreadsheet-formula-bar {
+  @apply flex shrink-0 items-center gap-2 px-2 py-1.5;
+  border-bottom: 1px solid var(--spreadsheet-border);
+  background-color: color-mix(in oklab, #ffffff 92%, transparent);
+}
+
+.spreadsheet-formula-bar__cell {
+  @apply inline-flex h-7 min-w-12 shrink-0 items-center justify-center rounded px-2 text-xs font-medium;
+  font-variant-numeric: tabular-nums;
+  color: var(--spreadsheet-muted);
+  background-color: color-mix(in oklab, var(--color-ink) 5%, transparent);
+}
+
+.spreadsheet-formula-bar__field {
+  @apply relative min-w-0 flex-1;
+}
+
+.spreadsheet-formula-bar__input,
+.spreadsheet-formula-bar__tokens {
+  @apply box-border h-7 w-full overflow-x-auto whitespace-pre px-2 leading-7;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 13px;
+}
+
+.spreadsheet-formula-bar__input {
+  @apply relative rounded border bg-transparent;
+  border-color: var(--spreadsheet-border);
+  color: transparent;
+  caret-color: var(--spreadsheet-text);
+}
+
+.spreadsheet-formula-bar__input::placeholder {
+  color: var(--spreadsheet-muted);
+}
+
+.spreadsheet-formula-bar--picking .spreadsheet-formula-bar__input {
+  border-color: var(--spreadsheet-accent);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--spreadsheet-accent) 24%, transparent);
+}
+
+.spreadsheet-formula-bar__hint {
+  @apply shrink-0 text-xs;
+  color: var(--spreadsheet-accent);
+}
+
+.spreadsheet-formula-bar__suggest {
+  @apply absolute left-0 top-full z-30 mt-1 w-full;
+}
+
+/* ── Formula token overlay (shared by formula bar + cell editor) ───────── */
+
+.spreadsheet-formula-tokens {
+  @apply pointer-events-none absolute inset-0 overflow-hidden whitespace-pre;
+}
+
+.spreadsheet-formula-token {
+  white-space: pre;
+}
+
+.spreadsheet-formula-token--fn {
+  color: #7c3aed;
+  font-weight: 600;
+}
+.spreadsheet-formula-token--const {
+  color: #0d9488;
+}
+.spreadsheet-formula-token--ref {
+  color: #2563eb;
+}
+.spreadsheet-formula-token--cellref {
+  color: #c2410c;
+}
+.spreadsheet-formula-token--string {
+  color: #16a34a;
+}
+.spreadsheet-formula-token--number {
+  color: #0891b2;
+}
+.spreadsheet-formula-token--op {
+  color: #6b7280;
+}
+.spreadsheet-formula-token--ident,
+.spreadsheet-formula-token--ws {
+  color: inherit;
+}
+
+/* ── In-cell editor (rendered inside the Glide overlay) ────────────────── */
+
+.spreadsheet-cell-editor {
+  @apply relative flex items-center;
+  background-color: #ffffff;
+}
+
+.spreadsheet-cell-editor__input,
+.spreadsheet-cell-editor__tokens {
+  @apply box-border h-full w-full whitespace-pre px-2 leading-7;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 13px;
+}
+
+.spreadsheet-cell-editor__input {
+  @apply border-0 bg-transparent outline-none;
+  color: var(--spreadsheet-text);
+}
+
+.spreadsheet-cell-editor__input--formula {
+  color: transparent;
+  caret-color: var(--spreadsheet-text);
+}
+
+.spreadsheet-cell-editor__tokens {
+  @apply pointer-events-none absolute inset-0 overflow-hidden;
+}
+
+/* ── Autocomplete popup (rendered to document.body via portal) ─────────── */
+
+.spreadsheet-cell-editor__popup {
+  @apply fixed z-50;
+}
+
+.spreadsheet-suggest {
+  @apply max-h-64 overflow-y-auto rounded-md border bg-white py-1 shadow-lg;
+  border-color: var(--spreadsheet-border, #e5e7eb);
+}
+
+.spreadsheet-suggest__item {
+  @apply flex w-full items-center justify-between gap-3 px-3 py-1.5 text-left text-sm;
+}
+
+.spreadsheet-suggest__item--active {
+  background-color: color-mix(in oklab, var(--spreadsheet-accent, #0d9488) 12%, transparent);
+}
+
+.spreadsheet-suggest__label {
+  @apply flex min-w-0 items-center gap-2;
+}
+
+.spreadsheet-suggest__kind {
+  @apply inline-flex shrink-0 items-center rounded px-1 text-[10px] font-medium uppercase;
+  background-color: color-mix(in oklab, var(--color-ink, #111) 8%, transparent);
+}
+
+.spreadsheet-suggest__kind--fn {
+  color: #7c3aed;
+}
+.spreadsheet-suggest__kind--def {
+  color: #0d9488;
+}
+.spreadsheet-suggest__kind--ref {
+  color: #2563eb;
+}
+
+.spreadsheet-suggest__name {
+  @apply truncate font-medium;
+}
+
+.spreadsheet-suggest__detail {
+  @apply shrink-0 truncate text-xs;
+  color: #6b7280;
+}
+
+.spreadsheet-dialog-surface {
+  --spreadsheet-accent: #0d9488;
+  --button-primary-bg: var(--spreadsheet-accent);
+  --button-primary-fg: #ffffff;
+  --primary: var(--spreadsheet-accent);
+  --primary-foreground: #ffffff;
+}
