@@ -456,6 +456,81 @@ describe("useContactsController", () => {
   });
 });
 
+describe("useContactsController group etag refetch", () => {
+  const WRITE_QUEUE_MS = 2500;
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("addMembersToGroup refetches group etag before patchCard", async () => {
+    vi.useFakeTimers();
+    const staleEtag = "etag-stale-from-bootstrap";
+    const freshEtag = "etag-fresh-from-server";
+    const bootstrapGroup = bootstrap.data.cards.find((card) => card.id === "card-group-friends")!;
+    const acmeCard = bootstrap.data.cards.find((card) => card.id === "card-acme")!;
+    const groupCard = { ...bootstrapGroup, etag: staleEtag };
+    const data = {
+      ...bootstrap.data,
+      cards: bootstrap.data.cards.map((card) =>
+        card.id === "card-group-friends" ? groupCard : card,
+      ),
+    };
+    const freshGroup = { ...groupCard, etag: freshEtag };
+
+    const getCard = vi.fn(() => Promise.resolve(freshGroup));
+    const patchCard = vi.fn(() =>
+      Promise.resolve({
+        ...freshGroup,
+        members: {
+          ...freshGroup.members,
+          [acmeCard.uid!]: true as const,
+        },
+      }),
+    );
+
+    const { result } = renderHook(() =>
+      useContactsController({
+        data,
+        listLoading: false,
+        operations: {
+          listAddressBooks: vi.fn(),
+          listCards: vi.fn(),
+          getCard,
+          createCard: vi.fn(),
+          patchCard,
+          deleteCard: vi.fn(),
+        },
+      }),
+    );
+
+    act(() => {
+      result.current.addMembersToGroup("card-group-friends", ["card-acme"]);
+    });
+
+    await act(async () => {
+      vi.advanceTimersByTime(WRITE_QUEUE_MS);
+      await Promise.resolve();
+    });
+
+    expect(getCard).toHaveBeenCalledWith(
+      "card-group-friends",
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+    expect(patchCard).toHaveBeenCalledWith(
+      "card-group-friends",
+      expect.objectContaining({ members: expect.any(Object) }),
+      expect.objectContaining({ ifMatch: freshEtag }),
+    );
+    expect(patchCard).not.toHaveBeenCalledWith(
+      "card-group-friends",
+      expect.anything(),
+      expect.objectContaining({ ifMatch: staleEtag }),
+    );
+    expect(getCard.mock.invocationCallOrder[0]).toBeLessThan(patchCard.mock.invocationCallOrder[0]);
+  });
+});
+
 describe("useContactsController vCard import", () => {
   beforeEach(() => {
     mockShow.mockClear();

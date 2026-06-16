@@ -86,14 +86,9 @@ final class PropIdEnsuringPlugin extends ServerPlugin
             return;
         }
 
-        $sanitized = $this->sanitizeAndPersistCard(
-            $location['addressBookId'],
-            $location['cardUri'],
-            $raw,
-            false,
-        );
-        if ($sanitized !== null) {
-            $response->setBody($sanitized);
+        $memberResult = $this->memberUriSanitizer->sanitize($raw);
+        if ($memberResult['changed']) {
+            $response->setBody($memberResult['vcard']);
         }
     }
 

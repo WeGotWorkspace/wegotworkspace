@@ -77,6 +77,36 @@ type UseContactsControllerArgs = {
 
 const WRITE_QUEUE_DELAY_MS = 2500;
 
+function isPreconditionFailed(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "status" in error &&
+    (error as { status: number }).status === 412
+  );
+}
+
+async function patchGroupWithFreshEtag(
+  operations: ContactsAPIOperations,
+  groupId: string,
+  buildPatch: (freshGroup: ContactCard) => ContactCardPatch | null,
+  signal: AbortSignal,
+): Promise<ContactCard> {
+  const run = async (): Promise<ContactCard> => {
+    const fresh = await operations.getCard(groupId, { signal });
+    const patch = buildPatch(fresh);
+    if (!patch) return fresh;
+    return operations.patchCard(groupId, patch, { signal, ifMatch: fresh.etag });
+  };
+
+  try {
+    return await run();
+  } catch (error) {
+    if (!isPreconditionFailed(error)) throw error;
+    return run();
+  }
+}
+
 function draftDisplayName(draft: ContactEditDraft, unknownLabel: string): string {
   const name = [draft.nameGiven, draft.nameGiven2, draft.nameSurname]
     .map((part) => part.trim())
@@ -825,14 +855,16 @@ export function useContactsController({
         key: `contacts:remove-from-group:${groupId}:${cardIds.slice().sort().join(",")}`,
         toastMessage: L.toastRemovedFromGroup(removedCount),
         icon: <UserMinus className="size-4" />,
-        execute: (signal) =>
-          operations
-            ? operations
-                .patchCard(groupId, patch, { signal, ifMatch: group.etag })
-                .then((saved) => {
-                  setCards((prev) => prev.map((card) => (card.id === groupId ? saved : card)));
-                })
-            : Promise.resolve(),
+        execute: async (signal) => {
+          if (!operations) return;
+          const saved = await patchGroupWithFreshEtag(
+            operations,
+            groupId,
+            (fresh) => groupRemoveMembersPatch(fresh, cardIds, cardsRef.current),
+            signal,
+          );
+          setCards((prev) => prev.map((card) => (card.id === groupId ? saved : card)));
+        },
         undo: rollback,
         onError: rollback,
         undoToastMessage: "Removal undone.",
@@ -862,7 +894,6 @@ export function useContactsController({
       const group = cards.find((card) => card.id === groupId);
       if (!value || !group || value === contactDisplayName(group)) return;
 
-      const patch = groupRenamePatch(value);
       const previousCard = group;
       const merged: ContactCard = {
         ...group,
@@ -881,14 +912,16 @@ export function useContactsController({
         key: `contacts:rename-group:${groupId}`,
         toastMessage: L.toastGroupRenamed(value),
         icon: <Tag className="size-4" />,
-        execute: (signal) =>
-          operations
-            ? operations
-                .patchCard(groupId, patch, { signal, ifMatch: group.etag })
-                .then((saved) => {
-                  setCards((prev) => prev.map((card) => (card.id === groupId ? saved : card)));
-                })
-            : Promise.resolve(),
+        execute: async (signal) => {
+          if (!operations) return;
+          const saved = await patchGroupWithFreshEtag(
+            operations,
+            groupId,
+            () => groupRenamePatch(value),
+            signal,
+          );
+          setCards((prev) => prev.map((card) => (card.id === groupId ? saved : card)));
+        },
         undo: rollback,
         onError: rollback,
         undoToastMessage: "Rename undone.",
@@ -1027,14 +1060,21 @@ export function useContactsController({
         key: `contacts:add-members:${groupId}:${cardIds.slice().sort().join(",")}`,
         toastMessage: L.toastMembersAdded(addedCount, groupName),
         icon: <UserPlus className="size-4" />,
-        execute: (signal) =>
-          operations
-            ? operations
-                .patchCard(groupId, patch, { signal, ifMatch: group.etag })
-                .then((saved) => {
-                  setCards((prev) => prev.map((card) => (card.id === groupId ? saved : card)));
-                })
-            : Promise.resolve(),
+        execute: async (signal) => {
+          if (!operations) return;
+          const saved = await patchGroupWithFreshEtag(
+            operations,
+            groupId,
+            (fresh) => {
+              const cardsToAdd = cardIds
+                .map((id) => cardsRef.current.find((card) => card.id === id))
+                .filter((card): card is ContactCard => card !== undefined);
+              return groupAddMembersPatch(fresh, cardsToAdd);
+            },
+            signal,
+          );
+          setCards((prev) => prev.map((card) => (card.id === groupId ? saved : card)));
+        },
         undo: rollback,
         onError: rollback,
         undoToastMessage: "Add members undone.",
