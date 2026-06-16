@@ -294,6 +294,7 @@ export function ContactsWorkspace({
         accept=".vcf,.vcard,text/vcard,text/x-vcard,application/vcard"
         multiple
         className="hidden"
+        aria-label={L.importVcf}
         onChange={(event) => {
           void handleImportVcf(event.target.files);
           event.target.value = "";
