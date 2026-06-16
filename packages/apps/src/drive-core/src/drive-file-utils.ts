@@ -72,16 +72,24 @@ export function driveFileFromEntry(
 }
 
 /** Pick a unique `Untitled.md` name against existing file titles in the current listing. */
-export function suggestNewMarkdownFileName(files: readonly DriveFile[]): string {
+function suggestNewFileName(files: readonly DriveFile[], extension: string): string {
   const taken = new Set(
     files.filter((file) => file.kind !== "folder").map((file) => file.title.trim().toLowerCase()),
   );
   const base = "Untitled";
-  let candidate = `${base}.md`;
+  let candidate = `${base}.${extension}`;
   let index = 2;
   while (taken.has(candidate.toLowerCase())) {
-    candidate = `${base} ${index}.md`;
+    candidate = `${base} ${index}.${extension}`;
     index += 1;
   }
   return candidate;
+}
+
+export function suggestNewMarkdownFileName(files: readonly DriveFile[]): string {
+  return suggestNewFileName(files, "md");
+}
+
+export function suggestNewSpreadsheetFileName(files: readonly DriveFile[]): string {
+  return suggestNewFileName(files, "ycsv");
 }

@@ -19,6 +19,10 @@ import { MeetApp } from "@/meet-core/src/meet-app";
 import { createWgwMeetGuestApiSource } from "@/meet-core/src/meet-api-source";
 import { NotesApp } from "@/notes-core/src/notes-app";
 import { SettingsApp } from "@/settings-core/src/settings-app";
+import { SpreadsheetApp } from "@/spreadsheet-core/src/spreadsheet-app";
+import { validateSpreadsheetRouteSearch } from "@/spreadsheet-core/src/spreadsheet-route-search";
+import { SpreadsheetWorkspace } from "@/spreadsheet-core/src/spreadsheet-workspace";
+import { createSpreadsheetAppBootstrap } from "@/lib/api/mock/spreadsheet-bootstrap";
 import { createAdminAppBootstrap } from "@/lib/api/mock/admin-bootstrap";
 import { createContactsAppBootstrap } from "@/lib/api/mock/contacts-bootstrap";
 import { createDriveAppBootstrap } from "@/lib/api/mock/drive-bootstrap";
@@ -87,6 +91,14 @@ function MockDocsRoute() {
   const onLogout = useWeGotWorkspaceLogout();
   const bootstrap = useMemo(() => createDocsAppBootstrap(), []);
   return <DocsWorkspace data={bootstrap.data} session={bootstrap.session} onLogout={onLogout} />;
+}
+
+function MockSpreadsheetRoute() {
+  const onLogout = useWeGotWorkspaceLogout();
+  const bootstrap = useMemo(() => createSpreadsheetAppBootstrap(), []);
+  return (
+    <SpreadsheetWorkspace data={bootstrap.data} session={bootstrap.session} onLogout={onLogout} />
+  );
 }
 
 function MockNotesRoute() {
@@ -220,6 +232,13 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
     component: isLive ? withWeGotWorkspaceAuth(SettingsApp) : MockSettingsRoute,
   });
 
+  const sheetsRoute = createRoute({
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/sheets",
+    validateSearch: validateSpreadsheetRouteSearch,
+    component: isLive ? withWeGotWorkspaceAuth(SpreadsheetApp) : MockSpreadsheetRoute,
+  });
+
   const meetRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/meet",
@@ -298,6 +317,7 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
     driveRoute,
     docsRoute,
     settingsRoute,
+    sheetsRoute,
     meetRoute,
     meetGuestRoute,
     meetJoinRoute,

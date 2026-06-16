@@ -26,6 +26,7 @@ export function DriveWorkspace({
   view,
   onViewChange,
   onOpenDocsFile,
+  onOpenSpreadsheetFile,
   onNavigate,
   onLogout,
   className,
@@ -38,6 +39,7 @@ export function DriveWorkspace({
     view,
     onViewChange,
     onOpenDocsFile,
+    onOpenSpreadsheetFile,
     onNavigate,
   });
   const { primarySidebarItems, groupSidebarItems } = useDriveSidebarModel({
@@ -59,6 +61,7 @@ export function DriveWorkspace({
             session={session}
             onLogout={onLogout}
             onOpenDocsFile={onOpenDocsFile}
+            onOpenSpreadsheetFile={onOpenSpreadsheetFile}
             primarySidebarItems={primarySidebarItems}
             groupSidebarItems={groupSidebarItems}
           />
@@ -90,6 +93,7 @@ function DriveSidebar({
   session,
   onLogout,
   onOpenDocsFile,
+  onOpenSpreadsheetFile,
   primarySidebarItems,
   groupSidebarItems,
 }: {
@@ -97,6 +101,7 @@ function DriveSidebar({
   session: WorkspaceSession;
   onLogout?: () => void;
   onOpenDocsFile?: (apiPath: string) => void;
+  onOpenSpreadsheetFile?: (apiPath: string) => void;
   primarySidebarItems: ReturnType<typeof useDriveSidebarModel>["primarySidebarItems"];
   groupSidebarItems: ReturnType<typeof useDriveSidebarModel>["groupSidebarItems"];
 }) {
@@ -106,6 +111,7 @@ function DriveSidebar({
     setSidebarOpen,
     createFolder,
     createMarkdown,
+    createSpreadsheet,
     createFromTemplate,
     newFileTemplates,
     fileInputRef,
@@ -130,6 +136,7 @@ function DriveSidebar({
           onCreateFolder={createFolder}
           onUploadFiles={() => fileInputRef.current?.click()}
           onCreateMarkdown={onOpenDocsFile ? createMarkdown : undefined}
+          onCreateSpreadsheet={onOpenSpreadsheetFile ? createSpreadsheet : undefined}
           newFileTemplates={newFileTemplates}
           onCreateTemplate={createFromTemplate}
         />

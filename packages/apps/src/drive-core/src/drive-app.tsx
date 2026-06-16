@@ -7,6 +7,7 @@ import {
   parseDriveRouteSearch,
 } from "@/drive-core/src/drive-route-search";
 import { docsSearchFromApiPath } from "@/docs-core/src/docs-route-search";
+import { spreadsheetSearchFromApiPath } from "@/spreadsheet-core/src/spreadsheet-route-search";
 import type { ViewKey } from "@/drive-core/src/drive-models";
 import { useDriveAPI } from "@/drive-core/src/use-drive-api";
 import { DriveWorkspace } from "@/drive-core/src/drive-workspace";
@@ -41,6 +42,14 @@ export function DriveApp({ apiSource }: DriveAppProps = {}) {
     window.open(href, "_blank", "noopener,noreferrer");
   }, []);
 
+  const handleOpenSpreadsheetFile = useCallback((apiPath: string) => {
+    const file = spreadsheetSearchFromApiPath(apiPath).file;
+    const query = new URLSearchParams();
+    if (file) query.set("file", file);
+    const href = `/sheets${query.toString() ? `?${query.toString()}` : ""}`;
+    window.open(href, "_blank", "noopener,noreferrer");
+  }, []);
+
   const handleNavigate = useCallback((href: string) => {
     window.location.assign(href);
   }, []);
@@ -62,6 +71,7 @@ export function DriveApp({ apiSource }: DriveAppProps = {}) {
           view={routeView}
           onViewChange={handleViewChange}
           onOpenDocsFile={handleOpenDocsFile}
+          onOpenSpreadsheetFile={handleOpenSpreadsheetFile}
           onNavigate={handleNavigate}
           onLogout={() => {
             window.location.assign("/logout");

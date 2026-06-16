@@ -8,7 +8,10 @@ import { findDrivePluginForExtension } from "@/drive-core/src/drive-plugin-utils
 import { filterDriveVisibleItems } from "@/drive-core/src/drive-visible-items";
 import { extensionFromFileName } from "@/drive-core/src/drive-file-utils";
 import type { DriveFile } from "@/drive-core/src/drive-models";
-import { DOCS_EDITOR_EXTENSIONS } from "@/drive-core/src/drive-models";
+import {
+  DOCS_EDITOR_EXTENSIONS,
+  SPREADSHEET_EDITOR_EXTENSIONS,
+} from "@/drive-core/src/drive-models";
 import type { DriveShellState } from "@/drive-core/src/use-drive-shell";
 
 const WRITE_QUEUE_DELAY_MS = 2500;
@@ -16,9 +19,10 @@ const WRITE_QUEUE_DELAY_MS = 2500;
 export type UseDriveListArgs = {
   shell: DriveShellState;
   onOpenDocsFile?: (apiPath: string) => void;
+  onOpenSpreadsheetFile?: (apiPath: string) => void;
 };
 
-export function useDriveList({ shell, onOpenDocsFile }: UseDriveListArgs) {
+export function useDriveList({ shell, onOpenDocsFile, onOpenSpreadsheetFile }: UseDriveListArgs) {
   const {
     files,
     setFiles,
@@ -235,6 +239,10 @@ export function useDriveList({ shell, onOpenDocsFile }: UseDriveListArgs) {
       const ext = extensionFromFileName(f.title);
       if (f.apiPath && DOCS_EDITOR_EXTENSIONS.has(ext) && onOpenDocsFile) {
         onOpenDocsFile(f.apiPath);
+        return;
+      }
+      if (f.apiPath && SPREADSHEET_EDITOR_EXTENSIONS.has(ext) && onOpenSpreadsheetFile) {
+        onOpenSpreadsheetFile(f.apiPath);
         return;
       }
       if (f.apiPath) {

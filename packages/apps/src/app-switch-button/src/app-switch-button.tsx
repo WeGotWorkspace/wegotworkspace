@@ -8,9 +8,14 @@ import {
   NotebookPen,
   Settings as SettingsIcon,
   Shield,
+  Table2,
   Video,
 } from "lucide-react";
 import { docsApiPathFromSearch, parseDocsRouteSearch } from "@/docs-core/src/docs-route-search";
+import {
+  parseSpreadsheetRouteSearch,
+  spreadsheetApiPathFromSearch,
+} from "@/spreadsheet-core/src/spreadsheet-route-search";
 import { DropdownMenu } from "@/menu-dropdown/src/dropdown-menu";
 import type { DropdownMenuItemProps } from "@/menu-dropdown/src/dropdown-menu";
 import { BrandMark } from "@/brand-mark/src/brand-mark";
@@ -49,6 +54,12 @@ const WORKSPACE_APPS = [
     label: "Docs",
     icon: FileText,
     to: "/docs",
+  },
+  {
+    id: "sheets",
+    label: "Sheets",
+    icon: Table2,
+    to: "/sheets",
   },
   {
     id: "settings",
@@ -93,6 +104,10 @@ export function AppSwitchButton({
   const docsFileOpen =
     docsApiPathFromSearch(parseDocsRouteSearch(location.search as Record<string, unknown>).file) !=
     null;
+  const sheetsFileOpen =
+    spreadsheetApiPathFromSearch(
+      parseSpreadsheetRouteSearch(location.search as Record<string, unknown>).file,
+    ) != null;
   const navigate = useNavigate();
   const current =
     WORKSPACE_APPS.find((a) => path === a.to || path.startsWith(`${a.to}/`)) ?? WORKSPACE_APPS[0];
@@ -106,7 +121,8 @@ export function AppSwitchButton({
 
   const menuItems: DropdownMenuItemProps[] = WORKSPACE_APPS.map((app) => {
     const Icon = app.icon;
-    const itemDisabled = app.id === "docs" && !docsFileOpen;
+    const itemDisabled =
+      (app.id === "docs" && !docsFileOpen) || (app.id === "sheets" && !sheetsFileOpen);
     return {
       id: app.id,
       label: app.label,

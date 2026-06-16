@@ -6,6 +6,7 @@ import {
   FileSpreadsheet,
   Presentation,
   ScrollText,
+  Table2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -30,6 +31,7 @@ export type DriveNewMenuProps = {
   onCreateFolder: () => void;
   onUploadFiles: () => void;
   onCreateMarkdown?: () => void;
+  onCreateSpreadsheet?: () => void;
   newFileTemplates: DriveNewFileTemplate[];
   onCreateTemplate: (templateId: string) => void;
 };
@@ -39,6 +41,7 @@ export function DriveNewMenu({
   onCreateFolder,
   onUploadFiles,
   onCreateMarkdown,
+  onCreateSpreadsheet,
   newFileTemplates,
   onCreateTemplate,
 }: DriveNewMenuProps) {
@@ -68,6 +71,12 @@ export function DriveNewMenu({
           <DropdownMenuItem onClick={onCreateMarkdown} className="cursor-pointer gap-2.5 py-2">
             <ScrollText className="size-4 opacity-70" />
             <span>{labels.newMarkdown}</span>
+          </DropdownMenuItem>
+        ) : null}
+        {onCreateSpreadsheet ? (
+          <DropdownMenuItem onClick={onCreateSpreadsheet} className="cursor-pointer gap-2.5 py-2">
+            <Table2 className="size-4 opacity-70" />
+            <span>{labels.newSpreadsheet}</span>
           </DropdownMenuItem>
         ) : null}
         {newFileTemplates.map((template) => (
