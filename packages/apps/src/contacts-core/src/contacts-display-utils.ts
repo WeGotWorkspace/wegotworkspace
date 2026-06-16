@@ -231,6 +231,25 @@ type ContactPhotoUrlOptions = {
   blobBaseUrl?: string;
 };
 
+/** Blob id for the preferred photo/logo media entry, if any. */
+export function contactPhotoBlobId(card: ContactCard): string | undefined {
+  const media = card.media;
+  if (!media) return undefined;
+
+  const preferredKinds =
+    card.kind === "org" ? (["logo", "photo"] as const) : (["photo", "logo"] as const);
+
+  for (const kind of preferredKinds) {
+    for (const [, entry] of mapEntriesSorted(media)) {
+      if (entry.kind !== kind) continue;
+      const blobId = typeof entry.blobId === "string" ? entry.blobId.trim() : "";
+      if (blobId) return blobId;
+    }
+  }
+
+  return undefined;
+}
+
 function resolveMediaEntryUrl(
   entry: NonNullable<ContactCard["media"]>[string],
   blobBaseUrl: string,

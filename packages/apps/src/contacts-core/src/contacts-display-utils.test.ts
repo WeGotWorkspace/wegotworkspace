@@ -9,6 +9,7 @@ import {
   contactListDetail,
   contactListSubtitle,
   contactPhotoUrl,
+  contactPhotoBlobId,
   CONTACT_MEDIA_BLOB_PATH,
   filterCardsBySearch,
   mapEntriesSorted,
@@ -197,6 +198,7 @@ describe("contacts-display-utils", () => {
     expect(contactPhotoUrl(applePhotoCard)).toBe(
       `${CONTACT_MEDIA_BLOB_PATH}/aabbccdd-1122-4aab-8aab-aabbccdd0001`,
     );
+    expect(contactPhotoBlobId(applePhotoCard)).toBe("aabbccdd-1122-4aab-8aab-aabbccdd0001");
   });
 
   it("prefers logo over photo for organization cards", () => {

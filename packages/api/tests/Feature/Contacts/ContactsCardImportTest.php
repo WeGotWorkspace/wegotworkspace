@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Contacts;
 
+use App\Models\Addressbook;
+use App\Models\Card;
 use Tests\Support\ContactsTestFixtures;
 use Tests\Support\WgwDatabaseTestCase;
 
@@ -120,5 +122,68 @@ VCARD;
             '',
         )
             ->assertStatus(400);
+    }
+
+    public function test_import_apple_vcard3_binary_photo_persists_media_and_blob(): void
+    {
+        $vcard = (string) file_get_contents(__DIR__.'/../../fixtures/Contacts/thomas-boo-photo.vcf');
+
+        $response = $this->call(
+            'POST',
+            '/api/v1/contacts/cards/import?addressBookId=default',
+            [],
+            [],
+            [],
+            [
+                'HTTP_AUTHORIZATION' => 'Bearer '.$this->userBearerToken(),
+                'CONTENT_TYPE' => 'text/vcard',
+                'HTTP_ACCEPT' => 'application/json',
+            ],
+            $vcard,
+        );
+
+        $response->assertCreated()
+            ->assertJsonCount(1, 'list')
+            ->assertJsonCount(0, 'errors')
+            ->assertJsonPath('list.0.name.full', 'Thomas Boo');
+
+        $card = $response->json('list.0');
+        $this->assertIsArray($card);
+        $media = $card['media'] ?? [];
+        $this->assertNotEmpty($media, 'Imported card must expose photo media.');
+        $entry = reset($media);
+        $this->assertIsArray($entry);
+        $this->assertSame('photo', $entry['kind'] ?? null);
+        $this->assertArrayHasKey('blobId', $entry);
+        $this->assertArrayNotHasKey('uri', $entry);
+        $this->assertSame('image/jpeg', $entry['mediaType'] ?? null);
+
+        $blobId = (string) $entry['blobId'];
+        $this->withBearer($this->userBearerToken())
+            ->get('/api/v1/contacts/blobs/'.$blobId)
+            ->assertOk()
+            ->assertHeader('Content-Type', 'image/jpeg');
+
+        $stored = $this->findBobCard((string) $card['id']);
+        $this->assertNotNull($stored);
+        $raw = is_string($stored->carddata) ? $stored->carddata : (string) $stored->carddata;
+        $this->assertStringContainsString('PHOTO', $raw);
+        $this->assertStringContainsStringIgnoringCase('TYPE=JPEG', $raw);
+    }
+
+    private function findBobCard(string $cardId): ?Card
+    {
+        $cardUri = str_ends_with($cardId, '.vcf') ? $cardId : $cardId.'.vcf';
+        $bookIds = Addressbook::query()
+            ->where('principaluri', 'principals/bob')
+            ->pluck('id');
+
+        return Card::query()
+            ->whereIn('addressbookid', $bookIds)
+            ->where(function ($query) use ($cardId, $cardUri): void {
+                $query->where('uri', $cardId)
+                    ->orWhere('uri', $cardUri);
+            })
+            ->first();
     }
 }

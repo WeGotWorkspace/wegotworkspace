@@ -33,11 +33,14 @@ export {
   contactListDetail,
   contactListSubtitle,
   contactPhotoUrl,
+  contactPhotoBlobId,
   CONTACT_MEDIA_BLOB_PATH,
   filterCardsBySearch,
   mapEntriesSorted,
   type ChannelDisplayLabelOptions,
 } from "./contacts-display-utils";
+export { ContactUserAvatar } from "./contact-user-avatar";
+export { useContactPhotoSrc } from "./use-contact-photo-src";
 export {
   contactsGroupViewKey,
   filterCardsByView,

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Plus, X } from "lucide-react";
 import { Button, IconButton } from "@/button/src/button";
-import { UserAvatar } from "@/user-avatar/src/user-avatar";
+import { ContactUserAvatar } from "./contact-user-avatar";
 import { FieldLabelRow } from "@/ui/field-label-row";
 import { Input } from "@/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
@@ -19,7 +19,6 @@ import {
   contactDisplayName,
   contactPersonName,
   channelDisplayLabels,
-  contactPhotoUrl,
   contactBirthdayDisplay,
   mapEntriesSorted,
   phoneToTelHref,
@@ -327,12 +326,7 @@ export function ContactsDetailView({
   return (
     <article className={cn("contacts-detail-view", className)}>
       <header className="contacts-detail-view__header">
-        <UserAvatar
-          displayName={displayName}
-          imageSrc={card ? contactPhotoUrl(card) : undefined}
-          size="lg"
-          compact
-        />
+        <ContactUserAvatar card={card} displayName={displayName} size="lg" compact />
         {!isEditing && card ? (
           <h1 className="contacts-detail-view__title">{contactDisplayName(card)}</h1>
         ) : null}

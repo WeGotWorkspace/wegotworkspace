@@ -3,7 +3,7 @@ import { Pencil, RefreshCw, Trash2, UserMinus } from "lucide-react";
 import { IconButton } from "@/button/src/button";
 import { ListItem } from "@/list-item/src/list-item";
 import { ViewHeader } from "@/view-header/src/view-header";
-import { UserAvatar } from "@/user-avatar/src/user-avatar";
+import { ContactUserAvatar } from "./contact-user-avatar";
 import { LoadingSpinner } from "@/loading-spinner/src/loading-spinner";
 import { WorkspaceSwipeList } from "@/workspace-swipe-list/src/workspace-swipe-list";
 import { cn } from "@/lib/utils";
@@ -12,7 +12,6 @@ import {
   contactDisplayName,
   contactListDetail,
   contactListSubtitle,
-  contactPhotoUrl,
 } from "@/contacts-core/src/contacts-display-utils";
 import type { ContactsUILabels } from "@/contacts-core/src/contacts-labels";
 
@@ -152,9 +151,8 @@ export function ContactsListPanel({
               text={contactListDetail(card)}
               icons={[]}
               leading={
-                <UserAvatar
-                  displayName={name}
-                  imageSrc={contactPhotoUrl(card)}
+                <ContactUserAvatar
+                  card={card}
                   compact
                   size="sm"
                   className="contacts-list-panel__avatar"
