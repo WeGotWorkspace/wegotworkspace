@@ -153,6 +153,7 @@ export function ListItem({
       data-active={isActive ? "true" : "false"}
       data-selected={isSelected ? "true" : "false"}
       data-selection-mode={selectionMode ? "true" : "false"}
+      data-dragging={isDragging ? "true" : "false"}
       onClick={(e) => {
         if (longPressFired.current || longPressBlockedBySwipeRef.current) {
           e.preventDefault();
@@ -180,59 +181,52 @@ export function ListItem({
         e.dataTransfer.setData("text/plain", id);
       }}
       onDragEnd={onDragEnd}
-      className={`list-item__button relative w-full text-left px-4 py-3 md:px-6 md:py-4 border-b block select-none outline-none focus:outline-none ${
-        isDragging ? "opacity-40" : ""
-      } ${selectionMode ? "pl-9 md:pl-11" : ""} ${leading ? "list-item__button--with-leading" : ""}`}
+      className={`list-item__button${leading ? " list-item__button--with-leading" : ""}`}
       style={themeVars}
     >
-      <span
-        aria-hidden
-        className="list-item__checkbox-wrap absolute left-3 md:left-4 top-1/2 -translate-y-1/2"
-      >
-        <span className="list-item__checkbox inline-flex size-4 items-center justify-center rounded-[4px] border">
-          {isSelected ? <Check className="size-3 text-white" strokeWidth={2.75} /> : null}
+      <span aria-hidden className="list-item__checkbox-wrap">
+        <span className="list-item__checkbox">
+          {isSelected ? <Check className="list-item__checkbox-icon" strokeWidth={2.75} /> : null}
         </span>
       </span>
 
-      {leading ? <span className="list-item__leading shrink-0">{leading}</span> : null}
+      {leading ? <span className="list-item__leading">{leading}</span> : null}
 
-      <div className="list-item__content min-w-0">
+      <div className="list-item__content">
         {metaPosition === "above" ? (
-          <div className="flex justify-between items-baseline mb-1 gap-3">
-            <span className="list-item__subtitle text-sm font-semibold truncate min-w-0 font-sans">
-              {subtitle}
-            </span>
-            <span className="flex items-center gap-1.5 shrink-0">
+          <div className="list-item__header-row">
+            <span className="list-item__subtitle">{subtitle}</span>
+            <span className="list-item__meta-trailing">
               {icons.map((icon, index) => (
-                <span key={`${id}-icon-${index}`} className="inline-flex items-center">
+                <span key={`${id}-icon-${index}`} className="list-item__icon-slot">
                   {icon}
                 </span>
               ))}
-              <span className="list-item__date text-xs tabular-nums">{date}</span>
+              <span className="list-item__date">{date}</span>
             </span>
           </div>
         ) : null}
 
         {metaPosition === "below" ? (
-          <div className="flex justify-between items-baseline mb-1 gap-3">
+          <div className="list-item__header-row">
             <h3
-              className="list-item__title text-base font-medium leading-tight tracking-tight truncate min-w-0"
+              className="list-item__title list-item__title--in-header"
               data-empty={title ? "false" : "true"}
             >
               {title || emptyTitle}
             </h3>
-            <span className="flex items-center gap-1.5 shrink-0">
+            <span className="list-item__meta-trailing">
               {icons.map((icon, index) => (
-                <span key={`${id}-icon-${index}`} className="inline-flex items-center">
+                <span key={`${id}-icon-${index}`} className="list-item__icon-slot">
                   {icon}
                 </span>
               ))}
-              <span className="list-item__date text-xs tabular-nums">{date}</span>
+              <span className="list-item__date">{date}</span>
             </span>
           </div>
         ) : (
           <h3
-            className="list-item__title text-base font-medium leading-tight mb-1 tracking-tight truncate"
+            className="list-item__title list-item__title--standalone"
             data-empty={title ? "false" : "true"}
           >
             {title || emptyTitle}
@@ -240,14 +234,10 @@ export function ListItem({
         )}
 
         {metaPosition === "below" && subtitle ? (
-          <p className="list-item__subtitle text-sm font-semibold truncate min-w-0 font-sans mb-1">
-            {subtitle}
-          </p>
+          <p className="list-item__subtitle list-item__subtitle--below">{subtitle}</p>
         ) : null}
 
-        <p className="list-item__body text-sm leading-relaxed line-clamp-1">
-          {text || (!title ? emptyText : "")}
-        </p>
+        <p className="list-item__body">{text || (!title ? emptyText : "")}</p>
       </div>
     </button>
   );
@@ -261,7 +251,7 @@ export function ListItem({
         destructive={swipeLeftAction.destructive}
       >
         <div
-          className="list-item__swipe-action flex items-center justify-center text-white text-xs font-medium gap-1 flex-col w-full"
+          className="list-item__swipe-action"
           style={{ "--list-item-swipe-bg": swipeLeftAction.color } as CSSProperties}
         >
           {swipeLeftAction.icon}
@@ -278,7 +268,7 @@ export function ListItem({
         destructive={swipeRightAction.destructive}
       >
         <div
-          className="list-item__swipe-action flex items-center justify-center text-white text-xs font-medium gap-1 flex-col w-full"
+          className="list-item__swipe-action"
           style={{ "--list-item-swipe-bg": swipeRightAction.color } as CSSProperties}
         >
           {swipeRightAction.icon ?? <Archive className="size-5" />}
