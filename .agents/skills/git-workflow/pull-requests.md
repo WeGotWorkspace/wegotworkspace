@@ -12,7 +12,24 @@ pnpm run ci:quality
 
 For API contract work also run `pnpm test:api-done-gate` — see [testing](../testing/SKILL.md) and [developer/done-checklist.md](../developer/done-checklist.md).
 
-Ensure commits are **signed** (required for merge to `main`).
+Ensure every commit you push is **cryptographically signed** (required for merge to `main`).
+
+Before the first commit on a branch:
+
+```bash
+git config --get commit.gpgSign
+git config --get user.signingkey
+```
+
+Use `git commit -S` when `commit.gpgSign` is not `true`. The Husky **post-commit** hook checks whether `HEAD` is signed (`%G?` is not `N`/`B`) and soft-resets unsigned commits (changes stay staged). If it fails, fix signing config — see [SKILL.md](SKILL.md#signed-commits-required). Do **not** bypass with `--no-verify` or `HUSKY=0` unless the user explicitly asks.
+
+Quick SSH setup:
+
+```bash
+git config gpg.format ssh
+git config user.signingkey ~/.ssh/id_ed25519.pub   # your public key
+git config commit.gpgSign true
+```
 
 ## Push branch
 
@@ -62,7 +79,8 @@ Fix failing checks before expecting merge.
 - **Do not** add Cursor attribution to PR titles or bodies (`Made with Cursor`, `Made-with: Cursor`, `Co-authored-by: Cursor`, etc.). CI and project hooks reject it.
 - **Do not** push or open PRs unless the user asks.
 - **Do not** force-push `main`.
-- **Do not** skip hooks (`--no-verify`) unless the user explicitly requests it.
+- **Do not** skip hooks (`--no-verify`, `HUSKY=0`) unless the user explicitly requests it — especially the signed-commit post-commit hook.
+- **Do not** push unsigned commits; verify with `git log --show-signature -1` before push when unsure.
 - **Do not** amend commits unless user requests it and amend rules are satisfied (unpushed, your commit, etc.).
 - Use `gh` for all GitHub tasks (PR, checks, issues).
 

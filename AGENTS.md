@@ -4,7 +4,7 @@
 
 **API greenfield:** Work under `packages/api/` is a new Laravel app matching OpenAPI — no legacy PHP in tree. Do not restore `packages/api/src/`, `*Kernel`, `MailApi`, or dual autoload. Full guidance: [`.agents/skills/api/`](.agents/skills/api/).
 
-**Git:** Do not `git commit` or open PRs unless the user explicitly asks. [`.agents/skills/git-workflow/`](.agents/skills/git-workflow/).
+**Git:** Do not `git commit` or open PRs unless the user explicitly asks. Commits must be **signed** (GPG or SSH) — see [`.agents/skills/git-workflow/`](.agents/skills/git-workflow/).
 
 ## Start here
 

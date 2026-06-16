@@ -18,7 +18,7 @@ Policies agents should follow for **new work**. Backlog gaps are tracked on GitH
 | **WCAG 2.2 AA** | Required for new/changed UI | CI: a11y `error` on `vitest-ci` smoke (`STORYBOOK_A11Y_GATE=1`); manual `todo` in dev | [storybook/a11y-testing.md](skills/storybook/a11y-testing.md) |
 | **Chromatic** | Optional visual regression; **dormant** until maintainers opt in ([#85](https://github.com/WeGotWorkspace/wegotworkspace/issues/85)) | CI publishes when `CHROMATIC_ENABLED=true` + `CHROMATIC_PROJECT_TOKEN`; **`exitZeroOnChanges`** — review-only, does not fail CI | [storybook/chromatic.md](skills/storybook/chromatic.md), [testing/apps-done-gate.md](skills/testing/apps-done-gate.md) |
 | **No auto-commits / PRs** | Always | User instruction | [git-workflow/SKILL.md](skills/git-workflow/SKILL.md) |
-| **Signed commits on `main`** | Required for merge | Branch protection | [git-workflow/pull-requests.md](skills/git-workflow/pull-requests.md) |
+| **Signed commits on `main`** | Required for merge; enforced by post-commit hook | Branch protection + Husky | [git-workflow/SKILL.md](skills/git-workflow/SKILL.md) |
 
 **Domain skills override** generic rows when more specific ([clean-code](skills/clean-code/SKILL.md), [api/layers.md](skills/api/layers.md), etc.).
 

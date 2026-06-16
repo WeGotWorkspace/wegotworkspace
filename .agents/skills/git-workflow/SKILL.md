@@ -23,6 +23,35 @@ description: Git workflow for this repository — branching, commits, pull reque
 - It is fine to run read-only git commands (`git status`, `git diff`, `git log`) for investigation without asking.
 - **Do not** push to remote unless the user explicitly asks.
 
+## Signed commits (required)
+
+Branch protection on `main` requires **cryptographically signed commits** (GPG or SSH). A Husky **post-commit** hook checks `git log -1 --format=%G?` on `HEAD` and **rejects unsigned commits** (soft-reset, changes stay staged).
+
+**Before committing** (when the user asks), verify signing is configured:
+
+```bash
+git config --get commit.gpgSign    # should be true
+git config --get user.signingkey   # must be set (SSH .pub path or GPG key id)
+git config --get gpg.format        # ssh or gpg (default openpgp)
+```
+
+If `commit.gpgSign` is not `true`, **always** pass `-S` / `--gpg-sign`:
+
+```bash
+git commit -S -m "$(cat <<'EOF'
+type(scope): subject
+
+EOF
+)"
+```
+
+**Agent rules:**
+
+1. Check signing config before the first commit on a branch; configure locally if missing (SSH example in [README.md](../../../README.md) release signing table).
+2. Never push unsigned commits to branches that target `main`.
+3. If the signed-commit hook fails, **fix signing config and recommit** — do **not** use `--no-verify` or `HUSKY=0` unless the user explicitly requests it.
+4. CI branch protection also rejects unsigned commits on merge; hooks catch the problem at commit time.
+
 ## Conventional Commits (when the user asks you to commit)
 
 Use **[Conventional Commits](https://www.conventionalcommits.org/)** for every commit message:
@@ -38,6 +67,6 @@ Do not use vague one-word subjects (`fix`, `update`, `wip`) without a clear desc
 
 ## Repo constraints (summary)
 
-- **Signed commits** required on `main` (GPG or SSH).
+- **Signed commits** required on `main` (GPG or SSH) — enforced locally by the post-commit hook and on merge by branch protection.
 - **Branch protection:** PR required; CI checks must pass — see [pull-requests.md](pull-requests.md).
-- Husky runs Prettier/ESLint/Pint on commit; Commitlint enforces Conventional Commits. CI rejects Cursor attribution in commit messages and PR descriptions; `.cursor/hooks` blocks `gh pr create` / `gh pr edit` with attribution in `--body`.
+- Husky runs Prettier/ESLint/Pint on commit; Commitlint enforces Conventional Commits; post-commit verifies commit signatures. CI rejects Cursor attribution in commit messages and PR descriptions; `.cursor/hooks` blocks `gh pr create` / `gh pr edit` with attribution in `--body`.

@@ -61,7 +61,7 @@ Meet/RTC: `pnpm --dir packages/apps exec vitest run src/lib/rtc/session src/meet
 pnpm run ci:quality
 ```
 
-- [ ] Signed commits ([git-workflow/pull-requests.md](../git-workflow/pull-requests.md))
+- [ ] Signed commits — `git log -1 --format=%G?` is not `N`/`B`; see [git-workflow/SKILL.md](../git-workflow/SKILL.md#signed-commits-required)
 - [ ] PR test plan lists concrete commands run ([testing/SKILL.md](../testing/SKILL.md))
 
 ## Dev environment issues

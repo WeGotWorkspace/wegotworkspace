@@ -1,0 +1,1 @@
+node tools/git/require-signed-commit.mjs
