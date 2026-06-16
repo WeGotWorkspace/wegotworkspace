@@ -1,4 +1,7 @@
-import { contactDisplayName } from "@/contacts-core/src/contacts-display-utils";
+import {
+  contactDisplayName,
+  contactListSortName,
+} from "@/contacts-core/src/contacts-display-utils";
 import type { ContactCard, ContactCardPatch } from "@/contacts-core/src/contacts-types";
 
 /**
@@ -203,7 +206,7 @@ export function filterCardsByView(cards: ContactCard[], view: string): ContactCa
     const groupCard = cards.find((card) => card.id === groupId);
     if (!groupCard || !isContactGroupCard(groupCard)) return [];
     return resolveGroupMemberCards(groupCard, cards).sort((a, b) =>
-      contactDisplayName(a).localeCompare(contactDisplayName(b), undefined, {
+      contactListSortName(a).localeCompare(contactListSortName(b), undefined, {
         sensitivity: "base",
       }),
     );

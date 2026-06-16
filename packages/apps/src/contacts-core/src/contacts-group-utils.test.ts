@@ -223,7 +223,7 @@ describe("contacts-group-utils", () => {
     });
   });
 
-  it("returns group members sorted by display name regardless of members insertion order", () => {
+  it("returns group members sorted by surname-first sort key regardless of members insertion order", () => {
     const zoeUid = "urn:uuid:550e8400-e29b-41d4-a716-446655440030";
     const zoe = {
       "@type": "Card",
@@ -248,7 +248,7 @@ describe("contacts-group-utils", () => {
       [...cards, zoe, groupUnsortedInsertionOrder],
       contactsGroupViewKey("card-group-unsorted"),
     );
-    // Jane (J) < Zoe (Z) alphabetically
+    // Jane (Doe) < Zoe (Last) by surname-first sort key
     expect(result.map((c) => c.id)).toEqual(["card-jane", "card-zoe"]);
   });
 

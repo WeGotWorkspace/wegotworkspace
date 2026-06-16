@@ -150,6 +150,60 @@ function nameFromComponents(card: ContactCard): string {
   return synthesizeNameFromComponents(card.name?.components);
 }
 
+function nameComponentValue(
+  components: NameComponentLike[] | undefined,
+  kind: "given" | "given2" | "surname" | "surname2",
+): string {
+  return (components ?? [])
+    .filter((component) => component.kind === kind)
+    .map((component) => component.value.trim())
+    .filter(Boolean)
+    .join(" ");
+}
+
+/** Last token as surname when only `name.full` is available (matches edit draft parsing). */
+function splitFullNameForSort(fullName: string): { given: string; surname: string } {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return {
+      given: parts.slice(0, -1).join(" "),
+      surname: parts[parts.length - 1] ?? "",
+    };
+  }
+  return { given: fullName.trim(), surname: "" };
+}
+
+function personSortNameParts(card: ContactCard): { given: string; surname: string } {
+  const components = card.name?.components;
+  let given = [nameComponentValue(components, "given"), nameComponentValue(components, "given2")]
+    .filter(Boolean)
+    .join(" ");
+  let surname = [
+    nameComponentValue(components, "surname"),
+    nameComponentValue(components, "surname2"),
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const fullName = card.name?.full?.trim() ?? "";
+  if (!given && !surname && fullName) {
+    const split = splitFullNameForSort(fullName);
+    given = split.given;
+    surname = split.surname;
+  }
+
+  return { given, surname };
+}
+
+function formatPersonListSortName(given: string, surname: string): string {
+  const givenTrimmed = given.trim();
+  const surnameTrimmed = surname.trim();
+  if (surnameTrimmed && givenTrimmed) return `${surnameTrimmed}, ${givenTrimmed}`;
+  if (surnameTrimmed) return surnameTrimmed;
+  if (givenTrimmed) return givenTrimmed;
+  return "";
+}
+
 /** Person name from `name.full` or name components — not organization. */
 export function contactPersonName(card: ContactCard): string {
   const full = card.name?.full?.trim();
@@ -351,10 +405,29 @@ export function phoneToTelHref(number: string): string {
   return stripped ? `tel:${stripped}` : "";
 }
 
-/**
- * Returns a safe absolute href for external contact links.
- * Unsupported or malformed protocols (for example `javascript:`) are rejected.
- */
+/** Sort key for contact lists: surname-first for people, display name for orgs/groups. */
+export function contactListSortName(card: ContactCard): string {
+  const organizationName = firstOrganizationName(card);
+  const { given, surname } = personSortNameParts(card);
+  const personSortName = formatPersonListSortName(given, surname);
+  const displayName = contactDisplayName(card);
+
+  if (card.kind === "org") {
+    if (organizationName) return organizationName.trim();
+    if (personSortName) return personSortName;
+    return displayName.trim();
+  }
+
+  if (card.kind === "group") {
+    const groupName = contactPersonName(card).trim() || organizationName?.trim() || "";
+    if (groupName) return groupName;
+    return displayName.trim();
+  }
+
+  if (personSortName) return personSortName;
+  if (organizationName) return organizationName.trim();
+  return displayName.trim();
+}
 
 /** First letter bucket for alphabetical list sections (A–Z or #). */
 export function contactListSectionLetter(name: string): string {
@@ -366,21 +439,25 @@ export function contactListSectionLetter(name: string): string {
   return "#";
 }
 
+export function sortContactCardsForList(cards: ContactCard[]): ContactCard[] {
+  return [...cards].sort((left, right) =>
+    contactListSortName(left).localeCompare(contactListSortName(right), undefined, {
+      sensitivity: "base",
+    }),
+  );
+}
+
 export type ContactListSection = {
   letter: string;
   cards: ContactCard[];
 };
 
 export function groupContactCardsBySection(cards: ContactCard[]): ContactListSection[] {
-  const sorted = [...cards].sort((left, right) =>
-    contactDisplayName(left).localeCompare(contactDisplayName(right), undefined, {
-      sensitivity: "base",
-    }),
-  );
+  const sorted = sortContactCardsForList(cards);
   const sections: ContactListSection[] = [];
 
   for (const card of sorted) {
-    const letter = contactListSectionLetter(contactDisplayName(card));
+    const letter = contactListSectionLetter(contactListSortName(card));
     const last = sections[sections.length - 1];
     if (last?.letter === letter) {
       last.cards.push(card);
@@ -392,6 +469,10 @@ export function groupContactCardsBySection(cards: ContactCard[]): ContactListSec
   return sections;
 }
 
+/**
+ * Returns a safe absolute href for external contact links.
+ * Unsupported or malformed protocols (for example `javascript:`) are rejected.
+ */
 export function safeContactExternalHref(href: string): string {
   const trimmed = href.trim();
   if (!trimmed) return "";

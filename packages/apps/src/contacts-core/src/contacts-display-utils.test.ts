@@ -7,6 +7,7 @@ import {
   contactDisplayName,
   contactInitials,
   contactListDetail,
+  contactListSortName,
   contactListSubtitle,
   contactPhotoUrl,
   contactPhotoBlobId,
@@ -16,6 +17,7 @@ import {
   mapEntriesSorted,
   phoneToTelHref,
   safeContactExternalHref,
+  sortContactCardsForList,
 } from "./contacts-display-utils";
 
 const janeCard = {
@@ -474,12 +476,90 @@ describe("contacts-display-utils", () => {
     });
   });
 
-  it("groups contacts into sticky section letters by display name", () => {
-    const sections = groupContactCardsBySection([joeCard, janeCard]);
-    expect(sections).toEqual([{ letter: "J", cards: [janeCard, joeCard] }]);
+  it("sorts contacts by surname then given name", () => {
+    const aliceSmith = {
+      ...janeCard,
+      id: "card-alice",
+      name: { "@type": "Name" as const, isOrdered: false, full: "Alice Smith" },
+    } as unknown as ContactCard;
+    const bobAdams = {
+      ...joeCard,
+      id: "card-bob",
+      name: {
+        "@type": "Name" as const,
+        isOrdered: false,
+        components: [
+          { "@type": "NameComponent" as const, kind: "given" as const, value: "Bob" },
+          { "@type": "NameComponent" as const, kind: "surname" as const, value: "Adams" },
+        ],
+      },
+    } as unknown as ContactCard;
+
+    expect(contactListSortName(aliceSmith)).toBe("Smith, Alice");
+    expect(contactListSortName(bobAdams)).toBe("Adams, Bob");
+    expect(sortContactCardsForList([aliceSmith, bobAdams]).map((card) => card.id)).toEqual([
+      "card-bob",
+      "card-alice",
+    ]);
   });
 
-  it("uses # when the display name does not start with A–Z", () => {
+  it("sorts surname-only and single-name contacts by available name parts", () => {
+    const surnameOnly = {
+      ...janeCard,
+      id: "card-vendrik",
+      name: {
+        "@type": "Name" as const,
+        isOrdered: false,
+        components: [
+          { "@type": "NameComponent" as const, kind: "surname" as const, value: "Vendrik" },
+        ],
+      },
+    } as unknown as ContactCard;
+    const mononym = {
+      ...joeCard,
+      id: "card-cher",
+      name: { "@type": "Name" as const, isOrdered: false, full: "Cher" },
+    } as unknown as ContactCard;
+
+    expect(contactListSortName(surnameOnly)).toBe("Vendrik");
+    expect(contactListSortName(mononym)).toBe("Cher");
+    expect(sortContactCardsForList([mononym, surnameOnly]).map((card) => card.id)).toEqual([
+      "card-cher",
+      "card-vendrik",
+    ]);
+  });
+
+  it("sorts org cards by organization name", () => {
+    const companyCard = {
+      ...janeCard,
+      id: "card-acme",
+      kind: "org" as const,
+      name: undefined,
+      organizations: {
+        "org-1": { "@type": "Organization" as const, name: "Acme Corp" },
+      },
+    } as unknown as ContactCard;
+
+    expect(contactListSortName(companyCard)).toBe("Acme Corp");
+  });
+
+  it("sorts contacts alphabetically by surname-first sort key", () => {
+    const cards = [joeCard, janeCard];
+    expect(sortContactCardsForList(cards).map((card) => card.id)).toEqual([
+      "card-jane",
+      "card-joe",
+    ]);
+  });
+
+  it("groups sorted contacts into sticky section letters by surname", () => {
+    const sections = groupContactCardsBySection([joeCard, janeCard]);
+    expect(sections).toEqual([
+      { letter: "D", cards: [janeCard] },
+      { letter: "E", cards: [joeCard] },
+    ]);
+  });
+
+  it("uses # when the sort key does not start with A–Z", () => {
     const numericMononym = {
       ...janeCard,
       id: "card-123",
@@ -488,6 +568,19 @@ describe("contacts-display-utils", () => {
 
     expect(groupContactCardsBySection([numericMononym])).toEqual([
       { letter: "#", cards: [numericMononym] },
+    ]);
+  });
+
+  it("sections multi-token names by surname even when given starts with a digit", () => {
+    const addressLikeName = {
+      ...janeCard,
+      id: "card-123-main",
+      name: { "@type": "Name" as const, isOrdered: false, full: "123 Main" },
+    } as unknown as ContactCard;
+
+    expect(contactListSortName(addressLikeName)).toBe("Main, 123");
+    expect(groupContactCardsBySection([addressLikeName])).toEqual([
+      { letter: "M", cards: [addressLikeName] },
     ]);
   });
 });
