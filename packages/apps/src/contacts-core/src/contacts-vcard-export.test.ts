@@ -116,7 +116,7 @@ describe("contactCardToVCard", () => {
   it("escapes URL values when exporting links", () => {
     const card = makeCard({
       links: {
-        l1: { "@type": "Link", kind: "other", uri: "https://example.com/a,b;c" },
+        l1: { "@type": "Link", uri: "https://example.com/a,b;c" },
       },
     });
     const vcard = contactCardToVCard(card);
@@ -128,7 +128,6 @@ describe("contactCardToVCard", () => {
       links: {
         l1: {
           "@type": "Link",
-          kind: "other",
           uri: "https://example.com\r\nNOTE:injected",
         },
       },
