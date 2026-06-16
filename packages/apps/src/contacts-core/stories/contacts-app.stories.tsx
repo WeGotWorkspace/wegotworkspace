@@ -28,6 +28,7 @@ export const Default: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    const body = within(document.body);
     const janeListItem = canvasElement.querySelector('[data-list-item-id="card-jane"]');
     expect(janeListItem).toBeTruthy();
     await userEvent.click(janeListItem as HTMLElement);
@@ -54,7 +55,6 @@ export const Default: Story = {
     const phoneInput = canvas.getByDisplayValue("+1-555-0101");
     await userEvent.clear(phoneInput);
     await userEvent.type(phoneInput, "+1-555-0199");
-    await userEvent.click(canvas.getByRole("button", { name: "Save" }));
 
     await waitFor(
       () => {
@@ -75,6 +75,7 @@ export const Default: Story = {
     await userEvent.click(canvas.getByRole("button", { name: "All contacts" }));
 
     await userEvent.click(canvas.getByRole("button", { name: "New contact" }));
+    await userEvent.click(body.getByRole("menuitem", { name: "Create contact" }));
     await userEvent.type(canvas.getByLabelText("First name"), "Pat");
     await userEvent.type(canvas.getByLabelText("Last name"), "Example");
     await userEvent.click(canvas.getByRole("button", { name: "Save" }));
