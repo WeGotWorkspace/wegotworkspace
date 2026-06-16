@@ -3229,6 +3229,10 @@
                     "etag": {
                         "$ref": "#/components/schemas/DavEtag"
                     },
+                    "state": {
+                        "type": "string",
+                        "description": "Opaque JMAP state token for Contact/set ifInState (RFC 9610)."
+                    },
                     "kind": {
                         "type": "string",
                         "enum": [
@@ -6291,6 +6295,103 @@
                 },
                 "additionalProperties": false,
                 "description": "REST response for POST /contacts/cards/import."
+            },
+            "ContactCardSetRequest": {
+                "type": "object",
+                "properties": {
+                    "create": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/ContactCardCreate"
+                        }
+                    },
+                    "update": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object",
+                            "properties": {
+                                "ifInState": {
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": true
+                        }
+                    },
+                    "destroy": {
+                        "description": "Card ids to destroy, or map of id to { ifInState }.",
+                        "oneOf": [
+                            {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/JsContactId"
+                                }
+                            },
+                            {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "object",
+                                    "properties": {
+                                        "ifInState": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "additionalProperties": false
+                                }
+                            }
+                        ]
+                    }
+                },
+                "additionalProperties": false
+            },
+            "ContactCardSetResponse": {
+                "type": "object",
+                "required": [
+                    "created",
+                    "updated",
+                    "destroyed",
+                    "notCreated",
+                    "notUpdated",
+                    "notDestroyed"
+                ],
+                "properties": {
+                    "created": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/JsContactId"
+                        }
+                    },
+                    "updated": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
+                    "destroyed": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/JsContactId"
+                        }
+                    },
+                    "notCreated": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object"
+                        }
+                    },
+                    "notUpdated": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object"
+                        }
+                    },
+                    "notDestroyed": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object"
+                        }
+                    }
+                },
+                "additionalProperties": false
             }
         }
     },
@@ -10895,6 +10996,42 @@
                     },
                     "400": {
                         "description": "Invalid or empty vCard payload"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/contacts/cards/set": {
+            "post": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "JMAP Contact/set batch mutations",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ContactCardSetRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Contact/set result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactCardSetResponse"
+                                }
+                            }
+                        }
                     }
                 },
                 "x-wgw-access": "user"

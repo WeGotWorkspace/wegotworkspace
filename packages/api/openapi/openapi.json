@@ -1678,6 +1678,42 @@
         "x-wgw-access": "user"
       }
     },
+    "/contacts/cards/set": {
+      "post": {
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "JMAP Contact/set batch mutations",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactCardSetRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contact/set result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactCardSetResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-wgw-access": "user"
+      }
+    },
     "/contacts/cards/query": {
       "post": {
         "tags": [

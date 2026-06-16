@@ -125,5 +125,95 @@
       }
     },
     "additionalProperties": false
+  },
+  "ContactCardSetRequest": {
+    "type": "object",
+    "properties": {
+      "create": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "#/components/schemas/ContactCardCreate"
+        }
+      },
+      "update": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "properties": {
+            "ifInState": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "destroy": {
+        "description": "Card ids to destroy, or map of id to { ifInState }.",
+        "oneOf": [
+          {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JsContactId"
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "ifInState": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        ]
+      }
+    },
+    "additionalProperties": false
+  },
+  "ContactCardSetResponse": {
+    "type": "object",
+    "required": ["created", "updated", "destroyed", "notCreated", "notUpdated", "notDestroyed"],
+    "properties": {
+      "created": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "#/components/schemas/JsContactId"
+        }
+      },
+      "updated": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "string"
+        }
+      },
+      "destroyed": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/JsContactId"
+        }
+      },
+      "notCreated": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object"
+        }
+      },
+      "notUpdated": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object"
+        }
+      },
+      "notDestroyed": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object"
+        }
+      }
+    },
+    "additionalProperties": false
   }
 }

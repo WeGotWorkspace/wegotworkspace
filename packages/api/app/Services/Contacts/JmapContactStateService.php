@@ -1,0 +1,140 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services\Contacts;
+
+use App\Exceptions\ApiHttpException;
+use App\Models\Card;
+use App\Models\JmapContactState;
+use Illuminate\Support\Str;
+
+final class JmapContactStateService
+{
+    public function attachStateToken(
+        string $username,
+        array $contact,
+        Card $card,
+        string $addressBookUri,
+    ): array {
+        $state = $this->ensureStateRow($username, $card, $addressBookUri);
+        $contact['state'] = $state->state_token;
+
+        return $contact;
+    }
+
+    public function stateTokenForCard(string $username, string $cardId): ?string
+    {
+        $row = JmapContactState::query()
+            ->where('username', $username)
+            ->where('card_id', $cardId)
+            ->first();
+
+        return $row !== null ? $row->state_token : null;
+    }
+
+    /**
+     * Resolve JMAP ifInState to a CardDAV etag for If-Match.
+     */
+    public function resolveEtagForIfInState(string $username, string $cardId, string $ifInState): string
+    {
+        $row = JmapContactState::query()
+            ->where('username', $username)
+            ->where('card_id', $cardId)
+            ->first();
+
+        if ($row === null || $row->state_token !== $ifInState) {
+            throw new ApiHttpException(
+                412,
+                'Contact state does not match ifInState.',
+                'stateMismatch',
+            );
+        }
+
+        $etag = is_string($row->etag) ? trim($row->etag) : '';
+        if ($etag === '') {
+            throw new ApiHttpException(
+                412,
+                'Contact state does not match ifInState.',
+                'stateMismatch',
+            );
+        }
+
+        return $etag;
+    }
+
+    public function rotateAfterWrite(
+        string $username,
+        string $cardId,
+        Card $card,
+        string $addressBookUri,
+    ): string {
+        $rawEtag = is_string($card->etag) ? $card->etag : null;
+        $row = JmapContactState::query()
+            ->where('username', $username)
+            ->where('card_id', $cardId)
+            ->first();
+
+        if ($row === null) {
+            $row = new JmapContactState([
+                'username' => $username,
+                'card_id' => $cardId,
+                'address_book_uri' => $addressBookUri,
+                'card_uri' => (string) $card->uri,
+            ]);
+        }
+
+        $row->address_book_uri = $addressBookUri;
+        $row->card_uri = (string) $card->uri;
+        $row->etag = $rawEtag;
+        $row->state_token = $this->generateStateToken();
+        $row->save();
+
+        return $row->state_token;
+    }
+
+    public function deleteForCard(string $username, string $cardId): void
+    {
+        JmapContactState::query()
+            ->where('username', $username)
+            ->where('card_id', $cardId)
+            ->delete();
+    }
+
+    private function ensureStateRow(string $username, Card $card, string $addressBookUri): JmapContactState
+    {
+        $cardId = ContactCardMapper::cardIdFromUri((string) $card->uri);
+        $row = JmapContactState::query()
+            ->where('username', $username)
+            ->where('card_id', $cardId)
+            ->first();
+
+        $rawEtag = is_string($card->etag) ? $card->etag : null;
+
+        if ($row === null) {
+            $row = JmapContactState::query()->create([
+                'username' => $username,
+                'card_id' => $cardId,
+                'address_book_uri' => $addressBookUri,
+                'card_uri' => (string) $card->uri,
+                'state_token' => $this->generateStateToken(),
+                'etag' => $rawEtag,
+            ]);
+
+            return $row;
+        }
+
+        if ($rawEtag !== null && $rawEtag !== '' && $row->etag !== $rawEtag) {
+            $row->etag = $rawEtag;
+            $row->state_token = $this->generateStateToken();
+            $row->save();
+        }
+
+        return $row;
+    }
+
+    private function generateStateToken(): string
+    {
+        return Str::lower(Str::replace('-', '', Str::uuid()->toString()));
+    }
+}

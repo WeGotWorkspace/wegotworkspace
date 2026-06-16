@@ -16,6 +16,7 @@ final class ContactCardMapper
         private readonly VCardJsContactConverter $converter,
         private readonly ContactMediaBlobResolver $mediaBlobs,
         private readonly ContactMemberResolver $members,
+        private readonly JmapContactStateService $contactStates,
     ) {}
 
     /**
@@ -48,7 +49,7 @@ final class ContactCardMapper
             }
         }
 
-        return $contact;
+        return $this->contactStates->attachStateToken($username, $contact, $card, $addressBookUri);
     }
 
     /**

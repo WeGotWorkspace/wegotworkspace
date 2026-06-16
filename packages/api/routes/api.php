@@ -199,6 +199,7 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($filesS
             ->where('addressBookId', '[a-z0-9_-]+');
         Route::delete('contacts/addressbooks/{addressBookId}', [ContactsAddressBooksController::class, 'destroy'])
             ->where('addressBookId', '[a-z0-9_-]+');
+        Route::post('contacts/cards/set', [ContactCardsController::class, 'set']);
         Route::get('contacts/cards/changes', [ContactCardsController::class, 'changes']);
         Route::post('contacts/cards/query', [ContactCardsController::class, 'query']);
         Route::post('contacts/cards/import', ContactCardImportController::class);
