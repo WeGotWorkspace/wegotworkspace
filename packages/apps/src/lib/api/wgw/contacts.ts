@@ -163,8 +163,11 @@ export async function downloadCardVcf(
 
 export async function importVcards(
   vcardText: string,
-  opts: { addressBookId: string; signal?: AbortSignal },
+  opts?: { addressBookId: string; signal?: AbortSignal },
 ): Promise<ContactCardImportResponse> {
+  if (!opts?.addressBookId) {
+    throw new ContactsRequestError("addressBookId is required for vCard import", 400);
+  }
   const query = `?addressBookId=${encodeURIComponent(opts.addressBookId)}`;
   const res = await wgwFetch(`/contacts/cards/import${query}`, {
     method: "POST",

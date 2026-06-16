@@ -99,7 +99,7 @@ describe("useContactsController", () => {
     const patchCard = vi.fn((_id: string) =>
       Promise.resolve({
         ...bootstrap.data.cards.find((card) => card.id === "card-jane")!,
-        name: { "@type": "Name", isOrdered: false, full: "Changed Name Doe" },
+        name: { "@type": "Name" as const, isOrdered: false, full: "Changed Name Doe" },
       }),
     );
 
