@@ -27,10 +27,14 @@ type ListItemTheme = {
   bodyColor: string;
 };
 
+type ListItemMetaPosition = "above" | "below";
+
 type ListItemProps = {
   id: string;
   title: string;
   subtitle: string;
+  /** Subtitle/meta line placement. Mail and notes keep the default `above`; contacts pass `below`. */
+  metaPosition?: ListItemMetaPosition;
   date: string;
   icons?: React.ReactNode[];
   text: string;
@@ -85,6 +89,7 @@ export function ListItem({
   id,
   title,
   subtitle,
+  metaPosition = "above",
   date,
   icons = [],
   text,
@@ -192,26 +197,53 @@ export function ListItem({
       {leading ? <span className="list-item__leading shrink-0">{leading}</span> : null}
 
       <div className="list-item__content min-w-0">
-        <div className="flex justify-between items-baseline mb-1 gap-3">
-          <span className="list-item__subtitle text-sm font-semibold truncate min-w-0 font-sans">
-            {subtitle}
-          </span>
-          <span className="flex items-center gap-1.5 shrink-0">
-            {icons.map((icon, index) => (
-              <span key={`${id}-icon-${index}`} className="inline-flex items-center">
-                {icon}
-              </span>
-            ))}
-            <span className="list-item__date text-xs tabular-nums">{date}</span>
-          </span>
-        </div>
+        {metaPosition === "above" ? (
+          <div className="flex justify-between items-baseline mb-1 gap-3">
+            <span className="list-item__subtitle text-sm font-semibold truncate min-w-0 font-sans">
+              {subtitle}
+            </span>
+            <span className="flex items-center gap-1.5 shrink-0">
+              {icons.map((icon, index) => (
+                <span key={`${id}-icon-${index}`} className="inline-flex items-center">
+                  {icon}
+                </span>
+              ))}
+              <span className="list-item__date text-xs tabular-nums">{date}</span>
+            </span>
+          </div>
+        ) : null}
 
-        <h3
-          className="list-item__title text-base font-medium leading-tight mb-1 tracking-tight truncate"
-          data-empty={title ? "false" : "true"}
-        >
-          {title || emptyTitle}
-        </h3>
+        {metaPosition === "below" ? (
+          <div className="flex justify-between items-baseline mb-1 gap-3">
+            <h3
+              className="list-item__title text-base font-medium leading-tight tracking-tight truncate min-w-0"
+              data-empty={title ? "false" : "true"}
+            >
+              {title || emptyTitle}
+            </h3>
+            <span className="flex items-center gap-1.5 shrink-0">
+              {icons.map((icon, index) => (
+                <span key={`${id}-icon-${index}`} className="inline-flex items-center">
+                  {icon}
+                </span>
+              ))}
+              <span className="list-item__date text-xs tabular-nums">{date}</span>
+            </span>
+          </div>
+        ) : (
+          <h3
+            className="list-item__title text-base font-medium leading-tight mb-1 tracking-tight truncate"
+            data-empty={title ? "false" : "true"}
+          >
+            {title || emptyTitle}
+          </h3>
+        )}
+
+        {metaPosition === "below" && subtitle ? (
+          <p className="list-item__subtitle text-sm font-semibold truncate min-w-0 font-sans mb-1">
+            {subtitle}
+          </p>
+        ) : null}
 
         <p className="list-item__body text-sm leading-relaxed line-clamp-1">
           {text || (!title ? emptyText : "")}

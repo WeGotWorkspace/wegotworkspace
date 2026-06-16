@@ -147,6 +147,7 @@ export function ContactsListPanel({
               id={card.id}
               title={name}
               subtitle={contactListSubtitle(card)}
+              metaPosition="below"
               date=""
               text={contactListDetail(card)}
               icons={[]}
