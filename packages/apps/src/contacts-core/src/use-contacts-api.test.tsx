@@ -7,16 +7,13 @@ import type { ContactsApiSource } from "./contacts-api-source";
 const mockPatchBootstrap = vi.fn();
 const mockLoadBootstrap = vi.fn();
 
-vi.mock("@/hooks/use-workspace-api", () => ({
-  useWorkspaceApi: () => ({
+vi.mock("@/lib/live/use-hybrid-bootstrap", () => ({
+  useHybridBootstrap: () => ({
     phase: "ready",
     error: null,
-    retry: vi.fn(),
+    data: createContactsAppBootstrap(),
+    load: vi.fn(),
     successVersion: 1,
-    listLoading: false,
-    session: createContactsAppBootstrap().session,
-    data: createContactsAppBootstrap().data,
-    operations: undefined,
     patchBootstrap: mockPatchBootstrap,
   }),
 }));
