@@ -23,6 +23,7 @@ export function ContactsWorkspace({
   labels,
   operations,
   listLoading = false,
+  onRefreshList,
   onLogout,
   className,
   initialView,
@@ -199,6 +200,7 @@ export function ContactsWorkspace({
             onSwipeDelete: (id) => openDeleteConfirm([id]),
             onSwipeRemoveFromGroup: (id) => removeFromGroup([id]),
             selectionBar,
+            onRefreshList,
           });
 
           return {

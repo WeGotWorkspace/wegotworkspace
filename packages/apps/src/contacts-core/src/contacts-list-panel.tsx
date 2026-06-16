@@ -1,11 +1,12 @@
 import type { MouseEvent as ReactMouseEvent, ReactNode, RefObject } from "react";
-import { Pencil, Trash2, UserMinus } from "lucide-react";
+import { Pencil, RefreshCw, Trash2, UserMinus } from "lucide-react";
 import { IconButton } from "@/button/src/button";
 import { ListItem } from "@/list-item/src/list-item";
 import { ViewHeader } from "@/view-header/src/view-header";
 import { UserAvatar } from "@/user-avatar/src/user-avatar";
 import { LoadingSpinner } from "@/loading-spinner/src/loading-spinner";
 import { WorkspaceSwipeList } from "@/workspace-swipe-list/src/workspace-swipe-list";
+import { cn } from "@/lib/utils";
 import type { ContactCard } from "@/contacts-core/src/contacts-types";
 import {
   contactDisplayName,
@@ -42,6 +43,7 @@ type ContactsListPanelProps = {
   onSwipeDelete: (id: string) => void;
   onSwipeRemoveFromGroup: (id: string) => void;
   selectionBar: ReactNode;
+  onRefreshList?: () => void;
 };
 
 export function ContactsListPanel({
@@ -71,6 +73,7 @@ export function ContactsListPanel({
   onSwipeDelete,
   onSwipeRemoveFromGroup,
   selectionBar,
+  onRefreshList,
 }: ContactsListPanelProps) {
   return {
     header: (
@@ -84,28 +87,42 @@ export function ContactsListPanel({
             : L.listContacts(visibleCards.length)
         }
         actions={
-          selectedGroupId ? (
-            <>
-              {canRenameGroup ? (
-                <IconButton
-                  label={L.renameGroup}
-                  onClick={() => openGroupRenameDialog(selectedGroupId, viewLabel)}
-                  icon={<Pencil />}
-                  size="sm"
-                  variant="subtle"
-                />
-              ) : null}
-              {canDeleteGroup ? (
-                <IconButton
-                  label={L.deleteGroup}
-                  onClick={() => onDeleteGroup(selectedGroupId)}
-                  icon={<Trash2 />}
-                  size="sm"
-                  variant="subtle"
-                />
-              ) : null}
-            </>
-          ) : null
+          <>
+            {onRefreshList ? (
+              <IconButton
+                label={L.refreshList}
+                onClick={onRefreshList}
+                disabled={listLoading}
+                icon={
+                  <RefreshCw className={cn("size-4", listLoading && "animate-spin")} aria-hidden />
+                }
+                size="sm"
+                variant="subtle"
+              />
+            ) : null}
+            {selectedGroupId ? (
+              <>
+                {canRenameGroup ? (
+                  <IconButton
+                    label={L.renameGroup}
+                    onClick={() => openGroupRenameDialog(selectedGroupId, viewLabel)}
+                    icon={<Pencil />}
+                    size="sm"
+                    variant="subtle"
+                  />
+                ) : null}
+                {canDeleteGroup ? (
+                  <IconButton
+                    label={L.deleteGroup}
+                    onClick={() => onDeleteGroup(selectedGroupId)}
+                    icon={<Trash2 />}
+                    size="sm"
+                    variant="subtle"
+                  />
+                ) : null}
+              </>
+            ) : null}
+          </>
         }
         searchPlaceholder={L.searchPlaceholder}
         searchValue={searchQuery}

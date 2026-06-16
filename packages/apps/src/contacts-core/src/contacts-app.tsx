@@ -19,8 +19,17 @@ export function ContactsApp({ apiSource }: ContactsAppProps = {}) {
   const params = useParams({ strict: false }) as { groupCardId?: string; contactId?: string };
   const rawSearch = useSearch({ strict: false }) as Record<string, unknown>;
 
-  const { phase, error, retry, successVersion, listLoading, data, session, operations } =
-    useContactsAPI(apiSource);
+  const {
+    phase,
+    error,
+    retry,
+    successVersion,
+    listLoading,
+    refreshList,
+    data,
+    session,
+    operations,
+  } = useContactsAPI(apiSource);
 
   // Backward compat: redirect legacy query-param URLs (?view=&contact=) to new path form.
   // Runs once on mount; if no legacy params are present this is a no-op.
@@ -137,6 +146,7 @@ export function ContactsApp({ apiSource }: ContactsAppProps = {}) {
           session={session}
           operations={operations}
           listLoading={listLoading}
+          onRefreshList={refreshList}
           initialView={initialView}
           initialContactId={initialContactId}
           onViewChange={handleViewChange}

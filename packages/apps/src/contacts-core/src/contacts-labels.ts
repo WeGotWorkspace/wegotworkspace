@@ -6,6 +6,7 @@ import { workspaceDestructiveDialogLabels } from "@/lib/workspace/destructive-di
  */
 export type ContactsUILabels = {
   listLoading: string;
+  refreshList: string;
   searchPlaceholder: string;
   sidebarAllContacts: string;
   sectionGroups: string;
@@ -90,6 +91,7 @@ export type ContactsUILabels = {
 
 export const defaultContactsLabels: ContactsUILabels = {
   listLoading: "Loading contacts…",
+  refreshList: "Refresh contacts",
   searchPlaceholder: "Search contacts...",
   sidebarAllContacts: "All contacts",
   sectionGroups: "Groups",

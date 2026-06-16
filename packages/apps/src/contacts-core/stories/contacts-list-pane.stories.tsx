@@ -40,6 +40,8 @@ function ContactsListPaneHarness({ preset = "default" }: { preset?: ContactsList
     selectedGroupId: controller.selectedGroup?.id ?? null,
     canRenameGroup: controller.canRenameGroup,
     openGroupRenameDialog: (groupId, name) => controller.setGroupRenameDialog({ groupId, name }),
+    canDeleteGroup: controller.canDeleteGroup,
+    onDeleteGroup: controller.openDeleteGroupConfirm,
     selectedIds: controller.selectedIds,
     selectionMode: controller.selectionMode || controller.selectedIds.length > 1,
     listLoading: controller.listLoading,
@@ -56,6 +58,7 @@ function ContactsListPaneHarness({ preset = "default" }: { preset?: ContactsList
     onSwipeDelete: (id) => controller.openDeleteConfirm([id]),
     onSwipeRemoveFromGroup: (id) => controller.removeFromGroup([id]),
     selectionBar: controller.selectionBar,
+    onRefreshList: () => {},
   });
 
   return (
@@ -90,6 +93,7 @@ export const Default: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.getByRole("heading", { level: 3, name: "Jane Doe" })).toBeInTheDocument();
     await expect(canvas.getByRole("heading", { level: 3, name: "Acme Corp" })).toBeInTheDocument();
+    await expect(canvas.getByRole("button", { name: "Refresh contacts" })).toBeInTheDocument();
     await expect(canvas.queryByText("info@acme.com")).not.toBeInTheDocument();
     const input = canvas.getByPlaceholderText("Search contacts...");
     await userEvent.type(input, "joe@");

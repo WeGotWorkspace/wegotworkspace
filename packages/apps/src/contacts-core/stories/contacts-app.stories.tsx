@@ -24,6 +24,7 @@ export const Default: Story = {
     ...bootstrap,
     listLoading: false,
     operations,
+    onRefreshList: () => {},
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
