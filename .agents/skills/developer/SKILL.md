@@ -38,7 +38,7 @@ See [dev-environment](../dev-environment/SKILL.md) for commands, URLs, and troub
 
 1. **API is greenfield Laravel** — no legacy PHP in tree; reimplement from OpenAPI → [api](../api/SKILL.md)
 2. **No auto-commits** — only commit when the user asks → [git-workflow](../git-workflow/SKILL.md)
-3. **UI styling via CSS variables** — primitives stay context-agnostic → [apps-ui](../apps-ui/SKILL.md)
+3. **UI styling: BEM classes + `@apply` in CSS** — not long Tailwind in TSX or raw CSS properties; primitives stay context-agnostic → [apps-ui](../apps-ui/SKILL.md)
 4. **File I/O via Flysystem** — single storage layer for REST and WebDAV → [storage-flysystem.md](../api/storage-flysystem.md)
 
 ## Multitask
