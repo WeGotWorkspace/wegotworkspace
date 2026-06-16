@@ -73,19 +73,20 @@ final class ContactCardRepository
             ->get();
 
         $ids = [];
+        $total = 0;
         foreach ($cards as $card) {
             if ($uidFilter !== null && $this->extractUid($card) !== $uidFilter) {
                 continue;
             }
-            $ids[] = ContactCardMapper::cardIdFromUri((string) $card->uri);
-            if ($limit !== null && count($ids) >= $limit) {
-                break;
+            $total++;
+            if ($limit === null || count($ids) < $limit) {
+                $ids[] = ContactCardMapper::cardIdFromUri((string) $card->uri);
             }
         }
 
         return [
             'ids' => $ids,
-            'total' => count($ids),
+            'total' => $total,
         ];
     }
 

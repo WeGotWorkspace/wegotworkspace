@@ -13,6 +13,7 @@ import {
   filterCardsBySearch,
   mapEntriesSorted,
   phoneToTelHref,
+  safeContactExternalHref,
 } from "./contacts-display-utils";
 
 const janeCard = {
@@ -298,6 +299,16 @@ describe("contacts-display-utils", () => {
     expect(phoneToTelHref("  ")).toBe("");
     expect(phoneToTelHref("")).toBe("");
     expect(phoneToTelHref("(555) 867-5309")).toBe("tel:(555)867-5309");
+  });
+
+  it("allows only safe external contact link protocols", () => {
+    expect(safeContactExternalHref("https://example.com/profile")).toBe(
+      "https://example.com/profile",
+    );
+    expect(safeContactExternalHref("mailto:jane@example.com")).toBe("mailto:jane@example.com");
+    expect(safeContactExternalHref("javascript:alert(1)")).toBe("");
+    expect(safeContactExternalHref("/relative/path")).toBe("");
+    expect(safeContactExternalHref("")).toBe("");
   });
 
   it("splits comma-separated custom labels into separate tags", () => {

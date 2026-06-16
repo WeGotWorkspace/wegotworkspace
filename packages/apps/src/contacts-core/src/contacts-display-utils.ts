@@ -23,6 +23,8 @@ const PHONE_FEATURE_KEYS = [
   "voice",
 ] as const;
 
+const ALLOWED_EXTERNAL_CONTACT_LINK_PROTOCOLS = new Set(["http:", "https:", "mailto:"]);
+
 type PhoneFeatureKey = (typeof PHONE_FEATURE_KEYS)[number];
 
 /** vCard TYPE names for JSContact `Phone.features` keys (RFC 9555 TEL table). */
@@ -328,6 +330,21 @@ function collectPhones(card: ContactCard): string[] {
 export function phoneToTelHref(number: string): string {
   const stripped = number.replace(/\s/g, "");
   return stripped ? `tel:${stripped}` : "";
+}
+
+/**
+ * Returns a safe absolute href for external contact links.
+ * Unsupported or malformed protocols (for example `javascript:`) are rejected.
+ */
+export function safeContactExternalHref(href: string): string {
+  const trimmed = href.trim();
+  if (!trimmed) return "";
+  try {
+    const url = new URL(trimmed);
+    return ALLOWED_EXTERNAL_CONTACT_LINK_PROTOCOLS.has(url.protocol) ? url.toString() : "";
+  } catch {
+    return "";
+  }
 }
 
 export function filterCardsBySearch(cards: ContactCard[], query: string): ContactCard[] {

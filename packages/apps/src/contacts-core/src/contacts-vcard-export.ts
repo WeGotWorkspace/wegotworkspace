@@ -69,6 +69,12 @@ function readLegacyField(address: Record<string, unknown>, field: string): strin
   return typeof value === "string" ? value.trim() : "";
 }
 
+function sanitizeVCardUrlValue(uri: string): string {
+  const trimmed = uri.trim();
+  if (!trimmed || /[\r\n]/.test(trimmed)) return "";
+  return vcardEscape(trimmed);
+}
+
 /** Convert a JSContact `ContactCard` to a vCard 3.0 string. */
 export function contactCardToVCard(card: ContactCard): string {
   const lines: string[] = ["BEGIN:VCARD", "VERSION:3.0"];
@@ -142,7 +148,7 @@ export function contactCardToVCard(card: ContactCard): string {
   // URL — skip contact-kind links
   for (const [, link] of mapEntriesSorted(card.links)) {
     if (link.kind === "contact") continue;
-    const uri = link.uri?.trim() ?? "";
+    const uri = sanitizeVCardUrlValue(link.uri ?? "");
     if (uri) lines.push(`URL:${uri}`);
   }
 

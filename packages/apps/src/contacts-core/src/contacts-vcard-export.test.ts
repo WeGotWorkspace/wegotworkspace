@@ -113,6 +113,31 @@ describe("contactCardToVCard", () => {
     expect(vcard).toContain("NOTE:Important contact");
   });
 
+  it("escapes URL values when exporting links", () => {
+    const card = makeCard({
+      links: {
+        l1: { "@type": "Link", kind: "other", uri: "https://example.com/a,b;c" },
+      },
+    });
+    const vcard = contactCardToVCard(card);
+    expect(vcard).toContain("URL:https://example.com/a\\,b\\;c");
+  });
+
+  it("skips URL values containing CRLF to prevent line injection", () => {
+    const card = makeCard({
+      links: {
+        l1: {
+          "@type": "Link",
+          kind: "other",
+          uri: "https://example.com\r\nNOTE:injected",
+        },
+      },
+    });
+    const vcard = contactCardToVCard(card);
+    expect(vcard).not.toContain("URL:https://example.com");
+    expect(vcard).not.toContain("NOTE:injected");
+  });
+
   it("includes BDAY for birth anniversary (PartialDate)", () => {
     const card = makeCard({
       anniversaries: {

@@ -23,6 +23,7 @@ import {
   contactBirthdayDisplay,
   mapEntriesSorted,
   phoneToTelHref,
+  safeContactExternalHref,
 } from "@/contacts-core/src/contacts-display-utils";
 import type { ContactsUILabels } from "@/contacts-core/src/contacts-labels";
 
@@ -650,22 +651,29 @@ export function ContactsDetailView({
           </div>
         ) : (
           <ul className="contacts-detail-view__channel-list">
-            {readUrls.map((row) => (
-              <ChannelReadRow
-                key={row.id}
-                contextLabels={"contextLabels" in row ? row.contextLabels : undefined}
-                emptyLabel={labels.channelLabelNone}
-              >
-                <a
-                  className="contacts-detail-view__link"
-                  href={row.uri}
-                  target="_blank"
-                  rel="noreferrer"
+            {readUrls.map((row) => {
+              const href = safeContactExternalHref(row.uri);
+              return (
+                <ChannelReadRow
+                  key={row.id}
+                  contextLabels={"contextLabels" in row ? row.contextLabels : undefined}
+                  emptyLabel={labels.channelLabelNone}
                 >
-                  {row.uri}
-                </a>
-              </ChannelReadRow>
-            ))}
+                  {href ? (
+                    <a
+                      className="contacts-detail-view__link"
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {row.uri}
+                    </a>
+                  ) : (
+                    <span>{row.uri}</span>
+                  )}
+                </ChannelReadRow>
+              );
+            })}
           </ul>
         )}
       </DetailSection>

@@ -87,6 +87,43 @@ final class ContactsCardsSyncTest extends WgwDatabaseTestCase
             ->assertJsonPath('total', 1);
     }
 
+    public function test_query_total_counts_matches_before_limit(): void
+    {
+        $uid = 'urn:uuid:550e8400-e29b-41d4-a716-4466554400aa';
+
+        $this->withBearer($this->userBearerToken())
+            ->postJson('/api/v1/contacts/cards', array_merge(
+                $this->sampleContactCardPayload(),
+                [
+                    'uid' => $uid,
+                    'name' => ['full' => 'First Limited Match'],
+                ],
+            ))
+            ->assertCreated();
+
+        $this->withBearer($this->userBearerToken())
+            ->postJson('/api/v1/contacts/cards', array_merge(
+                $this->sampleContactCardPayload(),
+                [
+                    'uid' => $uid,
+                    'name' => ['full' => 'Second Limited Match'],
+                ],
+            ))
+            ->assertCreated();
+
+        $this->withBearer($this->userBearerToken())
+            ->postJson('/api/v1/contacts/cards/query', [
+                'filter' => [
+                    'inAddressBook' => 'default',
+                    'uid' => $uid,
+                ],
+                'limit' => 1,
+            ])
+            ->assertOk()
+            ->assertJsonCount(1, 'ids')
+            ->assertJsonPath('total', 2);
+    }
+
     public function test_list_cards_supports_uid_query_parameter(): void
     {
         $this->withBearer($this->userBearerToken())

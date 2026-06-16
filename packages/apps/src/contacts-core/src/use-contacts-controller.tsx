@@ -104,7 +104,7 @@ export function useContactsController({
   }>(null);
   const [createGroupDialog, setCreateGroupDialog] = useState(false);
 
-  const { show, showError } = useAppToast();
+  const { showError } = useAppToast();
   const showMutationError = useCallback(
     (fallback = "Could not sync this change. Please try again.") => showError(fallback),
     [showError],
@@ -650,8 +650,6 @@ export function useContactsController({
       }
       if (shouldExitSelection) setSelectionMode(false);
 
-      show(L.toastRemovedFromGroup(removedCount), { icon: <UserMinus className="size-4" /> });
-
       const rollback = () => {
         setCards((prev) => prev.map((card) => (card.id === groupId ? previousCard : card)));
         setSelectedIds(previousSelectedIds);
@@ -662,6 +660,7 @@ export function useContactsController({
       queueMutation({
         key: `contacts:remove-from-group:${groupId}:${cardIds.slice().sort().join(",")}`,
         toastMessage: L.toastRemovedFromGroup(removedCount),
+        icon: <UserMinus className="size-4" />,
         execute: (signal) =>
           operations
             ? operations
@@ -685,7 +684,6 @@ export function useContactsController({
       selectedIds,
       setSelectedIds,
       setSelectionMode,
-      show,
     ],
   );
 
@@ -711,8 +709,6 @@ export function useContactsController({
       };
 
       setCards((prev) => prev.map((card) => (card.id === groupId ? merged : card)));
-      show(L.toastGroupRenamed(value), { icon: <Tag className="size-4" /> });
-
       const rollback = () => {
         setCards((prev) => prev.map((card) => (card.id === groupId ? previousCard : card)));
       };
@@ -720,6 +716,7 @@ export function useContactsController({
       queueMutation({
         key: `contacts:rename-group:${groupId}`,
         toastMessage: L.toastGroupRenamed(value),
+        icon: <Tag className="size-4" />,
         execute: (signal) =>
           operations
             ? operations
@@ -733,7 +730,7 @@ export function useContactsController({
         undoToastMessage: "Rename undone.",
       });
     },
-    [L.toastGroupRenamed, cards, operations, queueMutation, show],
+    [L.toastGroupRenamed, cards, operations, queueMutation],
   );
 
   const deleteGroup = useCallback(
@@ -816,8 +813,6 @@ export function useContactsController({
       const previousCards = cards;
 
       setCards((prev) => [...prev, optimisticCard]);
-      show(L.toastGroupCreated(value), { icon: <Check className="size-4" /> });
-
       const rollback = () => {
         setCards(previousCards);
       };
@@ -825,6 +820,7 @@ export function useContactsController({
       queueMutation({
         key: `contacts:create-group:${optimisticId}`,
         toastMessage: L.toastGroupCreated(value),
+        icon: <Check className="size-4" />,
         execute: async (signal) => {
           if (!operations) return;
           const created = await operations.createCard(body, { signal });
@@ -835,7 +831,7 @@ export function useContactsController({
         undoToastMessage: "Group creation undone.",
       });
     },
-    [L.toastGroupCreated, addressBooks, cards, operations, queueMutation, show],
+    [L.toastGroupCreated, addressBooks, cards, operations, queueMutation],
   );
 
   const addMembersToGroup = useCallback(
@@ -859,8 +855,6 @@ export function useContactsController({
       };
 
       setCards((prev) => prev.map((card) => (card.id === groupId ? merged : card)));
-      show(L.toastMembersAdded(addedCount, groupName), { icon: <UserPlus className="size-4" /> });
-
       const rollback = () => {
         setCards((prev) => prev.map((card) => (card.id === groupId ? previousCard : card)));
       };
@@ -868,6 +862,7 @@ export function useContactsController({
       queueMutation({
         key: `contacts:add-members:${groupId}:${cardIds.slice().sort().join(",")}`,
         toastMessage: L.toastMembersAdded(addedCount, groupName),
+        icon: <UserPlus className="size-4" />,
         execute: (signal) =>
           operations
             ? operations
@@ -881,7 +876,7 @@ export function useContactsController({
         undoToastMessage: "Add members undone.",
       });
     },
-    [L, cards, operations, queueMutation, show],
+    [L, cards, operations, queueMutation],
   );
 
   const saveEdit = useCallback(() => {
@@ -908,8 +903,6 @@ export function useContactsController({
       setEditMode(false);
       setEditDraft(null);
       setActiveId(optimisticId);
-      show(L.toastCreated, { icon: <Check className="size-4" /> });
-
       const rollback = () => {
         setCards(previousCards);
         setActiveId("");
@@ -918,6 +911,7 @@ export function useContactsController({
       queueMutation({
         key: `contacts:create:${optimisticId}`,
         toastMessage: L.toastCreated,
+        icon: <Check className="size-4" />,
         execute: async (signal) => {
           if (!operations) return;
           const created = await operations.createCard(body, { signal });
@@ -963,8 +957,6 @@ export function useContactsController({
     setCards((prev) => prev.map((card) => (card.id === active.id ? merged : card)));
     setEditMode(false);
     setEditDraft(null);
-    show(L.toastSaved, { icon: <Check className="size-4" /> });
-
     const rollback = () => {
       setCards((prev) => prev.map((card) => (card.id === active.id ? previousCard : card)));
     };
@@ -972,6 +964,7 @@ export function useContactsController({
     queueMutation({
       key: `contacts:patch:${active.id}`,
       toastMessage: L.toastSaved,
+      icon: <Check className="size-4" />,
       execute: (signal) =>
         operations
           ? operations
@@ -994,7 +987,6 @@ export function useContactsController({
     editDraft,
     operations,
     queueMutation,
-    show,
     view,
   ]);
 

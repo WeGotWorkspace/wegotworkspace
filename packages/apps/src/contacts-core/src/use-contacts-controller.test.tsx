@@ -184,6 +184,32 @@ describe("useContactsController", () => {
     expect(result.current.viewLabel).toBe("Close Friends");
   });
 
+  it("queues a single rename toast (no duplicate immediate toast)", () => {
+    mockShow.mockClear();
+    const { result } = renderHook(() =>
+      useContactsController({
+        data: bootstrap.data,
+        listLoading: false,
+      }),
+    );
+
+    act(() => {
+      result.current.selectView(contactsGroupViewKey("card-group-friends"));
+    });
+
+    act(() => {
+      result.current.renameGroup("card-group-friends", "Close Friends");
+    });
+
+    expect(mockShow).toHaveBeenCalledTimes(1);
+    expect(mockShow).toHaveBeenCalledWith(
+      expect.stringContaining("Close Friends"),
+      expect.objectContaining({
+        canUndo: true,
+      }),
+    );
+  });
+
   it("removeFromGroup optimistically removes a member from the current group", () => {
     const { result } = renderHook(() =>
       useContactsController({
