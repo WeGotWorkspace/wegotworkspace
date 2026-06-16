@@ -930,10 +930,23 @@ final class ConversionSupport
         }
 
         $memberUid = self::stripMemberUidQuotes($memberUid);
+        $original = $memberUid;
 
         while (str_starts_with(strtolower($memberUid), 'urn:uuid:')) {
-            $memberUid = substr($memberUid, 9);
-            $memberUid = self::stripMemberUidQuotes(trim($memberUid));
+            $rest = substr($memberUid, 9);
+            $rest = self::stripMemberUidQuotes(trim($rest));
+            if ($rest === '') {
+                break;
+            }
+
+            if (str_starts_with(strtolower($rest), 'urn:uuid:')
+                || preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $rest) === 1) {
+                $memberUid = $rest;
+
+                continue;
+            }
+
+            return $original;
         }
 
         if ($memberUid === '') {

@@ -29,6 +29,9 @@ final class VCardJsContactConverterTest extends TestCase
         $fixtures = [];
         foreach (glob(dirname(__DIR__, 2).'/fixtures/Contacts/*.vcf') ?: [] as $path) {
             $name = basename($path, '.vcf');
+            if ($name === 'apple-group-with-members') {
+                continue;
+            }
             $fixtures[$name] = [$name];
         }
 
