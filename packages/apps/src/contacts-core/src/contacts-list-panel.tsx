@@ -12,6 +12,7 @@ import {
   contactDisplayName,
   contactListDetail,
   contactListSubtitle,
+  groupContactCardsBySection,
 } from "@/contacts-core/src/contacts-display-utils";
 import type { ContactsUILabels } from "@/contacts-core/src/contacts-labels";
 
@@ -135,64 +136,74 @@ export function ContactsListPanel({
       </div>
     ) : (
       <WorkspaceSwipeList isTouch={isTouch}>
-        {visibleCards.map((card) => {
-          const dragHandlers = itemDragHandlers(card.id) as {
-            onDragStart?: () => void;
-            onDragEnd?: () => void;
-          };
-          const name = contactDisplayName(card);
-          return (
-            <ListItem
-              key={card.id}
-              id={card.id}
-              title={name}
-              subtitle={contactListSubtitle(card)}
-              metaPosition="below"
-              date=""
-              text={contactListDetail(card)}
-              icons={[]}
-              leading={
-                <ContactUserAvatar
-                  card={card}
-                  compact
-                  size="sm"
-                  className="contacts-list-panel__avatar"
+        {groupContactCardsBySection(visibleCards).map((section) => (
+          <section key={section.letter} aria-labelledby={`contacts-section-${section.letter}`}>
+            <div
+              id={`contacts-section-${section.letter}`}
+              className="contacts-list-panel__section-header"
+            >
+              {section.letter}
+            </div>
+            {section.cards.map((card) => {
+              const dragHandlers = itemDragHandlers(card.id) as {
+                onDragStart?: () => void;
+                onDragEnd?: () => void;
+              };
+              const name = contactDisplayName(card);
+              return (
+                <ListItem
+                  key={card.id}
+                  id={card.id}
+                  title={name}
+                  subtitle={contactListSubtitle(card)}
+                  metaPosition="below"
+                  date=""
+                  text={contactListDetail(card)}
+                  icons={[]}
+                  leading={
+                    <ContactUserAvatar
+                      card={card}
+                      compact
+                      size="sm"
+                      className="contacts-list-panel__avatar"
+                    />
+                  }
+                  isActive={card.id === activeId}
+                  isSelected={selectedIds.includes(card.id)}
+                  selectionMode={selectionMode}
+                  isTouch={isTouch}
+                  isDragging={isItemDragging(card.id)}
+                  onClick={(e: ReactMouseEvent) => handleSelect(card.id, e)}
+                  onLongPress={() => enterSelectionFor(card.id)}
+                  {...dragHandlers}
+                  onDragStart={dragHandlers.onDragStart ?? (() => {})}
+                  onDragEnd={dragHandlers.onDragEnd ?? (() => {})}
+                  emptyTitle={L.unknownContact}
+                  {...(isTouch
+                    ? selectedGroupId
+                      ? {
+                          swipeRightAction: {
+                            icon: <UserMinus className="size-5" />,
+                            color: "var(--contacts-swipe-remove-color)",
+                            label: L.swipeRemoveFromGroup,
+                            onActivate: () => onSwipeRemoveFromGroup(card.id),
+                          },
+                        }
+                      : {
+                          swipeRightAction: {
+                            icon: <Trash2 className="size-5" />,
+                            color: "var(--contacts-swipe-delete-color)",
+                            label: L.swipeDelete,
+                            destructive: true,
+                            onActivate: () => onSwipeDelete(card.id),
+                          },
+                        }
+                    : {})}
                 />
-              }
-              isActive={card.id === activeId}
-              isSelected={selectedIds.includes(card.id)}
-              selectionMode={selectionMode}
-              isTouch={isTouch}
-              isDragging={isItemDragging(card.id)}
-              onClick={(e: ReactMouseEvent) => handleSelect(card.id, e)}
-              onLongPress={() => enterSelectionFor(card.id)}
-              {...dragHandlers}
-              onDragStart={dragHandlers.onDragStart ?? (() => {})}
-              onDragEnd={dragHandlers.onDragEnd ?? (() => {})}
-              emptyTitle={L.unknownContact}
-              {...(isTouch
-                ? selectedGroupId
-                  ? {
-                      swipeRightAction: {
-                        icon: <UserMinus className="size-5" />,
-                        color: "var(--contacts-swipe-remove-color)",
-                        label: L.swipeRemoveFromGroup,
-                        onActivate: () => onSwipeRemoveFromGroup(card.id),
-                      },
-                    }
-                  : {
-                      swipeRightAction: {
-                        icon: <Trash2 className="size-5" />,
-                        color: "var(--contacts-swipe-delete-color)",
-                        label: L.swipeDelete,
-                        destructive: true,
-                        onActivate: () => onSwipeDelete(card.id),
-                      },
-                    }
-                : {})}
-            />
-          );
-        })}
+              );
+            })}
+          </section>
+        ))}
       </WorkspaceSwipeList>
     ),
     hasItems: listLoading || visibleCards.length > 0,

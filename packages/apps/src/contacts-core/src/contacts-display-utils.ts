@@ -355,6 +355,43 @@ export function phoneToTelHref(number: string): string {
  * Returns a safe absolute href for external contact links.
  * Unsupported or malformed protocols (for example `javascript:`) are rejected.
  */
+
+/** First letter bucket for alphabetical list sections (A–Z or #). */
+export function contactListSectionLetter(name: string): string {
+  const trimmed = name.trim();
+  if (!trimmed) return "#";
+
+  const first = trimmed.charAt(0).toLocaleUpperCase();
+  if (/\p{L}/u.test(first)) return first;
+  return "#";
+}
+
+export type ContactListSection = {
+  letter: string;
+  cards: ContactCard[];
+};
+
+export function groupContactCardsBySection(cards: ContactCard[]): ContactListSection[] {
+  const sorted = [...cards].sort((left, right) =>
+    contactDisplayName(left).localeCompare(contactDisplayName(right), undefined, {
+      sensitivity: "base",
+    }),
+  );
+  const sections: ContactListSection[] = [];
+
+  for (const card of sorted) {
+    const letter = contactListSectionLetter(contactDisplayName(card));
+    const last = sections[sections.length - 1];
+    if (last?.letter === letter) {
+      last.cards.push(card);
+    } else {
+      sections.push({ letter, cards: [card] });
+    }
+  }
+
+  return sections;
+}
+
 export function safeContactExternalHref(href: string): string {
   const trimmed = href.trim();
   if (!trimmed) return "";

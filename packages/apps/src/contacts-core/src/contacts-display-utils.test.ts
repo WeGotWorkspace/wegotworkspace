@@ -12,6 +12,7 @@ import {
   contactPhotoBlobId,
   CONTACT_MEDIA_BLOB_PATH,
   filterCardsBySearch,
+  groupContactCardsBySection,
   mapEntriesSorted,
   phoneToTelHref,
   safeContactExternalHref,
@@ -471,5 +472,22 @@ describe("contacts-display-utils", () => {
       const result = contactBirthdayDisplay(card, "en-US");
       expect(result).toBe("March 7, 1990");
     });
+  });
+
+  it("groups contacts into sticky section letters by display name", () => {
+    const sections = groupContactCardsBySection([joeCard, janeCard]);
+    expect(sections).toEqual([{ letter: "J", cards: [janeCard, joeCard] }]);
+  });
+
+  it("uses # when the display name does not start with A–Z", () => {
+    const numericMononym = {
+      ...janeCard,
+      id: "card-123",
+      name: { "@type": "Name" as const, isOrdered: false, full: "123" },
+    } as unknown as ContactCard;
+
+    expect(groupContactCardsBySection([numericMononym])).toEqual([
+      { letter: "#", cards: [numericMononym] },
+    ]);
   });
 });
