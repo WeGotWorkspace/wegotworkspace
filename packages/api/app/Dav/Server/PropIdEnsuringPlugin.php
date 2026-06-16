@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Dav\Server;
 
+use App\Services\Contacts\MemberUriSanitizer;
 use App\Services\Contacts\PropIdEnsurer;
 use Illuminate\Support\Facades\DB;
 use Sabre\CardDAV\Backend\PDO as CardPDO;
@@ -23,6 +24,7 @@ final class PropIdEnsuringPlugin extends ServerPlugin
 
     public function __construct(
         private readonly PropIdEnsurer $propIdEnsurer,
+        private readonly MemberUriSanitizer $memberUriSanitizer,
         private readonly CardPDO $cardBackend,
     ) {}
 
@@ -61,8 +63,17 @@ final class PropIdEnsuringPlugin extends ServerPlugin
             return;
         }
 
-        $result = $this->propIdEnsurer->ensure($raw);
-        if (! $result['changed']) {
+        $memberResult = $this->memberUriSanitizer->sanitize($raw);
+        if ($memberResult['changed']) {
+            $raw = $memberResult['vcard'];
+        }
+
+        $propResult = $this->propIdEnsurer->ensure($raw);
+        if ($propResult['changed']) {
+            $raw = $propResult['vcard'];
+        }
+
+        if (! $memberResult['changed'] && ! $propResult['changed']) {
             return;
         }
 
@@ -71,7 +82,7 @@ final class PropIdEnsuringPlugin extends ServerPlugin
             $this->cardBackend->updateCard(
                 $location['addressBookId'],
                 $location['cardUri'],
-                $result['vcard'],
+                $raw,
             );
         } finally {
             $this->reentrant = false;

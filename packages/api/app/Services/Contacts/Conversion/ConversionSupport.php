@@ -917,20 +917,43 @@ final class ConversionSupport
     }
 
     /**
+     * Canonical group member uid for JSContact and vCard writes.
+     *
+     * macOS AddressBookCore CardDAV PUT may emit corrupt values such as
+     * urn:uuid:"urn:uuid:<uuid>" (double prefix, embedded quotes, line folding).
+     */
+    public static function normalizeMemberUid(string $memberUid): string
+    {
+        $memberUid = trim($memberUid);
+        if ($memberUid === '') {
+            return '';
+        }
+
+        $memberUid = self::stripMemberUidQuotes($memberUid);
+
+        while (str_starts_with(strtolower($memberUid), 'urn:uuid:')) {
+            $memberUid = substr($memberUid, 9);
+            $memberUid = self::stripMemberUidQuotes(trim($memberUid));
+        }
+
+        if ($memberUid === '') {
+            return '';
+        }
+
+        if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $memberUid) === 1) {
+            return 'urn:uuid:'.strtolower($memberUid);
+        }
+
+        return $memberUid;
+    }
+
+    /**
      * Apple CardDAV group members use urn:uuid: URIs; contact cards often store bare UUIDs.
      * Normalize member references on write so Apple Contacts.app reconciles membership correctly.
      */
     public static function memberUidForVCardWrite(string $memberUid): string
     {
-        $memberUid = trim($memberUid);
-        if ($memberUid === '') {
-            return $memberUid;
-        }
-        if (str_starts_with(strtolower($memberUid), 'urn:uuid:')) {
-            return $memberUid;
-        }
-
-        return 'urn:uuid:'.$memberUid;
+        return self::normalizeMemberUid($memberUid);
     }
 
     /**
@@ -939,12 +962,24 @@ final class ConversionSupport
      */
     public static function normalizeContactUidForMatch(string $uid): string
     {
-        $uid = trim($uid);
-        if (str_starts_with(strtolower($uid), 'urn:uuid:')) {
-            $uid = substr($uid, 9);
+        $normalized = self::normalizeMemberUid($uid);
+        if (str_starts_with(strtolower($normalized), 'urn:uuid:')) {
+            return strtolower(substr($normalized, 9));
         }
 
-        return strtolower($uid);
+        return strtolower(trim($normalized));
+    }
+
+    private static function stripMemberUidQuotes(string $uid): string
+    {
+        $previous = null;
+        while ($previous !== $uid) {
+            $previous = $uid;
+            $uid = trim($uid);
+            $uid = trim($uid, "\"'");
+        }
+
+        return $uid;
     }
 
     /**

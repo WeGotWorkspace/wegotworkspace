@@ -7,6 +7,7 @@ namespace Tests\Support;
 use App\Models\Principal;
 use App\Models\User;
 use App\Services\Auth\AdminRoleResolver;
+use App\Services\Contacts\MemberUriSanitizer;
 use App\Services\Contacts\PropIdEnsurer;
 use App\Support\WgwSettings;
 use Illuminate\Support\Facades\DB;
@@ -112,9 +113,13 @@ trait ContactsTestFixtures
             throw new \RuntimeException("Card {$cardUri} not found for {$username}.");
         }
         $raw = is_string($card['carddata'] ?? null) ? $card['carddata'] : (string) ($card['carddata'] ?? '');
-        $result = (new PropIdEnsurer)->ensure($raw);
-        if ($result['changed']) {
-            $carddav->updateCard($bookId, $cardUri, $result['vcard']);
+        $memberResult = (new MemberUriSanitizer)->sanitize($raw);
+        if ($memberResult['changed']) {
+            $raw = $memberResult['vcard'];
+        }
+        $propResult = (new PropIdEnsurer)->ensure($raw);
+        if ($memberResult['changed'] || $propResult['changed']) {
+            $carddav->updateCard($bookId, $cardUri, $propResult['changed'] ? $propResult['vcard'] : $raw);
         }
     }
 
