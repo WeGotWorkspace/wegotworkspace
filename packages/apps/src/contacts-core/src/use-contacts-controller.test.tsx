@@ -6,16 +6,17 @@ import { createContactsAppBootstrap } from "@/lib/api/mock/contacts-bootstrap";
 import { contactsGroupViewKey } from "./contacts-group-utils";
 import { useContactsController } from "./use-contacts-controller";
 
-const { mockRequestConfirm, mockShow, mockDismiss } = vi.hoisted(() => ({
+const { mockRequestConfirm, mockShow, mockShowError, mockDismiss } = vi.hoisted(() => ({
   mockRequestConfirm: vi.fn(),
   mockShow: vi.fn(),
   mockDismiss: vi.fn(),
+  mockShowError: vi.fn(),
 }));
 
 vi.mock("@/hooks/use-app-toast", () => ({
   useAppToast: () => ({
     show: mockShow,
-    showError: vi.fn(),
+    showError: mockShowError,
     showSuccess: vi.fn(),
     dismiss: mockDismiss,
   }),
@@ -430,6 +431,115 @@ describe("useContactsController", () => {
     );
 
     expect(result.current.canDeleteGroup).toBe(false);
+  });
+});
+
+describe("useContactsController vCard import", () => {
+  beforeEach(() => {
+    mockShow.mockClear();
+    mockShowError.mockClear();
+  });
+
+  it("imports multiple vCard files and merges created contacts", async () => {
+    const importVcards = vi
+      .fn()
+      .mockResolvedValueOnce({
+        list: [
+          {
+            ...bootstrap.data.cards[0],
+            id: "card-imported-one",
+            name: { full: "Imported One" },
+          },
+        ],
+        errors: [],
+      })
+      .mockResolvedValueOnce({
+        list: [
+          {
+            ...bootstrap.data.cards[1],
+            id: "card-imported-two",
+            name: { full: "Imported Two" },
+          },
+        ],
+        errors: [],
+      });
+
+    const { result } = renderHook(() =>
+      useContactsController({
+        data: bootstrap.data,
+        listLoading: false,
+        operations: {
+          listAddressBooks: vi.fn(),
+          listCards: vi.fn(),
+          getCard: vi.fn(),
+          createCard: vi.fn(),
+          patchCard: vi.fn(),
+          deleteCard: vi.fn(),
+          importVcards,
+        },
+      }),
+    );
+
+    const fileList = {
+      0: new File(["BEGIN:VCARD\nFN:One\nEND:VCARD"], "one.vcf"),
+      1: new File(["BEGIN:VCARD\nFN:Two\nEND:VCARD"], "two.vcf"),
+      length: 2,
+      item(index: number) {
+        return this[index as 0 | 1];
+      },
+      [Symbol.iterator]() {
+        return [this[0], this[1]][Symbol.iterator]();
+      },
+    } as FileList;
+
+    await act(async () => {
+      await result.current.handleImportVcf(fileList);
+    });
+
+    expect(importVcards).toHaveBeenCalledTimes(2);
+    expect(result.current.cards.some((card) => card.id === "card-imported-one")).toBe(true);
+    expect(result.current.cards.some((card) => card.id === "card-imported-two")).toBe(true);
+    expect(mockShow).toHaveBeenCalledWith(
+      expect.stringContaining("Imported 2 contacts"),
+      expect.any(Object),
+    );
+  });
+
+  it("shows an error when no vCard files are selected", async () => {
+    const { result } = renderHook(() =>
+      useContactsController({
+        data: bootstrap.data,
+        listLoading: false,
+        operations: {
+          listAddressBooks: vi.fn(),
+          listCards: vi.fn(),
+          getCard: vi.fn(),
+          createCard: vi.fn(),
+          patchCard: vi.fn(),
+          deleteCard: vi.fn(),
+          importVcards: vi.fn(),
+        },
+      }),
+    );
+
+    const fileList = {
+      0: new File(["plain"], "notes.txt", { type: "text/plain" }),
+      length: 1,
+      item() {
+        return this[0];
+      },
+      [Symbol.iterator]() {
+        return [this[0]][Symbol.iterator]();
+      },
+    } as FileList;
+
+    await act(async () => {
+      await result.current.handleImportVcf(fileList);
+    });
+
+    expect(mockShowError).toHaveBeenCalledWith(
+      expect.stringContaining("Choose one or more .vcf or .vcard files"),
+    );
   });
 });
 

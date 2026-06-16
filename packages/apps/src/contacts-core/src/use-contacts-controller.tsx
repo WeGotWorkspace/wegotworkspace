@@ -52,7 +52,7 @@ import {
   downloadMultipleContactsVCard,
   vcardFilename,
 } from "@/contacts-core/src/contacts-vcard-export";
-import { filterVcfFiles, readVcfFiles } from "@/contacts-core/src/contacts-vcard-import";
+import { importVcfFilesBatch, partitionVcfFiles } from "@/contacts-core/src/contacts-vcard-import";
 
 type UseContactsControllerArgs = {
   data: ContactsUIData;
@@ -390,8 +390,8 @@ export function useContactsController({
 
   const handleImportVcf = useCallback(
     async (fileList: FileList | null) => {
-      const files = filterVcfFiles(fileList);
-      if (files.length === 0) {
+      const { vcfFiles, skippedCount } = partitionVcfFiles(fileList);
+      if (vcfFiles.length === 0) {
         showError(L.importInvalidFile);
         return;
       }
@@ -407,8 +407,10 @@ export function useContactsController({
       }
 
       try {
-        const vcardText = await readVcfFiles(files);
-        const result = await operations.importVcards(vcardText, { addressBookId });
+        const result = await importVcfFilesBatch(vcfFiles, (vcardText) =>
+          operations.importVcards!(vcardText, { addressBookId }),
+        );
+
         if (result.list.length > 0) {
           setCards((prev) => {
             const byId = new Map(prev.map((card) => [card.id, card]));
@@ -419,14 +421,19 @@ export function useContactsController({
           });
         }
 
-        const errorCount = result.errors?.length ?? 0;
         if (result.list.length > 0) {
           show(L.toastImported(result.list.length), { icon: <Upload className="size-4" /> });
         }
-        if (errorCount > 0) {
-          showError(L.importPartialFailure(errorCount));
+        if (skippedCount > 0) {
+          showError(L.importFilesSkipped(skippedCount));
         }
-        if (result.list.length === 0) {
+        if (result.fileErrors.length > 0) {
+          showError(L.importFilesFailed(result.fileErrors.length));
+        }
+        if (result.blockErrors > 0) {
+          showError(L.importPartialFailure(result.blockErrors));
+        }
+        if (result.list.length === 0 && result.fileErrors.length === 0) {
           showError(L.importFailed);
         }
       } catch {

@@ -39,7 +39,13 @@ export function ContactsNewMenu({
           <UserPlus className="size-4 opacity-70" />
           <span>{labels.createContact}</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={onImportVcf} className="cursor-pointer gap-2.5 py-2">
+        <DropdownMenuItem
+          onSelect={(event) => {
+            event.preventDefault();
+            onImportVcf();
+          }}
+          className="cursor-pointer gap-2.5 py-2"
+        >
           <Upload className="size-4 opacity-70" />
           <span>{labels.importVcf}</span>
         </DropdownMenuItem>

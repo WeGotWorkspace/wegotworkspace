@@ -291,7 +291,7 @@ export function ContactsWorkspace({
       <input
         ref={fileInputRef}
         type="file"
-        accept=".vcf,text/vcard,text/x-vcard"
+        accept=".vcf,.vcard,text/vcard,text/x-vcard,application/vcard"
         multiple
         className="hidden"
         onChange={(event) => {
