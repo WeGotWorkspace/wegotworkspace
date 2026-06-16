@@ -11,7 +11,8 @@ const wgwMonorepoRoot = path.join(__dirname, "..", "..", "..");
 const wgwProxyTarget = resolveWgwProxyTarget();
 
 export default defineConfig({
-  base: "./",
+  // Absolute base so SPA deep links (e.g. /contacts/all/:id) resolve /assets/* correctly on refresh.
+  base: "/",
   envDir: wgwMonorepoRoot,
   resolve: {
     alias: {

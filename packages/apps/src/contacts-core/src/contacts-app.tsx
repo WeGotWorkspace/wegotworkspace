@@ -79,6 +79,14 @@ export function ContactsApp({ apiSource }: ContactsAppProps = {}) {
   const currentViewRef = useRef<string>(initialView);
   const currentContactRef = useRef<string>(initialContactId);
 
+  useEffect(() => {
+    currentViewRef.current = initialView;
+  }, [initialView]);
+
+  useEffect(() => {
+    currentContactRef.current = initialContactId;
+  }, [initialContactId]);
+
   const handleViewChange = useCallback(
     (view: string) => {
       currentViewRef.current = view;

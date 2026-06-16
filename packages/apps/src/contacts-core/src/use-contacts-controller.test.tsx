@@ -826,6 +826,26 @@ describe("useContactsController keyboard shortcuts", () => {
       expect(result.current.active?.id).toBe("card-jane");
     });
 
+    it("syncs activeId when initialContactId changes from the URL", () => {
+      const { result, rerender, unmount } = renderHook(
+        ({ initialContactId }: { initialContactId: string }) =>
+          useContactsController({
+            data: bootstrap.data,
+            listLoading: false,
+            initialContactId,
+          }),
+        { initialProps: { initialContactId: "" } },
+      );
+      unmountHook = unmount;
+
+      expect(result.current.activeId).toBe("");
+
+      rerender({ initialContactId: "card-jane" });
+
+      expect(result.current.activeId).toBe("card-jane");
+      expect(result.current.active?.id).toBe("card-jane");
+    });
+
     it("onViewChange is called when selectView is invoked (not on mount)", () => {
       const onViewChange = vi.fn();
       const { result, unmount } = renderHook(() =>

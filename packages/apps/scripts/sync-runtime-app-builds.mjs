@@ -100,7 +100,9 @@ export function syncRuntimeAppBuilds() {
       }
     }
 
-    const assetBase = module.name === "install" ? "/install" : ".";
+    // Shell and product apps are served from site-root SPA paths; absolute /assets/* avoids broken
+    // relative URLs when index.html is returned for deep links like /contacts/all/:contactId.
+    const assetBase = module.name === "install" ? "/install" : "";
     const html = renderIndexHtml({
       title: module.title,
       scriptPath: `${assetBase}/assets/${mainJs}`,
