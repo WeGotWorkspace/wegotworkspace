@@ -666,3 +666,8 @@ export function editDraftToPatch(draft: ContactEditDraft, active: ContactCard): 
 
   return patch;
 }
+
+/** True when the draft differs from the persisted card (would produce a non-empty patch). */
+export function contactEditDraftHasChanges(draft: ContactEditDraft, card: ContactCard): boolean {
+  return Object.keys(editDraftToPatch(draft, card)).length > 0;
+}

@@ -29,7 +29,7 @@ export function ContactsDetailActionBar({
   onCancel,
   onDownload,
 }: ContactsDetailActionBarProps) {
-  if (createMode || editMode) {
+  if (createMode) {
     return (
       <ActionBar
         onBack={closeMobileDetail}
@@ -45,11 +45,15 @@ export function ContactsDetailActionBar({
             label: labels.save,
             onClick: onSave,
             icon: <Check className="size-4" />,
-            disabled: createMode && !canSaveCreate,
+            disabled: !canSaveCreate,
           },
         ]}
       />
     );
+  }
+
+  if (editMode) {
+    return <ActionBar onBack={closeMobileDetail} />;
   }
 
   const rightActions = [

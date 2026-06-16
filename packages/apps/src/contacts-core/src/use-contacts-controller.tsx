@@ -25,6 +25,7 @@ import { mergeContactsLabels, type ContactsUILabels } from "@/contacts-core/src/
 import {
   CONTACTS_CREATE_ID,
   contactCardToEditDraft,
+  contactEditDraftHasChanges,
   contactEditDraftHasContent,
   editDraftToCreateBody,
   editDraftToPatch,
@@ -38,9 +39,14 @@ import {
 import type {
   ContactCard,
   ContactCardCreate,
+  ContactCardPatch,
   ContactsAPIOperations,
   ContactsUIData,
 } from "@/contacts-core/src/contacts-types";
+import {
+  CONTACTS_AUTOSAVE_DEBOUNCE_MS,
+  createContactSaveDebouncer,
+} from "@/contacts-core/src/contacts-edit-autosave";
 import {
   downloadContactVCard,
   downloadMultipleContactsVCard,
@@ -75,6 +81,35 @@ function draftDisplayName(draft: ContactEditDraft, unknownLabel: string): string
   return name || unknownLabel;
 }
 
+function mergeContactFromPatch(active: ContactCard, patch: ContactCardPatch): ContactCard {
+  const merged: ContactCard = {
+    ...active,
+    ...patch,
+    name: patch.name ?? active.name,
+    phones: { ...active.phones, ...patch.phones },
+    emails: { ...active.emails, ...patch.emails },
+    addresses: { ...active.addresses, ...patch.addresses },
+    organizations: { ...active.organizations, ...patch.organizations },
+    notes: { ...active.notes, ...patch.notes },
+  };
+  for (const [key, value] of Object.entries(patch.phones ?? {})) {
+    if (value === null) delete merged.phones?.[key];
+  }
+  for (const [key, value] of Object.entries(patch.emails ?? {})) {
+    if (value === null) delete merged.emails?.[key];
+  }
+  for (const [key, value] of Object.entries(patch.addresses ?? {})) {
+    if (value === null) delete merged.addresses?.[key];
+  }
+  for (const [key, value] of Object.entries(patch.organizations ?? {})) {
+    if (value === null) delete merged.organizations?.[key];
+  }
+  for (const [key, value] of Object.entries(patch.notes ?? {})) {
+    if (value === null) delete merged.notes?.[key];
+  }
+  return merged;
+}
+
 export function useContactsController({
   data,
   labels,
@@ -104,6 +139,15 @@ export function useContactsController({
   }>(null);
   const [createGroupDialog, setCreateGroupDialog] = useState(false);
 
+  const cardsRef = useRef(cards);
+  const activeIdRef = useRef(activeId);
+  const contactDraftsRef = useRef<Map<string, ContactEditDraft>>(new Map());
+  const abortControllersRef = useRef<Map<string, AbortController>>(new Map());
+  const debouncerRef = useRef(createContactSaveDebouncer(CONTACTS_AUTOSAVE_DEBOUNCE_MS));
+  const persistContactEditRef = useRef<
+    (contactId: string, draft: ContactEditDraft) => Promise<void>
+  >(async () => {});
+
   const { showError } = useAppToast();
   const showMutationError = useCallback(
     (fallback = "Could not sync this change. Please try again.") => showError(fallback),
@@ -118,6 +162,14 @@ export function useContactsController({
     setCards(data.cards);
     setAddressBooks(data.addressBooks);
   }, [data.addressBooks, data.cards]);
+
+  useEffect(() => {
+    cardsRef.current = cards;
+  }, [cards]);
+
+  useEffect(() => {
+    activeIdRef.current = activeId;
+  }, [activeId]);
 
   // Skip the initial render so mount doesn't trigger unnecessary URL writes.
   const viewSyncedRef = useRef(false);
@@ -155,6 +207,23 @@ export function useContactsController({
 
   const visibleIds = useMemo(() => visibleCards.map((card) => card.id), [visibleCards]);
 
+  const stashActiveEditDraft = useCallback(() => {
+    if (!editMode || createMode || !editDraft || !activeId || activeId === CONTACTS_CREATE_ID)
+      return;
+    contactDraftsRef.current.set(activeId, editDraft);
+  }, [activeId, createMode, editDraft, editMode]);
+
+  const restoreEditDraftForContact = useCallback((contactId: string) => {
+    const stashed = contactDraftsRef.current.get(contactId);
+    if (stashed) {
+      setEditMode(true);
+      setEditDraft(stashed);
+    } else {
+      setEditMode(false);
+      setEditDraft(null);
+    }
+  }, []);
+
   const {
     selectedIds,
     setSelectedIds,
@@ -177,9 +246,9 @@ export function useContactsController({
     setActiveId,
     onPrimarySelect: (id) => {
       if (createMode) return;
+      stashActiveEditDraft();
       setActiveId(id);
-      setEditMode(false);
-      setEditDraft(null);
+      restoreEditDraftForContact(id);
       workspaceLayoutRef.current?.openMobileDetail();
     },
     onNavigateToId: () => workspaceLayoutRef.current?.openMobileDetail(),
@@ -263,6 +332,10 @@ export function useContactsController({
   }, [L.unknownContact, active, createMode, editDraft, editMode]);
 
   const selectView = useCallback((nextView: string) => {
+    debouncerRef.current.flushAll((contactId, draft) => {
+      void persistContactEditRef.current(contactId, draft);
+    });
+    contactDraftsRef.current.clear();
     setView(nextView);
     setSearchQuery("");
     setEditMode(false);
@@ -278,7 +351,7 @@ export function useContactsController({
   const startEdit = useCallback(() => {
     if (!active || createMode) return;
     setEditMode(true);
-    setEditDraft(contactCardToEditDraft(active));
+    setEditDraft(contactDraftsRef.current.get(active.id) ?? contactCardToEditDraft(active));
   }, [active, createMode]);
 
   const cancelEdit = useCallback(() => {
@@ -494,6 +567,9 @@ export function useContactsController({
         setEditMode(false);
         setEditDraft(null);
         setCreateMode(false);
+      }
+      for (const id of ids) {
+        contactDraftsRef.current.delete(id);
       }
       if (shouldExitSelection) setSelectionMode(false);
 
@@ -879,116 +955,127 @@ export function useContactsController({
     [L, cards, operations, queueMutation],
   );
 
-  const saveEdit = useCallback(() => {
-    if (!editDraft) return;
+  const persistContactEdit = useCallback(
+    async (contactId: string, draft: ContactEditDraft) => {
+      const card = cardsRef.current.find((row) => row.id === contactId);
+      if (!card) {
+        contactDraftsRef.current.delete(contactId);
+        return;
+      }
+      if (!contactEditDraftHasChanges(draft, card)) {
+        contactDraftsRef.current.delete(contactId);
+        return;
+      }
 
-    if (createMode) {
-      if (!contactEditDraftHasContent(editDraft)) return;
-      const body = editDraftToCreateBody(
-        editDraft,
-        resolveCreateAddressBookIds(view, addressBooks),
-      );
-      const optimisticId = `card-${newContactMapId()}`;
-      const optimisticCard: ContactCard = {
-        "@type": "Card",
-        version: "1.0",
-        id: optimisticId,
-        uid: `urn:uuid:${newContactMapId()}`,
-        ...body,
-      };
-      const previousCards = cards;
+      const patch = editDraftToPatch(draft, card);
+      const previousCard = card;
+      const merged = mergeContactFromPatch(card, patch);
 
-      setCards((prev) => [optimisticCard, ...prev]);
-      setCreateMode(false);
-      setEditMode(false);
-      setEditDraft(null);
-      setActiveId(optimisticId);
-      const rollback = () => {
-        setCards(previousCards);
-        setActiveId("");
-      };
+      const existingAbort = abortControllersRef.current.get(contactId);
+      existingAbort?.abort();
+      const controller = new AbortController();
+      abortControllersRef.current.set(contactId, controller);
 
-      queueMutation({
-        key: `contacts:create:${optimisticId}`,
-        toastMessage: L.toastCreated,
-        icon: <Check className="size-4" />,
-        execute: async (signal) => {
-          if (!operations) return;
-          const created = await operations.createCard(body, { signal });
-          setCards((prev) => prev.map((card) => (card.id === optimisticId ? created : card)));
-          setActiveId(created.id);
-        },
-        undo: rollback,
-        onError: rollback,
-        undoToastMessage: "Create undone.",
-      });
+      setCards((prev) => prev.map((row) => (row.id === contactId ? merged : row)));
+
+      try {
+        if (!operations) {
+          contactDraftsRef.current.delete(contactId);
+          if (activeIdRef.current === contactId) {
+            setEditDraft(contactCardToEditDraft(merged));
+          }
+          return;
+        }
+        const saved = await operations.patchCard(contactId, patch, {
+          signal: controller.signal,
+          ifMatch: card.etag,
+        });
+        contactDraftsRef.current.delete(contactId);
+        setCards((prev) => prev.map((row) => (row.id === contactId ? saved : row)));
+        if (activeIdRef.current === contactId) {
+          setEditDraft(contactCardToEditDraft(saved));
+        }
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setCards((prev) => prev.map((row) => (row.id === contactId ? previousCard : row)));
+        showMutationError();
+      } finally {
+        if (abortControllersRef.current.get(contactId) === controller) {
+          abortControllersRef.current.delete(contactId);
+        }
+      }
+    },
+    [operations, showMutationError],
+  );
+
+  useEffect(() => {
+    persistContactEditRef.current = persistContactEdit;
+  }, [persistContactEdit]);
+
+  useEffect(() => {
+    if (!editMode || createMode || !editDraft || !activeId || activeId === CONTACTS_CREATE_ID)
       return;
-    }
 
-    if (!active) return;
-    const patch = editDraftToPatch(editDraft, active);
-    const previousCard = active;
-    const merged: ContactCard = {
-      ...active,
-      ...patch,
-      name: patch.name ?? active.name,
-      phones: { ...active.phones, ...patch.phones },
-      emails: { ...active.emails, ...patch.emails },
-      addresses: { ...active.addresses, ...patch.addresses },
-      organizations: { ...active.organizations, ...patch.organizations },
-      notes: { ...active.notes, ...patch.notes },
+    contactDraftsRef.current.set(activeId, editDraft);
+
+    const card = cardsRef.current.find((row) => row.id === activeId);
+    if (!card || !contactEditDraftHasChanges(editDraft, card)) return;
+
+    debouncerRef.current.schedule(activeId, editDraft, (contactId, draft) => {
+      void persistContactEditRef.current(contactId, draft);
+    });
+  }, [activeId, createMode, editDraft, editMode]);
+
+  useEffect(() => {
+    const debouncer = debouncerRef.current;
+    return () => {
+      debouncer.flushAll((contactId, draft) => {
+        void persistContactEditRef.current(contactId, draft);
+      });
     };
-    for (const [key, value] of Object.entries(patch.phones ?? {})) {
-      if (value === null) delete merged.phones?.[key];
-    }
-    for (const [key, value] of Object.entries(patch.emails ?? {})) {
-      if (value === null) delete merged.emails?.[key];
-    }
-    for (const [key, value] of Object.entries(patch.addresses ?? {})) {
-      if (value === null) delete merged.addresses?.[key];
-    }
-    for (const [key, value] of Object.entries(patch.organizations ?? {})) {
-      if (value === null) delete merged.organizations?.[key];
-    }
-    for (const [key, value] of Object.entries(patch.notes ?? {})) {
-      if (value === null) delete merged.notes?.[key];
-    }
+  }, []);
 
-    setCards((prev) => prev.map((card) => (card.id === active.id ? merged : card)));
+  const saveEdit = useCallback(() => {
+    if (!editDraft || !createMode) return;
+
+    if (!contactEditDraftHasContent(editDraft)) return;
+    const body = editDraftToCreateBody(editDraft, resolveCreateAddressBookIds(view, addressBooks));
+    const optimisticId = `card-${newContactMapId()}`;
+    const optimisticCard: ContactCard = {
+      "@type": "Card",
+      version: "1.0",
+      id: optimisticId,
+      uid: `urn:uuid:${newContactMapId()}`,
+      ...body,
+    };
+    const previousCards = cards;
+
+    setCards((prev) => [optimisticCard, ...prev]);
+    setCreateMode(false);
     setEditMode(false);
     setEditDraft(null);
+    setActiveId(optimisticId);
     const rollback = () => {
-      setCards((prev) => prev.map((card) => (card.id === active.id ? previousCard : card)));
+      setCards(previousCards);
+      setActiveId("");
     };
 
     queueMutation({
-      key: `contacts:patch:${active.id}`,
-      toastMessage: L.toastSaved,
+      key: `contacts:create:${optimisticId}`,
+      toastMessage: L.toastCreated,
       icon: <Check className="size-4" />,
-      execute: (signal) =>
-        operations
-          ? operations
-              .patchCard(active.id, patch, { signal, ifMatch: active.etag })
-              .then((saved) => {
-                setCards((prev) => prev.map((card) => (card.id === active.id ? saved : card)));
-              })
-          : Promise.resolve(),
+      execute: async (signal) => {
+        if (!operations) return;
+        const created = await operations.createCard(body, { signal });
+        setCards((prev) => prev.map((card) => (card.id === optimisticId ? created : card)));
+        setActiveId(created.id);
+      },
       undo: rollback,
       onError: rollback,
-      undoToastMessage: "Save undone.",
+      undoToastMessage: "Create undone.",
     });
-  }, [
-    L.toastCreated,
-    L.toastSaved,
-    active,
-    addressBooks,
-    cards,
-    createMode,
-    editDraft,
-    operations,
-    queueMutation,
-    view,
-  ]);
+  }, [L.toastCreated, addressBooks, cards, createMode, editDraft, operations, queueMutation, view]);
 
   useWorkspaceListKeyboardShortcuts({
     searchInputRef,

@@ -1,6 +1,7 @@
 import { act, renderHook } from "@testing-library/react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { CONTACTS_AUTOSAVE_DEBOUNCE_MS } from "./contacts-edit-autosave";
 import { createContactsAppBootstrap } from "@/lib/api/mock/contacts-bootstrap";
 import { contactsGroupViewKey } from "./contacts-group-utils";
 import { useContactsController } from "./use-contacts-controller";
@@ -67,7 +68,7 @@ describe("useContactsController", () => {
     expect(result.current.visibleCards.map((card) => card.id)).toEqual(["card-joe"]);
   });
 
-  it("cancel edit restores read mode without draft state", () => {
+  it("preserves in-progress edit draft when switching contacts", () => {
     const { result } = renderHook(() =>
       useContactsController({
         data: bootstrap.data,
@@ -79,20 +80,81 @@ describe("useContactsController", () => {
     act(() => {
       result.current.startEdit();
     });
-    expect(result.current.editMode).toBe(true);
-    expect(result.current.editDraft).not.toBeNull();
-
     act(() => {
       result.current.updateEditDraft({ nameGiven: "Changed Name" });
     });
+
+    clickSelect(result, "card-joe");
+    expect(result.current.activeId).toBe("card-joe");
+    expect(result.current.editMode).toBe(false);
+
+    clickSelect(result, "card-jane");
+    expect(result.current.editMode).toBe(true);
+    expect(result.current.editDraft?.nameGiven).toBe("Changed Name");
+  });
+
+  it("auto-saves contact edits after debounce", async () => {
+    vi.useFakeTimers();
+    const patchCard = vi.fn((_id: string) =>
+      Promise.resolve({
+        ...bootstrap.data.cards.find((card) => card.id === "card-jane")!,
+        name: { "@type": "Name", isOrdered: false, full: "Changed Name Doe" },
+      }),
+    );
+
+    const { result } = renderHook(() =>
+      useContactsController({
+        data: bootstrap.data,
+        listLoading: false,
+        operations: {
+          listAddressBooks: vi.fn(),
+          listCards: vi.fn(),
+          getCard: vi.fn(),
+          createCard: vi.fn(),
+          patchCard,
+          deleteCard: vi.fn(),
+        },
+      }),
+    );
+
+    clickSelect(result, "card-jane");
+    act(() => {
+      result.current.startEdit();
+    });
+    act(() => {
+      result.current.updateEditDraft({ nameGiven: "Changed Name" });
+    });
+
+    await act(async () => {
+      vi.advanceTimersByTime(CONTACTS_AUTOSAVE_DEBOUNCE_MS);
+      await Promise.resolve();
+    });
+
+    expect(patchCard).toHaveBeenCalledOnce();
+    vi.useRealTimers();
+  });
+
+  it("cancel create restores read mode without draft state", () => {
+    const { result } = renderHook(() =>
+      useContactsController({
+        data: bootstrap.data,
+        listLoading: false,
+      }),
+    );
+
+    act(() => {
+      result.current.createContact();
+    });
+    expect(result.current.createMode).toBe(true);
+    expect(result.current.editDraft).not.toBeNull();
 
     act(() => {
       result.current.cancelEdit();
     });
 
-    expect(result.current.editMode).toBe(false);
+    expect(result.current.createMode).toBe(false);
     expect(result.current.editDraft).toBeNull();
-    expect(result.current.active?.name?.full).toBe("Jane Doe");
+    expect(result.current.activeId).toBe("");
   });
 
   it("hides group cards from the default address book list", () => {
