@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { WorkspaceLiveAppShell } from "@/lib/live/workspace-live-app-shell";
+import {
+  useConnectivitySyncRunner,
+  ConnectivitySyncRunner,
+} from "@/lib/offline/connectivity-sync-runner";
+import { getContactsSyncRunner } from "@/lib/offline/contacts-hybrid-operations";
 import type { ContactsApiSource } from "@/contacts-core/src/contacts-api-source";
 import { ContactsWorkspace } from "@/contacts-core/src/contacts-workspace";
 import { useContactsAPI } from "@/contacts-core/src/use-contacts-api";
@@ -30,6 +35,15 @@ export function ContactsApp({ apiSource }: ContactsAppProps = {}) {
     session,
     operations,
   } = useContactsAPI(apiSource);
+
+  const syncRunner = useMemo(
+    () =>
+      session.user.username
+        ? getContactsSyncRunner(session.user.username)
+        : new ConnectivitySyncRunner(async () => undefined),
+    [session.user.username],
+  );
+  useConnectivitySyncRunner(syncRunner);
 
   // Backward compat: redirect legacy query-param URLs (?view=&contact=) to new path form.
   // Runs once on mount; if no legacy params are present this is a no-op.

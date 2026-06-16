@@ -42,6 +42,7 @@ import type {
   ContactCardCreate,
   ContactCardPatch,
   ContactsAPIOperations,
+  ContactsMutationOpts,
   ContactsUIData,
 } from "@/contacts-core/src/contacts-types";
 import {
@@ -96,7 +97,7 @@ async function patchGroupWithFreshEtag(
     const fresh = await operations.getCard(groupId, { signal });
     const patch = buildPatch(fresh);
     if (!patch) return fresh;
-    return operations.patchCard(groupId, patch, { signal, ifMatch: fresh.etag });
+    return operations.patchCard(groupId, patch, contactMutationOpts(fresh, signal));
   };
 
   try {
@@ -113,6 +114,18 @@ function draftDisplayName(draft: ContactEditDraft, unknownLabel: string): string
     .filter(Boolean)
     .join(" ");
   return name || unknownLabel;
+}
+
+function contactMutationOpts(
+  card: ContactCard | undefined,
+  signal?: AbortSignal,
+): ContactsMutationOpts {
+  const state = card ? (card as ContactCard & { state?: string }).state : undefined;
+  return {
+    signal,
+    ifInState: state ?? undefined,
+    ifMatch: card?.etag,
+  };
 }
 
 function mergeContactFromPatch(active: ContactCard, patch: ContactCardPatch): ContactCard {
@@ -706,7 +719,7 @@ export function useContactsController({
             ? Promise.all(
                 ids.map((id) => {
                   const card = previousCards.find((row) => row.id === id);
-                  return operations.deleteCard(id, { signal, ifMatch: card?.etag });
+                  return operations.deleteCard(id, contactMutationOpts(card, signal));
                 }),
               ).then(() => {})
             : Promise.resolve(),
@@ -958,7 +971,7 @@ export function useContactsController({
         toastMessage: L.toastGroupDeleted(groupName),
         execute: (signal) =>
           operations
-            ? operations.deleteCard(groupId, { signal, ifMatch: group.etag }).then(() => {})
+            ? operations.deleteCard(groupId, contactMutationOpts(group, signal)).then(() => {})
             : Promise.resolve(),
         undo: rollback,
         onError: rollback,
@@ -1115,8 +1128,7 @@ export function useContactsController({
           return;
         }
         const saved = await operations.patchCard(contactId, patch, {
-          signal: controller.signal,
-          ifMatch: card.etag,
+          ...contactMutationOpts(card, controller.signal),
         });
         contactDraftsRef.current.delete(contactId);
         setCards((prev) => prev.map((row) => (row.id === contactId ? saved : row)));
