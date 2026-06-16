@@ -109,10 +109,11 @@ Git hooks (installed on `pnpm install` via Husky):
 - **pre-commit** — Prettier + ESLint fix on staged `@wgw/apps` files; Pint on staged `packages/api` PHP
 - **prepare-commit-msg** — strips Cursor `Co-authored-by` / `Made-with` trailers before the commit is signed
 - **commit-msg** — rejects any remaining Cursor attribution, then [Conventional Commits](https://www.conventionalcommits.org/) via Commitlint (`feat(scope): subject`)
+- **post-commit** — verifies `HEAD` has a signature (`git log -1 --format=%G?`); unsigned commits are soft-reset (changes stay staged)
 
 CI also rejects Cursor attribution in PR commits and PR descriptions (covers `--no-verify`). Project hooks block `gh pr create` / `gh pr edit` when the body includes attribution. You can disable injection at the source in **Cursor Settings → Agents → Attribution**.
 
-Use `HUSKY=0 git commit` to skip hooks once. Full gate before push: `pnpm run ci:quality`.
+Use `HUSKY=0 git commit` to skip hooks once (including signature verification). Full gate before push: `pnpm run ci:quality`.
 
 ## Plugins
 
