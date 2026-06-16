@@ -107,7 +107,7 @@ export const defaultContactsLabels: ContactsUILabels = {
   toastGroupRenamed: (name) => `Renamed to “${name}”`,
   newContact: "New contact",
   createContact: "Create contact",
-  importVcf: "Import vCard",
+  importVcf: "Import vCards",
   dropImportHint: "Drop vCard files to import",
   toastImported: (count) => `Imported ${count} contact${count === 1 ? "" : "s"}`,
   importInvalidFile: "Choose one or more .vcf or .vcard files to import.",
