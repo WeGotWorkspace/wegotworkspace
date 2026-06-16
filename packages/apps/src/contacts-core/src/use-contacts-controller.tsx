@@ -13,6 +13,7 @@ import type { WorkspaceAppHandle } from "@/workspace-app/src/workspace-app";
 import {
   contactDisplayName,
   filterCardsBySearch,
+  sortContactCardsForList,
 } from "@/contacts-core/src/contacts-display-utils";
 import {
   filterCardsByView,
@@ -218,7 +219,10 @@ export function useContactsController({
     return filterCardsBySearch(byView, searchQuery);
   }, [cards, searchQuery, view]);
 
-  const visibleIds = useMemo(() => visibleCards.map((card) => card.id), [visibleCards]);
+  const visibleIds = useMemo(
+    () => sortContactCardsForList(visibleCards).map((card) => card.id),
+    [visibleCards],
+  );
 
   const stashActiveEditDraft = useCallback(() => {
     if (!editMode || createMode || !editDraft || !activeId || activeId === CONTACTS_CREATE_ID)

@@ -35,18 +35,40 @@ vi.mock("@/hooks/use-is-touch", () => ({
 
 const bootstrap = createContactsAppBootstrap();
 
-function clickSelect(result: { current: ReturnType<typeof useContactsController> }, id: string) {
+function clickSelect(
+  result: { current: ReturnType<typeof useContactsController> },
+  id: string,
+  options: { shiftKey?: boolean } = {},
+) {
   act(() => {
     result.current.handleSelect(id, {
       detail: 1,
       metaKey: false,
       ctrlKey: false,
-      shiftKey: false,
+      shiftKey: options.shiftKey ?? false,
     } as ReactMouseEvent);
   });
 }
 
 describe("useContactsController", () => {
+  it("shift-clicks a range in visible list sort order", () => {
+    const { result } = renderHook(() =>
+      useContactsController({
+        data: bootstrap.data,
+        listLoading: false,
+      }),
+    );
+
+    act(() => {
+      result.current.selectView("all");
+    });
+
+    clickSelect(result, "card-joe");
+    clickSelect(result, "card-acme", { shiftKey: true });
+
+    expect(result.current.selectedIds).toEqual(["card-acme", "card-jane", "card-joe"]);
+  });
+
   it("selects a contact and filters the list by search query", () => {
     const { result } = renderHook(() =>
       useContactsController({
