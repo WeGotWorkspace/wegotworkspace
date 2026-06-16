@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 
 import { execFileSync } from "node:child_process";
-import { containsCursorAttribution } from "./cursor-attribution.mjs";
+import {
+  containsCursorAttribution,
+  isCursorAgentAuthorEmail,
+} from "./cursor-attribution.mjs";
 
 const range = process.argv[2];
 if (!range) {
@@ -17,7 +20,7 @@ let logOutput = "";
 try {
   logOutput = execFileSync(
     "git",
-    ["log", "--format=%H%x1f%B%x1e", range],
+    ["log", "--format=%H%x1f%ae%x1f%B%x1e", range],
     { encoding: "utf8" },
   );
 } catch {
@@ -33,10 +36,17 @@ for (const entry of entries) {
     continue;
   }
 
+  const rest = entry.slice(separator + 1);
+  const emailSeparator = rest.indexOf("\x1f");
+  if (emailSeparator === -1) {
+    continue;
+  }
+
   const sha = entry.slice(0, separator);
-  const message = entry.slice(separator + 1);
-  if (containsCursorAttribution(message)) {
-    violations.push(sha.slice(0, 12));
+  const authorEmail = rest.slice(0, emailSeparator);
+  const message = rest.slice(emailSeparator + 1);
+  if (isCursorAgentAuthorEmail(authorEmail) || containsCursorAttribution(message)) {
+    violations.push(sha.trim().slice(0, 12));
   }
 }
 
@@ -44,6 +54,8 @@ if (violations.length > 0) {
   console.error(
     `Found Cursor attribution in ${violations.length} commit(s): ${violations.join(", ")}`,
   );
-  console.error("Remove Co-authored-by / Made-with Cursor trailers before merging.");
+  console.error(
+    "Use your own git author identity and remove Co-authored-by / Made-with Cursor trailers before merging.",
+  );
   process.exit(1);
 }
