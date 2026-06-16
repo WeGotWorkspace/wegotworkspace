@@ -66,6 +66,15 @@ function normalizeContactUidForMatch(uid: string): string {
   return trimmed.toLowerCase();
 }
 
+/** Canonical member-map / vCard member URI for Apple CardDAV (urn:uuid: prefix). */
+function memberUidForGroupMap(uid: string): string {
+  const trimmed = uid.trim();
+  if (trimmed.toLowerCase().startsWith("urn:uuid:")) {
+    return trimmed;
+  }
+  return `urn:uuid:${trimmed}`;
+}
+
 function memberCardIdFromApi(
   memberCardIds: ContactCardWithResolvedMembers["memberCardIds"],
   uid: string,
@@ -188,7 +197,7 @@ export function groupAddMembersPatch(
     if (!card.uid) continue;
     if (isContactGroupCard(card)) continue;
     if (existingNormalizedUids.has(normalizeContactUidForMatch(card.uid))) continue;
-    newMembers[card.uid] = true;
+    newMembers[memberUidForGroupMap(card.uid)] = true;
   }
   if (Object.keys(newMembers).length === 0) return null;
   return { members: newMembers };
