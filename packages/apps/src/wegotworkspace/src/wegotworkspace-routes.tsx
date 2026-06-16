@@ -249,46 +249,38 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
 
   const ContactsComponent = isLive ? withWeGotWorkspaceAuth(ContactsApp) : MockContactsRoute;
 
-  // Layout route: renders ContactsApp (or mock) for all /contacts/** paths.
-  // Child routes define path segments and params; they carry no component of their own,
-  // so ContactsApp reads params via useParams({ strict: false }).
-  const contactsRoute = createRoute({
+  // Each contacts path is a root-level route with its own component so `useParams` in
+  // ContactsApp resolves leaf params (contactId, groupCardId) on direct page loads.
+  const contactsIndexRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/contacts",
-    component: ContactsComponent,
-  });
-
-  // /contacts → redirect to /contacts/all (also handles legacy ?view=&contact= in ContactsApp)
-  const contactsIndexRoute = createRoute({
-    getParentRoute: () => contactsRoute,
-    path: "/",
     beforeLoad: () => {
       throw redirect({ to: "/contacts/all" });
     },
   });
 
-  // /contacts/all
   const contactsAllRoute = createRoute({
-    getParentRoute: () => contactsRoute,
-    path: "/all",
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/contacts/all",
+    component: ContactsComponent,
   });
 
-  // /contacts/all/:contactId
   const contactsAllContactRoute = createRoute({
-    getParentRoute: () => contactsRoute,
-    path: "/all/$contactId",
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/contacts/all/$contactId",
+    component: ContactsComponent,
   });
 
-  // /contacts/groups/:groupCardId
   const contactsGroupRoute = createRoute({
-    getParentRoute: () => contactsRoute,
-    path: "/groups/$groupCardId",
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/contacts/groups/$groupCardId",
+    component: ContactsComponent,
   });
 
-  // /contacts/groups/:groupCardId/:contactId
   const contactsGroupContactRoute = createRoute({
-    getParentRoute: () => contactsRoute,
-    path: "/groups/$groupCardId/$contactId",
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/contacts/groups/$groupCardId/$contactId",
+    component: ContactsComponent,
   });
 
   const installRoute = createRoute({
@@ -310,13 +302,11 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
     meetGuestRoute,
     meetJoinRoute,
     adminRoute,
-    contactsRoute.addChildren([
-      contactsIndexRoute,
-      contactsAllRoute,
-      contactsAllContactRoute,
-      contactsGroupRoute,
-      contactsGroupContactRoute,
-    ]),
+    contactsIndexRoute,
+    contactsAllRoute,
+    contactsAllContactRoute,
+    contactsGroupRoute,
+    contactsGroupContactRoute,
     installRoute,
   ]);
 }

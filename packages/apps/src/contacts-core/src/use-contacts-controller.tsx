@@ -167,6 +167,11 @@ export function useContactsController({
   }, [data.addressBooks, data.cards]);
 
   useEffect(() => {
+    if (!initialContactId) return;
+    workspaceLayoutRef.current?.openMobileDetail();
+  }, [initialContactId]);
+
+  useEffect(() => {
     cardsRef.current = cards;
   }, [cards]);
 
