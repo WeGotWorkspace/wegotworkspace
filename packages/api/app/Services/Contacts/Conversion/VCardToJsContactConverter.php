@@ -1037,7 +1037,7 @@ final class VCardToJsContactConverter
             if ($name === 'X-ADDRESSBOOKSERVER-KIND' && ($card['kind'] ?? '') === 'group') {
                 continue;
             }
-            if (in_array($name, ['X-ADDRESSBOOKSERVER-MEMBER', 'X-ABGROUPMEMBER'], true) && isset($card['members'])) {
+            if (in_array($name, ['MEMBER', 'X-ADDRESSBOOKSERVER-MEMBER', 'X-ABGROUPMEMBER'], true) && isset($card['members'])) {
                 continue;
             }
             if ($isKnown && ! $isPreserveOnly && ! $isDeferred) {

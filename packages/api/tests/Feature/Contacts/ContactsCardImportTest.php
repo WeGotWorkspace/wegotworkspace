@@ -106,6 +106,175 @@ VCARD;
         $this->assertArrayHasKey('memberCardIds', $group);
     }
 
+    public function test_import_apple_addressbook_group_with_kind_and_member_properties(): void
+    {
+        $janeUid = 'b0273eb1-df19-4f11-8446-85ee29cd9dfd';
+        $joeUid = 'a9c0941e-ddf9-4c98-a1da-ee1b241a7e2d';
+
+        $vcard = <<<VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Jane Doe
+UID:{$janeUid}
+END:VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Joe Example
+UID:{$joeUid}
+END:VCARD
+BEGIN:VCARD
+VERSION:3.0
+UID:786ec7b4-e5c5-4977-af48-1aa1675bc135
+KIND:group
+X-ADDRESSBOOKSERVER-KIND:group
+PRODID:-//Apple Inc.//AddressBookCore 1.0//EN
+FN:Family Members
+N:Family Members;;;;;;
+MEMBER:urn:uuid:{$janeUid}
+MEMBER:urn:uuid:{$joeUid}
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:{$janeUid}
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:{$joeUid}
+END:VCARD
+VCARD;
+
+        $import = $this->call(
+            'POST',
+            '/api/v1/contacts/cards/import?addressBookId=default',
+            [],
+            [],
+            [],
+            [
+                'HTTP_AUTHORIZATION' => 'Bearer '.$this->userBearerToken(),
+                'CONTENT_TYPE' => 'text/vcard',
+                'HTTP_ACCEPT' => 'application/json',
+            ],
+            $vcard,
+        );
+
+        $import->assertCreated()
+            ->assertJsonCount(3, 'list')
+            ->assertJsonCount(0, 'errors');
+
+        $group = collect($import->json('list'))
+            ->first(fn (array $card): bool => ($card['kind'] ?? null) === 'group');
+        $this->assertIsArray($group);
+        $this->assertSame('Family Members', $group['name']['full'] ?? null);
+        $this->assertCount(2, $group['members'] ?? []);
+        $this->assertArrayHasKey('urn:uuid:'.$janeUid, $group['members']);
+        $this->assertArrayHasKey('urn:uuid:'.$joeUid, $group['members']);
+
+        $janeId = collect($import->json('list'))
+            ->first(fn (array $card): bool => ($card['uid'] ?? null) === $janeUid)['id'] ?? null;
+        $joeId = collect($import->json('list'))
+            ->first(fn (array $card): bool => ($card['uid'] ?? null) === $joeUid)['id'] ?? null;
+        $this->assertIsString($janeId);
+        $this->assertIsString($joeId);
+        $this->assertSame($janeId, $group['memberCardIds']['urn:uuid:'.$janeUid] ?? null);
+        $this->assertSame($joeId, $group['memberCardIds']['urn:uuid:'.$joeUid] ?? null);
+
+        $groupId = (string) $group['id'];
+        $list = $this->withBearer($this->userBearerToken())
+            ->getJson('/api/v1/contacts/cards?addressBookId=default')
+            ->assertOk()
+            ->json('list');
+        $listedGroup = collect($list)
+            ->first(fn (array $card): bool => ($card['id'] ?? null) === $groupId);
+        $this->assertIsArray($listedGroup);
+        $this->assertCount(2, $listedGroup['members'] ?? []);
+        $this->assertSame($janeId, $listedGroup['memberCardIds']['urn:uuid:'.$janeUid] ?? null);
+
+        $stored = $this->findBobCard($groupId);
+        $this->assertNotNull($stored);
+        $raw = is_string($stored->carddata) ? $stored->carddata : (string) $stored->carddata;
+        $this->assertStringContainsString('MEMBER:urn:uuid:'.$janeUid, $raw);
+        $this->assertStringContainsString('X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:'.$joeUid, $raw);
+    }
+
+    public function test_import_apple_fixture_resolves_members_after_batch(): void
+    {
+        $vcard = (string) file_get_contents(__DIR__.'/../../fixtures/Contacts/apple-group-with-members.vcf');
+
+        $response = $this->call(
+            'POST',
+            '/api/v1/contacts/cards/import?addressBookId=default',
+            [],
+            [],
+            [],
+            [
+                'HTTP_AUTHORIZATION' => 'Bearer '.$this->userBearerToken(),
+                'CONTENT_TYPE' => 'text/vcard',
+                'HTTP_ACCEPT' => 'application/json',
+            ],
+            $vcard,
+        );
+
+        $response->assertCreated()
+            ->assertJsonCount(3, 'list')
+            ->assertJsonCount(0, 'errors');
+
+        $group = collect($response->json('list'))
+            ->first(fn (array $card): bool => ($card['kind'] ?? null) === 'group');
+        $this->assertIsArray($group);
+        $this->assertCount(2, $group['members'] ?? []);
+        $this->assertCount(2, $group['memberCardIds'] ?? []);
+    }
+
+    public function test_import_group_file_after_contacts_file_resolves_member_card_ids(): void
+    {
+        $contacts = <<<'VCARD'
+BEGIN:VCARD
+VERSION:3.0
+FN:Jane Doe
+UID:a1111111-1111-4111-8111-111111111111
+END:VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Joe Example
+UID:a2222222-2222-4222-8222-222222222222
+END:VCARD
+VCARD;
+
+        $group = <<<'VCARD'
+BEGIN:VCARD
+VERSION:3.0
+UID:b3333333-3333-4333-8333-333333333333
+KIND:group
+X-ADDRESSBOOKSERVER-KIND:group
+FN:Family Members
+MEMBER:urn:uuid:a1111111-1111-4111-8111-111111111111
+MEMBER:urn:uuid:a2222222-2222-4222-8222-222222222222
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:a1111111-1111-4111-8111-111111111111
+X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:a2222222-2222-4222-8222-222222222222
+END:VCARD
+VCARD;
+
+        $headers = [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$this->userBearerToken(),
+            'CONTENT_TYPE' => 'text/vcard',
+            'HTTP_ACCEPT' => 'application/json',
+        ];
+
+        $this->call('POST', '/api/v1/contacts/cards/import?addressBookId=default', [], [], [], $headers, $contacts)
+            ->assertCreated()
+            ->assertJsonCount(2, 'list');
+
+        $groupImport = $this->call(
+            'POST',
+            '/api/v1/contacts/cards/import?addressBookId=default',
+            [],
+            [],
+            [],
+            $headers,
+            $group,
+        );
+
+        $groupImport->assertCreated()->assertJsonCount(1, 'list');
+        $importedGroup = $groupImport->json('list.0');
+        $this->assertIsArray($importedGroup);
+        $this->assertSame('group', $importedGroup['kind'] ?? null);
+        $this->assertCount(2, $importedGroup['memberCardIds'] ?? []);
+    }
+
     public function test_import_empty_body_returns_bad_request(): void
     {
         $this->call(
