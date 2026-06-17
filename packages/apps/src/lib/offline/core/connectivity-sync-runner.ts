@@ -16,3 +16,16 @@ export class ConnectivitySyncRunner<T = void> {
       });
   }
 }
+
+/** Per-account registry of {@link ConnectivitySyncRunner} instances. */
+export class ConnectivitySyncRunnerRegistry<T = void> {
+  private readonly runners = new Map<string, ConnectivitySyncRunner<T>>();
+
+  getOrCreate(username: string, flushTask: FlushTask<T>): ConnectivitySyncRunner<T> {
+    const existing = this.runners.get(username);
+    if (existing) return existing;
+    const runner = new ConnectivitySyncRunner(flushTask);
+    this.runners.set(username, runner);
+    return runner;
+  }
+}

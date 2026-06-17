@@ -3,6 +3,7 @@ import { contactCardSet, ContactStateMismatchError } from "@/lib/api/wgw/contact
 import { getCard, listAddressBooks } from "@/lib/api/wgw/contacts";
 import { syncAllContactBooks } from "@/lib/api/wgw/contacts-sync";
 import type { ContactsAppBootstrap } from "@/lib/api/mock/contacts-bootstrap";
+import { CONTACTS_DOMAIN } from "@/lib/offline/contacts/contacts-schema";
 import {
   listOutboxMutations,
   markOutboxError,
@@ -28,7 +29,7 @@ export async function flushContactsOutbox(username: string): Promise<OutboxFlush
   const stateMismatches: string[] = [];
 
   for (const row of rows) {
-    if (row.domain !== "contacts") continue;
+    if (row.domain !== CONTACTS_DOMAIN) continue;
     try {
       const payload = JSON.parse(row.payload) as Record<string, unknown>;
       if (row.op === "create") {
