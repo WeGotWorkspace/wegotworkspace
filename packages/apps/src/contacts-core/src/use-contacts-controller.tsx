@@ -423,10 +423,12 @@ export function useContactsController({
     if (createMode) {
       setCreateMode(false);
       setActiveId("");
+    } else if (activeId && activeId !== CONTACTS_CREATE_ID) {
+      contactDraftsRef.current.delete(activeId);
     }
     setEditMode(false);
     setEditDraft(null);
-  }, [createMode]);
+  }, [activeId, createMode]);
 
   const createContact = useCallback(() => {
     setCreateMode(true);

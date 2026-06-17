@@ -65,9 +65,8 @@ export function ContactsDetailActionBar({
           {
             id: "edit",
             label: labels.edit,
-            onClick: onEdit,
+            onClick: editMode ? onCancel : onEdit,
             icon: <Pencil className="size-4" />,
-            disabled: editMode,
             active: editMode,
           },
         ]
