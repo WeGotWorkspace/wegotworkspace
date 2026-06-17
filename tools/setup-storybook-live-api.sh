@@ -7,7 +7,7 @@ ENV_LOCAL="$ROOT/.env.local"
 DB="$ROOT/apps/wegotworkspace/wgw-content/db.sqlite"
 USERNAME="${STORYBOOK_DEV_USERNAME:-admin}"
 PASSWORD="${STORYBOOK_DEV_PASSWORD:-storybook-dev}"
-PROXY_TARGET="${WGW_PROXY_TARGET:-https://wegotworkspace.localhost}"
+PROXY_TARGET="${WGW_PROXY_TARGET:-http://127.0.0.1:9080}"
 SET_PASSWORD=0
 
 for arg in "$@"; do

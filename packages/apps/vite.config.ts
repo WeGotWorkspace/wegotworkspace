@@ -9,7 +9,6 @@ import { wgwApiViteProxy } from "./scripts/wgw-proxy-target";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const wgwMonorepoRoot = path.join(__dirname, "..", "..", "..");
-const wgwApiProxy = wgwApiViteProxy();
 
 const DEFAULT_DEV_PORT = 5173;
 const DEFAULT_PREVIEW_PORT = 4173;
@@ -26,53 +25,56 @@ function resolveWgwVitePort(raw: string | undefined, defaultPort: number, envVar
   return parsed;
 }
 
-const wgwEnv = loadEnv(process.env.NODE_ENV ?? "development", wgwMonorepoRoot, "WGW_");
-const devPort = resolveWgwVitePort(wgwEnv.WGW_VITE_DEV_PORT, DEFAULT_DEV_PORT, "WGW_VITE_DEV_PORT");
-const previewPort = resolveWgwVitePort(
-  wgwEnv.WGW_VITE_PREVIEW_PORT,
-  DEFAULT_PREVIEW_PORT,
-  "WGW_VITE_PREVIEW_PORT",
-);
+export default defineConfig(({ mode }) => {
+  const wgwApiProxy = wgwApiViteProxy(mode);
+  const wgwEnv = loadEnv(mode, wgwMonorepoRoot, "WGW_");
+  const devPort = resolveWgwVitePort(wgwEnv.WGW_VITE_DEV_PORT, DEFAULT_DEV_PORT, "WGW_VITE_DEV_PORT");
+  const previewPort = resolveWgwVitePort(
+    wgwEnv.WGW_VITE_PREVIEW_PORT,
+    DEFAULT_PREVIEW_PORT,
+    "WGW_VITE_PREVIEW_PORT",
+  );
 
-export default defineConfig({
-  // Absolute base so SPA deep links (e.g. /contacts/all/:id) resolve /assets/* correctly on refresh.
-  base: "/",
-  envDir: wgwMonorepoRoot,
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "src"),
-    },
-  },
-  plugins: [
-    react(),
-    tailwindcss(),
-    tsconfigPaths(),
-    VitePWA({
-      registerType: "autoUpdate",
-      injectRegister: false,
-      devOptions: { enabled: false },
-      workbox: {
-        navigateFallback: "index.html",
-        globPatterns: ["**/*.{js,css,html,ico,png,woff2,webmanifest}"],
+  return {
+    // Absolute base so SPA deep links (e.g. /contacts/all/:id) resolve /assets/* correctly on refresh.
+    base: "/",
+    envDir: wgwMonorepoRoot,
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "src"),
       },
-      manifest: false,
-    }),
-  ],
-  server: {
-    // Bind all interfaces so both http://127.0.0.1 and http://localhost work (Node may otherwise listen on ::1 only).
-    host: true,
-    port: devPort,
-    strictPort: true,
-    proxy: wgwApiProxy,
-  },
-  preview: {
-    port: previewPort,
-    strictPort: true,
-    proxy: wgwApiProxy,
-  },
-  build: {
-    outDir: "dist",
-    emptyOutDir: true,
-  },
-  publicDir: "public",
+    },
+    plugins: [
+      react(),
+      tailwindcss(),
+      tsconfigPaths(),
+      VitePWA({
+        registerType: "autoUpdate",
+        injectRegister: false,
+        devOptions: { enabled: false },
+        workbox: {
+          navigateFallback: "index.html",
+          globPatterns: ["**/*.{js,css,html,ico,png,woff2,webmanifest}"],
+        },
+        manifest: false,
+      }),
+    ],
+    server: {
+      // Bind all interfaces so both http://127.0.0.1 and http://localhost work (Node may otherwise listen on ::1 only).
+      host: true,
+      port: devPort,
+      strictPort: true,
+      proxy: wgwApiProxy,
+    },
+    preview: {
+      port: previewPort,
+      strictPort: true,
+      proxy: wgwApiProxy,
+    },
+    build: {
+      outDir: "dist",
+      emptyOutDir: true,
+    },
+    publicDir: "public",
+  };
 });
