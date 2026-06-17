@@ -41,6 +41,7 @@
         "test": "phpunit -c phpunit.xml",
         "test:mysql": "WGW_TEST_DRIVER=mysql phpunit -c phpunit.xml",
         "test:mysql:parity": "WGW_TEST_DRIVER=mysql phpunit -c phpunit-mysql-parity.xml",
+        "test:mysql:parity:shard": "WGW_TEST_DRIVER=mysql php scripts/phpunit-shard.php --config=phpunit-mysql-parity.xml",
         "test:architecture": "phpunit -c phpunit.xml --testsuite Architecture",
         "greenfield:guard": "@lint",
         "done-gate:contract": "php scripts/done-gate.php --contract",
