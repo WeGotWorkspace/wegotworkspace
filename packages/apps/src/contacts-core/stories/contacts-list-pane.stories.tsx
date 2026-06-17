@@ -17,9 +17,11 @@ export type ContactsListPanePreset = "default" | "empty" | "loading" | "inGroup"
 function ContactsListPaneHarness({
   preset = "default",
   pendingCardIds,
+  failedSyncCount,
 }: {
   preset?: ContactsListPanePreset;
   pendingCardIds?: string[];
+  failedSyncCount?: number;
 }) {
   const controller = useContactsPaneStoryController(
     preset === "empty"
@@ -66,6 +68,8 @@ function ContactsListPaneHarness({
     selectionBar: controller.selectionBar,
     onRefreshList: () => {},
     pendingCardIds: pendingCardIds ? new Set(pendingCardIds) : undefined,
+    failedSyncCount,
+    onRetrySync: () => {},
   });
 
   return (
@@ -114,6 +118,16 @@ export const PendingSync: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getByRole("img", { name: "Pending sync" })).toBeInTheDocument();
+  },
+};
+
+export const RetrySync: Story = {
+  tags: ["vitest-ci"],
+  args: { preset: "default", failedSyncCount: 2 },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByText("Some changes couldn’t sync")).toBeInTheDocument();
+    await expect(canvas.getByRole("button", { name: "Retry" })).toBeInTheDocument();
   },
 };
 

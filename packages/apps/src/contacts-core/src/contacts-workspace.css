@@ -136,6 +136,10 @@
   color: var(--contacts-pending-sync-color);
 }
 
+.contacts-list-panel__retry-callout {
+  @apply m-3;
+}
+
 .contacts-detail-view {
   max-width: 680px;
   margin-inline: auto;

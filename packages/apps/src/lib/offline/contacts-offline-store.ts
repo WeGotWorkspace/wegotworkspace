@@ -6,7 +6,11 @@ import type {
   ContactCardPatch,
 } from "@/contacts-core/src/contacts-types";
 import { offlineAccountKeyFromUsername, offlineDbForAccount } from "@/lib/offline/core/offline-db";
-import { enqueueOutboxMutation } from "@/lib/offline/core/outbox-store";
+import {
+  enqueueOutboxMutation,
+  isRetryableOutboxRow,
+  listOutboxMutationsForDomain,
+} from "@/lib/offline/core/outbox-store";
 import type { OfflineOutboxRow } from "@/lib/offline/core/types";
 import {
   CONTACTS_DOMAIN,
@@ -98,6 +102,15 @@ export async function upsertContactCardInCache(
 export async function removeContactCardFromCache(username: string, cardId: string): Promise<void> {
   const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
   await contactsCardsTable(db).delete(cardId);
+}
+
+/**
+ * Outbox rows that failed for a transient (non-conflict) reason and can be
+ * retried. Conflicts go to the resolution modal, not the retry callout.
+ */
+export async function listFailedContactOutbox(username: string): Promise<OfflineOutboxRow[]> {
+  const rows = await listOutboxMutationsForDomain(username, CONTACTS_DOMAIN);
+  return rows.filter(isRetryableOutboxRow);
 }
 
 /** Ids of cards with unsynced local changes (drives the pending-sync badge). */
