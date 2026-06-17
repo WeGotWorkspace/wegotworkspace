@@ -1,15 +1,19 @@
+import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { expect, userEvent, within } from "storybook/test";
 import { ContactsDetailActionBar } from "@/contacts-core/src/contacts-detail-action-bar";
 import { defaultContactsLabels } from "@/contacts-core/src/contacts-labels";
 import { ContactsStoryScope } from "./contacts-story-scope";
 
 function ContactsDetailActionBarHarness({
-  editMode = false,
+  editMode: initialEditMode = false,
   createMode = false,
 }: {
   editMode?: boolean;
   createMode?: boolean;
 }) {
+  const [editMode, setEditMode] = useState(initialEditMode);
+
   return (
     <ContactsStoryScope variant="detail">
       <div className="sticky top-0 z-10 border-b px-2 py-2">
@@ -19,11 +23,11 @@ function ContactsDetailActionBarHarness({
           editMode={editMode}
           createMode={createMode}
           closeMobileDetail={() => {}}
-          onEdit={() => {}}
+          onEdit={() => setEditMode(true)}
           onDelete={() => {}}
           onDownload={() => {}}
           onSave={() => {}}
-          onCancel={() => {}}
+          onCancel={() => setEditMode(false)}
         />
       </div>
     </ContactsStoryScope>
@@ -47,6 +51,12 @@ export const ReadMode: Story = {
 
 export const EditMode: Story = {
   args: { editMode: true },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const editButton = canvas.getByRole("button", { name: defaultContactsLabels.edit });
+    await userEvent.click(editButton);
+    await expect(editButton.className).not.toContain("icon-button--active");
+  },
 };
 
 export const CreateMode: Story = {

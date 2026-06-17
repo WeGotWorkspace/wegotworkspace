@@ -42,6 +42,18 @@ Clients may also use CardDAV **sync-collection REPORT** against `/addressbooks/{
 | `uid` | **Supported** on query POST body and `GET ?uid=` |
 | `text`, `name`, `email`, … | **Deferred** — use unified search or full list + client filter |
 
+### Contact/set (batch writes)
+
+`POST /api/v1/contacts/cards/set` implements JMAP `Contact/set`:
+
+- `create` — map of creation id → ContactCard body
+- `update` — map of card id → patch fields plus optional `ifInState`
+- `destroy` — id array (force) or map of id → `{ ifInState }`
+
+Responses use `created`, `updated`, `destroyed`, and `not*` buckets. Stale `ifInState` yields `notUpdated` / `notDestroyed` entries with `type: stateMismatch`.
+
+Per-contact opaque `state` tokens are stored in `jmap_contact_states` and returned on `Contact/get` responses (alongside legacy `etag` for REST PATCH).
+
 ### Query request (POST)
 
 ```json

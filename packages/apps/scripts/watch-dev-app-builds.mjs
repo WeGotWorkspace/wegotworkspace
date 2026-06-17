@@ -17,7 +17,7 @@ await build({
       closeBundle() {
         buildCounter += 1;
         console.log(
-          `[watch-dev-app-builds] Rebuilt packages/apps/dist (#${buildCounter}). PHP serves from monorepo paths; run pnpm dev:preview to sync into apps/wegotworkspace.`,
+          `[watch-dev-app-builds] Rebuilt packages/apps/dist (#${buildCounter}). PHP serves from monorepo paths; run pnpm build to sync into apps/wegotworkspace.`,
         );
       },
     },

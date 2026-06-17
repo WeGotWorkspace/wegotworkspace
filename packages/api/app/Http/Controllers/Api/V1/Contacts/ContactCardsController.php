@@ -8,15 +8,20 @@ use App\Exceptions\ApiHttpException;
 use App\Http\Middleware\AuthenticateWgwApi;
 use App\Http\Requests\Api\V1\ContactCardPatchRequest;
 use App\Http\Requests\Api\V1\ContactCardQueryRequest;
+use App\Http\Requests\Api\V1\ContactCardSetRequest;
 use App\Http\Requests\Api\V1\ContactCardUpsertRequest;
 use App\Http\Support\JmapResourceResponse;
 use App\Services\Contacts\ContactCardRepository;
+use App\Services\Contacts\ContactCardSetService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 final class ContactCardsController
 {
-    public function __construct(private readonly ContactCardRepository $cards) {}
+    public function __construct(
+        private readonly ContactCardRepository $cards,
+        private readonly ContactCardSetService $cardSet,
+    ) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -32,6 +37,16 @@ final class ContactCardsController
         $uidFilter = is_string($uid) && trim($uid) !== '' ? trim($uid) : null;
 
         return response()->json($this->cards->list($principal['username'], $addressBookId, $uidFilter));
+    }
+
+    public function set(ContactCardSetRequest $request): JsonResponse
+    {
+        /** @var array{username: string, role: string} $principal */
+        $principal = $request->attributes->get(AuthenticateWgwApi::PRINCIPAL_ATTRIBUTE);
+
+        return response()->json(
+            $this->cardSet->set($principal['username'], $request->json()->all()),
+        );
     }
 
     public function query(ContactCardQueryRequest $request): JsonResponse

@@ -8,9 +8,118 @@ on:
     branches: [main]
   pull_request:
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  api-quality:
+    if: >-
+      github.event_name != 'push' ||
+      !startsWith(github.event.head_commit.message, 'chore(release):')
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: ctype, dom, iconv, imap, json, mbstring, pdo, pdo_sqlite, simplexml, zip
+          coverage: none
+
+      - uses: pnpm/action-setup@v4.4.0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "pnpm"
+
+      - name: Cache Composer vendor
+        uses: actions/cache@v4
+        with:
+          path: packages/api/vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('packages/api/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Cache Turbo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ hashFiles('pnpm-lock.yaml', 'turbo.json', 'packages/api/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
+      - name: Install JS workspace
+        run: pnpm install --frozen-lockfile
+
+      - name: Install backend Composer dependencies
+        run: composer --working-dir packages/api install --no-interaction --prefer-dist
+
+      - name: Prepare Laravel env for tests
+        run: |
+          cp packages/api/.env.example packages/api/.env
+          php packages/api/artisan key:generate --force --no-interaction
+
+      # Shard 1 also runs greenfield-guard + the Architecture suite; later
+      # shards run only their round-robin slice of unit/feature/storage tests.
+      - name: API quality gate (shard ${{ matrix.shard }}/2)
+        env:
+          DONE_GATE_SHARD: ${{ matrix.shard }}/2
+        run: pnpm run ci:quality:api
+
+  apps-quality:
+    if: >-
+      github.event_name != 'push' ||
+      !startsWith(github.event.head_commit.message, 'chore(release):')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4.4.0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "pnpm"
+
+      - name: Cache Turbo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ hashFiles('pnpm-lock.yaml', 'turbo.json', 'packages/api/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
+      - name: Install JS workspace
+        run: pnpm install --frozen-lockfile
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-chromium-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-chromium-
+
+      - name: Install Playwright (Storybook Vitest)
+        run: |
+          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" != 'true' ]; then
+            pnpm --filter @wgw/apps exec playwright install chromium --with-deps
+          else
+            pnpm --filter @wgw/apps exec playwright install chromium
+          fi
+
+      - name: Apps quality gate
+        run: pnpm run ci:quality:apps
+
   build:
-    # release:publish pushes the VERSION commit then the tag; Release workflow builds that commit.
+    needs: [api-quality, apps-quality]
     if: >-
       github.event_name != 'push' ||
       !startsWith(github.event.head_commit.message, 'chore(release):')
@@ -31,16 +140,19 @@ jobs:
           node-version: "24"
           cache: "pnpm"
 
+      - name: Cache Composer vendor
+        uses: actions/cache@v4
+        with:
+          path: packages/api/vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('packages/api/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
       - name: Install JS workspace
         run: pnpm install --frozen-lockfile
 
       - name: Install backend Composer dependencies
         run: composer --working-dir packages/api install --no-interaction --prefer-dist
-
-      - name: Prepare Laravel env for tests
-        run: |
-          cp packages/api/.env.example packages/api/.env
-          php packages/api/artisan key:generate --force --no-interaction
 
       - name: License policy (production dependencies)
         run: pnpm run check:licenses
@@ -54,26 +166,6 @@ jobs:
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
         run: node tools/git/check-pr-body-attribution.mjs
-
-      - name: Cache Playwright browsers
-        uses: actions/cache@v4
-        id: playwright-cache
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-chromium-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-playwright-chromium-
-
-      - name: Install Playwright (Storybook Vitest)
-        run: |
-          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" != 'true' ]; then
-            pnpm --filter @wgw/apps exec playwright install chromium --with-deps
-          else
-            pnpm --filter @wgw/apps exec playwright install chromium
-          fi
-
-      - name: Quality gate (typegen, lint, format, API + apps done gates)
-        run: pnpm run ci:quality
 
       - name: Chromatic (optional)
         if: vars.CHROMATIC_ENABLED == 'true'
@@ -118,6 +210,10 @@ jobs:
       github.event_name != 'push' ||
       !startsWith(github.event.head_commit.message, 'chore(release):')
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     services:
       mysql:
         image: mysql:8.0
@@ -140,6 +236,14 @@ jobs:
           extensions: ctype, dom, iconv, imap, json, mbstring, pdo, pdo_mysql, pdo_sqlite, simplexml, zip
           coverage: none
 
+      - name: Cache Composer vendor
+        uses: actions/cache@v4
+        with:
+          path: packages/api/vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('packages/api/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
       - name: Install backend Composer dependencies
         run: composer --working-dir packages/api install --no-interaction --prefer-dist
 
@@ -148,7 +252,10 @@ jobs:
           cp packages/api/.env.example packages/api/.env
           php packages/api/artisan key:generate --force --no-interaction
 
-      - name: API tests (MySQL wgw connection)
+      # PR/push runs only the MySQL parity subset (DB-dialect-relevant tests),
+      # split into round-robin shards. The full MySQL suite runs on main +
+      # nightly via ci-mysql-full.yml.
+      - name: API tests (MySQL parity subset, shard ${{ matrix.shard }}/2)
         env:
           WGW_TEST_DRIVER: mysql
           WGW_TEST_MYSQL_HOST: 127.0.0.1
@@ -156,4 +263,5 @@ jobs:
           WGW_TEST_MYSQL_DATABASE: wgw_test
           WGW_TEST_MYSQL_USERNAME: root
           WGW_TEST_MYSQL_PASSWORD: root
-        run: composer --working-dir packages/api run test:mysql
+          WGW_PHPUNIT_SHARD: ${{ matrix.shard }}/2
+        run: composer --working-dir packages/api run test:mysql:parity:shard

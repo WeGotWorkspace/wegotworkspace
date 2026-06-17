@@ -1,7 +1,16 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { WorkspaceLiveAppShell } from "@/lib/live/workspace-live-app-shell";
+import {
+  resolveConflictKeepLocal,
+  resolveConflictUseServer,
+} from "@/lib/offline/contacts-conflict-resolution";
+import { resolveContactsOfflineUsername } from "@/lib/offline/offline-session";
 import type { ContactsApiSource } from "@/contacts-core/src/contacts-api-source";
+import { ContactsConflictDialog } from "@/contacts-core/src/contacts-conflict-dialog";
+import { contactDisplayName } from "@/contacts-core/src/contacts-display-utils";
+import { defaultContactsLabels } from "@/contacts-core/src/contacts-labels";
+import type { ContactCard } from "@/contacts-core/src/contacts-types";
 import { ContactsWorkspace } from "@/contacts-core/src/contacts-workspace";
 import { useContactsAPI } from "@/contacts-core/src/use-contacts-api";
 import {
@@ -19,6 +28,24 @@ export function ContactsApp({ apiSource }: ContactsAppProps = {}) {
   const params = useParams({ strict: false }) as { groupCardId?: string; contactId?: string };
   const rawSearch = useSearch({ strict: false }) as Record<string, unknown>;
 
+  const handleContactChangeRef = useRef<(contactId: string) => void>(() => undefined);
+  const cardsRef = useRef<ContactCard[]>([]);
+
+  // Conflicted card ids awaiting a "Keep mine / Use server" decision, resolved
+  // one at a time. TODO(#206): replace this binary choice with a field-level merge UI.
+  const [conflictQueue, setConflictQueue] = useState<string[]>([]);
+  const [resolvingConflict, setResolvingConflict] = useState(false);
+
+  const handleSyncConflict = useCallback((cardIds: string[]) => {
+    setConflictQueue((prev) => {
+      const next = [...prev];
+      for (const id of cardIds) {
+        if (!next.includes(id)) next.push(id);
+      }
+      return next;
+    });
+  }, []);
+
   const {
     phase,
     error,
@@ -29,7 +56,50 @@ export function ContactsApp({ apiSource }: ContactsAppProps = {}) {
     data,
     session,
     operations,
-  } = useContactsAPI(apiSource);
+  } = useContactsAPI(apiSource, { onSyncConflict: handleSyncConflict });
+
+  cardsRef.current = data.cards;
+
+  const offlineUsername = resolveContactsOfflineUsername(session.user.username);
+  const activeConflictId = conflictQueue[0] ?? null;
+  const activeConflictCard = activeConflictId
+    ? cardsRef.current.find((c) => c.id === activeConflictId)
+    : undefined;
+  const activeConflictName = activeConflictCard
+    ? contactDisplayName(activeConflictCard)
+    : (activeConflictId ?? "");
+
+  const dismissActiveConflict = useCallback(() => {
+    setConflictQueue((prev) => prev.slice(1));
+  }, []);
+
+  const resolveActiveConflict = useCallback(
+    (mode: "local" | "server") => {
+      if (!activeConflictId || !offlineUsername) {
+        dismissActiveConflict();
+        return;
+      }
+      const cardId = activeConflictId;
+      const username = offlineUsername;
+      setResolvingConflict(true);
+      void (async () => {
+        try {
+          if (mode === "local") {
+            await resolveConflictKeepLocal(username, cardId);
+          } else {
+            await resolveConflictUseServer(username, cardId);
+          }
+        } catch {
+          // Resolution best-effort; the refresh below re-reads the latest state.
+        } finally {
+          setResolvingConflict(false);
+          dismissActiveConflict();
+          refreshList();
+        }
+      })();
+    },
+    [activeConflictId, offlineUsername, dismissActiveConflict, refreshList],
+  );
 
   // Backward compat: redirect legacy query-param URLs (?view=&contact=) to new path form.
   // Runs once on mount; if no legacy params are present this is a no-op.
@@ -140,30 +210,46 @@ export function ContactsApp({ apiSource }: ContactsAppProps = {}) {
     [navigate],
   );
 
+  handleContactChangeRef.current = handleContactChange;
+
   return (
-    <WorkspaceLiveAppShell
-      phase={phase}
-      error={error}
-      retry={retry}
-      errorTitle="Could not load live contacts"
-      successVersion={successVersion}
-      render={(key) => (
-        <ContactsWorkspace
-          key={key}
-          data={data}
-          session={session}
-          operations={operations}
-          listLoading={listLoading}
-          onRefreshList={refreshList}
-          initialView={initialView}
-          initialContactId={initialContactId}
-          onViewChange={handleViewChange}
-          onContactChange={handleContactChange}
-          onLogout={() => {
-            window.location.assign("/logout");
-          }}
-        />
-      )}
-    />
+    <>
+      <WorkspaceLiveAppShell
+        phase={phase}
+        error={error}
+        retry={retry}
+        errorTitle="Could not load live contacts"
+        successVersion={successVersion}
+        render={(key) => (
+          <ContactsWorkspace
+            key={key}
+            data={data}
+            session={session}
+            operations={operations}
+            listLoading={listLoading}
+            onRefreshList={refreshList}
+            initialView={initialView}
+            initialContactId={initialContactId}
+            onViewChange={handleViewChange}
+            onContactChange={handleContactChange}
+            onLogout={() => {
+              window.location.assign("/logout");
+            }}
+          />
+        )}
+      />
+      <ContactsConflictDialog
+        open={activeConflictId !== null}
+        contactName={activeConflictName}
+        remainingCount={Math.max(conflictQueue.length - 1, 0)}
+        busy={resolvingConflict}
+        labels={defaultContactsLabels}
+        onKeepLocal={() => resolveActiveConflict("local")}
+        onUseServer={() => resolveActiveConflict("server")}
+        onOpenChange={(open) => {
+          if (!open && !resolvingConflict) dismissActiveConflict();
+        }}
+      />
+    </>
   );
 }

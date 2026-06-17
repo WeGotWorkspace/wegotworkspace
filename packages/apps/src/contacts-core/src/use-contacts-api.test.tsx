@@ -6,25 +6,37 @@ import type { ContactsApiSource } from "./contacts-api-source";
 
 const mockPatchBootstrap = vi.fn();
 const mockLoadBootstrap = vi.fn();
+const mockFlush = vi.fn();
 
-vi.mock("@/hooks/use-workspace-api", () => ({
-  useWorkspaceApi: () => ({
+vi.mock("@/lib/live/use-hybrid-bootstrap", () => ({
+  useHybridBootstrap: () => ({
     phase: "ready",
     error: null,
-    retry: vi.fn(),
+    data: createContactsAppBootstrap(),
+    load: vi.fn(),
     successVersion: 1,
-    listLoading: false,
-    session: createContactsAppBootstrap().session,
-    data: createContactsAppBootstrap().data,
-    operations: undefined,
     patchBootstrap: mockPatchBootstrap,
   }),
+}));
+
+vi.mock("@/lib/offline/contacts-hybrid-operations", () => ({
+  createHybridContactsOperations: vi.fn(),
+  getContactsSyncRunner: () => ({ flush: mockFlush }),
+}));
+
+vi.mock("@/hooks/use-connectivity", () => ({
+  useConnectivity: () => ({ online: true }),
+  useOnReconnect: (callback: () => void) => {
+    callback();
+  },
 }));
 
 describe("useContactsAPI", () => {
   beforeEach(() => {
     mockPatchBootstrap.mockReset();
     mockLoadBootstrap.mockReset();
+    mockFlush.mockReset();
+    mockFlush.mockResolvedValue({ stateMismatches: [], bootstrap: null });
     mockLoadBootstrap.mockResolvedValue(createContactsAppBootstrap());
   });
 
@@ -49,5 +61,20 @@ describe("useContactsAPI", () => {
     expect(mockLoadBootstrap).toHaveBeenCalledTimes(1);
     expect(mockPatchBootstrap).toHaveBeenCalledTimes(1);
     expect(mockPatchBootstrap.mock.calls[0]?.[0]()).toEqual(createContactsAppBootstrap());
+  });
+
+  it("forwards sync conflicts reported during bootstrap flush", async () => {
+    const onSyncConflict = vi.fn();
+    const source: ContactsApiSource = {
+      loadBootstrap: mockLoadBootstrap,
+      createOperations: () => undefined,
+    };
+
+    renderHook(() => useContactsAPI(source, { onSyncConflict }));
+
+    const { reportContactsSyncConflicts } = await import("@/lib/offline/contacts-sync-conflicts");
+    reportContactsSyncConflicts(["jane-doe"]);
+
+    expect(onSyncConflict).toHaveBeenCalledWith(["jane-doe"]);
   });
 });

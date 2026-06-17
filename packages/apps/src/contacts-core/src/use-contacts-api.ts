@@ -1,10 +1,25 @@
-import { useCallback, useMemo, useState } from "react";
-import { useWorkspaceApi } from "@/hooks/use-workspace-api";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useOnReconnect } from "@/hooks/use-connectivity";
 import { mockWorkspaceSession } from "@/lib/api/mock/workspace-session-mock";
+import { useHybridBootstrap } from "@/lib/live/use-hybrid-bootstrap";
+import {
+  createHybridContactsOperations,
+  getContactsSyncRunner,
+} from "@/lib/offline/contacts-hybrid-operations";
+import { readContactsBootstrapFromCache } from "@/lib/offline/contacts-offline-store";
+import {
+  readOfflineContactsUsername,
+  resolveContactsOfflineUsername,
+} from "@/lib/offline/offline-session";
+import { setContactsSyncConflictListener } from "@/lib/offline/contacts-sync-conflicts";
 import type { ContactsUIData } from "@/contacts-core/src/contacts-types";
 import { createDefaultContactsApiSource, type ContactsApiSource } from "./contacts-api-source";
 
-export function useContactsAPI(source?: ContactsApiSource) {
+export type UseContactsAPIOptions = {
+  onSyncConflict?: (cardIds: string[]) => void;
+};
+
+export function useContactsAPI(source?: ContactsApiSource, options?: UseContactsAPIOptions) {
   const resolvedSource = useMemo(() => source ?? createDefaultContactsApiSource(), [source]);
   const placeholderData = useMemo<ContactsUIData>(
     () => ({
@@ -13,55 +28,74 @@ export function useContactsAPI(source?: ContactsApiSource) {
     }),
     [],
   );
-  const loadBootstrapFromSource = useCallback(
-    (apiSource: ContactsApiSource) => apiSource.loadBootstrap(),
-    [],
-  );
-  const createOperationsFromSource = useCallback(
-    (apiSource: ContactsApiSource) => apiSource.createOperations(),
-    [],
-  );
-  const {
-    phase,
-    error,
-    retry,
-    successVersion,
-    listLoading: bootstrapLoading,
-    session,
-    data,
-    operations,
-    patchBootstrap,
-  } = useWorkspaceApi({
-    source: resolvedSource,
-    createDefaultSource: createDefaultContactsApiSource,
-    placeholderData,
-    loadBootstrap: loadBootstrapFromSource,
-    createOperations: createOperationsFromSource,
-    fallbackSession: mockWorkspaceSession,
+
+  const runBootstrap = useCallback(() => resolvedSource.loadBootstrap(), [resolvedSource]);
+  const readCache = useCallback(async () => {
+    const username = readOfflineContactsUsername();
+    if (!username) return null;
+    return readContactsBootstrapFromCache(username);
+  }, []);
+
+  const { phase, error, data, load, successVersion, patchBootstrap } = useHybridBootstrap({
+    load: runBootstrap,
+    readCache,
   });
+
+  const operations = useMemo(() => {
+    const fromSource = resolvedSource.createOperations(data ?? undefined);
+    if (fromSource) return fromSource;
+    const username = resolveContactsOfflineUsername(data?.session.user.username);
+    if (!username) return undefined;
+    return createHybridContactsOperations(username);
+  }, [resolvedSource, data]);
+
+  const offlineUsername = useMemo(
+    () => resolveContactsOfflineUsername(data?.session.user.username),
+    [data?.session.user.username],
+  );
+
+  const onSyncConflict = options?.onSyncConflict;
+
+  useEffect(() => {
+    setContactsSyncConflictListener(onSyncConflict);
+    return () => setContactsSyncConflictListener(undefined);
+  }, [onSyncConflict]);
+
+  useOnReconnect(
+    useCallback(() => {
+      if (!offlineUsername) return;
+      void (async () => {
+        await getContactsSyncRunner(offlineUsername).flush();
+        const cached = await readContactsBootstrapFromCache(offlineUsername);
+        if (cached) patchBootstrap(() => cached);
+      })();
+    }, [offlineUsername, patchBootstrap]),
+  );
+
   const [listRefreshing, setListRefreshing] = useState(false);
 
   const refreshList = useCallback(() => {
     if (listRefreshing) return;
     setListRefreshing(true);
-    void loadBootstrapFromSource(resolvedSource)
+    void resolvedSource
+      .loadBootstrap()
       .then((next) => {
         patchBootstrap(() => next);
       })
       .finally(() => {
         setListRefreshing(false);
       });
-  }, [listRefreshing, loadBootstrapFromSource, patchBootstrap, resolvedSource]);
+  }, [listRefreshing, patchBootstrap, resolvedSource]);
 
   return {
     phase,
     error,
-    retry,
+    retry: load,
     successVersion,
-    listLoading: bootstrapLoading || listRefreshing,
+    listLoading: phase === "loading" || listRefreshing,
     refreshList,
-    session,
-    data,
+    session: data?.session ?? mockWorkspaceSession,
+    data: data?.data ?? placeholderData,
     operations,
   };
 }

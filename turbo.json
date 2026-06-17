@@ -24,33 +24,44 @@
       "outputs": ["openapi/generated/**"]
     },
     "typegen:check": {
-      "dependsOn": ["typegen"],
-      "cache": false
+      "dependsOn": ["typegen"]
     },
     "typegen:watch": {
       "cache": false,
       "persistent": true
     },
-    "lint": {
-      "cache": false
-    },
-    "format:check": {
-      "cache": false
-    },
+    "lint": {},
+    "format:check": {},
     "typecheck": {
       "dependsOn": ["typegen"],
       "cache": false
     },
     "test": {
       "dependsOn": ["lint", "format:check", "typecheck"],
-      "cache": false
+      "cache": false,
+      "passThroughEnv": ["DONE_GATE_SHARD"]
     },
     "dev": {
       "dependsOn": ["^build"],
       "cache": false,
       "persistent": true
     },
+    "dev:app": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true
+    },
+    "dev:storybook": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true
+    },
     "dev:php": {
+      "cache": false,
+      "persistent": true
+    },
+    "preview": {
+      "dependsOn": ["^build"],
       "cache": false,
       "persistent": true
     },

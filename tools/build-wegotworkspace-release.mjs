@@ -62,7 +62,7 @@ for (const entry of repoReleaseEntries) {
     filter: createApiPackageCopyFilter(source, { forRelease: true }),
   });
 }
-const rootDocs = ["INSTALL.md", "README.md", "LICENSE"];
+const rootDocs = ["INSTALL.md", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md"];
 for (const file of rootDocs) {
   const source = resolve(repoRoot, file);
   if (!existsSync(source)) {

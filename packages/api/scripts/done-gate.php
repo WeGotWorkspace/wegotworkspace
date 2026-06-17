@@ -20,6 +20,23 @@ $contractOnly = in_array('--contract', $argv, true);
 $full = in_array('--full', $argv, true);
 $verbose = in_array('--verbose', $argv, true) || getenv('DONE_GATE_VERBOSE') === '1';
 
+/*
+ * Optional CI sharding: DONE_GATE_SHARD=I/N runs only shard I's slice of the
+ * unit/feature/storage test files (round-robin by sorted path). Shard 1 also
+ * runs greenfield-guard + the Architecture suite; later shards run tests only.
+ * Unset (local default) keeps the full gate behaviour below.
+ */
+$shardSpec = getenv('DONE_GATE_SHARD');
+$shardIndex = 1;
+$shardTotal = 1;
+$isSharded = false;
+if ($shardSpec !== false && trim($shardSpec) !== '') {
+    require_once __DIR__.'/phpunit-shard.php';
+    [$shardIndex, $shardTotal] = wgw_parse_shard($shardSpec);
+    $isSharded = $shardTotal > 1;
+}
+$runContractSteps = ! $isSharded || $shardIndex === 1;
+
 if (! is_file($phpunit)) {
     fwrite(STDERR, "done-gate: vendor/bin/phpunit missing — run: composer install\n");
     exit(127);
@@ -90,35 +107,45 @@ function done_gate_summary(array $results, bool $passed): void
 }
 
 $step = 1;
-$totalSteps = $contractOnly ? 2 : ($full ? 4 : 3);
-
-done_gate_step("Step {$step}/{$totalSteps}: greenfield-guard");
-$guardCode = done_gate_run(['php', $apiRoot.'/scripts/greenfield-guard.php']);
-$results[] = ['label' => 'greenfield-guard', 'ok' => $guardCode === 0];
-$step++;
-
-if ($guardCode !== 0) {
-    done_gate_summary($results, false);
-    exit($guardCode);
+if ($contractOnly) {
+    $totalSteps = 2;
+} elseif ($full) {
+    $totalSteps = 4;
+} elseif (! $runContractSteps) {
+    $totalSteps = 1;
+} else {
+    $totalSteps = 3;
 }
 
-done_gate_step("Step {$step}/{$totalSteps}: architecture (OpenAPI ↔ routes, role matrix, guards)");
-$archCode = done_gate_run([
-    ...done_gate_phpunit_base($phpunit, $config),
-    '--testsuite',
-    'Architecture',
-    '--testdox',
-]);
-$results[] = [
-    'label' => 'architecture',
-    'ok' => $archCode === 0,
-    'detail' => 'contract + role matrix',
-];
-$step++;
+if ($runContractSteps) {
+    done_gate_step("Step {$step}/{$totalSteps}: greenfield-guard");
+    $guardCode = done_gate_run(['php', $apiRoot.'/scripts/greenfield-guard.php']);
+    $results[] = ['label' => 'greenfield-guard', 'ok' => $guardCode === 0];
+    $step++;
 
-if ($archCode !== 0) {
-    done_gate_summary($results, false);
-    exit($archCode);
+    if ($guardCode !== 0) {
+        done_gate_summary($results, false);
+        exit($guardCode);
+    }
+
+    done_gate_step("Step {$step}/{$totalSteps}: architecture (OpenAPI ↔ routes, role matrix, guards)");
+    $archCode = done_gate_run([
+        ...done_gate_phpunit_base($phpunit, $config),
+        '--testsuite',
+        'Architecture',
+        '--testdox',
+    ]);
+    $results[] = [
+        'label' => 'architecture',
+        'ok' => $archCode === 0,
+        'detail' => 'contract + role matrix',
+    ];
+    $step++;
+
+    if ($archCode !== 0) {
+        done_gate_summary($results, false);
+        exit($archCode);
+    }
 }
 
 if ($contractOnly) {
@@ -126,16 +153,41 @@ if ($contractOnly) {
     exit(0);
 }
 
-done_gate_step("Step {$step}/{$totalSteps}: PHPUnit (unit + feature + storage)");
+$phpunitLabel = $isSharded
+    ? "PHPUnit (unit + feature + storage — shard {$shardIndex}/{$shardTotal})"
+    : 'PHPUnit (unit + feature + storage)';
+done_gate_step("Step {$step}/{$totalSteps}: {$phpunitLabel}");
+
 $testCommand = done_gate_phpunit_base($phpunit, $config);
 if ($verbose) {
     $testCommand[] = '--testdox';
 }
+
+if ($isSharded) {
+    $shardFiles = wgw_partition_files(
+        wgw_resolve_testsuite_files($config, ['Architecture']),
+        $shardIndex,
+        $shardTotal,
+    );
+
+    if ($shardFiles === []) {
+        fwrite(STDERR, "done-gate: shard {$shardIndex}/{$shardTotal} resolved to 0 test files\n");
+        exit(1);
+    }
+
+    $testCommand = array_merge($testCommand, $shardFiles);
+    $testDetail = sprintf('unit + feature + storage shard %d/%d (%d files)', $shardIndex, $shardTotal, count($shardFiles));
+} else {
+    $testCommand[] = '--exclude-testsuite';
+    $testCommand[] = 'Architecture';
+    $testDetail = 'unit + feature + storage (architecture already run)';
+}
+
 $testCode = done_gate_run($testCommand);
 $results[] = [
     'label' => 'phpunit (full)',
     'ok' => $testCode === 0,
-    'detail' => 'all test suites',
+    'detail' => $testDetail,
 ];
 $step++;
 

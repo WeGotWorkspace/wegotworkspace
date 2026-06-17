@@ -4,41 +4,26 @@ import {
 } from "@/lib/api/mock/contacts-bootstrap";
 import { createWorkspaceSource } from "@/lib/api/create-workspace-source";
 import { wgwLiveApiEnabled } from "@/lib/api/wgw/http";
-import {
-  createCard,
-  deleteCard,
-  downloadCardVcf,
-  fetchContactsLiveBootstrap,
-  getCard,
-  importVcards,
-  listAddressBooks,
-  listCards,
-  patchCard,
-} from "@/lib/api/wgw/contacts";
 import type { ContactsAPIOperations } from "@/contacts-core/src/contacts-types";
+import {
+  createHybridContactsOperations,
+  loadContactsBootstrapHybrid,
+} from "@/lib/offline/contacts-hybrid-operations";
+import { resolveContactsOfflineUsername } from "@/lib/offline/offline-session";
 
 export type ContactsApiSource = {
   loadBootstrap: () => Promise<ContactsAppBootstrap>;
-  createOperations: () => ContactsAPIOperations | undefined;
+  createOperations: (bootstrap?: ContactsAppBootstrap) => ContactsAPIOperations | undefined;
 };
 
-function createWgwOperations(): ContactsAPIOperations {
+export function createHybridContactsApiSource(): ContactsApiSource {
   return {
-    listAddressBooks,
-    listCards,
-    getCard,
-    createCard,
-    patchCard,
-    deleteCard,
-    downloadCardVcf,
-    importVcards,
-  };
-}
-
-export function createWgwContactsApiSource(): ContactsApiSource {
-  return {
-    loadBootstrap: fetchContactsLiveBootstrap,
-    createOperations: () => createWgwOperations(),
+    loadBootstrap: loadContactsBootstrapHybrid,
+    createOperations: (bootstrap) => {
+      const username = resolveContactsOfflineUsername(bootstrap?.session.user.username);
+      if (!username) return undefined;
+      return createHybridContactsOperations(username);
+    },
   };
 }
 
@@ -47,8 +32,12 @@ export function createDefaultContactsApiSource(): ContactsApiSource {
     isLive: wgwLiveApiEnabled(),
     createMockSource: () => ({
       loadBootstrap: () => Promise.resolve(createContactsAppBootstrap()),
-      createOperations: () => undefined,
+      createOperations: (bootstrap) => {
+        const username = resolveContactsOfflineUsername(bootstrap?.session.user.username);
+        if (!username) return undefined;
+        return createHybridContactsOperations(username);
+      },
     }),
-    createLiveSource: createWgwContactsApiSource,
+    createLiveSource: createHybridContactsApiSource,
   });
 }

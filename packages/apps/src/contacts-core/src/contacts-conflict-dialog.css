@@ -1,0 +1,15 @@
+@import "../../styles.css" reference;
+
+/* Darker cyan so white-on-primary meets WCAG AA contrast (>= 4.5:1). */
+.contacts-conflict-dialog.contacts-dialog-surface {
+  --button-primary-bg: #0e7490;
+}
+
+.contacts-conflict-dialog__remaining {
+  @apply text-sm;
+  color: color-mix(in oklab, var(--color-ink) 55%, transparent);
+}
+
+.contacts-conflict-dialog__actions {
+  @apply gap-2;
+}

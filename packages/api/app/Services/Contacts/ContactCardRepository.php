@@ -23,7 +23,8 @@ final class ContactCardRepository
         private readonly ContactCardMapper $mapper,
         private readonly SearchIndexerService $searchIndexer,
         private readonly VCardJsContactConverter $vcardConverter,
-        private readonly BestEffortSearchIndexSync $searchIndexSync = new BestEffortSearchIndexSync,
+        private readonly BestEffortSearchIndexSync $searchIndexSync,
+        private readonly JmapContactStateService $contactStates,
     ) {}
 
     /**
@@ -247,7 +248,7 @@ final class ContactCardRepository
             throw new ApiHttpException(404, 'Contact card not found.', 'not_found');
         }
 
-        $this->assertCardPreconditions($located['card'], $ifMatch, $ifUnmodifiedSince);
+        $this->assertCardPreconditions($located['card'], $ifMatch, $ifUnmodifiedSince, true);
 
         $book = $located['book'];
         $card = $located['card'];
@@ -287,12 +288,34 @@ final class ContactCardRepository
         ?string $ifMatch = null,
         ?string $ifUnmodifiedSince = null,
     ): array {
+        return $this->patchWithPrecondition(
+            $username,
+            $cardId,
+            $patch,
+            $ifMatch,
+            $ifUnmodifiedSince,
+            true,
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $patch
+     * @return array<string, mixed>
+     */
+    public function patchWithPrecondition(
+        string $username,
+        string $cardId,
+        array $patch,
+        ?string $ifMatch = null,
+        ?string $ifUnmodifiedSince = null,
+        bool $requirePrecondition = true,
+    ): array {
         $located = $this->findOwnedCard($username, $cardId);
         if ($located === null) {
             throw new ApiHttpException(404, 'Contact card not found.', 'not_found');
         }
 
-        $this->assertCardPreconditions($located['card'], $ifMatch, $ifUnmodifiedSince);
+        $this->assertCardPreconditions($located['card'], $ifMatch, $ifUnmodifiedSince, $requirePrecondition);
 
         $book = $located['book'];
         $card = $located['card'];
@@ -356,12 +379,25 @@ final class ContactCardRepository
         ?string $ifMatch = null,
         ?string $ifUnmodifiedSince = null,
     ): array {
+        return $this->deleteWithPrecondition($username, $cardId, $ifMatch, $ifUnmodifiedSince, true);
+    }
+
+    /**
+     * @return array{ok: true}
+     */
+    public function deleteWithPrecondition(
+        string $username,
+        string $cardId,
+        ?string $ifMatch = null,
+        ?string $ifUnmodifiedSince = null,
+        bool $requirePrecondition = true,
+    ): array {
         $located = $this->findOwnedCard($username, $cardId);
         if ($located === null) {
             throw new ApiHttpException(404, 'Contact card not found.', 'not_found');
         }
 
-        $this->assertCardPreconditions($located['card'], $ifMatch, $ifUnmodifiedSince);
+        $this->assertCardPreconditions($located['card'], $ifMatch, $ifUnmodifiedSince, $requirePrecondition);
 
         $book = $located['book'];
         $card = $located['card'];
@@ -374,6 +410,8 @@ final class ContactCardRepository
             $davPath,
             $username,
         );
+
+        $this->contactStates->deleteForCard($username, $cardId);
 
         return ['ok' => true];
     }
@@ -500,13 +538,18 @@ final class ContactCardRepository
         return 'principals/'.$username;
     }
 
-    private function assertCardPreconditions(Card $card, ?string $ifMatch, ?string $ifUnmodifiedSince): void
-    {
+    private function assertCardPreconditions(
+        Card $card,
+        ?string $ifMatch,
+        ?string $ifUnmodifiedSince,
+        bool $requirePrecondition = true,
+    ): void {
         OptimisticConcurrency::assertPreconditions(
             $ifMatch,
             $ifUnmodifiedSince,
             is_string($card->etag) ? $card->etag : null,
             (int) ($card->lastmodified ?? 0),
+            $requirePrecondition,
         );
     }
 

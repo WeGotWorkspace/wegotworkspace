@@ -12,8 +12,13 @@ import { ContactsDetailView } from "@/contacts-core/src/contacts-detail-view";
 import { ContactsListPanel } from "@/contacts-core/src/contacts-list-panel";
 import { ContactsNewMenu } from "@/contacts-core/src/contacts-new-menu";
 import type { ContactsWorkspaceProps } from "@/contacts-core/src/contacts-workspace-props";
+import { useCallback } from "react";
 import { useContactsController } from "@/contacts-core/src/use-contacts-controller";
+import { useContactsFailedSync } from "@/contacts-core/src/use-contacts-failed-sync";
+import { useContactsPendingSync } from "@/contacts-core/src/use-contacts-pending-sync";
 import { useContactsSidebarModel } from "@/contacts-core/src/use-contacts-sidebar-model";
+import { getContactsSyncRunner } from "@/lib/offline/contacts-hybrid-operations";
+import { resolveContactsOfflineUsername } from "@/lib/offline/offline-session";
 import "react-swipeable-list/dist/styles.css";
 import "@/contacts-core/src/contacts-workspace.css";
 
@@ -122,6 +127,17 @@ export function ContactsWorkspace({
     onContactChange,
   });
 
+  const offlineUsername = resolveContactsOfflineUsername(session.user.username);
+  const pendingCardIds = useContactsPendingSync(offlineUsername, data.cards.length);
+  const failedSyncCount = useContactsFailedSync(offlineUsername, data.cards.length);
+
+  const handleRetrySync = useCallback(() => {
+    if (!offlineUsername) return;
+    void getContactsSyncRunner(offlineUsername)
+      .flush()
+      .finally(() => onRefreshList?.());
+  }, [offlineUsername, onRefreshList]);
+
   const { primarySidebarItems, groupSidebarItems } = useContactsSidebarModel({
     labels: L,
     view,
@@ -202,6 +218,9 @@ export function ContactsWorkspace({
             onSwipeRemoveFromGroup: (id) => removeFromGroup([id]),
             selectionBar,
             onRefreshList,
+            pendingCardIds,
+            failedSyncCount,
+            onRetrySync: handleRetrySync,
           });
 
           return {

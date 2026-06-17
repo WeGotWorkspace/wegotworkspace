@@ -10,7 +10,7 @@ const defaultLiveApiBaseUrl =
 
 const liveApiStoryDescription =
   "Uses the PHP dev API via Storybook proxy (`/api/v1` → `WGW_PROXY_TARGET`). " +
-  "Run `pnpm setup:storybook-live-api` once, then `pnpm docker:up` (or `pnpm dev:api`) and `pnpm dev:ui`. " +
+  "Run `pnpm setup:storybook-live-api` once, then `pnpm dev` (or `pnpm dev:api` for API only). " +
   "Restart Storybook after changing `.env.local`.";
 
 const meta: Meta<typeof WeGotWorkspace> = {
