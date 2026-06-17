@@ -8,9 +8,12 @@ on:
     branches: [main]
   pull_request:
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
-    # release:publish pushes the VERSION commit then the tag; Release workflow builds that commit.
+  api-quality:
     if: >-
       github.event_name != 'push' ||
       !startsWith(github.event.head_commit.message, 'chore(release):')
@@ -31,6 +34,22 @@ jobs:
           node-version: "24"
           cache: "pnpm"
 
+      - name: Cache Composer vendor
+        uses: actions/cache@v4
+        with:
+          path: packages/api/vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('packages/api/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Cache Turbo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ hashFiles('pnpm-lock.yaml', 'turbo.json', 'packages/api/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
       - name: Install JS workspace
         run: pnpm install --frozen-lockfile
 
@@ -42,18 +61,34 @@ jobs:
           cp packages/api/.env.example packages/api/.env
           php packages/api/artisan key:generate --force --no-interaction
 
-      - name: License policy (production dependencies)
-        run: pnpm run check:licenses
+      - name: API quality gate
+        run: pnpm run ci:quality:api
 
-      - name: Reject Cursor commit attribution
-        if: github.event_name == 'pull_request'
-        run: node tools/git/check-commit-range-attribution.mjs "${{ github.event.pull_request.base.sha }}..${{ github.sha }}"
+  apps-quality:
+    if: >-
+      github.event_name != 'push' ||
+      !startsWith(github.event.head_commit.message, 'chore(release):')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
 
-      - name: Reject Cursor PR description attribution
-        if: github.event_name == 'pull_request'
-        env:
-          PR_BODY: ${{ github.event.pull_request.body }}
-        run: node tools/git/check-pr-body-attribution.mjs
+      - uses: pnpm/action-setup@v4.4.0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "pnpm"
+
+      - name: Cache Turbo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ hashFiles('pnpm-lock.yaml', 'turbo.json', 'packages/api/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
+      - name: Install JS workspace
+        run: pnpm install --frozen-lockfile
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4
@@ -72,8 +107,57 @@ jobs:
             pnpm --filter @wgw/apps exec playwright install chromium
           fi
 
-      - name: Quality gate (typegen, lint, format, API + apps done gates)
-        run: pnpm run ci:quality
+      - name: Apps quality gate
+        run: pnpm run ci:quality:apps
+
+  build:
+    needs: [api-quality, apps-quality]
+    if: >-
+      github.event_name != 'push' ||
+      !startsWith(github.event.head_commit.message, 'chore(release):')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: ctype, dom, iconv, imap, json, mbstring, pdo, pdo_sqlite, simplexml, zip
+          coverage: none
+
+      - uses: pnpm/action-setup@v4.4.0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "pnpm"
+
+      - name: Cache Composer vendor
+        uses: actions/cache@v4
+        with:
+          path: packages/api/vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('packages/api/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Install JS workspace
+        run: pnpm install --frozen-lockfile
+
+      - name: Install backend Composer dependencies
+        run: composer --working-dir packages/api install --no-interaction --prefer-dist
+
+      - name: License policy (production dependencies)
+        run: pnpm run check:licenses
+
+      - name: Reject Cursor commit attribution
+        if: github.event_name == 'pull_request'
+        run: node tools/git/check-commit-range-attribution.mjs "${{ github.event.pull_request.base.sha }}..${{ github.sha }}"
+
+      - name: Reject Cursor PR description attribution
+        if: github.event_name == 'pull_request'
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: node tools/git/check-pr-body-attribution.mjs
 
       - name: Chromatic (optional)
         if: vars.CHROMATIC_ENABLED == 'true'
