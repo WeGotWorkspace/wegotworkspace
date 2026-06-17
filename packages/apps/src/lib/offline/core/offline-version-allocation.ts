@@ -1,0 +1,101 @@
+import type { OfflineDomainRegistration } from "@/lib/offline/core/types";
+
+/** Core Dexie version. Domains contribute additive versions starting at 2. */
+export const CORE_OFFLINE_VERSION = 1;
+
+/** Inclusive Dexie version range reserved for one offline domain plugin. */
+export type OfflineDomainVersionRange = {
+  min: number;
+  max: number;
+};
+
+/**
+ * Fixed, non-overlapping version blocks per domain. Reserve a block here before
+ * registering tables for a new offline app (see offline-platform.md).
+ */
+export const OFFLINE_DOMAIN_VERSION_RANGES: Record<string, OfflineDomainVersionRange> = {
+  contacts: { min: 2, max: 9 },
+  /** Reserved for offline app #2 — rename the key to your domain when claiming. */
+  "app-slot-2": { min: 10, max: 19 },
+  /** Reserved for offline app #3 — rename the key to your domain when claiming. */
+  "app-slot-3": { min: 20, max: 29 },
+};
+
+/** Contacts version steps within the contacts block (2–9). */
+export const CONTACTS_OFFLINE_VERSION = {
+  tables: 2,
+  updatedAtIndex: 3,
+} as const;
+
+const versionOwners = new Map<number, string>();
+
+function assertNonOverlappingRanges(ranges: Record<string, OfflineDomainVersionRange>): void {
+  const entries = Object.entries(ranges);
+  for (let i = 0; i < entries.length; i++) {
+    for (let j = i + 1; j < entries.length; j++) {
+      const [domainA, rangeA] = entries[i]!;
+      const [domainB, rangeB] = entries[j]!;
+      if (rangeA.min <= rangeB.max && rangeB.min <= rangeA.max) {
+        throw new Error(
+          `Offline version ranges for "${domainA}" (${rangeA.min}–${rangeA.max}) and "${domainB}" (${rangeB.min}–${rangeB.max}) overlap.`,
+        );
+      }
+    }
+  }
+}
+
+assertNonOverlappingRanges(OFFLINE_DOMAIN_VERSION_RANGES);
+
+export function releaseOfflineDomainVersions(domain: string): void {
+  for (const [version, owner] of versionOwners) {
+    if (owner === domain) versionOwners.delete(version);
+  }
+}
+
+/**
+ * Validates a domain registration against its allocated range and claims each
+ * version number. Throws when a version is out of range or already owned by
+ * another domain.
+ */
+export function claimOfflineDomainVersions(registration: OfflineDomainRegistration): void {
+  const range = OFFLINE_DOMAIN_VERSION_RANGES[registration.domain];
+  if (!range) {
+    throw new Error(
+      `Offline domain "${registration.domain}" has no allocated Dexie version range. Add an entry to OFFLINE_DOMAIN_VERSION_RANGES before registering tables.`,
+    );
+  }
+
+  const seen = new Set<number>();
+  for (const step of registration.versions) {
+    if (seen.has(step.version)) {
+      throw new Error(
+        `Offline domain "${registration.domain}" declares Dexie version ${step.version} more than once.`,
+      );
+    }
+    seen.add(step.version);
+
+    if (step.version < range.min || step.version > range.max) {
+      throw new Error(
+        `Offline domain "${registration.domain}" cannot use Dexie version ${step.version}; allocated range is ${range.min}–${range.max}.`,
+      );
+    }
+
+    const existing = versionOwners.get(step.version);
+    if (existing !== undefined && existing !== registration.domain) {
+      throw new Error(
+        `Dexie version ${step.version} is already claimed by domain "${existing}"; domain "${registration.domain}" cannot reuse it.`,
+      );
+    }
+    versionOwners.set(step.version, registration.domain);
+  }
+}
+
+/** Clears version ownership claims. For unit tests only. */
+export function resetOfflineVersionClaimsForTests(): void {
+  versionOwners.clear();
+}
+
+/** Seeds a version owner without range validation. For unit tests only. */
+export function seedOfflineVersionOwnerForTests(version: number, domain: string): void {
+  versionOwners.set(version, domain);
+}

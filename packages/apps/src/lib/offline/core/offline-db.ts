@@ -5,9 +5,13 @@ import type {
   OfflineOutboxRow,
   OfflineStoreSchema,
 } from "@/lib/offline/core/types";
+import {
+  claimOfflineDomainVersions,
+  CORE_OFFLINE_VERSION,
+  releaseOfflineDomainVersions,
+} from "@/lib/offline/core/offline-version-allocation";
 
-/** Core Dexie version. Domains contribute additive versions starting at 2. */
-export const CORE_OFFLINE_VERSION = 1;
+export { CORE_OFFLINE_VERSION } from "@/lib/offline/core/offline-version-allocation";
 
 /** Generic, app-agnostic tables every account database always has. */
 const CORE_STORES: OfflineStoreSchema = {
@@ -24,6 +28,8 @@ const domainRegistrations = new Map<string, OfflineDomainRegistration>();
  * picks up the new schema (useful under HMR/tests).
  */
 export function registerOfflineDomainTables(registration: OfflineDomainRegistration): void {
+  releaseOfflineDomainVersions(registration.domain);
+  claimOfflineDomainVersions(registration);
   domainRegistrations.set(registration.domain, registration);
   dbCache.clear();
 }
@@ -103,4 +109,10 @@ export function offlineDbForAccount(accountKey: string): WgwOfflineDatabase {
 
 export function offlineAccountKeyFromUsername(username: string): string {
   return username.trim().toLowerCase() || "default";
+}
+
+/** Clears domain registrations and cached databases. For unit tests only. */
+export function resetOfflineDomainRegistrationsForTests(): void {
+  domainRegistrations.clear();
+  dbCache.clear();
 }
