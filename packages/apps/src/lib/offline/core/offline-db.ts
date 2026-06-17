@@ -37,7 +37,7 @@ export function registerOfflineDomainTables(registration: OfflineDomainRegistrat
 type MergedVersionStep = {
   version: number;
   stores: OfflineStoreSchema;
-  upgrades: NonNullable<OfflineDomainRegistration["versions"][number]["upgrade"]>;
+  upgrades: NonNullable<OfflineDomainRegistration["versions"][number]["upgrade"]>[];
 };
 
 function collectVersionSteps(): MergedVersionStep[] {
