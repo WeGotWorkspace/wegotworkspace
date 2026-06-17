@@ -18,6 +18,7 @@ import {
   contactsCardsTable,
   type OfflineContactCardRow,
 } from "@/lib/offline/contacts/contacts-schema";
+import { coalesceContactPatches } from "@/lib/offline/contacts/contacts-patch-merge";
 
 export {
   enqueueOutboxMutation,
@@ -148,18 +149,6 @@ export async function writeAddressBooksSyncToken(username: string, token: string
   await db.meta.put({ key: META_ADDRESS_BOOKS_STATE, value: token });
 }
 
-function mergeContactPatches(a: ContactCardPatch, b: ContactCardPatch): ContactCardPatch {
-  return {
-    ...a,
-    ...b,
-    name: b.name ? { ...a.name, ...b.name } : a.name,
-    emails: b.emails ? { ...a.emails, ...b.emails } : a.emails,
-    phones: b.phones ? { ...a.phones, ...b.phones } : a.phones,
-    addresses: b.addresses ? { ...a.addresses, ...b.addresses } : a.addresses,
-    members: b.members ? { ...a.members, ...b.members } : a.members,
-  };
-}
-
 /** Card id targeted by an outbox row (update/delete `cardId`, or create `tempCardId`). */
 export function contactsOutboxCardId(row: OfflineOutboxRow): string | null {
   if (row.domain !== CONTACTS_DOMAIN) return null;
@@ -188,7 +177,7 @@ export async function enqueueCoalescedContactUpdate(
 
   if (existing) {
     const payload = JSON.parse(existing.payload) as { cardId: string; patch: ContactCardPatch };
-    const mergedPatch = mergeContactPatches(payload.patch, patch);
+    const mergedPatch = coalesceContactPatches(payload.patch, patch);
     await db.outbox.put({
       ...existing,
       payload: JSON.stringify({ cardId, patch: mergedPatch }),

@@ -20,6 +20,7 @@ import {
 } from "@/lib/api/wgw/contacts";
 import { syncAllContactBooks } from "@/lib/api/wgw/contacts-sync";
 import { isFetchNetworkError, readBrowserOnline } from "@/lib/offline/browser-online";
+import { applyContactPatch } from "@/lib/offline/contacts/contacts-patch-merge";
 import {
   createTempContactId,
   enqueueCoalescedContactUpdate,
@@ -33,18 +34,6 @@ import { flushContactsOutbox, type OutboxFlushResult } from "@/lib/offline/conta
 import { reportContactsSyncConflicts } from "@/lib/offline/contacts-sync-conflicts";
 import { readOfflineContactsUsername } from "@/lib/offline/offline-session";
 import { ConnectivitySyncRunner } from "@/lib/offline/connectivity-sync-runner";
-
-function mergePatch(card: ContactCard, patch: ContactCardPatch): ContactCard {
-  return {
-    ...card,
-    ...patch,
-    name: patch.name ? { ...card.name, ...patch.name } : card.name,
-    emails: patch.emails ? { ...card.emails, ...patch.emails } : card.emails,
-    phones: patch.phones ? { ...card.phones, ...patch.phones } : card.phones,
-    addresses: patch.addresses ? { ...card.addresses, ...patch.addresses } : patch.addresses,
-    members: patch.members ? { ...patch.members, ...patch.members } : card.members,
-  } as ContactCard;
-}
 
 function concurrencyToken(card: ContactCard, opts?: ContactsMutationOpts): string | undefined {
   const state = (card as ContactCard & { state?: string }).state;
@@ -122,7 +111,7 @@ async function queueOfflinePatch(
   opts?: ContactsMutationOpts,
 ): Promise<ContactCard> {
   const token = concurrencyToken(existing, opts);
-  const optimistic = mergePatch(existing, patch);
+  const optimistic = applyContactPatch(existing, patch);
   await upsertContactCardInCache(username, optimistic, true);
   await enqueueCoalescedContactUpdate(username, cardId, patch, token);
   return optimistic;

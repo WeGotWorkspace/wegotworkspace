@@ -110,6 +110,62 @@ describe("contacts offline store", () => {
     expect(payload.patch.name?.full).toBe("Jane B");
   });
 
+  it("coalesces edits to different fields/ids into one patch with the original ifInState", async () => {
+    await enqueueCoalescedContactUpdate(
+      username,
+      "jane-doe",
+      { emails: { e1: { "@type": "EmailAddress", address: "a@example.com" } } } as never,
+      "state-1",
+    );
+    await enqueueCoalescedContactUpdate(
+      username,
+      "jane-doe",
+      {
+        phones: { p1: { "@type": "Phone", number: "123" } },
+        emails: { e2: { "@type": "EmailAddress", address: "b@example.com" } },
+      } as never,
+      "state-9",
+    );
+
+    const rows = await listOutboxMutations(username);
+    expect(rows).toHaveLength(1);
+    // Original ifInState is preserved across coalescing (later token ignored).
+    expect(rows[0]?.ifInState).toBe("state-1");
+    const payload = JSON.parse(rows[0]?.payload ?? "{}") as {
+      cardId: string;
+      patch: {
+        emails?: Record<string, unknown>;
+        phones?: Record<string, unknown>;
+      };
+    };
+    expect(payload.cardId).toBe("jane-doe");
+    expect(Object.keys(payload.patch.emails ?? {})).toEqual(["e1", "e2"]);
+    expect(Object.keys(payload.patch.phones ?? {})).toEqual(["p1"]);
+  });
+
+  it("preserves a later null delete in the coalesced outbox patch", async () => {
+    await enqueueCoalescedContactUpdate(
+      username,
+      "jane-doe",
+      { emails: { e1: { "@type": "EmailAddress", address: "a@example.com" } } } as never,
+      "state-1",
+    );
+    await enqueueCoalescedContactUpdate(
+      username,
+      "jane-doe",
+      { emails: { e1: null } } as never,
+      "state-1",
+    );
+
+    const rows = await listOutboxMutations(username);
+    expect(rows).toHaveLength(1);
+    const payload = JSON.parse(rows[0]?.payload ?? "{}") as {
+      patch: { emails?: Record<string, unknown> };
+    };
+    // The queued server patch must still carry the delete instruction.
+    expect(payload.patch.emails).toEqual({ e1: null });
+  });
+
   it("keeps separate update rows for different cardIds", async () => {
     await enqueueCoalescedContactUpdate(
       username,
