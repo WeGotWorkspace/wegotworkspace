@@ -1,4 +1,5 @@
 import path from "node:path";
+import type { IncomingMessage, ServerResponse } from "node:http";
 import { fileURLToPath } from "node:url";
 import { loadEnv } from "vite";
 
@@ -24,12 +25,16 @@ export function wgwApiViteProxy(mode = process.env.NODE_ENV ?? "development") {
       target,
       changeOrigin: true,
       secure: false,
-      configure: (proxy) => {
-        proxy.on("error", (err, _req, res) => {
-          const socket = res as import("node:http").ServerResponse | undefined;
-          if (!socket || socket.headersSent) return;
-          socket.writeHead(502, { "Content-Type": "application/json" });
-          socket.end(
+      configure: (proxy: {
+        on(
+          event: "error",
+          listener: (err: Error, req: IncomingMessage, res: ServerResponse) => void,
+        ): void;
+      }) => {
+        proxy.on("error", (err: Error, _req: IncomingMessage, res: ServerResponse) => {
+          if (res.headersSent) return;
+          res.writeHead(502, { "Content-Type": "application/json" });
+          res.end(
             JSON.stringify({
               error: `API proxy: backend unreachable at ${target}`,
               code: "proxy_backend_down",
