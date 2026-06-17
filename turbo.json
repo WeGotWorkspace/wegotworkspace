@@ -38,7 +38,8 @@
     },
     "test": {
       "dependsOn": ["lint", "format:check", "typecheck"],
-      "cache": false
+      "cache": false,
+      "passThroughEnv": ["DONE_GATE_SHARD"]
     },
     "dev": {
       "dependsOn": ["^build"],
