@@ -39,7 +39,7 @@ Collaborative markdown editing over artifact-based REST endpoints.
 
 ### Run
 
-1. \`pnpm dev:ui\` (Storybook on :6006)
+1. \`pnpm dev\` (Storybook on :6006, full app on :5173)
 2. Ensure \`.env.local\` has valid \`VITE_WGW_DEV_USERNAME\`, \`VITE_WGW_DEV_PASSWORD\`, and \`VITE_WGW_LIVE_ORIGIN\`.
 3. Open this story in two windows with different names to test collaboration.
 `;

@@ -4,14 +4,30 @@ The `/api/v1` endpoints use bearer JWT tokens signed with RS256.
 
 ## 1) Signing keys
 
-The web installer creates RSA keys under `{data_dir}/keys/` on first install:
+For Docker-free monorepo dev, run **`pnpm dev`** or **`pnpm preview`** — the first run bootstraps `wgw-config.php`, SQLite, an `admin` user, and RSA keys under `wgw-content/keys/` (no manual OpenSSL step). Default login: `admin` / `storybook-dev` (override with `WGW_DEV_USERNAME` / `WGW_DEV_PASSWORD`).
+
+The web installer and `wgw:dev-install` create these files:
 
 - `api-jwt-private.pem`
 - `api-jwt-public.pem`
 
-By default, the API reads those files from your install data directory (typically `wgw-content/keys/`).
+By default, the API reads them from your install data directory (typically `wgw-content/keys/`).
 
-If an install finished before keys were generated, create them from your install root:
+If keys are missing after an older install:
+
+```bash
+php packages/api/artisan wgw:jwt-keys
+```
+
+To re-run the full local bootstrap manually:
+
+```bash
+php packages/api/artisan wgw:dev-install
+```
+
+### Advanced: manual OpenSSL override
+
+From the install root (`apps/wegotworkspace` in monorepo dev):
 
 ```bash
 mkdir -p wgw-content/keys

@@ -59,7 +59,7 @@ Complete in order; steps 1–3 need org/repo admin access:
 Storybook and Vitest smoke cover offline visual confidence without Chromatic:
 
 ```bash
-pnpm dev:ui                    # Storybook at http://127.0.0.1:6006
+pnpm dev                       # Storybook at http://127.0.0.1:6006
 pnpm test:apps-done-gate       # includes Storybook Vitest smoke + a11y gate
 ```
 

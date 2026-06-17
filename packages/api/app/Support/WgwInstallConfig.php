@@ -77,7 +77,7 @@ final class WgwInstallConfig
             return rtrim($path, '/');
         }
 
-        return rtrim($this->installRoot().'/'.ltrim($path, '/'), '/');
+        return rtrim($this->installRoot().'/'.$this->relativeInstallSegment($path), '/');
     }
 
     private function isAbsolutePath(string $path): bool
@@ -115,7 +115,17 @@ final class WgwInstallConfig
             return rtrim($path, '/');
         }
 
-        return rtrim($this->installRoot().'/'.ltrim($path, '/'), '/');
+        return rtrim($this->installRoot().'/'.$this->relativeInstallSegment($path), '/');
+    }
+
+    private function relativeInstallSegment(string $path): string
+    {
+        $relative = ltrim($path, '/');
+        while (str_starts_with($relative, './')) {
+            $relative = substr($relative, 2);
+        }
+
+        return $relative;
     }
 
     private function looksLikeInstallRoot(string $dir): bool

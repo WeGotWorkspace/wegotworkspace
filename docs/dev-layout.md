@@ -5,39 +5,88 @@
 | Path | What it is | Built? |
 |------|------------|--------|
 | `packages/api` | Laravel **API app** (REST, WebDAV, UI kernels) | `composer install` only |
-| `packages/apps` | UI **source** (Vite → `packages/apps/dist/`) | `vite build` / watch |
+| `packages/apps` | UI **source** (Vite dev / build → `packages/apps/dist/`) | `vite dev` or `vite build` |
 | `apps/wegotworkspace` | **Install shell** — `index.php`, `wgw-config.php`, `wgw-content/` | No code copies in day-to-day dev |
 
 Production releases still assemble a self-contained tree under `apps/wegotworkspace/packages/*` via `pnpm build` / `pnpm release`. That sync is for shipping, not for editing.
 
-## Default dev (Docker + UI)
+## Default dev (Docker-free)
+
+```bash
+pnpm dev
+```
+
+| Service | URL | Notes |
+|---------|-----|-------|
+| Full app (HMR) | http://127.0.0.1:5173 | Vite dev server; proxies `/api/v1` → `:9080` |
+| Storybook | http://127.0.0.1:6006 | Component catalog; same API proxy |
+| API (host PHP) | http://127.0.0.1:9080 | Health: `/api/v1/health` |
+
+The API task runs `packages/api/scripts/dev-php-server.sh`, which traps `SIGINT`/`SIGTERM` and stops the `php -S` process when you exit `pnpm dev` or `pnpm preview` (Ctrl+C). If `:9080` stays bound after a crash, find the listener with `lsof -nP -iTCP:9080 -sTCP:LISTEN` and stop it manually.
+
+`pnpm dev` runs `wgw:dev-install` first (idempotent), then starts all three in parallel via turbo. On a fresh clone that bootstraps `wgw-config.php`, `wgw-content/db.sqlite`, the `admin` user (password `storybook-dev`, overridable via `WGW_DEV_USERNAME` / `WGW_DEV_PASSWORD`), and JWT keys under `apps/wegotworkspace/wgw-content/keys/` (gitignored). OpenAPI typegen watch runs alongside.
+
+## Docker API (optional)
 
 ```bash
 pnpm docker:up
-pnpm dev:ui
+pnpm dev          # UI only needs API on :9080; host PHP is not started if you skip `pnpm dev:api`
 ```
 
-- API: Apache in Docker → **http://127.0.0.1:9080** (health, Storybook proxy target)
-- UI: Storybook **http://127.0.0.1:6006** with Vite watch into `packages/apps/dist`
-- PHP loads **`packages/api`** directly; static UI from **`packages/apps/*/dist`** (`WgwAppBootstrap` / `AppPaths`)
+Or run Storybook alone: `pnpm dev:storybook`.
 
 HTTPS / WebDAV hostname: [`docker/README.md`](../docker/README.md).
 
 ## Host PHP instead of Docker
 
 ```bash
-pnpm dev          # API :9080 + UI + Storybook + OpenAPI typegen watch
+pnpm dev          # API :9080 + Vite app :5173 + Storybook :6006 + typegen watch
 pnpm dev:api      # API only
-pnpm dev:ui       # UI only (start API separately)
+pnpm dev:storybook # Storybook only
+pnpm dev:ui       # alias for `pnpm dev`
 ```
+
+## Preview (built UI, no HMR)
+
+```bash
+pnpm preview
+```
+
+Builds apps (`vite build`), starts host PHP API on `:9080`, and serves the bundle via `vite preview` on **http://127.0.0.1:4173** with the same `/api/v1` proxy.
+
+`preview:bootstrap` runs the same `wgw:dev-install` step as `pnpm dev` (see above). To regenerate keys only:
+
+```bash
+php packages/api/artisan wgw:jwt-keys
+```
+
+To re-run the full dev bootstrap manually:
+
+```bash
+php packages/api/artisan wgw:dev-install
+```
+
+See [`packages/api/docs/api-auth.md`](../packages/api/docs/api-auth.md) for env overrides (`WGW_API_JWT_*`).
 
 ## Environment files
 
-See [`env.md`](env.md) — root `.env` (tooling), `packages/api/.env` (Laravel), `.env.local` (Storybook).
+See [`env.md`](env.md) — root `.env` (tooling), `packages/api/.env` (Laravel), `.env.local` (Vite / Storybook proxy).
 
-## Production-like install tree (`pnpm dev:preview`)
+### Multiple worktrees (port conflicts)
 
-Copies `packages/api` and UI `dist/` into `apps/wegotworkspace/packages/` and watches with runtime sync — same layout as a release ZIP. Use when testing install-path or Apache edge cases only.
+Default ports are **5173** (dev) and **4173** (`pnpm preview`). Vite uses `strictPort: true`, so a second clone fails if those ports are already bound.
+
+Set predictable per-worktree ports in **`.env.local`** (copy from `packages/apps/.env.example`):
+
+```bash
+# Example: second git worktree on the same machine
+WGW_VITE_DEV_PORT=5174
+WGW_VITE_PREVIEW_PORT=4174
+```
+
+Restart `pnpm dev` or `pnpm preview` after changing ports. Single-worktree setups can omit these — defaults stay `:5173` / `:4173`.
+
+**Edit the same worktree you run `pnpm dev` in.** Git worktrees share history but not working files — each clone has its own `packages/apps/src/`. Saving in one worktree does not affect Vite running in another.
 
 ## UI smoke e2e (Playwright, optional)
 
@@ -47,7 +96,7 @@ Phase 1 loads mock-tier Storybook stories — no live API required:
 pnpm test:apps-e2e
 ```
 
-Starts Storybook on **:6006** (or reuses `pnpm dev:ui`). Specs live in `packages/apps/e2e/`. With Storybook already running:
+Starts Storybook on **:6006** (or reuses `pnpm dev`). Specs live in `packages/apps/e2e/`. With Storybook already running:
 
 ```bash
 WGW_APPS_E2E_NO_SERVER=1 pnpm test:apps-e2e

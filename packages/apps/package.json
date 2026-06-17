@@ -4,8 +4,8 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
-    "dev": "storybook dev -p 6006",
     "dev:app": "vite dev",
+    "dev:storybook": "storybook dev -p 6006",
     "typegen": "echo \"@wgw/apps uses shared @wgw/api generated OpenAPI types\"",
     "build": "vite build && node scripts/sync-runtime-app-builds.mjs",
     "sync:runtime": "node scripts/sync-runtime-app-builds.mjs",
