@@ -14,6 +14,12 @@ By default, the API reads those files from your install data directory (typicall
 If an install finished before keys were generated, create them from your install root:
 
 ```bash
+php packages/api/artisan wgw:jwt-keys
+```
+
+Or with OpenSSL from the install root (`apps/wegotworkspace` in monorepo dev):
+
+```bash
 mkdir -p wgw-content/keys
 openssl genrsa -out wgw-content/keys/api-jwt-private.pem 2048
 openssl rsa -in wgw-content/keys/api-jwt-private.pem -pubout -out wgw-content/keys/api-jwt-public.pem
