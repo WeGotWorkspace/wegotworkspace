@@ -7,12 +7,8 @@
     "watch:runtime": "node scripts/watch-runtime-api-package.mjs",
     "sync:runtime": "node scripts/sync-runtime-api-package.mjs --with-vendor",
     "dev": "pnpm run dev:php",
-<<<<<<< HEAD
     "dev:php": "bash scripts/dev-php-server.sh",
     "preview": "pnpm run dev:php",
-=======
-    "dev:php": "sh -c 'php artisan wgw:schema-migrate && app_root=\"../../apps/wegotworkspace\"; env -u SABRE_BUILD_DIR php -S 127.0.0.1:9080 -t \"$app_root\" \"$app_root/index.php\"'",
->>>>>>> 164475eba (fix(api): auto-run WGW schema migrate on dev:api startup)
     "openapi:build-json": "node scripts/build-openapi-built-json.mjs",
     "openapi:check-drift": "node scripts/build-openapi-built-json.mjs && git diff --exit-code -- openapi/generated/openapi.built.json",
     "typegen": "pnpm run openapi:build-json && pnpm run typegen:openapi",
