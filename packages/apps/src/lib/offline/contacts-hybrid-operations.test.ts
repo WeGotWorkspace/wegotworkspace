@@ -137,6 +137,46 @@ describe("createHybridContactsOperations", () => {
     expect(JSON.parse(row?.data ?? "{}").name?.full).toBe("Jane Pending");
   });
 
+  it("retains addresses and members when an offline edit touches another field (#210)", async () => {
+    vi.mocked(readBrowserOnline).mockReturnValue(false);
+
+    const richCard = {
+      ...card,
+      addresses: {
+        a1: { "@type": "Address", components: [{ kind: "locality", value: "Paris" }] },
+      },
+      members: { "urn:uuid:m1": true },
+    } as unknown as ContactCard;
+    await writeContactsBootstrapToCache(username, {
+      ...bootstrap,
+      data: { ...bootstrap.data, cards: [richCard] },
+    });
+
+    const operations = createHybridContactsOperations(username);
+    const saved = await operations.patchCard("jane-doe", {
+      name: { "@type": "Name", isOrdered: false, full: "Jane Renamed" },
+      members: { "urn:uuid:m2": true },
+    } as never);
+
+    expect(saved.name?.full).toBe("Jane Renamed");
+    expect((saved as unknown as { addresses?: Record<string, unknown> }).addresses?.a1).toEqual({
+      "@type": "Address",
+      components: [{ kind: "locality", value: "Paris" }],
+    });
+    expect((saved as unknown as { members?: Record<string, boolean> }).members).toEqual({
+      "urn:uuid:m1": true,
+      "urn:uuid:m2": true,
+    });
+
+    const cached = await readContactsBootstrapFromCache(username);
+    const cachedCard = cached?.data.cards[0] as unknown as {
+      addresses?: Record<string, unknown>;
+      members?: Record<string, boolean>;
+    };
+    expect(cachedCard?.addresses?.a1).toBeDefined();
+    expect(cachedCard?.members).toEqual({ "urn:uuid:m1": true, "urn:uuid:m2": true });
+  });
+
   it("preserves pendingSync cards when bootstrap cache is rewritten", async () => {
     vi.mocked(readBrowserOnline).mockReturnValue(false);
 
