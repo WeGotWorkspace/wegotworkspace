@@ -1,6 +1,6 @@
 import type { ComponentProps } from "react";
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { TooltipProvider } from "@/ui/tooltip";
 import { ContactsDetailActionBar } from "./contacts-detail-action-bar";
 import { defaultContactsLabels } from "./contacts-labels";
@@ -32,10 +32,39 @@ describe("ContactsDetailActionBar", () => {
     expect(screen.getByRole("button", { name: defaultContactsLabels.delete })).toBeTruthy();
   });
 
-  it("hides save and cancel actions while editing an existing contact", () => {
-    renderActionBar({ editMode: true });
+  it("keeps read actions visible while editing with correct disabled states", () => {
+    const { container } = renderActionBar({ editMode: true });
+    const row = container.querySelector(".action-bar__row");
+    expect(row).toBeTruthy();
+
+    const actions = within(row as HTMLElement);
+    const download = actions.getByRole("button", {
+      name: defaultContactsLabels.downloadVCard,
+    }) as HTMLButtonElement;
+    const edit = actions.getByRole("button", {
+      name: defaultContactsLabels.edit,
+    }) as HTMLButtonElement;
+    const deleteButton = actions.getByRole("button", {
+      name: defaultContactsLabels.delete,
+    }) as HTMLButtonElement;
+
+    expect(download.disabled).toBe(true);
+    expect(edit.disabled).toBe(false);
+    expect(deleteButton.disabled).toBe(false);
     expect(screen.queryByRole("button", { name: defaultContactsLabels.save })).toBeNull();
     expect(screen.queryByRole("button", { name: defaultContactsLabels.cancel })).toBeNull();
+  });
+
+  it("toggles edit off via the active edit button", () => {
+    const onCancel = vi.fn();
+    const { container } = renderActionBar({ editMode: true, onCancel });
+    const row = container.querySelector(".action-bar__row");
+    expect(row).toBeTruthy();
+
+    const actions = within(row as HTMLElement);
+    fireEvent.click(actions.getByRole("button", { name: defaultContactsLabels.edit }));
+
+    expect(onCancel).toHaveBeenCalledOnce();
   });
 
   it("shows save and cancel actions in create mode", () => {

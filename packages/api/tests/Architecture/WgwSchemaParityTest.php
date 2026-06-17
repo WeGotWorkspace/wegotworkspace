@@ -30,6 +30,7 @@ final class WgwSchemaParityTest extends WgwDatabaseTestCase
             'drive_starred_items',
             'search_documents',
             'search_terms',
+            'jmap_contact_states',
         ] as $table) {
             $this->assertTrue(
                 Schema::connection('wgw')->hasTable($table),

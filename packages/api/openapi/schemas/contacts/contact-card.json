@@ -37,6 +37,10 @@
       "etag": {
         "$ref": "#/components/schemas/DavEtag"
       },
+      "state": {
+        "type": "string",
+        "description": "Opaque JMAP state token for Contact/set ifInState (RFC 9610)."
+      },
       "kind": {
         "type": "string",
         "enum": ["individual", "group", "org", "location", "device", "application"],

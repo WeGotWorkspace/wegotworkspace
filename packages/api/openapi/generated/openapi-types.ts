@@ -5461,6 +5461,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/contacts/cards/set": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** JMAP Contact/set batch mutations */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ContactCardSetRequest"];
+                };
+            };
+            responses: {
+                /** @description Contact/set result */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ContactCardSetResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -6616,6 +6656,8 @@ export interface components {
             created?: components["schemas"]["JsContactUTCDateTime"];
             updated?: components["schemas"]["JsContactUTCDateTime"];
             etag?: components["schemas"]["DavEtag"];
+            /** @description Opaque JMAP state token for Contact/set ifInState (RFC 9610). */
+            state?: string;
             /**
              * @default individual
              * @enum {string}
@@ -7849,6 +7891,42 @@ export interface components {
         ContactCardImportResponse: {
             list: components["schemas"]["ContactCard"][];
             errors: components["schemas"]["ContactCardImportError"][];
+        };
+        ContactCardSetRequest: {
+            create?: {
+                [key: string]: components["schemas"]["ContactCardCreate"];
+            };
+            update?: {
+                [key: string]: {
+                    ifInState?: string;
+                } & {
+                    [key: string]: unknown;
+                };
+            };
+            /** @description Card ids to destroy, or map of id to { ifInState }. */
+            destroy?: components["schemas"]["JsContactId"][] | {
+                [key: string]: {
+                    ifInState?: string;
+                };
+            };
+        };
+        ContactCardSetResponse: {
+            created: {
+                [key: string]: components["schemas"]["JsContactId"];
+            };
+            updated: {
+                [key: string]: string;
+            };
+            destroyed: components["schemas"]["JsContactId"][];
+            notCreated: {
+                [key: string]: Record<string, never>;
+            };
+            notUpdated: {
+                [key: string]: Record<string, never>;
+            };
+            notDestroyed: {
+                [key: string]: Record<string, never>;
+            };
         };
     };
     responses: never;

@@ -46,13 +46,39 @@ pnpm dev:storybook # Storybook only
 pnpm dev:ui       # alias for `pnpm dev`
 ```
 
+Host API uses PHP’s built-in server on **http://127.0.0.1:9080** (`packages/api` → `dev:php` via install shell `apps/wegotworkspace/index.php`).
+
+**First-time host API setup** (once per clone):
+
+```bash
+cp packages/api/.env.example packages/api/.env
+php artisan key:generate --working-dir packages/api
+bash packages/api/scripts/generate-jwt-keys.sh
+# Ensure packages/api/.env has WGW_API_JWT_*_PATH (see .env.example)
+pnpm dev:api
+curl -s http://127.0.0.1:9080/api/v1/health
+```
+
+JWT keys live in `packages/api/storage/app/jwt/` (gitignored) when using `generate-jwt-keys.sh`. `pnpm dev` / `pnpm preview` bootstrap also creates install-tree keys under `wgw-content/keys/`. See [`env.md`](env.md) and [`packages/api/docs/api-auth.md`](../packages/api/docs/api-auth.md).
+
 ## Preview (built UI, no HMR)
 
 ```bash
 pnpm preview
 ```
 
-Builds apps (`vite build`), starts host PHP API on `:9080`, and serves the bundle via `vite preview` on **http://127.0.0.1:4173** with the same `/api/v1` proxy.
+Builds apps (`vite build`), starts host PHP API on `:9080`, and serves the bundle via `vite preview` on **http://127.0.0.1:4173** with the same `/api/v1` proxy. Use this to exercise the PWA/service worker and offline contacts against a host API.
+
+Manual split (same result as `pnpm preview` without turbo):
+
+```bash
+pnpm dev:api   # terminal 1 → http://127.0.0.1:9080 (health: curl -s http://127.0.0.1:9080/api/v1/health)
+cp packages/apps/.env.example .env.local   # once; set VITE_WGW_DEV_* credentials
+pnpm --filter @wgw/apps run build && pnpm --filter @wgw/apps run preview   # terminal 2 → :4173
+```
+
+- Browser loads **http://127.0.0.1:4173**; `wgwFetch` uses relative **`/api/v1`** (`VITE_WGW_API_BASE_URL` in `.env.local`).
+- Vite preview proxies **`/api/v1` → `WGW_PROXY_TARGET`** (default **`http://127.0.0.1:9080`**).
 
 `preview:bootstrap` runs the same `wgw:dev-install` step as `pnpm dev` (see above). To regenerate keys only:
 
@@ -67,6 +93,15 @@ php packages/api/artisan wgw:dev-install
 ```
 
 See [`packages/api/docs/api-auth.md`](../packages/api/docs/api-auth.md) for env overrides (`WGW_API_JWT_*`).
+
+**Login (`POST /api/v1/auth/token`) prerequisites:**
+
+1. **API running** — `pnpm dev:api` in a separate terminal; `curl -s http://127.0.0.1:9080/api/v1/health` must return `200`.
+2. **Laravel env** — `cp packages/api/.env.example packages/api/.env` and `php artisan key:generate --working-dir packages/api`.
+3. **Install data** under `apps/wegotworkspace/` — `wgw-config.php`, `wgw-content/db.sqlite`, and `wgw-content/keys/api-jwt-{private,public}.pem` (created by the web installer, or copy from an existing install / run `tools/setup-storybook-live-api.sh` after install).
+4. **Preview env** — repo-root `.env.local` from `packages/apps/.env.example` with `VITE_WGW_USE_LIVE_API=1` and credentials matching your install user.
+
+If the API is down, the preview proxy returns **502** with `code: proxy_backend_down` (not a Laravel 500). When the API is up but JWT keys are missing, `/auth/token` returns **503** `config_error`.
 
 ## Environment files
 

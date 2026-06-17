@@ -96,6 +96,7 @@ final class WgwSchemaMigratorTest extends TestCase
             'collab_messages',
             'search_documents',
             'search_terms',
+            'jmap_contact_states',
         ] as $table) {
             $this->assertTrue(
                 Schema::connection('wgw')->hasTable($table),

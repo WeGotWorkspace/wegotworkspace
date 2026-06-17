@@ -24,7 +24,9 @@ export type ContactCardImportResponse = {
 
 export type ContactsMutationOpts = {
   signal?: AbortSignal;
-  /** CardDAV etag from ContactCard — required for PATCH/DELETE against the live API. */
+  /** JMAP ifInState token — preferred for Contact/set. */
+  ifInState?: string;
+  /** Legacy CardDAV etag — used when state is unavailable. */
   ifMatch?: string;
 };
 
