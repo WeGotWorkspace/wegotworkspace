@@ -30,10 +30,14 @@ import {
   upsertContactCardInCache,
   writeContactsBootstrapToCache,
 } from "@/lib/offline/contacts-offline-store";
+import { CONTACTS_DOMAIN } from "@/lib/offline/contacts/contacts-schema";
 import { flushContactsOutbox, type OutboxFlushResult } from "@/lib/offline/contacts-outbox-flush";
 import { reportContactsSyncConflicts } from "@/lib/offline/contacts-sync-conflicts";
 import { readOfflineContactsUsername } from "@/lib/offline/offline-session";
-import { ConnectivitySyncRunner } from "@/lib/offline/connectivity-sync-runner";
+import {
+  ConnectivitySyncRunner,
+  ConnectivitySyncRunnerRegistry,
+} from "@/lib/offline/core/connectivity-sync-runner";
 
 function concurrencyToken(card: ContactCard, opts?: ContactsMutationOpts): string | undefined {
   const state = (card as ContactCard & { state?: string }).state;
@@ -46,7 +50,7 @@ function rethrowUnlessOfflineQueue(error: unknown, opts?: ContactsMutationOpts):
   if (!isFetchNetworkError(error)) throw error;
 }
 
-const runners = new Map<string, ConnectivitySyncRunner<OutboxFlushResult>>();
+const syncRunnerRegistry = new ConnectivitySyncRunnerRegistry<OutboxFlushResult>();
 
 async function flushContactsOutboxAndReport(username: string): Promise<OutboxFlushResult> {
   const result = await flushContactsOutbox(username);
@@ -55,11 +59,9 @@ async function flushContactsOutboxAndReport(username: string): Promise<OutboxFlu
 }
 
 function runnerFor(username: string): ConnectivitySyncRunner<OutboxFlushResult> {
-  const existing = runners.get(username);
-  if (existing) return existing;
-  const runner = new ConnectivitySyncRunner(async () => flushContactsOutboxAndReport(username));
-  runners.set(username, runner);
-  return runner;
+  return syncRunnerRegistry.getOrCreate(username, async () =>
+    flushContactsOutboxAndReport(username),
+  );
 }
 
 async function resolveCachedCard(
@@ -92,7 +94,7 @@ async function queueOfflineCreate(username: string, body: ContactCardCreate): Pr
   await upsertContactCardInCache(username, optimistic, true);
   await enqueueOutboxMutation(username, {
     id: crypto.randomUUID(),
-    domain: "contacts",
+    domain: CONTACTS_DOMAIN,
     op: "create",
     payload: JSON.stringify({
       creationId: tempId,
@@ -125,7 +127,7 @@ async function queueOfflineDelete(
   await removeContactCardFromCache(username, cardId);
   await enqueueOutboxMutation(username, {
     id: crypto.randomUUID(),
-    domain: "contacts",
+    domain: CONTACTS_DOMAIN,
     op: "delete",
     payload: JSON.stringify({ cardId }),
     ifInState: token,
