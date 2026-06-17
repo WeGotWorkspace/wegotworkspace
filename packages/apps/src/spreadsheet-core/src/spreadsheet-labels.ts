@@ -8,6 +8,9 @@ export const spreadsheetLabels = {
   parseError: "This source has a YCSV syntax error; the grid shows the last valid state.",
   viewSource: "Edit source",
   hideSource: "Hide source",
+  statsColumns: (count: number) =>
+    `${count.toLocaleString()} ${count === 1 ? "column" : "columns"}`,
+  statsRows: (count: number) => `${count.toLocaleString()} ${count === 1 ? "row" : "rows"}`,
   rename: "Rename",
   renameDialogTitle: "Rename spreadsheet",
   renameDialogDescription: "Change the name; the file extension cannot be edited.",

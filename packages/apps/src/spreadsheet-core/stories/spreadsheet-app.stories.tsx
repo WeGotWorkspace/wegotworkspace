@@ -120,6 +120,26 @@ export const InCellEditing: Story = {
   },
 };
 
+export const SheetStats: Story = {
+  name: "Sheet stats footer",
+  tags: ["vitest-ci"],
+  args: {
+    ...bootstrap,
+    filePath: mockDocument.apiPath,
+    operations: createMockSpreadsheetOperations(),
+    onFileRenamed: () => {},
+    onLogout: () => {},
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    // The sample sheet has 5 columns and 5 data rows (header excluded).
+    await waitFor(() => {
+      expect(canvas.getByText("5 columns")).toBeInTheDocument();
+      expect(canvas.getByText("5 rows")).toBeInTheDocument();
+    });
+  },
+};
+
 export const Empty: Story = {
   name: "No spreadsheet",
   args: {

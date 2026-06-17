@@ -408,6 +408,10 @@ export function useSpreadsheetController({
     sheets: workbook.sheets,
     activeSheetIndex: safeSheetIndex,
     setActiveSheetIndex,
+    // Footer stats for the active sheet: column count and data-row count
+    // (YCSV `rows` are the data rows, excluding the header row).
+    columnCount: columnSettings.length,
+    rowCount: activeSheet?.rows.length ?? 0,
     rawData,
     computed: activeComputed,
     columnSettings,

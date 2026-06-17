@@ -16,6 +16,12 @@
   --spreadsheet-border: color-mix(in oklab, var(--color-ink) 12%, transparent);
   --spreadsheet-error: #dc2626;
   --spreadsheet-formula: #2563eb;
+  --spreadsheet-stat-tag-bg: color-mix(in oklab, var(--spreadsheet-accent) 10%, transparent);
+  --spreadsheet-stat-tag-color: color-mix(
+    in oklab,
+    var(--spreadsheet-accent) 88%,
+    var(--color-ink)
+  );
 
   --app-sidebar-bg: var(--spreadsheet-sidebar);
   --app-sidebar-border-color: color-mix(in oklab, #ffffff 18%, transparent);
@@ -113,6 +119,22 @@
 
 .spreadsheet-workspace__source .text-editor-source {
   @apply min-h-0 flex-1;
+}
+
+/* Stats footer — mirrors `.docs-workspace__stats-footer`, scoped to sheets. */
+.spreadsheet-workspace__stats-footer {
+  @apply flex shrink-0 flex-wrap items-center justify-start gap-1.5;
+  box-sizing: border-box;
+  padding-block: 0.5rem;
+  padding-inline: 1rem;
+  min-height: 3rem;
+  background-color: color-mix(in oklab, #ffffff 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--spreadsheet-border);
+}
+
+.spreadsheet-workspace__stats-footer .tag {
+  font-variant-numeric: tabular-nums;
 }
 
 .spreadsheet-workspace__parse-banner {

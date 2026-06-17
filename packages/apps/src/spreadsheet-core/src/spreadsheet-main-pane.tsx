@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { TextEditorSource } from "@/text-editor-core/src/text-editor-source";
 import { SpreadsheetFormulaBar } from "@/spreadsheet-core/src/spreadsheet-formula-bar";
+import { SpreadsheetStatsFooter } from "@/spreadsheet-core/src/spreadsheet-stats-footer";
 import {
   SpreadsheetGrid,
   type SpreadsheetGridSelection,
@@ -76,6 +77,7 @@ export function SpreadsheetMainPane({ controller, viewSource }: SpreadsheetMainP
             picking={controller.picking}
           />
         </div>
+        <SpreadsheetStatsFooter controller={controller} />
       </div>
       {viewSource ? (
         <div className="spreadsheet-workspace__source">
