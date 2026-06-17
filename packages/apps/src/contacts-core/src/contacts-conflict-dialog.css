@@ -1,0 +1,8 @@
+.contacts-conflict-dialog__remaining {
+  @apply text-sm;
+  color: color-mix(in oklab, var(--color-ink) 55%, transparent);
+}
+
+.contacts-conflict-dialog__actions {
+  @apply gap-2;
+}
