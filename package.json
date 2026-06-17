@@ -4,7 +4,7 @@
   "license": "AGPL-3.0-or-later",
   "packageManager": "pnpm@9.15.4",
   "scripts": {
-    "dev": "tools/with-root-env.sh run 'turbo run typegen:watch dev --filter=@wgw/api dev:app dev:storybook --filter=@wgw/apps --concurrency=20'",
+    "dev": "tools/with-root-env.sh run 'php packages/api/artisan wgw:dev-install && turbo run typegen:watch dev --filter=@wgw/api dev:app dev:storybook --filter=@wgw/apps --concurrency=20'",
     "dev:bootstrap": "php packages/api/artisan wgw:dev-install && pnpm --filter @wgw/apps run build:dev",
     "dev:api": "tools/with-root-env.sh -- turbo run dev --filter=@wgw/api",
     "dev:ui": "pnpm run dev",

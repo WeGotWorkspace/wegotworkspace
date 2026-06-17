@@ -22,7 +22,7 @@ pnpm dev
 | Storybook | http://127.0.0.1:6006 | Component catalog; same API proxy |
 | API (host PHP) | http://127.0.0.1:9080 | Health: `/api/v1/health` |
 
-`pnpm dev` starts all three in parallel via turbo. OpenAPI typegen watch runs alongside.
+`pnpm dev` runs `wgw:dev-install` first (idempotent), then starts all three in parallel via turbo. On a fresh clone that bootstraps `wgw-config.php`, `wgw-content/db.sqlite`, the `admin` user (password `storybook-dev`, overridable via `WGW_DEV_USERNAME` / `WGW_DEV_PASSWORD`), and JWT keys under `apps/wegotworkspace/wgw-content/keys/` (gitignored). OpenAPI typegen watch runs alongside.
 
 ## Docker API (optional)
 
@@ -52,7 +52,7 @@ pnpm preview
 
 Builds apps (`vite build`), starts host PHP API on `:9080`, and serves the bundle via `vite preview` on **http://127.0.0.1:4173** with the same `/api/v1` proxy.
 
-`preview:bootstrap` runs `php artisan wgw:dev-install` so login works without the web installer: it writes `wgw-config.php`, migrates `wgw-content/db.sqlite`, seeds the `admin` user (password `storybook-dev`, overridable via `WGW_DEV_USERNAME` / `WGW_DEV_PASSWORD`), and creates JWT keys under `apps/wegotworkspace/wgw-content/keys/` (gitignored). To regenerate keys only:
+`preview:bootstrap` runs the same `wgw:dev-install` step as `pnpm dev` (see above). To regenerate keys only:
 
 ```bash
 php packages/api/artisan wgw:jwt-keys

@@ -41,6 +41,8 @@ cp packages/api/.env.example packages/api/.env   # then edit / key:generate
 pnpm dev
 ```
 
+First run also bootstraps local install data (`wgw-config.php`, SQLite, admin user, JWT keys) — no manual OpenSSL step.
+
 Open:
 
 - **http://127.0.0.1:5173** — full app (Vite HMR)
