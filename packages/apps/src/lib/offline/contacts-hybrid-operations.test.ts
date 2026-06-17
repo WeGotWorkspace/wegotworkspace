@@ -8,6 +8,7 @@ import {
   writeContactsBootstrapToCache,
 } from "@/lib/offline/contacts-offline-store";
 import { offlineAccountKeyFromUsername, offlineDbForAccount } from "@/lib/offline/offline-db";
+import { contactsBooksTable, contactsCardsTable } from "@/lib/offline/contacts/contacts-schema";
 import { createHybridContactsOperations } from "@/lib/offline/contacts-hybrid-operations";
 
 const username = "alice";
@@ -75,8 +76,8 @@ describe("createHybridContactsOperations", () => {
     vi.mocked(readBrowserOnline).mockReturnValue(true);
     const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
     await db.outbox.clear();
-    await db.contacts_cards.clear();
-    await db.contacts_address_books.clear();
+    await contactsCardsTable(db).clear();
+    await contactsBooksTable(db).clear();
     await db.meta.clear();
     await writeContactsBootstrapToCache(username, bootstrap);
   });
@@ -131,7 +132,7 @@ describe("createHybridContactsOperations", () => {
     });
 
     const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
-    const row = await db.contacts_cards.get("jane-doe");
+    const row = await contactsCardsTable(db).get("jane-doe");
     expect(row?.pendingSync).toBe(true);
     expect(JSON.parse(row?.data ?? "{}").name?.full).toBe("Jane Pending");
   });

@@ -1,14 +1,15 @@
-type ContactsSyncConflictListener = (cardIds: string[]) => void;
+import { createSyncConflictChannel } from "@/lib/offline/core/sync-conflicts";
 
-let listener: ContactsSyncConflictListener | undefined;
+const channel = createSyncConflictChannel<string>();
+
+export type ContactsSyncConflictListener = (cardIds: string[]) => void;
 
 export function setContactsSyncConflictListener(
   next: ContactsSyncConflictListener | undefined,
 ): void {
-  listener = next;
+  channel.setListener(next);
 }
 
 export function reportContactsSyncConflicts(cardIds: string[]): void {
-  if (cardIds.length === 0) return;
-  listener?.(cardIds);
+  channel.report(cardIds);
 }

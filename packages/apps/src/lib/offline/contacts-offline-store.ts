@@ -5,17 +5,40 @@ import type {
   ContactCard,
   ContactCardPatch,
 } from "@/contacts-core/src/contacts-types";
+import { offlineAccountKeyFromUsername, offlineDbForAccount } from "@/lib/offline/core/offline-db";
+import { enqueueOutboxMutation } from "@/lib/offline/core/outbox-store";
+import type { OfflineOutboxRow } from "@/lib/offline/core/types";
 import {
-  offlineAccountKeyFromUsername,
-  offlineDbForAccount,
-  type OfflineOutboxRow,
-} from "@/lib/offline/offline-db";
+  CONTACTS_DOMAIN,
+  contactsBooksTable,
+  contactsCardsTable,
+  type OfflineContactCardRow,
+} from "@/lib/offline/contacts/contacts-schema";
+
+export {
+  enqueueOutboxMutation,
+  listOutboxMutations,
+  markOutboxError,
+  removeOutboxMutation,
+} from "@/lib/offline/core/outbox-store";
 
 const META_ADDRESS_BOOKS_STATE = "contacts:addressBooks:state";
 const META_SESSION = "contacts:session";
 
 function metaKeyForBookState(bookId: string): string {
   return `contacts:book:${bookId}:state`;
+}
+
+function contactCardRow(card: ContactCard, pendingSync: boolean): OfflineContactCardRow {
+  const addressBookId =
+    Object.keys(card.addressBookIds ?? {}).find((k) => card.addressBookIds?.[k]) ?? "default";
+  return {
+    id: card.id,
+    addressBookId,
+    data: JSON.stringify(card),
+    pendingSync,
+    updatedAt: Date.now(),
+  };
 }
 
 export async function readContactsBootstrapFromCache(
@@ -25,8 +48,8 @@ export async function readContactsBootstrapFromCache(
   const sessionRow = await db.meta.get(META_SESSION);
   if (!sessionRow?.value) return null;
 
-  const books = await db.contacts_address_books.toArray();
-  const cards = await db.contacts_cards.toArray();
+  const books = await contactsBooksTable(db).toArray();
+  const cards = await contactsCardsTable(db).toArray();
   if (books.length === 0 && cards.length === 0) return null;
 
   const session = JSON.parse(sessionRow.value) as ContactsAppBootstrap["session"];
@@ -44,31 +67,22 @@ export async function writeContactsBootstrapToCache(
   bootstrap: ContactsAppBootstrap,
 ): Promise<void> {
   const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
-  const pendingRows = await db.contacts_cards.filter((row) => row.pendingSync).toArray();
+  const cards = contactsCardsTable(db);
+  const books = contactsBooksTable(db);
+  const pendingRows = await cards.filter((row) => row.pendingSync).toArray();
   await db.meta.put({ key: META_SESSION, value: JSON.stringify(bootstrap.session) });
   rememberOfflineContactsUsername(username);
-  await db.contacts_address_books.clear();
-  await db.contacts_address_books.bulkPut(
+  await books.clear();
+  await books.bulkPut(
     bootstrap.data.addressBooks.map((book) => ({
       id: book.id ?? "default",
       data: JSON.stringify(book),
     })),
   );
-  await db.contacts_cards.clear();
-  await db.contacts_cards.bulkPut(
-    bootstrap.data.cards.map((card) => {
-      const addressBookId =
-        Object.keys(card.addressBookIds ?? {}).find((k) => card.addressBookIds?.[k]) ?? "default";
-      return {
-        id: card.id,
-        addressBookId,
-        data: JSON.stringify(card),
-        pendingSync: false,
-      };
-    }),
-  );
+  await cards.clear();
+  await cards.bulkPut(bootstrap.data.cards.map((card) => contactCardRow(card, false)));
   if (pendingRows.length > 0) {
-    await db.contacts_cards.bulkPut(pendingRows);
+    await cards.bulkPut(pendingRows);
   }
 }
 
@@ -78,19 +92,21 @@ export async function upsertContactCardInCache(
   pendingSync = false,
 ): Promise<void> {
   const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
-  const addressBookId =
-    Object.keys(card.addressBookIds ?? {}).find((k) => card.addressBookIds?.[k]) ?? "default";
-  await db.contacts_cards.put({
-    id: card.id,
-    addressBookId,
-    data: JSON.stringify(card),
-    pendingSync,
-  });
+  await contactsCardsTable(db).put(contactCardRow(card, pendingSync));
 }
 
 export async function removeContactCardFromCache(username: string, cardId: string): Promise<void> {
   const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
-  await db.contacts_cards.delete(cardId);
+  await contactsCardsTable(db).delete(cardId);
+}
+
+/** Ids of cards with unsynced local changes (drives the pending-sync badge). */
+export async function listPendingContactCardIds(username: string): Promise<string[]> {
+  const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
+  const rows = await contactsCardsTable(db)
+    .filter((row) => row.pendingSync)
+    .toArray();
+  return rows.map((row) => row.id);
 }
 
 export async function readSyncToken(username: string, bookId: string): Promise<string | null> {
@@ -119,18 +135,6 @@ export async function writeAddressBooksSyncToken(username: string, token: string
   await db.meta.put({ key: META_ADDRESS_BOOKS_STATE, value: token });
 }
 
-export async function enqueueOutboxMutation(
-  username: string,
-  row: Omit<OfflineOutboxRow, "createdAt" | "retries">,
-): Promise<void> {
-  const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
-  await db.outbox.put({
-    ...row,
-    createdAt: Date.now(),
-    retries: 0,
-  });
-}
-
 function mergeContactPatches(a: ContactCardPatch, b: ContactCardPatch): ContactCardPatch {
   return {
     ...a,
@@ -143,11 +147,16 @@ function mergeContactPatches(a: ContactCardPatch, b: ContactCardPatch): ContactC
   };
 }
 
-function outboxUpdateCardId(row: OfflineOutboxRow): string | null {
-  if (row.domain !== "contacts" || row.op !== "update") return null;
+/** Card id targeted by an outbox row (update/delete `cardId`, or create `tempCardId`). */
+export function contactsOutboxCardId(row: OfflineOutboxRow): string | null {
+  if (row.domain !== CONTACTS_DOMAIN) return null;
   try {
-    const payload = JSON.parse(row.payload) as { cardId?: string };
-    return payload.cardId ?? null;
+    const payload = JSON.parse(row.payload) as {
+      cardId?: string;
+      tempCardId?: string;
+      creationId?: string;
+    };
+    return payload.cardId ?? payload.tempCardId ?? payload.creationId ?? null;
   } catch {
     return null;
   }
@@ -161,8 +170,8 @@ export async function enqueueCoalescedContactUpdate(
   ifInState: string | undefined,
 ): Promise<void> {
   const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
-  const rows = await db.outbox.where("domain").equals("contacts").sortBy("createdAt");
-  const existing = rows.find((row) => row.op === "update" && outboxUpdateCardId(row) === cardId);
+  const rows = await db.outbox.where("domain").equals(CONTACTS_DOMAIN).sortBy("createdAt");
+  const existing = rows.find((row) => row.op === "update" && contactsOutboxCardId(row) === cardId);
 
   if (existing) {
     const payload = JSON.parse(existing.payload) as { cardId: string; patch: ContactCardPatch };
@@ -176,31 +185,10 @@ export async function enqueueCoalescedContactUpdate(
 
   await enqueueOutboxMutation(username, {
     id: crypto.randomUUID(),
-    domain: "contacts",
+    domain: CONTACTS_DOMAIN,
     op: "update",
     payload: JSON.stringify({ cardId, patch }),
     ifInState,
-  });
-}
-
-export async function listOutboxMutations(username: string): Promise<OfflineOutboxRow[]> {
-  const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
-  return db.outbox.orderBy("createdAt").toArray();
-}
-
-export async function removeOutboxMutation(username: string, id: string): Promise<void> {
-  const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
-  await db.outbox.delete(id);
-}
-
-export async function markOutboxError(username: string, id: string, error: string): Promise<void> {
-  const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
-  const row = await db.outbox.get(id);
-  if (!row) return;
-  await db.outbox.put({
-    ...row,
-    retries: row.retries + 1,
-    lastError: error,
   });
 }
 
