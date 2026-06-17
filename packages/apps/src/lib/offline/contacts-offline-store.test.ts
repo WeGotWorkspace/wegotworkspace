@@ -3,7 +3,9 @@ import { describe, expect, it, beforeEach } from "vitest";
 import type { ContactsAppBootstrap } from "@/lib/api/mock/contacts-bootstrap";
 import { mockWorkspaceSession } from "@/lib/api/mock/workspace-session-mock";
 import type { ContactCard } from "@/contacts-core/src/contacts-types";
+import { offlineAccountKeyFromUsername, offlineDbForAccount } from "@/lib/offline/offline-db";
 import {
+  enqueueCoalescedContactUpdate,
   enqueueOutboxMutation,
   listOutboxMutations,
   readContactsBootstrapFromCache,
@@ -43,6 +45,8 @@ const bootstrap = {
 describe("contacts offline store", () => {
   beforeEach(async () => {
     await writeContactsBootstrapToCache(username, bootstrap);
+    const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
+    await db.outbox.clear();
   });
 
   it("reads bootstrap written to cache", async () => {
@@ -79,5 +83,48 @@ describe("contacts offline store", () => {
 
     const cached = await readContactsBootstrapFromCache(username);
     expect(cached?.data.cards[0]?.name?.full).toBe("Bob Local");
+  });
+
+  it("coalesces offline update rows for the same cardId", async () => {
+    await enqueueCoalescedContactUpdate(
+      username,
+      "jane-doe",
+      { name: { "@type": "Name", isOrdered: false, full: "Jane A" } },
+      "state-1",
+    );
+    await enqueueCoalescedContactUpdate(
+      username,
+      "jane-doe",
+      { name: { "@type": "Name", isOrdered: false, full: "Jane B" } },
+      "state-1",
+    );
+
+    const rows = await listOutboxMutations(username);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.ifInState).toBe("state-1");
+    const payload = JSON.parse(rows[0]?.payload ?? "{}") as {
+      cardId: string;
+      patch: { name?: { full?: string } };
+    };
+    expect(payload.cardId).toBe("jane-doe");
+    expect(payload.patch.name?.full).toBe("Jane B");
+  });
+
+  it("keeps separate update rows for different cardIds", async () => {
+    await enqueueCoalescedContactUpdate(
+      username,
+      "jane-doe",
+      { name: { "@type": "Name", isOrdered: false, full: "Jane" } },
+      "state-1",
+    );
+    await enqueueCoalescedContactUpdate(
+      username,
+      "other-card",
+      { name: { "@type": "Name", isOrdered: false, full: "Other" } },
+      "state-2",
+    );
+
+    const rows = await listOutboxMutations(username);
+    expect(rows).toHaveLength(2);
   });
 });

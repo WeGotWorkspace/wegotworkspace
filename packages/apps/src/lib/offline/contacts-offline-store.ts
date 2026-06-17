@@ -1,6 +1,10 @@
 import type { ContactsAppBootstrap } from "@/lib/api/mock/contacts-bootstrap";
 import { rememberOfflineContactsUsername } from "@/lib/offline/offline-session";
-import type { AddressBook, ContactCard } from "@/contacts-core/src/contacts-types";
+import type {
+  AddressBook,
+  ContactCard,
+  ContactCardPatch,
+} from "@/contacts-core/src/contacts-types";
 import {
   offlineAccountKeyFromUsername,
   offlineDbForAccount,
@@ -124,6 +128,58 @@ export async function enqueueOutboxMutation(
     ...row,
     createdAt: Date.now(),
     retries: 0,
+  });
+}
+
+function mergeContactPatches(a: ContactCardPatch, b: ContactCardPatch): ContactCardPatch {
+  return {
+    ...a,
+    ...b,
+    name: b.name ? { ...a.name, ...b.name } : a.name,
+    emails: b.emails ? { ...a.emails, ...b.emails } : a.emails,
+    phones: b.phones ? { ...a.phones, ...b.phones } : a.phones,
+    addresses: b.addresses ? { ...a.addresses, ...b.addresses } : a.addresses,
+    members: b.members ? { ...a.members, ...b.members } : a.members,
+  };
+}
+
+function outboxUpdateCardId(row: OfflineOutboxRow): string | null {
+  if (row.domain !== "contacts" || row.op !== "update") return null;
+  try {
+    const payload = JSON.parse(row.payload) as { cardId?: string };
+    return payload.cardId ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Merges pending update rows for the same card so flush sends one patch with the original ifInState. */
+export async function enqueueCoalescedContactUpdate(
+  username: string,
+  cardId: string,
+  patch: ContactCardPatch,
+  ifInState: string | undefined,
+): Promise<void> {
+  const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
+  const rows = await db.outbox.where("domain").equals("contacts").sortBy("createdAt");
+  const existing = rows.find((row) => row.op === "update" && outboxUpdateCardId(row) === cardId);
+
+  if (existing) {
+    const payload = JSON.parse(existing.payload) as { cardId: string; patch: ContactCardPatch };
+    const mergedPatch = mergeContactPatches(payload.patch, patch);
+    await db.outbox.put({
+      ...existing,
+      payload: JSON.stringify({ cardId, patch: mergedPatch }),
+    });
+    return;
+  }
+
+  await enqueueOutboxMutation(username, {
+    id: crypto.randomUUID(),
+    domain: "contacts",
+    op: "update",
+    payload: JSON.stringify({ cardId, patch }),
+    ifInState,
   });
 }
 

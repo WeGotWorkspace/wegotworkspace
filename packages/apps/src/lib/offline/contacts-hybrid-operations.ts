@@ -23,6 +23,7 @@ import { isFetchNetworkError, readBrowserOnline } from "@/lib/offline/browser-on
 import { flushContactsOutbox } from "@/lib/offline/contacts-outbox-flush";
 import {
   createTempContactId,
+  enqueueCoalescedContactUpdate,
   enqueueOutboxMutation,
   readContactsBootstrapFromCache,
   removeContactCardFromCache,
@@ -118,13 +119,7 @@ async function queueOfflinePatch(
   const token = concurrencyToken(existing, opts);
   const optimistic = mergePatch(existing, patch);
   await upsertContactCardInCache(username, optimistic, true);
-  await enqueueOutboxMutation(username, {
-    id: crypto.randomUUID(),
-    domain: "contacts",
-    op: "update",
-    payload: JSON.stringify({ cardId, patch }),
-    ifInState: token,
-  });
+  await enqueueCoalescedContactUpdate(username, cardId, patch, token);
   return optimistic;
 }
 
