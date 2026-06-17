@@ -72,6 +72,20 @@ See [`packages/api/docs/api-auth.md`](../packages/api/docs/api-auth.md) for env 
 
 See [`env.md`](env.md) — root `.env` (tooling), `packages/api/.env` (Laravel), `.env.local` (Vite / Storybook proxy).
 
+### Multiple worktrees (port conflicts)
+
+Default ports are **5173** (dev) and **4173** (`pnpm preview`). Vite uses `strictPort: true`, so a second clone fails if those ports are already bound.
+
+Set predictable per-worktree ports in **`.env.local`** (copy from `packages/apps/.env.example`):
+
+```bash
+# Example: second git worktree on the same machine
+WGW_VITE_DEV_PORT=5174
+WGW_VITE_PREVIEW_PORT=4174
+```
+
+Restart `pnpm dev` or `pnpm preview` after changing ports. Single-worktree setups can omit these — defaults stay `:5173` / `:4173`.
+
 ## UI smoke e2e (Playwright, optional)
 
 Phase 1 loads mock-tier Storybook stories — no live API required:
