@@ -1,4 +1,3 @@
-import { WifiOff } from "lucide-react";
 import { useConnectivity } from "@/hooks/use-connectivity";
 import { defaultOfflineLabels } from "@/lib/offline/offline-labels";
 import { cn } from "@/lib/utils";
@@ -24,7 +23,7 @@ export function OfflineStatusIndicator({
 
   return (
     <div className={cn("offline-status-indicator", className)} role="status" aria-live="polite">
-      <WifiOff className="offline-status-indicator__icon" aria-hidden="true" />
+      <span className="offline-status-indicator__dot" aria-hidden="true" />
       <span className="offline-status-indicator__text">{message}</span>
     </div>
   );
