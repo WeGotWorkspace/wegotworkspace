@@ -1,4 +1,4 @@
-import type { EntityTable } from "dexie";
+import type { EntityTable, Transaction } from "dexie";
 import {
   registerOfflineDomainTables,
   type WgwOfflineDatabase,
@@ -14,7 +14,7 @@ export type OfflineContactCardRow = {
   addressBookId: string;
   data: string;
   pendingSync: boolean;
-  /** Last local write time (epoch ms). */
+  /** Last local write time (epoch ms). Indexed at schema v3 for recency queries. */
   updatedAt: number;
 };
 
@@ -25,6 +25,9 @@ export const CONTACTS_DOMAIN = "contacts";
  * `{ meta, outbox }` baseline (v1):
  *
  * - **v2** introduces `contacts_address_books` and `contacts_cards`.
+ * - **v3** adds an additive `updatedAt` index on `contacts_cards` and backfills
+ *   the field for existing rows — the reference pattern an app #2 follows to add
+ *   an index without losing data.
  */
 registerOfflineDomainTables({
   domain: CONTACTS_DOMAIN,
@@ -34,6 +37,23 @@ registerOfflineDomainTables({
       stores: {
         contacts_address_books: "id",
         contacts_cards: "id, addressBookId, pendingSync",
+      },
+    },
+    {
+      version: 3,
+      stores: {
+        contacts_cards: "id, addressBookId, pendingSync, updatedAt",
+      },
+      upgrade: async (tx: Transaction) => {
+        const now = Date.now();
+        await tx
+          .table<OfflineContactCardRow>("contacts_cards")
+          .toCollection()
+          .modify((row) => {
+            if (typeof row.updatedAt !== "number") {
+              row.updatedAt = now;
+            }
+          });
       },
     },
   ],
