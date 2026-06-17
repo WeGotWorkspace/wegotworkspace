@@ -3,6 +3,7 @@ import {
   registerOfflineDomainTables,
   type WgwOfflineDatabase,
 } from "@/lib/offline/core/offline-db";
+import { CONTACTS_OFFLINE_VERSION } from "@/lib/offline/core/offline-version-allocation";
 
 export type OfflineAddressBookRow = {
   id: string;
@@ -33,14 +34,14 @@ registerOfflineDomainTables({
   domain: CONTACTS_DOMAIN,
   versions: [
     {
-      version: 2,
+      version: CONTACTS_OFFLINE_VERSION.tables,
       stores: {
         contacts_address_books: "id",
         contacts_cards: "id, addressBookId, pendingSync",
       },
     },
     {
-      version: 3,
+      version: CONTACTS_OFFLINE_VERSION.updatedAtIndex,
       stores: {
         contacts_cards: "id, addressBookId, pendingSync, updatedAt",
       },
