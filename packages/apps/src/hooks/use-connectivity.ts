@@ -1,17 +1,16 @@
-import { useEffect, useState } from "react";
-import { readBrowserOnline, subscribeBrowserOnline } from "@/lib/offline/browser-online";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import {
+  getConnectivitySnapshot,
+  readBrowserOnline,
+  subscribeBrowserOnline,
+} from "@/lib/offline/browser-online";
 
 export type ConnectivityState = {
   online: boolean;
 };
 
 export function useConnectivity(): ConnectivityState {
-  const [online, setOnline] = useState(() => readBrowserOnline());
-
-  useEffect(() => {
-    setOnline(readBrowserOnline());
-    return subscribeBrowserOnline(setOnline);
-  }, []);
+  const online = useSyncExternalStore(subscribeBrowserOnline, getConnectivitySnapshot, () => true);
 
   return { online };
 }
