@@ -63,36 +63,6 @@ final class JmapContactStateService
         return $etag;
     }
 
-    public function rotateAfterWrite(
-        string $username,
-        string $cardId,
-        Card $card,
-        string $addressBookUri,
-    ): string {
-        $rawEtag = is_string($card->etag) ? $card->etag : null;
-        $row = JmapContactState::query()
-            ->where('username', $username)
-            ->where('card_id', $cardId)
-            ->first();
-
-        if ($row === null) {
-            $row = new JmapContactState([
-                'username' => $username,
-                'card_id' => $cardId,
-                'address_book_uri' => $addressBookUri,
-                'card_uri' => (string) $card->uri,
-            ]);
-        }
-
-        $row->address_book_uri = $addressBookUri;
-        $row->card_uri = (string) $card->uri;
-        $row->etag = $rawEtag;
-        $row->state_token = $this->generateStateToken();
-        $row->save();
-
-        return $row->state_token;
-    }
-
     public function deleteForCard(string $username, string $cardId): void
     {
         JmapContactState::query()
@@ -101,6 +71,9 @@ final class JmapContactStateService
             ->delete();
     }
 
+    /**
+     * Ensures a state row exists and rotates state_token when the CardDAV etag changes (read path).
+     */
     private function ensureStateRow(string $username, Card $card, string $addressBookUri): JmapContactState
     {
         $cardId = ContactCardMapper::cardIdFromUri((string) $card->uri);
