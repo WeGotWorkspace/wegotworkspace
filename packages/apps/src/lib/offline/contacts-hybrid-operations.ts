@@ -27,6 +27,7 @@ import {
   upsertContactCardInCache,
   writeContactsBootstrapToCache,
 } from "@/lib/offline/contacts-offline-store";
+import { readBrowserOnline } from "@/lib/offline/browser-online";
 import { readOfflineContactsUsername } from "@/lib/offline/offline-session";
 import { ConnectivitySyncRunner } from "@/lib/offline/connectivity-sync-runner";
 
@@ -66,7 +67,7 @@ export function createHybridContactsOperations(username: string): ContactsAPIOpe
     listAddressBooks: (opts) => listAddressBooks(opts),
     listCards: async (opts) => {
       const cached = await readContactsBootstrapFromCache(username);
-      if (cached && !navigator.onLine) {
+      if (cached && !readBrowserOnline()) {
         if (opts?.addressBookId) {
           const bookId = opts.addressBookId;
           return cached.data.cards.filter((c) => Boolean(c.addressBookIds?.[bookId]));
@@ -77,14 +78,14 @@ export function createHybridContactsOperations(username: string): ContactsAPIOpe
     },
     getCard: async (cardId, opts) => {
       const cached = await readContactsBootstrapFromCache(username);
-      if (cached && !navigator.onLine) {
+      if (cached && !readBrowserOnline()) {
         const found = cached.data.cards.find((c) => c.id === cardId);
         if (found) return found;
       }
       return getCard(cardId, opts);
     },
     createCard: async (body, opts) => {
-      if (navigator.onLine) {
+      if (readBrowserOnline()) {
         const card = await createCardWithState(body, opts);
         await upsertContactCardInCache(username, card, false);
         await runner.flush();
@@ -116,12 +117,12 @@ export function createHybridContactsOperations(username: string): ContactsAPIOpe
       const cached = await readContactsBootstrapFromCache(username);
       const existing =
         cached?.data.cards.find((c) => c.id === cardId) ??
-        (navigator.onLine ? await getCard(cardId, opts) : undefined);
+        (readBrowserOnline() ? await getCard(cardId, opts) : undefined);
       if (!existing) {
         throw new Error("Contact not found in cache while offline");
       }
       const token = concurrencyToken(existing, opts);
-      if (navigator.onLine) {
+      if (readBrowserOnline()) {
         const card = await patchCardWithState(cardId, patch, {
           ...opts,
           ifInState: token,
@@ -147,7 +148,7 @@ export function createHybridContactsOperations(username: string): ContactsAPIOpe
       const token = existing
         ? concurrencyToken(existing, opts)
         : (opts?.ifInState ?? opts?.ifMatch);
-      if (navigator.onLine) {
+      if (readBrowserOnline()) {
         await deleteCardWithState(cardId, { ...opts, ifInState: token });
         await removeContactCardFromCache(username, cardId);
         await runner.flush();
@@ -164,7 +165,7 @@ export function createHybridContactsOperations(username: string): ContactsAPIOpe
     },
     downloadCardVcf,
     importVcards: async (vcardText, opts) => {
-      if (!navigator.onLine) {
+      if (!readBrowserOnline()) {
         throw new Error("vCard import requires an internet connection");
       }
       return importVcards(vcardText, opts);
@@ -182,7 +183,7 @@ export async function fetchContactsHybridBootstrap(): Promise<
   }
   await writeContactsBootstrapToCache(username, bootstrap);
   const bookIds = bootstrap.data.addressBooks.map((b) => b.id).filter((id) => id.length > 0);
-  if (bookIds.length > 0 && navigator.onLine) {
+  if (bookIds.length > 0 && readBrowserOnline()) {
     await syncAllContactBooks(username, bookIds);
     const cached = await readContactsBootstrapFromCache(username);
     if (cached) {
@@ -198,7 +199,7 @@ export async function fetchContactsHybridBootstrap(): Promise<
 export async function loadContactsBootstrapHybrid(): Promise<
   Awaited<ReturnType<typeof fetchContactsLiveBootstrap>>
 > {
-  if (typeof navigator !== "undefined" && !navigator.onLine) {
+  if (!readBrowserOnline()) {
     const username = readOfflineContactsUsername();
     if (username) {
       const cached = await readContactsBootstrapFromCache(username);

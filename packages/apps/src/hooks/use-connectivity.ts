@@ -1,23 +1,16 @@
 import { useEffect, useState } from "react";
+import { readBrowserOnline, subscribeBrowserOnline } from "@/lib/offline/browser-online";
 
 export type ConnectivityState = {
   online: boolean;
 };
 
 export function useConnectivity(): ConnectivityState {
-  const [online, setOnline] = useState(() =>
-    typeof navigator !== "undefined" ? navigator.onLine : true,
-  );
+  const [online, setOnline] = useState(() => readBrowserOnline());
 
   useEffect(() => {
-    const onOnline = () => setOnline(true);
-    const onOffline = () => setOnline(false);
-    window.addEventListener("online", onOnline);
-    window.addEventListener("offline", onOffline);
-    return () => {
-      window.removeEventListener("online", onOnline);
-      window.removeEventListener("offline", onOffline);
-    };
+    setOnline(readBrowserOnline());
+    return subscribeBrowserOnline(setOnline);
   }, []);
 
   return { online };
@@ -25,7 +18,7 @@ export function useConnectivity(): ConnectivityState {
 
 export function useOnReconnect(callback: () => void): void {
   const { online } = useConnectivity();
-  const [wasOffline, setWasOffline] = useState(false);
+  const [wasOffline, setWasOffline] = useState(() => !readBrowserOnline());
 
   useEffect(() => {
     if (!online) {

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { readBrowserOnline } from "@/lib/offline/browser-online";
 
 type HybridPhase = "loading" | "ready" | "error";
 
@@ -39,7 +40,7 @@ export function useHybridBootstrap<T>({
       if (cancelled) return;
       if (cached) {
         applySuccess(cached);
-        if (typeof navigator !== "undefined" && navigator.onLine) {
+        if (readBrowserOnline()) {
           void load()
             .then((next) => {
               if (!cancelled) applySuccess(next);
