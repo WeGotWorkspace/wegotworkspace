@@ -1,6 +1,6 @@
 # Offline platform — adding offline support to a new app
 
-The generic offline platform lives under [`packages/apps/src/lib/offline/core/`](../src/lib/offline/core). It is **app-agnostic**: it owns the per-account Dexie database, a domain table/version registry, generic outbox + meta stores, connectivity detection, a serialized sync runner, the hybrid-bootstrap hook, the account-session helpers, a generic conflict channel, and the shell offline indicator.
+The generic offline platform lives under [`packages/apps/src/lib/offline/core/`](../src/lib/offline/core). It is **app-agnostic**: it owns the per-account Dexie database, a domain table/version registry, generic outbox + meta stores, connectivity detection, serialized sync runners, the hybrid-bootstrap hook, the account-session helpers, a generic conflict channel, outbox coalescing, and the shell offline indicator.
 
 A **domain plugin** (like contacts) registers its tables, implements a small store/flush/operations layer on top of the core, and wires the shared hooks. Contacts is the reference implementation — every step below links to its real file.
 
@@ -9,17 +9,19 @@ A **domain plugin** (like contacts) registers its tables, implements a small sto
 | Concern                                                                   | Module                                                                                                                             |
 | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | Dexie factory + version/migration registry                                | [`core/offline-db.ts`](../src/lib/offline/core/offline-db.ts)                                                                      |
+| Enforced per-domain Dexie version blocks                                  | [`core/offline-version-allocation.ts`](../src/lib/offline/core/offline-version-allocation.ts)                                      |
 | Generic outbox CRUD (`enqueue`/`list`/`remove`/`markError`/`isRetryable`) | [`core/outbox-store.ts`](../src/lib/offline/core/outbox-store.ts)                                                                  |
+| Coalesce pending update rows for the same entity                          | [`core/outbox-coalescing.ts`](../src/lib/offline/core/outbox-coalescing.ts)                                                        |
 | Key/value meta + sync tokens                                              | [`core/meta-store.ts`](../src/lib/offline/core/meta-store.ts)                                                                      |
 | Online/offline detection + snapshots                                      | [`core/browser-online.ts`](../src/lib/offline/core/browser-online.ts) (via [`use-connectivity`](../src/hooks/use-connectivity.ts)) |
-| Serialized flush runner                                                   | [`core/connectivity-sync-runner.ts`](../src/lib/offline/core/connectivity-sync-runner.ts)                                          |
+| Serialized flush runner + per-account registry                            | [`core/connectivity-sync-runner.ts`](../src/lib/offline/core/connectivity-sync-runner.ts)                                          |
 | Cache-then-network bootstrap                                              | [`core/use-hybrid-bootstrap.ts`](../src/lib/offline/core/use-hybrid-bootstrap.ts)                                                  |
 | Per-domain account session (`wgw.offline.<domain>.username`)              | [`core/offline-account.ts`](../src/lib/offline/core/offline-account.ts)                                                            |
 | Generic conflict channel `createSyncConflictChannel<TId>()`               | [`core/sync-conflicts.ts`](../src/lib/offline/core/sync-conflicts.ts)                                                              |
 | Shell "Offline" pill                                                      | [`core/offline-status-indicator.tsx`](../src/lib/offline/core/offline-status-indicator.tsx)                                        |
 | Shared type contracts                                                     | [`core/types.ts`](../src/lib/offline/core/types.ts)                                                                                |
 
-The core defines Dexie **version 1** = `{ meta, outbox }`. Each domain owns a **non-overlapping version block** enforced at registration time (see [`core/offline-version-allocation.ts`](../src/lib/offline/core/offline-version-allocation.ts)). Contacts uses **2–9**; reserved slots **10–19** and **20–29** are available for the next offline apps.
+The core defines Dexie **version 1** = `{ meta, outbox }`. Each domain owns a **non-overlapping version block** enforced at registration time (see [Version allocation](#version-allocation)). Contacts uses **2–9**; reserved slots **10–19** and **20–29** are available for the next offline apps.
 
 ## Version allocation
 
@@ -32,9 +34,33 @@ Before registering tables, claim a version block in `OFFLINE_DOMAIN_VERSION_RANG
 | app-slot-2    | 10–19          |
 | app-slot-3    | 20–29          |
 
-Rename the slot key to your domain name (e.g. `notes`) when you take it. Each version step you register must fall inside your block. Registration **throws** if a version is out of range or already claimed by another domain — two domains must never share a Dexie version number.
+Rename the slot key to your domain name (e.g. `notes`) when you take it. Each version step you register must fall inside your block. `registerOfflineDomainTables` calls `claimOfflineDomainVersions`, which **throws** if:
+
+- the domain has no entry in `OFFLINE_DOMAIN_VERSION_RANGES`;
+- a version is outside the allocated range;
+- two domains declare the same version number.
 
 Define named constants for your steps (contacts uses `CONTACTS_OFFLINE_VERSION`) so migrations stay readable and stay inside the block.
+
+## Domain contract adapters
+
+`OfflineDomainStore` and `OfflineDomainOperations` in [`core/types.ts`](../src/lib/offline/core/types.ts) are **TypeScript contracts**, not runtime validators. Wire your domain with thin adapters that `satisfies` the contract so drift is caught at compile time:
+
+```ts
+export const notesOfflineDomainStore = {
+  readBootstrap: readNotesBootstrapFromCache,
+  writeBootstrap: writeNotesBootstrapToCache,
+  upsertEntity: upsertNoteInCache,
+  removeEntity: removeNoteFromCache,
+  readSyncToken,
+  writeSyncToken,
+} satisfies OfflineDomainStore<NotesBootstrap, Note>;
+
+export const notesHybridDomainOperations: OfflineDomainOperations<NotesAPIOperations> =
+  createHybridNotesOperations;
+```
+
+Contacts reference: [`contacts/contacts-domain-contract.ts`](../src/lib/offline/contacts/contacts-domain-contract.ts). Domain-specific helpers (outbox coalescing wrappers, token scopes, etc.) stay on your `*-offline-store.ts` module.
 
 ## Steps to add offline to app #2
 
@@ -73,7 +99,7 @@ registerOfflineDomainTables({
 
 ### 2. Implement the domain store
 
-Wrap the core DB with your read/write helpers — bootstrap read/write, entity upsert/remove, sync tokens — and reuse the generic outbox helpers for queued mutations. Model after [`contacts-offline-store.ts`](../src/lib/offline/contacts-offline-store.ts). Wire the generic contract in a thin adapter (see [`contacts/contacts-domain-contract.ts`](../src/lib/offline/contacts/contacts-domain-contract.ts)) that `satisfies` `OfflineDomainStore<TBootstrap, TEntity>` from [`core/types.ts`](../src/lib/offline/core/types.ts).
+Wrap the core DB with your read/write helpers — bootstrap read/write, entity upsert/remove, sync tokens — and reuse the generic outbox helpers for queued mutations. Model after [`contacts-offline-store.ts`](../src/lib/offline/contacts-offline-store.ts). Export a contract adapter (step above) that `satisfies` `OfflineDomainStore<TBootstrap, TEntity>`.
 
 ### 3. Implement the outbox flush
 
@@ -81,7 +107,19 @@ Drain queued mutations against the live API, mark `stateMismatch` rows for the c
 
 ### 4. Implement hybrid operations + the sync runner
 
-Expose the operations the UI calls. When offline (or on a network error), queue to the outbox and update the cache optimistically; when online, hit the live API and `flush()` the per-account [`ConnectivitySyncRunner`](../src/lib/offline/core/connectivity-sync-runner.ts). Model after [`contacts-hybrid-operations.ts`](../src/lib/offline/contacts-hybrid-operations.ts) and wire the factory through `OfflineDomainOperations<TOperations>` in [`contacts/contacts-domain-contract.ts`](../src/lib/offline/contacts/contacts-domain-contract.ts).
+Expose the operations the UI calls. When offline (or on a network error), queue to the outbox and update the cache optimistically; when online, hit the live API and `flush()` the per-account runner.
+
+**Per-account sync runner.** Keep one module-level [`ConnectivitySyncRunnerRegistry`](../src/lib/offline/core/connectivity-sync-runner.ts) and call `getOrCreate(username, flushTask)` so concurrent reconnects or UI triggers never overlap flushes for the same account:
+
+```ts
+const syncRunnerRegistry = new ConnectivitySyncRunnerRegistry<OutboxFlushResult>();
+
+function runnerFor(username: string): ConnectivitySyncRunner<OutboxFlushResult> {
+  return syncRunnerRegistry.getOrCreate(username, async () => flushNotesOutbox(username));
+}
+```
+
+`ConnectivitySyncRunner` itself serializes a single flush; the registry holds one runner per username. Model after [`contacts-hybrid-operations.ts`](../src/lib/offline/contacts-hybrid-operations.ts) and wire the factory through `OfflineDomainOperations<TOperations>` in your domain contract adapter.
 
 ### 5. Wire the UI
 
@@ -94,6 +132,30 @@ Expose the operations the UI calls. When offline (or on a network error), queue 
 ### 6. Mount nothing extra for the shell indicator
 
 The shell already renders [`OfflineStatusIndicator`](../src/lib/offline/core/offline-status-indicator.tsx). It reads `useConnectivity()` and shows automatically when offline — no per-app wiring needed.
+
+## Outbox coalescing
+
+When the user edits the same entity several times while offline, queue **one** outbox row instead of many. The core helper [`enqueueCoalescedOutboxUpdate`](../src/lib/offline/core/outbox-coalescing.ts) finds an existing pending `update` row for the same domain + entity, merges patches via your `mergePatches` callback, and preserves the original `ifInState`. If no row exists, it enqueues a new mutation.
+
+Wrap it in a domain-specific function on your offline store. Contacts example — [`enqueueCoalescedContactUpdate`](../src/lib/offline/contacts-offline-store.ts) passes `coalesceContactPatches` as `mergePatches` and domain payload builders.
+
+## Patch merge (optimistic cache vs outbox)
+
+Domains with partial updates need **two** merge functions:
+
+1. **`apply*Patch`** — merge a patch into the cached entity for the optimistic UI. `null` in sparse maps means "delete this key" (resolved view).
+2. **`coalesce*Patches`** — merge two pending patches for the outbox. `null` entries are **kept** so the flush payload still tells the server to delete the id.
+
+Contacts implements this pattern in [`contacts/contacts-patch-merge.ts`](../src/lib/offline/contacts/contacts-patch-merge.ts): `applyContactPatch` for cache updates, `coalesceContactPatches` for `enqueueCoalescedOutboxUpdate`. Copy the shape-driven merge approach for your entity type; the exact rules depend on your API patch semantics.
+
+## Testing multi-domain isolation
+
+Core tests prove that contacts and a second domain share one Dexie database without table or outbox collisions. Copy the neutral fixture when adding similar tests for your app:
+
+- **Fixture template:** [`__tests__/fixtures/notes-offline-fixture.ts`](../src/lib/offline/__tests__/fixtures/notes-offline-fixture.ts) — registers `app-slot-2` tables at versions 10–11 (mirrors the contacts v2/v3 layout). Swap domain key, table names, row types, and version numbers per this guide.
+- **Multi-domain test:** [`core/__tests__/offline-db-multi-domain.test.ts`](../src/lib/offline/core/__tests__/offline-db-multi-domain.test.ts) — opens a DB with core + contacts + fixture tables, asserts isolated writes and composed upgrades.
+
+Import the fixture only from tests — not from app runtime.
 
 ## Account session
 
@@ -113,4 +175,9 @@ Contacts keeps a thin wrapper ([`offline-session.ts`](../src/lib/offline/offline
 
 ## Definition of "ready for app #2"
 
-A new app can register Dexie tables + a version, implement the domain store / flush / operations interfaces, and reuse connectivity, hybrid bootstrap, the sync runner, the conflict channel, and the shell offline indicator — with **no contacts coupling**.
+A new offline app is ready when it:
+
+1. Claims a block in `OFFLINE_DOMAIN_VERSION_RANGES` and registers tables via `registerOfflineDomainTables` (enforced at registration — out-of-range or duplicate versions throw).
+2. Implements store / flush / hybrid operations following the contacts reference files.
+3. Uses `satisfies OfflineDomainStore` / `OfflineDomainOperations` adapters for compile-time contract checks (not runtime-enforced).
+4. Reuses core connectivity, hybrid bootstrap, `ConnectivitySyncRunnerRegistry`, outbox coalescing, the conflict channel, and the shell offline indicator — with **no contacts coupling**.
