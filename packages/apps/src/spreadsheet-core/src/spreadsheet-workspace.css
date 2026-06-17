@@ -1,5 +1,6 @@
 @import "../../styles.css" reference;
 @import "../../workspace-shell/src/workspace-split-app.css";
+@import "../../text-editor-core/src/text-editor-source.css";
 @import "@glideapps/glide-data-grid/dist/index.css";
 
 .spreadsheet-workspace {
