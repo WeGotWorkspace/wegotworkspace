@@ -79,6 +79,15 @@ php packages/api/artisan wgw:dev-install
 
 See [`packages/api/docs/api-auth.md`](../packages/api/docs/api-auth.md) for env overrides (`WGW_API_JWT_*`).
 
+**Login (`POST /api/v1/auth/token`) prerequisites:**
+
+1. **API running** — `pnpm dev:api` in a separate terminal; `curl -s http://127.0.0.1:9080/api/v1/health` must return `200`.
+2. **Laravel env** — `cp packages/api/.env.example packages/api/.env` and `php artisan key:generate --working-dir packages/api`.
+3. **Install data** under `apps/wegotworkspace/` — `wgw-config.php`, `wgw-content/db.sqlite`, and `wgw-content/keys/api-jwt-{private,public}.pem` (created by the web installer, or copy from an existing install / run `tools/setup-storybook-live-api.sh` after install).
+4. **Preview env** — repo-root `.env.local` from `packages/apps/.env.example` with `VITE_WGW_USE_LIVE_API=1` and credentials matching your install user.
+
+If the API is down, the preview proxy returns **502** with `code: proxy_backend_down` (not a Laravel 500). When the API is up but JWT keys are missing, `/auth/token` returns **503** `config_error`.
+
 ## Environment files
 
 See [`env.md`](env.md) — root `.env` (tooling), `packages/api/.env` (Laravel), `.env.local` (Vite / Storybook proxy).

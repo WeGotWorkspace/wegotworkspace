@@ -18,11 +18,27 @@ export function resolveWgwProxyTarget(mode = process.env.NODE_ENV ?? "developmen
 
 /** Shared Vite dev/preview proxy for same-origin `/api/v1` → local API. */
 export function wgwApiViteProxy(mode = process.env.NODE_ENV ?? "development") {
+  const target = resolveWgwProxyTarget(mode);
   return {
     "/api/v1": {
-      target: resolveWgwProxyTarget(mode),
+      target,
       changeOrigin: true,
       secure: false,
+      configure: (proxy) => {
+        proxy.on("error", (err, _req, res) => {
+          const socket = res as import("node:http").ServerResponse | undefined;
+          if (!socket || socket.headersSent) return;
+          socket.writeHead(502, { "Content-Type": "application/json" });
+          socket.end(
+            JSON.stringify({
+              error: `API proxy: backend unreachable at ${target}`,
+              code: "proxy_backend_down",
+              hint: "Start the API with `pnpm dev:api` and verify http://127.0.0.1:9080/api/v1/health",
+              detail: err.message,
+            }),
+          );
+        });
+      },
     },
   } as const;
 }

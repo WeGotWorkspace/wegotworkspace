@@ -68,6 +68,9 @@ docker compose -f compose.dev.yml exec web php /var/www/packages/api/artisan wgw
 |---------|--------------|-----|
 | Storybook **`Live …`** stories fail | API not running | `pnpm dev:api` or `pnpm docker:up`; optional `pnpm setup:storybook-live-api`; restart Storybook |
 | Full app `/api/v1` errors | API down or wrong proxy | Health at http://127.0.0.1:9080/api/v1/health; check `WGW_PROXY_TARGET` in `.env.local` |
+| Preview **500/502** on `/api/v1/*` | API not on `:9080` or proxy backend down | `pnpm dev:api`; `curl http://127.0.0.1:9080/api/v1/health`; match `WGW_PROXY_TARGET` in `.env.local` |
+| `/auth/token` **503** `config_error` | Missing JWT keys | Run installer or create `wgw-content/keys/api-jwt-*.pem` — see `packages/api/docs/api-auth.md` |
+| `/auth/token` **401** | Wrong password | Match install user; optional `pnpm setup:storybook-live-api --set-password` |
 | Mock-tier stories fail | Unrelated to API — check story mocks | Use `@/lib/api/mock/*-bootstrap`; see [storybook/offline-first.md](../storybook/offline-first.md) |
 | `9080` connection refused | API not started | `pnpm dev:api` or `docker compose -f compose.dev.yml up -d --build` |
 | `9080` still in use after stopping dev | Orphan `php -S` from a crashed session | `lsof -nP -iTCP:9080 -sTCP:LISTEN` then stop the PID; normal Ctrl+C on `pnpm dev` / `pnpm preview` should release the port |
