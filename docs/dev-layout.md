@@ -46,6 +46,21 @@ pnpm dev:storybook # Storybook only
 pnpm dev:ui       # alias for `pnpm dev`
 ```
 
+Host API uses PHP’s built-in server on **http://127.0.0.1:9080** (`packages/api` → `dev:php` via install shell `apps/wegotworkspace/index.php`).
+
+**First-time host API setup** (once per clone):
+
+```bash
+cp packages/api/.env.example packages/api/.env
+php artisan key:generate --working-dir packages/api
+bash packages/api/scripts/generate-jwt-keys.sh
+# Ensure packages/api/.env has WGW_API_JWT_*_PATH (see .env.example)
+pnpm dev:api
+curl -s http://127.0.0.1:9080/api/v1/health
+```
+
+JWT keys live in `packages/api/storage/app/jwt/` (gitignored) when using `generate-jwt-keys.sh`. `pnpm dev` / `pnpm preview` bootstrap also creates install-tree keys under `wgw-content/keys/`. See [`env.md`](env.md) and [`packages/api/docs/api-auth.md`](../packages/api/docs/api-auth.md).
+
 ## Preview (built UI, no HMR)
 
 ```bash

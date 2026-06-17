@@ -20,7 +20,10 @@ Three layers — keep secrets in one place per runtime.
 ```bash
 cp packages/api/.env.example packages/api/.env
 php artisan key:generate --working-dir packages/api   # or set APP_KEY manually
+bash packages/api/scripts/generate-jwt-keys.sh          # RS256 keys for auth/token
 ```
+
+`pnpm dev:api` loads **repo-root** `.env` only for pnpm/turbo tooling (`tools/with-root-env.sh`). **Laravel reads `packages/api/.env` only** — put JWT paths and `APP_KEY` there, not in the repo root.
 
 Tune `APP_URL`, `APP_ENV`, and `APP_DEBUG` for production.  
 `DB_*` in this file is for **Laravel framework** storage (sessions/cache when using database drivers).  

@@ -36,11 +36,13 @@ For HTTPS / Sabre endpoints: `pnpm docker:up:https` and set `WGW_PROXY_TARGET=ht
 
 ```bash
 pnpm dev          # API :9080 + Vite app + Storybook + typegen watch
-pnpm dev:api      # API only
+pnpm dev:api      # API only — Laravel env: packages/api/.env (not repo root)
 pnpm dev:storybook # Storybook only
+pnpm dev:ui       # alias for `pnpm dev`
 pnpm preview      # built UI + API (no HMR)
 ```
 
+First-time host API JWT (without full install tree): copy `packages/api/.env.example` → `packages/api/.env`, then `bash packages/api/scripts/generate-jwt-keys.sh`. For install-tree keys, `php packages/api/artisan wgw:jwt-keys` (also run by `pnpm dev` / `pnpm preview` bootstrap).
 
 ## Offline / PWA (contacts pilot)
 
@@ -69,7 +71,7 @@ docker compose -f compose.dev.yml exec web php /var/www/packages/api/artisan wgw
 | Storybook **`Live …`** stories fail | API not running | `pnpm dev:api` or `pnpm docker:up`; optional `pnpm setup:storybook-live-api`; restart Storybook |
 | Full app `/api/v1` errors | API down or wrong proxy | Health at http://127.0.0.1:9080/api/v1/health; check `WGW_PROXY_TARGET` in `.env.local` |
 | Preview **500/502** on `/api/v1/*` | API not on `:9080` or proxy backend down | `pnpm dev:api`; `curl http://127.0.0.1:9080/api/v1/health`; match `WGW_PROXY_TARGET` in `.env.local` |
-| `/auth/token` **503** `config_error` | Missing JWT keys | Run installer or create `wgw-content/keys/api-jwt-*.pem` — see `packages/api/docs/api-auth.md` |
+| `/auth/token` **503** `config_error` | Missing JWT keys | `php packages/api/artisan wgw:jwt-keys` or `bash packages/api/scripts/generate-jwt-keys.sh`; set `WGW_API_JWT_*_PATH` in `packages/api/.env` — see `packages/api/docs/api-auth.md` |
 | `/auth/token` **401** | Wrong password | Match install user; optional `pnpm setup:storybook-live-api --set-password` |
 | Mock-tier stories fail | Unrelated to API — check story mocks | Use `@/lib/api/mock/*-bootstrap`; see [storybook/offline-first.md](../storybook/offline-first.md) |
 | `9080` connection refused | API not started | `pnpm dev:api` or `docker compose -f compose.dev.yml up -d --build` |
