@@ -22,6 +22,10 @@ import {
   type Defs,
 } from "@/spreadsheet-core/src/ycsv/ycsv";
 import type { ComputedCell } from "@/spreadsheet-core/src/ycsv/ycsv-formula-engine";
+import {
+  computeAutoColumnWidths,
+  MIN_COL_WIDTH,
+} from "@/spreadsheet-core/src/spreadsheet-column-widths";
 import { FormulaTokens, tokenizeFormula } from "@/spreadsheet-core/src/formula-highlight";
 import { computeSuggestions, SuggestionList } from "@/spreadsheet-core/src/formula-suggest";
 import {
@@ -76,6 +80,8 @@ export type SpreadsheetGridProps = {
   onActivateCell: (p: { row: number; column: number }) => void;
   onSelect: (sel: SpreadsheetGridSelection) => void;
   writeCell: (row: number, column: number, value: string) => void;
+  /** Append an empty data row (Glide trailing row + footer control). */
+  onAddRow: () => void;
   /** When true, clicking cells inserts refs into the formula bar instead of editing. */
   picking: boolean;
 };
@@ -148,6 +154,7 @@ export function SpreadsheetGrid({
   onActivateCell,
   onSelect,
   writeCell,
+  onAddRow,
   picking,
 }: SpreadsheetGridProps) {
   useGlidePortalRoot();
@@ -175,35 +182,35 @@ export function SpreadsheetGrid({
     [colCount, columnSettings, inferType],
   );
 
+  const autoWidths = useMemo(
+    () => computeAutoColumnWidths(colCount, columnSettings, rawData, computed, viewOffset),
+    [colCount, columnSettings, rawData, computed, viewOffset],
+  );
+
+  const [widthOverrides, setWidthOverrides] = useState<Record<number, number>>({});
+  const sizingKey = `${colCount}:${rawData.length}:${columnSettings.map((c) => c.ref).join(",")}`;
+
+  useEffect(() => {
+    setWidthOverrides({});
+  }, [sizingKey]);
+
   const columns = useMemo<GridColumn[]>(() => {
-    const canvas = document.createElement("canvas");
-    const cctx = canvas.getContext("2d");
-    const measure = (s: string, bold = false) => {
-      if (!s) return 0;
-      if (!cctx) return s.length * 7.5;
-      cctx.font = `${bold ? "600 " : ""}13px ui-sans-serif, system-ui, -apple-system, sans-serif`;
-      return cctx.measureText(s).width;
-    };
     return Array.from({ length: colCount }, (_, i) => {
       const cs = columnSettings[i];
       const label = cs?.name || cs?.ref || colLetter(i);
       const badge = cs?.ref && cs.ref !== label ? cs.ref : "";
-      let maxW = Math.max(measure(label, true), badge ? measure(badge) + 12 : 0);
-      for (let r = viewOffset; r < rawData.length; r++) {
-        const raw = rawData[r]?.[i]?.value ?? "";
-        const disp = raw.startsWith("=") ? (computed[r]?.[i]?.display ?? "") : raw;
-        const w = measure(disp);
-        if (w > maxW) maxW = w;
-      }
-      const width = Math.max(64, Math.min(600, Math.ceil(maxW) + 28));
       return {
         title: label,
         id: String(i),
-        width,
+        width: widthOverrides[i] ?? autoWidths[i] ?? MIN_COL_WIDTH,
         icon: badge ? GridColumnIcon.HeaderString : undefined,
       };
     });
-  }, [colCount, columnSettings, rawData, computed, viewOffset]);
+  }, [autoWidths, colCount, columnSettings, widthOverrides]);
+
+  const onColumnResize = useCallback((_column: GridColumn, newSize: number, colIndex: number) => {
+    setWidthOverrides((prev) => ({ ...prev, [colIndex]: newSize }));
+  }, []);
 
   const getCellContent = useCallback(
     ([col, row]: Item): GridCell => {
@@ -394,6 +401,10 @@ export function SpreadsheetGrid({
     [columnSettings],
   );
 
+  const onRowAppended = useCallback(() => {
+    onAddRow();
+  }, [onAddRow]);
+
   return (
     <SpreadsheetGridProvider value={{ defs, columnSettings }}>
       <div className={cn("spreadsheet-grid", picking && "spreadsheet-grid--picking")}>
@@ -403,6 +414,7 @@ export function SpreadsheetGrid({
           onCellEdited={onCellEdited}
           columns={columns}
           rows={rowCount}
+          onColumnResize={onColumnResize}
           rowMarkers={{ kind: "number", startIndex: 1 + viewOffset }}
           smoothScrollX
           smoothScrollY
@@ -415,6 +427,8 @@ export function SpreadsheetGrid({
           drawHeader={drawHeader}
           getCellsForSelection
           keybindings={{ search: false }}
+          trailingRowOptions={{ hint: "Add row", sticky: true, tint: true }}
+          onRowAppended={onRowAppended}
           theme={{
             baseFontStyle: "13px",
             headerFontStyle: "600 13px",

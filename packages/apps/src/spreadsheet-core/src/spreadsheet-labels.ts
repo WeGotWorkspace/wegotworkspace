@@ -11,6 +11,8 @@ export const spreadsheetLabels = {
   statsColumns: (count: number) =>
     `${count.toLocaleString()} ${count === 1 ? "column" : "columns"}`,
   statsRows: (count: number) => `${count.toLocaleString()} ${count === 1 ? "row" : "rows"}`,
+  addRow: "Add row",
+  addColumn: "Add column",
   rename: "Rename",
   renameDialogTitle: "Rename spreadsheet",
   renameDialogDescription: "Change the name; the file extension cannot be edited.",

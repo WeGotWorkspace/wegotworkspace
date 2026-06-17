@@ -71,9 +71,16 @@ export function SpreadsheetFormulaBar({ controller }: { controller: SpreadsheetC
   };
 
   const showSuggestions = fbEditing && suggestions.length > 0;
+  const isFormula = value.startsWith("=");
 
   return (
-    <div className={cn("spreadsheet-formula-bar", picking && "spreadsheet-formula-bar--picking")}>
+    <div
+      className={cn(
+        "spreadsheet-formula-bar",
+        picking && "spreadsheet-formula-bar--picking",
+        isFormula && "spreadsheet-formula-bar--formula",
+      )}
+    >
       <span className="spreadsheet-formula-bar__cell">{cellLabel || "—"}</span>
       <div className="spreadsheet-formula-bar__field">
         <FormulaTokens
@@ -84,7 +91,10 @@ export function SpreadsheetFormulaBar({ controller }: { controller: SpreadsheetC
         />
         <input
           ref={inputRef}
-          className="spreadsheet-formula-bar__input"
+          className={cn(
+            "spreadsheet-formula-bar__input",
+            isFormula && "spreadsheet-formula-bar__input--formula",
+          )}
           value={value}
           placeholder={labels.formulaBarPlaceholder}
           disabled={!activeCell}

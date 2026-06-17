@@ -429,14 +429,19 @@ export function sheetToMatrix(sheet: Pick<ParsedSheet, "headers" | "rows">): { v
   return [head, ...body];
 }
 
-export function matrixToSheet(matrix: { value?: string }[][]): {
+export function matrixToSheet(
+  matrix: { value?: string }[][],
+  options?: { trimTrailingBlankRows?: boolean },
+): {
   headers: string[];
   rows: string[][];
 } {
   if (!matrix.length) return { headers: [], rows: [] };
   const headers = (matrix[0] ?? []).map((c) => c?.value ?? "");
   const rows = matrix.slice(1).map((r) => headers.map((_, i) => r[i]?.value ?? ""));
-  while (rows.length && rows[rows.length - 1].every((c) => c === "")) rows.pop();
+  if (options?.trimTrailingBlankRows !== false) {
+    while (rows.length && rows[rows.length - 1].every((c) => c === "")) rows.pop();
+  }
   return { headers, rows };
 }
 

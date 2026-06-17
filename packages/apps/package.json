@@ -33,6 +33,7 @@
     "check:storybook-coverage": "node scripts/check-storybook-coverage.mjs"
   },
   "dependencies": {
+    "@chenglou/pretext": "^0.0.8",
     "@formulajs/formulajs": "^4.6.0",
     "@glideapps/glide-data-grid": "^6.0.3",
     "@hookform/resolvers": "^5.2.2",

@@ -20,6 +20,7 @@ import {
   YCSV_VERSION,
   type ColumnSetting,
   type Defs,
+  type ParsedSheet,
   type ParsedWorkbook,
 } from "@/spreadsheet-core/src/ycsv/ycsv";
 import { OPEN_TOKEN_RE } from "@/spreadsheet-core/src/formula-suggest";
@@ -59,9 +60,20 @@ function workbookWithSheetMatrix(
   sheetIndex: number,
   matrix: { value?: string }[][],
 ): ParsedWorkbook {
-  const { rows } = matrixToSheet(matrix);
+  const { rows } = matrixToSheet(matrix, { trimTrailingBlankRows: false });
   const sheets = workbook.sheets.map((sheet, i) => (i === sheetIndex ? { ...sheet, rows } : sheet));
   return { ...workbook, sheets };
+}
+
+function workbookWithActiveSheet(
+  workbook: ParsedWorkbook,
+  sheetIndex: number,
+  nextSheet: ParsedSheet,
+): ParsedWorkbook {
+  return {
+    ...workbook,
+    sheets: workbook.sheets.map((sheet, i) => (i === sheetIndex ? nextSheet : sheet)),
+  };
 }
 
 export function useSpreadsheetController({
@@ -97,15 +109,18 @@ export function useSpreadsheetController({
   const [renameName, setRenameName] = useState("");
   const [renameExtension, setRenameExtension] = useState("");
   const [renamePending, setRenamePending] = useState(false);
+  /** Preserves structural edits (e.g. trailing empty rows) that YCSV re-parse would drop. */
+  const [workbookOverride, setWorkbookOverride] = useState<ParsedWorkbook | null>(null);
 
-  // The parsed workbook is the source of truth for grid rendering.
-  const workbook = useMemo<ParsedWorkbook>(() => {
+  const workbookFromSource = useMemo<ParsedWorkbook>(() => {
     try {
       return parseYcsv(source);
     } catch {
       return parseYcsv(EMPTY_YCSV);
     }
   }, [source]);
+
+  const workbook = workbookOverride ?? workbookFromSource;
 
   const computed = useMemo(() => {
     try {
@@ -186,6 +201,7 @@ export function useSpreadsheetController({
     setActiveCell(null);
     setSelection(null);
     setParseError(null);
+    setWorkbookOverride(null);
 
     if (!filePath) {
       setDocument(initialDocument);
@@ -252,6 +268,14 @@ export function useSpreadsheetController({
     [scheduleSave],
   );
 
+  const applyWorkbookChange = useCallback(
+    (nextWorkbook: ParsedWorkbook) => {
+      setWorkbookOverride(nextWorkbook);
+      applySource(serializeYcsv(nextWorkbook));
+    },
+    [applySource],
+  );
+
   const writeCell = useCallback(
     (row: number, column: number, value: string) => {
       if (!activeSheet) return;
@@ -263,13 +287,37 @@ export function useSpreadsheetController({
       while (targetRow.length <= column) targetRow.push({ value: "" });
       targetRow[column] = { value };
       const nextWorkbook = workbookWithSheetMatrix(workbook, safeSheetIndex, matrix);
-      applySource(serializeYcsv(nextWorkbook));
+      applyWorkbookChange(nextWorkbook);
     },
-    [activeSheet, applySource, safeSheetIndex, workbook],
+    [activeSheet, applyWorkbookChange, safeSheetIndex, workbook],
   );
+
+  const addRow = useCallback(() => {
+    if (!activeSheet) return;
+    const colLen = Math.max(1, activeSheet.columnSettings.length);
+    const emptyRow = Array.from({ length: colLen }, () => "");
+    const nextSheet: ParsedSheet = { ...activeSheet, rows: [...activeSheet.rows, emptyRow] };
+    applyWorkbookChange(workbookWithActiveSheet(workbook, safeSheetIndex, nextSheet));
+  }, [activeSheet, applyWorkbookChange, safeSheetIndex, workbook]);
+
+  const addColumn = useCallback(() => {
+    if (!activeSheet) return;
+    const nextCol = activeSheet.columnSettings.length;
+    const ref = colLetter(nextCol);
+    const nextColumnSettings: ColumnSetting[] = [...activeSheet.columnSettings, { ref, name: ref }];
+    const nextSheet: ParsedSheet = {
+      ...activeSheet,
+      rows: activeSheet.rows.map((row) => [...row, ""]),
+      columnSettings: nextColumnSettings,
+      refs: nextColumnSettings.map((c) => c.ref!),
+      headers: nextColumnSettings.map((c) => c.name ?? c.ref!),
+    };
+    applyWorkbookChange(workbookWithActiveSheet(workbook, safeSheetIndex, nextSheet));
+  }, [activeSheet, applyWorkbookChange, safeSheetIndex, workbook]);
 
   const onSourceChange = useCallback(
     (next: string) => {
+      setWorkbookOverride(null);
       try {
         const parsed = parseYcsv(next);
         setParseError(parsed.warnings.find((w) => w.includes("not valid YAML")) ?? null);
@@ -423,6 +471,8 @@ export function useSpreadsheetController({
     selection,
     setSelection,
     writeCell,
+    addRow,
+    addColumn,
     commitFormulaBar,
     refForCell,
     fbEditing,

@@ -136,6 +136,37 @@ export const SheetStats: Story = {
     await waitFor(() => {
       expect(canvas.getByText("5 columns")).toBeInTheDocument();
       expect(canvas.getByText("5 rows")).toBeInTheDocument();
+      expect(canvas.getByRole("button", { name: "Add row" })).toBeInTheDocument();
+      expect(canvas.getByRole("button", { name: "Add column" })).toBeInTheDocument();
+    });
+  },
+};
+
+export const AddRowColumn: Story = {
+  name: "Add row and column",
+  tags: ["vitest-ci"],
+  args: {
+    ...bootstrap,
+    filePath: mockDocument.apiPath,
+    operations: createMockSpreadsheetOperations(),
+    onFileRenamed: () => {},
+    onLogout: () => {},
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+
+    await step("Add row updates the footer row count", async () => {
+      await userEvent.click(await canvas.findByRole("button", { name: "Add row" }));
+      await waitFor(() => {
+        expect(canvas.getByText("6 rows")).toBeInTheDocument();
+      });
+    });
+
+    await step("Add column updates the footer column count", async () => {
+      await userEvent.click(await canvas.findByRole("button", { name: "Add column" }));
+      await waitFor(() => {
+        expect(canvas.getByText("6 columns")).toBeInTheDocument();
+      });
     });
   },
 };

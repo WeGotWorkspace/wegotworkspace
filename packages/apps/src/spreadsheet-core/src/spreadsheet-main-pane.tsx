@@ -74,6 +74,7 @@ export function SpreadsheetMainPane({ controller, viewSource }: SpreadsheetMainP
             onActivateCell={handleActivateCell}
             onSelect={handleSelect}
             writeCell={controller.writeCell}
+            onAddRow={controller.addRow}
             picking={controller.picking}
           />
         </div>

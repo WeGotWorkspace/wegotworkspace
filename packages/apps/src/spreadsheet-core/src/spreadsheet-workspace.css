@@ -57,6 +57,37 @@
   --button-subtle-hover-background: color-mix(in oklab, #ffffff 20%, transparent);
 }
 
+.spreadsheet-workspace .app-sidebar {
+  --field-label-color: #ffffff;
+  --app-switch-label-color: #ffffff;
+  --app-switch-label-tagline-color: #ffffff;
+  --app-switch-chevron-color: #ffffff;
+}
+
+.spreadsheet-workspace .sidebar-section .menu-item--surface-idle {
+  color: #ffffff;
+  background-color: var(--spreadsheet-sidebar);
+}
+
+.spreadsheet-workspace .sidebar-section .menu-item--surface-selected {
+  background-color: color-mix(in oklab, #ffffff 14%, var(--spreadsheet-sidebar));
+  color: #ffffff;
+}
+
+.spreadsheet-workspace .sidebar-section .menu-item--interactive:hover {
+  background-color: color-mix(in oklab, #ffffff 12%, var(--spreadsheet-sidebar));
+}
+
+.spreadsheet-workspace .sidebar-section .menu-item:not(.menu-item--selected) .menu-item__icon-slot,
+.spreadsheet-workspace .sidebar-section .menu-item.menu-item--selected .menu-item__icon-slot {
+  color: #ffffff;
+  opacity: 1;
+}
+
+.spreadsheet-workspace .sidebar-section__title {
+  color: #ffffff;
+}
+
 .spreadsheet-workspace .app-sidebar__footer {
   --workspace-user-footer-text-color: #ffffff;
   --workspace-user-footer-subtitle-color: color-mix(in oklab, #ffffff 72%, transparent);
@@ -123,7 +154,7 @@
 
 /* Stats footer — mirrors `.docs-workspace__stats-footer`, scoped to sheets. */
 .spreadsheet-workspace__stats-footer {
-  @apply flex shrink-0 flex-wrap items-center justify-start gap-1.5;
+  @apply flex shrink-0 flex-wrap items-center justify-between gap-1.5;
   box-sizing: border-box;
   padding-block: 0.5rem;
   padding-inline: 1rem;
@@ -131,6 +162,14 @@
   background-color: color-mix(in oklab, #ffffff 88%, transparent);
   backdrop-filter: blur(8px);
   border-top: 1px solid var(--spreadsheet-border);
+}
+
+.spreadsheet-workspace__sheet-actions {
+  @apply flex flex-wrap items-center gap-1.5;
+}
+
+.spreadsheet-workspace__stats-tags {
+  @apply ml-auto flex flex-wrap items-center gap-1.5;
 }
 
 .spreadsheet-workspace__stats-footer .tag {
@@ -191,6 +230,7 @@
 
 .spreadsheet-formula-bar__field {
   @apply relative min-w-0 flex-1;
+  color: var(--spreadsheet-text);
 }
 
 .spreadsheet-formula-bar__input,
@@ -200,11 +240,20 @@
   font-size: 13px;
 }
 
+.spreadsheet-formula-bar__tokens {
+  color: var(--spreadsheet-text);
+}
+
 .spreadsheet-formula-bar__input {
   @apply relative rounded border bg-transparent;
   border-color: var(--spreadsheet-border);
-  color: transparent;
+  color: var(--spreadsheet-text);
   caret-color: var(--spreadsheet-text);
+}
+
+.spreadsheet-formula-bar--formula .spreadsheet-formula-bar__input,
+.spreadsheet-formula-bar__input--formula {
+  color: transparent;
 }
 
 .spreadsheet-formula-bar__input::placeholder {
