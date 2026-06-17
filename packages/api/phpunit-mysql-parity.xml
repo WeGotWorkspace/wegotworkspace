@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    MySQL parity subset config (tiered MySQL CI strategy).
+
+    Runs only the DB-dialect-relevant tests against MySQL in PR/push CI via
+    `composer test:mysql:parity` (which sets WGW_TEST_DRIVER=mysql). This keeps
+    the default phpunit.xml runs (composer test, done-gate) free of the
+    "file already added to another suite" warnings that a sibling overlapping
+    testsuite would otherwise emit.
+
+    Selection captures every Tests\Support\WgwDatabaseTestCase descendant
+    (migration- and query-dependent), the schema parity assertion, and the
+    installer MySQL install wizard test. Pure HTTP/static/system tests that
+    never touch the wgw connection are excluded.
+
+    The FULL MySQL suite (all tests) still runs on main + nightly — see
+    .github/workflows/ci-mysql-full.yml (composer test:mysql).
+
+    The <php> block below MUST mirror phpunit.xml.
+-->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+>
+    <testsuites>
+        <testsuite name="MySQLParity">
+            <directory>tests/Feature</directory>
+            <exclude>tests/Feature/Front</exclude>
+            <exclude>tests/Feature/System</exclude>
+            <exclude>tests/Feature/Ui</exclude>
+            <directory>tests/Database</directory>
+            <file>tests/Unit/Rtc/RtcSettingsServiceTest.php</file>
+            <file>tests/Unit/Settings/GroupMembershipResolverTest.php</file>
+            <file>tests/Unit/Mail/MailCredentialServiceImapUsernameTest.php</file>
+            <file>tests/Architecture/WgwSchemaParityTest.php</file>
+            <file>tests/Architecture/RoleAccessMatrixTest.php</file>
+        </testsuite>
+    </testsuites>
+    <php>
+        <!-- Fixed key for PHPUnit/CI only (packages/api/.env is gitignored). -->
+        <env name="APP_KEY" value="base64:v0owzbW5YBuFZHa31dE5LlOg4wruLmtLj/VBX2yAbKk="/>
+        <env name="APP_ENV" value="testing"/>
+        <env name="APP_MAINTENANCE_DRIVER" value="file"/>
+        <env name="BCRYPT_ROUNDS" value="4"/>
+        <env name="CACHE_STORE" value="array"/>
+        <env name="DB_CONNECTION" value="wgw"/>
+        <env name="WGW_DB_DATABASE" value=":memory:"/>
+        <env name="MAIL_MAILER" value="array"/>
+        <env name="PULSE_ENABLED" value="false"/>
+        <env name="QUEUE_CONNECTION" value="sync"/>
+        <env name="SESSION_DRIVER" value="array"/>
+        <env name="TELESCOPE_ENABLED" value="false"/>
+        <!-- Dev-only JWT paths in .env.example must not override installer test keys. -->
+        <env name="WGW_API_JWT_PRIVATE_KEY_PATH" value=""/>
+        <env name="WGW_API_JWT_PUBLIC_KEY_PATH" value=""/>
+    </php>
+</phpunit>

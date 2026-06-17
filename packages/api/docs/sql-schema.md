@@ -67,13 +67,18 @@ Installer connectivity, user probes, and install readiness use `WgwDatabaseProbe
 2. Add `app/Models/{Name}.php` with `UsesWgwConnection` and documented `$fillable`.
 3. Use the model from `app/Services/{Domain}/` — no `DB::table()`.
 4. Extend `tests/Architecture/WgwSchemaParityTest.php` expected table list.
-5. Add a feature or database test on `WgwDatabaseTestCase` (SQLite); MySQL parity is covered by CI `api-mysql`.
+5. Add a feature or database test on `WgwDatabaseTestCase` (SQLite). MySQL parity is covered automatically — every `WgwDatabaseTestCase` descendant is part of the `MySQLParity` testsuite that CI runs against MySQL (see Tests → CI tiers below).
 
 ## Tests
 
 - **Harness:** `WgwDatabaseTestCase` + `WgwTestDatabase` run `migrate:fresh` on `database/migrations/wgw/` (replaces hand-rolled `SqliteWgwSchema`).
 - **Drivers:** default SQLite (`:memory:`); set `WGW_TEST_DRIVER=mysql` with `WGW_TEST_MYSQL_*` env vars for MySQL.
-- **CI:** `api-mysql` job runs `composer test:mysql`; full stack uses `composer done-gate:full`.
+- **CI tiers (tiered MySQL strategy):**
+  - **PR / push — SQLite (full):** `api-quality` runs `composer done-gate` over the entire suite on SQLite.
+  - **PR / push — MySQL (parity subset):** `api-mysql` runs `composer test:mysql:parity` — the `MySQLParity` testsuite (every `WgwDatabaseTestCase` descendant + `WgwSchemaParityTest` + the installer MySQL install test, ~525 tests). This catches DB-dialect regressions without running all ~789 tests twice on every PR.
+  - **main / nightly — MySQL (full):** `.github/workflows/ci-mysql-full.yml` runs `composer test:mysql` (the entire suite on MySQL) on pushes to `main` and on a nightly cron. This is the full MySQL safety net.
+  - Local full stack: `composer done-gate:full` (SQLite suite + full MySQL driver run).
+- **`MySQLParity` testsuite:** defined in its own config `phpunit-mysql-parity.xml` (kept separate from `phpunit.xml` so the default `composer test`/done-gate runs don't emit "file already added to another suite" warnings for the overlapping selection). It includes `tests/Feature` (minus the non-DB `Front`, `System`, `Ui` groups), `tests/Database`, the three DB-backed `tests/Unit` cases, and `tests/Architecture/{WgwSchemaParityTest,RoleAccessMatrixTest}`. New DB-backed feature tests are picked up automatically; DB-backed tests added elsewhere should be added to the testsuite. The `<php>` env block must mirror `phpunit.xml`.
 - **Parity:** `tests/Architecture/WgwSchemaParityTest.php` asserts expected tables per driver.
 - **Architecture:** `tests/Architecture/GreenfieldArchitectureTest.php` + `scripts/greenfield-guard.php`.
 - **Cutover:** `tests/Unit/Installer/WgwSchemaMigratorTest.php` covers fresh migrate, idempotency, and legacy `app_migrations` v0–5.

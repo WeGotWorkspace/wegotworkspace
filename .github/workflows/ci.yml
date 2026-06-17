@@ -224,6 +224,14 @@ jobs:
           extensions: ctype, dom, iconv, imap, json, mbstring, pdo, pdo_mysql, pdo_sqlite, simplexml, zip
           coverage: none
 
+      - name: Cache Composer vendor
+        uses: actions/cache@v4
+        with:
+          path: packages/api/vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('packages/api/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
       - name: Install backend Composer dependencies
         run: composer --working-dir packages/api install --no-interaction --prefer-dist
 
@@ -232,7 +240,9 @@ jobs:
           cp packages/api/.env.example packages/api/.env
           php packages/api/artisan key:generate --force --no-interaction
 
-      - name: API tests (MySQL wgw connection)
+      # PR/push runs only the MySQL parity subset (DB-dialect-relevant tests).
+      # The full MySQL suite runs on main + nightly via ci-mysql-full.yml.
+      - name: API tests (MySQL parity subset)
         env:
           WGW_TEST_DRIVER: mysql
           WGW_TEST_MYSQL_HOST: 127.0.0.1
@@ -240,4 +250,4 @@ jobs:
           WGW_TEST_MYSQL_DATABASE: wgw_test
           WGW_TEST_MYSQL_USERNAME: root
           WGW_TEST_MYSQL_PASSWORD: root
-        run: composer --working-dir packages/api run test:mysql
+        run: composer --working-dir packages/api run test:mysql:parity
