@@ -5,7 +5,7 @@
     "license": "AGPL-3.0-or-later",
     "require": {
         "php": "^8.3",
-        "laravel/framework": "^11.44",
+        "laravel/framework": "^12.61",
         "lcobucci/jwt": "^5.5",
         "phpmailer/phpmailer": "^6.9",
         "sabre/dav": "^4.7",
