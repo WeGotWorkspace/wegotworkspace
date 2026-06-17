@@ -73,7 +73,7 @@ registerOfflineDomainTables({
 
 ### 2. Implement the domain store
 
-Wrap the core DB with your read/write helpers — bootstrap read/write, entity upsert/remove, sync tokens — and reuse the generic outbox helpers for queued mutations. Model after [`contacts-offline-store.ts`](../src/lib/offline/contacts-offline-store.ts). The shape is captured by `OfflineDomainStore<TBootstrap, TEntity>` in [`core/types.ts`](../src/lib/offline/core/types.ts).
+Wrap the core DB with your read/write helpers — bootstrap read/write, entity upsert/remove, sync tokens — and reuse the generic outbox helpers for queued mutations. Model after [`contacts-offline-store.ts`](../src/lib/offline/contacts-offline-store.ts). Wire the generic contract in a thin adapter (see [`contacts/contacts-domain-contract.ts`](../src/lib/offline/contacts/contacts-domain-contract.ts)) that `satisfies` `OfflineDomainStore<TBootstrap, TEntity>` from [`core/types.ts`](../src/lib/offline/core/types.ts).
 
 ### 3. Implement the outbox flush
 
@@ -81,7 +81,7 @@ Drain queued mutations against the live API, mark `stateMismatch` rows for the c
 
 ### 4. Implement hybrid operations + the sync runner
 
-Expose the operations the UI calls. When offline (or on a network error), queue to the outbox and update the cache optimistically; when online, hit the live API and `flush()` the per-account [`ConnectivitySyncRunner`](../src/lib/offline/core/connectivity-sync-runner.ts). Model after [`contacts-hybrid-operations.ts`](../src/lib/offline/contacts-hybrid-operations.ts).
+Expose the operations the UI calls. When offline (or on a network error), queue to the outbox and update the cache optimistically; when online, hit the live API and `flush()` the per-account [`ConnectivitySyncRunner`](../src/lib/offline/core/connectivity-sync-runner.ts). Model after [`contacts-hybrid-operations.ts`](../src/lib/offline/contacts-hybrid-operations.ts) and wire the factory through `OfflineDomainOperations<TOperations>` in [`contacts/contacts-domain-contract.ts`](../src/lib/offline/contacts/contacts-domain-contract.ts).
 
 ### 5. Wire the UI
 
