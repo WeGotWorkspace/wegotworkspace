@@ -4,6 +4,7 @@ import type { ContactsAppBootstrap } from "@/lib/api/mock/contacts-bootstrap";
 import { mockWorkspaceSession } from "@/lib/api/mock/workspace-session-mock";
 import type { ContactCard } from "@/contacts-core/src/contacts-types";
 import { offlineAccountKeyFromUsername, offlineDbForAccount } from "@/lib/offline/offline-db";
+import { CONTACTS_DOMAIN } from "@/lib/offline/contacts/contacts-schema";
 import {
   enqueueCoalescedContactUpdate,
   enqueueOutboxMutation,
@@ -57,14 +58,14 @@ describe("contacts offline store", () => {
   it("orders outbox mutations by createdAt", async () => {
     await enqueueOutboxMutation(username, {
       id: "b",
-      domain: "contacts",
+      domain: CONTACTS_DOMAIN,
       op: "update",
       payload: "{}",
     });
     await new Promise((resolve) => setTimeout(resolve, 5));
     await enqueueOutboxMutation(username, {
       id: "a",
-      domain: "contacts",
+      domain: CONTACTS_DOMAIN,
       op: "update",
       payload: "{}",
     });

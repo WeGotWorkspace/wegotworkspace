@@ -7,10 +7,10 @@ import type {
 } from "@/contacts-core/src/contacts-types";
 import { offlineAccountKeyFromUsername, offlineDbForAccount } from "@/lib/offline/core/offline-db";
 import {
-  enqueueOutboxMutation,
   isRetryableOutboxRow,
   listOutboxMutationsForDomain,
 } from "@/lib/offline/core/outbox-store";
+import { enqueueCoalescedOutboxUpdate } from "@/lib/offline/core/outbox-coalescing";
 import type { OfflineOutboxRow } from "@/lib/offline/core/types";
 import {
   CONTACTS_DOMAIN,
@@ -171,26 +171,16 @@ export async function enqueueCoalescedContactUpdate(
   patch: ContactCardPatch,
   ifInState: string | undefined,
 ): Promise<void> {
-  const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
-  const rows = await db.outbox.where("domain").equals(CONTACTS_DOMAIN).sortBy("createdAt");
-  const existing = rows.find((row) => row.op === "update" && contactsOutboxCardId(row) === cardId);
-
-  if (existing) {
-    const payload = JSON.parse(existing.payload) as { cardId: string; patch: ContactCardPatch };
-    const mergedPatch = coalesceContactPatches(payload.patch, patch);
-    await db.outbox.put({
-      ...existing,
-      payload: JSON.stringify({ cardId, patch: mergedPatch }),
-    });
-    return;
-  }
-
-  await enqueueOutboxMutation(username, {
-    id: crypto.randomUUID(),
+  await enqueueCoalescedOutboxUpdate({
+    username,
     domain: CONTACTS_DOMAIN,
-    op: "update",
-    payload: JSON.stringify({ cardId, patch }),
+    entityId: cardId,
+    patch,
     ifInState,
+    mergePatches: coalesceContactPatches,
+    entityIdFromRow: contactsOutboxCardId,
+    buildUpdatePayload: (entityId, mergedPatch) => ({ cardId: entityId, patch: mergedPatch }),
+    readPatchFromPayload: (payload) => payload.patch as ContactCardPatch,
   });
 }
 
