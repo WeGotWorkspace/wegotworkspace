@@ -9,6 +9,7 @@ import {
   createHybridContactsOperations,
   loadContactsBootstrapHybrid,
 } from "@/lib/offline/contacts-hybrid-operations";
+import { resolveContactsOfflineUsername } from "@/lib/offline/offline-session";
 
 export type ContactsApiSource = {
   loadBootstrap: () => Promise<ContactsAppBootstrap>;
@@ -19,7 +20,7 @@ export function createHybridContactsApiSource(): ContactsApiSource {
   return {
     loadBootstrap: loadContactsBootstrapHybrid,
     createOperations: (bootstrap) => {
-      const username = bootstrap?.session.user.username;
+      const username = resolveContactsOfflineUsername(bootstrap?.session.user.username);
       if (!username) return undefined;
       return createHybridContactsOperations(username);
     },
@@ -31,7 +32,11 @@ export function createDefaultContactsApiSource(): ContactsApiSource {
     isLive: wgwLiveApiEnabled(),
     createMockSource: () => ({
       loadBootstrap: () => Promise.resolve(createContactsAppBootstrap()),
-      createOperations: () => undefined,
+      createOperations: (bootstrap) => {
+        const username = resolveContactsOfflineUsername(bootstrap?.session.user.username);
+        if (!username) return undefined;
+        return createHybridContactsOperations(username);
+      },
     }),
     createLiveSource: createHybridContactsApiSource,
   });

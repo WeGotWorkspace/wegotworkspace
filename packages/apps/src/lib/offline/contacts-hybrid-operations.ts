@@ -242,6 +242,9 @@ export async function fetchContactsHybridBootstrap(): Promise<
   if (!username) {
     throw new Error("Contacts bootstrap missing username");
   }
+  if (readBrowserOnline()) {
+    await flushContactsOutbox(username);
+  }
   await writeContactsBootstrapToCache(username, bootstrap);
   const bookIds = bootstrap.data.addressBooks.map((b) => b.id).filter((id) => id.length > 0);
   if (bookIds.length > 0 && readBrowserOnline()) {

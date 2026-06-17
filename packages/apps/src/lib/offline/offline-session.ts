@@ -17,3 +17,10 @@ export function readOfflineContactsUsername(): string | null {
     return null;
   }
 }
+
+/** Session username first, then the last cached contacts account from localStorage. */
+export function resolveContactsOfflineUsername(sessionUsername: string | undefined): string | null {
+  const fromSession = sessionUsername?.trim();
+  if (fromSession) return fromSession;
+  return readOfflineContactsUsername()?.trim() ?? null;
+}

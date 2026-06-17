@@ -7,6 +7,7 @@ import {
   enqueueOutboxMutation,
   listOutboxMutations,
   readContactsBootstrapFromCache,
+  upsertContactCardInCache,
   writeContactsBootstrapToCache,
 } from "@/lib/offline/contacts-offline-store";
 
@@ -65,5 +66,18 @@ describe("contacts offline store", () => {
     });
     const rows = await listOutboxMutations(username);
     expect(rows.map((r) => r.id)).toEqual(["b", "a"]);
+  });
+
+  it("preserves pendingSync cards when bootstrap is rewritten from server", async () => {
+    const localCard = {
+      ...bootstrap.data.cards[0],
+      name: { "@type": "Name", isOrdered: false, full: "Bob Local" },
+    } as ContactCard;
+    await upsertContactCardInCache(username, localCard, true);
+
+    await writeContactsBootstrapToCache(username, bootstrap);
+
+    const cached = await readContactsBootstrapFromCache(username);
+    expect(cached?.data.cards[0]?.name?.full).toBe("Bob Local");
   });
 });

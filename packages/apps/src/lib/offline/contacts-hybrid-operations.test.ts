@@ -121,4 +121,46 @@ describe("createHybridContactsOperations", () => {
     expect(outbox).toHaveLength(1);
     expect(outbox[0]?.op).toBe("update");
   });
+
+  it("sets pendingSync on contacts_cards row after offline patch", async () => {
+    vi.mocked(readBrowserOnline).mockReturnValue(false);
+
+    const operations = createHybridContactsOperations(username);
+    await operations.patchCard("jane-doe", {
+      name: { "@type": "Name", isOrdered: false, full: "Jane Pending" },
+    });
+
+    const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
+    const row = await db.contacts_cards.get("jane-doe");
+    expect(row?.pendingSync).toBe(true);
+    expect(JSON.parse(row?.data ?? "{}").name?.full).toBe("Jane Pending");
+  });
+
+  it("preserves pendingSync cards when bootstrap cache is rewritten", async () => {
+    vi.mocked(readBrowserOnline).mockReturnValue(false);
+
+    const operations = createHybridContactsOperations(username);
+    await operations.patchCard("jane-doe", {
+      name: { "@type": "Name", isOrdered: false, full: "Jane Local" },
+    });
+
+    await writeContactsBootstrapToCache(username, {
+      ...bootstrap,
+      data: {
+        ...bootstrap.data,
+        cards: [
+          {
+            ...card,
+            name: { "@type": "Name", isOrdered: false, full: "Jane Server" },
+          },
+        ],
+      },
+    });
+
+    const cached = await readContactsBootstrapFromCache(username);
+    expect(cached?.data.cards[0]?.name?.full).toBe("Jane Local");
+
+    const outbox = await listOutboxMutations(username);
+    expect(outbox).toHaveLength(1);
+  });
 });

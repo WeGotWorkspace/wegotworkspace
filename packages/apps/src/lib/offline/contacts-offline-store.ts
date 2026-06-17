@@ -40,6 +40,7 @@ export async function writeContactsBootstrapToCache(
   bootstrap: ContactsAppBootstrap,
 ): Promise<void> {
   const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
+  const pendingRows = await db.contacts_cards.filter((row) => row.pendingSync).toArray();
   await db.meta.put({ key: META_SESSION, value: JSON.stringify(bootstrap.session) });
   rememberOfflineContactsUsername(username);
   await db.contacts_address_books.clear();
@@ -62,6 +63,9 @@ export async function writeContactsBootstrapToCache(
       };
     }),
   );
+  if (pendingRows.length > 0) {
+    await db.contacts_cards.bulkPut(pendingRows);
+  }
 }
 
 export async function upsertContactCardInCache(
