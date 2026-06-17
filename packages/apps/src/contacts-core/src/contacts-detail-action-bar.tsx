@@ -52,16 +52,13 @@ export function ContactsDetailActionBar({
     );
   }
 
-  if (editMode) {
-    return <ActionBar onBack={closeMobileDetail} />;
-  }
-
   const rightActions = [
     {
       id: "download",
       label: labels.downloadVCard,
       onClick: onDownload,
       icon: <Download className="size-4" />,
+      disabled: editMode,
     },
     ...(canEdit
       ? [
@@ -70,6 +67,8 @@ export function ContactsDetailActionBar({
             label: labels.edit,
             onClick: onEdit,
             icon: <Pencil className="size-4" />,
+            disabled: editMode,
+            active: editMode,
           },
         ]
       : []),
