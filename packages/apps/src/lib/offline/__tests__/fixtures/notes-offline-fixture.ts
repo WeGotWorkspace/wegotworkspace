@@ -22,8 +22,8 @@ export type NotesFixturePageRow = {
   updatedAt: number;
 };
 
-/** Test-only domain key — uses v10–v11 to stay clear of contacts v2–v3. */
-export const NOTES_FIXTURE_DOMAIN = "notes-fixture";
+/** Test-only domain key — claims the app-slot-2 version block (v10–v11). */
+export const NOTES_FIXTURE_DOMAIN = "app-slot-2";
 
 /** Version steps for the fixture — mirror contacts-schema v2/v3 layout at v10/v11. */
 export const NOTES_FIXTURE_OFFLINE_VERSION = {

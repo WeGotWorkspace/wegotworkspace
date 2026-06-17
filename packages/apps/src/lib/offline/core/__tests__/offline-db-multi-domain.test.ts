@@ -2,6 +2,7 @@ import "fake-indexeddb/auto";
 import Dexie from "dexie";
 import { describe, expect, it } from "vitest";
 import { registerOfflineDomainTables, WgwOfflineDatabase } from "@/lib/offline/core/offline-db";
+import { seedOfflineVersionOwnerForTests } from "@/lib/offline/core/offline-version-allocation";
 import { contactsCardsTable } from "@/lib/offline/contacts/contacts-schema";
 import {
   notesFixturePagesTable,
@@ -12,7 +13,7 @@ import {
 const dbName = (key: string) => `wgw-offline-${key}`;
 
 describe("offline db multi-domain registry", () => {
-  it("opens fresh with core, contacts, and notes-fixture tables at the latest version", async () => {
+  it("opens fresh with core, contacts, and app-slot-2 fixture tables at the latest version", async () => {
     const db = new WgwOfflineDatabase("multi-fresh");
     await db.open();
 
@@ -100,7 +101,7 @@ describe("offline db multi-domain registry", () => {
     await db.delete();
   });
 
-  it("runs the notes-fixture v10 -> v11 migration while contacts remains registered", async () => {
+  it("runs the app-slot-2 fixture v10 -> v11 migration while contacts remains registered", async () => {
     const legacy = new Dexie(dbName("multi-migrate-notes"));
     legacy.version(1).stores({ meta: "key", outbox: "id, domain, createdAt" });
     legacy.version(2).stores({
@@ -143,25 +144,14 @@ describe("offline db multi-domain registry", () => {
     await db.delete();
   });
 
-  it("currently merges colliding version store deltas instead of rejecting (#212)", async () => {
-    registerOfflineDomainTables({
-      domain: "collision-a",
-      versions: [{ version: 50, stores: { collision_a_table: "id" } }],
-    });
-    registerOfflineDomainTables({
-      domain: "collision-b",
-      versions: [{ version: 50, stores: { collision_b_table: "id" } }],
-    });
+  it("rejects registration when two domains claim the same Dexie version (#212)", () => {
+    seedOfflineVersionOwnerForTests(25, "app-slot-2");
 
-    const db = new WgwOfflineDatabase("collision-merge");
-    await db.open();
-
-    const names = db.tables.map((t) => t.name);
-    expect(names).toContain("collision_a_table");
-    expect(names).toContain("collision_b_table");
-
-    await db.delete();
+    expect(() =>
+      registerOfflineDomainTables({
+        domain: "app-slot-3",
+        versions: [{ version: 25, stores: { collision_b_table: "id" } }],
+      }),
+    ).toThrow(/already claimed by domain "app-slot-2"/);
   });
-
-  it.todo("rejects registration when two domains claim the same Dexie version (#212)");
 });
