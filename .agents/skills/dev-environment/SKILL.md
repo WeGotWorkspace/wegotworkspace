@@ -65,6 +65,7 @@ docker compose -f compose.dev.yml exec web php /var/www/packages/api/artisan wgw
 | Full app `/api/v1` errors | API down or wrong proxy | Health at http://127.0.0.1:9080/api/v1/health; check `WGW_PROXY_TARGET` in `.env.local` |
 | Mock-tier stories fail | Unrelated to API — check story mocks | Use `@/lib/api/mock/*-bootstrap`; see [storybook/offline-first.md](../storybook/offline-first.md) |
 | `9080` connection refused | API not started | `pnpm dev:api` or `docker compose -f compose.dev.yml up -d --build` |
+| `9080` still in use after stopping dev | Orphan `php -S` from a crashed session | `lsof -nP -iTCP:9080 -sTCP:LISTEN` then stop the PID; normal Ctrl+C on `pnpm dev` / `pnpm preview` should release the port |
 | `5173` / `6006` port in use | Another dev server | Stop conflicting process or free the port |
 | HTTPS-only Docker without `.env.local` | Default proxy is `:9080` | Set `WGW_PROXY_TARGET=https://wegotworkspace.localhost` for `docker:up:https` |
 | HTTPS cert warnings | mkcert not installed | `pnpm docker:ssl:setup`; trust mkcert CA |

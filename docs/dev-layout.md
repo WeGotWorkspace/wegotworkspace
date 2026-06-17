@@ -22,6 +22,8 @@ pnpm dev
 | Storybook | http://127.0.0.1:6006 | Component catalog; same API proxy |
 | API (host PHP) | http://127.0.0.1:9080 | Health: `/api/v1/health` |
 
+The API task runs `packages/api/scripts/dev-php-server.sh`, which traps `SIGINT`/`SIGTERM` and stops the `php -S` process when you exit `pnpm dev` or `pnpm preview` (Ctrl+C). If `:9080` stays bound after a crash, find the listener with `lsof -nP -iTCP:9080 -sTCP:LISTEN` and stop it manually.
+
 `pnpm dev` runs `wgw:dev-install` first (idempotent), then starts all three in parallel via turbo. On a fresh clone that bootstraps `wgw-config.php`, `wgw-content/db.sqlite`, the `admin` user (password `storybook-dev`, overridable via `WGW_DEV_USERNAME` / `WGW_DEV_PASSWORD`), and JWT keys under `apps/wegotworkspace/wgw-content/keys/` (gitignored). OpenAPI typegen watch runs alongside.
 
 ## Docker API (optional)
