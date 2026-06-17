@@ -1,5 +1,3 @@
-import { useOnReconnect } from "@/hooks/use-connectivity";
-
 type FlushTask<T> = () => Promise<T>;
 
 export class ConnectivitySyncRunner<T = void> {
@@ -16,10 +14,4 @@ export class ConnectivitySyncRunner<T = void> {
         this.flushing = false;
       });
   }
-}
-
-export function useConnectivitySyncRunner(runner: ConnectivitySyncRunner): void {
-  useOnReconnect(() => {
-    void runner.flush();
-  });
 }
