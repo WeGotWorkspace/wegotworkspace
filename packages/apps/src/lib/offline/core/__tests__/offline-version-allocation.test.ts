@@ -55,7 +55,7 @@ describe("offline version allocation", () => {
   it("throws when a version is outside the domain block", () => {
     expect(() =>
       registerOfflineDomainTables({
-        domain: "app-slot-2",
+        domain: "notes",
         versions: [{ version: 3, stores: { notes_notes: "id" } }],
       }),
     ).toThrow(/allocated range is 10–19/);
@@ -64,7 +64,7 @@ describe("offline version allocation", () => {
   it("throws when the same domain declares a version twice", () => {
     expect(() =>
       claimOfflineDomainVersions({
-        domain: "app-slot-2",
+        domain: "notes",
         versions: [
           { version: 10, stores: { a: "id" } },
           { version: 10, stores: { b: "id" } },
@@ -74,18 +74,18 @@ describe("offline version allocation", () => {
   });
 
   it("throws when two domains claim the same Dexie version", () => {
-    seedOfflineVersionOwnerForTests(25, "app-slot-2");
+    seedOfflineVersionOwnerForTests(25, "notes");
 
     expect(() =>
       claimOfflineDomainVersions({
-        domain: "app-slot-3",
+        domain: "docs",
         versions: [{ version: 25, stores: { calendar_events: "id" } }],
       }),
-    ).toThrow(/already claimed by domain "app-slot-2"/);
+    ).toThrow(/already claimed by domain "notes"/);
 
     expect(() =>
       registerOfflineDomainTables({
-        domain: "app-slot-2",
+        domain: "notes",
         versions: [{ version: 2, stores: { notes_notes: "id" } }],
       }),
     ).toThrow(/allocated range is 10–19/);
@@ -93,17 +93,24 @@ describe("offline version allocation", () => {
 
   it("composes multiple domains into one linear Dexie version sequence", async () => {
     registerOfflineDomainTables({
-      domain: "app-slot-2",
+      domain: "notes",
       versions: [
         { version: 10, stores: { notes_notes: "id" } },
         { version: 11, stores: { notes_notes: "id, updatedAt" } },
+      ],
+    });
+    registerOfflineDomainTables({
+      domain: "docs",
+      versions: [
+        { version: 20, stores: { docs_files: "apiPath" } },
+        { version: 21, stores: { docs_files: "apiPath, pendingSync" } },
       ],
     });
 
     const db = new WgwOfflineDatabase("multi-domain-acct");
     await db.open();
 
-    expect(db.verno).toBe(11);
+    expect(db.verno).toBe(21);
     expect(db.tables.map((t) => t.name)).toEqual(
       expect.arrayContaining([
         "meta",
@@ -111,6 +118,7 @@ describe("offline version allocation", () => {
         "contacts_address_books",
         "contacts_cards",
         "notes_notes",
+        "docs_files",
       ]),
     );
 

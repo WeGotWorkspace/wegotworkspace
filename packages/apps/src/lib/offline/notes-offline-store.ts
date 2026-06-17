@@ -1,0 +1,197 @@
+import type { NotesAppBootstrap } from "@/lib/api/mock/notes-bootstrap";
+import type { Note } from "@/lib/models/note";
+import { rememberOfflineNotesUsername } from "@/lib/offline/offline-session";
+import { offlineAccountKeyFromUsername, offlineDbForAccount } from "@/lib/offline/core/offline-db";
+import { enqueueCoalescedOutboxUpdate } from "@/lib/offline/core/outbox-coalescing";
+import {
+  isRetryableOutboxRow,
+  listOutboxMutationsForDomain,
+} from "@/lib/offline/core/outbox-store";
+import type { OfflineOutboxRow } from "@/lib/offline/core/types";
+import {
+  NOTES_DOMAIN,
+  notesNotebooksTable,
+  notesNotesTable,
+  type OfflineNoteRow,
+} from "@/lib/offline/notes/notes-schema";
+
+export {
+  enqueueOutboxMutation,
+  listOutboxMutations,
+  markOutboxError,
+  removeOutboxMutation,
+} from "@/lib/offline/core/outbox-store";
+
+const META_SESSION = "notes:session";
+
+export type NotesUpsertPayload = {
+  noteId: string;
+  note: Note;
+  tempNoteId?: string;
+};
+
+function metaKeyForNotebookState(notebook: string): string {
+  return `notes:notebook:${notebook}:state`;
+}
+
+function noteRow(note: Note, pendingSync: boolean): OfflineNoteRow {
+  return {
+    id: note.id,
+    notebookId: note.notebook,
+    data: JSON.stringify(note),
+    pendingSync,
+    updatedAt: Date.now(),
+  };
+}
+
+function tagsFromNotes(notes: Note[]): string[] {
+  return [...new Set(notes.flatMap((n) => n.tags))];
+}
+
+export async function readNotesBootstrapFromCache(
+  username: string,
+): Promise<NotesAppBootstrap | null> {
+  const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
+  const sessionRow = await db.meta.get(META_SESSION);
+  if (!sessionRow?.value) return null;
+
+  const books = await notesNotebooksTable(db).toArray();
+  const notes = await notesNotesTable(db).toArray();
+  if (books.length === 0 && notes.length === 0) return null;
+
+  const session = JSON.parse(sessionRow.value) as NotesAppBootstrap["session"];
+  const notebooks = books.map((row) => row.id);
+  const noteEntities = notes.map((row) => JSON.parse(row.data) as Note);
+
+  return {
+    session,
+    data: {
+      notes: noteEntities,
+      notebooks,
+      tags: tagsFromNotes(noteEntities),
+    },
+  };
+}
+
+export async function writeNotesBootstrapToCache(
+  username: string,
+  bootstrap: NotesAppBootstrap,
+): Promise<void> {
+  const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
+  const notes = notesNotesTable(db);
+  const books = notesNotebooksTable(db);
+  const pendingRows = await notes.filter((row) => row.pendingSync).toArray();
+  await db.meta.put({ key: META_SESSION, value: JSON.stringify(bootstrap.session) });
+  rememberOfflineNotesUsername(username);
+  await books.clear();
+  await books.bulkPut(
+    bootstrap.data.notebooks.map((name) => ({
+      id: name,
+      data: JSON.stringify({ name }),
+    })),
+  );
+  await notes.clear();
+  await notes.bulkPut(bootstrap.data.notes.map((note) => noteRow(note, false)));
+  if (pendingRows.length > 0) {
+    await notes.bulkPut(pendingRows);
+  }
+}
+
+export async function upsertNoteInCache(
+  username: string,
+  note: Note,
+  pendingSync = false,
+): Promise<void> {
+  const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
+  await notesNotesTable(db).put(noteRow(note, pendingSync));
+}
+
+export async function removeNoteFromCache(username: string, noteId: string): Promise<void> {
+  const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
+  await notesNotesTable(db).delete(noteId);
+}
+
+export async function listFailedNotesOutbox(username: string): Promise<OfflineOutboxRow[]> {
+  const rows = await listOutboxMutationsForDomain(username, NOTES_DOMAIN);
+  return rows.filter(isRetryableOutboxRow);
+}
+
+export async function listPendingNoteIds(username: string): Promise<string[]> {
+  const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
+  const rows = await notesNotesTable(db)
+    .filter((row) => row.pendingSync)
+    .toArray();
+  return rows.map((row) => row.id);
+}
+
+export async function readSyncToken(username: string, notebook: string): Promise<string | null> {
+  const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
+  const row = await db.meta.get(metaKeyForNotebookState(notebook));
+  return row?.value ?? null;
+}
+
+export async function writeSyncToken(
+  username: string,
+  notebook: string,
+  token: string,
+): Promise<void> {
+  const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
+  await db.meta.put({ key: metaKeyForNotebookState(notebook), value: token });
+}
+
+/** Note id targeted by an outbox row (upsert/delete `noteId`, or create `tempNoteId`). */
+export function notesOutboxNoteId(row: OfflineOutboxRow): string | null {
+  if (row.domain !== NOTES_DOMAIN) return null;
+  try {
+    const payload = JSON.parse(row.payload) as {
+      noteId?: string;
+      tempNoteId?: string;
+    };
+    return payload.noteId ?? payload.tempNoteId ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function mergeNoteUpsertPayloads(
+  existing: NotesUpsertPayload,
+  incoming: NotesUpsertPayload,
+): NotesUpsertPayload {
+  return {
+    noteId: incoming.noteId,
+    note: incoming.note,
+    tempNoteId: incoming.tempNoteId ?? existing.tempNoteId,
+  };
+}
+
+/** Merges pending upsert rows for the same note so flush sends one whole-note payload. */
+export async function enqueueCoalescedNoteUpdate(
+  username: string,
+  noteId: string,
+  note: Note,
+  baseUpdatedAt: string | undefined,
+  tempNoteId?: string,
+): Promise<void> {
+  await enqueueCoalescedOutboxUpdate({
+    username,
+    domain: NOTES_DOMAIN,
+    op: "upsert",
+    entityId: noteId,
+    patch: { noteId, note, tempNoteId },
+    ifInState: baseUpdatedAt,
+    mergePatches: mergeNoteUpsertPayloads,
+    entityIdFromRow: notesOutboxNoteId,
+    buildUpdatePayload: (entityId, patch) => ({ ...patch, noteId: entityId }),
+    readPatchFromPayload: (payload) => payload as NotesUpsertPayload,
+  });
+}
+
+export function createTempNoteId(): string {
+  return `local-${crypto.randomUUID().replace(/-/g, "")}`;
+}
+
+export function noteUpdatedAtMs(value: string | undefined): number {
+  if (!value || value === "—") return 0;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
