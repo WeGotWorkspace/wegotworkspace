@@ -20,6 +20,8 @@ cleanup() {
 
 trap cleanup EXIT INT TERM
 
+(cd "${API_ROOT}" && php artisan wgw:schema-migrate)
+
 env -u SABRE_BUILD_DIR php -S 127.0.0.1:9080 -t "${APP_ROOT}" "${APP_ROOT}/index.php" &
 php_pid=$!
 wait "${php_pid}"
