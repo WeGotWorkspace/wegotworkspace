@@ -7,7 +7,8 @@ import {
   upsertContactCardInCache,
   writeSyncToken,
 } from "@/lib/offline/contacts-offline-store";
-import { offlineAccountKeyFromUsername, offlineDbForAccount } from "@/lib/offline/offline-db";
+import { offlineAccountKeyFromUsername, offlineDbForAccount } from "@/lib/offline/core/offline-db";
+import { contactsCardsTable } from "@/lib/offline/contacts/contacts-schema";
 
 type JmapChangesResponse = {
   oldState: string;
@@ -66,14 +67,15 @@ async function applyContactCardChanges(
   opts?: { signal?: AbortSignal },
 ): Promise<void> {
   const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
+  const cards = contactsCardsTable(db);
   for (const id of changes.destroyed) {
-    const row = await db.contacts_cards.get(id);
+    const row = await cards.get(id);
     if (row?.pendingSync) continue;
     await removeContactCardFromCache(username, id);
   }
   const toFetch = [...changes.created, ...changes.updated];
   for (const id of toFetch) {
-    const row = await db.contacts_cards.get(id);
+    const row = await cards.get(id);
     if (row?.pendingSync) continue;
     const card = await getCard(id, opts);
     await upsertContactCardInCache(username, card, false);

@@ -1,4 +1,4 @@
-@import "../../styles.css" reference;
+@import "../../../styles.css" reference;
 
 .offline-status-indicator {
   --offline-status-indicator-accent: #c98a1f;

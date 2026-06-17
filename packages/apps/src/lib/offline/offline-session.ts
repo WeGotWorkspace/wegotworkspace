@@ -1,26 +1,21 @@
-const OFFLINE_CONTACTS_USER_KEY = "wgw.offline.contacts.username";
+import {
+  readOfflineUsername,
+  rememberOfflineUsername,
+  resolveOfflineUsername,
+} from "@/lib/offline/core/offline-account";
 
+const CONTACTS_DOMAIN = "contacts";
+
+/** Contacts-domain wrapper over the generic offline account session helpers. */
 export function rememberOfflineContactsUsername(username: string): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(OFFLINE_CONTACTS_USER_KEY, username);
-  } catch {
-    // ignore
-  }
+  rememberOfflineUsername(CONTACTS_DOMAIN, username);
 }
 
 export function readOfflineContactsUsername(): string | null {
-  if (typeof window === "undefined") return null;
-  try {
-    return window.localStorage.getItem(OFFLINE_CONTACTS_USER_KEY);
-  } catch {
-    return null;
-  }
+  return readOfflineUsername(CONTACTS_DOMAIN);
 }
 
 /** Session username first, then the last cached contacts account from localStorage. */
 export function resolveContactsOfflineUsername(sessionUsername: string | undefined): string | null {
-  const fromSession = sessionUsername?.trim();
-  if (fromSession) return fromSession;
-  return readOfflineContactsUsername()?.trim() ?? null;
+  return resolveOfflineUsername(CONTACTS_DOMAIN, sessionUsername);
 }

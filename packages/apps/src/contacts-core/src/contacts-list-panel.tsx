@@ -1,6 +1,7 @@
 import type { MouseEvent as ReactMouseEvent, ReactNode, RefObject } from "react";
-import { Pencil, RefreshCw, Trash2, UserMinus } from "lucide-react";
-import { IconButton } from "@/button/src/button";
+import { Circle, Pencil, RefreshCw, Trash2, UserMinus } from "lucide-react";
+import { Button, IconButton } from "@/button/src/button";
+import { Callout } from "@/callout/src/callout";
 import { ListItem } from "@/list-item/src/list-item";
 import { ViewHeader } from "@/view-header/src/view-header";
 import { ContactUserAvatar } from "./contact-user-avatar";
@@ -44,6 +45,12 @@ type ContactsListPanelProps = {
   onSwipeRemoveFromGroup: (id: string) => void;
   selectionBar: ReactNode;
   onRefreshList?: () => void;
+  /** Card ids with unsynced local changes; rendered with a subtle pending-sync dot. */
+  pendingCardIds?: ReadonlySet<string>;
+  /** Number of outbox rows that failed to sync for a transient reason. */
+  failedSyncCount?: number;
+  /** Retry handler for failed outbox rows (triggers a sync flush). */
+  onRetrySync?: () => void;
 };
 
 export function ContactsListPanel({
@@ -74,7 +81,21 @@ export function ContactsListPanel({
   onSwipeRemoveFromGroup,
   selectionBar,
   onRefreshList,
+  pendingCardIds,
+  failedSyncCount = 0,
+  onRetrySync,
 }: ContactsListPanelProps) {
+  const retryCallout =
+    failedSyncCount > 0 && onRetrySync ? (
+      <Callout
+        className="contacts-list-panel__retry-callout"
+        severity="error"
+        title={L.syncFailedTitle}
+        message={L.syncFailedMessage}
+        action={<Button variant="subtle" size="sm" label={L.retrySync} onClick={onRetrySync} />}
+      />
+    ) : null;
+
   return {
     header: (
       <ViewHeader
@@ -130,81 +151,97 @@ export function ContactsListPanel({
         searchInputRef={searchInputRef}
       />
     ),
-    listContent: listLoading ? (
-      <div className="contacts-list-panel__loading" aria-busy>
-        <LoadingSpinner size="lg" label={L.listLoading} />
-      </div>
-    ) : (
-      <WorkspaceSwipeList isTouch={isTouch}>
-        {groupContactCardsBySection(visibleCards).map((section) => (
-          <section key={section.letter} aria-labelledby={`contacts-section-${section.letter}`}>
-            <div
-              id={`contacts-section-${section.letter}`}
-              className="contacts-list-panel__section-header"
-            >
-              {section.letter}
-            </div>
-            {section.cards.map((card) => {
-              const dragHandlers = itemDragHandlers(card.id) as {
-                onDragStart?: () => void;
-                onDragEnd?: () => void;
-              };
-              const name = contactDisplayName(card);
-              return (
-                <ListItem
-                  key={card.id}
-                  id={card.id}
-                  title={name}
-                  subtitle={contactListSubtitle(card)}
-                  metaPosition="below"
-                  date=""
-                  text={contactListDetail(card)}
-                  icons={[]}
-                  leading={
-                    <ContactUserAvatar
-                      card={card}
-                      compact
-                      size="sm"
-                      className="contacts-list-panel__avatar"
+    listContent: (
+      <>
+        {retryCallout}
+        {listLoading ? (
+          <div className="contacts-list-panel__loading" aria-busy>
+            <LoadingSpinner size="lg" label={L.listLoading} />
+          </div>
+        ) : (
+          <WorkspaceSwipeList isTouch={isTouch}>
+            {groupContactCardsBySection(visibleCards).map((section) => (
+              <section key={section.letter} aria-labelledby={`contacts-section-${section.letter}`}>
+                <div
+                  id={`contacts-section-${section.letter}`}
+                  className="contacts-list-panel__section-header"
+                >
+                  {section.letter}
+                </div>
+                {section.cards.map((card) => {
+                  const dragHandlers = itemDragHandlers(card.id) as {
+                    onDragStart?: () => void;
+                    onDragEnd?: () => void;
+                  };
+                  const name = contactDisplayName(card);
+                  const isPendingSync = pendingCardIds?.has(card.id) ?? false;
+                  return (
+                    <ListItem
+                      key={card.id}
+                      id={card.id}
+                      title={name}
+                      subtitle={contactListSubtitle(card)}
+                      metaPosition="below"
+                      date=""
+                      text={contactListDetail(card)}
+                      icons={[
+                        isPendingSync ? (
+                          <span
+                            className="contacts-list-panel__pending-dot"
+                            role="img"
+                            aria-label={L.pendingSync}
+                          >
+                            <Circle className="size-2.5" fill="currentColor" strokeWidth={0} />
+                          </span>
+                        ) : null,
+                      ].filter(Boolean)}
+                      leading={
+                        <ContactUserAvatar
+                          card={card}
+                          compact
+                          size="sm"
+                          className="contacts-list-panel__avatar"
+                        />
+                      }
+                      isActive={card.id === activeId}
+                      isSelected={selectedIds.includes(card.id)}
+                      selectionMode={selectionMode}
+                      isTouch={isTouch}
+                      isDragging={isItemDragging(card.id)}
+                      onClick={(e: ReactMouseEvent) => handleSelect(card.id, e)}
+                      onLongPress={() => enterSelectionFor(card.id)}
+                      {...dragHandlers}
+                      onDragStart={dragHandlers.onDragStart ?? (() => {})}
+                      onDragEnd={dragHandlers.onDragEnd ?? (() => {})}
+                      emptyTitle={L.unknownContact}
+                      {...(isTouch
+                        ? selectedGroupId
+                          ? {
+                              swipeRightAction: {
+                                icon: <UserMinus className="size-5" />,
+                                color: "var(--contacts-swipe-remove-color)",
+                                label: L.swipeRemoveFromGroup,
+                                onActivate: () => onSwipeRemoveFromGroup(card.id),
+                              },
+                            }
+                          : {
+                              swipeRightAction: {
+                                icon: <Trash2 className="size-5" />,
+                                color: "var(--contacts-swipe-delete-color)",
+                                label: L.swipeDelete,
+                                destructive: true,
+                                onActivate: () => onSwipeDelete(card.id),
+                              },
+                            }
+                        : {})}
                     />
-                  }
-                  isActive={card.id === activeId}
-                  isSelected={selectedIds.includes(card.id)}
-                  selectionMode={selectionMode}
-                  isTouch={isTouch}
-                  isDragging={isItemDragging(card.id)}
-                  onClick={(e: ReactMouseEvent) => handleSelect(card.id, e)}
-                  onLongPress={() => enterSelectionFor(card.id)}
-                  {...dragHandlers}
-                  onDragStart={dragHandlers.onDragStart ?? (() => {})}
-                  onDragEnd={dragHandlers.onDragEnd ?? (() => {})}
-                  emptyTitle={L.unknownContact}
-                  {...(isTouch
-                    ? selectedGroupId
-                      ? {
-                          swipeRightAction: {
-                            icon: <UserMinus className="size-5" />,
-                            color: "var(--contacts-swipe-remove-color)",
-                            label: L.swipeRemoveFromGroup,
-                            onActivate: () => onSwipeRemoveFromGroup(card.id),
-                          },
-                        }
-                      : {
-                          swipeRightAction: {
-                            icon: <Trash2 className="size-5" />,
-                            color: "var(--contacts-swipe-delete-color)",
-                            label: L.swipeDelete,
-                            destructive: true,
-                            onActivate: () => onSwipeDelete(card.id),
-                          },
-                        }
-                    : {})}
-                />
-              );
-            })}
-          </section>
-        ))}
-      </WorkspaceSwipeList>
+                  );
+                })}
+              </section>
+            ))}
+          </WorkspaceSwipeList>
+        )}
+      </>
     ),
     hasItems: listLoading || visibleCards.length > 0,
     emptyLabel: view.startsWith("group:") ? L.emptyGroupMembers : L.emptyList,

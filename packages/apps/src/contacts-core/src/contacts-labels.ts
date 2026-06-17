@@ -74,6 +74,15 @@ export type ContactsUILabels = {
   toastDeleted: string;
   toastSyncConflict: (name: string) => string;
   toastSyncConflictOpen: string;
+  pendingSync: string;
+  conflictTitle: string;
+  conflictDescription: (name: string) => string;
+  conflictRemaining: (count: number) => string;
+  conflictKeepMine: string;
+  conflictUseServer: string;
+  syncFailedTitle: string;
+  syncFailedMessage: string;
+  retrySync: string;
   downloadVCard: string;
   selectionDelete: string;
   selectionRemoveFromGroup: string;
@@ -165,6 +174,16 @@ export const defaultContactsLabels: ContactsUILabels = {
   toastSyncConflict: (name) =>
     `Could not sync changes to “${name}” because it was updated elsewhere.`,
   toastSyncConflictOpen: "Open contact",
+  pendingSync: "Pending sync",
+  conflictTitle: "Sync conflict",
+  conflictDescription: (name) =>
+    `“${name}” was changed somewhere else while you had unsynced edits. Which version should win?`,
+  conflictRemaining: (count) => `${count} more contact${count === 1 ? "" : "s"} to review`,
+  conflictKeepMine: "Keep mine",
+  conflictUseServer: "Use server version",
+  syncFailedTitle: "Some changes couldn’t sync",
+  syncFailedMessage: "We’ll keep your edits saved locally until they go through.",
+  retrySync: "Retry",
   downloadVCard: "Download vCard",
   selectionDelete: "Delete",
   selectionRemoveFromGroup: "Remove from group",
