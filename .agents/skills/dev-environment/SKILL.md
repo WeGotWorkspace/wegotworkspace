@@ -71,6 +71,7 @@ docker compose -f compose.dev.yml exec web php /var/www/packages/api/artisan wgw
 | Port 80/443 in use | Host Apache/nginx | `brew services stop httpd` (see docker README) |
 | MySQL from container can't reach host DB | `127.0.0.1` is container-local | Use **`host.docker.internal`** as DB host from Docker |
 | Login shows **JWT key configuration missing** | No RSA keys under `wgw-content/keys/` | `php packages/api/artisan wgw:jwt-keys` (also run by `pnpm dev` / `pnpm preview` bootstrap) |
+| Login **HTTP 500** on `auth/token` | No `wgw-config.php` / `db.sqlite` (API falls back to empty in-memory DB) | `php packages/api/artisan wgw:dev-install` (also run by `pnpm dev:bootstrap` / `pnpm preview:bootstrap`) |
 | Missing tables after pull | Pending WGW migration | `wgw:schema-migrate` (see above) |
 | Type errors after OpenAPI change | Types not regenerated | `pnpm --filter @wgw/api run openapi:build-json` + apps typegen |
 

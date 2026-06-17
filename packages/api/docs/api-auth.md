@@ -17,6 +17,14 @@ If an install finished before keys were generated, create them from your install
 php packages/api/artisan wgw:jwt-keys
 ```
 
+For Docker-free monorepo dev (`pnpm dev` / `pnpm preview`), bootstrap the full local install (config, SQLite, admin user, and keys) with:
+
+```bash
+php packages/api/artisan wgw:dev-install
+```
+
+Default login: `admin` / `storybook-dev` (override with `WGW_DEV_USERNAME` / `WGW_DEV_PASSWORD`).
+
 Or with OpenSSL from the install root (`apps/wegotworkspace` in monorepo dev):
 
 ```bash

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services\Installer;
 
 use App\Support\AppPaths;
-use App\Support\WgwConnectionConfigurator;
 use App\Support\WgwDatabaseProbe;
 use Illuminate\Support\Facades\DB;
 
@@ -57,7 +56,7 @@ final class InstallerDatabaseInstaller
             }
         }
 
-        WgwConnectionConfigurator::applyFromInstallerDb($db);
+        $this->databaseProbe->applyInstallerDb($db);
 
         // Schema migrations run DDL; MySQL implicitly commits and breaks Laravel transactions.
         $this->schemaMigrator->migrate();

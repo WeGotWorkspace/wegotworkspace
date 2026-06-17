@@ -52,10 +52,16 @@ pnpm preview
 
 Builds apps (`vite build`), starts host PHP API on `:9080`, and serves the bundle via `vite preview` on **http://127.0.0.1:4173** with the same `/api/v1` proxy.
 
-`preview:bootstrap` runs `php artisan wgw:jwt-keys` so login can issue tokens without running the web installer first. Keys land in `apps/wegotworkspace/wgw-content/keys/` (gitignored). To regenerate manually:
+`preview:bootstrap` runs `php artisan wgw:dev-install` so login works without the web installer: it writes `wgw-config.php`, migrates `wgw-content/db.sqlite`, seeds the `admin` user (password `storybook-dev`, overridable via `WGW_DEV_USERNAME` / `WGW_DEV_PASSWORD`), and creates JWT keys under `apps/wegotworkspace/wgw-content/keys/` (gitignored). To regenerate keys only:
 
 ```bash
 php packages/api/artisan wgw:jwt-keys
+```
+
+To re-run the full dev bootstrap manually:
+
+```bash
+php packages/api/artisan wgw:dev-install
 ```
 
 See [`packages/api/docs/api-auth.md`](../packages/api/docs/api-auth.md) for env overrides (`WGW_API_JWT_*`).
