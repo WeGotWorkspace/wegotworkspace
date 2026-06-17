@@ -3,6 +3,24 @@ export function readBrowserOnline(): boolean {
   return typeof navigator !== "undefined" ? navigator.onLine : true;
 }
 
+/** True when a fetch failed because the device/network is unreachable (not HTTP 4xx/5xx). */
+export function isFetchNetworkError(error: unknown): boolean {
+  if (error instanceof DOMException) {
+    if (error.name === "AbortError") return false;
+    if (error.name === "NetworkError") return true;
+  }
+  if (error instanceof TypeError) {
+    const message = error.message.toLowerCase();
+    return (
+      message.includes("failed to fetch") ||
+      message.includes("networkerror") ||
+      message.includes("network request failed") ||
+      message.includes("load failed")
+    );
+  }
+  return false;
+}
+
 /** Subscribe to browser online/offline events. No-op outside the browser. */
 export function subscribeBrowserOnline(onChange: (online: boolean) => void): () => void {
   if (typeof window === "undefined") {
