@@ -64,6 +64,62 @@ export const ViewSource: Story = {
   },
 };
 
+export const InCellEditing: Story = {
+  name: "In-cell editing",
+  tags: ["vitest-ci"],
+  args: {
+    ...bootstrap,
+    filePath: mockDocument.apiPath,
+    operations: createMockSpreadsheetOperations(),
+    onFileRenamed: () => {},
+    onLogout: () => {},
+  },
+  play: async ({ canvasElement, step }) => {
+    const canvas = within(canvasElement);
+    // Glide's overlay editor renders into #portal on document.body, outside the story root.
+    const doc = canvasElement.ownerDocument;
+    const findCellInput = () =>
+      waitFor(() => {
+        const el = doc.querySelector<HTMLInputElement>(".spreadsheet-cell-editor__input");
+        if (!el)
+          throw new Error("in-cell editor did not open (Glide #portal mount point missing?)");
+        return el;
+      });
+
+    await step("Activating a cell opens the in-cell editor", async () => {
+      // Click the first data cell on the canvas, then Enter to edit. This opens
+      // Glide's overlay editor, which renders into #portal — the mount point that
+      // was missing, breaking all in-cell editing.
+      const gridCanvas = await canvas.findByTestId("data-grid-canvas");
+      const rect = gridCanvas.getBoundingClientRect();
+      const clientX = rect.left + 100;
+      const clientY = rect.top + 55;
+      const opts = { bubbles: true, cancelable: true, clientX, clientY, button: 0 };
+      gridCanvas.dispatchEvent(new PointerEvent("pointerdown", { ...opts, pointerId: 1 }));
+      gridCanvas.dispatchEvent(new MouseEvent("mousedown", opts));
+      gridCanvas.dispatchEvent(new PointerEvent("pointerup", { ...opts, pointerId: 1 }));
+      gridCanvas.dispatchEvent(new MouseEvent("mouseup", opts));
+      gridCanvas.dispatchEvent(new MouseEvent("click", opts));
+      gridCanvas.focus();
+      await userEvent.keyboard("{Enter}");
+      const input = await findCellInput();
+      await userEvent.clear(input);
+      await userEvent.type(input, "Pears");
+      await userEvent.keyboard("{Enter}");
+    });
+
+    await step("The edit is written back to the workbook", async () => {
+      await userEvent.click(await canvas.findByRole("button", { name: "Edit source" }));
+      const source = await canvas.findByRole<HTMLTextAreaElement>("textbox", {
+        name: "YCSV source",
+      });
+      await waitFor(() => {
+        expect(source.value).toContain("Pears,6,0.45");
+      });
+    });
+  },
+};
+
 export const Empty: Story = {
   name: "No spreadsheet",
   args: {

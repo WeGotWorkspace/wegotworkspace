@@ -36,6 +36,25 @@ type Cell = { value?: string } | undefined;
 const FORMULA_COLOR = "#2563eb";
 const ERROR_COLOR = "#dc2626";
 
+/**
+ * Glide renders its in-cell overlay editor into `document.getElementById("portal")`
+ * and silently bails (no editor, console error) when that element is missing — which
+ * breaks in-cell typing. Ensure the mount point exists wherever the grid is used
+ * (app, Storybook, tests) so the editor can open.
+ */
+function useGlidePortalRoot() {
+  useEffect(() => {
+    if (document.getElementById("portal")) return;
+    const el = document.createElement("div");
+    el.id = "portal";
+    el.style.position = "fixed";
+    el.style.left = "0";
+    el.style.top = "0";
+    el.style.zIndex = "9999";
+    document.body.appendChild(el);
+  }, []);
+}
+
 export type SpreadsheetGridSelection =
   | null
   | { kind: "cell"; row: number; column: number }
@@ -131,6 +150,7 @@ export function SpreadsheetGrid({
   writeCell,
   picking,
 }: SpreadsheetGridProps) {
+  useGlidePortalRoot();
   const gridRef = useRef<DataEditorRef>(null);
   const colCount = rawData[0]?.length ?? columnSettings.length ?? 1;
   const rowCount = Math.max(0, rawData.length - viewOffset);
