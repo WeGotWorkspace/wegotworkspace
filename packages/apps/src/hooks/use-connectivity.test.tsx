@@ -77,12 +77,16 @@ describe("probeBrowserReachable", () => {
 });
 
 describe("useConnectivity", () => {
+  let unmountHook: (() => void) | undefined;
+
   beforeEach(() => {
     vi.spyOn(navigator, "onLine", "get").mockReturnValue(true);
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 200 })));
   });
 
   afterEach(() => {
+    unmountHook?.();
+    unmountHook = undefined;
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
@@ -90,7 +94,8 @@ describe("useConnectivity", () => {
   it("initializes from navigator.onLine when already offline", () => {
     vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
 
-    const { result } = renderHook(() => useConnectivity());
+    const { result, unmount } = renderHook(() => useConnectivity());
+    unmountHook = unmount;
 
     expect(result.current.online).toBe(false);
   });
@@ -99,16 +104,17 @@ describe("useConnectivity", () => {
     vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
 
     const { result, unmount } = renderHook(() => useConnectivity());
+    unmountHook = unmount;
 
     expect(result.current.online).toBe(false);
-    unmount();
   });
 
   it("detects offline via reachability probe when navigator.onLine is stale", async () => {
     vi.spyOn(navigator, "onLine", "get").mockReturnValue(true);
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
 
-    const { result } = renderHook(() => useConnectivity());
+    const { result, unmount } = renderHook(() => useConnectivity());
+    unmountHook = unmount;
 
     expect(result.current.online).toBe(true);
 
@@ -118,7 +124,8 @@ describe("useConnectivity", () => {
   });
 
   it("updates when the browser fires offline and online events", () => {
-    const { result } = renderHook(() => useConnectivity());
+    const { result, unmount } = renderHook(() => useConnectivity());
+    unmountHook = unmount;
     expect(result.current.online).toBe(true);
 
     act(() => {
