@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useOnReconnect } from "@/hooks/use-connectivity";
 import { mockWorkspaceSession } from "@/lib/api/mock/workspace-session-mock";
 import { useHybridBootstrap } from "@/lib/live/use-hybrid-bootstrap";
@@ -11,10 +11,15 @@ import {
   readOfflineContactsUsername,
   resolveContactsOfflineUsername,
 } from "@/lib/offline/offline-session";
+import { setContactsSyncConflictListener } from "@/lib/offline/contacts-sync-conflicts";
 import type { ContactsUIData } from "@/contacts-core/src/contacts-types";
 import { createDefaultContactsApiSource, type ContactsApiSource } from "./contacts-api-source";
 
-export function useContactsAPI(source?: ContactsApiSource) {
+export type UseContactsAPIOptions = {
+  onSyncConflict?: (cardIds: string[]) => void;
+};
+
+export function useContactsAPI(source?: ContactsApiSource, options?: UseContactsAPIOptions) {
   const resolvedSource = useMemo(() => source ?? createDefaultContactsApiSource(), [source]);
   const placeholderData = useMemo<ContactsUIData>(
     () => ({
@@ -48,6 +53,13 @@ export function useContactsAPI(source?: ContactsApiSource) {
     () => resolveContactsOfflineUsername(data?.session.user.username),
     [data?.session.user.username],
   );
+
+  const onSyncConflict = options?.onSyncConflict;
+
+  useEffect(() => {
+    setContactsSyncConflictListener(onSyncConflict);
+    return () => setContactsSyncConflictListener(undefined);
+  }, [onSyncConflict]);
 
   useOnReconnect(
     useCallback(() => {

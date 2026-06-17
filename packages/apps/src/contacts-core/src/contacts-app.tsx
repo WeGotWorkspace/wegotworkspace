@@ -1,7 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { createElement, useCallback, useEffect, useMemo, useRef } from "react";
 import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
+import { useAppToast } from "@/hooks/use-app-toast";
 import { WorkspaceLiveAppShell } from "@/lib/live/workspace-live-app-shell";
 import type { ContactsApiSource } from "@/contacts-core/src/contacts-api-source";
+import { contactDisplayName } from "@/contacts-core/src/contacts-display-utils";
+import { defaultContactsLabels } from "@/contacts-core/src/contacts-labels";
+import type { ContactCard } from "@/contacts-core/src/contacts-types";
 import { ContactsWorkspace } from "@/contacts-core/src/contacts-workspace";
 import { useContactsAPI } from "@/contacts-core/src/use-contacts-api";
 import {
@@ -16,8 +20,35 @@ export type ContactsAppProps = {
 
 export function ContactsApp({ apiSource }: ContactsAppProps = {}) {
   const navigate = useNavigate();
+  const { showError } = useAppToast();
   const params = useParams({ strict: false }) as { groupCardId?: string; contactId?: string };
   const rawSearch = useSearch({ strict: false }) as Record<string, unknown>;
+
+  const handleContactChangeRef = useRef<(contactId: string) => void>(() => undefined);
+  const cardsRef = useRef<ContactCard[]>([]);
+
+  const handleSyncConflict = useCallback(
+    (cardIds: string[]) => {
+      const L = defaultContactsLabels;
+      for (const cardId of cardIds) {
+        const card = cardsRef.current.find((c) => c.id === cardId);
+        const name = card ? contactDisplayName(card) : cardId;
+        const openContact = () => handleContactChangeRef.current(cardId);
+        showError(L.toastSyncConflict(name), {
+          description: createElement(
+            "button",
+            {
+              type: "button",
+              className: "text-left underline underline-offset-2",
+              onClick: openContact,
+            },
+            L.toastSyncConflictOpen,
+          ),
+        });
+      }
+    },
+    [showError],
+  );
 
   const {
     phase,
@@ -29,7 +60,9 @@ export function ContactsApp({ apiSource }: ContactsAppProps = {}) {
     data,
     session,
     operations,
-  } = useContactsAPI(apiSource);
+  } = useContactsAPI(apiSource, { onSyncConflict: handleSyncConflict });
+
+  cardsRef.current = data.cards;
 
   // Backward compat: redirect legacy query-param URLs (?view=&contact=) to new path form.
   // Runs once on mount; if no legacy params are present this is a no-op.
@@ -139,6 +172,8 @@ export function ContactsApp({ apiSource }: ContactsAppProps = {}) {
     },
     [navigate],
   );
+
+  handleContactChangeRef.current = handleContactChange;
 
   return (
     <WorkspaceLiveAppShell

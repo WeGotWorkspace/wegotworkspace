@@ -1,14 +1,14 @@
 import { useOnReconnect } from "@/hooks/use-connectivity";
 
-type FlushTask = () => Promise<void>;
+type FlushTask<T> = () => Promise<T>;
 
-export class ConnectivitySyncRunner {
+export class ConnectivitySyncRunner<T = void> {
   private flushing = false;
 
-  constructor(private readonly flushTask: FlushTask) {}
+  constructor(private readonly flushTask: FlushTask<T>) {}
 
-  flush(): Promise<void> {
-    if (this.flushing) return Promise.resolve();
+  flush(): Promise<T | undefined> {
+    if (this.flushing) return Promise.resolve(undefined);
     this.flushing = true;
     return this.flushTask()
       .catch(() => undefined)

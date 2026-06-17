@@ -20,7 +20,6 @@ import {
 } from "@/lib/api/wgw/contacts";
 import { syncAllContactBooks } from "@/lib/api/wgw/contacts-sync";
 import { isFetchNetworkError, readBrowserOnline } from "@/lib/offline/browser-online";
-import { flushContactsOutbox } from "@/lib/offline/contacts-outbox-flush";
 import {
   createTempContactId,
   enqueueCoalescedContactUpdate,
@@ -30,6 +29,8 @@ import {
   upsertContactCardInCache,
   writeContactsBootstrapToCache,
 } from "@/lib/offline/contacts-offline-store";
+import { flushContactsOutbox, type OutboxFlushResult } from "@/lib/offline/contacts-outbox-flush";
+import { reportContactsSyncConflicts } from "@/lib/offline/contacts-sync-conflicts";
 import { readOfflineContactsUsername } from "@/lib/offline/offline-session";
 import { ConnectivitySyncRunner } from "@/lib/offline/connectivity-sync-runner";
 
@@ -56,14 +57,18 @@ function rethrowUnlessOfflineQueue(error: unknown, opts?: ContactsMutationOpts):
   if (!isFetchNetworkError(error)) throw error;
 }
 
-const runners = new Map<string, ConnectivitySyncRunner>();
+const runners = new Map<string, ConnectivitySyncRunner<OutboxFlushResult>>();
 
-function runnerFor(username: string): ConnectivitySyncRunner {
+async function flushContactsOutboxAndReport(username: string): Promise<OutboxFlushResult> {
+  const result = await flushContactsOutbox(username);
+  reportContactsSyncConflicts(result.stateMismatches);
+  return result;
+}
+
+function runnerFor(username: string): ConnectivitySyncRunner<OutboxFlushResult> {
   const existing = runners.get(username);
   if (existing) return existing;
-  const runner = new ConnectivitySyncRunner(async () => {
-    await flushContactsOutbox(username);
-  });
+  const runner = new ConnectivitySyncRunner(async () => flushContactsOutboxAndReport(username));
   runners.set(username, runner);
   return runner;
 }
@@ -236,7 +241,7 @@ export async function fetchContactsHybridBootstrap(): Promise<
     throw new Error("Contacts bootstrap missing username");
   }
   if (readBrowserOnline()) {
-    await flushContactsOutbox(username);
+    await flushContactsOutboxAndReport(username);
   }
   await writeContactsBootstrapToCache(username, bootstrap);
   const bookIds = bootstrap.data.addressBooks.map((b) => b.id).filter((id) => id.length > 0);
@@ -268,6 +273,6 @@ export async function loadContactsBootstrapHybrid(): Promise<
   return fetchContactsHybridBootstrap();
 }
 
-export function getContactsSyncRunner(username: string): ConnectivitySyncRunner {
+export function getContactsSyncRunner(username: string): ConnectivitySyncRunner<OutboxFlushResult> {
   return runnerFor(username);
 }
