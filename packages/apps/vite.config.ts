@@ -21,6 +21,19 @@ export default defineConfig({
   },
   plugins: [react(), tailwindcss(), tsconfigPaths()],
   server: {
+    port: 5173,
+    strictPort: true,
+    proxy: {
+      "/api/v1": {
+        target: wgwProxyTarget,
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
+  preview: {
+    port: 4173,
+    strictPort: true,
     proxy: {
       "/api/v1": {
         target: wgwProxyTarget,

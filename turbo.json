@@ -50,7 +50,22 @@
       "cache": false,
       "persistent": true
     },
+    "dev:app": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true
+    },
+    "dev:storybook": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true
+    },
     "dev:php": {
+      "cache": false,
+      "persistent": true
+    },
+    "preview": {
+      "dependsOn": ["^build"],
       "cache": false,
       "persistent": true
     },

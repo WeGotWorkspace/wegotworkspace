@@ -35,14 +35,19 @@ composer --working-dir packages/api install
 cp packages/api/.env.example packages/api/.env   # then edit / key:generate
 ```
 
-**Every day** (Docker API + UI on the host):
+**Every day** (Docker-free — host PHP API + Vite app + Storybook):
 
 ```bash
-pnpm docker:up
-pnpm dev:ui
+pnpm dev
 ```
 
-Open **http://127.0.0.1:6006** (Storybook). The UI proxies `/api/v1` to the API on **http://127.0.0.1:9080**.
+Open:
+
+- **http://127.0.0.1:5173** — full app (Vite HMR)
+- **http://127.0.0.1:6006** — Storybook
+- API on **http://127.0.0.1:9080** (proxied as `/api/v1` from Vite and Storybook)
+
+Optional: use Docker for the API instead of host PHP (`pnpm docker:up` then keep `pnpm dev` for UI).
 
 Edit code in **`packages/api`** and **`packages/apps`** — nothing is copied into `apps/wegotworkspace` during normal dev. Details: [`docs/dev-layout.md`](docs/dev-layout.md).
 
@@ -61,9 +66,10 @@ Then use **https://wegotworkspace.localhost/** (see [`docker/README.md`](docker/
 
 | Command                    | Use                                                    |
 | -------------------------- | ------------------------------------------------------ |
-| `pnpm dev`                 | Host PHP API + UI + Storybook (no Docker)              |
+| `pnpm dev`                 | Host PHP API + Vite app (HMR) + Storybook (no Docker)  |
 | `pnpm dev:api`             | PHP API only on `:9080`                                |
-| `pnpm dev:preview`         | Release-like sync into `apps/wegotworkspace/packages/` |
+| `pnpm dev:storybook`       | Storybook only on `:6006`                              |
+| `pnpm preview`             | Built UI (`vite preview`) + PHP API (no HMR)           |
 | `pnpm build`               | Production build + runtime sync (CI/release)           |
 | `pnpm test:api-e2e:docker` | Playwright against Docker stack                        |
 

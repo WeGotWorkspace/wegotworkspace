@@ -23,7 +23,7 @@ docker compose -f compose.dev.yml up -d --build
 - API: http://127.0.0.1:9080 (`WGW_DOCKER_HTTP_PORT` to override)
 - Health: http://127.0.0.1:9080/api/v1/health
 
-**Day-to-day UI:** Storybook/Vite on the host (`pnpm dev` or `pnpm dev:ui`), proxy `/api/v1` to `http://127.0.0.1:9080`.
+**Day-to-day UI:** `pnpm dev` on the host (Vite app :5173, Storybook :6006); both proxy `/api/v1` to `http://127.0.0.1:9080`.
 
 **Stop:** `docker compose -f compose.dev.yml down`
 

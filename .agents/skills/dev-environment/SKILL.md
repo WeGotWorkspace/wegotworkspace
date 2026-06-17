@@ -7,32 +7,39 @@ description: Local dev setup, Docker, Storybook proxy, HTTPS/WebDAV, and trouble
 
 Canonical layout: [`docs/dev-layout.md`](../../../docs/dev-layout.md). Env files: [`docs/env.md`](../../../docs/env.md). Docker detail: [`docker/README.md`](../../../docker/README.md).
 
-## Default workflow
+## Default workflow (Docker-free)
 
 ```bash
-pnpm docker:up          # API → http://127.0.0.1:9080
-pnpm dev:ui             # Storybook → http://127.0.0.1:6006, Vite watch → packages/apps/dist
+pnpm dev                # API :9080 + Vite app :5173 + Storybook :6006
 ```
 
 | Service | URL | Notes |
 |---------|-----|-------|
-| API (Docker) | http://127.0.0.1:9080 | Health: `/api/v1/health` |
-| Storybook | http://127.0.0.1:6006 | Proxies `/api/v1` to `:9080` |
-| HTTPS + WebDAV | https://wegotworkspace.localhost/ | Requires `compose.local.yml` + mkcert — see below |
+| Full app (HMR) | http://127.0.0.1:5173 | Vite dev; proxies `/api/v1` → `:9080` |
+| Storybook | http://127.0.0.1:6006 | Same API proxy |
+| API (host PHP) | http://127.0.0.1:9080 | Health: `/api/v1/health` |
+| Built preview | http://127.0.0.1:4173 | `pnpm preview` (no HMR) |
+| HTTPS + WebDAV | https://wegotworkspace.localhost/ | Optional — `compose.local.yml` + mkcert |
 
-**Edit paths:** `packages/api` (Laravel), `packages/apps` (UI source → `dist/`). Install shell `apps/wegotworkspace` is config/data only — not a second codebase.
+**Edit paths:** `packages/api` (Laravel), `packages/apps` (UI source). Install shell `apps/wegotworkspace` is config/data only — not a second codebase.
+
+## Docker API (optional)
+
+```bash
+pnpm docker:up          # API → http://127.0.0.1:9080
+pnpm dev                # UI servers; proxy targets :9080 by default
+```
+
+For HTTPS / Sabre endpoints: `pnpm docker:up:https` and set `WGW_PROXY_TARGET=https://wegotworkspace.localhost` in `.env.local` if not using plain HTTP on `:9080`.
 
 ## Host PHP (no Docker)
 
 ```bash
-pnpm dev          # API :9080 + UI + Storybook + typegen watch
+pnpm dev          # API :9080 + Vite app + Storybook + typegen watch
 pnpm dev:api      # API only
-pnpm dev:ui       # UI only — start API separately
+pnpm dev:storybook # Storybook only
+pnpm preview      # built UI + API (no HMR)
 ```
-
-## Production-like install tree
-
-`pnpm dev:preview` or `pnpm build` syncs into `apps/wegotworkspace/packages/` — use for install-path edge cases only.
 
 ## HTTPS + WebDAV (optional)
 
@@ -54,15 +61,16 @@ docker compose -f compose.dev.yml exec web php /var/www/packages/api/artisan wgw
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
-| Storybook **`Live …`** stories fail | API not running | `pnpm docker:up`; optional `pnpm setup:storybook-live-api`; restart Storybook |
+| Storybook **`Live …`** stories fail | API not running | `pnpm dev:api` or `pnpm docker:up`; optional `pnpm setup:storybook-live-api`; restart Storybook |
+| Full app `/api/v1` errors | API down or wrong proxy | Health at http://127.0.0.1:9080/api/v1/health; check `WGW_PROXY_TARGET` in `.env.local` |
 | Mock-tier stories fail | Unrelated to API — check story mocks | Use `@/lib/api/mock/*-bootstrap`; see [storybook/offline-first.md](../storybook/offline-first.md) |
-| `9080` connection refused | Docker stack down or wrong port | `docker compose -f compose.dev.yml up -d --build`; check `WGW_DOCKER_HTTP_PORT` |
-| Storybook `/api/v1` errors on live tier | Proxy target down | Ensure API health OK at http://127.0.0.1:9080/api/v1/health |
+| `9080` connection refused | API not started | `pnpm dev:api` or `docker compose -f compose.dev.yml up -d --build` |
+| `5173` / `6006` port in use | Another dev server | Stop conflicting process or free the port |
+| HTTPS-only Docker without `.env.local` | Default proxy is `:9080` | Set `WGW_PROXY_TARGET=https://wegotworkspace.localhost` for `docker:up:https` |
 | HTTPS cert warnings | mkcert not installed | `pnpm docker:ssl:setup`; trust mkcert CA |
 | Port 80/443 in use | Host Apache/nginx | `brew services stop httpd` (see docker README) |
 | MySQL from container can't reach host DB | `127.0.0.1` is container-local | Use **`host.docker.internal`** as DB host from Docker |
 | Missing tables after pull | Pending WGW migration | `wgw:schema-migrate` (see above) |
-| UI stale in browser | `dist/` not rebuilt | `pnpm dev:ui` watches; or `pnpm --filter @wgw/apps run build:dev` |
 | Type errors after OpenAPI change | Types not regenerated | `pnpm --filter @wgw/api run openapi:build-json` + apps typegen |
 
 ## API e2e (local, not default CI for apps)

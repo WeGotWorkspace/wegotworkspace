@@ -4,8 +4,8 @@ import { loadEnv } from "vite";
 
 const wgwMonorepoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 
-/** Default for Storybook / Vite dev proxy — `pnpm dev`, `pnpm dev:api`, or `pnpm docker:up`. */
-export const DEFAULT_WGW_PROXY_TARGET = "https://wegotworkspace.localhost";
+/** Default for Storybook / Vite dev proxy — host PHP (`pnpm dev:api`) or Docker HTTP on :9080. */
+export const DEFAULT_WGW_PROXY_TARGET = "http://127.0.0.1:9080";
 
 /**
  * REST origin for `/api/v1` proxying. Reads repo-root `.env.local` (see `packages/apps/.env.example`).

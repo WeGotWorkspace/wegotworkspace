@@ -5,39 +5,56 @@
 | Path | What it is | Built? |
 |------|------------|--------|
 | `packages/api` | Laravel **API app** (REST, WebDAV, UI kernels) | `composer install` only |
-| `packages/apps` | UI **source** (Vite → `packages/apps/dist/`) | `vite build` / watch |
+| `packages/apps` | UI **source** (Vite dev / build → `packages/apps/dist/`) | `vite dev` or `vite build` |
 | `apps/wegotworkspace` | **Install shell** — `index.php`, `wgw-config.php`, `wgw-content/` | No code copies in day-to-day dev |
 
 Production releases still assemble a self-contained tree under `apps/wegotworkspace/packages/*` via `pnpm build` / `pnpm release`. That sync is for shipping, not for editing.
 
-## Default dev (Docker + UI)
+## Default dev (Docker-free)
+
+```bash
+pnpm dev
+```
+
+| Service | URL | Notes |
+|---------|-----|-------|
+| Full app (HMR) | http://127.0.0.1:5173 | Vite dev server; proxies `/api/v1` → `:9080` |
+| Storybook | http://127.0.0.1:6006 | Component catalog; same API proxy |
+| API (host PHP) | http://127.0.0.1:9080 | Health: `/api/v1/health` |
+
+`pnpm dev` starts all three in parallel via turbo. OpenAPI typegen watch runs alongside.
+
+## Docker API (optional)
 
 ```bash
 pnpm docker:up
-pnpm dev:ui
+pnpm dev          # UI only needs API on :9080; host PHP is not started if you skip `pnpm dev:api`
 ```
 
-- API: Apache in Docker → **http://127.0.0.1:9080** (health, Storybook proxy target)
-- UI: Storybook **http://127.0.0.1:6006** with Vite watch into `packages/apps/dist`
-- PHP loads **`packages/api`** directly; static UI from **`packages/apps/*/dist`** (`WgwAppBootstrap` / `AppPaths`)
+Or run Storybook alone: `pnpm dev:storybook`.
 
 HTTPS / WebDAV hostname: [`docker/README.md`](../docker/README.md).
 
 ## Host PHP instead of Docker
 
 ```bash
-pnpm dev          # API :9080 + UI + Storybook + OpenAPI typegen watch
+pnpm dev          # API :9080 + Vite app :5173 + Storybook :6006 + typegen watch
 pnpm dev:api      # API only
-pnpm dev:ui       # UI only (start API separately)
+pnpm dev:storybook # Storybook only
+pnpm dev:ui       # alias for `pnpm dev`
 ```
+
+## Preview (built UI, no HMR)
+
+```bash
+pnpm preview
+```
+
+Builds apps (`vite build`), starts host PHP API on `:9080`, and serves the bundle via `vite preview` on **http://127.0.0.1:4173** with the same `/api/v1` proxy.
 
 ## Environment files
 
-See [`env.md`](env.md) — root `.env` (tooling), `packages/api/.env` (Laravel), `.env.local` (Storybook).
-
-## Production-like install tree (`pnpm dev:preview`)
-
-Copies `packages/api` and UI `dist/` into `apps/wegotworkspace/packages/` and watches with runtime sync — same layout as a release ZIP. Use when testing install-path or Apache edge cases only.
+See [`env.md`](env.md) — root `.env` (tooling), `packages/api/.env` (Laravel), `.env.local` (Vite / Storybook proxy).
 
 ## UI smoke e2e (Playwright, optional)
 
@@ -47,7 +64,7 @@ Phase 1 loads mock-tier Storybook stories — no live API required:
 pnpm test:apps-e2e
 ```
 
-Starts Storybook on **:6006** (or reuses `pnpm dev:ui`). Specs live in `packages/apps/e2e/`. With Storybook already running:
+Starts Storybook on **:6006** (or reuses `pnpm dev`). Specs live in `packages/apps/e2e/`. With Storybook already running:
 
 ```bash
 WGW_APPS_E2E_NO_SERVER=1 pnpm test:apps-e2e
