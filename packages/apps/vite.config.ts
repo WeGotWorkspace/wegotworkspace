@@ -5,11 +5,11 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import { VitePWA } from "vite-plugin-pwa";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { resolveWgwProxyTarget } from "./scripts/wgw-proxy-target";
+import { wgwApiViteProxy } from "./scripts/wgw-proxy-target";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const wgwMonorepoRoot = path.join(__dirname, "..", "..", "..");
-const wgwProxyTarget = resolveWgwProxyTarget();
+const wgwApiProxy = wgwApiViteProxy();
 
 const DEFAULT_DEV_PORT = 5173;
 const DEFAULT_PREVIEW_PORT = 4173;
@@ -63,24 +63,12 @@ export default defineConfig({
     host: true,
     port: devPort,
     strictPort: true,
-    proxy: {
-      "/api/v1": {
-        target: wgwProxyTarget,
-        changeOrigin: true,
-        secure: false,
-      },
-    },
+    proxy: wgwApiProxy,
   },
   preview: {
     port: previewPort,
     strictPort: true,
-    proxy: {
-      "/api/v1": {
-        target: wgwProxyTarget,
-        changeOrigin: true,
-        secure: false,
-      },
-    },
+    proxy: wgwApiProxy,
   },
   build: {
     outDir: "dist",

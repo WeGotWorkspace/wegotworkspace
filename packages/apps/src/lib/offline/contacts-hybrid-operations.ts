@@ -46,7 +46,7 @@ function mergePatch(card: ContactCard, patch: ContactCardPatch): ContactCard {
 
 function concurrencyToken(card: ContactCard, opts?: ContactsMutationOpts): string | undefined {
   const state = (card as ContactCard & { state?: string }).state;
-  return opts?.ifInState ?? state ?? opts?.ifMatch ?? card.etag;
+  return opts?.ifInState ?? state;
 }
 
 function rethrowUnlessOfflineQueue(error: unknown, opts?: ContactsMutationOpts): void {
@@ -208,9 +208,7 @@ export function createHybridContactsOperations(username: string): ContactsAPIOpe
     deleteCard: async (cardId, opts) => {
       const cached = await readContactsBootstrapFromCache(username);
       const existing = cached?.data.cards.find((c) => c.id === cardId);
-      const token = existing
-        ? concurrencyToken(existing, opts)
-        : (opts?.ifInState ?? opts?.ifMatch);
+      const token = existing ? concurrencyToken(existing, opts) : opts?.ifInState;
       if (!readBrowserOnline()) {
         await queueOfflineDelete(username, cardId, token);
         return;

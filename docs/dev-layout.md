@@ -52,7 +52,18 @@ pnpm dev:ui       # alias for `pnpm dev`
 pnpm preview
 ```
 
-Builds apps (`vite build`), starts host PHP API on `:9080`, and serves the bundle via `vite preview` on **http://127.0.0.1:4173** with the same `/api/v1` proxy.
+Builds apps (`vite build`), starts host PHP API on `:9080`, and serves the bundle via `vite preview` on **http://127.0.0.1:4173** with the same `/api/v1` proxy. Use this to exercise the PWA/service worker and offline contacts against a host API.
+
+Manual split (same result as `pnpm preview` without turbo):
+
+```bash
+pnpm dev:api   # terminal 1 → http://127.0.0.1:9080 (health: curl -s http://127.0.0.1:9080/api/v1/health)
+cp packages/apps/.env.example .env.local   # once; set VITE_WGW_DEV_* credentials
+pnpm --filter @wgw/apps run build && pnpm --filter @wgw/apps run preview   # terminal 2 → :4173
+```
+
+- Browser loads **http://127.0.0.1:4173**; `wgwFetch` uses relative **`/api/v1`** (`VITE_WGW_API_BASE_URL` in `.env.local`).
+- Vite preview proxies **`/api/v1` → `WGW_PROXY_TARGET`** (default **`http://127.0.0.1:9080`**).
 
 `preview:bootstrap` runs the same `wgw:dev-install` step as `pnpm dev` (see above). To regenerate keys only:
 

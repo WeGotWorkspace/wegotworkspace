@@ -41,6 +41,11 @@ pnpm dev:storybook # Storybook only
 pnpm preview      # built UI + API (no HMR)
 ```
 
+
+## Offline / PWA (contacts pilot)
+
+`pnpm preview` serves the production build with the same `/api/v1` proxy — use for service worker and offline contacts. Copy `packages/apps/.env.example` → `.env.local` when needed. Details: [`docs/dev-layout.md`](../../../docs/dev-layout.md#preview-built-ui-no-hmr).
+
 ## HTTPS + WebDAV (optional)
 
 ```bash

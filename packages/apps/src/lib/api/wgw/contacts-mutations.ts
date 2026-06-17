@@ -7,10 +7,9 @@ export async function patchCardWithState(
   patch: Record<string, unknown>,
   opts?: ContactsMutationOpts & { ifInState?: string },
 ): Promise<Awaited<ReturnType<typeof getCard>>> {
-  const ifInState = opts?.ifInState ?? opts?.ifMatch;
   const { newState } = await patchCardViaSet(cardId, patch, {
     signal: opts?.signal,
-    ifInState: ifInState ?? undefined,
+    ifInState: opts?.ifInState,
   });
   const card = await getCard(cardId, { signal: opts?.signal });
   return { ...card, state: newState };
@@ -20,10 +19,9 @@ export async function deleteCardWithState(
   cardId: string,
   opts?: ContactsMutationOpts & { ifInState?: string },
 ): Promise<void> {
-  const ifInState = opts?.ifInState ?? opts?.ifMatch;
   await deleteCardViaSet(cardId, {
     signal: opts?.signal,
-    ifInState: ifInState ?? undefined,
+    ifInState: opts?.ifInState,
   });
 }
 
