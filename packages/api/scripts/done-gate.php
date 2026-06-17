@@ -127,7 +127,11 @@ if ($contractOnly) {
 }
 
 done_gate_step("Step {$step}/{$totalSteps}: PHPUnit (unit + feature + storage)");
-$testCommand = done_gate_phpunit_base($phpunit, $config);
+$testCommand = [
+    ...done_gate_phpunit_base($phpunit, $config),
+    '--exclude-testsuite',
+    'Architecture',
+];
 if ($verbose) {
     $testCommand[] = '--testdox';
 }
@@ -135,7 +139,7 @@ $testCode = done_gate_run($testCommand);
 $results[] = [
     'label' => 'phpunit (full)',
     'ok' => $testCode === 0,
-    'detail' => 'all test suites',
+    'detail' => 'unit + feature + storage (architecture already run)',
 ];
 $step++;
 
