@@ -155,19 +155,29 @@ final class JwtConfigService
             return str_replace('\\n', "\n", $raw);
         }
 
-        $path = trim((string) config('wgw.jwt.'.$pathKey));
-        if ($path === '' && $defaultPath !== '') {
-            $path = $defaultPath;
+        $configuredPath = trim((string) config('wgw.jwt.'.$pathKey));
+        if ($configuredPath !== '') {
+            $material = $this->readKeyFile($configuredPath);
+            if ($material !== null) {
+                return $material;
+            }
         }
+
+        if ($defaultPath !== '') {
+            return $this->readKeyFile($defaultPath);
+        }
+
+        return null;
+    }
+
+    private function readKeyFile(string $path): ?string
+    {
         if ($path === '') {
             return null;
         }
 
         $absolute = $this->install->resolveInstallPath($path);
-        if (! is_readable($absolute)) {
-            return null;
-        }
-        if (! File::isFile($absolute)) {
+        if (! is_readable($absolute) || ! File::isFile($absolute)) {
             return null;
         }
         $contents = trim(File::get($absolute));
