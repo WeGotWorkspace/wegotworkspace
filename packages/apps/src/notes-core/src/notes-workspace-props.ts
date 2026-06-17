@@ -10,6 +10,8 @@ export type NotesWorkspaceProps = {
   operations?: NotesAPIOperations;
   /** Show list-column spinner while notes bootstrap (shell + sidebar visible). */
   listLoading?: boolean;
+  /** Refresh cached bootstrap after reconnect or conflict resolution. */
+  onRefreshList?: () => void;
   /** Invoked when the user chooses log out; navigation is owned by the app shell. */
   onLogout?: () => void;
   className?: string;

@@ -1,6 +1,7 @@
 import type { MouseEvent as ReactMouseEvent, ReactNode, RefObject } from "react";
-import { Archive, Pencil, Star, Trash2 } from "lucide-react";
-import { IconButton } from "@/button/src/button";
+import { Archive, Circle, Pencil, Star, Trash2 } from "lucide-react";
+import { Button, IconButton } from "@/button/src/button";
+import { Callout } from "@/callout/src/callout";
 import { ListItem } from "@/list-item/src/list-item";
 import { ViewHeader } from "@/view-header/src/view-header";
 import type { Note } from "@/lib/models/note";
@@ -40,6 +41,9 @@ type NotesListPanelProps = {
   toggleStar: (id: string) => void;
   toggleArchive: (id: string) => void;
   selectionBar: ReactNode;
+  pendingNoteIds?: ReadonlySet<string>;
+  failedSyncCount?: number;
+  onRetrySync?: () => void;
 };
 
 export function NotesListPanel({
@@ -72,7 +76,21 @@ export function NotesListPanel({
   toggleStar,
   toggleArchive,
   selectionBar,
+  pendingNoteIds,
+  failedSyncCount = 0,
+  onRetrySync,
 }: NotesListPanelProps) {
+  const retryCallout =
+    failedSyncCount > 0 && onRetrySync ? (
+      <Callout
+        className="notes-list-panel__retry-callout"
+        severity="error"
+        title={L.syncFailedTitle}
+        message={L.syncFailedMessage}
+        action={<Button variant="subtle" size="sm" label={L.retrySync} onClick={onRetrySync} />}
+      />
+    ) : null;
+
   return {
     header: (
       <ViewHeader
@@ -143,65 +161,79 @@ export function NotesListPanel({
         <LoadingSpinner size="lg" label={L.listLoading} />
       </div>
     ) : (
-      <WorkspaceSwipeList isTouch={isTouch}>
-        {visibleNotes.map((note) => {
-          const dragHandlers = itemDragHandlers(note.id) as {
-            onDragStart?: () => void;
-            onDragEnd?: () => void;
-          };
-          return (
-            <ListItem
-              key={note.id}
-              id={note.id}
-              title={note.title}
-              subtitle={note.notebook}
-              date={formatNoteDateForList(note.date)}
-              text={note.excerpt}
-              icons={[
-                <span
-                  key="star"
-                  className="notes-list-panel__star-pip"
-                  data-active={starred[note.id] ? "true" : "false"}
-                >
-                  <Star className="notes-list-panel__star-icon" fill="currentColor" />
-                </span>,
-              ]}
-              isActive={note.id === activeId}
-              isSelected={selectedIds.includes(note.id)}
-              selectionMode={selectionMode}
-              isTouch={isTouch}
-              isDragging={isItemDragging(note.id)}
-              onClick={(e: ReactMouseEvent) => handleSelect(note.id, e)}
-              onLongPress={() => enterSelectionFor(note.id)}
-              {...dragHandlers}
-              onDragStart={dragHandlers.onDragStart ?? (() => {})}
-              onDragEnd={dragHandlers.onDragEnd ?? (() => {})}
-              {...(isTouch
-                ? {
-                    swipeLeftAction: {
-                      icon: (
-                        <Star
-                          className="size-5"
-                          fill={starred[note.id] ? "currentColor" : "none"}
-                        />
-                      ),
-                      color: "var(--color-emerald)",
-                      label: starred[note.id] ? L.swipeUnstar : L.swipeStar,
-                      onActivate: () => toggleStar(note.id),
-                    },
-                    swipeRightAction: {
-                      icon: <Archive className="size-5" />,
-                      color: "var(--color-ink)",
-                      label: archived[note.id] ? L.swipeUnarchive : L.swipeArchive,
-                      destructive: true,
-                      onActivate: () => toggleArchive(note.id),
-                    },
-                  }
-                : {})}
-            />
-          );
-        })}
-      </WorkspaceSwipeList>
+      <>
+        {retryCallout}
+        <WorkspaceSwipeList isTouch={isTouch}>
+          {visibleNotes.map((note) => {
+            const dragHandlers = itemDragHandlers(note.id) as {
+              onDragStart?: () => void;
+              onDragEnd?: () => void;
+            };
+            const isPendingSync = pendingNoteIds?.has(note.id) ?? false;
+            return (
+              <ListItem
+                key={note.id}
+                id={note.id}
+                title={note.title}
+                subtitle={note.notebook}
+                date={formatNoteDateForList(note.date)}
+                text={note.excerpt}
+                icons={[
+                  isPendingSync ? (
+                    <span
+                      key="pending"
+                      className="notes-list-panel__pending-dot"
+                      role="img"
+                      aria-label={L.pendingSync}
+                    >
+                      <Circle className="size-2.5" fill="currentColor" strokeWidth={0} />
+                    </span>
+                  ) : null,
+                  <span
+                    key="star"
+                    className="notes-list-panel__star-pip"
+                    data-active={starred[note.id] ? "true" : "false"}
+                  >
+                    <Star className="notes-list-panel__star-icon" fill="currentColor" />
+                  </span>,
+                ].filter(Boolean)}
+                isActive={note.id === activeId}
+                isSelected={selectedIds.includes(note.id)}
+                selectionMode={selectionMode}
+                isTouch={isTouch}
+                isDragging={isItemDragging(note.id)}
+                onClick={(e: ReactMouseEvent) => handleSelect(note.id, e)}
+                onLongPress={() => enterSelectionFor(note.id)}
+                {...dragHandlers}
+                onDragStart={dragHandlers.onDragStart ?? (() => {})}
+                onDragEnd={dragHandlers.onDragEnd ?? (() => {})}
+                {...(isTouch
+                  ? {
+                      swipeLeftAction: {
+                        icon: (
+                          <Star
+                            className="size-5"
+                            fill={starred[note.id] ? "currentColor" : "none"}
+                          />
+                        ),
+                        color: "var(--color-emerald)",
+                        label: starred[note.id] ? L.swipeUnstar : L.swipeStar,
+                        onActivate: () => toggleStar(note.id),
+                      },
+                      swipeRightAction: {
+                        icon: <Archive className="size-5" />,
+                        color: "var(--color-ink)",
+                        label: archived[note.id] ? L.swipeUnarchive : L.swipeArchive,
+                        destructive: true,
+                        onActivate: () => toggleArchive(note.id),
+                      },
+                    }
+                  : {})}
+              />
+            );
+          })}
+        </WorkspaceSwipeList>
+      </>
     ),
     hasItems: listLoading || visibleNotes.length > 0,
     emptyLabel: L.emptyList,
