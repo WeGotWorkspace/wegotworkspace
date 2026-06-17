@@ -24,7 +24,7 @@ export type OfflineOutboxRow = {
 /** Dexie store spec map (`tableName` → index spec). A `null` value drops the table. */
 export type OfflineStoreSchema = Record<string, string | null>;
 
-/** A single Dexie version step a domain contributes (version `>= 2`; `1` is core). */
+/** A single Dexie version step a domain contributes (within its allocated range; core owns version 1). */
 export type OfflineDomainVersion = {
   version: number;
   /** Delta of stores added/changed at this version; merged onto the running schema. */
