@@ -20,6 +20,7 @@ paths:
 | **Which shell pattern?** (split vs collection vs custom) | [workspace-shells.md](../../../packages/apps/docs/workspace-shells.md) |
 | Shell layout, sidebar, navigation, toasts | This file |
 | Split product into App + Workspace + panes | [feature-blueprint.md](feature-blueprint.md) |
+| **Add offline support to a new app** (Dexie, outbox, sync, conflicts) | [offline-platform.md](../../../packages/apps/docs/offline-platform.md) |
 
 ## `WorkspaceAppLayout` split mode
 
