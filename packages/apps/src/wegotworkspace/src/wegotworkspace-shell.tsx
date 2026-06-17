@@ -1,12 +1,12 @@
 import { Link, Outlet } from "@tanstack/react-router";
-import { OfflineConnectivityBanner } from "@/lib/offline/offline-connectivity-banner";
+import { OfflineStatusIndicator } from "@/lib/offline/offline-status-indicator";
 import { AppToaster } from "@/ui/sonner";
 import { TooltipProvider } from "@/ui/tooltip";
 
 export function WeGotWorkspaceShell() {
   return (
     <TooltipProvider delayDuration={300}>
-      <OfflineConnectivityBanner />
+      <OfflineStatusIndicator />
       <Outlet />
       <AppToaster />
     </TooltipProvider>
