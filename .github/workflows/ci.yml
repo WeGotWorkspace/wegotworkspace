@@ -18,6 +18,10 @@ jobs:
       github.event_name != 'push' ||
       !startsWith(github.event.head_commit.message, 'chore(release):')
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     steps:
       - uses: actions/checkout@v6
 
@@ -61,7 +65,11 @@ jobs:
           cp packages/api/.env.example packages/api/.env
           php packages/api/artisan key:generate --force --no-interaction
 
-      - name: API quality gate
+      # Shard 1 also runs greenfield-guard + the Architecture suite; later
+      # shards run only their round-robin slice of unit/feature/storage tests.
+      - name: API quality gate (shard ${{ matrix.shard }}/2)
+        env:
+          DONE_GATE_SHARD: ${{ matrix.shard }}/2
         run: pnpm run ci:quality:api
 
   apps-quality:
@@ -202,6 +210,10 @@ jobs:
       github.event_name != 'push' ||
       !startsWith(github.event.head_commit.message, 'chore(release):')
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     services:
       mysql:
         image: mysql:8.0
@@ -240,9 +252,10 @@ jobs:
           cp packages/api/.env.example packages/api/.env
           php packages/api/artisan key:generate --force --no-interaction
 
-      # PR/push runs only the MySQL parity subset (DB-dialect-relevant tests).
-      # The full MySQL suite runs on main + nightly via ci-mysql-full.yml.
-      - name: API tests (MySQL parity subset)
+      # PR/push runs only the MySQL parity subset (DB-dialect-relevant tests),
+      # split into round-robin shards. The full MySQL suite runs on main +
+      # nightly via ci-mysql-full.yml.
+      - name: API tests (MySQL parity subset, shard ${{ matrix.shard }}/2)
         env:
           WGW_TEST_DRIVER: mysql
           WGW_TEST_MYSQL_HOST: 127.0.0.1
@@ -250,4 +263,5 @@ jobs:
           WGW_TEST_MYSQL_DATABASE: wgw_test
           WGW_TEST_MYSQL_USERNAME: root
           WGW_TEST_MYSQL_PASSWORD: root
-        run: composer --working-dir packages/api run test:mysql:parity
+          WGW_PHPUNIT_SHARD: ${{ matrix.shard }}/2
+        run: composer --working-dir packages/api run test:mysql:parity:shard
