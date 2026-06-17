@@ -28,7 +28,11 @@ function resolveWgwVitePort(raw: string | undefined, defaultPort: number, envVar
 export default defineConfig(({ mode }) => {
   const wgwApiProxy = wgwApiViteProxy(mode);
   const wgwEnv = loadEnv(mode, wgwMonorepoRoot, "WGW_");
-  const devPort = resolveWgwVitePort(wgwEnv.WGW_VITE_DEV_PORT, DEFAULT_DEV_PORT, "WGW_VITE_DEV_PORT");
+  const devPort = resolveWgwVitePort(
+    wgwEnv.WGW_VITE_DEV_PORT,
+    DEFAULT_DEV_PORT,
+    "WGW_VITE_DEV_PORT",
+  );
   const previewPort = resolveWgwVitePort(
     wgwEnv.WGW_VITE_PREVIEW_PORT,
     DEFAULT_PREVIEW_PORT,
