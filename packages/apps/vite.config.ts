@@ -44,6 +44,8 @@ export default defineConfig({
   },
   plugins: [react(), tailwindcss(), tsconfigPaths()],
   server: {
+    // Bind all interfaces so both http://127.0.0.1 and http://localhost work (Node may otherwise listen on ::1 only).
+    host: true,
     port: devPort,
     strictPort: true,
     proxy: {

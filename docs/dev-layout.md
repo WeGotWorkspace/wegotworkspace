@@ -86,6 +86,8 @@ WGW_VITE_PREVIEW_PORT=4174
 
 Restart `pnpm dev` or `pnpm preview` after changing ports. Single-worktree setups can omit these — defaults stay `:5173` / `:4173`.
 
+**Edit the same worktree you run `pnpm dev` in.** Git worktrees share history but not working files — each clone has its own `packages/apps/src/`. Saving in one worktree does not affect Vite running in another.
+
 ## UI smoke e2e (Playwright, optional)
 
 Phase 1 loads mock-tier Storybook stories — no live API required:

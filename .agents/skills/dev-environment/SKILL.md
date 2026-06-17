@@ -75,6 +75,8 @@ docker compose -f compose.dev.yml exec web php /var/www/packages/api/artisan wgw
 | Login shows **JWT key configuration missing** | No RSA keys under `wgw-content/keys/` | `php packages/api/artisan wgw:jwt-keys` (also run by `pnpm dev` / `pnpm preview` on first start) |
 | Login **HTTP 500** on `auth/token` | No `wgw-config.php` / `db.sqlite` (API falls back to empty in-memory DB) | `php packages/api/artisan wgw:dev-install` (also run by `pnpm dev` / `pnpm preview` on first start) |
 | Missing tables after pull | Pending WGW migration | `wgw:schema-migrate` (see above) |
+| UI edits never appear (HMR or reload) | Editing a **different git worktree** than the one running `pnpm dev` | Open the file under the same clone that started Vite (check `lsof -p $(lsof -t -iTCP:5173) \| grep cwd`). Each worktree has its own `packages/apps/src/` — not symlinked. |
+| UI edits on `/` not visible | Component only mounted on app routes (e.g. Contacts at `/contacts/all`) | Navigate to the route that renders the component; `/` is the home launcher only. |
 | Type errors after OpenAPI change | Types not regenerated | `pnpm --filter @wgw/api run openapi:build-json` + apps typegen |
 
 ## API e2e (local, not default CI for apps)
