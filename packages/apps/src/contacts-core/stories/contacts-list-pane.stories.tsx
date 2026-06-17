@@ -14,7 +14,13 @@ const storyChrome = {
 
 export type ContactsListPanePreset = "default" | "empty" | "loading" | "inGroup";
 
-function ContactsListPaneHarness({ preset = "default" }: { preset?: ContactsListPanePreset }) {
+function ContactsListPaneHarness({
+  preset = "default",
+  pendingCardIds,
+}: {
+  preset?: ContactsListPanePreset;
+  pendingCardIds?: string[];
+}) {
   const controller = useContactsPaneStoryController(
     preset === "empty"
       ? { cardsOverride: [] }
@@ -59,6 +65,7 @@ function ContactsListPaneHarness({ preset = "default" }: { preset?: ContactsList
     onSwipeRemoveFromGroup: (id) => controller.removeFromGroup([id]),
     selectionBar: controller.selectionBar,
     onRefreshList: () => {},
+    pendingCardIds: pendingCardIds ? new Set(pendingCardIds) : undefined,
   });
 
   return (
@@ -98,6 +105,15 @@ export const Default: Story = {
     const input = canvas.getByPlaceholderText("Search contacts...");
     await userEvent.type(input, "joe@");
     await expect(input).toHaveValue("joe@");
+  },
+};
+
+export const PendingSync: Story = {
+  tags: ["vitest-ci"],
+  args: { preset: "default", pendingCardIds: ["card-jane"] },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByRole("img", { name: "Pending sync" })).toBeInTheDocument();
   },
 };
 

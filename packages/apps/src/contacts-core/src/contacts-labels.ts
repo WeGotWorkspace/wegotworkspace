@@ -74,6 +74,7 @@ export type ContactsUILabels = {
   toastDeleted: string;
   toastSyncConflict: (name: string) => string;
   toastSyncConflictOpen: string;
+  pendingSync: string;
   downloadVCard: string;
   selectionDelete: string;
   selectionRemoveFromGroup: string;
@@ -165,6 +166,7 @@ export const defaultContactsLabels: ContactsUILabels = {
   toastSyncConflict: (name) =>
     `Could not sync changes to “${name}” because it was updated elsewhere.`,
   toastSyncConflictOpen: "Open contact",
+  pendingSync: "Pending sync",
   downloadVCard: "Download vCard",
   selectionDelete: "Delete",
   selectionRemoveFromGroup: "Remove from group",

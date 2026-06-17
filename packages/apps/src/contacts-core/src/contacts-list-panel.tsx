@@ -1,5 +1,5 @@
 import type { MouseEvent as ReactMouseEvent, ReactNode, RefObject } from "react";
-import { Pencil, RefreshCw, Trash2, UserMinus } from "lucide-react";
+import { Circle, Pencil, RefreshCw, Trash2, UserMinus } from "lucide-react";
 import { IconButton } from "@/button/src/button";
 import { ListItem } from "@/list-item/src/list-item";
 import { ViewHeader } from "@/view-header/src/view-header";
@@ -44,6 +44,8 @@ type ContactsListPanelProps = {
   onSwipeRemoveFromGroup: (id: string) => void;
   selectionBar: ReactNode;
   onRefreshList?: () => void;
+  /** Card ids with unsynced local changes; rendered with a subtle pending-sync dot. */
+  pendingCardIds?: ReadonlySet<string>;
 };
 
 export function ContactsListPanel({
@@ -74,6 +76,7 @@ export function ContactsListPanel({
   onSwipeRemoveFromGroup,
   selectionBar,
   onRefreshList,
+  pendingCardIds,
 }: ContactsListPanelProps) {
   return {
     header: (
@@ -150,6 +153,7 @@ export function ContactsListPanel({
                 onDragEnd?: () => void;
               };
               const name = contactDisplayName(card);
+              const isPendingSync = pendingCardIds?.has(card.id) ?? false;
               return (
                 <ListItem
                   key={card.id}
@@ -159,7 +163,17 @@ export function ContactsListPanel({
                   metaPosition="below"
                   date=""
                   text={contactListDetail(card)}
-                  icons={[]}
+                  icons={[
+                    isPendingSync ? (
+                      <span
+                        className="contacts-list-panel__pending-dot"
+                        role="img"
+                        aria-label={L.pendingSync}
+                      >
+                        <Circle className="size-2.5" fill="currentColor" strokeWidth={0} />
+                      </span>
+                    ) : null,
+                  ].filter(Boolean)}
                   leading={
                     <ContactUserAvatar
                       card={card}

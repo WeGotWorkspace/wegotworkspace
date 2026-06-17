@@ -30,6 +30,7 @@
 
   --contacts-list-avatar-bg: #0e7490;
   --contacts-list-avatar-color: #ffffff;
+  --contacts-pending-sync-color: #c98a1f;
   --contacts-swipe-delete-color: #dc2626;
   --contacts-swipe-remove-color: var(--contacts-accent);
   --contacts-detail-title-font-family: var(--font-serif);
@@ -128,6 +129,11 @@
 .contacts-list-panel__avatar .user-avatar__mark {
   background-color: var(--contacts-list-avatar-bg);
   color: var(--contacts-list-avatar-color);
+}
+
+.contacts-list-panel__pending-dot {
+  @apply inline-flex shrink-0 items-center justify-center;
+  color: var(--contacts-pending-sync-color);
 }
 
 .contacts-detail-view {

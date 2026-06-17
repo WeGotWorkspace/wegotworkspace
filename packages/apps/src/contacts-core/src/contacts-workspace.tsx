@@ -13,7 +13,9 @@ import { ContactsListPanel } from "@/contacts-core/src/contacts-list-panel";
 import { ContactsNewMenu } from "@/contacts-core/src/contacts-new-menu";
 import type { ContactsWorkspaceProps } from "@/contacts-core/src/contacts-workspace-props";
 import { useContactsController } from "@/contacts-core/src/use-contacts-controller";
+import { useContactsPendingSync } from "@/contacts-core/src/use-contacts-pending-sync";
 import { useContactsSidebarModel } from "@/contacts-core/src/use-contacts-sidebar-model";
+import { resolveContactsOfflineUsername } from "@/lib/offline/offline-session";
 import "react-swipeable-list/dist/styles.css";
 import "@/contacts-core/src/contacts-workspace.css";
 
@@ -122,6 +124,9 @@ export function ContactsWorkspace({
     onContactChange,
   });
 
+  const offlineUsername = resolveContactsOfflineUsername(session.user.username);
+  const pendingCardIds = useContactsPendingSync(offlineUsername, data.cards.length);
+
   const { primarySidebarItems, groupSidebarItems } = useContactsSidebarModel({
     labels: L,
     view,
@@ -202,6 +207,7 @@ export function ContactsWorkspace({
             onSwipeRemoveFromGroup: (id) => removeFromGroup([id]),
             selectionBar,
             onRefreshList,
+            pendingCardIds,
           });
 
           return {
