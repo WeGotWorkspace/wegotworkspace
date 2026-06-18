@@ -70,6 +70,7 @@ export function NotesListPaneHarness({
     toggleStar: controller.toggleStar,
     toggleArchive: controller.toggleArchive,
     selectionBar: controller.selectionBar,
+    onRefreshList: () => {},
     pendingNoteIds: pendingNoteIds ? new Set(pendingNoteIds) : undefined,
     failedSyncCount,
     onRetrySync: () => {},
@@ -106,6 +107,7 @@ export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getByText(/Architecture of Quiet/i)).toBeInTheDocument();
+    await expect(canvas.getByRole("button", { name: "Refresh notes" })).toBeInTheDocument();
     const input = canvas.getByPlaceholderText("Search notes...");
     await userEvent.type(input, "Nordic");
     await expect(input).toHaveValue("Nordic");

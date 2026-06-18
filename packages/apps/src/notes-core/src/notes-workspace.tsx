@@ -191,6 +191,7 @@ export function NotesWorkspace({
             toggleStar,
             toggleArchive,
             selectionBar,
+            onRefreshList,
             pendingNoteIds,
             failedSyncCount,
             onRetrySync: handleRetrySync,
