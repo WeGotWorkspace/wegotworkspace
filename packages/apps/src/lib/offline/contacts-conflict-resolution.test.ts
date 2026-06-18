@@ -10,6 +10,7 @@ import {
   writeContactsBootstrapToCache,
 } from "@/lib/offline/contacts-offline-store";
 import {
+  resolveConflictFieldMerge,
   resolveConflictKeepLocal,
   resolveConflictUseServer,
 } from "@/lib/offline/contacts-conflict-resolution";
@@ -144,5 +145,61 @@ describe("contacts conflict resolution", () => {
 
     const cached = await readContactsBootstrapFromCache(username);
     expect(cached?.data.cards.find((c) => c.id === "jane-doe")?.name?.full).toBe("Jane Server");
+  });
+
+  it("field merge: re-pushes a merged patch with the fresh server ifInState", async () => {
+    await enqueueCoalescedContactUpdate(
+      username,
+      "jane-doe",
+      {
+        name: { "@type": "Name", isOrdered: false, full: "Jane Local" },
+        emails: { e1: { "@type": "EmailAddress", address: "jane@local.example" } },
+      },
+      "state-1",
+    );
+
+    const localCard = {
+      ...bootstrap.data.cards[0],
+      name: { "@type": "Name", isOrdered: false, full: "Jane Local" },
+      emails: { e1: { address: "jane@local.example" } },
+    } as unknown as ContactCard;
+
+    getCard.mockResolvedValue({
+      ...bootstrap.data.cards[0],
+      name: { "@type": "Name", isOrdered: false, full: "Jane Server" },
+      emails: { e1: { address: "jane@server.example" } },
+      state: "state-2",
+    });
+    contactCardSet.mockResolvedValue({
+      created: {},
+      updated: { "jane-doe": null },
+      destroyed: {},
+      notCreated: {},
+      notUpdated: {},
+      notDestroyed: {},
+    });
+
+    const result = await resolveConflictFieldMerge(username, "jane-doe", localCard, {
+      name: "server",
+      emails: "local",
+      phones: "server",
+      addresses: "server",
+      urls: "server",
+      organization: "server",
+      notes: "server",
+      kind: "server",
+    });
+
+    expect(result.stateMismatches).toEqual([]);
+    expect(contactCardSet).toHaveBeenCalledTimes(1);
+    expect(contactCardSet.mock.calls[0]?.[0]).toEqual({
+      update: {
+        "jane-doe": {
+          emails: { e1: { address: "jane@local.example" } },
+          ifInState: "state-2",
+        },
+      },
+    });
+    expect(await listOutboxMutations(username)).toHaveLength(0);
   });
 });

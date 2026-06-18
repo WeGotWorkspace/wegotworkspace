@@ -1,10 +1,15 @@
 import { getCard } from "@/lib/api/wgw/contacts";
+import type { ContactCard } from "@/contacts-core/src/contacts-types";
 import { isFetchNetworkError } from "@/lib/offline/core/browser-online";
 import {
   listOutboxMutations,
   putOutboxMutation,
   removeOutboxMutation,
 } from "@/lib/offline/core/outbox-store";
+import {
+  buildResolvedContactPatch,
+  type ContactConflictFieldChoices,
+} from "@/lib/offline/contacts-conflict-merge";
 import {
   contactsOutboxCardId,
   removeContactCardFromCache,
@@ -52,6 +57,43 @@ export async function resolveConflictKeepLocal(
  * row(s) for the card and refreshes the cached card from the server (or removes
  * it from cache when the server reports it gone).
  */
+/**
+ * Field-level merge: build a merged patch from per-field choices, rebase onto
+ * the fresh server `ifInState`, then flush the outbox.
+ */
+export async function resolveConflictFieldMerge(
+  username: string,
+  cardId: string,
+  localCard: ContactCard,
+  choices: ContactConflictFieldChoices,
+): Promise<OutboxFlushResult> {
+  const fresh = await getCard(cardId);
+  const freshState = cardState(fresh);
+  const mergedPatch = buildResolvedContactPatch(fresh, localCard, choices);
+
+  const rows = await outboxRowsForCard(username, cardId);
+  if (Object.keys(mergedPatch).length === 0) {
+    for (const row of rows) {
+      await removeOutboxMutation(username, row.id);
+    }
+    await upsertContactCardInCache(username, fresh, false);
+    return { stateMismatches: [], bootstrap: null };
+  }
+
+  for (const row of rows) {
+    if (row.op !== "update") continue;
+    await putOutboxMutation(username, {
+      ...row,
+      payload: JSON.stringify({ cardId, patch: mergedPatch }),
+      ifInState: freshState,
+      retries: 0,
+      lastError: undefined,
+    });
+  }
+
+  return flushContactsOutbox(username);
+}
+
 export async function resolveConflictUseServer(username: string, cardId: string): Promise<void> {
   const rows = await outboxRowsForCard(username, cardId);
   for (const row of rows) {

@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { wgwApiViteProxy } from "./scripts/wgw-proxy-target";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const wgwMonorepoRoot = path.join(__dirname, "..", "..", "..");
+const wgwMonorepoRoot = path.join(__dirname, "..", "..");
 
 const DEFAULT_DEV_PORT = 5173;
 const DEFAULT_PREVIEW_PORT = 4173;
