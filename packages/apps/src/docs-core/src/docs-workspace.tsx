@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Editor } from "@tiptap/react";
-import { Code2, Pencil, Printer } from "lucide-react";
+import { Circle, Code2, Pencil, Printer } from "lucide-react";
+import { Button } from "@/button/src/button";
+import { Callout } from "@/callout/src/callout";
 import { TooltipProvider } from "@/ui/tooltip";
 import { IconButton } from "@/button/src/button";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
@@ -17,6 +19,10 @@ import { DocsOutlineSidebar } from "@/docs-core/src/docs-outline-sidebar";
 import { DocsWorkspaceModals } from "@/docs-core/src/docs-workspace-modals";
 import { focusOutlineHeading, parseMarkdownOutline } from "@/docs-core/src/docs-outline";
 import { useDocsController } from "@/docs-core/src/use-docs-controller";
+import { useDocsFailedSync } from "@/docs-core/src/use-docs-failed-sync";
+import { useDocsPendingSync } from "@/docs-core/src/use-docs-pending-sync";
+import { getDocsSyncRunner } from "@/lib/offline/docs/docs-hybrid-operations";
+import { resolveDocsOfflineUsername } from "@/lib/offline/offline-session";
 import type { DocsWorkspaceProps } from "@/docs-core/src/docs-workspace-props";
 import "@/docs-core/src/docs-workspace.css";
 
@@ -27,6 +33,7 @@ export function DocsWorkspace({
   session,
   operations,
   filePath = null,
+  offlineEnabled = false,
   labels,
   onLogout,
   onFileRenamed,
@@ -41,6 +48,21 @@ export function DocsWorkspace({
   });
 
   const fileKey = filePath ?? data.document?.apiPath ?? "mock";
+  const offlineUsername = resolveDocsOfflineUsername(session.user.username);
+  const pendingSync = useDocsPendingSync(
+    offlineEnabled ? offlineUsername : null,
+    filePath,
+    controller.content.length,
+  );
+  const failedSyncCount = useDocsFailedSync(
+    offlineEnabled ? offlineUsername : null,
+    controller.content.length,
+  );
+
+  const handleRetrySync = useCallback(() => {
+    if (!offlineUsername) return;
+    void getDocsSyncRunner(offlineUsername).flush();
+  }, [offlineUsername]);
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -49,6 +71,9 @@ export function DocsWorkspace({
         controller={controller}
         fileKey={fileKey}
         session={session}
+        pendingSync={pendingSync}
+        failedSyncCount={failedSyncCount}
+        onRetrySync={offlineEnabled ? handleRetrySync : undefined}
         onLogout={onLogout}
       />
       <DocsWorkspaceModals controller={controller} />
@@ -61,12 +86,18 @@ function DocsWorkspaceShell({
   controller,
   fileKey,
   session,
+  pendingSync = false,
+  failedSyncCount = 0,
+  onRetrySync,
   onLogout,
 }: {
   className?: string;
   controller: DocsController;
   fileKey: string;
   session: WorkspaceSession;
+  pendingSync?: boolean;
+  failedSyncCount?: number;
+  onRetrySync?: () => void;
   onLogout?: () => void;
 }) {
   const [editor, setEditor] = useState<Editor | null>(null);
@@ -104,12 +135,31 @@ function DocsWorkspaceShell({
         />
       }
       mainHeader={
-        <DocsMainHeader
-          controller={controller}
-          editor={editor}
-          viewSource={viewSource}
-          onToggleViewSource={() => setViewSource((on) => !on)}
-        />
+        <>
+          {failedSyncCount > 0 && onRetrySync ? (
+            <Callout
+              className="docs-workspace__retry-callout"
+              severity="error"
+              title={controller.labels.syncFailedTitle}
+              message={controller.labels.syncFailedMessage}
+              action={
+                <Button
+                  variant="subtle"
+                  size="sm"
+                  label={controller.labels.retrySync}
+                  onClick={onRetrySync}
+                />
+              }
+            />
+          ) : null}
+          <DocsMainHeader
+            controller={controller}
+            editor={editor}
+            viewSource={viewSource}
+            pendingSync={pendingSync}
+            onToggleViewSource={() => setViewSource((on) => !on)}
+          />
+        </>
       }
       main={
         <DocsMainPane
@@ -166,11 +216,13 @@ function DocsMainHeader({
   controller,
   editor,
   viewSource,
+  pendingSync = false,
   onToggleViewSource,
 }: {
   controller: DocsController;
   editor: Editor | null;
   viewSource: boolean;
+  pendingSync?: boolean;
   onToggleViewSource: () => void;
 }) {
   const title = controller.title || controller.labels.emptyTitle;
@@ -183,6 +235,13 @@ function DocsMainHeader({
       actions={
         controller.hasFile ? (
           <div className="docs-workspace__header-actions">
+            {pendingSync ? (
+              <Circle
+                className="docs-workspace__pending-sync"
+                aria-label={controller.labels.pendingSync}
+                fill="currentColor"
+              />
+            ) : null}
             <IconButton
               label={viewSource ? controller.labels.hideSource : controller.labels.viewSource}
               icon={<Code2 />}

@@ -17,6 +17,17 @@ export const docsLabels = {
   outlineEmpty: "No headings in this document yet.",
   statsWords: (count: number) => `${count.toLocaleString()} words`,
   statsCharacters: (count: number) => `${count.toLocaleString()} characters`,
+  pendingSync: "Pending sync",
+  conflictTitle: "Sync conflict",
+  conflictDescription: (title: string) =>
+    `"${title}" was changed on the server while you were offline. Keep your version or use the server copy?`,
+  conflictRemaining: (count: number) =>
+    count === 1 ? "1 more conflict waiting" : `${count} more conflicts waiting`,
+  conflictKeepMine: "Keep mine",
+  conflictUseServer: "Use server",
+  syncFailedTitle: "Some changes could not sync",
+  syncFailedMessage: "Your edits are saved locally. Retry when you are back online.",
+  retrySync: "Retry",
 } as const;
 
 export type DocsUILabels = typeof docsLabels;
