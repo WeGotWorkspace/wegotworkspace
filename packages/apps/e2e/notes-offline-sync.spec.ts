@@ -53,14 +53,13 @@ test.describe("Notes offline sync (live app)", () => {
     await expect(page.locator(".ProseMirror")).toContainText(token);
   });
 
-  test("two windows: editor syncs and observer sees edit after refresh", async ({ browser }) => {
-    // Cross-tab live updates are not implemented; observer reloads to fetch server bootstrap.
+  test("two windows: editor syncs and observer sees edit without reload", async ({ browser }) => {
     const token = `e2e-2win-${Date.now()}`;
     const authFile = "e2e/.auth/admin.json";
-    const contextEditor = await browser.newContext({ storageState: authFile });
-    const contextObserver = await browser.newContext({ storageState: authFile });
-    const editor = await contextEditor.newPage();
-    const observer = await contextObserver.newPage();
+    // Same browser context so BroadcastChannel / IDB match real multi-tab behavior.
+    const context = await browser.newContext({ storageState: authFile });
+    const editor = await context.newPage();
+    const observer = await context.newPage();
 
     try {
       await prepareNotesForOfflineSync(editor);
@@ -102,9 +101,6 @@ test.describe("Notes offline sync (live app)", () => {
         )
         .toBe(true);
 
-      // Observer does not receive cross-tab push; reload pulls server bootstrap after background refresh.
-      await observer.reload();
-      await observer.getByRole("button", { name: "New note" }).waitFor({ timeout: 30_000 });
       await expect
         .poll(
           async () =>
@@ -116,8 +112,7 @@ test.describe("Notes offline sync (live app)", () => {
         )
         .toBe(true);
     } finally {
-      await contextEditor.close();
-      await contextObserver.close();
+      await context.close();
     }
   });
 

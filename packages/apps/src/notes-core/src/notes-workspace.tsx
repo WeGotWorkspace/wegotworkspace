@@ -97,6 +97,7 @@ export function NotesWorkspace({
     labels,
     listLoading,
     operations,
+    bootstrapRevision,
   });
 
   const { primarySidebarItems, notebookSidebarItems, tagSidebarItems } = useNotesSidebarModel({

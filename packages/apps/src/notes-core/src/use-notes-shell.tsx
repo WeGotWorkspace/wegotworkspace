@@ -18,6 +18,7 @@ export type UseNotesShellArgs = {
   labels?: Partial<NotesUILabels>;
   listLoading?: boolean;
   operations?: NotesAPIOperations;
+  bootstrapRevision?: number;
 };
 
 export function useNotesShell({
@@ -25,6 +26,7 @@ export function useNotesShell({
   labels,
   listLoading = false,
   operations,
+  bootstrapRevision = 0,
 }: UseNotesShellArgs) {
   const L = useMemo(() => mergeNotesLabels(labels), [labels]);
   const [notes, setNotes] = useState<Note[]>(() => data.notes.map(enrichNote));
@@ -88,7 +90,7 @@ export function useNotesShell({
 
   useEffect(() => {
     setNotes(data.notes.map(enrichNote));
-  }, [data]);
+  }, [bootstrapRevision, data]);
 
   const notebooks = useMemo(
     () => [...new Set(notes.map((note) => note.notebook).filter((name) => name.trim().length > 0))],
