@@ -1,5 +1,6 @@
 export const docsLabels = {
   toastSaved: "Document saved",
+  toastSynced: "Changes synced",
   emptyTitle: "No document open",
   emptyDescription: "Open a Markdown file from Drive to start editing.",
   loadError: "Could not load this document.",
@@ -13,6 +14,7 @@ export const docsLabels = {
   renameDialogDescription: "Change the name; the file extension cannot be edited.",
   renameAction: "Rename",
   cancel: "Cancel",
+  pendingSync: "Pending sync",
   sidebarOutline: "Outline",
   outlineEmpty: "No headings in this document yet.",
   statsWords: (count: number) => `${count.toLocaleString()} words`,
