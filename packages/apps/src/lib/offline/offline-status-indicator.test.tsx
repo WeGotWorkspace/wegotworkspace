@@ -1,16 +1,19 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { resetConnectivityHubForTests } from "@/lib/offline/browser-online";
 import { defaultOfflineLabels } from "@/lib/offline/offline-labels";
 import { OfflineStatusIndicator } from "@/lib/offline/offline-status-indicator";
 
 describe("OfflineStatusIndicator", () => {
   beforeEach(() => {
+    resetConnectivityHubForTests();
     vi.spyOn(navigator, "onLine", "get").mockReturnValue(true);
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 200 })));
   });
 
   afterEach(() => {
     cleanup();
+    resetConnectivityHubForTests();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });

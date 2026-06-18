@@ -20,7 +20,7 @@ import type { NotesUIData } from "@/notes-core/src/notes-types";
 import { createDefaultNotesApiSource, type NotesApiSource } from "./notes-api-source";
 
 /** Full bootstrap fetch while online — lighter than pending-sync badge polls. */
-const ONLINE_BOOTSTRAP_POLL_MS = 30_000;
+const ONLINE_BOOTSTRAP_POLL_MS = 10_000;
 
 export type UseNotesAPIOptions = {
   onSyncConflict?: (noteIds: string[]) => void;

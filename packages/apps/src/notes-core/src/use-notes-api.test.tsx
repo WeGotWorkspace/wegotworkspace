@@ -140,7 +140,7 @@ describe("useNotesAPI", () => {
     expect(mockLoadBootstrap).not.toHaveBeenCalled();
 
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(30_000);
+      await vi.advanceTimersByTimeAsync(10_000);
     });
 
     expect(mockLoadBootstrap).toHaveBeenCalledTimes(1);
