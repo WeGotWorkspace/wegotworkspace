@@ -78,7 +78,7 @@ describe("offline version allocation", () => {
 
     expect(() =>
       claimOfflineDomainVersions({
-        domain: "docs",
+        domain: "app-slot-3",
         versions: [{ version: 25, stores: { calendar_events: "id" } }],
       }),
     ).toThrow(/already claimed by domain "notes"/);
@@ -99,18 +99,11 @@ describe("offline version allocation", () => {
         { version: 11, stores: { notes_notes: "id, updatedAt" } },
       ],
     });
-    registerOfflineDomainTables({
-      domain: "docs",
-      versions: [
-        { version: 20, stores: { docs_files: "apiPath" } },
-        { version: 21, stores: { docs_files: "apiPath, pendingSync" } },
-      ],
-    });
 
     const db = new WgwOfflineDatabase("multi-domain-acct");
     await db.open();
 
-    expect(db.verno).toBe(21);
+    expect(db.verno).toBe(11);
     expect(db.tables.map((t) => t.name)).toEqual(
       expect.arrayContaining([
         "meta",
@@ -118,7 +111,6 @@ describe("offline version allocation", () => {
         "contacts_address_books",
         "contacts_cards",
         "notes_notes",
-        "docs_files",
       ]),
     );
 

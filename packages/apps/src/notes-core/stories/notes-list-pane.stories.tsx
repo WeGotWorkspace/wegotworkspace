@@ -13,7 +13,15 @@ const storyChrome = {
 
 export type NotesListPanePreset = "default" | "empty" | "loading" | "inNotebook";
 
-export function NotesListPaneHarness({ preset = "default" }: { preset?: NotesListPanePreset }) {
+export function NotesListPaneHarness({
+  preset = "default",
+  pendingNoteIds,
+  failedSyncCount,
+}: {
+  preset?: NotesListPanePreset;
+  pendingNoteIds?: string[];
+  failedSyncCount?: number;
+}) {
   const controller = useNotesPaneStoryController(
     preset === "empty"
       ? { notesOverride: [] }
@@ -62,6 +70,9 @@ export function NotesListPaneHarness({ preset = "default" }: { preset?: NotesLis
     toggleStar: controller.toggleStar,
     toggleArchive: controller.toggleArchive,
     selectionBar: controller.selectionBar,
+    pendingNoteIds: pendingNoteIds ? new Set(pendingNoteIds) : undefined,
+    failedSyncCount,
+    onRetrySync: () => {},
   });
 
   return (
@@ -98,6 +109,25 @@ export const Default: Story = {
     const input = canvas.getByPlaceholderText("Search notes...");
     await userEvent.type(input, "Nordic");
     await expect(input).toHaveValue("Nordic");
+  },
+};
+
+export const PendingSync: Story = {
+  tags: ["vitest-ci"],
+  args: { preset: "default", pendingNoteIds: ["1"] },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByRole("img", { name: "Pending sync" })).toBeInTheDocument();
+  },
+};
+
+export const RetrySync: Story = {
+  tags: ["vitest-ci"],
+  args: { preset: "default", failedSyncCount: 2 },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByText("Some changes could not sync")).toBeInTheDocument();
+    await expect(canvas.getByRole("button", { name: "Retry" })).toBeInTheDocument();
   },
 };
 

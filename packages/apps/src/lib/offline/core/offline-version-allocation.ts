@@ -16,19 +16,14 @@ export type OfflineDomainVersionRange = {
 export const OFFLINE_DOMAIN_VERSION_RANGES: Record<string, OfflineDomainVersionRange> = {
   contacts: { min: 2, max: 9 },
   notes: { min: 10, max: 19 },
-  docs: { min: 20, max: 29 },
+  /** Reserved for offline app #3 — rename the key to your domain when claiming. */
+  "app-slot-3": { min: 20, max: 29 },
 };
 
 /** Contacts version steps within the contacts block (2–9). */
 export const CONTACTS_OFFLINE_VERSION = {
   tables: 2,
   updatedAtIndex: 3,
-} as const;
-
-/** Docs My Drive version steps within the docs block (20–29). */
-export const DOCS_OFFLINE_VERSION = {
-  tables: 20,
-  pendingSyncIndex: 21,
 } as const;
 
 /** Notes version steps within the notes block (10–19). */

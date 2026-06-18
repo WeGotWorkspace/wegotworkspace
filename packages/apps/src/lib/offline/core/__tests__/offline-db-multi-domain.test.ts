@@ -2,13 +2,9 @@ import "fake-indexeddb/auto";
 import Dexie from "dexie";
 import { describe, expect, it } from "vitest";
 import { registerOfflineDomainTables, WgwOfflineDatabase } from "@/lib/offline/core/offline-db";
-import {
-  DOCS_OFFLINE_VERSION,
-  NOTES_OFFLINE_VERSION,
-  seedOfflineVersionOwnerForTests,
-} from "@/lib/offline/core/offline-version-allocation";
+import { NOTES_OFFLINE_VERSION } from "@/lib/offline/core/offline-version-allocation";
+import { seedOfflineVersionOwnerForTests } from "@/lib/offline/core/offline-version-allocation";
 import { contactsCardsTable } from "@/lib/offline/contacts/contacts-schema";
-import "@/lib/offline/docs/docs-schema";
 import {
   notesNotesTable,
   NOTES_DOMAIN,
@@ -17,16 +13,15 @@ import {
 const dbName = (key: string) => `wgw-offline-${key}`;
 
 describe("offline db multi-domain registry", () => {
-  it("opens fresh with core, contacts, notes, and docs tables at the latest version", async () => {
+  it("opens fresh with core, contacts, and notes tables at the latest version", async () => {
     const db = new WgwOfflineDatabase("multi-fresh");
     await db.open();
 
-    expect(db.verno).toBe(DOCS_OFFLINE_VERSION.pendingSyncIndex);
+    expect(db.verno).toBe(NOTES_OFFLINE_VERSION.updatedAtIndex);
     expect(db.tables.map((t) => t.name).sort()).toEqual(
       expect.arrayContaining([
         "contacts_address_books",
         "contacts_cards",
-        "docs_files",
         "meta",
         "notes_notebooks",
         "notes_notes",
@@ -98,12 +93,11 @@ describe("offline db multi-domain registry", () => {
     const db = new WgwOfflineDatabase("multi-upgrade");
     await db.open();
 
-    expect(db.verno).toBe(DOCS_OFFLINE_VERSION.pendingSyncIndex);
+    expect(db.verno).toBe(NOTES_OFFLINE_VERSION.updatedAtIndex);
     expect(await db.meta.get("shared:session")).toBeTruthy();
     expect(await db.outbox.get("legacy-op")).toBeTruthy();
     expect(db.tables.map((t) => t.name)).toContain("contacts_cards");
     expect(db.tables.map((t) => t.name)).toContain("notes_notes");
-    expect(db.tables.map((t) => t.name)).toContain("docs_files");
 
     await db.delete();
   });
@@ -157,7 +151,7 @@ describe("offline db multi-domain registry", () => {
 
     expect(() =>
       registerOfflineDomainTables({
-        domain: "docs",
+        domain: "app-slot-3",
         versions: [{ version: 25, stores: { collision_b_table: "id" } }],
       }),
     ).toThrow(/already claimed by domain "notes"/);

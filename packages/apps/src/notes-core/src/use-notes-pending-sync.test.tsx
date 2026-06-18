@@ -1,0 +1,31 @@
+import "fake-indexeddb/auto";
+import { renderHook, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("@/lib/offline/notes-offline-store", () => ({
+  listPendingNoteIds: vi.fn(),
+}));
+
+import { listPendingNoteIds } from "@/lib/offline/notes-offline-store";
+import { useNotesPendingSync } from "@/notes-core/src/use-notes-pending-sync";
+
+describe("useNotesPendingSync", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns an empty set and skips the read when no username is known", () => {
+    const { result } = renderHook(() => useNotesPendingSync(null));
+    expect(result.current.size).toBe(0);
+    expect(listPendingNoteIds).not.toHaveBeenCalled();
+  });
+
+  it("exposes the pending note ids read from the offline store", async () => {
+    vi.mocked(listPendingNoteIds).mockResolvedValue(["note-1", "note-2"]);
+    const { result } = renderHook(() => useNotesPendingSync("bob"));
+
+    await waitFor(() => expect(result.current.has("note-1")).toBe(true));
+    expect(result.current.has("note-2")).toBe(true);
+    expect(result.current.size).toBe(2);
+  });
+});
