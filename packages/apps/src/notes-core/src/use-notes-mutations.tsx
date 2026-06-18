@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useConnectivity } from "@/hooks/use-connectivity";
 import { Archive, ArchiveRestore, BookOpen, Plus, Star, StarOff, Tag, Trash2 } from "lucide-react";
 import { useConfirmDialog } from "@/hooks/use-confirm-dialog";
 import { useWorkspaceSelectionPresentation } from "@/hooks/use-workspace-list-controller";
 import type { Note } from "@/lib/models/note";
+import { createTempNoteId } from "@/lib/offline/notes-offline-store";
 import {
   AUTOSAVE_WRITE_DEBOUNCE_MS,
   computeExcerpt,
   computeWordCount,
   createNoteSaveDebouncer,
+  enrichNote,
   normalizeTag,
   persistBestEffort,
 } from "./notes-note-utils";
@@ -54,6 +57,8 @@ export function useNotesMutations({ shell, list }: UseNotesMutationsArgs) {
   } = list;
 
   const debouncerRef = useRef(createNoteSaveDebouncer(AUTOSAVE_WRITE_DEBOUNCE_MS));
+  const { online } = useConnectivity();
+  const wasOnlineRef = useRef(online);
 
   useEffect(() => {
     const debouncer = debouncerRef.current;
@@ -63,6 +68,13 @@ export function useNotesMutations({ shell, list }: UseNotesMutationsArgs) {
       }
     };
   }, [operations]);
+
+  useEffect(() => {
+    if (wasOnlineRef.current && !online && operations) {
+      debouncerRef.current.flushAll((note) => persistBestEffort(operations.upsertNote(note)));
+    }
+    wasOnlineRef.current = online;
+  }, [online, operations]);
 
   const [moveDialog, setMoveDialog] = useState<{ ids: string[] } | null>(null);
   const [editDialog, setEditDialog] = useState<null | { kind: "notebook" | "tag"; name: string }>(
@@ -94,13 +106,16 @@ export function useNotesMutations({ shell, list }: UseNotesMutationsArgs) {
         }
         if (operations) {
           const ops = operations;
-          debouncerRef.current.schedule(noteId, updated, (note) =>
-            persistBestEffort(ops.upsertNote(note)),
-          );
+          const persist = (note: Note) => persistBestEffort(ops.upsertNote(note));
+          if (online) {
+            debouncerRef.current.schedule(noteId, updated, persist);
+          } else {
+            persist(updated);
+          }
         }
       }
     },
-    [operations, queueAutoSaveToast, setNotes],
+    [online, operations, queueAutoSaveToast, setNotes],
   );
 
   const toggleStar = useCallback(
@@ -407,7 +422,7 @@ export function useNotesMutations({ shell, list }: UseNotesMutationsArgs) {
     if (!canCreateNote) return;
     const targetNotebook = view.startsWith("nb:") ? view.slice(3) : (notebooks[0] ?? "Drafts");
     const targetTag = view.startsWith("tag:") ? view.slice(4) : null;
-    const id = `n-${Date.now()}`;
+    const id = createTempNoteId();
     const date = new Date().toISOString();
     const note: Note = {
       id,
@@ -424,7 +439,19 @@ export function useNotesMutations({ shell, list }: UseNotesMutationsArgs) {
     setActiveId(id);
     selectSingle(id);
     workspaceLayoutRef.current?.openMobileDetail();
-    if (operations) persistBestEffort(operations.upsertNote(note));
+    if (operations) {
+      void operations
+        .upsertNote(note)
+        .then((saved) => {
+          if (saved.id === id) return;
+          setNotes((prev) => prev.map((row) => (row.id === id ? enrichNote(saved) : row)));
+          setActiveId((current) => (current === id ? saved.id : current));
+          if (selectedIds.includes(id)) {
+            setSelectedIds((current) => current.map((rowId) => (rowId === id ? saved.id : rowId)));
+          }
+        })
+        .catch(() => {});
+    }
     show(L.toastNewNote, { icon: <Plus className="size-4" /> });
   }, [
     L.newNoteCategory,
@@ -433,8 +460,10 @@ export function useNotesMutations({ shell, list }: UseNotesMutationsArgs) {
     notebooks,
     operations,
     selectSingle,
+    selectedIds,
     setActiveId,
     setNotes,
+    setSelectedIds,
     show,
     view,
     workspaceLayoutRef,

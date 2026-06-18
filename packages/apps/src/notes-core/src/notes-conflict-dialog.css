@@ -1,0 +1,11 @@
+.notes-conflict-dialog__remaining {
+  margin: 0;
+  font-size: 0.875rem;
+  color: color-mix(in oklab, var(--color-ink) 65%, transparent);
+}
+
+.notes-conflict-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}

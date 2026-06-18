@@ -1,10 +1,11 @@
 /**
  * @deprecated Generic database helpers now live in `@/lib/offline/core/offline-db`
- * and contacts table types in `@/lib/offline/contacts/contacts-schema`. This shim
- * preserves the historical import path and guarantees the contacts schema is
+ * and domain table types under `@/lib/offline/contacts/` and `@/lib/offline/notes/`.
+ * This shim preserves the historical import path and guarantees domain schemas are
  * registered before the database opens.
  */
 import "@/lib/offline/contacts/contacts-schema";
+import "@/lib/offline/notes/notes-schema";
 
 export {
   CORE_OFFLINE_VERSION,

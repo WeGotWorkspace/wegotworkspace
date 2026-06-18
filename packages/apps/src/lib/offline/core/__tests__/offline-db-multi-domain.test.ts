@@ -2,29 +2,29 @@ import "fake-indexeddb/auto";
 import Dexie from "dexie";
 import { describe, expect, it } from "vitest";
 import { registerOfflineDomainTables, WgwOfflineDatabase } from "@/lib/offline/core/offline-db";
+import { NOTES_OFFLINE_VERSION } from "@/lib/offline/core/offline-version-allocation";
 import { seedOfflineVersionOwnerForTests } from "@/lib/offline/core/offline-version-allocation";
 import { contactsCardsTable } from "@/lib/offline/contacts/contacts-schema";
 import {
-  notesFixturePagesTable,
-  NOTES_FIXTURE_DOMAIN,
-  NOTES_FIXTURE_OFFLINE_VERSION,
+  notesNotesTable,
+  NOTES_DOMAIN,
 } from "@/lib/offline/__tests__/fixtures/notes-offline-fixture";
 
 const dbName = (key: string) => `wgw-offline-${key}`;
 
 describe("offline db multi-domain registry", () => {
-  it("opens fresh with core, contacts, and app-slot-2 fixture tables at the latest version", async () => {
+  it("opens fresh with core, contacts, and notes tables at the latest version", async () => {
     const db = new WgwOfflineDatabase("multi-fresh");
     await db.open();
 
-    expect(db.verno).toBe(NOTES_FIXTURE_OFFLINE_VERSION.updatedAtIndex);
+    expect(db.verno).toBe(NOTES_OFFLINE_VERSION.updatedAtIndex);
     expect(db.tables.map((t) => t.name).sort()).toEqual(
       expect.arrayContaining([
         "contacts_address_books",
         "contacts_cards",
         "meta",
-        "notes_fixture_notebooks",
-        "notes_fixture_pages",
+        "notes_notebooks",
+        "notes_notes",
         "outbox",
       ]),
     );
@@ -43,10 +43,11 @@ describe("offline db multi-domain registry", () => {
       pendingSync: false,
       updatedAt: 100,
     });
-    await notesFixturePagesTable(db).put({
+    await notesNotesTable(db).put({
       id: "page-1",
       notebookId: "nb-1",
-      body: "offline draft",
+      data: '{"id":"page-1","title":"Draft"}',
+      pendingSync: false,
       updatedAt: 200,
     });
     await db.outbox.put({
@@ -59,7 +60,7 @@ describe("offline db multi-domain registry", () => {
     });
     await db.outbox.put({
       id: "notes-op",
-      domain: NOTES_FIXTURE_DOMAIN,
+      domain: NOTES_DOMAIN,
       op: "create",
       payload: "{}",
       createdAt: 2,
@@ -67,9 +68,9 @@ describe("offline db multi-domain registry", () => {
     });
 
     expect(await contactsCardsTable(db).count()).toBe(1);
-    expect(await notesFixturePagesTable(db).count()).toBe(1);
+    expect(await notesNotesTable(db).count()).toBe(1);
     expect(await db.outbox.where("domain").equals("contacts").count()).toBe(1);
-    expect(await db.outbox.where("domain").equals(NOTES_FIXTURE_DOMAIN).count()).toBe(1);
+    expect(await db.outbox.where("domain").equals(NOTES_DOMAIN).count()).toBe(1);
 
     await db.delete();
   });
@@ -92,16 +93,16 @@ describe("offline db multi-domain registry", () => {
     const db = new WgwOfflineDatabase("multi-upgrade");
     await db.open();
 
-    expect(db.verno).toBe(NOTES_FIXTURE_OFFLINE_VERSION.updatedAtIndex);
+    expect(db.verno).toBe(NOTES_OFFLINE_VERSION.updatedAtIndex);
     expect(await db.meta.get("shared:session")).toBeTruthy();
     expect(await db.outbox.get("legacy-op")).toBeTruthy();
     expect(db.tables.map((t) => t.name)).toContain("contacts_cards");
-    expect(db.tables.map((t) => t.name)).toContain("notes_fixture_pages");
+    expect(db.tables.map((t) => t.name)).toContain("notes_notes");
 
     await db.delete();
   });
 
-  it("runs the app-slot-2 fixture v10 -> v11 migration while contacts remains registered", async () => {
+  it("runs the notes v10 -> v11 migration while contacts remains registered", async () => {
     const legacy = new Dexie(dbName("multi-migrate-notes"));
     legacy.version(1).stores({ meta: "key", outbox: "id, domain, createdAt" });
     legacy.version(2).stores({
@@ -116,42 +117,43 @@ describe("offline db multi-domain registry", () => {
       contacts_address_books: "id",
       contacts_cards: "id, addressBookId, pendingSync, updatedAt",
     });
-    legacy.version(NOTES_FIXTURE_OFFLINE_VERSION.tables).stores({
+    legacy.version(NOTES_OFFLINE_VERSION.tables).stores({
       meta: "key",
       outbox: "id, domain, createdAt",
       contacts_address_books: "id",
       contacts_cards: "id, addressBookId, pendingSync, updatedAt",
-      notes_fixture_notebooks: "id",
-      notes_fixture_pages: "id, notebookId",
+      notes_notebooks: "id",
+      notes_notes: "id, notebookId, pendingSync",
     });
     await legacy.open();
-    await legacy.table("notes_fixture_pages").put({
+    await legacy.table("notes_notes").put({
       id: "p1",
       notebookId: "nb1",
-      body: "draft",
+      data: "{}",
+      pendingSync: false,
     });
     legacy.close();
 
     const db = new WgwOfflineDatabase("multi-migrate-notes");
     await db.open();
 
-    const page = await notesFixturePagesTable(db).get("p1");
+    const page = await notesNotesTable(db).get("p1");
     expect(typeof page?.updatedAt).toBe("number");
 
-    const byRecency = await notesFixturePagesTable(db).orderBy("updatedAt").toArray();
+    const byRecency = await notesNotesTable(db).orderBy("updatedAt").toArray();
     expect(byRecency.map((row) => row.id)).toEqual(["p1"]);
 
     await db.delete();
   });
 
   it("rejects registration when two domains claim the same Dexie version (#212)", () => {
-    seedOfflineVersionOwnerForTests(25, "app-slot-2");
+    seedOfflineVersionOwnerForTests(25, "notes");
 
     expect(() =>
       registerOfflineDomainTables({
         domain: "app-slot-3",
         versions: [{ version: 25, stores: { collision_b_table: "id" } }],
       }),
-    ).toThrow(/already claimed by domain "app-slot-2"/);
+    ).toThrow(/already claimed by domain "notes"/);
   });
 });

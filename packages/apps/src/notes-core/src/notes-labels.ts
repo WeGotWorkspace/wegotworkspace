@@ -6,6 +6,7 @@ import { workspaceDestructiveDialogLabels } from "@/lib/workspace/destructive-di
  */
 export type NotesUILabels = {
   listLoading: string;
+  refreshList: string;
   searchPlaceholder: string;
   sidebarAllItems: string;
   sidebarStarred: string;
@@ -24,6 +25,7 @@ export type NotesUILabels = {
   fallbackViewTitle: string;
   toastNewNote: string;
   toastSaved: string;
+  toastSynced: string;
   selectionStar: string;
   selectionArchive: string;
   selectionMoveToNotebook: string;
@@ -47,10 +49,20 @@ export type NotesUILabels = {
   dialogPermanentDeleteLeadIn: string;
   tagViewTitle: (tag: string) => string;
   newNoteCategory: string;
+  pendingSync: string;
+  conflictTitle: string;
+  conflictDescription: (title: string) => string;
+  conflictRemaining: (count: number) => string;
+  conflictKeepMine: string;
+  conflictUseServer: string;
+  syncFailedTitle: string;
+  syncFailedMessage: string;
+  retrySync: string;
 };
 
 export const defaultNotesLabels: NotesUILabels = {
   listLoading: "Loading notes…",
+  refreshList: "Refresh notes",
   searchPlaceholder: "Search notes...",
   sidebarAllItems: "All Items",
   sidebarStarred: "Starred",
@@ -69,6 +81,7 @@ export const defaultNotesLabels: NotesUILabels = {
   fallbackViewTitle: "Writings",
   toastNewNote: "New note",
   toastSaved: "Note saved",
+  toastSynced: "Changes synced",
   selectionStar: "Star",
   selectionArchive: "Archive",
   selectionMoveToNotebook: "Change notebook",
@@ -92,6 +105,17 @@ export const defaultNotesLabels: NotesUILabels = {
   dialogPermanentDeleteLeadIn: workspaceDestructiveDialogLabels.dialogPermanentDeleteLeadIn,
   tagViewTitle: (tag) => tag,
   newNoteCategory: "Note",
+  pendingSync: "Pending sync",
+  conflictTitle: "Sync conflict",
+  conflictDescription: (title) =>
+    `"${title}" was changed on the server while you were offline. Keep your version or use the server copy?`,
+  conflictRemaining: (count) =>
+    count === 1 ? "1 more conflict waiting" : `${count} more conflicts waiting`,
+  conflictKeepMine: "Keep mine",
+  conflictUseServer: "Use server",
+  syncFailedTitle: "Some changes could not sync",
+  syncFailedMessage: "Your edits are saved locally. Retry when you are back online.",
+  retrySync: "Retry",
 };
 
 export function mergeNotesLabels(overrides?: Partial<NotesUILabels>): NotesUILabels {

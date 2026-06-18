@@ -15,8 +15,7 @@ export type OfflineDomainVersionRange = {
  */
 export const OFFLINE_DOMAIN_VERSION_RANGES: Record<string, OfflineDomainVersionRange> = {
   contacts: { min: 2, max: 9 },
-  /** Reserved for offline app #2 — rename the key to your domain when claiming. */
-  "app-slot-2": { min: 10, max: 19 },
+  notes: { min: 10, max: 19 },
   /** Reserved for offline app #3 — rename the key to your domain when claiming. */
   "app-slot-3": { min: 20, max: 29 },
 };
@@ -25,6 +24,12 @@ export const OFFLINE_DOMAIN_VERSION_RANGES: Record<string, OfflineDomainVersionR
 export const CONTACTS_OFFLINE_VERSION = {
   tables: 2,
   updatedAtIndex: 3,
+} as const;
+
+/** Notes version steps within the notes block (10–19). */
+export const NOTES_OFFLINE_VERSION = {
+  tables: 10,
+  updatedAtIndex: 11,
 } as const;
 
 const versionOwners = new Map<number, string>();

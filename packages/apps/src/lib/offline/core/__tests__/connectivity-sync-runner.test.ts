@@ -5,12 +5,12 @@ import {
 } from "@/lib/offline/core/connectivity-sync-runner";
 
 describe("ConnectivitySyncRunner", () => {
-  it("returns undefined when a flush is already in flight", async () => {
+  it("awaits the in-flight flush when another flush is requested", async () => {
     let resolveFlush!: () => void;
     const flushTask = vi.fn(
       () =>
-        new Promise<void>((resolve) => {
-          resolveFlush = resolve;
+        new Promise<string>((resolve) => {
+          resolveFlush = () => resolve("done");
         }),
     );
     const runner = new ConnectivitySyncRunner(flushTask);
@@ -19,10 +19,9 @@ describe("ConnectivitySyncRunner", () => {
     const second = runner.flush();
 
     expect(flushTask).toHaveBeenCalledTimes(1);
-    expect(await second).toBeUndefined();
-
     resolveFlush();
-    await first;
+    await expect(first).resolves.toBe("done");
+    await expect(second).resolves.toBe("done");
   });
 
   it("allows a new flush after the previous one completes", async () => {

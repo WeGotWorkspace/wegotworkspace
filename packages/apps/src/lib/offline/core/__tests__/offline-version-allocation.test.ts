@@ -55,7 +55,7 @@ describe("offline version allocation", () => {
   it("throws when a version is outside the domain block", () => {
     expect(() =>
       registerOfflineDomainTables({
-        domain: "app-slot-2",
+        domain: "notes",
         versions: [{ version: 3, stores: { notes_notes: "id" } }],
       }),
     ).toThrow(/allocated range is 10–19/);
@@ -64,7 +64,7 @@ describe("offline version allocation", () => {
   it("throws when the same domain declares a version twice", () => {
     expect(() =>
       claimOfflineDomainVersions({
-        domain: "app-slot-2",
+        domain: "notes",
         versions: [
           { version: 10, stores: { a: "id" } },
           { version: 10, stores: { b: "id" } },
@@ -74,18 +74,18 @@ describe("offline version allocation", () => {
   });
 
   it("throws when two domains claim the same Dexie version", () => {
-    seedOfflineVersionOwnerForTests(25, "app-slot-2");
+    seedOfflineVersionOwnerForTests(25, "notes");
 
     expect(() =>
       claimOfflineDomainVersions({
         domain: "app-slot-3",
         versions: [{ version: 25, stores: { calendar_events: "id" } }],
       }),
-    ).toThrow(/already claimed by domain "app-slot-2"/);
+    ).toThrow(/already claimed by domain "notes"/);
 
     expect(() =>
       registerOfflineDomainTables({
-        domain: "app-slot-2",
+        domain: "notes",
         versions: [{ version: 2, stores: { notes_notes: "id" } }],
       }),
     ).toThrow(/allocated range is 10–19/);
@@ -93,7 +93,7 @@ describe("offline version allocation", () => {
 
   it("composes multiple domains into one linear Dexie version sequence", async () => {
     registerOfflineDomainTables({
-      domain: "app-slot-2",
+      domain: "notes",
       versions: [
         { version: 10, stores: { notes_notes: "id" } },
         { version: 11, stores: { notes_notes: "id, updatedAt" } },

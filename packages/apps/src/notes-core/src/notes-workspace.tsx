@@ -1,6 +1,7 @@
 import { Pencil } from "lucide-react";
 import type { NotesWorkspaceProps } from "@/notes-core/src/notes-workspace-props";
 import "react-swipeable-list/dist/styles.css";
+import { useCallback } from "react";
 import { Button } from "@/button/src/button";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
@@ -15,7 +16,11 @@ import { NotesDetailActionBar } from "@/notes-core/src/notes-detail-action-bar";
 import { formatNoteDateForList } from "@/notes-core/src/notes-date-utils";
 import { NotesListPanel } from "@/notes-core/src/notes-list-panel";
 import { useNotesController } from "@/notes-core/src/use-notes-controller";
+import { useNotesFailedSync } from "@/notes-core/src/use-notes-failed-sync";
+import { useNotesPendingSync } from "@/notes-core/src/use-notes-pending-sync";
 import { useNotesSidebarModel } from "@/notes-core/src/use-notes-sidebar-model";
+import { getNotesSyncRunner } from "@/lib/offline/notes-hybrid-operations";
+import { resolveNotesOfflineUsername } from "@/lib/offline/offline-session";
 import "@/notes-core/src/notes-workspace.css";
 
 export function NotesWorkspace({
@@ -24,6 +29,8 @@ export function NotesWorkspace({
   labels,
   operations,
   listLoading = false,
+  bootstrapRevision = 0,
+  onRefreshList,
   onLogout,
   className,
 }: NotesWorkspaceProps) {
@@ -90,6 +97,7 @@ export function NotesWorkspace({
     labels,
     listLoading,
     operations,
+    bootstrapRevision,
   });
 
   const { primarySidebarItems, notebookSidebarItems, tagSidebarItems } = useNotesSidebarModel({
@@ -102,6 +110,17 @@ export function NotesWorkspace({
     moveToNotebook,
     assignTagToNotes,
   });
+
+  const offlineUsername = resolveNotesOfflineUsername(session.user.username);
+  const pendingNoteIds = useNotesPendingSync(offlineUsername, bootstrapRevision);
+  const failedSyncCount = useNotesFailedSync(offlineUsername, bootstrapRevision);
+
+  const handleRetrySync = useCallback(() => {
+    if (!offlineUsername) return;
+    void getNotesSyncRunner(offlineUsername)
+      .flush()
+      .finally(() => onRefreshList?.());
+  }, [offlineUsername, onRefreshList]);
 
   return (
     <>
@@ -174,6 +193,10 @@ export function NotesWorkspace({
             toggleStar,
             toggleArchive,
             selectionBar,
+            onRefreshList,
+            pendingNoteIds,
+            failedSyncCount,
+            onRetrySync: handleRetrySync,
           })
         }
         actionBar={(c) =>
