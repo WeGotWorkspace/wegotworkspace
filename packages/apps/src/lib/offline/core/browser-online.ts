@@ -21,11 +21,35 @@ export function isFetchNetworkError(error: unknown): boolean {
   return false;
 }
 
-let connectivityOnline = readBrowserOnline();
+/** Poll reachability while offline with a stale `navigator.onLine` (DevTools service-worker offline). */
+const OFFLINE_REACHABILITY_POLL_MS = 2000;
 
-/** Snapshot for useSyncExternalStore; may reflect probe results when navigator.onLine is stale. */
-export function getConnectivitySnapshot(): boolean {
-  return connectivityOnline;
+type ConnectivityHub = {
+  online: boolean;
+  subscribers: Set<() => void>;
+  started: boolean;
+  probeController?: AbortController;
+  offlinePollId?: number;
+  deferredId?: number;
+};
+
+function getConnectivityHub(): ConnectivityHub | null {
+  if (typeof window === "undefined") return null;
+  const w = window as Window & { __wgwConnectivityHub?: ConnectivityHub };
+  if (!w.__wgwConnectivityHub) {
+    w.__wgwConnectivityHub = {
+      online: readBrowserOnline(),
+      subscribers: new Set(),
+      started: false,
+    };
+  }
+  return w.__wgwConnectivityHub;
+}
+
+function notifyConnectivitySubscribers(hub: ConnectivityHub): void {
+  for (const subscriber of hub.subscribers) {
+    subscriber();
+  }
 }
 
 /**
@@ -48,66 +72,109 @@ export async function probeBrowserReachable(signal?: AbortSignal): Promise<boole
   }
 }
 
-/** Subscribe to browser online/offline events. No-op outside the browser. */
-export function subscribeBrowserOnline(onStoreChange: () => void): () => void {
-  if (typeof window === "undefined") {
-    return () => undefined;
+/** Snapshot for useSyncExternalStore; may reflect probe results when navigator.onLine is stale. */
+export function getConnectivitySnapshot(): boolean {
+  return getConnectivityHub()?.online ?? readBrowserOnline();
+}
+
+function clearOfflinePoll(hub: ConnectivityHub): void {
+  if (hub.offlinePollId === undefined) return;
+  window.clearInterval(hub.offlinePollId);
+  hub.offlinePollId = undefined;
+}
+
+function scheduleReachabilityProbe(hub: ConnectivityHub): void {
+  hub.probeController?.abort();
+  if (!readBrowserOnline()) {
+    return;
   }
-
-  let probeController: AbortController | undefined;
-
-  const setOnline = (online: boolean) => {
-    if (connectivityOnline === online) return;
-    connectivityOnline = online;
-    onStoreChange();
-  };
-
-  const adoptNavigatorOffline = () => {
-    if (!readBrowserOnline()) {
-      setOnline(false);
-    }
-  };
-
-  const scheduleReachabilityProbe = () => {
-    probeController?.abort();
-    if (!readBrowserOnline()) {
+  hub.probeController = new AbortController();
+  const { signal } = hub.probeController;
+  void probeBrowserReachable(signal).then((reachable) => {
+    if (signal.aborted) return;
+    if (!reachable) {
+      setConnectivityOnline(hub, false);
       return;
     }
-    probeController = new AbortController();
-    const { signal } = probeController;
-    void probeBrowserReachable(signal).then((reachable) => {
-      if (signal.aborted) return;
-      if (!reachable) {
-        setOnline(false);
-        return;
-      }
-      if (readBrowserOnline()) {
-        setOnline(true);
-      }
-    });
-  };
+    if (readBrowserOnline()) {
+      setConnectivityOnline(hub, true);
+    }
+  });
+}
+
+function startOfflinePoll(hub: ConnectivityHub): void {
+  if (hub.offlinePollId !== undefined || !readBrowserOnline()) return;
+  hub.offlinePollId = window.setInterval(() => {
+    if (!readBrowserOnline()) {
+      clearOfflinePoll(hub);
+      return;
+    }
+    scheduleReachabilityProbe(hub);
+  }, OFFLINE_REACHABILITY_POLL_MS);
+}
+
+function setConnectivityOnline(hub: ConnectivityHub, online: boolean): void {
+  if (hub.online === online) return;
+  hub.online = online;
+  if (online) {
+    clearOfflinePoll(hub);
+  } else if (readBrowserOnline()) {
+    startOfflinePoll(hub);
+  }
+  notifyConnectivitySubscribers(hub);
+}
+
+function ensureConnectivityHubStarted(hub: ConnectivityHub): void {
+  if (hub.started) return;
+  hub.started = true;
 
   const onOnline = () => {
-    probeController?.abort();
-    setOnline(true);
+    hub.probeController?.abort();
+    clearOfflinePoll(hub);
+    scheduleReachabilityProbe(hub);
   };
   const onOffline = () => {
-    probeController?.abort();
-    setOnline(false);
+    hub.probeController?.abort();
+    setConnectivityOnline(hub, false);
+  };
+  const onFocus = () => {
+    if (hub.online) return;
+    scheduleReachabilityProbe(hub);
   };
 
   window.addEventListener("online", onOnline);
   window.addEventListener("offline", onOffline);
+  window.addEventListener("focus", onFocus);
 
-  connectivityOnline = readBrowserOnline();
+  hub.online = readBrowserOnline();
+  notifyConnectivitySubscribers(hub);
+  hub.deferredId = window.setTimeout(() => {
+    if (!readBrowserOnline()) {
+      setConnectivityOnline(hub, false);
+    }
+  }, 0);
+  scheduleReachabilityProbe(hub);
+}
+
+/** Subscribe to browser online/offline events. No-op outside the browser. */
+export function subscribeBrowserOnline(onStoreChange: () => void): () => void {
+  const hub = getConnectivityHub();
+  if (!hub) {
+    return () => undefined;
+  }
+
+  ensureConnectivityHubStarted(hub);
+  hub.subscribers.add(onStoreChange);
   onStoreChange();
-  const deferredId = window.setTimeout(adoptNavigatorOffline, 0);
-  scheduleReachabilityProbe();
 
   return () => {
-    probeController?.abort();
-    window.clearTimeout(deferredId);
-    window.removeEventListener("online", onOnline);
-    window.removeEventListener("offline", onOffline);
+    hub.subscribers.delete(onStoreChange);
   };
+}
+
+/** Clears the shared browser connectivity hub. For unit tests only. */
+export function resetConnectivityHubForTests(): void {
+  if (typeof window === "undefined") return;
+  const w = window as Window & { __wgwConnectivityHub?: ConnectivityHub };
+  delete w.__wgwConnectivityHub;
 }

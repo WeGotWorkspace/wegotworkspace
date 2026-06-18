@@ -86,6 +86,10 @@ export function useNotesShell({
     [],
   );
 
+  useEffect(() => {
+    setNotes(data.notes.map(enrichNote));
+  }, [data]);
+
   const notebooks = useMemo(
     () => [...new Set(notes.map((note) => note.notebook).filter((name) => name.trim().length > 0))],
     [notes],
@@ -106,6 +110,14 @@ export function useNotesShell({
     }
     setStarred(next);
   }, [notes, setStarred]);
+
+  useEffect(() => {
+    const next: Record<string, boolean> = {};
+    for (const note of notes) {
+      if (note.archived) next[note.id] = true;
+    }
+    setArchived(next);
+  }, [notes, setArchived]);
 
   const viewLabel = useMemo(() => {
     if (view === "all") return L.sidebarAllItems;

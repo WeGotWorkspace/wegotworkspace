@@ -1,4 +1,6 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Check } from "lucide-react";
+import { useAppToast } from "@/hooks/use-app-toast";
 import { WorkspaceLiveAppShell } from "@/lib/live/workspace-live-app-shell";
 import {
   resolveNotesConflictKeepLocal,
@@ -21,6 +23,8 @@ export function NotesApp({ apiSource }: NotesAppProps = {}) {
   const notesRef = useRef<Note[]>([]);
   const [conflictQueue, setConflictQueue] = useState<string[]>([]);
   const [resolvingConflict, setResolvingConflict] = useState(false);
+  const wasSyncingRef = useRef(false);
+  const { show } = useAppToast();
 
   const handleSyncConflict = useCallback((noteIds: string[]) => {
     setConflictQueue((prev) => {
@@ -37,12 +41,21 @@ export function NotesApp({ apiSource }: NotesAppProps = {}) {
     error,
     retry,
     successVersion,
+    bootstrapRevision,
+    syncing,
     listLoading,
     refreshList,
     data,
     session,
     operations,
   } = useNotesAPI(apiSource, { onSyncConflict: handleSyncConflict });
+
+  useEffect(() => {
+    if (wasSyncingRef.current && !syncing) {
+      show(defaultNotesLabels.toastSynced, { icon: <Check className="size-4" /> });
+    }
+    wasSyncingRef.current = syncing;
+  }, [show, syncing]);
 
   notesRef.current = data.notes;
 
@@ -100,6 +113,7 @@ export function NotesApp({ apiSource }: NotesAppProps = {}) {
             session={session}
             operations={operations}
             listLoading={listLoading}
+            bootstrapRevision={bootstrapRevision}
             onRefreshList={refreshList}
             onLogout={() => {
               window.location.assign("/logout");

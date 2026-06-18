@@ -2,18 +2,18 @@ type FlushTask<T> = () => Promise<T>;
 
 /** Serializes flush attempts so a single in-flight sync never overlaps itself. */
 export class ConnectivitySyncRunner<T = void> {
-  private flushing = false;
+  private inFlight: Promise<T | undefined> | undefined;
 
   constructor(private readonly flushTask: FlushTask<T>) {}
 
   flush(): Promise<T | undefined> {
-    if (this.flushing) return Promise.resolve(undefined);
-    this.flushing = true;
-    return this.flushTask()
+    if (this.inFlight) return this.inFlight;
+    this.inFlight = this.flushTask()
       .catch(() => undefined)
       .finally(() => {
-        this.flushing = false;
+        this.inFlight = undefined;
       });
+    return this.inFlight;
   }
 }
 

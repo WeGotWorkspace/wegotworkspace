@@ -6,6 +6,7 @@ import { enqueueCoalescedOutboxUpdate } from "@/lib/offline/core/outbox-coalesci
 import {
   isRetryableOutboxRow,
   listOutboxMutationsForDomain,
+  removeOutboxMutation,
 } from "@/lib/offline/core/outbox-store";
 import type { OfflineOutboxRow } from "@/lib/offline/core/types";
 import {
@@ -153,6 +154,29 @@ export function notesOutboxNoteId(row: OfflineOutboxRow): string | null {
   }
 }
 
+/** Drop pending outbox rows for a note so a delete is not undone by a later upsert flush. */
+export async function removeOutboxMutationsForNote(
+  username: string,
+  noteId: string,
+): Promise<void> {
+  const rows = await listOutboxMutationsForDomain(username, NOTES_DOMAIN);
+  for (const row of rows) {
+    if (notesOutboxNoteId(row) === noteId) {
+      await removeOutboxMutation(username, row.id);
+      continue;
+    }
+    if (row.op !== "upsert") continue;
+    try {
+      const payload = JSON.parse(row.payload) as NotesUpsertPayload;
+      if (payload.noteId === noteId || payload.tempNoteId === noteId) {
+        await removeOutboxMutation(username, row.id);
+      }
+    } catch {
+      // ignore malformed payloads
+    }
+  }
+}
+
 function mergeNoteUpsertPayloads(
   existing: NotesUpsertPayload,
   incoming: NotesUpsertPayload,
@@ -188,6 +212,10 @@ export async function enqueueCoalescedNoteUpdate(
 
 export function createTempNoteId(): string {
   return `local-${crypto.randomUUID().replace(/-/g, "")}`;
+}
+
+export function isLocalTempNoteId(id: string | undefined): boolean {
+  return !!id?.startsWith("local-");
 }
 
 export function noteUpdatedAtMs(value: string | undefined): number {

@@ -62,18 +62,9 @@ export function useNotesAPI(source?: NotesApiSource, options?: UseNotesAPIOption
     return () => setNotesSyncConflictListener(undefined);
   }, [onSyncConflict]);
 
-  useOnReconnect(
-    useCallback(() => {
-      if (!offlineUsername) return;
-      void (async () => {
-        await getNotesSyncRunner(offlineUsername).flush();
-        const cached = await readNotesBootstrapFromCache(offlineUsername);
-        if (cached) patchBootstrap(() => cached);
-      })();
-    }, [offlineUsername, patchBootstrap]),
-  );
-
   const [listRefreshing, setListRefreshing] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [bootstrapRevision, setBootstrapRevision] = useState(0);
 
   const refreshList = useCallback(() => {
     if (listRefreshing) return;
@@ -82,18 +73,40 @@ export function useNotesAPI(source?: NotesApiSource, options?: UseNotesAPIOption
       .loadBootstrap()
       .then((next) => {
         patchBootstrap(() => next);
+        setBootstrapRevision((revision) => revision + 1);
       })
       .finally(() => {
         setListRefreshing(false);
       });
   }, [listRefreshing, patchBootstrap, resolvedSource]);
 
+  useOnReconnect(
+    useCallback(() => {
+      if (!offlineUsername) return;
+      void (async () => {
+        setSyncing(true);
+        try {
+          const result = await getNotesSyncRunner(offlineUsername).flush();
+          const cached = result?.bootstrap ?? (await readNotesBootstrapFromCache(offlineUsername));
+          if (cached) {
+            patchBootstrap(() => cached);
+            setBootstrapRevision((revision) => revision + 1);
+          }
+        } finally {
+          setSyncing(false);
+        }
+      })();
+    }, [offlineUsername, patchBootstrap]),
+  );
+
   return {
     phase,
     error,
     retry: load,
     successVersion,
-    listLoading: phase === "loading" || listRefreshing,
+    bootstrapRevision,
+    syncing,
+    listLoading: phase === "loading" || listRefreshing || syncing,
     refreshList,
     session: data?.session ?? mockWorkspaceSession,
     data: data?.data ?? placeholderData,

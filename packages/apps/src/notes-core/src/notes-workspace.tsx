@@ -29,6 +29,7 @@ export function NotesWorkspace({
   labels,
   operations,
   listLoading = false,
+  bootstrapRevision = 0,
   onRefreshList,
   onLogout,
   className,
@@ -110,8 +111,8 @@ export function NotesWorkspace({
   });
 
   const offlineUsername = resolveNotesOfflineUsername(session.user.username);
-  const pendingNoteIds = useNotesPendingSync(offlineUsername, data.notes.length);
-  const failedSyncCount = useNotesFailedSync(offlineUsername, data.notes.length);
+  const pendingNoteIds = useNotesPendingSync(offlineUsername, bootstrapRevision);
+  const failedSyncCount = useNotesFailedSync(offlineUsername, bootstrapRevision);
 
   const handleRetrySync = useCallback(() => {
     if (!offlineUsername) return;

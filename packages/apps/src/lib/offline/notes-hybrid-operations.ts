@@ -12,17 +12,25 @@ import {
   updateNoteItem,
   wgwNoteUpsertFromNote,
 } from "@/lib/api/wgw/notes";
-import { isFetchNetworkError, readBrowserOnline } from "@/lib/offline/core/browser-online";
+import {
+  getConnectivitySnapshot,
+  isFetchNetworkError,
+  readBrowserOnline,
+} from "@/lib/offline/core/browser-online";
 import {
   createTempNoteId,
+  isLocalTempNoteId,
   enqueueCoalescedNoteUpdate,
   enqueueOutboxMutation,
+  listOutboxMutations,
   readNotesBootstrapFromCache,
   removeNoteFromCache,
+  removeOutboxMutationsForNote,
   upsertNoteInCache,
   writeNotesBootstrapToCache,
 } from "@/lib/offline/notes-offline-store";
-import { NOTES_DOMAIN } from "@/lib/offline/notes/notes-schema";
+import { NOTES_DOMAIN, notesNotesTable } from "@/lib/offline/notes/notes-schema";
+import { offlineAccountKeyFromUsername, offlineDbForAccount } from "@/lib/offline/core/offline-db";
 import { flushNotesOutbox, type OutboxFlushResult } from "@/lib/offline/notes-outbox-flush";
 import { reportNotesSyncConflicts } from "@/lib/offline/notes-sync-conflicts";
 import { readOfflineNotesUsername } from "@/lib/offline/offline-session";
@@ -54,6 +62,13 @@ function applyNoteUpdate(existing: Note, patch: Note): Note {
   return { ...existing, ...patch };
 }
 
+function tempNoteIdForCreate(existing: Note | undefined, note: Note): string | undefined {
+  if (existing) return undefined;
+  if (isLocalTempNoteId(note.id)) return note.id;
+  if (note.id?.trim()) return undefined;
+  return createTempNoteId();
+}
+
 const syncRunnerRegistry = new ConnectivitySyncRunnerRegistry<OutboxFlushResult>();
 
 async function flushNotesOutboxAndReport(username: string): Promise<OutboxFlushResult> {
@@ -71,6 +86,12 @@ async function resolveCachedNote(
   noteId: string,
   _signal?: AbortSignal,
 ): Promise<Note | undefined> {
+  const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
+  const row = await notesNotesTable(db).get(noteId);
+  if (row) {
+    return JSON.parse(row.data) as Note;
+  }
+
   const cached = await readNotesBootstrapFromCache(username);
   const fromCache = cached?.data.notes.find((n) => n.id === noteId);
   if (fromCache || !readBrowserOnline()) return fromCache;
@@ -98,6 +119,7 @@ async function queueOfflineDelete(
   username: string,
   note: Pick<Note, "id" | "notebook" | "archived">,
 ): Promise<void> {
+  await removeOutboxMutationsForNote(username, note.id);
   await removeNoteFromCache(username, note.id);
   await enqueueOutboxMutation(username, {
     id: crypto.randomUUID(),
@@ -109,6 +131,25 @@ async function queueOfflineDelete(
       archived: !!note.archived,
     }),
   });
+}
+
+async function resolveDeleteTarget(
+  username: string,
+  note: Pick<Note, "id" | "notebook" | "archived">,
+): Promise<Pick<Note, "id" | "notebook" | "archived">> {
+  const cached = note.id ? await resolveCachedNote(username, note.id) : undefined;
+  if (cached) {
+    return {
+      id: note.id,
+      notebook: cached.notebook,
+      archived: cached.archived ?? note.archived ?? false,
+    };
+  }
+  return {
+    id: note.id,
+    notebook: note.notebook,
+    archived: !!note.archived,
+  };
 }
 
 async function upsertNoteOnline(
@@ -146,7 +187,7 @@ export function createHybridNotesOperations(username: string): NotesAPIOperation
         : undefined;
       const merged = existing ? applyNoteUpdate(existing, note) : note;
       if (!readBrowserOnline()) {
-        const tempId = existing ? undefined : createTempNoteId();
+        const tempId = tempNoteIdForCreate(existing, merged);
         const optimistic = tempId ? { ...merged, id: tempId } : merged;
         return queueOfflineUpsert(username, optimistic, tempId);
       }
@@ -154,23 +195,29 @@ export function createHybridNotesOperations(username: string): NotesAPIOperation
         return await upsertNoteOnline(username, merged, runner, opts);
       } catch (error) {
         rethrowUnlessOfflineQueue(error, opts?.signal);
-        const tempId = existing ? undefined : createTempNoteId();
+        const tempId = tempNoteIdForCreate(existing, merged);
         const optimistic = tempId ? { ...merged, id: tempId } : merged;
         return queueOfflineUpsert(username, optimistic, tempId);
       }
     },
     deleteNote: async (note, opts) => {
-      if (!readBrowserOnline()) {
-        await queueOfflineDelete(username, note);
+      const target = await resolveDeleteTarget(username, note);
+      await removeOutboxMutationsForNote(username, target.id);
+      if (!getConnectivitySnapshot()) {
+        await queueOfflineDelete(username, target);
         return;
       }
       try {
-        await deleteNoteItem(note.id, { notebook: note.notebook, archived: !!note.archived }, opts);
-        await removeNoteFromCache(username, note.id);
+        await deleteNoteItem(
+          target.id,
+          { notebook: target.notebook, archived: !!target.archived },
+          opts,
+        );
+        await removeNoteFromCache(username, target.id);
         await runner.flush();
       } catch (error) {
         rethrowUnlessOfflineQueue(error, opts?.signal);
-        await queueOfflineDelete(username, note);
+        await queueOfflineDelete(username, target);
       }
     },
     archiveNote: async (id, opts) => {
@@ -361,8 +408,22 @@ export async function fetchNotesHybridBootstrap(): Promise<
   if (!username) {
     throw new Error("Notes bootstrap missing username");
   }
+  const hadOutbox = readBrowserOnline() && (await listOutboxMutations(username)).length > 0;
   if (readBrowserOnline()) {
     await flushNotesOutboxAndReport(username);
+  }
+  const cached = await readNotesBootstrapFromCache(username);
+  if (cached) {
+    cached.session = bootstrap.session;
+    if (bootstrap.data.notebooks.length > 0) {
+      cached.data.notebooks = bootstrap.data.notebooks;
+    }
+    if (!hadOutbox) {
+      cached.data.notes = bootstrap.data.notes;
+      cached.data.tags = bootstrap.data.tags;
+    }
+    await writeNotesBootstrapToCache(username, cached);
+    return cached;
   }
   await writeNotesBootstrapToCache(username, bootstrap);
   return bootstrap;

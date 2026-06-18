@@ -1,9 +1,5 @@
-import { useEffect, useState, useSyncExternalStore } from "react";
-import {
-  getConnectivitySnapshot,
-  readBrowserOnline,
-  subscribeBrowserOnline,
-} from "@/lib/offline/browser-online";
+import { useEffect, useRef, useSyncExternalStore } from "react";
+import { getConnectivitySnapshot, subscribeBrowserOnline } from "@/lib/offline/browser-online";
 
 export type ConnectivityState = {
   online: boolean;
@@ -15,18 +11,25 @@ export function useConnectivity(): ConnectivityState {
   return { online };
 }
 
+/** Runs `callback` after connectivity returns from offline (including stale `navigator.onLine`). */
 export function useOnReconnect(callback: () => void): void {
-  const { online } = useConnectivity();
-  const [wasOffline, setWasOffline] = useState(() => !readBrowserOnline());
+  const callbackRef = useRef(callback);
+  callbackRef.current = callback;
 
   useEffect(() => {
-    if (!online) {
-      setWasOffline(true);
-      return;
-    }
-    if (wasOffline) {
-      callback();
-      setWasOffline(false);
-    }
-  }, [callback, online, wasOffline]);
+    let wasOffline = !getConnectivitySnapshot();
+
+    const onConnectivityChange = () => {
+      const online = getConnectivitySnapshot();
+      if (!online) {
+        wasOffline = true;
+        return;
+      }
+      if (!wasOffline) return;
+      wasOffline = false;
+      callbackRef.current();
+    };
+
+    return subscribeBrowserOnline(onConnectivityChange);
+  }, []);
 }
