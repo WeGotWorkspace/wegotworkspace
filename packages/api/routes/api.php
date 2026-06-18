@@ -235,6 +235,22 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($filesS
         Route::delete('calendars/events/{eventId}', [CalendarEventsController::class, 'destroy'])
             ->where('eventId', '[a-z0-9_#%-]+');
     });
+
+    Route::middleware('wgw.calendars')->group(function (): void {
+        Route::get('calendars/calendars', [CalendarsController::class, 'index']);
+        Route::get('calendars/calendars/{calendarId}', [CalendarsController::class, 'show'])
+            ->where('calendarId', '[a-z0-9_-]+');
+        Route::get('calendars/events', [CalendarEventsController::class, 'index']);
+        Route::post('calendars/events', [CalendarEventsController::class, 'store']);
+        Route::get('calendars/events/{eventId}', [CalendarEventsController::class, 'show'])
+            ->where('eventId', '[a-z0-9_#%-]+');
+        Route::put('calendars/events/{eventId}', [CalendarEventsController::class, 'update'])
+            ->where('eventId', '[a-z0-9_#%-]+');
+        Route::patch('calendars/events/{eventId}', [CalendarEventsController::class, 'patch'])
+            ->where('eventId', '[a-z0-9_#%-]+');
+        Route::delete('calendars/events/{eventId}', [CalendarEventsController::class, 'destroy'])
+            ->where('eventId', '[a-z0-9_#%-]+');
+    });
 });
 
 Route::middleware(['wgw.auth', 'wgw.role:admin'])->prefix('admin')->group(function (): void {

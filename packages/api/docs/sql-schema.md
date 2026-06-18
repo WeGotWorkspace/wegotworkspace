@@ -34,12 +34,14 @@ All models use [`UsesWgwConnection`](app/Models/Concerns/UsesWgwConnection.php) 
 | `search_documents` | `App\Models\SearchDocument` | Unified search index documents |
 | `search_terms` | `App\Models\SearchTerm` | Search token weights (FK → `search_documents`) |
 | `drive_starred_items` | `App\Models\DriveStarredItem` | Per-user starred drive paths |
-| `calendarobjects` | `App\Models\CalendarObject` | CalDAV objects (search indexer joins) |
+| `calendarobjects` | `App\Models\CalendarObject` | CalDAV event blobs (Calendars REST + search indexer) |
+| `calendars` | `App\Models\Calendar` | CalDAV calendar collection root |
+| `calendarinstances` | `App\Models\CalendarInstance` | Per-principal calendar instances (Calendars REST reads) |
 | `cards` | `App\Models\Card` | CardDAV vCards (search indexer joins) |
 | `addressbooks` | `App\Models\Addressbook` | CardDAV address books (Contacts REST reads) |
 | `mail_user_credentials` | `App\Models\MailUserCredential` | Per-user IMAP/SMTP credentials |
 
-Sabre-owned tables (`calendars`, `locks`, `propertystorage`, …) have no app models yet; access them through Sabre backends or add models when a domain needs direct queries.
+Sabre-owned tables (`locks`, `propertystorage`, `calendarchanges`, …) have no app models yet; access them through Sabre backends or add models when a domain needs direct queries.
 
 ## PDO exception boundaries
 
