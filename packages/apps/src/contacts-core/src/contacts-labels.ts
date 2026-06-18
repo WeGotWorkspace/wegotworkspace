@@ -80,6 +80,10 @@ export type ContactsUILabels = {
   conflictRemaining: (count: number) => string;
   conflictKeepMine: string;
   conflictUseServer: string;
+  conflictDescriptionFieldMerge: (name: string) => string;
+  conflictFieldLocal: string;
+  conflictFieldServer: string;
+  conflictApplyMerge: string;
   syncFailedTitle: string;
   syncFailedMessage: string;
   retrySync: string;
@@ -181,6 +185,11 @@ export const defaultContactsLabels: ContactsUILabels = {
   conflictRemaining: (count) => `${count} more contact${count === 1 ? "" : "s"} to review`,
   conflictKeepMine: "Keep mine",
   conflictUseServer: "Use server version",
+  conflictDescriptionFieldMerge: (name) =>
+    `“${name}” was changed elsewhere. Choose which value to keep for each field below.`,
+  conflictFieldLocal: "Your edits",
+  conflictFieldServer: "Server version",
+  conflictApplyMerge: "Apply merged changes",
   syncFailedTitle: "Some changes couldn’t sync",
   syncFailedMessage: "We’ll keep your edits saved locally until they go through.",
   retrySync: "Retry",

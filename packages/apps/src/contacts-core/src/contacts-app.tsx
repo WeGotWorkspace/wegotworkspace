@@ -1,10 +1,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
+import { getCard } from "@/lib/api/wgw/contacts";
 import { WorkspaceLiveAppShell } from "@/lib/live/workspace-live-app-shell";
 import {
+  resolveConflictFieldMerge,
   resolveConflictKeepLocal,
   resolveConflictUseServer,
 } from "@/lib/offline/contacts-conflict-resolution";
+import {
+  buildContactConflictFieldRows,
+  defaultContactConflictFieldChoices,
+  type ContactConflictFieldChoices,
+  type ContactConflictFieldRow,
+} from "@/lib/offline/contacts-conflict-merge";
+import { listOutboxMutations } from "@/lib/offline/core/outbox-store";
+import { contactsOutboxCardId } from "@/lib/offline/contacts-offline-store";
 import { resolveContactsOfflineUsername } from "@/lib/offline/offline-session";
 import type { ContactsApiSource } from "@/contacts-core/src/contacts-api-source";
 import { ContactsConflictDialog } from "@/contacts-core/src/contacts-conflict-dialog";
@@ -23,6 +33,11 @@ export type ContactsAppProps = {
   apiSource?: ContactsApiSource;
 };
 
+type ConflictMergeContext = {
+  fieldRows: ContactConflictFieldRow[];
+  fieldChoices: ContactConflictFieldChoices;
+};
+
 export function ContactsApp({ apiSource }: ContactsAppProps = {}) {
   const navigate = useNavigate();
   const params = useParams({ strict: false }) as { groupCardId?: string; contactId?: string };
@@ -31,10 +46,12 @@ export function ContactsApp({ apiSource }: ContactsAppProps = {}) {
   const handleContactChangeRef = useRef<(contactId: string) => void>(() => undefined);
   const cardsRef = useRef<ContactCard[]>([]);
 
-  // Conflicted card ids awaiting a "Keep mine / Use server" decision, resolved
-  // one at a time. TODO(#206): replace this binary choice with a field-level merge UI.
   const [conflictQueue, setConflictQueue] = useState<string[]>([]);
   const [resolvingConflict, setResolvingConflict] = useState(false);
+  const [conflictMergeContext, setConflictMergeContext] = useState<ConflictMergeContext | null>(
+    null,
+  );
+  const [conflictMergeLoading, setConflictMergeLoading] = useState(false);
 
   const handleSyncConflict = useCallback((cardIds: string[]) => {
     setConflictQueue((prev) => {
@@ -71,24 +88,19 @@ export function ContactsApp({ apiSource }: ContactsAppProps = {}) {
 
   const dismissActiveConflict = useCallback(() => {
     setConflictQueue((prev) => prev.slice(1));
+    setConflictMergeContext(null);
   }, []);
 
-  const resolveActiveConflict = useCallback(
-    (mode: "local" | "server") => {
+  const finishConflictResolution = useCallback(
+    (task: () => Promise<unknown>) => {
       if (!activeConflictId || !offlineUsername) {
         dismissActiveConflict();
         return;
       }
-      const cardId = activeConflictId;
-      const username = offlineUsername;
       setResolvingConflict(true);
       void (async () => {
         try {
-          if (mode === "local") {
-            await resolveConflictKeepLocal(username, cardId);
-          } else {
-            await resolveConflictUseServer(username, cardId);
-          }
+          await task();
         } catch {
           // Resolution best-effort; the refresh below re-reads the latest state.
         } finally {
@@ -99,6 +111,87 @@ export function ContactsApp({ apiSource }: ContactsAppProps = {}) {
       })();
     },
     [activeConflictId, offlineUsername, dismissActiveConflict, refreshList],
+  );
+
+  const resolveActiveConflictKeepLocal = useCallback(() => {
+    finishConflictResolution(() => resolveConflictKeepLocal(offlineUsername!, activeConflictId!));
+  }, [finishConflictResolution, offlineUsername, activeConflictId]);
+
+  const resolveActiveConflictUseServer = useCallback(() => {
+    finishConflictResolution(() => resolveConflictUseServer(offlineUsername!, activeConflictId!));
+  }, [finishConflictResolution, offlineUsername, activeConflictId]);
+
+  const handleFieldChoicesChange = useCallback((choices: ContactConflictFieldChoices) => {
+    setConflictMergeContext((prev) => (prev ? { ...prev, fieldChoices: choices } : prev));
+  }, []);
+
+  const resolveActiveConflictFieldMerge = useCallback(
+    (choices: ContactConflictFieldChoices) => {
+      if (!activeConflictCard) {
+        dismissActiveConflict();
+        return;
+      }
+      finishConflictResolution(() =>
+        resolveConflictFieldMerge(offlineUsername!, activeConflictId!, activeConflictCard, choices),
+      );
+    },
+    [
+      activeConflictCard,
+      finishConflictResolution,
+      offlineUsername,
+      activeConflictId,
+      dismissActiveConflict,
+    ],
+  );
+
+  useEffect(() => {
+    if (!activeConflictId || !offlineUsername || !activeConflictCard) {
+      setConflictMergeContext(null);
+      setConflictMergeLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setConflictMergeLoading(true);
+    setConflictMergeContext(null);
+
+    void (async () => {
+      try {
+        const rows = await listOutboxMutations(offlineUsername);
+        const pending = rows.filter((row) => contactsOutboxCardId(row) === activeConflictId);
+        const hasUpdate = pending.some((row) => row.op === "update");
+        if (!hasUpdate) {
+          if (!cancelled) setConflictMergeContext(null);
+          return;
+        }
+
+        const serverCard = await getCard(activeConflictId);
+        const fieldRows = buildContactConflictFieldRows(
+          serverCard,
+          activeConflictCard,
+          defaultContactsLabels,
+        );
+        if (!cancelled) {
+          setConflictMergeContext({
+            fieldRows,
+            fieldChoices: defaultContactConflictFieldChoices(fieldRows),
+          });
+        }
+      } catch {
+        if (!cancelled) setConflictMergeContext(null);
+      } finally {
+        if (!cancelled) setConflictMergeLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeConflictId, offlineUsername, activeConflictCard]);
+
+  const fieldMergeMode = useMemo(
+    () => Boolean(conflictMergeContext && conflictMergeContext.fieldRows.length > 0),
+    [conflictMergeContext],
   );
 
   // Backward compat: redirect legacy query-param URLs (?view=&contact=) to new path form.
@@ -239,15 +332,19 @@ export function ContactsApp({ apiSource }: ContactsAppProps = {}) {
         )}
       />
       <ContactsConflictDialog
-        open={activeConflictId !== null}
+        open={activeConflictId !== null && (!conflictMergeLoading || fieldMergeMode)}
         contactName={activeConflictName}
         remainingCount={Math.max(conflictQueue.length - 1, 0)}
-        busy={resolvingConflict}
+        busy={resolvingConflict || conflictMergeLoading}
         labels={defaultContactsLabels}
-        onKeepLocal={() => resolveActiveConflict("local")}
-        onUseServer={() => resolveActiveConflict("server")}
+        fieldRows={fieldMergeMode ? conflictMergeContext?.fieldRows : undefined}
+        fieldChoices={conflictMergeContext?.fieldChoices}
+        onFieldChoicesChange={handleFieldChoicesChange}
+        onConfirmMerge={resolveActiveConflictFieldMerge}
+        onKeepLocal={resolveActiveConflictKeepLocal}
+        onUseServer={resolveActiveConflictUseServer}
         onOpenChange={(open) => {
-          if (!open && !resolvingConflict) dismissActiveConflict();
+          if (!open && !resolvingConflict && !conflictMergeLoading) dismissActiveConflict();
         }}
       />
     </>
