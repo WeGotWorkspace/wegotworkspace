@@ -10,6 +10,7 @@ type UseNotesControllerArgs = {
   labels?: Partial<NotesUILabels>;
   listLoading?: boolean;
   operations?: NotesAPIOperations;
+  bootstrapRevision?: number;
 };
 
 /**
@@ -21,8 +22,9 @@ export function useNotesController({
   labels,
   listLoading = false,
   operations,
+  bootstrapRevision = 0,
 }: UseNotesControllerArgs) {
-  const shell = useNotesShell({ data, labels, listLoading, operations });
+  const shell = useNotesShell({ data, labels, listLoading, operations, bootstrapRevision });
   const list = useNotesList({ shell });
   const mutations = useNotesMutations({ shell, list });
 

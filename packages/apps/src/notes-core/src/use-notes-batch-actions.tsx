@@ -85,7 +85,14 @@ export function useNotesBatchActions({
         toastMessage: `Deleted ${target.length} item${target.length === 1 ? "" : "s"}`,
         execute: () =>
           operations
-            ? Promise.all(rows.map((note) => operations.deleteNote(note))).then(() => {})
+            ? Promise.all(
+                rows.map((note) =>
+                  operations.deleteNote({
+                    ...note,
+                    archived: !!archived[note.id] || !!note.archived,
+                  }),
+                ),
+              ).then(() => {})
             : Promise.resolve(),
         undo: rollback,
         onError: rollback,

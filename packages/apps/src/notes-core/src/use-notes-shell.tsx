@@ -18,6 +18,7 @@ export type UseNotesShellArgs = {
   labels?: Partial<NotesUILabels>;
   listLoading?: boolean;
   operations?: NotesAPIOperations;
+  bootstrapRevision?: number;
 };
 
 export function useNotesShell({
@@ -25,6 +26,7 @@ export function useNotesShell({
   labels,
   listLoading = false,
   operations,
+  bootstrapRevision = 0,
 }: UseNotesShellArgs) {
   const L = useMemo(() => mergeNotesLabels(labels), [labels]);
   const [notes, setNotes] = useState<Note[]>(() => data.notes.map(enrichNote));
@@ -86,6 +88,10 @@ export function useNotesShell({
     [],
   );
 
+  useEffect(() => {
+    setNotes(data.notes.map(enrichNote));
+  }, [bootstrapRevision, data]);
+
   const notebooks = useMemo(
     () => [...new Set(notes.map((note) => note.notebook).filter((name) => name.trim().length > 0))],
     [notes],
@@ -106,6 +112,14 @@ export function useNotesShell({
     }
     setStarred(next);
   }, [notes, setStarred]);
+
+  useEffect(() => {
+    const next: Record<string, boolean> = {};
+    for (const note of notes) {
+      if (note.archived) next[note.id] = true;
+    }
+    setArchived(next);
+  }, [notes, setArchived]);
 
   const viewLabel = useMemo(() => {
     if (view === "all") return L.sidebarAllItems;

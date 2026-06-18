@@ -1,10 +1,11 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useConnectivity } from "@/hooks/use-connectivity";
+import { useConnectivity, useOnReconnect } from "@/hooks/use-connectivity";
 import {
   getConnectivitySnapshot,
   probeBrowserReachable,
   readBrowserOnline,
+  resetConnectivityHubForTests,
   subscribeBrowserOnline,
 } from "@/lib/offline/browser-online";
 
@@ -20,6 +21,7 @@ describe("readBrowserOnline", () => {
 
 describe("subscribeBrowserOnline", () => {
   afterEach(() => {
+    resetConnectivityHubForTests();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
@@ -35,21 +37,51 @@ describe("subscribeBrowserOnline", () => {
     unsubscribe();
   });
 
-  it("fires store change on offline and online events", () => {
+  it("fires store change on offline and online events", async () => {
     vi.spyOn(navigator, "onLine", "get").mockReturnValue(true);
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 200 })));
     const onStoreChange = vi.fn();
     const unsubscribe = subscribeBrowserOnline(onStoreChange);
 
-    expect(getConnectivitySnapshot()).toBe(true);
+    await waitFor(() => {
+      expect(getConnectivitySnapshot()).toBe(true);
+    });
 
     window.dispatchEvent(new Event("offline"));
     expect(getConnectivitySnapshot()).toBe(false);
 
     window.dispatchEvent(new Event("online"));
-    expect(getConnectivitySnapshot()).toBe(true);
+    await waitFor(() => {
+      expect(getConnectivitySnapshot()).toBe(true);
+    });
 
     unsubscribe();
+  });
+
+  it("detects reconnect when reachability returns without an online event", async () => {
+    vi.useFakeTimers();
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(true);
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+      .mockResolvedValue(new Response(null, { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const onStoreChange = vi.fn();
+    const unsubscribe = subscribeBrowserOnline(onStoreChange);
+
+    await vi.waitFor(() => {
+      expect(getConnectivitySnapshot()).toBe(false);
+    });
+
+    await vi.advanceTimersByTimeAsync(2000);
+
+    await vi.waitFor(() => {
+      expect(getConnectivitySnapshot()).toBe(true);
+    });
+
+    unsubscribe();
+    vi.useRealTimers();
   });
 });
 
@@ -80,6 +112,7 @@ describe("useConnectivity", () => {
   let unmountHook: (() => void) | undefined;
 
   beforeEach(() => {
+    resetConnectivityHubForTests();
     vi.spyOn(navigator, "onLine", "get").mockReturnValue(true);
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 200 })));
   });
@@ -87,6 +120,7 @@ describe("useConnectivity", () => {
   afterEach(() => {
     unmountHook?.();
     unmountHook = undefined;
+    resetConnectivityHubForTests();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
@@ -123,10 +157,12 @@ describe("useConnectivity", () => {
     });
   });
 
-  it("updates when the browser fires offline and online events", () => {
+  it("updates when the browser fires offline and online events", async () => {
     const { result, unmount } = renderHook(() => useConnectivity());
     unmountHook = unmount;
-    expect(result.current.online).toBe(true);
+    await waitFor(() => {
+      expect(result.current.online).toBe(true);
+    });
 
     act(() => {
       window.dispatchEvent(new Event("offline"));
@@ -136,6 +172,41 @@ describe("useConnectivity", () => {
     act(() => {
       window.dispatchEvent(new Event("online"));
     });
-    expect(result.current.online).toBe(true);
+    await waitFor(() => {
+      expect(result.current.online).toBe(true);
+    });
+  });
+});
+
+describe("useOnReconnect", () => {
+  afterEach(() => {
+    resetConnectivityHubForTests();
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
+  it("runs the callback when reachability returns without an online event", async () => {
+    vi.useFakeTimers();
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(true);
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+      .mockResolvedValue(new Response(null, { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const onReconnect = vi.fn();
+    renderHook(() => useOnReconnect(onReconnect));
+
+    await vi.waitFor(() => {
+      expect(getConnectivitySnapshot()).toBe(false);
+    });
+
+    await vi.advanceTimersByTimeAsync(2000);
+
+    await vi.waitFor(() => {
+      expect(getConnectivitySnapshot()).toBe(true);
+      expect(onReconnect).toHaveBeenCalledTimes(1);
+    });
   });
 });

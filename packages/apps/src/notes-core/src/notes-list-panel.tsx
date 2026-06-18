@@ -1,5 +1,5 @@
 import type { MouseEvent as ReactMouseEvent, ReactNode, RefObject } from "react";
-import { Archive, Circle, Pencil, Star, Trash2 } from "lucide-react";
+import { Archive, Circle, Pencil, RefreshCw, Star, Trash2 } from "lucide-react";
 import { Button, IconButton } from "@/button/src/button";
 import { Callout } from "@/callout/src/callout";
 import { ListItem } from "@/list-item/src/list-item";
@@ -9,6 +9,7 @@ import { formatNoteDateForList } from "@/notes-core/src/notes-date-utils";
 import type { NotesUILabels } from "@/notes-core/src/notes-labels";
 import { LoadingSpinner } from "@/loading-spinner/src/loading-spinner";
 import { WorkspaceSwipeList } from "@/workspace-swipe-list/src/workspace-swipe-list";
+import { cn } from "@/lib/utils";
 import "@/notes-core/src/notes-list-panel.css";
 
 type NotesListPanelProps = {
@@ -41,6 +42,7 @@ type NotesListPanelProps = {
   toggleStar: (id: string) => void;
   toggleArchive: (id: string) => void;
   selectionBar: ReactNode;
+  onRefreshList?: () => void;
   pendingNoteIds?: ReadonlySet<string>;
   failedSyncCount?: number;
   onRetrySync?: () => void;
@@ -76,6 +78,7 @@ export function NotesListPanel({
   toggleStar,
   toggleArchive,
   selectionBar,
+  onRefreshList,
   pendingNoteIds,
   failedSyncCount = 0,
   onRetrySync,
@@ -104,6 +107,18 @@ export function NotesListPanel({
         }
         actions={
           <div className="notes-list-panel__header-actions flex items-center gap-2">
+            {onRefreshList ? (
+              <IconButton
+                label={L.refreshList}
+                onClick={onRefreshList}
+                disabled={listLoading}
+                icon={
+                  <RefreshCw className={cn("size-4", listLoading && "animate-spin")} aria-hidden />
+                }
+                size="sm"
+                variant="subtle"
+              />
+            ) : null}
             {canEditDelete ? (
               <>
                 <IconButton

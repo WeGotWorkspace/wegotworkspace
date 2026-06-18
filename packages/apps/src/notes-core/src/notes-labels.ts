@@ -6,6 +6,7 @@ import { workspaceDestructiveDialogLabels } from "@/lib/workspace/destructive-di
  */
 export type NotesUILabels = {
   listLoading: string;
+  refreshList: string;
   searchPlaceholder: string;
   sidebarAllItems: string;
   sidebarStarred: string;
@@ -24,6 +25,7 @@ export type NotesUILabels = {
   fallbackViewTitle: string;
   toastNewNote: string;
   toastSaved: string;
+  toastSynced: string;
   selectionStar: string;
   selectionArchive: string;
   selectionMoveToNotebook: string;
@@ -60,6 +62,7 @@ export type NotesUILabels = {
 
 export const defaultNotesLabels: NotesUILabels = {
   listLoading: "Loading notes…",
+  refreshList: "Refresh notes",
   searchPlaceholder: "Search notes...",
   sidebarAllItems: "All Items",
   sidebarStarred: "Starred",
@@ -78,6 +81,7 @@ export const defaultNotesLabels: NotesUILabels = {
   fallbackViewTitle: "Writings",
   toastNewNote: "New note",
   toastSaved: "Note saved",
+  toastSynced: "Changes synced",
   selectionStar: "Star",
   selectionArchive: "Archive",
   selectionMoveToNotebook: "Change notebook",

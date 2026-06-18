@@ -6,7 +6,6 @@ import {
   createNotebook,
   deleteNotebook,
   deleteNoteItem,
-  fetchNotesLiveBootstrap,
   noteFromWgwItem,
   parseNotesItemsPayload,
   renameNotebook,
@@ -15,7 +14,6 @@ import {
   wgwNoteUpsertFromNote,
 } from "@/lib/api/wgw/notes";
 import { wgwFetch, wgwReadJson } from "@/lib/api/wgw/http";
-import { readBrowserOnline } from "@/lib/offline/core/browser-online";
 import { NOTES_DOMAIN } from "@/lib/offline/notes/notes-schema";
 import {
   listOutboxMutations,
@@ -138,17 +136,8 @@ export async function flushNotesOutbox(username: string): Promise<OutboxFlushRes
     }
   }
 
-  let nextBootstrap = await readNotesBootstrapFromCache(username);
-  if (nextBootstrap && readBrowserOnline()) {
-    try {
-      const live = await fetchNotesLiveBootstrap();
-      live.session = cached.session;
-      await writeNotesBootstrapToCache(username, live);
-      nextBootstrap = live;
-    } catch {
-      // Keep the locally merged bootstrap when a refresh fails transiently.
-    }
-  } else if (nextBootstrap) {
+  const nextBootstrap = await readNotesBootstrapFromCache(username);
+  if (nextBootstrap) {
     nextBootstrap.session = cached.session;
     await writeNotesBootstrapToCache(username, nextBootstrap);
   }

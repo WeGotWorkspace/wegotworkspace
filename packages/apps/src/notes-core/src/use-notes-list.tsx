@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import { useIsTouch } from "@/hooks/use-is-touch";
 import { useSelectionResetOnKeyChange } from "@/hooks/use-selection-reset-on-key-change";
 import { useWorkspaceListController } from "@/hooks/use-workspace-list-controller";
 import type { Note } from "@/lib/models/note";
+import { isLocalTempNoteId } from "@/lib/offline/notes-offline-store";
 import { filterVisibleNotes } from "./notes-note-utils";
 import type { NotesShellState } from "./use-notes-shell";
 
@@ -69,6 +70,48 @@ export function useNotesList({ shell }: UseNotesListArgs) {
     setSelectedIds,
     setSelectionMode,
   });
+
+  const prevNotesRef = useRef(notes);
+
+  useEffect(() => {
+    if (!activeId) {
+      prevNotesRef.current = notes;
+      return;
+    }
+    if (notes.some((note) => note.id === activeId)) {
+      prevNotesRef.current = notes;
+      return;
+    }
+
+    const prevNotes = prevNotesRef.current;
+    const prevActive = prevNotes.find((note) => note.id === activeId);
+    let remappedId: string | undefined;
+
+    if (isLocalTempNoteId(activeId)) {
+      const prevIds = new Set(prevNotes.map((note) => note.id));
+      const added = notes.filter((note) => !prevIds.has(note.id));
+      if (added.length === 1) {
+        remappedId = added[0]?.id;
+      } else if (prevActive) {
+        remappedId = notes.find(
+          (note) =>
+            note.notebook === prevActive.notebook &&
+            note.date === prevActive.date &&
+            note.title === prevActive.title,
+        )?.id;
+      }
+    }
+
+    if (remappedId) {
+      setActiveId(remappedId);
+      setSelectedIds((current) =>
+        current.map((rowId) => (rowId === activeId ? remappedId! : rowId)),
+      );
+    } else {
+      setActiveId("");
+    }
+    prevNotesRef.current = notes;
+  }, [activeId, notes, setSelectedIds]);
 
   const active = activeId ? notes.find((n) => n.id === activeId) : undefined;
 

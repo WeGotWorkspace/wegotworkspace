@@ -8,6 +8,8 @@ import "@/note-detail-view/src/note-text-editor-body.css";
 export type NoteTextEditorBodyProps = {
   /** Remount editor when the active note changes. */
   noteId: string;
+  /** Remount when remote content revision changes (e.g. note edited date). */
+  contentRevision?: string;
   initialMarkdown: string;
   readOnly?: boolean;
   onMarkdownChange?: (markdown: string) => void;
@@ -44,6 +46,10 @@ function NoteTextEditorBodyInner({
 /**
  * Markdown note body using the shared TextEditor (no format bar).
  */
-export function NoteTextEditorBody({ noteId, ...props }: NoteTextEditorBodyProps) {
-  return <NoteTextEditorBodyInner key={noteId} {...props} />;
+export function NoteTextEditorBody({
+  noteId,
+  contentRevision = "",
+  ...props
+}: NoteTextEditorBodyProps) {
+  return <NoteTextEditorBodyInner key={`${noteId}:${contentRevision}`} {...props} />;
 }

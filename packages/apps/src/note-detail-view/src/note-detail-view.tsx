@@ -77,7 +77,7 @@ export function NoteDetailView({
         title={title ?? ""}
         editable={!readOnly}
         onTitleChange={onTitleChange}
-        titleKey={`${noteId}-title`}
+        titleKey={`${noteId}-${lastEdited ?? ""}-title`}
         titleClassName="note-detail-view__title font-serif text-3xl md:text-4xl font-semibold leading-[1.1] tracking-tight mb-8 md:mb-10"
         titlePlaceholder="Untitled"
       />
@@ -98,6 +98,7 @@ export function NoteDetailView({
 
       <NoteTextEditorBody
         noteId={noteId}
+        contentRevision={lastEdited ?? ""}
         initialMarkdown={markdown}
         readOnly={readOnly || !onBodyMarkdownChange}
         onMarkdownChange={readOnly ? undefined : onBodyMarkdownChange}
