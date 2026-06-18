@@ -106,7 +106,7 @@ export const Default: Story = {
   args: { preset: "default" },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByText(/Architecture of Quiet/i)).toBeInTheDocument();
+    await expect(canvas.getByRole("button", { name: /Endless scroll/i })).toBeInTheDocument();
     await expect(canvas.getByRole("button", { name: "Refresh notes" })).toBeInTheDocument();
     const input = canvas.getByPlaceholderText("Search notes...");
     await userEvent.type(input, "Nordic");

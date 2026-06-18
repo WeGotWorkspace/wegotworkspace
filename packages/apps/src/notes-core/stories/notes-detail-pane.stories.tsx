@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { expect, userEvent, waitFor, within } from "storybook/test";
+import { expect, userEvent, waitFor } from "storybook/test";
 import { NoteDetailView } from "@/note-detail-view/src/note-detail-view";
 import { getNotesDetailStoryProps } from "./notes-pane-stories.fixtures";
 import { NotesStoryScope } from "./notes-story-scope";
@@ -18,7 +18,6 @@ function NotesDetailPaneHarness({
     extraBody: tallBody,
     pullQuote: withPullQuote ? "A highlighted line for layout checks." : undefined,
   });
-  const [title, setTitle] = useState(base.title);
   const [body, setBody] = useState(base.body);
 
   return (
@@ -28,8 +27,6 @@ function NotesDetailPaneHarness({
         notebook={base.notebook}
         lastEdited={base.lastEdited}
         editedLabel={base.editedLabel}
-        title={title}
-        onTitleChange={readOnly ? undefined : setTitle}
         tags={base.tags}
         readOnly={readOnly}
         pullQuote={base.pullQuote}
@@ -55,12 +52,12 @@ export const Editable: Story = {
   tags: ["vitest-ci"],
   args: {},
   play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const title = canvas.getByRole("heading", { name: /Architecture of Quiet/i });
-    await userEvent.clear(title);
-    await userEvent.type(title, "Updated note title");
+    const editor = canvasElement.querySelector('[contenteditable="true"]');
+    expect(editor).toBeTruthy();
+    await userEvent.click(editor!);
+    await userEvent.type(editor!, " Updated body text");
     await waitFor(() => {
-      expect(title).toHaveTextContent("Updated note title");
+      expect(editor!.textContent).toMatch(/Updated body text/);
     });
   },
 };

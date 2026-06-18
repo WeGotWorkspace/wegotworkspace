@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
+import { blurWorkspaceDetailEditor } from "@/hooks/blur-workspace-detail-editor";
 import { useIsTouch } from "@/hooks/use-is-touch";
 import { useSelectionResetOnKeyChange } from "@/hooks/use-selection-reset-on-key-change";
 import { useWorkspaceListController } from "@/hooks/use-workspace-list-controller";
@@ -57,10 +58,14 @@ export function useNotesList({ shell }: UseNotesListArgs) {
     activeId,
     setActiveId,
     onPrimarySelect: (id) => {
+      blurWorkspaceDetailEditor();
       setActiveId(id);
       workspaceLayoutRef.current?.openMobileDetail();
     },
-    onNavigateToId: () => workspaceLayoutRef.current?.openMobileDetail(),
+    onNavigateToId: () => {
+      blurWorkspaceDetailEditor();
+      workspaceLayoutRef.current?.openMobileDetail();
+    },
     onMutationError: showMutationError,
     queueDelayMs: WRITE_QUEUE_DELAY_MS,
   });
@@ -97,7 +102,8 @@ export function useNotesList({ shell }: UseNotesListArgs) {
           (note) =>
             note.notebook === prevActive.notebook &&
             note.date === prevActive.date &&
-            note.title === prevActive.title,
+            note.excerpt === prevActive.excerpt &&
+            note.body.join("\n\n") === prevActive.body.join("\n\n"),
         )?.id;
       }
     }

@@ -31,6 +31,7 @@ export function useNotesController({
   useWorkspaceListKeyboardShortcuts({
     searchInputRef: shell.searchInputRef,
     selectedCount: list.selectedIds.length,
+    selectionMode: list.selectionMode,
     onRequestDeleteSelection: mutations.requestDeleteSelected,
     onNavigateList: list.navigateListByKeyboard,
     onUndoQueuedAction: list.undoLatest,

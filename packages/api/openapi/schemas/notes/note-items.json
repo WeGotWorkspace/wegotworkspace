@@ -1,0 +1,35 @@
+{
+  "NoteItem": {
+    "type": "object",
+    "properties": {
+      "id": { "type": "string" },
+      "username": { "type": "string" },
+      "notebook": { "type": "string" },
+      "body": { "type": "string" },
+      "tags": { "$ref": "#/components/schemas/NoteTagList" },
+      "starred": { "type": ["boolean", "null"] },
+      "archived": { "type": "boolean" },
+      "updatedAt": { "type": "string" }
+    },
+    "required": ["id", "username", "notebook", "body", "tags", "archived", "updatedAt"]
+  },
+  "NoteUpsertRequest": {
+    "type": "object",
+    "properties": {
+      "id": { "type": "string" },
+      "notebook": { "type": "string" },
+      "body": { "type": "string" },
+      "tags": { "$ref": "#/components/schemas/NoteTagList" },
+      "starred": { "type": "boolean" },
+      "archived": { "type": "boolean" }
+    },
+    "required": ["notebook"],
+    "example": {
+      "id": "n123",
+      "notebook": "General",
+      "body": "Draft roadmap",
+      "tags": ["planning"],
+      "starred": true
+    }
+  }
+}

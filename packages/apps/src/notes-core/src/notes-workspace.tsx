@@ -231,8 +231,6 @@ export function NotesWorkspace({
               notebook={active.notebook}
               lastEdited={formatNoteDateForList(active.date)}
               editedLabel="Edited "
-              title={active.title}
-              onTitleChange={(value) => updateNote(active.id, { title: value })}
               tags={active.tags}
               onTagAdd={() => setTagDialog({ noteId: active.id })}
               onTagRemove={(tag) => toggleNoteTag(active.id, tag)}

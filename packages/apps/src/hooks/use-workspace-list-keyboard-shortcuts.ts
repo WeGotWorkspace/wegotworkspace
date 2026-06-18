@@ -3,6 +3,9 @@ import { useEffect, type RefObject } from "react";
 export type UseWorkspaceListKeyboardShortcutsOptions = {
   searchInputRef: RefObject<HTMLInputElement | null>;
   selectedCount: number;
+  selectionMode?: boolean;
+  /** When set, list shortcuts still run while focus is inside this detail editor. */
+  detailEditorSelector?: string;
   onRequestDeleteSelection: () => void;
   onNavigateList?: (direction: -1 | 1, extendSelection: boolean) => void;
   onUndoQueuedAction?: () => boolean;
@@ -15,6 +18,8 @@ export type UseWorkspaceListKeyboardShortcutsOptions = {
 export function useWorkspaceListKeyboardShortcuts({
   searchInputRef,
   selectedCount,
+  selectionMode = false,
+  detailEditorSelector = "[data-workspace-detail-editor]",
   onRequestDeleteSelection,
   onNavigateList,
   onUndoQueuedAction,
@@ -25,17 +30,22 @@ export function useWorkspaceListKeyboardShortcuts({
     let spaceHeld = false;
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
-      const inField =
-        !!target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
+      const inFormField = !!target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName);
+      const inDetailEditor = !!target?.closest(detailEditorSelector);
+      const inContentEditable = !!target?.isContentEditable;
+      const listShortcutsAllowed =
+        !inFormField &&
+        (!inContentEditable ||
+          (inDetailEditor && selectedCount > 0 && (selectionMode || selectedCount > 1)));
 
-      if ((e.key === "k" && (e.metaKey || e.ctrlKey)) || (!inField && e.key === "/")) {
+      if ((e.key === "k" && (e.metaKey || e.ctrlKey)) || (listShortcutsAllowed && e.key === "/")) {
         e.preventDefault();
         searchInputRef.current?.focus();
         searchInputRef.current?.select();
         return;
       }
 
-      if (inField) return;
+      if (!listShortcutsAllowed) return;
       const keyLower = e.key.toLowerCase();
       const undoPressed =
         keyLower === "z" &&
@@ -73,5 +83,13 @@ export function useWorkspaceListKeyboardShortcuts({
       window.removeEventListener("keydown", handler);
       window.removeEventListener("keyup", keyupHandler);
     };
-  }, [searchInputRef, selectedCount, onRequestDeleteSelection, onNavigateList, onUndoQueuedAction]);
+  }, [
+    searchInputRef,
+    selectedCount,
+    selectionMode,
+    detailEditorSelector,
+    onRequestDeleteSelection,
+    onNavigateList,
+    onUndoQueuedAction,
+  ]);
 }

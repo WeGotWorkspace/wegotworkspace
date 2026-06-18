@@ -428,7 +428,6 @@ export function useNotesMutations({ shell, list }: UseNotesMutationsArgs) {
       id,
       category: L.newNoteCategory,
       date,
-      title: "",
       excerpt: "",
       body: [""],
       notebook: targetNotebook,

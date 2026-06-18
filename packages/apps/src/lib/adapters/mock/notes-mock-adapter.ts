@@ -10,7 +10,6 @@ const INITIAL_NOTES: Note[] = [
     category: "Essay",
     date: "12 Oct 2024",
     starred: true,
-    title: "The Architecture of Quiet",
     excerpt:
       "The silence of a library is not the absence of sound, but rather the presence of intense focus. We must consider...",
     body: [
@@ -26,7 +25,6 @@ const INITIAL_NOTES: Note[] = [
     id: "2",
     category: "Monograph",
     date: "08 Oct 2024",
-    title: "Notes on the Nordic Coast",
     excerpt:
       "Sharp granite edges meet the Atlantic. The light here has a crystalline quality that refuses to be captured by...",
     body: [
@@ -41,7 +39,6 @@ const INITIAL_NOTES: Note[] = [
     id: "3",
     category: "Research",
     date: "29 Sep 2024",
-    title: "A Revision of Modernity",
     excerpt:
       "When the Bauhaus movement first proposed its principles, the world was a different place. Today, we must ask...",
     body: [
@@ -57,7 +54,6 @@ const INITIAL_NOTES: Note[] = [
     category: "Review",
     date: "24 Sep 2024",
     archived: true,
-    title: "The Printed Word in Digital Age",
     excerpt:
       "The tactile nature of paper is irreplaceable. The smell of ink, the grain of the page, the physical weight of...",
     body: [

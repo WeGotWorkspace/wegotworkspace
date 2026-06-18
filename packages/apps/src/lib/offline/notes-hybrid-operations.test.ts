@@ -21,7 +21,6 @@ const note: Note = {
   id: "note-1",
   category: "Note",
   date: "2024-10-12T10:00:00.000Z",
-  title: "Quiet draft",
   excerpt: "Draft excerpt",
   body: ["Body text"],
   notebook: "Drafts",
@@ -101,13 +100,13 @@ describe("createHybridNotesOperations", () => {
     vi.mocked(readBrowserOnline).mockReturnValue(false);
 
     const operations = createHybridNotesOperations(username);
-    const saved = await operations.upsertNote({ ...note, title: "Offline edit" });
+    const saved = await operations.upsertNote({ ...note, body: ["Offline edit"] });
 
-    expect(saved.title).toBe("Offline edit");
+    expect(saved.body).toEqual(["Offline edit"]);
     expect(updateNoteItem).not.toHaveBeenCalled();
 
     const cached = await readNotesBootstrapFromCache(username);
-    expect(cached?.data.notes[0]?.title).toBe("Offline edit");
+    expect(cached?.data.notes[0]?.body).toEqual(["Offline edit"]);
 
     const outbox = await listOutboxMutations(username);
     expect(outbox).toHaveLength(1);
@@ -119,9 +118,9 @@ describe("createHybridNotesOperations", () => {
     vi.mocked(updateNoteItem).mockRejectedValue(new TypeError("network request failed"));
 
     const operations = createHybridNotesOperations(username);
-    const saved = await operations.upsertNote({ ...note, title: "Queued edit" });
+    const saved = await operations.upsertNote({ ...note, body: ["Queued edit"] });
 
-    expect(saved.title).toBe("Queued edit");
+    expect(saved.body).toEqual(["Queued edit"]);
     expect(updateNoteItem).toHaveBeenCalledOnce();
 
     const outbox = await listOutboxMutations(username);
@@ -133,12 +132,12 @@ describe("createHybridNotesOperations", () => {
     vi.mocked(readBrowserOnline).mockReturnValue(false);
 
     const operations = createHybridNotesOperations(username);
-    await operations.upsertNote({ ...note, title: "Pending edit" });
+    await operations.upsertNote({ ...note, body: ["Pending edit"] });
 
     const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
     const row = await notesNotesTable(db).get("note-1");
     expect(row?.pendingSync).toBe(true);
-    expect(JSON.parse(row?.data ?? "{}").title).toBe("Pending edit");
+    expect(JSON.parse(row?.data ?? "{}").body).toEqual(["Pending edit"]);
   });
 
   it("reuses a caller-provided local temp id for offline creates", async () => {
@@ -150,9 +149,8 @@ describe("createHybridNotesOperations", () => {
       id: tempId,
       category: "Note",
       date: "2024-10-12T10:00:00.000Z",
-      title: "Offline create",
       excerpt: "",
-      body: [""],
+      body: ["Offline create"],
       notebook: "Drafts",
       tags: [],
       wordCount: 0,
@@ -163,7 +161,7 @@ describe("createHybridNotesOperations", () => {
     const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
     const row = await notesNotesTable(db).get(tempId);
     expect(row?.pendingSync).toBe(true);
-    expect(JSON.parse(row?.data ?? "{}").title).toBe("Offline create");
+    expect(JSON.parse(row?.data ?? "{}").body).toEqual(["Offline create"]);
 
     const outbox = await listOutboxMutations(username);
     expect(outbox).toHaveLength(1);
@@ -174,7 +172,7 @@ describe("createHybridNotesOperations", () => {
     await enqueueCoalescedNoteUpdate(
       username,
       note.id,
-      { ...note, title: "Pending edit" },
+      { ...note, body: ["Pending edit"] },
       note.date,
     );
     vi.mocked(deleteNoteItem).mockResolvedValue(undefined);
@@ -244,20 +242,20 @@ describe("fetchNotesHybridBootstrap", () => {
       ...bootstrap,
       data: {
         ...bootstrap.data,
-        notes: [{ ...note, title: "Stale server title" }],
+        notes: [{ ...note, body: ["Stale server body"] }],
       },
     });
-    vi.mocked(updateNoteItem).mockResolvedValue({ ...note, title: "Flushed local title" });
+    vi.mocked(updateNoteItem).mockResolvedValue({ ...note, body: ["Flushed local body"] });
     await enqueueCoalescedNoteUpdate(
       username,
       note.id,
-      { ...note, title: "Flushed local title" },
+      { ...note, body: ["Flushed local body"] },
       note.date,
     );
 
     const result = await fetchNotesHybridBootstrap();
 
-    expect(result.data.notes[0]?.title).toBe("Flushed local title");
+    expect(result.data.notes[0]?.body).toEqual(["Flushed local body"]);
     expect(await listOutboxMutations(username)).toHaveLength(0);
   });
 });

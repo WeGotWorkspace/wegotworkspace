@@ -2320,9 +2320,6 @@
                     "notebook": {
                         "type": "string"
                     },
-                    "title": {
-                        "type": "string"
-                    },
                     "body": {
                         "type": "string"
                     },
@@ -2346,7 +2343,6 @@
                     "id",
                     "username",
                     "notebook",
-                    "title",
                     "body",
                     "tags",
                     "archived",
@@ -2397,9 +2393,6 @@
                     "notebook": {
                         "type": "string"
                     },
-                    "title": {
-                        "type": "string"
-                    },
                     "body": {
                         "type": "string"
                     },
@@ -2414,13 +2407,11 @@
                     }
                 },
                 "required": [
-                    "notebook",
-                    "title"
+                    "notebook"
                 ],
                 "example": {
                     "id": "n123",
                     "notebook": "General",
-                    "title": "Roadmap",
                     "body": "Draft roadmap",
                     "tags": [
                         "planning"

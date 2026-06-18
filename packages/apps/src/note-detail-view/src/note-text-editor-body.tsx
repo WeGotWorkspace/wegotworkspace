@@ -28,6 +28,7 @@ function NoteTextEditorBodyInner({
     format: "markdown",
     content: initialMarkdown,
     editable: canEdit,
+    autofocus: false,
     placeholder: "Press '/' for commands…",
     onUpdate: canEdit
       ? ({ content }) => {
@@ -37,7 +38,10 @@ function NoteTextEditorBodyInner({
   });
 
   return (
-    <div className={cn("note-text-editor-body text-editor", className)}>
+    <div
+      className={cn("note-text-editor-body text-editor", className)}
+      data-workspace-detail-editor
+    >
       <TextEditorSheet editor={editor} variant="sheet" />
     </div>
   );

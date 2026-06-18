@@ -42,12 +42,13 @@ final class NoteRepository
             }
             if (
                 $q !== ''
-                && ! str_contains(strtolower((string) $note['title']), $q)
+                && ! str_contains(strtolower((string) ($note['_searchTitle'] ?? '')), $q)
                 && ! str_contains(strtolower((string) $note['body']), $q)
                 && ! str_contains(strtolower(implode(',', $note['tags'])), $q)
             ) {
                 continue;
             }
+            unset($note['_searchTitle']);
             $items[] = $note;
         }
 
@@ -70,14 +71,14 @@ final class NoteRepository
             : $this->sanitizeNoteId((string) ($body['id'] ?? ('n'.(string) time())));
         $notebook = $this->sanitizeNotebook((string) ($body['notebook'] ?? 'General'));
         $archived = $this->codec->toBool($body['archived'] ?? false) ?? false;
-        $title = trim((string) ($body['title'] ?? 'Untitled'));
         $tags = $this->codec->normalizeTags($body['tags'] ?? []);
         $bodyText = (string) ($body['body'] ?? '');
         $starred = $this->codec->toBool($body['starred'] ?? null);
         $key = $this->notePaths->noteKey($username, $notebook, $id, $archived);
         $disk = $this->disk();
+        $title = $this->resolvePersistedTitle($username, $id, $key);
         $disk->makeDirectory(dirname($key));
-        $markdown = $this->codec->serialize($title !== '' ? $title : 'Untitled', $tags, $starred, $bodyText);
+        $markdown = $this->codec->serialize($title, $tags, $starred, $bodyText);
         if (! $disk->put($key, $markdown)) {
             throw new ApiHttpException(500, 'Could not save note.', 'server_error');
         }
@@ -348,13 +349,34 @@ final class NoteRepository
             'id' => $id,
             'username' => $username,
             'notebook' => $notebook,
-            'title' => $title,
             'body' => $body,
             'tags' => $tags,
             'starred' => $starred,
             'archived' => $archived,
             'updatedAt' => date('c', $mtime),
+            '_searchTitle' => $title,
         ];
+    }
+
+    private function resolvePersistedTitle(string $username, string $id, string $targetKey): string
+    {
+        $disk = $this->disk();
+        if ($disk->exists($targetKey)) {
+            $raw = (string) $disk->get($targetKey);
+            [$title] = $this->codec->parse($raw, $id);
+
+            return $title !== '' ? $title : 'Untitled';
+        }
+
+        $existing = $this->findNoteKey($username, $id, null, null);
+        if ($existing !== null && $disk->exists($existing['key'])) {
+            $raw = (string) $disk->get($existing['key']);
+            [$title] = $this->codec->parse($raw, $id);
+
+            return $title !== '' ? $title : 'Untitled';
+        }
+
+        return 'Untitled';
     }
 
     private function disk(): Filesystem

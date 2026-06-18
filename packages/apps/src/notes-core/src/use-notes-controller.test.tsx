@@ -29,7 +29,6 @@ const localNote: Note = {
   id: "local-offline-create",
   category: "Note",
   date: "2024-10-12T10:00:00.000Z",
-  title: "Offline draft",
   excerpt: "Draft excerpt",
   body: ["Draft body"],
   notebook: "Drafts",
@@ -40,7 +39,6 @@ const localNote: Note = {
 const syncedNote: Note = {
   ...localNote,
   id: "server-note-99",
-  title: "Offline draft",
   excerpt: "Synced excerpt",
   body: ["Synced body"],
 };
@@ -90,12 +88,12 @@ describe("useNotesController bootstrap sync", () => {
 
   it("refreshes the active note when bootstrap syncs updated server content", () => {
     const initialData: NotesUIData = {
-      notes: [{ ...localNote, id: "note-1", title: "Before sync" }],
+      notes: [{ ...localNote, id: "note-1", excerpt: "Before sync", body: ["Before body"] }],
       notebooks: ["Drafts"],
       tags: [],
     };
     const syncedData: NotesUIData = {
-      notes: [{ ...localNote, id: "note-1", title: "After sync", body: ["Server body"] }],
+      notes: [{ ...localNote, id: "note-1", excerpt: "After sync", body: ["Server body"] }],
       notebooks: ["Drafts"],
       tags: [],
     };
@@ -106,12 +104,12 @@ describe("useNotesController bootstrap sync", () => {
     );
 
     clickSelect(result, "note-1");
-    expect(result.current.active?.title).toBe("Before sync");
+    expect(result.current.active?.excerpt).toBe("Before sync");
 
     rerender({ data: syncedData });
 
     expect(result.current.activeId).toBe("note-1");
-    expect(result.current.active?.title).toBe("After sync");
+    expect(result.current.active?.excerpt).toBe("After sync");
     expect(result.current.active?.body).toEqual(["Server body"]);
   });
 });

@@ -13,10 +13,8 @@ const base = {
   noteId: "demo-1",
   notebook: "Personal",
   lastEdited: "6 May 2026",
-  title: "Shared detail layout",
   tags: ["ideas", "draft"],
   body: ["First paragraph of the note.", "Second paragraph with more detail."],
-  onTitleChange: () => {},
   onTagAdd: () => {},
   onTagRemove: () => {},
   onBodyMarkdownChange: () => {},
@@ -34,7 +32,6 @@ export const ReadOnly: Story = {
   args: {
     ...base,
     readOnly: true,
-    title: "Read-only preview",
     pullQuote: undefined,
   },
 };
