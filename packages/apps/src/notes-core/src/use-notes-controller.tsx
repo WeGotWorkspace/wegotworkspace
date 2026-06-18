@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { useWorkspaceListKeyboardShortcuts } from "@/hooks/use-workspace-list-keyboard-shortcuts";
 import type { NotesUILabels } from "./notes-labels";
 import type { NotesAPIOperations, NotesUIData } from "./notes-types";
@@ -11,6 +12,10 @@ type UseNotesControllerArgs = {
   listLoading?: boolean;
   operations?: NotesAPIOperations;
   bootstrapRevision?: number;
+  initialView?: string;
+  initialNoteId?: string;
+  onViewChange?: (view: string) => void;
+  onNoteChange?: (noteId: string) => void;
 };
 
 /**
@@ -23,9 +28,29 @@ export function useNotesController({
   listLoading = false,
   operations,
   bootstrapRevision = 0,
+  initialView,
+  initialNoteId,
+  onViewChange,
+  onNoteChange,
 }: UseNotesControllerArgs) {
-  const shell = useNotesShell({ data, labels, listLoading, operations, bootstrapRevision });
-  const list = useNotesList({ shell });
+  const shell = useNotesShell({
+    data,
+    labels,
+    listLoading,
+    operations,
+    bootstrapRevision,
+    initialView,
+    onViewChange,
+  });
+  const list = useNotesList({ shell, initialNoteId, onNoteChange });
+
+  const selectView = useCallback(
+    (nextView: string) => {
+      list.setActiveId("");
+      shell.selectView(nextView);
+    },
+    [list, shell],
+  );
   const mutations = useNotesMutations({ shell, list });
 
   useWorkspaceListKeyboardShortcuts({
@@ -73,7 +98,7 @@ export function useNotesController({
     selectionBar: mutations.selectionBar,
     handleSelect: list.handleSelect,
     enterSelectionFor: list.enterSelectionFor,
-    selectView: shell.selectView,
+    selectView,
     setSearchQuery: shell.setSearchQuery,
     setMoveDialog: mutations.setMoveDialog,
     setEditDialog: mutations.setEditDialog,

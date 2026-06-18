@@ -17,4 +17,15 @@ export type NotesWorkspaceProps = {
   /** Invoked when the user chooses log out; navigation is owned by the app shell. */
   onLogout?: () => void;
   className?: string;
+  /**
+   * Initial view to restore from a deep-link URL (e.g. `"all"`, `"nb:Drafts"`, `"tag:focus"`).
+   * Falls back to `"all"` when absent.
+   */
+  initialView?: string;
+  /** Initial note `id` to open on load (e.g. from a deep-link URL). */
+  initialNoteId?: string;
+  /** Called whenever the active view changes so the app layer can sync the URL. */
+  onViewChange?: (view: string) => void;
+  /** Called whenever the active note changes so the app layer can sync the URL. */
+  onNoteChange?: (noteId: string) => void;
 };

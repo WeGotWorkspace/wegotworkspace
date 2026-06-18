@@ -33,6 +33,10 @@ export function NotesWorkspace({
   onRefreshList,
   onLogout,
   className,
+  initialView,
+  initialNoteId,
+  onViewChange,
+  onNoteChange,
 }: NotesWorkspaceProps) {
   const closeSidebarOnMobile = (closeSidebar: () => void) => {
     if (typeof window === "undefined") return;
@@ -98,6 +102,10 @@ export function NotesWorkspace({
     listLoading,
     operations,
     bootstrapRevision,
+    initialView,
+    initialNoteId,
+    onViewChange,
+    onNoteChange,
   });
 
   const { primarySidebarItems, notebookSidebarItems, tagSidebarItems } = useNotesSidebarModel({

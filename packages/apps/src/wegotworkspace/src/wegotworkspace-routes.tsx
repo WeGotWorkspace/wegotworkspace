@@ -194,10 +194,76 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
     component: isLive ? withWeGotWorkspaceAuth(MailApp) : MockMailRoute,
   });
 
-  const notesRoute = createRoute({
+  const NotesComponent = isLive ? withWeGotWorkspaceAuth(NotesApp) : MockNotesRoute;
+
+  // Each notes path is a root-level route with its own component so `useParams` in
+  // NotesApp resolves leaf params (noteId, notebookSlug, tagSlug) on direct page loads.
+  const notesIndexRoute = createRoute({
     getParentRoute: () => wegotworkspaceRootRoute,
     path: "/notes",
-    component: isLive ? withWeGotWorkspaceAuth(NotesApp) : MockNotesRoute,
+    beforeLoad: () => {
+      throw redirect({ to: "/notes/all" });
+    },
+  });
+
+  const notesAllRoute = createRoute({
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/notes/all",
+    component: NotesComponent,
+  });
+
+  const notesAllNoteRoute = createRoute({
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/notes/all/$noteId",
+    component: NotesComponent,
+  });
+
+  const notesStarredRoute = createRoute({
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/notes/starred",
+    component: NotesComponent,
+  });
+
+  const notesStarredNoteRoute = createRoute({
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/notes/starred/$noteId",
+    component: NotesComponent,
+  });
+
+  const notesArchiveRoute = createRoute({
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/notes/archive",
+    component: NotesComponent,
+  });
+
+  const notesArchiveNoteRoute = createRoute({
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/notes/archive/$noteId",
+    component: NotesComponent,
+  });
+
+  const notesTagRoute = createRoute({
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/notes/tags/$tagSlug",
+    component: NotesComponent,
+  });
+
+  const notesTagNoteRoute = createRoute({
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/notes/tags/$tagSlug/$noteId",
+    component: NotesComponent,
+  });
+
+  const notesNotebookRoute = createRoute({
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/notes/$notebookSlug",
+    component: NotesComponent,
+  });
+
+  const notesNotebookNoteRoute = createRoute({
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/notes/$notebookSlug/$noteId",
+    component: NotesComponent,
   });
 
   const driveRoute = createRoute({
@@ -294,7 +360,17 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
     loginRoute,
     logoutRoute,
     mailRoute,
-    notesRoute,
+    notesIndexRoute,
+    notesAllRoute,
+    notesAllNoteRoute,
+    notesStarredRoute,
+    notesStarredNoteRoute,
+    notesArchiveRoute,
+    notesArchiveNoteRoute,
+    notesTagRoute,
+    notesTagNoteRoute,
+    notesNotebookRoute,
+    notesNotebookNoteRoute,
     driveRoute,
     docsRoute,
     settingsRoute,

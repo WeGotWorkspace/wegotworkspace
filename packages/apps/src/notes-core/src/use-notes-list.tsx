@@ -13,9 +13,11 @@ const WRITE_QUEUE_DELAY_MS = 2500;
 
 export type UseNotesListArgs = {
   shell: NotesShellState;
+  initialNoteId?: string;
+  onNoteChange?: (noteId: string) => void;
 };
 
-export function useNotesList({ shell }: UseNotesListArgs) {
+export function useNotesList({ shell, initialNoteId, onNoteChange }: UseNotesListArgs) {
   const {
     notes,
     setNotes,
@@ -27,8 +29,28 @@ export function useNotesList({ shell }: UseNotesListArgs) {
     showMutationError,
   } = shell;
 
-  const [activeId, setActiveId] = useState<string>("");
+  const [activeId, setActiveId] = useState<string>(() => initialNoteId ?? "");
   const isTouch = useIsTouch();
+
+  useEffect(() => {
+    if (initialNoteId === undefined) return;
+    setActiveId(initialNoteId);
+  }, [initialNoteId]);
+
+  useEffect(() => {
+    if (!initialNoteId) return;
+    workspaceLayoutRef.current?.openMobileDetail();
+  }, [initialNoteId, workspaceLayoutRef]);
+
+  const noteSyncedRef = useRef(false);
+  useEffect(() => {
+    if (!noteSyncedRef.current) {
+      noteSyncedRef.current = true;
+      return;
+    }
+    if (isLocalTempNoteId(activeId)) return;
+    onNoteChange?.(activeId);
+  }, [activeId, onNoteChange]);
 
   const visibleNotes = useMemo(
     () => filterVisibleNotes(notes, { view, archived, starred, searchQuery }),
