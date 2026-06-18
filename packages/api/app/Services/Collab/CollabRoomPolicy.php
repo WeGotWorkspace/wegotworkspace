@@ -9,6 +9,10 @@ namespace App\Services\Collab;
  */
 final class CollabRoomPolicy
 {
+    /** @var non-empty-string */
+    private const DOCUMENT_EXTENSIONS =
+        'csv|env|html|ini|json|log|md|markdown|toml|txt|xml|yaml|yml';
+
     public function cleanRoom(mixed $room): string
     {
         if (! is_string($room) || ! preg_match('/^[A-Za-z0-9._~\/ -]{4,190}$/', $room)) {
@@ -19,12 +23,12 @@ final class CollabRoomPolicy
     }
 
     /**
-     * Drive virtual path to a markdown or plain-text document.
+     * Drive virtual path to an editable text document (explicit extension allowlist).
      */
     public function cleanDocumentPath(mixed $room): string
     {
         $room = $this->cleanRoom($room);
-        if (! preg_match('/\.(md|txt)$/i', $room)) {
+        if (! preg_match('/\.(?:'.self::DOCUMENT_EXTENSIONS.')$/i', $room)) {
             $this->fail('invalid_document_path');
         }
 

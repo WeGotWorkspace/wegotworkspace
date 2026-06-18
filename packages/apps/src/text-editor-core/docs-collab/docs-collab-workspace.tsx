@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import type { Editor } from "@tiptap/react";
-import { Code2, Printer } from "lucide-react";
+import { Code2, Circle, Printer } from "lucide-react";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import { IconButton } from "@/button/src/button";
 import { docsLabels } from "@/docs-core/src/docs-labels";
@@ -141,6 +141,7 @@ function DocsCollabWorkspaceInner({
     connectingPeers,
     warningPeers,
     docStatus,
+    pendingSync,
     onMarkdownChange,
   } = useDocsCollab({
     userName,
@@ -157,8 +158,12 @@ function DocsCollabWorkspaceInner({
   const [activeOutlineIndex, setActiveOutlineIndex] = useState<number | null>(null);
   const resolvedDocumentTitle = documentTitle?.trim() || defaultTitleFromRoom(urls?.room);
   const editorFormat = docsEditorFormatFromFileName(resolvedDocumentTitle);
+  const showMarkdownOutline = resolvedDocumentTitle.toLowerCase().endsWith(".md");
 
-  const outline = useMemo(() => parseMarkdownOutline(markdown), [markdown]);
+  const outline = useMemo(
+    () => (showMarkdownOutline ? parseMarkdownOutline(markdown) : []),
+    [markdown, showMarkdownOutline],
+  );
 
   const handleMarkdownChange = useCallback(
     (getContent: () => string) => {
@@ -231,21 +236,33 @@ function DocsCollabWorkspaceInner({
                 />
               }
             >
-              <DocsOutlineSidebar
-                labels={labels}
-                items={outline}
-                activeIndex={activeOutlineIndex}
-                onSelect={handleOutlineSelect}
-              />
+              {showMarkdownOutline ? (
+                <DocsOutlineSidebar
+                  labels={labels}
+                  items={outline}
+                  activeIndex={activeOutlineIndex}
+                  onSelect={handleOutlineSelect}
+                />
+              ) : null}
             </AppSidebar>
           }
           mainHeader={
             <ViewHeader
               title={resolvedDocumentTitle}
+              subtitle={docStatus || undefined}
               sidebarOpen={sidebarOpen}
               onToggleSidebar={() => setSidebarOpen((open) => !open)}
               actions={
                 <div className="docs-workspace__header-actions">
+                  {pendingSync ? (
+                    <span
+                      className="docs-workspace__pending-sync"
+                      role="img"
+                      aria-label={labels.pendingSync}
+                    >
+                      <Circle fill="currentColor" strokeWidth={0} />
+                    </span>
+                  ) : null}
                   {collabSession ? (
                     <DocsCollabPresence
                       localUser={{

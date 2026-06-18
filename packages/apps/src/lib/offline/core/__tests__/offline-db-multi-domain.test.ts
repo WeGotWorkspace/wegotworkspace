@@ -147,13 +147,13 @@ describe("offline db multi-domain registry", () => {
   });
 
   it("rejects registration when two domains claim the same Dexie version (#212)", () => {
-    seedOfflineVersionOwnerForTests(25, "notes");
+    seedOfflineVersionOwnerForTests(10, "contacts");
 
     expect(() =>
       registerOfflineDomainTables({
-        domain: "app-slot-3",
-        versions: [{ version: 25, stores: { collision_b_table: "id" } }],
+        domain: "notes",
+        versions: [{ version: 10, stores: { notes_notes: "id" } }],
       }),
-    ).toThrow(/already claimed by domain "notes"/);
+    ).toThrow(/already claimed by domain "contacts"/);
   });
 });

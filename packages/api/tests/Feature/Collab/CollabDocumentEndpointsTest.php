@@ -121,4 +121,73 @@ final class CollabDocumentEndpointsTest extends WgwDatabaseTestCase
             ->assertHeader('Content-Type', 'text/markdown; charset=utf-8')
             ->assertSeeText('# Hello World');
     }
+
+    public function test_my_drive_markdown_collaboration_round_trips(): void
+    {
+        $token = $this->issueBearerToken();
+        $path = '/users/alice/docs/personal.md';
+
+        $this->withBearer($token)
+            ->putJson('/api/v1/files/collaboration?path='.urlencode($path), [
+                'markdown' => "# Personal\n\nMy Drive note.\n",
+            ])
+            ->assertOk()
+            ->assertJsonPath('ok', true);
+
+        $this->withBearer($token)
+            ->get('/api/v1/files/collaboration?path='.urlencode($path))
+            ->assertOk()
+            ->assertSeeText('My Drive note.');
+    }
+
+    public function test_yaml_collaboration_path_is_allowed(): void
+    {
+        $token = $this->issueBearerToken();
+        $path = '/users/alice/docs/config.yaml';
+
+        $this->withBearer($token)
+            ->putJson('/api/v1/files/collaboration?path='.urlencode($path), [
+                'markdown' => "version: 1\nfeature: docs\n",
+            ])
+            ->assertOk()
+            ->assertJsonPath('ok', true);
+
+        $storage = app(WgwStorage::class)->files();
+        $stored = (string) $storage->get('users/alice/docs/config.yaml');
+        $this->assertStringContainsString('version: 1', $stored);
+        $this->assertStringContainsString('feature: docs', $stored);
+
+        $this->withBearer($token)
+            ->get('/api/v1/files/collaboration?path='.urlencode($path))
+            ->assertOk()
+            ->assertSeeText('feature: docs');
+    }
+
+    public function test_csv_collaboration_path_is_allowed(): void
+    {
+        $token = $this->issueBearerToken();
+        $path = '/users/alice/docs/metrics.csv';
+
+        $this->withBearer($token)
+            ->putJson('/api/v1/files/collaboration?path='.urlencode($path), [
+                'markdown' => "name,value\nalpha,1\n",
+            ])
+            ->assertOk()
+            ->assertJsonPath('ok', true);
+
+        $this->withBearer($token)
+            ->get('/api/v1/files/collaboration?path='.urlencode($path))
+            ->assertOk()
+            ->assertSeeText('alpha,1');
+    }
+
+    public function test_binary_extension_is_rejected_for_collaboration(): void
+    {
+        $token = $this->issueBearerToken();
+
+        $this->withBearer($token)
+            ->get('/api/v1/files/collaboration?path='.urlencode('/users/alice/docs/photo.png'))
+            ->assertBadRequest()
+            ->assertJsonPath('error', 'invalid_document_path');
+    }
 }

@@ -4,5 +4,15 @@ export { DocsCollabEditor } from "./docs-collab-editor";
 export type { DocsCollabEditorProps } from "./docs-collab-editor";
 export { DocsCollabPresence } from "./docs-collab-presence";
 export type { DocsCollabPresenceProps } from "./docs-collab-presence";
-export { useDocsCollab, DEFAULT_DOCS_COLLAB_URLS } from "./use-docs-collab";
+export { migrateCollabPersistence } from "./docs-collab-persistence";
+export {
+  useDocsCollab,
+  DEFAULT_DOCS_COLLAB_URLS,
+  MESH_ORIGIN,
+  SEED_ORIGIN,
+  SERVER_ORIGIN,
+  IDB_ORIGIN,
+} from "./use-docs-collab";
 export type { DocsCollabUrls, DocsCollabSession, UseDocsCollabOptions } from "./use-docs-collab";
+export { useDocsCollabPendingSync } from "./use-docs-collab-pending-sync";
+export { useDocsCollabFailedSync } from "./use-docs-collab-failed-sync";
