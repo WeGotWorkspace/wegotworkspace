@@ -2,13 +2,17 @@ import "fake-indexeddb/auto";
 import Dexie from "dexie";
 import { describe, expect, it } from "vitest";
 import { registerOfflineDomainTables, WgwOfflineDatabase } from "@/lib/offline/core/offline-db";
-import { NOTES_OFFLINE_VERSION } from "@/lib/offline/core/offline-version-allocation";
+import {
+  NOTES_OFFLINE_VERSION,
+  DOCS_OFFLINE_VERSION,
+} from "@/lib/offline/core/offline-version-allocation";
 import { seedOfflineVersionOwnerForTests } from "@/lib/offline/core/offline-version-allocation";
 import { contactsCardsTable } from "@/lib/offline/contacts/contacts-schema";
 import {
   notesNotesTable,
   NOTES_DOMAIN,
 } from "@/lib/offline/__tests__/fixtures/notes-offline-fixture";
+import "@/lib/offline/docs/docs-schema";
 
 const dbName = (key: string) => `wgw-offline-${key}`;
 
@@ -17,11 +21,12 @@ describe("offline db multi-domain registry", () => {
     const db = new WgwOfflineDatabase("multi-fresh");
     await db.open();
 
-    expect(db.verno).toBe(NOTES_OFFLINE_VERSION.updatedAtIndex);
+    expect(db.verno).toBe(DOCS_OFFLINE_VERSION.pendingSyncIndex);
     expect(db.tables.map((t) => t.name).sort()).toEqual(
       expect.arrayContaining([
         "contacts_address_books",
         "contacts_cards",
+        "docs_files",
         "meta",
         "notes_notebooks",
         "notes_notes",
@@ -93,7 +98,7 @@ describe("offline db multi-domain registry", () => {
     const db = new WgwOfflineDatabase("multi-upgrade");
     await db.open();
 
-    expect(db.verno).toBe(NOTES_OFFLINE_VERSION.updatedAtIndex);
+    expect(db.verno).toBe(DOCS_OFFLINE_VERSION.pendingSyncIndex);
     expect(await db.meta.get("shared:session")).toBeTruthy();
     expect(await db.outbox.get("legacy-op")).toBeTruthy();
     expect(db.tables.map((t) => t.name)).toContain("contacts_cards");
@@ -151,7 +156,7 @@ describe("offline db multi-domain registry", () => {
 
     expect(() =>
       registerOfflineDomainTables({
-        domain: "app-slot-3",
+        domain: "docs",
         versions: [{ version: 25, stores: { collision_b_table: "id" } }],
       }),
     ).toThrow(/already claimed by domain "notes"/);

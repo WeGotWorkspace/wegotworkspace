@@ -6,6 +6,7 @@
  */
 import "@/lib/offline/contacts/contacts-schema";
 import "@/lib/offline/notes/notes-schema";
+import "@/lib/offline/docs/docs-schema";
 
 export {
   CORE_OFFLINE_VERSION,
