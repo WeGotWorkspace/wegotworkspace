@@ -27,22 +27,28 @@ final class UnifiedSearchService
      * @return array{
      *   query: string,
      *   limit: int,
+     *   offset: int,
+     *   hasMore: bool,
      *   sources: list<string>,
      *   filters: array<string, mixed>,
      *   results: list<array<string, mixed>>
      * }
      */
-    public function search(string $username, string $query, int $limit, array $sources, array $filters = []): array
+    public function search(string $username, string $query, int $limit, array $sources, array $filters = [], int $offset = 0): array
     {
         $query = trim($query);
         $limit = max(1, min(100, $limit));
+        $offset = max(0, $offset);
         $allowedSources = array_values(array_intersect(['file', 'note', 'caldav', 'carddav'], $sources));
         $normalizedFilters = $this->normalizeFilters($filters);
         $tokens = $this->tokens->tokenize($query);
-        if ($query === '' || $tokens === []) {
+        $browseMode = $query === '' && $this->isBrowseMode($allowedSources, $normalizedFilters);
+        if (! $browseMode && ($query === '' || $tokens === [])) {
             return [
                 'query' => $query,
                 'limit' => $limit,
+                'offset' => $offset,
+                'hasMore' => false,
                 'sources' => $allowedSources === [] ? ['file', 'note', 'caldav', 'carddav'] : $allowedSources,
                 'filters' => $normalizedFilters,
                 'results' => [],
@@ -55,7 +61,8 @@ final class UnifiedSearchService
             $tokens,
             $limit,
             $allowedSources,
-            $normalizedFilters
+            $normalizedFilters,
+            $offset
         );
 
         $results = [];
@@ -90,10 +97,28 @@ final class UnifiedSearchService
         return [
             'query' => $query,
             'limit' => $limit,
+            'offset' => $offset,
+            'hasMore' => count($results) >= $limit,
             'sources' => $allowedSources === [] ? ['file', 'note', 'caldav', 'carddav'] : $allowedSources,
             'filters' => $normalizedFilters,
             'results' => $results,
         ];
+    }
+
+    /**
+     * @param  list<string>  $allowedSources
+     * @param  array{extensions?: list<string>}  $normalizedFilters
+     */
+    private function isBrowseMode(array $allowedSources, array $normalizedFilters): bool
+    {
+        if ($allowedSources === []) {
+            return false;
+        }
+        if (! isset($normalizedFilters['extensions']) || $normalizedFilters['extensions'] === []) {
+            return false;
+        }
+
+        return array_values(array_diff($allowedSources, ['file'])) === [];
     }
 
     /**

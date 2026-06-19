@@ -81,6 +81,7 @@ final class SearchDocumentStore
         int $limit,
         array $sources,
         array $filters = [],
+        int $offset = 0,
     ): array {
         $groupPrincipalOwners = array_values(array_unique(array_map(
             static fn (string $slug): string => 'groups/'.$slug,
@@ -163,6 +164,8 @@ final class SearchDocumentStore
         $rows = $query
             ->orderByDesc('token_score')
             ->orderByDesc('d.modified_at_ts')
+            ->orderByDesc('d.id')
+            ->offset(max(0, $offset))
             ->limit(max(1, min(100, $limit)))
             ->get()
             ->map(static fn (SearchDocument $row): array => $row->toArray())

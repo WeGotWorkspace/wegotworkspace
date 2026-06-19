@@ -1,0 +1,89 @@
+{
+  "UnifiedSearchResult": {
+    "type": "object",
+    "required": [
+      "id",
+      "sourceType",
+      "sourceKey",
+      "title",
+      "size",
+      "modifiedAt",
+      "tokenScore",
+      "metadata"
+    ],
+    "properties": {
+      "id": { "type": "integer" },
+      "sourceType": { "type": "string" },
+      "sourceSubtype": { "type": ["string", "null"] },
+      "sourceKey": { "type": "string" },
+      "title": { "type": "string" },
+      "extension": { "type": ["string", "null"] },
+      "category": { "type": ["string", "null"] },
+      "contentType": { "type": ["string", "null"] },
+      "size": { "type": "integer" },
+      "modifiedAt": { "type": "integer" },
+      "snippet": { "type": ["string", "null"] },
+      "tokenScore": { "type": "integer" },
+      "metadata": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "additionalProperties": false,
+    "description": "A single unified search hit across files, notes, calendar, and contacts."
+  },
+  "UnifiedSearchFilters": {
+    "type": "object",
+    "required": ["categories", "extensions", "modified_from", "modified_to"],
+    "properties": {
+      "categories": {
+        "type": "array",
+        "items": { "type": "string" }
+      },
+      "extensions": {
+        "type": "array",
+        "items": { "type": "string" }
+      },
+      "modified_from": { "type": ["integer", "null"] },
+      "modified_to": { "type": ["integer", "null"] }
+    },
+    "additionalProperties": false,
+    "description": "Normalized filters echoed back on the search response."
+  },
+  "UnifiedSearchResponse": {
+    "type": "object",
+    "required": ["data"],
+    "properties": {
+      "data": {
+        "type": "object",
+        "required": [
+          "query",
+          "limit",
+          "offset",
+          "hasMore",
+          "sources",
+          "filters",
+          "results"
+        ],
+        "properties": {
+          "query": { "type": "string" },
+          "limit": { "type": "integer" },
+          "offset": { "type": "integer" },
+          "hasMore": { "type": "boolean" },
+          "sources": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "filters": { "$ref": "#/components/schemas/UnifiedSearchFilters" },
+          "results": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/UnifiedSearchResult" }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "additionalProperties": false,
+    "description": "REST response for GET /search/results, including offset/hasMore pagination."
+  }
+}

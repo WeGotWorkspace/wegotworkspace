@@ -34,7 +34,7 @@ final class UnifiedSearchController
             return response()->json([
                 'data' => $this->search->search(
                     (string) $principal['username'],
-                    (string) $validated['q'],
+                    isset($validated['q']) ? (string) $validated['q'] : '',
                     isset($validated['limit']) ? (int) $validated['limit'] : 25,
                     $sources,
                     [
@@ -42,7 +42,8 @@ final class UnifiedSearchController
                         'extensions' => $extensions,
                         'modified_from' => isset($validated['modified_from']) ? (string) $validated['modified_from'] : null,
                         'modified_to' => isset($validated['modified_to']) ? (string) $validated['modified_to'] : null,
-                    ]
+                    ],
+                    isset($validated['offset']) ? (int) $validated['offset'] : 0
                 ),
             ]);
         } catch (\InvalidArgumentException $e) {
