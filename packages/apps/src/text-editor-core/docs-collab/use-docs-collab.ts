@@ -136,6 +136,27 @@ function isRemoteUpdateOrigin(origin: unknown, persistence: IndexeddbPersistence
   return false;
 }
 
+function hashString(value: string): number {
+  let hash = 2166136261;
+  for (let i = 0; i < value.length; i += 1) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function bytesToHex(bytes: Uint8Array): string {
+  let out = "";
+  for (const b of bytes) out += b.toString(16).padStart(2, "0");
+  return out;
+}
+
+function docSignature(markdown: string, ydoc: Y.Doc): string {
+  const vectorHex = bytesToHex(Y.encodeStateVector(ydoc));
+  const markdownHash = hashString(markdown).toString(16);
+  return `${markdown.length}:${markdownHash}:${vectorHex}`;
+}
+
 async function loadMarkdown(documentUrl: string, authToken?: string): Promise<string> {
   const res = await fetch(documentUrl, {
     headers: withBearerAuth({}, authToken),
@@ -230,6 +251,10 @@ export function useDocsCollab({
   const saveInFlightRef = useRef(false);
   const saveRetryMsRef = useRef(0);
   const nextSaveAttemptAtRef = useRef(0);
+  const localDirtySinceLastSaveRef = useRef(false);
+  const pendingServerSaveRef = useRef(false);
+  const lastKnownMarkdownRef = useRef("");
+  const lastSuccessfulSaveSignatureRef = useRef<string | null>(null);
 
   const [session, setSession] = useState<DocsCollabSession | null>(null);
   const [joined, setJoined] = useState(false);
@@ -255,6 +280,7 @@ export function useDocsCollab({
     async (pending: boolean, failed = false) => {
       setPendingSync(pending);
       setFailedSync(pending && failed && getConnectivitySnapshot());
+      pendingServerSaveRef.current = pending;
       setDocsCollabSyncState(room, {
         pendingServerSave: pending,
         failedSync: pending && failed && getConnectivitySnapshot(),
@@ -315,11 +341,24 @@ export function useDocsCollab({
     const ydoc = ydocRef.current;
     const getMd = getMarkdownRef.current;
     if (!ydoc || !getMd) return;
+    const markdown = getMd();
+    const signature = docSignature(markdown, ydoc);
+    const signatureChanged = signature !== lastSuccessfulSaveSignatureRef.current;
+    const shouldPersist =
+      (localDirtySinceLastSaveRef.current || pendingServerSaveRef.current) && signatureChanged;
+    if (!shouldPersist) {
+      localDirtySinceLastSaveRef.current = false;
+      if (pendingServerSaveRef.current && !signatureChanged) {
+        await updatePendingState(false, false);
+        setDocStatus("");
+      }
+      return;
+    }
     saveInFlightRef.current = true;
     try {
       await saveDocument(
         urls.documentUrl,
-        getMd(),
+        markdown,
         ydoc,
         urls.room,
         authTokenRef.current,
@@ -327,6 +366,8 @@ export function useDocsCollab({
       );
       markRoomServerSuccess(room);
       saveFailedRef.current = false;
+      localDirtySinceLastSaveRef.current = false;
+      lastSuccessfulSaveSignatureRef.current = signature;
       saveRetryMsRef.current = 0;
       nextSaveAttemptAtRef.current = 0;
       await updatePendingState(false, false);
@@ -349,6 +390,7 @@ export function useDocsCollab({
   }, [room, updatePendingState, urls.documentSaveMethod, urls.documentUrl, urls.room]);
 
   const scheduleSave = useCallback(() => {
+    if (!localDirtySinceLastSaveRef.current && !pendingServerSaveRef.current) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     const retryDelayMs = Math.max(nextSaveAttemptAtRef.current - Date.now(), 0);
     const delayMs = Math.max(SAVE_DELAY_MS, retryDelayMs);
@@ -475,6 +517,10 @@ export function useDocsCollab({
     awarenessRef.current = null;
     authTokenRef.current = undefined;
     seedDoneRef.current = false;
+    localDirtySinceLastSaveRef.current = false;
+    pendingServerSaveRef.current = false;
+    lastKnownMarkdownRef.current = "";
+    lastSuccessfulSaveSignatureRef.current = null;
     saveFailedRef.current = false;
     saveInFlightRef.current = false;
     saveRetryMsRef.current = 0;
@@ -534,6 +580,7 @@ export function useDocsCollab({
       if (pendingSave) {
         await persistToServer();
       } else {
+        localDirtySinceLastSaveRef.current = false;
         setDocStatus("");
       }
     } catch (error) {
@@ -576,6 +623,9 @@ export function useDocsCollab({
       }
 
       pendingMarkdownRef.current = markdown;
+      lastKnownMarkdownRef.current = markdown;
+      lastSuccessfulSaveSignatureRef.current = docSignature(markdown, ydoc);
+      localDirtySinceLastSaveRef.current = false;
 
       if (!seedDoneRef.current && isYDocEmpty(ydoc)) {
         const mesh = meshRef.current;
@@ -670,6 +720,7 @@ export function useDocsCollab({
 
     ydoc.on("update", (update, origin) => {
       if (isRemoteUpdateOrigin(origin, persistenceRef.current)) return;
+      localDirtySinceLastSaveRef.current = true;
       const encoder = encoding.createEncoder();
       syncProtocol.writeUpdate(encoder, update);
       meshRef.current?.broadcast({
@@ -766,6 +817,10 @@ export function useDocsCollab({
   const onMarkdownChange = useCallback(
     (getMarkdown: () => string) => {
       getMarkdownRef.current = getMarkdown;
+      const nextMarkdown = getMarkdown();
+      if (nextMarkdown === lastKnownMarkdownRef.current) return;
+      lastKnownMarkdownRef.current = nextMarkdown;
+      localDirtySinceLastSaveRef.current = true;
       scheduleSave();
     },
     [scheduleSave],

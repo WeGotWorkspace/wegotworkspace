@@ -313,6 +313,46 @@ describe("useDocsCollab offline lifecycle", () => {
     expect(mockJoin).toHaveBeenCalledTimes(1);
   });
 
+  it("stays network-idle after settle until user edits", async () => {
+    const fetchMock = mockFetchResponses({ markdown: "# Hello" });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { result } = renderHook(() =>
+      useDocsCollab({
+        userName: "Alex",
+        autoJoin: true,
+        urls: testUrls,
+        wire,
+      }),
+    );
+
+    await waitFor(() => expect(result.current.session).not.toBeNull());
+    await waitFor(() => expect(mockJoin).toHaveBeenCalledTimes(1));
+
+    act(() => {
+      result.current.onMarkdownChange(() => "# Hello");
+    });
+    const settledCallCount = fetchMock.mock.calls.length;
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+    });
+    expect(fetchMock.mock.calls.length).toBe(settledCallCount);
+
+    act(() => {
+      result.current.onMarkdownChange(() => "# Hello\n\nedited");
+    });
+    await waitFor(
+      () => {
+        const saveCalls = fetchMock.mock.calls.filter(([, init]) => {
+          const method = init?.method ?? "GET";
+          return method === "PUT" || method === "POST";
+        });
+        expect(saveCalls.length).toBe(1);
+      },
+      { timeout: 5000 },
+    );
+  }, 15000);
+
   it("backs off collaboration GET retries across quick remounts", async () => {
     let collaborationGetCount = 0;
     const failingFetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
