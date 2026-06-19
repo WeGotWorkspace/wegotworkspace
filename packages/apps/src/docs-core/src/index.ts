@@ -13,7 +13,9 @@ export {
 export { DOCS_EDITOR_EXTENSIONS } from "@/drive-core/src/drive-models";
 export {
   docsApiPathFromSearch,
+  docsHrefFromApiPath,
   docsSearchFromApiPath,
+  openDocsFileInNewWindow,
   parseDocsRouteSearch,
   validateDocsRouteSearch,
   type DocsRouteSearch,

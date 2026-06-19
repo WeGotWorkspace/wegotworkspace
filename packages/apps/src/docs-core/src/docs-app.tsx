@@ -6,6 +6,7 @@ import { WorkspaceLiveAppShell } from "@/lib/live/workspace-live-app-shell";
 import {
   docsApiPathFromSearch,
   docsSearchFromApiPath,
+  openDocsFileInNewWindow,
   parseDocsRouteSearch,
 } from "@/docs-core/src/docs-route-search";
 import { wgwApiBaseUrl, wgwCurrentAccessToken } from "@/lib/api/wgw/http";
@@ -47,15 +48,9 @@ export function DocsApp({ apiSource }: DocsAppProps = {}) {
     [navigate],
   );
 
-  const handleOpenHomeFile = useCallback(
-    (apiPath: string) => {
-      void navigate({
-        to: "/docs",
-        search: docsSearchFromApiPath(apiPath),
-      });
-    },
-    [navigate],
-  );
+  const handleOpenHomeFile = useCallback((apiPath: string) => {
+    openDocsFileInNewWindow(apiPath);
+  }, []);
 
   const showCollab = isDocsCollabEditablePath(filePath);
   const collabUrls = useMemo(() => {

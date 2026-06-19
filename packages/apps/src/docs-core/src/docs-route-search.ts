@@ -22,3 +22,16 @@ export function docsApiPathFromSearch(file: string | undefined): string | null {
 export function docsSearchFromApiPath(apiPath: string): DocsRouteSearch {
   return { file: apiPath.replace(/^\/+/, "") };
 }
+
+/** Docs editor URL for a drive API path (`/docs?file=…`). */
+export function docsHrefFromApiPath(apiPath: string): string {
+  const file = docsSearchFromApiPath(apiPath).file;
+  const query = new URLSearchParams();
+  if (file) query.set("file", file);
+  return `/docs${query.toString() ? `?${query.toString()}` : ""}`;
+}
+
+/** Open a document for editing in a new browser tab/window (user-gesture safe). */
+export function openDocsFileInNewWindow(apiPath: string): Window | null {
+  return window.open(docsHrefFromApiPath(apiPath), "_blank", "noopener,noreferrer");
+}

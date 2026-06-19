@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { FileText } from "lucide-react";
+import { useSelectableListState } from "@/hooks/use-selectable-list-state";
 import { Button } from "@/button/src/button";
 import { CollectionState } from "@/collection-state/src/collection-state";
 import { ViewHeader } from "@/view-header/src/view-header";
@@ -44,21 +45,13 @@ export function DocsHomePane({
   sidebarOpen,
   onToggleSidebar,
 }: DocsHomePaneProps) {
-  const filesById = useMemo(() => {
-    const map = new Map<string, DriveFile>();
-    for (const file of files) map.set(file.id, file);
-    return map;
-  }, [files]);
-
-  const openById = (id: string) => {
-    const file = filesById.get(id);
-    if (file) onOpenFile(file);
-  };
+  const visibleIds = useMemo(() => files.map((file) => file.id), [files]);
+  const { selectedIds, handleSelect } = useSelectableListState({ visibleIds });
 
   const browserProps = {
     items: files,
     imagePreviewUrls: {},
-    selectedIds: [] as string[],
+    selectedIds,
     starred: {} as Record<string, boolean>,
     labels: driveLabels,
     searchActive: false,
@@ -69,7 +62,7 @@ export function DocsHomePane({
     isItemDragging: () => false,
     itemDragHandlers: () => ({ onDragStart: noop, onDragEnd: noop }),
     folderDropZoneProps: () => ({}),
-    onSelect: (id: string) => openById(id),
+    onSelect: handleSelect,
     onOpen: onOpenFile,
     onLongPress: noop,
     onStar: noop,
