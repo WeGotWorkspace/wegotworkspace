@@ -65,6 +65,7 @@ export function DocsApp({ apiSource }: DocsAppProps = {}) {
     };
   }, [filePath, showCollab]);
   const pendingCollabSync = useDocsCollabPendingSync(showCollab ? collabUrls?.room : null);
+  const collabWire = useMemo(() => createWgwDocsCollabWire(), []);
 
   useEffect(() => {
     if (!showCollab) {
@@ -99,7 +100,7 @@ export function DocsApp({ apiSource }: DocsAppProps = {}) {
               userName={collabUserName}
               documentTitle={collabDocumentTitle}
               urls={collabUrls}
-              wire={createWgwDocsCollabWire()}
+              wire={collabWire}
             />
           ) : (
             <DocsWorkspace

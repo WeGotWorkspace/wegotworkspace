@@ -191,6 +191,7 @@ export function useDocsCollab({
   const authTokenRef = useRef<string | undefined>(undefined);
   const failedSinceRef = useRef<Map<string, number>>(new Map());
   const saveFailedRef = useRef(false);
+  const wireRef = useRef(wire);
 
   const [session, setSession] = useState<DocsCollabSession | null>(null);
   const [joined, setJoined] = useState(false);
@@ -202,6 +203,10 @@ export function useDocsCollab({
   const [linkCount, setLinkCount] = useState(0);
   const [pendingSync, setPendingSync] = useState(false);
   const [failedSync, setFailedSync] = useState(false);
+
+  useEffect(() => {
+    wireRef.current = wire;
+  }, [wire]);
 
   const updatePendingState = useCallback(
     async (pending: boolean, failed = false) => {
@@ -369,7 +374,7 @@ export function useDocsCollab({
     async (name: string, authToken: string): Promise<DocsCollabMeshPeer[]> => {
       let rtcSettings;
       try {
-        rtcSettings = await wire.fetchRtcSettings({
+        rtcSettings = await wireRef.current.fetchRtcSettings({
           url: urls.collabRtcUrl,
           bearerToken: authToken,
           channel: "collab",
@@ -392,7 +397,7 @@ export function useDocsCollab({
       refreshMeshUi();
       return joinedData.peers;
     },
-    [handleMeshMessage, refreshMeshUi, room, urls.collabApiBaseUrl, urls.collabRtcUrl, wire],
+    [handleMeshMessage, refreshMeshUi, room, urls.collabApiBaseUrl, urls.collabRtcUrl],
   );
 
   const teardown = useCallback(() => {
@@ -483,7 +488,7 @@ export function useDocsCollab({
     const online = getConnectivitySnapshot();
     let authToken: string | undefined;
     try {
-      authToken = await wire.fetchAuthToken({
+      authToken = await wireRef.current.fetchAuthToken({
         authToken: urls.authToken,
         authTokenUrl: urls.authTokenUrl,
         authUser: urls.authUser,
@@ -556,18 +561,8 @@ export function useDocsCollab({
       },
     );
 
-    let meshPeers: DocsCollabMeshPeer[] = [];
-    if (online && authToken) {
-      meshPeers = await joinMesh(name, authToken);
-      if (generation !== joinGenerationRef.current) return;
-    } else {
-      setStatus("Editing offline");
-    }
-
     setSession({ ydoc, awareness, user });
     setJoined(true);
-    setConnectingPeers(meshPeers);
-    if (online) refreshMeshUi();
 
     if (!seedDoneRef.current && isYDocEmpty(ydoc)) {
       const mesh = meshRef.current;
@@ -585,6 +580,26 @@ export function useDocsCollab({
     } else {
       setDocStatus(hadSnapshot ? "Restored Yjs snapshot" : online ? "" : "Editing offline");
     }
+
+    if (online && authToken) {
+      const joinGeneration = generation;
+      setDocStatus((prev) => prev || "Connecting to collaborators…");
+      setStatus("Connecting to mesh…");
+      void joinMesh(name, authToken)
+        .then((meshPeers) => {
+          if (joinGeneration !== joinGenerationRef.current) return;
+          setConnectingPeers(meshPeers);
+          refreshMeshUi();
+          setDocStatus((prev) => (prev === "Connecting to collaborators…" ? "" : prev));
+        })
+        .catch((error) => {
+          if (joinGeneration !== joinGenerationRef.current) return;
+          console.warn("[docs-collab] mesh join failed", error);
+          setDocStatus(error instanceof Error ? error.message : String(error));
+        });
+    } else {
+      setStatus("Editing offline");
+    }
   }, [
     documentFormat,
     joinMesh,
@@ -601,7 +616,6 @@ export function useDocsCollab({
     urls.documentUrl,
     urls.yjsUrl,
     userName,
-    wire,
   ]);
 
   const leave = useCallback(async () => {

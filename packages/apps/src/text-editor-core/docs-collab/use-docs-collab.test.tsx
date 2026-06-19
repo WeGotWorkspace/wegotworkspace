@@ -122,7 +122,37 @@ describe("useDocsCollab offline lifecycle", () => {
 
     await waitFor(() => expect(result.current.session).not.toBeNull());
     expect(mockJoin).toHaveBeenCalledTimes(1);
-    expect(result.current.status).toContain("Mesh");
+    await waitFor(() => expect(result.current.status).toContain("Mesh"));
+  });
+
+  it("exposes session before mesh join completes", async () => {
+    let resolveJoin: ((value: { peers: [] }) => void) | undefined;
+    mockJoin.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveJoin = resolve;
+        }),
+    );
+
+    const { result } = renderHook(() =>
+      useDocsCollab({
+        userName: "Alex",
+        autoJoin: true,
+        urls: testUrls,
+        wire,
+      }),
+    );
+
+    await waitFor(() => expect(result.current.session).not.toBeNull());
+    expect(result.current.joined).toBe(true);
+    expect(mockJoin).toHaveBeenCalledTimes(1);
+    expect(result.current.status).toBe("Connecting to mesh…");
+
+    await act(async () => {
+      resolveJoin?.({ peers: [] });
+    });
+
+    await waitFor(() => expect(result.current.status).toContain("Mesh"));
   });
 
   it("marks pendingSync when server save fails while online", async () => {
@@ -216,5 +246,30 @@ describe("useDocsCollab offline lifecycle", () => {
     window.dispatchEvent(new Event("focus"));
 
     await waitFor(() => expect(result.current.pendingSync).toBe(false), { timeout: 7000 });
+  });
+
+  it("does not rejoin when wire object identity changes", async () => {
+    const makeWire = (): DocsCollabWireOperations => ({
+      fetchAuthToken: vi.fn(async () => "test-token"),
+      fetchRtcSettings: vi.fn(async () => DEFAULT_RTC_SETTINGS),
+    });
+
+    const { result, rerender } = renderHook(
+      ({ nextWire }) =>
+        useDocsCollab({
+          userName: "Alex",
+          autoJoin: true,
+          urls: testUrls,
+          wire: nextWire,
+        }),
+      { initialProps: { nextWire: makeWire() } },
+    );
+
+    await waitFor(() => expect(result.current.session).not.toBeNull());
+    expect(mockJoin).toHaveBeenCalledTimes(1);
+
+    rerender({ nextWire: makeWire() });
+    await waitFor(() => expect(result.current.session).not.toBeNull());
+    expect(mockJoin).toHaveBeenCalledTimes(1);
   });
 });

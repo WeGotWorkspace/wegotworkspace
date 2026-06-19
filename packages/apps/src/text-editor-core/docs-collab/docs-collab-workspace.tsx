@@ -323,7 +323,7 @@ function DocsCollabWorkspaceInner({
                 />
               ) : (
                 <div className="p-8">
-                  <p className="docs-workspace__loading">Joining collaboration mesh…</p>
+                  <p className="docs-workspace__loading">Loading document…</p>
                   {docStatus ? (
                     <p className="docs-workspace__loading mt-2 text-sm">{docStatus}</p>
                   ) : null}
