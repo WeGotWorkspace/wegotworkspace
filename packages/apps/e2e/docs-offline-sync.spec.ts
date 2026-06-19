@@ -1,0 +1,168 @@
+import { expect, test } from "@playwright/test";
+import {
+  appendToActiveDocBody,
+  blockReachabilityAndApi,
+  currentEditorText,
+  docTokenOnServer,
+  docsUrlForFile,
+  expectEditorContains,
+  expectOfflineIndicator,
+  expectPendingDotVisible,
+  expectSyncCompleted,
+  loginToDocs,
+  prepareDocsForOfflineSync,
+  prepareGroupDocForOfflineSync,
+  reloadDocsOffline,
+  restoreNetwork,
+  waitForDocSaved,
+} from "./helpers/docs-live";
+
+test.describe("Docs offline sync (live app)", () => {
+  test("My Drive .md: offline edit reconnects and persists to server", async ({ page }) => {
+    const token = `e2e-md-mydrive-${Date.now()}`;
+    const fileName = `e2e-md-mydrive-${Date.now()}.md`;
+    const apiPath = await prepareDocsForOfflineSync(page, fileName);
+
+    await page.context().setOffline(true);
+    await expectOfflineIndicator(page);
+
+    await appendToActiveDocBody(page, token);
+    await expectPendingDotVisible(page);
+
+    await page.context().setOffline(false);
+    await expectSyncCompleted(page);
+    await waitForDocSaved(page, apiPath, token);
+
+    await page.goto(docsUrlForFile(apiPath));
+    await expect(page.locator(".ProseMirror")).toContainText(token);
+  });
+
+  test("Group/shared .md: offline edit shows pending dot and syncs", async ({ page }) => {
+    const token = `e2e-md-group-${Date.now()}`;
+    const apiPath = `/groups/Engineering/e2e-shared-${Date.now()}.md`;
+
+    await prepareGroupDocForOfflineSync(page, apiPath);
+
+    await page.context().setOffline(true);
+    await expectOfflineIndicator(page);
+
+    await appendToActiveDocBody(page, token);
+    await expectPendingDotVisible(page);
+
+    await page.context().setOffline(false);
+    await expectSyncCompleted(page);
+    await waitForDocSaved(page, apiPath, token);
+
+    await page.goto(docsUrlForFile(apiPath));
+    await expect(page.locator(".ProseMirror")).toContainText(token);
+  });
+
+  test("multi-tab same user: reconnect sync appears in other tab", async ({ browser }) => {
+    const token = `e2e-tab-${Date.now()}`;
+    const fileName = `e2e-tab-${Date.now()}.md`;
+    const authFile = "e2e/.auth/admin.json";
+    const context = await browser.newContext({ storageState: authFile });
+    const tabA = await context.newPage();
+    const tabB = await context.newPage();
+
+    try {
+      const apiPath = await prepareDocsForOfflineSync(tabA, fileName);
+      await tabB.goto(docsUrlForFile(apiPath));
+      await expect(tabB.locator(".ProseMirror")).toBeVisible({ timeout: 30_000 });
+
+      await context.setOffline(true);
+      await expectOfflineIndicator(tabA);
+      await expectOfflineIndicator(tabB);
+
+      await appendToActiveDocBody(tabA, token);
+      await expectPendingDotVisible(tabA);
+      expect(await currentEditorText(tabB)).not.toContain(token);
+
+      await context.setOffline(false);
+      await expectSyncCompleted(tabA);
+      await expectEditorContains(tabB, token);
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("two contexts: offline user reconnect merges with online edits", async ({ browser }) => {
+    const onlineToken = `e2e-ctx-online-${Date.now()}`;
+    const offlineToken = `e2e-ctx-offline-${Date.now()}`;
+    const apiPath = `/groups/Engineering/e2e-merge-${Date.now()}.md`;
+    const authFile = "e2e/.auth/admin.json";
+    const contextA = await browser.newContext({ storageState: authFile });
+    const contextB = await browser.newContext({ storageState: authFile });
+    const pageA = await contextA.newPage();
+    const pageB = await contextB.newPage();
+
+    try {
+      await loginToDocs(pageA);
+      await pageA.goto(docsUrlForFile(apiPath));
+      await pageB.goto(docsUrlForFile(apiPath));
+      await expect(pageA.locator(".ProseMirror")).toBeVisible({ timeout: 30_000 });
+      await expect(pageB.locator(".ProseMirror")).toBeVisible({ timeout: 30_000 });
+
+      await contextB.setOffline(true);
+      await expectOfflineIndicator(pageB);
+
+      await appendToActiveDocBody(pageA, onlineToken);
+      await waitForDocSaved(pageA, apiPath, onlineToken);
+
+      await appendToActiveDocBody(pageB, offlineToken);
+      await expectPendingDotVisible(pageB);
+
+      await contextB.setOffline(false);
+      await expectSyncCompleted(pageB);
+      await waitForDocSaved(pageB, apiPath, offlineToken);
+
+      await expectEditorContains(pageA, onlineToken);
+      await expectEditorContains(pageA, offlineToken);
+      await expectEditorContains(pageB, onlineToken);
+      await expectEditorContains(pageB, offlineToken);
+      await expect
+        .poll(() => docTokenOnServer(pageA, apiPath, onlineToken), { timeout: 30_000 })
+        .toBe(true);
+      await expect
+        .poll(() => docTokenOnServer(pageA, apiPath, offlineToken), { timeout: 30_000 })
+        .toBe(true);
+    } finally {
+      await contextA.close();
+      await contextB.close();
+    }
+  });
+
+  test("plain text file: offline edit reconnects and syncs", async ({ page }) => {
+    const token = `e2e-text-${Date.now()}`;
+    const fileName = `e2e-text-${Date.now()}.txt`;
+    const apiPath = await prepareDocsForOfflineSync(page, fileName);
+
+    await page.context().setOffline(true);
+    await expectOfflineIndicator(page);
+
+    await appendToActiveDocBody(page, token);
+    await expectPendingDotVisible(page);
+
+    await page.context().setOffline(false);
+    await expectSyncCompleted(page);
+    await waitForDocSaved(page, apiPath, token);
+    await expect(page.locator(".ProseMirror")).toContainText(token);
+  });
+
+  test("stale navigator.onLine: blocked API/probe then restore triggers sync", async ({ page }) => {
+    const token = `e2e-stale-${Date.now()}`;
+    const fileName = `e2e-stale-${Date.now()}.md`;
+
+    const apiPath = await prepareDocsForOfflineSync(page, fileName);
+    await blockReachabilityAndApi(page);
+    await reloadDocsOffline(page, apiPath);
+    await expectOfflineIndicator(page);
+
+    await appendToActiveDocBody(page, token);
+    await expectPendingDotVisible(page);
+
+    await restoreNetwork(page);
+    await expectSyncCompleted(page);
+    await expect(page.locator(".ProseMirror")).toContainText(token);
+  });
+});

@@ -104,12 +104,14 @@ function DocsWorkspaceShell({
         />
       }
       mainHeader={
-        <DocsMainHeader
-          controller={controller}
-          editor={editor}
-          viewSource={viewSource}
-          onToggleViewSource={() => setViewSource((on) => !on)}
-        />
+        <>
+          <DocsMainHeader
+            controller={controller}
+            editor={editor}
+            viewSource={viewSource}
+            onToggleViewSource={() => setViewSource((on) => !on)}
+          />
+        </>
       }
       main={
         <DocsMainPane

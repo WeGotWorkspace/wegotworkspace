@@ -148,11 +148,16 @@ final class UiStaticFront
 
     private function isPublicAssetPath(string $webBase, string $path): bool
     {
-        foreach (['/assets', '/fonts', '/icons', '/manifests'] as $prefix) {
+        foreach (['/assets', '/fonts', '/icons', '/manifests', '/sw.js'] as $prefix) {
             $full = InstallerWebBase::url($webBase, $prefix);
             if ($path === $full || str_starts_with($path, $full.'/')) {
                 return true;
             }
+        }
+
+        $workboxPrefix = InstallerWebBase::url($webBase, '/workbox-');
+        if (str_starts_with($path, $workboxPrefix) && str_ends_with($path, '.js')) {
+            return true;
         }
 
         return false;

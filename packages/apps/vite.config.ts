@@ -53,11 +53,13 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       tsconfigPaths(),
       VitePWA({
-        registerType: "autoUpdate",
+        // Keep updates passive to avoid cross-tab reload/remount loops when two docs tabs are open.
+        registerType: "prompt",
         injectRegister: false,
         devOptions: { enabled: false },
         workbox: {
           navigateFallback: "index.html",
+          navigateFallbackDenylist: [/^\/api\//],
           globPatterns: ["**/*.{js,css,html,ico,png,woff2,webmanifest}"],
         },
         manifest: false,

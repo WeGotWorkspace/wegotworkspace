@@ -1,10 +1,13 @@
 import { extensionFromFileName } from "@/drive-core/src/drive-file-utils";
+import { DOCS_COLLAB_TEXT_EXTENSIONS } from "@/docs-core/src/docs-collab-text-files";
 import type { TextEditorContentFormat } from "@/text-editor-core/src/text-editor-content";
 
 /** Map a drive file name to the text-editor serialization format. */
 export function docsEditorFormatFromFileName(fileName: string): TextEditorContentFormat {
   const ext = extensionFromFileName(fileName);
-  if (ext === "txt") return "text";
+  if (ext === "md" || ext === "markdown") return "markdown";
+  if (ext === "html") return "html";
+  if (ext === "txt" || DOCS_COLLAB_TEXT_EXTENSIONS.has(ext)) return "text";
   return "markdown";
 }
 

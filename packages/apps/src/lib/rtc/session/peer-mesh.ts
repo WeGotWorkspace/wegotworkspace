@@ -71,6 +71,7 @@ const DEFAULT_POLL_INTERVALS: RtcPollIntervals = {
   connectingMs: 400,
   steadyMs: 1200,
 };
+const COLLAB_IDLE_POLL_INTERVAL_MS = 15000;
 
 export class RtcPeerMesh {
   private myId: string | null = null;
@@ -571,10 +572,24 @@ export class RtcPeerMesh {
     await this.onPoll(data);
   }
 
+  private hasStableCollabTopology(): boolean {
+    if (this.options.channel !== "collab" || this.options.binding?.kind !== "data") return false;
+    if (!this.rtcSignalsEnabled()) return false;
+    for (const peer of this.lastRoomPeers) {
+      const entry = this.peers.get(peer.id);
+      if (!entry || this.linkState(entry) !== "connected") return false;
+    }
+    return true;
+  }
+
   private schedulePoll(steady = false): void {
     if (!this.myId) return;
     const intervals = this.pollIntervals();
-    const delay = steady ? intervals.steadyMs : intervals.connectingMs;
+    const delay = !steady
+      ? intervals.connectingMs
+      : this.hasStableCollabTopology()
+        ? Math.max(intervals.steadyMs, COLLAB_IDLE_POLL_INTERVAL_MS)
+        : intervals.steadyMs;
     this.pollTimer = this.scheduleTimeout(() => {
       void this.pollOnce()
         .catch((error) => {

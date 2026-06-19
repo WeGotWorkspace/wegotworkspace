@@ -71,7 +71,8 @@ export function createTextEditorExtensions(
     options.placeholder ?? (format === "text" ? "Start typing…" : "Press '/' for commands…");
 
   const extensions: Extensions = [
-    StarterKit,
+    // Keep Link/Underline explicitly configured below without duplicating StarterKit marks.
+    StarterKit.configure({ link: false, underline: false }),
     Underline,
     Link.configure({ openOnClick: false }),
     Placeholder.configure({ placeholder }),

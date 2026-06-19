@@ -11,9 +11,10 @@ use App\Support\WgwSettings;
 use Illuminate\Http\Request;
 
 /**
- * Markdown + Yjs sidecar persistence on the drive files disk.
+ * Text document + Yjs sidecar persistence on the drive files disk.
  *
- * Sidecar convention: /.{filename}.yjs next to the document (.md or .txt).
+ * Sidecar convention: /.{filename}.yjs next to the document (any allowed text extension).
+ * Request/response body field is named `markdown` but holds UTF-8 bytes for all text formats.
  */
 final class DocCollabDocumentService
 {

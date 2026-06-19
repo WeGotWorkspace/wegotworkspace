@@ -1,21 +1,69 @@
 import * as decoding from "lib0/decoding";
 import * as encoding from "lib0/encoding";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { IndexeddbPersistence } from "y-indexeddb";
 import * as awarenessProtocol from "y-protocols/awareness";
 import * as syncProtocol from "y-protocols/sync";
 import * as Y from "yjs";
+import { useOnReconnect } from "@/hooks/use-connectivity";
+import { getConnectivitySnapshot, isFetchNetworkError } from "@/lib/offline/browser-online";
 import { applyRtcDebugOverrides } from "@/lib/rtc/force-relay";
 import { DEFAULT_RTC_SETTINGS } from "@/lib/rtc/types";
+import { docsEditorFormatFromFileName } from "@/docs-core/src/docs-editor-format";
 import { applyContentSeedToYDoc } from "./docs-collab-editor-surface";
 import type { TextEditorContentFormat } from "@/text-editor-core/src/text-editor-content";
+import { clearDocsCollabSyncState, setDocsCollabSyncState } from "./docs-collab-sync-registry";
 import { DEFAULT_DOCS_COLLAB_WIRE, type DocsCollabWireOperations } from "./docs-collab-wire";
 import { DocsRtcSession } from "./docs-rtc-session";
 import type { DocsCollabMeshMessage, DocsCollabMeshPeer } from "./docs-collab-types";
 
-const MESH_ORIGIN = "mesh";
-const SEED_ORIGIN = "seed";
+export const MESH_ORIGIN = "mesh";
+export const SEED_ORIGIN = "seed";
+export const SERVER_ORIGIN = "server";
+export const IDB_ORIGIN = "idb";
+
+const REMOTE_UPDATE_ORIGINS = new Set<string>([
+  MESH_ORIGIN,
+  SEED_ORIGIN,
+  SERVER_ORIGIN,
+  IDB_ORIGIN,
+]);
 const SAVE_DELAY_MS = 2000;
 const PEER_FAILURE_WARNING_DELAY_MS = 6000;
+const PENDING_SERVER_SAVE_KEY = "pendingServerSave";
+const SAVE_RETRY_MAX_MS = 30000;
+const ROOM_SERVER_BACKOFF_INITIAL_MS = 3000;
+const ROOM_SERVER_BACKOFF_MAX_MS = 30000;
+
+type RoomServerBackoff = {
+  retryMs: number;
+  nextAttemptAt: number;
+};
+
+const roomServerBackoff = new Map<string, RoomServerBackoff>();
+
+/** Test helper to clear per-room backoff state. */
+export function resetDocsCollabBackoffForTests(): void {
+  roomServerBackoff.clear();
+}
+
+function roomServerAllowed(room: string): boolean {
+  const backoff = roomServerBackoff.get(room);
+  return !backoff || Date.now() >= backoff.nextAttemptAt;
+}
+
+function markRoomServerSuccess(room: string): void {
+  roomServerBackoff.delete(room);
+}
+
+function markRoomServerFailure(room: string): void {
+  const now = Date.now();
+  const prev = roomServerBackoff.get(room);
+  const retryMs = prev
+    ? Math.min(prev.retryMs * 2, ROOM_SERVER_BACKOFF_MAX_MS)
+    : ROOM_SERVER_BACKOFF_INITIAL_MS;
+  roomServerBackoff.set(room, { retryMs, nextAttemptAt: now + retryMs });
+}
 
 const COLORS = [
   "#2563eb",
@@ -69,7 +117,9 @@ function isYDocEmpty(doc: Y.Doc): boolean {
 }
 
 function collabDocumentFormat(room: string | undefined): TextEditorContentFormat {
-  return room?.toLowerCase().endsWith(".txt") ? "text" : "markdown";
+  const fileName = room?.split("/").pop() ?? "";
+  const format = docsEditorFormatFromFileName(fileName);
+  return format === "markdown" ? "markdown" : "text";
 }
 
 function withBearerAuth(
@@ -78,6 +128,33 @@ function withBearerAuth(
 ): Record<string, string> {
   if (authToken) headers.Authorization = `Bearer ${authToken}`;
   return headers;
+}
+
+function isRemoteUpdateOrigin(origin: unknown, persistence: IndexeddbPersistence | null): boolean {
+  if (typeof origin === "string" && REMOTE_UPDATE_ORIGINS.has(origin)) return true;
+  if (origin === persistence) return true;
+  return false;
+}
+
+function hashString(value: string): number {
+  let hash = 2166136261;
+  for (let i = 0; i < value.length; i += 1) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function bytesToHex(bytes: Uint8Array): string {
+  let out = "";
+  for (const b of bytes) out += b.toString(16).padStart(2, "0");
+  return out;
+}
+
+function docSignature(markdown: string, ydoc: Y.Doc): string {
+  const vectorHex = bytesToHex(Y.encodeStateVector(ydoc));
+  const markdownHash = hashString(markdown).toString(16);
+  return `${markdown.length}:${markdownHash}:${vectorHex}`;
 }
 
 async function loadMarkdown(documentUrl: string, authToken?: string): Promise<string> {
@@ -92,6 +169,7 @@ async function loadYjsSnapshot(
   yjsUrl: string,
   target: Y.Doc,
   authToken?: string,
+  origin: string = SERVER_ORIGIN,
 ): Promise<boolean> {
   const res = await fetch(yjsUrl, {
     headers: withBearerAuth({}, authToken),
@@ -99,7 +177,7 @@ async function loadYjsSnapshot(
   if (res.status === 204 || !res.ok) return false;
   const buf = new Uint8Array(await res.arrayBuffer());
   if (buf.length === 0) return false;
-  Y.applyUpdate(target, buf, SEED_ORIGIN);
+  Y.applyUpdate(target, buf, origin);
   return true;
 }
 
@@ -151,18 +229,32 @@ export function useDocsCollab({
     ...DEFAULT_DOCS_COLLAB_URLS,
     ...(inputUrls ?? {}),
   };
-  const documentFormat = collabDocumentFormat(urls.room);
+  const room = urls.room ?? "docs/test-together.md";
+  const documentFormat = collabDocumentFormat(room);
   const meshRef = useRef<DocsRtcSession | null>(null);
   const ydocRef = useRef<Y.Doc | null>(null);
   const awarenessRef = useRef<awarenessProtocol.Awareness | null>(null);
+  const persistenceRef = useRef<IndexeddbPersistence | null>(null);
   const pendingMarkdownRef = useRef("");
   const seedDoneRef = useRef(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const seedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const getMarkdownRef = useRef<(() => string) | null>(null);
   const joinGenerationRef = useRef(0);
+  const reconnectGenerationRef = useRef(0);
   const authTokenRef = useRef<string | undefined>(undefined);
   const failedSinceRef = useRef<Map<string, number>>(new Map());
+  const saveFailedRef = useRef(false);
+  const wireRef = useRef(wire);
+  const joinedRoomRef = useRef<string | null>(null);
+  const reconnectInFlightRef = useRef(false);
+  const saveInFlightRef = useRef(false);
+  const saveRetryMsRef = useRef(0);
+  const nextSaveAttemptAtRef = useRef(0);
+  const localDirtySinceLastSaveRef = useRef(false);
+  const pendingServerSaveRef = useRef(false);
+  const lastKnownMarkdownRef = useRef("");
+  const lastSuccessfulSaveSignatureRef = useRef<string | null>(null);
 
   const [session, setSession] = useState<DocsCollabSession | null>(null);
   const [joined, setJoined] = useState(false);
@@ -172,6 +264,34 @@ export function useDocsCollab({
   const [connectingPeers, setConnectingPeers] = useState<DocsCollabMeshPeer[]>([]);
   const [warningPeers, setWarningPeers] = useState<DocsCollabMeshPeer[]>([]);
   const [linkCount, setLinkCount] = useState(0);
+  const [pendingSync, setPendingSync] = useState(false);
+  const [failedSync, setFailedSync] = useState(false);
+  const sessionRef = useRef<DocsCollabSession | null>(null);
+
+  useEffect(() => {
+    wireRef.current = wire;
+  }, [wire]);
+
+  useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
+
+  const updatePendingState = useCallback(
+    async (pending: boolean, failed = false) => {
+      setPendingSync(pending);
+      setFailedSync(pending && failed && getConnectivitySnapshot());
+      pendingServerSaveRef.current = pending;
+      setDocsCollabSyncState(room, {
+        pendingServerSave: pending,
+        failedSync: pending && failed && getConnectivitySnapshot(),
+      });
+      const persistence = persistenceRef.current;
+      if (!persistence) return;
+      if (pending) await persistence.set(PENDING_SERVER_SAVE_KEY, 1);
+      else await persistence.del(PENDING_SERVER_SAVE_KEY);
+    },
+    [room],
+  );
 
   const refreshMeshUi = useCallback(() => {
     const mesh = meshRef.current;
@@ -216,35 +336,123 @@ export function useDocsCollab({
     seedDoneRef.current = true;
   }, []);
 
-  const scheduleSave = useCallback(() => {
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(() => {
-      saveTimerRef.current = null;
-      const ydoc = ydocRef.current;
-      const getMd = getMarkdownRef.current;
-      if (!ydoc || !getMd) return;
-      void saveDocument(
+  const markPendingWhenUnsaved = useCallback(async (): Promise<void> => {
+    const ydoc = ydocRef.current;
+    const getMd = getMarkdownRef.current;
+    if (!ydoc || !getMd || !localDirtySinceLastSaveRef.current) return;
+    const signature = docSignature(getMd(), ydoc);
+    if (signature === lastSuccessfulSaveSignatureRef.current) return;
+    await updatePendingState(true, false);
+  }, [updatePendingState]);
+
+  const persistToServer = useCallback(async (): Promise<void> => {
+    if (saveInFlightRef.current) return;
+    if (!getConnectivitySnapshot()) {
+      await markPendingWhenUnsaved();
+      return;
+    }
+    const ydoc = ydocRef.current;
+    const getMd = getMarkdownRef.current;
+    if (!ydoc || !getMd) return;
+    const markdown = getMd();
+    const signature = docSignature(markdown, ydoc);
+    const signatureChanged = signature !== lastSuccessfulSaveSignatureRef.current;
+    const shouldPersist =
+      (localDirtySinceLastSaveRef.current || pendingServerSaveRef.current) && signatureChanged;
+    if (!shouldPersist) {
+      localDirtySinceLastSaveRef.current = false;
+      if (pendingServerSaveRef.current && !signatureChanged) {
+        await updatePendingState(false, false);
+        setDocStatus("");
+      }
+      return;
+    }
+    saveInFlightRef.current = true;
+    try {
+      await saveDocument(
         urls.documentUrl,
-        getMd(),
+        markdown,
         ydoc,
         urls.room,
         authTokenRef.current,
         urls.documentSaveMethod ?? "POST",
-      )
-        .then(() => setDocStatus(`Saved · ${new Date().toLocaleTimeString()}`))
-        .catch((err) =>
-          setDocStatus(`Save failed: ${err instanceof Error ? err.message : String(err)}`),
-        );
-    }, SAVE_DELAY_MS);
-  }, [urls.documentSaveMethod, urls.documentUrl, urls.room]);
+      );
+      markRoomServerSuccess(room);
+      saveFailedRef.current = false;
+      localDirtySinceLastSaveRef.current = false;
+      lastSuccessfulSaveSignatureRef.current = signature;
+      saveRetryMsRef.current = 0;
+      nextSaveAttemptAtRef.current = 0;
+      await updatePendingState(false, false);
+      setDocStatus(`Saved · ${new Date().toLocaleTimeString()}`);
+    } catch (err) {
+      saveFailedRef.current = true;
+      const nextRetryMs = Math.min(
+        Math.max(saveRetryMsRef.current || SAVE_DELAY_MS, SAVE_DELAY_MS) * 2,
+        SAVE_RETRY_MAX_MS,
+      );
+      saveRetryMsRef.current = nextRetryMs;
+      nextSaveAttemptAtRef.current = Date.now() + nextRetryMs;
+      if (getConnectivitySnapshot()) {
+        markRoomServerFailure(room);
+      }
+      await updatePendingState(true, true);
+      setDocStatus(`Save failed: ${err instanceof Error ? err.message : String(err)}`);
+      throw err;
+    } finally {
+      saveInFlightRef.current = false;
+    }
+  }, [
+    markPendingWhenUnsaved,
+    room,
+    updatePendingState,
+    urls.documentSaveMethod,
+    urls.documentUrl,
+    urls.room,
+  ]);
+
+  const scheduleSave = useCallback(() => {
+    if (!localDirtySinceLastSaveRef.current && !pendingServerSaveRef.current) return;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    const retryDelayMs = Math.max(nextSaveAttemptAtRef.current - Date.now(), 0);
+    const delayMs = Math.max(SAVE_DELAY_MS, retryDelayMs);
+    saveTimerRef.current = setTimeout(() => {
+      saveTimerRef.current = null;
+      void persistToServer().catch(() => undefined);
+    }, delayMs);
+  }, [persistToServer]);
+
+  const flushPendingSaveIfReady = useCallback(() => {
+    if (!pendingServerSaveRef.current || !getConnectivitySnapshot()) return;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      saveTimerRef.current = null;
+      void persistToServer().catch(() => undefined);
+    }, 0);
+  }, [persistToServer]);
+
+  const registerMarkdownGetter = useCallback(
+    (getMarkdown: () => string) => {
+      getMarkdownRef.current = getMarkdown;
+      flushPendingSaveIfReady();
+    },
+    [flushPendingSaveIfReady],
+  );
 
   const trySeedFromFile = useCallback(() => {
     const ydoc = ydocRef.current;
     const mesh = meshRef.current;
     const markdown = pendingMarkdownRef.current;
-    if (!ydoc || !mesh || !markdown || seedDoneRef.current) return;
+    if (!ydoc || !markdown || seedDoneRef.current) return;
     if (!isYDocEmpty(ydoc)) {
       markDocReady();
+      return;
+    }
+
+    if (!mesh) {
+      applyContentSeedToYDoc(ydoc, markdown, documentFormat);
+      markDocReady();
+      setDocStatus("Loaded shared document");
       return;
     }
 
@@ -305,16 +513,60 @@ export function useDocsCollab({
     [markDocReady, refreshMeshUi, sendSyncStep1, trySeedFromFile],
   );
 
+  const joinMesh = useCallback(
+    async (name: string, authToken: string): Promise<DocsCollabMeshPeer[]> => {
+      let rtcSettings;
+      try {
+        rtcSettings = await wireRef.current.fetchRtcSettings({
+          url: urls.collabRtcUrl,
+          bearerToken: authToken,
+          channel: "collab",
+        });
+      } catch (error) {
+        console.warn("[docs-collab] rtc settings unavailable", error);
+        rtcSettings = await DEFAULT_DOCS_COLLAB_WIRE.fetchRtcSettings({ channel: "collab" });
+      }
+
+      const mesh = new DocsRtcSession({
+        apiBase: urls.collabApiBaseUrl ?? "/api/v1/rooms",
+        room,
+        authToken,
+        rtcSettings:
+          rtcSettings ?? applyRtcDebugOverrides({ ...DEFAULT_RTC_SETTINGS, forceRelay: false }),
+      });
+      meshRef.current = mesh;
+      mesh.onMessage(handleMeshMessage);
+      const joinedData = await mesh.join(name);
+      refreshMeshUi();
+      return joinedData.peers;
+    },
+    [handleMeshMessage, refreshMeshUi, room, urls.collabApiBaseUrl, urls.collabRtcUrl],
+  );
+
   const teardown = useCallback(() => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     if (seedTimerRef.current) clearTimeout(seedTimerRef.current);
     const mesh = meshRef.current;
     meshRef.current = null;
     void mesh?.leave();
+    const persistence = persistenceRef.current;
+    persistenceRef.current = null;
+    void persistence?.destroy();
     ydocRef.current = null;
     awarenessRef.current = null;
     authTokenRef.current = undefined;
     seedDoneRef.current = false;
+    localDirtySinceLastSaveRef.current = false;
+    pendingServerSaveRef.current = false;
+    lastKnownMarkdownRef.current = "";
+    lastSuccessfulSaveSignatureRef.current = null;
+    saveFailedRef.current = false;
+    saveInFlightRef.current = false;
+    saveRetryMsRef.current = 0;
+    nextSaveAttemptAtRef.current = 0;
+    reconnectInFlightRef.current = false;
+    joinedRoomRef.current = null;
+    clearDocsCollabSyncState(room);
     setSession(null);
     setJoined(false);
     setPeers([]);
@@ -324,50 +576,232 @@ export function useDocsCollab({
     setLinkCount(0);
     setStatus("Disconnected");
     setDocStatus("");
-  }, []);
+    setPendingSync(false);
+    setFailedSync(false);
+  }, [room]);
+
+  const mergeServerState = useCallback(
+    async (authToken: string | undefined): Promise<boolean> => {
+      const ydoc = ydocRef.current;
+      if (!ydoc) return false;
+      return loadYjsSnapshot(urls.yjsUrl, ydoc, authToken, SERVER_ORIGIN);
+    },
+    [urls.yjsUrl],
+  );
+
+  const resolveAuthTokenForReconnect = useCallback(async (): Promise<string | undefined> => {
+    if (authTokenRef.current) return authTokenRef.current;
+    try {
+      const token = await wireRef.current.fetchAuthToken({
+        authToken: urls.authToken,
+        authTokenUrl: urls.authTokenUrl,
+        authUser: urls.authUser,
+        authPassword: urls.authPassword,
+      });
+      authTokenRef.current = token;
+      return token;
+    } catch (error) {
+      markRoomServerFailure(room);
+      if (!isFetchNetworkError(error)) {
+        console.warn("[docs-collab] auth unavailable on reconnect", error);
+      }
+      return undefined;
+    }
+  }, [room, urls.authPassword, urls.authToken, urls.authTokenUrl, urls.authUser]);
+
+  const restartMeshAfterReconnect = useCallback(
+    async (generation: number, authToken: string): Promise<void> => {
+      const name = userName.trim();
+      if (!name) return;
+
+      const existingMesh = meshRef.current;
+      meshRef.current = null;
+      if (existingMesh) await existingMesh.leave();
+      if (generation !== reconnectGenerationRef.current) return;
+
+      setStatus("Connecting to mesh…");
+      const meshPeers = await joinMesh(name, authToken);
+      if (generation !== reconnectGenerationRef.current) return;
+      setConnectingPeers(meshPeers);
+      refreshMeshUi();
+      trySeedFromFile();
+    },
+    [joinMesh, refreshMeshUi, trySeedFromFile, userName],
+  );
+
+  const handleReconnect = useCallback(async () => {
+    if (reconnectInFlightRef.current) return;
+    const generation = ++reconnectGenerationRef.current;
+    const ydoc = ydocRef.current;
+    const persistence = persistenceRef.current;
+    if (!ydoc || !persistence || !joined) return;
+    reconnectInFlightRef.current = true;
+
+    setDocStatus("Reconnecting…");
+    const allowServerRequests = roomServerAllowed(room);
+
+    try {
+      const authToken = await resolveAuthTokenForReconnect();
+      if (generation !== reconnectGenerationRef.current) return;
+
+      // Same signaling path as initial pageload: joinMesh → DocsRtcSession.join → poll loop.
+      if (authToken) {
+        await restartMeshAfterReconnect(generation, authToken);
+        if (generation !== reconnectGenerationRef.current) return;
+      }
+
+      if (allowServerRequests) {
+        await mergeServerState(authToken);
+        markRoomServerSuccess(room);
+        if (generation !== reconnectGenerationRef.current) return;
+
+        const pendingSave = await persistence.get(PENDING_SERVER_SAVE_KEY);
+        if (pendingSave || pendingServerSaveRef.current) {
+          await persistToServer();
+        } else {
+          localDirtySinceLastSaveRef.current = false;
+          setDocStatus((prev) => (prev === "Reconnecting…" ? "" : prev));
+        }
+        flushPendingSaveIfReady();
+      } else {
+        setDocStatus((prev) => (prev === "Reconnecting…" ? "" : prev));
+      }
+    } catch (error) {
+      markRoomServerFailure(room);
+      console.warn("[docs-collab] reconnect failed", error);
+      setDocStatus(error instanceof Error ? error.message : String(error));
+    } finally {
+      reconnectInFlightRef.current = false;
+    }
+  }, [
+    joined,
+    flushPendingSaveIfReady,
+    mergeServerState,
+    persistToServer,
+    resolveAuthTokenForReconnect,
+    restartMeshAfterReconnect,
+    room,
+  ]);
+
+  useOnReconnect(() => {
+    if (sessionRef.current) void handleReconnect();
+  });
+
+  const applyServerBootstrap = useCallback(
+    async (generation: number, authToken: string | undefined) => {
+      const ydoc = ydocRef.current;
+      if (!ydoc || generation !== joinGenerationRef.current) return;
+
+      let markdown = "";
+      let hadSnapshot = false;
+      try {
+        markdown = await loadMarkdown(urls.documentUrl, authToken);
+      } catch (error) {
+        markRoomServerFailure(room);
+        console.warn("[docs-collab] markdown load failed", error);
+      }
+      if (generation !== joinGenerationRef.current) return;
+      try {
+        hadSnapshot = await loadYjsSnapshot(urls.yjsUrl, ydoc, authToken, SERVER_ORIGIN);
+      } catch (error) {
+        markRoomServerFailure(room);
+        console.warn("[docs-collab] yjs load failed", error);
+      }
+      if (generation !== joinGenerationRef.current) return;
+      if (hadSnapshot) seedDoneRef.current = true;
+      if (hadSnapshot || markdown) {
+        markRoomServerSuccess(room);
+      }
+
+      pendingMarkdownRef.current = markdown;
+      lastKnownMarkdownRef.current = markdown;
+      lastSuccessfulSaveSignatureRef.current = docSignature(markdown, ydoc);
+      localDirtySinceLastSaveRef.current = false;
+
+      if (!seedDoneRef.current && isYDocEmpty(ydoc)) {
+        const mesh = meshRef.current;
+        if (!mesh || mesh.getPeerIds().length === 0) {
+          if (markdown) {
+            applyContentSeedToYDoc(ydoc, markdown, documentFormat);
+            markDocReady();
+            setDocStatus("Loaded shared document");
+          }
+        } else {
+          const tick = () => trySeedFromFile();
+          seedTimerRef.current = setTimeout(tick, 1000);
+          setTimeout(tick, 3000);
+        }
+      } else if (hadSnapshot) {
+        setDocStatus("Restored Yjs snapshot");
+      }
+    },
+    [documentFormat, markDocReady, room, trySeedFromFile, urls.documentUrl, urls.yjsUrl],
+  );
+
+  const connectMeshInBackground = useCallback(
+    async (generation: number, name: string, authToken: string) => {
+      setDocStatus((prev) => prev || "Connecting to collaborators…");
+      setStatus("Connecting to mesh…");
+      try {
+        const meshPeers = await joinMesh(name, authToken);
+        if (generation !== joinGenerationRef.current) return;
+        setConnectingPeers(meshPeers);
+        refreshMeshUi();
+        setDocStatus((prev) => (prev === "Connecting to collaborators…" ? "" : prev));
+        trySeedFromFile();
+      } catch (error) {
+        if (generation !== joinGenerationRef.current) return;
+        markRoomServerFailure(room);
+        console.warn("[docs-collab] mesh join failed", error);
+        setDocStatus(error instanceof Error ? error.message : String(error));
+      }
+    },
+    [joinMesh, refreshMeshUi, room, trySeedFromFile],
+  );
 
   const join = useCallback(async () => {
+    if (joinedRoomRef.current === room && sessionRef.current) return;
     const generation = ++joinGenerationRef.current;
     const name = userName.trim();
     if (!name) {
       setStatus("Enter a display name");
       return;
     }
-
     teardown();
 
-    const authToken = await wire.fetchAuthToken({
-      authToken: urls.authToken,
-      authTokenUrl: urls.authTokenUrl,
-      authUser: urls.authUser,
-      authPassword: urls.authPassword,
-    });
-    if (generation !== joinGenerationRef.current) return;
-    authTokenRef.current = authToken;
-    let rtcSettings;
-    try {
-      rtcSettings = await wire.fetchRtcSettings({
-        url: urls.collabRtcUrl,
-        bearerToken: authToken,
-        channel: "collab",
-      });
-    } catch (error) {
-      console.warn("[docs-collab] rtc settings unavailable", error);
-      rtcSettings = await DEFAULT_DOCS_COLLAB_WIRE.fetchRtcSettings({ channel: "collab" });
-    }
-    if (generation !== joinGenerationRef.current) return;
-
-    setDocStatus("Loading document…");
-    pendingMarkdownRef.current = await loadMarkdown(urls.documentUrl, authToken);
-    if (generation !== joinGenerationRef.current) return;
+    const online = getConnectivitySnapshot();
+    const allowServerRequests = online && roomServerAllowed(room);
     seedDoneRef.current = false;
+    setDocStatus("");
 
     const ydoc = new Y.Doc();
     ydocRef.current = ydoc;
-    const hadSnapshot =
-      documentFormat === "text" ? false : await loadYjsSnapshot(urls.yjsUrl, ydoc, authToken);
+    const persistence = new IndexeddbPersistence(room, ydoc);
+    persistenceRef.current = persistence;
+
+    const authTokenPromise = allowServerRequests
+      ? wireRef.current
+          .fetchAuthToken({
+            authToken: urls.authToken,
+            authTokenUrl: urls.authTokenUrl,
+            authUser: urls.authUser,
+            authPassword: urls.authPassword,
+          })
+          .catch((error) => {
+            markRoomServerFailure(room);
+            if (online && !isFetchNetworkError(error)) throw error;
+            console.warn("[docs-collab] auth unavailable, continuing with local cache", error);
+            return undefined;
+          })
+      : Promise.resolve(undefined);
+
+    await persistence.whenSynced;
     if (generation !== joinGenerationRef.current) return;
-    if (hadSnapshot) seedDoneRef.current = true;
+
+    const pendingSave = await persistence.get(PENDING_SERVER_SAVE_KEY);
+    if (pendingSave) {
+      await updatePendingState(true, false);
+    }
 
     const awareness = new awarenessProtocol.Awareness(ydoc);
     awarenessRef.current = awareness;
@@ -375,7 +809,8 @@ export function useDocsCollab({
     awareness.setLocalStateField("user", user);
 
     ydoc.on("update", (update, origin) => {
-      if (origin === MESH_ORIGIN || origin === SEED_ORIGIN) return;
+      if (isRemoteUpdateOrigin(origin, persistenceRef.current)) return;
+      localDirtySinceLastSaveRef.current = true;
       const encoder = encoding.createEncoder();
       syncProtocol.writeUpdate(encoder, update);
       meshRef.current?.broadcast({
@@ -397,52 +832,52 @@ export function useDocsCollab({
       },
     );
 
-    const mesh = new DocsRtcSession({
-      apiBase: urls.collabApiBaseUrl ?? "/api/v1/rooms",
-      room: urls.room ?? "docs/test-together.md",
-      authToken,
-      rtcSettings:
-        rtcSettings ?? applyRtcDebugOverrides({ ...DEFAULT_RTC_SETTINGS, forceRelay: false }),
-    });
-    meshRef.current = mesh;
-    mesh.onMessage(handleMeshMessage);
-
-    const joinedData = await mesh.join(name);
-    if (generation !== joinGenerationRef.current) return;
     setSession({ ydoc, awareness, user });
     setJoined(true);
-    setConnectingPeers(joinedData.peers);
-    refreshMeshUi();
+    joinedRoomRef.current = room;
 
-    if (!seedDoneRef.current && isYDocEmpty(ydoc)) {
-      if (mesh.getPeerIds().length === 0) {
-        applyContentSeedToYDoc(ydoc, pendingMarkdownRef.current, documentFormat);
-        markDocReady();
-        setDocStatus("Loaded shared document");
-      } else {
-        const tick = () => trySeedFromFile();
-        seedTimerRef.current = setTimeout(tick, 1000);
-        setTimeout(tick, 3000);
-      }
-    } else {
-      setDocStatus(hadSnapshot ? "Restored Yjs snapshot" : "");
+    if (!online || !allowServerRequests) {
+      setStatus("Editing offline");
+      setDocStatus(online ? "Server unavailable, using local draft" : "Editing offline");
+      void authTokenPromise.then((token) => {
+        if (generation !== joinGenerationRef.current) return;
+        authTokenRef.current = token;
+      });
+      return;
     }
+
+    void (async () => {
+      let authToken: string | undefined;
+      try {
+        authToken = await authTokenPromise;
+      } catch (error) {
+        if (generation !== joinGenerationRef.current) return;
+        setDocStatus(error instanceof Error ? error.message : String(error));
+        return;
+      }
+      if (generation !== joinGenerationRef.current) return;
+      authTokenRef.current = authToken;
+
+      const tasks: Promise<void>[] = [applyServerBootstrap(generation, authToken)];
+      if (authToken) {
+        tasks.push(connectMeshInBackground(generation, name, authToken));
+      }
+      await Promise.all(tasks);
+      if (generation !== joinGenerationRef.current) return;
+      flushPendingSaveIfReady();
+    })();
   }, [
-    handleMeshMessage,
-    markDocReady,
-    refreshMeshUi,
+    applyServerBootstrap,
+    connectMeshInBackground,
+    flushPendingSaveIfReady,
+    room,
     teardown,
-    trySeedFromFile,
-    documentFormat,
-    urls.collabApiBaseUrl,
-    urls.collabRtcUrl,
-    urls.documentUrl,
-    urls.authToken,
+    updatePendingState,
     urls.authPassword,
+    urls.authToken,
     urls.authTokenUrl,
     urls.authUser,
-    urls.room,
-    urls.signalUrl,
+    urls.documentUrl,
     urls.yjsUrl,
     userName,
   ]);
@@ -468,27 +903,23 @@ export function useDocsCollab({
   }, [teardown, urls.documentSaveMethod, urls.documentUrl, urls.room]);
 
   const saveNow = useCallback(async () => {
-    const getMd = getMarkdownRef.current;
-    const ydoc = ydocRef.current;
-    if (!getMd || !ydoc) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    await saveDocument(
-      urls.documentUrl,
-      getMd(),
-      ydoc,
-      urls.room,
-      authTokenRef.current,
-      urls.documentSaveMethod ?? "POST",
-    );
-    setDocStatus(`Saved · ${new Date().toLocaleTimeString()}`);
-  }, [urls.documentSaveMethod, urls.documentUrl, urls.room]);
+    await persistToServer();
+  }, [persistToServer]);
 
   const onMarkdownChange = useCallback(
     (getMarkdown: () => string) => {
       getMarkdownRef.current = getMarkdown;
+      const nextMarkdown = getMarkdown();
+      if (nextMarkdown === lastKnownMarkdownRef.current) return;
+      lastKnownMarkdownRef.current = nextMarkdown;
+      localDirtySinceLastSaveRef.current = true;
+      if (!getConnectivitySnapshot()) {
+        void markPendingWhenUnsaved();
+      }
       scheduleSave();
     },
-    [scheduleSave],
+    [markPendingWhenUnsaved, scheduleSave],
   );
 
   useEffect(() => {
@@ -513,9 +944,12 @@ export function useDocsCollab({
     connectingPeers,
     warningPeers,
     linkCount,
+    pendingSync,
+    failedSync,
     join,
     leave,
     saveNow,
+    registerMarkdownGetter,
     onMarkdownChange,
   };
 }

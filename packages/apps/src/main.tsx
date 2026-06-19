@@ -5,7 +5,7 @@ import "@/styles.css";
 
 if (import.meta.env.PROD && "serviceWorker" in navigator) {
   void import("virtual:pwa-register").then(({ registerSW }) => {
-    registerSW({ immediate: true });
+    registerSW();
   });
 }
 

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import type { Editor } from "@tiptap/react";
 import { Code2, Printer } from "lucide-react";
+import { LoadingSpinner } from "@/loading-spinner/src/loading-spinner";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import { IconButton } from "@/button/src/button";
 import { docsLabels } from "@/docs-core/src/docs-labels";
@@ -11,6 +12,7 @@ import { focusOutlineHeading, parseMarkdownOutline } from "@/docs-core/src/docs-
 import { mockWorkspaceSession } from "@/lib/api/mock/workspace-session-mock";
 import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
 import { cn } from "@/lib/utils";
+import { useConnectivity } from "@/hooks/use-connectivity";
 import { TooltipProvider } from "@/ui/tooltip";
 import {
   AlertDialog,
@@ -141,7 +143,10 @@ function DocsCollabWorkspaceInner({
     connectingPeers,
     warningPeers,
     docStatus,
+    pendingSync,
+    failedSync,
     onMarkdownChange,
+    registerMarkdownGetter,
   } = useDocsCollab({
     userName,
     autoJoin: true,
@@ -157,8 +162,15 @@ function DocsCollabWorkspaceInner({
   const [activeOutlineIndex, setActiveOutlineIndex] = useState<number | null>(null);
   const resolvedDocumentTitle = documentTitle?.trim() || defaultTitleFromRoom(urls?.room);
   const editorFormat = docsEditorFormatFromFileName(resolvedDocumentTitle);
+  const showMarkdownOutline = resolvedDocumentTitle.toLowerCase().endsWith(".md");
+  const { online } = useConnectivity();
+  const showPendingSyncIndicator = pendingSync && (!online || failedSync);
+  const pendingSyncLabel = failedSync ? labels.pendingSyncFailed : labels.pendingSync;
 
-  const outline = useMemo(() => parseMarkdownOutline(markdown), [markdown]);
+  const outline = useMemo(
+    () => (showMarkdownOutline ? parseMarkdownOutline(markdown) : []),
+    [markdown, showMarkdownOutline],
+  );
 
   const handleMarkdownChange = useCallback(
     (getContent: () => string) => {
@@ -186,10 +198,12 @@ function DocsCollabWorkspaceInner({
     (nextEditor: Editor | null) => {
       setEditor(nextEditor);
       if (nextEditor) {
-        setMarkdown(getTextEditorContent(nextEditor, editorFormat));
+        const getContent = () => getTextEditorContent(nextEditor, editorFormat);
+        setMarkdown(getContent());
+        registerMarkdownGetter(getContent);
       }
     },
-    [editorFormat],
+    [editorFormat, registerMarkdownGetter],
   );
 
   const handleOutlineSelect = useCallback(
@@ -231,21 +245,34 @@ function DocsCollabWorkspaceInner({
                 />
               }
             >
-              <DocsOutlineSidebar
-                labels={labels}
-                items={outline}
-                activeIndex={activeOutlineIndex}
-                onSelect={handleOutlineSelect}
-              />
+              {showMarkdownOutline ? (
+                <DocsOutlineSidebar
+                  labels={labels}
+                  items={outline}
+                  activeIndex={activeOutlineIndex}
+                  onSelect={handleOutlineSelect}
+                />
+              ) : null}
             </AppSidebar>
           }
           mainHeader={
             <ViewHeader
               title={resolvedDocumentTitle}
+              subtitle={docStatus || undefined}
               sidebarOpen={sidebarOpen}
               onToggleSidebar={() => setSidebarOpen((open) => !open)}
               actions={
                 <div className="docs-workspace__header-actions">
+                  {showPendingSyncIndicator ? (
+                    <span
+                      className="docs-workspace__pending-sync"
+                      role="status"
+                      aria-live="polite"
+                      aria-label={pendingSyncLabel}
+                    >
+                      <LoadingSpinner size="sm" />
+                    </span>
+                  ) : null}
                   {collabSession ? (
                     <DocsCollabPresence
                       localUser={{
@@ -304,14 +331,7 @@ function DocsCollabWorkspaceInner({
                   onContentChange={handleMarkdownChange}
                   onEditorReady={handleEditorReady}
                 />
-              ) : (
-                <div className="p-8">
-                  <p className="docs-workspace__loading">Joining collaboration mesh…</p>
-                  {docStatus ? (
-                    <p className="docs-workspace__loading mt-2 text-sm">{docStatus}</p>
-                  ) : null}
-                </div>
-              )}
+              ) : null}
               <footer className="docs-workspace__stats-footer" aria-live="polite">
                 <Tag
                   label={labels.statsWords(wordCount)}

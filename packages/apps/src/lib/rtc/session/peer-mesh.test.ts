@@ -180,6 +180,59 @@ describe("RtcPeerMesh", () => {
     setTimeoutSpy.mockRestore();
   });
 
+  it("backs off collab polling when topology is stable", async () => {
+    const signaling = createMockSignaling({ peerId: "peer-a", peers: [] });
+    const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout");
+
+    const mesh = new RtcPeerMesh({
+      channel: "collab",
+      room: "docs/test.md",
+      signaling: signaling.client as unknown as HttpSignalingClient,
+      rtcSettings: RTC_SETTINGS,
+      pollIntervals: { connectingMs: 400, steadyMs: 1200 },
+      binding: {
+        kind: "data",
+        label: "collab",
+        attachInitiator: () => ({ readyState: "open" }) as RTCDataChannel,
+        attachReceiver: () => undefined,
+        linkState: () => "connected",
+      },
+    });
+
+    await mesh.join({ name: "Host", peerId: "peer-a" });
+    expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 400);
+
+    await vi.advanceTimersByTimeAsync(400);
+    await flushAsyncWork();
+
+    expect(setTimeoutSpy).toHaveBeenLastCalledWith(expect.any(Function), 15000);
+    await mesh.leave();
+    setTimeoutSpy.mockRestore();
+  });
+
+  it("keeps steady polling for non-collab channels", async () => {
+    const signaling = createMockSignaling({ peerId: "peer-a", peers: [] });
+    const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout");
+
+    const mesh = new RtcPeerMesh({
+      channel: "meet",
+      room: "test-room",
+      signaling: signaling.client as unknown as HttpSignalingClient,
+      rtcSettings: RTC_SETTINGS,
+      pollIntervals: { connectingMs: 400, steadyMs: 1200 },
+    });
+
+    await mesh.join({ name: "Host", peerId: "peer-a" });
+    expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 400);
+
+    await vi.advanceTimersByTimeAsync(400);
+    await flushAsyncWork();
+
+    expect(setTimeoutSpy).toHaveBeenLastCalledWith(expect.any(Function), 1200);
+    await mesh.leave();
+    setTimeoutSpy.mockRestore();
+  });
+
   it("sends offer when meet higherId initiator sees a new peer", async () => {
     const signaling = createMockSignaling({
       peerId: "ZZZZZZZZZZ",

@@ -74,14 +74,14 @@ describe("offline version allocation", () => {
   });
 
   it("throws when two domains claim the same Dexie version", () => {
-    seedOfflineVersionOwnerForTests(25, "notes");
+    seedOfflineVersionOwnerForTests(10, "contacts");
 
     expect(() =>
       claimOfflineDomainVersions({
-        domain: "app-slot-3",
-        versions: [{ version: 25, stores: { calendar_events: "id" } }],
+        domain: "notes",
+        versions: [{ version: 10, stores: { notes_notes: "id" } }],
       }),
-    ).toThrow(/already claimed by domain "notes"/);
+    ).toThrow(/already claimed by domain "contacts"/);
 
     expect(() =>
       registerOfflineDomainTables({

@@ -38,6 +38,13 @@ const RUNTIME_FONT_PRELOADS = [
   "JetBrainsMono-Variable.woff2",
 ];
 
+/** Workbox service worker artifacts generated beside dist/index.html (hashed workbox-*.js name). */
+function listPwaServiceWorkerFiles(distRoot) {
+  return readdirSync(distRoot).filter(
+    (file) => file === "sw.js" || (file.startsWith("workbox-") && file.endsWith(".js")),
+  );
+}
+
 function renderFontPreloadTags(assetBase) {
   return RUNTIME_FONT_PRELOADS.map(
     (file) =>
@@ -89,6 +96,10 @@ export function syncRuntimeAppBuilds() {
     cpSync(resolve(distRoot, "fonts"), resolve(targetDist, "fonts"), { recursive: true });
     cpSync(resolve(distRoot, "icons"), resolve(targetDist, "icons"), { recursive: true });
     cpSync(resolve(distRoot, "manifests"), resolve(targetDist, "manifests"), { recursive: true });
+
+    for (const file of listPwaServiceWorkerFiles(distRoot)) {
+      cpSync(resolve(distRoot, file), resolve(targetDist, file));
+    }
 
     for (const file of readdirSync(targetAssetsDir)) {
       const filePath = resolve(targetAssetsDir, file);
