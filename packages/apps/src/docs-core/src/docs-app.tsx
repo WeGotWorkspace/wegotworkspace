@@ -93,8 +93,8 @@ export function DocsApp({ apiSource }: DocsAppProps = {}) {
       retry={retry}
       errorTitle="Could not load docs"
       successVersion={successVersion}
-      render={(key) => (
-        <div key={key}>
+      render={() => (
+        <div>
           {showCollab && collabUrls ? (
             <DocsCollabWorkspace
               userName={collabUserName}

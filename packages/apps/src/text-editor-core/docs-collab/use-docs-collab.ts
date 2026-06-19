@@ -6,7 +6,7 @@ import * as awarenessProtocol from "y-protocols/awareness";
 import * as syncProtocol from "y-protocols/sync";
 import * as Y from "yjs";
 import { useOnReconnect } from "@/hooks/use-connectivity";
-import { getConnectivitySnapshot } from "@/lib/offline/browser-online";
+import { getConnectivitySnapshot, isFetchNetworkError } from "@/lib/offline/browser-online";
 import { applyRtcDebugOverrides } from "@/lib/rtc/force-relay";
 import { DEFAULT_RTC_SETTINGS } from "@/lib/rtc/types";
 import { docsEditorFormatFromFileName } from "@/docs-core/src/docs-editor-format";
@@ -31,6 +31,39 @@ const REMOTE_UPDATE_ORIGINS = new Set<string>([
 const SAVE_DELAY_MS = 2000;
 const PEER_FAILURE_WARNING_DELAY_MS = 6000;
 const PENDING_SERVER_SAVE_KEY = "pendingServerSave";
+const SAVE_RETRY_MAX_MS = 30000;
+const ROOM_SERVER_BACKOFF_INITIAL_MS = 3000;
+const ROOM_SERVER_BACKOFF_MAX_MS = 30000;
+
+type RoomServerBackoff = {
+  retryMs: number;
+  nextAttemptAt: number;
+};
+
+const roomServerBackoff = new Map<string, RoomServerBackoff>();
+
+/** Test helper to clear per-room backoff state. */
+export function resetDocsCollabBackoffForTests(): void {
+  roomServerBackoff.clear();
+}
+
+function roomServerAllowed(room: string): boolean {
+  const backoff = roomServerBackoff.get(room);
+  return !backoff || Date.now() >= backoff.nextAttemptAt;
+}
+
+function markRoomServerSuccess(room: string): void {
+  roomServerBackoff.delete(room);
+}
+
+function markRoomServerFailure(room: string): void {
+  const now = Date.now();
+  const prev = roomServerBackoff.get(room);
+  const retryMs = prev
+    ? Math.min(prev.retryMs * 2, ROOM_SERVER_BACKOFF_MAX_MS)
+    : ROOM_SERVER_BACKOFF_INITIAL_MS;
+  roomServerBackoff.set(room, { retryMs, nextAttemptAt: now + retryMs });
+}
 
 const COLORS = [
   "#2563eb",
@@ -192,6 +225,11 @@ export function useDocsCollab({
   const failedSinceRef = useRef<Map<string, number>>(new Map());
   const saveFailedRef = useRef(false);
   const wireRef = useRef(wire);
+  const joinedRoomRef = useRef<string | null>(null);
+  const reconnectInFlightRef = useRef(false);
+  const saveInFlightRef = useRef(false);
+  const saveRetryMsRef = useRef(0);
+  const nextSaveAttemptAtRef = useRef(0);
 
   const [session, setSession] = useState<DocsCollabSession | null>(null);
   const [joined, setJoined] = useState(false);
@@ -203,10 +241,15 @@ export function useDocsCollab({
   const [linkCount, setLinkCount] = useState(0);
   const [pendingSync, setPendingSync] = useState(false);
   const [failedSync, setFailedSync] = useState(false);
+  const sessionRef = useRef<DocsCollabSession | null>(null);
 
   useEffect(() => {
     wireRef.current = wire;
   }, [wire]);
+
+  useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
 
   const updatePendingState = useCallback(
     async (pending: boolean, failed = false) => {
@@ -268,33 +311,52 @@ export function useDocsCollab({
   }, []);
 
   const persistToServer = useCallback(async (): Promise<void> => {
+    if (saveInFlightRef.current) return;
     const ydoc = ydocRef.current;
     const getMd = getMarkdownRef.current;
     if (!ydoc || !getMd) return;
-    await saveDocument(
-      urls.documentUrl,
-      getMd(),
-      ydoc,
-      urls.room,
-      authTokenRef.current,
-      urls.documentSaveMethod ?? "POST",
-    );
-    saveFailedRef.current = false;
-    await updatePendingState(false, false);
-    setDocStatus(`Saved · ${new Date().toLocaleTimeString()}`);
-  }, [updatePendingState, urls.documentSaveMethod, urls.documentUrl, urls.room]);
+    saveInFlightRef.current = true;
+    try {
+      await saveDocument(
+        urls.documentUrl,
+        getMd(),
+        ydoc,
+        urls.room,
+        authTokenRef.current,
+        urls.documentSaveMethod ?? "POST",
+      );
+      markRoomServerSuccess(room);
+      saveFailedRef.current = false;
+      saveRetryMsRef.current = 0;
+      nextSaveAttemptAtRef.current = 0;
+      await updatePendingState(false, false);
+      setDocStatus(`Saved · ${new Date().toLocaleTimeString()}`);
+    } catch (err) {
+      saveFailedRef.current = true;
+      const nextRetryMs = Math.min(
+        Math.max(saveRetryMsRef.current || SAVE_DELAY_MS, SAVE_DELAY_MS) * 2,
+        SAVE_RETRY_MAX_MS,
+      );
+      saveRetryMsRef.current = nextRetryMs;
+      nextSaveAttemptAtRef.current = Date.now() + nextRetryMs;
+      markRoomServerFailure(room);
+      await updatePendingState(true, true);
+      setDocStatus(`Save failed: ${err instanceof Error ? err.message : String(err)}`);
+      throw err;
+    } finally {
+      saveInFlightRef.current = false;
+    }
+  }, [room, updatePendingState, urls.documentSaveMethod, urls.documentUrl, urls.room]);
 
   const scheduleSave = useCallback(() => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    const retryDelayMs = Math.max(nextSaveAttemptAtRef.current - Date.now(), 0);
+    const delayMs = Math.max(SAVE_DELAY_MS, retryDelayMs);
     saveTimerRef.current = setTimeout(() => {
       saveTimerRef.current = null;
-      void persistToServer().catch(async (err) => {
-        saveFailedRef.current = true;
-        await updatePendingState(true, true);
-        setDocStatus(`Save failed: ${err instanceof Error ? err.message : String(err)}`);
-      });
-    }, SAVE_DELAY_MS);
-  }, [persistToServer, updatePendingState]);
+      void persistToServer().catch(() => undefined);
+    }, delayMs);
+  }, [persistToServer]);
 
   const trySeedFromFile = useCallback(() => {
     const ydoc = ydocRef.current;
@@ -414,6 +476,11 @@ export function useDocsCollab({
     authTokenRef.current = undefined;
     seedDoneRef.current = false;
     saveFailedRef.current = false;
+    saveInFlightRef.current = false;
+    saveRetryMsRef.current = 0;
+    nextSaveAttemptAtRef.current = 0;
+    reconnectInFlightRef.current = false;
+    joinedRoomRef.current = null;
     clearDocsCollabSyncState(room);
     setSession(null);
     setJoined(false);
@@ -438,16 +505,20 @@ export function useDocsCollab({
   );
 
   const handleReconnect = useCallback(async () => {
+    if (reconnectInFlightRef.current) return;
     const generation = ++reconnectGenerationRef.current;
     const ydoc = ydocRef.current;
     const persistence = persistenceRef.current;
     if (!ydoc || !persistence || !joined) return;
+    if (!roomServerAllowed(room)) return;
+    reconnectInFlightRef.current = true;
 
     setDocStatus("Reconnecting…");
     const authToken = authTokenRef.current;
 
     try {
       await mergeServerState(authToken);
+      markRoomServerSuccess(room);
       if (generation !== reconnectGenerationRef.current) return;
 
       if (!meshRef.current && authToken) {
@@ -466,10 +537,13 @@ export function useDocsCollab({
         setDocStatus("");
       }
     } catch (error) {
+      markRoomServerFailure(room);
       console.warn("[docs-collab] reconnect failed", error);
       setDocStatus(error instanceof Error ? error.message : String(error));
+    } finally {
+      reconnectInFlightRef.current = false;
     }
-  }, [joinMesh, joined, mergeServerState, persistToServer, userName]);
+  }, [joinMesh, joined, mergeServerState, persistToServer, room, userName]);
 
   useOnReconnect(() => {
     if (session) void handleReconnect();
@@ -485,12 +559,21 @@ export function useDocsCollab({
       try {
         markdown = await loadMarkdown(urls.documentUrl, authToken);
       } catch (error) {
+        markRoomServerFailure(room);
         console.warn("[docs-collab] markdown load failed", error);
       }
       if (generation !== joinGenerationRef.current) return;
-      hadSnapshot = await loadYjsSnapshot(urls.yjsUrl, ydoc, authToken, SERVER_ORIGIN);
+      try {
+        hadSnapshot = await loadYjsSnapshot(urls.yjsUrl, ydoc, authToken, SERVER_ORIGIN);
+      } catch (error) {
+        markRoomServerFailure(room);
+        console.warn("[docs-collab] yjs load failed", error);
+      }
       if (generation !== joinGenerationRef.current) return;
       if (hadSnapshot) seedDoneRef.current = true;
+      if (hadSnapshot || markdown) {
+        markRoomServerSuccess(room);
+      }
 
       pendingMarkdownRef.current = markdown;
 
@@ -511,7 +594,7 @@ export function useDocsCollab({
         setDocStatus("Restored Yjs snapshot");
       }
     },
-    [documentFormat, markDocReady, trySeedFromFile, urls.documentUrl, urls.yjsUrl],
+    [documentFormat, markDocReady, room, trySeedFromFile, urls.documentUrl, urls.yjsUrl],
   );
 
   const connectMeshInBackground = useCallback(
@@ -527,24 +610,26 @@ export function useDocsCollab({
         trySeedFromFile();
       } catch (error) {
         if (generation !== joinGenerationRef.current) return;
+        markRoomServerFailure(room);
         console.warn("[docs-collab] mesh join failed", error);
         setDocStatus(error instanceof Error ? error.message : String(error));
       }
     },
-    [joinMesh, refreshMeshUi, trySeedFromFile],
+    [joinMesh, refreshMeshUi, room, trySeedFromFile],
   );
 
   const join = useCallback(async () => {
+    if (joinedRoomRef.current === room && sessionRef.current) return;
     const generation = ++joinGenerationRef.current;
     const name = userName.trim();
     if (!name) {
       setStatus("Enter a display name");
       return;
     }
-
     teardown();
 
     const online = getConnectivitySnapshot();
+    const allowServerRequests = online && roomServerAllowed(room);
     seedDoneRef.current = false;
     setDocStatus("");
 
@@ -553,18 +638,21 @@ export function useDocsCollab({
     const persistence = new IndexeddbPersistence(room, ydoc);
     persistenceRef.current = persistence;
 
-    const authTokenPromise = wireRef.current
-      .fetchAuthToken({
-        authToken: urls.authToken,
-        authTokenUrl: urls.authTokenUrl,
-        authUser: urls.authUser,
-        authPassword: urls.authPassword,
-      })
-      .catch((error) => {
-        if (online) throw error;
-        console.warn("[docs-collab] auth unavailable offline", error);
-        return undefined;
-      });
+    const authTokenPromise = allowServerRequests
+      ? wireRef.current
+          .fetchAuthToken({
+            authToken: urls.authToken,
+            authTokenUrl: urls.authTokenUrl,
+            authUser: urls.authUser,
+            authPassword: urls.authPassword,
+          })
+          .catch((error) => {
+            markRoomServerFailure(room);
+            if (online && !isFetchNetworkError(error)) throw error;
+            console.warn("[docs-collab] auth unavailable, continuing with local cache", error);
+            return undefined;
+          })
+      : Promise.resolve(undefined);
 
     await persistence.whenSynced;
     if (generation !== joinGenerationRef.current) return;
@@ -605,10 +693,11 @@ export function useDocsCollab({
 
     setSession({ ydoc, awareness, user });
     setJoined(true);
+    joinedRoomRef.current = room;
 
-    if (!online) {
+    if (!online || !allowServerRequests) {
       setStatus("Editing offline");
-      setDocStatus("Editing offline");
+      setDocStatus(online ? "Server unavailable, using local draft" : "Editing offline");
       void authTokenPromise.then((token) => {
         if (generation !== joinGenerationRef.current) return;
         authTokenRef.current = token;

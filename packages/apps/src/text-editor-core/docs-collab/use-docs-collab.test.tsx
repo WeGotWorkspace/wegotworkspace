@@ -7,7 +7,11 @@ import {
 } from "@/lib/offline/browser-online";
 import { DEFAULT_RTC_SETTINGS } from "@/lib/rtc/types";
 import type { DocsCollabWireOperations } from "./docs-collab-wire";
-import { useDocsCollab, DEFAULT_DOCS_COLLAB_URLS } from "./use-docs-collab";
+import {
+  useDocsCollab,
+  DEFAULT_DOCS_COLLAB_URLS,
+  resetDocsCollabBackoffForTests,
+} from "./use-docs-collab";
 
 const rtcMocks = vi.hoisted(() => ({
   mockJoin: vi.fn(),
@@ -81,6 +85,7 @@ describe("useDocsCollab offline lifecycle", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetConnectivityHubForTests();
+    resetDocsCollabBackoffForTests();
     mockJoin.mockResolvedValue({ peers: [] });
     vi.spyOn(navigator, "onLine", "get").mockReturnValue(true);
     vi.stubGlobal("fetch", mockFetchResponses({}));
@@ -88,6 +93,7 @@ describe("useDocsCollab offline lifecycle", () => {
 
   afterEach(() => {
     resetConnectivityHubForTests();
+    resetDocsCollabBackoffForTests();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
@@ -305,5 +311,46 @@ describe("useDocsCollab offline lifecycle", () => {
     rerender({ nextWire: makeWire() });
     await waitFor(() => expect(result.current.session).not.toBeNull());
     expect(mockJoin).toHaveBeenCalledTimes(1);
+  });
+
+  it("backs off collaboration GET retries across quick remounts", async () => {
+    let collaborationGetCount = 0;
+    const failingFetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const method = init?.method ?? "GET";
+      if (method === "GET" && url.includes("/api/v1/files/collaboration")) {
+        collaborationGetCount += 1;
+        throw new TypeError("Failed to fetch");
+      }
+      return new Response("{}", { status: 200 });
+    });
+    vi.stubGlobal("fetch", failingFetch);
+
+    const first = renderHook(() =>
+      useDocsCollab({
+        userName: "Alex",
+        autoJoin: true,
+        urls: testUrls,
+        wire,
+      }),
+    );
+    await waitFor(() => expect(first.result.current.session).not.toBeNull());
+    await act(async () => {
+      first.unmount();
+    });
+
+    const firstAttemptCount = collaborationGetCount;
+    expect(firstAttemptCount).toBeGreaterThan(0);
+
+    const second = renderHook(() =>
+      useDocsCollab({
+        userName: "Alex",
+        autoJoin: true,
+        urls: testUrls,
+        wire,
+      }),
+    );
+    await waitFor(() => expect(second.result.current.session).not.toBeNull());
+    expect(collaborationGetCount).toBe(firstAttemptCount);
   });
 });
