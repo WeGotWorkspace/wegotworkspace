@@ -1,4 +1,6 @@
 import { useMemo } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
 import type { MenuItemProps } from "@/menu-item/src/menu-item";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
 import { formatOutlineNumbers, type DocsOutlineItem } from "@/docs-core/src/docs-outline";
@@ -19,6 +21,19 @@ export function DocsOutlineSidebar({
   activeIndex,
   onSelect,
 }: DocsOutlineSidebarProps) {
+  const navigate = useNavigate();
+
+  const homeItems = useMemo(
+    (): MenuItemProps[] => [
+      {
+        label: labels.sidebarBackToHome,
+        icon: <ArrowLeft className="size-4" aria-hidden />,
+        onClick: () => void navigate({ to: "/docs" }),
+      },
+    ],
+    [labels.sidebarBackToHome, navigate],
+  );
+
   const menuItems = useMemo((): MenuItemProps[] => {
     if (items.length === 0) {
       return [{ label: labels.outlineEmpty }];
@@ -33,5 +48,10 @@ export function DocsOutlineSidebar({
     }));
   }, [activeIndex, items, labels.outlineEmpty, onSelect]);
 
-  return <SidebarSection title={labels.sidebarOutline} items={menuItems} />;
+  return (
+    <>
+      <SidebarSection items={homeItems} />
+      <SidebarSection title={labels.sidebarOutline} items={menuItems} />
+    </>
+  );
 }

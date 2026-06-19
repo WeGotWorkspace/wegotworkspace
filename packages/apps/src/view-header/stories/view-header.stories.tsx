@@ -48,6 +48,17 @@ export const WithoutSearch: Story = {
   },
 };
 
+/** Compact title (medium-size, medium-weight, sans-serif) used for the doc editor file name. */
+export const SmallTitle: Story = {
+  args: {
+    ...Default.args,
+    title: "quarterly-report.md",
+    subtitle: undefined,
+    titleSize: "sm",
+    searchPlaceholder: undefined,
+  },
+};
+
 /** Portaled surfaces (e.g. mail compose dialog) omit the sidebar toggle. */
 export const WithoutSidebarToggle: Story = {
   args: {

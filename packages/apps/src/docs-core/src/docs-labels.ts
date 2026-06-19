@@ -23,6 +23,7 @@ export const docsLabels = {
   cancel: "Cancel",
   pendingSync: "Unsaved changes",
   pendingSyncFailed: "Save failed — changes not on server",
+  sidebarBackToHome: "Back to docs home",
   sidebarOutline: "Outline",
   outlineEmpty: "No headings in this document yet.",
   statsWords: (count: number) => `${count.toLocaleString()} words`,
