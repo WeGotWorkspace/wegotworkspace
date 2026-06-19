@@ -5,7 +5,7 @@ import { UnifiedSearchApiDropdown } from "@/unified-search-dropdown/src/unified-
 async function mockFetcher(
   params: Omit<WgwUnifiedSearchParams, "signal"> & { signal?: AbortSignal },
 ): Promise<WgwUnifiedSearchData> {
-  const q = params.q.toLowerCase();
+  const q = (params.q ?? "").toLowerCase();
   const base = [
     {
       id: 1,
@@ -39,8 +39,10 @@ async function mockFetcher(
     (item) => item.title.toLowerCase().includes(q) || q.includes("alpha"),
   );
   return {
-    query: params.q,
+    query: params.q ?? "",
     limit: params.limit ?? 10,
+    offset: params.offset ?? 0,
+    hasMore: false,
     sources: params.sources ?? ["file", "caldav", "carddav"],
     filters: {},
     results,

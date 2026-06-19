@@ -14,6 +14,7 @@ import type { DocsAppProps } from "@/docs-core/src/docs-app-props";
 import { isDocsCollabEditablePath } from "@/docs-core/src/docs-collab-text-files";
 import { docsLabels } from "@/docs-core/src/docs-labels";
 import { DocsWorkspace } from "@/docs-core/src/docs-workspace";
+import { DocsHomeWorkspace } from "@/docs-core/src/docs-home-workspace";
 import { DocsCollabWorkspace, useDocsCollabPendingSync } from "@/text-editor-core/docs-collab";
 import { createWgwDocsCollabWire } from "@/docs-core/src/docs-collab-wgw-wire";
 import { useDocsAPI } from "@/docs-core/src/use-docs-api";
@@ -37,6 +38,16 @@ export function DocsApp({ apiSource }: DocsAppProps = {}) {
   }, []);
 
   const handleFileRenamed = useCallback(
+    (apiPath: string) => {
+      void navigate({
+        to: "/docs",
+        search: docsSearchFromApiPath(apiPath),
+      });
+    },
+    [navigate],
+  );
+
+  const handleOpenHomeFile = useCallback(
     (apiPath: string) => {
       void navigate({
         to: "/docs",
@@ -95,7 +106,13 @@ export function DocsApp({ apiSource }: DocsAppProps = {}) {
       successVersion={successVersion}
       render={() => (
         <div>
-          {showCollab && collabUrls ? (
+          {filePath === null ? (
+            <DocsHomeWorkspace
+              session={session}
+              onOpenFile={handleOpenHomeFile}
+              onLogout={handleLogout}
+            />
+          ) : showCollab && collabUrls ? (
             <DocsCollabWorkspace
               userName={collabUserName}
               documentTitle={collabDocumentTitle}

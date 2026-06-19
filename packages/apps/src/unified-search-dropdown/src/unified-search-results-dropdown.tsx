@@ -11,6 +11,7 @@ import {
   LoaderCircle,
 } from "lucide-react";
 import type { WgwUnifiedSearchResult } from "@/lib/api/wgw/search";
+import { driveLocationLabel } from "@/drive-core/src/drive-search-utils";
 import type { MenuItemProps } from "@/menu-item/src/menu-item";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
 import { Tag } from "@/tag/src/tag";
@@ -191,13 +192,6 @@ function groupItems(
 
 function driveTagForResult(result: WgwUnifiedSearchResult): { label: string } | null {
   if (result.sourceType !== "file") return null;
-  const segments = result.sourceKey.split("/").filter(Boolean);
-  if (segments.length < 2) return null;
-  if (segments[0] === "users") {
-    return { label: "My Drive" };
-  }
-  if (segments[0] === "groups" && segments[1]) {
-    return { label: segments[1] };
-  }
-  return null;
+  const label = driveLocationLabel(result.sourceKey);
+  return label ? { label } : null;
 }

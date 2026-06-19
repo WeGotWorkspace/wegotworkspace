@@ -15,6 +15,17 @@ export function apiPathFromSearchSourceKey(sourceKey: string): string | null {
   return `/${key}`;
 }
 
+/**
+ * Top-level drive location label for a unified-search source key.
+ * `users/...` → `My Drive`; `groups/{name}/...` → `Groups/{name}`; otherwise `null`.
+ */
+export function driveLocationLabel(sourceKey: string): string | null {
+  const segments = sourceKey.split("/").filter(Boolean);
+  if (segments[0] === "users") return "My Drive";
+  if (segments[0] === "groups" && segments[1]) return `Groups/${segments[1]}`;
+  return null;
+}
+
 function fileKindFromCategory(category: string | null | undefined): FileKind {
   if (category === "folder") return "folder";
   if (category === "image") return "image";
@@ -36,11 +47,15 @@ export function driveFileFromSearchResult(
   const title = result.title || uiPath.split("/").pop() || result.sourceKey;
   const parent = parentVirtualPath(uiPath);
   const kind = fileKindFromCategory(result.category);
+  const date =
+    typeof result.modifiedAt === "number" && result.modifiedAt > 0
+      ? new Date(result.modifiedAt * 1000).toLocaleDateString()
+      : "Now";
 
   return {
     id: `search:${result.sourceType}:${result.sourceKey}`,
     category: result.category ?? "File",
-    date: "",
+    date,
     title,
     excerpt: result.snippet ?? "",
     body: [],
@@ -51,6 +66,7 @@ export function driveFileFromSearchResult(
     kind,
     size: result.size > 0 ? String(result.size) : "—",
     apiPath: apiPath || undefined,
+    location: driveLocationLabel(result.sourceKey) ?? undefined,
   };
 }
 

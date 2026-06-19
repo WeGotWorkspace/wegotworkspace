@@ -37,6 +37,8 @@ export type DriveUnifiedSearchResult = {
   category?: string | null;
   snippet?: string | null;
   size: number;
+  /** Unix seconds of the last modification (used for the Modified column). */
+  modifiedAt?: number;
 };
 
 export type DriveUnifiedSearchDownloadInput = {

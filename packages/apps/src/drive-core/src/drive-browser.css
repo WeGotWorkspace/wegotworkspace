@@ -170,9 +170,18 @@
   color: var(--color-emerald);
 }
 
+.drive-workspace .drive-file-tile__text {
+  @apply flex min-w-0 flex-1 flex-col;
+}
+
 .drive-workspace .drive-file-tile__title {
   @apply flex-1 min-w-0 truncate text-sm sm:text-[0.9375rem] font-medium;
   color: var(--color-ink);
+}
+
+.drive-workspace .drive-file-tile__location {
+  @apply min-w-0 truncate text-xs;
+  color: color-mix(in oklab, var(--color-ink) 55%, transparent);
 }
 
 .drive-workspace .drive-list-view {
@@ -193,6 +202,10 @@
 
 .drive-workspace .drive-list-col-size {
   width: 6rem;
+}
+
+.drive-workspace .drive-list-col-location {
+  width: 10rem;
 }
 
 .drive-workspace .drive-list-col-actions {
