@@ -6317,7 +6317,6 @@ export interface components {
             id: string;
             username: string;
             notebook: string;
-            title: string;
             body: string;
             tags: components["schemas"]["NoteTagList"];
             starred?: boolean | null;
@@ -6343,7 +6342,7 @@ export interface components {
          * @example {
          *       "id": "n123",
          *       "notebook": "General",
-         *       "title": "Roadmap",
+         *       "body": "Draft roadmap",
          *       "tags": [
          *         "planning"
          *       ],
@@ -6354,7 +6353,6 @@ export interface components {
         NoteUpsertRequest: {
             id?: string;
             notebook: string;
-            title: string;
             /** @description Optional. Omit the field entirely to update metadata only and preserve the existing body bytes on disk. Sending it (including an empty string) overwrites the body. */
             body?: string;
             tags?: components["schemas"]["NoteTagList"];

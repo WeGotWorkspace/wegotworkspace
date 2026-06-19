@@ -27,13 +27,13 @@ export function coerceNoteItem(raw: unknown): WgwNoteItem | null {
     id: String(id),
     notebook: String(notebook),
     username: username != null ? String(username) : undefined,
-    title: r.title != null ? String(r.title) : undefined,
     body: r.body != null ? String(r.body) : undefined,
     tags,
     starred: typeof r.starred === "boolean" ? r.starred : undefined,
     archived: typeof r.archived === "boolean" ? r.archived : undefined,
     scope,
-    groupSlug: typeof r.groupSlug === "string" ? r.groupSlug : r.groupSlug === null ? null : undefined,
+    groupSlug:
+      typeof r.groupSlug === "string" ? r.groupSlug : r.groupSlug === null ? null : undefined,
     updatedAt:
       r.updatedAt != null
         ? String(r.updatedAt)
@@ -105,7 +105,6 @@ export function noteFromWgwItem(row: WgwNoteItem): Note {
   return {
     id: row.id,
     notebook: row.notebook,
-    title: row.title ?? "",
     excerpt: excerptFromBody(row.body ?? ""),
     body,
     tags: row.tags ?? [],
@@ -125,7 +124,6 @@ export function wgwNoteUpsertFromNote(
   return {
     id: note.id,
     notebook: note.notebook,
-    title: note.title,
     body: note.body.join("\n\n"),
     tags: note.tags,
     ...(opts?.starred !== undefined && { starred: opts.starred }),
@@ -145,7 +143,6 @@ export function wgwNoteMetadataFromNote(
   return {
     id: note.id,
     notebook: note.notebook,
-    title: note.title,
     tags: note.tags,
     ...(opts?.starred !== undefined && { starred: opts.starred }),
     ...(opts?.archived !== undefined && { archived: opts.archived }),

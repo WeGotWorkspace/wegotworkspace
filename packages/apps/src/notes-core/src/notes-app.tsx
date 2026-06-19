@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check } from "lucide-react";
+import { useLocation, useNavigate, useParams } from "@tanstack/react-router";
 import { useAppToast } from "@/hooks/use-app-toast";
 import { WorkspaceLiveAppShell } from "@/lib/live/workspace-live-app-shell";
 import {
@@ -10,7 +11,13 @@ import { resolveNotesOfflineUsername } from "@/lib/offline/offline-session";
 import type { Note } from "@/lib/models/note";
 import type { NotesApiSource } from "@/notes-core/src/notes-api-source";
 import { NotesConflictDialog } from "@/notes-core/src/notes-conflict-dialog";
+import { noteListTitle } from "@/notes-core/src/notes-note-utils";
 import { defaultNotesLabels } from "@/notes-core/src/notes-labels";
+import {
+  notesNavigateTarget,
+  notesNoteFromParams,
+  notesViewFromLocation,
+} from "@/notes-core/src/notes-route-search";
 import { NotesWorkspace } from "@/notes-core/src/notes-workspace";
 import { useNotesAPI } from "@/notes-core/src/use-notes-api";
 
@@ -20,6 +27,14 @@ export type NotesAppProps = {
 };
 
 export function NotesApp({ apiSource }: NotesAppProps = {}) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const params = useParams({ strict: false }) as {
+    tagSlug?: string;
+    notebookSlug?: string;
+    noteId?: string;
+  };
+
   const notesRef = useRef<Note[]>([]);
   const [conflictQueue, setConflictQueue] = useState<string[]>([]);
   const [resolvingConflict, setResolvingConflict] = useState(false);
@@ -64,7 +79,9 @@ export function NotesApp({ apiSource }: NotesAppProps = {}) {
   const activeConflictNote = activeConflictId
     ? notesRef.current.find((n) => n.id === activeConflictId)
     : undefined;
-  const activeConflictTitle = activeConflictNote?.title || activeConflictId || "";
+  const activeConflictTitle = activeConflictNote
+    ? noteListTitle(activeConflictNote)
+    : activeConflictId || "";
 
   const dismissActiveConflict = useCallback(() => {
     setConflictQueue((prev) => prev.slice(1));
@@ -98,6 +115,43 @@ export function NotesApp({ apiSource }: NotesAppProps = {}) {
     [activeConflictId, offlineUsername, dismissActiveConflict, refreshList],
   );
 
+  const initialView = useMemo(
+    () => notesViewFromLocation(location.pathname, params),
+    [location.pathname, params],
+  );
+  const initialNoteId = useMemo(() => notesNoteFromParams(params), [params]);
+
+  const currentViewRef = useRef<string>(initialView);
+  const currentNoteRef = useRef<string>(initialNoteId);
+
+  useEffect(() => {
+    currentViewRef.current = initialView;
+  }, [initialView]);
+
+  useEffect(() => {
+    currentNoteRef.current = initialNoteId;
+  }, [initialNoteId]);
+
+  const handleViewChange = useCallback(
+    (view: string) => {
+      currentViewRef.current = view;
+      currentNoteRef.current = "";
+      const target = notesNavigateTarget(view);
+      void navigate({ ...target, replace: true });
+    },
+    [navigate],
+  );
+
+  const handleNoteChange = useCallback(
+    (noteId: string) => {
+      currentNoteRef.current = noteId;
+      const view = currentViewRef.current;
+      const target = notesNavigateTarget(view, noteId);
+      void navigate({ ...target, replace: true });
+    },
+    [navigate],
+  );
+
   return (
     <>
       <WorkspaceLiveAppShell
@@ -115,6 +169,10 @@ export function NotesApp({ apiSource }: NotesAppProps = {}) {
             listLoading={listLoading}
             bootstrapRevision={bootstrapRevision}
             onRefreshList={refreshList}
+            initialView={initialView}
+            initialNoteId={initialNoteId}
+            onViewChange={handleViewChange}
+            onNoteChange={handleNoteChange}
             onLogout={() => {
               window.location.assign("/logout");
             }}

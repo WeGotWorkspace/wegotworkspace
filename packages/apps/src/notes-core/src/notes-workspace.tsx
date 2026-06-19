@@ -37,6 +37,10 @@ export function NotesWorkspace({
   onRefreshList,
   onLogout,
   className,
+  initialView,
+  initialNoteId,
+  onViewChange,
+  onNoteChange,
 }: NotesWorkspaceProps) {
   const closeSidebarOnMobile = (closeSidebar: () => void) => {
     if (typeof window === "undefined") return;
@@ -95,13 +99,16 @@ export function NotesWorkspace({
     deleteNotebook,
     deleteTag,
     toggleNoteTag,
-    updateNote,
   } = useNotesController({
     data,
     labels,
     listLoading,
     operations,
     bootstrapRevision,
+    initialView,
+    initialNoteId,
+    onViewChange,
+    onNoteChange,
   });
 
   const { primarySidebarItems, notebookSidebarItems, tagSidebarItems } = useNotesSidebarModel({
@@ -255,8 +262,6 @@ export function NotesWorkspace({
               notebook={active.notebook}
               lastEdited={formatNoteDateForList(active.date)}
               editedLabel="Edited "
-              title={active.title}
-              onTitleChange={(value) => updateNote(active.id, { title: value })}
               tags={active.tags}
               onTagAdd={() => setTagDialog({ noteId: active.id })}
               onTagRemove={(tag) => toggleNoteTag(active.id, tag)}

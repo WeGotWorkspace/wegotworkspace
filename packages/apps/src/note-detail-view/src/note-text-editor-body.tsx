@@ -1,10 +1,17 @@
-import { useCallback } from "react";
+import { createContext, useCallback, useContext, type ReactNode } from "react";
 import type { Editor } from "@tiptap/react";
 import { cn } from "@/lib/utils";
+import { docsLabels } from "@/docs-core/src/docs-labels";
+import { useConnectivity } from "@/hooks/use-connectivity";
+import { LoadingSpinner } from "@/loading-spinner/src/loading-spinner";
 import { getTextEditorContent } from "@/text-editor-core/src/text-editor-content";
 import { TextEditorSheet } from "@/text-editor-core/src/text-editor-sheet";
 import { useTextEditor } from "@/text-editor-core/src/use-text-editor";
-import { DocsCollabEditor, useDocsCollab } from "@/text-editor-core/docs-collab";
+import {
+  DocsCollabEditor,
+  DocsCollabPresence,
+  useDocsCollab,
+} from "@/text-editor-core/docs-collab";
 import type { DocsCollabUrls } from "@/text-editor-core/docs-collab";
 import type { DocsCollabWireOperations } from "@/text-editor-core/docs-collab/docs-collab-wire";
 
@@ -37,26 +44,97 @@ export type NoteTextEditorBodyProps = {
   className?: string;
 };
 
-function NoteCollabBody({
-  initialMarkdown,
-  userName,
-  urls,
-  wire,
-  className,
-}: {
-  initialMarkdown: string;
+type NoteCollabContextValue = ReturnType<typeof useDocsCollab> & {
+  localDisplayName: string;
+};
+
+const NoteCollabContext = createContext<NoteCollabContextValue | null>(null);
+
+function useNoteCollabContext(): NoteCollabContextValue {
+  const value = useContext(NoteCollabContext);
+  if (!value) {
+    throw new Error("NoteCollabChrome and NoteCollabEditorSurface require NoteCollabSession.");
+  }
+  return value;
+}
+
+export type NoteCollabSessionProps = {
   userName: string;
   urls: DocsCollabUrls;
   wire?: DocsCollabWireOperations;
-  className?: string;
-}) {
-  const { session, onMarkdownChange, registerMarkdownGetter } = useDocsCollab({
+  initialMarkdown: string;
+  localDisplayName: string;
+  children: ReactNode;
+};
+
+/** Single Yjs collab session for a note body; wraps detail chrome + editor. */
+export function NoteCollabSession({
+  userName,
+  urls,
+  wire,
+  initialMarkdown,
+  localDisplayName,
+  children,
+}: NoteCollabSessionProps) {
+  const collab = useDocsCollab({
     userName,
     autoJoin: true,
     urls,
     wire,
     seedContent: initialMarkdown,
   });
+
+  const value = { ...collab, localDisplayName };
+
+  return <NoteCollabContext.Provider value={value}>{children}</NoteCollabContext.Provider>;
+}
+
+/** Docs-style peer avatars + pending-sync spinner for the note detail meta row. */
+export function NoteCollabChrome({ className }: { className?: string }) {
+  const {
+    session,
+    peers,
+    connectingPeers,
+    warningPeers,
+    pendingSync,
+    failedSync,
+    localDisplayName,
+  } = useNoteCollabContext();
+  const { online } = useConnectivity();
+  const labels = docsLabels;
+  const showPendingSyncIndicator = pendingSync && (!online || failedSync);
+  const pendingSyncLabel = failedSync ? labels.pendingSyncFailed : labels.pendingSync;
+
+  if (!session && !showPendingSyncIndicator) {
+    return null;
+  }
+
+  return (
+    <div className={cn("note-detail-view__collab-chrome", className)}>
+      {showPendingSyncIndicator ? (
+        <span
+          className="note-detail-view__pending-sync"
+          role="status"
+          aria-live="polite"
+          aria-label={pendingSyncLabel}
+        >
+          <LoadingSpinner size="sm" />
+        </span>
+      ) : null}
+      {session ? (
+        <DocsCollabPresence
+          localUser={{ displayName: localDisplayName }}
+          peers={peers}
+          connectingPeers={connectingPeers}
+          warningPeers={warningPeers}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+export function NoteCollabEditorSurface({ className }: { className?: string }) {
+  const { session, onMarkdownChange, registerMarkdownGetter } = useNoteCollabContext();
 
   const handleEditorReady = useCallback(
     (editor: Editor | null) => {
@@ -96,11 +174,15 @@ function NoteSoloBody({
     format: "markdown",
     content: initialMarkdown,
     editable,
+    autofocus: false,
     placeholder: "Press '/' for commands…",
   });
 
   return (
-    <div className={cn("note-text-editor-body text-editor", className)}>
+    <div
+      className={cn("note-text-editor-body text-editor", className)}
+      data-workspace-detail-editor
+    >
       <TextEditorSheet editor={editor} variant="sheet" />
     </div>
   );
@@ -121,16 +203,16 @@ export function NoteTextEditorBody({
 }: NoteTextEditorBodyProps) {
   if (!readOnly && collab) {
     return (
-      <NoteCollabBody
-        // Room encodes note id + notebook + archive state: switching notes
-        // remounts the session; metadata edits (new lastEdited) do not.
+      <NoteCollabSession
         key={collab.urls.room ?? noteId}
         initialMarkdown={initialMarkdown}
         userName={collab.userName}
         urls={collab.urls}
         wire={collab.wire}
-        className={className}
-      />
+        localDisplayName={collab.userName}
+      >
+        <NoteCollabEditorSurface className={className} />
+      </NoteCollabSession>
     );
   }
 

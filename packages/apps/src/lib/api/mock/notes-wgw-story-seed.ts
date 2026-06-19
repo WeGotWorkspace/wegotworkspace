@@ -6,7 +6,6 @@ const SAMPLE_ITEMS: WgwNoteItem[] = [
   {
     id: "wgw-note-1",
     notebook: "General",
-    title: "Note from GET /notes/items",
     body: "Paragraph one from a WgwNoteItem.\n\nSecond block exercises splitBodyParagraphs the same way the REST body string would.",
     tags: ["openapi", "storybook"],
     starred: true,
@@ -16,7 +15,6 @@ const SAMPLE_ITEMS: WgwNoteItem[] = [
   {
     id: "wgw-note-2",
     notebook: "Archive Demo",
-    title: "Archived on the wire",
     body: "This row has archived: true, which should open directly in the Archive sidebar bucket.",
     tags: ["archive"],
     starred: false,

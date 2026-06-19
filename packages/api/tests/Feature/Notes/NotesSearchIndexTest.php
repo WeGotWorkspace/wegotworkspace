@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Notes;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Tests\Support\NotesTestFixtures;
 use Tests\Support\WgwDatabaseTestCase;
 
@@ -28,7 +29,6 @@ final class NotesSearchIndexTest extends WgwDatabaseTestCase
     {
         $token = $this->userBearerToken();
         $created = $this->createNoteFor($token, [
-            'title' => 'Indexed title',
             'body' => 'indexneedle789',
         ]);
         $key = 'users/bob/.notes/Drafts/'.$created['id'].'.md';
@@ -40,24 +40,23 @@ final class NotesSearchIndexTest extends WgwDatabaseTestCase
 
         $this->assertNotNull($row);
         $this->assertSame('note', $row->category);
-        $this->assertSame('Indexed title', $row->title);
+        $this->assertSame('Untitled', $row->title);
         $this->assertStringContainsString('indexneedle789', (string) $row->body_text);
         $this->assertSame('bob', $row->owner_username);
     }
 
-    public function test_update_note_updates_search_index_body(): void
+    public function test_update_note_preserves_frontmatter_title_in_search_index(): void
     {
         $token = $this->userBearerToken();
-        $created = $this->createNoteFor($token, [
-            'title' => 'First',
-            'body' => 'oldindex111',
-        ]);
-        $key = 'users/bob/.notes/Drafts/'.$created['id'].'.md';
+        $key = 'users/bob/.notes/Drafts/note-search-title.md';
+        Storage::disk('wgw_notes')->put(
+            $key,
+            "title: First\ntags:\nstarred: false\n----\noldindex111"
+        );
 
         $this->withBearer($token)
-            ->putJson('/api/v1/notes/items/'.$created['id'], [
+            ->putJson('/api/v1/notes/items/note-search-title', [
                 'notebook' => 'Drafts',
-                'title' => 'Updated',
                 'body' => 'newindex222',
                 'tags' => [],
             ])
@@ -69,7 +68,7 @@ final class NotesSearchIndexTest extends WgwDatabaseTestCase
             ->first();
 
         $this->assertNotNull($row);
-        $this->assertSame('Updated', $row->title);
+        $this->assertSame('First', $row->title);
         $this->assertStringContainsString('newindex222', (string) $row->body_text);
         $this->assertStringNotContainsString('oldindex111', (string) $row->body_text);
     }

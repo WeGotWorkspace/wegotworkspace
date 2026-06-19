@@ -1,0 +1,52 @@
+{
+  "NoteItem": {
+    "type": "object",
+    "properties": {
+      "id": { "type": "string" },
+      "username": { "type": "string" },
+      "notebook": { "type": "string" },
+      "body": { "type": "string" },
+      "tags": { "$ref": "#/components/schemas/NoteTagList" },
+      "starred": { "type": ["boolean", "null"] },
+      "archived": { "type": "boolean" },
+      "scope": {
+        "type": "string",
+        "enum": ["personal", "group"],
+        "description": "Storage scope: personal (users/{username}/.notes) or group (groups/{slug}/.notes)."
+      },
+      "groupSlug": {
+        "type": ["string", "null"],
+        "description": "Group slug when scope is group, null for personal notes."
+      },
+      "updatedAt": { "type": "string" }
+    },
+    "required": ["id", "username", "notebook", "body", "tags", "archived", "scope", "groupSlug", "updatedAt"]
+  },
+  "NoteUpsertRequest": {
+    "type": "object",
+    "properties": {
+      "id": { "type": "string" },
+      "notebook": { "type": "string" },
+      "body": {
+        "type": "string",
+        "description": "Optional. Omit the field entirely to update metadata only and preserve the existing body bytes on disk. Sending it (including an empty string) overwrites the body."
+      },
+      "tags": { "$ref": "#/components/schemas/NoteTagList" },
+      "starred": { "type": "boolean" },
+      "archived": { "type": "boolean" },
+      "groupSlug": {
+        "type": ["string", "null"],
+        "description": "Target a shared group notebook (groups/{slug}/.notes). Omit or null for the caller's personal notes. Caller must be a group member."
+      }
+    },
+    "required": ["notebook"],
+    "example": {
+      "id": "n123",
+      "notebook": "General",
+      "body": "Draft roadmap",
+      "tags": ["planning"],
+      "starred": true,
+      "groupSlug": "team"
+    }
+  }
+}

@@ -7,6 +7,7 @@ import {
   enrichNote,
   filterVisibleNotes,
   normalizeTag,
+  noteListTitle,
   plainTextFromBody,
 } from "./notes-note-utils";
 import type { Note } from "@/lib/models/note";
@@ -15,8 +16,7 @@ const sampleNote: Note = {
   id: "n-1",
   category: "Note",
   date: "2026-01-01T00:00:00.000Z",
-  title: "Hello",
-  excerpt: "",
+  excerpt: "Hello excerpt",
   body: ["# Title", "Some **bold** text here."],
   notebook: "Drafts",
   tags: ["work"],
@@ -38,6 +38,12 @@ describe("notes-note-utils", () => {
     expect(computeExcerpt(longBody).endsWith("…")).toBe(true);
   });
 
+  it("derives list titles from excerpt or body", () => {
+    expect(noteListTitle({ excerpt: "Preview line", body: [""] })).toBe("Preview line");
+    expect(noteListTitle({ excerpt: "", body: ["Body line one"] })).toBe("Body line one");
+    expect(noteListTitle({ excerpt: "", body: [""] })).toBe("Untitled note");
+  });
+
   it("enriches notes with excerpt and word count", () => {
     const enriched = enrichNote({ ...sampleNote, excerpt: "", wordCount: 0 });
     expect(enriched.excerpt.length).toBeGreaterThan(0);
@@ -52,7 +58,14 @@ describe("notes-note-utils", () => {
   it("filters notes by view and search query", () => {
     const notes: Note[] = [
       { ...sampleNote, id: "n-1", starred: true, archived: false },
-      { ...sampleNote, id: "n-2", title: "Other", starred: false, archived: true },
+      {
+        ...sampleNote,
+        id: "n-2",
+        excerpt: "Other excerpt",
+        body: ["Other body"],
+        starred: false,
+        archived: true,
+      },
     ];
     const starredOnly = filterVisibleNotes(notes, {
       view: "starred",
@@ -99,7 +112,7 @@ describe("createNoteSaveDebouncer", () => {
     vi.useFakeTimers();
     const persist = vi.fn();
     const { schedule } = createNoteSaveDebouncer(500);
-    const updatedNote = { ...sampleNote, title: "Updated" };
+    const updatedNote = { ...sampleNote, body: ["Updated body"] };
     schedule("n-1", sampleNote, persist);
     vi.advanceTimersByTime(300);
     schedule("n-1", updatedNote, persist);
@@ -114,9 +127,9 @@ describe("createNoteSaveDebouncer", () => {
     vi.useFakeTimers();
     const persist = vi.fn();
     const { schedule } = createNoteSaveDebouncer(500);
-    const v1 = { ...sampleNote, title: "v1" };
-    const v2 = { ...sampleNote, title: "v2" };
-    const v3 = { ...sampleNote, title: "v3" };
+    const v1 = { ...sampleNote, body: ["v1"] };
+    const v2 = { ...sampleNote, body: ["v2"] };
+    const v3 = { ...sampleNote, body: ["v3"] };
     schedule("n-1", v1, persist);
     schedule("n-1", v2, persist);
     schedule("n-1", v3, persist);
@@ -129,7 +142,7 @@ describe("createNoteSaveDebouncer", () => {
     vi.useFakeTimers();
     const persist = vi.fn();
     const { schedule } = createNoteSaveDebouncer(500);
-    const note2 = { ...sampleNote, id: "n-2", title: "Note 2" };
+    const note2 = { ...sampleNote, id: "n-2", body: ["Note 2 body"] };
     schedule("n-1", sampleNote, persist);
     schedule("n-2", note2, persist);
     vi.advanceTimersByTime(500);
@@ -140,7 +153,7 @@ describe("createNoteSaveDebouncer", () => {
     vi.useFakeTimers();
     const persist = vi.fn();
     const { schedule, flushAll } = createNoteSaveDebouncer(500);
-    const note2 = { ...sampleNote, id: "n-2", title: "Note 2" };
+    const note2 = { ...sampleNote, id: "n-2", body: ["Note 2 body"] };
     schedule("n-1", sampleNote, persist);
     schedule("n-2", note2, persist);
     flushAll(persist);

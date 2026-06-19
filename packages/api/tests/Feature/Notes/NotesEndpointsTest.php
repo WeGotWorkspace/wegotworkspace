@@ -49,7 +49,6 @@ final class NotesEndpointsTest extends WgwDatabaseTestCase
 
         $create = $this->withBearer($token)->postJson('/api/v1/notes/items', [
             'notebook' => 'Drafts',
-            'title' => 'Hello',
             'body' => 'World',
             'tags' => ['demo'],
             'starred' => false,
@@ -95,7 +94,6 @@ final class NotesEndpointsTest extends WgwDatabaseTestCase
 
         $create = $this->withBearer($token)->postJson('/api/v1/notes/items', [
             'notebook' => 'Drafts',
-            'title' => 'Blank',
         ]);
         $create->assertCreated();
         $noteId = (string) $create->json('item.id');
@@ -104,7 +102,6 @@ final class NotesEndpointsTest extends WgwDatabaseTestCase
 
         $update = $this->withBearer($token)->putJson('/api/v1/notes/items/'.$noteId, [
             'notebook' => 'Drafts',
-            'title' => 'Still blank',
             'body' => '',
             'tags' => [],
         ]);
@@ -128,7 +125,7 @@ final class NotesEndpointsTest extends WgwDatabaseTestCase
         $list->assertOk();
         $this->assertCount(1, $list->json('items'));
         $this->assertSame('good', $list->json('items.0.id'));
-        $this->assertSame('Visible', $list->json('items.0.title'));
+        $list->assertJsonMissingPath('items.0.title');
     }
 
     public function test_notes_capabilities_and_state(): void

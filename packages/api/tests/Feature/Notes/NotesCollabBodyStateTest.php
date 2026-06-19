@@ -35,13 +35,18 @@ final class NotesCollabBodyStateTest extends WgwDatabaseTestCase
         $token = $this->userBearerToken();
         $created = $this->createNoteFor($token, [
             'notebook' => 'Drafts',
-            'title' => 'Stable meta',
             'body' => 'original body',
             'tags' => ['keep'],
         ]);
         $id = $created['id'];
         $beforeUpdatedAt = (string) $created['item']['updatedAt'];
         $this->assertNotSame('', $beforeUpdatedAt);
+
+        $key = 'users/bob/.notes/Drafts/'.$id.'.md';
+        Storage::disk('wgw_notes')->put(
+            $key,
+            "title: Stable meta\ntags: keep\nstarred: false\n----\noriginal body"
+        );
 
         // Body edit flows through the collab document, room = note virtual path.
         $room = '/users/bob/.notes/Drafts/'.$id.'.md';
@@ -78,11 +83,15 @@ final class NotesCollabBodyStateTest extends WgwDatabaseTestCase
         $token = $this->userBearerToken();
         $created = $this->createNoteFor($token, [
             'notebook' => 'Drafts',
-            'title' => 'Title before',
             'body' => 'seed body',
             'tags' => ['a'],
         ]);
         $id = $created['id'];
+        $key = 'users/bob/.notes/Drafts/'.$id.'.md';
+        Storage::disk('wgw_notes')->put(
+            $key,
+            "title: Title before\ntags: a\nstarred: false\n----\nseed body"
+        );
 
         $room = '/users/bob/.notes/Drafts/'.$id.'.md';
         $this->withBearer($token)
@@ -96,12 +105,14 @@ final class NotesCollabBodyStateTest extends WgwDatabaseTestCase
         $this->withBearer($token)
             ->putJson('/api/v1/notes/items/'.$id, [
                 'notebook' => 'Drafts',
-                'title' => 'Title after',
                 'tags' => ['a', 'b'],
             ])
             ->assertOk()
-            ->assertJsonPath('item.title', 'Title after')
+            ->assertJsonMissingPath('item.title')
             ->assertJsonPath('item.tags', ['a', 'b'])
             ->assertJsonPath('item.body', 'collab body wins');
+
+        $raw = (string) Storage::disk('wgw_notes')->get($key);
+        $this->assertStringContainsString('title: Title before', $raw);
     }
 }

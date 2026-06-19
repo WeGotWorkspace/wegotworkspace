@@ -21,7 +21,6 @@ final class NoteUpsertRequest extends FormRequest
         return [
             'id' => ['sometimes', 'string', 'max:120'],
             'notebook' => ['required', 'string', 'max:255'],
-            'title' => ['required', 'string', 'max:4096'],
             // Body is optional: when omitted the existing markdown body on disk
             // is preserved and only the frontmatter (metadata) is rewritten.
             'body' => ['sometimes', 'nullable', 'string'],

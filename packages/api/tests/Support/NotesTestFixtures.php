@@ -88,7 +88,6 @@ trait NotesTestFixtures
         $payload = array_merge([
             'id' => 'note-'.uniqid('', true),
             'notebook' => 'Drafts',
-            'title' => 'Test Note',
             'body' => 'Body text',
             'tags' => ['demo'],
             'starred' => false,

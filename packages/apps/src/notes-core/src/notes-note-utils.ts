@@ -64,6 +64,24 @@ export function computeExcerpt(body: string[]): string {
   return `${text.slice(0, 179)}…`;
 }
 
+const NOTE_LIST_TITLE_MAX = 80;
+
+/** Derives the list-row heading from excerpt or body (notes have no separate title field). */
+export function noteListTitle(note: Pick<Note, "excerpt" | "body">): string {
+  const excerpt = note.excerpt.trim();
+  if (excerpt) {
+    const withoutEllipsis = excerpt.endsWith("…") ? excerpt.slice(0, -1).trim() : excerpt;
+    return withoutEllipsis.length <= NOTE_LIST_TITLE_MAX
+      ? withoutEllipsis
+      : `${withoutEllipsis.slice(0, NOTE_LIST_TITLE_MAX - 1)}…`;
+  }
+  const text = plainTextFromBody(note.body).trim();
+  if (text) {
+    return text.length <= NOTE_LIST_TITLE_MAX ? text : `${text.slice(0, NOTE_LIST_TITLE_MAX - 1)}…`;
+  }
+  return "Untitled note";
+}
+
 export function normalizeTag(value: string): string {
   return value.trim();
 }
@@ -107,7 +125,7 @@ export function filterVisibleNotes(
     if (!inView) return false;
     if (!q) return true;
     const haystack =
-      `${note.title} ${note.excerpt} ${note.body.join(" ")} ${note.notebook} ${note.tags.join(" ")}`.toLowerCase();
+      `${note.excerpt} ${note.body.join(" ")} ${note.notebook} ${note.tags.join(" ")}`.toLowerCase();
     return haystack.includes(q);
   });
 }

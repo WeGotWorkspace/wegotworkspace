@@ -15,7 +15,6 @@ const note: Note = {
   id: "note-1",
   category: "Note",
   date: "2024-10-12T10:00:00.000Z",
-  title: "Quiet draft",
   excerpt: "Draft excerpt",
   body: ["Body text"],
   notebook: "Drafts",
@@ -66,12 +65,12 @@ describe("notes conflict resolution", () => {
   });
 
   it("use server drops queued rows and refreshes from server", async () => {
-    fetchServerNote.mockResolvedValue({ ...note, title: "Server title" });
+    fetchServerNote.mockResolvedValue({ ...note, body: ["Server body"] });
 
     await resolveNotesConflictUseServer(username, note.id);
 
     expect(await listOutboxMutations(username)).toHaveLength(0);
     const cached = await readNotesBootstrapFromCache(username);
-    expect(cached?.data.notes[0]?.title).toBe("Server title");
+    expect(cached?.data.notes[0]?.body).toEqual(["Server body"]);
   });
 });

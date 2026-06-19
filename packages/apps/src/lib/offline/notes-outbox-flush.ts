@@ -41,7 +41,6 @@ function noteMetadataUpsertRequest(
   return {
     id: noteId,
     notebook: metadata.notebook,
-    title: metadata.title,
     tags: metadata.tags,
     ...(metadata.starred !== undefined ? { starred: metadata.starred } : {}),
     ...(metadata.archived !== undefined ? { archived: metadata.archived } : {}),

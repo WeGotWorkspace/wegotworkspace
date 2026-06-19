@@ -6,7 +6,6 @@ const note: Note = {
   id: "note-1",
   category: "Note",
   date: "2024-10-12T10:00:00.000Z",
-  title: "Quiet draft",
   excerpt: "Draft excerpt",
   body: ["Body text", "Second paragraph"],
   notebook: "Drafts",
@@ -27,11 +26,11 @@ describe("wgwNoteMetadataFromNote", () => {
     expect(request).toMatchObject({
       id: "note-1",
       notebook: "Drafts",
-      title: "Quiet draft",
       tags: ["essay"],
       starred: true,
       archived: false,
     });
+    expect(request).not.toHaveProperty("title");
   });
 
   it("omits starred/archived when not provided", () => {

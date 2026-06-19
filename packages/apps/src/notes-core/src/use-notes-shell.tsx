@@ -19,6 +19,8 @@ export type UseNotesShellArgs = {
   listLoading?: boolean;
   operations?: NotesAPIOperations;
   bootstrapRevision?: number;
+  initialView?: string;
+  onViewChange?: (view: string) => void;
 };
 
 export function useNotesShell({
@@ -27,10 +29,12 @@ export function useNotesShell({
   listLoading = false,
   operations,
   bootstrapRevision = 0,
+  initialView,
+  onViewChange,
 }: UseNotesShellArgs) {
   const L = useMemo(() => mergeNotesLabels(labels), [labels]);
   const [notes, setNotes] = useState<Note[]>(() => data.notes.map(enrichNote));
-  const [view, setView] = useState<string>("all");
+  const [view, setView] = useState<string>(() => initialView ?? "all");
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const workspaceLayoutRef = useRef<WorkspaceAppHandle>(null);
@@ -142,6 +146,15 @@ export function useNotesShell({
       workspaceLayoutRef.current?.closeSidebar();
     }
   }, []);
+
+  const viewSyncedRef = useRef(false);
+  useEffect(() => {
+    if (!viewSyncedRef.current) {
+      viewSyncedRef.current = true;
+      return;
+    }
+    onViewChange?.(view);
+  }, [view, onViewChange]);
 
   return {
     L,

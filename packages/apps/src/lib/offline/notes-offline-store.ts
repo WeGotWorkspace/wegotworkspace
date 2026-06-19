@@ -32,7 +32,6 @@ const META_SESSION = "notes:session";
  */
 export type NoteUpsertMetadata = {
   notebook: string;
-  title: string;
   tags: string[];
   starred?: boolean;
   archived?: boolean;
@@ -48,7 +47,6 @@ export type NotesUpsertPayload = {
 export function extractNoteMetadata(note: Note): NoteUpsertMetadata {
   return {
     notebook: note.notebook,
-    title: note.title,
     tags: note.tags,
     ...(note.starred !== undefined ? { starred: note.starred } : {}),
     ...(note.archived !== undefined ? { archived: note.archived } : {}),
@@ -203,7 +201,7 @@ export async function removeOutboxMutationsForNote(
 
 /**
  * Coalesce pending metadata upserts for the same note. Merges **metadata fields
- * only** (latest title/tags/starred/notebook wins) — there is no whole-note
+ * only** (latest tags/starred/notebook wins) — there is no whole-note
  * replacement, so a concurrent collab body edit can never be clobbered here.
  */
 function mergeNoteUpsertPayloads(

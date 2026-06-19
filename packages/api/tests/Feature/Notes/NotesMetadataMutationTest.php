@@ -29,35 +29,37 @@ final class NotesMetadataMutationTest extends WgwDatabaseTestCase
         parent::tearDown();
     }
 
-    public function test_metadata_only_put_preserves_existing_body(): void
+    public function test_metadata_only_put_preserves_existing_body_and_frontmatter_title(): void
     {
         $token = $this->userBearerToken();
         $created = $this->createNoteFor($token, [
             'notebook' => 'Drafts',
-            'title' => 'Original',
             'body' => "First paragraph\n\nSecond paragraph",
             'tags' => ['old'],
             'starred' => false,
         ]);
         $id = $created['id'];
         $key = 'users/bob/.notes/Drafts/'.$id.'.md';
+        Storage::disk('wgw_notes')->put(
+            $key,
+            "title: Original\ntags: old\nstarred: false\n----\nFirst paragraph\n\nSecond paragraph"
+        );
 
-        // PUT without a body field: frontmatter updates, body stays intact.
+        // PUT without a body field: frontmatter updates, body and stored title stay intact.
         $this->withBearer($token)
             ->putJson('/api/v1/notes/items/'.$id, [
                 'notebook' => 'Drafts',
-                'title' => 'Renamed',
                 'tags' => ['new', 'shiny'],
                 'starred' => true,
             ])
             ->assertOk()
-            ->assertJsonPath('item.title', 'Renamed')
+            ->assertJsonMissingPath('item.title')
             ->assertJsonPath('item.tags', ['new', 'shiny'])
             ->assertJsonPath('item.starred', true)
             ->assertJsonPath('item.body', "First paragraph\n\nSecond paragraph");
 
         $raw = (string) Storage::disk('wgw_notes')->get($key);
-        $this->assertStringContainsString('title: Renamed', $raw);
+        $this->assertStringContainsString('title: Original', $raw);
         $this->assertStringContainsString('tags: new, shiny', $raw);
         $this->assertStringContainsString("----\nFirst paragraph\n\nSecond paragraph", $raw);
     }
@@ -65,13 +67,12 @@ final class NotesMetadataMutationTest extends WgwDatabaseTestCase
     public function test_put_with_body_still_overwrites_body(): void
     {
         $token = $this->userBearerToken();
-        $created = $this->createNoteFor($token, ['title' => 'T', 'body' => 'old body']);
+        $created = $this->createNoteFor($token, ['body' => 'old body']);
         $id = $created['id'];
 
         $this->withBearer($token)
             ->putJson('/api/v1/notes/items/'.$id, [
                 'notebook' => 'Drafts',
-                'title' => 'T',
                 'body' => 'brand new body',
             ])
             ->assertOk()
@@ -81,13 +82,12 @@ final class NotesMetadataMutationTest extends WgwDatabaseTestCase
     public function test_put_with_empty_string_body_clears_body(): void
     {
         $token = $this->userBearerToken();
-        $created = $this->createNoteFor($token, ['title' => 'T', 'body' => 'has content']);
+        $created = $this->createNoteFor($token, ['body' => 'has content']);
         $id = $created['id'];
 
         $this->withBearer($token)
             ->putJson('/api/v1/notes/items/'.$id, [
                 'notebook' => 'Drafts',
-                'title' => 'T',
                 'body' => '',
             ])
             ->assertOk()
@@ -99,11 +99,15 @@ final class NotesMetadataMutationTest extends WgwDatabaseTestCase
         $token = $this->userBearerToken();
         $created = $this->createNoteFor($token, [
             'notebook' => 'Drafts',
-            'title' => 'Shared draft',
             'body' => 'initial body',
             'tags' => ['draft'],
         ]);
         $id = $created['id'];
+        $key = 'users/bob/.notes/Drafts/'.$id.'.md';
+        Storage::disk('wgw_notes')->put(
+            $key,
+            "title: Shared draft\ntags: draft\nstarred: false\n----\ninitial body"
+        );
         $path = '/users/bob/.notes/Drafts/'.$id.'.md';
 
         // Collab exposes the body section only (frontmatter stays Notes-owned).
@@ -120,29 +124,31 @@ final class NotesMetadataMutationTest extends WgwDatabaseTestCase
             ->assertOk()
             ->assertJsonPath('ok', true);
 
-        // Frontmatter survived the collab body write.
+        // Frontmatter survived the collab body write; title is not exposed on the API.
         $afterCollab = $this->withBearer($token)->getJson('/api/v1/notes/items');
         $afterCollab->assertOk();
-        $this->assertSame('Shared draft', $afterCollab->json('items.0.title'));
+        $afterCollab->assertJsonMissingPath('items.0.title');
         $this->assertSame(['draft'], $afterCollab->json('items.0.tags'));
         $this->assertSame('body rewritten by collab', $afterCollab->json('items.0.body'));
 
-        // Metadata-only PUT does not clobber the collab-written body.
+        // Metadata-only PUT does not clobber the collab-written body or stored title.
         $this->withBearer($token)
             ->putJson('/api/v1/notes/items/'.$id, [
                 'notebook' => 'Drafts',
-                'title' => 'Renamed after collab',
                 'tags' => ['final'],
             ])
             ->assertOk()
-            ->assertJsonPath('item.title', 'Renamed after collab')
+            ->assertJsonMissingPath('item.title')
             ->assertJsonPath('item.body', 'body rewritten by collab');
+
+        $raw = (string) Storage::disk('wgw_notes')->get($key);
+        $this->assertStringContainsString('title: Shared draft', $raw);
 
         // Collab still reads only the body section after the metadata change.
         $this->withBearer($token)
             ->get('/api/v1/files/collaboration?path='.urlencode($path))
             ->assertOk()
-            ->assertDontSeeText('Renamed after collab')
+            ->assertDontSeeText('Shared draft')
             ->assertSeeText('body rewritten by collab');
     }
 }

@@ -114,11 +114,10 @@ final class NotesSharedNotebooksTest extends WgwDatabaseTestCase
         $this->withBearer($token)
             ->putJson('/api/v1/notes/items/'.$id, [
                 'notebook' => 'Roadmap',
-                'title' => 'Edited',
                 'groupSlug' => self::TEAM,
             ])
             ->assertOk()
-            ->assertJsonPath('item.title', 'Edited')
+            ->assertJsonMissingPath('item.title')
             ->assertJsonPath('item.body', 'v1')
             ->assertJsonPath('item.scope', 'group');
 

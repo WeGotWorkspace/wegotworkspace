@@ -6,6 +6,7 @@ import { ListItem } from "@/list-item/src/list-item";
 import { ViewHeader } from "@/view-header/src/view-header";
 import type { Note } from "@/lib/models/note";
 import { formatNoteDateForList } from "@/notes-core/src/notes-date-utils";
+import { noteListTitle } from "@/notes-core/src/notes-note-utils";
 import type { NotesUILabels } from "@/notes-core/src/notes-labels";
 import { LoadingSpinner } from "@/loading-spinner/src/loading-spinner";
 import { WorkspaceSwipeList } from "@/workspace-swipe-list/src/workspace-swipe-list";
@@ -189,7 +190,7 @@ export function NotesListPanel({
               <ListItem
                 key={note.id}
                 id={note.id}
-                title={note.title}
+                title={noteListTitle(note)}
                 subtitle={note.notebook}
                 date={formatNoteDateForList(note.date)}
                 text={note.excerpt}

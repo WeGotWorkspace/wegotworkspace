@@ -46,12 +46,13 @@ final class NoteRepository
                 }
                 if (
                     $q !== ''
-                    && ! str_contains(strtolower((string) $note['title']), $q)
+                    && ! str_contains(strtolower((string) ($note['_searchTitle'] ?? '')), $q)
                     && ! str_contains(strtolower((string) $note['body']), $q)
                     && ! str_contains(strtolower(implode(',', $note['tags'])), $q)
                 ) {
                     continue;
                 }
+                unset($note['_searchTitle']);
                 $items[] = $note;
             }
         }
@@ -76,12 +77,11 @@ final class NoteRepository
             : $this->sanitizeNoteId((string) ($body['id'] ?? ('n'.(string) time())));
         $notebook = $this->sanitizeNotebook((string) ($body['notebook'] ?? 'General'));
         $archived = $this->codec->toBool($body['archived'] ?? false) ?? false;
-        $title = trim((string) ($body['title'] ?? 'Untitled'));
-        $title = $title !== '' ? $title : 'Untitled';
         $tags = $this->codec->normalizeTags($body['tags'] ?? []);
         $starred = $this->codec->toBool($body['starred'] ?? null);
         $key = $this->notePaths->noteKey($scope, $notebook, $id, $archived);
         $disk = $this->disk();
+        $title = $this->resolvePersistedTitle($scope, $id, $key);
         $disk->makeDirectory(dirname($key));
 
         // Body is optional: when the field is absent the markdown body section
@@ -387,7 +387,6 @@ final class NoteRepository
             'id' => $id,
             'username' => $username,
             'notebook' => $notebook,
-            'title' => $title,
             'body' => $body,
             'tags' => $tags,
             'starred' => $starred,
@@ -395,6 +394,7 @@ final class NoteRepository
             'scope' => $scope->isGroup() ? 'group' : 'personal',
             'groupSlug' => $scope->groupSlug(),
             'updatedAt' => $updated ?? date('c', $mtime),
+            '_searchTitle' => $title,
         ];
     }
 
@@ -458,6 +458,27 @@ final class NoteRepository
         }
 
         return NoteScope::group($slug);
+    }
+
+    private function resolvePersistedTitle(NoteScope $scope, string $id, string $targetKey): string
+    {
+        $disk = $this->disk();
+        if ($disk->exists($targetKey)) {
+            $raw = (string) $disk->get($targetKey);
+            [$title] = $this->codec->parse($raw, $id);
+
+            return $title !== '' ? $title : 'Untitled';
+        }
+
+        $existing = $this->findNoteKey($scope, $id, null, null);
+        if ($existing !== null && $disk->exists($existing['key'])) {
+            $raw = (string) $disk->get($existing['key']);
+            [$title] = $this->codec->parse($raw, $id);
+
+            return $title !== '' ? $title : 'Untitled';
+        }
+
+        return 'Untitled';
     }
 
     private function disk(): Filesystem
