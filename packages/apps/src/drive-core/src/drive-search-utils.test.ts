@@ -64,14 +64,26 @@ describe("driveFileFromSearchResult", () => {
       excerpt: "Quarterly planning",
       parent: "My Drive",
       kind: "doc",
-      size: "2048",
+      size: "2.0 KB",
       apiPath: "/users/alice/notes.md",
       location: "My Drive",
     });
     expect(file.date).toBe(new Date(1_700_000_000 * 1000).toLocaleDateString());
   });
 
-  it("falls back to Now when no modified timestamp is present", () => {
+  it("formats larger sizes in MB", () => {
+    const result: DriveUnifiedSearchResult = {
+      id: 3,
+      sourceType: "file",
+      sourceKey: "users/alice/deck.md",
+      title: "Deck",
+      size: 3_500_000,
+    };
+    const file = driveFileFromSearchResult(result, "My Drive/deck.md", "/users/alice/deck.md");
+    expect(file.size).toBe("3.3 MB");
+  });
+
+  it("falls back to Now and an em dash for zero/unknown sizes", () => {
     const result: DriveUnifiedSearchResult = {
       id: 2,
       sourceType: "file",
@@ -81,5 +93,6 @@ describe("driveFileFromSearchResult", () => {
     };
     const file = driveFileFromSearchResult(result, "My Drive/draft.md", "/users/alice/draft.md");
     expect(file.date).toBe("Now");
+    expect(file.size).toBe("—");
   });
 });

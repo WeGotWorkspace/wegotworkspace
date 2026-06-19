@@ -82,6 +82,12 @@ describe("mapDocsHomeResults", () => {
     expect(files).toHaveLength(1);
     expect(files[0].title).toBe("A copy");
   });
+
+  it("formats byte sizes for list and grid display", () => {
+    const large = { ...result(1, "users/alice/big.md", "Big", 500), size: 1_048_576 };
+    const files = mapDocsHomeResults([large], "alice");
+    expect(files[0].size).toBe("1.0 MB");
+  });
 });
 
 describe("useDocsHomeList", () => {
@@ -134,4 +140,45 @@ describe("useDocsHomeList", () => {
     await waitFor(() => expect(hook.current.files.map((f) => f.title)).toEqual(["D"]));
     expect(hook.current.hasMore).toBe(false);
   });
+
+  it("forwards pathPrefix to the fetcher and reloads when the scope changes", async () => {
+    const scopedFetcher = createScopedFetcher(FIXTURES, 50);
+    const { result: hook, rerender } = renderHook(
+      ({ prefix }: { prefix?: string }) =>
+        useDocsHomeList({
+          username: "alice",
+          pathPrefix: prefix,
+          fetcher: scopedFetcher,
+          debounceMs: 0,
+        }),
+      { initialProps: { prefix: undefined as string | undefined } },
+    );
+
+    await waitFor(() => expect(hook.current.loading).toBe(false));
+    expect(hook.current.files.map((f) => f.title)).toEqual(["A", "B", "C", "D", "E"]);
+
+    rerender({ prefix: "groups/eng" });
+    await waitFor(() => expect(hook.current.files.map((f) => f.title)).toEqual(["B"]));
+
+    rerender({ prefix: "users/alice" });
+    await waitFor(() => expect(hook.current.files.map((f) => f.title)).toEqual(["A", "C", "E"]));
+  });
 });
+
+function createScopedFetcher(all: WgwUnifiedSearchResult[], pageSize: number): DocsHomeFetcher {
+  return vi.fn(async (params): Promise<WgwUnifiedSearchData> => {
+    const prefix = params.pathPrefix?.trim() ?? "";
+    const filtered = prefix ? all.filter((item) => item.sourceKey.startsWith(`${prefix}/`)) : all;
+    const start = params.offset ?? 0;
+    const results = filtered.slice(start, start + pageSize);
+    return {
+      query: params.q ?? "",
+      limit: params.limit ?? pageSize,
+      offset: start,
+      hasMore: start + results.length < filtered.length,
+      sources: params.sources ?? ["file"],
+      filters: { path_prefix: prefix || null },
+      results,
+    };
+  });
+}

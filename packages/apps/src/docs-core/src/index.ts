@@ -10,6 +10,16 @@ export {
   sortDocsHomeResults,
   type DocsHomeFetcher,
 } from "@/docs-core/src/use-docs-home-list";
+export {
+  buildDocsHomeDrives,
+  collectGroupRoots,
+  mergeGroupRoots,
+  newDocumentApiPath,
+  nextUntitledMarkdownName,
+  fallbackUntitledMarkdownName,
+  resolveNewDocumentName,
+  type DocsHomeDrive,
+} from "@/docs-core/src/docs-home-drives";
 export { DOCS_EDITOR_EXTENSIONS } from "@/drive-core/src/drive-models";
 export {
   docsApiPathFromSearch,

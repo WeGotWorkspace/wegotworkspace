@@ -19,10 +19,11 @@ import { DocsHomeWorkspace } from "@/docs-core/src/docs-home-workspace";
 import { DocsCollabWorkspace, useDocsCollabPendingSync } from "@/text-editor-core/docs-collab";
 import { createWgwDocsCollabWire } from "@/docs-core/src/docs-collab-wgw-wire";
 import { useDocsAPI } from "@/docs-core/src/use-docs-api";
+import { createWgwDriveOperations } from "@/lib/api/wgw/drive";
 
 export function DocsApp({ apiSource }: DocsAppProps = {}) {
   const navigate = useNavigate();
-  const { show } = useAppToast();
+  const { show, showError } = useAppToast();
   const wasPendingRef = useRef(false);
   const search = useSearch({ strict: false });
 
@@ -51,6 +52,26 @@ export function DocsApp({ apiSource }: DocsAppProps = {}) {
   const handleOpenHomeFile = useCallback((apiPath: string) => {
     openDocsFileInNewWindow(apiPath);
   }, []);
+
+  const driveOperations = useMemo(() => createWgwDriveOperations("/"), []);
+
+  const handleCreateHomeDocument = useCallback(
+    (apiPath: string) => {
+      void (async () => {
+        try {
+          await networkOperations.saveFile(apiPath, "");
+        } catch {
+          showError(docsLabels.homeCreateError);
+          return;
+        }
+        void navigate({
+          to: "/docs",
+          search: docsSearchFromApiPath(apiPath),
+        });
+      })();
+    },
+    [navigate, networkOperations, showError],
+  );
 
   const showCollab = isDocsCollabEditablePath(filePath);
   const collabUrls = useMemo(() => {
@@ -104,7 +125,9 @@ export function DocsApp({ apiSource }: DocsAppProps = {}) {
           {filePath === null ? (
             <DocsHomeWorkspace
               session={session}
+              operations={driveOperations}
               onOpenFile={handleOpenHomeFile}
+              onCreateDocument={handleCreateHomeDocument}
               onLogout={handleLogout}
             />
           ) : showCollab && collabUrls ? (

@@ -22,7 +22,8 @@ final class UnifiedSearchService
      *   categories?: list<string>,
      *   extensions?: list<string>,
      *   modified_from?: string|int|null,
-     *   modified_to?: string|int|null
+     *   modified_to?: string|int|null,
+     *   path_prefix?: string|null
      * }  $filters
      * @return array{
      *   query: string,
@@ -189,13 +190,15 @@ final class UnifiedSearchService
      *   categories?: list<string>,
      *   extensions?: list<string>,
      *   modified_from?: string|int|null,
-     *   modified_to?: string|int|null
+     *   modified_to?: string|int|null,
+     *   path_prefix?: string|null
      * }  $filters
      * @return array{
      *   categories: list<string>,
      *   extensions: list<string>,
      *   modified_from: int|null,
-     *   modified_to: int|null
+     *   modified_to: int|null,
+     *   path_prefix: string|null
      * }
      */
     private function normalizeFilters(array $filters): array
@@ -214,13 +217,30 @@ final class UnifiedSearchService
             : [];
         $modifiedFrom = $this->normalizeTimestampFilter($filters['modified_from'] ?? null);
         $modifiedTo = $this->normalizeTimestampFilter($filters['modified_to'] ?? null);
+        $pathPrefix = $this->normalizePathPrefixFilter($filters['path_prefix'] ?? null);
 
         return [
             'categories' => $categories,
             'extensions' => $extensions,
             'modified_from' => $modifiedFrom,
             'modified_to' => $modifiedTo,
+            'path_prefix' => $pathPrefix,
         ];
+    }
+
+    /**
+     * Normalize an optional storage-key prefix used to scope file/note browse to a
+     * single drive (e.g. `users/alice` or `groups/team`). Surrounding slashes are
+     * stripped; an empty value disables the filter.
+     */
+    private function normalizePathPrefixFilter(mixed $value): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+        $trimmed = trim(trim($value), '/');
+
+        return $trimmed === '' ? null : $trimmed;
     }
 
     private function normalizeTimestampFilter(mixed $value): ?int

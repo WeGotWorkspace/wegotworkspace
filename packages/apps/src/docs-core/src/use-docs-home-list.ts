@@ -27,6 +27,12 @@ export type UseDocsHomeListOptions = {
   username: string;
   /** Optional home search box value; debounced and resets pagination on change. */
   query?: string;
+  /**
+   * Optional storage-key prefix scoping the browse to a single drive
+   * (e.g. `users/alice` for My Drive, `groups/team` for a shared drive).
+   * Changing it resets pagination and reloads from offset 0.
+   */
+  pathPrefix?: string;
   /** Injectable fetcher (mock in Storybook/Vitest); defaults to the live client. */
   fetcher?: DocsHomeFetcher;
   pageSize?: number;
@@ -77,6 +83,7 @@ export function mapDocsHomeResults(
 export function useDocsHomeList({
   username,
   query = "",
+  pathPrefix,
   fetcher = fetchWgwUnifiedSearch,
   pageSize = DOCS_HOME_PAGE_SIZE,
   debounceMs = 300,
@@ -95,14 +102,16 @@ export function useDocsHomeList({
     return () => window.clearTimeout(timer);
   }, [query, debounceMs]);
 
+  const scopePrefix = pathPrefix?.trim() ?? "";
   const baseParams = useMemo(
     () => ({
       sources: [...DOCS_HOME_SOURCES],
       extensions: [...DOCS_HOME_EXTENSIONS],
       categories: [...DOCS_HOME_CATEGORIES],
       limit: pageSize,
+      ...(scopePrefix ? { pathPrefix: scopePrefix } : {}),
     }),
-    [pageSize],
+    [pageSize, scopePrefix],
   );
 
   useEffect(() => {

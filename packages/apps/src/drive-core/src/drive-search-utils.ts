@@ -1,6 +1,7 @@
 import type { DriveFile, FileKind } from "@/drive-core/src/drive-models";
 import type { DriveUnifiedSearchResult } from "@/drive-core/src/drive-types";
 import { uiPathFromApiPath } from "@/drive-core/src/drive-path-utils";
+import { formatBytesCompact } from "@/drive-core/src/drive-file-utils";
 
 export function parentVirtualPath(path: string): string {
   const normalized = path.trim().replace(/\/+$/, "");
@@ -64,7 +65,7 @@ export function driveFileFromSearchResult(
     wordCount: 0,
     parent,
     kind,
-    size: result.size > 0 ? String(result.size) : "—",
+    size: result.size > 0 ? formatBytesCompact(result.size) : "—",
     apiPath: apiPath || undefined,
     location: driveLocationLabel(result.sourceKey) ?? undefined,
   };

@@ -27,6 +27,7 @@ export type WgwUnifiedSearchData = {
     extensions?: string[];
     modified_from?: number | null;
     modified_to?: number | null;
+    path_prefix?: string | null;
   };
   results: WgwUnifiedSearchResult[];
 };
@@ -45,6 +46,8 @@ export type WgwUnifiedSearchParams = {
   extensions?: string[];
   modifiedFrom?: string | Date;
   modifiedTo?: string | Date;
+  /** Scope file/note results to a storage-key prefix (e.g. `users/alice` or `groups/team`). */
+  pathPrefix?: string;
   signal?: AbortSignal;
 };
 
@@ -70,6 +73,9 @@ export async function fetchWgwUnifiedSearch(
       "modified_to",
       params.modifiedTo instanceof Date ? params.modifiedTo.toISOString() : params.modifiedTo,
     );
+  }
+  if (params.pathPrefix && params.pathPrefix.trim() !== "") {
+    qs.set("path_prefix", params.pathPrefix.trim());
   }
 
   const res = await wgwFetch(`/search/results?${qs.toString()}`, {

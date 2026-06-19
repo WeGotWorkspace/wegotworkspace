@@ -4516,6 +4516,8 @@ export interface paths {
                     modified_from?: string;
                     /** @description Only include results modified on or before this timestamp. */
                     modified_to?: string;
+                    /** @description Scope file/note results to a storage-key prefix, e.g. a single drive (`users/alice` for My Drive or `groups/team` for a shared drive). Surrounding slashes are ignored. Calendar/contact sources are unaffected. */
+                    path_prefix?: string;
                 };
                 header?: never;
                 path?: never;
@@ -7974,6 +7976,7 @@ export interface components {
             extensions: string[];
             modified_from: number | null;
             modified_to: number | null;
+            path_prefix: string | null;
         };
         /** @description REST response for GET /search/results, including offset/hasMore pagination. */
         UnifiedSearchResponse: {

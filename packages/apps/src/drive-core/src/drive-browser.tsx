@@ -440,6 +440,7 @@ export function DriveListView({
   searchActive = false,
   showLocationColumn = false,
   locationColumnLabel = "Location",
+  showKindColumn = true,
 }: {
   items: DriveFile[];
   activeId: string | null;
@@ -453,6 +454,8 @@ export function DriveListView({
   showLocationColumn?: boolean;
   /** Header label for the optional Location column. */
   locationColumnLabel?: string;
+  /** Show the "Kind" column. Defaults to `true`; Docs home hides it (all documents). */
+  showKindColumn?: boolean;
   inTrash: boolean;
   isItemDragging: (id: string) => boolean;
   itemDragHandlers: (id: string) => ItemDragHandlers;
@@ -480,7 +483,9 @@ export function DriveListView({
               </th>
             ) : null}
             <th className="drive-list-head__cell hidden sm:table-cell">Modified</th>
-            <th className="drive-list-head__cell hidden lg:table-cell">Kind</th>
+            {showKindColumn ? (
+              <th className="drive-list-head__cell hidden lg:table-cell">Kind</th>
+            ) : null}
             <th className="drive-list-col-size drive-list-head__cell drive-list-head__cell--align-end hidden sm:table-cell">
               Size
             </th>
@@ -572,7 +577,11 @@ export function DriveListView({
                 <td className="py-2 hidden sm:table-cell tabular-nums drive-list-muted">
                   {f.date}
                 </td>
-                <td className="py-2 hidden lg:table-cell drive-list-muted">{KIND_LABEL[f.kind]}</td>
+                {showKindColumn ? (
+                  <td className="py-2 hidden lg:table-cell drive-list-muted">
+                    {KIND_LABEL[f.kind]}
+                  </td>
+                ) : null}
                 <td className="drive-list-col-size py-2 text-right tabular-nums drive-list-muted hidden sm:table-cell">
                   {f.size}
                 </td>

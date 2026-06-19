@@ -1,7 +1,9 @@
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { expect, fn, userEvent, waitFor, within } from "storybook/test";
 import type { WgwUnifiedSearchData, WgwUnifiedSearchResult } from "@/lib/api/wgw/search";
 import type { WorkspaceSession } from "@/lib/workspace/workspace-session";
+import type { DriveAPIOperations, DriveUIData } from "@/drive-core/src/drive-types";
 import { DocsHomeWorkspace } from "@/docs-core/src/docs-home-workspace";
 import { DocsHomePane } from "@/docs-core/src/docs-home-pane";
 import { docsLabels } from "@/docs-core/src/docs-labels";
@@ -56,12 +58,17 @@ function fixture(
   };
 }
 
-/** Mock fetcher: 3-per-page browse with offset/hasMore, optional `q` title filter. */
+/**
+ * Mock fetcher: 3-per-page browse with offset/hasMore, optional `q` title filter
+ * and optional `pathPrefix` drive scope (mirrors the server-side `path_prefix`).
+ */
 function createPaginatedFetcher(all: WgwUnifiedSearchResult[]): DocsHomeFetcher {
   const PAGE = 3;
   return async (params) => {
     const q = (params.q ?? "").trim().toLowerCase();
-    const filtered = q ? all.filter((item) => item.title.toLowerCase().includes(q)) : all;
+    const prefix = params.pathPrefix?.trim() ?? "";
+    const scoped = prefix ? all.filter((item) => item.sourceKey.startsWith(`${prefix}/`)) : all;
+    const filtered = q ? scoped.filter((item) => item.title.toLowerCase().includes(q)) : scoped;
     const start = params.offset ?? 0;
     const results = filtered.slice(start, start + PAGE);
     const data: WgwUnifiedSearchData = {
@@ -73,10 +80,46 @@ function createPaginatedFetcher(all: WgwUnifiedSearchResult[]): DocsHomeFetcher 
       filters: {
         categories: params.categories,
         extensions: params.extensions,
+        path_prefix: prefix || null,
       },
       results,
     };
     return data;
+  };
+}
+
+/**
+ * In-memory drive operations so the row actions (star/download/rename/move/trash)
+ * are functional in Storybook. Stars toggle optimistically; mutations resolve no-op.
+ */
+function createMockHomeOperations(
+  initialStars: string[] = [],
+  myDriveNames: string[] = [],
+): DriveAPIOperations {
+  const stars = new Set(initialStars);
+  const data = {} as DriveUIData;
+  const listing = {
+    directory: { files: myDriveNames.map((name) => ({ name })) },
+  } as unknown as DriveUIData;
+  return {
+    refreshState: async () => data,
+    changeDir: async () => data,
+    listDirectory: async () => listing,
+    search: async () => [],
+    createFolder: async () => data,
+    createFile: async () => data,
+    renameItem: async () => data,
+    deleteItems: async () => data,
+    downloadFile: async () => {},
+    readFileBlob: async () => new Blob(),
+    checkUploadReady: async () => {},
+    listStars: async () => Array.from(stars),
+    listEntriesByPaths: async () => [],
+    setStar: async ({ path, starred }) => {
+      if (starred) stars.add(path);
+      else stars.delete(path);
+    },
+    uploadFiles: async () => data,
   };
 }
 
@@ -89,7 +132,9 @@ const meta: Meta<typeof DocsHomeWorkspace> = {
   },
   args: {
     session,
+    operations: createMockHomeOperations(["/users/alice/Roadmap 2026.md"]),
     onOpenFile: () => {},
+    onCreateDocument: () => {},
     onLogout: () => {},
   },
 };
@@ -99,8 +144,73 @@ type Story = StoryObj<typeof DocsHomeWorkspace>;
 
 export const Default: Story = {
   name: "Browse (paginated)",
+  tags: ["vitest-ci"],
   args: {
     fetcher: createPaginatedFetcher(FIXTURES),
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(await canvas.findByRole("button", { name: "New document" })).toBeInTheDocument();
+    await expect(canvas.getByRole("button", { name: "All docs" })).toBeInTheDocument();
+    await expect(canvas.getByText("Drives")).toBeInTheDocument();
+    await expect(canvas.getByRole("button", { name: "My Drive" })).toBeInTheDocument();
+
+    // Docs home hides the redundant "Kind" column (everything is a document).
+    await expect(canvas.queryByRole("columnheader", { name: "Kind" })).not.toBeInTheDocument();
+
+    const engineering = await canvas.findByRole("button", { name: "engineering" });
+    await expect(await canvas.findByText("Roadmap 2026")).toBeInTheDocument();
+
+    await userEvent.click(engineering);
+
+    await waitFor(async () => {
+      await expect(canvas.queryByText("Roadmap 2026")).not.toBeInTheDocument();
+    });
+    await expect(canvas.getByText("RFC: Storage Tiers")).toBeInTheDocument();
+  },
+};
+
+/** Matches Drive: single click selects the row, double click opens it. */
+export const SelectVsOpen: Story = {
+  name: "Select vs open (SST)",
+  tags: ["vitest-ci"],
+  args: {
+    fetcher: createPaginatedFetcher(FIXTURES),
+    onOpenFile: fn(),
+  },
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+    const cell = await canvas.findByText("Roadmap 2026");
+    const row = cell.closest("tr");
+    if (!row) throw new Error("Expected the document to render in a list row");
+
+    await userEvent.click(cell);
+    await waitFor(() => expect(row).toHaveClass("drive-list-row--selected"));
+    await expect(args.onOpenFile).not.toHaveBeenCalled();
+
+    await userEvent.dblClick(cell);
+    await waitFor(() => expect(args.onOpenFile).toHaveBeenCalled());
+  },
+};
+
+/** The create button resolves a non-colliding name from the live My Drive listing. */
+export const CreateUniqueName: Story = {
+  name: "Create (unique name)",
+  tags: ["vitest-ci"],
+  args: {
+    fetcher: createPaginatedFetcher(FIXTURES),
+    // Live listing already contains Untitled.md, so the create flow must skip it.
+    operations: createMockHomeOperations([], ["Untitled.md"]),
+    onCreateDocument: fn(),
+  },
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+    const createButton = await canvas.findByRole("button", { name: "New document" });
+    await userEvent.click(createButton);
+    await waitFor(() =>
+      expect(args.onCreateDocument).toHaveBeenCalledWith("/users/alice/Untitled 2.md"),
+    );
   },
 };
 

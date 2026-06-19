@@ -62,6 +62,8 @@
 
 .docs-workspace .app-sidebar__scroll {
   --color-ink: #ffffff;
+  --button-primary-bg: #ffffff;
+  --button-primary-fg: var(--docs-accent);
   --button-subtle-color: #ffffff;
   --button-subtle-background: color-mix(in oklab, #ffffff 12%, transparent);
   --button-subtle-hover-background: color-mix(in oklab, #ffffff 20%, transparent);

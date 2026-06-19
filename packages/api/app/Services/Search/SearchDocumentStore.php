@@ -144,6 +144,17 @@ final class SearchDocumentStore
         if (isset($filters['modified_to']) && is_int($filters['modified_to'])) {
             $query->where('d.modified_at_ts', '<=', $filters['modified_to']);
         }
+        if (isset($filters['path_prefix']) && is_string($filters['path_prefix']) && $filters['path_prefix'] !== '') {
+            $prefix = $filters['path_prefix'];
+            // File/note source keys are storage paths, so scope them by prefix. Calendar/
+            // contact keys are not path-shaped, so they are left unaffected by this filter.
+            $query->where(function ($scope) use ($prefix): void {
+                $scope->where(function ($paths) use ($prefix): void {
+                    $paths->whereIn('d.source_type', ['file', 'note'])
+                        ->where('d.source_key', 'like', $prefix.'/%');
+                })->orWhereNotIn('d.source_type', ['file', 'note']);
+            });
+        }
 
         if ($tokens !== []) {
             $query->where(function ($match) use ($tokens): void {

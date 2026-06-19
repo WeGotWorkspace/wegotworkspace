@@ -3439,6 +3439,17 @@
               "format": "date-time"
             },
             "description": "Only include results modified on or before this timestamp."
+          },
+          {
+            "name": "path_prefix",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            },
+            "description": "Scope file/note results to a storage-key prefix, e.g. a single drive (`users/alice` for My Drive or `groups/team` for a shared drive). Surrounding slashes are ignored. Calendar/contact sources are unaffected."
           }
         ],
         "responses": {

@@ -31,19 +31,29 @@ final class UnifiedSearchRequest extends FormRequest
             'extensions.*' => ['string', 'min:1', 'max:32'],
             'modified_from' => ['sometimes', 'string', 'date'],
             'modified_to' => ['sometimes', 'string', 'date'],
+            'path_prefix' => ['sometimes', 'string', 'min:1', 'max:512'],
         ];
     }
 
     protected function prepareForValidation(): void
     {
-        $this->merge([
+        $merge = [
             'sources' => $this->normalizeListParam($this->input('sources')),
             'categories' => $this->normalizeListParam($this->input('categories')),
             'extensions' => array_map(
                 static fn (string $value): string => strtolower($value),
                 $this->normalizeListParam($this->input('extensions'))
             ),
-        ]);
+        ];
+        $pathPrefix = $this->input('path_prefix');
+        if (is_string($pathPrefix)) {
+            $normalized = trim($pathPrefix);
+            $normalized = trim($normalized, '/');
+            if ($normalized !== '') {
+                $merge['path_prefix'] = $normalized;
+            }
+        }
+        $this->merge($merge);
     }
 
     /**

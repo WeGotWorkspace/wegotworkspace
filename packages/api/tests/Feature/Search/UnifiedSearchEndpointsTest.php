@@ -191,6 +191,60 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
         $this->assertSame([], array_intersect($page1Keys, $page2Keys));
     }
 
+    public function test_unified_search_browse_scopes_to_path_prefix_drive(): void
+    {
+        $teamGroup = $this->seedWgwGroup('principals/groups/team', 'Team');
+        $alice = Principal::forUsername('alice');
+        $this->assertNotNull($alice);
+        $this->addPrincipalToGroup($teamGroup, $alice);
+
+        $storage = app(WgwStorage::class);
+        $storage->files()->put('users/alice/my-drive-doc.md', '# My Drive doc');
+        $storage->files()->put('groups/team/team-doc.md', '# Team doc');
+
+        app(SearchIndexerService::class)->reindexAll();
+
+        $token = $this->issueBearerToken();
+
+        $unscoped = $this->withBearer($token)
+            ->getJson('/api/v1/search/results?'.http_build_query([
+                'sources' => ['file'],
+                'extensions' => ['md'],
+                'categories' => ['document'],
+                'limit' => 50,
+            ]));
+        $unscoped->assertOk();
+        $unscopedKeys = array_column((array) $unscoped->json('data.results'), 'sourceKey');
+        $this->assertContains('users/alice/my-drive-doc.md', $unscopedKeys);
+        $this->assertContains('groups/team/team-doc.md', $unscopedKeys);
+
+        $myDrive = $this->withBearer($token)
+            ->getJson('/api/v1/search/results?'.http_build_query([
+                'sources' => ['file'],
+                'extensions' => ['md'],
+                'categories' => ['document'],
+                'path_prefix' => '/users/alice/',
+                'limit' => 50,
+            ]));
+        $myDrive->assertOk()
+            ->assertJsonPath('data.filters.path_prefix', 'users/alice');
+        $myDriveKeys = array_column((array) $myDrive->json('data.results'), 'sourceKey');
+        $this->assertSame(['users/alice/my-drive-doc.md'], $myDriveKeys);
+
+        $teamDrive = $this->withBearer($token)
+            ->getJson('/api/v1/search/results?'.http_build_query([
+                'sources' => ['file'],
+                'extensions' => ['md'],
+                'categories' => ['document'],
+                'path_prefix' => 'groups/team',
+                'limit' => 50,
+            ]));
+        $teamDrive->assertOk()
+            ->assertJsonPath('data.filters.path_prefix', 'groups/team');
+        $teamDriveKeys = array_column((array) $teamDrive->json('data.results'), 'sourceKey');
+        $this->assertSame(['groups/team/team-doc.md'], $teamDriveKeys);
+    }
+
     public function test_unified_search_browse_mode_respects_auth_scope(): void
     {
         $storage = app(WgwStorage::class);

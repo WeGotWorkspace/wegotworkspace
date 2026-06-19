@@ -34,7 +34,7 @@
   },
   "UnifiedSearchFilters": {
     "type": "object",
-    "required": ["categories", "extensions", "modified_from", "modified_to"],
+    "required": ["categories", "extensions", "modified_from", "modified_to", "path_prefix"],
     "properties": {
       "categories": {
         "type": "array",
@@ -45,7 +45,8 @@
         "items": { "type": "string" }
       },
       "modified_from": { "type": ["integer", "null"] },
-      "modified_to": { "type": ["integer", "null"] }
+      "modified_to": { "type": ["integer", "null"] },
+      "path_prefix": { "type": ["string", "null"] }
     },
     "additionalProperties": false,
     "description": "Normalized filters echoed back on the search response."
