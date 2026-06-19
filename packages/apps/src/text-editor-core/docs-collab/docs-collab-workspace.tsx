@@ -321,14 +321,7 @@ function DocsCollabWorkspaceInner({
                   onContentChange={handleMarkdownChange}
                   onEditorReady={handleEditorReady}
                 />
-              ) : (
-                <div className="p-8">
-                  <p className="docs-workspace__loading">Loading document…</p>
-                  {docStatus ? (
-                    <p className="docs-workspace__loading mt-2 text-sm">{docStatus}</p>
-                  ) : null}
-                </div>
-              )}
+              ) : null}
               <footer className="docs-workspace__stats-footer" aria-live="polite">
                 <Tag
                   label={labels.statsWords(wordCount)}

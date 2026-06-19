@@ -475,6 +475,65 @@ export function useDocsCollab({
     if (session) void handleReconnect();
   });
 
+  const applyServerBootstrap = useCallback(
+    async (generation: number, authToken: string | undefined) => {
+      const ydoc = ydocRef.current;
+      if (!ydoc || generation !== joinGenerationRef.current) return;
+
+      let markdown = "";
+      let hadSnapshot = false;
+      try {
+        markdown = await loadMarkdown(urls.documentUrl, authToken);
+      } catch (error) {
+        console.warn("[docs-collab] markdown load failed", error);
+      }
+      if (generation !== joinGenerationRef.current) return;
+      hadSnapshot = await loadYjsSnapshot(urls.yjsUrl, ydoc, authToken, SERVER_ORIGIN);
+      if (generation !== joinGenerationRef.current) return;
+      if (hadSnapshot) seedDoneRef.current = true;
+
+      pendingMarkdownRef.current = markdown;
+
+      if (!seedDoneRef.current && isYDocEmpty(ydoc)) {
+        const mesh = meshRef.current;
+        if (!mesh || mesh.getPeerIds().length === 0) {
+          if (markdown) {
+            applyContentSeedToYDoc(ydoc, markdown, documentFormat);
+            markDocReady();
+            setDocStatus("Loaded shared document");
+          }
+        } else {
+          const tick = () => trySeedFromFile();
+          seedTimerRef.current = setTimeout(tick, 1000);
+          setTimeout(tick, 3000);
+        }
+      } else if (hadSnapshot) {
+        setDocStatus("Restored Yjs snapshot");
+      }
+    },
+    [documentFormat, markDocReady, trySeedFromFile, urls.documentUrl, urls.yjsUrl],
+  );
+
+  const connectMeshInBackground = useCallback(
+    async (generation: number, name: string, authToken: string) => {
+      setDocStatus((prev) => prev || "Connecting to collaborators…");
+      setStatus("Connecting to mesh…");
+      try {
+        const meshPeers = await joinMesh(name, authToken);
+        if (generation !== joinGenerationRef.current) return;
+        setConnectingPeers(meshPeers);
+        refreshMeshUi();
+        setDocStatus((prev) => (prev === "Connecting to collaborators…" ? "" : prev));
+        trySeedFromFile();
+      } catch (error) {
+        if (generation !== joinGenerationRef.current) return;
+        console.warn("[docs-collab] mesh join failed", error);
+        setDocStatus(error instanceof Error ? error.message : String(error));
+      }
+    },
+    [joinMesh, refreshMeshUi, trySeedFromFile],
+  );
+
   const join = useCallback(async () => {
     const generation = ++joinGenerationRef.current;
     const name = userName.trim();
@@ -486,28 +545,27 @@ export function useDocsCollab({
     teardown();
 
     const online = getConnectivitySnapshot();
-    let authToken: string | undefined;
-    try {
-      authToken = await wireRef.current.fetchAuthToken({
-        authToken: urls.authToken,
-        authTokenUrl: urls.authTokenUrl,
-        authUser: urls.authUser,
-        authPassword: urls.authPassword,
-      });
-    } catch (error) {
-      if (online) throw error;
-      console.warn("[docs-collab] auth unavailable offline", error);
-    }
-    if (generation !== joinGenerationRef.current) return;
-    authTokenRef.current = authToken;
-
-    setDocStatus("Loading document…");
     seedDoneRef.current = false;
+    setDocStatus("");
 
     const ydoc = new Y.Doc();
     ydocRef.current = ydoc;
     const persistence = new IndexeddbPersistence(room, ydoc);
     persistenceRef.current = persistence;
+
+    const authTokenPromise = wireRef.current
+      .fetchAuthToken({
+        authToken: urls.authToken,
+        authTokenUrl: urls.authTokenUrl,
+        authUser: urls.authUser,
+        authPassword: urls.authPassword,
+      })
+      .catch((error) => {
+        if (online) throw error;
+        console.warn("[docs-collab] auth unavailable offline", error);
+        return undefined;
+      });
+
     await persistence.whenSynced;
     if (generation !== joinGenerationRef.current) return;
 
@@ -516,22 +574,6 @@ export function useDocsCollab({
       saveFailedRef.current = true;
       await updatePendingState(true, true);
     }
-
-    let markdown = "";
-    let hadSnapshot = false;
-    if (online) {
-      try {
-        markdown = await loadMarkdown(urls.documentUrl, authToken);
-      } catch (error) {
-        console.warn("[docs-collab] markdown load failed", error);
-      }
-      if (generation !== joinGenerationRef.current) return;
-      hadSnapshot = await loadYjsSnapshot(urls.yjsUrl, ydoc, authToken, SERVER_ORIGIN);
-      if (generation !== joinGenerationRef.current) return;
-      if (hadSnapshot) seedDoneRef.current = true;
-    }
-
-    pendingMarkdownRef.current = markdown;
 
     const awareness = new awarenessProtocol.Awareness(ydoc);
     awarenessRef.current = awareness;
@@ -564,50 +606,39 @@ export function useDocsCollab({
     setSession({ ydoc, awareness, user });
     setJoined(true);
 
-    if (!seedDoneRef.current && isYDocEmpty(ydoc)) {
-      const mesh = meshRef.current;
-      if (!mesh || mesh.getPeerIds().length === 0) {
-        if (markdown) {
-          applyContentSeedToYDoc(ydoc, markdown, documentFormat);
-          markDocReady();
-          setDocStatus("Loaded shared document");
-        }
-      } else {
-        const tick = () => trySeedFromFile();
-        seedTimerRef.current = setTimeout(tick, 1000);
-        setTimeout(tick, 3000);
-      }
-    } else {
-      setDocStatus(hadSnapshot ? "Restored Yjs snapshot" : online ? "" : "Editing offline");
+    if (!online) {
+      setStatus("Editing offline");
+      setDocStatus("Editing offline");
+      void authTokenPromise.then((token) => {
+        if (generation !== joinGenerationRef.current) return;
+        authTokenRef.current = token;
+      });
+      return;
     }
 
-    if (online && authToken) {
-      const joinGeneration = generation;
-      setDocStatus((prev) => prev || "Connecting to collaborators…");
-      setStatus("Connecting to mesh…");
-      void joinMesh(name, authToken)
-        .then((meshPeers) => {
-          if (joinGeneration !== joinGenerationRef.current) return;
-          setConnectingPeers(meshPeers);
-          refreshMeshUi();
-          setDocStatus((prev) => (prev === "Connecting to collaborators…" ? "" : prev));
-        })
-        .catch((error) => {
-          if (joinGeneration !== joinGenerationRef.current) return;
-          console.warn("[docs-collab] mesh join failed", error);
-          setDocStatus(error instanceof Error ? error.message : String(error));
-        });
-    } else {
-      setStatus("Editing offline");
-    }
+    void (async () => {
+      let authToken: string | undefined;
+      try {
+        authToken = await authTokenPromise;
+      } catch (error) {
+        if (generation !== joinGenerationRef.current) return;
+        setDocStatus(error instanceof Error ? error.message : String(error));
+        return;
+      }
+      if (generation !== joinGenerationRef.current) return;
+      authTokenRef.current = authToken;
+
+      const tasks: Promise<void>[] = [applyServerBootstrap(generation, authToken)];
+      if (authToken) {
+        tasks.push(connectMeshInBackground(generation, name, authToken));
+      }
+      await Promise.all(tasks);
+    })();
   }, [
-    documentFormat,
-    joinMesh,
-    markDocReady,
-    refreshMeshUi,
+    applyServerBootstrap,
+    connectMeshInBackground,
     room,
     teardown,
-    trySeedFromFile,
     updatePendingState,
     urls.authPassword,
     urls.authToken,

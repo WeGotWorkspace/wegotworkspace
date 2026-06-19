@@ -125,6 +125,40 @@ describe("useDocsCollab offline lifecycle", () => {
     await waitFor(() => expect(result.current.status).toContain("Mesh"));
   });
 
+  it("exposes session before server fetch completes", async () => {
+    let resolveMarkdown: ((value: Response) => void) | undefined;
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("format=yjs")) {
+        return new Response(null, { status: 204 });
+      }
+      if (init?.method === "PUT" || init?.method === "POST") {
+        return new Response("{}", { status: 200 });
+      }
+      return new Promise<Response>((resolve) => {
+        resolveMarkdown = resolve;
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { result } = renderHook(() =>
+      useDocsCollab({
+        userName: "Alex",
+        autoJoin: true,
+        urls: testUrls,
+        wire,
+      }),
+    );
+
+    await waitFor(() => expect(result.current.session).not.toBeNull());
+    expect(fetchMock).toHaveBeenCalled();
+    expect(resolveMarkdown).toBeDefined();
+
+    await act(async () => {
+      resolveMarkdown?.(new Response("# Hello", { status: 200 }));
+    });
+  });
+
   it("exposes session before mesh join completes", async () => {
     let resolveJoin: ((value: { peers: [] }) => void) | undefined;
     mockJoin.mockImplementation(
