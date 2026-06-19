@@ -259,6 +259,30 @@ describe("useDocsCollab offline lifecycle", () => {
     expect(getConnectivitySnapshot()).toBe(false);
   });
 
+  it("rejoins mesh after reconnect from offline session", async () => {
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+
+    const { result } = renderHook(() =>
+      useDocsCollab({
+        userName: "Alex",
+        autoJoin: true,
+        urls: testUrls,
+        wire,
+      }),
+    );
+
+    await waitFor(() => expect(result.current.session).not.toBeNull());
+    expect(mockJoin).not.toHaveBeenCalled();
+
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(true);
+    vi.stubGlobal("fetch", mockFetchResponses({}));
+    window.dispatchEvent(new Event("online"));
+    window.dispatchEvent(new Event("focus"));
+
+    await waitFor(() => expect(mockJoin).toHaveBeenCalledTimes(1), { timeout: 7000 });
+    await waitFor(() => expect(result.current.status).toContain("Mesh"), { timeout: 7000 });
+  });
+
   it("flushes pending save after reconnect", async () => {
     let online = false;
     vi.spyOn(navigator, "onLine", "get").mockImplementation(() => online);
@@ -287,6 +311,93 @@ describe("useDocsCollab offline lifecycle", () => {
 
     await waitFor(() => expect(result.current.pendingSync).toBe(false), { timeout: 7000 });
   });
+
+  it("rejoins mesh after offline refresh reconnect", async () => {
+    let online = false;
+    vi.spyOn(navigator, "onLine", "get").mockImplementation(() => online);
+
+    const { result } = renderHook(() =>
+      useDocsCollab({
+        userName: "Alex",
+        autoJoin: true,
+        urls: testUrls,
+        wire,
+      }),
+    );
+
+    await waitFor(() => expect(result.current.session).not.toBeNull());
+    expect(result.current.status).toBe("Editing offline");
+    expect(mockJoin).not.toHaveBeenCalled();
+
+    online = true;
+    window.dispatchEvent(new Event("online"));
+
+    await waitFor(() => expect(mockJoin).toHaveBeenCalledTimes(1), { timeout: 5000 });
+    await waitFor(() => expect(result.current.status).toContain("Mesh"));
+  });
+
+  it("rejoins mesh even when server backoff blocks collaboration GET", async () => {
+    let online = true;
+    vi.spyOn(navigator, "onLine", "get").mockImplementation(() => online);
+    vi.stubGlobal("fetch", mockFetchResponses({ saveFails: true }));
+
+    const { result } = renderHook(() =>
+      useDocsCollab({
+        userName: "Alex",
+        autoJoin: true,
+        urls: testUrls,
+        wire,
+      }),
+    );
+
+    await waitFor(() => expect(result.current.session).not.toBeNull());
+    await waitFor(() => expect(mockJoin).toHaveBeenCalledTimes(1));
+
+    act(() => {
+      result.current.onMarkdownChange(() => "# edited before backoff");
+    });
+    await waitFor(() => expect(result.current.pendingSync).toBe(true), { timeout: 5000 });
+
+    const joinsBeforeReconnect = mockJoin.mock.calls.length;
+    online = false;
+    window.dispatchEvent(new Event("offline"));
+
+    online = true;
+    vi.stubGlobal("fetch", mockFetchResponses({ saveFails: false }));
+    window.dispatchEvent(new Event("online"));
+    window.dispatchEvent(new Event("focus"));
+
+    await waitFor(() => expect(mockJoin.mock.calls.length).toBeGreaterThan(joinsBeforeReconnect), {
+      timeout: 7000,
+    });
+    await waitFor(() => expect(result.current.status).toContain("Mesh"), { timeout: 7000 });
+  }, 15000);
+
+  it("restarts mesh after reconnect when a stale session exists", async () => {
+    let online = true;
+    vi.spyOn(navigator, "onLine", "get").mockImplementation(() => online);
+
+    const { result } = renderHook(() =>
+      useDocsCollab({
+        userName: "Alex",
+        autoJoin: true,
+        urls: testUrls,
+        wire,
+      }),
+    );
+
+    await waitFor(() => expect(result.current.session).not.toBeNull());
+    await waitFor(() => expect(mockJoin).toHaveBeenCalledTimes(1));
+
+    online = false;
+    window.dispatchEvent(new Event("offline"));
+    online = true;
+    window.dispatchEvent(new Event("online"));
+    window.dispatchEvent(new Event("focus"));
+
+    await waitFor(() => expect(rtcMocks.mockLeave).toHaveBeenCalled(), { timeout: 7000 });
+    expect(mockJoin.mock.calls.length).toBeGreaterThan(1);
+  }, 15000);
 
   it("does not rejoin when wire object identity changes", async () => {
     const makeWire = (): DocsCollabWireOperations => ({

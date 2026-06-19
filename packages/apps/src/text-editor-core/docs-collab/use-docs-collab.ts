@@ -338,6 +338,7 @@ export function useDocsCollab({
 
   const persistToServer = useCallback(async (): Promise<void> => {
     if (saveInFlightRef.current) return;
+    if (!getConnectivitySnapshot()) return;
     const ydoc = ydocRef.current;
     const getMd = getMarkdownRef.current;
     if (!ydoc || !getMd) return;
@@ -380,7 +381,9 @@ export function useDocsCollab({
       );
       saveRetryMsRef.current = nextRetryMs;
       nextSaveAttemptAtRef.current = Date.now() + nextRetryMs;
-      markRoomServerFailure(room);
+      if (getConnectivitySnapshot()) {
+        markRoomServerFailure(room);
+      }
       await updatePendingState(true, true);
       setDocStatus(`Save failed: ${err instanceof Error ? err.message : String(err)}`);
       throw err;
@@ -550,38 +553,81 @@ export function useDocsCollab({
     [urls.yjsUrl],
   );
 
+  const resolveAuthTokenForReconnect = useCallback(async (): Promise<string | undefined> => {
+    if (authTokenRef.current) return authTokenRef.current;
+    try {
+      const token = await wireRef.current.fetchAuthToken({
+        authToken: urls.authToken,
+        authTokenUrl: urls.authTokenUrl,
+        authUser: urls.authUser,
+        authPassword: urls.authPassword,
+      });
+      authTokenRef.current = token;
+      return token;
+    } catch (error) {
+      markRoomServerFailure(room);
+      if (!isFetchNetworkError(error)) {
+        console.warn("[docs-collab] auth unavailable on reconnect", error);
+      }
+      return undefined;
+    }
+  }, [room, urls.authPassword, urls.authToken, urls.authTokenUrl, urls.authUser]);
+
+  const restartMeshAfterReconnect = useCallback(
+    async (generation: number, authToken: string): Promise<void> => {
+      const name = userName.trim();
+      if (!name) return;
+
+      const existingMesh = meshRef.current;
+      meshRef.current = null;
+      if (existingMesh) await existingMesh.leave();
+      if (generation !== reconnectGenerationRef.current) return;
+
+      setStatus("Connecting to mesh…");
+      const meshPeers = await joinMesh(name, authToken);
+      if (generation !== reconnectGenerationRef.current) return;
+      setConnectingPeers(meshPeers);
+      refreshMeshUi();
+      trySeedFromFile();
+    },
+    [joinMesh, refreshMeshUi, trySeedFromFile, userName],
+  );
+
   const handleReconnect = useCallback(async () => {
     if (reconnectInFlightRef.current) return;
     const generation = ++reconnectGenerationRef.current;
     const ydoc = ydocRef.current;
     const persistence = persistenceRef.current;
     if (!ydoc || !persistence || !joined) return;
-    if (!roomServerAllowed(room)) return;
     reconnectInFlightRef.current = true;
 
     setDocStatus("Reconnecting…");
-    const authToken = authTokenRef.current;
+    const allowServerRequests = roomServerAllowed(room);
 
     try {
-      await mergeServerState(authToken);
-      markRoomServerSuccess(room);
+      const authToken = await resolveAuthTokenForReconnect();
       if (generation !== reconnectGenerationRef.current) return;
 
-      if (!meshRef.current && authToken) {
-        const name = userName.trim();
-        if (name) {
-          const meshPeers = await joinMesh(name, authToken);
-          if (generation !== reconnectGenerationRef.current) return;
-          setConnectingPeers(meshPeers);
-        }
+      // Same signaling path as initial pageload: joinMesh → DocsRtcSession.join → poll loop.
+      if (authToken) {
+        await restartMeshAfterReconnect(generation, authToken);
+        if (generation !== reconnectGenerationRef.current) return;
       }
 
-      const pendingSave = await persistence.get(PENDING_SERVER_SAVE_KEY);
-      if (pendingSave) {
-        await persistToServer();
+      if (allowServerRequests) {
+        await mergeServerState(authToken);
+        markRoomServerSuccess(room);
+        if (generation !== reconnectGenerationRef.current) return;
+
+        const pendingSave = await persistence.get(PENDING_SERVER_SAVE_KEY);
+        if (pendingSave) {
+          await persistToServer();
+        } else {
+          localDirtySinceLastSaveRef.current = false;
+          setDocStatus((prev) => (prev === "Reconnecting…" ? "" : prev));
+        }
       } else {
-        localDirtySinceLastSaveRef.current = false;
-        setDocStatus("");
+        setDocStatus((prev) => (prev === "Reconnecting…" ? "" : prev));
       }
     } catch (error) {
       markRoomServerFailure(room);
@@ -590,10 +636,17 @@ export function useDocsCollab({
     } finally {
       reconnectInFlightRef.current = false;
     }
-  }, [joinMesh, joined, mergeServerState, persistToServer, room, userName]);
+  }, [
+    joined,
+    mergeServerState,
+    persistToServer,
+    resolveAuthTokenForReconnect,
+    restartMeshAfterReconnect,
+    room,
+  ]);
 
   useOnReconnect(() => {
-    if (session) void handleReconnect();
+    if (sessionRef.current) void handleReconnect();
   });
 
   const applyServerBootstrap = useCallback(
