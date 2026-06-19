@@ -21,6 +21,7 @@ final class NotebookDeleteRequest extends FormRequest
         return [
             'mode' => ['sometimes', 'string', 'in:archive,move,purge'],
             'target' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'groupSlug' => ['sometimes', 'nullable', 'string', 'max:190'],
         ];
     }
 }

@@ -183,7 +183,15 @@ export type WgwNotesStateResponse = NotesStateResponse;
 /** Row from `GET /notes/items`, with optional-friendly narrowing for older payloads. */
 export type WgwNoteItem = Omit<
   NoteItem,
-  "title" | "body" | "tags" | "starred" | "archived" | "updatedAt" | "username"
+  | "title"
+  | "body"
+  | "tags"
+  | "starred"
+  | "archived"
+  | "updatedAt"
+  | "username"
+  | "scope"
+  | "groupSlug"
 > & {
   username?: string;
   title?: string;
@@ -192,6 +200,8 @@ export type WgwNoteItem = Omit<
   starred?: boolean;
   archived?: boolean;
   updatedAt?: string;
+  scope?: "personal" | "group";
+  groupSlug?: string | null;
 };
 
 export type WgwNotesItemsResponse = NotesItemsResponse;

@@ -77,7 +77,11 @@ describe("notes offline store", () => {
     const rows = await listOutboxMutations(username);
     expect(rows).toHaveLength(1);
     expect(rows[0]?.op).toBe("upsert");
-    expect(JSON.parse(rows[0]?.payload ?? "{}").note.title).toBe("Merged title");
+    const payload = JSON.parse(rows[0]?.payload ?? "{}");
+    expect(payload.metadata.title).toBe("Merged title");
+    // Body is never coalesced into the metadata outbox.
+    expect(payload).not.toHaveProperty("note");
+    expect(payload.metadata).not.toHaveProperty("body");
   });
 
   it("orders outbox mutations by createdAt", async () => {

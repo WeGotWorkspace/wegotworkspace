@@ -21,7 +21,7 @@ final class NotebooksController
         /** @var array{username: string, role: string} $principal */
         $principal = $request->attributes->get(AuthenticateWgwApi::PRINCIPAL_ATTRIBUTE);
 
-        return response()->json($this->notes->listNotebooks($principal['username']));
+        return response()->json($this->notes->listNotebooks($principal['username'], $request->query()));
     }
 
     public function store(NotebookCreateRequest $request): JsonResponse

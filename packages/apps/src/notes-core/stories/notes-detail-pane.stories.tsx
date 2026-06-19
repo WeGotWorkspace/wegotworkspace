@@ -19,7 +19,6 @@ function NotesDetailPaneHarness({
     pullQuote: withPullQuote ? "A highlighted line for layout checks." : undefined,
   });
   const [title, setTitle] = useState(base.title);
-  const [body, setBody] = useState(base.body);
 
   return (
     <NotesStoryScope variant="detail">
@@ -33,8 +32,7 @@ function NotesDetailPaneHarness({
         tags={base.tags}
         readOnly={readOnly}
         pullQuote={base.pullQuote}
-        body={body}
-        onBodyMarkdownChange={readOnly ? undefined : (markdown) => setBody([markdown])}
+        body={base.body}
       />
     </NotesStoryScope>
   );

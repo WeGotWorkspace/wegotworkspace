@@ -11,13 +11,14 @@ import {
   renameNotebook,
   restoreNoteItem,
   updateNoteItem,
-  wgwNoteUpsertFromNote,
 } from "@/lib/api/wgw/notes";
 import { wgwFetch, wgwReadJson } from "@/lib/api/wgw/http";
+import type { WgwNoteUpsertRequest } from "@/lib/api/wgw/types";
 import { NOTES_DOMAIN } from "@/lib/offline/notes/notes-schema";
 import {
   listOutboxMutations,
   markOutboxError,
+  type NoteUpsertMetadata,
   noteUpdatedAtMs,
   readNotesBootstrapFromCache,
   removeNoteFromCache,
@@ -31,6 +32,21 @@ export type OutboxFlushResult = {
   stateMismatches: string[];
   bootstrap: NotesAppBootstrap | null;
 };
+
+/** Build a metadata-only `PUT /notes/items/{id}` request — no `body` field. */
+function noteMetadataUpsertRequest(
+  noteId: string,
+  metadata: NoteUpsertMetadata,
+): WgwNoteUpsertRequest {
+  return {
+    id: noteId,
+    notebook: metadata.notebook,
+    title: metadata.title,
+    tags: metadata.tags,
+    ...(metadata.starred !== undefined ? { starred: metadata.starred } : {}),
+    ...(metadata.archived !== undefined ? { archived: metadata.archived } : {}),
+  };
+}
 
 function notebookDeleteBodyForAction(action: DeleteNotebookAction): {
   mode: "archive" | "move" | "purge";
@@ -73,27 +89,30 @@ export async function flushNotesOutbox(username: string): Promise<OutboxFlushRes
       if (row.op === "upsert") {
         const upsert = payload as NotesUpsertPayload;
         const noteId = upsert.noteId;
-        const note = upsert.note;
         if (row.ifInState) {
           const serverMs = serverUpdatedAtMs(serverNotes, noteId);
           const baseMs = noteUpdatedAtMs(row.ifInState);
           if (serverMs > baseMs) {
+            // Metadata-only conflict. The API derives a note's `updatedAt` from a
+            // frontmatter marker that only metadata mutations bump — body-only
+            // collab saves (`PUT /files/collaboration`) preserve it — so a
+            // server-newer reading here always reflects a genuine frontmatter
+            // divergence, never a concurrent body edit.
             stateMismatches.push(noteId);
             await markOutboxError(username, row.id, "stateMismatch");
             continue;
           }
         }
-        const body = wgwNoteUpsertFromNote(note, {
-          starred: !!note.starred,
-          archived: !!note.archived,
-        });
+        // Metadata-only PUT preserves the body bytes on disk; the 404 create
+        // fallback seeds an empty body (collab persists the real body separately).
+        const metadataRequest = noteMetadataUpsertRequest(noteId, upsert.metadata);
         let saved;
         try {
-          saved = await updateNoteItem(noteId, body);
+          saved = await updateNoteItem(noteId, metadataRequest);
         } catch (error) {
           const status = (error as { status?: number } | undefined)?.status;
           if (status !== 404) throw error;
-          saved = await createNoteItem(body);
+          saved = await createNoteItem({ ...metadataRequest, body: "" });
         }
         const tempId = upsert.tempNoteId;
         if (tempId && tempId !== saved.id) {

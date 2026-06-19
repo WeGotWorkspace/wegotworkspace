@@ -7,8 +7,6 @@ import type { Note } from "@/lib/models/note";
 import { createTempNoteId } from "@/lib/offline/notes-offline-store";
 import {
   AUTOSAVE_WRITE_DEBOUNCE_MS,
-  computeExcerpt,
-  computeWordCount,
   createNoteSaveDebouncer,
   enrichNote,
   normalizeTag,
@@ -401,19 +399,9 @@ export function useNotesMutations({ shell, list }: UseNotesMutationsArgs) {
 
   const updateNote = useCallback(
     (id: string, patch: Partial<Note>) => {
-      updateAndPersistNote(
-        id,
-        (note) => {
-          const body = patch.body ?? note.body;
-          return {
-            ...note,
-            ...patch,
-            excerpt: patch.excerpt ?? computeExcerpt(body),
-            wordCount: patch.wordCount ?? computeWordCount(body),
-          };
-        },
-        { autoSaveToast: true },
-      );
+      // Metadata only (title/tags/notebook/starred). Body is owned by the collab
+      // document and never travels through the Notes upsert path.
+      updateAndPersistNote(id, (note) => ({ ...note, ...patch }), { autoSaveToast: true });
     },
     [updateAndPersistNote],
   );

@@ -97,6 +97,10 @@ describe("flushNotesOutbox", () => {
 
     const result = await flushNotesOutbox(username);
     expect(updateNoteItem).toHaveBeenCalledOnce();
+    // Metadata-only PUT: the request must never carry the note body.
+    const [, request] = updateNoteItem.mock.calls[0] ?? [];
+    expect(request).toMatchObject({ title: "Updated title", notebook: "Drafts" });
+    expect(request).not.toHaveProperty("body");
     expect(result.stateMismatches).toEqual([]);
   });
 

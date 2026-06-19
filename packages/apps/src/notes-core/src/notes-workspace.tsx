@@ -1,7 +1,7 @@
 import { Pencil } from "lucide-react";
 import type { NotesWorkspaceProps } from "@/notes-core/src/notes-workspace-props";
 import "react-swipeable-list/dist/styles.css";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { Button } from "@/button/src/button";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import { SidebarSection } from "@/sidebar-section/src/sidebar-section";
@@ -21,6 +21,10 @@ import { useNotesPendingSync } from "@/notes-core/src/use-notes-pending-sync";
 import { useNotesSidebarModel } from "@/notes-core/src/use-notes-sidebar-model";
 import { getNotesSyncRunner } from "@/lib/offline/notes-hybrid-operations";
 import { resolveNotesOfflineUsername } from "@/lib/offline/offline-session";
+import { wgwLiveApiEnabled } from "@/lib/api/wgw/http";
+import type { NoteCollabConfig } from "@/note-detail-view/src/note-text-editor-body";
+import { buildNoteCollabUrls, noteCollabPath } from "@/notes-core/src/note-collab-path";
+import { createWgwNotesCollabWire } from "@/notes-core/src/notes-collab-wgw-wire";
 import "@/notes-core/src/notes-workspace.css";
 
 export function NotesWorkspace({
@@ -114,6 +118,26 @@ export function NotesWorkspace({
   const offlineUsername = resolveNotesOfflineUsername(session.user.username);
   const pendingNoteIds = useNotesPendingSync(offlineUsername, bootstrapRevision);
   const failedSyncCount = useNotesFailedSync(offlineUsername, bootstrapRevision);
+
+  // Body lives in the Docs Yjs collab document keyed by the note's virtual path;
+  // only enabled against the live API (mock/Storybook uses the solo editor).
+  const notesCollabWire = useMemo(() => createWgwNotesCollabWire(), []);
+  const noteBodyCollab = useMemo<NoteCollabConfig | undefined>(() => {
+    if (!wgwLiveApiEnabled() || !active) return undefined;
+    const username = session.user.username;
+    if (!username) return undefined;
+    const path = noteCollabPath({
+      scope: { kind: "personal", username },
+      notebook: active.notebook,
+      noteId: active.id,
+      archived: !!archived[active.id],
+    });
+    return {
+      userName: session.user.displayName || username,
+      urls: buildNoteCollabUrls(path),
+      wire: notesCollabWire,
+    };
+  }, [active, archived, notesCollabWire, session.user.displayName, session.user.username]);
 
   const handleRetrySync = useCallback(() => {
     if (!offlineUsername) return;
@@ -238,7 +262,7 @@ export function NotesWorkspace({
               onTagRemove={(tag) => toggleNoteTag(active.id, tag)}
               pullQuote={active.pullQuote}
               body={active.body}
-              onBodyMarkdownChange={(markdown) => updateNote(active.id, { body: [markdown] })}
+              collab={noteBodyCollab}
             />
           );
         }}

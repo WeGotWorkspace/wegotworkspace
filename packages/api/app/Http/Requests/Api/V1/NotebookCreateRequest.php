@@ -20,6 +20,7 @@ final class NotebookCreateRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+            'groupSlug' => ['sometimes', 'nullable', 'string', 'max:190'],
         ];
     }
 }

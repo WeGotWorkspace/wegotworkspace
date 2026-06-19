@@ -54,10 +54,86 @@ Two shipped Dexie domains cover the main offline shapes. Pick the one closest to
 | Domain   | API shape                          | Cache model                             | Cross-tab sync                                                                                                                                               | Key files                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | -------- | ---------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Contacts | Entity REST (cards, address books) | Bootstrap + per-entity rows             | —                                                                                                                                                            | [`contacts-schema.ts`](../src/lib/offline/contacts/contacts-schema.ts), [`contacts-offline-store.ts`](../src/lib/offline/contacts-offline-store.ts), [`contacts-outbox-flush.ts`](../src/lib/offline/contacts-outbox-flush.ts), [`contacts-hybrid-operations.ts`](../src/lib/offline/contacts-hybrid-operations.ts), [`contacts/contacts-patch-merge.ts`](../src/lib/offline/contacts/contacts-patch-merge.ts)                              |
-| Notes    | Entity REST (notebooks, notes)     | Bootstrap + per-entity rows             | [`notes-bootstrap-sync.ts`](../src/lib/offline/notes-bootstrap-sync.ts) — BroadcastChannel + localStorage fallback notifies other tabs after flush/reconnect | [`notes/notes-schema.ts`](../src/lib/offline/notes/notes-schema.ts), [`notes-offline-store.ts`](../src/lib/offline/notes-offline-store.ts), [`notes-outbox-flush.ts`](../src/lib/offline/notes-outbox-flush.ts), [`notes-hybrid-operations.ts`](../src/lib/offline/notes-hybrid-operations.ts), [`use-notes-api.ts`](../src/notes-core/src/use-notes-api.ts)                                                                                |
+| Notes    | **Dual-path**: metadata REST + collab body | Bootstrap + per-entity rows (metadata); `Y.Doc` + `y-indexeddb` per note path (body) | [`notes-bootstrap-sync.ts`](../src/lib/offline/notes-bootstrap-sync.ts) — BroadcastChannel + localStorage fallback notifies other tabs after flush/reconnect | [`notes/notes-schema.ts`](../src/lib/offline/notes/notes-schema.ts), [`notes-offline-store.ts`](../src/lib/offline/notes-offline-store.ts), [`notes-outbox-flush.ts`](../src/lib/offline/notes-outbox-flush.ts), [`notes-hybrid-operations.ts`](../src/lib/offline/notes-hybrid-operations.ts), [`use-notes-api.ts`](../src/notes-core/src/use-notes-api.ts), [`note-text-editor-body.tsx`](../src/note-detail-view/src/note-text-editor-body.tsx) — see [Notes dual-path](#notes-dual-path-yjs-body--dexie-metadata) |
 | Docs     | Text collaboration + REST sidecar  | `Y.Doc` + `y-indexeddb` per collab room | Yjs provider sync + room-scoped registry (`docs-collab-sync-registry.ts`)                                                                                    | [`use-docs-collab.ts`](../src/text-editor-core/docs-collab/use-docs-collab.ts), [`docs-collab-persistence.ts`](../src/text-editor-core/docs-collab/docs-collab-persistence.ts), [`docs-collab-workspace.tsx`](../src/text-editor-core/docs-collab/docs-collab-workspace.tsx), [`docs-drive-operations.ts`](../src/lib/offline/docs/docs-drive-operations.ts), [`docs-collab-text-files.ts`](../src/docs-core/src/docs-collab-text-files.ts) |
 
 **Contacts** is the original reference for patch-merge coalescing and field-level conflict merge. **Notes** adds entity-list bootstrap, reconnect `syncing` + toast, and cross-tab bootstrap refresh. **Docs** now uses collab-first offline persistence with Yjs + y-indexeddb for editable text files.
+
+## Notes dual-path (Yjs body + Dexie metadata)
+
+Notes is the only domain that is **split across two persistence paths**. Unlike
+the Contacts whole-entity model — where one outbox row carries the entire card —
+a note's **body** and its **metadata** travel independently:
+
+| Concern | Path | Storage | Transport | Conflict model |
+| --- | --- | --- | --- | --- |
+| **Body** (markdown text) | Docs collab stack (#230) | `Y.Doc` + `y-indexeddb` per note path, `.yjs` sidecar on the `wgw_files` tree | `PUT /files/collaboration` (room = note virtual path) | CRDT merge (Yjs) + live WebRTC mesh for shared notes — **no dialog** |
+| **Metadata** (title, tags, starred, notebook, archived) | Dexie outbox | `notes_notes` rows + generic outbox | `PUT /notes/items/{id}` (and lifecycle `PATCH`/`DELETE`) | Last-writer-wins with an optional `stateMismatch` dialog |
+
+**Body path modules.** [`note-text-editor-body.tsx`](../src/note-detail-view/src/note-text-editor-body.tsx)
+mounts `NoteCollabBody` (the Docs `DocsCollabEditor` + [`useDocsCollab`](../src/text-editor-core/docs-collab/use-docs-collab.ts))
+for editable notes; the room is computed by [`note-collab-path.ts`](../src/notes-core/src/note-collab-path.ts)
+and the WeGotWorkspace wire is injected via [`notes-collab-wgw-wire.ts`](../src/notes-core/src/notes-collab-wgw-wire.ts)
+(mirrors [`docs-collab-wgw-wire.ts`](../src/docs-core/src/docs-collab-wgw-wire.ts)). The
+body never rides the Notes metadata API, and the metadata outbox never carries body bytes.
+
+**Metadata path modules.** [`wgwNoteMetadataFromNote`](../src/lib/api/wgw/notes.ts)
+builds the metadata request; [`notes-hybrid-operations.ts`](../src/lib/offline/notes-hybrid-operations.ts)
+queues/flushes it and [`notes-outbox-flush.ts`](../src/lib/offline/notes-outbox-flush.ts)
+drains the outbox against `PUT /notes/items/{id}`.
+
+### Contract nuance: the metadata PUT must OMIT the `body` key
+
+`PUT /notes/items/{id}` treats `body` as **optional**, but because Laravel's
+`ConvertEmptyStringsToNull` middleware normalizes `""`/`null` to a *present*
+value, the API only **preserves** the on-disk body when the `body` key is
+**absent entirely**. A request with `body: ""` or `body: null` is treated as
+"clear the body" and would wipe text written through the collab path.
+
+Therefore the metadata builders deliberately construct the request object
+**without a `body` property** (not `body: undefined`, which would still appear as
+`null` after JSON round-trips for some shapes). This is enforced by tests in
+[`notes.test.ts`](../src/lib/api/wgw/notes.ts) and
+[`notes-outbox-flush.test.ts`](../src/lib/offline/notes-outbox-flush.ts)
+(`expect(request).not.toHaveProperty("body")`). The full-body request
+([`wgwNoteUpsertFromNote`](../src/lib/api/wgw/notes.ts)) is used **only** for the
+`POST /notes/items` create / 404-create fallback, where seeding an (empty) body
+once is correct.
+
+### State decision: metadata `updatedAt` is body-edit-invariant
+
+The Notes API derives a note's `updatedAt` from a frontmatter **`updated`
+marker** that **only metadata mutations bump**. A body-only collab save
+(`PUT /files/collaboration`) rewrites the `.md` file but *preserves* the marker
+(see `NoteMarkdownCodec::replaceBody` and `NoteRepository::readAt` in
+`packages/api`), so a body edit does **not** advance `updatedAt`.
+
+This closes a false-conflict seam: the offline metadata flush uses the note's
+`updatedAt`-at-enqueue as its `ifInState` guard and raises a `stateMismatch`
+when the server looks newer. Without the marker, the sequence *edit body
+(bumps mtime) → later flush a queued metadata change with a now-stale
+`ifInState`* would falsely look "server newer" and pop a spurious
+[`NotesConflictDialog`](../src/notes-core/src/notes-conflict-dialog.tsx). With
+the marker, a `stateMismatch` only ever reflects a genuine frontmatter
+divergence. (Consequence: body edits no longer re-sort the note list by
+modified time; body freshness is surfaced by the collab pending-sync dot,
+[`use-docs-collab-pending-sync.ts`](../src/text-editor-core/docs-collab/use-docs-collab-pending-sync.ts),
+not by `updatedAt`.) Legacy notes that predate the marker fall back to file
+mtime, and the first collab save freezes the marker at the pre-write mtime so
+even they do not trip the guard.
+
+### History
+
+This dual-path model **supersedes the body-offline portion of #225**
+([Notes whole-entity offline](https://github.com/WeGotWorkspace/wegotworkspace/issues/225)),
+which originally pushed body, title, tags, and starred through a single
+debounced upsert + outbox + binary conflict dialog. #225 still correctly
+describes the **metadata** Dexie domain; only body editing moved to the Docs
+Yjs path. See the alignment epic [#234](https://github.com/WeGotWorkspace/wegotworkspace/issues/234),
+the body collab stack [#230](https://github.com/WeGotWorkspace/wegotworkspace/issues/230),
+the editor/mutation wiring [#237](https://github.com/WeGotWorkspace/wegotworkspace/issues/237),
+and the metadata outbox + slim conflict handling [#238](https://github.com/WeGotWorkspace/wegotworkspace/issues/238).
+Do **not** reopen #225 — it is correctly closed and superseded here.
 
 ## Domain contract adapters
 

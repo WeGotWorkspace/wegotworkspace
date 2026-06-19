@@ -3,7 +3,10 @@ import { DetailViewHeader } from "@/detail-view-header/src/detail-view-header";
 import { TagGroup } from "@/tag/src/tag";
 import { cn } from "@/lib/utils";
 import { noteBodyToMarkdown } from "@/lib/models/note-body-markdown";
-import { NoteTextEditorBody } from "@/note-detail-view/src/note-text-editor-body";
+import {
+  NoteTextEditorBody,
+  type NoteCollabConfig,
+} from "@/note-detail-view/src/note-text-editor-body";
 
 export type NoteDetailViewProps = {
   /** Used for React keys on editors when switching notes. */
@@ -19,13 +22,14 @@ export type NoteDetailViewProps = {
   onTagAdd?: () => void;
   onTagRemove?: (label: string) => void;
   pullQuote?: string;
-  /** Body paragraphs; persisted as markdown via {@link noteBodyToMarkdown}. */
+  /** Body paragraphs; seeded into the collab document via {@link noteBodyToMarkdown}. */
   body: string[];
   /**
-   * Persisted as a single markdown string (`body` becomes `[markdown]`).
-   * When omitted but `readOnly` is false, the body shows as read-only plain text.
+   * Collab config for the body. When provided (and not read-only), the body is
+   * edited via the Docs Yjs stack and persists through the collab document — the
+   * body never flows through the Notes metadata API. Omit for read-only/solo.
    */
-  onBodyMarkdownChange?: (markdown: string) => void;
+  collab?: NoteCollabConfig;
   /** When `true`, title, body, and tags are display-only. Default `false` (editing on). */
   readOnly?: boolean;
   className?: string;
@@ -43,7 +47,7 @@ export function NoteDetailView({
   onTagRemove,
   pullQuote,
   body,
-  onBodyMarkdownChange,
+  collab,
   readOnly = false,
   className,
 }: NoteDetailViewProps) {
@@ -100,8 +104,8 @@ export function NoteDetailView({
         noteId={noteId}
         contentRevision={lastEdited ?? ""}
         initialMarkdown={markdown}
-        readOnly={readOnly || !onBodyMarkdownChange}
-        onMarkdownChange={readOnly ? undefined : onBodyMarkdownChange}
+        readOnly={readOnly}
+        collab={collab}
       />
     </article>
   );

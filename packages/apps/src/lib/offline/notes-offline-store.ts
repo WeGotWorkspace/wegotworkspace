@@ -25,11 +25,35 @@ export {
 
 const META_SESSION = "notes:session";
 
+/**
+ * Frontmatter metadata coalesced through the Notes outbox. The note **body** is
+ * intentionally excluded — body lives in the Docs Yjs collab document and is
+ * never sent through the Notes metadata API.
+ */
+export type NoteUpsertMetadata = {
+  notebook: string;
+  title: string;
+  tags: string[];
+  starred?: boolean;
+  archived?: boolean;
+};
+
 export type NotesUpsertPayload = {
   noteId: string;
-  note: Note;
+  metadata: NoteUpsertMetadata;
   tempNoteId?: string;
 };
+
+/** Pull only the outbox-tracked metadata fields off a note (drops body/excerpt). */
+export function extractNoteMetadata(note: Note): NoteUpsertMetadata {
+  return {
+    notebook: note.notebook,
+    title: note.title,
+    tags: note.tags,
+    ...(note.starred !== undefined ? { starred: note.starred } : {}),
+    ...(note.archived !== undefined ? { archived: note.archived } : {}),
+  };
+}
 
 function metaKeyForNotebookState(notebook: string): string {
   return `notes:notebook:${notebook}:state`;
@@ -177,18 +201,23 @@ export async function removeOutboxMutationsForNote(
   }
 }
 
+/**
+ * Coalesce pending metadata upserts for the same note. Merges **metadata fields
+ * only** (latest title/tags/starred/notebook wins) — there is no whole-note
+ * replacement, so a concurrent collab body edit can never be clobbered here.
+ */
 function mergeNoteUpsertPayloads(
   existing: NotesUpsertPayload,
   incoming: NotesUpsertPayload,
 ): NotesUpsertPayload {
   return {
     noteId: incoming.noteId,
-    note: incoming.note,
+    metadata: { ...existing.metadata, ...incoming.metadata },
     tempNoteId: incoming.tempNoteId ?? existing.tempNoteId,
   };
 }
 
-/** Merges pending upsert rows for the same note so flush sends one whole-note payload. */
+/** Merges pending upsert rows for the same note so flush sends one metadata-only payload. */
 export async function enqueueCoalescedNoteUpdate(
   username: string,
   noteId: string,
@@ -196,12 +225,13 @@ export async function enqueueCoalescedNoteUpdate(
   baseUpdatedAt: string | undefined,
   tempNoteId?: string,
 ): Promise<void> {
-  await enqueueCoalescedOutboxUpdate({
+  const metadata = extractNoteMetadata(note);
+  await enqueueCoalescedOutboxUpdate<NotesUpsertPayload>({
     username,
     domain: NOTES_DOMAIN,
     op: "upsert",
     entityId: noteId,
-    patch: { noteId, note, tempNoteId },
+    patch: { noteId, metadata, tempNoteId },
     ifInState: baseUpdatedAt,
     mergePatches: mergeNoteUpsertPayloads,
     entityIdFromRow: notesOutboxNoteId,

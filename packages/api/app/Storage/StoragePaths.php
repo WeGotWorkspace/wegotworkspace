@@ -44,6 +44,23 @@ final class StoragePaths
         return 'users/'.$username.'/.notes/'.$relativePath;
     }
 
+    public function groupNoteStorageKey(string $slug, string $relativePath): string
+    {
+        $relativePath = ltrim(str_replace('\\', '/', $relativePath), '/');
+
+        return 'groups/'.$slug.'/.notes/'.$relativePath;
+    }
+
+    /**
+     * True when the virtual path lives inside a personal or group `.notes` tree.
+     */
+    public function isNotePath(string $path): bool
+    {
+        $normalized = $this->normalizeVirtualPath($path);
+
+        return preg_match('#^/(?:users|groups)/[^/]+/\.notes(?:/|$)#', $normalized) === 1;
+    }
+
     public function isPathAllowed(string $path, string $username, array $groupSlugs, bool $forWrite): bool
     {
         $normalized = $this->normalizeVirtualPath($path);

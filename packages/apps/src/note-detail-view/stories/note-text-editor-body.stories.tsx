@@ -42,7 +42,6 @@ export const Default: Story = {
   args: {
     noteId: "demo-1",
     initialMarkdown: sampleMarkdown,
-    onMarkdownChange: () => {},
   },
 };
 

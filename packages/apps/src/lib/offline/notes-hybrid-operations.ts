@@ -10,6 +10,7 @@ import {
   renameNotebook as renameNotebookApi,
   restoreNoteItem,
   updateNoteItem,
+  wgwNoteMetadataFromNote,
   wgwNoteUpsertFromNote,
 } from "@/lib/api/wgw/notes";
 import {
@@ -158,19 +159,24 @@ async function upsertNoteOnline(
   runner: ConnectivitySyncRunner<OutboxFlushResult>,
   opts?: { signal?: AbortSignal },
 ): Promise<Note> {
-  const body = wgwNoteUpsertFromNote(note, {
+  // Metadata-only PUT preserves the on-disk body; the 404 create fallback sends
+  // the full note so a brand-new note's (empty) body is initialised once.
+  const metadataRequest = wgwNoteMetadataFromNote(note, {
     starred: !!note.starred,
     archived: !!note.archived,
   });
   try {
-    const saved = await updateNoteItem(note.id, body, opts);
+    const saved = await updateNoteItem(note.id, metadataRequest, opts);
     await upsertNoteInCache(username, saved, false);
     await runner.flush();
     return saved;
   } catch (error) {
     const status = (error as { status?: number } | undefined)?.status;
     if (status !== 404) throw error;
-    const saved = await createNoteItem(body, opts);
+    const saved = await createNoteItem(
+      wgwNoteUpsertFromNote(note, { starred: !!note.starred, archived: !!note.archived }),
+      opts,
+    );
     await upsertNoteInCache(username, saved, false);
     await runner.flush();
     return saved;
