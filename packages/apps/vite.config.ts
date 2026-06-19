@@ -58,7 +58,10 @@ export default defineConfig(({ mode }) => {
         devOptions: { enabled: false },
         workbox: {
           navigateFallback: "index.html",
+          navigateFallbackDenylist: [/^\/api\//],
           globPatterns: ["**/*.{js,css,html,ico,png,woff2,webmanifest}"],
+          clientsClaim: true,
+          skipWaiting: true,
         },
         manifest: false,
       }),

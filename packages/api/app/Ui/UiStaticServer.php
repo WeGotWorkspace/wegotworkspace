@@ -43,6 +43,10 @@ final class UiStaticServer
             '/settings',
         ];
 
+        if ($this->isPwaRootAssetPath($webBase, $path)) {
+            return true;
+        }
+
         foreach (self::GLOBAL_PREFIXES as $prefix) {
             $full = InstallerWebBase::url($webBase, $prefix);
             if ($path === $full || str_starts_with($path, $full.'/')) {
@@ -65,6 +69,10 @@ final class UiStaticServer
         $root = rtrim($distRoot, '/');
         if (! $this->distReady($root)) {
             return null;
+        }
+
+        if ($this->isPwaRootAssetPath($webBase, $path)) {
+            return $this->serveResolvedPath($root, $this->pwaRootAssetRelativePath($webBase, $path), false);
         }
 
         foreach (self::GLOBAL_PREFIXES as $prefix) {
@@ -222,6 +230,34 @@ final class UiStaticServer
         $direct = $root.'/'.$rel;
 
         return is_file($direct) ? $direct : null;
+    }
+
+    private function isPwaRootAssetPath(string $webBase, string $path): bool
+    {
+        $rel = $this->pwaRootAssetRelativePath($webBase, $path);
+        if ($rel === '' || str_contains($rel, '/')) {
+            return false;
+        }
+
+        if (! $this->isPwaRootAssetFile($rel)) {
+            return false;
+        }
+
+        return $path === InstallerWebBase::url($webBase, '/'.$rel);
+    }
+
+    private function pwaRootAssetRelativePath(string $webBase, string $path): string
+    {
+        $prefix = InstallerWebBase::url($webBase, '/');
+        $suffix = $prefix === '/' ? ltrim($path, '/') : substr($path, strlen($prefix));
+
+        return is_string($suffix) ? ltrim($suffix, '/') : '';
+    }
+
+    private function isPwaRootAssetFile(string $basename): bool
+    {
+        return $basename === 'sw.js'
+            || (str_starts_with($basename, 'workbox-') && str_ends_with($basename, '.js'));
     }
 
     private function notFound(): Response

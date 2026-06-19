@@ -45,6 +45,35 @@ final class UiStaticServerTest extends TestCase
         $this->assertNull($server->resolveRoutePrefix('', '/mail/inbox', $prefixes));
     }
 
+    public function test_serves_service_worker_at_site_root(): void
+    {
+        $dist = sys_get_temp_dir().'/wgw-static-sw-'.uniqid('', true);
+        mkdir($dist, 0775, true);
+        file_put_contents($dist.'/index.html', '<!doctype html><title>App</title>');
+        file_put_contents($dist.'/sw.js', 'self.addEventListener("install", () => self.skipWaiting());');
+
+        $server = new UiStaticServer;
+        $response = $server->tryServe($dist, '', '/sw.js', false);
+
+        $this->assertNotNull($response);
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('application/javascript; charset=utf-8', $response->headers->get('Content-Type'));
+    }
+
+    public function test_serves_workbox_runtime_at_site_root(): void
+    {
+        $dist = sys_get_temp_dir().'/wgw-static-workbox-'.uniqid('', true);
+        mkdir($dist, 0775, true);
+        file_put_contents($dist.'/index.html', '<!doctype html><title>App</title>');
+        file_put_contents($dist.'/workbox-deadbeef.js', 'self.__WB_MANIFEST=[];');
+
+        $server = new UiStaticServer;
+        $response = $server->tryServe($dist, '', '/workbox-deadbeef.js', false);
+
+        $this->assertNotNull($response);
+        $this->assertSame(200, $response->getStatusCode());
+    }
+
     public function test_serves_install_scoped_assets(): void
     {
         $dist = sys_get_temp_dir().'/wgw-static-install-'.uniqid('', true);
