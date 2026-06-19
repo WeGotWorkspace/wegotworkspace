@@ -9,7 +9,7 @@ const authFile = path.join(packageRoot, "e2e", ".auth", "admin.json");
 
 export default defineConfig({
   testDir: "./e2e",
-  testMatch: /(?:notes|docs)-offline-sync\.spec\.ts/,
+  testMatch: /(?:notes-offline-sync|docs-offline-sync|docs-home-browse)\.spec\.ts/,
   globalSetup: "./e2e/global-setup-live.mjs",
   fullyParallel: false,
   workers: 1,
