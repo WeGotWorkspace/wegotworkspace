@@ -142,11 +142,18 @@ export async function appendToActiveDocBody(page: Page, text: string): Promise<v
 }
 
 export async function expectPendingDotVisible(page: Page): Promise<void> {
-  await expect(page.getByRole("img", { name: "Pending sync" })).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByRole("status", { name: "Unsaved changes" })).toBeVisible({
+    timeout: 10_000,
+  });
 }
 
 export async function expectPendingDotHidden(page: Page): Promise<void> {
-  await expect(page.getByRole("img", { name: "Pending sync" })).toHaveCount(0, { timeout: 20_000 });
+  await expect(page.getByRole("status", { name: "Unsaved changes" })).toHaveCount(0, {
+    timeout: 20_000,
+  });
+  await expect(
+    page.getByRole("status", { name: "Save failed — changes not on server" }),
+  ).toHaveCount(0, { timeout: 20_000 });
 }
 
 export async function expectSyncCompleted(page: Page): Promise<void> {
@@ -178,7 +185,10 @@ export async function blockReachabilityAndApi(page: Page): Promise<void> {
 export async function reloadDocsOffline(page: Page, apiPath: string): Promise<void> {
   await page.goto(docsUrlForFile(apiPath));
   await expect(
-    page.locator(".ProseMirror, .docs-workspace__error, text=Could not load docs"),
+    page
+      .locator(".ProseMirror")
+      .or(page.locator(".docs-workspace__error"))
+      .or(page.getByText("Could not load docs")),
   ).toBeVisible({
     timeout: 30_000,
   });

@@ -80,6 +80,17 @@
   @apply flex shrink-0 flex-wrap items-center justify-end gap-1.5;
 }
 
+.docs-workspace__pending-sync {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #c98a1f;
+}
+
+.docs-workspace__pending-sync .loading-spinner {
+  color: #c98a1f;
+}
+
 .docs-workspace .docs-collab-presence__avatar--self {
   background-color: var(--docs-accent);
   box-shadow:

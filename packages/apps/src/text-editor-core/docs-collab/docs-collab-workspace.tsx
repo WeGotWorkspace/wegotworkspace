@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import type { Editor } from "@tiptap/react";
-import { Code2, Circle, Printer } from "lucide-react";
+import { Code2, Printer } from "lucide-react";
+import { LoadingSpinner } from "@/loading-spinner/src/loading-spinner";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import { IconButton } from "@/button/src/button";
 import { docsLabels } from "@/docs-core/src/docs-labels";
@@ -11,6 +12,7 @@ import { focusOutlineHeading, parseMarkdownOutline } from "@/docs-core/src/docs-
 import { mockWorkspaceSession } from "@/lib/api/mock/workspace-session-mock";
 import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
 import { cn } from "@/lib/utils";
+import { useConnectivity } from "@/hooks/use-connectivity";
 import { TooltipProvider } from "@/ui/tooltip";
 import {
   AlertDialog,
@@ -142,7 +144,9 @@ function DocsCollabWorkspaceInner({
     warningPeers,
     docStatus,
     pendingSync,
+    failedSync,
     onMarkdownChange,
+    registerMarkdownGetter,
   } = useDocsCollab({
     userName,
     autoJoin: true,
@@ -159,6 +163,9 @@ function DocsCollabWorkspaceInner({
   const resolvedDocumentTitle = documentTitle?.trim() || defaultTitleFromRoom(urls?.room);
   const editorFormat = docsEditorFormatFromFileName(resolvedDocumentTitle);
   const showMarkdownOutline = resolvedDocumentTitle.toLowerCase().endsWith(".md");
+  const { online } = useConnectivity();
+  const showPendingSyncIndicator = pendingSync && (!online || failedSync);
+  const pendingSyncLabel = failedSync ? labels.pendingSyncFailed : labels.pendingSync;
 
   const outline = useMemo(
     () => (showMarkdownOutline ? parseMarkdownOutline(markdown) : []),
@@ -191,10 +198,12 @@ function DocsCollabWorkspaceInner({
     (nextEditor: Editor | null) => {
       setEditor(nextEditor);
       if (nextEditor) {
-        setMarkdown(getTextEditorContent(nextEditor, editorFormat));
+        const getContent = () => getTextEditorContent(nextEditor, editorFormat);
+        setMarkdown(getContent());
+        registerMarkdownGetter(getContent);
       }
     },
-    [editorFormat],
+    [editorFormat, registerMarkdownGetter],
   );
 
   const handleOutlineSelect = useCallback(
@@ -254,13 +263,14 @@ function DocsCollabWorkspaceInner({
               onToggleSidebar={() => setSidebarOpen((open) => !open)}
               actions={
                 <div className="docs-workspace__header-actions">
-                  {pendingSync ? (
+                  {showPendingSyncIndicator ? (
                     <span
                       className="docs-workspace__pending-sync"
-                      role="img"
-                      aria-label={labels.pendingSync}
+                      role="status"
+                      aria-live="polite"
+                      aria-label={pendingSyncLabel}
                     >
-                      <Circle fill="currentColor" strokeWidth={0} />
+                      <LoadingSpinner size="sm" />
                     </span>
                   ) : null}
                   {collabSession ? (

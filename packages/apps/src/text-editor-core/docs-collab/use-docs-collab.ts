@@ -336,9 +336,21 @@ export function useDocsCollab({
     seedDoneRef.current = true;
   }, []);
 
+  const markPendingWhenUnsaved = useCallback(async (): Promise<void> => {
+    const ydoc = ydocRef.current;
+    const getMd = getMarkdownRef.current;
+    if (!ydoc || !getMd || !localDirtySinceLastSaveRef.current) return;
+    const signature = docSignature(getMd(), ydoc);
+    if (signature === lastSuccessfulSaveSignatureRef.current) return;
+    await updatePendingState(true, false);
+  }, [updatePendingState]);
+
   const persistToServer = useCallback(async (): Promise<void> => {
     if (saveInFlightRef.current) return;
-    if (!getConnectivitySnapshot()) return;
+    if (!getConnectivitySnapshot()) {
+      await markPendingWhenUnsaved();
+      return;
+    }
     const ydoc = ydocRef.current;
     const getMd = getMarkdownRef.current;
     if (!ydoc || !getMd) return;
@@ -390,7 +402,14 @@ export function useDocsCollab({
     } finally {
       saveInFlightRef.current = false;
     }
-  }, [room, updatePendingState, urls.documentSaveMethod, urls.documentUrl, urls.room]);
+  }, [
+    markPendingWhenUnsaved,
+    room,
+    updatePendingState,
+    urls.documentSaveMethod,
+    urls.documentUrl,
+    urls.room,
+  ]);
 
   const scheduleSave = useCallback(() => {
     if (!localDirtySinceLastSaveRef.current && !pendingServerSaveRef.current) return;
@@ -402,6 +421,23 @@ export function useDocsCollab({
       void persistToServer().catch(() => undefined);
     }, delayMs);
   }, [persistToServer]);
+
+  const flushPendingSaveIfReady = useCallback(() => {
+    if (!pendingServerSaveRef.current || !getConnectivitySnapshot()) return;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      saveTimerRef.current = null;
+      void persistToServer().catch(() => undefined);
+    }, 0);
+  }, [persistToServer]);
+
+  const registerMarkdownGetter = useCallback(
+    (getMarkdown: () => string) => {
+      getMarkdownRef.current = getMarkdown;
+      flushPendingSaveIfReady();
+    },
+    [flushPendingSaveIfReady],
+  );
 
   const trySeedFromFile = useCallback(() => {
     const ydoc = ydocRef.current;
@@ -620,12 +656,13 @@ export function useDocsCollab({
         if (generation !== reconnectGenerationRef.current) return;
 
         const pendingSave = await persistence.get(PENDING_SERVER_SAVE_KEY);
-        if (pendingSave) {
+        if (pendingSave || pendingServerSaveRef.current) {
           await persistToServer();
         } else {
           localDirtySinceLastSaveRef.current = false;
           setDocStatus((prev) => (prev === "Reconnecting…" ? "" : prev));
         }
+        flushPendingSaveIfReady();
       } else {
         setDocStatus((prev) => (prev === "Reconnecting…" ? "" : prev));
       }
@@ -638,6 +675,7 @@ export function useDocsCollab({
     }
   }, [
     joined,
+    flushPendingSaveIfReady,
     mergeServerState,
     persistToServer,
     resolveAuthTokenForReconnect,
@@ -762,8 +800,7 @@ export function useDocsCollab({
 
     const pendingSave = await persistence.get(PENDING_SERVER_SAVE_KEY);
     if (pendingSave) {
-      saveFailedRef.current = true;
-      await updatePendingState(true, true);
+      await updatePendingState(true, false);
     }
 
     const awareness = new awarenessProtocol.Awareness(ydoc);
@@ -826,10 +863,13 @@ export function useDocsCollab({
         tasks.push(connectMeshInBackground(generation, name, authToken));
       }
       await Promise.all(tasks);
+      if (generation !== joinGenerationRef.current) return;
+      flushPendingSaveIfReady();
     })();
   }, [
     applyServerBootstrap,
     connectMeshInBackground,
+    flushPendingSaveIfReady,
     room,
     teardown,
     updatePendingState,
@@ -874,9 +914,12 @@ export function useDocsCollab({
       if (nextMarkdown === lastKnownMarkdownRef.current) return;
       lastKnownMarkdownRef.current = nextMarkdown;
       localDirtySinceLastSaveRef.current = true;
+      if (!getConnectivitySnapshot()) {
+        void markPendingWhenUnsaved();
+      }
       scheduleSave();
     },
-    [scheduleSave],
+    [markPendingWhenUnsaved, scheduleSave],
   );
 
   useEffect(() => {
@@ -906,6 +949,7 @@ export function useDocsCollab({
     join,
     leave,
     saveNow,
+    registerMarkdownGetter,
     onMarkdownChange,
   };
 }

@@ -82,13 +82,19 @@ function mockFetchResponses(options: {
 }
 
 describe("useDocsCollab offline lifecycle", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     resetConnectivityHubForTests();
     resetDocsCollabBackoffForTests();
     mockJoin.mockResolvedValue({ peers: [] });
     vi.spyOn(navigator, "onLine", "get").mockReturnValue(true);
     vi.stubGlobal("fetch", mockFetchResponses({}));
+    await new Promise<void>((resolve) => {
+      const request = indexedDB.deleteDatabase(testUrls.room);
+      request.onblocked = () => resolve();
+      request.onsuccess = () => resolve();
+      request.onerror = () => resolve();
+    });
   });
 
   afterEach(() => {
@@ -114,6 +120,59 @@ describe("useDocsCollab offline lifecycle", () => {
     expect(result.current.joined).toBe(true);
     expect(result.current.status).toBe("Editing offline");
     expect(mockJoin).not.toHaveBeenCalled();
+  });
+
+  it("marks pendingSync when editing offline", async () => {
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+
+    const { result } = renderHook(() =>
+      useDocsCollab({
+        userName: "Alex",
+        autoJoin: true,
+        urls: testUrls,
+        wire,
+      }),
+    );
+
+    await waitFor(() => expect(result.current.session).not.toBeNull());
+
+    act(() => {
+      result.current.onMarkdownChange(() => "# offline edit");
+    });
+
+    await waitFor(() => expect(result.current.pendingSync).toBe(true));
+  });
+
+  it("flushes IDB pending save once the markdown getter is registered", async () => {
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    vi.stubGlobal("fetch", mockFetchResponses({}));
+
+    const { result } = renderHook(() =>
+      useDocsCollab({
+        userName: "Alex",
+        autoJoin: true,
+        urls: testUrls,
+        wire,
+      }),
+    );
+
+    await waitFor(() => expect(result.current.session).not.toBeNull());
+
+    act(() => {
+      result.current.onMarkdownChange(() => "# offline edit");
+    });
+    await waitFor(() => expect(result.current.pendingSync).toBe(true));
+
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(true);
+    vi.stubGlobal("fetch", mockFetchResponses({}));
+    resetConnectivityHubForTests();
+    window.dispatchEvent(new Event("online"));
+
+    act(() => {
+      result.current.registerMarkdownGetter(() => "# offline edit");
+    });
+
+    await waitFor(() => expect(result.current.pendingSync).toBe(false), { timeout: 5000 });
   });
 
   it("joins online with mesh after IDB sync and server fetch", async () => {
@@ -216,10 +275,10 @@ describe("useDocsCollab offline lifecycle", () => {
     await waitFor(
       () => {
         expect(result.current.pendingSync).toBe(true);
+        expect(result.current.failedSync).toBe(true);
       },
       { timeout: 5000 },
     );
-    expect(result.current.failedSync).toBe(true);
   });
 
   it("restores pendingSync from IDB meta on reopen", async () => {
