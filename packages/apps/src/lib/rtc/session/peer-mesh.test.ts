@@ -374,6 +374,33 @@ describe("RtcPeerMesh", () => {
     await mesh.leave();
   });
 
+  it("does not reschedule polling after leave while a poll is in flight", async () => {
+    const signaling = createMockSignaling({ peerId: "peer-a", peers: [] });
+    let resolvePoll: ((value: HttpSignalingPollResult) => void) | null = null;
+    signaling.setPollHandler(
+      () =>
+        new Promise((resolve) => {
+          resolvePoll = resolve;
+        }),
+    );
+
+    const { mesh } = meshWithStubPc(signaling.client);
+    await mesh.join({ name: "Host", peerId: "peer-a" });
+
+    await vi.advanceTimersByTimeAsync(400);
+    expect(signaling.client.poll).toHaveBeenCalledTimes(1);
+    expect(resolvePoll).not.toBeNull();
+
+    const leavePromise = mesh.leave();
+    await flushAsyncWork();
+    resolvePoll?.({ peers: [], messages: [] });
+    await leavePromise;
+    await flushAsyncWork();
+
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(signaling.client.poll).toHaveBeenCalledTimes(1);
+  });
+
   it("ignores chat messages during rtc signal handling", async () => {
     const signaling = createMockSignaling({ peerId: "AAAAAAAAAA", peers: [] });
     const { mesh } = meshWithStubPc(signaling.client);
@@ -394,6 +421,35 @@ describe("RtcPeerMesh", () => {
     await vi.advanceTimersByTimeAsync(400);
 
     expect(signaling.sends.some((s) => s.type === "answer")).toBe(false);
+    await mesh.leave();
+  });
+
+  it("does not run overlapping poll requests when poll is rescheduled", async () => {
+    const signaling = createMockSignaling({ peerId: "peer-a", peers: [] });
+    let resolvePoll: ((value: HttpSignalingPollResult) => void) | null = null;
+    signaling.client.poll.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolvePoll = resolve;
+        }),
+    );
+
+    const { mesh } = meshWithStubPc(signaling.client);
+    await mesh.join({ name: "Host", peerId: "peer-a" });
+    signaling.client.poll.mockClear();
+
+    await vi.advanceTimersByTimeAsync(400);
+    expect(signaling.client.poll).toHaveBeenCalledTimes(1);
+
+    const meshWithSchedule = mesh as unknown as { schedulePoll: (steady?: boolean) => void };
+    meshWithSchedule.schedulePoll(true);
+    meshWithSchedule.schedulePoll(true);
+    await vi.advanceTimersByTimeAsync(1200);
+
+    expect(signaling.client.poll).toHaveBeenCalledTimes(1);
+
+    resolvePoll?.({ peers: [], messages: [] });
+    await flushAsyncWork();
     await mesh.leave();
   });
 });

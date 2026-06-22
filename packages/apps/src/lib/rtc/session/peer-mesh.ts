@@ -88,6 +88,8 @@ export class RtcPeerMesh {
 
   private pollTimer: ReturnType<typeof setTimeout> | null = null;
 
+  private pollInFlight = false;
+
   private rejoinInFlight = false;
 
   private readonly turnConfigured: boolean;
@@ -562,14 +564,19 @@ export class RtcPeerMesh {
   }
 
   private async pollOnce(): Promise<void> {
-    if (!this.myId) return;
-    const data = await this.options.signaling.poll({
-      room: this.options.room,
-      peerId: this.myId,
-      since: this.lastMsgId,
-      sessionKey: this.sessionKey ?? undefined,
-    });
-    await this.onPoll(data);
+    if (!this.myId || this.pollInFlight) return;
+    this.pollInFlight = true;
+    try {
+      const data = await this.options.signaling.poll({
+        room: this.options.room,
+        peerId: this.myId,
+        since: this.lastMsgId,
+        sessionKey: this.sessionKey ?? undefined,
+      });
+      await this.onPoll(data);
+    } finally {
+      this.pollInFlight = false;
+    }
   }
 
   private hasStableCollabTopology(): boolean {
@@ -584,6 +591,7 @@ export class RtcPeerMesh {
 
   private schedulePoll(steady = false): void {
     if (!this.myId) return;
+    this.stopPolling();
     const intervals = this.pollIntervals();
     const delay = !steady
       ? intervals.connectingMs
@@ -712,19 +720,22 @@ export class RtcPeerMesh {
 
   async leave(): Promise<void> {
     this.stopPolling();
-    if (this.myId) {
+    this.pollInFlight = false;
+    const peerId = this.myId;
+    const sessionKey = this.sessionKey;
+    this.myId = null;
+    if (peerId) {
       try {
         await this.options.signaling.leave({
           room: this.options.room,
-          peerId: this.myId,
-          sessionKey: this.sessionKey ?? undefined,
+          peerId,
+          sessionKey: sessionKey ?? undefined,
         });
       } catch {
         // Ignore leave failures during cleanup.
       }
     }
     for (const id of [...this.peers.keys()]) this.removePeer(id);
-    this.myId = null;
     this.myName = "";
     this.sessionKey = null;
     this.lastMsgId = 0;
