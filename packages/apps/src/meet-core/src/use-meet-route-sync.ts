@@ -32,6 +32,9 @@ export function useMeetRouteSync() {
   const onRoomChange = useCallback(
     (roomCode: string | null) => {
       if (typeof window === "undefined") return;
+      // Match useMeetRoomState history.replaceState: only sync when a call room is active.
+      // Skipping null avoids stripping ?room= from guest invite links on initial mount.
+      if (!roomCode) return;
       const currentRoom = meetRoomFromSearch(
         parseMeetRouteSearch(search as Record<string, unknown>),
       );
