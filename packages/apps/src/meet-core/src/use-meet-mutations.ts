@@ -47,7 +47,8 @@ export function useMeetMutations({
       room.roomCodeRef.current = null;
       room.selfIdRef.current = null;
     },
-    [meetRtc, room, stopLocalMedia],
+    // Room setters/refs are stable; omit the room object to avoid recreating leave every render.
+    [meetRtc, stopLocalMedia],
   );
   leaveRef.current = leave;
 
@@ -245,9 +246,9 @@ export function useMeetMutations({
 
   useEffect(() => {
     return () => {
-      void leave();
+      void leaveRef.current?.();
     };
-  }, [leave]);
+  }, [leaveRef]);
 
   useEffect(() => {
     const isMeetingActive =

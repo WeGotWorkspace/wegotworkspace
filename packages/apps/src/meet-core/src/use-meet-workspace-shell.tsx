@@ -117,7 +117,7 @@ export function useMeetWorkspaceShell({
     void controller.ensureLocalMedia().catch(() => {
       // Keep lobby usable if the user declines camera/mic permissions.
     });
-  }, [controller, showInviteCheckingScreen, showMissingInviteScreen]);
+  }, [controller.ensureLocalMedia, showInviteCheckingScreen, showMissingInviteScreen]);
 
   const cameras = useMemo(
     () => normalizeMeetDeviceOptions("videoinput", controller.videoInputs),
