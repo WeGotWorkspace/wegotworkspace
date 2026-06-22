@@ -2,6 +2,7 @@ import { useCallback, useMemo } from "react";
 import { useNavigate, useRouterState, useSearch } from "@tanstack/react-router";
 import {
   buildMeetGuestCallLink,
+  meetIsJoinRoute,
   meetRoomFromSearch,
   meetSearchFromRoom,
   parseMeetRouteSearch,
@@ -23,6 +24,8 @@ export function useMeetRouteSync() {
     () => meetRoomFromSearch(parseMeetRouteSearch(search as Record<string, unknown>)),
     [search],
   );
+
+  const isJoinRoute = useMemo(() => meetIsJoinRoute(pathname), [pathname]);
 
   const buildCallLink = useCallback((roomCode: string) => {
     if (typeof window === "undefined") return buildMeetGuestCallLink(roomCode);
@@ -49,5 +52,5 @@ export function useMeetRouteSync() {
     [navigate, pathname, search],
   );
 
-  return { invitedRoom, buildCallLink, onRoomChange };
+  return { invitedRoom, isJoinRoute, buildCallLink, onRoomChange };
 }
