@@ -63,6 +63,8 @@ pnpm test:meet-api
 | Initiator | Meet uses `higherId` (lexicographic peer id) |
 | Guest tabs | Unauthenticated fetch + `sessionKey` on poll/send/chat |
 
+**Poll cadence:** connecting 400 ms; active steady 1200 ms (chat, knock/admit, roster). When all media peers are connected and no knockers are waiting, meet idles at **4 s** — lighter than collab's 15 s idle backoff but still responsive for control messages.
+
 Debug: `?rtcDebug=1` on URL. Relay-only dev: `?rtcForceRelay=1` or `VITE_WGW_RTC_FORCE_RELAY=1`.
 
 ## Storybook (mock-tier required)

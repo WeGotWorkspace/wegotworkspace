@@ -72,6 +72,10 @@ const DEFAULT_POLL_INTERVALS: RtcPollIntervals = {
   steadyMs: 1200,
 };
 const COLLAB_IDLE_POLL_INTERVAL_MS = 15000;
+/** Meet idle backoff when connected with no knockers — shorter than collab for chat/control UX. */
+const MEET_IDLE_POLL_INTERVAL_MS = 4000;
+/** Encoded knocker roster names — keep fast poll while guests wait for admit. */
+const MEET_KNOCK_ROSTER_PREFIX = "__wgw_knock__:";
 
 export class RtcPeerMesh {
   private myId: string | null = null;
@@ -589,15 +593,39 @@ export class RtcPeerMesh {
     return true;
   }
 
+  private hasKnockersInRoster(): boolean {
+    return this.lastRoomPeers.some((peer) => peer.name.startsWith(MEET_KNOCK_ROSTER_PREFIX));
+  }
+
+  private hasStableMeetTopology(): boolean {
+    if (this.options.channel !== "meet" || this.options.binding?.kind !== "media") return false;
+    if (!this.rtcSignalsEnabled()) return false;
+    if (this.hasKnockersInRoster()) return false;
+    const activePeers = this.lastRoomPeers.filter(
+      (peer) => !peer.name.startsWith(MEET_KNOCK_ROSTER_PREFIX),
+    );
+    for (const peer of activePeers) {
+      const entry = this.peers.get(peer.id);
+      if (!entry || this.linkState(entry) !== "connected") return false;
+    }
+    return true;
+  }
+
+  private steadyPollDelayMs(intervals: RtcPollIntervals): number {
+    if (this.hasStableCollabTopology()) {
+      return Math.max(intervals.steadyMs, COLLAB_IDLE_POLL_INTERVAL_MS);
+    }
+    if (this.hasStableMeetTopology()) {
+      return Math.max(intervals.steadyMs, MEET_IDLE_POLL_INTERVAL_MS);
+    }
+    return intervals.steadyMs;
+  }
+
   private schedulePoll(steady = false): void {
     if (!this.myId) return;
     this.stopPolling();
     const intervals = this.pollIntervals();
-    const delay = !steady
-      ? intervals.connectingMs
-      : this.hasStableCollabTopology()
-        ? Math.max(intervals.steadyMs, COLLAB_IDLE_POLL_INTERVAL_MS)
-        : intervals.steadyMs;
+    const delay = !steady ? intervals.connectingMs : this.steadyPollDelayMs(intervals);
     this.pollTimer = this.scheduleTimeout(() => {
       void this.pollOnce()
         .catch((error) => {

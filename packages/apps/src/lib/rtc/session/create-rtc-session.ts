@@ -10,6 +10,7 @@ import {
 } from "@/lib/rtc/signaling/create-client";
 import {
   DEFAULT_RTC_POLL_INTERVALS,
+  MEET_RTC_POLL_INTERVALS,
   type RtcPollIntervals,
   type RtcSettings,
   type SignalingChannel,
@@ -47,6 +48,10 @@ const CHANNEL_INITIATOR: Partial<Record<SignalingChannel, InitiatorRule>> = {
   meet: "higherId",
 };
 
+const CHANNEL_POLL_INTERVALS: Partial<Record<SignalingChannel, RtcPollIntervals>> = {
+  meet: MEET_RTC_POLL_INTERVALS,
+};
+
 /** Configure `RtcPeerMesh` + `HttpSignalingClient` for a signaling channel. */
 export function createRtcSession(options: CreateRtcSessionOptions): RtcPeerMesh {
   const signaling = createRtcSignalingClient({
@@ -60,7 +65,10 @@ export function createRtcSession(options: CreateRtcSessionOptions): RtcPeerMesh 
     signaling,
     rtcSettings: options.rtcSettings,
     binding: options.binding,
-    pollIntervals: options.pollIntervals ?? DEFAULT_RTC_POLL_INTERVALS,
+    pollIntervals:
+      options.pollIntervals ??
+      CHANNEL_POLL_INTERVALS[options.channel] ??
+      DEFAULT_RTC_POLL_INTERVALS,
     iceCandidatePoolSize: options.iceCandidatePoolSize,
     initiatorRule: options.initiatorRule ?? CHANNEL_INITIATOR[options.channel] ?? "lowerId",
     recoverOnUnknownPeer: options.recoverOnUnknownPeer ?? true,
