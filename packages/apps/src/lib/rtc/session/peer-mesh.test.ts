@@ -223,7 +223,6 @@ describe("RtcPeerMesh", () => {
       binding: {
         kind: "media",
         attach: () => new MediaStream(),
-        linkState: () => "connected",
       },
     });
 
@@ -254,7 +253,6 @@ describe("RtcPeerMesh", () => {
       binding: {
         kind: "media",
         attach: () => new MediaStream(),
-        linkState: () => "connected",
       },
     });
 
@@ -280,7 +278,6 @@ describe("RtcPeerMesh", () => {
       binding: {
         kind: "media",
         attach: () => new MediaStream(),
-        linkState: () => "connected",
       },
       shouldHandleRtcSignals: () => false,
     });
@@ -463,7 +460,7 @@ describe("RtcPeerMesh", () => {
     let resolvePoll: ((value: HttpSignalingPollResult) => void) | null = null;
     signaling.setPollHandler(
       () =>
-        new Promise((resolve) => {
+        new Promise<HttpSignalingPollResult>((resolve) => {
           resolvePoll = resolve;
         }),
     );
@@ -477,7 +474,7 @@ describe("RtcPeerMesh", () => {
 
     const leavePromise = mesh.leave();
     await flushAsyncWork();
-    resolvePoll?.({ peers: [], messages: [] });
+    resolvePoll!({ peers: [], messages: [] });
     await leavePromise;
     await flushAsyncWork();
 
@@ -513,7 +510,7 @@ describe("RtcPeerMesh", () => {
     let resolvePoll: ((value: HttpSignalingPollResult) => void) | null = null;
     signaling.client.poll.mockImplementation(
       () =>
-        new Promise((resolve) => {
+        new Promise<HttpSignalingPollResult>((resolve) => {
           resolvePoll = resolve;
         }),
     );
@@ -532,7 +529,7 @@ describe("RtcPeerMesh", () => {
 
     expect(signaling.client.poll).toHaveBeenCalledTimes(1);
 
-    resolvePoll?.({ peers: [], messages: [] });
+    resolvePoll!({ peers: [], messages: [] });
     await flushAsyncWork();
     await mesh.leave();
   });
