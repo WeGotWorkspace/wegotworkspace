@@ -7,13 +7,20 @@ import {
   selectedMeetDeviceOptionId,
 } from "@/meet-core/src/meet-device-utils";
 import { meetLabels } from "@/meet-core/src/meet-labels";
+import { meetCallExitMode } from "@/meet-core/src/meet-route-search";
 import { playMeetKnockSound } from "@/meet-core/src/meet-chat-utils";
 import type { MeetWorkspaceProps } from "@/meet-core/src/meet-workspace-props";
 import { useMeetController } from "@/meet-core/src/use-meet-controller";
 
 type MeetWorkspaceShellInput = Pick<
   MeetWorkspaceProps,
-  "data" | "session" | "operations" | "invitedRoom" | "buildCallLink" | "onRoomChange"
+  | "data"
+  | "session"
+  | "operations"
+  | "invitedRoom"
+  | "isJoinRoute"
+  | "buildCallLink"
+  | "onRoomChange"
 >;
 
 export function useMeetWorkspaceShell({
@@ -21,6 +28,7 @@ export function useMeetWorkspaceShell({
   session,
   operations,
   invitedRoom = null,
+  isJoinRoute = false,
   buildCallLink,
   onRoomChange,
 }: MeetWorkspaceShellInput) {
@@ -54,8 +62,8 @@ export function useMeetWorkspaceShell({
   const showMissingInviteScreen = isGuestInviteFlow && guestInviteState === "missing";
   const showInviteCheckingScreen = isGuestInviteFlow && guestInviteState === "checking";
 
-  const callExitLabel =
-    inJoinFlow || !hasSignedInIdentity ? meetLabels.leaveCall : meetLabels.endCall;
+  const callExitMode = meetCallExitMode(isJoinRoute, hasSignedInIdentity);
+  const callExitLabel = callExitMode === "leave" ? meetLabels.leaveCall : meetLabels.endCall;
   const callExitTitle =
     callExitLabel === meetLabels.leaveCall ? meetLabels.leaveCallTitle : meetLabels.endCallTitle;
   const callExitDescription =
@@ -117,7 +125,7 @@ export function useMeetWorkspaceShell({
     void controller.ensureLocalMedia().catch(() => {
       // Keep lobby usable if the user declines camera/mic permissions.
     });
-  }, [controller, showInviteCheckingScreen, showMissingInviteScreen]);
+  }, [controller.ensureLocalMedia, showInviteCheckingScreen, showMissingInviteScreen]);
 
   const cameras = useMemo(
     () => normalizeMeetDeviceOptions("videoinput", controller.videoInputs),
