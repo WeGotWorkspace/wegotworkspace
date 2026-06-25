@@ -1,3 +1,5 @@
+@import "./text-editor-source.css";
+
 /* Parent-scoped tokens for the text editor workspace */
 .text-editor {
   --text-editor-sheet: oklch(1 0 0);
@@ -874,110 +876,6 @@
   margin: 0;
   background: transparent;
   box-shadow: none;
-}
-
-.text-editor-source {
-  --text-editor-source-font-size: 0.875rem;
-  --text-editor-source-line-height: 1.55;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  min-width: 0;
-  overflow: hidden;
-  background: var(--text-editor-sheet, oklch(1 0 0));
-}
-
-.text-editor-source__layout {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  align-items: stretch;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.text-editor-source__gutter {
-  flex: 0 0 auto;
-  overflow: hidden;
-  border-right: 1px solid var(--border);
-  padding: 0.75rem 0.625rem 0.75rem 0.75rem;
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: var(--text-editor-source-font-size, 0.875rem);
-  line-height: var(--text-editor-source-line-height, 1.55);
-  color: var(--muted-foreground);
-  text-align: left;
-  user-select: none;
-}
-
-.text-editor-source__gutter-line {
-  display: block;
-  box-sizing: border-box;
-  line-height: var(--text-editor-source-line-height, 1.55);
-}
-
-.text-editor-source__input-wrap {
-  position: relative;
-  flex: 1 1 0;
-  width: 0;
-  min-width: 0;
-  min-height: 0;
-  align-self: stretch;
-}
-
-.text-editor-source__input {
-  box-sizing: border-box;
-  display: block;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  resize: none;
-  border: 0;
-  background: transparent;
-  padding: 0.75rem 1rem;
-  margin: 0;
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: var(--text-editor-source-font-size, 0.875rem);
-  line-height: var(--text-editor-source-line-height, 1.55);
-  color: var(--foreground);
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
-  word-break: break-word;
-  overflow-x: hidden;
-  overflow-y: auto;
-  tab-size: 2;
-  appearance: none;
-}
-
-.text-editor-source__mirror {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  visibility: hidden;
-  pointer-events: none;
-  box-sizing: border-box;
-  padding: 0.75rem 1rem;
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: var(--text-editor-source-font-size, 0.875rem);
-  line-height: var(--text-editor-source-line-height, 1.55);
-}
-
-.text-editor-source__mirror-line {
-  display: block;
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
-  word-break: break-word;
-}
-
-.text-editor-source__input:focus {
-  outline: none;
-}
-
-.text-editor-source__input:read-only {
-  cursor: default;
-  opacity: 0.85;
 }
 
 @media (min-width: 48rem) and (orientation: landscape) {

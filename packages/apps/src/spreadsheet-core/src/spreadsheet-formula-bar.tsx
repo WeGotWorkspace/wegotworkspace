@@ -1,0 +1,154 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
+import { colLetter } from "@/spreadsheet-core/src/ycsv/ycsv";
+import { FormulaTokens, useScrollSync } from "@/spreadsheet-core/src/formula-highlight";
+import { computeSuggestions, SuggestionList } from "@/spreadsheet-core/src/formula-suggest";
+import type { SpreadsheetController } from "@/spreadsheet-core/src/use-spreadsheet-controller";
+
+export function SpreadsheetFormulaBar({ controller }: { controller: SpreadsheetController }) {
+  const {
+    labels,
+    activeCell,
+    activeRaw,
+    columnSettings,
+    defs,
+    fbEditing,
+    fbDraft,
+    setFbDraft,
+    fbCaret,
+    setFbCaret,
+    beginFormulaEdit,
+    cancelFormulaEdit,
+    commitFormulaBar,
+    picking,
+  } = controller;
+
+  const inputRef = useRef<HTMLInputElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const [activeSuggestion, setActiveSuggestion] = useState(0);
+  useScrollSync(inputRef, overlayRef);
+
+  const value = fbEditing ? fbDraft : activeRaw;
+
+  const cellLabel = useMemo(() => {
+    if (!activeCell) return "";
+    const cs = columnSettings[activeCell.column];
+    const letter =
+      cs?.ref && /^[a-z][a-z0-9_]*$/.test(cs.ref) ? cs.ref : colLetter(activeCell.column);
+    return `${letter}${activeCell.row + 1}`;
+  }, [activeCell, columnSettings]);
+
+  const consts = useMemo(() => new Set(Object.keys(defs)), [defs]);
+  const refs = useMemo(
+    () => new Set(columnSettings.filter((c) => c.ref).map((c) => c.ref!)),
+    [columnSettings],
+  );
+
+  const suggestions = useMemo(
+    () => (fbEditing ? computeSuggestions(fbDraft, fbCaret, defs, columnSettings) : []),
+    [columnSettings, defs, fbCaret, fbDraft, fbEditing],
+  );
+  useEffect(() => setActiveSuggestion(0), [suggestions.length]);
+
+  // Keep the native caret in sync when picking inserts refs programmatically.
+  useEffect(() => {
+    if (!fbEditing) return;
+    const el = inputRef.current;
+    if (el && document.activeElement === el) {
+      el.setSelectionRange(fbCaret, fbCaret);
+    }
+  }, [fbCaret, fbDraft, fbEditing]);
+
+  const applySuggestion = (i: number) => {
+    const s = suggestions[i];
+    if (!s) return;
+    const before = fbDraft.slice(0, fbCaret - s.tokenLen);
+    const after = fbDraft.slice(fbCaret);
+    const next = before + s.insert + after;
+    setFbDraft(next);
+    setFbCaret(before.length + s.insert.length);
+    requestAnimationFrame(() => inputRef.current?.focus());
+  };
+
+  const showSuggestions = fbEditing && suggestions.length > 0;
+  const isFormula = value.startsWith("=");
+
+  return (
+    <div
+      className={cn(
+        "spreadsheet-formula-bar",
+        picking && "spreadsheet-formula-bar--picking",
+        isFormula && "spreadsheet-formula-bar--formula",
+      )}
+    >
+      <span className="spreadsheet-formula-bar__cell">{cellLabel || "—"}</span>
+      <div className="spreadsheet-formula-bar__field">
+        <FormulaTokens
+          value={value}
+          consts={consts}
+          refs={refs}
+          className="spreadsheet-formula-bar__tokens"
+        />
+        <input
+          ref={inputRef}
+          className={cn(
+            "spreadsheet-formula-bar__input",
+            isFormula && "spreadsheet-formula-bar__input--formula",
+          )}
+          value={value}
+          placeholder={labels.formulaBarPlaceholder}
+          disabled={!activeCell}
+          spellCheck={false}
+          onFocus={() => {
+            if (!fbEditing) beginFormulaEdit();
+          }}
+          onChange={(e) => {
+            if (!fbEditing) beginFormulaEdit();
+            setFbDraft(e.target.value);
+            setFbCaret(e.target.selectionStart ?? e.target.value.length);
+          }}
+          onClick={(e) => setFbCaret((e.target as HTMLInputElement).selectionStart ?? 0)}
+          onKeyUp={(e) => setFbCaret((e.target as HTMLInputElement).selectionStart ?? 0)}
+          onKeyDown={(e) => {
+            if (showSuggestions) {
+              if (e.key === "ArrowDown") {
+                e.preventDefault();
+                setActiveSuggestion((i) => (i + 1) % suggestions.length);
+                return;
+              }
+              if (e.key === "ArrowUp") {
+                e.preventDefault();
+                setActiveSuggestion((i) => (i - 1 + suggestions.length) % suggestions.length);
+                return;
+              }
+              if (e.key === "Tab") {
+                e.preventDefault();
+                applySuggestion(activeSuggestion);
+                return;
+              }
+            }
+            if (e.key === "Enter") {
+              e.preventDefault();
+              if (showSuggestions) applySuggestion(activeSuggestion);
+              else commitFormulaBar(fbDraft);
+            } else if (e.key === "Escape") {
+              e.preventDefault();
+              cancelFormulaEdit();
+              inputRef.current?.blur();
+            }
+          }}
+        />
+        {showSuggestions ? (
+          <SuggestionList
+            className="spreadsheet-formula-bar__suggest"
+            suggestions={suggestions}
+            activeIdx={activeSuggestion}
+            onPick={applySuggestion}
+            onHover={setActiveSuggestion}
+          />
+        ) : null}
+      </div>
+      {picking ? <span className="spreadsheet-formula-bar__hint">{labels.pickingHint}</span> : null}
+    </div>
+  );
+}

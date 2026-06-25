@@ -19,3 +19,4 @@ export type ViewKey =
   | { type: "shared" };
 
 export const DOCS_EDITOR_EXTENSIONS = new Set(["md", "markdown", "txt"]);
+export const SPREADSHEET_EDITOR_EXTENSIONS = new Set(["ycsv"]);

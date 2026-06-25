@@ -9,7 +9,11 @@ import {
   normalizeApiVirtualPath,
   uiPathFromApiPath,
 } from "@/drive-core/src/drive-path-utils";
-import { formatBytesCompact, suggestNewMarkdownFileName } from "@/drive-core/src/drive-file-utils";
+import {
+  formatBytesCompact,
+  suggestNewMarkdownFileName,
+  suggestNewSpreadsheetFileName,
+} from "@/drive-core/src/drive-file-utils";
 import { driveFileFromEntry } from "@/drive-core/src/drive-file-utils";
 import type { DriveUploadProgress } from "@/drive-core/src/drive-types";
 import { useDriveBatchActions } from "@/drive-core/src/use-drive-batch-actions";
@@ -22,9 +26,15 @@ export type UseDriveMutationsArgs = {
   shell: DriveShellState;
   list: DriveListState;
   onOpenDocsFile?: (apiPath: string) => void;
+  onOpenSpreadsheetFile?: (apiPath: string) => void;
 };
 
-export function useDriveMutations({ shell, list, onOpenDocsFile }: UseDriveMutationsArgs) {
+export function useDriveMutations({
+  shell,
+  list,
+  onOpenDocsFile,
+  onOpenSpreadsheetFile,
+}: UseDriveMutationsArgs) {
   const { show, showError } = useAppToast();
 
   const {
@@ -464,6 +474,63 @@ export function useDriveMutations({ shell, list, onOpenDocsFile }: UseDriveMutat
     view,
   ]);
 
+  const createSpreadsheet = useCallback(() => {
+    if (!onOpenSpreadsheetFile) return;
+    const targetParent = view.type === "folder" ? view.path : "My Drive";
+    const name = suggestNewSpreadsheetFileName(files);
+    const cwd = apiPathFromUiPath(targetParent, currentUsername, groupRootNames);
+    const apiPath = normalizeApiVirtualPath(`${cwd}/${name}`);
+
+    if (operations) {
+      void operations
+        .createFile({ cwd, name })
+        .then((nextData) => {
+          setFiles(
+            nextData.directory.files.map((entry) => driveFileFromEntry(entry, currentUsername)),
+          );
+          commitView({ type: "folder", path: uiPathFromApiPath(nextData.cwd, currentUsername) });
+          onOpenSpreadsheetFile(apiPath);
+        })
+        .catch((error: unknown) => {
+          const message = error instanceof Error ? error.message : String(error);
+          showError(message);
+        });
+      return;
+    }
+
+    const id = `f-${Date.now()}`;
+    setFiles((previous) => [
+      {
+        id,
+        notebook: "File · 0 KB",
+        category: "File",
+        date: "Now",
+        title: name,
+        excerpt: apiPath,
+        body: [],
+        tags: [],
+        wordCount: 0,
+        parent: targetParent,
+        kind: "doc",
+        size: "0 KB",
+        apiPath,
+      },
+      ...previous,
+    ]);
+    show(`Created “${name}”`, { icon: <ScrollText className="size-4" /> });
+    onOpenSpreadsheetFile(apiPath);
+  }, [
+    commitView,
+    currentUsername,
+    files,
+    groupRootNames,
+    onOpenSpreadsheetFile,
+    operations,
+    show,
+    showError,
+    view,
+  ]);
+
   useEffect(() => {
     return () => {
       if (uploadProgressResetTimerRef.current !== null) {
@@ -541,6 +608,7 @@ export function useDriveMutations({ shell, list, onOpenDocsFile }: UseDriveMutat
     createFolder,
     submitCreateFolder,
     createMarkdown,
+    createSpreadsheet,
     createBlank,
     createFromTemplate,
     resetRenameDialog,

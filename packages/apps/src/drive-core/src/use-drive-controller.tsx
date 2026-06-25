@@ -15,6 +15,7 @@ export type UseDriveControllerArgs = {
   view?: ViewKey;
   onViewChange?: (view: ViewKey) => void;
   onOpenDocsFile?: (apiPath: string) => void;
+  onOpenSpreadsheetFile?: (apiPath: string) => void;
   onNavigate?: (href: string) => void;
 };
 
@@ -30,6 +31,7 @@ export function useDriveController({
   view,
   onViewChange,
   onOpenDocsFile,
+  onOpenSpreadsheetFile,
   onNavigate,
 }: UseDriveControllerArgs) {
   const shell = useDriveShell({
@@ -41,8 +43,8 @@ export function useDriveController({
     onViewChange,
     onNavigate,
   });
-  const list = useDriveList({ shell, onOpenDocsFile });
-  const mutations = useDriveMutations({ shell, list, onOpenDocsFile });
+  const list = useDriveList({ shell, onOpenDocsFile, onOpenSpreadsheetFile });
+  const mutations = useDriveMutations({ shell, list, onOpenDocsFile, onOpenSpreadsheetFile });
   const resetRenameRef = useRef(mutations.resetRenameDialog);
   resetRenameRef.current = mutations.resetRenameDialog;
 
@@ -177,6 +179,7 @@ export function useDriveController({
     createFolder: mutations.createFolder,
     submitCreateFolder: mutations.submitCreateFolder,
     createMarkdown: mutations.createMarkdown,
+    createSpreadsheet: mutations.createSpreadsheet,
     createBlank: mutations.createBlank,
     createFromTemplate: mutations.createFromTemplate,
     newFileTemplates: shell.newFileTemplates,

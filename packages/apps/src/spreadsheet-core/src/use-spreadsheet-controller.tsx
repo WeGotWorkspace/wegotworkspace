@@ -1,0 +1,500 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Check, Pencil } from "lucide-react";
+import { useAppToast } from "@/hooks/use-app-toast";
+import { parentAndName } from "@/lib/files/api-path";
+import { joinFileNameForRename, splitFileNameForRename } from "@/lib/files/filename-rename";
+import {
+  mergeSpreadsheetLabels,
+  type SpreadsheetUILabels,
+} from "@/spreadsheet-core/src/spreadsheet-labels";
+import type {
+  SpreadsheetAPIOperations,
+  SpreadsheetDocument,
+} from "@/spreadsheet-core/src/spreadsheet-types";
+import {
+  colLetter,
+  matrixToSheet,
+  parseYcsv,
+  serializeYcsv,
+  sheetToMatrix,
+  YCSV_VERSION,
+  type ColumnSetting,
+  type Defs,
+  type ParsedSheet,
+  type ParsedWorkbook,
+} from "@/spreadsheet-core/src/ycsv/ycsv";
+import { OPEN_TOKEN_RE } from "@/spreadsheet-core/src/formula-suggest";
+import { evaluateWorkbook } from "@/spreadsheet-core/src/ycsv/ycsv-formula-engine";
+import type { SpreadsheetGridSelection } from "@/spreadsheet-core/src/spreadsheet-grid";
+
+const SAVE_DEBOUNCE_MS = 2500;
+const AUTO_SAVE_TOAST_DEBOUNCE_MS = 1200;
+const AUTO_SAVE_TOAST_THROTTLE_MS = 8000;
+
+const EMPTY_YCSV = `---\nycsv_version: ${YCSV_VERSION}\n---\n`;
+
+type UseSpreadsheetControllerArgs = {
+  filePath: string | null;
+  labels?: Partial<SpreadsheetUILabels>;
+  operations?: SpreadsheetAPIOperations;
+  /** Mock bootstrap document when no `filePath` (Storybook). */
+  initialDocument?: SpreadsheetDocument | null;
+  onFileRenamed?: (apiPath: string) => void;
+};
+
+function fileNameFromApiPath(apiPath: string): string {
+  return parentAndName(apiPath).from;
+}
+
+function resolveActiveApiPath(
+  filePath: string | null,
+  document: SpreadsheetDocument | null,
+  initialDocument: SpreadsheetDocument | null,
+): string | null {
+  return filePath ?? document?.apiPath ?? initialDocument?.apiPath ?? null;
+}
+
+/** Rebuild a workbook with the active sheet's rows replaced from a matrix. */
+function workbookWithSheetMatrix(
+  workbook: ParsedWorkbook,
+  sheetIndex: number,
+  matrix: { value?: string }[][],
+): ParsedWorkbook {
+  const { rows } = matrixToSheet(matrix, { trimTrailingBlankRows: false });
+  const sheets = workbook.sheets.map((sheet, i) => (i === sheetIndex ? { ...sheet, rows } : sheet));
+  return { ...workbook, sheets };
+}
+
+function workbookWithActiveSheet(
+  workbook: ParsedWorkbook,
+  sheetIndex: number,
+  nextSheet: ParsedSheet,
+): ParsedWorkbook {
+  return {
+    ...workbook,
+    sheets: workbook.sheets.map((sheet, i) => (i === sheetIndex ? nextSheet : sheet)),
+  };
+}
+
+export function useSpreadsheetController({
+  filePath,
+  labels,
+  operations,
+  initialDocument = null,
+  onFileRenamed,
+}: UseSpreadsheetControllerArgs) {
+  const L = useMemo(() => mergeSpreadsheetLabels(labels), [labels]);
+  const { show, showError } = useAppToast();
+
+  const [document, setDocument] = useState<SpreadsheetDocument | null>(initialDocument);
+  const [source, setSource] = useState(() => initialDocument?.content ?? EMPTY_YCSV);
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [parseError, setParseError] = useState<string | null>(null);
+  const [activeSheetIndex, setActiveSheetIndex] = useState(0);
+  const [activeCell, setActiveCell] = useState<{ row: number; column: number } | null>(null);
+  const [selection, setSelection] = useState<SpreadsheetGridSelection>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveInFlightRef = useRef(false);
+  const pendingContentRef = useRef<string | null>(null);
+  const autoSaveToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastAutoSaveToastAtRef = useRef(0);
+  const latestPathRef = useRef<string | null>(
+    resolveActiveApiPath(filePath, null, initialDocument),
+  );
+
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [renameName, setRenameName] = useState("");
+  const [renameExtension, setRenameExtension] = useState("");
+  const [renamePending, setRenamePending] = useState(false);
+  /** Preserves structural edits (e.g. trailing empty rows) that YCSV re-parse would drop. */
+  const [workbookOverride, setWorkbookOverride] = useState<ParsedWorkbook | null>(null);
+
+  const workbookFromSource = useMemo<ParsedWorkbook>(() => {
+    try {
+      return parseYcsv(source);
+    } catch {
+      return parseYcsv(EMPTY_YCSV);
+    }
+  }, [source]);
+
+  const workbook = workbookOverride ?? workbookFromSource;
+
+  const computed = useMemo(() => {
+    try {
+      return evaluateWorkbook(workbook);
+    } catch {
+      return workbook.sheets.map(() => []);
+    }
+  }, [workbook]);
+
+  const sheetCount = workbook.sheets.length;
+  const safeSheetIndex = Math.min(activeSheetIndex, Math.max(0, sheetCount - 1));
+  const activeSheet = workbook.sheets[safeSheetIndex];
+
+  const rawData = useMemo(() => (activeSheet ? sheetToMatrix(activeSheet) : [[]]), [activeSheet]);
+  const activeComputed = computed[safeSheetIndex] ?? [];
+  const columnSettings = useMemo<ColumnSetting[]>(
+    () => activeSheet?.columnSettings ?? [],
+    [activeSheet],
+  );
+  const defs = useMemo<Defs>(() => activeSheet?.defs ?? {}, [activeSheet]);
+
+  const queueAutoSaveToast = useCallback(() => {
+    if (autoSaveToastTimerRef.current) clearTimeout(autoSaveToastTimerRef.current);
+    autoSaveToastTimerRef.current = setTimeout(() => {
+      const now = Date.now();
+      if (now - lastAutoSaveToastAtRef.current < AUTO_SAVE_TOAST_THROTTLE_MS) {
+        autoSaveToastTimerRef.current = null;
+        return;
+      }
+      lastAutoSaveToastAtRef.current = now;
+      show(L.toastSaved, { icon: <Check className="size-4" /> });
+      autoSaveToastTimerRef.current = null;
+    }, AUTO_SAVE_TOAST_DEBOUNCE_MS);
+  }, [L.toastSaved, show]);
+
+  const flushSave = useCallback(async () => {
+    const path = latestPathRef.current;
+    const nextContent = pendingContentRef.current;
+    if (!path || nextContent == null || !operations || saveInFlightRef.current) return;
+    saveInFlightRef.current = true;
+    pendingContentRef.current = null;
+    try {
+      await operations.saveFile(path, nextContent);
+      queueAutoSaveToast();
+    } catch {
+      showError(L.saveError);
+      pendingContentRef.current = nextContent;
+    } finally {
+      saveInFlightRef.current = false;
+      if (pendingContentRef.current != null) void flushSave();
+    }
+  }, [L.saveError, operations, queueAutoSaveToast, showError]);
+
+  const scheduleSave = useCallback(
+    (nextContent: string) => {
+      if (!latestPathRef.current || !operations) return;
+      pendingContentRef.current = nextContent;
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(() => {
+        saveTimerRef.current = null;
+        void flushSave();
+      }, SAVE_DEBOUNCE_MS);
+    },
+    [flushSave, operations],
+  );
+
+  useEffect(() => {
+    latestPathRef.current = resolveActiveApiPath(filePath, document, initialDocument);
+  }, [document, filePath, initialDocument]);
+
+  useEffect(() => {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+    pendingContentRef.current = null;
+    setActiveSheetIndex(0);
+    setActiveCell(null);
+    setSelection(null);
+    setParseError(null);
+    setWorkbookOverride(null);
+
+    if (!filePath) {
+      setDocument(initialDocument);
+      setSource(initialDocument?.content ?? EMPTY_YCSV);
+      setLoadError(false);
+      setLoading(false);
+      return;
+    }
+    if (!operations) {
+      setDocument(null);
+      setSource(EMPTY_YCSV);
+      setLoadError(false);
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    setLoadError(false);
+    void operations
+      .loadFile(filePath)
+      .then((loaded) => {
+        if (cancelled) return;
+        const content = loaded.trim() ? loaded : EMPTY_YCSV;
+        setDocument({
+          apiPath: filePath,
+          fileName: fileNameFromApiPath(filePath),
+          content,
+        });
+        setSource(content);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setDocument(null);
+        setSource(EMPTY_YCSV);
+        setLoadError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [filePath, initialDocument, operations]);
+
+  useEffect(
+    () => () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      if (autoSaveToastTimerRef.current) clearTimeout(autoSaveToastTimerRef.current);
+      const pending = pendingContentRef.current;
+      if (pending != null && latestPathRef.current && operations) {
+        void operations.saveFile(latestPathRef.current, pending).catch(() => {});
+      }
+    },
+    [operations],
+  );
+
+  // Apply a new source string (from grid edits or the source editor) + autosave.
+  const applySource = useCallback(
+    (next: string) => {
+      setSource(next);
+      scheduleSave(next);
+    },
+    [scheduleSave],
+  );
+
+  const applyWorkbookChange = useCallback(
+    (nextWorkbook: ParsedWorkbook) => {
+      setWorkbookOverride(nextWorkbook);
+      applySource(serializeYcsv(nextWorkbook));
+    },
+    [applySource],
+  );
+
+  const writeCell = useCallback(
+    (row: number, column: number, value: string) => {
+      if (!activeSheet) return;
+      const matrix = sheetToMatrix(activeSheet).map((r) => r.map((c) => ({ value: c.value })));
+      while (matrix.length <= row) {
+        matrix.push(matrix[0]?.map(() => ({ value: "" })) ?? [{ value: "" }]);
+      }
+      const targetRow = matrix[row];
+      while (targetRow.length <= column) targetRow.push({ value: "" });
+      targetRow[column] = { value };
+      const nextWorkbook = workbookWithSheetMatrix(workbook, safeSheetIndex, matrix);
+      applyWorkbookChange(nextWorkbook);
+    },
+    [activeSheet, applyWorkbookChange, safeSheetIndex, workbook],
+  );
+
+  const addRow = useCallback(() => {
+    if (!activeSheet) return;
+    const colLen = Math.max(1, activeSheet.columnSettings.length);
+    const emptyRow = Array.from({ length: colLen }, () => "");
+    const nextSheet: ParsedSheet = { ...activeSheet, rows: [...activeSheet.rows, emptyRow] };
+    applyWorkbookChange(workbookWithActiveSheet(workbook, safeSheetIndex, nextSheet));
+  }, [activeSheet, applyWorkbookChange, safeSheetIndex, workbook]);
+
+  const addColumn = useCallback(() => {
+    if (!activeSheet) return;
+    const nextCol = activeSheet.columnSettings.length;
+    const ref = colLetter(nextCol);
+    const nextColumnSettings: ColumnSetting[] = [...activeSheet.columnSettings, { ref, name: ref }];
+    const nextSheet: ParsedSheet = {
+      ...activeSheet,
+      rows: activeSheet.rows.map((row) => [...row, ""]),
+      columnSettings: nextColumnSettings,
+      refs: nextColumnSettings.map((c) => c.ref!),
+      headers: nextColumnSettings.map((c) => c.name ?? c.ref!),
+    };
+    applyWorkbookChange(workbookWithActiveSheet(workbook, safeSheetIndex, nextSheet));
+  }, [activeSheet, applyWorkbookChange, safeSheetIndex, workbook]);
+
+  const onSourceChange = useCallback(
+    (next: string) => {
+      setWorkbookOverride(null);
+      try {
+        const parsed = parseYcsv(next);
+        setParseError(parsed.warnings.find((w) => w.includes("not valid YAML")) ?? null);
+      } catch {
+        setParseError(L.parseError);
+      }
+      applySource(next);
+    },
+    [L.parseError, applySource],
+  );
+
+  // Formula-bar editing of the active cell.
+  const activeRaw =
+    activeCell && rawData[activeCell.row]?.[activeCell.column]
+      ? (rawData[activeCell.row][activeCell.column].value ?? "")
+      : "";
+
+  const [fbEditing, setFbEditing] = useState(false);
+  const [fbDraft, setFbDraft] = useState("");
+  const [fbCaret, setFbCaret] = useState(0);
+
+  const beginFormulaEdit = useCallback(() => {
+    setFbDraft(activeRaw);
+    setFbCaret(activeRaw.length);
+    setFbEditing(true);
+  }, [activeRaw]);
+
+  const cancelFormulaEdit = useCallback(() => {
+    setFbEditing(false);
+    setFbDraft("");
+  }, []);
+
+  const commitFormulaBar = useCallback(
+    (value: string) => {
+      setFbEditing(false);
+      setFbDraft("");
+      if (!activeCell) return;
+      writeCell(activeCell.row, activeCell.column, value);
+    },
+    [activeCell, writeCell],
+  );
+
+  // Picking mode: editing a formula whose caret sits in an "open" reference slot.
+  const picking =
+    fbEditing && fbDraft.startsWith("=") && OPEN_TOKEN_RE.test(fbDraft.slice(0, fbCaret));
+
+  const insertRefAtCaret = useCallback(
+    (ref: string) => {
+      setFbDraft((prev) => {
+        const caret = Math.min(fbCaret, prev.length);
+        const next = prev.slice(0, caret) + ref + prev.slice(caret);
+        setFbCaret(caret + ref.length);
+        return next;
+      });
+    },
+    [fbCaret],
+  );
+
+  /** A1 / named ref for a clicked cell, used while picking in the formula bar. */
+  const refForCell = useCallback(
+    (row: number, column: number): string => {
+      const cs = columnSettings[column];
+      const named = cs?.ref && /^[a-z][a-z0-9_]*$/.test(cs.ref) ? cs.ref : colLetter(column);
+      return `${named}${row + 1}`;
+    },
+    [columnSettings],
+  );
+
+  const title = document?.fileName ?? (filePath ? fileNameFromApiPath(filePath) : "");
+
+  const openRenameDialog = useCallback(() => {
+    const { baseName, extension, hasExtension } = splitFileNameForRename(title);
+    setRenameName(baseName);
+    setRenameExtension(hasExtension ? extension : "");
+    setRenameDialogOpen(true);
+  }, [title]);
+
+  const closeRenameDialog = useCallback(() => {
+    if (renamePending) return;
+    setRenameDialogOpen(false);
+    setRenameName("");
+    setRenameExtension("");
+  }, [renamePending]);
+
+  const submitRename = useCallback(async () => {
+    const path = latestPathRef.current;
+    const nextName = renameExtension
+      ? joinFileNameForRename(renameName, renameExtension)
+      : renameName.trim();
+    if (!path || !nextName || nextName === title || !operations?.renameFile) {
+      closeRenameDialog();
+      return;
+    }
+    setRenamePending(true);
+    try {
+      const nextPath = await operations.renameFile(path, nextName);
+      setDocument((current) =>
+        current ? { ...current, apiPath: nextPath, fileName: nextName } : current,
+      );
+      latestPathRef.current = nextPath;
+      onFileRenamed?.(nextPath);
+      show(`Renamed to “${nextName}”`, { icon: <Pencil className="size-4" /> });
+      setRenameDialogOpen(false);
+      setRenameName("");
+      setRenameExtension("");
+    } catch {
+      showError(L.renameError);
+    } finally {
+      setRenamePending(false);
+    }
+  }, [
+    closeRenameDialog,
+    L.renameError,
+    onFileRenamed,
+    operations,
+    renameExtension,
+    renameName,
+    show,
+    showError,
+    title,
+  ]);
+
+  return {
+    labels: L,
+    title,
+    loading,
+    loadError,
+    hasFile: !!filePath || !!initialDocument,
+    canRename: Boolean(
+      resolveActiveApiPath(filePath, document, initialDocument) && operations?.renameFile,
+    ),
+    source,
+    parseError,
+    onSourceChange,
+    workbook,
+    sheets: workbook.sheets,
+    activeSheetIndex: safeSheetIndex,
+    setActiveSheetIndex,
+    // Footer stats for the active sheet: column count and data-row count
+    // (YCSV `rows` are the data rows, excluding the header row).
+    columnCount: columnSettings.length,
+    rowCount: activeSheet?.rows.length ?? 0,
+    rawData,
+    computed: activeComputed,
+    columnSettings,
+    defs,
+    viewOffset: 1,
+    activeCell,
+    setActiveCell,
+    activeRaw,
+    selection,
+    setSelection,
+    writeCell,
+    addRow,
+    addColumn,
+    commitFormulaBar,
+    refForCell,
+    fbEditing,
+    fbDraft,
+    setFbDraft,
+    fbCaret,
+    setFbCaret,
+    beginFormulaEdit,
+    cancelFormulaEdit,
+    picking,
+    insertRefAtCaret,
+    sidebarOpen,
+    setSidebarOpen,
+    renameDialogOpen,
+    renameName,
+    setRenameName,
+    renameExtension,
+    renamePending,
+    openRenameDialog,
+    closeRenameDialog,
+    submitRename,
+  };
+}
+
+export type SpreadsheetController = ReturnType<typeof useSpreadsheetController>;
