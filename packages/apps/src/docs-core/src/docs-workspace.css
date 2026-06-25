@@ -82,6 +82,12 @@
   @apply flex shrink-0 flex-wrap items-center justify-end gap-1.5;
 }
 
+.docs-workspace__doc-status {
+  @apply truncate text-xs font-medium;
+  max-width: 16rem;
+  color: var(--docs-muted);
+}
+
 .docs-workspace__pending-sync {
   display: inline-flex;
   align-items: center;
