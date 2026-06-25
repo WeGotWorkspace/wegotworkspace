@@ -73,7 +73,15 @@ export function useMeetPollHandler({
       if (!selfPeerId) return;
 
       const pendingKnockers = listKnockersFromRoster(roster);
-      setKnockers(pendingKnockers);
+      setKnockers((prev) => {
+        if (
+          prev.length === pendingKnockers.length &&
+          prev.every((entry, index) => entry.id === pendingKnockers[index]?.id)
+        ) {
+          return prev;
+        }
+        return pendingKnockers;
+      });
       const pendingKnockerIds = new Set(pendingKnockers.map((peer) => peer.id));
       const activeRoster = buildActiveMeetRoster(roster, pendingKnockerIds);
       for (const [id, name] of activeRoster) {

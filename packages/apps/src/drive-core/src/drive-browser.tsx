@@ -47,6 +47,7 @@ export function DriveGridView({
   onMove,
   onTrash,
   searchActive: _searchActive = false,
+  showLocationColumn = false,
 }: {
   items: DriveFile[];
   imagePreviewUrls: Record<string, string>;
@@ -54,6 +55,8 @@ export function DriveGridView({
   starred: Record<string, boolean>;
   labels: DriveUILabels;
   searchActive?: boolean;
+  /** Show each file's drive location as a subtitle under the tile title. */
+  showLocationColumn?: boolean;
   inTrash: boolean;
   selectionMode: boolean;
   isTouch: boolean;
@@ -115,6 +118,7 @@ export function DriveGridView({
                 isStarred={!!starred[f.id]}
                 isDragging={isItemDragging(f.id)}
                 isTouch={isTouch}
+                showLocation={showLocationColumn}
                 itemDragHandlers={itemDragHandlers(f.id)}
                 onSelect={(e) => onSelect(f.id, e)}
                 onOpen={() => onOpen(f)}
@@ -266,6 +270,7 @@ function FileTile({
   isStarred,
   isDragging,
   isTouch,
+  showLocation = false,
   onSelect,
   onOpen,
   onLongPress,
@@ -284,6 +289,7 @@ function FileTile({
   isStarred: boolean;
   isDragging: boolean;
   isTouch: boolean;
+  showLocation?: boolean;
   itemDragHandlers: ItemDragHandlers;
   onSelect: (e: React.MouseEvent) => void;
   onOpen: () => void;
@@ -343,7 +349,12 @@ function FileTile({
       </div>
       <div className="drive-file-tile__footer">
         <span className="drive-file-tile__kind-icon shrink-0">{kindIcon[file.kind]}</span>
-        <span className="drive-file-tile__title">{file.title}</span>
+        <div className="drive-file-tile__text min-w-0 flex-1">
+          <span className="drive-file-tile__title">{file.title}</span>
+          {showLocation && file.location ? (
+            <span className="drive-file-tile__location">{file.location}</span>
+          ) : null}
+        </div>
         <DriveFileItemActions
           labels={labels}
           file={file}
@@ -427,6 +438,9 @@ export function DriveListView({
   onTrash,
   onLongPress,
   searchActive = false,
+  showLocationColumn = false,
+  locationColumnLabel = "Location",
+  showKindColumn = true,
 }: {
   items: DriveFile[];
   activeId: string | null;
@@ -436,6 +450,12 @@ export function DriveListView({
   isTouch: boolean;
   labels: DriveUILabels;
   searchActive?: boolean;
+  /** Show a Location column (between Name and Modified) for cross-drive listings. */
+  showLocationColumn?: boolean;
+  /** Header label for the optional Location column. */
+  locationColumnLabel?: string;
+  /** Show the "Kind" column. Defaults to `true`; Docs home hides it (all documents). */
+  showKindColumn?: boolean;
   inTrash: boolean;
   isItemDragging: (id: string) => boolean;
   itemDragHandlers: (id: string) => ItemDragHandlers;
@@ -457,8 +477,15 @@ export function DriveListView({
             <th className="drive-list-col-name drive-list-head__cell">
               {searchActive ? labels.searchViewTitle : labels.listColumnName}
             </th>
+            {showLocationColumn ? (
+              <th className="drive-list-col-location drive-list-head__cell hidden sm:table-cell">
+                {locationColumnLabel}
+              </th>
+            ) : null}
             <th className="drive-list-head__cell hidden sm:table-cell">Modified</th>
-            <th className="drive-list-head__cell hidden lg:table-cell">Kind</th>
+            {showKindColumn ? (
+              <th className="drive-list-head__cell hidden lg:table-cell">Kind</th>
+            ) : null}
             <th className="drive-list-col-size drive-list-head__cell drive-list-head__cell--align-end hidden sm:table-cell">
               Size
             </th>
@@ -542,10 +569,19 @@ export function DriveListView({
                     </div>
                   </div>
                 </td>
+                {showLocationColumn ? (
+                  <td className="drive-list-col-location py-2 hidden sm:table-cell drive-list-muted min-w-0">
+                    <span className="block truncate">{f.location ?? "—"}</span>
+                  </td>
+                ) : null}
                 <td className="py-2 hidden sm:table-cell tabular-nums drive-list-muted">
                   {f.date}
                 </td>
-                <td className="py-2 hidden lg:table-cell drive-list-muted">{KIND_LABEL[f.kind]}</td>
+                {showKindColumn ? (
+                  <td className="py-2 hidden lg:table-cell drive-list-muted">
+                    {KIND_LABEL[f.kind]}
+                  </td>
+                ) : null}
                 <td className="drive-list-col-size py-2 text-right tabular-nums drive-list-muted hidden sm:table-cell">
                   {f.size}
                 </td>

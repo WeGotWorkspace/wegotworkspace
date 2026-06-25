@@ -16,9 +16,9 @@ Shared browser RTC stack for **meet**, **docs**, and future **chat / sheet / sli
 | `session/create-rtc-session.ts` | `createRtcSession()` — signaling + mesh factory   |
 
 Meet uses `meet-core/src/meet-rtc-session.ts` + `use-meet-rtc.ts` (media binding, meet SDP sanitization).
-Docs uses `docs-collab/docs-rtc-session.ts` (data binding).
+Docs uses `text-editor-core/docs-collab/docs-rtc-session.ts` (data binding).
 
-Both use `DEFAULT_RTC_POLL_INTERVALS` and `recoverOnUnknownPeer: true` via `createRtcSession()`.
+Both use `recoverOnUnknownPeer: true` via `createRtcSession()`. Meet selects `MEET_RTC_POLL_INTERVALS` (400 ms connecting, 1200 ms active steady) and backs off to **4 s** when all media peers are connected and no knockers are waiting; collab data channels idle at **15 s**.
 
 Signaling uses `/api/v1/rooms/{roomId}/*` (`signalingApiSegment()` returns `rooms` in `types.ts`).
 

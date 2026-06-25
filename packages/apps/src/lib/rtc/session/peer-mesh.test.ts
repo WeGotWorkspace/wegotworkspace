@@ -210,12 +210,93 @@ describe("RtcPeerMesh", () => {
     setTimeoutSpy.mockRestore();
   });
 
-  it("keeps steady polling for non-collab channels", async () => {
+  it("backs off meet polling when topology is stable", async () => {
     const signaling = createMockSignaling({ peerId: "peer-a", peers: [] });
     const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout");
 
     const mesh = new RtcPeerMesh({
       channel: "meet",
+      room: "test-room",
+      signaling: signaling.client as unknown as HttpSignalingClient,
+      rtcSettings: RTC_SETTINGS,
+      pollIntervals: { connectingMs: 400, steadyMs: 1200 },
+      binding: {
+        kind: "media",
+        attach: () => new MediaStream(),
+      },
+    });
+
+    await mesh.join({ name: "Host", peerId: "peer-a" });
+    expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 400);
+
+    await vi.advanceTimersByTimeAsync(400);
+    await flushAsyncWork();
+
+    expect(setTimeoutSpy).toHaveBeenLastCalledWith(expect.any(Function), 4000);
+    await mesh.leave();
+    setTimeoutSpy.mockRestore();
+  });
+
+  it("keeps fast meet polling while knockers are waiting", async () => {
+    const signaling = createMockSignaling({
+      peerId: "peer-a",
+      peers: [{ id: "k1", name: "__wgw_knock__:Guest" }],
+    });
+    const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout");
+
+    const mesh = new RtcPeerMesh({
+      channel: "meet",
+      room: "test-room",
+      signaling: signaling.client as unknown as HttpSignalingClient,
+      rtcSettings: RTC_SETTINGS,
+      pollIntervals: { connectingMs: 400, steadyMs: 1200 },
+      binding: {
+        kind: "media",
+        attach: () => new MediaStream(),
+      },
+    });
+
+    await mesh.join({ name: "Host", peerId: "peer-a" });
+    await vi.advanceTimersByTimeAsync(400);
+    await flushAsyncWork();
+
+    expect(setTimeoutSpy).toHaveBeenLastCalledWith(expect.any(Function), 1200);
+    await mesh.leave();
+    setTimeoutSpy.mockRestore();
+  });
+
+  it("keeps fast meet polling while waiting for admission", async () => {
+    const signaling = createMockSignaling({ peerId: "peer-a", peers: [] });
+    const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout");
+
+    const mesh = new RtcPeerMesh({
+      channel: "meet",
+      room: "test-room",
+      signaling: signaling.client as unknown as HttpSignalingClient,
+      rtcSettings: RTC_SETTINGS,
+      pollIntervals: { connectingMs: 400, steadyMs: 1200 },
+      binding: {
+        kind: "media",
+        attach: () => new MediaStream(),
+      },
+      shouldHandleRtcSignals: () => false,
+    });
+
+    await mesh.join({ name: "Guest", peerId: "peer-a" });
+    await vi.advanceTimersByTimeAsync(400);
+    await flushAsyncWork();
+
+    expect(setTimeoutSpy).toHaveBeenLastCalledWith(expect.any(Function), 1200);
+    await mesh.leave();
+    setTimeoutSpy.mockRestore();
+  });
+
+  it("keeps steady polling for channels without idle backoff", async () => {
+    const signaling = createMockSignaling({ peerId: "peer-a", peers: [] });
+    const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout");
+
+    const mesh = new RtcPeerMesh({
+      channel: "chat",
       room: "test-room",
       signaling: signaling.client as unknown as HttpSignalingClient,
       rtcSettings: RTC_SETTINGS,
@@ -374,6 +455,33 @@ describe("RtcPeerMesh", () => {
     await mesh.leave();
   });
 
+  it("does not reschedule polling after leave while a poll is in flight", async () => {
+    const signaling = createMockSignaling({ peerId: "peer-a", peers: [] });
+    let resolvePoll: ((value: HttpSignalingPollResult) => void) | null = null;
+    signaling.setPollHandler(
+      () =>
+        new Promise<HttpSignalingPollResult>((resolve) => {
+          resolvePoll = resolve;
+        }),
+    );
+
+    const { mesh } = meshWithStubPc(signaling.client);
+    await mesh.join({ name: "Host", peerId: "peer-a" });
+
+    await vi.advanceTimersByTimeAsync(400);
+    expect(signaling.client.poll).toHaveBeenCalledTimes(1);
+    expect(resolvePoll).not.toBeNull();
+
+    const leavePromise = mesh.leave();
+    await flushAsyncWork();
+    resolvePoll!({ peers: [], messages: [] });
+    await leavePromise;
+    await flushAsyncWork();
+
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(signaling.client.poll).toHaveBeenCalledTimes(1);
+  });
+
   it("ignores chat messages during rtc signal handling", async () => {
     const signaling = createMockSignaling({ peerId: "AAAAAAAAAA", peers: [] });
     const { mesh } = meshWithStubPc(signaling.client);
@@ -394,6 +502,35 @@ describe("RtcPeerMesh", () => {
     await vi.advanceTimersByTimeAsync(400);
 
     expect(signaling.sends.some((s) => s.type === "answer")).toBe(false);
+    await mesh.leave();
+  });
+
+  it("does not run overlapping poll requests when poll is rescheduled", async () => {
+    const signaling = createMockSignaling({ peerId: "peer-a", peers: [] });
+    let resolvePoll: ((value: HttpSignalingPollResult) => void) | null = null;
+    signaling.client.poll.mockImplementation(
+      () =>
+        new Promise<HttpSignalingPollResult>((resolve) => {
+          resolvePoll = resolve;
+        }),
+    );
+
+    const { mesh } = meshWithStubPc(signaling.client);
+    await mesh.join({ name: "Host", peerId: "peer-a" });
+    signaling.client.poll.mockClear();
+
+    await vi.advanceTimersByTimeAsync(400);
+    expect(signaling.client.poll).toHaveBeenCalledTimes(1);
+
+    const meshWithSchedule = mesh as unknown as { schedulePoll: (steady?: boolean) => void };
+    meshWithSchedule.schedulePoll(true);
+    meshWithSchedule.schedulePoll(true);
+    await vi.advanceTimersByTimeAsync(1200);
+
+    expect(signaling.client.poll).toHaveBeenCalledTimes(1);
+
+    resolvePoll!({ peers: [], messages: [] });
+    await flushAsyncWork();
     await mesh.leave();
   });
 });

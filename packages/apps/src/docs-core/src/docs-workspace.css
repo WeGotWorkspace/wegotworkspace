@@ -62,6 +62,8 @@
 
 .docs-workspace .app-sidebar__scroll {
   --color-ink: #ffffff;
+  --button-primary-bg: #ffffff;
+  --button-primary-fg: var(--docs-accent);
   --button-subtle-color: #ffffff;
   --button-subtle-background: color-mix(in oklab, #ffffff 12%, transparent);
   --button-subtle-hover-background: color-mix(in oklab, #ffffff 20%, transparent);
@@ -78,6 +80,12 @@
 
 .docs-workspace__header-actions {
   @apply flex shrink-0 flex-wrap items-center justify-end gap-1.5;
+}
+
+.docs-workspace__doc-status {
+  @apply truncate text-xs font-medium;
+  max-width: 16rem;
+  color: var(--docs-muted);
 }
 
 .docs-workspace__pending-sync {

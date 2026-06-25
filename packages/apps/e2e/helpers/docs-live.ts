@@ -27,6 +27,17 @@ export async function loginToDocs(page: Page, fileSearchPath?: string): Promise<
   ).toHaveCount(0);
 }
 
+/** Navigate to the Docs home (no `file` param) and wait for the browse list shell. */
+export async function gotoDocsHome(page: Page): Promise<void> {
+  await page.goto("/docs");
+  await expect(page.locator(".docs-home-pane")).toBeVisible({ timeout: 30_000 });
+}
+
+/** List-view row for a Docs home file, matched by its (unique) file name. */
+export function docsHomeRow(page: Page, fileName: string) {
+  return page.locator(".drive-list-row", { hasText: fileName });
+}
+
 /** Drop the docs offline IndexedDB so e2e starts from a clean cache. */
 export async function clearDocsOfflineStore(page: Page): Promise<void> {
   await page.evaluate(async () => {

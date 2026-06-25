@@ -258,11 +258,16 @@ function DocsCollabWorkspaceInner({
           mainHeader={
             <ViewHeader
               title={resolvedDocumentTitle}
-              subtitle={docStatus || undefined}
+              titleSize="sm"
               sidebarOpen={sidebarOpen}
               onToggleSidebar={() => setSidebarOpen((open) => !open)}
               actions={
                 <div className="docs-workspace__header-actions">
+                  {docStatus ? (
+                    <span className="docs-workspace__doc-status" role="status" aria-live="polite">
+                      {docStatus}
+                    </span>
+                  ) : null}
                   {showPendingSyncIndicator ? (
                     <span
                       className="docs-workspace__pending-sync"

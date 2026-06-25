@@ -8,7 +8,7 @@ import { useMeetRouteSync } from "@/meet-core/src/use-meet-route-sync";
 export function MeetApp({ source }: MeetAppProps = {}) {
   const { phase, error, retry, successVersion, listLoading, data, session, operations } =
     useMeetAPI(source);
-  const { invitedRoom, buildCallLink, onRoomChange } = useMeetRouteSync();
+  const { invitedRoom, isJoinRoute, buildCallLink, onRoomChange } = useMeetRouteSync();
 
   const handleLogout = useCallback(() => {
     window.location.assign("/logout");
@@ -29,6 +29,7 @@ export function MeetApp({ source }: MeetAppProps = {}) {
           operations={operations}
           listLoading={listLoading}
           invitedRoom={invitedRoom}
+          isJoinRoute={isJoinRoute}
           buildCallLink={buildCallLink}
           onRoomChange={onRoomChange}
           onLogout={handleLogout}

@@ -399,7 +399,7 @@ final class SearchIndexerService
         $ext = strtolower((string) $extension);
 
         return match ($ext) {
-            'doc', 'docx', 'odt', 'rtf', 'pdf', 'txt', 'md' => 'document',
+            'doc', 'docx', 'odt', 'rtf', 'pdf', 'txt', 'md', 'markdown' => 'document',
             'xls', 'xlsx', 'ods', 'csv', 'numbers' => 'spreadsheet',
             'ppt', 'pptx', 'odp', 'key' => 'presentation',
             'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp' => 'image',

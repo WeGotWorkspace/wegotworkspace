@@ -26,15 +26,16 @@ final class DocsCollabDriveTest extends WgwDatabaseTestCase
         parent::tearDown();
     }
 
-    public function test_group_member_reads_default_markdown_when_file_missing(): void
+    public function test_group_member_reads_empty_markdown_when_file_missing(): void
     {
         $token = $this->userBearerToken();
 
-        $this->withBearer($token)
+        $response = $this->withBearer($token)
             ->get('/api/v1/files/collaboration?path='.urlencode(self::GROUP_PLAN))
             ->assertOk()
-            ->assertHeader('Content-Type', 'text/markdown; charset=utf-8')
-            ->assertSeeText('# Collaborative document');
+            ->assertHeader('Content-Type', 'text/markdown; charset=utf-8');
+
+        $this->assertSame('', $response->getContent());
     }
 
     public function test_group_member_persists_collaboration_markdown(): void

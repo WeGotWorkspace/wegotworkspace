@@ -18,6 +18,19 @@
   min-height: var(--view-header-title-row-min-height, 2.25rem);
 }
 
+/** Default: large serif display title. */
+.view-header__title {
+  @apply min-w-0 truncate text-3xl leading-none;
+  font-family: var(--font-serif);
+  color: var(--color-ink);
+}
+
+/** Compact variant: medium-size, medium-weight, sans-serif (e.g. doc editor file name). */
+.view-header__title--sm {
+  @apply text-xl font-medium;
+  font-family: var(--font-sans);
+}
+
 .view-header__actions {
   @apply flex shrink-0 items-center justify-end gap-1.5;
 }

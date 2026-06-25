@@ -6,6 +6,7 @@ namespace App\Services\Collab;
 
 use App\Services\Drive\DriveGroupResolver;
 use App\Services\Notes\NoteMarkdownCodec;
+use App\Services\Search\SearchIndexerService;
 use App\Storage\StoragePaths;
 use App\Storage\WgwStorage;
 use App\Support\WgwSettings;
@@ -32,6 +33,7 @@ final class DocCollabDocumentService
         private StoragePaths $paths,
         private DriveGroupResolver $groups,
         private NoteMarkdownCodec $noteCodec,
+        private SearchIndexerService $search,
     ) {}
 
     public function getMarkdown(Request $request, mixed $room): string
@@ -107,7 +109,7 @@ final class DocCollabDocumentService
             if (strlen($markdown) > self::MAX_MARKDOWN_BYTES) {
                 $this->fail('markdown_too_large', 413);
             }
-            $key = $this->paths->virtualToStorageKey($virtual);
+            $documentKey = $this->paths->virtualToStorageKey($virtual);
             if ($this->paths->isNotePath($virtual)) {
                 // The collab payload is the note body only: merge it back into
                 // the existing frontmatter so a body save never clobbers the
@@ -116,10 +118,10 @@ final class DocCollabDocumentService
                 // metadata state (see NoteRepository::readAt). For legacy notes
                 // without a marker we freeze it at the pre-write mtime so the
                 // first body save still leaves `updatedAt` stable.
-                $existing = $disk->fileExists($key) ? (string) $disk->get($key) : '';
+                $existing = $disk->fileExists($documentKey) ? (string) $disk->get($documentKey) : '';
                 $preservedUpdated = $this->noteCodec->updatedOf($existing);
-                if ($preservedUpdated === null && $disk->fileExists($key)) {
-                    $preservedUpdated = date('c', (int) $disk->lastModified($key));
+                if ($preservedUpdated === null && $disk->fileExists($documentKey)) {
+                    $preservedUpdated = date('c', (int) $disk->lastModified($documentKey));
                 }
                 $markdown = $this->noteCodec->replaceBody(
                     $existing,
@@ -128,7 +130,10 @@ final class DocCollabDocumentService
                     $preservedUpdated,
                 );
             }
-            $disk->put($key, $markdown);
+            $disk->put($documentKey, $markdown);
+            // Keep the unified search index in sync with the written content so size and
+            // body reflect the latest save without waiting for a later rename/upload.
+            $this->search->indexFileStorageKey($documentKey);
         }
 
         if ($hasYjs) {

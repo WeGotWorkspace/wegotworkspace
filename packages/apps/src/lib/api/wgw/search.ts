@@ -19,12 +19,15 @@ export type WgwUnifiedSearchResult = {
 export type WgwUnifiedSearchData = {
   query: string;
   limit: number;
+  offset: number;
+  hasMore: boolean;
   sources: string[];
   filters?: {
     categories?: string[];
     extensions?: string[];
     modified_from?: number | null;
     modified_to?: number | null;
+    path_prefix?: string | null;
   };
   results: WgwUnifiedSearchResult[];
 };
@@ -34,23 +37,28 @@ type WgwUnifiedSearchResponse = {
 };
 
 export type WgwUnifiedSearchParams = {
-  q: string;
+  /** Search query; omit (or leave empty) for browse mode over the filtered set. */
+  q?: string;
   limit?: number;
+  offset?: number;
   sources?: string[];
   categories?: string[];
   extensions?: string[];
   modifiedFrom?: string | Date;
   modifiedTo?: string | Date;
+  /** Scope file/note results to a storage-key prefix (e.g. `users/alice` or `groups/team`). */
+  pathPrefix?: string;
   signal?: AbortSignal;
 };
 
 export async function fetchWgwUnifiedSearch(
   params: WgwUnifiedSearchParams,
 ): Promise<WgwUnifiedSearchData> {
-  const query = params.q.trim();
+  const query = params.q?.trim() ?? "";
   const qs = new URLSearchParams();
-  qs.set("q", query);
+  if (query) qs.set("q", query);
   if (typeof params.limit === "number") qs.set("limit", String(params.limit));
+  if (typeof params.offset === "number") qs.set("offset", String(params.offset));
   for (const source of params.sources ?? []) qs.append("sources[]", source);
   for (const category of params.categories ?? []) qs.append("categories[]", category);
   for (const extension of params.extensions ?? []) qs.append("extensions[]", extension);
@@ -65,6 +73,9 @@ export async function fetchWgwUnifiedSearch(
       "modified_to",
       params.modifiedTo instanceof Date ? params.modifiedTo.toISOString() : params.modifiedTo,
     );
+  }
+  if (params.pathPrefix && params.pathPrefix.trim() !== "") {
+    qs.set("path_prefix", params.pathPrefix.trim());
   }
 
   const res = await wgwFetch(`/search/results?${qs.toString()}`, {

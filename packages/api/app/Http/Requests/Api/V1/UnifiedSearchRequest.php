@@ -20,8 +20,9 @@ final class UnifiedSearchRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'q' => ['required', 'string', 'min:2', 'max:512'],
+            'q' => ['sometimes', 'string', 'min:2', 'max:512'],
             'limit' => ['sometimes', 'integer', 'min:1', 'max:100'],
+            'offset' => ['sometimes', 'integer', 'min:0'],
             'sources' => ['sometimes', 'array'],
             'sources.*' => ['string', Rule::in(['file', 'note', 'caldav', 'carddav'])],
             'categories' => ['sometimes', 'array'],
@@ -30,19 +31,29 @@ final class UnifiedSearchRequest extends FormRequest
             'extensions.*' => ['string', 'min:1', 'max:32'],
             'modified_from' => ['sometimes', 'string', 'date'],
             'modified_to' => ['sometimes', 'string', 'date'],
+            'path_prefix' => ['sometimes', 'string', 'min:1', 'max:512'],
         ];
     }
 
     protected function prepareForValidation(): void
     {
-        $this->merge([
+        $merge = [
             'sources' => $this->normalizeListParam($this->input('sources')),
             'categories' => $this->normalizeListParam($this->input('categories')),
             'extensions' => array_map(
                 static fn (string $value): string => strtolower($value),
                 $this->normalizeListParam($this->input('extensions'))
             ),
-        ]);
+        ];
+        $pathPrefix = $this->input('path_prefix');
+        if (is_string($pathPrefix)) {
+            $normalized = trim($pathPrefix);
+            $normalized = trim($normalized, '/');
+            if ($normalized !== '') {
+                $merge['path_prefix'] = $normalized;
+            }
+        }
+        $this->merge($merge);
     }
 
     /**
@@ -65,9 +76,41 @@ final class UnifiedSearchRequest extends FormRequest
         ));
     }
 
+    /**
+     * Browse mode lets the client omit `q` to list documents: `extensions` must be
+     * non-empty AND every requested source must be `file` (omitted sources, which
+     * default to all sources, do not qualify).
+     */
+    public function isBrowseMode(): bool
+    {
+        $extensions = $this->input('extensions');
+        if (! is_array($extensions) || $extensions === []) {
+            return false;
+        }
+        $sources = $this->input('sources');
+        if (! is_array($sources) || $sources === []) {
+            return false;
+        }
+
+        foreach ($sources as $source) {
+            if ($source !== 'file') {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public function withValidator($validator): void
     {
         $validator->after(function ($validator): void {
+            if (! $this->isBrowseMode()) {
+                $q = $this->input('q');
+                if (! is_string($q) || trim($q) === '') {
+                    $validator->errors()->add('q', 'The q field is required unless browsing by extension.');
+                }
+            }
+
             $fromRaw = $this->input('modified_from');
             $toRaw = $this->input('modified_to');
             if (! is_string($fromRaw) || ! is_string($toRaw)) {
