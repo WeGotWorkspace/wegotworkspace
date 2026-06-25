@@ -73,10 +73,9 @@ final class NoteMarkdownCodec
 
     /**
      * @param  list<string>  $tags
-     *
      * @param  string|null  $updated  metadata timestamp to stamp into frontmatter;
-     *                                 when null a fresh `now` marker is written so
-     *                                 metadata mutations advance the note's state.
+     *                                when null a fresh `now` marker is written so
+     *                                metadata mutations advance the note's state.
      */
     public function serialize(string $title, array $tags, ?bool $starred, string $body, ?string $updated = null): string
     {
@@ -135,9 +134,9 @@ final class NoteMarkdownCodec
      * with a pre-body-edit `ifInState`.
      *
      * @param  string|null  $preservedUpdated  metadata marker to keep; when null
-     *                                          the existing frontmatter marker is
-     *                                          reused (falling back to a fresh one
-     *                                          only for notes that never had one).
+     *                                         the existing frontmatter marker is
+     *                                         reused (falling back to a fresh one
+     *                                         only for notes that never had one).
      */
     public function replaceBody(
         string $existingMarkdown,
