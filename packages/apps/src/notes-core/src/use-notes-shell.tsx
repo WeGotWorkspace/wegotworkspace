@@ -96,6 +96,11 @@ export function useNotesShell({
     setNotes(data.notes.map(enrichNote));
   }, [bootstrapRevision, data]);
 
+  useEffect(() => {
+    if (initialView === undefined) return;
+    setView(initialView);
+  }, [initialView]);
+
   const notebooks = useMemo(
     () => [...new Set(notes.map((note) => note.notebook).filter((name) => name.trim().length > 0))],
     [notes],

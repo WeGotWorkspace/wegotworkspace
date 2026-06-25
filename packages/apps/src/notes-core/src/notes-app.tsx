@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Check } from "lucide-react";
-import { useLocation, useNavigate, useParams } from "@tanstack/react-router";
 import { useAppToast } from "@/hooks/use-app-toast";
 import { WorkspaceLiveAppShell } from "@/lib/live/workspace-live-app-shell";
 import {
@@ -13,12 +12,8 @@ import type { NotesApiSource } from "@/notes-core/src/notes-api-source";
 import { NotesConflictDialog } from "@/notes-core/src/notes-conflict-dialog";
 import { noteListTitle } from "@/notes-core/src/notes-note-utils";
 import { defaultNotesLabels } from "@/notes-core/src/notes-labels";
-import {
-  notesNavigateTarget,
-  notesNoteFromParams,
-  notesViewFromLocation,
-} from "@/notes-core/src/notes-route-search";
 import { NotesWorkspace } from "@/notes-core/src/notes-workspace";
+import { useNotesRouteSync } from "@/notes-core/src/use-notes-route-sync";
 import { useNotesAPI } from "@/notes-core/src/use-notes-api";
 
 export type NotesAppProps = {
@@ -27,13 +22,7 @@ export type NotesAppProps = {
 };
 
 export function NotesApp({ apiSource }: NotesAppProps = {}) {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const params = useParams({ strict: false }) as {
-    tagSlug?: string;
-    notebookSlug?: string;
-    noteId?: string;
-  };
+  const { initialView, initialNoteId, handleViewChange, handleNoteChange } = useNotesRouteSync();
 
   const notesRef = useRef<Note[]>([]);
   const [conflictQueue, setConflictQueue] = useState<string[]>([]);
@@ -113,43 +102,6 @@ export function NotesApp({ apiSource }: NotesAppProps = {}) {
       })();
     },
     [activeConflictId, offlineUsername, dismissActiveConflict, refreshList],
-  );
-
-  const initialView = useMemo(
-    () => notesViewFromLocation(location.pathname, params),
-    [location.pathname, params],
-  );
-  const initialNoteId = useMemo(() => notesNoteFromParams(params), [params]);
-
-  const currentViewRef = useRef<string>(initialView);
-  const currentNoteRef = useRef<string>(initialNoteId);
-
-  useEffect(() => {
-    currentViewRef.current = initialView;
-  }, [initialView]);
-
-  useEffect(() => {
-    currentNoteRef.current = initialNoteId;
-  }, [initialNoteId]);
-
-  const handleViewChange = useCallback(
-    (view: string) => {
-      currentViewRef.current = view;
-      currentNoteRef.current = "";
-      const target = notesNavigateTarget(view);
-      void navigate({ ...target, replace: true });
-    },
-    [navigate],
-  );
-
-  const handleNoteChange = useCallback(
-    (noteId: string) => {
-      currentNoteRef.current = noteId;
-      const view = currentViewRef.current;
-      const target = notesNavigateTarget(view, noteId);
-      void navigate({ ...target, replace: true });
-    },
-    [navigate],
   );
 
   return (

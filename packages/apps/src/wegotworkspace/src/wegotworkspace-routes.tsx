@@ -38,6 +38,7 @@ import { mailStoryLabels } from "@/mail-core/src/mail-app.stories.fixtures";
 import { MeetWorkspace } from "@/meet-core/src/meet-workspace";
 import { DocsWorkspace } from "@/docs-core/src/docs-workspace";
 import { NotesWorkspace } from "@/notes-core/src/notes-workspace";
+import { useNotesRouteSync } from "@/notes-core/src/use-notes-route-sync";
 import { SettingsWorkspace } from "@/settings-core/src/settings-workspace";
 import { WeGotWorkspaceHome } from "@/wegotworkspace/src/wegotworkspace-home";
 import { WeGotWorkspaceLiveHome } from "@/wegotworkspace/src/wegotworkspace-live-home";
@@ -92,12 +93,17 @@ function MockDocsRoute() {
 function MockNotesRoute() {
   const onLogout = useWeGotWorkspaceLogout();
   const bootstrap = useMemo(() => createNotesAppBootstrap(), []);
+  const { initialView, initialNoteId, handleViewChange, handleNoteChange } = useNotesRouteSync();
   return (
     <NotesWorkspace
       data={bootstrap.data}
       session={bootstrap.session}
       listLoading={false}
       onLogout={onLogout}
+      initialView={initialView}
+      initialNoteId={initialNoteId}
+      onViewChange={handleViewChange}
+      onNoteChange={handleNoteChange}
     />
   );
 }
