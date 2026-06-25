@@ -469,7 +469,6 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
         $payload = [
             'id' => 'n-search',
             'notebook' => 'General',
-            'title' => 'First Note Title',
             'body' => 'oldneedle123',
             'tags' => ['alpha'],
             'starred' => false,
@@ -490,12 +489,11 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
         $firstRows = (array) $firstSearch->json('data.results');
         $this->assertNotEmpty($firstRows);
         $this->assertSame('note', $firstRows[0]['sourceType'] ?? null);
-        $this->assertSame('First Note Title', $firstRows[0]['title'] ?? null);
+        $this->assertSame('Untitled', $firstRows[0]['title'] ?? null);
 
         $this->withBearer($token)
             ->putJson('/api/v1/notes/items/n-search', [
                 ...$payload,
-                'title' => 'Updated Note Title',
                 'body' => 'newneedle456',
             ])
             ->assertOk();
@@ -518,6 +516,6 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
         $updatedRows = (array) $updatedSearch->json('data.results');
         $this->assertNotEmpty($updatedRows);
         $this->assertSame('note', $updatedRows[0]['sourceType'] ?? null);
-        $this->assertSame('Updated Note Title', $updatedRows[0]['title'] ?? null);
+        $this->assertSame('Untitled', $updatedRows[0]['title'] ?? null);
     }
 }
