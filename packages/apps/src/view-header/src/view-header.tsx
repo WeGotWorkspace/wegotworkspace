@@ -6,8 +6,12 @@ import { cn } from "@/lib/utils";
 
 import "./view-header.css";
 
+type ViewHeaderTitleSize = "default" | "sm";
+
 type ViewHeaderProps = {
   title: string;
+  /** "default" = large serif display; "sm" = medium sans-serif title (e.g. doc editor file name). */
+  titleSize?: ViewHeaderTitleSize;
   subtitle?: string;
   /** When true, omits the workspace sidebar toggle (e.g. portaled compose dialog). */
   hideSidebarToggle?: boolean;
@@ -24,6 +28,7 @@ type ViewHeaderProps = {
 
 export function ViewHeader({
   title,
+  titleSize = "default",
   subtitle,
   hideSidebarToggle = false,
   sidebarOpen = false,
@@ -57,8 +62,7 @@ export function ViewHeader({
         <div className="view-header__main">
           <div className="view-header__title-row">
             <h2
-              className="text-3xl leading-none min-w-0 truncate"
-              style={{ fontFamily: "var(--font-serif)", color: "var(--color-ink)" }}
+              className={cn("view-header__title", titleSize === "sm" && "view-header__title--sm")}
             >
               {title}
             </h2>

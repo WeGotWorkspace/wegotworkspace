@@ -16,6 +16,13 @@ import { clearDocsCollabSyncState, setDocsCollabSyncState } from "./docs-collab-
 import { DEFAULT_DOCS_COLLAB_WIRE, type DocsCollabWireOperations } from "./docs-collab-wire";
 import { DocsRtcSession } from "./docs-rtc-session";
 import type { DocsCollabMeshMessage, DocsCollabMeshPeer } from "./docs-collab-types";
+import {
+  DOC_STATUS_LOADED_SHARED_DOCUMENT,
+  DOC_STATUS_RESTORED_WORKING_VERSION,
+  formatSavedDocStatus,
+  isTransientDocStatus,
+  TRANSIENT_DOC_STATUS_DISMISS_MS,
+} from "./docs-collab-status";
 
 export const MESH_ORIGIN = "mesh";
 export const SEED_ORIGIN = "seed";
@@ -276,6 +283,15 @@ export function useDocsCollab({
     sessionRef.current = session;
   }, [session]);
 
+  useEffect(() => {
+    if (!isTransientDocStatus(docStatus)) return;
+    const statusAtSchedule = docStatus;
+    const timer = setTimeout(() => {
+      setDocStatus((prev) => (prev === statusAtSchedule ? "" : prev));
+    }, TRANSIENT_DOC_STATUS_DISMISS_MS);
+    return () => clearTimeout(timer);
+  }, [docStatus]);
+
   const updatePendingState = useCallback(
     async (pending: boolean, failed = false) => {
       setPendingSync(pending);
@@ -384,7 +400,7 @@ export function useDocsCollab({
       saveRetryMsRef.current = 0;
       nextSaveAttemptAtRef.current = 0;
       await updatePendingState(false, false);
-      setDocStatus(`Saved · ${new Date().toLocaleTimeString()}`);
+      setDocStatus(formatSavedDocStatus());
     } catch (err) {
       saveFailedRef.current = true;
       const nextRetryMs = Math.min(
@@ -452,7 +468,7 @@ export function useDocsCollab({
     if (!mesh) {
       applyContentSeedToYDoc(ydoc, markdown, documentFormat);
       markDocReady();
-      setDocStatus("Loaded shared document");
+      setDocStatus(DOC_STATUS_LOADED_SHARED_DOCUMENT);
       return;
     }
 
@@ -470,7 +486,7 @@ export function useDocsCollab({
 
     applyContentSeedToYDoc(ydoc, markdown, documentFormat);
     markDocReady();
-    setDocStatus("Loaded shared document");
+    setDocStatus(DOC_STATUS_LOADED_SHARED_DOCUMENT);
   }, [documentFormat, markDocReady]);
 
   const sendSyncStep1 = useCallback((toPeerId?: string) => {
@@ -724,7 +740,7 @@ export function useDocsCollab({
           if (markdown) {
             applyContentSeedToYDoc(ydoc, markdown, documentFormat);
             markDocReady();
-            setDocStatus("Loaded shared document");
+            setDocStatus(DOC_STATUS_LOADED_SHARED_DOCUMENT);
           }
         } else {
           const tick = () => trySeedFromFile();
@@ -732,7 +748,7 @@ export function useDocsCollab({
           setTimeout(tick, 3000);
         }
       } else if (hadSnapshot) {
-        setDocStatus("Restored Yjs snapshot");
+        setDocStatus(DOC_STATUS_RESTORED_WORKING_VERSION);
       }
     },
     [documentFormat, markDocReady, room, trySeedFromFile, urls.documentUrl, urls.yjsUrl],

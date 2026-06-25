@@ -4493,22 +4493,46 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Search results */
+        /**
+         * Search results
+         * @description Unified search across files, notes, calendar, and contacts. Supports a browse mode that lists documents without a query: omit `q` when `extensions` is non-empty and every `sources` entry is `file`. Results are paginated with `limit`/`offset`; `hasMore` is true when the page is full.
+         */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    /** @description Search query. Required unless in browse mode (see operation description). Minimum 2 characters when provided. */
+                    q?: string;
+                    /** @description Maximum number of results to return. */
+                    limit?: number;
+                    /** @description Number of results to skip for pagination. */
+                    offset?: number;
+                    /** @description Restrict results to the given source types. */
+                    sources?: ("file" | "note" | "caldav" | "carddav")[];
+                    /** @description Restrict file results to the given lowercase extensions (e.g. md, markdown, txt). */
+                    extensions?: string[];
+                    /** @description Restrict results to the given indexed categories (e.g. document). */
+                    categories?: string[];
+                    /** @description Only include results modified on or after this timestamp. */
+                    modified_from?: string;
+                    /** @description Only include results modified on or before this timestamp. */
+                    modified_to?: string;
+                    /** @description Scope file/note results to a storage-key prefix, e.g. a single drive (`users/alice` for My Drive or `groups/team` for a shared drive). Surrounding slashes are ignored. Calendar/contact sources are unaffected. */
+                    path_prefix?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
             };
             requestBody?: never;
             responses: {
-                /** @description OK */
+                /** @description Search results */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["UnifiedSearchResponse"];
+                    };
                 };
             };
         };
@@ -7926,6 +7950,44 @@ export interface components {
             };
             notDestroyed: {
                 [key: string]: Record<string, never>;
+            };
+        };
+        /** @description A single unified search hit across files, notes, calendar, and contacts. */
+        UnifiedSearchResult: {
+            id: number;
+            sourceType: string;
+            sourceSubtype?: string | null;
+            sourceKey: string;
+            title: string;
+            extension?: string | null;
+            category?: string | null;
+            contentType?: string | null;
+            size: number;
+            modifiedAt: number;
+            snippet?: string | null;
+            tokenScore: number;
+            metadata: {
+                [key: string]: unknown;
+            };
+        };
+        /** @description Normalized filters echoed back on the search response. */
+        UnifiedSearchFilters: {
+            categories: string[];
+            extensions: string[];
+            modified_from: number | null;
+            modified_to: number | null;
+            path_prefix: string | null;
+        };
+        /** @description REST response for GET /search/results, including offset/hasMore pagination. */
+        UnifiedSearchResponse: {
+            data: {
+                query: string;
+                limit: number;
+                offset: number;
+                hasMore: boolean;
+                sources: string[];
+                filters: components["schemas"]["UnifiedSearchFilters"];
+                results: components["schemas"]["UnifiedSearchResult"][];
             };
         };
     };

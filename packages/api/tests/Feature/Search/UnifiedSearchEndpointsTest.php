@@ -108,6 +108,198 @@ final class UnifiedSearchEndpointsTest extends WgwDatabaseTestCase
         $this->assertContains('carddav', $sourceTypes);
     }
 
+    public function test_unified_search_browse_lists_markdown_without_query_in_modified_desc_order(): void
+    {
+        $storage = app(WgwStorage::class);
+        $storage->files()->put('users/alice/older.md', '# Older doc');
+        $storage->files()->put('users/alice/newer.md', '# Newer doc');
+        $storage->files()->put('users/alice/newest.md', '# Newest doc');
+
+        app(SearchIndexerService::class)->reindexAll();
+
+        $this->setModifiedTs('users/alice/older.md', 1000);
+        $this->setModifiedTs('users/alice/newer.md', 2000);
+        $this->setModifiedTs('users/alice/newest.md', 3000);
+
+        $token = $this->issueBearerToken();
+        $response = $this->withBearer($token)
+            ->getJson('/api/v1/search/results?'.http_build_query([
+                'sources' => ['file'],
+                'extensions' => ['md'],
+                'categories' => ['document'],
+                'limit' => 50,
+            ]));
+
+        $response->assertOk()
+            ->assertJsonPath('data.query', '')
+            ->assertJsonPath('data.offset', 0)
+            ->assertJsonPath('data.limit', 50)
+            ->assertJsonPath('data.hasMore', false)
+            ->assertJsonPath('data.sources.0', 'file');
+
+        $keys = array_column((array) $response->json('data.results'), 'sourceKey');
+        $this->assertSame([
+            'users/alice/newest.md',
+            'users/alice/newer.md',
+            'users/alice/older.md',
+        ], $keys);
+    }
+
+    public function test_unified_search_browse_paginates_with_offset_and_has_more(): void
+    {
+        $storage = app(WgwStorage::class);
+        $storage->files()->put('users/alice/a.md', '# A');
+        $storage->files()->put('users/alice/b.md', '# B');
+        $storage->files()->put('users/alice/c.md', '# C');
+
+        app(SearchIndexerService::class)->reindexAll();
+
+        $this->setModifiedTs('users/alice/a.md', 3000);
+        $this->setModifiedTs('users/alice/b.md', 2000);
+        $this->setModifiedTs('users/alice/c.md', 1000);
+
+        $token = $this->issueBearerToken();
+
+        $page1 = $this->withBearer($token)
+            ->getJson('/api/v1/search/results?'.http_build_query([
+                'sources' => ['file'],
+                'extensions' => ['md'],
+                'categories' => ['document'],
+                'limit' => 2,
+                'offset' => 0,
+            ]));
+        $page1->assertOk()
+            ->assertJsonPath('data.offset', 0)
+            ->assertJsonPath('data.hasMore', true);
+        $page1Keys = array_column((array) $page1->json('data.results'), 'sourceKey');
+        $this->assertSame(['users/alice/a.md', 'users/alice/b.md'], $page1Keys);
+
+        $page2 = $this->withBearer($token)
+            ->getJson('/api/v1/search/results?'.http_build_query([
+                'sources' => ['file'],
+                'extensions' => ['md'],
+                'categories' => ['document'],
+                'limit' => 2,
+                'offset' => 2,
+            ]));
+        $page2->assertOk()
+            ->assertJsonPath('data.offset', 2)
+            ->assertJsonPath('data.hasMore', false);
+        $page2Keys = array_column((array) $page2->json('data.results'), 'sourceKey');
+        $this->assertSame(['users/alice/c.md'], $page2Keys);
+
+        $this->assertSame([], array_intersect($page1Keys, $page2Keys));
+    }
+
+    public function test_unified_search_browse_scopes_to_path_prefix_drive(): void
+    {
+        $teamGroup = $this->seedWgwGroup('principals/groups/team', 'Team');
+        $alice = Principal::forUsername('alice');
+        $this->assertNotNull($alice);
+        $this->addPrincipalToGroup($teamGroup, $alice);
+
+        $storage = app(WgwStorage::class);
+        $storage->files()->put('users/alice/my-drive-doc.md', '# My Drive doc');
+        $storage->files()->put('groups/team/team-doc.md', '# Team doc');
+
+        app(SearchIndexerService::class)->reindexAll();
+
+        $token = $this->issueBearerToken();
+
+        $unscoped = $this->withBearer($token)
+            ->getJson('/api/v1/search/results?'.http_build_query([
+                'sources' => ['file'],
+                'extensions' => ['md'],
+                'categories' => ['document'],
+                'limit' => 50,
+            ]));
+        $unscoped->assertOk();
+        $unscopedKeys = array_column((array) $unscoped->json('data.results'), 'sourceKey');
+        $this->assertContains('users/alice/my-drive-doc.md', $unscopedKeys);
+        $this->assertContains('groups/team/team-doc.md', $unscopedKeys);
+
+        $myDrive = $this->withBearer($token)
+            ->getJson('/api/v1/search/results?'.http_build_query([
+                'sources' => ['file'],
+                'extensions' => ['md'],
+                'categories' => ['document'],
+                'path_prefix' => '/users/alice/',
+                'limit' => 50,
+            ]));
+        $myDrive->assertOk()
+            ->assertJsonPath('data.filters.path_prefix', 'users/alice');
+        $myDriveKeys = array_column((array) $myDrive->json('data.results'), 'sourceKey');
+        $this->assertSame(['users/alice/my-drive-doc.md'], $myDriveKeys);
+
+        $teamDrive = $this->withBearer($token)
+            ->getJson('/api/v1/search/results?'.http_build_query([
+                'sources' => ['file'],
+                'extensions' => ['md'],
+                'categories' => ['document'],
+                'path_prefix' => 'groups/team',
+                'limit' => 50,
+            ]));
+        $teamDrive->assertOk()
+            ->assertJsonPath('data.filters.path_prefix', 'groups/team');
+        $teamDriveKeys = array_column((array) $teamDrive->json('data.results'), 'sourceKey');
+        $this->assertSame(['groups/team/team-doc.md'], $teamDriveKeys);
+    }
+
+    public function test_unified_search_browse_mode_respects_auth_scope(): void
+    {
+        $storage = app(WgwStorage::class);
+        $storage->files()->put('users/alice/private-alice.md', '# Alice private');
+
+        app(SearchIndexerService::class)->reindexAll();
+
+        $bobToken = $this->issueBearerToken('bob');
+        $response = $this->withBearer($bobToken)
+            ->getJson('/api/v1/search/results?'.http_build_query([
+                'sources' => ['file'],
+                'extensions' => ['md'],
+                'categories' => ['document'],
+                'limit' => 50,
+            ]));
+
+        $response->assertOk()->assertJsonPath('data.results', []);
+    }
+
+    public function test_unified_search_indexes_markdown_extension_as_document_category(): void
+    {
+        app(WgwStorage::class)->files()->put('users/alice/guide.markdown', '# Guide');
+
+        app(SearchIndexerService::class)->reindexAll();
+
+        $indexed = DB::connection('wgw')->table('search_documents')
+            ->where('source_type', 'file')
+            ->where('source_key', 'users/alice/guide.markdown')
+            ->first();
+
+        $this->assertNotNull($indexed);
+        $this->assertSame('markdown', $indexed->extension);
+        $this->assertSame('document', $indexed->category);
+
+        $token = $this->issueBearerToken();
+        $response = $this->withBearer($token)
+            ->getJson('/api/v1/search/results?'.http_build_query([
+                'sources' => ['file'],
+                'extensions' => ['markdown'],
+                'categories' => ['document'],
+                'limit' => 50,
+            ]));
+        $response->assertOk();
+        $keys = array_column((array) $response->json('data.results'), 'sourceKey');
+        $this->assertContains('users/alice/guide.markdown', $keys);
+    }
+
+    private function setModifiedTs(string $sourceKey, int $ts): void
+    {
+        DB::connection('wgw')->table('search_documents')
+            ->where('source_type', 'file')
+            ->where('source_key', $sourceKey)
+            ->update(['modified_at_ts' => $ts]);
+    }
+
     public function test_unified_search_supports_filters_date_range_and_auth_scope(): void
     {
         app(WgwStorage::class)->files()->put('users/alice/meeting-alpha.md', 'alpha note body');

@@ -51,11 +51,11 @@ final class CollabDocumentEndpointsTest extends WgwDatabaseTestCase
     {
         $token = $this->issueBearerToken();
 
-        $this->withBearer($token)
+        $freshDocument = $this->withBearer($token)
             ->get('/api/v1/files/collaboration?path='.urlencode(self::ROOM))
             ->assertOk()
-            ->assertHeader('Content-Type', 'text/markdown; charset=utf-8')
-            ->assertSeeText('# Collaborative document');
+            ->assertHeader('Content-Type', 'text/markdown; charset=utf-8');
+        $this->assertSame('', $freshDocument->getContent());
 
         $this->withBearer($token)
             ->get('/api/v1/files/collaboration?path='.urlencode(self::ROOM).'&format=yjs')
@@ -89,6 +89,43 @@ final class CollabDocumentEndpointsTest extends WgwDatabaseTestCase
             ->assertOk()
             ->assertHeader('Content-Type', 'application/octet-stream')
             ->assertContent("\x01\x02\x03\xff");
+    }
+
+    public function test_markdown_save_indexes_current_size_without_rename(): void
+    {
+        $token = $this->issueBearerToken();
+        $markdown = "# Together\n\nHello collab indexing.\n";
+
+        $this->withBearer($token)
+            ->putJson('/api/v1/files/collaboration?path='.urlencode(self::ROOM), [
+                'markdown' => $markdown,
+                'yjs' => [1, 2, 3, 255],
+            ])
+            ->assertOk()
+            ->assertJsonPath('ok', true);
+
+        $response = $this->withBearer($token)
+            ->getJson('/api/v1/search/results?'.http_build_query([
+                'q' => 'collab',
+                'limit' => 20,
+            ]));
+
+        $response->assertOk();
+        $results = $response->json('data.results');
+        $this->assertIsArray($results);
+
+        $match = null;
+        foreach ($results as $row) {
+            if (($row['sourceKey'] ?? null) === 'users/alice/docs/together.md') {
+                $match = $row;
+                break;
+            }
+        }
+
+        $this->assertNotNull($match, 'Expected the saved document to be indexed.');
+        $storedSize = (int) (app(WgwStorage::class)->files()->size('users/alice/docs/together.md') ?? 0);
+        $this->assertGreaterThan(0, $storedSize);
+        $this->assertSame($storedSize, (int) ($match['size'] ?? 0));
     }
 
     public function test_other_user_cannot_write_alice_document(): void

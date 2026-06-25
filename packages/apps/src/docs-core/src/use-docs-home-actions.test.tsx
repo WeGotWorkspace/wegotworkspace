@@ -1,0 +1,157 @@
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { DriveFile } from "@/drive-core/src/drive-models";
+import type { DriveAPIOperations, DriveUIData } from "@/drive-core/src/drive-types";
+import { useDocsHomeActions } from "@/docs-core/src/use-docs-home-actions";
+
+vi.mock("@/hooks/use-app-toast", () => ({
+  useAppToast: () => ({
+    show: vi.fn(),
+    dismiss: vi.fn(),
+    showSuccess: vi.fn(),
+    showError: vi.fn(),
+  }),
+}));
+
+function file(partial: Partial<DriveFile> & { id: string; apiPath: string }): DriveFile {
+  return {
+    category: "document",
+    date: "Now",
+    title: partial.title ?? partial.id,
+    excerpt: "",
+    body: [],
+    notebook: "",
+    tags: [],
+    wordCount: 0,
+    parent: "My Drive",
+    kind: "doc",
+    size: "—",
+    ...partial,
+  };
+}
+
+const FILES: DriveFile[] = [
+  file({ id: "search:file:users/alice/A.md", title: "A.md", apiPath: "/users/alice/A.md" }),
+  file({ id: "search:file:users/alice/B.md", title: "B.md", apiPath: "/users/alice/B.md" }),
+];
+
+type MockOperations = DriveAPIOperations & {
+  listStars: ReturnType<typeof vi.fn>;
+  setStar: ReturnType<typeof vi.fn>;
+  downloadFile: ReturnType<typeof vi.fn>;
+  renameItem: ReturnType<typeof vi.fn>;
+  deleteItems: ReturnType<typeof vi.fn>;
+  createFolder: ReturnType<typeof vi.fn>;
+};
+
+function createMockOperations(starredPaths: string[] = []): MockOperations {
+  const data = {} as DriveUIData;
+  return {
+    listStars: vi.fn(async () => starredPaths),
+    setStar: vi.fn(async () => undefined),
+    downloadFile: vi.fn(async () => undefined),
+    renameItem: vi.fn(async () => data),
+    deleteItems: vi.fn(async () => data),
+    createFolder: vi.fn(async () => data),
+  } as unknown as MockOperations;
+}
+
+function renderActions(operations: MockOperations, reload = vi.fn()) {
+  return renderHook(() =>
+    useDocsHomeActions({
+      operations,
+      files: FILES,
+      username: "alice",
+      groupRoots: [],
+      reload,
+    }),
+  );
+}
+
+describe("useDocsHomeActions", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("derives the starred map from listStars keyed by file id", async () => {
+    const operations = createMockOperations(["/users/alice/A.md"]);
+    const { result } = renderActions(operations);
+
+    await waitFor(() => expect(result.current.starred["search:file:users/alice/A.md"]).toBe(true));
+    expect(result.current.starred["search:file:users/alice/B.md"]).toBeUndefined();
+  });
+
+  it("toggles a star optimistically and persists via setStar", async () => {
+    const operations = createMockOperations(["/users/alice/A.md"]);
+    const { result } = renderActions(operations);
+    await waitFor(() => expect(result.current.starred["search:file:users/alice/A.md"]).toBe(true));
+
+    act(() => result.current.onStar("search:file:users/alice/A.md"));
+
+    expect(result.current.starred["search:file:users/alice/A.md"]).toBeUndefined();
+    expect(operations.setStar).toHaveBeenCalledWith({ path: "/users/alice/A.md", starred: false });
+  });
+
+  it("downloads via the file api path", () => {
+    const operations = createMockOperations();
+    const { result } = renderActions(operations);
+
+    act(() => result.current.onDownload(FILES[1]!));
+    expect(operations.downloadFile).toHaveBeenCalledWith("/users/alice/B.md");
+  });
+
+  it("renames within the same folder and refreshes the list", async () => {
+    const operations = createMockOperations();
+    const reload = vi.fn();
+    const { result } = renderActions(operations, reload);
+
+    act(() => result.current.onRename(FILES[0]!));
+    expect(result.current.renameName).toBe("A");
+
+    act(() => result.current.setRenameName("Renamed"));
+    act(() => result.current.submitRename());
+
+    await waitFor(() =>
+      expect(operations.renameItem).toHaveBeenCalledWith({
+        destination: "/users/alice",
+        from: "/users/alice/A.md",
+        to: "Renamed.md",
+      }),
+    );
+    await waitFor(() => expect(reload).toHaveBeenCalled());
+  });
+
+  it("moves a file to the resolved destination and refreshes", async () => {
+    const operations = createMockOperations();
+    const reload = vi.fn();
+    const { result } = renderActions(operations, reload);
+
+    act(() => result.current.onMove(FILES[0]!));
+    act(() => result.current.confirmMove("My Drive/Projects"));
+
+    await waitFor(() =>
+      expect(operations.renameItem).toHaveBeenCalledWith({
+        destination: "/users/alice/Projects",
+        from: "/users/alice/A.md",
+        to: "A.md",
+      }),
+    );
+    await waitFor(() => expect(reload).toHaveBeenCalled());
+  });
+
+  it("moves a file to Trash and refreshes", async () => {
+    const operations = createMockOperations();
+    const reload = vi.fn();
+    const { result } = renderActions(operations, reload);
+
+    act(() => result.current.onTrash(FILES[1]!));
+    act(() => result.current.confirmTrash());
+
+    await waitFor(() =>
+      expect(operations.renameItem).toHaveBeenCalledWith({
+        destination: "/users/alice/.Trash",
+        from: "/users/alice/B.md",
+        to: "B.md",
+      }),
+    );
+    await waitFor(() => expect(reload).toHaveBeenCalled());
+  });
+});

@@ -1,0 +1,242 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Download, Pencil, Star, StarOff, Trash2 } from "lucide-react";
+import { useAppToast } from "@/hooks/use-app-toast";
+import type { DriveAPIOperations } from "@/drive-core/src/drive-types";
+import type { DriveFile } from "@/drive-core/src/drive-models";
+import { ensureTrashFolder } from "@/drive-core/src/drive-batch-utils";
+import {
+  apiPathFromUiPath,
+  DRIVE_TRASH_UI_PATH,
+  normalizeApiVirtualPath,
+} from "@/drive-core/src/drive-path-utils";
+import { parentAndName } from "@/lib/files/api-path";
+import { joinFileNameForRename, splitFileNameForRename } from "@/lib/files/filename-rename";
+
+export type DocsHomeRenameState = { id: string; extension: string };
+export type DocsHomeMoveState = { id: string };
+export type DocsHomeDeleteState = { id: string };
+
+type UseDocsHomeActionsArgs = {
+  /** Live drive operations (star/download/rename/move/trash). Undefined in mock-only shells. */
+  operations?: DriveAPIOperations;
+  /** Currently loaded home files (used to resolve ids → api paths). */
+  files: DriveFile[];
+  /** Current user handle, for resolving My Drive / group api paths on move. */
+  username: string;
+  /** Known group roots, so move destinations under `Groups/*` resolve correctly. */
+  groupRoots: string[];
+  /** Refresh the home list after a mutation that changes the listing. */
+  reload: () => void;
+};
+
+export function useDocsHomeActions({
+  operations,
+  files,
+  username,
+  groupRoots,
+  reload,
+}: UseDocsHomeActionsArgs) {
+  const { show, showError } = useAppToast();
+
+  const filesById = useMemo(() => {
+    const map = new Map<string, DriveFile>();
+    for (const file of files) map.set(file.id, file);
+    return map;
+  }, [files]);
+  const fileById = useCallback((id: string) => filesById.get(id), [filesById]);
+
+  const groupRootNames = useMemo(() => new Set(groupRoots), [groupRoots]);
+
+  const [starredPaths, setStarredPaths] = useState<Set<string>>(new Set());
+  const [renameState, setRenameState] = useState<DocsHomeRenameState | null>(null);
+  const [renameName, setRenameName] = useState("");
+  const [moveState, setMoveState] = useState<DocsHomeMoveState | null>(null);
+  const [deleteState, setDeleteState] = useState<DocsHomeDeleteState | null>(null);
+
+  useEffect(() => {
+    if (!operations) return;
+    const controller = new AbortController();
+    void operations
+      .listStars({ signal: controller.signal })
+      .then((paths) => {
+        if (controller.signal.aborted) return;
+        setStarredPaths(new Set(paths.map((path) => normalizeApiVirtualPath(path))));
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [operations]);
+
+  /** Star map keyed by file id (search ids differ from api paths, so resolve per file). */
+  const starred = useMemo(() => {
+    const map: Record<string, boolean> = {};
+    for (const file of files) {
+      if (file.apiPath && starredPaths.has(normalizeApiVirtualPath(file.apiPath))) {
+        map[file.id] = true;
+      }
+    }
+    return map;
+  }, [files, starredPaths]);
+
+  const onStar = useCallback(
+    (id: string) => {
+      const file = fileById(id);
+      const apiPath = file?.apiPath ? normalizeApiVirtualPath(file.apiPath) : null;
+      if (!apiPath) return;
+      const next = !starredPaths.has(apiPath);
+      setStarredPaths((prev) => {
+        const updated = new Set(prev);
+        if (next) updated.add(apiPath);
+        else updated.delete(apiPath);
+        return updated;
+      });
+      show(next ? "Starred" : "Unstarred", {
+        icon: next ? (
+          <Star className="size-4" fill="currentColor" />
+        ) : (
+          <StarOff className="size-4" />
+        ),
+      });
+      if (!operations) return;
+      void operations.setStar({ path: apiPath, starred: next }).catch(() => {
+        setStarredPaths((prev) => {
+          const updated = new Set(prev);
+          if (next) updated.delete(apiPath);
+          else updated.add(apiPath);
+          return updated;
+        });
+        showError("Could not update star.");
+      });
+    },
+    [fileById, operations, show, showError, starredPaths],
+  );
+
+  const onDownload = useCallback(
+    (file: DriveFile) => {
+      if (!operations || !file.apiPath) return;
+      void operations
+        .downloadFile(file.apiPath)
+        .then(() => show("Download started", { icon: <Download className="size-4" /> }))
+        .catch((error: unknown) => {
+          showError(error instanceof Error ? error.message : "Could not download this file.");
+        });
+    },
+    [operations, show, showError],
+  );
+
+  const onRename = useCallback((file: DriveFile) => {
+    const { baseName, extension, hasExtension } = splitFileNameForRename(file.title);
+    setRenameState({ id: file.id, extension: hasExtension ? extension : "" });
+    setRenameName(baseName);
+  }, []);
+
+  const closeRename = useCallback(() => {
+    setRenameState(null);
+    setRenameName("");
+  }, []);
+
+  const submitRename = useCallback(() => {
+    if (!renameState) return;
+    const file = fileById(renameState.id);
+    const apiPath = file?.apiPath ? normalizeApiVirtualPath(file.apiPath) : null;
+    const nextName = renameState.extension
+      ? joinFileNameForRename(renameName, renameState.extension)
+      : renameName.trim();
+    if (!file || !apiPath || !nextName || nextName === file.title) {
+      closeRename();
+      return;
+    }
+    closeRename();
+    if (!operations) return;
+    const { destination } = parentAndName(apiPath);
+    void operations
+      .renameItem({ destination, from: apiPath, to: nextName })
+      .then(() => {
+        show(`Renamed to “${nextName}”`, { icon: <Pencil className="size-4" /> });
+        reload();
+      })
+      .catch((error: unknown) => {
+        showError(error instanceof Error ? error.message : "Could not rename this file.");
+      });
+  }, [closeRename, fileById, operations, reload, renameName, renameState, show, showError]);
+
+  const onMove = useCallback((file: DriveFile) => setMoveState({ id: file.id }), []);
+  const closeMove = useCallback(() => setMoveState(null), []);
+
+  const confirmMove = useCallback(
+    (destinationUiPath: string) => {
+      const state = moveState;
+      closeMove();
+      if (!state || !operations) return;
+      const file = fileById(state.id);
+      const apiPath = file?.apiPath ? normalizeApiVirtualPath(file.apiPath) : null;
+      if (!file || !apiPath) return;
+      const destination = apiPathFromUiPath(destinationUiPath, username, groupRootNames);
+      void operations
+        .renameItem({ destination, from: apiPath, to: file.title })
+        .then(() => {
+          show(`Moved “${file.title}”`);
+          reload();
+        })
+        .catch((error: unknown) => {
+          showError(error instanceof Error ? error.message : "Could not move this file.");
+        });
+    },
+    [closeMove, fileById, groupRootNames, moveState, operations, reload, show, showError, username],
+  );
+
+  const onTrash = useCallback((file: DriveFile) => setDeleteState({ id: file.id }), []);
+  const closeDelete = useCallback(() => setDeleteState(null), []);
+
+  const confirmTrash = useCallback(() => {
+    const state = deleteState;
+    closeDelete();
+    if (!state || !operations) return;
+    const file = fileById(state.id);
+    const apiPath = file?.apiPath ? normalizeApiVirtualPath(file.apiPath) : null;
+    if (!file || !apiPath) return;
+    void (async () => {
+      try {
+        await ensureTrashFolder(operations, username, groupRootNames);
+        const destination = apiPathFromUiPath(DRIVE_TRASH_UI_PATH, username, groupRootNames);
+        await operations.renameItem({ destination, from: apiPath, to: file.title });
+        show(`Moved “${file.title}” to Trash`, { icon: <Trash2 className="size-4" /> });
+        reload();
+      } catch (error) {
+        showError(error instanceof Error ? error.message : "Could not move this file to Trash.");
+      }
+    })();
+  }, [
+    closeDelete,
+    deleteState,
+    fileById,
+    groupRootNames,
+    operations,
+    reload,
+    show,
+    showError,
+    username,
+  ]);
+
+  return {
+    starred,
+    fileById,
+    onStar,
+    onDownload,
+    onRename,
+    onMove,
+    onTrash,
+    renameState,
+    renameName,
+    setRenameName,
+    submitRename,
+    closeRename,
+    moveState,
+    closeMove,
+    confirmMove,
+    deleteState,
+    closeDelete,
+    confirmTrash,
+  };
+}
+
+export type DocsHomeActions = ReturnType<typeof useDocsHomeActions>;

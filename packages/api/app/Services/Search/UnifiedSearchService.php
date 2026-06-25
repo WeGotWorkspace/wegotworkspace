@@ -22,27 +22,34 @@ final class UnifiedSearchService
      *   categories?: list<string>,
      *   extensions?: list<string>,
      *   modified_from?: string|int|null,
-     *   modified_to?: string|int|null
+     *   modified_to?: string|int|null,
+     *   path_prefix?: string|null
      * }  $filters
      * @return array{
      *   query: string,
      *   limit: int,
+     *   offset: int,
+     *   hasMore: bool,
      *   sources: list<string>,
      *   filters: array<string, mixed>,
      *   results: list<array<string, mixed>>
      * }
      */
-    public function search(string $username, string $query, int $limit, array $sources, array $filters = []): array
+    public function search(string $username, string $query, int $limit, array $sources, array $filters = [], int $offset = 0): array
     {
         $query = trim($query);
         $limit = max(1, min(100, $limit));
+        $offset = max(0, $offset);
         $allowedSources = array_values(array_intersect(['file', 'note', 'caldav', 'carddav'], $sources));
         $normalizedFilters = $this->normalizeFilters($filters);
         $tokens = $this->tokens->tokenize($query);
-        if ($query === '' || $tokens === []) {
+        $browseMode = $query === '' && $this->isBrowseMode($allowedSources, $normalizedFilters);
+        if (! $browseMode && ($query === '' || $tokens === [])) {
             return [
                 'query' => $query,
                 'limit' => $limit,
+                'offset' => $offset,
+                'hasMore' => false,
                 'sources' => $allowedSources === [] ? ['file', 'note', 'caldav', 'carddav'] : $allowedSources,
                 'filters' => $normalizedFilters,
                 'results' => [],
@@ -55,7 +62,8 @@ final class UnifiedSearchService
             $tokens,
             $limit,
             $allowedSources,
-            $normalizedFilters
+            $normalizedFilters,
+            $offset
         );
 
         $results = [];
@@ -90,10 +98,28 @@ final class UnifiedSearchService
         return [
             'query' => $query,
             'limit' => $limit,
+            'offset' => $offset,
+            'hasMore' => count($results) >= $limit,
             'sources' => $allowedSources === [] ? ['file', 'note', 'caldav', 'carddav'] : $allowedSources,
             'filters' => $normalizedFilters,
             'results' => $results,
         ];
+    }
+
+    /**
+     * @param  list<string>  $allowedSources
+     * @param  array{extensions?: list<string>}  $normalizedFilters
+     */
+    private function isBrowseMode(array $allowedSources, array $normalizedFilters): bool
+    {
+        if ($allowedSources === []) {
+            return false;
+        }
+        if (! isset($normalizedFilters['extensions']) || $normalizedFilters['extensions'] === []) {
+            return false;
+        }
+
+        return array_values(array_diff($allowedSources, ['file'])) === [];
     }
 
     /**
@@ -164,13 +190,15 @@ final class UnifiedSearchService
      *   categories?: list<string>,
      *   extensions?: list<string>,
      *   modified_from?: string|int|null,
-     *   modified_to?: string|int|null
+     *   modified_to?: string|int|null,
+     *   path_prefix?: string|null
      * }  $filters
      * @return array{
      *   categories: list<string>,
      *   extensions: list<string>,
      *   modified_from: int|null,
-     *   modified_to: int|null
+     *   modified_to: int|null,
+     *   path_prefix: string|null
      * }
      */
     private function normalizeFilters(array $filters): array
@@ -189,13 +217,30 @@ final class UnifiedSearchService
             : [];
         $modifiedFrom = $this->normalizeTimestampFilter($filters['modified_from'] ?? null);
         $modifiedTo = $this->normalizeTimestampFilter($filters['modified_to'] ?? null);
+        $pathPrefix = $this->normalizePathPrefixFilter($filters['path_prefix'] ?? null);
 
         return [
             'categories' => $categories,
             'extensions' => $extensions,
             'modified_from' => $modifiedFrom,
             'modified_to' => $modifiedTo,
+            'path_prefix' => $pathPrefix,
         ];
+    }
+
+    /**
+     * Normalize an optional storage-key prefix used to scope file/note browse to a
+     * single drive (e.g. `users/alice` or `groups/team`). Surrounding slashes are
+     * stripped; an empty value disables the filter.
+     */
+    private function normalizePathPrefixFilter(mixed $value): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+        $trimmed = trim(trim($value), '/');
+
+        return $trimmed === '' ? null : $trimmed;
     }
 
     private function normalizeTimestampFilter(mixed $value): ?int

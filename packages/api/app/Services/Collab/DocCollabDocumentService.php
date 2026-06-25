@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Collab;
 
 use App\Services\Drive\DriveGroupResolver;
+use App\Services\Search\SearchIndexerService;
 use App\Storage\StoragePaths;
 use App\Storage\WgwStorage;
 use App\Support\WgwSettings;
@@ -18,8 +19,6 @@ use Illuminate\Http\Request;
  */
 final class DocCollabDocumentService
 {
-    private const DEFAULT_MARKDOWN = "# Collaborative document\n\nStart typing…\n";
-
     private const MAX_MARKDOWN_BYTES = 2_097_152;
 
     private const MAX_YJS_BYTES = 5_242_880;
@@ -30,6 +29,7 @@ final class DocCollabDocumentService
         private WgwStorage $storage,
         private StoragePaths $paths,
         private DriveGroupResolver $groups,
+        private SearchIndexerService $search,
     ) {}
 
     public function getMarkdown(Request $request, mixed $room): string
@@ -38,12 +38,12 @@ final class DocCollabDocumentService
         $key = $this->paths->virtualToStorageKey($virtual);
         $disk = $this->storage->files();
         if (! $disk->fileExists($key)) {
-            return self::DEFAULT_MARKDOWN;
+            return '';
         }
 
         $contents = $disk->get($key);
-        if (! is_string($contents) || $contents === '') {
-            return self::DEFAULT_MARKDOWN;
+        if (! is_string($contents)) {
+            return '';
         }
 
         return $contents;
@@ -96,7 +96,11 @@ final class DocCollabDocumentService
             if (strlen($markdown) > self::MAX_MARKDOWN_BYTES) {
                 $this->fail('markdown_too_large', 413);
             }
-            $disk->put($this->paths->virtualToStorageKey($virtual), $markdown);
+            $documentKey = $this->paths->virtualToStorageKey($virtual);
+            $disk->put($documentKey, $markdown);
+            // Keep the unified search index in sync with the written content so size and
+            // body reflect the latest save without waiting for a later rename/upload.
+            $this->search->indexFileStorageKey($documentKey);
         }
 
         if ($hasYjs) {

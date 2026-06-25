@@ -1,0 +1,24 @@
+@import "../../styles.css" reference;
+
+.docs-home-workspace .workspace-app-layout__main-content {
+  @apply mx-0 flex min-h-full w-full max-w-none flex-1 flex-col px-0 py-0;
+}
+
+.docs-home-workspace .docs-home-pane {
+  @apply flex min-h-0 w-full flex-1 flex-col;
+  background-color: var(--docs-surface, var(--color-cream, #ffffff));
+}
+
+.docs-home-workspace .docs-home-pane__header {
+  @apply shrink-0 px-4 pb-3 pt-4 md:px-6 md:pt-6;
+  border-bottom: 1px solid
+    var(--docs-border, color-mix(in oklab, var(--color-ink) 12%, transparent));
+}
+
+.docs-home-workspace .docs-home-pane__body {
+  @apply flex min-h-0 flex-1 flex-col;
+}
+
+.docs-home-workspace .docs-home-pane__load-more {
+  @apply flex justify-center px-4 pb-8 md:px-6;
+}

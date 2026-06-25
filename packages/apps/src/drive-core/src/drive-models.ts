@@ -10,6 +10,8 @@ export type DriveFile = Note & {
   kind: FileKind;
   size: string;
   apiPath?: string;
+  /** Top-level drive location label (e.g. `My Drive`, `Groups/{name}`) for cross-drive listings. */
+  location?: string;
 };
 
 export type ViewKey =

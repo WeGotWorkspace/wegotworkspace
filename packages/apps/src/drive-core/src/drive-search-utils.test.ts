@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   apiPathFromSearchSourceKey,
   driveFileFromSearchResult,
+  driveLocationLabel,
   parentVirtualPath,
 } from "@/drive-core/src/drive-search-utils";
 import type { DriveUnifiedSearchResult } from "@/drive-core/src/drive-types";
@@ -28,6 +29,20 @@ describe("apiPathFromSearchSourceKey", () => {
   });
 });
 
+describe("driveLocationLabel", () => {
+  it("labels user drives as My Drive", () => {
+    expect(driveLocationLabel("users/alice/notes.md")).toBe("My Drive");
+  });
+
+  it("labels group drives as Groups/{name}", () => {
+    expect(driveLocationLabel("groups/engineering/rfc.md")).toBe("Groups/engineering");
+  });
+
+  it("returns null for unrecognized keys", () => {
+    expect(driveLocationLabel("misc/file.md")).toBeNull();
+  });
+});
+
 describe("driveFileFromSearchResult", () => {
   it("maps unified search rows into drive list items", () => {
     const result: DriveUnifiedSearchResult = {
@@ -38,6 +53,7 @@ describe("driveFileFromSearchResult", () => {
       snippet: "Quarterly planning",
       category: "document",
       size: 2048,
+      modifiedAt: 1_700_000_000,
     };
 
     const file = driveFileFromSearchResult(result, "My Drive/notes.md", "/users/alice/notes.md");
@@ -48,8 +64,35 @@ describe("driveFileFromSearchResult", () => {
       excerpt: "Quarterly planning",
       parent: "My Drive",
       kind: "doc",
-      size: "2048",
+      size: "2.0 KB",
       apiPath: "/users/alice/notes.md",
+      location: "My Drive",
     });
+    expect(file.date).toBe(new Date(1_700_000_000 * 1000).toLocaleDateString());
+  });
+
+  it("formats larger sizes in MB", () => {
+    const result: DriveUnifiedSearchResult = {
+      id: 3,
+      sourceType: "file",
+      sourceKey: "users/alice/deck.md",
+      title: "Deck",
+      size: 3_500_000,
+    };
+    const file = driveFileFromSearchResult(result, "My Drive/deck.md", "/users/alice/deck.md");
+    expect(file.size).toBe("3.3 MB");
+  });
+
+  it("falls back to Now and an em dash for zero/unknown sizes", () => {
+    const result: DriveUnifiedSearchResult = {
+      id: 2,
+      sourceType: "file",
+      sourceKey: "users/alice/draft.md",
+      title: "Draft",
+      size: 0,
+    };
+    const file = driveFileFromSearchResult(result, "My Drive/draft.md", "/users/alice/draft.md");
+    expect(file.date).toBe("Now");
+    expect(file.size).toBe("—");
   });
 });

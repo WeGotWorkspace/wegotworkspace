@@ -6,6 +6,7 @@ import { WorkspaceLiveAppShell } from "@/lib/live/workspace-live-app-shell";
 import {
   docsApiPathFromSearch,
   docsSearchFromApiPath,
+  openDocsFileInNewWindow,
   parseDocsRouteSearch,
 } from "@/docs-core/src/docs-route-search";
 import { wgwApiBaseUrl, wgwCurrentAccessToken } from "@/lib/api/wgw/http";
@@ -14,13 +15,15 @@ import type { DocsAppProps } from "@/docs-core/src/docs-app-props";
 import { isDocsCollabEditablePath } from "@/docs-core/src/docs-collab-text-files";
 import { docsLabels } from "@/docs-core/src/docs-labels";
 import { DocsWorkspace } from "@/docs-core/src/docs-workspace";
+import { DocsHomeWorkspace } from "@/docs-core/src/docs-home-workspace";
 import { DocsCollabWorkspace, useDocsCollabPendingSync } from "@/text-editor-core/docs-collab";
 import { createWgwDocsCollabWire } from "@/docs-core/src/docs-collab-wgw-wire";
 import { useDocsAPI } from "@/docs-core/src/use-docs-api";
+import { createWgwDriveOperations } from "@/lib/api/wgw/drive";
 
 export function DocsApp({ apiSource }: DocsAppProps = {}) {
   const navigate = useNavigate();
-  const { show } = useAppToast();
+  const { show, showError } = useAppToast();
   const wasPendingRef = useRef(false);
   const search = useSearch({ strict: false });
 
@@ -44,6 +47,30 @@ export function DocsApp({ apiSource }: DocsAppProps = {}) {
       });
     },
     [navigate],
+  );
+
+  const handleOpenHomeFile = useCallback((apiPath: string) => {
+    openDocsFileInNewWindow(apiPath);
+  }, []);
+
+  const driveOperations = useMemo(() => createWgwDriveOperations("/"), []);
+
+  const handleCreateHomeDocument = useCallback(
+    (apiPath: string) => {
+      void (async () => {
+        try {
+          await networkOperations.saveFile(apiPath, "");
+        } catch {
+          showError(docsLabels.homeCreateError);
+          return;
+        }
+        void navigate({
+          to: "/docs",
+          search: docsSearchFromApiPath(apiPath),
+        });
+      })();
+    },
+    [navigate, networkOperations, showError],
   );
 
   const showCollab = isDocsCollabEditablePath(filePath);
@@ -95,7 +122,15 @@ export function DocsApp({ apiSource }: DocsAppProps = {}) {
       successVersion={successVersion}
       render={() => (
         <div>
-          {showCollab && collabUrls ? (
+          {filePath === null ? (
+            <DocsHomeWorkspace
+              session={session}
+              operations={driveOperations}
+              onOpenFile={handleOpenHomeFile}
+              onCreateDocument={handleCreateHomeDocument}
+              onLogout={handleLogout}
+            />
+          ) : showCollab && collabUrls ? (
             <DocsCollabWorkspace
               userName={collabUserName}
               documentTitle={collabDocumentTitle}
