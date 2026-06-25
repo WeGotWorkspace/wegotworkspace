@@ -18,6 +18,7 @@ const repoRoot = resolve(packageRoot, "..", "..");
 const distRoot = resolve(packageRoot, "dist");
 const assetsDir = resolve(distRoot, "assets");
 const runtimeAppsRoot = resolve(repoRoot, "apps", "wegotworkspace", "packages", "apps");
+const installRoot = resolve(repoRoot, "apps", "wegotworkspace");
 
 const modules = [
   { name: "shell", title: "WeGotWorkspace" },
@@ -82,6 +83,8 @@ export function syncRuntimeAppBuilds() {
     );
   }
 
+  const pwaServiceWorkerFiles = listPwaServiceWorkerFiles(distRoot);
+
   for (const module of modules) {
     const targetDist = resolve(runtimeAppsRoot, module.name, "dist");
     const targetAssetsDir = resolve(targetDist, "assets");
@@ -97,7 +100,7 @@ export function syncRuntimeAppBuilds() {
     cpSync(resolve(distRoot, "icons"), resolve(targetDist, "icons"), { recursive: true });
     cpSync(resolve(distRoot, "manifests"), resolve(targetDist, "manifests"), { recursive: true });
 
-    for (const file of listPwaServiceWorkerFiles(distRoot)) {
+    for (const file of pwaServiceWorkerFiles) {
       cpSync(resolve(distRoot, file), resolve(targetDist, file));
     }
 
@@ -121,6 +124,12 @@ export function syncRuntimeAppBuilds() {
       assetBase,
     });
     writeFileSync(resolve(targetDist, "index.html"), html, "utf8");
+  }
+
+  // Apache serves existing docroot files directly; copy SW beside index.php so /sw.js
+  // works even when the install-tree packages/api copy is stale.
+  for (const file of pwaServiceWorkerFiles) {
+    cpSync(resolve(distRoot, file), resolve(installRoot, file));
   }
 
   console.log(
