@@ -14,6 +14,7 @@ export function MeetWorkspace({
   session,
   operations,
   invitedRoom = null,
+  isJoinRoute = false,
   buildCallLink,
   onRoomChange,
   onLogout,
@@ -24,6 +25,7 @@ export function MeetWorkspace({
     session,
     operations,
     invitedRoom,
+    isJoinRoute,
     buildCallLink,
     onRoomChange,
   });

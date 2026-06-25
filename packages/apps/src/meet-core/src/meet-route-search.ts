@@ -25,6 +25,22 @@ export function meetSearchFromRoom(roomCode: string | null): MeetRouteSearch {
   return { room };
 }
 
+export type MeetCallExitMode = "end" | "leave";
+
+/** True on guest/join routes where the user entered via invite link. */
+export function meetIsJoinRoute(pathname: string): boolean {
+  return pathname.startsWith("/meet/guest") || pathname.startsWith("/meet/join");
+}
+
+/** Host on `/meet` ends the call; guests and join routes leave only. */
+export function meetCallExitMode(
+  isJoinRoute: boolean,
+  hasSignedInIdentity: boolean,
+): MeetCallExitMode {
+  if (isJoinRoute || !hasSignedInIdentity) return "leave";
+  return "end";
+}
+
 /** Guest invite URL for sharing (always `/meet/guest?room=` on the given origin). */
 export function buildMeetGuestCallLink(
   roomCode: string,

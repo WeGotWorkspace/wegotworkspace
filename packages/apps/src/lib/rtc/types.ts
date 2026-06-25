@@ -50,6 +50,12 @@ export const DEFAULT_RTC_POLL_INTERVALS: RtcPollIntervals = {
   steadyMs: 1200,
 };
 
+/** Meet fast steady cadence; backs off further when topology is stable (see `RtcPeerMesh`). */
+export const MEET_RTC_POLL_INTERVALS: RtcPollIntervals = {
+  connectingMs: 400,
+  steadyMs: 1200,
+};
+
 /** @deprecated Use `DEFAULT_RTC_POLL_INTERVALS` — all channels share the same poll cadence. */
 export const COLLAB_RTC_POLL_INTERVALS: RtcPollIntervals = DEFAULT_RTC_POLL_INTERVALS;
 

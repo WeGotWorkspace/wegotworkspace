@@ -141,7 +141,8 @@ export function useMeetCallSession({
       });
     }
     room.setPeers(next);
-  }, [meetRtc, room]);
+    // Room setters/refs are stable; omit the room object to avoid recreating refreshPeers every render.
+  }, [meetRtc]);
   room.refreshPeersRef.current = refreshPeers;
 
   const announceMediaPresence = useCallback(
@@ -165,7 +166,8 @@ export function useMeetCallSession({
         // Best-effort; peers may still infer from tracks or RTP stats.
       }
     },
-    [meetRtc, room],
+    // Room fields are read via refs; omit the room object to keep this callback stable.
+    [meetRtc],
   );
   announceMediaPresenceRef.current = announceMediaPresence;
 
