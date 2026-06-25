@@ -8,20 +8,29 @@ final class NoteStoragePaths
 {
     public function __construct(private StoragePaths $paths) {}
 
-    public function baseKey(string $username, bool $archived): string
+    public function baseKey(NoteScope $scope, bool $archived): string
     {
-        return $archived
-            ? $this->paths->noteStorageKey($username, '.archive')
-            : rtrim($this->paths->noteStorageKey($username, ''), '/');
+        $root = $this->scopeRoot($scope);
+
+        return $archived ? $root.'/.archive' : $root;
     }
 
-    public function notebookKey(string $username, string $notebook, bool $archived): string
+    public function notebookKey(NoteScope $scope, string $notebook, bool $archived): string
     {
-        return $this->baseKey($username, $archived).'/'.$notebook;
+        return $this->baseKey($scope, $archived).'/'.$notebook;
     }
 
-    public function noteKey(string $username, string $notebook, string $id, bool $archived): string
+    public function noteKey(NoteScope $scope, string $notebook, string $id, bool $archived): string
     {
-        return $this->notebookKey($username, $notebook, $archived).'/'.$id.'.md';
+        return $this->notebookKey($scope, $notebook, $archived).'/'.$id.'.md';
+    }
+
+    private function scopeRoot(NoteScope $scope): string
+    {
+        $key = $scope->isGroup()
+            ? $this->paths->groupNoteStorageKey($scope->owner(), '')
+            : $this->paths->noteStorageKey($scope->owner(), '');
+
+        return rtrim($key, '/');
     }
 }

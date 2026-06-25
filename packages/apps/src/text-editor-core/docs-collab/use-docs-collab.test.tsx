@@ -122,6 +122,46 @@ describe("useDocsCollab offline lifecycle", () => {
     expect(mockJoin).not.toHaveBeenCalled();
   });
 
+  it("seeds an empty offline doc from seedContent (e.g. cached note body)", async () => {
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+
+    const { result } = renderHook(() =>
+      useDocsCollab({
+        userName: "Alex",
+        autoJoin: true,
+        urls: testUrls,
+        wire,
+        seedContent: "# Seeded note body",
+      }),
+    );
+
+    await waitFor(() => expect(result.current.session).not.toBeNull());
+    await waitFor(() => {
+      const ydoc = result.current.session?.ydoc;
+      expect(ydoc && ydoc.getXmlFragment("default").length).toBeGreaterThan(0);
+    });
+  });
+
+  it("falls back to seedContent only when the server has no markdown yet", async () => {
+    vi.stubGlobal("fetch", mockFetchResponses({ markdown: "" }));
+
+    const { result } = renderHook(() =>
+      useDocsCollab({
+        userName: "Alex",
+        autoJoin: true,
+        urls: testUrls,
+        wire,
+        seedContent: "# From cached body",
+      }),
+    );
+
+    await waitFor(() => expect(result.current.session).not.toBeNull());
+    await waitFor(() => {
+      const ydoc = result.current.session?.ydoc;
+      expect(ydoc && ydoc.getXmlFragment("default").length).toBeGreaterThan(0);
+    });
+  });
+
   it("marks pendingSync when editing offline", async () => {
     vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
 

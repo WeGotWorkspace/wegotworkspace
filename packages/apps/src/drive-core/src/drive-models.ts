@@ -6,6 +6,7 @@ export type TopFolder = (typeof TOP_FOLDERS)[number];
 export type FileKind = "folder" | "doc" | "image" | "video" | "audio" | "archive" | "file";
 
 export type DriveFile = Note & {
+  title: string;
   parent: string;
   kind: FileKind;
   size: string;

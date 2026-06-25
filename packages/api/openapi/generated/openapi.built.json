@@ -2320,9 +2320,6 @@
                     "notebook": {
                         "type": "string"
                     },
-                    "title": {
-                        "type": "string"
-                    },
                     "body": {
                         "type": "string"
                     },
@@ -2338,6 +2335,21 @@
                     "archived": {
                         "type": "boolean"
                     },
+                    "scope": {
+                        "type": "string",
+                        "enum": [
+                            "personal",
+                            "group"
+                        ],
+                        "description": "Storage scope: personal (users/{username}/.notes) or group (groups/{slug}/.notes)."
+                    },
+                    "groupSlug": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Group slug when scope is group, null for personal notes."
+                    },
                     "updatedAt": {
                         "type": "string"
                     }
@@ -2346,10 +2358,11 @@
                     "id",
                     "username",
                     "notebook",
-                    "title",
                     "body",
                     "tags",
                     "archived",
+                    "scope",
+                    "groupSlug",
                     "updatedAt"
                 ]
             },
@@ -2397,11 +2410,9 @@
                     "notebook": {
                         "type": "string"
                     },
-                    "title": {
-                        "type": "string"
-                    },
                     "body": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Optional. Omit the field entirely to update metadata only and preserve the existing body bytes on disk. Sending it (including an empty string) overwrites the body."
                     },
                     "tags": {
                         "$ref": "#/components/schemas/NoteTagList"
@@ -2411,21 +2422,27 @@
                     },
                     "archived": {
                         "type": "boolean"
+                    },
+                    "groupSlug": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Target a shared group notebook (groups/{slug}/.notes). Omit or null for the caller's personal notes. Caller must be a group member."
                     }
                 },
                 "required": [
-                    "notebook",
-                    "title"
+                    "notebook"
                 ],
                 "example": {
                     "id": "n123",
                     "notebook": "General",
-                    "title": "Roadmap",
                     "body": "Draft roadmap",
                     "tags": [
                         "planning"
                     ],
-                    "starred": true
+                    "starred": true,
+                    "groupSlug": "team"
                 }
             },
             "NoteDeleteRequest": {
@@ -2436,6 +2453,13 @@
                     },
                     "archived": {
                         "type": "boolean"
+                    },
+                    "groupSlug": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Target a shared group notebook. Omit or null for personal notes."
                     }
                 },
                 "required": [
@@ -2458,12 +2482,27 @@
                     },
                     "archivedCount": {
                         "type": "integer"
+                    },
+                    "scope": {
+                        "type": "string",
+                        "enum": [
+                            "personal",
+                            "group"
+                        ]
+                    },
+                    "groupSlug": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     }
                 },
                 "required": [
                     "name",
                     "activeCount",
-                    "archivedCount"
+                    "archivedCount",
+                    "scope",
+                    "groupSlug"
                 ]
             },
             "NotebookListItemList": {
@@ -2517,6 +2556,13 @@
                 "properties": {
                     "name": {
                         "type": "string"
+                    },
+                    "groupSlug": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Create the notebook in a shared group tree. Omit or null for personal."
                     }
                 },
                 "required": [
@@ -2531,6 +2577,12 @@
                 "properties": {
                     "name": {
                         "type": "string"
+                    },
+                    "groupSlug": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     }
                 },
                 "required": [
@@ -2553,6 +2605,12 @@
                     },
                     "target": {
                         "type": "string"
+                    },
+                    "groupSlug": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     }
                 },
                 "required": [
@@ -7791,10 +7849,22 @@
                 "tags": [
                     "Notes"
                 ],
-                "summary": "List notes with optional archive/notebook/search filters",
+                "summary": "List notes with optional archive/notebook/search filters and group scope",
+                "description": "Without `groupSlug` the response aggregates the caller's personal notes plus every shared group notebook they belong to; each item carries a `scope` (`personal`|`group`) and `groupSlug`. Pass `groupSlug` to return only that group's notes (403 for non-members).",
                 "security": [
                     {
                         "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "groupSlug",
+                        "in": "query",
+                        "required": false,
+                        "description": "Restrict the listing to a shared group notebook tree (groups/{slug}/.notes). Caller must be a member.",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "responses": {
@@ -7808,12 +7878,22 @@
                 "tags": [
                     "Notes"
                 ],
-                "summary": "Create a new note",
+                "summary": "Create a new note (personal or shared group scope)",
                 "security": [
                     {
                         "bearerAuth": []
                     }
                 ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NoteUpsertRequest"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "201": {
                         "description": "Created note"
@@ -7827,7 +7907,8 @@
                 "tags": [
                     "Notes"
                 ],
-                "summary": "Save/update a note",
+                "summary": "Save a note, or update only its metadata when body is omitted",
+                "description": "`body` is optional. When the `body` field is omitted entirely, only the frontmatter (title, tags, starred, notebook, archived) is rewritten and the existing markdown body bytes on disk are preserved — this is the metadata-only path used alongside collaborative body editing via `PUT /files/collaboration`. Sending `body` (including an empty string) overwrites the body. Pass `groupSlug` to target a shared group notebook.",
                 "security": [
                     {
                         "bearerAuth": []
@@ -7843,6 +7924,16 @@
                         }
                     }
                 ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NoteUpsertRequest"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "Updated note"
@@ -7870,6 +7961,16 @@
                         }
                     }
                 ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NoteDeleteRequest"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "Deleted note"
@@ -7881,7 +7982,7 @@
                 "tags": [
                     "Notes"
                 ],
-                "summary": "Patch note (e.g. archive)",
+                "summary": "Patch note (e.g. archive) — body optional, supports groupSlug",
                 "security": [
                     {
                         "bearerAuth": []
@@ -7980,10 +8081,22 @@
                 "tags": [
                     "Notes"
                 ],
-                "summary": "List notebooks with active/archive counts",
+                "summary": "List notebooks with active/archive counts and scope",
+                "description": "Without `groupSlug` the listing aggregates personal notebooks plus shared group notebooks the caller belongs to; each item carries a `scope` and `groupSlug`. Pass `groupSlug` to scope to one group.",
                 "security": [
                     {
                         "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "groupSlug",
+                        "in": "query",
+                        "required": false,
+                        "description": "Restrict the listing to a shared group notebook tree. Caller must be a member.",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "responses": {
@@ -7997,12 +8110,22 @@
                 "tags": [
                     "Notes"
                 ],
-                "summary": "Create notebook",
+                "summary": "Create notebook (personal or shared group scope)",
                 "security": [
                     {
                         "bearerAuth": []
                     }
                 ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NotebookCreateRequest"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "201": {
                         "description": "Notebook created"
@@ -8032,6 +8155,16 @@
                         }
                     }
                 ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NotebookRenameRequest"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "Notebook renamed"
@@ -8059,6 +8192,16 @@
                         }
                     }
                 ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NotebookDeleteRequest"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "Notebook deleted"

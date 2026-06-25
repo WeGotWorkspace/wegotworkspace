@@ -1,3 +1,20 @@
+// Notes dual-path offline e2e (live, cross-service — NOT run in this chunk).
+//
+// Contract after the Notes collab alignment (#234/#237/#238):
+// - Note BODY edits persist via the Docs Yjs collab stack
+//   (`PUT /api/v1/files/collaboration`, room = note virtual path) with
+//   y-indexeddb offline + deferred REST save. The metadata API
+//   (`/api/v1/notes/items`) is metadata-only and must never carry the body.
+// - The body pending indicator is the *collab* pending-sync dot (deferred
+//   collab save), distinct from the metadata outbox pending dot.
+//
+// Remaining live-validation TODOs flagged for the next e2e pass (need a running
+// stack to confirm the collab pending-dot/toast wiring and group fixtures):
+//   1. Confirm `expectPendingDotVisible` / `expectSyncCompleted` resolve against
+//      the collab pending-sync indicator for body-only edits (the helpers may
+//      need a collab-specific selector vs. the metadata dot).
+//   2. Add a shared-note scenario under `groups/{slug}/.notes/...` (#236):
+//      two members edit the same shared note body over the mesh + reconnect.
 import { expect, test } from "@playwright/test";
 import {
   appendToActiveNoteBody,
@@ -74,9 +91,14 @@ test.describe("Notes offline sync (live app)", () => {
       await expectPendingDotVisible(editor);
       await expect(observer.getByText(token)).toHaveCount(0);
 
+      // Dual-path contract: a note **body** edit now persists through the Docs
+      // collab document (`PUT /api/v1/files/collaboration`, room = note path),
+      // NOT through `/notes/items` (which is metadata-only). The body still
+      // surfaces on `/notes/items` reads because collab merges into the same
+      // `.md` file, but the write that must land is the collaboration PUT.
       const serverSync = editor.waitForResponse(
         (response) =>
-          response.url().includes("/api/v1/notes/items") &&
+          response.url().includes("/api/v1/files/collaboration") &&
           response.request().method() !== "GET" &&
           response.ok(),
         { timeout: 30_000 },

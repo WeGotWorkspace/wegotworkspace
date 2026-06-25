@@ -20,7 +20,6 @@ const note: Note = {
   id: "note-1",
   category: "Note",
   date: "2024-10-12T10:00:00.000Z",
-  title: "Quiet draft",
   excerpt: "Draft excerpt",
   body: ["Body text"],
   notebook: "Drafts",
@@ -46,23 +45,23 @@ describe("notes offline store", () => {
 
   it("reads bootstrap written to cache", async () => {
     const cached = await readNotesBootstrapFromCache(username);
-    expect(cached?.data.notes[0]?.title).toBe("Quiet draft");
+    expect(cached?.data.notes[0]?.body).toEqual(["Body text"]);
   });
 
   it("preserves pendingSync notes when bootstrap is rewritten from server", async () => {
-    const localNote = { ...note, title: "Local title" };
+    const localNote = { ...note, body: ["Local body"] };
     await upsertNoteInCache(username, localNote, true);
 
     await writeNotesBootstrapToCache(username, {
       ...bootstrap,
       data: {
         ...bootstrap.data,
-        notes: [{ ...note, title: "Server title" }],
+        notes: [{ ...note, body: ["Server body"] }],
       },
     });
 
     const cached = await readNotesBootstrapFromCache(username);
-    expect(cached?.data.notes[0]?.title).toBe("Local title");
+    expect(cached?.data.notes[0]?.body).toEqual(["Local body"]);
   });
 
   it("coalesces pending upsert rows for the same note", async () => {
@@ -70,14 +69,18 @@ describe("notes offline store", () => {
     await enqueueCoalescedNoteUpdate(
       username,
       note.id,
-      { ...note, title: "Merged title" },
+      { ...note, tags: ["merged", "essay"] },
       note.date,
     );
 
     const rows = await listOutboxMutations(username);
     expect(rows).toHaveLength(1);
     expect(rows[0]?.op).toBe("upsert");
-    expect(JSON.parse(rows[0]?.payload ?? "{}").note.title).toBe("Merged title");
+    const payload = JSON.parse(rows[0]?.payload ?? "{}");
+    expect(payload.metadata.tags).toEqual(["merged", "essay"]);
+    // Body is never coalesced into the metadata outbox.
+    expect(payload).not.toHaveProperty("note");
+    expect(payload.metadata).not.toHaveProperty("body");
   });
 
   it("orders outbox mutations by createdAt", async () => {

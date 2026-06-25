@@ -19,7 +19,6 @@ const note: Note = {
   id: "note-1",
   category: "Note",
   date: "2024-10-12T10:00:00.000Z",
-  title: "Quiet draft",
   excerpt: "Draft excerpt",
   body: ["Body text"],
   notebook: "Drafts",
@@ -89,14 +88,19 @@ describe("flushNotesOutbox", () => {
     await enqueueCoalescedNoteUpdate(
       username,
       note.id,
-      { ...note, title: "Updated title" },
+      { ...note, body: ["Updated body"] },
       note.date,
     );
 
-    updateNoteItem.mockResolvedValue({ ...note, title: "Updated title" });
+    updateNoteItem.mockResolvedValue({ ...note, body: ["Updated body"] });
 
     const result = await flushNotesOutbox(username);
     expect(updateNoteItem).toHaveBeenCalledOnce();
+    // Metadata-only PUT: the request must never carry the note body.
+    const [, request] = updateNoteItem.mock.calls[0] ?? [];
+    expect(request).toMatchObject({ notebook: "Drafts", tags: ["essay"] });
+    expect(request).not.toHaveProperty("body");
+    expect(request).not.toHaveProperty("title");
     expect(result.stateMismatches).toEqual([]);
   });
 
@@ -104,7 +108,7 @@ describe("flushNotesOutbox", () => {
     await enqueueCoalescedNoteUpdate(
       username,
       note.id,
-      { ...note, title: "Local edit" },
+      { ...note, body: ["Local edit"] },
       note.date,
     );
 
@@ -126,13 +130,13 @@ describe("flushNotesOutbox", () => {
     const offlineNote: Note = {
       ...note,
       id: tempId,
-      title: "Created offline",
+      body: ["Created offline"],
     };
 
     await enqueueCoalescedNoteUpdate(username, tempId, offlineNote, offlineNote.date, tempId);
 
     updateNoteItem.mockRejectedValue(Object.assign(new Error("not found"), { status: 404 }));
-    const saved = { ...note, id: "server-note-99", title: "Created offline" };
+    const saved = { ...note, id: "server-note-99", body: ["Created offline"] };
     createNoteItem.mockResolvedValue(saved);
 
     const result = await flushNotesOutbox(username);
@@ -144,14 +148,14 @@ describe("flushNotesOutbox", () => {
   });
 
   it("clears pendingSync after a successful flush", async () => {
-    await upsertNoteInCache(username, { ...note, title: "Synced title" }, true);
+    await upsertNoteInCache(username, { ...note, body: ["Synced body"] }, true);
     await enqueueCoalescedNoteUpdate(
       username,
       note.id,
-      { ...note, title: "Synced title" },
+      { ...note, body: ["Synced body"] },
       note.date,
     );
-    updateNoteItem.mockResolvedValue({ ...note, title: "Synced title" });
+    updateNoteItem.mockResolvedValue({ ...note, body: ["Synced body"] });
 
     await flushNotesOutbox(username);
 
@@ -159,7 +163,7 @@ describe("flushNotesOutbox", () => {
     const db = offlineDbForAccount(offlineAccountKeyFromUsername(username));
     const row = await notesNotesTable(db).get("note-1");
     expect(row?.pendingSync).toBe(false);
-    expect(JSON.parse(row?.data ?? "{}").title).toBe("Synced title");
+    expect(JSON.parse(row?.data ?? "{}").body).toEqual(["Synced body"]);
   });
 
   it("flushes a queued delete and removes the note from cache", async () => {

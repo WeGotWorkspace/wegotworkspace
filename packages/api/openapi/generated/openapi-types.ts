@@ -1564,10 +1564,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List notes with optional archive/notebook/search filters */
+        /**
+         * List notes with optional archive/notebook/search filters and group scope
+         * @description Without `groupSlug` the response aggregates the caller's personal notes plus every shared group notebook they belong to; each item carries a `scope` (`personal`|`group`) and `groupSlug`. Pass `groupSlug` to return only that group's notes (403 for non-members).
+         */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    /** @description Restrict the listing to a shared group notebook tree (groups/{slug}/.notes). Caller must be a member. */
+                    groupSlug?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -1584,7 +1590,7 @@ export interface paths {
             };
         };
         put?: never;
-        /** Create a new note */
+        /** Create a new note (personal or shared group scope) */
         post: {
             parameters: {
                 query?: never;
@@ -1592,7 +1598,11 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["NoteUpsertRequest"];
+                };
+            };
             responses: {
                 /** @description Created note */
                 201: {
@@ -1617,7 +1627,10 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** Save/update a note */
+        /**
+         * Save a note, or update only its metadata when body is omitted
+         * @description `body` is optional. When the `body` field is omitted entirely, only the frontmatter (title, tags, starred, notebook, archived) is rewritten and the existing markdown body bytes on disk are preserved — this is the metadata-only path used alongside collaborative body editing via `PUT /files/collaboration`. Sending `body` (including an empty string) overwrites the body. Pass `groupSlug` to target a shared group notebook.
+         */
         put: {
             parameters: {
                 query?: never;
@@ -1627,7 +1640,11 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["NoteUpsertRequest"];
+                };
+            };
             responses: {
                 /** @description Updated note */
                 200: {
@@ -1649,7 +1666,11 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["NoteDeleteRequest"];
+                };
+            };
             responses: {
                 /** @description Deleted note */
                 200: {
@@ -1662,7 +1683,7 @@ export interface paths {
         };
         options?: never;
         head?: never;
-        /** Patch note (e.g. archive) */
+        /** Patch note (e.g. archive) — body optional, supports groupSlug */
         patch: {
             parameters: {
                 query?: never;
@@ -1768,10 +1789,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List notebooks with active/archive counts */
+        /**
+         * List notebooks with active/archive counts and scope
+         * @description Without `groupSlug` the listing aggregates personal notebooks plus shared group notebooks the caller belongs to; each item carries a `scope` and `groupSlug`. Pass `groupSlug` to scope to one group.
+         */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    /** @description Restrict the listing to a shared group notebook tree. Caller must be a member. */
+                    groupSlug?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -1788,7 +1815,7 @@ export interface paths {
             };
         };
         put?: never;
-        /** Create notebook */
+        /** Create notebook (personal or shared group scope) */
         post: {
             parameters: {
                 query?: never;
@@ -1796,7 +1823,11 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["NotebookCreateRequest"];
+                };
+            };
             responses: {
                 /** @description Notebook created */
                 201: {
@@ -1833,7 +1864,11 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["NotebookDeleteRequest"];
+                };
+            };
             responses: {
                 /** @description Notebook deleted */
                 200: {
@@ -1856,7 +1891,11 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["NotebookRenameRequest"];
+                };
+            };
             responses: {
                 /** @description Notebook renamed */
                 200: {
@@ -6302,11 +6341,17 @@ export interface components {
             id: string;
             username: string;
             notebook: string;
-            title: string;
             body: string;
             tags: components["schemas"]["NoteTagList"];
             starred?: boolean | null;
             archived: boolean;
+            /**
+             * @description Storage scope: personal (users/{username}/.notes) or group (groups/{slug}/.notes).
+             * @enum {string}
+             */
+            scope: "personal" | "group";
+            /** @description Group slug when scope is group, null for personal notes. */
+            groupSlug: string | null;
             updatedAt: string;
         };
         NoteItemList: components["schemas"]["NoteItem"][];
@@ -6321,22 +6366,24 @@ export interface components {
          * @example {
          *       "id": "n123",
          *       "notebook": "General",
-         *       "title": "Roadmap",
          *       "body": "Draft roadmap",
          *       "tags": [
          *         "planning"
          *       ],
-         *       "starred": true
+         *       "starred": true,
+         *       "groupSlug": "team"
          *     }
          */
         NoteUpsertRequest: {
             id?: string;
             notebook: string;
-            title: string;
+            /** @description Optional. Omit the field entirely to update metadata only and preserve the existing body bytes on disk. Sending it (including an empty string) overwrites the body. */
             body?: string;
             tags?: components["schemas"]["NoteTagList"];
             starred?: boolean;
             archived?: boolean;
+            /** @description Target a shared group notebook (groups/{slug}/.notes). Omit or null for the caller's personal notes. Caller must be a group member. */
+            groupSlug?: string | null;
         };
         /**
          * @example {
@@ -6347,11 +6394,16 @@ export interface components {
         NoteDeleteRequest: {
             notebook: string;
             archived: boolean;
+            /** @description Target a shared group notebook. Omit or null for personal notes. */
+            groupSlug?: string | null;
         };
         NotebookListItem: {
             name: string;
             activeCount: number;
             archivedCount: number;
+            /** @enum {string} */
+            scope: "personal" | "group";
+            groupSlug: string | null;
         };
         NotebookListItemList: components["schemas"]["NotebookListItem"][];
         NotebookListResponse: {
@@ -6372,6 +6424,8 @@ export interface components {
          */
         NotebookCreateRequest: {
             name: string;
+            /** @description Create the notebook in a shared group tree. Omit or null for personal. */
+            groupSlug?: string | null;
         };
         /**
          * @example {
@@ -6380,6 +6434,7 @@ export interface components {
          */
         NotebookRenameRequest: {
             name: string;
+            groupSlug?: string | null;
         };
         /**
          * @example {
@@ -6391,6 +6446,7 @@ export interface components {
             /** @enum {string} */
             mode: "archive" | "move" | "purge";
             target?: string;
+            groupSlug?: string | null;
         };
         MeetSessionKey: string;
         MeetPeer: {

@@ -1,3 +1,5 @@
+@import "../../styles.css" reference;
+
 /* Note sheet: docs-style shadow, compact but roomier than mail; warm paper tint */
 .note-text-editor-body.text-editor {
   --text-editor-sheet: color-mix(in oklab, var(--notes-accent, #fcd34d) 24%, oklch(1 0 0));
@@ -18,4 +20,39 @@
 
 .note-text-editor-body .text-editor-slash-menu {
   z-index: 50;
+}
+
+.note-detail-view__collab-chrome {
+  @apply flex shrink-0 flex-wrap items-center justify-end gap-1.5;
+}
+
+.note-detail-view__pending-sync {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #c98a1f;
+}
+
+.note-detail-view__pending-sync .loading-spinner {
+  color: #c98a1f;
+}
+
+.note-detail-view .docs-collab-presence__avatar--self {
+  background-color: var(--notes-accent, #fcd34d);
+  color: var(--color-ink);
+  box-shadow:
+    0 0 0 2px var(--background),
+    0 0 0 3px color-mix(in oklab, var(--notes-accent, #fcd34d) 42%, transparent);
+}
+
+.note-detail-view .docs-collab-presence__avatar--connecting {
+  color: color-mix(in oklab, var(--notes-accent, #fcd34d) 72%, var(--color-ink));
+  background-color: color-mix(in oklab, var(--notes-accent, #fcd34d) 14%, transparent);
+  border: 1px dashed color-mix(in oklab, var(--notes-accent, #fcd34d) 38%, transparent);
+}
+
+.note-detail-view .docs-collab-presence__avatar--warning {
+  color: color-mix(in oklab, #c2410c 75%, var(--color-ink));
+  background-color: color-mix(in oklab, #c2410c 14%, transparent);
+  border: 1px solid color-mix(in oklab, #c2410c 42%, transparent);
 }

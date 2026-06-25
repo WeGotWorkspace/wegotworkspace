@@ -224,6 +224,13 @@ export type UseDocsCollabOptions = {
   autoJoin?: boolean;
   urls?: DocsCollabUrls;
   wire?: DocsCollabWireOperations;
+  /**
+   * Markdown to seed an empty Y.Doc with on first open when the server has no
+   * snapshot/markdown yet (e.g. Notes bodies seeded from the cached note body,
+   * or offline first-open of a note never persisted to IndexedDB). Server and
+   * IndexedDB content always take precedence over this fallback.
+   */
+  seedContent?: string;
 };
 
 export function useDocsCollab({
@@ -231,6 +238,7 @@ export function useDocsCollab({
   autoJoin = true,
   urls: inputUrls = DEFAULT_DOCS_COLLAB_URLS,
   wire = DEFAULT_DOCS_COLLAB_WIRE,
+  seedContent,
 }: UseDocsCollabOptions) {
   const urls: DocsCollabUrls = {
     ...DEFAULT_DOCS_COLLAB_URLS,
@@ -253,6 +261,7 @@ export function useDocsCollab({
   const failedSinceRef = useRef<Map<string, number>>(new Map());
   const saveFailedRef = useRef(false);
   const wireRef = useRef(wire);
+  const seedContentRef = useRef(seedContent);
   const joinedRoomRef = useRef<string | null>(null);
   const reconnectInFlightRef = useRef(false);
   const saveInFlightRef = useRef(false);
@@ -278,6 +287,10 @@ export function useDocsCollab({
   useEffect(() => {
     wireRef.current = wire;
   }, [wire]);
+
+  useEffect(() => {
+    seedContentRef.current = seedContent;
+  }, [seedContent]);
 
   useEffect(() => {
     sessionRef.current = session;
@@ -729,7 +742,10 @@ export function useDocsCollab({
         markRoomServerSuccess(room);
       }
 
-      pendingMarkdownRef.current = markdown;
+      // Server snapshot/markdown wins; fall back to the caller-provided seed
+      // (e.g. cached Notes body) only when the server has nothing yet.
+      const seed = markdown || seedContentRef.current || "";
+      pendingMarkdownRef.current = seed;
       lastKnownMarkdownRef.current = markdown;
       lastSuccessfulSaveSignatureRef.current = docSignature(markdown, ydoc);
       localDirtySinceLastSaveRef.current = false;
@@ -737,8 +753,8 @@ export function useDocsCollab({
       if (!seedDoneRef.current && isYDocEmpty(ydoc)) {
         const mesh = meshRef.current;
         if (!mesh || mesh.getPeerIds().length === 0) {
-          if (markdown) {
-            applyContentSeedToYDoc(ydoc, markdown, documentFormat);
+          if (seed) {
+            applyContentSeedToYDoc(ydoc, seed, documentFormat);
             markDocReady();
             setDocStatus(DOC_STATUS_LOADED_SHARED_DOCUMENT);
           }
@@ -853,6 +869,10 @@ export function useDocsCollab({
     joinedRoomRef.current = room;
 
     if (!online || !allowServerRequests) {
+      if (!seedDoneRef.current && isYDocEmpty(ydoc) && seedContentRef.current) {
+        applyContentSeedToYDoc(ydoc, seedContentRef.current, documentFormat);
+        markDocReady();
+      }
       setStatus("Editing offline");
       setDocStatus(online ? "Server unavailable, using local draft" : "Editing offline");
       void authTokenPromise.then((token) => {
@@ -885,7 +905,9 @@ export function useDocsCollab({
   }, [
     applyServerBootstrap,
     connectMeshInBackground,
+    documentFormat,
     flushPendingSaveIfReady,
+    markDocReady,
     room,
     teardown,
     updatePendingState,

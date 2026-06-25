@@ -10,6 +10,7 @@ export type MailAttachment = {
 };
 
 export type Mail = Note & {
+  title: string;
   from: string;
   email: string;
   mailbox: string;

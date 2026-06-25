@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Collab;
 
 use App\Services\Drive\DriveGroupResolver;
+use App\Services\Notes\NoteMarkdownCodec;
 use App\Services\Search\SearchIndexerService;
 use App\Storage\StoragePaths;
 use App\Storage\WgwStorage;
@@ -19,6 +20,8 @@ use Illuminate\Http\Request;
  */
 final class DocCollabDocumentService
 {
+    private const DEFAULT_MARKDOWN = "# Collaborative document\n\nStart typing…\n";
+
     private const MAX_MARKDOWN_BYTES = 2_097_152;
 
     private const MAX_YJS_BYTES = 5_242_880;
@@ -29,6 +32,7 @@ final class DocCollabDocumentService
         private WgwStorage $storage,
         private StoragePaths $paths,
         private DriveGroupResolver $groups,
+        private NoteMarkdownCodec $noteCodec,
         private SearchIndexerService $search,
     ) {}
 
@@ -37,16 +41,25 @@ final class DocCollabDocumentService
         $virtual = $this->resolveReadablePath($request, $room);
         $key = $this->paths->virtualToStorageKey($virtual);
         $disk = $this->storage->files();
+        $isNote = $this->paths->isNotePath($virtual);
         if (! $disk->fileExists($key)) {
-            return '';
+            // A note body that has never been written starts empty; the
+            // frontmatter is owned by the Notes metadata API, not collab.
+            return $isNote ? '' : self::DEFAULT_MARKDOWN;
         }
 
         $contents = $disk->get($key);
         if (! is_string($contents)) {
-            return '';
+            return $isNote ? '' : self::DEFAULT_MARKDOWN;
         }
 
-        return $contents;
+        // For notes the collab document is the body section only; frontmatter
+        // never enters the shared (Yjs) document so metadata stays Notes-owned.
+        if ($isNote) {
+            return $this->noteCodec->bodyOf($contents);
+        }
+
+        return $contents === '' ? self::DEFAULT_MARKDOWN : $contents;
     }
 
     /**
@@ -97,6 +110,26 @@ final class DocCollabDocumentService
                 $this->fail('markdown_too_large', 413);
             }
             $documentKey = $this->paths->virtualToStorageKey($virtual);
+            if ($this->paths->isNotePath($virtual)) {
+                // The collab payload is the note body only: merge it back into
+                // the existing frontmatter so a body save never clobbers the
+                // metadata owned by the Notes API. The frontmatter `updated`
+                // marker is preserved so a body save does not advance the note's
+                // metadata state (see NoteRepository::readAt). For legacy notes
+                // without a marker we freeze it at the pre-write mtime so the
+                // first body save still leaves `updatedAt` stable.
+                $existing = $disk->fileExists($documentKey) ? (string) $disk->get($documentKey) : '';
+                $preservedUpdated = $this->noteCodec->updatedOf($existing);
+                if ($preservedUpdated === null && $disk->fileExists($documentKey)) {
+                    $preservedUpdated = date('c', (int) $disk->lastModified($documentKey));
+                }
+                $markdown = $this->noteCodec->replaceBody(
+                    $existing,
+                    $markdown,
+                    basename($virtual, '.md'),
+                    $preservedUpdated,
+                );
+            }
             $disk->put($documentKey, $markdown);
             // Keep the unified search index in sync with the written content so size and
             // body reflect the latest save without waiting for a later rename/upload.

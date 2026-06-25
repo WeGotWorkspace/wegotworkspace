@@ -27,6 +27,7 @@ trait NotesTestFixtures
         File::ensureDirectoryExists($this->notesDataDir.'/files/users/bob');
         File::ensureDirectoryExists($this->notesDataDir.'/files/users/alice');
         File::ensureDirectoryExists($this->notesDataDir.'/files/users/carol');
+        File::ensureDirectoryExists($this->notesDataDir.'/files/groups/team');
 
         WgwTestDisks::refresh($this->notesDataDir);
         $this->configureWgwJwtKeys();
@@ -53,9 +54,17 @@ trait NotesTestFixtures
         $this->seedWgwUser('carol', displayName: 'Carol');
 
         $alice = Principal::forUsername('alice');
+        $bob = Principal::forUsername('bob');
         $this->assertNotNull($alice);
+        $this->assertNotNull($bob);
         $adminGroup = $this->seedWgwGroup(AdminRoleResolver::ADMIN_GROUP_URI, 'Administrators');
         $this->addPrincipalToGroup($adminGroup, $alice);
+
+        // Shared notebook group: only bob is a member. alice (admin) and carol
+        // are deliberately excluded so tests can assert non-members get 403 and
+        // that admin does not bypass group membership.
+        $team = $this->seedWgwGroup('principals/groups/team', 'Team');
+        $this->addPrincipalToGroup($team, $bob);
     }
 
     protected function carolBearerToken(): string
@@ -79,7 +88,6 @@ trait NotesTestFixtures
         $payload = array_merge([
             'id' => 'note-'.uniqid('', true),
             'notebook' => 'Drafts',
-            'title' => 'Test Note',
             'body' => 'Body text',
             'tags' => ['demo'],
             'starred' => false,

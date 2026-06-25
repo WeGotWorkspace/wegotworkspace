@@ -22,15 +22,18 @@ export function coerceNoteItem(raw: unknown): WgwNoteItem | null {
   const tagsRaw = r.tags;
   const tags = Array.isArray(tagsRaw) ? tagsRaw.map((t) => String(t)) : undefined;
   const username = r.username;
+  const scope = r.scope === "group" ? "group" : r.scope === "personal" ? "personal" : undefined;
   return {
     id: String(id),
     notebook: String(notebook),
     username: username != null ? String(username) : undefined,
-    title: r.title != null ? String(r.title) : undefined,
     body: r.body != null ? String(r.body) : undefined,
     tags,
     starred: typeof r.starred === "boolean" ? r.starred : undefined,
     archived: typeof r.archived === "boolean" ? r.archived : undefined,
+    scope,
+    groupSlug:
+      typeof r.groupSlug === "string" ? r.groupSlug : r.groupSlug === null ? null : undefined,
     updatedAt:
       r.updatedAt != null
         ? String(r.updatedAt)
@@ -102,7 +105,6 @@ export function noteFromWgwItem(row: WgwNoteItem): Note {
   return {
     id: row.id,
     notebook: row.notebook,
-    title: row.title ?? "",
     excerpt: excerptFromBody(row.body ?? ""),
     body,
     tags: row.tags ?? [],
@@ -114,6 +116,7 @@ export function noteFromWgwItem(row: WgwNoteItem): Note {
   };
 }
 
+/** Full upsert (incl. `body`) — use only for **creating** a note (`POST /notes/items`). */
 export function wgwNoteUpsertFromNote(
   note: Note,
   opts?: { starred?: boolean; archived?: boolean },
@@ -121,8 +124,25 @@ export function wgwNoteUpsertFromNote(
   return {
     id: note.id,
     notebook: note.notebook,
-    title: note.title,
     body: note.body.join("\n\n"),
+    tags: note.tags,
+    ...(opts?.starred !== undefined && { starred: opts.starred }),
+    ...(opts?.archived !== undefined && { archived: opts.archived }),
+  };
+}
+
+/**
+ * Metadata-only upsert (no `body`) for `PUT /notes/items/{id}`. The API leaves
+ * the markdown body untouched on disk — body edits flow through the collab
+ * document (`PUT /files/collaboration`), not the Notes metadata API.
+ */
+export function wgwNoteMetadataFromNote(
+  note: Note,
+  opts?: { starred?: boolean; archived?: boolean },
+): WgwNoteUpsertRequest {
+  return {
+    id: note.id,
+    notebook: note.notebook,
     tags: note.tags,
     ...(opts?.starred !== undefined && { starred: opts.starred }),
     ...(opts?.archived !== undefined && { archived: opts.archived }),

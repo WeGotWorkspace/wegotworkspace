@@ -29,7 +29,6 @@ final class NotesItemsTest extends WgwDatabaseTestCase
         $token = $this->userBearerToken();
         $response = $this->withBearer($token)->postJson('/api/v1/notes/items', [
             'notebook' => 'Projects',
-            'title' => 'Sprint plan',
             'body' => "Line one\nLine two",
             'tags' => ['work', 'sprint'],
             'starred' => true,
@@ -40,43 +39,47 @@ final class NotesItemsTest extends WgwDatabaseTestCase
 
         $this->assertTrue(Storage::disk('wgw_notes')->exists($key));
         $raw = (string) Storage::disk('wgw_notes')->get($key);
-        $this->assertStringContainsString('title: Sprint plan', $raw);
+        $this->assertStringContainsString('title: Untitled', $raw);
         $this->assertStringContainsString('tags: work, sprint', $raw);
         $this->assertStringContainsString('starred: true', $raw);
         $this->assertStringContainsString("----\nLine one\nLine two", $raw);
 
         $list = $this->withBearer($token)->getJson('/api/v1/notes/items');
         $list->assertOk();
-        $this->assertSame('Sprint plan', $list->json('items.0.title'));
+        $list->assertJsonMissingPath('items.0.title');
         $this->assertSame("Line one\nLine two", $list->json('items.0.body'));
         $this->assertSame(['work', 'sprint'], $list->json('items.0.tags'));
         $this->assertTrue($list->json('items.0.starred'));
     }
 
-    public function test_update_note_title_body_tags_and_star(): void
+    public function test_update_note_preserves_frontmatter_title_and_updates_body_tags_and_star(): void
     {
         $token = $this->userBearerToken();
-        $created = $this->createNoteFor($token, ['title' => 'Original', 'body' => 'old body', 'tags' => ['a']]);
-        $id = $created['id'];
+        $key = 'users/bob/.notes/Drafts/note-keep-title.md';
+        Storage::disk('wgw_notes')->put(
+            $key,
+            "title: Original\ntags: a\nstarred: false\n----\nold body"
+        );
 
         $this->withBearer($token)
-            ->putJson('/api/v1/notes/items/'.$id, [
+            ->putJson('/api/v1/notes/items/note-keep-title', [
                 'notebook' => 'Drafts',
-                'title' => 'Updated title',
                 'body' => 'new body text',
                 'tags' => ['beta', 'gamma'],
                 'starred' => true,
             ])
             ->assertOk()
-            ->assertJsonPath('item.title', 'Updated title')
+            ->assertJsonMissingPath('item.title')
             ->assertJsonPath('item.body', 'new body text')
             ->assertJsonPath('item.tags', ['beta', 'gamma'])
             ->assertJsonPath('item.starred', true);
 
+        $raw = (string) Storage::disk('wgw_notes')->get($key);
+        $this->assertStringContainsString('title: Original', $raw);
+
         $this->withBearer($token)
-            ->putJson('/api/v1/notes/items/'.$id, [
+            ->putJson('/api/v1/notes/items/note-keep-title', [
                 'notebook' => 'Drafts',
-                'title' => 'Updated title',
                 'body' => 'new body text',
                 'tags' => ['beta', 'gamma'],
                 'starred' => false,
@@ -117,7 +120,7 @@ final class NotesItemsTest extends WgwDatabaseTestCase
     public function test_archive_and_restore_note_moves_between_trees(): void
     {
         $token = $this->userBearerToken();
-        $created = $this->createNoteFor($token, ['title' => 'To archive']);
+        $created = $this->createNoteFor($token, ['body' => 'To archive']);
         $id = $created['id'];
         $activeKey = 'users/bob/.notes/Drafts/'.$id.'.md';
         $archivedKey = 'users/bob/.notes/.archive/Drafts/'.$id.'.md';
@@ -153,13 +156,15 @@ final class NotesItemsTest extends WgwDatabaseTestCase
 
         $alpha = $this->createNoteFor($token, [
             'notebook' => 'Alpha',
-            'title' => 'Alpha title',
             'body' => 'unique-alpha-body',
             'tags' => ['tag-alpha'],
         ]);
+        Storage::disk('wgw_notes')->put(
+            'users/bob/.notes/Alpha/'.$alpha['id'].'.md',
+            "title: Alpha title\ntags: tag-alpha\nstarred: false\n----\nunique-alpha-body"
+        );
         $this->createNoteFor($token, [
             'notebook' => 'Beta',
-            'title' => 'Beta title',
             'body' => 'other content',
             'tags' => ['tag-beta'],
         ]);
@@ -198,7 +203,6 @@ final class NotesItemsTest extends WgwDatabaseTestCase
         $this->withBearer($token)
             ->putJson('/api/v1/notes/items/bad!id', [
                 'notebook' => 'Drafts',
-                'title' => 'Bad',
             ])
             ->assertStatus(400)
             ->assertJsonPath('error', 'Invalid note id.');
@@ -211,7 +215,6 @@ final class NotesItemsTest extends WgwDatabaseTestCase
         $this->withBearer($token)
             ->postJson('/api/v1/notes/items', [
                 'notebook' => 'bad/name',
-                'title' => 'Nope',
             ])
             ->assertStatus(400)
             ->assertJsonPath('error', 'Invalid notebook name.');
@@ -222,11 +225,11 @@ final class NotesItemsTest extends WgwDatabaseTestCase
         $token = $this->userBearerToken();
 
         $this->withBearer($token)
-            ->postJson('/api/v1/notes/items', ['notebook' => 'Drafts'])
+            ->postJson('/api/v1/notes/items', [])
             ->assertStatus(400);
 
         $this->withBearer($token)
-            ->postJson('/api/v1/notes/items', ['title' => 'No notebook'])
+            ->postJson('/api/v1/notes/items', ['body' => 'No notebook'])
             ->assertStatus(400);
     }
 }

@@ -6,7 +6,8 @@
 
   /* Slightly lighter than Drive (#2563eb) — same blue family, distinct app chrome */
   --docs-accent: #3b82f6;
-  --docs-sidebar: var(--docs-accent);
+  /* Sidebar matches Drive blue — #3b82f6 fails WCAG 4.5:1 with white ink */
+  --docs-sidebar: #2563eb;
   --color-emerald: var(--docs-accent);
   --docs-surface: var(--color-cream, #ffffff);
   --background: oklch(98.5% 0.005 100);
@@ -60,10 +61,56 @@
   --field-label-color: color-mix(in oklab, #ffffff 72%, transparent);
 }
 
+.docs-workspace .app-sidebar,
+.docs-workspace .app-sidebar__header,
+.docs-workspace .app-sidebar__scroll-surface {
+  background-color: var(--docs-sidebar);
+  color: #ffffff;
+}
+
+.docs-workspace .app-sidebar .app-switch-button__trigger {
+  background-color: var(--docs-sidebar);
+}
+
+.docs-workspace .app-sidebar .app-switch-button__trigger:hover {
+  background-color: color-mix(in oklab, #ffffff 10%, var(--docs-sidebar));
+}
+
+.docs-workspace .app-sidebar {
+  --app-switch-label-color: #ffffff;
+  --app-switch-label-tagline-color: #ffffff;
+  --app-switch-chevron-color: #ffffff;
+}
+
+.docs-workspace .sidebar-section .menu-item--surface-idle {
+  color: #ffffff;
+  background-color: var(--docs-sidebar);
+}
+
+.docs-workspace .sidebar-section .menu-item--surface-selected {
+  background-color: color-mix(in oklab, #000000 16%, var(--docs-sidebar));
+  color: #ffffff;
+}
+
+.docs-workspace .sidebar-section .menu-item--interactive:hover {
+  background-color: color-mix(in oklab, #000000 10%, var(--docs-sidebar));
+  color: #ffffff;
+}
+
+.docs-workspace .sidebar-section .menu-item:not(.menu-item--selected) .menu-item__icon-slot,
+.docs-workspace .sidebar-section .menu-item.menu-item--selected .menu-item__icon-slot {
+  color: #ffffff;
+  opacity: 1;
+}
+
+.docs-workspace .sidebar-section__title {
+  color: #ffffff;
+}
+
 .docs-workspace .app-sidebar__scroll {
   --color-ink: #ffffff;
   --button-primary-bg: #ffffff;
-  --button-primary-fg: var(--docs-accent);
+  --button-primary-fg: #2563eb;
   --button-subtle-color: #ffffff;
   --button-subtle-background: color-mix(in oklab, #ffffff 12%, transparent);
   --button-subtle-hover-background: color-mix(in oklab, #ffffff 20%, transparent);
@@ -71,9 +118,9 @@
 
 .docs-workspace .app-sidebar__footer {
   --workspace-user-footer-text-color: #ffffff;
-  --workspace-user-footer-subtitle-color: color-mix(in oklab, #ffffff 72%, transparent);
+  --workspace-user-footer-subtitle-color: #ffffff;
   --workspace-user-footer-border-color: color-mix(in oklab, #ffffff 18%, transparent);
-  --workspace-user-footer-avatar-bg: color-mix(in oklab, #ffffff 22%, transparent);
+  --workspace-user-footer-avatar-bg: color-mix(in oklab, #000000 18%, var(--docs-sidebar));
   --workspace-user-footer-avatar-color: var(--app-sidebar-color);
   --workspace-user-footer-link-color: #ffffff;
 }

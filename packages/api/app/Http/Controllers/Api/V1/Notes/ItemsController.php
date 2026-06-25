@@ -50,7 +50,12 @@ final class ItemsController
 
         if ($request->has('archived')) {
             return response()->json(
-                $this->notes->setArchived($principal['username'], $id, $request->boolean('archived'))
+                $this->notes->setArchived(
+                    $principal['username'],
+                    $id,
+                    $request->boolean('archived'),
+                    $this->groupSlug($request),
+                )
             );
         }
 
@@ -75,7 +80,7 @@ final class ItemsController
         $principal = $request->attributes->get(AuthenticateWgwApi::PRINCIPAL_ATTRIBUTE);
 
         return response()->json(
-            $this->notes->setArchived($principal['username'], $id, true)
+            $this->notes->setArchived($principal['username'], $id, true, $this->groupSlug($request))
         );
     }
 
@@ -85,7 +90,14 @@ final class ItemsController
         $principal = $request->attributes->get(AuthenticateWgwApi::PRINCIPAL_ATTRIBUTE);
 
         return response()->json(
-            $this->notes->setArchived($principal['username'], $id, false)
+            $this->notes->setArchived($principal['username'], $id, false, $this->groupSlug($request))
         );
+    }
+
+    private function groupSlug(Request $request): ?string
+    {
+        $slug = $request->input('groupSlug');
+
+        return is_string($slug) && trim($slug) !== '' ? $slug : null;
     }
 }

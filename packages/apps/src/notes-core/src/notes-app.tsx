@@ -10,8 +10,10 @@ import { resolveNotesOfflineUsername } from "@/lib/offline/offline-session";
 import type { Note } from "@/lib/models/note";
 import type { NotesApiSource } from "@/notes-core/src/notes-api-source";
 import { NotesConflictDialog } from "@/notes-core/src/notes-conflict-dialog";
+import { noteListTitle } from "@/notes-core/src/notes-note-utils";
 import { defaultNotesLabels } from "@/notes-core/src/notes-labels";
 import { NotesWorkspace } from "@/notes-core/src/notes-workspace";
+import { useNotesRouteSync } from "@/notes-core/src/use-notes-route-sync";
 import { useNotesAPI } from "@/notes-core/src/use-notes-api";
 
 export type NotesAppProps = {
@@ -20,6 +22,8 @@ export type NotesAppProps = {
 };
 
 export function NotesApp({ apiSource }: NotesAppProps = {}) {
+  const { initialView, initialNoteId, handleViewChange, handleNoteChange } = useNotesRouteSync();
+
   const notesRef = useRef<Note[]>([]);
   const [conflictQueue, setConflictQueue] = useState<string[]>([]);
   const [resolvingConflict, setResolvingConflict] = useState(false);
@@ -64,7 +68,9 @@ export function NotesApp({ apiSource }: NotesAppProps = {}) {
   const activeConflictNote = activeConflictId
     ? notesRef.current.find((n) => n.id === activeConflictId)
     : undefined;
-  const activeConflictTitle = activeConflictNote?.title || activeConflictId || "";
+  const activeConflictTitle = activeConflictNote
+    ? noteListTitle(activeConflictNote)
+    : activeConflictId || "";
 
   const dismissActiveConflict = useCallback(() => {
     setConflictQueue((prev) => prev.slice(1));
@@ -115,6 +121,10 @@ export function NotesApp({ apiSource }: NotesAppProps = {}) {
             listLoading={listLoading}
             bootstrapRevision={bootstrapRevision}
             onRefreshList={refreshList}
+            initialView={initialView}
+            initialNoteId={initialNoteId}
+            onViewChange={handleViewChange}
+            onNoteChange={handleNoteChange}
             onLogout={() => {
               window.location.assign("/logout");
             }}
