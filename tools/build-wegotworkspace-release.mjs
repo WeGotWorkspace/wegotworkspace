@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { createHash, createSign } from "node:crypto";
-import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
@@ -50,6 +50,13 @@ for (const entry of appReleaseEntries) {
   ensureDir(dirname(target));
   cpSync(source, target, { recursive: true });
 }
+
+for (const file of readdirSync(appRoot)) {
+  if (file === "sw.js" || (file.startsWith("workbox-") && file.endsWith(".js"))) {
+    cpSync(resolve(appRoot, file), resolve(stagingRoot, file));
+  }
+}
+
 for (const entry of repoReleaseEntries) {
   const source = resolve(repoRoot, entry);
   if (!existsSync(source)) {
