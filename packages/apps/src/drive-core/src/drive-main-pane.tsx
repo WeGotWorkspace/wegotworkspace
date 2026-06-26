@@ -43,6 +43,7 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
     requestDeleteItem,
     requestRenameItem,
     requestMoveItem,
+    requestShareItem,
     isItemDragging,
     itemDragHandlers,
     folderDropZoneProps,
@@ -77,6 +78,9 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
 
   const searchActive = Boolean(searchQuery.trim());
 
+  // Sharing is owner-only and unavailable in mock/offline mode (no `operations.shares`).
+  const onShare = operations?.shares && !inTrashView ? requestShareItem : undefined;
+
   const browserProps = {
     items: visibleItems,
     imagePreviewUrls,
@@ -98,6 +102,7 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
     onRename: requestRenameItem,
     onMove: requestMoveItem,
     onTrash: requestDeleteItem,
+    onShare,
   };
 
   const dropTargetLabel =
@@ -207,6 +212,7 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
                 onStar: () => toggleStar(active.id),
                 onRename: () => requestRenameItem(active),
                 onMove: () => requestMoveItem(active),
+                onShare: onShare ? () => onShare(active) : undefined,
                 onDelete: () =>
                   isUnderTrash(active.parent)
                     ? setConfirmDelete({ ids: [active.id], permanent: true })
@@ -238,6 +244,7 @@ export function DriveMainPane({ controller, operations }: DriveMainPaneProps) {
               onStar: () => toggleStar(active.id),
               onRename: () => requestRenameItem(active),
               onMove: () => requestMoveItem(active),
+              onShare: onShare ? () => onShare(active) : undefined,
               onDelete: () =>
                 isUnderTrash(active.parent)
                   ? setConfirmDelete({ ids: [active.id], permanent: true })
@@ -276,6 +283,7 @@ function buildDetailPanelProps({
   onStar,
   onRename,
   onMove,
+  onShare,
   onDelete,
   mobile,
 }: {
@@ -290,6 +298,7 @@ function buildDetailPanelProps({
   onStar: () => void;
   onRename: () => void;
   onMove: () => void;
+  onShare?: () => void;
   onDelete: () => void;
   mobile?: boolean;
 }) {
@@ -303,6 +312,7 @@ function buildDetailPanelProps({
     onStar,
     onRename,
     onMove,
+    onShare,
     onDelete,
     mobile,
     onDownload: () => {

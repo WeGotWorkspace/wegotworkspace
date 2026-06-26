@@ -28,6 +28,8 @@ final class WgwSchemaParityTest extends WgwDatabaseTestCase
             'collab_peers',
             'collab_messages',
             'drive_starred_items',
+            'file_shares',
+            'file_share_grants',
             'search_documents',
             'search_terms',
             'jmap_contact_states',

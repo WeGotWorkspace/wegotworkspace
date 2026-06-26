@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\V1\Contacts\ContactCardsController;
 use App\Http\Controllers\Api\V1\Contacts\ContactCardVcfController;
 use App\Http\Controllers\Api\V1\Dav\CapabilitiesController as DavCapabilitiesController;
 use App\Http\Controllers\Api\V1\Files\FilesController;
+use App\Http\Controllers\Api\V1\Files\FileSharesController;
 use App\Http\Controllers\Api\V1\Home\StateController as HomeStateController;
 use App\Http\Controllers\Api\V1\Installer\ActionController as InstallerActionController;
 use App\Http\Controllers\Api\V1\Installer\BootstrapController as InstallerBootstrapController;
@@ -46,6 +47,7 @@ use App\Http\Controllers\Api\V1\Search\UnifiedSearchDownloadController;
 use App\Http\Controllers\Api\V1\Settings\MailController as SettingsMailController;
 use App\Http\Controllers\Api\V1\Settings\ProfileController as SettingsProfileController;
 use App\Http\Controllers\Api\V1\Settings\StateController as SettingsStateController;
+use App\Http\Controllers\Api\V1\Shares\PublicSharesController;
 use App\Http\Controllers\Api\V1\System\CapabilitiesController;
 use App\Http\Controllers\Api\V1\System\HealthController;
 use App\Http\Controllers\Api\V1\Tasks\CapabilitiesController as TasksCapabilitiesController;
@@ -89,6 +91,20 @@ Route::get('rooms/{roomId}/configuration', [RoomSessionController::class, 'confi
 Route::post('rooms/{roomId}/messages', [RoomSessionController::class, 'storeMessage'])
     ->where('roomId', '[A-Za-z0-9_.-]+');
 
+// Public file-sharing for non-team members (guest access; credentials are the
+// link token in the path + optional X-Wgw-Share-Access header).
+Route::post('shares/grants/confirm', [PublicSharesController::class, 'confirm']);
+Route::get('shares/{token}', [PublicSharesController::class, 'show'])
+    ->where('token', '[A-Za-z0-9]+');
+Route::post('shares/{token}/grants', [PublicSharesController::class, 'requestGrant'])
+    ->where('token', '[A-Za-z0-9]+');
+Route::get('shares/{token}/children', [PublicSharesController::class, 'children'])
+    ->where('token', '[A-Za-z0-9]+');
+Route::match(['GET', 'POST'], 'shares/{token}/content', [PublicSharesController::class, 'content'])
+    ->where('token', '[A-Za-z0-9]+');
+Route::post('shares/{token}/directories', [PublicSharesController::class, 'storeDirectory'])
+    ->where('token', '[A-Za-z0-9]+');
+
 Route::middleware([
     EncryptCookies::class,
     AddQueuedCookiesToResponse::class,
@@ -125,6 +141,18 @@ Route::middleware(['wgw.auth', 'wgw.role:user'])->group(function () use ($filesS
         Route::get('files/starred', [FilesController::class, 'starred']);
         Route::post('files/rooms', [FilesController::class, 'resolveRoom']);
     });
+
+    Route::get('files/shares', [FileSharesController::class, 'index']);
+    Route::post('files/shares', [FileSharesController::class, 'store']);
+    Route::patch('files/shares/{shareId}', [FileSharesController::class, 'update'])
+        ->where('shareId', '[A-Za-z0-9]+');
+    Route::delete('files/shares/{shareId}', [FileSharesController::class, 'destroy'])
+        ->where('shareId', '[A-Za-z0-9]+');
+    Route::post('files/shares/{shareId}/grants', [FileSharesController::class, 'storeGrants'])
+        ->where('shareId', '[A-Za-z0-9]+');
+    Route::delete('files/shares/{shareId}/grants/{grantId}', [FileSharesController::class, 'destroyGrant'])
+        ->where('shareId', '[A-Za-z0-9]+')
+        ->where('grantId', '[A-Za-z0-9]+');
 
     Route::get('search/results', UnifiedSearchController::class);
     Route::get('search/results/{resultId}/content', [UnifiedSearchDownloadController::class, 'contentByResultId'])

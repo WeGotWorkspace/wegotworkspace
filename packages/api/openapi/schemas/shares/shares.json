@@ -1,0 +1,173 @@
+{
+  "ShareGrant": {
+    "type": "object",
+    "required": ["id", "email", "permission", "status"],
+    "properties": {
+      "id": { "type": "string" },
+      "email": { "type": "string" },
+      "permission": { "type": "string", "enum": ["read", "write"] },
+      "status": { "type": "string", "enum": ["pending", "confirmed", "revoked"] },
+      "confirmedAt": { "type": ["string", "null"] }
+    }
+  },
+  "Share": {
+    "type": "object",
+    "required": ["id", "token", "path", "name", "targetType", "publicAccess", "url", "grants"],
+    "properties": {
+      "id": { "type": "string" },
+      "token": { "type": "string" },
+      "path": { "type": "string" },
+      "name": { "type": "string" },
+      "targetType": { "type": "string", "enum": ["file", "dir"] },
+      "publicAccess": { "type": "string", "enum": ["none", "read", "write"] },
+      "expiresAt": { "type": ["string", "null"] },
+      "url": { "type": "string", "description": "Absolute public viewer URL ({base}/s/{token})." },
+      "createdAt": { "type": ["string", "null"] },
+      "grants": {
+        "type": "array",
+        "items": { "$ref": "#/components/schemas/ShareGrant" }
+      }
+    }
+  },
+  "ShareListResponse": {
+    "type": "object",
+    "required": ["data"],
+    "properties": {
+      "data": {
+        "type": "object",
+        "required": ["shares"],
+        "properties": {
+          "shares": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Share" }
+          }
+        }
+      }
+    }
+  },
+  "ShareResponse": {
+    "type": "object",
+    "required": ["data"],
+    "properties": {
+      "data": { "$ref": "#/components/schemas/Share" }
+    }
+  },
+  "ShareCreateRequest": {
+    "type": "object",
+    "required": ["path", "publicAccess"],
+    "properties": {
+      "path": { "type": "string", "description": "Virtual drive path the owner controls, e.g. /users/bob/folder." },
+      "publicAccess": { "type": "string", "enum": ["none", "read", "write"] },
+      "expiresAt": { "type": ["string", "null"], "description": "ISO-8601 expiry; omit for the configured default (or no expiry)." }
+    }
+  },
+  "ShareUpdateRequest": {
+    "type": "object",
+    "properties": {
+      "publicAccess": { "type": "string", "enum": ["none", "read", "write"] },
+      "expiresAt": { "type": ["string", "null"], "description": "ISO-8601 expiry, or null to clear." }
+    }
+  },
+  "ShareGrantsCreateRequest": {
+    "type": "object",
+    "required": ["emails", "permission"],
+    "properties": {
+      "emails": { "type": "array", "items": { "type": "string", "format": "email" }, "minItems": 1 },
+      "permission": { "type": "string", "enum": ["read", "write"] }
+    }
+  },
+  "SharePublicGrantRequest": {
+    "type": "object",
+    "required": ["email"],
+    "properties": {
+      "email": { "type": "string", "format": "email" }
+    }
+  },
+  "ShareGrantRequestResponse": {
+    "type": "object",
+    "required": ["data"],
+    "properties": {
+      "data": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "status": { "type": "string", "enum": ["pending", "confirmed"] }
+        }
+      }
+    }
+  },
+  "ShareConfirmRequest": {
+    "type": "object",
+    "required": ["inviteToken"],
+    "properties": {
+      "inviteToken": { "type": "string" }
+    }
+  },
+  "ShareConfirmResponse": {
+    "type": "object",
+    "required": ["data"],
+    "properties": {
+      "data": {
+        "type": "object",
+        "required": ["accessToken", "token", "permission"],
+        "properties": {
+          "accessToken": { "type": "string", "description": "Present on subsequent requests via the X-Wgw-Share-Access header." },
+          "token": { "type": "string", "description": "The share link token." },
+          "permission": { "type": "string", "enum": ["read", "write"] }
+        }
+      }
+    }
+  },
+  "SharePublicMetadataResponse": {
+    "type": "object",
+    "required": ["data"],
+    "properties": {
+      "data": {
+        "type": "object",
+        "required": ["token", "name", "targetType", "publicAccess", "permission", "requiresConfirmation"],
+        "properties": {
+          "token": { "type": "string" },
+          "name": { "type": "string" },
+          "targetType": { "type": "string", "enum": ["file", "dir"] },
+          "publicAccess": { "type": "string", "enum": ["none", "read", "write"] },
+          "permission": { "type": "string", "enum": ["none", "read", "write"], "description": "Effective permission for the presented credential." },
+          "requiresConfirmation": { "type": "boolean", "description": "True when no credential grants access yet (email confirmation needed)." },
+          "expiresAt": { "type": ["string", "null"] }
+        }
+      }
+    }
+  },
+  "ShareEntry": {
+    "type": "object",
+    "required": ["type", "path", "name", "size", "time"],
+    "properties": {
+      "type": { "type": "string", "enum": ["file", "dir"] },
+      "path": { "type": "string", "description": "Path relative to the share root." },
+      "name": { "type": "string" },
+      "size": { "type": "integer" },
+      "time": { "type": "integer" }
+    }
+  },
+  "ShareChildrenResponse": {
+    "type": "object",
+    "required": ["data"],
+    "properties": {
+      "data": {
+        "type": "object",
+        "required": ["location", "files"],
+        "properties": {
+          "location": { "type": "string" },
+          "files": { "type": "array", "items": { "$ref": "#/components/schemas/ShareEntry" } }
+        }
+      }
+    }
+  },
+  "SharePublicDirectoryRequest": {
+    "type": "object",
+    "required": ["name"],
+    "properties": {
+      "name": { "type": "string" },
+      "path": { "type": ["string", "null"], "description": "Parent directory relative to the share root." }
+    }
+  }
+}

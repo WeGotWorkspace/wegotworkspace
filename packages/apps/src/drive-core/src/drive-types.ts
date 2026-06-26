@@ -6,6 +6,31 @@ import type {
   WgwPluginDescriptor,
   WgwDriveUserData,
 } from "@/lib/api/wgw/types";
+import type {
+  WgwShare,
+  WgwShareCreateInput,
+  WgwShareGrantsInput,
+  WgwShareUpdateInput,
+} from "@/lib/api/wgw/shares-types";
+
+/** Owner-side sharing operations, surfaced through {@link DriveAPIOperations}. */
+export type DriveShareOperations = {
+  listShares: (path: string, opts?: { signal?: AbortSignal }) => Promise<WgwShare[]>;
+  createShare: (input: WgwShareCreateInput, opts?: { signal?: AbortSignal }) => Promise<WgwShare>;
+  updateShare: (
+    input: { shareId: string } & WgwShareUpdateInput,
+    opts?: { signal?: AbortSignal },
+  ) => Promise<WgwShare>;
+  revokeShare: (shareId: string, opts?: { signal?: AbortSignal }) => Promise<void>;
+  addShareGrants: (
+    input: { shareId: string } & WgwShareGrantsInput,
+    opts?: { signal?: AbortSignal },
+  ) => Promise<WgwShare>;
+  removeShareGrant: (
+    input: { shareId: string; grantId: string },
+    opts?: { signal?: AbortSignal },
+  ) => Promise<WgwShare>;
+};
 
 export type DriveUIData = {
   user: WgwDriveUserData;
@@ -93,4 +118,6 @@ export type DriveAPIOperations = {
     opts?: { signal?: AbortSignal },
   ) => Promise<void>;
   ensurePluginSession?: (sessionApiPath: string, opts?: { signal?: AbortSignal }) => Promise<void>;
+  /** Owner sharing controls (link + email-invite management). Absent in mock/offline mode. */
+  shares?: DriveShareOperations;
 };

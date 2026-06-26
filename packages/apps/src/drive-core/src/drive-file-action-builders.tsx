@@ -1,4 +1,4 @@
-import { Download, FolderInput, Pencil, Star, Trash2 } from "lucide-react";
+import { Download, FolderInput, Pencil, Share2, Star, Trash2 } from "lucide-react";
 import type { ActionBarAction } from "@/action-bar/src/action-bar";
 import type { DriveUILabels } from "@/drive-core/src/drive-labels";
 
@@ -8,6 +8,7 @@ export type DriveFileActionCallbacks = {
   onDelete: () => void;
   onRename?: () => void;
   onMove?: () => void;
+  onShare?: () => void;
 };
 
 export function buildDriveFileActions(
@@ -17,6 +18,7 @@ export function buildDriveFileActions(
     inTrash: boolean;
     canDownload?: boolean;
     canMove?: boolean;
+    canShare?: boolean;
   },
   callbacks: DriveFileActionCallbacks,
 ): ActionBarAction[] {
@@ -28,6 +30,15 @@ export function buildDriveFileActions(
       label: labels.detailDownload,
       onClick: callbacks.onDownload,
       icon: <Download />,
+    });
+  }
+
+  if (options.canShare !== false && callbacks.onShare) {
+    actions.push({
+      id: "share",
+      label: labels.detailShare,
+      onClick: callbacks.onShare,
+      icon: <Share2 />,
     });
   }
 

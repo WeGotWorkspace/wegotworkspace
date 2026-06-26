@@ -6618,6 +6618,429 @@
                 },
                 "additionalProperties": false,
                 "description": "REST response for GET /search/results, including offset/hasMore pagination."
+            },
+            "ShareGrant": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "email",
+                    "permission",
+                    "status"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "permission": {
+                        "type": "string",
+                        "enum": [
+                            "read",
+                            "write"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "confirmed",
+                            "revoked"
+                        ]
+                    },
+                    "confirmedAt": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                }
+            },
+            "Share": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "token",
+                    "path",
+                    "name",
+                    "targetType",
+                    "publicAccess",
+                    "url",
+                    "grants"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "token": {
+                        "type": "string"
+                    },
+                    "path": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "targetType": {
+                        "type": "string",
+                        "enum": [
+                            "file",
+                            "dir"
+                        ]
+                    },
+                    "publicAccess": {
+                        "type": "string",
+                        "enum": [
+                            "none",
+                            "read",
+                            "write"
+                        ]
+                    },
+                    "expiresAt": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "url": {
+                        "type": "string",
+                        "description": "Absolute public viewer URL ({base}/s/{token})."
+                    },
+                    "createdAt": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "grants": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ShareGrant"
+                        }
+                    }
+                }
+            },
+            "ShareListResponse": {
+                "type": "object",
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "object",
+                        "required": [
+                            "shares"
+                        ],
+                        "properties": {
+                            "shares": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/Share"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "ShareResponse": {
+                "type": "object",
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/Share"
+                    }
+                }
+            },
+            "ShareCreateRequest": {
+                "type": "object",
+                "required": [
+                    "path",
+                    "publicAccess"
+                ],
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Virtual drive path the owner controls, e.g. /users/bob/folder."
+                    },
+                    "publicAccess": {
+                        "type": "string",
+                        "enum": [
+                            "none",
+                            "read",
+                            "write"
+                        ]
+                    },
+                    "expiresAt": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "ISO-8601 expiry; omit for the configured default (or no expiry)."
+                    }
+                }
+            },
+            "ShareUpdateRequest": {
+                "type": "object",
+                "properties": {
+                    "publicAccess": {
+                        "type": "string",
+                        "enum": [
+                            "none",
+                            "read",
+                            "write"
+                        ]
+                    },
+                    "expiresAt": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "ISO-8601 expiry, or null to clear."
+                    }
+                }
+            },
+            "ShareGrantsCreateRequest": {
+                "type": "object",
+                "required": [
+                    "emails",
+                    "permission"
+                ],
+                "properties": {
+                    "emails": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "email"
+                        },
+                        "minItems": 1
+                    },
+                    "permission": {
+                        "type": "string",
+                        "enum": [
+                            "read",
+                            "write"
+                        ]
+                    }
+                }
+            },
+            "SharePublicGrantRequest": {
+                "type": "object",
+                "required": [
+                    "email"
+                ],
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email"
+                    }
+                }
+            },
+            "ShareGrantRequestResponse": {
+                "type": "object",
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "object",
+                        "required": [
+                            "status"
+                        ],
+                        "properties": {
+                            "status": {
+                                "type": "string",
+                                "enum": [
+                                    "pending",
+                                    "confirmed"
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "ShareConfirmRequest": {
+                "type": "object",
+                "required": [
+                    "inviteToken"
+                ],
+                "properties": {
+                    "inviteToken": {
+                        "type": "string"
+                    }
+                }
+            },
+            "ShareConfirmResponse": {
+                "type": "object",
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "object",
+                        "required": [
+                            "accessToken",
+                            "token",
+                            "permission"
+                        ],
+                        "properties": {
+                            "accessToken": {
+                                "type": "string",
+                                "description": "Present on subsequent requests via the X-Wgw-Share-Access header."
+                            },
+                            "token": {
+                                "type": "string",
+                                "description": "The share link token."
+                            },
+                            "permission": {
+                                "type": "string",
+                                "enum": [
+                                    "read",
+                                    "write"
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "SharePublicMetadataResponse": {
+                "type": "object",
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "object",
+                        "required": [
+                            "token",
+                            "name",
+                            "targetType",
+                            "publicAccess",
+                            "permission",
+                            "requiresConfirmation"
+                        ],
+                        "properties": {
+                            "token": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "targetType": {
+                                "type": "string",
+                                "enum": [
+                                    "file",
+                                    "dir"
+                                ]
+                            },
+                            "publicAccess": {
+                                "type": "string",
+                                "enum": [
+                                    "none",
+                                    "read",
+                                    "write"
+                                ]
+                            },
+                            "permission": {
+                                "type": "string",
+                                "enum": [
+                                    "none",
+                                    "read",
+                                    "write"
+                                ],
+                                "description": "Effective permission for the presented credential."
+                            },
+                            "requiresConfirmation": {
+                                "type": "boolean",
+                                "description": "True when no credential grants access yet (email confirmation needed)."
+                            },
+                            "expiresAt": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "ShareEntry": {
+                "type": "object",
+                "required": [
+                    "type",
+                    "path",
+                    "name",
+                    "size",
+                    "time"
+                ],
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "file",
+                            "dir"
+                        ]
+                    },
+                    "path": {
+                        "type": "string",
+                        "description": "Path relative to the share root."
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "size": {
+                        "type": "integer"
+                    },
+                    "time": {
+                        "type": "integer"
+                    }
+                }
+            },
+            "ShareChildrenResponse": {
+                "type": "object",
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "object",
+                        "required": [
+                            "location",
+                            "files"
+                        ],
+                        "properties": {
+                            "location": {
+                                "type": "string"
+                            },
+                            "files": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/ShareEntry"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "SharePublicDirectoryRequest": {
+                "type": "object",
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "path": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Parent directory relative to the share root."
+                    }
+                }
             }
         }
     },
@@ -11469,6 +11892,609 @@
                     }
                 },
                 "x-wgw-access": "user"
+            }
+        },
+        "/files/shares": {
+            "get": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "List shares owned by the caller",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Owned shares",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ShareListResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "post": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Create a share for a file or directory the caller owns",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ShareCreateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Share created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ShareResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request or path not owned by caller"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/files/shares/{shareId}": {
+            "patch": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Update a share's public access or expiry",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "shareId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ShareUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Share updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ShareResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Share not found"
+                    }
+                },
+                "x-wgw-access": "user"
+            },
+            "delete": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Revoke a share",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "shareId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Share revoked"
+                    },
+                    "404": {
+                        "description": "Share not found"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/files/shares/{shareId}/grants": {
+            "post": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Invite email recipients to a share",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "shareId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ShareGrantsCreateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Grants created and invites sent",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ShareResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Share not found"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/files/shares/{shareId}/grants/{grantId}": {
+            "delete": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Revoke an email grant",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "shareId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "grantId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Grant revoked",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ShareResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Share or grant not found"
+                    }
+                },
+                "x-wgw-access": "user"
+            }
+        },
+        "/shares/grants/confirm": {
+            "post": {
+                "tags": [
+                    "Shares"
+                ],
+                "summary": "Confirm an email invite and receive an access token",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ShareConfirmRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Access token issued",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ShareConfirmResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Invite not found"
+                    },
+                    "429": {
+                        "description": "Too many requests"
+                    }
+                },
+                "x-wgw-access": "guest"
+            }
+        },
+        "/shares/{token}": {
+            "get": {
+                "tags": [
+                    "Shares"
+                ],
+                "summary": "Resolve share metadata and effective permission for the presented credential",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Wgw-Share-Access",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Confirmed-recipient access token."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Share metadata",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SharePublicMetadataResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Share not found or expired"
+                    }
+                },
+                "x-wgw-access": "guest"
+            }
+        },
+        "/shares/{token}/grants": {
+            "post": {
+                "tags": [
+                    "Shares"
+                ],
+                "summary": "Self-request access to a share by email",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SharePublicGrantRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "Confirmation email sent",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ShareGrantRequestResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Share not found"
+                    },
+                    "429": {
+                        "description": "Too many requests"
+                    }
+                },
+                "x-wgw-access": "guest"
+            }
+        },
+        "/shares/{token}/children": {
+            "get": {
+                "tags": [
+                    "Shares"
+                ],
+                "summary": "List a subdirectory of a shared directory",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Path relative to the share root."
+                    },
+                    {
+                        "name": "X-Wgw-Share-Access",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Directory listing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ShareChildrenResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Confirmed access required"
+                    },
+                    "404": {
+                        "description": "Share not found"
+                    }
+                },
+                "x-wgw-access": "guest"
+            }
+        },
+        "/shares/{token}/content": {
+            "get": {
+                "tags": [
+                    "Shares"
+                ],
+                "summary": "Download/preview a file from a share",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Path relative to the share root."
+                    },
+                    {
+                        "name": "X-Wgw-Share-Access",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "File stream"
+                    },
+                    "403": {
+                        "description": "Confirmed access required"
+                    },
+                    "404": {
+                        "description": "Share or file not found"
+                    }
+                },
+                "x-wgw-access": "guest"
+            },
+            "post": {
+                "tags": [
+                    "Shares"
+                ],
+                "summary": "Upload a file to a writable share",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Parent directory relative to the share root."
+                    },
+                    {
+                        "name": "X-Wgw-Share-Access",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "resumableFilename": {
+                                        "type": "string"
+                                    },
+                                    "resumableIdentifier": {
+                                        "type": "string"
+                                    },
+                                    "resumableChunkNumber": {
+                                        "type": "integer"
+                                    },
+                                    "resumableTotalChunks": {
+                                        "type": "integer"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Stored"
+                    },
+                    "400": {
+                        "description": "Read-only share or invalid path"
+                    },
+                    "403": {
+                        "description": "Confirmed access required"
+                    },
+                    "404": {
+                        "description": "Share not found"
+                    }
+                },
+                "x-wgw-access": "guest"
+            }
+        },
+        "/shares/{token}/directories": {
+            "post": {
+                "tags": [
+                    "Shares"
+                ],
+                "summary": "Create a directory inside a writable share",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Wgw-Share-Access",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SharePublicDirectoryRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    },
+                    "400": {
+                        "description": "Read-only share or invalid path"
+                    },
+                    "403": {
+                        "description": "Confirmed access required"
+                    },
+                    "404": {
+                        "description": "Share not found"
+                    }
+                },
+                "x-wgw-access": "guest"
             }
         }
     }

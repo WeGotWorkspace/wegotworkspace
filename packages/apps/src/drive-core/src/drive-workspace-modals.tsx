@@ -20,6 +20,8 @@ import {
   AlertDialogTitle,
 } from "@/ui/alert-dialog";
 import { DriveMoveToDialog } from "@/drive-core/src/drive-move-to-dialog";
+import { DriveShareDialog } from "@/drive-core/src/drive-share-dialog";
+import { resolveDriveFileApiPath } from "@/drive-core/src/drive-batch-utils";
 import type { useDriveController } from "@/drive-core/src/use-drive-controller";
 
 type DriveController = ReturnType<typeof useDriveController>;
@@ -48,6 +50,8 @@ export function DriveWorkspaceModals({ controller }: DriveWorkspaceModalsProps) 
     moveToTrash,
     moveDialog,
     setMoveDialog,
+    shareDialog,
+    setShareDialog,
     files,
     sidebarGroupPaths,
     commitMoveToFolder,
@@ -58,6 +62,15 @@ export function DriveWorkspaceModals({ controller }: DriveWorkspaceModalsProps) 
   } = controller;
 
   const renameTarget = renameDialog ? fileById(renameDialog.id) : null;
+  const shareTarget = shareDialog
+    ? {
+        path:
+          shareDialog.apiPath ??
+          resolveDriveFileApiPath(shareDialog, currentUsername, groupRootNames),
+        name: shareDialog.title,
+        targetType: (shareDialog.kind === "folder" ? "dir" : "file") as "dir" | "file",
+      }
+    : null;
   const renameExtension = renameDialog?.extension || undefined;
   const canSubmitRename = renameName.trim().length > 0;
 
@@ -186,6 +199,15 @@ export function DriveWorkspaceModals({ controller }: DriveWorkspaceModalsProps) 
           if (moveDialog) commitMoveToFolder(moveDialog.ids, destinationPath);
           setMoveDialog(null);
         }}
+      />
+
+      <DriveShareDialog
+        open={!!shareDialog}
+        onOpenChange={(open) => {
+          if (!open) setShareDialog(null);
+        }}
+        target={shareTarget}
+        operations={operations?.shares}
       />
     </>
   );

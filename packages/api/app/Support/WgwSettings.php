@@ -24,6 +24,8 @@ final class WgwSettings
 
     public const FILES_ENABLED = 'files_enabled';
 
+    public const PUBLIC_SHARES_ENABLED = 'public_shares_enabled';
+
     public const CALENDAR_ENABLED = 'calendar_enabled';
 
     public const CONTACTS_ENABLED = 'contacts_enabled';
@@ -55,6 +57,7 @@ final class WgwSettings
         return [
             self::BASE_URI => '/',
             self::FILES_ENABLED => true,
+            self::PUBLIC_SHARES_ENABLED => true,
             self::CALENDAR_ENABLED => true,
             self::CONTACTS_ENABLED => true,
             self::AUTH_REALM => 'SabreDAV',
@@ -82,7 +85,7 @@ final class WgwSettings
             }
             $out[$key] = match ($key) {
                 self::MAIL_IMAP_PORT, self::MAIL_SMTP_PORT => (int) $db[$key],
-                self::FILES_ENABLED, self::CALENDAR_ENABLED, self::CONTACTS_ENABLED, self::BROWSER_PLUGIN => (bool) $db[$key],
+                self::FILES_ENABLED, self::PUBLIC_SHARES_ENABLED, self::CALENDAR_ENABLED, self::CONTACTS_ENABLED, self::BROWSER_PLUGIN => (bool) $db[$key],
                 self::TIMEZONE => TimezoneNormalizer::normalize($db[$key]),
                 self::BASE_URI => self::normalizeBaseUri((string) $db[$key]),
                 default => $db[$key],

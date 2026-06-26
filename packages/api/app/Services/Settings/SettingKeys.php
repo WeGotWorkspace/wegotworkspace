@@ -16,6 +16,8 @@ final class SettingKeys
 
     public const FILES_ENABLED = 'files_enabled';
 
+    public const PUBLIC_SHARES_ENABLED = 'public_shares_enabled';
+
     public const CALENDAR_ENABLED = 'calendar_enabled';
 
     public const CONTACTS_ENABLED = 'contacts_enabled';
@@ -53,6 +55,7 @@ final class SettingKeys
             self::AUTH_REALM,
             self::BROWSER_PLUGIN,
             self::FILES_ENABLED,
+            self::PUBLIC_SHARES_ENABLED,
             self::CALENDAR_ENABLED,
             self::CONTACTS_ENABLED,
             self::MAIL_ENABLED,

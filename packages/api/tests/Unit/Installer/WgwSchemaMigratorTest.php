@@ -92,6 +92,8 @@ final class WgwSchemaMigratorTest extends TestCase
             'api_refresh_tokens',
             'api_revoked_tokens',
             'drive_starred_items',
+            'file_shares',
+            'file_share_grants',
             'collab_peers',
             'collab_messages',
             'search_documents',
