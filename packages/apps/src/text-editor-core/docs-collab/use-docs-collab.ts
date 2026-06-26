@@ -12,6 +12,10 @@ import { DEFAULT_RTC_SETTINGS } from "@/lib/rtc/types";
 import { docsEditorFormatFromFileName } from "@/docs-core/src/docs-editor-format";
 import { applyContentSeedToYDoc } from "./docs-collab-editor-surface";
 import type { TextEditorContentFormat } from "@/text-editor-core/src/text-editor-content";
+import {
+  trackChangesAuthorIdFromName,
+  type TextEditorCollabUser,
+} from "@/text-editor-core/src/text-editor-track-changes";
 import { clearDocsCollabSyncState, setDocsCollabSyncState } from "./docs-collab-sync-registry";
 import { DEFAULT_DOCS_COLLAB_WIRE, type DocsCollabWireOperations } from "./docs-collab-wire";
 import { DocsRtcSession } from "./docs-rtc-session";
@@ -110,7 +114,7 @@ export const DEFAULT_DOCS_COLLAB_URLS: DocsCollabUrls = {
 export type DocsCollabSession = {
   ydoc: Y.Doc;
   awareness: awarenessProtocol.Awareness;
-  user: { name: string; color: string };
+  user: TextEditorCollabUser;
 };
 
 function colorForName(name: string): string {
@@ -837,7 +841,7 @@ export function useDocsCollab({
 
     const awareness = new awarenessProtocol.Awareness(ydoc);
     awarenessRef.current = awareness;
-    const user = { name, color: colorForName(name) };
+    const user = { id: trackChangesAuthorIdFromName(name), name, color: colorForName(name) };
     awareness.setLocalStateField("user", user);
 
     ydoc.on("update", (update, origin) => {

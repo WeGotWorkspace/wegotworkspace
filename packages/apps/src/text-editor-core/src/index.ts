@@ -20,9 +20,15 @@ export { TextEditorTableControls } from "@/text-editor-core/src/text-editor-tabl
 export {
   createTextEditorExtensions,
   CommentMark,
-  SuggestionMark,
+  LegacySuggestionMark,
   type CreateTextEditorExtensionsOptions,
 } from "@/text-editor-core/src/text-editor-extensions";
+export {
+  getAcceptedTextEditorContent,
+  toTrackChangesAuthor,
+  trackChangesAuthorIdFromName,
+  type TextEditorCollabUser,
+} from "@/text-editor-core/src/text-editor-track-changes";
 export {
   TEXT_EDITOR_CONTENT_FORMATS,
   getTextEditorContent,

@@ -1,20 +1,23 @@
 import { useEffect, useRef } from "react";
 import type { Editor } from "@tiptap/react";
+import "@/text-editor-core/src/text-editor-track-changes-augmentation";
 import { isChangeOrigin } from "@tiptap/extension-collaboration";
 import { useEditor } from "@tiptap/react";
 import type { Awareness } from "y-protocols/awareness";
 import type * as Y from "yjs";
 import { cn } from "@/lib/utils";
-import {
-  getTextEditorContent,
-  type TextEditorContentFormat,
-} from "@/text-editor-core/src/text-editor-content";
+import type { TextEditorContentFormat } from "@/text-editor-core/src/text-editor-content";
 import {
   TextEditorFormatBar,
   type TextEditorFormatBarConfig,
   resolveTextEditorFormatBarConfig,
 } from "@/text-editor-core/src/text-editor-format-bar";
 import { createCollaborativeTextEditorExtensions } from "@/text-editor-core/src/text-editor-extensions";
+import {
+  getAcceptedTextEditorContent,
+  toTrackChangesAuthor,
+} from "@/text-editor-core/src/text-editor-track-changes";
+import { DocsCollabSuggestControls } from "./docs-collab-suggest-controls";
 import { TextEditorSheet } from "@/text-editor-core/src/text-editor-sheet";
 import { TextEditorSource } from "@/text-editor-core/src/text-editor-source";
 import { useTextEditorSourceSync } from "@/text-editor-core/src/use-text-editor-source-sync";
@@ -24,9 +27,11 @@ import "@/text-editor-core/src/text-editor.css";
 export type DocsCollabEditorProps = {
   ydoc: Y.Doc;
   awareness: Awareness;
-  user: { name: string; color: string };
+  user: { id: string; name: string; color: string };
   format?: TextEditorContentFormat;
   formatBar?: boolean | TextEditorFormatBarConfig;
+  /** Show suggest/edit toggle and accept/reject controls. Defaults to true for markdown/html. */
+  suggestControls?: boolean;
   sheetFill?: boolean;
   viewSource?: boolean;
   className?: string;
@@ -42,6 +47,7 @@ export function DocsCollabEditor({
   user,
   format = "markdown",
   formatBar = true,
+  suggestControls,
   sheetFill = false,
   viewSource = false,
   className,
@@ -71,13 +77,13 @@ export function DocsCollabEditor({
       },
       onUpdate: ({ transaction, editor: ed }) => {
         if (isChangeOrigin(transaction)) return;
-        onContentChangeRef.current?.(() => getTextEditorContent(ed, format));
+        onContentChangeRef.current?.(() => getAcceptedTextEditorContent(ed, format));
       },
       onSelectionUpdate: ({ editor: ed }) => {
         ed.commands.updateUser(user);
       },
     },
-    [ydoc, awareness, format, user.color, user.name],
+    [ydoc, awareness, format, user.color, user.id, user.name],
   );
 
   const { sourceValue, onSourceChange, onSourceFocus, onSourceBlur } = useTextEditorSourceSync({
@@ -93,6 +99,7 @@ export function DocsCollabEditor({
 
   useEffect(() => {
     editor?.commands.updateUser(user);
+    editor?.commands.setTrackChangesAuthor(toTrackChangesAuthor(user));
   }, [editor, user]);
 
   useEffect(() => {
@@ -115,6 +122,18 @@ export function DocsCollabEditor({
       className={formatBarConfig.className}
     />
   ) : null;
+
+  const showSuggestControls = suggestControls ?? format !== "text";
+  const suggestControlsElement = showSuggestControls ? (
+    <DocsCollabSuggestControls editor={editor} />
+  ) : null;
+
+  const toolbarStack = (
+    <>
+      {suggestControlsElement}
+      {formatBarElement}
+    </>
+  );
 
   const sheetElement = (
     <TextEditorSheet
@@ -149,13 +168,13 @@ export function DocsCollabEditor({
             className="text-editor__source min-h-0"
           />
           <div className="text-editor__formatted flex min-h-0 flex-1 flex-col">
-            {formatBarElement}
+            {toolbarStack}
             {sheetElement}
           </div>
         </div>
       ) : (
         <>
-          {formatBarElement}
+          {toolbarStack}
           {sheetElement}
         </>
       )}

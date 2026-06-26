@@ -12,7 +12,12 @@ import Typography from "@tiptap/extension-typography";
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { Mark, mergeAttributes, type Extensions } from "@tiptap/react";
+import { TrackChangesExtension } from "tiptap-track-changes";
 import { Markdown } from "tiptap-markdown";
+import {
+  toTrackChangesAuthor,
+  type TextEditorCollabUser,
+} from "@/text-editor-core/src/text-editor-track-changes";
 import type { Awareness } from "y-protocols/awareness";
 import type * as Y from "yjs";
 import type { TextEditorContentFormat } from "@/text-editor-core/src/text-editor-content";
@@ -38,8 +43,9 @@ export const CommentMark = Mark.create({
   },
 });
 
-export const SuggestionMark = Mark.create({
-  name: "suggestion",
+/** Legacy static highlight mark — not used for live track-changes suggestions. */
+export const LegacySuggestionMark = Mark.create({
+  name: "legacySuggestion",
   inclusive: false,
   addAttributes() {
     return {
@@ -54,7 +60,7 @@ export const SuggestionMark = Mark.create({
     return [{ tag: "span[data-suggestion-id]" }];
   },
   renderHTML({ HTMLAttributes }) {
-    return ["span", mergeAttributes(HTMLAttributes, { class: "suggestion-mark" }), 0];
+    return ["span", mergeAttributes(HTMLAttributes, { class: "legacy-suggestion-mark" }), 0];
   },
 });
 
@@ -87,7 +93,7 @@ export function createTextEditorExtensions(
     TableHeader,
     TableCell,
     CommentMark,
-    SuggestionMark,
+    LegacySuggestionMark,
   ];
 
   if (format === "markdown") {
@@ -110,7 +116,7 @@ export function createTextEditorExtensions(
 export type CreateCollaborativeTextEditorExtensionsOptions = CreateTextEditorExtensionsOptions & {
   document: Y.Doc;
   awareness: Awareness;
-  user: { name: string; color: string };
+  user: TextEditorCollabUser;
 };
 
 /** Same surface as {@link createTextEditorExtensions} with Yjs + remote carets (undo disabled). */
@@ -120,9 +126,15 @@ export function createCollaborativeTextEditorExtensions(
   const { document, awareness, user, ...editorOptions } = options;
   const base = createTextEditorExtensions(editorOptions).filter((ext) => ext.name !== "starterKit");
 
+  const author = toTrackChangesAuthor(user);
+
   return [
     StarterKit.configure({ undoRedo: false }),
     ...base,
+    TrackChangesExtension.configure({
+      author,
+      mode: "edit",
+    }),
     Collaboration.configure({ document }),
     CollaborationCaret.configure({
       provider: { awareness },

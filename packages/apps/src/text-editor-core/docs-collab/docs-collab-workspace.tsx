@@ -24,7 +24,7 @@ import {
   AlertDialogTitle,
 } from "@/ui/alert-dialog";
 import { ViewHeader } from "@/view-header/src/view-header";
-import { getTextEditorContent } from "@/text-editor-core/src/text-editor-content";
+import { getAcceptedTextEditorContent } from "@/text-editor-core/src/text-editor-track-changes";
 import { TEXT_EDITOR_FORMAT_BAR_FULL } from "@/text-editor-core/src/text-editor-format-bar-config";
 import { printTextEditorSheet } from "@/text-editor-core/src/text-editor-print";
 import { DocsCollabEditor } from "./docs-collab-editor";
@@ -184,7 +184,7 @@ function DocsCollabWorkspaceInner({
     if (!editor) return;
 
     const updateFromEditor = () => {
-      setMarkdown(getTextEditorContent(editor, editorFormat));
+      setMarkdown(getAcceptedTextEditorContent(editor, editorFormat));
     };
 
     updateFromEditor();
@@ -198,7 +198,7 @@ function DocsCollabWorkspaceInner({
     (nextEditor: Editor | null) => {
       setEditor(nextEditor);
       if (nextEditor) {
-        const getContent = () => getTextEditorContent(nextEditor, editorFormat);
+        const getContent = () => getAcceptedTextEditorContent(nextEditor, editorFormat);
         setMarkdown(getContent());
         registerMarkdownGetter(getContent);
       }

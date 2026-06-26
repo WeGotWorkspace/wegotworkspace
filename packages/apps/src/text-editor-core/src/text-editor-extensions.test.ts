@@ -29,7 +29,7 @@ describe("text editor extensions", () => {
     const extensions = createCollaborativeTextEditorExtensions({
       document: ydoc,
       awareness,
-      user: { name: "Alex", color: "#2563eb" },
+      user: { id: "alex", name: "Alex", color: "#2563eb" },
       format: "markdown",
     });
     const names = extensions.map((ext) => ext.name);

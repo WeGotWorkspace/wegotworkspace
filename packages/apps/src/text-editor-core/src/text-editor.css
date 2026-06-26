@@ -6,6 +6,9 @@
   --text-editor-highlight: oklch(0.95 0.15 95);
   --text-editor-comment: oklch(0.9 0.12 80);
   --text-editor-suggestion: oklch(0.85 0.15 145);
+  --text-editor-track-insertion: oklch(0.88 0.12 145);
+  --text-editor-track-deletion: oklch(0.88 0.12 25);
+  --text-editor-track-format: oklch(0.88 0.1 250);
   --text-editor-shadow-sheet:
     0 0 0 1px rgba(15, 23, 42, 0.045), 0 0 48px -16px rgba(15, 23, 42, 0.08),
     0 -1px 1px rgba(15, 23, 42, 0.03), 0 -10px 24px -16px rgba(15, 23, 42, 0.1),
@@ -515,9 +518,107 @@
   cursor: pointer;
 }
 
-.text-editor-prose .suggestion-mark {
+.text-editor-prose .legacy-suggestion-mark {
   background: color-mix(in oklab, var(--text-editor-suggestion) 40%, transparent);
   border-bottom: 2px dashed var(--text-editor-suggestion);
+}
+
+.text-editor-prose ins[data-change-id] {
+  background: color-mix(in oklab, var(--text-editor-track-insertion) 55%, transparent);
+  border-bottom: 2px solid
+    color-mix(in oklab, var(--author-color, var(--text-editor-track-insertion)) 80%, transparent);
+  text-decoration: none;
+}
+
+.text-editor-prose del[data-change-id] {
+  background: color-mix(in oklab, var(--text-editor-track-deletion) 45%, transparent);
+  color: color-mix(in oklab, var(--foreground) 55%, transparent);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(
+    in oklab,
+    var(--author-color, var(--text-editor-track-deletion)) 85%,
+    transparent
+  );
+}
+
+.text-editor-prose span[data-format-change] {
+  background: color-mix(in oklab, var(--text-editor-track-format) 35%, transparent);
+  border-bottom: 2px dotted
+    color-mix(in oklab, var(--author-color, var(--text-editor-track-format)) 80%, transparent);
+}
+
+.text-editor-suggest-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.125rem;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in oklab, var(--background) 92%, transparent);
+  padding: 0.25rem 0.5rem;
+}
+
+.text-editor-suggest-controls__btn {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  height: 2rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  padding: 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-editor-format-btn-color);
+  background: transparent;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+
+.text-editor-suggest-controls__btn:hover:not(:disabled) {
+  background: var(--text-editor-format-btn-hover-bg);
+  color: var(--text-editor-format-btn-hover-color);
+}
+
+.text-editor-suggest-controls__btn--active {
+  background: var(--text-editor-format-btn-active-bg);
+  color: var(--text-editor-format-btn-active-color);
+}
+
+.text-editor-suggest-controls__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.text-editor-suggest-controls__btn svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.text-editor-suggest-controls__label {
+  white-space: nowrap;
+}
+
+.text-editor-suggest-controls__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 999px;
+  padding: 0 0.25rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent-foreground);
+  background: var(--accent);
+}
+
+.text-editor-suggest-controls__sep {
+  width: 1px;
+  height: 1.25rem;
+  margin-inline: 0.125rem;
+  background: var(--border);
 }
 
 .text-editor-prose table {

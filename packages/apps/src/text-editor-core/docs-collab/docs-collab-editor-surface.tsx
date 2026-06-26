@@ -15,7 +15,7 @@ const SEED_ORIGIN = "seed";
 export type DocsCollabEditorSurfaceProps = {
   ydoc: Y.Doc;
   awareness: Awareness;
-  user: { name: string; color: string };
+  user: { id: string; name: string; color: string };
   onMarkdownChange: (getMarkdown: () => string) => void;
 };
 
@@ -35,7 +35,9 @@ export function applyContentSeedToYDoc(
     extensions: [
       StarterKit.configure({ undoRedo: false }),
       Collaboration.configure({ document: temp }),
-      ...createTextEditorExtensions({ format }).filter((ext) => ext.name !== "starterKit"),
+      ...createTextEditorExtensions({ format }).filter(
+        (ext) => ext.name !== "starterKit" && ext.name !== "placeholder",
+      ),
     ],
     editorProps: {
       attributes: { class: "text-editor-prose focus:outline-none" },
