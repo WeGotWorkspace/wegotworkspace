@@ -131,6 +131,9 @@ importers:
       '@tanstack/react-router':
         specifier: ^1.168.0
         version: 1.168.23(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@tiptap/core':
+        specifier: ^3.23.4
+        version: 3.23.6(@tiptap/pm@3.23.6)
       '@tiptap/extension-collaboration':
         specifier: ^3.23.4
         version: 3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)(@tiptap/y-tiptap@3.0.3(prosemirror-model@1.25.6)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.7(yjs@13.6.30))(yjs@13.6.30))(yjs@13.6.30)

@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { Editor } from "@tiptap/core";
+import { Editor } from "@tiptap/react";
 import "@/text-editor-core/src/text-editor-track-changes-augmentation";
 import { beforeEach, describe, expect, it } from "vitest";
 import { Awareness } from "y-protocols/awareness";

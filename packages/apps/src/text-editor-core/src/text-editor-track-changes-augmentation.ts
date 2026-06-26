@@ -1,4 +1,5 @@
 import type { ChangeAuthor, TrackChangesMode, TrackChangesStorage } from "tiptap-track-changes";
+import "@tiptap/core";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
