@@ -110,14 +110,6 @@ export function resolvePaginatedPrintPageStartNodes(
     .filter((node): node is HTMLElement => node instanceof HTMLElement);
 }
 
-/** Screen page 2+ starts from the current layout (indices + live nodes). */
-export function computePaginatedPrintPageStartNodes(proseMirror: HTMLElement): HTMLElement[] {
-  return resolvePaginatedPrintPageStartNodes(
-    proseMirror,
-    computePaginatedPrintPageStartIndices(proseMirror),
-  );
-}
-
 /** Apply print page breaks to content nodes captured from the screen layout. */
 export function applyPaginatedPrintPageStarts(
   proseMirror: HTMLElement,

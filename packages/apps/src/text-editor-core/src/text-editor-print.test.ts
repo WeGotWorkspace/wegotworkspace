@@ -12,7 +12,6 @@ import {
   TEXT_EDITOR_PRINT_PAGE_START_CLASS,
   preparePaginatedPrintLayout,
   computePaginatedPrintPageStartIndices,
-  computePaginatedPrintPageStartNodes,
   resolvePaginatedPrintPageStartNodes,
   applyPaginatedPrintPageStarts,
 } from "./text-editor-print";
@@ -285,7 +284,7 @@ describe("paginated print page-start helpers", () => {
   it("marks the first content node of screen page 2+ for print page breaks", () => {
     const { prose, paragraph2 } = buildPaginatedPrintDom();
     const indices = computePaginatedPrintPageStartIndices(prose);
-    const startNodes = computePaginatedPrintPageStartNodes(prose);
+    const startNodes = resolvePaginatedPrintPageStartNodes(prose, indices);
     const restore = applyPaginatedPrintPageStarts(prose, startNodes);
 
     expect(indices).toEqual([1]);
