@@ -302,6 +302,9 @@
  * centers the page column. Gutter + border colors are parent-owned tokens.
  */
 .text-editor-sheet--paginated .text-editor-sheet__surface {
+  /* Screen gap height (tiptap `pageGap` / PAGE_GAP in pagination.ts). Color is
+   * `--text-editor-page-gap` (parent-owned, e.g. docs `--docs-canvas`). */
+  --text-editor-page-gap-size: 32px;
   /* Track the selected page format (set by the editor root); the plugin also
    * sizes the inner page box, so `fit-content` is a safe fallback. */
   width: var(--text-editor-page-width, fit-content);
@@ -743,7 +746,8 @@
    * Docs paginated print: named `@page` rules per footer selection. The print
    * helper sets `data-text-editor-page-format` on `html`/`body`; the `page`
    * property selects the matching rule. Margins match the sheet padding token
-   * (0.75in). Pagination plugin chrome stays hidden — content flows naturally.
+   * (`--text-editor-sheet-padding` / SHEET_MARGIN) so each printed page gets the
+   * same inset as the on-screen page box — container padding cannot do that.
    */
   @page text-editor-a4 {
     size: A4;
@@ -865,9 +869,13 @@
     max-height: none !important;
     overflow: visible !important;
     flex: none !important;
+    background: transparent !important;
   }
 
   body.text-editor-print-active .text-editor-sheet__surface--print .ProseMirror {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: none !important;
     height: auto !important;
     min-height: 0 !important;
     max-height: none !important;
@@ -902,17 +910,8 @@
   /*
    * Pagination is screen-only. Strip the plugin's page boxes, gaps, headers,
    * footers, and inline chrome so the printed document flows continuously and
-   * the browser's `@page` margins drive the physical page breaks.
+   * the browser's `@page` margins drive per-page inset and breaks.
    */
-  body.text-editor-print-active .text-editor-sheet__surface--print .ProseMirror.rm-with-pagination {
-    width: 100% !important;
-    min-height: 0 !important;
-    border: 0 !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-    background: transparent !important;
-  }
-
   body.text-editor-print-active .rm-with-pagination #pages,
   body.text-editor-print-active .rm-with-pagination [data-rm-pagination],
   body.text-editor-print-active .rm-with-pagination .rm-first-page-header,

@@ -8,6 +8,7 @@ import { PAGE_SIZES, PaginationPlus } from "tiptap-pagination-plus";
  * inset stays identical to the non-paginated sheet.
  */
 const SHEET_MARGIN = 72; // 0.75in × 96dpi
+/** Screen gap height — keep in sync with `--text-editor-page-gap-size` in text-editor.css. */
 const PAGE_GAP = 32;
 
 /** Selectable page formats. `a4` is the default; pagination is visual-only. */
