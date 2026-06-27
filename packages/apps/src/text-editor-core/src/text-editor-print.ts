@@ -14,8 +14,6 @@ export const TEXT_EDITOR_PRINT_FORMATTED_CLASS = "text-editor--print-formatted";
  * ProseMirror so phantom height does not paginate into blank sheets.
  */
 export const TEXT_EDITOR_PRINT_PAGINATED_CLASS = "text-editor-print-paginated";
-/** @deprecated Print reflows via `@page` margins; class kept for layout helpers/tests. */
-export const TEXT_EDITOR_PRINT_PAGE_START_CLASS = "text-editor-print-page-start";
 
 function findPrintSurface(editor: Editor): HTMLElement | null {
   const editorRoot = editor.view.dom.closest(".text-editor");
@@ -30,143 +28,6 @@ function findPrintSurface(editor: Editor): HTMLElement | null {
   return editorRoot.querySelector<HTMLElement>(".text-editor-sheet__surface");
 }
 
-const PAGINATED_CONTENT_SELECTOR = ":scope > :not([data-rm-pagination]):not(.rm-first-page-header)";
-
-/** Ignore empty trailing paragraphs — they sit in the phantom page band and block cleanup. */
-function isSubstantivePaginatedContentNode(node: HTMLElement): boolean {
-  const rect = node.getBoundingClientRect();
-  if (rect.height <= 0) return false;
-
-  const text = node.textContent?.replace(/\u200b/g, "").trim() ?? "";
-  return text.length > 0;
-}
-
-function paginatedContentNodes(proseMirror: HTMLElement): HTMLElement[] {
-  return [...proseMirror.querySelectorAll<HTMLElement>(PAGINATED_CONTENT_SELECTOR)].filter(
-    isSubstantivePaginatedContentNode,
-  );
-}
-
-function flushPaginatedPrintLayout(proseMirror: HTMLElement): void {
-  proseMirror.getBoundingClientRect();
-  void proseMirror.offsetHeight;
-}
-
-function pageBandMidpoint(node: HTMLElement): number {
-  const rect = node.getBoundingClientRect();
-  return (rect.top + rect.bottom) / 2;
-}
-
-function setPrintPageStartBreak(node: HTMLElement): void {
-  node.classList.add(TEXT_EDITOR_PRINT_PAGE_START_CLASS);
-  node.style.setProperty("break-before", "page", "important");
-  node.style.setProperty("page-break-before", "always", "important");
-}
-
-function clearPrintPageStartBreak(node: HTMLElement): void {
-  node.classList.remove(TEXT_EDITOR_PRINT_PAGE_START_CLASS);
-  node.style.removeProperty("break-before");
-  node.style.removeProperty("page-break-before");
-}
-
-/**
- * Measure on the screen layout (before print classes): indices of the first
- * substantive content node on each screen page 2+.
- */
-export function computePaginatedPrintPageStartIndices(proseMirror: HTMLElement): number[] {
-  const pagesRoot = proseMirror.querySelector("[data-rm-pagination]");
-  const pageBreaks = pagesRoot
-    ? ([...pagesRoot.querySelectorAll(".rm-page-break")] as HTMLElement[])
-    : [];
-  if (pageBreaks.length === 0) return [];
-
-  const contentNodes = paginatedContentNodes(proseMirror);
-  const startIndices: number[] = [];
-
-  for (let index = 1; index < pageBreaks.length; index++) {
-    const bandTop =
-      pageBreaks[index - 1].querySelector(".rm-page-footer")?.getBoundingClientRect().bottom ??
-      proseMirror.getBoundingClientRect().top;
-    const bandBottom =
-      pageBreaks[index].querySelector(".rm-page-footer")?.getBoundingClientRect().top ??
-      proseMirror.getBoundingClientRect().bottom;
-
-    const nodeIndex = contentNodes.findIndex((node) => {
-      const mid = pageBandMidpoint(node);
-      return mid >= bandTop && mid <= bandBottom;
-    });
-
-    if (nodeIndex >= 0) startIndices.push(nodeIndex);
-  }
-
-  return startIndices;
-}
-
-/** Content nodes that begin screen page 2+ (stable references from screen layout). */
-export function computePaginatedPrintPageStartNodes(proseMirror: HTMLElement): HTMLElement[] {
-  const contentNodes = paginatedContentNodes(proseMirror);
-  return computePaginatedPrintPageStartIndices(proseMirror)
-    .map((nodeIndex) => contentNodes[nodeIndex])
-    .filter((node): node is HTMLElement => node instanceof HTMLElement);
-}
-
-/** Apply print page breaks to content nodes captured from the screen layout. */
-export function applyPaginatedPrintPageStarts(
-  proseMirror: HTMLElement,
-  startNodes: readonly HTMLElement[],
-): () => void {
-  const marked: HTMLElement[] = [];
-
-  startNodes.forEach((node) => {
-    if (!proseMirror.contains(node)) return;
-    setPrintPageStartBreak(node);
-    marked.push(node);
-  });
-
-  return () => {
-    marked.forEach(clearPrintPageStartBreak);
-  };
-}
-
-/** @deprecated Use {@link computePaginatedPrintPageStartNodes} + {@link applyPaginatedPrintPageStarts}. */
-export function annotatePaginatedPrintPageStarts(proseMirror: HTMLElement): () => void {
-  return applyPaginatedPrintPageStarts(
-    proseMirror,
-    computePaginatedPrintPageStartNodes(proseMirror),
-  );
-}
-
-/** True when no document content sits in this page-break band (trailing phantom page). */
-export function isEmptyPaginatedPrintPageBreak(
-  proseMirror: HTMLElement,
-  pagesRoot: Element,
-  breakIndex: number,
-): boolean {
-  const pageBreak = pagesRoot.children[breakIndex];
-  if (!(pageBreak instanceof HTMLElement) || !pageBreak.classList.contains("rm-page-break")) {
-    return false;
-  }
-
-  const footer = pageBreak.querySelector(".rm-page-footer");
-  if (!footer) return false;
-
-  const bandTop =
-    breakIndex === 0
-      ? (proseMirror.querySelector(".rm-first-page-header")?.getBoundingClientRect().bottom ??
-        proseMirror.getBoundingClientRect().top)
-      : (pagesRoot.children[breakIndex - 1]
-          ?.querySelector(".rm-page-footer")
-          ?.getBoundingClientRect().bottom ?? proseMirror.getBoundingClientRect().top);
-  const bandBottom = footer.getBoundingClientRect().top;
-
-  if (bandBottom <= bandTop + 1) return true;
-
-  return !paginatedContentNodes(proseMirror).some((node) => {
-    const mid = pageBandMidpoint(node);
-    return mid >= bandTop && mid <= bandBottom;
-  });
-}
-
 /** Clear plugin inline sizing so print reflow matches `@page` geometry. */
 export function preparePaginatedPrintLayout(proseMirror: HTMLElement): () => void {
   const previousMinHeight = proseMirror.style.minHeight;
@@ -176,7 +37,8 @@ export function preparePaginatedPrintLayout(proseMirror: HTMLElement): () => voi
   proseMirror.style.setProperty("height", "auto", "important");
   proseMirror.style.setProperty("width", "100%", "important");
 
-  flushPaginatedPrintLayout(proseMirror);
+  proseMirror.getBoundingClientRect();
+  void proseMirror.offsetHeight;
 
   return () => {
     proseMirror.style.removeProperty("min-height");
@@ -264,7 +126,7 @@ export function printTextEditorSheet(editor: Editor | null, pageFormat?: TextEdi
 
   applyPaginatedPrintLayout();
 
-  // Let print-only CSS + page-start markers settle before the preview opens.
+  // Let print-only CSS settle before the preview opens.
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       window.print();

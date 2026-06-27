@@ -9,12 +9,7 @@ import {
   printTextEditorSheet,
   TEXT_EDITOR_PRINT_FORMATTED_CLASS,
   TEXT_EDITOR_PRINT_PAGINATED_CLASS,
-  TEXT_EDITOR_PRINT_PAGE_START_CLASS,
-  isEmptyPaginatedPrintPageBreak,
   preparePaginatedPrintLayout,
-  computePaginatedPrintPageStartIndices,
-  computePaginatedPrintPageStartNodes,
-  applyPaginatedPrintPageStarts,
 } from "./text-editor-print";
 
 function createMockEditor(editorRoot: HTMLElement, proseMirror?: HTMLElement): Editor {
@@ -178,124 +173,27 @@ describe("printTextEditorSheet", () => {
   });
 });
 
-function mockRect(element: Element, rect: Partial<DOMRect>) {
-  const full = {
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    width: 0,
-    height: 0,
-    x: 0,
-    y: 0,
-    toJSON: () => ({}),
-    ...rect,
-  } satisfies DOMRect;
-  element.getBoundingClientRect = () => full;
-}
-
-function buildPaginatedPrintDom() {
-  const prose = document.createElement("div");
-  prose.className = "ProseMirror rm-with-pagination text-editor-prose";
-
-  const firstHeader = document.createElement("div");
-  firstHeader.className = "rm-first-page-header";
-  mockRect(firstHeader, { top: 0, bottom: 72, height: 72 });
-
-  const pages = document.createElement("div");
-  pages.dataset.rmPagination = "true";
-
-  const pageBreak = (footerTop: number, pageIndex: number) => {
-    const brk = document.createElement("div");
-    brk.className = "rm-page-break";
-    const page = document.createElement("div");
-    page.className = "page";
-    mockRect(page, { top: footerTop - 979, bottom: footerTop, height: 979 });
-    const breaker = document.createElement("div");
-    breaker.className = "breaker";
-    const footer = document.createElement("div");
-    footer.className = "rm-page-footer";
-    mockRect(footer, { top: footerTop, bottom: footerTop + 72, height: 72 });
-    breaker.append(footer);
-    brk.append(page, breaker);
-    pages.appendChild(brk);
-    return { brk, footerTop, pageIndex };
-  };
-
-  const page1 = pageBreak(1100, 1);
-  const page2 = pageBreak(2200, 2);
-  const page3 = pageBreak(3300, 3);
-
-  const paragraph = document.createElement("p");
-  paragraph.textContent = "Body copy on page one.";
-  mockRect(paragraph, { top: 200, bottom: 240, height: 40 });
-
-  const paragraph2 = document.createElement("p");
-  paragraph2.textContent = "Body copy on page two.";
-  mockRect(paragraph2, { top: 1500, bottom: 1540, height: 40 });
-
-  prose.append(firstHeader, pages, paragraph, paragraph2);
-  mockRect(prose, { top: 0, bottom: 3400, height: 3400 });
-
-  document.body.appendChild(prose);
-  return { prose, pages, page1, page2, page3, paragraph, paragraph2 };
-}
-
-describe("paginated print layout helpers", () => {
+describe("preparePaginatedPrintLayout", () => {
   afterEach(() => {
     document.body.innerHTML = "";
   });
 
-  it("detects a trailing page break band with no content", () => {
-    const { prose, pages } = buildPaginatedPrintDom();
-    expect(isEmptyPaginatedPrintPageBreak(prose, pages, 2)).toBe(true);
-    expect(isEmptyPaginatedPrintPageBreak(prose, pages, 1)).toBe(false);
-  });
-
   it("clears plugin inline min-height and restores it on cleanup", () => {
-    const { prose, pages } = buildPaginatedPrintDom();
+    const prose = document.createElement("div");
+    prose.className = "ProseMirror rm-with-pagination text-editor-prose";
     prose.style.minHeight = "calc(3400px + 2px)";
     prose.style.width = "794px";
+    document.body.appendChild(prose);
     const originalMinHeight = prose.style.minHeight;
-    const lastBreak = pages.lastElementChild as HTMLElement;
 
     const restore = preparePaginatedPrintLayout(prose);
 
     expect(prose.style.minHeight).toBe("0px");
     expect(prose.style.width).toBe("100%");
-    expect(lastBreak.style.display).toBe("");
 
     restore();
 
     expect(prose.style.minHeight).toBe(originalMinHeight);
     expect(prose.style.width).toBe("794px");
-  });
-
-  it("still allows hiding trailing phantom page breaks via helpers", () => {
-    const { prose, pages } = buildPaginatedPrintDom();
-    const emptyParagraph = document.createElement("p");
-    const trailingBreak = document.createElement("br");
-    trailingBreak.className = "ProseMirror-trailingBreak";
-    emptyParagraph.appendChild(trailingBreak);
-    mockRect(emptyParagraph, { top: 3200, bottom: 3272, height: 72 });
-    prose.appendChild(emptyParagraph);
-
-    expect(isEmptyPaginatedPrintPageBreak(prose, pages, 2)).toBe(true);
-  });
-
-  it("marks the first content node of screen page 2+ for print page breaks", () => {
-    const { prose, paragraph2 } = buildPaginatedPrintDom();
-    const indices = computePaginatedPrintPageStartIndices(prose);
-    const startNodes = computePaginatedPrintPageStartNodes(prose);
-    const restore = applyPaginatedPrintPageStarts(prose, startNodes);
-
-    expect(indices).toEqual([1]);
-    expect(startNodes).toEqual([paragraph2]);
-    expect(paragraph2.classList.contains(TEXT_EDITOR_PRINT_PAGE_START_CLASS)).toBe(true);
-    expect(paragraph2.style.breakBefore).toBe("page");
-
-    restore();
-    expect(paragraph2.classList.contains(TEXT_EDITOR_PRINT_PAGE_START_CLASS)).toBe(false);
-    expect(paragraph2.style.breakBefore).toBe("");
   });
 });
