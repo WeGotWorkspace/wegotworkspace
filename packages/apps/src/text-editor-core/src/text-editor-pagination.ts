@@ -1,13 +1,13 @@
 import type { AnyExtension, Editor } from "@tiptap/react";
 import { PAGE_SIZES, PaginationPlus } from "tiptap-pagination-plus";
+import { resolveTextEditorSheetMarginPx } from "@/text-editor-core/src/text-editor-sheet-margin";
 
 /**
- * Page margins (px @96dpi) match the continuous sheet padding token
- * (`--text-editor-sheet-padding: 0.75in`). We keep a single consistent margin
- * across formats instead of the plugin's per-format margins so the writing
- * inset stays identical to the non-paginated sheet.
+ * Page margins match the continuous sheet padding token
+ * (`--text-editor-sheet-padding` on `.text-editor`). We keep a single consistent
+ * margin across formats instead of the plugin's per-format margins so the
+ * writing inset stays identical to the non-paginated sheet and print `@page`.
  */
-const SHEET_MARGIN = 72; // 0.75in × 96dpi
 /** Screen gap height — keep in sync with `--text-editor-page-gap-size` in text-editor.css. */
 const PAGE_GAP = 32;
 
@@ -67,15 +67,16 @@ export function textEditorPrintPageName(format: TextEditorPageFormat): string {
   return `text-editor-${format}`;
 }
 
-function pageSizeFor(format: TextEditorPageFormat) {
+function pageSizeFor(format: TextEditorPageFormat, scope?: Element | null) {
   const { width, height } = pageFormatOption(format);
+  const margin = resolveTextEditorSheetMarginPx(scope);
   return {
     pageWidth: width,
     pageHeight: height,
-    marginTop: SHEET_MARGIN,
-    marginBottom: SHEET_MARGIN,
-    marginLeft: SHEET_MARGIN,
-    marginRight: SHEET_MARGIN,
+    marginTop: margin,
+    marginBottom: margin,
+    marginLeft: margin,
+    marginRight: margin,
   };
 }
 
@@ -91,9 +92,10 @@ function pageSizeFor(format: TextEditorPageFormat) {
  */
 export function createTextEditorPaginationExtension(
   format: TextEditorPageFormat = DEFAULT_TEXT_EDITOR_PAGE_FORMAT,
+  scope?: Element | null,
 ): AnyExtension {
   return PaginationPlus.configure({
-    ...pageSizeFor(format),
+    ...pageSizeFor(format, scope),
     contentMarginTop: 0,
     contentMarginBottom: 0,
     pageGap: PAGE_GAP,
@@ -114,5 +116,6 @@ export function createTextEditorPaginationExtension(
  */
 export function applyTextEditorPageFormat(editor: Editor, format: TextEditorPageFormat): void {
   if (!editor.storage.PaginationPlus) return;
-  editor.commands.updatePageSize(pageSizeFor(format));
+  const scope = editor.view.dom.closest(".text-editor");
+  editor.commands.updatePageSize(pageSizeFor(format, scope));
 }

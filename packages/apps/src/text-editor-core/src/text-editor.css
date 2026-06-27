@@ -1,7 +1,10 @@
 /* Parent-scoped tokens for the text editor workspace */
+:root {
+  --text-editor-sheet-padding: 0.75in;
+}
+
 .text-editor {
   --text-editor-sheet: oklch(1 0 0);
-  --text-editor-sheet-padding: 0.75in;
   --text-editor-sheet-margin-block: 1.5rem;
   --text-editor-highlight: oklch(0.95 0.15 95);
   --text-editor-comment: oklch(0.9 0.12 80);
@@ -322,6 +325,11 @@
     /* Screen-only: the plugin renders one continuous bordered column with cream
      * page gaps; the sheet shadow frames that column as a distinct stack. */
     box-shadow: var(--text-editor-shadow-sheet);
+    /* Override plugin inline `--rm-margin-*` px so screen inset tracks the token. */
+    --rm-margin-top: var(--text-editor-sheet-padding) !important;
+    --rm-margin-bottom: var(--text-editor-sheet-padding) !important;
+    --rm-margin-left: var(--text-editor-sheet-padding) !important;
+    --rm-margin-right: var(--text-editor-sheet-padding) !important;
   }
 }
 
@@ -739,39 +747,39 @@
 
 @media print {
   @page {
-    margin: 1in;
+    margin: var(--text-editor-print-page-margin, var(--text-editor-sheet-padding));
   }
 
   /*
    * Docs paginated print: named `@page` rules per footer selection. The print
    * helper sets `data-text-editor-page-format` on `html`/`body`; the `page`
-   * property selects the matching rule. Margins match the sheet padding token
-   * (`--text-editor-sheet-padding` / SHEET_MARGIN) so each printed page gets the
-   * same inset as the on-screen page box — container padding cannot do that.
+   * property selects the matching rule. Margins use `--text-editor-print-page-margin`
+   * (mirrored from `--text-editor-sheet-padding` during print) so each printed
+   * page gets the same inset as the on-screen page box.
    */
   @page text-editor-a4 {
     size: A4;
-    margin: 0.75in;
+    margin: var(--text-editor-print-page-margin, var(--text-editor-sheet-padding));
   }
 
   @page text-editor-letter {
     size: letter;
-    margin: 0.75in;
+    margin: var(--text-editor-print-page-margin, var(--text-editor-sheet-padding));
   }
 
   @page text-editor-legal {
     size: legal;
-    margin: 0.75in;
+    margin: var(--text-editor-print-page-margin, var(--text-editor-sheet-padding));
   }
 
   @page text-editor-a3 {
     size: A3;
-    margin: 0.75in;
+    margin: var(--text-editor-print-page-margin, var(--text-editor-sheet-padding));
   }
 
   @page text-editor-a5 {
     size: A5;
-    margin: 0.75in;
+    margin: var(--text-editor-print-page-margin, var(--text-editor-sheet-padding));
   }
 
   html.text-editor-print-active[data-text-editor-page-format="a4"],
