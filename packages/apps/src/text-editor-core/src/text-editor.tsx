@@ -1,7 +1,12 @@
-import { useEffect } from "react";
+import { useEffect, type CSSProperties } from "react";
 import type { Editor } from "@tiptap/react";
 import { cn } from "@/lib/utils";
 import type { TextEditorContentFormat } from "@/text-editor-core/src/text-editor-content";
+import {
+  DEFAULT_TEXT_EDITOR_PAGE_FORMAT,
+  textEditorPageWidth,
+  type TextEditorPageFormat,
+} from "@/text-editor-core/src/text-editor-pagination";
 import { textEditorDemoContent } from "@/text-editor-core/src/text-editor-fixtures";
 import {
   TextEditorFormatBar,
@@ -30,8 +35,10 @@ export type TextEditorProps = {
   sheetVariant?: TextEditorSheetVariant;
   /** Grow the letter sheet to fill a flex parent (e.g. mail compose). */
   sheetFill?: boolean;
-  /** Visual multi-page pagination (US Letter). Off by default; Docs opts in. */
+  /** Visual multi-page pagination. Off by default; Docs opts in. */
   pagination?: boolean;
+  /** Page size for visual pagination (defaults to A4). */
+  pageFormat?: TextEditorPageFormat;
   /**
    * When true, shows a source editor. Wide landscape viewports use a split
    * (rich text + source); narrow or portrait viewports show source only.
@@ -57,6 +64,7 @@ export function TextEditor({
   sheetVariant = "sheet",
   sheetFill = false,
   pagination = false,
+  pageFormat = DEFAULT_TEXT_EDITOR_PAGE_FORMAT,
   viewSource = false,
   className,
   onUpdate,
@@ -68,6 +76,7 @@ export function TextEditor({
     editable,
     placeholder,
     pagination,
+    pageFormat,
     onUpdate,
   });
 
@@ -113,6 +122,10 @@ export function TextEditor({
     />
   );
 
+  const paginationStyle = pagination
+    ? ({ "--text-editor-page-width": `${textEditorPageWidth(pageFormat)}px` } as CSSProperties)
+    : undefined;
+
   return (
     <div
       className={cn(
@@ -121,6 +134,7 @@ export function TextEditor({
         viewSource && "text-editor--view-source",
         className,
       )}
+      style={paginationStyle}
     >
       {viewSource ? (
         <div className="text-editor__body min-h-0 flex-1">

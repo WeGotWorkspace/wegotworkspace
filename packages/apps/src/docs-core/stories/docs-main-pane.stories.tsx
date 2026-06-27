@@ -7,6 +7,7 @@ import { createDocsAppBootstrap, createDocsTxtBootstrap } from "@/lib/api/mock/d
 import type { DocsAppBootstrap } from "@/docs-core/src/docs-types";
 import { createMockDocsOperations } from "@/docs-core/src/docs-mock-operations";
 import { DocsMainPane } from "@/docs-core/src/docs-main-pane";
+import type { TextEditorPageFormat } from "@/text-editor-core/src/text-editor-pagination";
 import { useDocsController } from "@/docs-core/src/use-docs-controller";
 import "@/docs-core/src/docs-workspace.css";
 
@@ -97,7 +98,13 @@ function DocsMainPaneHarness({
   );
 }
 
-function DocsPaginatedHarness({ bootstrap }: { bootstrap: DocsAppBootstrap }) {
+function DocsPaginatedHarness({
+  bootstrap,
+  initialPageFormat,
+}: {
+  bootstrap: DocsAppBootstrap;
+  initialPageFormat?: TextEditorPageFormat;
+}) {
   const operations = useMemo(() => createMockDocsOperations(), []);
   const controller = useDocsController({
     filePath: bootstrap.data.document?.apiPath ?? null,
@@ -118,11 +125,22 @@ function DocsPaginatedHarness({ bootstrap }: { bootstrap: DocsAppBootstrap }) {
           fileKey={fileKey}
           viewSource={false}
           onEditorReady={setEditor}
+          initialPageFormat={initialPageFormat}
         />
       </div>
     </TooltipProvider>
   );
 }
+
+const PAGINATED_BOOTSTRAP = createDocsAppBootstrap({
+  data: {
+    document: {
+      apiPath: "/users/demo/multi-page-brief.md",
+      fileName: "multi-page-brief.md",
+      content: LONG_DOCS_MARKDOWN,
+    },
+  },
+});
 
 const meta = {
   title: "Apps/Docs/Panes/Main",
@@ -163,22 +181,22 @@ export const ViewSource: Story = {
 };
 
 /**
- * Long-form document showing visual multi-page pagination on the cream canvas.
+ * Long-form document showing visual multi-page pagination on the cream canvas,
+ * defaulting to A4. The footer (bottom-right) carries the runtime page-size
+ * picker — switching re-flows pagination live without touching the content.
+ *
  * Untagged (no `vitest-ci`): pagination measures layout at runtime, so this is
  * a manual/visual smoke story rather than a deterministic interaction test.
  */
 export const Paginated: Story = {
-  render: () => (
-    <DocsPaginatedHarness
-      bootstrap={createDocsAppBootstrap({
-        data: {
-          document: {
-            apiPath: "/users/demo/multi-page-brief.md",
-            fileName: "multi-page-brief.md",
-            content: LONG_DOCS_MARKDOWN,
-          },
-        },
-      })}
-    />
-  ),
+  render: () => <DocsPaginatedHarness bootstrap={PAGINATED_BOOTSTRAP} />,
+};
+
+/**
+ * Same document with the page-size picker initialized to US Letter, so the
+ * A4 (default) vs Letter geometry can be compared side by side. Untagged for
+ * the same runtime-measurement reason as {@link Paginated}.
+ */
+export const PaginatedLetter: Story = {
+  render: () => <DocsPaginatedHarness bootstrap={PAGINATED_BOOTSTRAP} initialPageFormat="letter" />,
 };

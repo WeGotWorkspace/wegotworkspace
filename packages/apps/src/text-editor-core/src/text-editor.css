@@ -302,8 +302,10 @@
  * centers the page column. Gutter + border colors are parent-owned tokens.
  */
 .text-editor-sheet--paginated .text-editor-sheet__surface {
-  width: fit-content;
-  max-width: none;
+  /* Track the selected page format (set by the editor root); the plugin also
+   * sizes the inner page box, so `fit-content` is a safe fallback. */
+  width: var(--text-editor-page-width, fit-content);
+  max-width: var(--text-editor-page-width, none);
   margin-inline: auto;
   padding: 0;
   background: transparent;
@@ -733,6 +735,62 @@
 @media print {
   @page {
     margin: 1in;
+  }
+
+  /*
+   * Docs paginated print: named `@page` rules per footer selection. The print
+   * helper sets `data-text-editor-page-format` on `html`/`body`; the `page`
+   * property selects the matching rule. Margins match the sheet padding token
+   * (0.75in). Pagination plugin chrome stays hidden — content flows naturally.
+   */
+  @page text-editor-a4 {
+    size: A4;
+    margin: 0.75in;
+  }
+
+  @page text-editor-letter {
+    size: letter;
+    margin: 0.75in;
+  }
+
+  @page text-editor-legal {
+    size: legal;
+    margin: 0.75in;
+  }
+
+  @page text-editor-a3 {
+    size: A3;
+    margin: 0.75in;
+  }
+
+  @page text-editor-a5 {
+    size: A5;
+    margin: 0.75in;
+  }
+
+  html.text-editor-print-active[data-text-editor-page-format="a4"],
+  html.text-editor-print-active[data-text-editor-page-format="a4"] body {
+    page: text-editor-a4;
+  }
+
+  html.text-editor-print-active[data-text-editor-page-format="letter"],
+  html.text-editor-print-active[data-text-editor-page-format="letter"] body {
+    page: text-editor-letter;
+  }
+
+  html.text-editor-print-active[data-text-editor-page-format="legal"],
+  html.text-editor-print-active[data-text-editor-page-format="legal"] body {
+    page: text-editor-legal;
+  }
+
+  html.text-editor-print-active[data-text-editor-page-format="a3"],
+  html.text-editor-print-active[data-text-editor-page-format="a3"] body {
+    page: text-editor-a3;
+  }
+
+  html.text-editor-print-active[data-text-editor-page-format="a5"],
+  html.text-editor-print-active[data-text-editor-page-format="a5"] body {
+    page: text-editor-a5;
   }
 
   html.text-editor-print-active,

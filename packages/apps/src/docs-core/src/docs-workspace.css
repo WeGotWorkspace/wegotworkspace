@@ -177,7 +177,7 @@
 }
 
 .docs-workspace__stats-footer {
-  @apply flex shrink-0 flex-wrap items-center justify-start gap-1.5;
+  @apply flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-2;
   box-sizing: border-box;
   padding-block: var(--docs-format-chrome-padding-y);
   padding-inline: var(--docs-format-chrome-padding-x);
@@ -185,6 +185,14 @@
   background-color: color-mix(in oklab, #ffffff 88%, transparent);
   backdrop-filter: blur(8px);
   border-top: 1px solid var(--docs-border);
+}
+
+.docs-workspace__stats-footer-group {
+  @apply flex flex-wrap items-center gap-1.5;
+}
+
+.docs-workspace__stats-footer-group--end {
+  @apply ml-auto;
 }
 
 .docs-dialog-surface {
@@ -197,6 +205,19 @@
 
 .docs-workspace__stats-footer .tag {
   font-variant-numeric: tabular-nums;
+}
+
+.docs-page-size-select {
+  @apply flex items-center;
+}
+
+.docs-page-size-select__trigger {
+  --input-height: 2rem;
+  --input-font-size: 0.8125rem;
+  --input-padding-x: 0.625rem;
+  width: auto;
+  min-width: 6.5rem;
+  color: var(--docs-text);
 }
 
 .docs-workspace__editor {
@@ -319,8 +340,8 @@
   .text-editor:not(.text-editor--view-source)
   .text-editor-sheet--paginated.text-editor-sheet--fill
   .text-editor-sheet__surface {
-  width: fit-content;
-  max-width: none;
+  width: var(--text-editor-page-width, fit-content);
+  max-width: var(--text-editor-page-width, none);
   min-height: 0;
   margin-inline: auto;
   background: transparent;
