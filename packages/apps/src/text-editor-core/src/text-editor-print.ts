@@ -4,6 +4,7 @@ import {
   type TextEditorPageFormat,
 } from "@/text-editor-core/src/text-editor-pagination";
 import { readTextEditorSheetPaddingToken } from "@/text-editor-core/src/text-editor-sheet-margin";
+import { readTextEditorProseFontSizeToken } from "@/text-editor-core/src/text-editor-prose-font";
 
 const PRINT_BODY_CLASS = "text-editor-print-active";
 const PRINT_SURFACE_CLASS = "text-editor-sheet__surface--print";
@@ -17,6 +18,8 @@ export const TEXT_EDITOR_PRINT_FORMATTED_CLASS = "text-editor--print-formatted";
 export const TEXT_EDITOR_PRINT_PAGINATED_CLASS = "text-editor-print-paginated";
 /** Mirrored on `html` during print so `@page` can read the sheet padding token. */
 const PRINT_PAGE_MARGIN_VAR = "--text-editor-print-page-margin";
+/** Mirrored on `html` during print so print typography matches the on-screen prose scale. */
+const PRINT_PROSE_FONT_SIZE_VAR = "--text-editor-print-prose-font-size";
 
 function findPrintSurface(editor: Editor): HTMLElement | null {
   const editorRoot = editor.view.dom.closest(".text-editor");
@@ -72,6 +75,22 @@ function syncPrintPageMarginToken(editorRoot: Element | null): () => void {
   };
 }
 
+/** Mirror `--text-editor-prose-font-size` onto `html` for print typography scope. */
+function syncPrintProseFontToken(editorRoot: Element | null): () => void {
+  const root = document.documentElement;
+  const previous = root.style.getPropertyValue(PRINT_PROSE_FONT_SIZE_VAR);
+  const token = readTextEditorProseFontSizeToken(editorRoot);
+  root.style.setProperty(PRINT_PROSE_FONT_SIZE_VAR, token);
+
+  return () => {
+    if (previous) {
+      root.style.setProperty(PRINT_PROSE_FONT_SIZE_VAR, previous);
+    } else {
+      root.style.removeProperty(PRINT_PROSE_FONT_SIZE_VAR);
+    }
+  };
+}
+
 /**
  * Print the editor sheet from the live document so fonts and styles match the UI.
  * Uses print-only CSS on `body` (see `text-editor.css`) — no iframe.
@@ -98,6 +117,7 @@ export function printTextEditorSheet(editor: Editor | null, pageFormat?: TextEdi
 
   let restorePaginatedLayout: (() => void) | null = null;
   let restorePrintPageMargin: (() => void) | null = null;
+  let restorePrintProseFont: (() => void) | null = null;
 
   const applyPaginatedPrintLayout = () => {
     if (!paginatedPrint || !proseMirror) return;
@@ -120,6 +140,7 @@ export function printTextEditorSheet(editor: Editor | null, pageFormat?: TextEdi
   }
 
   restorePrintPageMargin = syncPrintPageMarginToken(editorRoot);
+  restorePrintProseFont = syncPrintProseFontToken(editorRoot);
 
   const onBeforePrint = () => {
     applyPaginatedPrintLayout();
@@ -132,6 +153,7 @@ export function printTextEditorSheet(editor: Editor | null, pageFormat?: TextEdi
     window.removeEventListener("beforeprint", onBeforePrint);
     restorePaginatedLayout?.();
     restorePrintPageMargin?.();
+    restorePrintProseFont?.();
     root.classList.remove(PRINT_BODY_CLASS);
     body.classList.remove(PRINT_BODY_CLASS);
     surface.classList.remove(PRINT_SURFACE_CLASS);

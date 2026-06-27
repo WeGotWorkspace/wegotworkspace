@@ -80,6 +80,7 @@ describe("printTextEditorSheet", () => {
     document.documentElement.classList.remove("text-editor-print-active");
     document.documentElement.removeAttribute(TEXT_EDITOR_PAGE_FORMAT_DATA_ATTR);
     document.documentElement.style.removeProperty("--text-editor-print-page-margin");
+    document.documentElement.style.removeProperty("--text-editor-print-prose-font-size");
     document.body.classList.remove("text-editor-print-active");
     document.body.removeAttribute(TEXT_EDITOR_PAGE_FORMAT_DATA_ATTR);
     document.documentElement.classList.remove(TEXT_EDITOR_PRINT_PAGINATED_CLASS);
@@ -105,6 +106,9 @@ describe("printTextEditorSheet", () => {
     expect(document.documentElement.style.getPropertyValue("--text-editor-print-page-margin")).toBe(
       "0.75in",
     );
+    expect(
+      document.documentElement.style.getPropertyValue("--text-editor-print-prose-font-size"),
+    ).toBe("16px");
 
     editorRoot.remove();
   });
