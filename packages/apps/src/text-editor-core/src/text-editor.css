@@ -994,6 +994,61 @@
     display: none !important;
   }
 
+  /*
+   * Task list checkboxes: checked state uses filled primary + light checkmark.
+   * Browsers strip background colors in print unless color-adjust is exact; without
+   * the fill, a light checkmark on white paper looks unchecked.
+   */
+  body.text-editor-print-active
+    .text-editor-sheet__surface--print
+    .text-editor-prose
+    ul[data-type="taskList"]
+    li
+    > label
+    span {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body.text-editor-print-active
+    .text-editor-sheet__surface--print
+    .text-editor-prose
+    ul[data-type="taskList"]
+    li
+    > label
+    input:checked
+    + span,
+  body.text-editor-print-active
+    .text-editor-sheet__surface--print
+    .text-editor-prose
+    ul[data-type="taskList"]
+    li[data-checked="true"]
+    > label
+    span {
+    border-color: var(--primary) !important;
+    background: var(--primary) !important;
+    box-shadow: none !important;
+  }
+
+  body.text-editor-print-active
+    .text-editor-sheet__surface--print
+    .text-editor-prose
+    ul[data-type="taskList"]
+    li
+    > label
+    input:checked
+    + span::after,
+  body.text-editor-print-active
+    .text-editor-sheet__surface--print
+    .text-editor-prose
+    ul[data-type="taskList"]
+    li[data-checked="true"]
+    > label
+    span::after {
+    content: "" !important;
+    border-color: var(--primary-foreground) !important;
+  }
+
   .text-editor-sheet__surface {
     box-shadow: none;
     border-radius: 0;
