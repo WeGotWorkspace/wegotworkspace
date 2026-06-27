@@ -901,7 +901,6 @@
 
   body.text-editor-print-active .text-editor-sheet__surface--print .ProseMirror {
     box-sizing: border-box !important;
-    width: 100% !important;
     max-width: none !important;
     height: auto !important;
     min-height: 0 !important;
@@ -915,6 +914,29 @@
     background: transparent !important;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
+  }
+
+  /*
+   * Paginated print: match the plugin's inner content column (page width minus
+   * sheet inset). Plain `width: 100%` reflows at the full page width (~794px)
+   * instead of the on-screen band (~650px), packing more text per printed page.
+   */
+  body.text-editor-print-active.text-editor-print-paginated
+    .text-editor-sheet__surface--print
+    .ProseMirror {
+    width: calc(
+      var(--rm-page-width, 794px) - var(--rm-margin-left, 72px) - var(--rm-margin-right, 72px)
+    ) !important;
+    max-width: calc(
+      var(--rm-page-width, 794px) - var(--rm-margin-left, 72px) - var(--rm-margin-right, 72px)
+    ) !important;
+    margin-inline: auto !important;
+  }
+
+  body.text-editor-print-active:not(.text-editor-print-paginated)
+    .text-editor-sheet__surface--print
+    .ProseMirror {
+    width: 100% !important;
   }
 
   body.text-editor-print-active .text-editor-sheet__surface--print .text-editor-prose {
@@ -954,6 +976,11 @@
   body.text-editor-print-active .rm-with-pagination .rm-page-break,
   body.text-editor-print-active .rm-with-pagination .rm-pagination-gap {
     display: none !important;
+  }
+
+  body.text-editor-print-active .text-editor-print-page-start {
+    break-before: page !important;
+    page-break-before: always !important;
   }
 
   body.text-editor-print-active

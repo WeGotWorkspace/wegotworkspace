@@ -9,7 +9,11 @@ import {
   printTextEditorSheet,
   TEXT_EDITOR_PRINT_FORMATTED_CLASS,
   TEXT_EDITOR_PRINT_PAGINATED_CLASS,
+  TEXT_EDITOR_PRINT_PAGE_START_CLASS,
   preparePaginatedPrintLayout,
+  computePaginatedPrintPageStartIndices,
+  computePaginatedPrintPageStartNodes,
+  applyPaginatedPrintPageStarts,
 } from "./text-editor-print";
 
 function createMockEditor(editorRoot: HTMLElement, proseMirror?: HTMLElement): Editor {
@@ -88,6 +92,9 @@ describe("printTextEditorSheet", () => {
     document
       .querySelectorAll(`.${TEXT_EDITOR_PRINT_FORMATTED_CLASS}`)
       .forEach((node) => node.classList.remove(TEXT_EDITOR_PRINT_FORMATTED_CLASS));
+    document
+      .querySelectorAll(`.${TEXT_EDITOR_PRINT_PAGE_START_CLASS}`)
+      .forEach((node) => node.classList.remove(TEXT_EDITOR_PRINT_PAGE_START_CLASS));
   });
 
   it("sets the page-format data attribute during Docs print", () => {
@@ -197,11 +204,96 @@ describe("preparePaginatedPrintLayout", () => {
     const restore = preparePaginatedPrintLayout(prose);
 
     expect(prose.style.minHeight).toBe("0px");
-    expect(prose.style.width).toBe("100%");
+    expect(prose.style.width).toBe("");
 
     restore();
 
     expect(prose.style.minHeight).toBe(originalMinHeight);
     expect(prose.style.width).toBe("794px");
+  });
+});
+
+function mockRect(element: Element, rect: Partial<DOMRect>) {
+  const full = {
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    width: 0,
+    height: 0,
+    x: 0,
+    y: 0,
+    toJSON: () => ({}),
+    ...rect,
+  } satisfies DOMRect;
+  element.getBoundingClientRect = () => full;
+}
+
+function buildPaginatedPrintDom() {
+  const prose = document.createElement("div");
+  prose.className = "ProseMirror rm-with-pagination text-editor-prose";
+
+  const firstHeader = document.createElement("div");
+  firstHeader.className = "rm-first-page-header";
+  mockRect(firstHeader, { top: 0, bottom: 72, height: 72 });
+
+  const pages = document.createElement("div");
+  pages.dataset.rmPagination = "true";
+
+  const pageBreak = (footerTop: number) => {
+    const brk = document.createElement("div");
+    brk.className = "rm-page-break";
+    const page = document.createElement("div");
+    page.className = "page";
+    mockRect(page, { top: footerTop - 979, bottom: footerTop, height: 979 });
+    const breaker = document.createElement("div");
+    breaker.className = "breaker";
+    const footer = document.createElement("div");
+    footer.className = "rm-page-footer";
+    mockRect(footer, { top: footerTop, bottom: footerTop + 72, height: 72 });
+    breaker.append(footer);
+    brk.append(page, breaker);
+    pages.appendChild(brk);
+    return { brk, footerTop };
+  };
+
+  pageBreak(1100);
+  pageBreak(2200);
+  pageBreak(3300);
+
+  const paragraph = document.createElement("p");
+  paragraph.textContent = "Body copy on page one.";
+  mockRect(paragraph, { top: 200, bottom: 240, height: 40 });
+
+  const paragraph2 = document.createElement("p");
+  paragraph2.textContent = "Body copy on page two.";
+  mockRect(paragraph2, { top: 1500, bottom: 1540, height: 40 });
+
+  prose.append(firstHeader, pages, paragraph, paragraph2);
+  mockRect(prose, { top: 0, bottom: 3400, height: 3400 });
+
+  document.body.appendChild(prose);
+  return { prose, paragraph, paragraph2 };
+}
+
+describe("paginated print page-start helpers", () => {
+  afterEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  it("marks the first content node of screen page 2+ for print page breaks", () => {
+    const { prose, paragraph2 } = buildPaginatedPrintDom();
+    const indices = computePaginatedPrintPageStartIndices(prose);
+    const startNodes = computePaginatedPrintPageStartNodes(prose);
+    const restore = applyPaginatedPrintPageStarts(prose, startNodes);
+
+    expect(indices).toEqual([1]);
+    expect(startNodes).toEqual([paragraph2]);
+    expect(paragraph2.classList.contains(TEXT_EDITOR_PRINT_PAGE_START_CLASS)).toBe(true);
+    expect(paragraph2.style.breakBefore).toBe("page");
+
+    restore();
+    expect(paragraph2.classList.contains(TEXT_EDITOR_PRINT_PAGE_START_CLASS)).toBe(false);
+    expect(paragraph2.style.breakBefore).toBe("");
   });
 });
