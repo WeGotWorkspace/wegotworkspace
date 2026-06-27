@@ -327,6 +327,7 @@ function DocsCollabWorkspaceInner({
                   user={collabSession.user}
                   format={editorFormat}
                   sheetFill
+                  pagination
                   viewSource={viewSource}
                   formatBar={
                     editorFormat === "text"

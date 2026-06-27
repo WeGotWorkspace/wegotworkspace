@@ -48,6 +48,7 @@ export function DocsMainPane({
         format={controller.editorFormat}
         content={controller.content}
         sheetFill
+        pagination
         viewSource={viewSource}
         formatBar={isPlainText ? false : { groups: TEXT_EDITOR_FORMAT_BAR_FULL, showPrint: false }}
         onUpdate={({ content }) => controller.onContentChange(content)}

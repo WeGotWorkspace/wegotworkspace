@@ -14,6 +14,8 @@ export type UseTextEditorOptions = {
   format?: TextEditorContentFormat;
   editable?: boolean;
   placeholder?: string;
+  /** Visual multi-page pagination (US Letter). Off by default; Docs opts in. */
+  pagination?: boolean;
   onUpdate?: (payload: { editor: Editor; content: string }) => void;
 } & Pick<UseEditorOptions, "autofocus" | "editorProps">;
 
@@ -23,12 +25,13 @@ export function useTextEditor(options: UseTextEditorOptions = {}) {
     format = "html",
     editable = true,
     placeholder,
+    pagination = false,
     onUpdate,
     autofocus,
     editorProps,
   } = options;
 
-  const extensionOptions: CreateTextEditorExtensionsOptions = { placeholder, format };
+  const extensionOptions: CreateTextEditorExtensionsOptions = { placeholder, format, pagination };
 
   return useEditor(
     {
@@ -49,6 +52,6 @@ export function useTextEditor(options: UseTextEditorOptions = {}) {
             })
         : undefined,
     },
-    [format, editable, placeholder],
+    [format, editable, placeholder, pagination],
   );
 }

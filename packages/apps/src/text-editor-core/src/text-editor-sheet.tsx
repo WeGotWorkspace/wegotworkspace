@@ -1,5 +1,5 @@
 import { EditorContent, type Editor } from "@tiptap/react";
-import { cn } from "@/lib/utils";
+import { clsx } from "clsx";
 import { TextEditorSlashMenu } from "@/text-editor-core/src/text-editor-slash-menu";
 import { TextEditorTableControls } from "@/text-editor-core/src/text-editor-table-controls";
 
@@ -11,6 +11,11 @@ export type TextEditorSheetProps = {
   variant?: TextEditorSheetVariant;
   /** Grow the sheet to fill a flex parent (e.g. mail compose). Shadow and radius stay on the surface. */
   fill?: boolean;
+  /**
+   * Visual multi-page pagination is active: the plugin owns the page boxes, so
+   * the sheet surface drops its duplicate padding / shadow (`sheet` variant only).
+   */
+  paginated?: boolean;
   /** Slash command menu (off for plain `.txt` mode). */
   slashMenu?: boolean;
   className?: string;
@@ -23,15 +28,21 @@ export function TextEditorSheet({
   editor,
   variant = "sheet",
   fill = false,
+  paginated = false,
   slashMenu = true,
   className,
 }: TextEditorSheetProps) {
+  // BEM block/modifiers must NOT pass through `cn` (tailwind-merge): it treats
+  // the shared `text-` prefix as one utility group and keeps only the last
+  // `text-editor-sheet*` class, silently dropping the base + co-modifiers (e.g.
+  // `--fill` next to `--paginated`). `clsx` preserves every class as authored.
   return (
     <div
-      className={cn(
+      className={clsx(
         "text-editor-sheet",
         variant === "inline" && "text-editor-sheet--inline",
         fill && variant === "sheet" && "text-editor-sheet--fill",
+        paginated && variant === "sheet" && "text-editor-sheet--paginated",
         className,
       )}
     >

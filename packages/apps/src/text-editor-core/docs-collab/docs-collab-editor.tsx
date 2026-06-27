@@ -28,6 +28,8 @@ export type DocsCollabEditorProps = {
   format?: TextEditorContentFormat;
   formatBar?: boolean | TextEditorFormatBarConfig;
   sheetFill?: boolean;
+  /** Visual multi-page pagination (US Letter). Off by default; Docs opts in. */
+  pagination?: boolean;
   viewSource?: boolean;
   className?: string;
   /** @deprecated Prefer `onContentChange`; kept for compatibility paths. */
@@ -43,6 +45,7 @@ export function DocsCollabEditor({
   format = "markdown",
   formatBar = true,
   sheetFill = false,
+  pagination = false,
   viewSource = false,
   className,
   onMarkdownChange,
@@ -62,6 +65,7 @@ export function DocsCollabEditor({
       extensions: createCollaborativeTextEditorExtensions({
         format,
         placeholder: "Press '/' for commands…",
+        pagination,
         document: ydoc,
         awareness,
         user,
@@ -77,7 +81,7 @@ export function DocsCollabEditor({
         ed.commands.updateUser(user);
       },
     },
-    [ydoc, awareness, format, user.color, user.name],
+    [ydoc, awareness, format, pagination, user.color, user.name],
   );
 
   const { sourceValue, onSourceChange, onSourceFocus, onSourceBlur } = useTextEditorSourceSync({
@@ -121,6 +125,7 @@ export function DocsCollabEditor({
       editor={editor}
       variant="sheet"
       fill={sheetFill}
+      paginated={pagination}
       slashMenu={format !== "text"}
       className="min-h-0 flex-1"
     />

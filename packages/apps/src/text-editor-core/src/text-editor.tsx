@@ -30,6 +30,8 @@ export type TextEditorProps = {
   sheetVariant?: TextEditorSheetVariant;
   /** Grow the letter sheet to fill a flex parent (e.g. mail compose). */
   sheetFill?: boolean;
+  /** Visual multi-page pagination (US Letter). Off by default; Docs opts in. */
+  pagination?: boolean;
   /**
    * When true, shows a source editor. Wide landscape viewports use a split
    * (rich text + source); narrow or portrait viewports show source only.
@@ -54,6 +56,7 @@ export function TextEditor({
   showPrint,
   sheetVariant = "sheet",
   sheetFill = false,
+  pagination = false,
   viewSource = false,
   className,
   onUpdate,
@@ -64,6 +67,7 @@ export function TextEditor({
     content: content ?? textEditorDemoContent(format),
     editable,
     placeholder,
+    pagination,
     onUpdate,
   });
 
@@ -103,6 +107,7 @@ export function TextEditor({
       editor={editor}
       variant={sheetVariant}
       fill={sheetFill}
+      paginated={pagination}
       slashMenu={format !== "text"}
       className="min-h-0 flex-1"
     />
