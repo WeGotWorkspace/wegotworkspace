@@ -313,11 +313,13 @@
   border-radius: 0;
 }
 
-.text-editor-sheet--paginated .text-editor-sheet__surface .ProseMirror.rm-with-pagination {
-  background: var(--text-editor-sheet);
-  /* The plugin renders one continuous bordered column with cream page gaps; the
-   * sheet shadow frames that column so the pages read as a distinct stack. */
-  box-shadow: var(--text-editor-shadow-sheet);
+@media screen {
+  .text-editor-sheet--paginated .text-editor-sheet__surface .ProseMirror.rm-with-pagination {
+    background: var(--text-editor-sheet);
+    /* Screen-only: the plugin renders one continuous bordered column with cream
+     * page gaps; the sheet shadow frames that column as a distinct stack. */
+    box-shadow: var(--text-editor-shadow-sheet);
+  }
 }
 
 /*
@@ -873,28 +875,62 @@
     flex: none !important;
     padding: 0 !important;
     margin: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  /*
+   * View-source: portrait/narrow hides the formatted pane on screen — force it
+   * visible for print and keep the source pane out of the output entirely.
+   */
+  body.text-editor-print-active
+    .text-editor--print-formatted.text-editor--view-source
+    .text-editor__formatted {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    overflow: visible !important;
+  }
+
+  body.text-editor-print-active
+    .text-editor--print-formatted.text-editor--view-source
+    .text-editor__source {
+    display: none !important;
   }
 
   /*
    * Pagination is screen-only. Strip the plugin's page boxes, gaps, headers,
-   * and footers so the printed document flows continuously and the browser's
-   * `@page` margins drive the physical page breaks.
+   * footers, and inline chrome so the printed document flows continuously and
+   * the browser's `@page` margins drive the physical page breaks.
    */
   body.text-editor-print-active .text-editor-sheet__surface--print .ProseMirror.rm-with-pagination {
     width: 100% !important;
+    min-height: 0 !important;
     border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    background: transparent !important;
   }
 
   body.text-editor-print-active .rm-with-pagination #pages,
+  body.text-editor-print-active .rm-with-pagination [data-rm-pagination],
   body.text-editor-print-active .rm-with-pagination .rm-first-page-header,
   body.text-editor-print-active .rm-with-pagination .rm-page-header,
   body.text-editor-print-active .rm-with-pagination .rm-page-footer,
+  body.text-editor-print-active .rm-with-pagination .rm-page-break,
   body.text-editor-print-active .rm-with-pagination .rm-pagination-gap {
     display: none !important;
   }
 
   body.text-editor-print-active
-    :is(.text-editor__source, .text-editor-source, .text-editor-format-bar, .no-print) {
+    :is(
+      .text-editor__source,
+      .text-editor-source,
+      .text-editor-format-bar,
+      .docs-page-size-select,
+      .no-print
+    ) {
     display: none !important;
   }
 

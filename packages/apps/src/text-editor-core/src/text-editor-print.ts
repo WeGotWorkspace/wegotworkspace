@@ -6,16 +6,18 @@ import {
 
 const PRINT_BODY_CLASS = "text-editor-print-active";
 const PRINT_SURFACE_CLASS = "text-editor-sheet__surface--print";
+/** Applied to `.text-editor` during print so view-source split prints formatted content only. */
+export const TEXT_EDITOR_PRINT_FORMATTED_CLASS = "text-editor--print-formatted";
 
 function findPrintSurface(editor: Editor): HTMLElement | null {
   const editorRoot = editor.view.dom.closest(".text-editor");
   if (!editorRoot) return null;
 
-  if (editorRoot.classList.contains("text-editor--view-source")) {
-    return editorRoot.querySelector<HTMLElement>(
-      ".text-editor__formatted .text-editor-sheet__surface",
-    );
-  }
+  // Always print the formatted WYSIWYG sheet — never the Markdown/HTML source pane.
+  const formattedSurface = editorRoot.querySelector<HTMLElement>(
+    ".text-editor__formatted .text-editor-sheet__surface",
+  );
+  if (formattedSurface) return formattedSurface;
 
   return editorRoot.querySelector<HTMLElement>(".text-editor-sheet__surface");
 }
@@ -39,9 +41,11 @@ export function printTextEditorSheet(editor: Editor | null, pageFormat?: TextEdi
 
   const root = document.documentElement;
   const body = document.body;
+  const editorRoot = surface.closest(".text-editor");
   root.classList.add(PRINT_BODY_CLASS);
   body.classList.add(PRINT_BODY_CLASS);
   surface.classList.add(PRINT_SURFACE_CLASS);
+  editorRoot?.classList.add(TEXT_EDITOR_PRINT_FORMATTED_CLASS);
 
   if (pageFormat) {
     root.setAttribute(TEXT_EDITOR_PAGE_FORMAT_DATA_ATTR, pageFormat);
@@ -55,6 +59,7 @@ export function printTextEditorSheet(editor: Editor | null, pageFormat?: TextEdi
     root.classList.remove(PRINT_BODY_CLASS);
     body.classList.remove(PRINT_BODY_CLASS);
     surface.classList.remove(PRINT_SURFACE_CLASS);
+    editorRoot?.classList.remove(TEXT_EDITOR_PRINT_FORMATTED_CLASS);
     root.removeAttribute(TEXT_EDITOR_PAGE_FORMAT_DATA_ATTR);
     body.removeAttribute(TEXT_EDITOR_PAGE_FORMAT_DATA_ATTR);
     window.removeEventListener("afterprint", cleanup);
