@@ -39,9 +39,6 @@ function findPrintSurface(editor: Editor): HTMLElement | null {
 
 /** Ignore empty trailing paragraphs — they sit in the phantom page band and block cleanup. */
 function isSubstantivePaginatedContentNode(node: HTMLElement): boolean {
-  const rect = node.getBoundingClientRect();
-  if (rect.height <= 0) return false;
-
   const text = node.textContent?.replace(/\u200b/g, "").trim() ?? "";
   return text.length > 0;
 }
@@ -102,12 +99,23 @@ export function computePaginatedPrintPageStartIndices(proseMirror: HTMLElement):
   return startIndices;
 }
 
-/** Content nodes that begin screen page 2+ (stable references from screen layout). */
-export function computePaginatedPrintPageStartNodes(proseMirror: HTMLElement): HTMLElement[] {
+/** Content nodes that begin screen page 2+ (re-query live DOM — do not cache refs). */
+export function resolvePaginatedPrintPageStartNodes(
+  proseMirror: HTMLElement,
+  startIndices: readonly number[],
+): HTMLElement[] {
   const contentNodes = paginatedContentNodes(proseMirror);
-  return computePaginatedPrintPageStartIndices(proseMirror)
+  return startIndices
     .map((nodeIndex) => contentNodes[nodeIndex])
     .filter((node): node is HTMLElement => node instanceof HTMLElement);
+}
+
+/** Screen page 2+ starts from the current layout (indices + live nodes). */
+export function computePaginatedPrintPageStartNodes(proseMirror: HTMLElement): HTMLElement[] {
+  return resolvePaginatedPrintPageStartNodes(
+    proseMirror,
+    computePaginatedPrintPageStartIndices(proseMirror),
+  );
 }
 
 /** Apply print page breaks to content nodes captured from the screen layout. */
@@ -211,8 +219,9 @@ export function printTextEditorSheet(editor: Editor | null, pageFormat?: TextEdi
   const proseMirror = surface.querySelector<HTMLElement>(".ProseMirror.rm-with-pagination");
 
   // Capture screen page boundaries before print-only CSS reflows the column.
-  const paginatedPageStartNodes =
-    paginatedPrint && proseMirror ? computePaginatedPrintPageStartNodes(proseMirror) : [];
+  // Store indices only — `preparePaginatedPrintLayout` can replace ProseMirror nodes.
+  const paginatedPageStartIndices =
+    paginatedPrint && proseMirror ? computePaginatedPrintPageStartIndices(proseMirror) : [];
 
   let restorePaginatedLayout: (() => void) | null = null;
   let restorePrintPageMargin: (() => void) | null = null;
@@ -222,7 +231,8 @@ export function printTextEditorSheet(editor: Editor | null, pageFormat?: TextEdi
     if (!paginatedPrint || !proseMirror) return;
     restorePaginatedLayout?.();
     const restoreLayout = preparePaginatedPrintLayout(proseMirror);
-    const restoreBreaks = applyPaginatedPrintPageStarts(proseMirror, paginatedPageStartNodes);
+    const startNodes = resolvePaginatedPrintPageStartNodes(proseMirror, paginatedPageStartIndices);
+    const restoreBreaks = applyPaginatedPrintPageStarts(proseMirror, startNodes);
     restorePaginatedLayout = () => {
       restoreBreaks();
       restoreLayout();

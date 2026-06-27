@@ -13,6 +13,7 @@ import {
   preparePaginatedPrintLayout,
   computePaginatedPrintPageStartIndices,
   computePaginatedPrintPageStartNodes,
+  resolvePaginatedPrintPageStartNodes,
   applyPaginatedPrintPageStarts,
 } from "./text-editor-print";
 
@@ -295,5 +296,23 @@ describe("paginated print page-start helpers", () => {
     restore();
     expect(paragraph2.classList.contains(TEXT_EDITOR_PRINT_PAGE_START_CLASS)).toBe(false);
     expect(paragraph2.style.breakBefore).toBe("");
+  });
+
+  it("re-resolves page-start nodes after layout prep so markers stay in the document", () => {
+    const { prose } = buildPaginatedPrintDom();
+    const indices = computePaginatedPrintPageStartIndices(prose);
+
+    const restoreLayout = preparePaginatedPrintLayout(prose);
+    const liveNodes = resolvePaginatedPrintPageStartNodes(prose, indices);
+    const restoreBreaks = applyPaginatedPrintPageStarts(prose, liveNodes);
+
+    expect(indices).toEqual([1]);
+    expect(liveNodes).toHaveLength(1);
+    expect(prose.contains(liveNodes[0])).toBe(true);
+    expect(liveNodes[0].classList.contains(TEXT_EDITOR_PRINT_PAGE_START_CLASS)).toBe(true);
+    expect(document.querySelectorAll(`.${TEXT_EDITOR_PRINT_PAGE_START_CLASS}`).length).toBe(1);
+
+    restoreBreaks();
+    restoreLayout();
   });
 });
