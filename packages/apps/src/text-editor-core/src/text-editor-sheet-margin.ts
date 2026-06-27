@@ -38,6 +38,10 @@ function cssLengthToPx(length: string, rootFontSizePx = 16): number {
  * same CSS token — this helper keeps JS page-height calculations in sync.
  */
 export function resolveTextEditorSheetMarginPx(scope: Element | null = null): number {
+  if (typeof document === "undefined") {
+    return cssLengthToPx(TEXT_EDITOR_SHEET_PADDING_FALLBACK);
+  }
+
   const host = scope ?? document.documentElement;
   const token =
     getComputedStyle(host).getPropertyValue("--text-editor-sheet-padding").trim() ||
