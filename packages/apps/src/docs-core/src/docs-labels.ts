@@ -33,6 +33,7 @@ export const docsLabels = {
   outlineEmpty: "No headings in this document yet.",
   statsWords: (count: number) => `${count.toLocaleString()} words`,
   statsCharacters: (count: number) => `${count.toLocaleString()} characters`,
+  pageSizeLabel: "Page size",
 } as const;
 
 export type DocsUILabels = typeof docsLabels;

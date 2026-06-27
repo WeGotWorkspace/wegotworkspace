@@ -1,7 +1,18 @@
 /* Parent-scoped tokens for the text editor workspace */
+:root {
+  --text-editor-sheet-padding: 0.75in;
+  --text-editor-prose-font-size: 16px;
+  --text-editor-prose-line-height: 1.7;
+  /* Unitless multipliers × `--text-editor-prose-font-size` for heading scale. */
+  --text-editor-prose-heading-h1-size: 2.1;
+  --text-editor-prose-heading-h2-size: 1.6;
+  --text-editor-prose-heading-h3-size: 1.25;
+  --text-editor-prose-code-size: 0.9;
+  --text-editor-prose-pre-size: 0.85;
+}
+
 .text-editor {
   --text-editor-sheet: oklch(1 0 0);
-  --text-editor-sheet-padding: 0.75in;
   --text-editor-sheet-margin-block: 1.5rem;
   --text-editor-highlight: oklch(0.95 0.15 95);
   --text-editor-comment: oklch(0.9 0.12 80);
@@ -295,11 +306,64 @@
   min-height: 0;
 }
 
+/*
+ * Visual pagination (tiptap-pagination-plus): the plugin draws fixed-width
+ * Letter page boxes inside `.ProseMirror` (border + per-page gaps/footer), so
+ * the sheet surface drops its own padding / shadow / max-width and just
+ * centers the page column. Gutter + border colors are parent-owned tokens.
+ */
+.text-editor-sheet--paginated .text-editor-sheet__surface {
+  /* Screen gap height (tiptap `pageGap` / PAGE_GAP in pagination.ts). Color is
+   * `--text-editor-page-gap` (parent-owned, e.g. docs `--docs-canvas`). */
+  --text-editor-page-gap-size: 32px;
+  /* Track the selected page format (set by the editor root); the plugin also
+   * sizes the inner page box, so `fit-content` is a safe fallback. */
+  width: var(--text-editor-page-width, fit-content);
+  max-width: var(--text-editor-page-width, none);
+  margin-inline: auto;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+@media screen {
+  .text-editor-sheet--paginated .text-editor-sheet__surface .ProseMirror.rm-with-pagination {
+    background: var(--text-editor-sheet);
+    /* Screen-only: the plugin renders one continuous bordered column with cream
+     * page gaps; the sheet shadow frames that column as a distinct stack. */
+    box-shadow: var(--text-editor-shadow-sheet);
+    /* Override plugin inline `--rm-margin-*` px so screen inset tracks the token. */
+    --rm-margin-top: var(--text-editor-sheet-padding) !important;
+    --rm-margin-bottom: var(--text-editor-sheet-padding) !important;
+    --rm-margin-left: var(--text-editor-sheet-padding) !important;
+    --rm-margin-right: var(--text-editor-sheet-padding) !important;
+  }
+}
+
+/*
+ * Source-view split shows a flat WYSIWYG pane, so neutralize the plugin's
+ * fixed-width page chrome (inline styles → needs `!important`) and let content
+ * flow continuously.
+ */
+.text-editor--view-source .text-editor__formatted .ProseMirror.rm-with-pagination {
+  width: 100% !important;
+  min-height: 0 !important;
+  border: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.text-editor--view-source .text-editor__formatted .rm-with-pagination #pages,
+.text-editor--view-source .text-editor__formatted .rm-with-pagination .rm-first-page-header {
+  display: none !important;
+}
+
 .text-editor-prose {
   font-family: var(--font-sans);
   color: var(--foreground);
-  font-size: 16px;
-  line-height: 1.7;
+  font-size: var(--text-editor-prose-font-size);
+  line-height: var(--text-editor-prose-line-height);
 }
 
 .text-editor-prose :is(strong, b) {
@@ -311,21 +375,30 @@
 }
 
 .text-editor-prose h1 {
-  font-size: 2.1rem;
+  font-size: calc(
+    var(--text-editor-prose-heading-h1-size) *
+      var(--text-editor-print-prose-font-size, var(--text-editor-prose-font-size))
+  );
   font-weight: 600;
   margin: 1.6rem 0 0.8rem;
   letter-spacing: -0.02em;
 }
 
 .text-editor-prose h2 {
-  font-size: 1.6rem;
+  font-size: calc(
+    var(--text-editor-prose-heading-h2-size) *
+      var(--text-editor-print-prose-font-size, var(--text-editor-prose-font-size))
+  );
   font-weight: 600;
   margin: 1.4rem 0 0.6rem;
   letter-spacing: -0.015em;
 }
 
 .text-editor-prose h3 {
-  font-size: 1.25rem;
+  font-size: calc(
+    var(--text-editor-prose-heading-h3-size) *
+      var(--text-editor-print-prose-font-size, var(--text-editor-prose-font-size))
+  );
   font-weight: 500;
   margin: 1.2rem 0 0.5rem;
 }
@@ -364,7 +437,7 @@
   background: var(--muted);
   padding: 0.1rem 0.35rem;
   border-radius: 4px;
-  font-size: 0.9em;
+  font-size: calc(var(--text-editor-prose-code-size) * 1em);
   font-family: var(--font-mono, ui-monospace, monospace);
 }
 
@@ -375,7 +448,7 @@
   border-radius: 8px;
   overflow-x: auto;
   font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 0.85em;
+  font-size: calc(var(--text-editor-prose-pre-size) * 1em);
   margin: 1rem 0;
 }
 
@@ -691,7 +764,64 @@
 
 @media print {
   @page {
-    margin: 1in;
+    margin: var(--text-editor-print-page-margin, var(--text-editor-sheet-padding));
+  }
+
+  /*
+   * Docs paginated print: named `@page` rules per footer selection. The print
+   * helper sets `data-text-editor-page-format` on `html`/`body`; the `page`
+   * property selects the matching rule. Margins use `--text-editor-print-page-margin`
+   * (mirrored from `--text-editor-sheet-padding` during print) so each printed
+   * page gets the same inset as the on-screen page box.
+   */
+  @page text-editor-a4 {
+    size: A4;
+    margin: var(--text-editor-print-page-margin, var(--text-editor-sheet-padding));
+  }
+
+  @page text-editor-letter {
+    size: letter;
+    margin: var(--text-editor-print-page-margin, var(--text-editor-sheet-padding));
+  }
+
+  @page text-editor-legal {
+    size: legal;
+    margin: var(--text-editor-print-page-margin, var(--text-editor-sheet-padding));
+  }
+
+  @page text-editor-a3 {
+    size: A3;
+    margin: var(--text-editor-print-page-margin, var(--text-editor-sheet-padding));
+  }
+
+  @page text-editor-a5 {
+    size: A5;
+    margin: var(--text-editor-print-page-margin, var(--text-editor-sheet-padding));
+  }
+
+  html.text-editor-print-active[data-text-editor-page-format="a4"],
+  html.text-editor-print-active[data-text-editor-page-format="a4"] body {
+    page: text-editor-a4;
+  }
+
+  html.text-editor-print-active[data-text-editor-page-format="letter"],
+  html.text-editor-print-active[data-text-editor-page-format="letter"] body {
+    page: text-editor-letter;
+  }
+
+  html.text-editor-print-active[data-text-editor-page-format="legal"],
+  html.text-editor-print-active[data-text-editor-page-format="legal"] body {
+    page: text-editor-legal;
+  }
+
+  html.text-editor-print-active[data-text-editor-page-format="a3"],
+  html.text-editor-print-active[data-text-editor-page-format="a3"] body {
+    page: text-editor-a3;
+  }
+
+  html.text-editor-print-active[data-text-editor-page-format="a5"],
+  html.text-editor-print-active[data-text-editor-page-format="a5"] body {
+    page: text-editor-a5;
   }
 
   html.text-editor-print-active,
@@ -700,6 +830,8 @@
     overflow: visible !important;
     margin: 0 !important;
     padding: 0 !important;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   body.text-editor-print-active * {
@@ -764,9 +896,12 @@
     max-height: none !important;
     overflow: visible !important;
     flex: none !important;
+    background: transparent !important;
   }
 
   body.text-editor-print-active .text-editor-sheet__surface--print .ProseMirror {
+    box-sizing: border-box !important;
+    max-width: none !important;
     height: auto !important;
     min-height: 0 !important;
     max-height: none !important;
@@ -774,11 +909,144 @@
     flex: none !important;
     padding: 0 !important;
     margin: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  /*
+   * Paginated print: match the plugin's inner content column (page width minus
+   * sheet inset). Plain `width: 100%` reflows at the full page width (~794px)
+   * instead of the on-screen band (~650px), packing more text per printed page.
+   */
+  body.text-editor-print-active.text-editor-print-paginated
+    .text-editor-sheet__surface--print
+    .ProseMirror {
+    width: calc(
+      var(--rm-page-width, 794px) - var(--rm-margin-left, 72px) - var(--rm-margin-right, 72px)
+    ) !important;
+    max-width: calc(
+      var(--rm-page-width, 794px) - var(--rm-margin-left, 72px) - var(--rm-margin-right, 72px)
+    ) !important;
+    margin-inline: auto !important;
+  }
+
+  body.text-editor-print-active:not(.text-editor-print-paginated)
+    .text-editor-sheet__surface--print
+    .ProseMirror {
+    width: 100% !important;
+  }
+
+  body.text-editor-print-active .text-editor-sheet__surface--print .text-editor-prose {
+    font-size: var(--text-editor-print-prose-font-size, var(--text-editor-prose-font-size));
+    line-height: var(--text-editor-prose-line-height);
+  }
+
+  /*
+   * View-source: portrait/narrow hides the formatted pane on screen — force it
+   * visible for print and keep the source pane out of the output entirely.
+   */
+  body.text-editor-print-active
+    .text-editor--print-formatted.text-editor--view-source
+    .text-editor__formatted {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    overflow: visible !important;
   }
 
   body.text-editor-print-active
-    :is(.text-editor__source, .text-editor-source, .text-editor-format-bar, .no-print) {
+    .text-editor--print-formatted.text-editor--view-source
+    .text-editor__source {
     display: none !important;
+  }
+
+  /*
+   * Pagination is screen-only. Strip the plugin's page boxes, gaps, headers,
+   * footers, and inline chrome so the printed document flows continuously and
+   * the browser's `@page` margins drive per-page inset and breaks.
+   */
+  body.text-editor-print-active .rm-with-pagination #pages,
+  body.text-editor-print-active .rm-with-pagination [data-rm-pagination],
+  body.text-editor-print-active .rm-with-pagination .rm-first-page-header,
+  body.text-editor-print-active .rm-with-pagination .rm-page-header,
+  body.text-editor-print-active .rm-with-pagination .rm-page-footer,
+  body.text-editor-print-active .rm-with-pagination .rm-page-break,
+  body.text-editor-print-active .rm-with-pagination .rm-pagination-gap {
+    display: none !important;
+  }
+
+  body.text-editor-print-active .text-editor-print-page-start {
+    break-before: page !important;
+    page-break-before: always !important;
+  }
+
+  body.text-editor-print-active
+    :is(
+      .text-editor__source,
+      .text-editor-source,
+      .text-editor-format-bar,
+      .docs-page-size-select,
+      .no-print
+    ) {
+    display: none !important;
+  }
+
+  /*
+   * Task list checkboxes: checked state uses filled primary + light checkmark.
+   * Browsers strip background colors in print unless color-adjust is exact; without
+   * the fill, a light checkmark on white paper looks unchecked.
+   */
+  body.text-editor-print-active
+    .text-editor-sheet__surface--print
+    .text-editor-prose
+    ul[data-type="taskList"]
+    li
+    > label
+    span {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body.text-editor-print-active
+    .text-editor-sheet__surface--print
+    .text-editor-prose
+    ul[data-type="taskList"]
+    li
+    > label
+    input:checked
+    + span,
+  body.text-editor-print-active
+    .text-editor-sheet__surface--print
+    .text-editor-prose
+    ul[data-type="taskList"]
+    li[data-checked="true"]
+    > label
+    span {
+    border-color: var(--primary) !important;
+    background: var(--primary) !important;
+    box-shadow: none !important;
+  }
+
+  body.text-editor-print-active
+    .text-editor-sheet__surface--print
+    .text-editor-prose
+    ul[data-type="taskList"]
+    li
+    > label
+    input:checked
+    + span::after,
+  body.text-editor-print-active
+    .text-editor-sheet__surface--print
+    .text-editor-prose
+    ul[data-type="taskList"]
+    li[data-checked="true"]
+    > label
+    span::after {
+    content: "" !important;
+    border-color: var(--primary-foreground) !important;
   }
 
   .text-editor-sheet__surface {

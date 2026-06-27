@@ -11,6 +11,10 @@ import {
 import { workspaceUserInitials, type WorkspaceSession } from "@/lib/workspace/workspace-session";
 import { ViewHeader } from "@/view-header/src/view-header";
 import { printTextEditorSheet } from "@/text-editor-core/src/text-editor-print";
+import {
+  DEFAULT_TEXT_EDITOR_PAGE_FORMAT,
+  type TextEditorPageFormat,
+} from "@/text-editor-core/src/text-editor-pagination";
 import { cn } from "@/lib/utils";
 import { DocsMainPane } from "@/docs-core/src/docs-main-pane";
 import { DocsOutlineSidebar } from "@/docs-core/src/docs-outline-sidebar";
@@ -71,10 +75,14 @@ function DocsWorkspaceShell({
 }) {
   const [editor, setEditor] = useState<Editor | null>(null);
   const [viewSource, setViewSource] = useState(false);
+  const [pageFormat, setPageFormat] = useState<TextEditorPageFormat>(
+    DEFAULT_TEXT_EDITOR_PAGE_FORMAT,
+  );
   const [activeOutlineIndex, setActiveOutlineIndex] = useState<number | null>(null);
 
   useEffect(() => {
     setViewSource(false);
+    setPageFormat(DEFAULT_TEXT_EDITOR_PAGE_FORMAT);
   }, [fileKey]);
 
   const outline = useMemo(() => parseMarkdownOutline(controller.content), [controller.content]);
@@ -108,6 +116,7 @@ function DocsWorkspaceShell({
           <DocsMainHeader
             controller={controller}
             editor={editor}
+            pageFormat={pageFormat}
             viewSource={viewSource}
             onToggleViewSource={() => setViewSource((on) => !on)}
           />
@@ -118,6 +127,8 @@ function DocsWorkspaceShell({
           controller={controller}
           fileKey={fileKey}
           viewSource={viewSource}
+          pageFormat={pageFormat}
+          onPageFormatChange={setPageFormat}
           onEditorReady={setEditor}
         />
       }
@@ -167,11 +178,13 @@ function DocsSidebar({
 function DocsMainHeader({
   controller,
   editor,
+  pageFormat,
   viewSource,
   onToggleViewSource,
 }: {
   controller: DocsController;
   editor: Editor | null;
+  pageFormat: TextEditorPageFormat;
   viewSource: boolean;
   onToggleViewSource: () => void;
 }) {
@@ -203,7 +216,7 @@ function DocsMainHeader({
               size="sm"
               variant="subtle"
               disabled={!editor}
-              onClick={() => printTextEditorSheet(editor)}
+              onClick={() => printTextEditorSheet(editor, pageFormat)}
             />
             <IconButton
               label={controller.labels.rename}

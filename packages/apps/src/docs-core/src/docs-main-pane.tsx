@@ -1,6 +1,11 @@
+import { useState } from "react";
 import type { Editor } from "@tiptap/react";
 import { TextEditor, TEXT_EDITOR_FORMAT_BAR_FULL } from "@/text-editor-core/src";
 import { DocsStatsFooter } from "@/docs-core/src/docs-stats-footer";
+import {
+  DEFAULT_TEXT_EDITOR_PAGE_FORMAT,
+  type TextEditorPageFormat,
+} from "@/text-editor-core/src/text-editor-pagination";
 import type { useDocsController } from "@/docs-core/src/use-docs-controller";
 
 type DocsController = ReturnType<typeof useDocsController>;
@@ -10,6 +15,11 @@ export type DocsMainPaneProps = {
   fileKey: string;
   viewSource: boolean;
   onEditorReady: (editor: Editor | null) => void;
+  /** Controlled visual page size (in-memory UI state). */
+  pageFormat?: TextEditorPageFormat;
+  onPageFormatChange?: (format: TextEditorPageFormat) => void;
+  /** Initial visual page size when uncontrolled (defaults to A4). */
+  initialPageFormat?: TextEditorPageFormat;
 };
 
 export function DocsMainPane({
@@ -17,7 +27,15 @@ export function DocsMainPane({
   fileKey,
   viewSource,
   onEditorReady,
+  pageFormat: pageFormatProp,
+  onPageFormatChange,
+  initialPageFormat = DEFAULT_TEXT_EDITOR_PAGE_FORMAT,
 }: DocsMainPaneProps) {
+  const [uncontrolledPageFormat, setUncontrolledPageFormat] =
+    useState<TextEditorPageFormat>(initialPageFormat);
+  const pageFormat = pageFormatProp ?? uncontrolledPageFormat;
+  const setPageFormat = onPageFormatChange ?? setUncontrolledPageFormat;
+
   if (controller.loading) {
     return <p className="docs-workspace__loading">Loading…</p>;
   }
@@ -48,12 +66,18 @@ export function DocsMainPane({
         format={controller.editorFormat}
         content={controller.content}
         sheetFill
+        pagination
+        pageFormat={pageFormat}
         viewSource={viewSource}
         formatBar={isPlainText ? false : { groups: TEXT_EDITOR_FORMAT_BAR_FULL, showPrint: false }}
         onUpdate={({ content }) => controller.onContentChange(content)}
         onEditorReady={onEditorReady}
       />
-      <DocsStatsFooter controller={controller} />
+      <DocsStatsFooter
+        controller={controller}
+        pageFormat={pageFormat}
+        onPageFormatChange={setPageFormat}
+      />
     </div>
   );
 }

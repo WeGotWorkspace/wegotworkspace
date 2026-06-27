@@ -7,6 +7,11 @@ import { IconButton } from "@/button/src/button";
 import { docsLabels } from "@/docs-core/src/docs-labels";
 import { docsEditorFormatFromFileName } from "@/docs-core/src/docs-editor-format";
 import { DocsOutlineSidebar } from "@/docs-core/src/docs-outline-sidebar";
+import { DocsPageSizeSelect } from "@/docs-core/src/docs-page-size-select";
+import {
+  DEFAULT_TEXT_EDITOR_PAGE_FORMAT,
+  type TextEditorPageFormat,
+} from "@/text-editor-core/src/text-editor-pagination";
 import { Tag } from "@/tag/src/tag";
 import { focusOutlineHeading, parseMarkdownOutline } from "@/docs-core/src/docs-outline";
 import { mockWorkspaceSession } from "@/lib/api/mock/workspace-session-mock";
@@ -155,6 +160,9 @@ function DocsCollabWorkspaceInner({
   });
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [pageFormat, setPageFormat] = useState<TextEditorPageFormat>(
+    DEFAULT_TEXT_EDITOR_PAGE_FORMAT,
+  );
   const [viewSource, setViewSource] = useState(false);
   const [sourceClosedDialogOpen, setSourceClosedDialogOpen] = useState(false);
   const [editor, setEditor] = useState<Editor | null>(null);
@@ -312,7 +320,7 @@ function DocsCollabWorkspaceInner({
                     size="sm"
                     variant="subtle"
                     disabled={!editor}
-                    onClick={() => printTextEditorSheet(editor)}
+                    onClick={() => printTextEditorSheet(editor, pageFormat)}
                   />
                 </div>
               }
@@ -327,6 +335,8 @@ function DocsCollabWorkspaceInner({
                   user={collabSession.user}
                   format={editorFormat}
                   sheetFill
+                  pagination
+                  pageFormat={pageFormat}
                   viewSource={viewSource}
                   formatBar={
                     editorFormat === "text"
@@ -338,20 +348,31 @@ function DocsCollabWorkspaceInner({
                 />
               ) : null}
               <footer className="docs-workspace__stats-footer" aria-live="polite">
-                <Tag
-                  label={labels.statsWords(wordCount)}
-                  colors={{
-                    backgroundColor: "var(--docs-stat-tag-bg)",
-                    color: "var(--docs-stat-tag-color)",
-                  }}
-                />
-                <Tag
-                  label={labels.statsCharacters(characterCount)}
-                  colors={{
-                    backgroundColor: "var(--docs-stat-tag-bg)",
-                    color: "var(--docs-stat-tag-color)",
-                  }}
-                />
+                <div className="docs-workspace__stats-footer-group">
+                  <Tag
+                    label={labels.statsWords(wordCount)}
+                    colors={{
+                      backgroundColor: "var(--docs-stat-tag-bg)",
+                      color: "var(--docs-stat-tag-color)",
+                    }}
+                  />
+                  <Tag
+                    label={labels.statsCharacters(characterCount)}
+                    colors={{
+                      backgroundColor: "var(--docs-stat-tag-bg)",
+                      color: "var(--docs-stat-tag-color)",
+                    }}
+                  />
+                </div>
+                {collabSession ? (
+                  <div className="docs-workspace__stats-footer-group docs-workspace__stats-footer-group--end">
+                    <DocsPageSizeSelect
+                      value={pageFormat}
+                      onValueChange={setPageFormat}
+                      label={labels.pageSizeLabel}
+                    />
+                  </div>
+                ) : null}
               </footer>
             </div>
           }

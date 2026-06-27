@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 import type { Editor } from "@tiptap/react";
 import { isChangeOrigin } from "@tiptap/extension-collaboration";
 import { useEditor } from "@tiptap/react";
@@ -9,6 +9,12 @@ import {
   getTextEditorContent,
   type TextEditorContentFormat,
 } from "@/text-editor-core/src/text-editor-content";
+import {
+  applyTextEditorPageFormat,
+  DEFAULT_TEXT_EDITOR_PAGE_FORMAT,
+  textEditorPageWidth,
+  type TextEditorPageFormat,
+} from "@/text-editor-core/src/text-editor-pagination";
 import {
   TextEditorFormatBar,
   type TextEditorFormatBarConfig,
@@ -28,6 +34,10 @@ export type DocsCollabEditorProps = {
   format?: TextEditorContentFormat;
   formatBar?: boolean | TextEditorFormatBarConfig;
   sheetFill?: boolean;
+  /** Visual multi-page pagination. Off by default; Docs opts in. */
+  pagination?: boolean;
+  /** Page size for visual pagination (defaults to A4). */
+  pageFormat?: TextEditorPageFormat;
   viewSource?: boolean;
   className?: string;
   /** @deprecated Prefer `onContentChange`; kept for compatibility paths. */
@@ -43,6 +53,8 @@ export function DocsCollabEditor({
   format = "markdown",
   formatBar = true,
   sheetFill = false,
+  pagination = false,
+  pageFormat = DEFAULT_TEXT_EDITOR_PAGE_FORMAT,
   viewSource = false,
   className,
   onMarkdownChange,
@@ -62,6 +74,8 @@ export function DocsCollabEditor({
       extensions: createCollaborativeTextEditorExtensions({
         format,
         placeholder: "Press '/' for commands…",
+        pagination,
+        pageFormat,
         document: ydoc,
         awareness,
         user,
@@ -77,7 +91,7 @@ export function DocsCollabEditor({
         ed.commands.updateUser(user);
       },
     },
-    [ydoc, awareness, format, user.color, user.name],
+    [ydoc, awareness, format, pagination, user.color, user.name],
   );
 
   const { sourceValue, onSourceChange, onSourceFocus, onSourceBlur } = useTextEditorSourceSync({
@@ -94,6 +108,13 @@ export function DocsCollabEditor({
   useEffect(() => {
     editor?.commands.updateUser(user);
   }, [editor, user]);
+
+  // `pageFormat` is intentionally out of the editor deps so a size change
+  // re-flows pagination live instead of tearing down the collab editor.
+  useEffect(() => {
+    if (!editor || !pagination) return;
+    applyTextEditorPageFormat(editor, pageFormat);
+  }, [editor, pagination, pageFormat]);
 
   useEffect(() => {
     onEditorReady?.(editor);
@@ -121,12 +142,17 @@ export function DocsCollabEditor({
       editor={editor}
       variant="sheet"
       fill={sheetFill}
+      paginated={pagination}
       slashMenu={format !== "text"}
       className="min-h-0 flex-1"
     />
   );
 
   const formatLabel = format === "markdown" ? "Markdown" : format === "text" ? "Text" : "HTML";
+
+  const paginationStyle = pagination
+    ? ({ "--text-editor-page-width": `${textEditorPageWidth(pageFormat)}px` } as CSSProperties)
+    : undefined;
 
   return (
     <div
@@ -136,6 +162,7 @@ export function DocsCollabEditor({
         viewSource && "text-editor--view-source",
         className,
       )}
+      style={paginationStyle}
     >
       {viewSource ? (
         <div className="text-editor__body min-h-0 flex-1">
