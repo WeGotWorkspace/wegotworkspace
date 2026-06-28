@@ -4,6 +4,18 @@ export { DocsCollabEditor } from "./docs-collab-editor";
 export type { DocsCollabEditorProps } from "./docs-collab-editor";
 export { DocsCollabPresence } from "./docs-collab-presence";
 export type { DocsCollabPresenceProps } from "./docs-collab-presence";
+export { DocsCommentsPanel, DocsCommentsSidebar } from "./docs-comments";
+export type { DocsCommentsPanelProps, DocsCommentsSidebarProps } from "./docs-comments";
+export { DocsCommentsFloatingLayer } from "./docs-comments";
+export type { DocsCommentsFloatingLayerProps } from "./docs-comments";
+export { useDocsComments, getDocsCommentsMap } from "./use-docs-comments";
+export type { UseDocsCommentsOptions, UseDocsCommentsResult } from "./use-docs-comments";
+export type {
+  DocsCommentThread,
+  DocsCommentMessage,
+  DocsCommentAuthor,
+} from "./docs-comments-types";
+export { DOCS_COMMENTS_MAP_KEY } from "./docs-comments-types";
 export { migrateCollabPersistence } from "./docs-collab-persistence";
 export {
   useDocsCollab,

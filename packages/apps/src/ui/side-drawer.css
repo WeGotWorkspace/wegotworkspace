@@ -1,0 +1,11 @@
+@import "../styles.css" reference;
+
+.side-drawer {
+  --side-drawer-width: 18rem;
+
+  @apply w-[min(100%,var(--side-drawer-width))] max-w-[100vw] gap-0 border-0 p-0 shadow-none [&>button]:hidden;
+}
+
+.side-drawer__body {
+  @apply flex h-full min-h-0 flex-col;
+}

@@ -15,6 +15,9 @@
   --docs-sheet-width: 210mm;
   --docs-sheet-min-height: 297mm;
   --docs-sheet-canvas-padding-block: 2.5rem;
+  --docs-comments-column-width: 20rem;
+  --docs-comments-column-gap: 1rem;
+  --docs-comments-centered-min-width: 1472px;
   --docs-stat-tag-bg: color-mix(in oklab, var(--docs-accent) 10%, transparent);
   --docs-stat-tag-color: color-mix(in oklab, var(--docs-accent) 88%, var(--color-ink));
   --docs-text: var(--color-ink);
@@ -47,6 +50,11 @@
   .docs-workspace {
     --docs-format-chrome-padding-x: 1.5rem;
   }
+}
+
+.docs-workspace .workspace-app-layout__main-header {
+  @apply relative z-30;
+  background-color: var(--docs-surface);
 }
 
 .docs-workspace .workspace-app-layout__main-scroll {
@@ -176,8 +184,23 @@
   background-color: color-mix(in oklab, var(--docs-accent) 24%, transparent);
 }
 
+.docs-workspace__header-actions .docs-workspace__comments-toggle {
+  @apply relative;
+}
+
+.docs-workspace__header-actions .docs-workspace__comments-toggle::after {
+  content: attr(data-count);
+  @apply absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold;
+  background-color: var(--docs-accent);
+  color: #ffffff;
+}
+
+.docs-workspace__header-actions .docs-workspace__comments-toggle:not([data-count])::after {
+  display: none;
+}
+
 .docs-workspace__stats-footer {
-  @apply flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-2;
+  @apply relative z-30 flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-2;
   box-sizing: border-box;
   padding-block: var(--docs-format-chrome-padding-y);
   padding-inline: var(--docs-format-chrome-padding-x);
@@ -224,8 +247,20 @@
   @apply flex min-h-0 flex-1 flex-col overflow-hidden;
 }
 
+.docs-workspace .docs-comments-floating-layer {
+  --docs-accent: #3b82f6;
+}
+
+.docs-workspace .docs-comments-floating-layer__card .docs-comments-thread-card[data-active="true"] {
+  box-shadow:
+    0 1px 2px color-mix(in oklab, var(--color-ink) 5%, transparent),
+    0 8px 24px -8px color-mix(in oklab, var(--docs-accent) 28%, transparent),
+    0 0 0 1px color-mix(in oklab, var(--docs-accent) 12%, transparent);
+}
+
 .docs-workspace .text-editor {
   @apply min-h-0 flex-1;
+  --text-editor-comment: var(--docs-accent);
   --text-editor-shadow-sheet: 0 1px 2px #0000000a, 0 10px 30px -10px #0f172a1f;
   /* Pagination chrome: cream gutter between pages + subtle page border */
   --text-editor-page-gap: var(--docs-canvas);
@@ -347,6 +382,30 @@
   background: transparent;
   box-shadow: none;
   padding: 0;
+}
+
+/*
+ * Medium viewports (1160–1471px): nudge the sheet left so margin comments fit
+ * beside the page without overlapping. Wide viewports (≥1472px) stay centered.
+ */
+@media (min-width: 1160px) and (max-width: 1471px) {
+  .docs-workspace--comments-sheet-compact
+    .docs-workspace__editor
+    .text-editor:not(.text-editor--view-source)
+    .text-editor-sheet--fill
+    .text-editor-sheet__surface {
+    margin-inline-start: auto;
+    margin-inline-end: calc(var(--docs-comments-column-width) + var(--docs-comments-column-gap));
+  }
+
+  .docs-workspace--comments-sheet-compact
+    .docs-workspace__editor
+    .text-editor:not(.text-editor--view-source)
+    .text-editor-sheet--paginated.text-editor-sheet--fill
+    .text-editor-sheet__surface {
+    margin-inline-start: auto;
+    margin-inline-end: calc(var(--docs-comments-column-width) + var(--docs-comments-column-gap));
+  }
 }
 
 .docs-workspace__editor .text-editor--view-source .text-editor__source {

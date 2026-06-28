@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Editor } from "@tiptap/react";
-import { Code2, Printer } from "lucide-react";
+import { Code2, MessageSquare, Printer } from "lucide-react";
 import { LoadingSpinner } from "@/loading-spinner/src/loading-spinner";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import { IconButton } from "@/button/src/button";
@@ -18,6 +18,15 @@ import { mockWorkspaceSession } from "@/lib/api/mock/workspace-session-mock";
 import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
 import { cn } from "@/lib/utils";
 import { useConnectivity } from "@/hooks/use-connectivity";
+import {
+  resolveDocsCommentsLayoutMode,
+  shouldApplyCommentsSheetCompact,
+  shouldAutoOpenCommentsForDraft,
+  shouldAutoOpenCommentsForThreads,
+  shouldDefaultCommentsOpen,
+  useDocsCommentsLayout,
+} from "./use-docs-comments-layout";
+import { SideDrawer } from "@/ui/side-drawer";
 import { TooltipProvider } from "@/ui/tooltip";
 import {
   AlertDialog,
@@ -34,7 +43,10 @@ import { TEXT_EDITOR_FORMAT_BAR_FULL } from "@/text-editor-core/src/text-editor-
 import { printTextEditorSheet } from "@/text-editor-core/src/text-editor-print";
 import { DocsCollabEditor } from "./docs-collab-editor";
 import { DocsCollabPresence } from "./docs-collab-presence";
+import { DocsCommentsFloatingLayer } from "./docs-comments/docs-comments-floating-layer";
+import { DocsCommentsPanel } from "./docs-comments/docs-comments-panel";
 import type { DocsCollabWireOperations } from "./docs-collab-wire";
+import { useDocsComments } from "./use-docs-comments";
 import { useDocsCollab } from "./use-docs-collab";
 import type { DocsCollabUrls } from "./use-docs-collab";
 import {
@@ -43,6 +55,7 @@ import {
 } from "@/workspace-shell/src/workspace-app-layout";
 
 import "@/docs-core/src/docs-workspace.css";
+import "@/text-editor-core/docs-collab/docs-comments-sidebar.css";
 
 const USERNAME_PROMPT = "Your display name";
 
@@ -160,6 +173,11 @@ function DocsCollabWorkspaceInner({
   });
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(() =>
+    typeof window === "undefined"
+      ? false
+      : shouldDefaultCommentsOpen(resolveDocsCommentsLayoutMode(window.innerWidth)),
+  );
   const [pageFormat, setPageFormat] = useState<TextEditorPageFormat>(
     DEFAULT_TEXT_EDITOR_PAGE_FORMAT,
   );
@@ -172,8 +190,208 @@ function DocsCollabWorkspaceInner({
   const editorFormat = docsEditorFormatFromFileName(resolvedDocumentTitle);
   const showMarkdownOutline = resolvedDocumentTitle.toLowerCase().endsWith(".md");
   const { online } = useConnectivity();
+  const commentsLayout = useDocsCommentsLayout();
+  const useCommentsDrawer = commentsLayout === "drawer";
+  const composeSuppressedRef = useRef(false);
+  const [draftComposeVisible, setDraftComposeVisible] = useState(false);
   const showPendingSyncIndicator = pendingSync && (!online || failedSync);
   const pendingSyncLabel = failedSync ? labels.pendingSyncFailed : labels.pendingSync;
+
+  const comments = useDocsComments({
+    ydoc: collabSession?.ydoc ?? null,
+    editor,
+    currentUser: {
+      id: session.user.username,
+      name: session.user.displayName,
+    },
+    commentsVisible: commentsOpen || draftComposeVisible,
+  });
+
+  const {
+    draftThread,
+    canAddComment,
+    selectionQualifiesForComment,
+    openThreads,
+    activeThreadId,
+    createThreadFromSelection,
+    cancelDraft,
+    clearActiveThread,
+    activateThreadFromMark,
+    selectThread,
+    addReply,
+    toggleReaction,
+    resolveThread,
+    deleteThread,
+  } = comments;
+
+  useEffect(() => {
+    if (draftThread) {
+      setDraftComposeVisible(true);
+      return;
+    }
+    if (!commentsOpen) {
+      setDraftComposeVisible(false);
+    }
+  }, [commentsOpen, draftThread]);
+
+  useEffect(() => {
+    if (viewSource || !collabSession || draftThread || commentsOpen) return;
+    if (!selectionQualifiesForComment || composeSuppressedRef.current) return;
+    setDraftComposeVisible(true);
+  }, [collabSession, commentsOpen, draftThread, selectionQualifiesForComment, viewSource]);
+
+  useEffect(() => {
+    if (viewSource || !collabSession || draftThread) return;
+
+    if (commentsOpen) {
+      if (!canAddComment) return;
+      createThreadFromSelection();
+      return;
+    }
+
+    if (!draftComposeVisible || !selectionQualifiesForComment || composeSuppressedRef.current) {
+      return;
+    }
+    createThreadFromSelection();
+  }, [
+    canAddComment,
+    collabSession,
+    commentsOpen,
+    createThreadFromSelection,
+    draftComposeVisible,
+    draftThread,
+    selectionQualifiesForComment,
+    viewSource,
+  ]);
+
+  useEffect(() => {
+    if (viewSource) return;
+    if (shouldAutoOpenCommentsForDraft(draftThread)) {
+      setCommentsOpen(true);
+      return;
+    }
+    if (!shouldAutoOpenCommentsForThreads(commentsLayout)) return;
+    if (openThreads.length > 0) {
+      setCommentsOpen(true);
+    }
+  }, [commentsLayout, draftThread, openThreads.length, viewSource]);
+
+  const handleCommentsClose = useCallback(() => {
+    composeSuppressedRef.current = true;
+    setDraftComposeVisible(false);
+    cancelDraft();
+    clearActiveThread();
+    setCommentsOpen(false);
+  }, [cancelDraft, clearActiveThread]);
+
+  useEffect(() => {
+    if (!viewSource) return;
+    if (commentsOpen || draftThread) {
+      handleCommentsClose();
+    }
+  }, [commentsOpen, draftThread, handleCommentsClose, viewSource]);
+
+  const handleCommentActivated = useCallback(
+    (commentId: string, clickPos: number) => {
+      if (viewSource) return;
+      composeSuppressedRef.current = false;
+      setCommentsOpen(true);
+      activateThreadFromMark(commentId, clickPos);
+    },
+    [activateThreadFromMark, viewSource],
+  );
+
+  const handleToggleComments = useCallback(() => {
+    if (viewSource) return;
+    if (commentsOpen) {
+      handleCommentsClose();
+      return;
+    }
+    composeSuppressedRef.current = false;
+    setCommentsOpen(true);
+  }, [commentsOpen, handleCommentsClose, viewSource]);
+
+  const commentsOverlay = useMemo(
+    () =>
+      collabSession && !useCommentsDrawer ? (
+        <DocsCommentsFloatingLayer
+          editor={editor}
+          visible={commentsOpen || draftThread != null}
+          labels={labels}
+          threads={openThreads}
+          draftThread={draftThread}
+          currentUserId={session.user.username}
+          activeThreadId={activeThreadId}
+          onSelectThread={selectThread}
+          onAddReply={addReply}
+          onToggleReaction={toggleReaction}
+          onResolveThread={resolveThread}
+          onDeleteThread={deleteThread}
+          onCancelDraft={cancelDraft}
+        />
+      ) : null,
+    [
+      activeThreadId,
+      addReply,
+      cancelDraft,
+      collabSession,
+      deleteThread,
+      draftThread,
+      editor,
+      useCommentsDrawer,
+      labels,
+      openThreads,
+      resolveThread,
+      selectThread,
+      session.user.username,
+      toggleReaction,
+      commentsOpen,
+    ],
+  );
+
+  const commentsMobileDrawer = useMemo(
+    () =>
+      collabSession && useCommentsDrawer ? (
+        <SideDrawer
+          open={commentsOpen}
+          onClose={handleCommentsClose}
+          title={labels.commentsSidebarTitle}
+          className="docs-comments-panel-drawer"
+          contentClassName="docs-comments-panel-drawer__body"
+        >
+          <DocsCommentsPanel
+            onCloseMobile={handleCommentsClose}
+            labels={labels}
+            threads={openThreads}
+            draftThread={draftThread}
+            currentUserId={session.user.username}
+            activeThreadId={activeThreadId}
+            onSelectThread={selectThread}
+            onAddReply={addReply}
+            onToggleReaction={toggleReaction}
+            onResolveThread={resolveThread}
+            onDeleteThread={deleteThread}
+            onCancelDraft={cancelDraft}
+          />
+        </SideDrawer>
+      ) : null,
+    [
+      activeThreadId,
+      addReply,
+      cancelDraft,
+      collabSession,
+      commentsOpen,
+      deleteThread,
+      draftThread,
+      useCommentsDrawer,
+      labels,
+      openThreads,
+      resolveThread,
+      selectThread,
+      session.user.username,
+      toggleReaction,
+    ],
+  );
 
   const outline = useMemo(
     () => (showMarkdownOutline ? parseMarkdownOutline(markdown) : []),
@@ -239,7 +457,12 @@ function DocsCollabWorkspaceInner({
     <TooltipProvider delayDuration={200}>
       <>
         <WorkspaceAppLayout
-          className={cn("docs-workspace", "min-h-screen")}
+          className={cn(
+            "docs-workspace",
+            "min-h-screen",
+            shouldApplyCommentsSheetCompact(commentsLayout, commentsOpen) &&
+              "docs-workspace--comments-sheet-compact",
+          )}
           sidebar={
             <AppSidebar
               open={sidebarOpen}
@@ -301,16 +524,18 @@ function DocsCollabWorkspaceInner({
                     label={
                       sourceLockedByCollab
                         ? "Source view is disabled while collaborating"
-                        : viewSource
-                          ? labels.hideSource
-                          : labels.viewSource
+                        : commentsOpen
+                          ? "Source view is disabled while comments are open"
+                          : viewSource
+                            ? labels.hideSource
+                            : labels.viewSource
                     }
                     icon={<Code2 />}
                     size="sm"
                     variant="subtle"
                     active={viewSource}
                     aria-pressed={viewSource}
-                    disabled={!editor || sourceLockedByCollab}
+                    disabled={!editor || sourceLockedByCollab || commentsOpen}
                     className={cn(viewSource && "docs-workspace__source-toggle--active")}
                     onClick={() => setViewSource((on) => !on)}
                   />
@@ -321,6 +546,26 @@ function DocsCollabWorkspaceInner({
                     variant="subtle"
                     disabled={!editor}
                     onClick={() => printTextEditorSheet(editor, pageFormat)}
+                  />
+                  <IconButton
+                    label={
+                      viewSource
+                        ? "Comments are disabled in source view"
+                        : commentsOpen
+                          ? labels.commentsToggleHide
+                          : openThreads.length > 0
+                            ? `${labels.commentsToggleShow} (${openThreads.length} open)`
+                            : labels.commentsToggleShow
+                    }
+                    icon={<MessageSquare />}
+                    size="sm"
+                    variant="subtle"
+                    active={commentsOpen}
+                    aria-pressed={commentsOpen}
+                    disabled={viewSource}
+                    className="docs-workspace__comments-toggle"
+                    data-count={openThreads.length > 0 ? openThreads.length : undefined}
+                    onClick={handleToggleComments}
                   />
                 </div>
               }
@@ -345,6 +590,8 @@ function DocsCollabWorkspaceInner({
                   }
                   onContentChange={handleMarkdownChange}
                   onEditorReady={handleEditorReady}
+                  onCommentActivated={handleCommentActivated}
+                  commentsOverlay={commentsOverlay}
                 />
               ) : null}
               <footer className="docs-workspace__stats-footer" aria-live="polite">
@@ -377,6 +624,7 @@ function DocsCollabWorkspaceInner({
             </div>
           }
         />
+        {commentsMobileDrawer}
         <AlertDialog open={sourceClosedDialogOpen} onOpenChange={setSourceClosedDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>

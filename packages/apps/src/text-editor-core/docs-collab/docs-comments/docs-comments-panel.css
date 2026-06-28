@@ -1,0 +1,51 @@
+@import "../../../styles.css" reference;
+
+.docs-comments-panel {
+  @apply flex h-full min-h-0 w-full flex-col self-stretch overflow-hidden;
+  background-color: var(--docs-surface, var(--color-cream, #ffffff));
+  color: var(--docs-comments-panel-color, var(--docs-text, var(--color-ink)));
+}
+
+.docs-comments-panel__header {
+  @apply flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3;
+  border-color: var(
+    --docs-comments-panel-border-color,
+    color-mix(in oklab, var(--color-ink) 8%, transparent)
+  );
+  background-color: color-mix(in oklab, var(--docs-surface, #ffffff) 72%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.docs-comments-panel__header-main {
+  @apply flex min-w-0 flex-col gap-0.5;
+}
+
+.docs-comments-panel__label {
+  @apply text-[11px] font-semibold uppercase tracking-wider;
+  color: var(--docs-muted, color-mix(in oklab, var(--color-ink) 55%, transparent));
+}
+
+.docs-comments-panel__count {
+  @apply text-sm font-medium;
+}
+
+.docs-comments-panel__close {
+  @apply flex size-8 shrink-0 items-center justify-center rounded-full transition-colors;
+}
+
+.docs-comments-panel__close:hover {
+  background-color: color-mix(in oklab, var(--color-ink) 8%, transparent);
+}
+
+.docs-comments-panel__scroll {
+  @apply min-h-0 flex-1 overflow-y-auto px-3 py-4;
+}
+
+.docs-comments-panel__empty {
+  @apply px-1 text-sm;
+  color: var(--docs-muted, color-mix(in oklab, var(--color-ink) 55%, transparent));
+}
+
+.docs-comments-panel__threads {
+  @apply space-y-3;
+}

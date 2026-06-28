@@ -1,0 +1,233 @@
+@import "../../../styles.css" reference;
+
+.docs-comments-thread-card {
+  @apply cursor-pointer rounded-xl border p-4 shadow-sm transition-[box-shadow,border-color,background-color,opacity] duration-200;
+  --highlight-amber: oklch(0.94 0.13 86);
+  border-color: var(--docs-border, color-mix(in oklab, var(--color-ink) 12%, transparent));
+  background-color: var(--docs-surface, var(--color-cream, #ffffff));
+  box-shadow:
+    0 1px 2px color-mix(in oklab, var(--color-ink) 5%, transparent),
+    0 1px 3px color-mix(in oklab, var(--color-ink) 4%, transparent);
+}
+
+.docs-comments-thread-card[data-active="false"] {
+  opacity: 0.85;
+}
+
+.docs-comments-thread-card:hover:not([data-active="true"]) {
+  opacity: 0.96;
+  border-color: color-mix(in oklab, var(--docs-accent, #3b82f6) 16%, transparent);
+  background-color: color-mix(
+    in oklab,
+    var(--docs-accent, #3b82f6) 5%,
+    var(--docs-surface, var(--color-cream, #ffffff))
+  );
+  box-shadow:
+    0 1px 2px color-mix(in oklab, var(--color-ink) 6%, transparent),
+    0 4px 12px color-mix(in oklab, var(--color-ink) 5%, transparent);
+}
+
+.docs-comments-thread-card[data-active="true"] {
+  opacity: 1;
+  border-width: 2px;
+  border-color: var(--docs-accent, #3b82f6);
+  box-shadow:
+    0 1px 2px color-mix(in oklab, var(--color-ink) 5%, transparent),
+    0 0 0 1px color-mix(in oklab, var(--docs-accent, #3b82f6) 12%, transparent);
+}
+
+.docs-comments-thread-card__header {
+  @apply flex items-start justify-between gap-2;
+}
+
+.docs-comments-thread-card__author-row {
+  @apply flex min-w-0 flex-1 items-center gap-2.5;
+}
+
+.docs-comments-thread-card__avatar .user-avatar__mark {
+  width: 2rem;
+  height: 2rem;
+  font-size: 10px;
+}
+
+.docs-comments-thread-card__avatar {
+  --user-avatar-bg: color-mix(in oklab, var(--docs-accent, #3b82f6) 14%, transparent);
+  --user-avatar-fg: color-mix(in oklab, var(--docs-accent, #3b82f6) 85%, var(--color-ink));
+}
+
+.docs-comments-thread-card__meta {
+  @apply flex min-w-0 flex-1 flex-col gap-0.5;
+}
+
+.docs-comments-thread-card__author {
+  @apply m-0 truncate text-sm font-semibold leading-tight;
+}
+
+.docs-comments-thread-card__time {
+  @apply text-[11px] leading-tight;
+  color: var(--docs-muted, color-mix(in oklab, var(--color-ink) 55%, transparent));
+}
+
+.docs-comments-thread-card__actions {
+  @apply flex shrink-0 items-center gap-1;
+}
+
+.docs-comments-thread-card__resolve {
+  @apply inline-flex h-7 items-center gap-1 rounded-full border px-2.5 text-xs font-medium transition-colors;
+  border-color: var(--docs-border, color-mix(in oklab, var(--color-ink) 12%, transparent));
+  color: var(--docs-text, var(--color-ink));
+  background-color: transparent;
+}
+
+.docs-comments-thread-card__resolve:hover {
+  background-color: color-mix(in oklab, var(--color-ink) 5%, transparent);
+}
+
+.docs-comments-thread-card__resolve-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.docs-comments-thread-card__delete {
+  @apply inline-flex size-7 shrink-0 items-center justify-center rounded-full border transition-colors;
+  border-color: var(--docs-border, color-mix(in oklab, var(--color-ink) 12%, transparent));
+  color: var(--docs-text, var(--color-ink));
+  background-color: transparent;
+}
+
+.docs-comments-thread-card__delete:hover {
+  background-color: color-mix(in oklab, var(--color-ink) 5%, transparent);
+}
+
+.docs-comments-thread-card__delete-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.docs-comments-thread-card__quote {
+  @apply mt-2.5 line-clamp-2 text-[12px] leading-snug not-italic;
+  background-color: color-mix(in oklab, var(--highlight-amber) 32%, transparent);
+  color: var(--docs-text, var(--color-ink));
+}
+
+.docs-comments-thread-card__body {
+  @apply mt-2.5 text-sm leading-relaxed whitespace-pre-wrap;
+}
+
+.docs-comments-thread-card__reactions {
+  @apply mt-2.5 flex flex-wrap items-center gap-1.5;
+}
+
+.docs-comments-thread-card__reaction {
+  @apply inline-flex h-7 items-center gap-1 rounded-full border px-2 text-xs transition-colors;
+  border-color: var(--docs-border, color-mix(in oklab, var(--color-ink) 12%, transparent));
+  background-color: transparent;
+  color: var(--docs-text, var(--color-ink));
+}
+
+.docs-comments-thread-card__reaction:hover {
+  background-color: color-mix(in oklab, var(--color-ink) 4%, transparent);
+}
+
+.docs-comments-thread-card__reaction[data-reacted="true"] {
+  border-color: color-mix(in oklab, var(--docs-accent, #3b82f6) 35%, transparent);
+  background-color: color-mix(in oklab, var(--docs-accent, #3b82f6) 10%, transparent);
+  color: color-mix(in oklab, var(--docs-accent, #3b82f6) 88%, var(--color-ink));
+}
+
+.docs-comments-thread-card__reaction--add {
+  @apply justify-center px-2;
+  border-style: dashed;
+  border-color: color-mix(in oklab, var(--color-ink) 18%, transparent);
+  color: var(--docs-muted, color-mix(in oklab, var(--color-ink) 55%, transparent));
+}
+
+.docs-comments-thread-card__reaction-add-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.docs-comments-thread-card__reaction-emoji {
+  @apply text-sm leading-none;
+}
+
+.docs-comments-thread-card__reaction-count {
+  @apply text-[11px] font-medium tabular-nums;
+}
+
+.docs-comments-thread-card__reaction-picker {
+  @apply w-auto p-1.5;
+}
+
+.docs-comments-thread-card__reaction-picker-grid {
+  @apply flex flex-wrap gap-0.5;
+}
+
+.docs-comments-thread-card__reaction-picker-item {
+  @apply flex size-8 items-center justify-center rounded-md text-base transition-colors;
+}
+
+.docs-comments-thread-card__reaction-picker-item:hover {
+  background-color: color-mix(in oklab, var(--color-ink) 6%, transparent);
+}
+
+.docs-comments-thread-card__replies {
+  @apply mt-3 space-y-2.5 border-t pt-3;
+  border-color: color-mix(in oklab, var(--color-ink) 8%, transparent);
+}
+
+.docs-comments-thread-card__composer {
+  @apply mt-3 flex items-center gap-2 rounded-lg border px-3 py-1;
+  border-color: var(--docs-border, color-mix(in oklab, var(--color-ink) 10%, transparent));
+  background-color: color-mix(
+    in oklab,
+    var(--docs-surface, var(--color-cream, #ffffff)) 40%,
+    transparent
+  );
+}
+
+.docs-comments-thread-card__composer-input {
+  @apply min-w-0 flex-1 border-0 bg-transparent text-sm outline-none;
+  color: var(--docs-text, var(--color-ink));
+}
+
+.docs-comments-thread-card__composer-input::placeholder {
+  color: var(--docs-muted, color-mix(in oklab, var(--color-ink) 55%, transparent));
+}
+
+.docs-comments-thread-card__composer-post {
+  @apply shrink-0 text-sm font-medium transition-opacity;
+  color: var(--docs-accent, #3b82f6);
+}
+
+.docs-comments-thread-card__composer-post:disabled {
+  @apply cursor-not-allowed opacity-40;
+}
+
+.docs-comments-thread-card__composer-post:not(:disabled):hover {
+  opacity: 0.85;
+}
+
+.docs-comments-thread-card[data-exiting="true"] {
+  pointer-events: none;
+  transition: none;
+  animation: docs-comments-thread-card-evaporate 200ms ease-out forwards;
+}
+
+@keyframes docs-comments-thread-card-evaporate {
+  from {
+    transform: scale(1) translateY(0);
+    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.94) translateY(-10px);
+    filter: blur(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .docs-comments-thread-card[data-exiting="true"] {
+    animation: none;
+  }
+}

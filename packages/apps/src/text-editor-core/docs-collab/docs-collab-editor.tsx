@@ -1,4 +1,4 @@
-import { useEffect, useRef, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, type CSSProperties, type ReactNode } from "react";
 import type { Editor } from "@tiptap/react";
 import { isChangeOrigin } from "@tiptap/extension-collaboration";
 import { useEditor } from "@tiptap/react";
@@ -21,6 +21,7 @@ import {
   resolveTextEditorFormatBarConfig,
 } from "@/text-editor-core/src/text-editor-format-bar";
 import { createCollaborativeTextEditorExtensions } from "@/text-editor-core/src/text-editor-extensions";
+import { getCommentMarkIdFromTarget } from "@/text-editor-core/src/text-editor-comment-commands";
 import { TextEditorSheet } from "@/text-editor-core/src/text-editor-sheet";
 import { TextEditorSource } from "@/text-editor-core/src/text-editor-source";
 import { useTextEditorSourceSync } from "@/text-editor-core/src/use-text-editor-source-sync";
@@ -44,6 +45,8 @@ export type DocsCollabEditorProps = {
   onMarkdownChange?: (getMarkdown: () => string) => void;
   onContentChange?: (getContent: () => string) => void;
   onEditorReady?: (editor: Editor | null) => void;
+  onCommentActivated?: (commentId: string, clickPos: number) => void;
+  commentsOverlay?: ReactNode;
 };
 
 export function DocsCollabEditor({
@@ -60,10 +63,27 @@ export function DocsCollabEditor({
   onMarkdownChange,
   onContentChange,
   onEditorReady,
+  onCommentActivated,
+  commentsOverlay,
 }: DocsCollabEditorProps) {
   const effectiveOnContentChange = onContentChange ?? onMarkdownChange;
   const onContentChangeRef = useRef(effectiveOnContentChange);
   onContentChangeRef.current = effectiveOnContentChange;
+  const onCommentActivatedRef = useRef(onCommentActivated);
+  onCommentActivatedRef.current = onCommentActivated;
+
+  const editorProps = useMemo(
+    () => ({
+      attributes: { class: "text-editor-prose focus:outline-none" },
+      handleClick: (_view: unknown, pos: number, event: MouseEvent) => {
+        const commentId = getCommentMarkIdFromTarget(event.target);
+        if (!commentId) return false;
+        onCommentActivatedRef.current?.(commentId, pos);
+        return true;
+      },
+    }),
+    [],
+  );
 
   const editor = useEditor(
     {
@@ -80,9 +100,7 @@ export function DocsCollabEditor({
         awareness,
         user,
       }),
-      editorProps: {
-        attributes: { class: "text-editor-prose focus:outline-none" },
-      },
+      editorProps,
       onUpdate: ({ transaction, editor: ed }) => {
         if (isChangeOrigin(transaction)) return;
         onContentChangeRef.current?.(() => getTextEditorContent(ed, format));
@@ -144,6 +162,7 @@ export function DocsCollabEditor({
       fill={sheetFill}
       paginated={pagination}
       slashMenu={format !== "text"}
+      overlay={commentsOverlay}
       className="min-h-0 flex-1"
     />
   );
