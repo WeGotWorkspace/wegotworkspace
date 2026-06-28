@@ -27,6 +27,8 @@ export type WorkspaceAppLayoutSplitProps = WorkspaceAppLayoutBaseProps & {
   sidebar: React.ReactNode;
   main: React.ReactNode;
   mainHeader?: React.ReactNode;
+  /** Optional right-hand panel (e.g. docs comments sidebar). */
+  panel?: React.ReactNode;
   children?: undefined;
 };
 
@@ -78,6 +80,7 @@ export function WorkspaceAppLayout(props: WorkspaceAppLayoutProps) {
               <div className="workspace-app-layout__main-content">{props.main}</div>
             </div>
           </section>
+          {props.panel ?? null}
         </>
       ) : (
         props.children

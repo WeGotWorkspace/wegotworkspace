@@ -1,0 +1,37 @@
+@import "../../../styles.css" reference;
+
+.docs-comments-reply {
+  @apply flex gap-2;
+}
+
+.docs-comments-reply__avatar .user-avatar__mark {
+  width: 1.5rem;
+  height: 1.5rem;
+  font-size: 9px;
+}
+
+.docs-comments-reply__avatar {
+  --user-avatar-bg: color-mix(in oklab, var(--docs-accent, #3b82f6) 12%, transparent);
+  --user-avatar-fg: color-mix(in oklab, var(--docs-accent, #3b82f6) 85%, var(--color-ink));
+}
+
+.docs-comments-reply__content {
+  @apply min-w-0 flex-1;
+}
+
+.docs-comments-reply__header {
+  @apply flex items-baseline gap-1.5;
+}
+
+.docs-comments-reply__author {
+  @apply text-xs font-semibold;
+}
+
+.docs-comments-reply__time {
+  @apply text-[11px];
+  color: var(--docs-muted, color-mix(in oklab, var(--color-ink) 55%, transparent));
+}
+
+.docs-comments-reply__body {
+  @apply mt-0.5 text-xs leading-relaxed whitespace-pre-wrap;
+}

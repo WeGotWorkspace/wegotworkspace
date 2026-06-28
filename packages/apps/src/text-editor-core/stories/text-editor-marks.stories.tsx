@@ -1,52 +1,159 @@
+import { useEffect, useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { CommentMark, SuggestionMark } from "@/text-editor-core/src/text-editor-extensions";
-import { TextEditor } from "@/text-editor-core/src/text-editor";
+import { expect, userEvent, within } from "storybook/test";
+import { useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import * as Y from "yjs";
+import { CommentMark } from "@/text-editor-core/src/text-editor-comment-commands";
+import { TextEditorSheet } from "@/text-editor-core/src/text-editor-sheet";
+import { DocsCommentsFloatingLayer } from "@/text-editor-core/docs-collab/docs-comments";
+import { useDocsComments } from "@/text-editor-core/docs-collab/use-docs-comments";
+import { docsLabels } from "@/docs-core/src/docs-labels";
 
 import "@/text-editor-core/src/text-editor.css";
 
-/** TipTap marks registered via {@link CommentMark} and {@link SuggestionMark}. */
-const MARKED_HTML = [
-  "<p>Review this ",
-  '<span data-comment-id="c-1" class="comment-mark">commented phrase</span>',
-  " and accept this ",
-  '<span data-suggestion-id="s-1" class="suggestion-mark">suggested edit</span>',
-  " before publishing.</p>",
-].join("");
+function DocsCommentsCollabDemo() {
+  const [ydoc] = useState(() => new Y.Doc());
+  const [commentsOpen, setCommentsOpen] = useState(true);
+  const editor = useEditor({
+    extensions: [StarterKit.configure({ undoRedo: false }), CommentMark],
+    content: "<p>Select this phrase to comment.</p>",
+    editorProps: {
+      attributes: { class: "text-editor-prose focus:outline-none" },
+    },
+    immediatelyRender: false,
+  });
+  const comments = useDocsComments({
+    ydoc,
+    editor,
+    currentUser: { id: "story-user", name: "Story User" },
+    commentsVisible: commentsOpen,
+  });
+  const { draftThread, canAddComment, createThreadFromSelection, ...commentActions } = comments;
+
+  useEffect(() => {
+    if (!editor) return;
+    editor.commands.setTextSelection({ from: 8, to: 19 });
+  }, [editor]);
+
+  useEffect(() => {
+    if (!commentsOpen || draftThread || !canAddComment) return;
+    createThreadFromSelection();
+  }, [canAddComment, commentsOpen, createThreadFromSelection, draftThread]);
+
+  return (
+    <div className="docs-workspace flex min-h-[480px] flex-col border">
+      <div className="flex items-center justify-end border-b px-3 py-2">
+        <button
+          type="button"
+          className="rounded-md border px-2 py-1 text-sm"
+          aria-pressed={commentsOpen}
+          onClick={() => setCommentsOpen((open) => !open)}
+        >
+          {commentsOpen ? "Hide comments" : "Show comments"}
+        </button>
+      </div>
+      <div className="relative min-h-0 flex-1 p-6">
+        <TextEditorSheet
+          editor={editor}
+          variant="sheet"
+          fill
+          overlay={
+            <DocsCommentsFloatingLayer
+              editor={editor}
+              visible={commentsOpen || draftThread != null}
+              labels={docsLabels}
+              threads={commentActions.openThreads}
+              draftThread={draftThread}
+              currentUserId="story-user"
+              activeThreadId={commentActions.activeThreadId}
+              onSelectThread={commentActions.selectThread}
+              onAddReply={commentActions.addReply}
+              onToggleReaction={commentActions.toggleReaction}
+              onResolveThread={commentActions.resolveThread}
+              onDeleteThread={commentActions.deleteThread}
+              onCancelDraft={commentActions.cancelDraft}
+            />
+          }
+        />
+      </div>
+    </div>
+  );
+}
 
 const meta = {
   title: "Shared/TextEditor/Marks",
-  component: TextEditor,
+  component: DocsCommentsCollabDemo,
   parameters: {
     layout: "fullscreen",
     docs: {
       description: {
-        component:
-          "Collaboration review marks (`CommentMark`, `SuggestionMark`) render inline highlights on HTML content.",
+        component: "Comment marks in the editor with margin comment cards.",
       },
     },
   },
-} satisfies Meta<typeof TextEditor>;
+} satisfies Meta<typeof DocsCommentsCollabDemo>;
 
 export default meta;
-type Story = StoryObj<typeof TextEditor>;
+
+type Story = StoryObj<typeof DocsCommentsCollabDemo>;
 
 export const CommentMarkStory: Story = {
   name: "CommentMark",
   render: () => (
-    <TextEditor format="html" content={MARKED_HTML} editable={false} formatBar={false} />
+    <div className="text-editor p-6">
+      <div
+        className="text-editor-prose"
+        dangerouslySetInnerHTML={{
+          __html:
+            '<p>Review this <span data-comment-id="c-1" class="comment-mark">commented phrase</span> before publishing.</p>',
+        }}
+      />
+    </div>
   ),
+};
+
+export const DocsCommentsCollab: Story = {
+  name: "Docs comments collab",
+  tags: ["vitest-ci"],
+  render: () => <DocsCommentsCollabDemo />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const composeField = await canvas.findByPlaceholderText(docsLabels.commentsComposePlaceholder);
+    await userEvent.type(composeField, "Looks good");
+    await userEvent.click(canvas.getByRole("button", { name: docsLabels.commentsAdd }));
+    await expect(
+      canvas.getByPlaceholderText(docsLabels.commentsReplyPlaceholder),
+    ).toBeInTheDocument();
+  },
 };
 
 export const SuggestionMarkStory: Story = {
   name: "SuggestionMark",
   render: () => (
-    <TextEditor format="html" content={MARKED_HTML} editable={false} formatBar={false} />
+    <div className="text-editor p-6">
+      <div
+        className="text-editor-prose"
+        dangerouslySetInnerHTML={{
+          __html:
+            '<p>Accept this <span data-suggestion-id="s-1" class="suggestion-mark">suggested edit</span> before publishing.</p>',
+        }}
+      />
+    </div>
   ),
 };
 
 export const BothMarks: Story = {
   name: "Comment and suggestion marks",
   render: () => (
-    <TextEditor format="html" content={MARKED_HTML} editable={false} formatBar={false} />
+    <div className="text-editor p-6">
+      <div
+        className="text-editor-prose"
+        dangerouslySetInnerHTML={{
+          __html:
+            '<p><span data-comment-id="c-1" class="comment-mark">Comment</span> and <span data-suggestion-id="s-1" class="suggestion-mark">suggestion</span> marks together.</p>',
+        }}
+      />
+    </div>
   ),
 };

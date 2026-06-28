@@ -1,3 +1,5 @@
+@import "../../styles.css" reference;
+
 /* Parent-scoped tokens for the text editor workspace */
 :root {
   --text-editor-sheet-padding: 0.75in;
@@ -360,6 +362,8 @@
 }
 
 .text-editor-prose {
+  --highlight-amber: oklch(0.94 0.13 86);
+  --highlight-amber-active: oklch(0.86 0.17 78);
   font-family: var(--font-sans);
   color: var(--foreground);
   font-size: var(--text-editor-prose-font-size);
@@ -582,10 +586,35 @@
   pointer-events: none;
 }
 
+/* Draft comment anchor — native selection appearance, not committed comment highlight. */
+.text-editor-prose .comment-draft-anchor-selection {
+  background: Highlight;
+  color: HighlightText;
+}
+
 .text-editor-prose .comment-mark {
-  background: color-mix(in oklab, var(--text-editor-comment) 60%, transparent);
-  border-bottom: 2px solid var(--text-editor-comment);
-  cursor: pointer;
+  @apply cursor-pointer transition-[background-color] duration-150;
+  background-color: color-mix(in oklab, var(--highlight-amber) 32%, transparent);
+}
+
+.text-editor-prose .comment-mark:hover {
+  background-color: color-mix(in oklab, var(--highlight-amber) 48%, transparent);
+}
+
+.text-editor-prose .comment-mark--active {
+  background-color: var(--highlight-amber-active);
+}
+
+.text-editor-prose .comment-mark--active:hover,
+.text-editor-prose .comment-mark--active:focus-visible {
+  background-color: var(--highlight-amber-active);
+}
+
+/* Active comment thread: mark highlight only — suppress native ::selection overlay. */
+.text-editor-prose .comment-mark--active::selection,
+.text-editor-prose .comment-mark--active *::selection {
+  background: transparent;
+  color: inherit;
 }
 
 .text-editor-prose .suggestion-mark {

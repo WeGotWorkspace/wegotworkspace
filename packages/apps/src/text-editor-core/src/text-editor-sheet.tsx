@@ -1,5 +1,6 @@
 import { EditorContent, type Editor } from "@tiptap/react";
 import { clsx } from "clsx";
+import type { ReactNode } from "react";
 import { TextEditorSlashMenu } from "@/text-editor-core/src/text-editor-slash-menu";
 import { TextEditorTableControls } from "@/text-editor-core/src/text-editor-table-controls";
 
@@ -18,6 +19,8 @@ export type TextEditorSheetProps = {
   paginated?: boolean;
   /** Slash command menu (off for plain `.txt` mode). */
   slashMenu?: boolean;
+  /** Absolutely positioned overlays (e.g. margin comment cards). */
+  overlay?: ReactNode;
   className?: string;
 };
 
@@ -30,6 +33,7 @@ export function TextEditorSheet({
   fill = false,
   paginated = false,
   slashMenu = true,
+  overlay,
   className,
 }: TextEditorSheetProps) {
   // BEM block/modifiers must NOT pass through `cn` (tailwind-merge): it treats
@@ -50,6 +54,7 @@ export function TextEditorSheet({
         editor={editor}
         className={variant === "sheet" ? "text-editor-sheet__surface" : undefined}
       />
+      {overlay}
       {slashMenu ? <TextEditorSlashMenu editor={editor} /> : null}
       <TextEditorTableControls editor={editor} />
     </div>

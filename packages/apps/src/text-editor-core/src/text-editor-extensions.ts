@@ -12,6 +12,8 @@ import Typography from "@tiptap/extension-typography";
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { Mark, mergeAttributes, type Extensions } from "@tiptap/react";
+import { CommentMark } from "@/text-editor-core/src/text-editor-comment-commands";
+import { CommentDraftAnchor } from "@/text-editor-core/src/text-editor-comment-draft-anchor";
 import { Markdown } from "tiptap-markdown";
 import type { Awareness } from "y-protocols/awareness";
 import type * as Y from "yjs";
@@ -22,25 +24,11 @@ import {
 } from "@/text-editor-core/src/text-editor-pagination";
 import { PlainTextPaste } from "@/text-editor-core/src/text-editor-plain-paste";
 
-export const CommentMark = Mark.create({
-  name: "comment",
-  inclusive: false,
-  addAttributes() {
-    return {
-      id: {
-        default: null,
-        parseHTML: (el) => (el as HTMLElement).getAttribute("data-comment-id"),
-        renderHTML: (attrs) => (attrs.id ? { "data-comment-id": attrs.id } : {}),
-      },
-    };
-  },
-  parseHTML() {
-    return [{ tag: "span[data-comment-id]" }];
-  },
-  renderHTML({ HTMLAttributes }) {
-    return ["span", mergeAttributes(HTMLAttributes, { class: "comment-mark" }), 0];
-  },
-});
+export { CommentMark };
+export {
+  CommentDraftAnchor,
+  setCommentDraftAnchor,
+} from "@/text-editor-core/src/text-editor-comment-draft-anchor";
 
 export const SuggestionMark = Mark.create({
   name: "suggestion",
@@ -98,6 +86,7 @@ export function createTextEditorExtensions(
     TableHeader,
     TableCell,
     CommentMark,
+    CommentDraftAnchor,
     SuggestionMark,
   ];
 

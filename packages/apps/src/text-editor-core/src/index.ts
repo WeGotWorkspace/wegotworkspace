@@ -24,6 +24,12 @@ export {
   type CreateTextEditorExtensionsOptions,
 } from "@/text-editor-core/src/text-editor-extensions";
 export {
+  getCommentMarkIdFromTarget,
+  readSelectedAnchorText,
+  scrollCommentMarkIntoView,
+  setCommentActiveId,
+} from "@/text-editor-core/src/text-editor-comment-commands";
+export {
   TEXT_EDITOR_CONTENT_FORMATS,
   getTextEditorContent,
   initialTextEditorContent,

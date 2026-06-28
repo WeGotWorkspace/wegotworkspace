@@ -80,6 +80,21 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: "dist",
       emptyOutDir: true,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes("scroll-timeline-polyfill")) {
+              return "scroll-timeline";
+            }
+            if (
+              id.includes("/docs-collab/docs-comments/") ||
+              id.includes("/docs-collab/use-docs-comments")
+            ) {
+              return "docs-comments";
+            }
+          },
+        },
+      },
     },
     publicDir: "public",
   };
