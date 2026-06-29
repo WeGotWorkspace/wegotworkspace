@@ -143,7 +143,11 @@ export const DocsCommentsCollab: Story = {
     );
     const composeField = await canvas.findByPlaceholderText(docsLabels.commentsComposePlaceholder);
     await userEvent.type(composeField, "Looks good");
-    await userEvent.click(canvas.getByRole("button", { name: docsLabels.commentsAdd }));
+    const composer = composeField.closest(".docs-comments-thread-card__composer");
+    if (!composer) throw new Error("expected comment composer");
+    await userEvent.click(
+      within(composer as HTMLElement).getByRole("button", { name: docsLabels.commentsAdd }),
+    );
     await expect(
       canvas.getByPlaceholderText(docsLabels.commentsReplyPlaceholder),
     ).toBeInTheDocument();
