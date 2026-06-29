@@ -19,7 +19,8 @@ Context-loading skill for AI agents and developers working in the WeGotWorkspace
 | Plugins / wgw-plugins | [plugins](../plugins/SKILL.md) | [storage-flysystem.md](../api/storage-flysystem.md) |
 | Meet / RTC / room signaling | [meet](../meet/SKILL.md) | `packages/api/docs/meet-signaling.md` |
 | UI primitives / CSS / styling | [apps-ui](../apps-ui/SKILL.md) | [components.md](../apps-ui/components.md), [typescript.md](../apps-ui/typescript.md) |
-| Workspace shell / *App / *Workspace | [workspace](../workspace/SKILL.md) | [workspace-shells.md](../../../packages/apps/docs/workspace-shells.md), [feature-blueprint.md](../workspace/feature-blueprint.md), [apps-done-gate.md](../testing/apps-done-gate.md) |
+| Workspace shell / *App / *Workspace | [workspace](../workspace/SKILL.md) | [workspace-shells.md](../../../packages/apps/docs/workspace-shells.md), [feature-blueprint.md](../workspace/feature-blueprint.md), [collab-hooks.md](../workspace/collab-hooks.md), [apps-done-gate.md](../testing/apps-done-gate.md) |
+| Collab / text-editor hooks (`docs-collab/`) | [workspace](../workspace/SKILL.md) | [collab-hooks.md](../workspace/collab-hooks.md), [clean-code/smells.md](../clean-code/smells.md) (React hooks) |
 | Planning a feature | [plan-feature](../plan-feature/SKILL.md) | — |
 | Issue acceptance criteria / "is #N done?" | [verify-issue](../verify-issue/SKILL.md) | — |
 | Writing or running tests | [testing](../testing/SKILL.md) | [test-first.md](../testing/test-first.md), [ui-architecture.md](../testing/ui-architecture.md) |
@@ -40,6 +41,7 @@ See [dev-environment](../dev-environment/SKILL.md) for commands, URLs, and troub
 2. **No auto-commits** — only commit when the user asks → [git-workflow](../git-workflow/SKILL.md)
 3. **UI styling: BEM classes + `@apply` in CSS** — not long Tailwind in TSX or raw CSS properties; primitives stay context-agnostic → [apps-ui](../apps-ui/SKILL.md)
 4. **File I/O via Flysystem** — single storage layer for REST and WebDAV → [storage-flysystem.md](../api/storage-flysystem.md)
+5. **Hook structure is a handoff gate** — when a feature adds multiple concerns to one hook, run a structure pass before handoff (split per [clean-code/smells.md](../clean-code/smells.md) React hooks section; collab layout in [collab-hooks.md](../workspace/collab-hooks.md)). Not optional nit — [code-review](../code-review/SKILL.md) blocks merge-ready work that violates thresholds without a documented exception.
 
 ## Multitask
 

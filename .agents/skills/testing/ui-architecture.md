@@ -30,7 +30,7 @@ See [storybook/offline-first.md](../storybook/offline-first.md) and [storybook/c
 
 ## Practices
 
-- Prefer testing public module exports over private helpers.
+- **Extract and test pure modules:** parsers, state machines, Yjs/CRDT writes, and TipTap command helpers belong in `*.ts` with direct Vitest coverage. Hook tests should assert orchestration contracts only — do not re-test every branch already covered by pure modules.
 - Mock HTTP at `lib/api/wgw` boundaries in **App/controller tests** only — prefer **`operations`** / **`*Fn` props** in component tests so panes never import the client ([apps-ui/components.md](../apps-ui/components.md)).
 - Avoid snapshot tests unless output is stable and high-value.
 - Keep tests fast (F.I.R.S.T. — see [clean-code](../clean-code/SKILL.md)).
