@@ -13,6 +13,7 @@ import {
 import { workspaceUserInitials, type WorkspaceSession } from "@/lib/workspace/workspace-session";
 import { cn } from "@/lib/utils";
 import { mergeDocsLabels, type DocsUILabels } from "@/docs-core/src/docs-labels";
+import { useDocumentTitle } from "@/lib/document-title";
 import { DocsHomePane } from "@/docs-core/src/docs-home-pane";
 import { useDocsHomeList, type DocsHomeFetcher } from "@/docs-core/src/use-docs-home-list";
 import {
@@ -60,6 +61,7 @@ export function DocsHomeWorkspace({
   className,
 }: DocsHomeWorkspaceProps) {
   const labels = mergeDocsLabels(labelOverrides);
+  useDocumentTitle(labels.homeTitle);
   const username = session.user.username ?? "";
 
   const [sidebarOpen, setSidebarOpen] = useState(true);

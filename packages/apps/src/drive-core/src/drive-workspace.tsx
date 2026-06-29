@@ -13,6 +13,7 @@ import { DriveMainPane } from "@/drive-core/src/drive-main-pane";
 import { DriveNewMenu } from "@/drive-core/src/drive-new-menu";
 import { UnifiedSearchApiDropdown } from "@/unified-search-dropdown/src/unified-search-api-dropdown";
 import { useDriveController } from "@/drive-core/src/use-drive-controller";
+import { useDocumentTitle } from "@/lib/document-title";
 import { useDriveSidebarModel } from "@/drive-core/src/use-drive-sidebar-model";
 import type { DriveWorkspaceProps } from "@/drive-core/src/drive-workspace-props";
 import { DriveWorkspaceModals } from "@/drive-core/src/drive-workspace-modals";
@@ -48,6 +49,11 @@ export function DriveWorkspace({
     sidebarDropZoneProps: controller.sidebarDropZoneProps,
     commitMoveToFolder: controller.commitMoveToFolder,
   });
+
+  const browserTitleContext = controller.searchQuery.trim()
+    ? controller.labels.searchViewTitle
+    : controller.viewLabel;
+  useDocumentTitle(browserTitleContext);
 
   return (
     <TooltipProvider delayDuration={300}>

@@ -8,6 +8,7 @@ import {
 } from "@/workspace-shell/src/workspace-app-layout";
 import { ViewHeader } from "@/view-header/src/view-header";
 import { useAdminController } from "@/admin-core/src/use-admin-controller";
+import { useDocumentTitle } from "@/lib/document-title";
 import type { AdminWorkspaceProps } from "@/admin-core/src/admin-workspace-props";
 import { AdminBackupsPane } from "@/admin-core/src/admin-backups-pane";
 import { AdminMailPane } from "@/admin-core/src/admin-mail-pane";
@@ -24,6 +25,8 @@ import "@/admin-core/src/admin-workspace.css";
 export function AdminWorkspace(props: AdminWorkspaceProps) {
   const { data, session, className, onLogout } = props;
   const controller = useAdminController({ data, operations: props.operations });
+
+  useDocumentTitle(controller.currentSection.label);
 
   const sidebarItems = controller.sections.map((candidate) => ({
     label: candidate.label,
