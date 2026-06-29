@@ -4,7 +4,9 @@ Only open a PR when the user explicitly asks (e.g. "open a PR", "create a pull r
 
 ## Before push
 
-When touching `packages/apps` or `packages/api`, run locally if feasible:
+**Apps (`packages/apps/**`):** Husky pre-push runs `pnpm test:apps-done-gate` when apps files changed in the push range. Run it manually if hooks were skipped — targeted Vitest alone is insufficient for merge-ready UI work.
+
+**Full stack before merge-ready PR** (when touching API or apps):
 
 ```bash
 pnpm run ci:quality
@@ -13,6 +15,8 @@ pnpm run ci:quality
 For API contract work also run `pnpm test:api-done-gate` — see [testing](../testing/SKILL.md) and [developer/done-checklist.md](../developer/done-checklist.md).
 
 Ensure commits are **signed** (required for merge to `main`).
+
+**CI validates PR tip only** — `apps-quality` / `api-quality` run on branch HEAD. Intermediate commits may fail the done gate until fix-forward; do not treat old SHAs as merge blockers when HEAD is green ([#250](https://github.com/WeGotWorkspace/wegotworkspace/issues/250)).
 
 ## Push branch
 

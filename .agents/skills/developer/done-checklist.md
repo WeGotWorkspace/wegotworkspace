@@ -56,7 +56,20 @@ Meet/RTC: `pnpm --dir packages/apps exec vitest run src/lib/rtc/session src/meet
 - [ ] OpenAPI/typegen before UI consumers if contract changed
 - [ ] After parallel agent chunks: verifier report when required ([multitask-verifier.md](multitask-verifier.md)); parent runs full verify ([multitask.md](multitask.md))
 
+## Before push (`packages/apps` UI work)
+
+Husky **pre-push** runs `pnpm test:apps-done-gate` when any file under `packages/apps/` changed in commits being pushed (vs the remote tip). Run it yourself before push if hooks are skipped — incremental commits on a branch are expected to fail an intermediate SHA; the gate must pass at **push time** so CI does not catch merge blockers first.
+
+```bash
+pnpm test:apps-done-gate                 # apps UI exports, panes, hooks, stories
+```
+
+- [ ] Done gate green before `git push` when `packages/apps/**` changed
+- [ ] Targeted Vitest alone is not enough for merge-ready apps UI work ([testing/apps-done-gate.md](../testing/apps-done-gate.md))
+
 ## Before PR (when user requests push/PR)
+
+Full CI-quality stack (API + apps lint/typegen + done gates):
 
 ```bash
 pnpm run ci:quality
@@ -64,6 +77,7 @@ pnpm run ci:quality
 
 - [ ] Signed commits ([git-workflow/pull-requests.md](../git-workflow/pull-requests.md))
 - [ ] PR test plan lists concrete commands run ([testing/SKILL.md](../testing/SKILL.md))
+- [ ] CI validates **PR tip (branch HEAD)** only — intermediate commits may be red until fix-forward; do not require per-commit gates in CI ([#250](https://github.com/WeGotWorkspace/wegotworkspace/issues/250))
 
 ## Dev environment issues
 

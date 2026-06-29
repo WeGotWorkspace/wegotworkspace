@@ -11,7 +11,7 @@ Policies agents should follow for **new work**. Backlog gaps are tracked on GitH
 | **Live-tier stories** (`Live …`) | Optional smoke only; never sole coverage | Manual | [storybook/offline-first.md](skills/storybook/offline-first.md) |
 | **Story `play` functions** | Target for critical UI flows | CI via `vitest-ci` smoke stories | [testing/apps-done-gate.md](skills/testing/apps-done-gate.md) |
 | **`@storybook/addon-vitest`** | Target | CI: Storybook smoke via `pnpm test:apps-done-gate` inside `ci:quality`; full catalog locally via `test:storybook` | [storybook/offline-first.md](skills/storybook/offline-first.md) — wired in [#74](https://github.com/WeGotWorkspace/wegotworkspace/pull/74) |
-| **Apps done gate** | Run before merge-ready UI work | `pnpm test:apps-done-gate` (local); same gate at end of `pnpm run ci:quality` in CI | [testing/apps-done-gate.md](skills/testing/apps-done-gate.md) |
+| **Apps done gate** | Run before merge-ready UI work | Husky **pre-push** when `packages/apps/**` changed; `pnpm test:apps-done-gate` (local); same gate at end of `pnpm run ci:quality` in CI on **PR HEAD** | [testing/apps-done-gate.md](skills/testing/apps-done-gate.md) |
 | **Vitest for hooks / pure logic** | Required when adding non-trivial logic | `pnpm test:apps-done-gate` (unit + jsdom projects) via `ci:quality` | [testing/ui-architecture.md](skills/testing/ui-architecture.md) |
 | **UI pane RTL tests** | Encouraged for interaction-heavy panes | jsdom project (`*.test.tsx`) | [testing/ui-architecture.md](skills/testing/ui-architecture.md) |
 | **UI e2e (Playwright apps)** | Out of scope | — | — |
@@ -23,3 +23,15 @@ Policies agents should follow for **new work**. Backlog gaps are tracked on GitH
 **Domain skills override** generic rows when more specific ([clean-code](skills/clean-code/SKILL.md), [api/layers.md](skills/api/layers.md), etc.).
 
 Before handoff, run [developer/done-checklist.md](skills/developer/done-checklist.md).
+
+## Enforcement layers (pre-commit → pre-push → CI)
+
+| Layer | When | What runs | Scope |
+|-------|------|-----------|--------|
+| **pre-commit** (Husky) | Every commit | lint-staged: Prettier + ESLint on staged `@wgw/apps`; Pint on staged API PHP | Staged files only |
+| **pre-push** (Husky) | Every push | `pnpm test:apps-done-gate` when `packages/apps/**` changed in the push range; else `@wgw/apps` typecheck | Commits being pushed vs remote tip |
+| **CI** (`apps-quality`, `api-quality`) | PR / push to `main` | `pnpm run ci:quality:apps` / `ci:quality:api` on **checkout HEAD** | Branch tip only — not every commit in PR history |
+
+**CI validates the PR tip only.** Intermediate commits on a feature branch may fail the full done gate until a later fix-forward commit; that is expected. Do not add per-commit CI gates. Retroactive `pnpm test:apps-done-gate` at old SHAs is for bisect/debug, not merge blocking.
+
+**Apps UI new work:** done gate must pass before push (hook) and at CI (HEAD). See [testing/apps-done-gate.md](skills/testing/apps-done-gate.md) and [git-workflow/SKILL.md](skills/git-workflow/SKILL.md).
