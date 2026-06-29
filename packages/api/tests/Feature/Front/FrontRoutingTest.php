@@ -75,6 +75,24 @@ final class FrontRoutingTest extends TestCase
             ->assertHeader('Content-Type', 'text/html; charset=utf-8');
     }
 
+    public function test_share_recipient_deep_link_serves_shell_not_webdav(): void
+    {
+        $this->repoRoot = UiDistFixture::bootstrapMonorepoLayout();
+        $installRoot = $this->repoRoot.'/apps/wegotworkspace';
+        $data = $installRoot.'/wgw-content';
+        WgwInstallFixture::markInstalled($installRoot, $data);
+        WgwInstallFixture::syncDatabaseConnection();
+
+        $share = $this->get('/s/abc123token');
+        $share->assertOk()
+            ->assertHeader('Content-Type', 'text/html; charset=utf-8');
+        $this->assertStringNotContainsString('Sabre\\DAV\\Exception\\NotFound', (string) $share->getContent());
+
+        $this->get('/s/abc123token/folder')
+            ->assertOk()
+            ->assertHeader('Content-Type', 'text/html; charset=utf-8');
+    }
+
     public function test_api_docs_not_handled_by_webdav_catch_all(): void
     {
         $this->get('/api/docs')

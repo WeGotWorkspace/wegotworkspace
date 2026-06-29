@@ -69,6 +69,7 @@ export function useDriveMutations({ shell, list, onOpenDocsFile }: UseDriveMutat
     null,
   );
   const [moveDialog, setMoveDialog] = useState<{ ids: string[] } | null>(null);
+  const [shareDialog, setShareDialog] = useState<DriveFile | null>(null);
   const [dropUploadActive, setDropUploadActive] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{
     label: string;
@@ -183,6 +184,7 @@ export function useDriveMutations({ shell, list, onOpenDocsFile }: UseDriveMutat
   }, []);
   const requestMoveSelected = () => openMoveDialog(selectedIds);
   const requestMoveItem = (file: DriveFile) => openMoveDialog([file.id]);
+  const requestShareItem = (file: DriveFile) => setShareDialog(file);
 
   const submitRenameItem = () => {
     if (!renameDialog) return;
@@ -518,6 +520,8 @@ export function useDriveMutations({ shell, list, onOpenDocsFile }: UseDriveMutat
     setConfirmDelete,
     moveDialog,
     setMoveDialog,
+    shareDialog,
+    setShareDialog,
     dropUploadActive,
     setDropUploadActive,
     uploadProgress,
@@ -533,6 +537,7 @@ export function useDriveMutations({ shell, list, onOpenDocsFile }: UseDriveMutat
     requestDeleteItem,
     requestMoveSelected,
     requestMoveItem,
+    requestShareItem,
     openMoveDialog,
     requestRenameItem,
     submitRenameItem,

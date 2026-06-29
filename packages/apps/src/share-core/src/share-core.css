@@ -1,0 +1,149 @@
+@import "../../styles.css" reference;
+
+.share-frame {
+  @apply flex min-h-screen flex-col bg-background text-foreground;
+}
+
+.share-frame__header {
+  @apply flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border px-4 py-3 sm:px-6;
+}
+
+.share-frame__brand {
+  @apply flex items-center gap-2 text-sm font-medium text-muted-foreground;
+}
+
+.share-frame__brand-icon {
+  @apply size-4;
+}
+
+.share-frame__heading {
+  @apply min-w-0 flex-1;
+}
+
+.share-frame__title {
+  @apply truncate text-base font-semibold;
+}
+
+.share-frame__subtitle {
+  @apply truncate text-xs text-muted-foreground;
+}
+
+.share-frame__actions {
+  @apply flex items-center gap-2;
+}
+
+.share-frame__main {
+  @apply min-h-0 flex-1 px-4 py-5 sm:px-6;
+}
+
+.share-frame__main--centered {
+  @apply flex items-center justify-center;
+}
+
+/* ---- Centered status / form cards ---- */
+
+.share-card {
+  @apply mx-auto flex w-full max-w-md flex-col items-center gap-3 rounded-lg border border-border bg-card p-8 text-center shadow-sm;
+}
+
+.share-card--form {
+  @apply items-stretch text-left;
+}
+
+.share-card__icon {
+  @apply size-10 text-muted-foreground;
+}
+
+.share-card__icon--success {
+  @apply text-emerald-600;
+}
+
+.share-card__icon--error {
+  @apply text-red-600;
+}
+
+.share-card__title {
+  @apply text-lg font-semibold;
+}
+
+.share-card__body {
+  @apply text-sm text-muted-foreground;
+}
+
+.share-card__field {
+  @apply flex flex-col gap-1.5;
+}
+
+.share-card__error {
+  @apply text-sm text-red-600;
+}
+
+/* ---- Viewer ---- */
+
+.share-viewer {
+  @apply flex flex-col gap-4;
+}
+
+.share-viewer__breadcrumbs {
+  @apply text-sm;
+}
+
+.share-viewer__grid {
+  @apply grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-3;
+}
+
+.share-viewer__tile {
+  @apply relative flex flex-col;
+}
+
+.share-viewer__tile-button {
+  @apply flex w-full flex-col items-center gap-2 rounded-lg border border-border bg-card p-4 text-center transition-colors hover:bg-accent;
+}
+
+.share-viewer__tile-icon {
+  @apply text-muted-foreground;
+}
+
+.share-viewer__tile-title {
+  @apply line-clamp-2 w-full break-words text-sm font-medium;
+}
+
+.share-viewer__tile-meta {
+  @apply text-xs text-muted-foreground;
+}
+
+.share-viewer__tile-download {
+  @apply absolute right-1.5 top-1.5 opacity-0 transition-opacity;
+}
+
+.share-viewer__tile:hover .share-viewer__tile-download {
+  @apply opacity-100;
+}
+
+.share-viewer__single {
+  @apply mx-auto flex w-full max-w-2xl flex-col items-center gap-4;
+}
+
+.share-viewer__single-preview {
+  @apply flex aspect-video w-full items-center justify-center overflow-hidden rounded-lg border border-border bg-muted;
+}
+
+.share-viewer__single-title {
+  @apply text-lg font-semibold;
+}
+
+.share-viewer__preview-media {
+  @apply max-h-[70vh] w-full object-contain;
+}
+
+.share-viewer__preview-dialog {
+  @apply max-w-2xl;
+}
+
+.share-viewer__preview-stage {
+  @apply flex items-center justify-center overflow-hidden rounded-md bg-muted;
+}
+
+.share-viewer__upload {
+  @apply fixed bottom-4 right-4 z-40 w-72;
+}

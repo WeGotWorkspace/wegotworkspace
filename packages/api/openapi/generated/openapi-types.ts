@@ -5564,6 +5564,636 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/files/shares": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List shares owned by the caller */
+        get: {
+            parameters: {
+                query?: {
+                    path?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Owned shares */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ShareListResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Create a share for a file or directory the caller owns */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ShareCreateRequest"];
+                };
+            };
+            responses: {
+                /** @description Share created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ShareResponse"];
+                    };
+                };
+                /** @description Invalid request or path not owned by caller */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/files/shares/{shareId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revoke a share */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    shareId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Share revoked */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Share not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Update a share's public access or expiry */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    shareId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ShareUpdateRequest"];
+                };
+            };
+            responses: {
+                /** @description Share updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ShareResponse"];
+                    };
+                };
+                /** @description Share not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/files/shares/{shareId}/grants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Invite email recipients to a share */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    shareId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ShareGrantsCreateRequest"];
+                };
+            };
+            responses: {
+                /** @description Grants created and invites sent */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ShareResponse"];
+                    };
+                };
+                /** @description Share not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/files/shares/{shareId}/grants/{grantId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revoke an email grant */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    shareId: string;
+                    grantId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Grant revoked */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ShareResponse"];
+                    };
+                };
+                /** @description Share or grant not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/shares/grants/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm an email invite and receive an access token */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ShareConfirmRequest"];
+                };
+            };
+            responses: {
+                /** @description Access token issued */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ShareConfirmResponse"];
+                    };
+                };
+                /** @description Invite not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Too many requests */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/shares/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Resolve share metadata and effective permission for the presented credential */
+        get: {
+            parameters: {
+                query?: never;
+                header?: {
+                    /** @description Confirmed-recipient access token. */
+                    "X-Wgw-Share-Access"?: string;
+                };
+                path: {
+                    token: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Share metadata */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SharePublicMetadataResponse"];
+                    };
+                };
+                /** @description Share not found or expired */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/shares/{token}/grants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Self-request access to a share by email */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    token: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SharePublicGrantRequest"];
+                };
+            };
+            responses: {
+                /** @description Confirmation email sent */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ShareGrantRequestResponse"];
+                    };
+                };
+                /** @description Share not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Too many requests */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/shares/{token}/children": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List a subdirectory of a shared directory */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Path relative to the share root. */
+                    path?: string;
+                };
+                header?: {
+                    "X-Wgw-Share-Access"?: string;
+                };
+                path: {
+                    token: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Directory listing */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ShareChildrenResponse"];
+                    };
+                };
+                /** @description Confirmed access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Share not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/shares/{token}/content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download/preview a file from a share */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Path relative to the share root. */
+                    path?: string;
+                };
+                header?: {
+                    "X-Wgw-Share-Access"?: string;
+                };
+                path: {
+                    token: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description File stream */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Confirmed access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Share or file not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        /** Upload a file to a writable share */
+        post: {
+            parameters: {
+                query?: {
+                    /** @description Parent directory relative to the share root. */
+                    path?: string;
+                };
+                header?: {
+                    "X-Wgw-Share-Access"?: string;
+                };
+                path: {
+                    token: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "multipart/form-data": {
+                        /** Format: binary */
+                        file?: string;
+                        resumableFilename?: string;
+                        resumableIdentifier?: string;
+                        resumableChunkNumber?: number;
+                        resumableTotalChunks?: number;
+                    };
+                };
+            };
+            responses: {
+                /** @description Stored */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Read-only share or invalid path */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Confirmed access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Share not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/shares/{token}/directories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a directory inside a writable share */
+        post: {
+            parameters: {
+                query?: never;
+                header?: {
+                    "X-Wgw-Share-Access"?: string;
+                };
+                path: {
+                    token: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SharePublicDirectoryRequest"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Read-only share or invalid path */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Confirmed access required */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Share not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -8045,6 +8675,118 @@ export interface components {
                 filters: components["schemas"]["UnifiedSearchFilters"];
                 results: components["schemas"]["UnifiedSearchResult"][];
             };
+        };
+        ShareGrant: {
+            id: string;
+            email: string;
+            /** @enum {string} */
+            permission: "read" | "write";
+            /** @enum {string} */
+            status: "pending" | "confirmed" | "revoked";
+            confirmedAt?: string | null;
+        };
+        Share: {
+            id: string;
+            token: string;
+            path: string;
+            name: string;
+            /** @enum {string} */
+            targetType: "file" | "dir";
+            /** @enum {string} */
+            publicAccess: "none" | "read" | "write";
+            expiresAt?: string | null;
+            /** @description Absolute public viewer URL ({base}/s/{token}). */
+            url: string;
+            createdAt?: string | null;
+            grants: components["schemas"]["ShareGrant"][];
+        };
+        ShareListResponse: {
+            data: {
+                shares: components["schemas"]["Share"][];
+            };
+        };
+        ShareResponse: {
+            data: components["schemas"]["Share"];
+        };
+        ShareCreateRequest: {
+            /** @description Virtual drive path the owner controls, e.g. /users/bob/folder. */
+            path: string;
+            /** @enum {string} */
+            publicAccess: "none" | "read" | "write";
+            /** @description ISO-8601 expiry; omit for the configured default (or no expiry). */
+            expiresAt?: string | null;
+        };
+        ShareUpdateRequest: {
+            /** @enum {string} */
+            publicAccess?: "none" | "read" | "write";
+            /** @description ISO-8601 expiry, or null to clear. */
+            expiresAt?: string | null;
+        };
+        ShareGrantsCreateRequest: {
+            emails: string[];
+            /** @enum {string} */
+            permission: "read" | "write";
+        };
+        SharePublicGrantRequest: {
+            /** Format: email */
+            email: string;
+        };
+        ShareGrantRequestResponse: {
+            data: {
+                /** @enum {string} */
+                status: "pending" | "confirmed";
+            };
+        };
+        ShareConfirmRequest: {
+            inviteToken: string;
+        };
+        ShareConfirmResponse: {
+            data: {
+                /** @description Present on subsequent requests via the X-Wgw-Share-Access header. */
+                accessToken: string;
+                /** @description The share link token. */
+                token: string;
+                /** @enum {string} */
+                permission: "read" | "write";
+            };
+        };
+        SharePublicMetadataResponse: {
+            data: {
+                token: string;
+                name: string;
+                /** @enum {string} */
+                targetType: "file" | "dir";
+                /** @enum {string} */
+                publicAccess: "none" | "read" | "write";
+                /**
+                 * @description Effective permission for the presented credential.
+                 * @enum {string}
+                 */
+                permission: "none" | "read" | "write";
+                /** @description True when no credential grants access yet (email confirmation needed). */
+                requiresConfirmation: boolean;
+                expiresAt?: string | null;
+            };
+        };
+        ShareEntry: {
+            /** @enum {string} */
+            type: "file" | "dir";
+            /** @description Path relative to the share root. */
+            path: string;
+            name: string;
+            size: number;
+            time: number;
+        };
+        ShareChildrenResponse: {
+            data: {
+                location: string;
+                files: components["schemas"]["ShareEntry"][];
+            };
+        };
+        SharePublicDirectoryRequest: {
+            name: string;
+            /** @description Parent directory relative to the share root. */
+            path?: string | null;
         };
     };
     responses: never;

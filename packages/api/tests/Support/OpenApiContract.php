@@ -147,6 +147,9 @@ final class OpenApiContract
             '{eventId}' => 'demo-event',
             '{taskId}' => 'demo-task',
             '{taskListId}' => 'default',
+            '{token}' => 'demoShareToken0001',
+            '{shareId}' => 'SHAREDEMO000000000000000001',
+            '{grantId}' => 'GRANTDEMO000000000000000001',
         ];
 
         $path = $openApiPath;

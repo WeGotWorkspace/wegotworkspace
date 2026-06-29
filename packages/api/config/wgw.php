@@ -25,4 +25,15 @@ return [
         /** Set {@code WGW_MAIL_SMTP_VERIFY_TLS=false} for local/dev SMTP with self-signed certs. */
         'smtp_verify_tls' => filter_var(env('WGW_MAIL_SMTP_VERIFY_TLS', true), FILTER_VALIDATE_BOOL),
     ],
+
+    'shares' => [
+        /** Entropy of public share/invite/access tokens, in raw bytes (hex-encoded for transport). */
+        'token_bytes' => max(16, (int) env('WGW_SHARE_TOKEN_BYTES', 32)),
+        /** Default lifetime (days) applied to new shares when the owner omits an expiry; null = no expiry. */
+        'default_expiry_days' => env('WGW_SHARE_DEFAULT_EXPIRY_DAYS') !== null
+            ? (int) env('WGW_SHARE_DEFAULT_EXPIRY_DAYS')
+            : null,
+        /** Base URL recipients use for the public viewer (`{base}/s/{token}`); falls back to app.url. */
+        'base_url' => env('WGW_SHARE_BASE_URL'),
+    ],
 ];

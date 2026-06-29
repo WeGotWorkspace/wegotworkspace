@@ -19,6 +19,7 @@ import { MeetApp } from "@/meet-core/src/meet-app";
 import { createWgwMeetGuestApiSource } from "@/meet-core/src/meet-api-source";
 import { NotesApp } from "@/notes-core/src/notes-app";
 import { SettingsApp } from "@/settings-core/src/settings-app";
+import { ShareApp } from "@/share-core/src/share-app";
 import { createAdminAppBootstrap } from "@/lib/api/mock/admin-bootstrap";
 import { createContactsAppBootstrap } from "@/lib/api/mock/contacts-bootstrap";
 import { createDriveAppBootstrap } from "@/lib/api/mock/drive-bootstrap";
@@ -361,6 +362,17 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
     component: isLive ? InstallApp : MockInstallRoute,
   });
 
+  // Public file-share viewer. No auth/workspace shell — the share token in the path
+  // (plus an optional `?invite=` confirmation token) governs access.
+  const shareRoute = createRoute({
+    getParentRoute: () => wegotworkspaceRootRoute,
+    path: "/s/$token",
+    validateSearch: (search: Record<string, unknown>): { invite?: string } => ({
+      invite: typeof search.invite === "string" ? search.invite : undefined,
+    }),
+    component: ShareApp,
+  });
+
   return wegotworkspaceRootRoute.addChildren([
     indexRoute,
     loginRoute,
@@ -390,6 +402,7 @@ function buildRouteTree(mode: WeGotWorkspaceRouteMode) {
     contactsGroupRoute,
     contactsGroupContactRoute,
     installRoute,
+    shareRoute,
   ]);
 }
 

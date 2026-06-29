@@ -46,6 +46,7 @@ export function DriveGridView({
   onRename,
   onMove,
   onTrash,
+  onShare,
   searchActive: _searchActive = false,
   showLocationColumn = false,
 }: {
@@ -71,6 +72,7 @@ export function DriveGridView({
   onRename: (file: DriveFile) => void;
   onMove: (file: DriveFile) => void;
   onTrash: (file: DriveFile) => void;
+  onShare?: (file: DriveFile) => void;
 }) {
   const folders = items.filter((i) => i.kind === "folder");
   const files = items.filter((i) => i.kind !== "folder");
@@ -100,6 +102,7 @@ export function DriveGridView({
                 onRename={() => onRename(f)}
                 onMove={() => onMove(f)}
                 onTrash={() => onTrash(f)}
+                onShare={onShare ? () => onShare(f) : undefined}
               />
             ))}
           </div>
@@ -130,6 +133,7 @@ export function DriveGridView({
                 onRename={() => onRename(f)}
                 onMove={() => onMove(f)}
                 onTrash={() => onTrash(f)}
+                onShare={onShare ? () => onShare(f) : undefined}
               />
             ))}
           </div>
@@ -186,6 +190,7 @@ function FolderTile({
   onRename,
   onMove,
   onTrash,
+  onShare,
 }: {
   file: DriveFile;
   isSelected: boolean;
@@ -204,6 +209,7 @@ function FolderTile({
   onRename: () => void;
   onMove: () => void;
   onTrash: () => void;
+  onShare?: () => void;
 }) {
   const lp = useLongPress(onLongPress);
   // Tile root is non-interactive so the actions menu is not nested inside a
@@ -258,6 +264,7 @@ function FolderTile({
         onRename={onRename}
         onMove={onMove}
         onDelete={onTrash}
+        onShare={onShare}
       />
     </div>
   );
@@ -281,6 +288,7 @@ function FileTile({
   onRename,
   onMove,
   onTrash,
+  onShare,
   itemDragHandlers,
 }: {
   file: DriveFile;
@@ -301,6 +309,7 @@ function FileTile({
   onRename: () => void;
   onMove: () => void;
   onTrash: () => void;
+  onShare?: () => void;
 }) {
   const lp = useLongPress(onLongPress);
   // Same overlay pattern as FolderTile: keeps the actions menu out of the
@@ -365,6 +374,7 @@ function FileTile({
           onRename={onRename}
           onMove={onMove}
           onDelete={onTrash}
+          onShare={onShare}
         />
       </div>
     </div>
@@ -381,6 +391,7 @@ function DriveFileItemActions({
   onRename,
   onMove,
   onDelete,
+  onShare,
 }: {
   labels: DriveUILabels;
   file: DriveFile;
@@ -391,6 +402,7 @@ function DriveFileItemActions({
   onRename?: () => void;
   onMove?: () => void;
   onDelete: () => void;
+  onShare?: () => void;
 }) {
   const actions = buildDriveFileActions(
     labels,
@@ -401,6 +413,7 @@ function DriveFileItemActions({
       onRename,
       onMove,
       onDelete,
+      onShare,
     },
   );
   return <DriveFileItemActionsMenu actions={actions} />;
@@ -436,6 +449,7 @@ export function DriveListView({
   onRename,
   onMove,
   onTrash,
+  onShare,
   onLongPress,
   searchActive = false,
   showLocationColumn = false,
@@ -467,6 +481,7 @@ export function DriveListView({
   onRename: (file: DriveFile) => void;
   onMove: (file: DriveFile) => void;
   onTrash: (file: DriveFile) => void;
+  onShare?: (file: DriveFile) => void;
   onLongPress: (id: string) => void;
 }) {
   return (
@@ -600,6 +615,7 @@ export function DriveListView({
                       onRename={() => onRename(f)}
                       onMove={() => onMove(f)}
                       onDelete={() => onTrash(f)}
+                      onShare={onShare ? () => onShare(f) : undefined}
                     />
                   </div>
                 </td>
@@ -626,6 +642,7 @@ export function DriveDetailPanel({
   onRename,
   onMove,
   onDelete,
+  onShare,
   mobile,
 }: {
   labels: DriveUILabels;
@@ -639,6 +656,7 @@ export function DriveDetailPanel({
   onRename: () => void;
   onMove: () => void;
   onDelete: () => void;
+  onShare?: () => void;
   mobile?: boolean;
 }) {
   const { show } = useAppToast();
@@ -655,6 +673,7 @@ export function DriveDetailPanel({
       onRename,
       onMove,
       onDelete,
+      onShare,
     },
   );
 

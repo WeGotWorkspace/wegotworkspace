@@ -40,6 +40,7 @@ final class UiStaticServer
             '/mail',
             '/meet',
             '/notes',
+            '/s',
             '/settings',
         ];
 
@@ -136,6 +137,7 @@ final class UiStaticServer
             '/mail',
             '/meet',
             '/notes',
+            '/s',
             '/settings',
             '/install',
         ];

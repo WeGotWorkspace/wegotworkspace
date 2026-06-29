@@ -1,0 +1,85 @@
+@import "../../styles.css" reference;
+
+.drive-share-dialog {
+  @apply max-w-2xl;
+}
+
+.drive-share-dialog__loading {
+  @apply flex items-center gap-2 py-4 text-sm text-muted-foreground;
+}
+
+.drive-share-dialog__body {
+  @apply flex flex-col gap-5;
+}
+
+.drive-share-dialog__section {
+  @apply flex flex-col gap-2;
+}
+
+.drive-share-dialog__label {
+  @apply text-sm font-medium;
+}
+
+.drive-share-dialog__hint {
+  @apply text-sm text-muted-foreground;
+}
+
+.drive-share-dialog__link-row {
+  @apply flex items-center gap-2;
+}
+
+.drive-share-dialog__link-row :first-child {
+  @apply min-w-0 flex-1;
+}
+
+.drive-share-dialog__control {
+  @apply w-full;
+}
+
+.drive-share-dialog__invite-row {
+  @apply flex flex-wrap items-center gap-2;
+}
+
+.drive-share-dialog__invite-row > :first-child {
+  @apply min-w-40 flex-1;
+}
+
+.drive-share-dialog__permission {
+  @apply w-36;
+}
+
+.drive-share-dialog__grants {
+  @apply mt-2 flex flex-col gap-1.5;
+}
+
+.drive-share-dialog__grant {
+  @apply flex items-center gap-2 rounded-md border border-border px-2.5 py-1.5 text-sm;
+}
+
+.drive-share-dialog__grant-email {
+  @apply min-w-0 flex-1 truncate;
+}
+
+.drive-share-dialog__grant-permission {
+  @apply shrink-0 text-xs text-muted-foreground;
+}
+
+.drive-share-dialog__grant-status {
+  @apply shrink-0 rounded-full px-2 py-0.5 text-xs font-medium;
+}
+
+.drive-share-dialog__grant-status--pending {
+  @apply bg-amber-100 text-amber-700;
+}
+
+.drive-share-dialog__grant-status--confirmed {
+  @apply bg-emerald-100 text-emerald-700;
+}
+
+.drive-share-dialog__grant-status--revoked {
+  @apply bg-muted text-muted-foreground line-through;
+}
+
+.drive-share-dialog__footer {
+  @apply flex justify-end border-t border-border pt-3;
+}

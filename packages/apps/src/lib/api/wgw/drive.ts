@@ -6,6 +6,7 @@ import {
 } from "@/lib/api/wgw/http";
 import { downloadWgwUnifiedSearchRecord } from "@/lib/api/wgw/search";
 import { fetchWgwPlugins } from "@/lib/api/wgw/plugins";
+import { createWgwShareOwnerOperations } from "@/lib/api/wgw/shares";
 import type {
   WgwDriveDirectoryEntry,
   WgwDriveListingResponse,
@@ -138,8 +139,19 @@ export function createWgwDriveOperations(
 ): DriveAPIOperations {
   let cwd = normalizePath(initialCwd);
   const plugins: WgwPluginDescriptor[] = initialPlugins;
+  const shareOwner = createWgwShareOwnerOperations();
 
   return {
+    shares: {
+      listShares: (path, opts) => shareOwner.listShares(path, opts),
+      createShare: (input, opts) => shareOwner.createShare(input, opts),
+      updateShare: ({ shareId, ...patch }, opts) => shareOwner.updateShare(shareId, patch, opts),
+      revokeShare: (shareId, opts) => shareOwner.revokeShare(shareId, opts),
+      addShareGrants: ({ shareId, ...input }, opts) =>
+        shareOwner.addShareGrants(shareId, input, opts),
+      removeShareGrant: ({ shareId, grantId }, opts) =>
+        shareOwner.removeShareGrant(shareId, grantId, opts),
+    },
     async refreshState(opts) {
       const state = await fetchState(cwd, opts, plugins);
       cwd = state.cwd;

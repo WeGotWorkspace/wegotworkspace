@@ -32,6 +32,41 @@ final class UiStaticServerTest extends TestCase
         $this->assertStringContainsString('console.log', (string) file_get_contents($file->getPathname()));
     }
 
+    public function test_share_recipient_deep_links_resolve_to_shell(): void
+    {
+        $server = new UiStaticServer;
+
+        $this->assertTrue($server->matchesShellPath('', '/s'));
+        $this->assertTrue($server->matchesShellPath('', '/s/'));
+        $this->assertTrue($server->matchesShellPath('', '/s/abc123token'));
+        $this->assertTrue($server->matchesShellPath('', '/s/abc123token/folder/file.txt'));
+    }
+
+    public function test_share_prefix_does_not_swallow_sibling_segments(): void
+    {
+        $server = new UiStaticServer;
+
+        $this->assertFalse($server->matchesShellPath('', '/search'));
+        $this->assertFalse($server->matchesShellPath('', '/share'));
+        $this->assertSame('/s', $server->resolveRoutePrefix('', '/s/token', ['/', '/s', '/settings']));
+        $this->assertSame('/settings', $server->resolveRoutePrefix('', '/settings/profile', ['/', '/s', '/settings']));
+        $this->assertNull($server->resolveRoutePrefix('', '/search', ['/', '/s', '/settings']));
+    }
+
+    public function test_share_recipient_deep_link_serves_spa_shell(): void
+    {
+        $dist = sys_get_temp_dir().'/wgw-static-share-'.uniqid('', true);
+        mkdir($dist, 0775, true);
+        file_put_contents($dist.'/index.html', '<!doctype html><title>App</title>');
+
+        $server = new UiStaticServer;
+        $response = $server->tryServe($dist, '', '/s/abc123token', true);
+
+        $this->assertNotNull($response);
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('text/html; charset=utf-8', $response->headers->get('Content-Type'));
+    }
+
     public function test_resolve_route_prefix_prefers_install_over_root(): void
     {
         $server = new UiStaticServer;

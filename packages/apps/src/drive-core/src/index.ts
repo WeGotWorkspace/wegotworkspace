@@ -8,3 +8,6 @@ export type {
   DriveAppBootstrap,
 } from "@/drive-core/src/drive-types";
 export { driveLabels } from "@/drive-core/src/drive-labels";
+export { DriveShareDialog } from "@/drive-core/src/drive-share-dialog";
+export type { DriveShareDialogProps, DriveShareTarget } from "@/drive-core/src/drive-share-dialog";
+export type { DriveShareOperations } from "@/drive-core/src/drive-types";
