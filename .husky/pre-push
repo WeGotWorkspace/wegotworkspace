@@ -1,1 +1,1 @@
-pnpm --filter @wgw/apps typecheck
+bash tools/git/pre-push.sh
