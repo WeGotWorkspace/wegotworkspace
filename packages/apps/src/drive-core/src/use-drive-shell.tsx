@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useAppToast } from "@/hooks/use-app-toast";
 import { buildDriveFolderBreadcrumbs } from "@/drive-core/src/drive-breadcrumbs";
-import { driveLabels } from "@/drive-core/src/drive-labels";
+import { driveLabels, driveOfficeNewFileLabel } from "@/drive-core/src/drive-labels";
 import { DRIVE_MOCK_FILES } from "@/drive-core/src/drive-mock-files";
 import type { DriveFile, ViewKey } from "@/drive-core/src/drive-models";
 import { mergeDriveFolderListing } from "@/drive-core/src/drive-batch-utils";
@@ -84,7 +84,7 @@ export function useDriveShell({
       .filter((template) => ["doc", "sheet", "slides"].includes(template.kind))
       .map((template) => ({
         id: template.id,
-        label: template.label,
+        label: driveOfficeNewFileLabel(template.kind),
         kind: template.kind,
         queryValue: template.queryValue,
       }));

@@ -20,6 +20,7 @@ import {
   AlertDialogTitle,
 } from "@/ui/alert-dialog";
 import { DriveMoveToDialog } from "@/drive-core/src/drive-move-to-dialog";
+import { DriveCreateMarkdownDialog } from "@/drive-core/src/drive-create-markdown-dialog";
 import type { useDriveController } from "@/drive-core/src/use-drive-controller";
 
 type DriveController = ReturnType<typeof useDriveController>;
@@ -48,6 +49,12 @@ export function DriveWorkspaceModals({ controller }: DriveWorkspaceModalsProps) 
     moveToTrash,
     moveDialog,
     setMoveDialog,
+    markdownDialogOpen,
+    markdownDialogDefaults,
+    markdownDialogSubmitting,
+    markdownDialogError,
+    closeMarkdownDialog,
+    submitCreateMarkdown,
     files,
     sidebarGroupPaths,
     commitMoveToFolder,
@@ -186,6 +193,23 @@ export function DriveWorkspaceModals({ controller }: DriveWorkspaceModalsProps) 
           if (moveDialog) commitMoveToFolder(moveDialog.ids, destinationPath);
           setMoveDialog(null);
         }}
+      />
+
+      <DriveCreateMarkdownDialog
+        open={markdownDialogOpen}
+        labels={labels}
+        defaultName={markdownDialogDefaults.defaultName}
+        initialBrowsePath={markdownDialogDefaults.initialBrowsePath}
+        files={files}
+        groupPaths={sidebarGroupPaths}
+        view={view}
+        operations={operations}
+        currentUsername={currentUsername}
+        groupRootNames={groupRootNames}
+        isSubmitting={markdownDialogSubmitting}
+        errorMessage={markdownDialogError}
+        onClose={closeMarkdownDialog}
+        onConfirm={submitCreateMarkdown}
       />
     </>
   );

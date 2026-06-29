@@ -19,6 +19,7 @@ import {
   buildDocsHomeDrives,
   collectGroupRoots,
   mergeGroupRoots,
+  resolveDocsHomeCreateDialogBrowsePath,
   resolveNewDocumentName,
 } from "@/docs-core/src/docs-home-drives";
 import { useDocsHomeSidebarModel } from "@/docs-core/src/use-docs-home-sidebar-model";
@@ -26,6 +27,7 @@ import { useDocsHomeActions } from "@/docs-core/src/use-docs-home-actions";
 import { DocsHomeModals } from "@/docs-core/src/docs-home-modals";
 import type { DriveAPIOperations } from "@/drive-core/src/drive-types";
 import type { DriveFile } from "@/drive-core/src/drive-models";
+import { apiPathFromUiPath, normalizeApiVirtualPath } from "@/drive-core/src/drive-path-utils";
 import "@/docs-core/src/docs-workspace.css";
 import "@/docs-core/src/docs-home-workspace.css";
 
@@ -68,6 +70,8 @@ export function DocsHomeWorkspace({
   const [query, setQuery] = useState("");
   const [selectedDrivePrefix, setSelectedDrivePrefix] = useState<string | null>(null);
   const [knownGroupRoots, setKnownGroupRoots] = useState<string[]>([]);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [createDialogDefaultName, setCreateDialogDefaultName] = useState("Untitled.md");
 
   const { files, loading, loadingMore, hasMore, error, loadMore, reload } = useDocsHomeList({
     username,
@@ -116,15 +120,44 @@ export function DocsHomeWorkspace({
     [onOpenFile],
   );
 
+  const groupRootNames = useMemo(() => new Set(knownGroupRoots), [knownGroupRoots]);
+  const createDialogBrowsePath = useMemo(
+    () => resolveDocsHomeCreateDialogBrowsePath(selectedDrivePrefix),
+    [selectedDrivePrefix],
+  );
+  const createDialogView = useMemo(
+    () => ({ type: "folder" as const, path: createDialogBrowsePath }),
+    [createDialogBrowsePath],
+  );
+
   const handleCreateDocument = useCallback(() => {
     const handle = username.trim();
     if (!handle || !onCreateDocument) return;
-    const userRoot = `/users/${handle}`;
+    const browsePath = resolveDocsHomeCreateDialogBrowsePath(selectedDrivePrefix);
+    const apiRoot = apiPathFromUiPath(browsePath, username, groupRootNames);
     void (async () => {
-      const name = await resolveNewDocumentName(operations, userRoot, files);
-      onCreateDocument(`${userRoot}/${name}`);
+      const name = await resolveNewDocumentName(operations, apiRoot, files);
+      setCreateDialogDefaultName(name);
+      setCreateDialogOpen(true);
     })();
-  }, [files, onCreateDocument, operations, username]);
+  }, [files, groupRootNames, onCreateDocument, operations, selectedDrivePrefix, username]);
+
+  const closeCreateDialog = useCallback(() => {
+    setCreateDialogOpen(false);
+  }, []);
+
+  const confirmCreateDocument = useCallback(
+    (name: string, destinationPath: string) => {
+      if (!onCreateDocument) return;
+      const trimmed = name.trim();
+      if (!trimmed) return;
+      const cwd = apiPathFromUiPath(destinationPath, username, groupRootNames);
+      const apiPath = normalizeApiVirtualPath(`${cwd}/${trimmed}`);
+      setCreateDialogOpen(false);
+      onCreateDocument(apiPath);
+    },
+    [groupRootNames, onCreateDocument, username],
+  );
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -199,6 +232,12 @@ export function DocsHomeWorkspace({
         username={username}
         groupRoots={knownGroupRoots}
         operations={operations}
+        createDialogOpen={createDialogOpen}
+        createDialogDefaultName={createDialogDefaultName}
+        createDialogBrowsePath={createDialogBrowsePath}
+        createDialogView={createDialogView}
+        onCloseCreateDialog={closeCreateDialog}
+        onConfirmCreateDocument={confirmCreateDocument}
       />
     </TooltipProvider>
   );
