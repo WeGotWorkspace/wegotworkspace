@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { DOCS_VIEW_MODE_STORAGE_KEY } from "@/hooks/persisted-view-mode";
+import { usePersistedViewMode } from "@/hooks/use-persisted-view-mode";
 import { Plus } from "lucide-react";
 import { TooltipProvider } from "@/ui/tooltip";
 import { Button } from "@/button/src/button";
@@ -9,7 +11,6 @@ import {
   WorkspaceUserFooter,
 } from "@/workspace-shell/src/workspace-app-layout";
 import { workspaceUserInitials, type WorkspaceSession } from "@/lib/workspace/workspace-session";
-import type { ViewMode } from "@/view-mode-toggle/src/view-mode-toggle";
 import { cn } from "@/lib/utils";
 import { mergeDocsLabels, type DocsUILabels } from "@/docs-core/src/docs-labels";
 import { DocsHomePane } from "@/docs-core/src/docs-home-pane";
@@ -60,7 +61,10 @@ export function DocsHomeWorkspace({
   const username = session.user.username ?? "";
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [viewMode, setViewMode] = usePersistedViewMode({
+    storageKey: DOCS_VIEW_MODE_STORAGE_KEY,
+    defaultMode: "list",
+  });
   const [query, setQuery] = useState("");
   const [selectedDrivePrefix, setSelectedDrivePrefix] = useState<string | null>(null);
   const [knownGroupRoots, setKnownGroupRoots] = useState<string[]>([]);
