@@ -11,6 +11,7 @@ import {
   type InstallControllerState,
 } from "@/install-core/src/use-install-controller";
 import { installStepTitle } from "@/install-core/src/install-labels";
+import { useDocumentTitle } from "@/lib/document-title";
 import { useInstallSidebarModel } from "@/install-core/src/use-install-sidebar-model";
 import { InstallWelcomePane } from "@/install-core/src/install-welcome-pane";
 import { InstallServerPane } from "@/install-core/src/install-server-pane";
@@ -34,6 +35,8 @@ export function InstallWorkspace({
   const sections = useInstallSidebarModel();
   const currentSection =
     sections.find((candidate) => candidate.id === controller.step.id) ?? sections[0]!;
+
+  useDocumentTitle(installStepTitle(currentSection.id));
 
   return (
     <TooltipProvider delayDuration={300}>

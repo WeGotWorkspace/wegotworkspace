@@ -14,6 +14,7 @@ import { ContactsNewMenu } from "@/contacts-core/src/contacts-new-menu";
 import type { ContactsWorkspaceProps } from "@/contacts-core/src/contacts-workspace-props";
 import { useCallback } from "react";
 import { useContactsController } from "@/contacts-core/src/use-contacts-controller";
+import { useDocumentTitle } from "@/lib/document-title";
 import { useContactsFailedSync } from "@/contacts-core/src/use-contacts-failed-sync";
 import { useContactsPendingSync } from "@/contacts-core/src/use-contacts-pending-sync";
 import { useContactsSidebarModel } from "@/contacts-core/src/use-contacts-sidebar-model";
@@ -146,6 +147,9 @@ export function ContactsWorkspace({
     sidebarDropZoneProps,
     addMembersToGroup,
   });
+
+  const browserTitleContext = active && selectedIds.length <= 1 ? displayName : viewLabel;
+  useDocumentTitle(browserTitleContext);
 
   return (
     <>

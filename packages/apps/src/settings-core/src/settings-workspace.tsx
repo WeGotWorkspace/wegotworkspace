@@ -11,6 +11,7 @@ import {
   useSettingsController,
   type SettingsControllerState,
 } from "@/settings-core/src/use-settings-controller";
+import { useDocumentTitle } from "@/lib/document-title";
 import type { SettingsWorkspaceProps } from "@/settings-core/src/settings-workspace-props";
 import { SettingsMailPane } from "@/settings-core/src/settings-mail-pane";
 import { SettingsMembershipsPane } from "@/settings-core/src/settings-memberships-pane";
@@ -21,6 +22,8 @@ import "@/settings-core/src/settings-workspace.css";
 export function SettingsWorkspace(props: SettingsWorkspaceProps) {
   const { data, session, operations, className, onLogout } = props;
   const controller = useSettingsController({ data, operations });
+
+  useDocumentTitle(controller.currentSection.label);
 
   return (
     <WorkspaceAppLayout

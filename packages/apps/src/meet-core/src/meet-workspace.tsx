@@ -4,6 +4,7 @@ import { MeetChatPane } from "@/meet-core/src/meet-chat-pane";
 import { MeetLobbyPane } from "@/meet-core/src/meet-lobby-pane";
 import { MeetRoomPane } from "@/meet-core/src/meet-room-pane";
 import { meetLabels } from "@/meet-core/src/meet-labels";
+import { useDocumentTitle } from "@/lib/document-title";
 import type { MeetWorkspaceProps } from "@/meet-core/src/meet-workspace-props";
 import { WorkspaceShellHeader } from "@/workspace-shell/src/workspace-shell-header";
 import { useMeetWorkspaceShell } from "@/meet-core/src/use-meet-workspace-shell";
@@ -29,6 +30,9 @@ export function MeetWorkspace({
     buildCallLink,
     onRoomChange,
   });
+
+  const browserTitleContext = shell.inCall ? (shell.controller.roomCode ?? undefined) : "Meet";
+  useDocumentTitle(browserTitleContext);
 
   return (
     <TooltipProvider delayDuration={200}>

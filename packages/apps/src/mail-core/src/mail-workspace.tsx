@@ -20,6 +20,7 @@ import { MailDetailActionBar } from "@/mail-core/src/mail-detail-action-bar";
 import { MailListPanel } from "@/mail-core/src/mail-list-panel";
 import { useMailSidebarModel } from "@/mail-core/src/use-mail-sidebar-model";
 import { useMailController } from "@/mail-core/src/use-mail-controller";
+import { useDocumentTitle } from "@/lib/document-title";
 import { folderTokenFromMailboxLabel } from "@/lib/mail/folder-token";
 import type { MailWorkspaceProps } from "@/mail-core/src/mail-workspace-props";
 
@@ -142,6 +143,10 @@ export function MailWorkspace({
     : undefined;
   const composeTargetDraft =
     composeDialogId && composeTarget ? composeDrafts[composeDialogId] : undefined;
+
+  const browserTitleContext =
+    active && selectedIds.length <= 1 ? active.title.trim() || L.noSubject : viewLabel;
+  useDocumentTitle(browserTitleContext);
 
   return (
     <>

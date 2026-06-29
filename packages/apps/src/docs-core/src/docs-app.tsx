@@ -14,12 +14,18 @@ import { encodeFileRoomId } from "@/lib/rtc/room-id";
 import type { DocsAppProps } from "@/docs-core/src/docs-app-props";
 import { isDocsCollabEditablePath } from "@/docs-core/src/docs-collab-text-files";
 import { docsLabels } from "@/docs-core/src/docs-labels";
+import { fileNameToBrowserTitle, useDocumentTitle } from "@/lib/document-title";
 import { DocsWorkspace } from "@/docs-core/src/docs-workspace";
 import { DocsHomeWorkspace } from "@/docs-core/src/docs-home-workspace";
 import { DocsCollabWorkspace, useDocsCollabPendingSync } from "@/text-editor-core/docs-collab";
 import { createWgwDocsCollabWire } from "@/docs-core/src/docs-collab-wgw-wire";
 import { useDocsAPI } from "@/docs-core/src/use-docs-api";
 import { createWgwDriveOperations } from "@/lib/api/wgw/drive";
+
+function DocsCollabDocumentTitle({ fileName }: { fileName: string }) {
+  useDocumentTitle(fileNameToBrowserTitle(fileName));
+  return null;
+}
 
 export function DocsApp({ apiSource }: DocsAppProps = {}) {
   const navigate = useNavigate();
@@ -131,12 +137,17 @@ export function DocsApp({ apiSource }: DocsAppProps = {}) {
               onLogout={handleLogout}
             />
           ) : showCollab && collabUrls ? (
-            <DocsCollabWorkspace
-              userName={collabUserName}
-              documentTitle={collabDocumentTitle}
-              urls={collabUrls}
-              wire={collabWire}
-            />
+            <>
+              {phase === "ready" && collabDocumentTitle ? (
+                <DocsCollabDocumentTitle fileName={collabDocumentTitle} />
+              ) : null}
+              <DocsCollabWorkspace
+                userName={collabUserName}
+                documentTitle={collabDocumentTitle}
+                urls={collabUrls}
+                wire={collabWire}
+              />
+            </>
           ) : (
             <DocsWorkspace
               data={data}

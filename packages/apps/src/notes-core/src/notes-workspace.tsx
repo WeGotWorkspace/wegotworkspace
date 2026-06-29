@@ -16,6 +16,8 @@ import { NotesDetailActionBar } from "@/notes-core/src/notes-detail-action-bar";
 import { formatNoteDateForList } from "@/notes-core/src/notes-date-utils";
 import { NotesListPanel } from "@/notes-core/src/notes-list-panel";
 import { useNotesController } from "@/notes-core/src/use-notes-controller";
+import { noteListTitle } from "@/notes-core/src/notes-note-utils";
+import { useDocumentTitle } from "@/lib/document-title";
 import { useNotesFailedSync } from "@/notes-core/src/use-notes-failed-sync";
 import { useNotesPendingSync } from "@/notes-core/src/use-notes-pending-sync";
 import { useNotesSidebarModel } from "@/notes-core/src/use-notes-sidebar-model";
@@ -152,6 +154,9 @@ export function NotesWorkspace({
       .flush()
       .finally(() => onRefreshList?.());
   }, [offlineUsername, onRefreshList]);
+
+  const browserTitleContext = active && selectedIds.length <= 1 ? noteListTitle(active) : viewLabel;
+  useDocumentTitle(browserTitleContext);
 
   return (
     <>

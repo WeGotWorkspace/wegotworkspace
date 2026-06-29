@@ -22,6 +22,7 @@ paths:
 | Shell layout, sidebar, navigation, toasts | This file |
 | Split product into App + Workspace + panes | [feature-blueprint.md](feature-blueprint.md) |
 | Collab / text-editor hooks (`docs-collab/`, Yjs + TipTap) | [collab-hooks.md](collab-hooks.md) |
+| **Browser tab titles** (`document.title`) | [document-title.md](document-title.md) |
 | **Add offline support to a new app** (Dexie, outbox, sync, conflicts) | [offline-platform.md](../../../packages/apps/docs/offline-platform.md) |
 
 ## `WorkspaceAppLayout` split mode

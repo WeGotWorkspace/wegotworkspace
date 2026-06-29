@@ -21,6 +21,7 @@ import { DocsOutlineSidebar } from "@/docs-core/src/docs-outline-sidebar";
 import { DocsWorkspaceModals } from "@/docs-core/src/docs-workspace-modals";
 import { focusOutlineHeading, parseMarkdownOutline } from "@/docs-core/src/docs-outline";
 import { useDocsController } from "@/docs-core/src/use-docs-controller";
+import { fileNameToBrowserTitle, useDocumentTitle } from "@/lib/document-title";
 import type { DocsWorkspaceProps } from "@/docs-core/src/docs-workspace-props";
 import "@/docs-core/src/docs-workspace.css";
 
@@ -45,6 +46,11 @@ export function DocsWorkspace({
   });
 
   const fileKey = filePath ?? data.document?.apiPath ?? "mock";
+  const browserTitleContext =
+    controller.title.trim().length > 0
+      ? fileNameToBrowserTitle(controller.title)
+      : controller.labels.emptyTitle;
+  useDocumentTitle(browserTitleContext);
 
   return (
     <TooltipProvider delayDuration={200}>

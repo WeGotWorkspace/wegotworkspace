@@ -175,5 +175,6 @@ Additional split references: `admin-workspace.tsx`, `drive-workspace.tsx`, `inst
 ## Related docs
 
 - Split feature layers, panes, controller hooks: [feature-blueprint.md](../../.agents/skills/workspace/feature-blueprint.md)
+- Browser tab titles (`document.title`): [document-title.md](../../.agents/skills/workspace/document-title.md)
 - Shell scrim, toasts, navigation ownership: [workspace SKILL.md](../../.agents/skills/workspace/SKILL.md)
 - Shell migration status: [rollout-pattern.md](./rollout-pattern.md)
