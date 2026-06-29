@@ -95,3 +95,17 @@ export const ListView: Story = {
     await expect(studioAssets.closest("tr")).toHaveClass(/drive-list-row--selected/);
   },
 };
+
+export const ListViewSelectionMode: Story = {
+  name: "List view selection mode",
+  tags: ["vitest-ci"],
+  args: { preset: "default", viewMode: "list" },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const row = canvas.getByText("Studio Assets").closest("tr");
+    if (!row) throw new Error("Expected Studio Assets row");
+    await userEvent.pointer({ keys: "[MouseRight>]", target: row });
+    await expect(row).toHaveAttribute("data-selection-mode", "true");
+    await expect(canvasElement.querySelector(".drive-list-row__checkbox")).toBeTruthy();
+  },
+};

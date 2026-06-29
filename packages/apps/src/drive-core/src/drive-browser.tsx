@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { Star, Download, Folder, HardDrive } from "lucide-react";
+import { Check, Star, Download, Folder, HardDrive } from "lucide-react";
 import { Tag } from "@/tag/src/tag";
 import { useAppToast } from "@/hooks/use-app-toast";
 import type { DriveFile, FileKind } from "@/drive-core/src/drive-models";
@@ -13,6 +13,30 @@ import { DriveMediaPreview } from "@/drive-core/src/drive-media-preview";
 import type { DriveUILabels } from "@/drive-core/src/drive-labels";
 import { driveFolderUiPath } from "@/drive-core/src/drive-item-path";
 import "@/drive-core/src/drive-browser.css";
+
+function DriveSelectionCheckbox({
+  isSelected,
+  className,
+}: {
+  isSelected: boolean;
+  selectionMode?: boolean;
+  className?: string;
+}) {
+  return (
+    <span aria-hidden className={cn("drive-selection-checkbox-wrap", className)}>
+      <span
+        className={cn(
+          "drive-selection-checkbox",
+          isSelected && "drive-selection-checkbox--selected",
+        )}
+      >
+        {isSelected ? (
+          <Check className="drive-selection-checkbox__icon" strokeWidth={2.75} />
+        ) : null}
+      </span>
+    </span>
+  );
+}
 
 /* ---------------- Grid view ---------------- */
 
@@ -33,7 +57,7 @@ export function DriveGridView({
   starred,
   labels,
   inTrash,
-  selectionMode: _selectionMode,
+  selectionMode,
   isTouch,
   isItemDragging,
   itemDragHandlers,
@@ -85,6 +109,7 @@ export function DriveGridView({
                 key={f.id}
                 file={f}
                 isSelected={selectedIds.includes(f.id)}
+                selectionMode={selectionMode}
                 isStarred={!!starred[f.id]}
                 isDragging={isItemDragging(f.id)}
                 isTouch={isTouch}
@@ -115,6 +140,7 @@ export function DriveGridView({
                 file={f}
                 previewSrc={imagePreviewUrls[f.id]}
                 isSelected={selectedIds.includes(f.id)}
+                selectionMode={selectionMode}
                 isStarred={!!starred[f.id]}
                 isDragging={isItemDragging(f.id)}
                 isTouch={isTouch}
@@ -171,6 +197,7 @@ function useLongPress(handler: () => void) {
 function FolderTile({
   file,
   isSelected,
+  selectionMode,
   isStarred,
   isDragging,
   isTouch,
@@ -189,6 +216,7 @@ function FolderTile({
 }: {
   file: DriveFile;
   isSelected: boolean;
+  selectionMode: boolean;
   isStarred: boolean;
   isDragging: boolean;
   isTouch: boolean;
@@ -222,12 +250,18 @@ function FolderTile({
       {...folderDropZone}
       className={cn(
         "group drive-folder-tile",
+        selectionMode && "drive-folder-tile--selection-mode",
         isDragging && "drive-folder-tile--dragging",
         folderDropZone.isDropTarget && "drive-folder-tile--drop-target",
         isSelected && "drive-folder-tile--selected",
         !isSelected && !folderDropZone.isDropTarget && "drive-folder-tile--idle",
       )}
     >
+      <DriveSelectionCheckbox
+        isSelected={isSelected}
+        selectionMode={selectionMode}
+        className="drive-folder-tile__checkbox"
+      />
       <button
         type="button"
         aria-label={file.title}
@@ -236,7 +270,7 @@ function FolderTile({
           if (lp.fired.current) return;
           onSelect(e);
         }}
-        onDoubleClick={onOpen}
+        onDoubleClick={selectionMode ? undefined : onOpen}
         onTouchStart={lp.start}
         onTouchEnd={lp.cancel}
         onTouchMove={lp.cancel}
@@ -267,6 +301,7 @@ function FileTile({
   file,
   previewSrc,
   isSelected,
+  selectionMode,
   isStarred,
   isDragging,
   isTouch,
@@ -286,6 +321,7 @@ function FileTile({
   file: DriveFile;
   previewSrc?: string;
   isSelected: boolean;
+  selectionMode: boolean;
   isStarred: boolean;
   isDragging: boolean;
   isTouch: boolean;
@@ -318,6 +354,7 @@ function FileTile({
       onDragEnd={itemDragHandlers.onDragEnd}
       className={cn(
         "group drive-file-tile",
+        selectionMode && "drive-file-tile--selection-mode",
         isDragging && "drive-file-tile--dragging",
         isSelected && "drive-file-tile--selected",
       )}
@@ -330,7 +367,7 @@ function FileTile({
           if (lp.fired.current) return;
           onSelect(e);
         }}
-        onDoubleClick={onOpen}
+        onDoubleClick={selectionMode ? undefined : onOpen}
         onTouchStart={lp.start}
         onTouchEnd={lp.cancel}
         onTouchMove={lp.cancel}
@@ -348,6 +385,11 @@ function FileTile({
         />
       </div>
       <div className="drive-file-tile__footer">
+        <DriveSelectionCheckbox
+          isSelected={isSelected}
+          selectionMode={selectionMode}
+          className="drive-file-tile__checkbox"
+        />
         <span className="drive-file-tile__kind-icon shrink-0">{kindIcon[file.kind]}</span>
         <div className="drive-file-tile__text min-w-0 flex-1">
           <span className="drive-file-tile__title">{file.title}</span>
@@ -425,6 +467,7 @@ export function DriveListView({
   starred,
   labels,
   inTrash,
+  selectionMode,
   isTouch,
   isItemDragging,
   itemDragHandlers,
@@ -522,8 +565,9 @@ export function DriveListView({
             return (
               <tr
                 key={f.id}
+                data-selection-mode={selectionMode ? "true" : "false"}
                 onClick={(e) => onSelect(f.id, e)}
-                onDoubleClick={() => onOpen(f)}
+                onDoubleClick={selectionMode ? undefined : () => onOpen(f)}
                 onTouchStart={lp.start}
                 onTouchEnd={lp.cancel}
                 onTouchMove={lp.cancel}
@@ -545,7 +589,12 @@ export function DriveListView({
                 )}
               >
                 <td className="drive-list-col-name py-2 min-w-0" {...(isFolder ? dropZone : {})}>
-                  <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="drive-list-row__name flex items-center gap-2.5 min-w-0">
+                    <DriveSelectionCheckbox
+                      isSelected={isSelected}
+                      selectionMode={selectionMode}
+                      className="drive-list-row__checkbox"
+                    />
                     <span
                       className={cn(
                         "shrink-0 [&>svg]:size-4",

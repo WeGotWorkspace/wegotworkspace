@@ -56,8 +56,13 @@
 }
 
 .drive-workspace .drive-folder-tile {
-  @apply relative w-full text-left px-4 h-16 sm:h-[4.25rem] flex items-center gap-3 transition-all outline-none focus-visible:ring-2;
+  @apply relative w-full text-left px-4 h-16 sm:h-[4.25rem] flex items-center gap-3 outline-none focus-visible:ring-2;
   border-radius: var(--control-radius);
+  transition:
+    padding 180ms ease,
+    background-color 150ms ease,
+    box-shadow 150ms ease,
+    opacity 150ms ease;
 }
 
 /* Invisible primary click/keyboard target covering the tile; visual children
@@ -72,7 +77,8 @@
 .drive-workspace .drive-folder-tile__title,
 .drive-workspace .drive-folder-tile__star,
 .drive-workspace .drive-file-tile__preview,
-.drive-workspace .drive-file-tile__footer {
+.drive-workspace .drive-file-tile__footer,
+.drive-workspace .drive-selection-checkbox-wrap {
   pointer-events: none;
 }
 
@@ -113,6 +119,69 @@
 .drive-workspace .drive-folder-tile__star {
   @apply size-3.5 shrink-0;
   color: var(--color-emerald);
+}
+
+.drive-workspace .drive-folder-tile--selection-mode {
+  @apply pl-9;
+}
+
+.drive-workspace .drive-folder-tile__checkbox {
+  @apply absolute left-3 top-1/2 z-[1] -translate-y-1/2;
+}
+
+.drive-workspace .drive-file-tile__footer {
+  @apply relative px-3.5 py-3 sm:px-4 sm:py-3.5 flex items-center gap-2.5 border-t;
+  border-color: color-mix(in oklab, var(--color-ink) 8%, transparent);
+  transition: padding 180ms ease;
+}
+
+.drive-workspace .drive-file-tile--selection-mode .drive-file-tile__footer {
+  @apply pl-9;
+}
+
+.drive-workspace .drive-file-tile__checkbox {
+  @apply absolute left-3 top-1/2 z-[1] -translate-y-1/2;
+}
+
+.drive-workspace .drive-selection-checkbox-wrap {
+  @apply inline-flex items-center justify-center;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.drive-workspace
+  :is(
+    .drive-folder-tile--selection-mode,
+    .drive-file-tile--selection-mode,
+    .drive-list-row[data-selection-mode="true"]
+  )
+  .drive-selection-checkbox-wrap {
+  opacity: 1;
+}
+
+.drive-workspace
+  :is(
+    .drive-folder-tile--selection-mode .drive-folder-tile__title,
+    .drive-file-tile--selection-mode .drive-file-tile__title,
+    .drive-file-tile--selection-mode .drive-file-tile__location,
+    .drive-list-row[data-selection-mode="true"] .drive-list-row__name
+  ) {
+  @apply select-none;
+}
+
+.drive-workspace .drive-selection-checkbox {
+  @apply inline-flex size-4 items-center justify-center rounded-[4px] border;
+  border-color: color-mix(in oklab, var(--color-ink) 30%, transparent);
+  background-color: transparent;
+}
+
+.drive-workspace .drive-selection-checkbox--selected {
+  border-color: var(--color-emerald);
+  background-color: var(--color-emerald);
+}
+
+.drive-workspace .drive-selection-checkbox__icon {
+  @apply size-3 text-white;
 }
 
 .drive-workspace .drive-file-tile {
@@ -169,11 +238,6 @@
     width: 4rem;
     height: 4rem;
   }
-}
-
-.drive-workspace .drive-file-tile__footer {
-  @apply px-3.5 py-3 sm:px-4 sm:py-3.5 flex items-center gap-2.5 border-t;
-  border-color: color-mix(in oklab, var(--color-ink) 8%, transparent);
 }
 
 .drive-workspace .drive-file-tile__kind-icon {
@@ -243,6 +307,19 @@
 
 .drive-workspace .drive-list-row {
   @apply cursor-default transition-colors;
+}
+
+.drive-workspace .drive-list-row__name {
+  @apply relative;
+  transition: padding-inline-start 180ms ease;
+}
+
+.drive-workspace .drive-list-row[data-selection-mode="true"] .drive-list-row__name {
+  @apply pl-9;
+}
+
+.drive-workspace .drive-list-row__checkbox {
+  @apply absolute left-3 top-1/2 -translate-y-1/2;
 }
 
 .drive-workspace .drive-list-row > td {

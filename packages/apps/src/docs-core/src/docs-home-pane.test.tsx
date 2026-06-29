@@ -62,7 +62,7 @@ function renderPane(
   },
 ) {
   const onOpenFile = vi.fn();
-  render(
+  const view = render(
     <TooltipProvider>
       <DocsHomePane
         labels={docsLabels}
@@ -85,7 +85,7 @@ function renderPane(
       />
     </TooltipProvider>,
   );
-  return { onOpenFile };
+  return { onOpenFile, container: view.container };
 }
 
 function selectTwoItems(viewMode: "list" | "grid") {
@@ -160,5 +160,11 @@ describe("DocsHomePane multi-select batch bar", () => {
     selectTwoItems("list");
     fireEvent.click(screen.getByRole("button", { name: driveLabels.selectionDone }));
     expect(screen.queryByText("2 selected")).toBeNull();
+  });
+
+  it("shows checkboxes in list view after context menu enters selection mode", () => {
+    const { container } = renderPane("list", [FILE, FILE2]);
+    fireEvent.contextMenu(screen.getByText(FILE.title).closest("tr")!);
+    expect(container.querySelector(".drive-list-row__checkbox")).toBeTruthy();
   });
 });
