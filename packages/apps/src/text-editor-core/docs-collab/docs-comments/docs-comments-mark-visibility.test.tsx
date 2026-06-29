@@ -6,16 +6,20 @@ import type { DocsCommentThread } from "../docs-comments-types";
 import * as viewTimelinePolyfill from "./docs-comments-view-timeline-polyfill";
 import {
   buildCollabTimelineScope,
+  buildCollabTimelineStylesheet,
   buildCommentTimelineScope,
   buildCommentViewTimelineStylesheet,
+  collabMarkIds,
   commentViewTimelineName,
   DOCS_COMMENT_VIEW_TIMELINE_STYLE_ID,
+  failOpenBrokenTimelineCards,
   isCommentMarkInScrollport,
   observeCommentMarkVisibility,
   resolveCommentVisibilityMode,
   resolveCommentVisibilityModeAsync,
   sortThreadsByDocumentOrder,
   suggestionViewTimelineName,
+  syncCollabCardScrollLinkedState,
   syncCommentViewTimelineStyles,
   syncCommentMarkVisibility,
 } from "./docs-comments-mark-visibility";
@@ -137,6 +141,21 @@ describe("sortThreadsByDocumentOrder", () => {
   });
 });
 
+describe("buildCollabTimelineStylesheet", () => {
+  it("builds comment and suggestion rules from a unified mark-id map", () => {
+    const css = buildCollabTimelineStylesheet(collabMarkIds(["t-1"], ["s-1"]));
+    expect(css).toContain(
+      '[data-comment-id="t-1"]{view-timeline-name:--docs-cmt-t-1;view-timeline-axis:block;}',
+    );
+    expect(css).toContain(
+      '[data-change-id="s-1"]{view-timeline-name:--docs-sug-s-1;view-timeline-axis:block;}',
+    );
+    expect(css).toContain(
+      ".text-editor-sheet--fill{timeline-scope:--docs-cmt-t-1, --docs-sug-s-1;}",
+    );
+  });
+});
+
 describe("buildCommentViewTimelineStylesheet", () => {
   it("builds mark, scope, and card animation-timeline rules", () => {
     const css = buildCommentViewTimelineStylesheet(["t-1", "t-2"]);
@@ -149,20 +168,15 @@ describe("buildCommentViewTimelineStylesheet", () => {
     expect(css).toContain(
       '.docs-comments-floating-layer[data-visibility-mode="timeline"] .docs-comments-floating-layer__card[data-thread-id="t-1"]{animation-timeline:--docs-cmt-t-1;animation-range:entry 0% exit 100%;}',
     );
-    expect(css).toContain(
-      '.docs-collab-review-floating-layer[data-visibility-mode="timeline"] .docs-collab-review-floating-layer__card--comment[data-thread-id="t-1"]{animation-timeline:--docs-cmt-t-1;animation-range:entry 0% exit 100%;}',
-    );
   });
 
-  it("builds suggestion mark and card animation-timeline rules", () => {
+  it("builds suggestion mark rules without floating card selectors", () => {
     const css = buildCommentViewTimelineStylesheet([], ["s-1"]);
     expect(css).toContain(
       '[data-change-id="s-1"]{view-timeline-name:--docs-sug-s-1;view-timeline-axis:block;}',
     );
     expect(css).toContain(".text-editor-sheet--fill{timeline-scope:--docs-sug-s-1;}");
-    expect(css).toContain(
-      '.docs-collab-review-floating-layer[data-visibility-mode="timeline"] .docs-collab-review-floating-layer__card--suggestion[data-change-id="s-1"]{animation-timeline:--docs-sug-s-1;animation-range:entry 0% exit 100%;}',
-    );
+    expect(css).not.toContain("docs-collab-review-floating-layer");
   });
 });
 
@@ -324,13 +338,15 @@ describe("syncCommentMarkVisibility", () => {
   });
 
   it("sets data-in-view on suggestion cards from change mark geometry", () => {
-    const editor = createEditor(
-      '<p><ins data-change-id="s-1" class="track-change">Hello</ins></p>',
-    );
+    const editor = createEditor("<p>Hello</p>");
+    const mark = document.createElement("span");
+    mark.setAttribute("data-change-id", "s-1");
+    mark.textContent = "Hello";
+    editor.view.dom.querySelector("p")!.append(mark);
+
     const scrollport = editor.view.dom.closest(".text-editor-sheet--fill") as HTMLElement;
-    const mark = editor.view.dom.querySelector('[data-change-id="s-1"]') as HTMLElement;
     const card = document.createElement("div");
-    card.className = "docs-collab-review-floating-layer__card--suggestion";
+    card.className = "docs-comments-floating-layer__card";
     document.body.append(card);
 
     vi.spyOn(mark, "getBoundingClientRect").mockReturnValue({
@@ -550,13 +566,15 @@ describe("observeCommentMarkVisibility", () => {
   });
 
   it("updates suggestion cards from IntersectionObserver callbacks", () => {
-    const editor = createEditor(
-      '<p><ins data-change-id="s-1" class="track-change">Hello</ins></p>',
-    );
+    const editor = createEditor("<p>Hello</p>");
+    const mark = document.createElement("span");
+    mark.setAttribute("data-change-id", "s-1");
+    mark.textContent = "Hello";
+    editor.view.dom.querySelector("p")!.append(mark);
+
     const scrollport = editor.view.dom.closest(".text-editor-sheet--fill") as HTMLElement;
-    const mark = editor.view.dom.querySelector('[data-change-id="s-1"]') as HTMLElement;
     const card = document.createElement("div");
-    card.className = "docs-collab-review-floating-layer__card--suggestion";
+    card.className = "docs-comments-floating-layer__card";
     document.body.append(card);
 
     const instances: Array<{
@@ -619,6 +637,116 @@ describe("observeCommentMarkVisibility", () => {
     expect(card.getAttribute("data-in-view")).toBe("false");
 
     observer.disconnect();
+  });
+});
+
+describe("syncCollabCardScrollLinkedState", () => {
+  it("marks suggestion cards scroll-linked when their change mark exists", () => {
+    const editor = createEditor("<p>Hello</p>");
+    const mark = document.createElement("ins");
+    mark.setAttribute("data-change-id", "s-1");
+    mark.textContent = "!";
+    editor.view.dom.querySelector("p")!.append(mark);
+
+    const card = document.createElement("div");
+    card.className = "docs-comments-floating-layer__card";
+    document.body.append(card);
+
+    syncCollabCardScrollLinkedState(editor, () => card, [], ["s-1"]);
+    expect(card.getAttribute("data-scroll-linked")).toBe("true");
+
+    editor.destroy();
+  });
+
+  it("marks cards scroll-linked when their document mark exists", () => {
+    const editor = createEditor(
+      '<p><span data-comment-id="t-1" class="comment-mark">Hello</span></p>',
+    );
+    const card = document.createElement("div");
+    card.className = "docs-comments-floating-layer__card";
+    document.body.append(card);
+
+    syncCollabCardScrollLinkedState(editor, () => card, ["t-1"]);
+    expect(card.getAttribute("data-scroll-linked")).toBe("true");
+
+    editor.destroy();
+  });
+
+  it("marks cards as not scroll-linked when the document mark is missing", () => {
+    const editor = createEditor("<p>Hello</p>");
+    const card = document.createElement("div");
+    card.className = "docs-comments-floating-layer__card";
+    document.body.append(card);
+
+    syncCollabCardScrollLinkedState(editor, () => card, ["t-1"]);
+    expect(card.getAttribute("data-scroll-linked")).toBe("false");
+
+    editor.destroy();
+  });
+
+  it("keeps timeline fallback cards scroll-unlinked after resync", () => {
+    const editor = createEditor(
+      '<p><span data-comment-id="t-1" class="comment-mark">Hello</span></p>',
+    );
+    const card = document.createElement("div");
+    card.className = "docs-comments-floating-layer__card";
+    card.setAttribute("data-timeline-fallback", "true");
+    card.setAttribute("data-scroll-linked", "false");
+    card.setAttribute("data-in-view", "true");
+    document.body.append(card);
+
+    syncCollabCardScrollLinkedState(editor, () => card, ["t-1"]);
+    expect(card.getAttribute("data-scroll-linked")).toBe("false");
+    expect(card.getAttribute("data-timeline-fallback")).toBe("true");
+
+    editor.destroy();
+  });
+});
+
+describe("failOpenBrokenTimelineCards", () => {
+  it("falls back to geometry visibility when scroll-linked cards stay hidden in view", () => {
+    const editor = createEditor(
+      '<p><span data-comment-id="t-1" class="comment-mark">Hello</span></p>',
+    );
+    const scrollport = editor.view.dom.closest(".text-editor-sheet--fill") as HTMLElement;
+    const mark = editor.view.dom.querySelector('[data-comment-id="t-1"]') as HTMLElement;
+    const card = document.createElement("div");
+    card.className = "docs-comments-floating-layer__card";
+    card.setAttribute("data-scroll-linked", "true");
+    document.body.append(card);
+
+    vi.spyOn(mark, "getBoundingClientRect").mockReturnValue({
+      top: 100,
+      bottom: 120,
+      left: 10,
+      right: 40,
+      width: 30,
+      height: 20,
+      x: 10,
+      y: 100,
+      toJSON: () => ({}),
+    });
+    vi.spyOn(scrollport, "getBoundingClientRect").mockReturnValue({
+      top: 0,
+      bottom: 800,
+      left: 0,
+      right: 600,
+      width: 600,
+      height: 800,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+    vi.spyOn(window, "getComputedStyle").mockReturnValue({
+      opacity: "0",
+    } as CSSStyleDeclaration);
+
+    failOpenBrokenTimelineCards(editor, () => card, ["t-1"]);
+    expect(card.getAttribute("data-scroll-linked")).toBe("false");
+    expect(card.getAttribute("data-timeline-fallback")).toBe("true");
+    expect(card.getAttribute("data-in-view")).toBe("true");
+
+    editor.destroy();
   });
 });
 

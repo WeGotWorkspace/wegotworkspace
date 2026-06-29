@@ -65,7 +65,7 @@ function useExplicitDraftCompose({
       setReviewPanelOpen(true);
       return;
     }
-    if (!shouldAutoOpenCommentsForThreads("margin-compact")) return;
+    if (!shouldAutoOpenCommentsForThreads("sidebar")) return;
     if (openThreads.length > 0) {
       setReviewPanelOpen(true);
     }

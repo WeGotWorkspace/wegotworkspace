@@ -16,6 +16,29 @@ export const DOCS_COMMENT_CARD_VISIBILITY_ANIMATION_RANGE = "entry 0% exit 100%"
 
 export type DocsCommentVisibilityMode = "timeline" | "observer" | "static";
 
+export type CollabMarkKind = "comment" | "suggestion";
+
+export type CollabMarkIds = {
+  comment: readonly string[];
+  suggestion: readonly string[];
+};
+
+type CollabMarkKindConfig = {
+  markAttribute: "data-comment-id" | "data-change-id";
+  viewTimelineName: (id: string) => `--docs-cmt-${string}` | `--docs-sug-${string}`;
+  escapeIdForSelector: (id: string) => string;
+  cardTimelineSelectors: (escapedId: string) => string[];
+};
+
+const COLLAB_MARK_KINDS: CollabMarkKind[] = ["comment", "suggestion"];
+
+export function collabMarkIds(
+  threadIds: readonly string[] = [],
+  changeIds: readonly string[] = [],
+): CollabMarkIds {
+  return { comment: threadIds, suggestion: changeIds };
+}
+
 /** Stable view-timeline name for a comment thread mark. */
 export function commentViewTimelineName(threadId: string): `--docs-cmt-${string}` {
   const safe = threadId.replace(/[^a-zA-Z0-9_-]/g, "_");
@@ -27,6 +50,23 @@ export function suggestionViewTimelineName(changeId: string): `--docs-sug-${stri
   const safe = changeId.replace(/[^a-zA-Z0-9_-]/g, "_");
   return `--docs-sug-${safe}`;
 }
+
+const COLLAB_MARK_KIND_CONFIG: Record<CollabMarkKind, CollabMarkKindConfig> = {
+  comment: {
+    markAttribute: "data-comment-id",
+    viewTimelineName: commentViewTimelineName,
+    escapeIdForSelector: escapeCommentIdForSelector,
+    cardTimelineSelectors: (escapedId) => [
+      `.docs-comments-floating-layer[data-visibility-mode="timeline"] .docs-comments-floating-layer__card[data-thread-id="${escapedId}"]`,
+    ],
+  },
+  suggestion: {
+    markAttribute: "data-change-id",
+    viewTimelineName: suggestionViewTimelineName,
+    escapeIdForSelector: escapeTrackChangeIdForSelector,
+    cardTimelineSelectors: (_escapedId) => [],
+  },
+};
 
 export function findDocsCommentScrollport(editor: Editor): HTMLElement | null {
   if (editor.isDestroyed) return null;
@@ -81,50 +121,47 @@ export async function resolveCommentVisibilityModeAsync(): Promise<DocsCommentVi
   return polyfillReady ? "timeline" : "observer";
 }
 
+function buildCollabMarkTimelineRules(kind: CollabMarkKind, ids: readonly string[]): string[] {
+  const config = COLLAB_MARK_KIND_CONFIG[kind];
+  return ids.map((id) => {
+    const selector = `[${config.markAttribute}="${config.escapeIdForSelector(id)}"]`;
+    const name = config.viewTimelineName(id);
+    return `${selector}{view-timeline-name:${name};view-timeline-axis:block;}`;
+  });
+}
+
+function buildCollabCardTimelineRules(kind: CollabMarkKind, ids: readonly string[]): string[] {
+  const config = COLLAB_MARK_KIND_CONFIG[kind];
+  return ids.flatMap((id) => {
+    const escapedId = config.escapeIdForSelector(id);
+    const timelineName = config.viewTimelineName(id);
+    const animationProps = `animation-timeline:${timelineName};animation-range:${DOCS_COMMENT_CARD_VISIBILITY_ANIMATION_RANGE};`;
+    return config
+      .cardTimelineSelectors(escapedId)
+      .map((selector) => `${selector}{${animationProps}}`);
+  });
+}
+
+export function buildCollabTimelineStylesheet(ids: CollabMarkIds): string {
+  const hasMarks = COLLAB_MARK_KINDS.some((kind) => ids[kind].length > 0);
+  if (!hasMarks) return "";
+
+  const markRules = COLLAB_MARK_KINDS.flatMap((kind) =>
+    buildCollabMarkTimelineRules(kind, ids[kind]),
+  );
+  const scopeRule = `${DOCS_COMMENT_SCROLLPORT_SELECTOR}{timeline-scope:${buildCollabTimelineScopeFromIds(ids)};}`;
+  const cardRules = COLLAB_MARK_KINDS.flatMap((kind) =>
+    buildCollabCardTimelineRules(kind, ids[kind]),
+  );
+
+  return [...markRules, scopeRule, ...cardRules].join("\n");
+}
+
 export function buildCommentViewTimelineStylesheet(
   threadIds: readonly string[],
   changeIds: readonly string[] = [],
 ): string {
-  if (threadIds.length === 0 && changeIds.length === 0) return "";
-
-  const commentMarkRules = threadIds.map((id) => {
-    const selector = `[data-comment-id="${escapeCommentIdForSelector(id)}"]`;
-    const name = commentViewTimelineName(id);
-    return `${selector}{view-timeline-name:${name};view-timeline-axis:block;}`;
-  });
-
-  const suggestionMarkRules = changeIds.map((id) => {
-    const selector = `[data-change-id="${escapeTrackChangeIdForSelector(id)}"]`;
-    const name = suggestionViewTimelineName(id);
-    return `${selector}{view-timeline-name:${name};view-timeline-axis:block;}`;
-  });
-
-  const scopeRule = `${DOCS_COMMENT_SCROLLPORT_SELECTOR}{timeline-scope:${buildCollabTimelineScope(threadIds, changeIds)};}`;
-
-  const commentCardRules = threadIds.flatMap((id) => {
-    const escapedId = escapeCommentIdForSelector(id);
-    const timelineName = commentViewTimelineName(id);
-    const animationProps = `animation-timeline:${timelineName};animation-range:${DOCS_COMMENT_CARD_VISIBILITY_ANIMATION_RANGE};`;
-    return [
-      `.docs-comments-floating-layer[data-visibility-mode="timeline"] .docs-comments-floating-layer__card[data-thread-id="${escapedId}"]{${animationProps}}`,
-      `.docs-collab-review-floating-layer[data-visibility-mode="timeline"] .docs-collab-review-floating-layer__card--comment[data-thread-id="${escapedId}"]{${animationProps}}`,
-    ];
-  });
-
-  const suggestionCardRules = changeIds.map((id) => {
-    const escapedId = escapeTrackChangeIdForSelector(id);
-    const timelineName = suggestionViewTimelineName(id);
-    const animationProps = `animation-timeline:${timelineName};animation-range:${DOCS_COMMENT_CARD_VISIBILITY_ANIMATION_RANGE};`;
-    return `.docs-collab-review-floating-layer[data-visibility-mode="timeline"] .docs-collab-review-floating-layer__card--suggestion[data-change-id="${escapedId}"]{${animationProps}}`;
-  });
-
-  return [
-    ...commentMarkRules,
-    ...suggestionMarkRules,
-    scopeRule,
-    ...commentCardRules,
-    ...suggestionCardRules,
-  ].join("\n");
+  return buildCollabTimelineStylesheet(collabMarkIds(threadIds, changeIds));
 }
 
 function clearLegacyInlineViewTimelines(editor: Editor): void {
@@ -165,29 +202,37 @@ function applyCommentViewTimelineStylesheet(css: string): void {
 }
 
 /** Inject view-timeline stylesheet rules for marks, scope, and card animation-timeline. */
+export function syncCollabViewTimelineStyles(editor: Editor, ids: CollabMarkIds): void {
+  if (editor.isDestroyed) return;
+
+  clearLegacyInlineViewTimelines(editor);
+  applyCommentViewTimelineStylesheet(buildCollabTimelineStylesheet(ids));
+}
+
+/** Inject view-timeline stylesheet rules for marks, scope, and card animation-timeline. */
 export function syncCommentViewTimelineStyles(
   editor: Editor,
   threadIds: readonly string[],
   changeIds: readonly string[] = [],
 ): void {
-  if (editor.isDestroyed) return;
-
-  clearLegacyInlineViewTimelines(editor);
-  applyCommentViewTimelineStylesheet(buildCommentViewTimelineStylesheet(threadIds, changeIds));
+  syncCollabViewTimelineStyles(editor, collabMarkIds(threadIds, changeIds));
 }
 
 export function buildCommentTimelineScope(threadIds: readonly string[]): string {
   return buildCollabTimelineScope(threadIds, []);
 }
 
+function buildCollabTimelineScopeFromIds(ids: CollabMarkIds): string {
+  return COLLAB_MARK_KINDS.flatMap((kind) =>
+    ids[kind].map((id) => COLLAB_MARK_KIND_CONFIG[kind].viewTimelineName(id)),
+  ).join(", ");
+}
+
 export function buildCollabTimelineScope(
   threadIds: readonly string[],
   changeIds: readonly string[],
 ): string {
-  return [
-    ...threadIds.map((id) => commentViewTimelineName(id)),
-    ...changeIds.map((id) => suggestionViewTimelineName(id)),
-  ].join(", ");
+  return buildCollabTimelineScopeFromIds(collabMarkIds(threadIds, changeIds));
 }
 
 export type CommentMarkVisibilityObserver = {
@@ -200,13 +245,18 @@ type ObserveCommentMarkVisibilityOptions = {
   threshold?: number | number[];
 };
 
-function collectCommentMarks(editor: Editor, threadIds: readonly string[]): Map<string, Element> {
+function collectCollabMarksForKind(
+  editor: Editor,
+  kind: CollabMarkKind,
+  ids: readonly string[],
+): Map<string, Element> {
   const marks = new Map<string, Element>();
   if (editor.isDestroyed) return marks;
 
-  for (const id of threadIds) {
+  const config = COLLAB_MARK_KIND_CONFIG[kind];
+  for (const id of ids) {
     const mark = editor.view.dom.querySelector(
-      `[data-comment-id="${escapeCommentIdForSelector(id)}"]`,
+      `[${config.markAttribute}="${config.escapeIdForSelector(id)}"]`,
     );
     if (mark) marks.set(id, mark);
   }
@@ -214,32 +264,10 @@ function collectCommentMarks(editor: Editor, threadIds: readonly string[]): Map<
   return marks;
 }
 
-function collectSuggestionMarks(
-  editor: Editor,
-  changeIds: readonly string[],
-): Map<string, Element> {
-  const marks = new Map<string, Element>();
-  if (editor.isDestroyed) return marks;
-
-  for (const id of changeIds) {
-    const mark = editor.view.dom.querySelector(
-      `[data-change-id="${escapeTrackChangeIdForSelector(id)}"]`,
-    );
-    if (mark) marks.set(id, mark);
-  }
-
-  return marks;
-}
-
-function collectCollabMarks(
-  editor: Editor,
-  threadIds: readonly string[],
-  changeIds: readonly string[],
-): Map<string, Element> {
-  return new Map([
-    ...collectCommentMarks(editor, threadIds),
-    ...collectSuggestionMarks(editor, changeIds),
-  ]);
+function collectCollabMarks(editor: Editor, ids: CollabMarkIds): Map<string, Element> {
+  return new Map(
+    COLLAB_MARK_KINDS.flatMap((kind) => [...collectCollabMarksForKind(editor, kind, ids[kind])]),
+  );
 }
 
 function getMarkIdFromElement(element: Element): string | null {
@@ -264,7 +292,7 @@ export function isCommentMarkInScrollport(mark: Element, scrollport: HTMLElement
 export function syncCommentCardVisibilityFromMarks(
   marks: ReadonlyMap<string, Element>,
   scrollport: HTMLElement | null,
-  getCardElement: (threadId: string) => HTMLElement | undefined,
+  getCardElement: (markId: string) => HTMLElement | undefined,
 ): void {
   for (const [id, mark] of marks) {
     const card = getCardElement(id);
@@ -277,7 +305,55 @@ export function syncCommentCardVisibilityFromMarks(
 }
 
 /** Geometry-only visibility sync for static (reduced-motion) mode. */
+export function syncCollabMarkVisibility(
+  editor: Editor,
+  getCardElement: (markId: string) => HTMLElement | undefined,
+  ids: CollabMarkIds,
+): void {
+  if (editor.isDestroyed) return;
+
+  const scrollport = findDocsCommentScrollport(editor);
+  const marks = collectCollabMarks(editor, ids);
+  syncCommentCardVisibilityFromMarks(marks, scrollport, getCardElement);
+}
+
+/** Geometry-only visibility sync for static (reduced-motion) mode. */
 export function syncCommentMarkVisibility(
+  editor: Editor,
+  getCardElement: (markId: string) => HTMLElement | undefined,
+  threadIds: readonly string[],
+  changeIds: readonly string[] = [],
+): void {
+  syncCollabMarkVisibility(editor, getCardElement, collabMarkIds(threadIds, changeIds));
+}
+
+function syncCollabCardScrollLinkedForKind(
+  marks: ReadonlyMap<string, Element>,
+  getCardElement: (markId: string) => HTMLElement | undefined,
+  ids: readonly string[],
+): void {
+  for (const id of ids) {
+    const card = getCardElement(id);
+    if (!card) continue;
+
+    if (!marks.has(id)) {
+      card.setAttribute("data-scroll-linked", "false");
+      card.removeAttribute("data-timeline-fallback");
+      continue;
+    }
+
+    if (card.getAttribute("data-timeline-fallback") === "true") {
+      card.setAttribute("data-scroll-linked", "false");
+      continue;
+    }
+
+    card.setAttribute("data-scroll-linked", "true");
+    card.removeAttribute("data-timeline-fallback");
+  }
+}
+
+/** True when a card can bind to a document mark for scroll-driven visibility. */
+export function syncCollabCardScrollLinkedState(
   editor: Editor,
   getCardElement: (markId: string) => HTMLElement | undefined,
   threadIds: readonly string[],
@@ -285,20 +361,73 @@ export function syncCommentMarkVisibility(
 ): void {
   if (editor.isDestroyed) return;
 
+  const ids = collabMarkIds(threadIds, changeIds);
+  const marks = collectCollabMarks(editor, ids);
+  for (const kind of COLLAB_MARK_KINDS) {
+    syncCollabCardScrollLinkedForKind(marks, getCardElement, ids[kind]);
+  }
+}
+
+const BROKEN_TIMELINE_OPACITY_THRESHOLD = 0.05;
+
+/**
+ * Fail open when scroll-linked cards stay hidden despite their mark being in view
+ * (broken animation-timeline binding or view-timeline support).
+ */
+export function failOpenBrokenTimelineCards(
+  editor: Editor,
+  getCardElement: (markId: string) => HTMLElement | undefined,
+  threadIds: readonly string[],
+  changeIds: readonly string[] = [],
+): void {
+  if (editor.isDestroyed || typeof window === "undefined") return;
+
   const scrollport = findDocsCommentScrollport(editor);
-  const marks = collectCollabMarks(editor, threadIds, changeIds);
-  syncCommentCardVisibilityFromMarks(marks, scrollport, getCardElement);
+  const marks = collectCollabMarks(editor, collabMarkIds(threadIds, changeIds));
+
+  for (const [id, mark] of marks) {
+    const card = getCardElement(id);
+    if (!card || card.getAttribute("data-scroll-linked") !== "true") continue;
+    if (!isCommentMarkInScrollport(mark, scrollport)) continue;
+
+    const opacity = Number.parseFloat(window.getComputedStyle(card).opacity);
+    if (!Number.isNaN(opacity) && opacity > BROKEN_TIMELINE_OPACITY_THRESHOLD) continue;
+
+    card.setAttribute("data-scroll-linked", "false");
+    card.setAttribute("data-timeline-fallback", "true");
+    card.setAttribute("data-in-view", "true");
+  }
+}
+
+/**
+ * Single sync entry for floating layers — timeline stylesheet, scroll-link state,
+ * geometry visibility, and timeline fail-open.
+ */
+export function syncCollabCardsVisibility(
+  editor: Editor,
+  getCardElement: (markId: string) => HTMLElement | undefined,
+  ids: CollabMarkIds,
+  visibilityMode: DocsCommentVisibilityMode,
+): void {
+  if (editor.isDestroyed) return;
+
+  syncCollabViewTimelineStyles(editor, ids);
+  syncCollabCardScrollLinkedState(editor, getCardElement, ids.comment, ids.suggestion);
+  syncCollabMarkVisibility(editor, getCardElement, ids);
+
+  if (visibilityMode === "timeline") {
+    failOpenBrokenTimelineCards(editor, getCardElement, ids.comment, ids.suggestion);
+  }
 }
 
 /**
  * Fallback visibility driver when view-timeline is unavailable
  * (polyfill failed and `@supports not (animation-timeline: view())`).
  */
-export function observeCommentMarkVisibility(
+export function observeCollabMarkVisibility(
   editor: Editor,
   getCardElement: (markId: string) => HTMLElement | undefined,
-  threadIds: readonly string[],
-  changeIds: readonly string[] = [],
+  ids: CollabMarkIds,
   options: ObserveCommentMarkVisibilityOptions = {},
 ): CommentMarkVisibilityObserver {
   if (editor.isDestroyed) {
@@ -306,7 +435,7 @@ export function observeCommentMarkVisibility(
   }
 
   const scrollport = findDocsCommentScrollport(editor);
-  let marks = collectCollabMarks(editor, threadIds, changeIds);
+  let marks = collectCollabMarks(editor, ids);
 
   syncCommentCardVisibilityFromMarks(marks, scrollport, getCardElement);
 
@@ -314,7 +443,7 @@ export function observeCommentMarkVisibility(
     return {
       disconnect: () => {},
       resync: () => {
-        marks = collectCollabMarks(editor, threadIds, changeIds);
+        marks = collectCollabMarks(editor, ids);
         syncCommentCardVisibilityFromMarks(marks, scrollport, getCardElement);
       },
     };
@@ -347,11 +476,30 @@ export function observeCommentMarkVisibility(
   return {
     disconnect: () => observer.disconnect(),
     resync: () => {
-      marks = collectCollabMarks(editor, threadIds, changeIds);
+      marks = collectCollabMarks(editor, ids);
       syncCommentCardVisibilityFromMarks(marks, scrollport, getCardElement);
       observeMarks(marks);
     },
   };
+}
+
+/**
+ * Fallback visibility driver when view-timeline is unavailable
+ * (polyfill failed and `@supports not (animation-timeline: view())`).
+ */
+export function observeCommentMarkVisibility(
+  editor: Editor,
+  getCardElement: (markId: string) => HTMLElement | undefined,
+  threadIds: readonly string[],
+  changeIds: readonly string[] = [],
+  options: ObserveCommentMarkVisibilityOptions = {},
+): CommentMarkVisibilityObserver {
+  return observeCollabMarkVisibility(
+    editor,
+    getCardElement,
+    collabMarkIds(threadIds, changeIds),
+    options,
+  );
 }
 
 export function measureFloatingLayerContainerMaxHeight(

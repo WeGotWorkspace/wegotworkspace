@@ -1,11 +1,9 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  DOCS_COMMENTS_CENTERED_SHEET_MIN_WIDTH,
   DOCS_COMMENTS_COMPACT_MIN,
   docsCommentsLayoutMediaQueries,
   resolveDocsCommentsLayoutMode,
-  shouldApplyCommentsSheetCompact,
   shouldAutoOpenCommentsForDraft,
   shouldAutoOpenCommentsForThreads,
   shouldDefaultCommentsOpen,
@@ -22,11 +20,9 @@ function mockMatchMedia(width: number) {
       const matches =
         query === queries.drawer
           ? width < DOCS_COMMENTS_COMPACT_MIN
-          : query === queries.marginCompact
-            ? width >= DOCS_COMMENTS_COMPACT_MIN && width < DOCS_COMMENTS_CENTERED_SHEET_MIN_WIDTH
-            : query === queries.marginWide
-              ? width >= DOCS_COMMENTS_CENTERED_SHEET_MIN_WIDTH
-              : false;
+          : query === queries.sidebar
+            ? width >= DOCS_COMMENTS_COMPACT_MIN
+            : false;
 
       if (!listeners.has(query)) {
         listeners.set(query, new Set());
@@ -73,32 +69,17 @@ describe("resolveDocsCommentsLayoutMode", () => {
     expect(resolveDocsCommentsLayoutMode(320)).toBe("drawer");
   });
 
-  it("returns margin-compact between compact and centered breakpoints", () => {
-    expect(resolveDocsCommentsLayoutMode(1160)).toBe("margin-compact");
-    expect(resolveDocsCommentsLayoutMode(1300)).toBe("margin-compact");
-    expect(resolveDocsCommentsLayoutMode(1471)).toBe("margin-compact");
-  });
-
-  it("returns margin-wide at and above the centered sheet breakpoint", () => {
-    expect(resolveDocsCommentsLayoutMode(1472)).toBe("margin-wide");
-    expect(resolveDocsCommentsLayoutMode(1920)).toBe("margin-wide");
-  });
-});
-
-describe("shouldApplyCommentsSheetCompact", () => {
-  it("applies compact sheet shift only when comments are open in the compact tier", () => {
-    expect(shouldApplyCommentsSheetCompact("margin-compact", true)).toBe(true);
-    expect(shouldApplyCommentsSheetCompact("margin-compact", false)).toBe(false);
-    expect(shouldApplyCommentsSheetCompact("margin-wide", true)).toBe(false);
-    expect(shouldApplyCommentsSheetCompact("drawer", true)).toBe(false);
+  it("returns sidebar at and above the compact breakpoint", () => {
+    expect(resolveDocsCommentsLayoutMode(1160)).toBe("sidebar");
+    expect(resolveDocsCommentsLayoutMode(1300)).toBe("sidebar");
+    expect(resolveDocsCommentsLayoutMode(1920)).toBe("sidebar");
   });
 });
 
 describe("shouldDefaultCommentsOpen", () => {
-  it("defaults closed on drawer tier and open on margin tiers", () => {
+  it("defaults closed on drawer tier and open on sidebar tier", () => {
     expect(shouldDefaultCommentsOpen("drawer")).toBe(false);
-    expect(shouldDefaultCommentsOpen("margin-compact")).toBe(true);
-    expect(shouldDefaultCommentsOpen("margin-wide")).toBe(true);
+    expect(shouldDefaultCommentsOpen("sidebar")).toBe(true);
   });
 
   it("drawer tier with existing threads still defaults closed on load", () => {
@@ -120,8 +101,7 @@ describe("shouldAutoOpenCommentsForDraft", () => {
 describe("shouldAutoOpenCommentsForThreads", () => {
   it("skips auto-open on drawer tier", () => {
     expect(shouldAutoOpenCommentsForThreads("drawer")).toBe(false);
-    expect(shouldAutoOpenCommentsForThreads("margin-compact")).toBe(true);
-    expect(shouldAutoOpenCommentsForThreads("margin-wide")).toBe(true);
+    expect(shouldAutoOpenCommentsForThreads("sidebar")).toBe(true);
   });
 });
 
@@ -134,18 +114,13 @@ describe("useDocsCommentsLayout", () => {
   it("initializes from the current viewport width", () => {
     mockMatchMedia(1300);
     const { result } = renderHook(() => useDocsCommentsLayout());
-    expect(result.current).toBe("margin-compact");
+    expect(result.current).toBe("sidebar");
   });
 
   it("updates when the viewport crosses breakpoints", () => {
     const media = mockMatchMedia(1472);
     const { result } = renderHook(() => useDocsCommentsLayout());
-    expect(result.current).toBe("margin-wide");
-
-    act(() => {
-      media.setWidth(1300);
-    });
-    expect(result.current).toBe("margin-compact");
+    expect(result.current).toBe("sidebar");
 
     act(() => {
       media.setWidth(1100);
@@ -155,6 +130,6 @@ describe("useDocsCommentsLayout", () => {
     act(() => {
       media.setWidth(1600);
     });
-    expect(result.current).toBe("margin-wide");
+    expect(result.current).toBe("sidebar");
   });
 });
