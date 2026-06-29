@@ -41,7 +41,6 @@ export {
   getTrackChangeIdFromTarget,
   escapeTrackChangeIdForSelector,
   scrollTrackChangeIntoView,
-  trackChangeIdAtSelection,
   toTrackChangesAuthor,
   trackChangesAuthorIdFromName,
   type DocsTrackChangeGroup,

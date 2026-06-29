@@ -133,24 +133,24 @@ export const CommentMark = Mark.create({
           scrollCommentMarkIntoView(editor, id);
 
           if (options?.preserveSelection) {
-            applyCommentActiveId(editor, id);
+            setCommentActiveId(editor, id);
             return chain().focus().run();
           }
 
           if (range == null) {
             const fallbackPos = findCommentMarkPos(editor.state.doc, id);
             if (fallbackPos == null) {
-              applyCommentActiveId(editor, id);
+              setCommentActiveId(editor, id);
               return false;
             }
             const ok = chain().focus().setTextSelection(fallbackPos).run();
-            applyCommentActiveId(editor, id);
+            setCommentActiveId(editor, id);
             return ok;
           }
 
           const caretPos = resolveSelectCommentCaretPos(range, options);
           const ok = chain().focus().setTextSelection(caretPos).run();
-          applyCommentActiveId(editor, id);
+          setCommentActiveId(editor, id);
           return ok;
         },
     };
@@ -215,11 +215,6 @@ export function setCommentActiveId(editor: Editor | null, activeId: string | nul
   const tr = editor.state.tr.setMeta(commentActiveIdPluginKey, activeId);
   tr.setMeta("addToHistory", false);
   editor.view.dispatch(tr);
-}
-
-/** Apply active styling immediately; plugin view.update re-syncs after DOM rebuilds. */
-export function applyCommentActiveId(editor: Editor, activeId: string | null): void {
-  setCommentActiveId(editor, activeId);
 }
 
 export function readSelectedAnchorText(editor: Editor): string | null {

@@ -5,7 +5,6 @@ import {
   getBaseText,
   getGroupedChanges,
   getPendingChangeCount,
-  getTrackedChanges,
   type ChangeAuthor,
   type TrackedChangeInfo,
   type TrackChangesMode,
@@ -18,7 +17,7 @@ import {
 import { createTextEditorExtensions } from "@/text-editor-core/src/text-editor-extensions";
 
 export type TextEditorCollabUser = {
-  id: string;
+  id?: string;
   name: string;
   color: string;
 };
@@ -33,11 +32,7 @@ export function trackChangesAuthorIdFromName(name: string): string {
   return `tc_${(hash >>> 0).toString(16)}`;
 }
 
-export function toTrackChangesAuthor(user: {
-  id?: string;
-  name: string;
-  color: string;
-}): ChangeAuthor {
+export function toTrackChangesAuthor(user: TextEditorCollabUser): ChangeAuthor {
   return {
     id: user.id ?? trackChangesAuthorIdFromName(user.name),
     name: user.name,
@@ -236,17 +231,6 @@ export function getDocsTrackChangeGroups(editor: Editor | null): DocsTrackChange
   }
 
   return groups.sort((left, right) => left.from - right.from || left.to - right.to);
-}
-
-/** changeId for a tracked change overlapping the current selection, if any. */
-export function trackChangeIdAtSelection(editor: Editor | null): string | null {
-  if (!editorHasTrackChanges(editor)) return null;
-  const { from, to } = editor.state.selection;
-  const anchor = from === to ? from : Math.floor((from + to) / 2);
-  const hit = getTrackedChanges(editor).find(
-    (change) => anchor >= change.from && anchor <= change.to,
-  );
-  return hit?.changeId ?? null;
 }
 
 export function editorHasPendingTrackChanges(editor: Editor): boolean {
