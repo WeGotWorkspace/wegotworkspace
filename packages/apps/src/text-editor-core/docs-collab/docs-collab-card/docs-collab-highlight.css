@@ -12,9 +12,12 @@
     var(--text-editor-track-insertion, oklch(0.88 0.12 145)) 55%,
     transparent
   );
-  border-bottom: 2px solid
-    color-mix(in oklab, var(--text-editor-track-insertion, oklch(0.88 0.12 145)) 80%, transparent);
-  text-decoration: none;
+  @apply border-b-2 border-solid no-underline;
+  border-bottom-color: color-mix(
+    in oklab,
+    var(--text-editor-track-insertion, oklch(0.88 0.12 145)) 80%,
+    transparent
+  );
 }
 
 .docs-collab-highlight--deletion {
@@ -28,7 +31,7 @@
     var(--docs-text, var(--color-ink)) 55%,
     transparent
   );
-  text-decoration: line-through;
+  @apply line-through;
   text-decoration-color: color-mix(
     in oklab,
     var(--text-editor-track-deletion, oklch(0.88 0.12 25)) 85%,
@@ -50,38 +53,37 @@
     var(--text-editor-track-format, oklch(0.88 0.1 250)) 55%,
     transparent
   );
-  border-bottom: 2px solid
-    color-mix(in oklab, var(--text-editor-track-format, oklch(0.88 0.1 250)) 80%, transparent);
+  @apply border-b-2 border-solid;
+  border-bottom-color: color-mix(
+    in oklab,
+    var(--text-editor-track-format, oklch(0.88 0.1 250)) 80%,
+    transparent
+  );
 }
 
 /* Inline format preview inside format-change suggestion highlights (matches text-editor-prose marks). */
 .docs-collab-highlight__format-mark--bold {
-  font-weight: 600;
+  @apply font-semibold;
 }
 
 .docs-collab-highlight__format-mark--italic {
-  font-style: italic;
+  @apply italic;
 }
 
 .docs-collab-highlight__format-mark--underline {
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  @apply underline underline-offset-2;
 }
 
 .docs-collab-highlight__format-mark--strike {
-  text-decoration: line-through;
+  @apply line-through;
 }
 
 .docs-collab-highlight__format-mark--code {
+  @apply rounded px-[0.35rem] py-[0.1rem] font-mono text-[0.9em];
   background: var(--muted);
-  padding: 0.1rem 0.35rem;
-  border-radius: 4px;
-  font-size: 0.9em;
-  font-family: var(--font-mono, ui-monospace, monospace);
 }
 
 .docs-collab-highlight__format-mark--highlight {
+  @apply rounded-sm px-0.5;
   background: var(--text-editor-highlight);
-  padding: 0 2px;
-  border-radius: 2px;
 }

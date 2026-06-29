@@ -197,10 +197,7 @@
 }
 
 .text-editor-format-bar__end {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
+  @apply ml-auto flex items-center gap-1.5;
 }
 
 .text-editor-format-bar__print {
@@ -251,106 +248,54 @@
 }
 
 .text-editor-format-bar__mode-trigger {
-  flex-direction: row;
-  flex-wrap: nowrap;
-  justify-content: flex-start;
-  gap: 0.25rem;
-  min-width: 0;
-  max-width: none;
-  width: auto;
-  padding-inline: 0.5rem;
-  white-space: nowrap;
+  @apply flex-row flex-nowrap justify-start gap-1 min-w-0 max-w-none w-auto px-2 whitespace-nowrap;
 }
 
 .text-editor-format-bar__mode-trigger-icon {
-  display: block;
-  flex: 0 0 0.875rem;
-  width: 0.875rem;
-  height: 0.875rem;
+  @apply block size-3.5 shrink-0;
 }
 
 .text-editor-format-bar__mode-trigger-label {
-  display: inline-block;
-  flex: 0 1 auto;
-  min-width: 2.5ch;
-  white-space: nowrap;
-  font-size: 0.75rem;
-  font-weight: 500;
+  @apply inline-block min-w-[2.5ch] shrink grow basis-auto whitespace-nowrap text-xs font-medium;
 }
 
 .text-editor-format-bar__mode-trigger-chevron {
-  display: block;
-  flex: 0 0 0.75rem;
-  width: 0.75rem;
-  height: 0.75rem;
-  opacity: 0.65;
+  @apply block size-3 shrink-0 opacity-65;
 }
 
 .text-editor-format-bar__mode-trigger-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.125rem;
-  height: 1.125rem;
-  border-radius: 999px;
-  padding: 0 0.25rem;
-  font-size: 0.625rem;
-  font-weight: 700;
-  line-height: 1;
+  @apply inline-flex items-center justify-center min-w-[1.125rem] h-[1.125rem] rounded-full px-1 text-[0.625rem] font-bold leading-none;
   color: var(--accent-foreground);
   background: var(--accent);
 }
 
 .text-editor-format-bar__mode-menu {
-  min-width: 14rem;
+  @apply min-w-56;
 }
 
 .text-editor-format-bar__mode-menu .text-editor-format-bar__mode-option {
-  align-items: flex-start;
-  min-height: 2.5rem;
-  padding-top: 0.375rem;
-  padding-bottom: 0.375rem;
+  @apply items-start min-h-10 py-1.5;
 }
 
 .text-editor-format-bar__mode-option-icon {
-  flex-shrink: 0;
-  width: 0.875rem;
-  height: 0.875rem;
-  margin-top: 0.125rem;
+  @apply size-3.5 shrink-0 mt-0.5;
 }
 
 .text-editor-format-bar__mode-option-text {
-  display: flex;
-  min-width: 0;
-  flex: 1;
-  flex-direction: column;
-  gap: 0.125rem;
+  @apply flex min-w-0 flex-1 flex-col gap-0.5;
 }
 
 .text-editor-format-bar__mode-option-label {
-  font-size: 0.8125rem;
-  font-weight: 500;
+  @apply text-[0.8125rem] font-medium;
 }
 
 .text-editor-format-bar__mode-option-hint {
-  font-size: 0.6875rem;
+  @apply text-[0.6875rem];
   color: var(--muted-foreground);
 }
 
 .text-editor-format-bar__mode-option-badge {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-self: flex-start;
-  margin-left: auto;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.125rem;
-  height: 1.125rem;
-  border-radius: 999px;
-  padding: 0 0.25rem;
-  font-size: 0.625rem;
-  font-weight: 700;
-  line-height: 1;
+  @apply ml-auto inline-flex shrink-0 self-start items-center justify-center min-w-[1.125rem] h-[1.125rem] rounded-full px-1 text-[0.625rem] font-bold leading-none;
   color: var(--accent-foreground);
   background: var(--accent);
 }
@@ -744,8 +689,9 @@
 }
 
 .text-editor-prose .legacy-suggestion-mark {
+  @apply border-b-2 border-dashed;
   background: color-mix(in oklab, var(--text-editor-suggestion) 40%, transparent);
-  border-bottom: 2px dashed var(--text-editor-suggestion);
+  border-bottom-color: var(--text-editor-suggestion);
 }
 
 /* Live track-changes (tiptap-track-changes) — insertions, deletions, format changes. */
@@ -756,16 +702,19 @@
 }
 
 .text-editor-prose ins[data-change-id] {
+  @apply border-b-2 border-solid no-underline;
   background: color-mix(in oklab, var(--text-editor-track-insertion) 55%, transparent);
-  border-bottom: 2px solid
-    color-mix(in oklab, var(--author-color, var(--text-editor-track-insertion)) 80%, transparent);
-  text-decoration: none;
+  border-bottom-color: color-mix(
+    in oklab,
+    var(--author-color, var(--text-editor-track-insertion)) 80%,
+    transparent
+  );
 }
 
 .text-editor-prose del[data-change-id] {
+  @apply line-through;
   background: color-mix(in oklab, var(--text-editor-track-deletion) 45%, transparent);
   color: color-mix(in oklab, var(--foreground) 55%, transparent);
-  text-decoration: line-through;
   text-decoration-color: color-mix(
     in oklab,
     var(--author-color, var(--text-editor-track-deletion)) 85%,
@@ -774,9 +723,13 @@
 }
 
 .text-editor-prose span[data-format-change] {
+  @apply border-b-2 border-dotted;
   background: color-mix(in oklab, var(--text-editor-track-format) 35%, transparent);
-  border-bottom: 2px dotted
-    color-mix(in oklab, var(--author-color, var(--text-editor-track-format)) 80%, transparent);
+  border-bottom-color: color-mix(
+    in oklab,
+    var(--author-color, var(--text-editor-track-format)) 80%,
+    transparent
+  );
 }
 
 /* Decoration wrapper from TrackChangeActiveExtension. */
@@ -799,8 +752,7 @@
 /* Active suggestion: mark highlight only — suppress native ::selection overlay. */
 .text-editor-prose .track-change-mark--active::selection,
 .text-editor-prose .track-change-mark--active *::selection {
-  background: transparent;
-  color: inherit;
+  @apply bg-transparent text-inherit;
 }
 
 /* Suggest-mode toolbar styles removed — mode control lives in the format bar dropdown. */

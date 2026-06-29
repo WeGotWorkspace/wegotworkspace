@@ -1,5 +1,4 @@
 @import "../../../styles.css" reference;
-@import "./docs-collab-card.css";
 @import "./docs-collab-highlight.css";
 
 .docs-collab-card {
@@ -13,18 +12,15 @@
 }
 
 .docs-collab-card[data-active="false"] {
-  opacity: 0.85;
+  @apply opacity-85;
 }
 
 .docs-collab-card[data-active="false"] .docs-collab-card__clamp {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
+  @apply line-clamp-2;
 }
 
 .docs-collab-card:hover:not([data-active="true"]) {
-  opacity: 0.96;
+  @apply opacity-[0.96];
   border-color: var(
     --docs-collab-card-hover-border,
     color-mix(in oklab, var(--docs-collab-card-accent) 16%, transparent)
@@ -32,8 +28,7 @@
 }
 
 .docs-collab-card[data-active="true"] {
-  opacity: 1;
-  border-width: 2px;
+  @apply border-2 opacity-100;
   border-color: var(--docs-collab-card-accent);
   box-shadow:
     0 1px 2px color-mix(in oklab, var(--color-ink) 5%, transparent),
@@ -45,8 +40,7 @@
 }
 
 .docs-collab-card[data-exiting="true"] {
-  pointer-events: none;
-  transition: none;
+  @apply pointer-events-none transition-none;
 }
 
 .docs-collab-card[data-exiting="true"][data-exit-animation="comment"] {
@@ -91,9 +85,7 @@
 }
 
 .docs-collab-card__avatar .user-avatar__mark {
-  width: 2rem;
-  height: 2rem;
-  font-size: 10px;
+  @apply size-8 text-[10px];
 }
 
 .docs-collab-card__avatar {

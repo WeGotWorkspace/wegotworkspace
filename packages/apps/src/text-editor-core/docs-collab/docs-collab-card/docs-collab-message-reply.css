@@ -7,9 +7,7 @@
 
 .docs-collab-message-reply__avatar .user-avatar__mark,
 .docs-comments-reply__avatar .user-avatar__mark {
-  width: 1.5rem;
-  height: 1.5rem;
-  font-size: 9px;
+  @apply size-6 text-[9px];
 }
 
 .docs-collab-message-reply__avatar,

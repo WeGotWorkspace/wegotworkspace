@@ -18,8 +18,7 @@
 }
 
 .docs-comments-thread-card__resolve-icon {
-  width: 0.875rem;
-  height: 0.875rem;
+  @apply size-3.5;
 }
 
 .docs-comments-thread-card__quote {
