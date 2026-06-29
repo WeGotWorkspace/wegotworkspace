@@ -116,6 +116,7 @@ export function useDriveShell({
   const [knownGroupRoots, setKnownGroupRoots] = useState<string[]>([]);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const syncedFolderPathRef = useRef<string | null>(null);
+  const pendingFolderRefetchRef = useRef(false);
   const starredLoadVersionRef = useRef(0);
   const [hydratedFolderPath, setHydratedFolderPath] = useState<string | null>(null);
 
@@ -126,10 +127,14 @@ export function useDriveShell({
       return;
     }
     const cwdUi = uiPathFromApiPath(data.cwd, currentUsername);
-    if (folderViewPath === cwdUi) {
-      syncedFolderPathRef.current = folderViewPath;
-      setHydratedFolderPath(folderViewPath);
+    if (folderViewPath !== cwdUi) {
+      return;
     }
+    if (pendingFolderRefetchRef.current) {
+      return;
+    }
+    syncedFolderPathRef.current = folderViewPath;
+    setHydratedFolderPath(folderViewPath);
   }, [currentUsername, data.cwd, folderViewPath, listLoading, operations]);
 
   useEffect(() => {
@@ -158,8 +163,9 @@ export function useDriveShell({
 
   useEffect(() => {
     if (!operations || listLoading || !currentUsername.trim()) return;
+    if (folderViewPath === null || pendingFolderRefetchRef.current) return;
     const cwdPath = uiPathFromApiPath(data.cwd, currentUsername);
-    if (isViewControlled && folderViewPath !== null && folderViewPath !== cwdPath) {
+    if (isViewControlled && folderViewPath !== cwdPath) {
       return;
     }
     setFiles(data.directory.files.map((entry) => driveFileFromEntry(entry, currentUsername)));
@@ -194,6 +200,7 @@ export function useDriveShell({
       })
       .then((nextData) => {
         const resolvedPath = uiPathFromApiPath(nextData.cwd, currentUsername);
+        pendingFolderRefetchRef.current = false;
         syncedFolderPathRef.current = resolvedPath;
         setFiles((previous) => mergeDriveFolderListing(previous, nextData, currentUsername));
         setHydratedFolderPath(resolvedPath);
@@ -203,6 +210,7 @@ export function useDriveShell({
       })
       .catch((error: unknown) => {
         if (controller.signal.aborted) return;
+        pendingFolderRefetchRef.current = false;
         setHydratedFolderPath(folderViewPath);
         const message = error instanceof Error ? error.message : String(error);
         showError(message);
@@ -214,6 +222,7 @@ export function useDriveShell({
   const selectView = useCallback(
     (v: ViewKey) => {
       if (v.type === "folder") {
+        pendingFolderRefetchRef.current = true;
         syncedFolderPathRef.current = null;
         setHydratedFolderPath(null);
       }
