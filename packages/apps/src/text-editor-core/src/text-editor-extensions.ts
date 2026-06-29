@@ -138,7 +138,7 @@ export function createCollaborativeTextEditorExtensions(
   const base = createTextEditorExtensions(editorOptions).filter((ext) => ext.name !== "starterKit");
 
   return [
-    StarterKit.configure({ undoRedo: false }),
+    StarterKit.configure({ undoRedo: false, link: false, underline: false }),
     ...base,
     TrackChangesExtension.configure({
       author: toTrackChangesAuthor(user),
