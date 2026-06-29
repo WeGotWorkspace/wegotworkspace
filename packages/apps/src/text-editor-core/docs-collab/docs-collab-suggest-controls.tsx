@@ -73,8 +73,10 @@ export function DocsCollabSuggestControls({ editor, className }: DocsCollabSugge
           )}
         >
           <Pencil className="text-editor-format-bar__mode-option-icon" aria-hidden />
-          <span className="text-editor-format-bar__mode-option-label">Edit</span>
-          <span className="text-editor-format-bar__mode-option-hint">Changes apply directly</span>
+          <span className="text-editor-format-bar__mode-option-text">
+            <span className="text-editor-format-bar__mode-option-label">Edit</span>
+            <span className="text-editor-format-bar__mode-option-hint">Changes apply directly</span>
+          </span>
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => editor.commands.setSuggestMode()}
@@ -84,7 +86,12 @@ export function DocsCollabSuggestControls({ editor, className }: DocsCollabSugge
           )}
         >
           <PenLine className="text-editor-format-bar__mode-option-icon" aria-hidden />
-          <span className="text-editor-format-bar__mode-option-label">Suggest</span>
+          <span className="text-editor-format-bar__mode-option-text">
+            <span className="text-editor-format-bar__mode-option-label">Suggest</span>
+            <span className="text-editor-format-bar__mode-option-hint">
+              Changes are tracked for review
+            </span>
+          </span>
           {pendingCount > 0 ? (
             <span
               className="text-editor-format-bar__mode-option-badge"
@@ -93,9 +100,6 @@ export function DocsCollabSuggestControls({ editor, className }: DocsCollabSugge
               {pendingCount}
             </span>
           ) : null}
-          <span className="text-editor-format-bar__mode-option-hint">
-            Changes are tracked for review
-          </span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

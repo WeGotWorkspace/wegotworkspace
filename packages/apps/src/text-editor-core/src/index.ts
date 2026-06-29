@@ -30,6 +30,7 @@ export {
   scrollCommentMarkIntoView,
   setCommentActiveId,
 } from "@/text-editor-core/src/text-editor-comment-commands";
+export { setSuggestionActiveId } from "@/text-editor-core/src/text-editor-suggestion-active";
 export {
   getAcceptedTextEditorContent,
   editorHasTrackChanges,
@@ -39,6 +40,7 @@ export {
   getDocsTrackChangeGroups,
   getTrackChangeIdFromTarget,
   escapeTrackChangeIdForSelector,
+  scrollTrackChangeIntoView,
   trackChangeIdAtSelection,
   toTrackChangesAuthor,
   trackChangesAuthorIdFromName,

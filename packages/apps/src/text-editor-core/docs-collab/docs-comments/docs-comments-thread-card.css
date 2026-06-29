@@ -23,7 +23,7 @@
 }
 
 .docs-comments-thread-card__quote {
-  @apply mt-2.5 m-0 line-clamp-2 not-italic;
+  @apply mt-2.5 m-0 not-italic;
 }
 
 .docs-comments-thread-card__body {

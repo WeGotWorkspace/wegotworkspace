@@ -9,6 +9,7 @@ import {
   insertSuggestionWithThread,
   replaceSuggestion,
   replaceSuggestionWithReactions,
+  longReplaceSuggestion,
 } from "./docs-suggestion-card.stories.fixtures";
 
 const noop = () => {};
@@ -76,8 +77,31 @@ export const Replace: Story = {
 
 export const ReplaceInactive: Story = {
   name: "Replace / inactive",
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Inactive cards clamp the diff to two lines via `.docs-collab-card__clamp` (see Replace / inactive long for a multi-line replace). Hover shows the full summary in the native title tooltip.",
+      },
+    },
+  },
   render: () => (
     <DocsSuggestionCard {...cardHandlers} suggestion={replaceSuggestion} active={false} />
+  ),
+};
+
+export const ReplaceInactiveLong: Story = {
+  name: "Replace / inactive long",
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "Manual check: deletion → insertion diff should visually clamp to two lines total when inactive.",
+      },
+    },
+  },
+  render: () => (
+    <DocsSuggestionCard {...cardHandlers} suggestion={longReplaceSuggestion} active={false} />
   ),
 };
 

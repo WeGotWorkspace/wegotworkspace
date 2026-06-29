@@ -5,6 +5,7 @@ import { docsLabels } from "@/docs-core/src/docs-labels";
 import {
   formatChangeSuggestion,
   insertSuggestion,
+  longReplaceSuggestion,
 } from "@/text-editor-core/stories/docs-suggestion-card.stories.fixtures";
 import { DocsSuggestionCard } from "./docs-suggestion-card";
 
@@ -52,6 +53,49 @@ describe("DocsSuggestionCard", () => {
     );
 
     expect(screen.queryByLabelText(docsLabels.commentsReplyPlaceholder)).toBeNull();
+  });
+
+  it("marks inactive cards and wraps diff content for two-line clamping", () => {
+    const { container } = render(
+      <DocsSuggestionCard
+        suggestion={longReplaceSuggestion}
+        labels={docsLabels}
+        currentUserId="u-1"
+        active={false}
+        onSelect={noop}
+        onAccept={noop}
+        onReject={noop}
+        onAddReply={noop}
+        onToggleReaction={noop}
+      />,
+    );
+
+    const card = container.querySelector(".docs-collab-card");
+    const diff = screen.getByLabelText(longReplaceSuggestion.summary);
+    const clamp = diff.querySelector(".docs-collab-card__clamp");
+
+    expect(card?.getAttribute("data-active")).toBe("false");
+    expect(clamp).toBeTruthy();
+    expect(clamp?.querySelector(".docs-collab-highlight--deletion")).toBeTruthy();
+    expect(clamp?.querySelector(".docs-collab-highlight--insertion")).toBeTruthy();
+  });
+
+  it("does not mark active cards as inactive", () => {
+    const { container } = render(
+      <DocsSuggestionCard
+        suggestion={longReplaceSuggestion}
+        labels={docsLabels}
+        currentUserId="u-1"
+        active
+        onSelect={noop}
+        onAccept={noop}
+        onReject={noop}
+        onAddReply={noop}
+        onToggleReaction={noop}
+      />,
+    );
+
+    expect(container.querySelector(".docs-collab-card")?.getAttribute("data-active")).toBe("true");
   });
 
   it("shows affected text for format-change suggestions, not format mark names", () => {

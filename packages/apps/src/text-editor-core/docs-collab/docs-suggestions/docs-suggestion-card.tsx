@@ -104,7 +104,11 @@ export function DocsSuggestionCard({
         }
       />
 
-      <SuggestionDiffBody parts={suggestion.parts} ariaLabel={suggestion.summary} />
+      <SuggestionDiffBody
+        parts={suggestion.parts}
+        ariaLabel={suggestion.summary}
+        title={active ? undefined : suggestion.summary}
+      />
 
       <DocsCollabReactions
         className="docs-suggestion-card__reactions"

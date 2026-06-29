@@ -4,6 +4,7 @@ import "@/text-editor-core/src/text-editor-track-changes-augmentation";
 import {
   editorHasTrackChanges,
   getDocsTrackChangeGroups,
+  scrollTrackChangeIntoView,
   type DocsTrackChangeGroup,
 } from "@/text-editor-core/src/text-editor-track-changes";
 import type * as Y from "yjs";
@@ -13,6 +14,7 @@ import {
   pruneOrphanSuggestionThreads,
 } from "./docs-suggestions/docs-suggestions-map-writes";
 import type { DocsSuggestionWithThread } from "./docs-suggestions-types";
+import { useDocsSuggestionsActive } from "./use-docs-suggestions-active";
 import { useDocsSuggestionsMutations } from "./use-docs-suggestions-mutations";
 import { useDocsSuggestionsSync } from "./use-docs-suggestions-sync";
 
@@ -59,7 +61,8 @@ export function useDocsSuggestions(
   const currentUser = options?.currentUser ?? { id: "", name: "" };
 
   const [editorSuggestions, setEditorSuggestions] = useState<DocsTrackChangeGroup[]>([]);
-  const [activeChangeId, setActiveChangeId] = useState<string | null>(null);
+  const { activeChangeId, setActiveChangeId, clearActiveSuggestion } =
+    useDocsSuggestionsActive(editor);
   const threads = useDocsSuggestionsSync(ydoc);
 
   const threadMap = useMemo(() => {
@@ -90,21 +93,25 @@ export function useDocsSuggestions(
       return;
     }
 
-    const refresh = () => {
+    const syncSuggestions = () => {
       const next = getDocsTrackChangeGroups(editor);
       setEditorSuggestions(next);
-      setActiveChangeId((current) => {
-        if (current && next.some((item) => item.changeId === current)) return current;
-        return null;
-      });
+      setActiveChangeId((current) =>
+        current && next.some((item) => item.changeId === current) ? current : null,
+      );
     };
 
-    refresh();
-    editor.on("transaction", refresh);
-    return () => {
-      editor.off("transaction", refresh);
+    const onTransaction = ({ transaction }: { transaction: { docChanged: boolean } }) => {
+      if (!transaction?.docChanged) return;
+      syncSuggestions();
     };
-  }, [editor]);
+
+    syncSuggestions();
+    editor.on("transaction", onTransaction);
+    return () => {
+      editor.off("transaction", onTransaction);
+    };
+  }, [editor, setActiveChangeId]);
 
   useEffect(() => {
     if (!ydoc || !editor || !editorHasTrackChanges(editor)) return;
@@ -115,37 +122,20 @@ export function useDocsSuggestions(
     pruneOrphanSuggestionThreads(ydoc, activeChangeIds);
   }, [editor, editorSuggestions, ydoc]);
 
-  const focusSuggestion = useCallback(
-    (changeId: string) => {
-      if (!editor) return;
-      const suggestion = getDocsTrackChangeGroups(editor).find(
-        (item) => item.changeId === changeId,
-      );
-      if (!suggestion) return;
-      const anchor = Math.min(suggestion.from, suggestion.to);
-      editor.chain().focus().setTextSelection({ from: anchor, to: anchor }).run();
-    },
-    [editor],
-  );
-
   const selectSuggestion = useCallback(
     (changeId: string) => {
       setActiveChangeId(changeId);
-      focusSuggestion(changeId);
     },
-    [focusSuggestion],
+    [setActiveChangeId],
   );
-
-  const clearActiveSuggestion = useCallback(() => {
-    setActiveChangeId(null);
-  }, []);
 
   const activateSuggestionFromMark = useCallback(
     (changeId: string) => {
       setActiveChangeId(changeId);
-      focusSuggestion(changeId);
+      if (!editor) return;
+      scrollTrackChangeIntoView(editor, changeId);
     },
-    [focusSuggestion],
+    [editor, setActiveChangeId],
   );
 
   const acceptSuggestion = useCallback(
@@ -155,7 +145,7 @@ export function useDocsSuggestions(
       if (ydoc) deleteSuggestionThread(ydoc, changeId);
       setActiveChangeId((current) => (current === changeId ? null : current));
     },
-    [editor, ydoc],
+    [editor, setActiveChangeId, ydoc],
   );
 
   const rejectSuggestion = useCallback(
@@ -165,7 +155,7 @@ export function useDocsSuggestions(
       if (ydoc) deleteSuggestionThread(ydoc, changeId);
       setActiveChangeId((current) => (current === changeId ? null : current));
     },
-    [editor, ydoc],
+    [editor, setActiveChangeId, ydoc],
   );
 
   const { addReply, toggleReaction } = useDocsSuggestionsMutations({ ydoc, currentUser });

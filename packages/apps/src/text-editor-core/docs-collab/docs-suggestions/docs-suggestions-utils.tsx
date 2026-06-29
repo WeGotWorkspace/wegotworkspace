@@ -14,6 +14,8 @@ export type SuggestionDiffBodyProps = {
   parts: TrackedChangeInfo[];
   /** Plain-text summary for screen readers (from `DocsTrackChangeGroup.summary`). */
   ariaLabel: string;
+  /** Full diff text for native tooltip when the card is inactive and clamped. */
+  title?: string;
 };
 
 function FormatChangeHighlight({
@@ -38,7 +40,7 @@ function FormatChangeHighlight({
   );
 }
 
-export function SuggestionDiffBody({ parts, ariaLabel }: SuggestionDiffBodyProps) {
+export function SuggestionDiffBody({ parts, ariaLabel, title }: SuggestionDiffBodyProps) {
   const insertion = parts.find((part) => part.type === "insertion");
   const deletion = parts.find((part) => part.type === "deletion");
   const formatChange = parts.find((part) => part.type === "formatChange");
@@ -47,36 +49,38 @@ export function SuggestionDiffBody({ parts, ariaLabel }: SuggestionDiffBodyProps
   const formatAdded = formatChange?.formatAdded;
 
   return (
-    <p className="docs-suggestion-card__diff" aria-label={ariaLabel}>
-      {formatChange ? (
-        formatText ? (
-          formatRemoved || formatAdded ? (
-            <>
-              <FormatChangeHighlight side="before" formatName={formatRemoved} text={formatText} />
-              <SuggestionDiffArrow />
-              <FormatChangeHighlight side="after" formatName={formatAdded} text={formatText} />
-            </>
+    <p className="docs-suggestion-card__diff" aria-label={ariaLabel} title={title}>
+      <span className="docs-collab-card__clamp">
+        {formatChange ? (
+          formatText ? (
+            formatRemoved || formatAdded ? (
+              <>
+                <FormatChangeHighlight side="before" formatName={formatRemoved} text={formatText} />
+                <SuggestionDiffArrow />
+                <FormatChangeHighlight side="after" formatName={formatAdded} text={formatText} />
+              </>
+            ) : (
+              formatText
+            )
           ) : (
-            formatText
+            "Format change"
           )
         ) : (
-          "Format change"
-        )
-      ) : (
-        <>
-          {deletion ? (
-            <DocsCollabHighlightText variant="deletion">
-              {deletion.text || "Delete text"}
-            </DocsCollabHighlightText>
-          ) : null}
-          {deletion && insertion ? <SuggestionDiffArrow /> : null}
-          {insertion ? (
-            <DocsCollabHighlightText variant="insertion">
-              {insertion.text || "Insert text"}
-            </DocsCollabHighlightText>
-          ) : null}
-        </>
-      )}
+          <>
+            {deletion ? (
+              <DocsCollabHighlightText variant="deletion">
+                {deletion.text || "Delete text"}
+              </DocsCollabHighlightText>
+            ) : null}
+            {deletion && insertion ? <SuggestionDiffArrow /> : null}
+            {insertion ? (
+              <DocsCollabHighlightText variant="insertion">
+                {insertion.text || "Insert text"}
+              </DocsCollabHighlightText>
+            ) : null}
+          </>
+        )}
+      </span>
     </p>
   );
 }

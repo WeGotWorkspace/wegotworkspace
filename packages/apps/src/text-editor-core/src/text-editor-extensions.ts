@@ -14,6 +14,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { Mark, mergeAttributes, type Extensions } from "@tiptap/react";
 import { TrackChangesExtension } from "tiptap-track-changes";
 import { CommentMark } from "@/text-editor-core/src/text-editor-comment-commands";
+import { TrackChangeActiveExtension } from "@/text-editor-core/src/text-editor-suggestion-active";
 import { CommentDraftAnchor } from "@/text-editor-core/src/text-editor-comment-draft-anchor";
 import { toTrackChangesAuthor } from "@/text-editor-core/src/text-editor-track-changes";
 import { Markdown } from "tiptap-markdown";
@@ -143,6 +144,7 @@ export function createCollaborativeTextEditorExtensions(
       author: toTrackChangesAuthor(user),
       mode: "edit",
     }),
+    TrackChangeActiveExtension,
     Collaboration.configure({ document }),
     CollaborationCaret.configure({
       provider: { awareness },

@@ -1,19 +1,49 @@
+/** @vitest-environment jsdom */
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import { Awareness } from "y-protocols/awareness";
 import { afterEach, describe, expect, it } from "vitest";
 import * as Y from "yjs";
+import "@/text-editor-core/src/text-editor-track-changes-augmentation";
 import { CommentMark } from "@/text-editor-core/src/text-editor-comment-commands";
 import {
   COMMENT_DRAFT_ANCHOR_CLASS,
   CommentDraftAnchor,
 } from "@/text-editor-core/src/text-editor-comment-draft-anchor";
+import { createCollaborativeTextEditorExtensions } from "@/text-editor-core/src/text-editor-extensions";
+import {
+  getDocsTrackChangeGroups,
+  trackChangesAuthorIdFromName,
+} from "@/text-editor-core/src/text-editor-track-changes";
+import { applyContentSeedToYDoc } from "./docs-collab-editor-surface";
 import { getDocsCommentsMap, useDocsComments } from "./use-docs-comments";
+import { useDocsSuggestions } from "./use-docs-suggestions";
 
 function createEditor(content = "<p>Hello world</p>") {
   return new Editor({
     extensions: [StarterKit.configure({ undoRedo: false }), CommentMark, CommentDraftAnchor],
     content,
+  });
+}
+
+function createCollabEditor(ydoc: Y.Doc, awareness: Awareness) {
+  applyContentSeedToYDoc(ydoc, "Hello world", "markdown");
+  const user = {
+    id: trackChangesAuthorIdFromName("Alex"),
+    name: "Alex",
+    color: "#2563eb",
+  };
+  const element = document.createElement("div");
+  document.body.appendChild(element);
+  return new Editor({
+    element,
+    extensions: createCollaborativeTextEditorExtensions({
+      document: ydoc,
+      awareness,
+      user,
+      format: "markdown",
+    }),
   });
 }
 
@@ -1421,5 +1451,48 @@ describe("useDocsComments", () => {
       reactions: { emoji: string; userIds: string[] }[];
     };
     expect(thread.reactions).toEqual([{ emoji: "👍", userIds: ["u-1", "u-2"] }]);
+  });
+
+  it("does not create a suggestion when adding a comment in suggest mode", () => {
+    const ydoc = new Y.Doc();
+    const awareness = new Awareness(ydoc);
+    const editor = createCollabEditor(ydoc, awareness);
+
+    editor.commands.setSuggestMode();
+    editor.commands.setTextSelection({ from: 7, to: 12 });
+
+    const { result: commentsResult } = renderHook(() =>
+      useDocsComments({
+        ydoc,
+        editor,
+        currentUser: { id: "u-1", name: "Alex" },
+      }),
+    );
+
+    const { result: suggestionsResult } = renderHook(() =>
+      useDocsSuggestions(editor, {
+        ydoc,
+        currentUser: { id: "u-1", name: "Alex" },
+      }),
+    );
+
+    const beforeSuggestionCount = getDocsTrackChangeGroups(editor).length;
+    expect(suggestionsResult.current.suggestions).toHaveLength(beforeSuggestionCount);
+
+    act(() => {
+      commentsResult.current.createThreadFromSelection();
+    });
+
+    act(() => {
+      commentsResult.current.submitDraftComment("Looks good");
+    });
+
+    expect(commentsResult.current.openThreads).toHaveLength(1);
+    expect(commentsResult.current.openThreads[0]?.messages).toHaveLength(1);
+    expect(getDocsTrackChangeGroups(editor)).toHaveLength(beforeSuggestionCount);
+    expect(suggestionsResult.current.suggestions).toHaveLength(beforeSuggestionCount);
+    expect(editor.getHTML()).toContain('data-comment-id="');
+
+    editor.destroy();
   });
 });

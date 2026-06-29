@@ -16,6 +16,13 @@
   opacity: 0.85;
 }
 
+.docs-collab-card[data-active="false"] .docs-collab-card__clamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
 .docs-collab-card:hover:not([data-active="true"]) {
   opacity: 0.96;
   border-color: var(

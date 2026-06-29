@@ -99,6 +99,33 @@ export const replaceSuggestion = buildSuggestion(
   "Replace “draft” with “final”",
 );
 
+/** Long replace diff for verifying inactive two-line clamp in Storybook. */
+export const longReplaceSuggestion = buildSuggestion(
+  "change-replace-long-1",
+  [
+    {
+      changeId: "change-replace-long-1",
+      type: "deletion",
+      ...alex,
+      timestamp: TIMESTAMP,
+      from: 10,
+      to: 80,
+      text: "the original paragraph that spans multiple lines when rendered inside a narrow suggestion card panel",
+    },
+    {
+      changeId: "change-replace-long-1",
+      type: "insertion",
+      ...alex,
+      timestamp: TIMESTAMP,
+      from: 10,
+      to: 80,
+      text: "the revised paragraph with substantially different wording that also wraps across several lines in the sidebar",
+    },
+  ],
+  "…the launch checklist for the release",
+  "Replace long paragraph text",
+);
+
 export const formatChangeSuggestion = buildSuggestion(
   "change-format-1",
   [

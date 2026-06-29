@@ -10,10 +10,14 @@ import { createCollaborativeTextEditorExtensions } from "./text-editor-extension
 import {
   getAcceptedTextEditorContent,
   getDocsTrackChangeGroups,
+  getTrackChangeIdFromTarget,
   getTrackChangesMode,
   getTrackChangesPendingCount,
+  scrollTrackChangeIntoView,
   trackChangesAuthorIdFromName,
 } from "./text-editor-track-changes";
+import { setSuggestionActiveId } from "./text-editor-suggestion-active";
+import { syncPersistedCommentMarks } from "./text-editor-comment-commands";
 
 beforeEach(() => {
   document.elementFromPoint = () => null;
@@ -31,6 +35,24 @@ function suggestInsertText(editor: Editor, text: string) {
     const tr = editor.state.tr.insertText(text, from, to);
     tr.setMeta("uiEvent", "input");
     editor.view.dispatch(tr);
+  }
+}
+
+function suggestReplaceText(editor: Editor, from: number, to: number, text: string) {
+  editor.commands.setSuggestMode();
+  editor.commands.setTextSelection({ from, to });
+  const view = editor.view;
+  const selection = view.state.selection;
+  const handled = view.someProp("handleTextInput", (handler) =>
+    (handler as (v: typeof view, f: number, t: number, s: string) => boolean)(
+      view,
+      selection.from,
+      selection.to,
+      text,
+    ),
+  );
+  if (!handled) {
+    throw new Error("expected suggest-mode handleTextInput to handle replace");
   }
 }
 
@@ -130,6 +152,94 @@ describe("text editor track changes", () => {
     editor.destroy();
   });
 
+  it("keeps data-change-id when scrolling to a replace insertion without focusing the editor", () => {
+    const ydoc = new Y.Doc();
+    const awareness = new Awareness(ydoc);
+    const user = {
+      id: trackChangesAuthorIdFromName("Alex"),
+      name: "Alex",
+      color: "#2563eb",
+    };
+    const editor = createCollabEditor(ydoc, awareness, user, "Hello world");
+
+    suggestReplaceText(editor, 6, 11, "everyone");
+    editor.commands.setEditMode();
+
+    const changeId = getDocsTrackChangeGroups(editor)[0]!.changeId;
+
+    setSuggestionActiveId(editor, changeId);
+    scrollTrackChangeIntoView(editor, changeId);
+
+    const insAfter = editor.view.dom.querySelector(`ins[data-change-id="${changeId}"]`);
+    expect(insAfter?.getAttribute("data-change-id")).toBe(changeId);
+
+    editor.destroy();
+  });
+
+  it("keeps replace parts when activating from insertion mark in edit mode", () => {
+    const ydoc = new Y.Doc();
+    const awareness = new Awareness(ydoc);
+    const user = {
+      id: trackChangesAuthorIdFromName("Alex"),
+      name: "Alex",
+      color: "#2563eb",
+    };
+    const editor = createCollabEditor(ydoc, awareness, user, "Hello world");
+
+    suggestReplaceText(editor, 6, 11, "everyone");
+    editor.commands.setEditMode();
+
+    const before = getDocsTrackChangeGroups(editor)[0]!;
+    const insertionMark = editor.view.dom.querySelector(
+      "ins[data-change-id]",
+    ) as HTMLElement | null;
+    expect(insertionMark).toBeTruthy();
+
+    const changeId = getTrackChangeIdFromTarget(insertionMark)!;
+    expect(changeId).toBe(before.changeId);
+
+    setSuggestionActiveId(editor, changeId);
+    scrollTrackChangeIntoView(editor, changeId);
+
+    const after = getDocsTrackChangeGroups(editor).find((group) => group.changeId === changeId);
+    expect(after?.parts.some((part) => part.type === "deletion")).toBe(true);
+    expect(after?.parts.some((part) => part.type === "insertion")).toBe(true);
+    expect(after?.summary).toContain("Replace");
+
+    const insAfter = editor.view.dom.querySelector("ins[data-change-id]");
+    expect(insAfter?.getAttribute("data-change-id")).toBe(changeId);
+
+    editor.destroy();
+  });
+
+  it("shows full insertion text when typing character by character in suggest mode", () => {
+    const ydoc = new Y.Doc();
+    const awareness = new Awareness(ydoc);
+    const user = {
+      id: trackChangesAuthorIdFromName("Alex"),
+      name: "Alex",
+      color: "#2563eb",
+    };
+    const editor = createCollabEditor(ydoc, awareness, user, "Hello");
+
+    editor.commands.setTextSelection({ from: 6, to: 6 });
+    const summaries: string[] = [];
+    for (const char of "world") {
+      suggestInsertText(editor, char);
+      summaries.push(getDocsTrackChangeGroups(editor)[0]?.summary ?? "");
+    }
+
+    expect(summaries).toEqual([
+      "Insert “w”",
+      "Insert “wo”",
+      "Insert “wor”",
+      "Insert “worl”",
+      "Insert “world”",
+    ]);
+
+    editor.destroy();
+  });
+
   it("groups pending track changes for the suggestions sidebar", () => {
     const ydoc = new Y.Doc();
     const awareness = new Awareness(ydoc);
@@ -200,5 +310,37 @@ describe("text editor track changes", () => {
 
     editor1.destroy();
     editor2.destroy();
+  });
+
+  it("does not track comment mark application in suggest mode", () => {
+    const ydoc = new Y.Doc();
+    const awareness = new Awareness(ydoc);
+    const user = {
+      id: trackChangesAuthorIdFromName("Alex"),
+      name: "Alex",
+      color: "#2563eb",
+    };
+    const editor = createCollabEditor(ydoc, awareness, user);
+
+    editor.commands.setSuggestMode();
+    editor.commands.setTextSelection({ from: 7, to: 12 });
+
+    const beforeCount = getDocsTrackChangeGroups(editor).length;
+
+    expect(
+      syncPersistedCommentMarks(editor, [
+        {
+          id: "c-1",
+          anchorText: "world",
+          resolved: false,
+          messages: [{ id: "m-1" }],
+        },
+      ]),
+    ).toBe(true);
+
+    expect(getDocsTrackChangeGroups(editor)).toHaveLength(beforeCount);
+    expect(editor.getHTML()).toContain('data-comment-id="c-1"');
+
+    editor.destroy();
   });
 });

@@ -5,9 +5,15 @@ import type { MarkType } from "@tiptap/pm/model";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
+import { trackChangesPluginKey } from "tiptap-track-changes";
 
 const COMMENT_MARK_CLASS = "comment-mark";
 const COMMENT_MARK_ACTIVE_CLASS = "comment-mark--active";
+
+function bypassTrackChangesForCommentTransaction(tr: Editor["state"]["tr"]): typeof tr {
+  tr.setMeta(trackChangesPluginKey, { handled: true });
+  return tr;
+}
 
 export const commentActiveIdPluginKey = new PluginKey<string | null>("commentActiveId");
 
@@ -82,8 +88,19 @@ export const CommentMark = Mark.create({
     return {
       setComment:
         (attributes: { id: string }) =>
-        ({ chain }: CommandProps) =>
-          chain().setMark(this.name, attributes).run(),
+        ({ state, dispatch }: CommandProps) => {
+          const markType = state.schema.marks[this.name];
+          if (!markType) return false;
+
+          const { from, to, empty } = state.selection;
+          if (empty) return false;
+
+          const tr = bypassTrackChangesForCommentTransaction(
+            state.tr.addMark(from, to, markType.create(attributes)),
+          );
+          if (dispatch) dispatch(tr);
+          return true;
+        },
       unsetComment:
         (id: string) =>
         ({ state, dispatch }: CommandProps) => {
@@ -103,7 +120,10 @@ export const CommentMark = Mark.create({
             }
           });
 
-          if (modified && dispatch) dispatch(tr);
+          if (modified) {
+            bypassTrackChangesForCommentTransaction(tr);
+            if (dispatch) dispatch(tr);
+          }
           return modified;
         },
       selectComment:
@@ -500,6 +520,7 @@ export function syncPersistedCommentMarks(
   if (!modified) return false;
 
   tr.setMeta("addToHistory", false);
+  bypassTrackChangesForCommentTransaction(tr);
   editor.view.dispatch(tr);
   return true;
 }

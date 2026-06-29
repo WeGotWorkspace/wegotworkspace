@@ -77,6 +77,14 @@ export function escapeTrackChangeIdForSelector(id: string): string {
   return escapeCommentIdForSelector(id);
 }
 
+export function scrollTrackChangeIntoView(editor: Editor, changeId: string): void {
+  const root = editor.view.dom;
+  const el = root.querySelector(`[data-change-id="${escapeTrackChangeIdForSelector(changeId)}"]`);
+  if (el && "scrollIntoView" in el && typeof el.scrollIntoView === "function") {
+    el.scrollIntoView({ block: "center", behavior: "smooth" });
+  }
+}
+
 export function getTrackChangeIdFromTarget(target: EventTarget | null): string | null {
   if (!(target instanceof Element)) return null;
   const el = target.closest("[data-change-id]");
@@ -139,6 +147,84 @@ function trackChangeAnchorText(editor: Editor, from: number, to: number): string
   return text.length > 120 ? `${text.slice(0, 117)}…` : text;
 }
 
+function trackChangePartScore(part: TrackedChangeInfo): number {
+  return (
+    (part.authorName?.trim() ? 4 : 0) +
+    (part.text ? 2 : 0) +
+    (part.authorColor ? 1 : 0) +
+    (part.timestamp ? 1 : 0)
+  );
+}
+
+function mergeTrackChangePartMetadata(
+  left: TrackedChangeInfo,
+  right: TrackedChangeInfo,
+): TrackedChangeInfo {
+  const richer = trackChangePartScore(left) >= trackChangePartScore(right) ? left : right;
+  const longer = (left.text?.length ?? 0) >= (right.text?.length ?? 0) ? left : right;
+  return {
+    ...richer,
+    text: longer.text ?? richer.text,
+    from: Math.min(left.from, right.from),
+    to: Math.max(left.to, right.to),
+  };
+}
+
+/** Collapse same-type fragments (e.g. one tracked node per typed character) into one part. */
+function consolidateTrackChangePartsOfSameType(parts: TrackedChangeInfo[]): TrackedChangeInfo {
+  const sorted = [...parts].sort((left, right) => left.from - right.from || left.to - right.to);
+  let merged = sorted[0]!;
+  for (let index = 1; index < sorted.length; index += 1) {
+    merged = mergeTrackChangePartMetadata(merged, sorted[index]!);
+  }
+  const text = sorted.map((part) => part.text ?? "").join("");
+  return text ? { ...merged, text } : merged;
+}
+
+/** Keep one part per change type; prefer richer metadata and the longest text. */
+function mergeTrackChangePartsByType(parts: TrackedChangeInfo[]): TrackedChangeInfo[] {
+  const byType = new Map<TrackedChangeInfo["type"], TrackedChangeInfo[]>();
+  for (const part of parts) {
+    const bucket = byType.get(part.type) ?? [];
+    bucket.push(part);
+    byType.set(part.type, bucket);
+  }
+
+  return [...byType.values()]
+    .map((typeParts) => consolidateTrackChangePartsOfSameType(typeParts))
+    .sort((left, right) => left.from - right.from || left.to - right.to);
+}
+
+function resolvePrimaryTrackChangePart(parts: TrackedChangeInfo[]): TrackedChangeInfo {
+  return (
+    parts.find((part) => part.authorName?.trim()) ??
+    parts.find((part) => part.authorColor) ??
+    parts[0]!
+  );
+}
+
+function buildDocsTrackChangeGroup(
+  editor: Editor,
+  changeId: string,
+  rawParts: TrackedChangeInfo[],
+): DocsTrackChangeGroup {
+  const parts = mergeTrackChangePartsByType(enrichFormatChangePartText(editor, rawParts));
+  const primary = resolvePrimaryTrackChangePart(parts);
+  const from = Math.min(...parts.map((part) => part.from));
+  const to = Math.max(...parts.map((part) => part.to));
+  return {
+    changeId,
+    authorName: primary.authorName?.trim() || "Unknown",
+    authorColor: primary.authorColor,
+    timestamp: primary.timestamp,
+    from,
+    to,
+    anchorText: trackChangeAnchorText(editor, from, to),
+    summary: summarizeTrackChangeParts(parts),
+    parts,
+  };
+}
+
 /** Pending track-change groups sorted by document position. */
 export function getDocsTrackChangeGroups(editor: Editor | null): DocsTrackChangeGroup[] {
   if (!editorHasTrackChanges(editor)) return [];
@@ -146,21 +232,7 @@ export function getDocsTrackChangeGroups(editor: Editor | null): DocsTrackChange
   const groups: DocsTrackChangeGroup[] = [];
   for (const [changeId, rawParts] of getGroupedChanges(editor)) {
     if (rawParts.length === 0) continue;
-    const parts = enrichFormatChangePartText(editor, rawParts);
-    const primary = parts[0]!;
-    const from = Math.min(...parts.map((part) => part.from));
-    const to = Math.max(...parts.map((part) => part.to));
-    groups.push({
-      changeId,
-      authorName: primary.authorName?.trim() || "Unknown",
-      authorColor: primary.authorColor,
-      timestamp: primary.timestamp,
-      from,
-      to,
-      anchorText: trackChangeAnchorText(editor, from, to),
-      summary: summarizeTrackChangeParts(parts),
-      parts,
-    });
+    groups.push(buildDocsTrackChangeGroup(editor, changeId, rawParts));
   }
 
   return groups.sort((left, right) => left.from - right.from || left.to - right.to);

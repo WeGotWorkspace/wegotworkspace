@@ -101,8 +101,13 @@ export function DocsCommentsThreadCard({
       />
 
       {thread.anchorText ? (
-        <blockquote className="docs-comments-thread-card__quote">
-          <DocsCollabHighlightText variant="comment">{thread.anchorText}</DocsCollabHighlightText>
+        <blockquote
+          className="docs-comments-thread-card__quote"
+          title={active ? undefined : thread.anchorText}
+        >
+          <span className="docs-collab-card__clamp">
+            <DocsCollabHighlightText variant="comment">{thread.anchorText}</DocsCollabHighlightText>
+          </span>
         </blockquote>
       ) : null}
 
