@@ -18,7 +18,6 @@ export type DocsCommentsPanelProps = {
   onAddReply: (threadId: string, body: string) => void;
   onToggleReaction: (threadId: string, emoji: string) => void;
   onResolveThread: (threadId: string) => void;
-  onDeleteThread: (threadId: string) => void;
   onCancelDraft?: () => void;
 };
 
@@ -33,7 +32,6 @@ export function DocsCommentsPanel({
   onAddReply,
   onToggleReaction,
   onResolveThread,
-  onDeleteThread,
   onCancelDraft,
 }: DocsCommentsPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -81,7 +79,6 @@ export function DocsCommentsPanel({
             onAddReply={(body) => onAddReply(thread.id, body)}
             onToggleReaction={(emoji) => onToggleReaction(thread.id, emoji)}
             onResolve={() => onResolveThread(thread.id)}
-            onDelete={() => onDeleteThread(thread.id)}
             onCancelDraft={isDraft ? onCancelDraft : undefined}
           />
         );

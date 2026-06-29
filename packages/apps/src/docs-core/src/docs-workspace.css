@@ -184,33 +184,18 @@
   background-color: color-mix(in oklab, var(--docs-accent) 24%, transparent);
 }
 
-.docs-workspace__header-actions .docs-workspace__comments-toggle {
+.docs-workspace__header-actions .docs-workspace__review-toggle {
   @apply relative;
 }
 
-.docs-workspace__header-actions .docs-workspace__comments-toggle::after {
+.docs-workspace__header-actions .docs-workspace__review-toggle::after {
   content: attr(data-count);
   @apply absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold;
   background-color: var(--docs-accent);
   color: #ffffff;
 }
 
-.docs-workspace__header-actions .docs-workspace__comments-toggle:not([data-count])::after {
-  display: none;
-}
-
-.docs-workspace__header-actions .docs-workspace__suggestions-toggle {
-  @apply relative;
-}
-
-.docs-workspace__header-actions .docs-workspace__suggestions-toggle::after {
-  content: attr(data-count);
-  @apply absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold;
-  background-color: var(--text-editor-suggestion, oklch(0.85 0.15 145));
-  color: var(--color-ink);
-}
-
-.docs-workspace__header-actions .docs-workspace__suggestions-toggle:not([data-count])::after {
+.docs-workspace__header-actions .docs-workspace__review-toggle:not([data-count])::after {
   display: none;
 }
 

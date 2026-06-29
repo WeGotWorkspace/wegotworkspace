@@ -22,22 +22,6 @@
   height: 0.875rem;
 }
 
-.docs-comments-thread-card__delete {
-  @apply inline-flex size-7 shrink-0 items-center justify-center rounded-full border transition-colors;
-  border-color: var(--docs-border, color-mix(in oklab, var(--color-ink) 12%, transparent));
-  color: var(--docs-text, var(--color-ink));
-  background-color: transparent;
-}
-
-.docs-comments-thread-card__delete:hover {
-  background-color: color-mix(in oklab, var(--color-ink) 5%, transparent);
-}
-
-.docs-comments-thread-card__delete-icon {
-  width: 0.875rem;
-  height: 0.875rem;
-}
-
 .docs-comments-thread-card__quote {
   @apply mt-2.5 line-clamp-2 text-[12px] leading-snug not-italic;
   background-color: color-mix(in oklab, var(--highlight-amber) 32%, transparent);

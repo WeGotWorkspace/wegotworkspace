@@ -140,7 +140,6 @@ describe("DocsCommentsFloatingLayer", () => {
         onAddReply={() => {}}
         onToggleReaction={() => {}}
         onResolveThread={() => {}}
-        onDeleteThread={() => {}}
       />,
     );
 
@@ -203,7 +202,6 @@ describe("DocsCommentsFloatingLayer", () => {
         onAddReply={() => {}}
         onToggleReaction={() => {}}
         onResolveThread={() => {}}
-        onDeleteThread={() => {}}
       />,
     );
 
@@ -247,7 +245,6 @@ describe("DocsCommentsFloatingLayer", () => {
         onAddReply={() => {}}
         onToggleReaction={() => {}}
         onResolveThread={() => {}}
-        onDeleteThread={() => {}}
       />,
     );
 
@@ -280,7 +277,6 @@ describe("DocsCommentsFloatingLayer", () => {
         onAddReply={() => {}}
         onToggleReaction={() => {}}
         onResolveThread={() => {}}
-        onDeleteThread={() => {}}
       />,
     );
 
@@ -391,7 +387,6 @@ describe("DocsCommentsFloatingLayer", () => {
         onAddReply={() => {}}
         onToggleReaction={() => {}}
         onResolveThread={() => {}}
-        onDeleteThread={() => {}}
       />,
     );
 
@@ -442,7 +437,6 @@ describe("DocsCommentsFloatingLayer", () => {
         onAddReply={() => {}}
         onToggleReaction={() => {}}
         onResolveThread={() => {}}
-        onDeleteThread={() => {}}
       />,
     );
 
@@ -488,7 +482,6 @@ describe("DocsCommentsFloatingLayer", () => {
         onAddReply={() => {}}
         onToggleReaction={() => {}}
         onResolveThread={() => {}}
-        onDeleteThread={() => {}}
       />,
     );
 
@@ -544,7 +537,6 @@ describe("DocsCommentsFloatingLayer", () => {
         onAddReply={() => {}}
         onToggleReaction={() => {}}
         onResolveThread={() => {}}
-        onDeleteThread={() => {}}
       />,
     );
 

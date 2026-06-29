@@ -1,5 +1,6 @@
 import type { Editor } from "@tiptap/react";
 import { escapeCommentIdForSelector } from "@/text-editor-core/src/text-editor-comment-commands";
+import { escapeTrackChangeIdForSelector } from "@/text-editor-core/src/text-editor-track-changes";
 import type { DocsCommentThread } from "../docs-comments-types";
 import {
   ensureCommentViewTimelinePolyfill,
@@ -19,6 +20,12 @@ export type DocsCommentVisibilityMode = "timeline" | "observer" | "static";
 export function commentViewTimelineName(threadId: string): `--docs-cmt-${string}` {
   const safe = threadId.replace(/[^a-zA-Z0-9_-]/g, "_");
   return `--docs-cmt-${safe}`;
+}
+
+/** Stable view-timeline name for a suggestion track-change mark. */
+export function suggestionViewTimelineName(changeId: string): `--docs-sug-${string}` {
+  const safe = changeId.replace(/[^a-zA-Z0-9_-]/g, "_");
+  return `--docs-sug-${safe}`;
 }
 
 export function findDocsCommentScrollport(editor: Editor): HTMLElement | null {
@@ -74,27 +81,54 @@ export async function resolveCommentVisibilityModeAsync(): Promise<DocsCommentVi
   return polyfillReady ? "timeline" : "observer";
 }
 
-export function buildCommentViewTimelineStylesheet(threadIds: readonly string[]): string {
-  if (threadIds.length === 0) return "";
+export function buildCommentViewTimelineStylesheet(
+  threadIds: readonly string[],
+  changeIds: readonly string[] = [],
+): string {
+  if (threadIds.length === 0 && changeIds.length === 0) return "";
 
-  const markRules = threadIds.map((id) => {
+  const commentMarkRules = threadIds.map((id) => {
     const selector = `[data-comment-id="${escapeCommentIdForSelector(id)}"]`;
     const name = commentViewTimelineName(id);
     return `${selector}{view-timeline-name:${name};view-timeline-axis:block;}`;
   });
 
-  const scopeRule = `${DOCS_COMMENT_SCROLLPORT_SELECTOR}{timeline-scope:${buildCommentTimelineScope(threadIds)};}`;
-
-  const cardRules = threadIds.map((id) => {
-    const selector = `.docs-comments-floating-layer[data-visibility-mode="timeline"] .docs-comments-floating-layer__card[data-thread-id="${escapeCommentIdForSelector(id)}"]`;
-    return `${selector}{animation-timeline:${commentViewTimelineName(id)};animation-range:${DOCS_COMMENT_CARD_VISIBILITY_ANIMATION_RANGE};}`;
+  const suggestionMarkRules = changeIds.map((id) => {
+    const selector = `[data-change-id="${escapeTrackChangeIdForSelector(id)}"]`;
+    const name = suggestionViewTimelineName(id);
+    return `${selector}{view-timeline-name:${name};view-timeline-axis:block;}`;
   });
 
-  return [...markRules, scopeRule, ...cardRules].join("\n");
+  const scopeRule = `${DOCS_COMMENT_SCROLLPORT_SELECTOR}{timeline-scope:${buildCollabTimelineScope(threadIds, changeIds)};}`;
+
+  const commentCardRules = threadIds.flatMap((id) => {
+    const escapedId = escapeCommentIdForSelector(id);
+    const timelineName = commentViewTimelineName(id);
+    const animationProps = `animation-timeline:${timelineName};animation-range:${DOCS_COMMENT_CARD_VISIBILITY_ANIMATION_RANGE};`;
+    return [
+      `.docs-comments-floating-layer[data-visibility-mode="timeline"] .docs-comments-floating-layer__card[data-thread-id="${escapedId}"]{${animationProps}}`,
+      `.docs-collab-review-floating-layer[data-visibility-mode="timeline"] .docs-collab-review-floating-layer__card--comment[data-thread-id="${escapedId}"]{${animationProps}}`,
+    ];
+  });
+
+  const suggestionCardRules = changeIds.map((id) => {
+    const escapedId = escapeTrackChangeIdForSelector(id);
+    const timelineName = suggestionViewTimelineName(id);
+    const animationProps = `animation-timeline:${timelineName};animation-range:${DOCS_COMMENT_CARD_VISIBILITY_ANIMATION_RANGE};`;
+    return `.docs-collab-review-floating-layer[data-visibility-mode="timeline"] .docs-collab-review-floating-layer__card--suggestion[data-change-id="${escapedId}"]{${animationProps}}`;
+  });
+
+  return [
+    ...commentMarkRules,
+    ...suggestionMarkRules,
+    scopeRule,
+    ...commentCardRules,
+    ...suggestionCardRules,
+  ].join("\n");
 }
 
 function clearLegacyInlineViewTimelines(editor: Editor): void {
-  editor.view.dom.querySelectorAll("[data-comment-id]").forEach((node) => {
+  editor.view.dom.querySelectorAll("[data-comment-id], [data-change-id]").forEach((node) => {
     const element = node as HTMLElement;
     element.style.removeProperty("view-timeline-name");
     element.style.removeProperty("view-timeline-axis");
@@ -131,15 +165,29 @@ function applyCommentViewTimelineStylesheet(css: string): void {
 }
 
 /** Inject view-timeline stylesheet rules for marks, scope, and card animation-timeline. */
-export function syncCommentViewTimelineStyles(editor: Editor, threadIds: readonly string[]): void {
+export function syncCommentViewTimelineStyles(
+  editor: Editor,
+  threadIds: readonly string[],
+  changeIds: readonly string[] = [],
+): void {
   if (editor.isDestroyed) return;
 
   clearLegacyInlineViewTimelines(editor);
-  applyCommentViewTimelineStylesheet(buildCommentViewTimelineStylesheet(threadIds));
+  applyCommentViewTimelineStylesheet(buildCommentViewTimelineStylesheet(threadIds, changeIds));
 }
 
 export function buildCommentTimelineScope(threadIds: readonly string[]): string {
-  return threadIds.map((id) => commentViewTimelineName(id)).join(", ");
+  return buildCollabTimelineScope(threadIds, []);
+}
+
+export function buildCollabTimelineScope(
+  threadIds: readonly string[],
+  changeIds: readonly string[],
+): string {
+  return [
+    ...threadIds.map((id) => commentViewTimelineName(id)),
+    ...changeIds.map((id) => suggestionViewTimelineName(id)),
+  ].join(", ");
 }
 
 export type CommentMarkVisibilityObserver = {
@@ -164,6 +212,38 @@ function collectCommentMarks(editor: Editor, threadIds: readonly string[]): Map<
   }
 
   return marks;
+}
+
+function collectSuggestionMarks(
+  editor: Editor,
+  changeIds: readonly string[],
+): Map<string, Element> {
+  const marks = new Map<string, Element>();
+  if (editor.isDestroyed) return marks;
+
+  for (const id of changeIds) {
+    const mark = editor.view.dom.querySelector(
+      `[data-change-id="${escapeTrackChangeIdForSelector(id)}"]`,
+    );
+    if (mark) marks.set(id, mark);
+  }
+
+  return marks;
+}
+
+function collectCollabMarks(
+  editor: Editor,
+  threadIds: readonly string[],
+  changeIds: readonly string[],
+): Map<string, Element> {
+  return new Map([
+    ...collectCommentMarks(editor, threadIds),
+    ...collectSuggestionMarks(editor, changeIds),
+  ]);
+}
+
+function getMarkIdFromElement(element: Element): string | null {
+  return element.getAttribute("data-comment-id") ?? element.getAttribute("data-change-id");
 }
 
 /** Geometry check for static/reduced-motion and IO fallback initial sync. */
@@ -199,13 +279,14 @@ export function syncCommentCardVisibilityFromMarks(
 /** Geometry-only visibility sync for static (reduced-motion) mode. */
 export function syncCommentMarkVisibility(
   editor: Editor,
-  getCardElement: (threadId: string) => HTMLElement | undefined,
+  getCardElement: (markId: string) => HTMLElement | undefined,
   threadIds: readonly string[],
+  changeIds: readonly string[] = [],
 ): void {
   if (editor.isDestroyed) return;
 
   const scrollport = findDocsCommentScrollport(editor);
-  const marks = collectCommentMarks(editor, threadIds);
+  const marks = collectCollabMarks(editor, threadIds, changeIds);
   syncCommentCardVisibilityFromMarks(marks, scrollport, getCardElement);
 }
 
@@ -215,8 +296,9 @@ export function syncCommentMarkVisibility(
  */
 export function observeCommentMarkVisibility(
   editor: Editor,
-  getCardElement: (threadId: string) => HTMLElement | undefined,
+  getCardElement: (markId: string) => HTMLElement | undefined,
   threadIds: readonly string[],
+  changeIds: readonly string[] = [],
   options: ObserveCommentMarkVisibilityOptions = {},
 ): CommentMarkVisibilityObserver {
   if (editor.isDestroyed) {
@@ -224,7 +306,7 @@ export function observeCommentMarkVisibility(
   }
 
   const scrollport = findDocsCommentScrollport(editor);
-  let marks = collectCommentMarks(editor, threadIds);
+  let marks = collectCollabMarks(editor, threadIds, changeIds);
 
   syncCommentCardVisibilityFromMarks(marks, scrollport, getCardElement);
 
@@ -232,7 +314,7 @@ export function observeCommentMarkVisibility(
     return {
       disconnect: () => {},
       resync: () => {
-        marks = collectCommentMarks(editor, threadIds);
+        marks = collectCollabMarks(editor, threadIds, changeIds);
         syncCommentCardVisibilityFromMarks(marks, scrollport, getCardElement);
       },
     };
@@ -241,7 +323,7 @@ export function observeCommentMarkVisibility(
   const observer = new IntersectionObserver(
     (entries) => {
       for (const entry of entries) {
-        const id = entry.target.getAttribute("data-comment-id");
+        const id = getMarkIdFromElement(entry.target);
         if (!id) continue;
         const card = getCardElement(id);
         if (!card) continue;
@@ -265,7 +347,7 @@ export function observeCommentMarkVisibility(
   return {
     disconnect: () => observer.disconnect(),
     resync: () => {
-      marks = collectCommentMarks(editor, threadIds);
+      marks = collectCollabMarks(editor, threadIds, changeIds);
       syncCommentCardVisibilityFromMarks(marks, scrollport, getCardElement);
       observeMarks(marks);
     },

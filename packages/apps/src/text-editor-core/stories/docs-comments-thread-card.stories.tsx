@@ -17,7 +17,6 @@ const cardHandlers = {
   onAddReply: noop,
   onToggleReaction: noop,
   onResolve: noop,
-  onDelete: noop,
 };
 
 const meta = {

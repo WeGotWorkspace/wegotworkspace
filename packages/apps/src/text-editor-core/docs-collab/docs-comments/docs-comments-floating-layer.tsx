@@ -29,7 +29,6 @@ export type DocsCommentsFloatingLayerProps = {
   onAddReply: (threadId: string, body: string) => void;
   onToggleReaction: (threadId: string, emoji: string) => void;
   onResolveThread: (threadId: string) => void;
-  onDeleteThread: (threadId: string) => void;
   onCancelDraft?: () => void;
 };
 
@@ -47,7 +46,6 @@ export function DocsCommentsFloatingLayer({
   onAddReply,
   onToggleReaction,
   onResolveThread,
-  onDeleteThread,
   onCancelDraft,
 }: DocsCommentsFloatingLayerProps) {
   const cardRefs = useRef(new Map<string, HTMLDivElement>());
@@ -230,7 +228,6 @@ export function DocsCommentsFloatingLayer({
                 onAddReply={(body) => onAddReply(thread.id, body)}
                 onToggleReaction={(emoji) => onToggleReaction(thread.id, emoji)}
                 onResolve={() => onResolveThread(thread.id)}
-                onDelete={() => onDeleteThread(thread.id)}
                 onCancelDraft={isDraft ? onCancelDraft : undefined}
               />
             </div>

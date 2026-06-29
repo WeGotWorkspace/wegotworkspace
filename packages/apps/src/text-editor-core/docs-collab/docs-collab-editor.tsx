@@ -180,21 +180,17 @@ export function DocsCollabEditor({
       groups={[...formatBarConfig.groups]}
       showPrint={formatBarConfig.showPrint}
       className={formatBarConfig.className}
-      trailing={
-        viewSource ? undefined : (
-          <>
-            {commentControlLabels && onAddCommentFromSelection ? (
-              <DocsCollabCommentControl
-                labels={commentControlLabels}
-                canAddFromSelection={canAddCommentFromSelection}
-                commentsDisabled={commentsDisabled}
-                onAddCommentFromSelection={onAddCommentFromSelection}
-              />
-            ) : null}
-            <DocsCollabSuggestControls editor={editor} />
-          </>
-        )
+      commentControl={
+        !viewSource && commentControlLabels && onAddCommentFromSelection ? (
+          <DocsCollabCommentControl
+            labels={commentControlLabels}
+            canAddFromSelection={canAddCommentFromSelection}
+            commentsDisabled={commentsDisabled}
+            onAddCommentFromSelection={onAddCommentFromSelection}
+          />
+        ) : undefined
       }
+      trailing={viewSource ? undefined : <DocsCollabSuggestControls editor={editor} />}
     />
   ) : null;
 

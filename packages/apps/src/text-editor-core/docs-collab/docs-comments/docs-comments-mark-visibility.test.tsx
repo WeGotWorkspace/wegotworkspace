@@ -5,6 +5,7 @@ import { CommentMark } from "@/text-editor-core/src/text-editor-comment-commands
 import type { DocsCommentThread } from "../docs-comments-types";
 import * as viewTimelinePolyfill from "./docs-comments-view-timeline-polyfill";
 import {
+  buildCollabTimelineScope,
   buildCommentTimelineScope,
   buildCommentViewTimelineStylesheet,
   commentViewTimelineName,
@@ -14,6 +15,7 @@ import {
   resolveCommentVisibilityMode,
   resolveCommentVisibilityModeAsync,
   sortThreadsByDocumentOrder,
+  suggestionViewTimelineName,
   syncCommentViewTimelineStyles,
   syncCommentMarkVisibility,
 } from "./docs-comments-mark-visibility";
@@ -69,9 +71,22 @@ describe("commentViewTimelineName", () => {
   });
 });
 
+describe("suggestionViewTimelineName", () => {
+  it("builds a stable timeline name from change ids", () => {
+    expect(suggestionViewTimelineName("s-1")).toBe("--docs-sug-s-1");
+    expect(suggestionViewTimelineName("weird/id+1")).toBe("--docs-sug-weird_id_1");
+  });
+});
+
 describe("buildCommentTimelineScope", () => {
   it("joins timeline names for timeline-scope", () => {
     expect(buildCommentTimelineScope(["a", "b"])).toBe("--docs-cmt-a, --docs-cmt-b");
+  });
+});
+
+describe("buildCollabTimelineScope", () => {
+  it("joins comment and suggestion timeline names for timeline-scope", () => {
+    expect(buildCollabTimelineScope(["a"], ["s-1"])).toBe("--docs-cmt-a, --docs-sug-s-1");
   });
 });
 
@@ -133,6 +148,20 @@ describe("buildCommentViewTimelineStylesheet", () => {
     );
     expect(css).toContain(
       '.docs-comments-floating-layer[data-visibility-mode="timeline"] .docs-comments-floating-layer__card[data-thread-id="t-1"]{animation-timeline:--docs-cmt-t-1;animation-range:entry 0% exit 100%;}',
+    );
+    expect(css).toContain(
+      '.docs-collab-review-floating-layer[data-visibility-mode="timeline"] .docs-collab-review-floating-layer__card--comment[data-thread-id="t-1"]{animation-timeline:--docs-cmt-t-1;animation-range:entry 0% exit 100%;}',
+    );
+  });
+
+  it("builds suggestion mark and card animation-timeline rules", () => {
+    const css = buildCommentViewTimelineStylesheet([], ["s-1"]);
+    expect(css).toContain(
+      '[data-change-id="s-1"]{view-timeline-name:--docs-sug-s-1;view-timeline-axis:block;}',
+    );
+    expect(css).toContain(".text-editor-sheet--fill{timeline-scope:--docs-sug-s-1;}");
+    expect(css).toContain(
+      '.docs-collab-review-floating-layer[data-visibility-mode="timeline"] .docs-collab-review-floating-layer__card--suggestion[data-change-id="s-1"]{animation-timeline:--docs-sug-s-1;animation-range:entry 0% exit 100%;}',
     );
   });
 });
@@ -291,6 +320,44 @@ describe("syncCommentMarkVisibility", () => {
 
     syncCommentMarkVisibility(editor, () => card, ["t-1"]);
     expect(card.getAttribute("data-in-view")).toBe("false");
+    editor.destroy();
+  });
+
+  it("sets data-in-view on suggestion cards from change mark geometry", () => {
+    const editor = createEditor(
+      '<p><ins data-change-id="s-1" class="track-change">Hello</ins></p>',
+    );
+    const scrollport = editor.view.dom.closest(".text-editor-sheet--fill") as HTMLElement;
+    const mark = editor.view.dom.querySelector('[data-change-id="s-1"]') as HTMLElement;
+    const card = document.createElement("div");
+    card.className = "docs-collab-review-floating-layer__card--suggestion";
+    document.body.append(card);
+
+    vi.spyOn(mark, "getBoundingClientRect").mockReturnValue({
+      top: 100,
+      bottom: 120,
+      left: 10,
+      right: 40,
+      width: 30,
+      height: 20,
+      x: 10,
+      y: 100,
+      toJSON: () => ({}),
+    });
+    vi.spyOn(scrollport, "getBoundingClientRect").mockReturnValue({
+      top: 0,
+      bottom: 800,
+      left: 0,
+      right: 600,
+      width: 600,
+      height: 800,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+
+    syncCommentMarkVisibility(editor, () => card, [], ["s-1"]);
+    expect(card.getAttribute("data-in-view")).toBe("true");
     editor.destroy();
   });
 });
@@ -477,6 +544,78 @@ describe("observeCommentMarkVisibility", () => {
       toJSON: () => ({}),
     });
     observer.resync();
+    expect(card.getAttribute("data-in-view")).toBe("false");
+
+    observer.disconnect();
+  });
+
+  it("updates suggestion cards from IntersectionObserver callbacks", () => {
+    const editor = createEditor(
+      '<p><ins data-change-id="s-1" class="track-change">Hello</ins></p>',
+    );
+    const scrollport = editor.view.dom.closest(".text-editor-sheet--fill") as HTMLElement;
+    const mark = editor.view.dom.querySelector('[data-change-id="s-1"]') as HTMLElement;
+    const card = document.createElement("div");
+    card.className = "docs-collab-review-floating-layer__card--suggestion";
+    document.body.append(card);
+
+    const instances: Array<{
+      observe: ReturnType<typeof vi.fn>;
+      disconnect: ReturnType<typeof vi.fn>;
+      trigger: (isIntersecting: boolean) => void;
+    }> = [];
+
+    class MockIntersectionObserver {
+      observe = vi.fn();
+      disconnect = vi.fn();
+      constructor(private callback: IntersectionObserverCallback) {
+        instances.push({
+          observe: this.observe,
+          disconnect: this.disconnect,
+          trigger: (isIntersecting: boolean) => {
+            this.callback(
+              [
+                {
+                  target: editor.view.dom.querySelector('[data-change-id="s-1"]')!,
+                  isIntersecting,
+                } as IntersectionObserverEntry,
+              ],
+              this as unknown as IntersectionObserver,
+            );
+          },
+        });
+      }
+    }
+
+    vi.stubGlobal("IntersectionObserver", MockIntersectionObserver);
+
+    vi.spyOn(mark, "getBoundingClientRect").mockReturnValue({
+      top: 100,
+      bottom: 120,
+      left: 10,
+      right: 40,
+      width: 30,
+      height: 20,
+      x: 10,
+      y: 100,
+      toJSON: () => ({}),
+    });
+    vi.spyOn(scrollport, "getBoundingClientRect").mockReturnValue({
+      top: 0,
+      bottom: 800,
+      left: 0,
+      right: 600,
+      width: 600,
+      height: 800,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+
+    const observer = observeCommentMarkVisibility(editor, () => card, [], ["s-1"]);
+    expect(card.getAttribute("data-in-view")).toBe("true");
+
+    instances[0]?.trigger(false);
     expect(card.getAttribute("data-in-view")).toBe("false");
 
     observer.disconnect();

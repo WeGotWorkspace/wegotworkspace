@@ -39,7 +39,6 @@ function renderPanel(overrides: Partial<ComponentProps<typeof DocsCommentsPanel>
       onAddReply={noop}
       onToggleReaction={noop}
       onResolveThread={noop}
-      onDeleteThread={noop}
       {...overrides}
     />,
   );

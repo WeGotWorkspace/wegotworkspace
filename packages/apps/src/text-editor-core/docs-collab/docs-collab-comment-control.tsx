@@ -1,4 +1,4 @@
-import { MessageSquare } from "lucide-react";
+import { MessageSquarePlus } from "lucide-react";
 import type { DocsUILabels } from "@/docs-core/src/docs-labels";
 import { cn } from "@/lib/utils";
 
@@ -37,11 +37,10 @@ export function DocsCollabCommentControl({
       aria-label={labels.commentsAddFromSelection}
       disabled={disabled}
       onClick={onAddCommentFromSelection}
-      className={cn("text-editor-format-bar__btn text-editor-format-bar__mode-trigger", className)}
+      className={cn("text-editor-format-bar__btn", className)}
     >
-      <MessageSquare className="text-editor-format-bar__mode-trigger-icon" aria-hidden />
-      <span className="text-editor-format-bar__mode-trigger-label">
-        {labels.commentsAddFromSelection}
+      <span className="text-editor-format-bar__btn-icon">
+        <MessageSquarePlus aria-hidden />
       </span>
     </button>
   );

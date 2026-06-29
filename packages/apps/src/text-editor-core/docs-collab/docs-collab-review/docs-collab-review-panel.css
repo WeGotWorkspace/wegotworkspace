@@ -1,0 +1,53 @@
+.docs-collab-review-panel-drawer {
+  --side-drawer-width: 22rem;
+}
+
+@import "../../../styles.css" reference;
+@import "../docs-collab-card/docs-collab-sidebar-panel.css";
+
+.docs-collab-review-panel {
+  --docs-collab-sidebar-panel-color: var(
+    --docs-comments-panel-color,
+    var(--docs-text, var(--color-ink))
+  );
+  --docs-collab-sidebar-panel-border-color: var(
+    --docs-comments-panel-border-color,
+    color-mix(in oklab, var(--color-ink) 8%, transparent)
+  );
+}
+
+.docs-collab-review-panel__list {
+  @apply space-y-6;
+}
+
+.docs-collab-review-panel__section {
+  @apply space-y-3;
+}
+
+.docs-collab-review-panel__section-title {
+  @apply px-1 text-[11px] font-semibold uppercase tracking-wider;
+  color: var(--docs-muted, color-mix(in oklab, var(--color-ink) 55%, transparent));
+}
+
+.docs-collab-review-panel__section-list {
+  @apply space-y-3;
+}
+
+.docs-collab-review-panel__bulk {
+  @apply hidden rounded-full px-2 py-1 text-[11px] font-medium transition-colors sm:inline-flex;
+  color: color-mix(
+    in oklab,
+    var(--text-editor-suggestion, oklch(0.85 0.15 145)) 88%,
+    var(--color-ink)
+  );
+  background-color: color-mix(
+    in oklab,
+    var(--text-editor-suggestion, oklch(0.85 0.15 145)) 12%,
+    transparent
+  );
+}
+
+.docs-collab-review-panel__bulk--muted {
+  color: var(--docs-muted, color-mix(in oklab, var(--color-ink) 55%, transparent));
+  background-color: color-mix(in oklab, var(--color-ink) 6%, transparent);
+}

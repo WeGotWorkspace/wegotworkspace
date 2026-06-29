@@ -8,6 +8,11 @@ export { DocsCollabCommentControl } from "./docs-collab-comment-control";
 export type { DocsCollabCommentControlProps } from "./docs-collab-comment-control";
 export { DocsCollabSuggestControls } from "./docs-collab-suggest-controls";
 export type { DocsCollabSuggestControlsProps } from "./docs-collab-suggest-controls";
+export { DocsCollabReviewFloatingLayer, DocsCollabReviewPanel } from "./docs-collab-review";
+export type {
+  DocsCollabReviewFloatingLayerProps,
+  DocsCollabReviewPanelProps,
+} from "./docs-collab-review";
 export {
   DocsSuggestionCard,
   DocsSuggestionsFloatingLayer,

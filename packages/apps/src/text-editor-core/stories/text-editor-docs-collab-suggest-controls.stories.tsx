@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEditor } from "@tiptap/react";
+import { DocsCollabCommentControl } from "@/text-editor-core/docs-collab/docs-collab-comment-control";
 import { DocsCollabSuggestControls } from "@/text-editor-core/docs-collab/docs-collab-suggest-controls";
+import { docsLabels } from "@/docs-core/src/docs-labels";
 import {
   TextEditorFormatBar,
   TEXT_EDITOR_FORMAT_BAR_FULL,
@@ -41,6 +43,13 @@ function SuggestControlsHarness() {
         editor={editor}
         groups={TEXT_EDITOR_FORMAT_BAR_FULL}
         showPrint={false}
+        commentControl={
+          <DocsCollabCommentControl
+            labels={docsLabels}
+            canAddFromSelection
+            onAddCommentFromSelection={() => {}}
+          />
+        }
         trailing={<DocsCollabSuggestControls editor={editor} />}
       />
       <TextEditorSheet editor={editor} variant="sheet" fill className="min-h-0 flex-1" />

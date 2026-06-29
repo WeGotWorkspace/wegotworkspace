@@ -91,7 +91,6 @@ function DocsCommentsCollabDemo() {
               onAddReply={commentActions.addReply}
               onToggleReaction={commentActions.toggleReaction}
               onResolveThread={commentActions.resolveThread}
-              onDeleteThread={commentActions.deleteThread}
               onCancelDraft={commentActions.cancelDraft}
             />
           }

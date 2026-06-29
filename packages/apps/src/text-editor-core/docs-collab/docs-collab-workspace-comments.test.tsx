@@ -23,22 +23,22 @@ function createEditor(content = "<p>Hello world</p>") {
 type ExplicitDraftComposeOptions = {
   ydoc: Y.Doc;
   editor: Editor;
-  initialCommentsOpen?: boolean;
+  initialReviewPanelOpen?: boolean;
 };
 
 /** Mirrors explicit comment compose orchestration in docs-collab-workspace.tsx */
 function useExplicitDraftCompose({
   ydoc,
   editor,
-  initialCommentsOpen = false,
+  initialReviewPanelOpen = false,
 }: ExplicitDraftComposeOptions) {
-  const [commentsOpen, setCommentsOpen] = useState(initialCommentsOpen);
+  const [reviewPanelOpen, setReviewPanelOpen] = useState(initialReviewPanelOpen);
 
   const comments = useDocsComments({
     ydoc,
     editor,
     currentUser: { id: "u-1", name: "Alex" },
-    commentsVisible: commentsOpen,
+    commentsVisible: reviewPanelOpen,
   });
 
   const {
@@ -50,7 +50,7 @@ function useExplicitDraftCompose({
   } = comments;
 
   const addCommentFromSelection = useCallback(() => {
-    setCommentsOpen(true);
+    setReviewPanelOpen(true);
     if (draftThread) {
       selectThread(draftThread.id);
       return;
@@ -62,86 +62,86 @@ function useExplicitDraftCompose({
 
   useEffect(() => {
     if (shouldAutoOpenCommentsForDraft(draftThread)) {
-      setCommentsOpen(true);
+      setReviewPanelOpen(true);
       return;
     }
     if (!shouldAutoOpenCommentsForThreads("margin-compact")) return;
     if (openThreads.length > 0) {
-      setCommentsOpen(true);
+      setReviewPanelOpen(true);
     }
   }, [draftThread, openThreads.length]);
 
   return {
-    commentsOpen,
+    reviewPanelOpen,
     draftThread,
     selectionQualifiesForComment,
     addCommentFromSelection,
   };
 }
 
-/** Mirrors source/comments exclusivity in docs-collab-workspace.tsx */
+/** Mirrors source/review exclusivity in docs-collab-workspace.tsx */
 function useSourceCommentsExclusivity({
   initialViewSource = false,
-  initialCommentsOpen = false,
+  initialReviewPanelOpen = false,
   initialDraftThread = null as ReturnType<typeof useDocsComments>["draftThread"],
 } = {}) {
   const [viewSource, setViewSource] = useState(initialViewSource);
-  const [commentsOpen, setCommentsOpen] = useState(initialCommentsOpen);
+  const [reviewPanelOpen, setReviewPanelOpen] = useState(initialReviewPanelOpen);
   const [draftThread, setDraftThread] = useState(initialDraftThread);
 
-  const handleCommentsClose = useCallback(() => {
-    setCommentsOpen(false);
+  const handleReviewClose = useCallback(() => {
+    setReviewPanelOpen(false);
     setDraftThread(null);
   }, []);
 
   useEffect(() => {
     if (!viewSource) return;
-    if (commentsOpen || draftThread) {
-      handleCommentsClose();
+    if (reviewPanelOpen || draftThread) {
+      handleReviewClose();
     }
-  }, [commentsOpen, draftThread, handleCommentsClose, viewSource]);
+  }, [draftThread, handleReviewClose, reviewPanelOpen, viewSource]);
 
-  const handleToggleComments = useCallback(() => {
+  const handleToggleReview = useCallback(() => {
     if (viewSource) return;
-    if (commentsOpen) {
-      handleCommentsClose();
+    if (reviewPanelOpen) {
+      handleReviewClose();
       return;
     }
-    setCommentsOpen(true);
-  }, [commentsOpen, handleCommentsClose, viewSource]);
+    setReviewPanelOpen(true);
+  }, [handleReviewClose, reviewPanelOpen, viewSource]);
 
   const handleToggleSource = useCallback(() => {
-    if (commentsOpen) return;
+    if (reviewPanelOpen) return;
     setViewSource((on) => !on);
-  }, [commentsOpen]);
+  }, [reviewPanelOpen]);
 
   return {
     viewSource,
-    commentsOpen,
+    reviewPanelOpen,
     draftThread,
     commentsDisabled: viewSource,
-    sourceDisabled: commentsOpen,
-    handleToggleComments,
+    sourceDisabled: reviewPanelOpen,
+    handleToggleReview,
     handleToggleSource,
     setViewSource,
-    setCommentsOpen,
+    setReviewPanelOpen,
     setDraftThread,
   };
 }
 
-describe("docs-collab-workspace source/comments exclusivity", () => {
-  it("closes comments when source view is enabled", () => {
+describe("docs-collab-workspace source/review exclusivity", () => {
+  it("closes review panel when source view is enabled", () => {
     const { result } = renderHook(() =>
       useSourceCommentsExclusivity({
-        initialCommentsOpen: true,
+        initialReviewPanelOpen: true,
       }),
     );
 
-    expect(result.current.commentsOpen).toBe(true);
+    expect(result.current.reviewPanelOpen).toBe(true);
     expect(result.current.sourceDisabled).toBe(true);
 
     act(() => {
-      result.current.setCommentsOpen(false);
+      result.current.setReviewPanelOpen(false);
     });
     expect(result.current.sourceDisabled).toBe(false);
 
@@ -150,11 +150,11 @@ describe("docs-collab-workspace source/comments exclusivity", () => {
     });
 
     expect(result.current.viewSource).toBe(true);
-    expect(result.current.commentsOpen).toBe(false);
+    expect(result.current.reviewPanelOpen).toBe(false);
     expect(result.current.commentsDisabled).toBe(true);
   });
 
-  it("does not open comments from the toggle while source view is active", () => {
+  it("does not open review from the toggle while source view is active", () => {
     const { result } = renderHook(() =>
       useSourceCommentsExclusivity({
         initialViewSource: true,
@@ -164,16 +164,16 @@ describe("docs-collab-workspace source/comments exclusivity", () => {
     expect(result.current.commentsDisabled).toBe(true);
 
     act(() => {
-      result.current.handleToggleComments();
+      result.current.handleToggleReview();
     });
 
-    expect(result.current.commentsOpen).toBe(false);
+    expect(result.current.reviewPanelOpen).toBe(false);
   });
 
-  it("does not enable source while comments are open", () => {
+  it("does not enable source while review panel is open", () => {
     const { result } = renderHook(() =>
       useSourceCommentsExclusivity({
-        initialCommentsOpen: true,
+        initialReviewPanelOpen: true,
       }),
     );
 
@@ -186,21 +186,21 @@ describe("docs-collab-workspace source/comments exclusivity", () => {
     expect(result.current.viewSource).toBe(false);
   });
 
-  it("closes comments when source is enabled while a draft exists", () => {
+  it("closes review panel when source is enabled while a draft exists", () => {
     const { result } = renderHook(() =>
       useSourceCommentsExclusivity({
-        initialCommentsOpen: true,
+        initialReviewPanelOpen: true,
         initialDraftThread: { id: "draft-1" } as ReturnType<typeof useDocsComments>["draftThread"],
       }),
     );
 
     act(() => {
-      result.current.setCommentsOpen(false);
+      result.current.setReviewPanelOpen(false);
       result.current.setViewSource(true);
     });
 
     expect(result.current.viewSource).toBe(true);
-    expect(result.current.commentsOpen).toBe(false);
+    expect(result.current.reviewPanelOpen).toBe(false);
     expect(result.current.draftThread).toBeNull();
   });
 });
@@ -214,13 +214,13 @@ describe("docs-collab-workspace draft compose", () => {
       useExplicitDraftCompose({
         ydoc,
         editor,
-        initialCommentsOpen: false,
+        initialReviewPanelOpen: false,
       }),
     );
 
     expect(result.current.selectionQualifiesForComment).toBe(true);
     expect(result.current.draftThread).toBeNull();
-    expect(result.current.commentsOpen).toBe(false);
+    expect(result.current.reviewPanelOpen).toBe(false);
 
     act(() => {
       editor.destroy();
@@ -235,7 +235,7 @@ describe("docs-collab-workspace draft compose", () => {
       useExplicitDraftCompose({
         ydoc,
         editor,
-        initialCommentsOpen: false,
+        initialReviewPanelOpen: false,
       }),
     );
 
@@ -244,7 +244,7 @@ describe("docs-collab-workspace draft compose", () => {
     });
 
     expect(result.current.draftThread).not.toBeNull();
-    expect(result.current.commentsOpen).toBe(true);
+    expect(result.current.reviewPanelOpen).toBe(true);
 
     act(() => {
       editor.destroy();
@@ -259,7 +259,7 @@ describe("docs-collab-workspace draft compose", () => {
       useExplicitDraftCompose({
         ydoc,
         editor,
-        initialCommentsOpen: false,
+        initialReviewPanelOpen: false,
       }),
     );
 
@@ -275,7 +275,7 @@ describe("docs-collab-workspace draft compose", () => {
     });
 
     expect(result.current.draftThread?.id).toBe(draftId);
-    expect(result.current.commentsOpen).toBe(true);
+    expect(result.current.reviewPanelOpen).toBe(true);
 
     act(() => {
       editor.destroy();

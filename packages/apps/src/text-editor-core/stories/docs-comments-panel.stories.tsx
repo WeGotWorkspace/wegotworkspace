@@ -25,7 +25,6 @@ const panelHandlers = {
   onAddReply: noop,
   onToggleReaction: noop,
   onResolveThread: noop,
-  onDeleteThread: noop,
 };
 
 const meta = {

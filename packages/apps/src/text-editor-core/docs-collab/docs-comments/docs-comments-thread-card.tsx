@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, Trash2 } from "lucide-react";
+import { Check } from "lucide-react";
 import type { DocsUILabels } from "@/docs-core/src/docs-labels";
 import type { DocsCommentThread } from "../docs-comments-types";
 import {
@@ -20,7 +20,6 @@ export type DocsCommentsThreadCardProps = {
   onAddReply: (body: string) => void;
   onToggleReaction: (emoji: string) => void;
   onResolve: () => void;
-  onDelete: () => void;
   onCancelDraft?: () => void;
 };
 
@@ -35,7 +34,6 @@ export function DocsCommentsThreadCard({
   onAddReply,
   onToggleReaction,
   onResolve,
-  onDelete,
   onCancelDraft,
 }: DocsCommentsThreadCardProps) {
   const [composerText, setComposerText] = useState("");
@@ -84,44 +82,19 @@ export function DocsCommentsThreadCard({
         authorName={authorName}
         createdAt={authorCreatedAt}
         actions={
-          isDraft ? (
+          isDraft ? null : (
             <button
               type="button"
-              className="docs-comments-thread-card__delete"
-              aria-label={labels.commentsDelete}
+              className="docs-comments-thread-card__resolve"
+              aria-label={labels.commentsResolve}
               onClick={(event) => {
                 event.stopPropagation();
-                if (onCancelDraft) runExitAnimation(onCancelDraft);
+                runExitAnimation(onResolve);
               }}
             >
-              <Trash2 className="docs-comments-thread-card__delete-icon" aria-hidden />
+              <Check className="docs-comments-thread-card__resolve-icon" aria-hidden />
+              Resolve
             </button>
-          ) : (
-            <>
-              <button
-                type="button"
-                className="docs-comments-thread-card__resolve"
-                aria-label={labels.commentsResolve}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  runExitAnimation(onResolve);
-                }}
-              >
-                <Check className="docs-comments-thread-card__resolve-icon" aria-hidden />
-                Resolve
-              </button>
-              <button
-                type="button"
-                className="docs-comments-thread-card__delete"
-                aria-label={labels.commentsDelete}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  runExitAnimation(onDelete);
-                }}
-              >
-                <Trash2 className="docs-comments-thread-card__delete-icon" aria-hidden />
-              </button>
-            </>
           )
         }
       />
