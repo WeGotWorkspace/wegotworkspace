@@ -33,7 +33,7 @@ export function applyContentSeedToYDoc(
   const temp = new Y.Doc();
   const tempEditor = new Editor({
     extensions: [
-      StarterKit.configure({ undoRedo: false }),
+      StarterKit.configure({ undoRedo: false, link: false, underline: false }),
       Collaboration.configure({ document: temp }),
       ...createTextEditorExtensions({ format }).filter((ext) => ext.name !== "starterKit"),
     ],
