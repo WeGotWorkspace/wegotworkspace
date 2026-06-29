@@ -19,10 +19,8 @@ import { workspaceUserInitials } from "@/lib/workspace/workspace-session";
 import { cn } from "@/lib/utils";
 import { useConnectivity } from "@/hooks/use-connectivity";
 import {
-  resolveDocsCommentsLayoutMode,
   shouldAutoOpenCommentsForDraft,
   shouldAutoOpenCommentsForThreads,
-  shouldDefaultCommentsOpen,
   useDocsCommentsLayout,
 } from "./use-docs-comments-layout";
 import { SideDrawer } from "@/ui/side-drawer";
@@ -172,11 +170,7 @@ function DocsCollabWorkspaceInner({
   });
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [reviewPanelOpen, setReviewPanelOpen] = useState(() =>
-    typeof window === "undefined"
-      ? false
-      : shouldDefaultCommentsOpen(resolveDocsCommentsLayoutMode(window.innerWidth)),
-  );
+  const [reviewPanelOpen, setReviewPanelOpen] = useState(false);
   const [pageFormat, setPageFormat] = useState<TextEditorPageFormat>(
     DEFAULT_TEXT_EDITOR_PAGE_FORMAT,
   );

@@ -10,9 +10,9 @@ export function resolveDocsCommentsLayoutMode(width: number): DocsCommentsLayout
   return "sidebar";
 }
 
-/** Sidebar tier shows review on load; drawer tier keeps it closed until the user opens it. */
-export function shouldDefaultCommentsOpen(layoutMode: DocsCommentsLayoutMode): boolean {
-  return layoutMode === "sidebar";
+/** Review panel starts closed on all tiers; auto-open when threads/suggestions exist is handled separately. */
+export function shouldDefaultCommentsOpen(_layoutMode: DocsCommentsLayoutMode): boolean {
+  return false;
 }
 
 /** Auto-open when threads appear applies only on the pinned sidebar tier. */

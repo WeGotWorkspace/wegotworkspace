@@ -8,6 +8,7 @@ import { CommentMark } from "@/text-editor-core/src/text-editor-comment-commands
 import {
   shouldAutoOpenCommentsForDraft,
   shouldAutoOpenCommentsForThreads,
+  type DocsCommentsLayoutMode,
 } from "./use-docs-comments-layout";
 import { useDocsComments } from "./use-docs-comments";
 
@@ -79,6 +80,31 @@ function useExplicitDraftCompose({
   };
 }
 
+/** Mirrors review panel auto-open orchestration in docs-collab-workspace.tsx */
+function useReviewPanelAutoOpen({
+  commentsLayout = "sidebar" as DocsCommentsLayoutMode,
+  openThreadsCount = 0,
+  suggestionsCount = 0,
+  draftThread = null as ReturnType<typeof useDocsComments>["draftThread"],
+  viewSource = false,
+} = {}) {
+  const [reviewPanelOpen, setReviewPanelOpen] = useState(false);
+
+  useEffect(() => {
+    if (viewSource) return;
+    if (shouldAutoOpenCommentsForDraft(draftThread)) {
+      setReviewPanelOpen(true);
+      return;
+    }
+    if (!shouldAutoOpenCommentsForThreads(commentsLayout)) return;
+    if (openThreadsCount > 0 || suggestionsCount > 0) {
+      setReviewPanelOpen(true);
+    }
+  }, [commentsLayout, draftThread, openThreadsCount, suggestionsCount, viewSource]);
+
+  return { reviewPanelOpen };
+}
+
 /** Mirrors source/review exclusivity in docs-collab-workspace.tsx */
 function useSourceCommentsExclusivity({
   initialViewSource = false,
@@ -128,6 +154,54 @@ function useSourceCommentsExclusivity({
     setDraftThread,
   };
 }
+
+describe("docs-collab-workspace review panel default", () => {
+  it("stays closed on sidebar tier when there are no threads or suggestions", () => {
+    const { result } = renderHook(() =>
+      useReviewPanelAutoOpen({
+        commentsLayout: "sidebar",
+        openThreadsCount: 0,
+        suggestionsCount: 0,
+      }),
+    );
+
+    expect(result.current.reviewPanelOpen).toBe(false);
+  });
+
+  it("auto-opens on sidebar tier when open threads exist on load", () => {
+    const { result } = renderHook(() =>
+      useReviewPanelAutoOpen({
+        commentsLayout: "sidebar",
+        openThreadsCount: 2,
+      }),
+    );
+
+    expect(result.current.reviewPanelOpen).toBe(true);
+  });
+
+  it("auto-opens on sidebar tier when pending suggestions exist on load", () => {
+    const { result } = renderHook(() =>
+      useReviewPanelAutoOpen({
+        commentsLayout: "sidebar",
+        suggestionsCount: 1,
+      }),
+    );
+
+    expect(result.current.reviewPanelOpen).toBe(true);
+  });
+
+  it("does not auto-open on drawer tier even when threads exist", () => {
+    const { result } = renderHook(() =>
+      useReviewPanelAutoOpen({
+        commentsLayout: "drawer",
+        openThreadsCount: 3,
+        suggestionsCount: 2,
+      }),
+    );
+
+    expect(result.current.reviewPanelOpen).toBe(false);
+  });
+});
 
 describe("docs-collab-workspace source/review exclusivity", () => {
   it("closes review panel when source view is enabled", () => {

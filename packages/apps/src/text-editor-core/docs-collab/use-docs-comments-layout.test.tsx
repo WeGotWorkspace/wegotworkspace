@@ -77,9 +77,9 @@ describe("resolveDocsCommentsLayoutMode", () => {
 });
 
 describe("shouldDefaultCommentsOpen", () => {
-  it("defaults closed on drawer tier and open on sidebar tier", () => {
+  it("defaults closed on all layout tiers", () => {
     expect(shouldDefaultCommentsOpen("drawer")).toBe(false);
-    expect(shouldDefaultCommentsOpen("sidebar")).toBe(true);
+    expect(shouldDefaultCommentsOpen("sidebar")).toBe(false);
   });
 
   it("drawer tier with existing threads still defaults closed on load", () => {
