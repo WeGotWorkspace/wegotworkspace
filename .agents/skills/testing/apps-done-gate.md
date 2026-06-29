@@ -14,6 +14,8 @@ From the repo root:
 pnpm test:apps-done-gate
 ```
 
+**Husky pre-push** runs this automatically when `packages/apps/**` changed in the commits being pushed (vs the remote tip). CI `apps-quality` runs the same gate on **PR HEAD** only — not on every commit in the PR ([#250](https://github.com/WeGotWorkspace/wegotworkspace/issues/250)).
+
 Or inside `packages/apps`:
 
 ```bash

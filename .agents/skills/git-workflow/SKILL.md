@@ -23,6 +23,15 @@ description: Git workflow for this repository — branching, commits, pull reque
 - It is fine to run read-only git commands (`git status`, `git diff`, `git log`) for investigation without asking.
 - **Do not** push to remote unless the user explicitly asks.
 
+### Apps UI verification before push
+
+When commits touch **`packages/apps/**`** (exports, panes, hooks, stories, CSS):
+
+1. **Before push** (Husky enforces): `pnpm test:apps-done-gate` — typecheck, Vitest, Storybook smoke, coverage baseline.
+2. **Before merge-ready PR** (when user asks): `pnpm run ci:quality` — full lint/format/typegen + API and apps done gates.
+
+Targeted Vitest or Storybook runs during development are fine; they do not replace the done gate. CI (`apps-quality`) validates **branch HEAD** on the PR only — intermediate commits may fail until fix-forward ([#250](https://github.com/WeGotWorkspace/wegotworkspace/issues/250)). Per-SHA gate runs are for bisect/debug only.
+
 ## Conventional Commits (when the user asks you to commit)
 
 Use **[Conventional Commits](https://www.conventionalcommits.org/)** for every commit message:
