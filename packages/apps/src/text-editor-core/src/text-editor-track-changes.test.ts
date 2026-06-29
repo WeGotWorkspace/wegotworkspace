@@ -9,6 +9,7 @@ import { applyContentSeedToYDoc } from "../docs-collab/docs-collab-editor-surfac
 import { createCollaborativeTextEditorExtensions } from "./text-editor-extensions";
 import {
   getAcceptedTextEditorContent,
+  getDocsTrackChangeGroups,
   getTrackChangesMode,
   getTrackChangesPendingCount,
   trackChangesAuthorIdFromName,
@@ -125,6 +126,27 @@ describe("text editor track changes", () => {
     editor.commands.acceptAll();
     expect(getTrackChangesPendingCount(editor)).toBe(0);
     expect(editor.getText()).toContain("Hello again");
+
+    editor.destroy();
+  });
+
+  it("groups pending track changes for the suggestions sidebar", () => {
+    const ydoc = new Y.Doc();
+    const awareness = new Awareness(ydoc);
+    const user = {
+      id: trackChangesAuthorIdFromName("Alex"),
+      name: "Alex",
+      color: "#2563eb",
+    };
+    const editor = createCollabEditor(ydoc, awareness, user, "Hello");
+
+    editor.commands.setTextSelection({ from: 6, to: 6 });
+    suggestInsertText(editor, " world");
+
+    const groups = getDocsTrackChangeGroups(editor);
+    expect(groups).toHaveLength(1);
+    expect(groups[0]?.summary).toContain("world");
+    expect(groups[0]?.authorName).toBe("Alex");
 
     editor.destroy();
   });

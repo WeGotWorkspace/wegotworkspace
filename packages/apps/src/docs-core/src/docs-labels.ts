@@ -49,6 +49,17 @@ export const docsLabels = {
   commentsReplyAction: "Post",
   commentsResolve: "Resolve thread",
   commentsDelete: "Delete thread",
+  suggestionsSidebarTitle: "Suggestions",
+  suggestionsCloseSidebar: "Close suggestions",
+  suggestionsEmpty: "No suggestions yet. Switch to Suggest mode and edit the document.",
+  suggestionsCountOne: "1 pending",
+  suggestionsCountMany: (count: number) => `${count} pending`,
+  suggestionsToggleShow: "Show suggestions",
+  suggestionsToggleHide: "Hide suggestions",
+  suggestionsAccept: "Accept suggestion",
+  suggestionsReject: "Reject suggestion",
+  suggestionsAcceptAll: "Accept all",
+  suggestionsRejectAll: "Reject all",
   pageSizeLabel: "Page size",
 } as const;
 

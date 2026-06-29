@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import type { Editor } from "@tiptap/react";
 import "@/text-editor-core/src/text-editor-track-changes-augmentation";
-import { Check, CheckCheck, Pencil, PenLine, X, XCircle } from "lucide-react";
+import { Pencil, PenLine } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   editorHasTrackChanges,
   getTrackChangesMode,
   getTrackChangesPendingCount,
-  trackChangeIdAtSelection,
 } from "@/text-editor-core/src/text-editor-track-changes";
 
 export type DocsCollabSuggestControlsProps = {
@@ -15,6 +14,7 @@ export type DocsCollabSuggestControlsProps = {
   className?: string;
 };
 
+/** Edit/suggest mode toggle for the format bar (accept/reject live in the suggestions sidebar). */
 export function DocsCollabSuggestControls({ editor, className }: DocsCollabSuggestControlsProps) {
   const [, setRevision] = useState(0);
 
@@ -31,7 +31,6 @@ export function DocsCollabSuggestControls({ editor, className }: DocsCollabSugge
 
   const mode = getTrackChangesMode(editor);
   const pendingCount = getTrackChangesPendingCount(editor);
-  const changeAtCursor = trackChangeIdAtSelection(editor);
   const suggestActive = mode === "suggest";
 
   return (
@@ -73,56 +72,6 @@ export function DocsCollabSuggestControls({ editor, className }: DocsCollabSugge
             {pendingCount}
           </span>
         ) : null}
-      </button>
-
-      <div className="text-editor-suggest-controls__sep" aria-hidden />
-
-      <button
-        type="button"
-        className="text-editor-suggest-controls__btn"
-        title="Accept suggestion at cursor"
-        disabled={!changeAtCursor}
-        onClick={() => {
-          if (changeAtCursor) editor.commands.acceptChange(changeAtCursor);
-        }}
-      >
-        <Check aria-hidden />
-        <span className="text-editor-suggest-controls__label">Accept</span>
-      </button>
-      <button
-        type="button"
-        className="text-editor-suggest-controls__btn"
-        title="Reject suggestion at cursor"
-        disabled={!changeAtCursor}
-        onClick={() => {
-          if (changeAtCursor) editor.commands.rejectChange(changeAtCursor);
-        }}
-      >
-        <X aria-hidden />
-        <span className="text-editor-suggest-controls__label">Reject</span>
-      </button>
-
-      <div className="text-editor-suggest-controls__sep" aria-hidden />
-
-      <button
-        type="button"
-        className="text-editor-suggest-controls__btn"
-        title="Accept all suggestions"
-        disabled={pendingCount === 0}
-        onClick={() => editor.commands.acceptAll()}
-      >
-        <CheckCheck aria-hidden />
-        <span className="text-editor-suggest-controls__label">Accept all</span>
-      </button>
-      <button
-        type="button"
-        className="text-editor-suggest-controls__btn"
-        title="Reject all suggestions"
-        disabled={pendingCount === 0}
-        onClick={() => editor.commands.rejectAll()}
-      >
-        <XCircle aria-hidden />
-        <span className="text-editor-suggest-controls__label">Reject all</span>
       </button>
     </div>
   );

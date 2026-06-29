@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Editor } from "@tiptap/react";
-import { Code2, Eye, MessageSquare, Pencil, PenLine, Printer } from "lucide-react";
+import { Code2, Eye, ListChecks, MessageSquare, Pencil, PenLine, Printer } from "lucide-react";
 import { LoadingSpinner } from "@/loading-spinner/src/loading-spinner";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import { IconButton } from "@/button/src/button";
@@ -50,8 +50,11 @@ import { DocsCollabEditor } from "./docs-collab-editor";
 import { DocsCollabPresence } from "./docs-collab-presence";
 import { DocsCommentsFloatingLayer } from "./docs-comments/docs-comments-floating-layer";
 import { DocsCommentsPanel } from "./docs-comments/docs-comments-panel";
+import { DocsSuggestionsFloatingLayer } from "./docs-suggestions/docs-suggestions-floating-layer";
+import { DocsSuggestionsPanel } from "./docs-suggestions/docs-suggestions-panel";
 import type { DocsCollabWireOperations } from "./docs-collab-wire";
 import { useDocsComments } from "./use-docs-comments";
+import { useDocsSuggestions } from "./use-docs-suggestions";
 import { useDocsCollab } from "./use-docs-collab";
 import type { DocsCollabUrls } from "./use-docs-collab";
 import {
@@ -61,6 +64,7 @@ import {
 
 import "@/docs-core/src/docs-workspace.css";
 import "@/text-editor-core/docs-collab/docs-comments-sidebar.css";
+import "@/text-editor-core/docs-collab/docs-suggestions-sidebar.css";
 
 const USERNAME_PROMPT = "Your display name";
 
@@ -183,6 +187,11 @@ function DocsCollabWorkspaceInner({
       ? false
       : shouldDefaultCommentsOpen(resolveDocsCommentsLayoutMode(window.innerWidth)),
   );
+  const [suggestionsOpen, setSuggestionsOpen] = useState(() =>
+    typeof window === "undefined"
+      ? false
+      : shouldDefaultCommentsOpen(resolveDocsCommentsLayoutMode(window.innerWidth)),
+  );
   const [pageFormat, setPageFormat] = useState<TextEditorPageFormat>(
     DEFAULT_TEXT_EDITOR_PAGE_FORMAT,
   );
@@ -229,6 +238,18 @@ function DocsCollabWorkspaceInner({
     resolveThread,
     deleteThread,
   } = comments;
+
+  const {
+    suggestions,
+    activeChangeId,
+    selectSuggestion,
+    clearActiveSuggestion,
+    activateSuggestionFromMark,
+    acceptSuggestion,
+    rejectSuggestion,
+    acceptAll,
+    rejectAll,
+  } = useDocsSuggestions(editor);
 
   useEffect(() => {
     if (draftThread) {
@@ -282,6 +303,14 @@ function DocsCollabWorkspaceInner({
     }
   }, [commentsLayout, draftThread, openThreads.length, viewSource]);
 
+  useEffect(() => {
+    if (viewSource) return;
+    if (!shouldAutoOpenCommentsForThreads(commentsLayout)) return;
+    if (suggestions.length > 0) {
+      setSuggestionsOpen(true);
+    }
+  }, [commentsLayout, suggestions.length, viewSource]);
+
   const handleCommentsClose = useCallback(() => {
     composeSuppressedRef.current = true;
     setDraftComposeVisible(false);
@@ -316,6 +345,29 @@ function DocsCollabWorkspaceInner({
     composeSuppressedRef.current = false;
     setCommentsOpen(true);
   }, [commentsOpen, handleCommentsClose, viewSource]);
+
+  const handleSuggestionsClose = useCallback(() => {
+    clearActiveSuggestion();
+    setSuggestionsOpen(false);
+  }, [clearActiveSuggestion]);
+
+  const handleToggleSuggestions = useCallback(() => {
+    if (viewSource) return;
+    if (suggestionsOpen) {
+      handleSuggestionsClose();
+      return;
+    }
+    setSuggestionsOpen(true);
+  }, [handleSuggestionsClose, suggestionsOpen, viewSource]);
+
+  const handleSuggestionActivated = useCallback(
+    (changeId: string) => {
+      if (viewSource) return;
+      setSuggestionsOpen(true);
+      activateSuggestionFromMark(changeId);
+    },
+    [activateSuggestionFromMark, viewSource],
+  );
 
   const handleSetTrackMode = useCallback(
     (mode: TrackChangesMode) => {
@@ -411,6 +463,73 @@ function DocsCollabWorkspaceInner({
     ],
   );
 
+  const suggestionsOverlay = useMemo(
+    () =>
+      collabSession && !useCommentsDrawer ? (
+        <DocsSuggestionsFloatingLayer
+          editor={editor}
+          visible={suggestionsOpen}
+          labels={labels}
+          suggestions={suggestions}
+          activeChangeId={activeChangeId}
+          onSelectSuggestion={selectSuggestion}
+          onAcceptSuggestion={acceptSuggestion}
+          onRejectSuggestion={rejectSuggestion}
+        />
+      ) : null,
+    [
+      acceptSuggestion,
+      activeChangeId,
+      collabSession,
+      editor,
+      labels,
+      rejectSuggestion,
+      selectSuggestion,
+      suggestions,
+      suggestionsOpen,
+      useCommentsDrawer,
+    ],
+  );
+
+  const suggestionsMobileDrawer = useMemo(
+    () =>
+      collabSession && useCommentsDrawer ? (
+        <SideDrawer
+          open={suggestionsOpen}
+          onClose={handleSuggestionsClose}
+          title={labels.suggestionsSidebarTitle}
+          className="docs-suggestions-panel-drawer"
+          contentClassName="docs-suggestions-panel-drawer__body"
+        >
+          <DocsSuggestionsPanel
+            onCloseMobile={handleSuggestionsClose}
+            labels={labels}
+            suggestions={suggestions}
+            activeChangeId={activeChangeId}
+            onSelectSuggestion={selectSuggestion}
+            onAcceptSuggestion={acceptSuggestion}
+            onRejectSuggestion={rejectSuggestion}
+            onAcceptAll={acceptAll}
+            onRejectAll={rejectAll}
+          />
+        </SideDrawer>
+      ) : null,
+    [
+      acceptAll,
+      acceptSuggestion,
+      activeChangeId,
+      collabSession,
+      handleSuggestionsClose,
+      labels,
+      rejectAll,
+      rejectSuggestion,
+      selectSuggestion,
+      suggestions,
+      suggestionsOpen,
+      useCommentsDrawer,
+    ],
+  );
+
   const outline = useMemo(
     () => (showMarkdownOutline ? parseMarkdownOutline(markdown) : []),
     [markdown, showMarkdownOutline],
@@ -480,7 +599,8 @@ function DocsCollabWorkspaceInner({
           className={cn(
             "docs-workspace",
             "min-h-screen",
-            shouldApplyCommentsSheetCompact(commentsLayout, commentsOpen) &&
+            (shouldApplyCommentsSheetCompact(commentsLayout, commentsOpen) ||
+              shouldApplyCommentsSheetCompact(commentsLayout, suggestionsOpen)) &&
               "docs-workspace--comments-sheet-compact",
           )}
           sidebar={
@@ -602,6 +722,25 @@ function DocsCollabWorkspaceInner({
                       />
                     </div>
                   ) : null}
+                  {trackChangesReady && !viewSource ? (
+                    <IconButton
+                      label={
+                        suggestionsOpen
+                          ? labels.suggestionsToggleHide
+                          : suggestions.length > 0
+                            ? `${labels.suggestionsToggleShow} (${suggestions.length} pending)`
+                            : labels.suggestionsToggleShow
+                      }
+                      icon={<ListChecks />}
+                      size="sm"
+                      variant="subtle"
+                      active={suggestionsOpen}
+                      aria-pressed={suggestionsOpen}
+                      className="docs-workspace__suggestions-toggle"
+                      data-count={suggestions.length > 0 ? suggestions.length : undefined}
+                      onClick={handleToggleSuggestions}
+                    />
+                  ) : null}
                   <IconButton
                     label={
                       viewSource
@@ -646,7 +785,9 @@ function DocsCollabWorkspaceInner({
                   onContentChange={handleMarkdownChange}
                   onEditorReady={handleEditorReady}
                   onCommentActivated={handleCommentActivated}
+                  onSuggestionActivated={handleSuggestionActivated}
                   commentsOverlay={commentsOverlay}
+                  suggestionsOverlay={suggestionsOverlay}
                 />
               ) : null}
               <footer className="docs-workspace__stats-footer" aria-live="polite">
@@ -680,6 +821,7 @@ function DocsCollabWorkspaceInner({
           }
         />
         {commentsMobileDrawer}
+        {suggestionsMobileDrawer}
         <AlertDialog open={sourceClosedDialogOpen} onOpenChange={setSourceClosedDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>

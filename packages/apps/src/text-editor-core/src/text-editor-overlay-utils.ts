@@ -74,10 +74,14 @@ export function forwardOverlayWheelToEditorScroll(
   editorAnchor: HTMLElement,
   overlayRoot: HTMLElement,
 ): boolean {
-  const card = (event.target as Element | null)?.closest(".docs-comments-floating-layer__card");
+  const card = (event.target as Element | null)?.closest(
+    ".docs-comments-floating-layer__card, .docs-suggestions-floating-layer__card",
+  );
   if (!card || !overlayRoot.contains(card)) return false;
 
-  const scrollHost = (event.target as Element | null)?.closest(".docs-comments-thread-card");
+  const scrollHost = (event.target as Element | null)?.closest(
+    ".docs-comments-thread-card, .docs-suggestion-card",
+  );
   if (
     scrollHost instanceof HTMLElement &&
     canElementAbsorbVerticalWheel(scrollHost, event.deltaY)

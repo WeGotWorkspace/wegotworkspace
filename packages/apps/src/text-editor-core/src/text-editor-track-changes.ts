@@ -3,11 +3,14 @@ import "@/text-editor-core/src/text-editor-track-changes-augmentation";
 import {
   TrackChangesExtension,
   getBaseText,
+  getGroupedChanges,
   getPendingChangeCount,
   getTrackedChanges,
   type ChangeAuthor,
+  type TrackedChangeInfo,
   type TrackChangesMode,
 } from "tiptap-track-changes";
+import { escapeCommentIdForSelector } from "@/text-editor-core/src/text-editor-comment-commands";
 import {
   getTextEditorContent,
   type TextEditorContentFormat,
@@ -54,6 +57,93 @@ export function getTrackChangesMode(editor: Editor | null): TrackChangesMode {
 export function getTrackChangesPendingCount(editor: Editor | null): number {
   if (!editorHasTrackChanges(editor)) return 0;
   return getPendingChangeCount(editor);
+}
+
+export type DocsTrackChangeGroup = {
+  changeId: string;
+  authorName: string;
+  authorColor: string;
+  timestamp: string;
+  from: number;
+  to: number;
+  anchorText: string;
+  summary: string;
+  parts: TrackedChangeInfo[];
+};
+
+const ANCHOR_CONTEXT_CHARS = 40;
+
+export function escapeTrackChangeIdForSelector(id: string): string {
+  return escapeCommentIdForSelector(id);
+}
+
+export function getTrackChangeIdFromTarget(target: EventTarget | null): string | null {
+  if (!(target instanceof Element)) return null;
+  const el = target.closest("[data-change-id]");
+  if (!el) return null;
+  return el.getAttribute("data-change-id");
+}
+
+function summarizeTrackChangeParts(parts: TrackedChangeInfo[]): string {
+  const insertion = parts.find((part) => part.type === "insertion");
+  const deletion = parts.find((part) => part.type === "deletion");
+  const formatChange = parts.find((part) => part.type === "formatChange");
+
+  if (insertion && deletion) {
+    const from = deletion.text || "…";
+    const to = insertion.text || "…";
+    return `Replace “${from}” with “${to}”`;
+  }
+  if (insertion) {
+    return insertion.text ? `Insert “${insertion.text}”` : "Insert text";
+  }
+  if (deletion) {
+    return deletion.text ? `Delete “${deletion.text}”` : "Delete text";
+  }
+  if (formatChange) {
+    const added = formatChange.formatAdded;
+    const removed = formatChange.formatRemoved;
+    if (added && removed) return `Change formatting: ${removed} → ${added}`;
+    if (added) return `Add ${added} formatting`;
+    if (removed) return `Remove ${removed} formatting`;
+    return "Format change";
+  }
+  return "Suggested change";
+}
+
+function trackChangeAnchorText(editor: Editor, from: number, to: number): string {
+  const doc = editor.state.doc;
+  const size = doc.content.size;
+  const start = Math.max(0, from - ANCHOR_CONTEXT_CHARS);
+  const end = Math.min(size, to + ANCHOR_CONTEXT_CHARS);
+  const text = doc.textBetween(start, end, " ").trim();
+  return text.length > 120 ? `${text.slice(0, 117)}…` : text;
+}
+
+/** Pending track-change groups sorted by document position. */
+export function getDocsTrackChangeGroups(editor: Editor | null): DocsTrackChangeGroup[] {
+  if (!editorHasTrackChanges(editor)) return [];
+
+  const groups: DocsTrackChangeGroup[] = [];
+  for (const [changeId, parts] of getGroupedChanges(editor)) {
+    if (parts.length === 0) continue;
+    const primary = parts[0]!;
+    const from = Math.min(...parts.map((part) => part.from));
+    const to = Math.max(...parts.map((part) => part.to));
+    groups.push({
+      changeId,
+      authorName: primary.authorName,
+      authorColor: primary.authorColor,
+      timestamp: primary.timestamp,
+      from,
+      to,
+      anchorText: trackChangeAnchorText(editor, from, to),
+      summary: summarizeTrackChangeParts(parts),
+      parts,
+    });
+  }
+
+  return groups.sort((left, right) => left.from - right.from || left.to - right.to);
 }
 
 /** changeId for a tracked change overlapping the current selection, if any. */

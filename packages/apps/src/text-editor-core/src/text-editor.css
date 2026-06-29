@@ -650,7 +650,7 @@
     color-mix(in oklab, var(--author-color, var(--text-editor-track-format)) 80%, transparent);
 }
 
-/* Suggest-mode toolbar: edit/suggest toggle + accept/reject controls. */
+/* Suggest-mode toolbar: edit/suggest toggle (accept/reject live in the suggestions sidebar). */
 .text-editor-suggest-controls {
   display: flex;
   flex-wrap: wrap;

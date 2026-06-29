@@ -6,6 +6,18 @@ export { DocsCollabPresence } from "./docs-collab-presence";
 export type { DocsCollabPresenceProps } from "./docs-collab-presence";
 export { DocsCollabSuggestControls } from "./docs-collab-suggest-controls";
 export type { DocsCollabSuggestControlsProps } from "./docs-collab-suggest-controls";
+export {
+  DocsSuggestionCard,
+  DocsSuggestionsFloatingLayer,
+  DocsSuggestionsPanel,
+} from "./docs-suggestions";
+export type {
+  DocsSuggestionCardProps,
+  DocsSuggestionsFloatingLayerProps,
+  DocsSuggestionsPanelProps,
+} from "./docs-suggestions";
+export { useDocsSuggestions } from "./use-docs-suggestions";
+export type { UseDocsSuggestionsResult } from "./use-docs-suggestions";
 export { DocsCommentsPanel, DocsCommentsSidebar } from "./docs-comments";
 export type { DocsCommentsPanelProps, DocsCommentsSidebarProps } from "./docs-comments";
 export { DocsCommentsFloatingLayer } from "./docs-comments";

@@ -36,9 +36,13 @@ export {
   editorHasPendingTrackChanges,
   getTrackChangesMode,
   getTrackChangesPendingCount,
+  getDocsTrackChangeGroups,
+  getTrackChangeIdFromTarget,
+  escapeTrackChangeIdForSelector,
   trackChangeIdAtSelection,
   toTrackChangesAuthor,
   trackChangesAuthorIdFromName,
+  type DocsTrackChangeGroup,
   type TextEditorCollabUser,
 } from "@/text-editor-core/src/text-editor-track-changes";
 export {

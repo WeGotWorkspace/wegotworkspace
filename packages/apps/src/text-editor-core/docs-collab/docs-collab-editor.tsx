@@ -20,7 +20,7 @@ import {
 } from "@/text-editor-core/src/text-editor-format-bar";
 import { createCollaborativeTextEditorExtensions } from "@/text-editor-core/src/text-editor-extensions";
 import { getCommentMarkIdFromTarget } from "@/text-editor-core/src/text-editor-comment-commands";
-import { DocsCollabSuggestControls } from "./docs-collab-suggest-controls";
+import { getTrackChangeIdFromTarget } from "@/text-editor-core/src/text-editor-track-changes";
 import { TextEditorSheet } from "@/text-editor-core/src/text-editor-sheet";
 import { TextEditorSource } from "@/text-editor-core/src/text-editor-source";
 import { useTextEditorSourceSync } from "@/text-editor-core/src/use-text-editor-source-sync";
@@ -45,7 +45,9 @@ export type DocsCollabEditorProps = {
   onContentChange?: (getContent: () => string) => void;
   onEditorReady?: (editor: Editor | null) => void;
   onCommentActivated?: (commentId: string, clickPos: number) => void;
+  onSuggestionActivated?: (changeId: string) => void;
   commentsOverlay?: ReactNode;
+  suggestionsOverlay?: ReactNode;
 };
 
 export function DocsCollabEditor({
@@ -63,22 +65,33 @@ export function DocsCollabEditor({
   onContentChange,
   onEditorReady,
   onCommentActivated,
+  onSuggestionActivated,
   commentsOverlay,
+  suggestionsOverlay,
 }: DocsCollabEditorProps) {
   const effectiveOnContentChange = onContentChange ?? onMarkdownChange;
   const onContentChangeRef = useRef(effectiveOnContentChange);
   onContentChangeRef.current = effectiveOnContentChange;
   const onCommentActivatedRef = useRef(onCommentActivated);
   onCommentActivatedRef.current = onCommentActivated;
+  const onSuggestionActivatedRef = useRef(onSuggestionActivated);
+  onSuggestionActivatedRef.current = onSuggestionActivated;
 
   const editorProps = useMemo(
     () => ({
       attributes: { class: "text-editor-prose focus:outline-none" },
       handleClick: (_view: unknown, pos: number, event: MouseEvent) => {
         const commentId = getCommentMarkIdFromTarget(event.target);
-        if (!commentId) return false;
-        onCommentActivatedRef.current?.(commentId, pos);
-        return true;
+        if (commentId) {
+          onCommentActivatedRef.current?.(commentId, pos);
+          return true;
+        }
+        const changeId = getTrackChangeIdFromTarget(event.target);
+        if (changeId) {
+          onSuggestionActivatedRef.current?.(changeId);
+          return true;
+        }
+        return false;
       },
     }),
     [],
@@ -154,12 +167,6 @@ export function DocsCollabEditor({
     />
   ) : null;
 
-  // Suggest-mode toolbar shares the toolbar region with the format bar; it
-  // self-hides when the editor has no track-changes extension.
-  const suggestControlsElement = formatBarConfig ? (
-    <DocsCollabSuggestControls editor={editor} />
-  ) : null;
-
   const sheetElement = (
     <TextEditorSheet
       editor={editor}
@@ -167,7 +174,14 @@ export function DocsCollabEditor({
       fill={sheetFill}
       paginated={pagination}
       slashMenu={format !== "text"}
-      overlay={commentsOverlay}
+      overlay={
+        commentsOverlay || suggestionsOverlay ? (
+          <>
+            {commentsOverlay}
+            {suggestionsOverlay}
+          </>
+        ) : null
+      }
       className="min-h-0 flex-1"
     />
   );
@@ -200,14 +214,12 @@ export function DocsCollabEditor({
             className="text-editor__source min-h-0"
           />
           <div className="text-editor__formatted flex min-h-0 flex-1 flex-col">
-            {suggestControlsElement}
             {formatBarElement}
             {sheetElement}
           </div>
         </div>
       ) : (
         <>
-          {suggestControlsElement}
           {formatBarElement}
           {sheetElement}
         </>

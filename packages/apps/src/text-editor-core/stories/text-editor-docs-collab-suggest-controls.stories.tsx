@@ -30,8 +30,8 @@ function SuggestControlsHarness() {
   return (
     <div className="text-editor flex min-h-[min(640px,90dvh)] w-full flex-col p-6">
       <p className="mb-3 text-sm text-muted-foreground">
-        Toggle <strong>Suggest</strong> to track edits, then accept or reject proposals at the
-        cursor or in bulk.
+        Toggle <strong>Suggest</strong> to track edits, then review and accept or reject proposals
+        in the suggestions sidebar.
       </p>
       <DocsCollabSuggestControls editor={editor} />
       <TextEditorSheet editor={editor} variant="sheet" fill className="min-h-0 flex-1" />
@@ -47,7 +47,7 @@ const meta = {
     docs: {
       description: {
         component:
-          "Suggest-mode toolbar (edit/suggest toggle + accept/reject) backed by MIT `tiptap-track-changes`.",
+          "Suggest-mode toolbar (edit/suggest toggle) backed by MIT `tiptap-track-changes`. Accept/reject live in the suggestions sidebar.",
       },
     },
   },

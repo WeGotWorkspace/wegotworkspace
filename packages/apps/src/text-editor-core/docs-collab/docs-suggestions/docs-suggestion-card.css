@@ -1,0 +1,121 @@
+@import "../../../styles.css" reference;
+
+.docs-suggestion-card {
+  @apply cursor-pointer rounded-xl border p-4 shadow-sm transition-[box-shadow,border-color,background-color,opacity] duration-200;
+  --docs-suggestion-accent: var(--text-editor-suggestion, oklch(0.85 0.15 145));
+  border-color: var(--docs-border, color-mix(in oklab, var(--color-ink) 12%, transparent));
+  background-color: var(--docs-surface, var(--color-cream, #ffffff));
+  box-shadow:
+    0 1px 2px color-mix(in oklab, var(--color-ink) 5%, transparent),
+    0 1px 3px color-mix(in oklab, var(--color-ink) 4%, transparent);
+}
+
+.docs-suggestion-card[data-active="false"] {
+  opacity: 0.85;
+}
+
+.docs-suggestion-card:hover:not([data-active="true"]) {
+  opacity: 0.96;
+  border-color: color-mix(in oklab, var(--docs-suggestion-accent) 28%, transparent);
+  background-color: color-mix(
+    in oklab,
+    var(--docs-suggestion-accent) 8%,
+    var(--docs-surface, var(--color-cream, #ffffff))
+  );
+}
+
+.docs-suggestion-card[data-active="true"] {
+  opacity: 1;
+  border-width: 2px;
+  border-color: var(--docs-suggestion-accent);
+  box-shadow:
+    0 1px 2px color-mix(in oklab, var(--color-ink) 5%, transparent),
+    0 0 0 1px color-mix(in oklab, var(--docs-suggestion-accent) 18%, transparent);
+}
+
+.docs-suggestion-card[data-exiting="true"] {
+  animation: docs-suggestion-card-evaporate 200ms ease forwards;
+}
+
+@keyframes docs-suggestion-card-evaporate {
+  to {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
+
+.docs-suggestion-card__header {
+  @apply flex items-start justify-between gap-2;
+}
+
+.docs-suggestion-card__author-row {
+  @apply flex min-w-0 flex-1 items-center gap-2.5;
+}
+
+.docs-suggestion-card__avatar .user-avatar__mark {
+  width: 2rem;
+  height: 2rem;
+  font-size: 10px;
+}
+
+.docs-suggestion-card__avatar {
+  --user-avatar-bg: color-mix(in oklab, var(--docs-suggestion-accent) 18%, transparent);
+  --user-avatar-fg: color-mix(in oklab, var(--docs-suggestion-accent) 85%, var(--color-ink));
+}
+
+.docs-suggestion-card__meta {
+  @apply flex min-w-0 flex-1 flex-col gap-0.5;
+}
+
+.docs-suggestion-card__author {
+  @apply m-0 truncate text-sm font-semibold leading-tight;
+}
+
+.docs-suggestion-card__time {
+  @apply text-[11px] leading-tight;
+  color: var(--docs-muted, color-mix(in oklab, var(--color-ink) 55%, transparent));
+}
+
+.docs-suggestion-card__actions {
+  @apply flex shrink-0 items-center gap-1;
+}
+
+.docs-suggestion-card__accept {
+  @apply inline-flex h-7 items-center gap-1 rounded-full border px-2.5 text-xs font-medium transition-colors;
+  border-color: color-mix(in oklab, var(--docs-suggestion-accent) 35%, transparent);
+  color: color-mix(in oklab, var(--docs-suggestion-accent) 88%, var(--color-ink));
+  background-color: color-mix(in oklab, var(--docs-suggestion-accent) 10%, transparent);
+}
+
+.docs-suggestion-card__accept:hover {
+  background-color: color-mix(in oklab, var(--docs-suggestion-accent) 18%, transparent);
+}
+
+.docs-suggestion-card__accept-icon {
+  @apply size-3.5;
+}
+
+.docs-suggestion-card__reject {
+  @apply inline-flex size-7 items-center justify-center rounded-full border transition-colors;
+  border-color: var(--docs-border, color-mix(in oklab, var(--color-ink) 12%, transparent));
+  color: var(--docs-muted, color-mix(in oklab, var(--color-ink) 55%, transparent));
+}
+
+.docs-suggestion-card__reject:hover {
+  color: var(--docs-text, var(--color-ink));
+  background-color: color-mix(in oklab, var(--color-ink) 6%, transparent);
+}
+
+.docs-suggestion-card__reject-icon {
+  @apply size-3.5;
+}
+
+.docs-suggestion-card__quote {
+  @apply m-0 mt-3 border-l-2 pl-3 text-xs leading-relaxed;
+  border-color: color-mix(in oklab, var(--docs-suggestion-accent) 35%, transparent);
+  color: var(--docs-muted, color-mix(in oklab, var(--color-ink) 55%, transparent));
+}
+
+.docs-suggestion-card__body {
+  @apply m-0 mt-3 text-sm leading-relaxed;
+}
