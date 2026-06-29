@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Editor } from "@tiptap/react";
 import type { DocsUILabels } from "@/docs-core/src/docs-labels";
-import { forwardOverlayWheelToEditorScroll } from "@/text-editor-core/src/text-editor-overlay-utils";
 import { escapeCommentIdForSelector } from "@/text-editor-core/src/text-editor-comment-commands";
 import type { DocsCommentThread } from "../docs-comments-types";
+import { useDocsCollabFloatingLayerLayout } from "../docs-collab-card";
 import { DocsCommentsThreadCard } from "./docs-comments-thread-card";
 import { mergeDraftThreadWithOpenThreads } from "./docs-comments-utils";
 import {
-  measureFloatingLayerContainerMaxHeight,
   observeCommentMarkVisibility,
   resolveCommentVisibilityModeAsync,
   sortThreadsByDocumentOrder,
@@ -15,10 +14,6 @@ import {
   syncCommentViewTimelineStyles,
   type DocsCommentVisibilityMode,
 } from "./docs-comments-mark-visibility";
-import {
-  measureCommentCardViewportLeft,
-  measureCommentFloatingLayerTopFromSurface,
-} from "./docs-comments-positioning";
 
 import "./docs-comments-floating-layer.css";
 
@@ -38,17 +33,7 @@ export type DocsCommentsFloatingLayerProps = {
   onCancelDraft?: () => void;
 };
 
-const CARD_MARGIN_GAP_PX = 16;
-const CARD_BOTTOM_INSET_PX = 16;
 const SCROLL_ANCHOR_VIEWPORT_OFFSET_FRACTION = 1 / 3;
-const WORKSPACE_FOOTER_SELECTOR = ".docs-workspace__stats-footer";
-const EDITOR_FORMAT_BAR_SELECTOR = ".text-editor-format-bar";
-
-type FloatingLayerContainerLayout = {
-  top: number;
-  left: number;
-  maxHeight: number;
-};
 
 export function DocsCommentsFloatingLayer({
   editor,
@@ -65,11 +50,13 @@ export function DocsCommentsFloatingLayer({
   onDeleteThread,
   onCancelDraft,
 }: DocsCommentsFloatingLayerProps) {
-  const layerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef(new Map<string, HTMLDivElement>());
-  const [containerLayout, setContainerLayout] = useState<FloatingLayerContainerLayout | null>(null);
   const [visibilityMode, setVisibilityMode] = useState<DocsCommentVisibilityMode>("static");
   const showLayer = visible || draftThread != null;
+  const { layerRef, containerLayout } = useDocsCollabFloatingLayerLayout({
+    editor,
+    visible: showLayer,
+  });
 
   const registerCardRef = useCallback((threadId: string, node: HTMLDivElement | null) => {
     if (node) {
@@ -93,44 +80,6 @@ export function DocsCommentsFloatingLayer({
     () => orderedThreads.filter((thread) => thread.messages.length > 0).map((thread) => thread.id),
     [orderedThreads],
   );
-
-  const syncContainerLayout = useCallback(() => {
-    if (!editor) return;
-
-    const surface = editor.view.dom.closest(".text-editor-sheet__surface") as HTMLElement | null;
-    const footer = document.querySelector(WORKSPACE_FOOTER_SELECTOR) as HTMLElement | null;
-    const left = measureCommentCardViewportLeft(surface, CARD_MARGIN_GAP_PX);
-    const top = measureCommentFloatingLayerTopFromSurface(surface);
-    const maxHeight = measureFloatingLayerContainerMaxHeight(top, footer, CARD_BOTTOM_INSET_PX);
-
-    if (left == null) {
-      setContainerLayout(null);
-      return;
-    }
-
-    setContainerLayout({ top, left, maxHeight });
-  }, [editor]);
-
-  useEffect(() => {
-    if (!editor || !showLayer) return;
-
-    syncContainerLayout();
-
-    const surface = editor.view.dom.closest(".text-editor-sheet__surface") as HTMLElement | null;
-    const formatBar = editor.view.dom
-      .closest(".text-editor")
-      ?.querySelector(EDITOR_FORMAT_BAR_SELECTOR) as HTMLElement | null;
-    const resizeObserver =
-      typeof ResizeObserver !== "undefined" ? new ResizeObserver(syncContainerLayout) : null;
-    if (surface) resizeObserver?.observe(surface);
-    if (formatBar) resizeObserver?.observe(formatBar);
-    window.addEventListener("resize", syncContainerLayout);
-
-    return () => {
-      resizeObserver?.disconnect();
-      window.removeEventListener("resize", syncContainerLayout);
-    };
-  }, [editor, showLayer, syncContainerLayout]);
 
   useEffect(() => {
     if (!editor || !showLayer) return;
@@ -204,18 +153,6 @@ export function DocsCommentsFloatingLayer({
       scrollport?.removeEventListener("scroll", syncVisibility);
     };
   }, [editor, markedThreadIds, showLayer, visibilityMode]);
-
-  useEffect(() => {
-    const layer = layerRef.current;
-    if (!layer || !editor || !showLayer) return;
-
-    const handleWheel = (event: WheelEvent) => {
-      forwardOverlayWheelToEditorScroll(event, editor.view.dom, layer);
-    };
-
-    layer.addEventListener("wheel", handleWheel, { passive: false, capture: true });
-    return () => layer.removeEventListener("wheel", handleWheel, { capture: true });
-  }, [editor, showLayer]);
 
   useEffect(() => {
     if (!showLayer || !activeThreadId || !editor) return;

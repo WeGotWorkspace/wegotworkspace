@@ -1,0 +1,55 @@
+@import "../../../styles.css" reference;
+
+.docs-collab-sidebar-panel {
+  @apply flex h-full min-h-0 w-full flex-col self-stretch overflow-hidden;
+  background-color: var(--docs-surface, var(--color-cream, #ffffff));
+  color: var(--docs-collab-sidebar-panel-color, var(--docs-text, var(--color-ink)));
+}
+
+.docs-collab-sidebar-panel__header {
+  @apply flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3;
+  border-color: var(
+    --docs-collab-sidebar-panel-border-color,
+    color-mix(in oklab, var(--color-ink) 8%, transparent)
+  );
+  background-color: color-mix(in oklab, var(--docs-surface, #ffffff) 72%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.docs-collab-sidebar-panel__header-main {
+  @apply flex min-w-0 flex-col gap-0.5;
+}
+
+.docs-collab-sidebar-panel__label {
+  @apply text-[11px] font-semibold uppercase tracking-wider;
+  color: var(--docs-muted, color-mix(in oklab, var(--color-ink) 55%, transparent));
+}
+
+.docs-collab-sidebar-panel__count {
+  @apply text-sm font-medium;
+}
+
+.docs-collab-sidebar-panel__header-actions {
+  @apply flex shrink-0 items-center gap-1;
+}
+
+.docs-collab-sidebar-panel__close {
+  @apply flex size-8 shrink-0 items-center justify-center rounded-full transition-colors;
+}
+
+.docs-collab-sidebar-panel__close:hover {
+  background-color: color-mix(in oklab, var(--color-ink) 8%, transparent);
+}
+
+.docs-collab-sidebar-panel__scroll {
+  @apply min-h-0 flex-1 overflow-y-auto px-3 py-4;
+}
+
+.docs-collab-sidebar-panel__empty {
+  @apply px-1 text-sm;
+  color: var(--docs-muted, color-mix(in oklab, var(--color-ink) 55%, transparent));
+}
+
+.docs-collab-sidebar-panel__list {
+  @apply space-y-3;
+}

@@ -1,34 +1,5 @@
 @import "../../../styles.css" reference;
-
-.docs-suggestions-panel {
-  @apply flex h-full min-h-0 w-full flex-col self-stretch overflow-hidden;
-  background-color: var(--docs-surface, var(--color-cream, #ffffff));
-  color: var(--docs-text, var(--color-ink));
-}
-
-.docs-suggestions-panel__header {
-  @apply flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3;
-  border-color: color-mix(in oklab, var(--color-ink) 8%, transparent);
-  background-color: color-mix(in oklab, var(--docs-surface, #ffffff) 72%, transparent);
-  backdrop-filter: blur(8px);
-}
-
-.docs-suggestions-panel__header-main {
-  @apply flex min-w-0 flex-col gap-0.5;
-}
-
-.docs-suggestions-panel__label {
-  @apply text-[11px] font-semibold uppercase tracking-wider;
-  color: var(--docs-muted, color-mix(in oklab, var(--color-ink) 55%, transparent));
-}
-
-.docs-suggestions-panel__count {
-  @apply text-sm font-medium;
-}
-
-.docs-suggestions-panel__header-actions {
-  @apply flex shrink-0 items-center gap-1;
-}
+@import "../docs-collab-card/docs-collab-sidebar-panel.css";
 
 .docs-suggestions-panel__bulk {
   @apply hidden rounded-full px-2 py-1 text-[11px] font-medium transition-colors sm:inline-flex;
@@ -47,23 +18,6 @@
 .docs-suggestions-panel__bulk--muted {
   color: var(--docs-muted, color-mix(in oklab, var(--color-ink) 55%, transparent));
   background-color: color-mix(in oklab, var(--color-ink) 6%, transparent);
-}
-
-.docs-suggestions-panel__close {
-  @apply flex size-8 shrink-0 items-center justify-center rounded-full transition-colors;
-}
-
-.docs-suggestions-panel__close:hover {
-  background-color: color-mix(in oklab, var(--color-ink) 8%, transparent);
-}
-
-.docs-suggestions-panel__scroll {
-  @apply min-h-0 flex-1 overflow-y-auto px-3 py-4;
-}
-
-.docs-suggestions-panel__empty {
-  @apply px-1 text-sm;
-  color: var(--docs-muted, color-mix(in oklab, var(--color-ink) 55%, transparent));
 }
 
 .docs-suggestions-panel__list {

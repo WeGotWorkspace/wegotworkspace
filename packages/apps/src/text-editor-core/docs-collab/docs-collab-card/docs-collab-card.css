@@ -1,0 +1,110 @@
+@import "../../../styles.css" reference;
+
+.docs-collab-card {
+  @apply cursor-pointer rounded-xl border p-4 shadow-sm transition-[box-shadow,border-color,background-color,opacity] duration-200;
+  --docs-collab-card-accent: var(--docs-accent, #3b82f6);
+  border-color: var(--docs-border, color-mix(in oklab, var(--color-ink) 12%, transparent));
+  background-color: var(--docs-surface, var(--color-cream, #ffffff));
+  box-shadow:
+    0 1px 2px color-mix(in oklab, var(--color-ink) 5%, transparent),
+    0 1px 3px color-mix(in oklab, var(--color-ink) 4%, transparent);
+}
+
+.docs-collab-card[data-active="false"] {
+  opacity: 0.85;
+}
+
+.docs-collab-card:hover:not([data-active="true"]) {
+  opacity: 0.96;
+  border-color: var(
+    --docs-collab-card-hover-border,
+    color-mix(in oklab, var(--docs-collab-card-accent) 16%, transparent)
+  );
+}
+
+.docs-collab-card[data-active="true"] {
+  opacity: 1;
+  border-width: 2px;
+  border-color: var(--docs-collab-card-accent);
+  box-shadow:
+    0 1px 2px color-mix(in oklab, var(--color-ink) 5%, transparent),
+    0 0 0 1px
+      var(
+        --docs-collab-card-active-ring,
+        color-mix(in oklab, var(--docs-collab-card-accent) 12%, transparent)
+      );
+}
+
+.docs-collab-card[data-exiting="true"] {
+  pointer-events: none;
+  transition: none;
+}
+
+.docs-collab-card[data-exiting="true"][data-exit-animation="comment"] {
+  animation: docs-comments-thread-card-evaporate 200ms ease-out forwards;
+}
+
+.docs-collab-card[data-exiting="true"][data-exit-animation="suggestion"] {
+  animation: docs-suggestion-card-evaporate 200ms ease forwards;
+}
+
+@keyframes docs-comments-thread-card-evaporate {
+  from {
+    transform: scale(1) translateY(0);
+    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.94) translateY(-10px);
+    filter: blur(6px);
+  }
+}
+
+@keyframes docs-suggestion-card-evaporate {
+  to {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .docs-collab-card[data-exiting="true"] {
+    animation: none;
+  }
+}
+
+.docs-collab-card__header {
+  @apply flex items-start justify-between gap-2;
+}
+
+.docs-collab-card__author-row {
+  @apply flex min-w-0 flex-1 items-center gap-2.5;
+}
+
+.docs-collab-card__avatar .user-avatar__mark {
+  width: 2rem;
+  height: 2rem;
+  font-size: 10px;
+}
+
+.docs-collab-card__avatar {
+  --user-avatar-bg: color-mix(in oklab, var(--docs-collab-card-accent) 14%, transparent);
+  --user-avatar-fg: color-mix(in oklab, var(--docs-collab-card-accent) 85%, var(--color-ink));
+}
+
+.docs-collab-card__meta {
+  @apply flex min-w-0 flex-1 flex-col gap-0.5;
+}
+
+.docs-collab-card__author {
+  @apply m-0 truncate text-sm font-semibold leading-tight;
+}
+
+.docs-collab-card__time {
+  @apply text-[11px] leading-tight;
+  color: var(--docs-muted, color-mix(in oklab, var(--color-ink) 55%, transparent));
+}
+
+.docs-collab-card__actions {
+  @apply flex shrink-0 items-center gap-1;
+}

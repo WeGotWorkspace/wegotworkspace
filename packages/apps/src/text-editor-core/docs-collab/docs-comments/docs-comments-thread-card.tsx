@@ -1,19 +1,14 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type AnimationEvent,
-  type MouseEvent,
-} from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Smile, Trash2 } from "lucide-react";
 import type { DocsUILabels } from "@/docs-core/src/docs-labels";
-import { UserAvatar } from "@/user-avatar/src/user-avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/ui/popover";
 import { DOCS_COMMENT_REACTION_EMOJIS, type DocsCommentThread } from "../docs-comments-types";
-import { DocsCommentsReply } from "./docs-comments-reply";
-import { formatRelativeTimestamp } from "./docs-comments-utils";
+import {
+  DocsCollabCardHeader,
+  DocsCollabCardShell,
+  DocsCollabMessageReply,
+  useDocsCollabCardExit,
+} from "../docs-collab-card";
 import "./docs-comments-thread-card.css";
 
 export type DocsCommentsThreadCardProps = {
@@ -44,22 +39,7 @@ function userReacted(
   );
 }
 
-const THREAD_CARD_EXIT_ANIMATION_MS = 200;
-
-function prefersReducedMotion(): boolean {
-  return (
-    typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  );
-}
-
-function isNestedInteractiveTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof Element)) return false;
-  return Boolean(
-    target.closest(
-      "button, a, input, textarea, select, [role='menu'], [role='menuitem'], [data-radix-popper-content-wrapper]",
-    ),
-  );
-}
+const COMMENT_EXIT_ANIMATION = "docs-comments-thread-card-evaporate";
 
 export function DocsCommentsThreadCard({
   thread,
@@ -74,10 +54,10 @@ export function DocsCommentsThreadCard({
   onCancelDraft,
 }: DocsCommentsThreadCardProps) {
   const [composerText, setComposerText] = useState("");
-  const [isExiting, setIsExiting] = useState(false);
   const composerRef = useRef<HTMLInputElement>(null);
-  const cardRef = useRef<HTMLElement>(null);
-  const exitActionRef = useRef<(() => void) | null>(null);
+  const { cardRef, isExiting, runExitAnimation, handleExitAnimationEnd } = useDocsCollabCardExit({
+    exitAnimationName: COMMENT_EXIT_ANIMATION,
+  });
   const isDraft = thread.messages.length === 0;
   const firstMessage = thread.messages[0];
   const replies = thread.messages.slice(1);
@@ -107,80 +87,27 @@ export function DocsCommentsThreadCard({
     setComposerText("");
   };
 
-  const handleCardClick = (event: MouseEvent<HTMLElement>) => {
-    if (isExiting || isNestedInteractiveTarget(event.target)) return;
-    onSelect();
-  };
-
-  const runExitAnimation = useCallback(
-    (action: () => void) => {
-      if (isExiting) return;
-      if (prefersReducedMotion()) {
-        action();
-        return;
-      }
-      exitActionRef.current = action;
-      setIsExiting(true);
-    },
-    [isExiting],
-  );
-
-  const completeExitAnimation = useCallback(() => {
-    const action = exitActionRef.current;
-    if (!action) return;
-    exitActionRef.current = null;
-    action();
-  }, []);
-
-  const handleExitAnimationEnd = useCallback(
-    (event: AnimationEvent<HTMLElement>) => {
-      if (event.target !== cardRef.current) return;
-      if (event.animationName !== "docs-comments-thread-card-evaporate") return;
-      completeExitAnimation();
-    },
-    [completeExitAnimation],
-  );
-
-  useEffect(() => {
-    if (!isExiting) return;
-    const timeoutId = window.setTimeout(completeExitAnimation, THREAD_CARD_EXIT_ANIMATION_MS + 50);
-    return () => window.clearTimeout(timeoutId);
-  }, [completeExitAnimation, isExiting]);
-
   if (!isDraft && !firstMessage) return null;
 
   const authorName = firstMessage?.author.name ?? thread.createdBy.name;
   const authorCreatedAt = firstMessage?.createdAt ?? thread.createdAt;
 
   return (
-    <article
-      ref={cardRef}
+    <DocsCollabCardShell
+      cardRef={cardRef}
       className="docs-comments-thread-card"
-      data-thread-id={thread.id}
-      data-active={active ? "true" : "false"}
-      data-exiting={isExiting ? "true" : "false"}
-      aria-current={active ? "true" : undefined}
-      aria-hidden={isExiting ? true : undefined}
-      onClick={handleCardClick}
+      exitVariant="comment"
+      active={active}
+      isExiting={isExiting}
+      onSelect={onSelect}
       onAnimationEnd={handleExitAnimationEnd}
+      dataAttributes={{ "data-thread-id": thread.id }}
     >
-      <div className="docs-comments-thread-card__header">
-        <div className="docs-comments-thread-card__author-row">
-          <UserAvatar
-            displayName={authorName}
-            compact
-            size="sm"
-            className="docs-comments-thread-card__avatar"
-          />
-          <div className="docs-comments-thread-card__meta">
-            <p className="docs-comments-thread-card__author">{authorName}</p>
-            <time className="docs-comments-thread-card__time" dateTime={authorCreatedAt}>
-              {formatRelativeTimestamp(authorCreatedAt)}
-            </time>
-          </div>
-        </div>
-        <div className="docs-comments-thread-card__actions">
-          {isDraft ? (
+      <DocsCollabCardHeader
+        authorName={authorName}
+        createdAt={authorCreatedAt}
+        actions={
+          isDraft ? (
             <button
               type="button"
               className="docs-comments-thread-card__delete"
@@ -218,9 +145,9 @@ export function DocsCommentsThreadCard({
                 <Trash2 className="docs-comments-thread-card__delete-icon" aria-hidden />
               </button>
             </>
-          )}
-        </div>
-      </div>
+          )
+        }
+      />
 
       {thread.anchorText ? (
         <blockquote className="docs-comments-thread-card__quote">
@@ -297,7 +224,7 @@ export function DocsCommentsThreadCard({
         <ul className="docs-comments-thread-card__replies" aria-live="polite">
           {replies.map((message) => (
             <li key={message.id}>
-              <DocsCommentsReply message={message} />
+              <DocsCollabMessageReply message={message} />
             </li>
           ))}
         </ul>
@@ -341,6 +268,6 @@ export function DocsCommentsThreadCard({
           </button>
         </div>
       ) : null}
-    </article>
+    </DocsCollabCardShell>
   );
 }

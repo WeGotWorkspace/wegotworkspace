@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useRef } from "react";
-import { X } from "lucide-react";
 import type { DocsUILabels } from "@/docs-core/src/docs-labels";
 import { escapeCommentIdForSelector } from "@/text-editor-core/src/text-editor-comment-commands";
 import type { DocsCommentThread } from "../docs-comments-types";
+import { DocsCollabSidebarPanel } from "../docs-collab-card";
 import { DocsCommentsThreadCard } from "./docs-comments-thread-card";
 import { mergeDraftThreadWithOpenThreads } from "./docs-comments-utils";
-
 import "./docs-comments-panel.css";
 
 export type DocsCommentsPanelProps = {
@@ -53,53 +52,41 @@ export function DocsCommentsPanel({
   }, [activeThreadId]);
 
   return (
-    <aside className="docs-comments-panel" aria-label={labels.commentsSidebarTitle}>
-      <header className="docs-comments-panel__header">
-        <div className="docs-comments-panel__header-main">
-          <p className="docs-comments-panel__label">{labels.commentsSidebarTitle}</p>
-          <p className="docs-comments-panel__count">
-            {displayThreads.length === 1
-              ? labels.commentsCountOne
-              : labels.commentsCountMany(displayThreads.length)}
-          </p>
-        </div>
-        <button
-          type="button"
-          className="docs-comments-panel__close"
-          aria-label={labels.commentsCloseSidebar}
-          onClick={onCloseMobile}
-        >
-          <X className="size-4" aria-hidden />
-        </button>
-      </header>
-
-      <div ref={scrollRef} className="docs-comments-panel__scroll">
-        {displayThreads.length === 0 ? (
-          <p className="docs-comments-panel__empty">{labels.commentsEmpty}</p>
-        ) : (
-          <div className="docs-comments-panel__threads">
-            {displayThreads.map((thread) => {
-              const isDraft = thread.messages.length === 0;
-              return (
-                <DocsCommentsThreadCard
-                  key={thread.id}
-                  thread={thread}
-                  labels={labels}
-                  currentUserId={currentUserId}
-                  active={activeThreadId === thread.id}
-                  onSelect={() => onSelectThread(thread.id)}
-                  onAddReply={(body) => onAddReply(thread.id, body)}
-                  onToggleReaction={(emoji) => onToggleReaction(thread.id, emoji)}
-                  onResolve={() => onResolveThread(thread.id)}
-                  onDelete={() => onDeleteThread(thread.id)}
-                  onCancelDraft={isDraft ? onCancelDraft : undefined}
-                />
-              );
-            })}
-          </div>
-        )}
-      </div>
-    </aside>
+    <DocsCollabSidebarPanel
+      className="docs-comments-panel"
+      ariaLabel={labels.commentsSidebarTitle}
+      title={labels.commentsSidebarTitle}
+      countLabel={
+        displayThreads.length === 1
+          ? labels.commentsCountOne
+          : labels.commentsCountMany(displayThreads.length)
+      }
+      closeLabel={labels.commentsCloseSidebar}
+      onClose={onCloseMobile}
+      scrollRef={scrollRef}
+      empty={displayThreads.length === 0}
+      emptyLabel={labels.commentsEmpty}
+      listClassName="docs-collab-sidebar-panel__list docs-comments-panel__threads"
+    >
+      {displayThreads.map((thread) => {
+        const isDraft = thread.messages.length === 0;
+        return (
+          <DocsCommentsThreadCard
+            key={thread.id}
+            thread={thread}
+            labels={labels}
+            currentUserId={currentUserId}
+            active={activeThreadId === thread.id}
+            onSelect={() => onSelectThread(thread.id)}
+            onAddReply={(body) => onAddReply(thread.id, body)}
+            onToggleReaction={(emoji) => onToggleReaction(thread.id, emoji)}
+            onResolve={() => onResolveThread(thread.id)}
+            onDelete={() => onDeleteThread(thread.id)}
+            onCancelDraft={isDraft ? onCancelDraft : undefined}
+          />
+        );
+      })}
+    </DocsCollabSidebarPanel>
   );
 }
 
