@@ -33,7 +33,7 @@ export const docsLabels = {
   outlineEmpty: "No headings in this document yet.",
   statsWords: (count: number) => `${count.toLocaleString()} words`,
   statsCharacters: (count: number) => `${count.toLocaleString()} characters`,
-  reviewSidebarTitle: "Comments & suggestions",
+  reviewSidebarTitle: "Review",
   reviewCloseSidebar: "Close review panel",
   reviewEmpty:
     "No comments or suggestions yet. Select text to comment, or switch to Suggest mode to track edits.",
@@ -69,8 +69,6 @@ export const docsLabels = {
   suggestionsToggleHide: "Hide suggestions",
   suggestionsAccept: "Accept suggestion",
   suggestionsReject: "Reject suggestion",
-  suggestionsAcceptAll: "Accept all",
-  suggestionsRejectAll: "Reject all",
   pageSizeLabel: "Page size",
 } as const;
 

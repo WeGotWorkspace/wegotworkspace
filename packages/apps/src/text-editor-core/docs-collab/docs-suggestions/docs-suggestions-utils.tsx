@@ -1,28 +1,13 @@
 import type { TrackedChangeInfo } from "tiptap-track-changes";
-import { Tag } from "@/tag/src/tag";
+import { DocsCollabHighlightText } from "../docs-collab-card";
+import { formatMarkPreviewClassName } from "./docs-suggestion-format-mark-styles";
 
-function formatChangeLabel(parts: TrackedChangeInfo[]): string | null {
-  const formatChange = parts.find((part) => part.type === "formatChange");
-  if (!formatChange) return null;
-
-  const added = formatChange.formatAdded;
-  const removed = formatChange.formatRemoved;
-  if (added && removed) return `Change formatting: ${removed} → ${added}`;
-  if (added) return `Add ${added} formatting`;
-  if (removed) return `Remove ${removed} formatting`;
-  return "Format change";
-}
-
-function getChangeTypeTagLabel(parts: TrackedChangeInfo[]): string {
-  const insertion = parts.find((part) => part.type === "insertion");
-  const deletion = parts.find((part) => part.type === "deletion");
-  const formatChange = parts.find((part) => part.type === "formatChange");
-
-  if (formatChange) return "Format changed";
-  if (insertion && deletion) return "Replaced";
-  if (insertion) return "Inserted";
-  if (deletion) return "Deleted";
-  return "Changed";
+function SuggestionDiffArrow() {
+  return (
+    <span className="docs-suggestion-card__diff-arrow" aria-hidden>
+      {" → "}
+    </span>
+  );
 }
 
 export type SuggestionDiffBodyProps = {
@@ -31,34 +16,67 @@ export type SuggestionDiffBodyProps = {
   ariaLabel: string;
 };
 
+function FormatChangeHighlight({
+  side,
+  formatName,
+  text,
+}: {
+  side: "before" | "after";
+  formatName: string | undefined;
+  text: string;
+}) {
+  const className = formatName
+    ? formatMarkPreviewClassName(side, formatName)
+    : side === "before"
+      ? "docs-collab-highlight__format-before"
+      : "docs-collab-highlight__format-after";
+
+  return (
+    <DocsCollabHighlightText variant="format">
+      <span className={className}>{text}</span>
+    </DocsCollabHighlightText>
+  );
+}
+
 export function SuggestionDiffBody({ parts, ariaLabel }: SuggestionDiffBodyProps) {
   const insertion = parts.find((part) => part.type === "insertion");
   const deletion = parts.find((part) => part.type === "deletion");
-  const formatLabel = formatChangeLabel(parts);
-  const changeTypeTagLabel = getChangeTypeTagLabel(parts);
+  const formatChange = parts.find((part) => part.type === "formatChange");
+  const formatText = formatChange?.text;
+  const formatRemoved = formatChange?.formatRemoved;
+  const formatAdded = formatChange?.formatAdded;
 
   return (
-    <div className="docs-suggestion-card__diff-block" aria-label={ariaLabel}>
-      <Tag label={changeTypeTagLabel} />
-      {formatLabel ? (
-        <p className="docs-suggestion-card__diff docs-suggestion-card__diff--format">
-          {formatLabel}
-        </p>
+    <p className="docs-suggestion-card__diff" aria-label={ariaLabel}>
+      {formatChange ? (
+        formatText ? (
+          formatRemoved || formatAdded ? (
+            <>
+              <FormatChangeHighlight side="before" formatName={formatRemoved} text={formatText} />
+              <SuggestionDiffArrow />
+              <FormatChangeHighlight side="after" formatName={formatAdded} text={formatText} />
+            </>
+          ) : (
+            formatText
+          )
+        ) : (
+          "Format change"
+        )
       ) : (
-        <p className="docs-suggestion-card__diff">
+        <>
           {deletion ? (
-            <del className="docs-suggestion-card__deletion">{deletion.text || "Delete text"}</del>
+            <DocsCollabHighlightText variant="deletion">
+              {deletion.text || "Delete text"}
+            </DocsCollabHighlightText>
           ) : null}
-          {deletion && insertion ? (
-            <span className="docs-suggestion-card__diff-arrow" aria-hidden>
-              {" → "}
-            </span>
-          ) : null}
+          {deletion && insertion ? <SuggestionDiffArrow /> : null}
           {insertion ? (
-            <ins className="docs-suggestion-card__insertion">{insertion.text || "Insert text"}</ins>
+            <DocsCollabHighlightText variant="insertion">
+              {insertion.text || "Insert text"}
+            </DocsCollabHighlightText>
           ) : null}
-        </p>
+        </>
       )}
-    </div>
+    </p>
   );
 }

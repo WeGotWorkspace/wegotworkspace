@@ -227,8 +227,6 @@ function DocsCollabWorkspaceInner({
     activateSuggestionFromMark,
     acceptSuggestion,
     rejectSuggestion,
-    acceptAll,
-    rejectAll,
     addReply: addSuggestionReply,
     toggleReaction: toggleSuggestionReaction,
   } = useDocsSuggestions(editor, {
@@ -316,7 +314,9 @@ function DocsCollabWorkspaceInner({
   const reviewPanelContent = useMemo(
     () => (
       <DocsCollabReviewPanel
+        editor={editor}
         onCloseMobile={handleReviewClose}
+        showCloseButton={useCommentsDrawer}
         labels={labels}
         threads={openThreads}
         draftThread={draftThread}
@@ -334,12 +334,9 @@ function DocsCollabWorkspaceInner({
         onRejectSuggestion={rejectSuggestion}
         onAddSuggestionReply={addSuggestionReply}
         onToggleSuggestionReaction={toggleSuggestionReaction}
-        onAcceptAll={acceptAll}
-        onRejectAll={rejectAll}
       />
     ),
     [
-      acceptAll,
       acceptSuggestion,
       activeChangeId,
       activeThreadId,
@@ -347,10 +344,11 @@ function DocsCollabWorkspaceInner({
       addSuggestionReply,
       cancelDraft,
       draftThread,
+      editor,
       handleReviewClose,
       labels,
       openThreads,
-      rejectAll,
+      useCommentsDrawer,
       rejectSuggestion,
       resolveThread,
       selectSuggestion,
@@ -364,8 +362,12 @@ function DocsCollabWorkspaceInner({
 
   const reviewSidebar = useMemo(
     () =>
-      collabSession && reviewPanelOpen && !useCommentsDrawer ? (
-        <div className="workspace-app-layout__panel docs-workspace__review-panel">
+      collabSession && !useCommentsDrawer ? (
+        <div
+          className="workspace-app-layout__panel docs-workspace__review-panel"
+          data-open={reviewPanelOpen ? "true" : "false"}
+          aria-hidden={!reviewPanelOpen}
+        >
           {reviewPanelContent}
         </div>
       ) : null,

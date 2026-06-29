@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
+import type { Editor } from "@tiptap/react";
 import type { DocsUILabels } from "@/docs-core/src/docs-labels";
 import { escapeCommentIdForSelector } from "@/text-editor-core/src/text-editor-comment-commands";
 import { escapeTrackChangeIdForSelector } from "@/text-editor-core/src/text-editor-track-changes";
@@ -8,10 +9,14 @@ import { mergeDraftThreadWithOpenThreads } from "../docs-comments/docs-comments-
 import { DocsCollabSidebarPanel } from "../docs-collab-card";
 import type { DocsSuggestionWithThread } from "../docs-suggestions-types";
 import { DocsSuggestionCard } from "../docs-suggestions/docs-suggestion-card";
+import { sortReviewItemsByDocumentOrder } from "./docs-collab-review-utils";
 import "./docs-collab-review-panel.css";
 
 export type DocsCollabReviewPanelProps = {
+  editor: Editor | null;
   onCloseMobile: () => void;
+  /** Show header close control (mobile drawer); desktop relies on main header toggle. */
+  showCloseButton?: boolean;
   labels: DocsUILabels;
   threads: DocsCommentThread[];
   draftThread?: DocsCommentThread | null;
@@ -29,12 +34,12 @@ export type DocsCollabReviewPanelProps = {
   onRejectSuggestion: (changeId: string) => void;
   onAddSuggestionReply: (changeId: string, body: string) => void;
   onToggleSuggestionReaction: (changeId: string, emoji: string) => void;
-  onAcceptAll?: () => void;
-  onRejectAll?: () => void;
 };
 
 export function DocsCollabReviewPanel({
+  editor,
   onCloseMobile,
+  showCloseButton = false,
   labels,
   threads,
   draftThread = null,
@@ -52,8 +57,6 @@ export function DocsCollabReviewPanel({
   onRejectSuggestion,
   onAddSuggestionReply,
   onToggleSuggestionReaction,
-  onAcceptAll,
-  onRejectAll,
 }: DocsCollabReviewPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -62,30 +65,15 @@ export function DocsCollabReviewPanel({
     [draftThread, threads],
   );
 
-  const itemCount = displayThreads.length + suggestions.length;
-  const isEmpty = itemCount === 0;
+  const reviewItems = useMemo(
+    () => sortReviewItemsByDocumentOrder(editor, displayThreads, suggestions),
+    [displayThreads, editor, suggestions],
+  );
 
-  const countLabel = itemCount === 1 ? labels.reviewCountOne : labels.reviewCountMany(itemCount);
+  const isEmpty = reviewItems.length === 0;
 
-  const bulkActions =
-    suggestions.length > 0 ? (
-      <>
-        {onAcceptAll ? (
-          <button type="button" className="docs-collab-review-panel__bulk" onClick={onAcceptAll}>
-            {labels.suggestionsAcceptAll}
-          </button>
-        ) : null}
-        {onRejectAll ? (
-          <button
-            type="button"
-            className="docs-collab-review-panel__bulk docs-collab-review-panel__bulk--muted"
-            onClick={onRejectAll}
-          >
-            {labels.suggestionsRejectAll}
-          </button>
-        ) : null}
-      </>
-    ) : null;
+  const countLabel =
+    reviewItems.length === 1 ? labels.reviewCountOne : labels.reviewCountMany(reviewItems.length);
 
   useEffect(() => {
     if (!scrollRef.current) return;
@@ -108,69 +96,52 @@ export function DocsCollabReviewPanel({
       className="docs-collab-review-panel"
       ariaLabel={labels.reviewSidebarTitle}
       title={labels.reviewSidebarTitle}
+      titleSize="default"
       countLabel={countLabel}
       closeLabel={labels.reviewCloseSidebar}
       onClose={onCloseMobile}
-      headerActions={bulkActions}
+      showCloseButton={showCloseButton}
       scrollRef={scrollRef}
       empty={isEmpty}
       emptyLabel={labels.reviewEmpty}
       listClassName="docs-collab-review-panel__list"
     >
-      {suggestions.length > 0 ? (
-        <section
-          className="docs-collab-review-panel__section"
-          aria-label={labels.suggestionsSidebarTitle}
-        >
-          <h3 className="docs-collab-review-panel__section-title">
-            {labels.suggestionsSidebarTitle}
-          </h3>
-          <div className="docs-collab-review-panel__section-list">
-            {suggestions.map((suggestion) => (
-              <DocsSuggestionCard
-                key={suggestion.changeId}
-                suggestion={suggestion}
-                labels={labels}
-                currentUserId={currentUserId}
-                active={activeChangeId === suggestion.changeId}
-                onSelect={() => onSelectSuggestion(suggestion.changeId)}
-                onAccept={() => onAcceptSuggestion(suggestion.changeId)}
-                onReject={() => onRejectSuggestion(suggestion.changeId)}
-                onAddReply={(body) => onAddSuggestionReply(suggestion.changeId, body)}
-                onToggleReaction={(emoji) => onToggleSuggestionReaction(suggestion.changeId, emoji)}
-              />
-            ))}
-          </div>
-        </section>
-      ) : null}
-      {displayThreads.length > 0 ? (
-        <section
-          className="docs-collab-review-panel__section"
-          aria-label={labels.commentsSidebarTitle}
-        >
-          <h3 className="docs-collab-review-panel__section-title">{labels.commentsSidebarTitle}</h3>
-          <div className="docs-collab-review-panel__section-list">
-            {displayThreads.map((thread) => {
-              const isDraft = thread.messages.length === 0;
-              return (
-                <div key={thread.id} data-thread-id={thread.id}>
-                  <DocsCommentsThreadCard
-                    thread={thread}
-                    labels={labels}
-                    currentUserId={currentUserId}
-                    active={activeThreadId === thread.id}
-                    onSelect={() => onSelectThread(thread.id)}
-                    onAddReply={(body) => onAddReply(thread.id, body)}
-                    onToggleReaction={(emoji) => onToggleReaction(thread.id, emoji)}
-                    onResolve={() => onResolveThread(thread.id)}
-                    onCancelDraft={isDraft ? onCancelDraft : undefined}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      ) : null}
+      {reviewItems.map((item) => {
+        if (item.type === "suggestion") {
+          const { suggestion } = item;
+          return (
+            <DocsSuggestionCard
+              key={`suggestion-${suggestion.changeId}`}
+              suggestion={suggestion}
+              labels={labels}
+              currentUserId={currentUserId}
+              active={activeChangeId === suggestion.changeId}
+              onSelect={() => onSelectSuggestion(suggestion.changeId)}
+              onAccept={() => onAcceptSuggestion(suggestion.changeId)}
+              onReject={() => onRejectSuggestion(suggestion.changeId)}
+              onAddReply={(body) => onAddSuggestionReply(suggestion.changeId, body)}
+              onToggleReaction={(emoji) => onToggleSuggestionReaction(suggestion.changeId, emoji)}
+            />
+          );
+        }
+
+        const { thread } = item;
+        const isDraft = thread.messages.length === 0;
+        return (
+          <DocsCommentsThreadCard
+            key={`comment-${thread.id}`}
+            thread={thread}
+            labels={labels}
+            currentUserId={currentUserId}
+            active={activeThreadId === thread.id}
+            onSelect={() => onSelectThread(thread.id)}
+            onAddReply={(body) => onAddReply(thread.id, body)}
+            onToggleReaction={(emoji) => onToggleReaction(thread.id, emoji)}
+            onResolve={() => onResolveThread(thread.id)}
+            onCancelDraft={isDraft ? onCancelDraft : undefined}
+          />
+        );
+      })}
     </DocsCollabSidebarPanel>
   );
 }

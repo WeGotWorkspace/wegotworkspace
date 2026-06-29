@@ -115,7 +115,7 @@ export const formatChangeSuggestion = buildSuggestion(
     },
   ],
   "…update the headline before review",
-  "Change formatting: italic → bold",
+  "Change formatting of “headline”: italic → bold",
 );
 
 const replyAuthorSam = { id: "u-sam", name: "Sam Lee" };

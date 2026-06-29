@@ -27,7 +27,7 @@ const meta = {
     docs: {
       description: {
         component:
-          "Standalone comment thread card. Panel-level stories live under Docs comments/Panel.",
+          "Standalone comment thread card. Anchor text uses the shared collab highlight primitive (yellow, matching editor comment marks) without decorative quote marks. Panel-level stories live under Docs comments/Panel.",
       },
     },
   },

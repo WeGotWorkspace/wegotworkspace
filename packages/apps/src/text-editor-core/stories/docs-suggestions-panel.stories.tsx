@@ -23,8 +23,6 @@ const panelHandlers = {
   onRejectSuggestion: noop,
   onAddReply: noop,
   onToggleReaction: noop,
-  onAcceptAll: noop,
-  onRejectAll: noop,
 };
 
 const meta = {

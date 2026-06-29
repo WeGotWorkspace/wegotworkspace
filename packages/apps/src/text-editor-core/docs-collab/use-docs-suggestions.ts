@@ -29,8 +29,6 @@ export type UseDocsSuggestionsResult = {
   activateSuggestionFromMark: (changeId: string) => void;
   acceptSuggestion: (changeId: string) => void;
   rejectSuggestion: (changeId: string) => void;
-  acceptAll: () => void;
-  rejectAll: () => void;
   addReply: (changeId: string, body: string) => void;
   toggleReaction: (changeId: string, emoji: string) => void;
 };
@@ -170,28 +168,6 @@ export function useDocsSuggestions(
     [editor, ydoc],
   );
 
-  const acceptAll = useCallback(() => {
-    if (!editor) return;
-    editor.commands.acceptAll();
-    if (ydoc) {
-      for (const suggestion of editorSuggestions) {
-        deleteSuggestionThread(ydoc, suggestion.changeId);
-      }
-    }
-    setActiveChangeId(null);
-  }, [editor, editorSuggestions, ydoc]);
-
-  const rejectAll = useCallback(() => {
-    if (!editor) return;
-    editor.commands.rejectAll();
-    if (ydoc) {
-      for (const suggestion of editorSuggestions) {
-        deleteSuggestionThread(ydoc, suggestion.changeId);
-      }
-    }
-    setActiveChangeId(null);
-  }, [editor, editorSuggestions, ydoc]);
-
   const { addReply, toggleReaction } = useDocsSuggestionsMutations({ ydoc, currentUser });
 
   return {
@@ -202,8 +178,6 @@ export function useDocsSuggestions(
     activateSuggestionFromMark,
     acceptSuggestion,
     rejectSuggestion,
-    acceptAll,
-    rejectAll,
     addReply,
     toggleReaction,
   };

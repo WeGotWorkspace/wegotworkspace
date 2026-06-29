@@ -7,7 +7,7 @@
 }
 
 .docs-collab-sidebar-panel__header {
-  @apply flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3;
+  @apply shrink-0 border-b px-4 py-3.5;
   border-color: var(
     --docs-collab-sidebar-panel-border-color,
     color-mix(in oklab, var(--color-ink) 8%, transparent)
@@ -16,33 +16,25 @@
   backdrop-filter: blur(8px);
 }
 
-.docs-collab-sidebar-panel__header-main {
-  @apply flex min-w-0 flex-col gap-0.5;
+.docs-collab-sidebar-panel__header .view-header__main {
+  @apply min-w-0 flex-1;
 }
 
-.docs-collab-sidebar-panel__label {
-  @apply text-[11px] font-semibold uppercase tracking-wider;
-  color: var(--docs-muted, color-mix(in oklab, var(--color-ink) 55%, transparent));
+.docs-collab-sidebar-panel__header .view-header__title-row {
+  --view-header-title-row-min-height: 2rem;
 }
 
-.docs-collab-sidebar-panel__count {
-  @apply text-sm font-medium;
+.docs-collab-sidebar-panel__header .view-header__subtitle {
+  @apply mt-1 text-sm font-medium;
+  color: var(--docs-text, var(--color-ink));
 }
 
 .docs-collab-sidebar-panel__header-actions {
   @apply flex shrink-0 items-center gap-1;
 }
 
-.docs-collab-sidebar-panel__close {
-  @apply flex size-8 shrink-0 items-center justify-center rounded-full transition-colors;
-}
-
-.docs-collab-sidebar-panel__close:hover {
-  background-color: color-mix(in oklab, var(--color-ink) 8%, transparent);
-}
-
 .docs-collab-sidebar-panel__scroll {
-  @apply min-h-0 flex-1 overflow-y-auto px-3 py-4;
+  @apply min-h-0 flex-1 overflow-y-auto px-4 py-5;
 }
 
 .docs-collab-sidebar-panel__empty {
@@ -51,5 +43,5 @@
 }
 
 .docs-collab-sidebar-panel__list {
-  @apply space-y-3;
+  @apply space-y-4;
 }

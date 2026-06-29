@@ -17,8 +17,6 @@ export type DocsSuggestionsPanelProps = {
   onRejectSuggestion: (changeId: string) => void;
   onAddReply: (changeId: string, body: string) => void;
   onToggleReaction: (changeId: string, emoji: string) => void;
-  onAcceptAll?: () => void;
-  onRejectAll?: () => void;
 };
 
 export function DocsSuggestionsPanel({
@@ -32,8 +30,6 @@ export function DocsSuggestionsPanel({
   onRejectSuggestion,
   onAddReply,
   onToggleReaction,
-  onAcceptAll,
-  onRejectAll,
 }: DocsSuggestionsPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -44,26 +40,6 @@ export function DocsSuggestionsPanel({
     );
     card?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
   }, [activeChangeId]);
-
-  const bulkActions =
-    suggestions.length > 0 ? (
-      <>
-        {onAcceptAll ? (
-          <button type="button" className="docs-suggestions-panel__bulk" onClick={onAcceptAll}>
-            {labels.suggestionsAcceptAll}
-          </button>
-        ) : null}
-        {onRejectAll ? (
-          <button
-            type="button"
-            className="docs-suggestions-panel__bulk docs-suggestions-panel__bulk--muted"
-            onClick={onRejectAll}
-          >
-            {labels.suggestionsRejectAll}
-          </button>
-        ) : null}
-      </>
-    ) : null;
 
   return (
     <DocsCollabSidebarPanel
@@ -77,7 +53,7 @@ export function DocsSuggestionsPanel({
       }
       closeLabel={labels.suggestionsCloseSidebar}
       onClose={onCloseMobile}
-      headerActions={bulkActions}
+      showCloseButton
       scrollRef={scrollRef}
       empty={suggestions.length === 0}
       emptyLabel={labels.suggestionsEmpty}

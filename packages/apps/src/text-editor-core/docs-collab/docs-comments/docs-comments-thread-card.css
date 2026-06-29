@@ -23,9 +23,7 @@
 }
 
 .docs-comments-thread-card__quote {
-  @apply mt-2.5 line-clamp-2 text-[12px] leading-snug not-italic;
-  background-color: color-mix(in oklab, var(--highlight-amber) 32%, transparent);
-  color: var(--docs-text, var(--color-ink));
+  @apply mt-2.5 m-0 line-clamp-2 not-italic;
 }
 
 .docs-comments-thread-card__body {

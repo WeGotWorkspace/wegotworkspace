@@ -61,6 +61,7 @@ export function DocsCommentsPanel({
       }
       closeLabel={labels.commentsCloseSidebar}
       onClose={onCloseMobile}
+      showCloseButton
       scrollRef={scrollRef}
       empty={displayThreads.length === 0}
       emptyLabel={labels.commentsEmpty}

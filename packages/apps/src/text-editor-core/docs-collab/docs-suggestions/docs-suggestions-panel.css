@@ -1,25 +1,6 @@
 @import "../../../styles.css" reference;
 @import "../docs-collab-card/docs-collab-sidebar-panel.css";
 
-.docs-suggestions-panel__bulk {
-  @apply hidden rounded-full px-2 py-1 text-[11px] font-medium transition-colors sm:inline-flex;
-  color: color-mix(
-    in oklab,
-    var(--text-editor-suggestion, oklch(0.85 0.15 145)) 88%,
-    var(--color-ink)
-  );
-  background-color: color-mix(
-    in oklab,
-    var(--text-editor-suggestion, oklch(0.85 0.15 145)) 12%,
-    transparent
-  );
-}
-
-.docs-suggestions-panel__bulk--muted {
-  color: var(--docs-muted, color-mix(in oklab, var(--color-ink) 55%, transparent));
-  background-color: color-mix(in oklab, var(--color-ink) 6%, transparent);
-}
-
 .docs-suggestions-panel__list {
-  @apply space-y-3;
+  @apply space-y-4;
 }

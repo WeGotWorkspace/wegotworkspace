@@ -5,6 +5,7 @@ import type { DocsCommentThread } from "../docs-comments-types";
 import {
   DocsCollabCardHeader,
   DocsCollabCardShell,
+  DocsCollabHighlightText,
   DocsCollabMessageReply,
   DocsCollabReactions,
   useDocsCollabCardExit,
@@ -101,9 +102,7 @@ export function DocsCommentsThreadCard({
 
       {thread.anchorText ? (
         <blockquote className="docs-comments-thread-card__quote">
-          <span aria-hidden>&ldquo;</span>
-          {thread.anchorText}
-          <span aria-hidden>&rdquo;</span>
+          <DocsCollabHighlightText variant="comment">{thread.anchorText}</DocsCollabHighlightText>
         </blockquote>
       ) : null}
 

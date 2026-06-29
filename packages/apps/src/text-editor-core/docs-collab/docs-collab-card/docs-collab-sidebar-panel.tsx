@@ -1,14 +1,20 @@
 import { X } from "lucide-react";
 import type { ReactNode, RefObject } from "react";
+import { IconButton } from "@/button/src/button";
+import { ViewHeader } from "@/view-header/src/view-header";
 import "./docs-collab-sidebar-panel.css";
 
 export type DocsCollabSidebarPanelProps = {
   className?: string;
   ariaLabel: string;
   title: string;
+  /** "default" = large serif display; "sm" = compact sans-serif (comments/suggestions panels). */
+  titleSize?: "default" | "sm";
   countLabel: string;
   closeLabel: string;
   onClose: () => void;
+  /** When true, renders a close action in the panel header (mobile drawer). */
+  showCloseButton?: boolean;
   headerActions?: ReactNode;
   scrollRef?: RefObject<HTMLDivElement | null>;
   empty?: boolean;
@@ -21,9 +27,11 @@ export function DocsCollabSidebarPanel({
   className,
   ariaLabel,
   title,
+  titleSize = "sm",
   countLabel,
   closeLabel,
   onClose,
+  showCloseButton = false,
   headerActions,
   scrollRef,
   empty = false,
@@ -37,21 +45,28 @@ export function DocsCollabSidebarPanel({
       aria-label={ariaLabel}
     >
       <header className="docs-collab-sidebar-panel__header">
-        <div className="docs-collab-sidebar-panel__header-main">
-          <p className="docs-collab-sidebar-panel__label">{title}</p>
-          <p className="docs-collab-sidebar-panel__count">{countLabel}</p>
-        </div>
-        <div className="docs-collab-sidebar-panel__header-actions">
-          {headerActions}
-          <button
-            type="button"
-            className="docs-collab-sidebar-panel__close"
-            aria-label={closeLabel}
-            onClick={onClose}
-          >
-            <X className="size-4" aria-hidden />
-          </button>
-        </div>
+        <ViewHeader
+          hideSidebarToggle
+          title={title}
+          titleSize={titleSize}
+          subtitle={countLabel}
+          actions={
+            headerActions || showCloseButton ? (
+              <div className="docs-collab-sidebar-panel__header-actions">
+                {headerActions}
+                {showCloseButton ? (
+                  <IconButton
+                    label={closeLabel}
+                    icon={<X className="size-4" aria-hidden />}
+                    size="sm"
+                    variant="subtle"
+                    onClick={onClose}
+                  />
+                ) : null}
+              </div>
+            ) : null
+          }
+        />
       </header>
 
       <div ref={scrollRef} className="docs-collab-sidebar-panel__scroll">

@@ -31,7 +31,7 @@ const meta = {
     docs: {
       description: {
         component:
-          "Standalone track-change suggestion card. Insert, delete, replace, and format-change fixtures mirror getDocsTrackChangeGroups output; each card shows a tinted Tag (Inserted, Deleted, Replaced, Format changed) above an inline diff (green insertions, red strikethrough deletions). Panel stories live under Docs suggestions/Panel.",
+          "Standalone track-change suggestion card. Insert, delete, replace, and format-change fixtures mirror getDocsTrackChangeGroups output; each card shows an inline diff using the shared collab highlight primitive (green insertions, red strikethrough deletions, blue format before → after). Panel stories live under Docs suggestions/Panel.",
       },
     },
   },

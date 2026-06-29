@@ -17,6 +17,7 @@
   --docs-sheet-canvas-padding-block: 2.5rem;
   --docs-comments-column-width: 20rem;
   --docs-comments-column-gap: 1rem;
+  --workspace-panel-width: var(--docs-comments-column-width);
   --docs-stat-tag-bg: color-mix(in oklab, var(--docs-accent) 10%, transparent);
   --docs-stat-tag-color: color-mix(in oklab, var(--docs-accent) 88%, var(--color-ink));
   --docs-text: var(--color-ink);
@@ -384,7 +385,7 @@
 }
 
 .docs-workspace .workspace-app-layout__panel {
-  @apply flex min-h-0 shrink-0 flex-col overflow-hidden border-l;
+  @apply flex min-h-0 flex-col border-l;
   width: var(--docs-comments-column-width);
   border-color: var(--docs-border);
   background-color: var(--docs-surface);

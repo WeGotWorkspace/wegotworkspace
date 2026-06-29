@@ -26,3 +26,8 @@ export type {
 } from "./docs-collab-message-reply";
 export { DocsCollabReactions } from "./docs-collab-reactions";
 export type { DocsCollabReactionsProps } from "./docs-collab-reactions";
+export { DocsCollabHighlightText } from "./docs-collab-highlight-text";
+export type {
+  DocsCollabHighlightTextProps,
+  DocsCollabHighlightVariant,
+} from "./docs-collab-highlight-text";

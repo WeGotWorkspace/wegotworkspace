@@ -101,14 +101,33 @@ function summarizeTrackChangeParts(parts: TrackedChangeInfo[]): string {
     return deletion.text ? `Delete “${deletion.text}”` : "Delete text";
   }
   if (formatChange) {
+    const text = formatChange.text;
     const added = formatChange.formatAdded;
     const removed = formatChange.formatRemoved;
+    if (text) {
+      if (added && removed) return `Change formatting of “${text}”: ${removed} → ${added}`;
+      if (added) return `Add ${added} formatting to “${text}”`;
+      if (removed) return `Remove ${removed} formatting from “${text}”`;
+      return `Change formatting of “${text}”`;
+    }
     if (added && removed) return `Change formatting: ${removed} → ${added}`;
     if (added) return `Add ${added} formatting`;
     if (removed) return `Remove ${removed} formatting`;
     return "Format change";
   }
   return "Suggested change";
+}
+
+/** Populate `text` on format-change parts when the track-changes API only has range + mark names. */
+function enrichFormatChangePartText(
+  editor: Editor,
+  parts: TrackedChangeInfo[],
+): TrackedChangeInfo[] {
+  return parts.map((part) => {
+    if (part.type !== "formatChange" || part.text) return part;
+    const text = editor.state.doc.textBetween(part.from, part.to, " ");
+    return text ? { ...part, text } : part;
+  });
 }
 
 function trackChangeAnchorText(editor: Editor, from: number, to: number): string {
@@ -125,8 +144,9 @@ export function getDocsTrackChangeGroups(editor: Editor | null): DocsTrackChange
   if (!editorHasTrackChanges(editor)) return [];
 
   const groups: DocsTrackChangeGroup[] = [];
-  for (const [changeId, parts] of getGroupedChanges(editor)) {
-    if (parts.length === 0) continue;
+  for (const [changeId, rawParts] of getGroupedChanges(editor)) {
+    if (rawParts.length === 0) continue;
+    const parts = enrichFormatChangePartText(editor, rawParts);
     const primary = parts[0]!;
     const from = Math.min(...parts.map((part) => part.from));
     const to = Math.max(...parts.map((part) => part.to));
