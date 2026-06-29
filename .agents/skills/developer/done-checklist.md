@@ -46,6 +46,7 @@ pnpm dev:ui                              # Storybook — mock-tier stories for c
 - [ ] Slice handlers / mock `operations` — no `@/lib/api/wgw/http` in panes ([apps-ui/components.md](../apps-ui/components.md))
 - [ ] Storybook a11y panel on new/changed stories ([storybook/a11y-testing.md](../storybook/a11y-testing.md))
 - [ ] Vitest for new/changed hooks, parsers, RTC/session logic ([testing/ui-architecture.md](../testing/ui-architecture.md))
+- [ ] New/changed hook files: [clean-code/smells.md](../clean-code/smells.md) React hooks section — split if over limits, or link a refactor issue with explicit user approval; collab hooks follow [collab-hooks.md](../workspace/collab-hooks.md)
 
 Meet/RTC: `pnpm --dir packages/apps exec vitest run src/lib/rtc/session src/meet-core/src/meet-rtc-session.test.ts`
 

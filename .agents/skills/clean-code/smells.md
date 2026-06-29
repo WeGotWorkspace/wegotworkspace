@@ -42,6 +42,19 @@ Use when reviewing diffs or before multitask chunk handoff. Not every item requi
 - [ ] Behavior change without test update
 - [ ] Tests that mirror implementation detail instead of contract
 
+## React hooks
+
+Scan **new or changed** `use*.ts(x)` files. Thresholds are handoff/merge blockers per [code-review/SKILL.md](../code-review/SKILL.md) — split or document an exception in the PR.
+
+- [ ] **Hook body > ~200 lines** — extract sub-hooks or pure modules; orchestrator should wire concerns, not implement them.
+- [ ] **> 4 `useEffect`s in one hook** — split by concern (sync, selection, draft, visibility, DOM listeners).
+- [ ] **> 2 unrelated concerns in one hook** (e.g. Yjs + TipTap + DOM + draft lifecycle) — split; see [workspace/collab-hooks.md](../workspace/collab-hooks.md) for collab layout.
+- [ ] **State + ref duplication** for the same value (stale-closure workaround) — refactor to a subscription helper or document why both are required.
+- [ ] **DOM listeners in orchestrator hooks** — extract `use-*-pointer.ts`, `use-*-outside-click.ts`, or similar focused hooks.
+- [ ] **`void foo` in dependency arrays** to force re-runs — require an explanatory comment or extract a subscription/effect helper.
+- [ ] **Optional fields on one type serving two shapes** (e.g. draft vs persisted anchor) — prefer discriminated unions.
+- [ ] **Test file line count ≫ orchestrator surface** — behavior may be covered but structure is untouchable; extract pure modules and test them directly ([testing/ui-architecture.md](../testing/ui-architecture.md)).
+
 ## Project-specific red flags
 
 - [ ] Legacy PHP patterns in `packages/api` (see `api/SKILL.md` forbidden list)

@@ -27,6 +27,11 @@ Lightweight gate before handoff or PR — not a second copy of domain skills.
 ## Blockers vs nits
 
 - **Block:** unmet issue acceptance criteria ([verify-issue](../verify-issue/SKILL.md)), policy violation in new code, missing tests for new behavior, secrets, legacy API PHP, live HTTP in panes.
+- **Block (apps hooks):** structural smells in **new or changed** hook files per [clean-code/smells.md](../clean-code/smells.md) React hooks section:
+  - Hook body > ~200 lines, or > 4 `useEffect`s, or > 2 unrelated concerns (Yjs, TipTap, DOM, draft UI, etc.) → must split or document an exception in the PR/handoff (link a follow-up issue only with explicit user approval).
+  - State + ref mirror for the same value without an explanatory comment → refactor before handoff.
+  - High test count or line coverage **does not** excuse unmaintainable structure — flag and block until split or exception documented.
+  - Collab/text-editor hooks: expected layout in [workspace/collab-hooks.md](../workspace/collab-hooks.md).
 - **Nit:** pre-existing debt outside the diff — note or link an issue; do not expand scope.
 
 ## Multitask merges
