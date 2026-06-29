@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { Editor } from "@tiptap/core";
 import { Awareness } from "y-protocols/awareness";
 import * as Y from "yjs";
 import {
@@ -34,6 +35,32 @@ describe("text editor extensions", () => {
     });
     const names = extensions.map((ext) => ext.name);
     expect(duplicateExtensionNames(names)).toEqual([]);
+  });
+
+  /** @vitest-environment jsdom */
+  it("resolves collaborative StarterKit children without duplicate TipTap marks", () => {
+    const ydoc = new Y.Doc();
+    const awareness = new Awareness(ydoc);
+    const warnings: string[] = [];
+    const originalWarn = console.warn;
+    console.warn = (...args: unknown[]) => {
+      warnings.push(args.map(String).join(" "));
+    };
+
+    try {
+      const editor = new Editor({
+        extensions: createCollaborativeTextEditorExtensions({
+          document: ydoc,
+          awareness,
+          user: { name: "Alex", color: "#2563eb" },
+          format: "markdown",
+        }),
+      });
+      editor.destroy();
+      expect(warnings.some((message) => message.includes("Duplicate extension names"))).toBe(false);
+    } finally {
+      console.warn = originalWarn;
+    }
   });
 
   it("excludes the pagination extension by default", () => {
