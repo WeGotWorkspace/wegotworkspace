@@ -244,10 +244,16 @@ final class SearchDocumentStore
             ->delete();
 
         $rows = [];
+        $seen = [];
         $now = date('c');
         foreach ($tokensByField as $field => $tokens) {
             $weight = $field === 'title' ? 8 : ($field === 'meta' ? 4 : 2);
             foreach ($tokens as $token) {
+                $dedupeKey = $field."\0".$token;
+                if (isset($seen[$dedupeKey])) {
+                    continue;
+                }
+                $seen[$dedupeKey] = true;
                 $rows[] = [
                     'document_id' => $documentId,
                     'token' => $token,

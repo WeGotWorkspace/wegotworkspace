@@ -11,7 +11,7 @@ final class SearchTokenService
      */
     public function tokenize(string $text): array
     {
-        $normalized = mb_strtolower(trim($text));
+        $normalized = $this->normalizeUnicode(mb_strtolower(trim($text)));
         if ($normalized === '') {
             return [];
         }
@@ -19,7 +19,7 @@ final class SearchTokenService
         $parts = preg_split('/[^\\pL\\pN]+/u', $normalized) ?: [];
         $tokens = [];
         foreach ($parts as $part) {
-            $token = trim($part);
+            $token = $this->normalizeUnicode(trim($part));
             if ($token === '' || mb_strlen($token) < 2) {
                 continue;
             }
@@ -27,5 +27,16 @@ final class SearchTokenService
         }
 
         return array_keys($tokens);
+    }
+
+    private function normalizeUnicode(string $value): string
+    {
+        if ($value === '' || ! class_exists(\Normalizer::class)) {
+            return $value;
+        }
+
+        $normalized = \Normalizer::normalize($value, \Normalizer::FORM_C);
+
+        return is_string($normalized) && $normalized !== '' ? $normalized : $value;
     }
 }
