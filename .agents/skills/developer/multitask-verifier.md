@@ -47,6 +47,12 @@ Run in order. Link out for depth — do not duplicate domain skill content.
 
 Follow [clean-code/smells.md](../clean-code/smells.md) on **all files touched by any chunk**, with extra attention at chunk boundaries (imports across packages, shared hooks, duplicated mock data).
 
+**Hook structure (apps):**
+
+- [ ] New/changed hooks meet React hooks thresholds in smells.md — or PR documents an approved exception.
+- [ ] **Test-to-orchestrator ratio** — flag when a hook test file is much larger than the orchestrator's public surface (smell: behavior tested but structure untouchable). Prefer pure-module tests + thin hook contract tests ([ui-architecture.md](../testing/ui-architecture.md)).
+- [ ] **Duplicate concerns** — flag new hooks that re-implement logic already owned by sibling modules in the same feature folder (e.g. second Yjs write path when `*-map-writes.ts` exists).
+
 ### 3. Policy vs CI
 
 Follow [code-review](../code-review/SKILL.md) step 3 — [POLICY.md](../../POLICY.md). Flag **new** violations; note pre-existing debt without expanding scope.

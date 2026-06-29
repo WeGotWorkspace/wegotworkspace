@@ -9,6 +9,7 @@ paths:
   - "packages/apps/src/**/*-core/**/use-*-api.ts"
   - "packages/apps/src/**/*-core/**/*-workspace*.css"
   - "packages/apps/src/**/*-core/**/*-workspace.styles.ts"
+  - "packages/apps/src/text-editor-core/docs-collab/**"
 ---
 
 # WeGotWorkspace Apps — Workspace Shell
@@ -20,6 +21,7 @@ paths:
 | **Which shell pattern?** (split vs collection vs custom) | [workspace-shells.md](../../../packages/apps/docs/workspace-shells.md) |
 | Shell layout, sidebar, navigation, toasts | This file |
 | Split product into App + Workspace + panes | [feature-blueprint.md](feature-blueprint.md) |
+| Collab / text-editor hooks (`docs-collab/`, Yjs + TipTap) | [collab-hooks.md](collab-hooks.md) |
 | **Add offline support to a new app** (Dexie, outbox, sync, conflicts) | [offline-platform.md](../../../packages/apps/docs/offline-platform.md) |
 
 ## `WorkspaceAppLayout` split mode

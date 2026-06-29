@@ -15,8 +15,9 @@ Domain skills override when more specific ([api/layers.md](../api/layers.md), [a
 ## When reviewing
 
 1. Run the [smells.md](smells.md) checklist on the diff.
-2. Prefer fixing small issues in files you already touch (Boy Scout Rule).
-3. Do not block feature delivery on unrelated refactors — file issues for out-of-scope debt.
+2. For **new or changed hooks**, apply the React hooks section — structural violations are **merge blockers** per [code-review/SKILL.md](../code-review/SKILL.md), not deferred nits.
+3. Prefer fixing small issues in files you already touch (Boy Scout Rule).
+4. Do not block feature delivery on unrelated refactors — file issues for out-of-scope debt. **Exception:** god-hooks and unreadable collab structure in the current diff must be split or documented before handoff.
 
 ## Optional depth
 

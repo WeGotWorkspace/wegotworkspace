@@ -80,3 +80,5 @@ Chunk `done-when` should reference:
 - Domain skill requirements (e.g. API feature tests, apps-ui CSS rules)
 - [clean-code](../clean-code/SKILL.md) smells checklist on touched files
 - [.agents/POLICY.md](../../POLICY.md) for policy vs enforced expectations
+
+**Collab / text-editor UI:** split plan chunks into **pure lib** (schema, map writes, editor actions — Vitest on exports) vs **orchestrator** (sub-hooks + thin public hook — RTL on contracts). See [workspace/collab-hooks.md](../workspace/collab-hooks.md).
