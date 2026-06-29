@@ -63,6 +63,14 @@ export function buildDocsHomeDrives(
   return drives;
 }
 
+export function resolveDocsHomeCreateDialogBrowsePath(selectedDrivePrefix: string | null): string {
+  if (selectedDrivePrefix?.startsWith("groups/")) {
+    const root = selectedDrivePrefix.slice("groups/".length);
+    return root ? `Groups/${root}` : "My Drive";
+  }
+  return "My Drive";
+}
+
 /**
  * API path for a brand-new Markdown document in the user's My Drive, using a
  * unique `Untitled.md`-style name against the currently loaded files.

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Input } from "@/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -10,6 +11,11 @@ export type RenameFilenameFieldProps = {
   extension?: string;
   disabled?: boolean;
   autoFocus?: boolean;
+  /**
+   * When this value changes to a non-null value, focus the input and select its
+   * contents (e.g. dialog open with a suggested `Untitled` name).
+   */
+  focusKey?: string | number | null;
   placeholder?: string;
   className?: string;
   onEnter?: () => void;
@@ -21,15 +27,29 @@ export function RenameFilenameField({
   extension,
   disabled = false,
   autoFocus = false,
+  focusKey = null,
   placeholder,
   className,
   onEnter,
 }: RenameFilenameFieldProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
   const showExtension = Boolean(extension);
+
+  useEffect(() => {
+    if (focusKey == null) return;
+    const frame = requestAnimationFrame(() => {
+      const node = inputRef.current;
+      if (!node) return;
+      node.focus();
+      node.select();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [focusKey]);
 
   if (!showExtension) {
     return (
       <Input
+        ref={inputRef}
         autoFocus={autoFocus}
         className={className}
         placeholder={placeholder}
@@ -49,6 +69,7 @@ export function RenameFilenameField({
   return (
     <div className={cn("rename-filename-field", className)}>
       <Input
+        ref={inputRef}
         autoFocus={autoFocus}
         className="rename-filename-field__input"
         placeholder={placeholder}

@@ -9,7 +9,8 @@ import {
   normalizeApiVirtualPath,
   uiPathFromApiPath,
 } from "@/drive-core/src/drive-path-utils";
-import { formatBytesCompact, suggestNewMarkdownFileName } from "@/drive-core/src/drive-file-utils";
+import { formatBytesCompact } from "@/drive-core/src/drive-file-utils";
+import { resolveCreateMarkdownDialogDefaults } from "@/drive-core/src/drive-create-markdown-dialog-utils";
 import { driveFileFromEntry } from "@/drive-core/src/drive-file-utils";
 import type { DriveUploadProgress } from "@/drive-core/src/drive-types";
 import { useDriveBatchActions } from "@/drive-core/src/use-drive-batch-actions";
@@ -69,6 +70,9 @@ export function useDriveMutations({ shell, list, onOpenDocsFile }: UseDriveMutat
     null,
   );
   const [moveDialog, setMoveDialog] = useState<{ ids: string[] } | null>(null);
+  const [markdownDialogOpen, setMarkdownDialogOpen] = useState(false);
+  const [markdownDialogSubmitting, setMarkdownDialogSubmitting] = useState(false);
+  const [markdownDialogError, setMarkdownDialogError] = useState<string | null>(null);
   const [dropUploadActive, setDropUploadActive] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{
     label: string;
@@ -409,60 +413,84 @@ export function useDriveMutations({ shell, list, onOpenDocsFile }: UseDriveMutat
 
   const createMarkdown = useCallback(() => {
     if (!onOpenDocsFile) return;
-    const targetParent = view.type === "folder" ? view.path : "My Drive";
-    const name = suggestNewMarkdownFileName(files);
-    const cwd = apiPathFromUiPath(targetParent, currentUsername, groupRootNames);
-    const apiPath = normalizeApiVirtualPath(`${cwd}/${name}`);
+    setMarkdownDialogError(null);
+    setMarkdownDialogOpen(true);
+  }, [onOpenDocsFile]);
 
-    if (operations) {
-      void operations
-        .createFile({ cwd, name })
-        .then((nextData) => {
-          setFiles(
-            nextData.directory.files.map((entry) => driveFileFromEntry(entry, currentUsername)),
-          );
-          commitView({ type: "folder", path: uiPathFromApiPath(nextData.cwd, currentUsername) });
-          onOpenDocsFile(apiPath);
-        })
-        .catch((error: unknown) => {
-          const message = error instanceof Error ? error.message : String(error);
-          showError(message);
-        });
-      return;
-    }
+  const closeMarkdownDialog = useCallback(() => {
+    if (markdownDialogSubmitting) return;
+    setMarkdownDialogOpen(false);
+    setMarkdownDialogError(null);
+  }, [markdownDialogSubmitting]);
 
-    const id = `f-${Date.now()}`;
-    setFiles((previous) => [
-      {
-        id,
-        notebook: "File · 0 KB",
-        category: "File",
-        date: "Now",
-        title: name,
-        excerpt: apiPath,
-        body: [],
-        tags: [],
-        wordCount: 0,
-        parent: targetParent,
-        kind: "doc",
-        size: "0 KB",
-        apiPath,
-      },
-      ...previous,
-    ]);
-    show(`Created “${name}”`, { icon: <ScrollText className="size-4" /> });
-    onOpenDocsFile(apiPath);
-  }, [
-    commitView,
-    currentUsername,
-    files,
-    groupRootNames,
-    onOpenDocsFile,
-    operations,
-    show,
-    showError,
-    view,
-  ]);
+  const submitCreateMarkdown = useCallback(
+    (name: string, destinationPath: string) => {
+      if (!onOpenDocsFile) return;
+      const trimmed = name.trim();
+      if (!trimmed) return;
+
+      const cwd = apiPathFromUiPath(destinationPath, currentUsername, groupRootNames);
+      const apiPath = normalizeApiVirtualPath(`${cwd}/${trimmed}`);
+
+      if (operations) {
+        setMarkdownDialogSubmitting(true);
+        setMarkdownDialogError(null);
+        void operations
+          .createFile({ cwd, name: trimmed })
+          .then((nextData) => {
+            setFiles(
+              nextData.directory.files.map((entry) => driveFileFromEntry(entry, currentUsername)),
+            );
+            commitView({ type: "folder", path: uiPathFromApiPath(nextData.cwd, currentUsername) });
+            setMarkdownDialogOpen(false);
+            setMarkdownDialogSubmitting(false);
+            onOpenDocsFile(apiPath);
+          })
+          .catch((error: unknown) => {
+            setMarkdownDialogSubmitting(false);
+            const message = error instanceof Error ? error.message : String(error);
+            setMarkdownDialogError(message);
+            showError(message);
+          });
+        return;
+      }
+
+      const id = `f-${Date.now()}`;
+      setFiles((previous) => [
+        {
+          id,
+          notebook: "File · 0 KB",
+          category: "File",
+          date: "Now",
+          title: trimmed,
+          excerpt: apiPath,
+          body: [],
+          tags: [],
+          wordCount: 0,
+          parent: destinationPath,
+          kind: "doc",
+          size: "0 KB",
+          apiPath,
+        },
+        ...previous,
+      ]);
+      show(`Created “${trimmed}”`, { icon: <ScrollText className="size-4" /> });
+      setMarkdownDialogOpen(false);
+      onOpenDocsFile(apiPath);
+    },
+    [
+      commitView,
+      currentUsername,
+      groupRootNames,
+      onOpenDocsFile,
+      operations,
+      setFiles,
+      show,
+      showError,
+    ],
+  );
+
+  const markdownDialogDefaults = resolveCreateMarkdownDialogDefaults(view, files);
 
   useEffect(() => {
     return () => {
@@ -518,6 +546,12 @@ export function useDriveMutations({ shell, list, onOpenDocsFile }: UseDriveMutat
     setConfirmDelete,
     moveDialog,
     setMoveDialog,
+    markdownDialogOpen,
+    markdownDialogDefaults,
+    markdownDialogSubmitting,
+    markdownDialogError,
+    closeMarkdownDialog,
+    submitCreateMarkdown,
     dropUploadActive,
     setDropUploadActive,
     uploadProgress,

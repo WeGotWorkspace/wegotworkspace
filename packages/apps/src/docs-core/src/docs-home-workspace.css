@@ -16,7 +16,20 @@
 }
 
 .docs-home-workspace .docs-home-pane__body {
-  @apply flex min-h-0 flex-1 flex-col;
+  @apply relative flex min-h-0 flex-1 flex-col;
+}
+
+@media (max-width: 767px) {
+  .docs-home-workspace .docs-home-pane__body:has(.drive-selection-bar) {
+    padding-bottom: 5.5rem;
+  }
+}
+
+.docs-home-workspace .docs-home-pane__body.drive-workspace .drive-selection-bar {
+  --button-ghost-color: inherit;
+  --button-ghost-hover-background: color-mix(in oklab, white 10%, transparent);
+  background-color: var(--color-ink) !important;
+  color: var(--color-cream, #ffffff) !important;
 }
 
 .docs-home-workspace .docs-home-pane__load-more {

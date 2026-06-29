@@ -8,6 +8,7 @@ import {
   mergeGroupRoots,
   newDocumentApiPath,
   nextUntitledMarkdownName,
+  resolveDocsHomeCreateDialogBrowsePath,
   resolveNewDocumentName,
 } from "@/docs-core/src/docs-home-drives";
 
@@ -141,5 +142,13 @@ describe("resolveNewDocumentName", () => {
     await expect(resolveNewDocumentName(undefined, "/users/alice", files)).resolves.toBe(
       "Untitled 2.md",
     );
+  });
+});
+
+describe("resolveDocsHomeCreateDialogBrowsePath", () => {
+  it("maps the selected drive prefix to a folder picker path", () => {
+    expect(resolveDocsHomeCreateDialogBrowsePath(null)).toBe("My Drive");
+    expect(resolveDocsHomeCreateDialogBrowsePath("users/alice")).toBe("My Drive");
+    expect(resolveDocsHomeCreateDialogBrowsePath("groups/engineering")).toBe("Groups/engineering");
   });
 });

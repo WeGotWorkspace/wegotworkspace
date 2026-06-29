@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { DRIVE_VIEW_MODE_STORAGE_KEY } from "@/hooks/persisted-view-mode";
+import { usePersistedViewMode } from "@/hooks/use-persisted-view-mode";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import { useAppToast } from "@/hooks/use-app-toast";
 import { useIsTouch } from "@/hooks/use-is-touch";
@@ -43,7 +45,10 @@ export function useDriveList({ shell, onOpenDocsFile }: UseDriveListArgs) {
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = usePersistedViewMode({
+    storageKey: DRIVE_VIEW_MODE_STORAGE_KEY,
+    defaultMode: "grid",
+  });
   const [imagePreviewUrls, setImagePreviewUrls] = useState<Record<string, string>>({});
   const imagePreviewUrlsRef = useRef<Record<string, string>>({});
   const recentOpenRef = useRef<{ key: string; at: number } | null>(null);

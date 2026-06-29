@@ -155,8 +155,6 @@ function DriveMainHeader({
     sidebarOpen,
     setSidebarOpen,
     viewLabel,
-    selectionMode,
-    selectedIds,
     viewMode,
     setViewMode,
     searchQuery,
@@ -170,9 +168,6 @@ function DriveMainHeader({
       sidebarOpen={sidebarOpen}
       onToggleSidebar={() => setSidebarOpen((v) => !v)}
       title={searchQuery.trim() ? labels.searchViewTitle : viewLabel}
-      subtitle={
-        selectionMode || selectedIds.length > 1 ? `${selectedIds.length} Selected` : undefined
-      }
       searchPlaceholder={labels.searchPlaceholder}
       searchValue={searchQuery}
       onSearchInput={setSearchQuery}

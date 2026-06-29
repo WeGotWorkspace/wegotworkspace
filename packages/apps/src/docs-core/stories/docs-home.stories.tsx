@@ -206,8 +206,11 @@ export const CreateUniqueName: Story = {
   },
   play: async ({ args, canvasElement }) => {
     const canvas = within(canvasElement);
+    const body = within(canvasElement.ownerDocument.body);
     const createButton = await canvas.findByRole("button", { name: "New document" });
     await userEvent.click(createButton);
+    await body.findByRole("dialog", { name: "New document" });
+    await userEvent.click(await body.findByRole("button", { name: "Create" }));
     await waitFor(() =>
       expect(args.onCreateDocument).toHaveBeenCalledWith("/users/alice/Untitled 2.md"),
     );

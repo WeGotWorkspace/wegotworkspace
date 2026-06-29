@@ -109,6 +109,33 @@ export function createTextEditorPaginationExtension(
   });
 }
 
+/** Inline vars PaginationPlus sets on `.ProseMirror`; stale entries break round-trip layout. */
+const PAGINATION_CONTENT_HEIGHT_VAR_PREFIX = "--rm-page-content";
+
+/** Remove plugin-managed per-page content height vars from the ProseMirror root. */
+export function clearTextEditorPaginationContentVariables(dom: HTMLElement): void {
+  const toRemove: string[] = [];
+  for (let i = 0; i < dom.style.length; i += 1) {
+    const name = dom.style.item(i);
+    if (
+      name.startsWith(PAGINATION_CONTENT_HEIGHT_VAR_PREFIX) ||
+      name === "--rm-max-content-child-height"
+    ) {
+      toRemove.push(name);
+    }
+  }
+  for (const name of toRemove) {
+    dom.style.removeProperty(name);
+  }
+}
+
+function resetTextEditorPaginationStorage(editor: Editor): void {
+  const storage = editor.storage.PaginationPlus;
+  if (!storage) return;
+  storage.headerHeight = new Map();
+  storage.footerHeight = new Map();
+}
+
 /**
  * Re-size an already-mounted paginated editor live (no re-create), preserving
  * cursor, undo history, and the collab session. No-op when the pagination
@@ -117,5 +144,12 @@ export function createTextEditorPaginationExtension(
 export function applyTextEditorPageFormat(editor: Editor, format: TextEditorPageFormat): void {
   if (!editor.storage.PaginationPlus) return;
   const scope = editor.view.dom.closest(".text-editor");
+  const { dom } = editor.view;
+
+  clearTextEditorPaginationContentVariables(dom);
+  resetTextEditorPaginationStorage(editor);
+
   editor.commands.updatePageSize(pageSizeFor(format, scope));
+  // Storage-only command — dispatch so decorations rebuild from fresh measurements.
+  editor.view.dispatch(editor.state.tr);
 }

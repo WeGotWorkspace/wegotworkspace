@@ -13,8 +13,8 @@ import { parentAndName } from "@/lib/files/api-path";
 import { joinFileNameForRename, splitFileNameForRename } from "@/lib/files/filename-rename";
 
 export type DocsHomeRenameState = { id: string; extension: string };
-export type DocsHomeMoveState = { id: string };
-export type DocsHomeDeleteState = { id: string };
+export type DocsHomeMoveState = { ids: string[] };
+export type DocsHomeDeleteState = { ids: string[] };
 
 type UseDocsHomeActionsArgs = {
   /** Live drive operations (star/download/rename/move/trash). Undefined in mock-only shells. */
@@ -159,47 +159,70 @@ export function useDocsHomeActions({
       });
   }, [closeRename, fileById, operations, reload, renameName, renameState, show, showError]);
 
-  const onMove = useCallback((file: DriveFile) => setMoveState({ id: file.id }), []);
+  const onMove = useCallback((file: DriveFile) => setMoveState({ ids: [file.id] }), []);
   const closeMove = useCallback(() => setMoveState(null), []);
+
+  const requestMoveSelected = useCallback((ids: string[]) => {
+    if (ids.length === 0) return;
+    setMoveState({ ids });
+  }, []);
 
   const confirmMove = useCallback(
     (destinationUiPath: string) => {
       const state = moveState;
       closeMove();
       if (!state || !operations) return;
-      const file = fileById(state.id);
-      const apiPath = file?.apiPath ? normalizeApiVirtualPath(file.apiPath) : null;
-      if (!file || !apiPath) return;
+      const rows = state.ids
+        .map((id) => fileById(id))
+        .filter((file): file is DriveFile => !!file?.apiPath);
+      if (rows.length === 0) return;
       const destination = apiPathFromUiPath(destinationUiPath, username, groupRootNames);
-      void operations
-        .renameItem({ destination, from: apiPath, to: file.title })
-        .then(() => {
-          show(`Moved “${file.title}”`);
+      void (async () => {
+        try {
+          for (const file of rows) {
+            const apiPath = normalizeApiVirtualPath(file.apiPath!);
+            await operations.renameItem({ destination, from: apiPath, to: file.title });
+          }
+          show(rows.length === 1 ? `Moved “${rows[0]!.title}”` : `Moved ${rows.length} files`);
           reload();
-        })
-        .catch((error: unknown) => {
+        } catch (error: unknown) {
           showError(error instanceof Error ? error.message : "Could not move this file.");
-        });
+        }
+      })();
     },
     [closeMove, fileById, groupRootNames, moveState, operations, reload, show, showError, username],
   );
 
-  const onTrash = useCallback((file: DriveFile) => setDeleteState({ id: file.id }), []);
+  const onTrash = useCallback((file: DriveFile) => setDeleteState({ ids: [file.id] }), []);
   const closeDelete = useCallback(() => setDeleteState(null), []);
+
+  const requestDeleteSelected = useCallback((ids: string[]) => {
+    if (ids.length === 0) return;
+    setDeleteState({ ids });
+  }, []);
 
   const confirmTrash = useCallback(() => {
     const state = deleteState;
     closeDelete();
     if (!state || !operations) return;
-    const file = fileById(state.id);
-    const apiPath = file?.apiPath ? normalizeApiVirtualPath(file.apiPath) : null;
-    if (!file || !apiPath) return;
+    const rows = state.ids
+      .map((id) => fileById(id))
+      .filter((file): file is DriveFile => !!file?.apiPath);
+    if (rows.length === 0) return;
     void (async () => {
       try {
         await ensureTrashFolder(operations, username, groupRootNames);
         const destination = apiPathFromUiPath(DRIVE_TRASH_UI_PATH, username, groupRootNames);
-        await operations.renameItem({ destination, from: apiPath, to: file.title });
-        show(`Moved “${file.title}” to Trash`, { icon: <Trash2 className="size-4" /> });
+        for (const file of rows) {
+          const apiPath = normalizeApiVirtualPath(file.apiPath!);
+          await operations.renameItem({ destination, from: apiPath, to: file.title });
+        }
+        show(
+          rows.length === 1
+            ? `Moved “${rows[0]!.title}” to Trash`
+            : `Moved ${rows.length} files to Trash`,
+          { icon: <Trash2 className="size-4" /> },
+        );
         reload();
       } catch (error) {
         showError(error instanceof Error ? error.message : "Could not move this file to Trash.");
@@ -216,6 +239,64 @@ export function useDocsHomeActions({
     showError,
     username,
   ]);
+
+  const batchStar = useCallback(
+    (ids: string[]) => {
+      if (ids.length === 0) return;
+      const rows = ids
+        .map((id) => fileById(id))
+        .filter((file): file is DriveFile => !!file?.apiPath);
+      if (rows.length === 0) return;
+
+      const nextValue = !ids.every((id) => {
+        const file = fileById(id);
+        const apiPath = file?.apiPath ? normalizeApiVirtualPath(file.apiPath) : null;
+        return apiPath ? starredPaths.has(apiPath) : false;
+      });
+
+      setStarredPaths((prev) => {
+        const updated = new Set(prev);
+        for (const file of rows) {
+          const apiPath = normalizeApiVirtualPath(file.apiPath!);
+          if (nextValue) updated.add(apiPath);
+          else updated.delete(apiPath);
+        }
+        return updated;
+      });
+      show(nextValue ? "Starred" : "Unstarred", {
+        icon: nextValue ? (
+          <Star className="size-4" fill="currentColor" />
+        ) : (
+          <StarOff className="size-4" />
+        ),
+      });
+      if (!operations) return;
+      void (async () => {
+        try {
+          await Promise.all(
+            rows.map((file) =>
+              operations.setStar({
+                path: normalizeApiVirtualPath(file.apiPath!),
+                starred: nextValue,
+              }),
+            ),
+          );
+        } catch {
+          setStarredPaths((prev) => {
+            const updated = new Set(prev);
+            for (const file of rows) {
+              const apiPath = normalizeApiVirtualPath(file.apiPath!);
+              if (nextValue) updated.delete(apiPath);
+              else updated.add(apiPath);
+            }
+            return updated;
+          });
+          showError("Could not update star.");
+        }
+      })();
+    },
+    [fileById, operations, show, showError, starredPaths],
+  );
 
   return {
     starred,
@@ -236,6 +317,9 @@ export function useDocsHomeActions({
     deleteState,
     closeDelete,
     confirmTrash,
+    batchStar,
+    requestMoveSelected,
+    requestDeleteSelected,
   };
 }
 
