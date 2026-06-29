@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { Editor } from "@tiptap/react";
-import { Code2, MessageSquare, Printer } from "lucide-react";
+import { Code2, Eye, MessageSquare, Pencil, PenLine, Printer } from "lucide-react";
 import { LoadingSpinner } from "@/loading-spinner/src/loading-spinner";
 import { AppSidebar } from "@/app-sidebar/src/app-sidebar";
 import { IconButton } from "@/button/src/button";
@@ -38,7 +38,12 @@ import {
   AlertDialogTitle,
 } from "@/ui/alert-dialog";
 import { ViewHeader } from "@/view-header/src/view-header";
-import { getTextEditorContent } from "@/text-editor-core/src/text-editor-content";
+import {
+  editorHasTrackChanges,
+  getAcceptedTextEditorContent,
+  getTrackChangesMode,
+} from "@/text-editor-core/src/text-editor-track-changes";
+import type { TrackChangesMode } from "tiptap-track-changes";
 import { TEXT_EDITOR_FORMAT_BAR_FULL } from "@/text-editor-core/src/text-editor-format-bar-config";
 import { printTextEditorSheet } from "@/text-editor-core/src/text-editor-print";
 import { DocsCollabEditor } from "./docs-collab-editor";
@@ -185,6 +190,7 @@ function DocsCollabWorkspaceInner({
   const [sourceClosedDialogOpen, setSourceClosedDialogOpen] = useState(false);
   const [editor, setEditor] = useState<Editor | null>(null);
   const [markdown, setMarkdown] = useState("");
+  const [trackMode, setTrackMode] = useState<TrackChangesMode>("edit");
   const [activeOutlineIndex, setActiveOutlineIndex] = useState<number | null>(null);
   const resolvedDocumentTitle = documentTitle?.trim() || defaultTitleFromRoom(urls?.room);
   const editorFormat = docsEditorFormatFromFileName(resolvedDocumentTitle);
@@ -311,6 +317,18 @@ function DocsCollabWorkspaceInner({
     setCommentsOpen(true);
   }, [commentsOpen, handleCommentsClose, viewSource]);
 
+  const handleSetTrackMode = useCallback(
+    (mode: TrackChangesMode) => {
+      if (!editor || !editorHasTrackChanges(editor)) return;
+      if (mode === "suggest") editor.commands.setSuggestMode();
+      else if (mode === "view") editor.commands.setViewMode();
+      else editor.commands.setEditMode();
+    },
+    [editor],
+  );
+
+  const trackChangesReady = Boolean(editor && editorHasTrackChanges(editor));
+
   const commentsOverlay = useMemo(
     () =>
       collabSession && !useCommentsDrawer ? (
@@ -410,7 +428,8 @@ function DocsCollabWorkspaceInner({
     if (!editor) return;
 
     const updateFromEditor = () => {
-      setMarkdown(getTextEditorContent(editor, editorFormat));
+      setMarkdown(getAcceptedTextEditorContent(editor, editorFormat));
+      setTrackMode(getTrackChangesMode(editor));
     };
 
     updateFromEditor();
@@ -424,8 +443,9 @@ function DocsCollabWorkspaceInner({
     (nextEditor: Editor | null) => {
       setEditor(nextEditor);
       if (nextEditor) {
-        const getContent = () => getTextEditorContent(nextEditor, editorFormat);
+        const getContent = () => getAcceptedTextEditorContent(nextEditor, editorFormat);
         setMarkdown(getContent());
+        setTrackMode(getTrackChangesMode(nextEditor));
         registerMarkdownGetter(getContent);
       }
     },
@@ -547,6 +567,41 @@ function DocsCollabWorkspaceInner({
                     disabled={!editor}
                     onClick={() => printTextEditorSheet(editor, pageFormat)}
                   />
+                  {trackChangesReady && !viewSource ? (
+                    <div
+                      className="docs-workspace__mode-toggle"
+                      role="group"
+                      aria-label="Editing mode"
+                    >
+                      <IconButton
+                        label="Edit mode — changes apply directly"
+                        icon={<Pencil />}
+                        size="sm"
+                        variant="subtle"
+                        active={trackMode === "edit"}
+                        aria-pressed={trackMode === "edit"}
+                        onClick={() => handleSetTrackMode("edit")}
+                      />
+                      <IconButton
+                        label="Suggest mode — changes are tracked for review"
+                        icon={<PenLine />}
+                        size="sm"
+                        variant="subtle"
+                        active={trackMode === "suggest"}
+                        aria-pressed={trackMode === "suggest"}
+                        onClick={() => handleSetTrackMode("suggest")}
+                      />
+                      <IconButton
+                        label="View mode — preview accepted result"
+                        icon={<Eye />}
+                        size="sm"
+                        variant="subtle"
+                        active={trackMode === "view"}
+                        aria-pressed={trackMode === "view"}
+                        onClick={() => handleSetTrackMode("view")}
+                      />
+                    </div>
+                  ) : null}
                   <IconButton
                     label={
                       viewSource

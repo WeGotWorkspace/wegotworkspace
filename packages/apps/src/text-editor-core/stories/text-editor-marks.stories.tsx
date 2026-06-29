@@ -128,15 +128,15 @@ export const DocsCommentsCollab: Story = {
   },
 };
 
-export const SuggestionMarkStory: Story = {
-  name: "SuggestionMark",
+export const LegacySuggestionMarkStory: Story = {
+  name: "LegacySuggestionMark",
   render: () => (
     <div className="text-editor p-6">
       <div
         className="text-editor-prose"
         dangerouslySetInnerHTML={{
           __html:
-            '<p>Accept this <span data-suggestion-id="s-1" class="suggestion-mark">suggested edit</span> before publishing.</p>',
+            '<p>Accept this <span data-suggestion-id="s-1" class="legacy-suggestion-mark">suggested edit</span> before publishing.</p>',
         }}
       />
     </div>
@@ -144,14 +144,14 @@ export const SuggestionMarkStory: Story = {
 };
 
 export const BothMarks: Story = {
-  name: "Comment and suggestion marks",
+  name: "Comment and legacy suggestion marks",
   render: () => (
     <div className="text-editor p-6">
       <div
         className="text-editor-prose"
         dangerouslySetInnerHTML={{
           __html:
-            '<p><span data-comment-id="c-1" class="comment-mark">Comment</span> and <span data-suggestion-id="s-1" class="suggestion-mark">suggestion</span> marks together.</p>',
+            '<p><span data-comment-id="c-1" class="comment-mark">Comment</span> and <span data-suggestion-id="s-1" class="legacy-suggestion-mark">suggestion</span> marks together.</p>',
         }}
       />
     </div>

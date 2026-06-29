@@ -5,10 +5,8 @@ import { useEditor } from "@tiptap/react";
 import type { Awareness } from "y-protocols/awareness";
 import type * as Y from "yjs";
 import { cn } from "@/lib/utils";
-import {
-  getTextEditorContent,
-  type TextEditorContentFormat,
-} from "@/text-editor-core/src/text-editor-content";
+import { type TextEditorContentFormat } from "@/text-editor-core/src/text-editor-content";
+import { getAcceptedTextEditorContent } from "@/text-editor-core/src/text-editor-track-changes";
 import {
   applyTextEditorPageFormat,
   DEFAULT_TEXT_EDITOR_PAGE_FORMAT,
@@ -22,6 +20,7 @@ import {
 } from "@/text-editor-core/src/text-editor-format-bar";
 import { createCollaborativeTextEditorExtensions } from "@/text-editor-core/src/text-editor-extensions";
 import { getCommentMarkIdFromTarget } from "@/text-editor-core/src/text-editor-comment-commands";
+import { DocsCollabSuggestControls } from "./docs-collab-suggest-controls";
 import { TextEditorSheet } from "@/text-editor-core/src/text-editor-sheet";
 import { TextEditorSource } from "@/text-editor-core/src/text-editor-source";
 import { useTextEditorSourceSync } from "@/text-editor-core/src/use-text-editor-source-sync";
@@ -31,7 +30,7 @@ import "@/text-editor-core/src/text-editor.css";
 export type DocsCollabEditorProps = {
   ydoc: Y.Doc;
   awareness: Awareness;
-  user: { name: string; color: string };
+  user: { name: string; color: string; id?: string };
   format?: TextEditorContentFormat;
   formatBar?: boolean | TextEditorFormatBarConfig;
   sheetFill?: boolean;
@@ -103,7 +102,7 @@ export function DocsCollabEditor({
       editorProps,
       onUpdate: ({ transaction, editor: ed }) => {
         if (isChangeOrigin(transaction)) return;
-        onContentChangeRef.current?.(() => getTextEditorContent(ed, format));
+        onContentChangeRef.current?.(() => getAcceptedTextEditorContent(ed, format));
       },
       onSelectionUpdate: ({ editor: ed }) => {
         ed.commands.updateUser(user);
@@ -155,6 +154,12 @@ export function DocsCollabEditor({
     />
   ) : null;
 
+  // Suggest-mode toolbar shares the toolbar region with the format bar; it
+  // self-hides when the editor has no track-changes extension.
+  const suggestControlsElement = formatBarConfig ? (
+    <DocsCollabSuggestControls editor={editor} />
+  ) : null;
+
   const sheetElement = (
     <TextEditorSheet
       editor={editor}
@@ -195,12 +200,14 @@ export function DocsCollabEditor({
             className="text-editor__source min-h-0"
           />
           <div className="text-editor__formatted flex min-h-0 flex-1 flex-col">
+            {suggestControlsElement}
             {formatBarElement}
             {sheetElement}
           </div>
         </div>
       ) : (
         <>
+          {suggestControlsElement}
           {formatBarElement}
           {sheetElement}
         </>

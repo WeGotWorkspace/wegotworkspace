@@ -12,8 +12,10 @@ import Typography from "@tiptap/extension-typography";
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { Mark, mergeAttributes, type Extensions } from "@tiptap/react";
+import { TrackChangesExtension } from "tiptap-track-changes";
 import { CommentMark } from "@/text-editor-core/src/text-editor-comment-commands";
 import { CommentDraftAnchor } from "@/text-editor-core/src/text-editor-comment-draft-anchor";
+import { toTrackChangesAuthor } from "@/text-editor-core/src/text-editor-track-changes";
 import { Markdown } from "tiptap-markdown";
 import type { Awareness } from "y-protocols/awareness";
 import type * as Y from "yjs";
@@ -30,8 +32,13 @@ export {
   setCommentDraftAnchor,
 } from "@/text-editor-core/src/text-editor-comment-draft-anchor";
 
-export const SuggestionMark = Mark.create({
-  name: "suggestion",
+/**
+ * Legacy static highlight mark — predates live track-changes suggestions and is
+ * kept only for stored documents that still carry `data-suggestion-id` spans.
+ * Live suggestions are handled by {@link TrackChangesExtension}.
+ */
+export const LegacySuggestionMark = Mark.create({
+  name: "legacySuggestion",
   inclusive: false,
   addAttributes() {
     return {
@@ -46,7 +53,7 @@ export const SuggestionMark = Mark.create({
     return [{ tag: "span[data-suggestion-id]" }];
   },
   renderHTML({ HTMLAttributes }) {
-    return ["span", mergeAttributes(HTMLAttributes, { class: "suggestion-mark" }), 0];
+    return ["span", mergeAttributes(HTMLAttributes, { class: "legacy-suggestion-mark" }), 0];
   },
 });
 
@@ -87,7 +94,7 @@ export function createTextEditorExtensions(
     TableCell,
     CommentMark,
     CommentDraftAnchor,
-    SuggestionMark,
+    LegacySuggestionMark,
   ];
 
   if (format === "markdown") {
@@ -114,10 +121,15 @@ export function createTextEditorExtensions(
 export type CreateCollaborativeTextEditorExtensionsOptions = CreateTextEditorExtensionsOptions & {
   document: Y.Doc;
   awareness: Awareness;
-  user: { name: string; color: string };
+  /** `id` is optional; a stable author id is derived from `name` when omitted. */
+  user: { name: string; color: string; id?: string };
 };
 
-/** Same surface as {@link createTextEditorExtensions} with Yjs + remote carets (undo disabled). */
+/**
+ * Same surface as {@link createTextEditorExtensions} with Yjs + remote carets
+ * (undo disabled) plus MIT `tiptap-track-changes` for suggestion mode. Starts in
+ * `edit` mode; the suggest controls flip it to `suggest`.
+ */
 export function createCollaborativeTextEditorExtensions(
   options: CreateCollaborativeTextEditorExtensionsOptions,
 ): Extensions {
@@ -127,6 +139,10 @@ export function createCollaborativeTextEditorExtensions(
   return [
     StarterKit.configure({ undoRedo: false }),
     ...base,
+    TrackChangesExtension.configure({
+      author: toTrackChangesAuthor(user),
+      mode: "edit",
+    }),
     Collaboration.configure({ document }),
     CollaborationCaret.configure({
       provider: { awareness },

@@ -19,8 +19,9 @@ export { printTextEditorSheet } from "@/text-editor-core/src/text-editor-print";
 export { TextEditorTableControls } from "@/text-editor-core/src/text-editor-table-controls";
 export {
   createTextEditorExtensions,
+  createCollaborativeTextEditorExtensions,
   CommentMark,
-  SuggestionMark,
+  LegacySuggestionMark,
   type CreateTextEditorExtensionsOptions,
 } from "@/text-editor-core/src/text-editor-extensions";
 export {
@@ -29,6 +30,17 @@ export {
   scrollCommentMarkIntoView,
   setCommentActiveId,
 } from "@/text-editor-core/src/text-editor-comment-commands";
+export {
+  getAcceptedTextEditorContent,
+  editorHasTrackChanges,
+  editorHasPendingTrackChanges,
+  getTrackChangesMode,
+  getTrackChangesPendingCount,
+  trackChangeIdAtSelection,
+  toTrackChangesAuthor,
+  trackChangesAuthorIdFromName,
+  type TextEditorCollabUser,
+} from "@/text-editor-core/src/text-editor-track-changes";
 export {
   TEXT_EDITOR_CONTENT_FORMATS,
   getTextEditorContent,

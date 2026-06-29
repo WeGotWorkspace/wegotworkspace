@@ -4,6 +4,8 @@ export { DocsCollabEditor } from "./docs-collab-editor";
 export type { DocsCollabEditorProps } from "./docs-collab-editor";
 export { DocsCollabPresence } from "./docs-collab-presence";
 export type { DocsCollabPresenceProps } from "./docs-collab-presence";
+export { DocsCollabSuggestControls } from "./docs-collab-suggest-controls";
+export type { DocsCollabSuggestControlsProps } from "./docs-collab-suggest-controls";
 export { DocsCommentsPanel, DocsCommentsSidebar } from "./docs-comments";
 export type { DocsCommentsPanelProps, DocsCommentsSidebarProps } from "./docs-comments";
 export { DocsCommentsFloatingLayer } from "./docs-comments";
