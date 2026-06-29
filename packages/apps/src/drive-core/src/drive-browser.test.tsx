@@ -85,11 +85,83 @@ describe("DriveGridView tile interaction", () => {
     fireEvent.doubleClick(hit);
     expect(onOpen).toHaveBeenCalledWith(FILE);
   });
+
+  it("does not open on double click while in selection mode", () => {
+    const onOpen = vi.fn();
+    render(
+      <div className="drive-workspace">
+        <DriveGridView
+          {...baseBrowserProps({ onOpen, selectionMode: true, selectedIds: [FILE.id] })}
+        />
+      </div>,
+    );
+
+    fireEvent.doubleClick(screen.getByRole("button", { name: FILE.title }));
+    expect(onOpen).not.toHaveBeenCalled();
+  });
+
+  it("shows a checkbox overlay in selection mode", () => {
+    const { container } = render(
+      <div className="drive-workspace">
+        <DriveGridView {...baseBrowserProps({ selectionMode: true, selectedIds: [FILE.id] })} />
+      </div>,
+    );
+
+    expect(container.querySelector(".drive-file-tile__checkbox")).toBeTruthy();
+  });
+
+  it("enters selection via context menu on desktop", () => {
+    const onLongPress = vi.fn();
+    render(
+      <div className="drive-workspace">
+        <DriveGridView {...baseBrowserProps({ onLongPress })} />
+      </div>,
+    );
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: FILE.title }));
+    expect(onLongPress).toHaveBeenCalledWith(FILE.id);
+  });
 });
 
 describe("DriveListView", () => {
   it("renders the Kind column by default", () => {
     render(<DriveListView {...baseBrowserProps()} />);
     expect(screen.getByRole("columnheader", { name: "Kind" })).toBeTruthy();
+  });
+
+  it("shows a checkbox in selection mode", () => {
+    const { container } = render(
+      <div className="drive-workspace">
+        <DriveListView {...baseBrowserProps({ selectionMode: true, selectedIds: [FILE.id] })} />
+      </div>,
+    );
+
+    expect(container.querySelector(".drive-list-row__checkbox")).toBeTruthy();
+  });
+
+  it("does not open on double click while in selection mode", () => {
+    const onOpen = vi.fn();
+    render(
+      <div className="drive-workspace">
+        <DriveListView
+          {...baseBrowserProps({ onOpen, selectionMode: true, selectedIds: [FILE.id] })}
+        />
+      </div>,
+    );
+
+    fireEvent.doubleClick(screen.getByText(FILE.title).closest("tr")!);
+    expect(onOpen).not.toHaveBeenCalled();
+  });
+
+  it("enters selection via context menu on desktop", () => {
+    const onLongPress = vi.fn();
+    render(
+      <div className="drive-workspace">
+        <DriveListView {...baseBrowserProps({ onLongPress })} />
+      </div>,
+    );
+
+    fireEvent.contextMenu(screen.getByText(FILE.title).closest("tr")!);
+    expect(onLongPress).toHaveBeenCalledWith(FILE.id);
   });
 });

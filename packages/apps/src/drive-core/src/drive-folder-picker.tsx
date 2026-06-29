@@ -173,6 +173,9 @@ export function DriveFolderPicker({
 
   useEffect(() => {
     setBrowsePath(initialBrowsePath);
+  }, [initialBrowsePath]);
+
+  useEffect(() => {
     setHighlightedPath(
       canMoveDriveItemsToFolder(files, moveIds, initialBrowsePath).length > 0
         ? initialBrowsePath
