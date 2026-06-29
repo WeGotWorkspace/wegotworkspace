@@ -1011,6 +1011,9 @@
   body.text-editor-print-active
     :is(
       .app-sidebar,
+      .workspace-app-layout__panel,
+      .docs-workspace__review-panel,
+      .docs-collab-review-panel-drawer,
       .workspace-app-layout__main-header,
       .view-header,
       .action-bar,
@@ -1028,6 +1031,7 @@
       .workspace-app-layout__main,
       .workspace-app-layout__main-scroll,
       .workspace-app-layout__main-content,
+      .workspace-app-layout__panel,
       .docs-workspace__editor,
       .text-editor,
       .text-editor__body,
