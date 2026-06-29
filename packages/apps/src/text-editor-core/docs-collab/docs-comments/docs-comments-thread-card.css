@@ -49,60 +49,7 @@
 }
 
 .docs-comments-thread-card__reactions {
-  @apply mt-2.5 flex flex-wrap items-center gap-1.5;
-}
-
-.docs-comments-thread-card__reaction {
-  @apply inline-flex h-7 items-center gap-1 rounded-full border px-2 text-xs transition-colors;
-  border-color: var(--docs-border, color-mix(in oklab, var(--color-ink) 12%, transparent));
-  background-color: transparent;
-  color: var(--docs-text, var(--color-ink));
-}
-
-.docs-comments-thread-card__reaction:hover {
-  background-color: color-mix(in oklab, var(--color-ink) 4%, transparent);
-}
-
-.docs-comments-thread-card__reaction[data-reacted="true"] {
-  border-color: color-mix(in oklab, var(--docs-accent, #3b82f6) 35%, transparent);
-  background-color: color-mix(in oklab, var(--docs-accent, #3b82f6) 10%, transparent);
-  color: color-mix(in oklab, var(--docs-accent, #3b82f6) 88%, var(--color-ink));
-}
-
-.docs-comments-thread-card__reaction--add {
-  @apply justify-center px-2;
-  border-style: dashed;
-  border-color: color-mix(in oklab, var(--color-ink) 18%, transparent);
-  color: var(--docs-muted, color-mix(in oklab, var(--color-ink) 55%, transparent));
-}
-
-.docs-comments-thread-card__reaction-add-icon {
-  width: 0.875rem;
-  height: 0.875rem;
-}
-
-.docs-comments-thread-card__reaction-emoji {
-  @apply text-sm leading-none;
-}
-
-.docs-comments-thread-card__reaction-count {
-  @apply text-[11px] font-medium tabular-nums;
-}
-
-.docs-comments-thread-card__reaction-picker {
-  @apply w-auto p-1.5;
-}
-
-.docs-comments-thread-card__reaction-picker-grid {
-  @apply flex flex-wrap gap-0.5;
-}
-
-.docs-comments-thread-card__reaction-picker-item {
-  @apply flex size-8 items-center justify-center rounded-md text-base transition-colors;
-}
-
-.docs-comments-thread-card__reaction-picker-item:hover {
-  background-color: color-mix(in oklab, var(--color-ink) 6%, transparent);
+  @apply mt-2.5;
 }
 
 .docs-comments-thread-card__replies {

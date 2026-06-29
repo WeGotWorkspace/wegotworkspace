@@ -24,3 +24,5 @@ export type {
   DocsCollabMessageReplyProps,
   DocsCommentsReplyProps,
 } from "./docs-collab-message-reply";
+export { DocsCollabReactions } from "./docs-collab-reactions";
+export type { DocsCollabReactionsProps } from "./docs-collab-reactions";

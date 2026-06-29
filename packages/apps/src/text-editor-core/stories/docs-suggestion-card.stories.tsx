@@ -6,16 +6,21 @@ import {
   deleteSuggestion,
   formatChangeSuggestion,
   insertSuggestion,
+  insertSuggestionWithThread,
   replaceSuggestion,
+  replaceSuggestionWithReactions,
 } from "./docs-suggestion-card.stories.fixtures";
 
 const noop = () => {};
 
 const cardHandlers = {
   labels: docsLabels,
+  currentUserId: "u-alex",
   onSelect: noop,
   onAccept: noop,
   onReject: noop,
+  onAddReply: noop,
+  onToggleReaction: noop,
 };
 
 const meta = {
@@ -79,4 +84,18 @@ export const ReplaceInactive: Story = {
 export const FormatChange: Story = {
   name: "Format change",
   render: () => <DocsSuggestionCard {...cardHandlers} suggestion={formatChangeSuggestion} active />,
+};
+
+export const WithRepliesAndReactions: Story = {
+  name: "With replies and reactions",
+  render: () => (
+    <DocsSuggestionCard {...cardHandlers} suggestion={insertSuggestionWithThread} active />
+  ),
+};
+
+export const WithReactionsOnly: Story = {
+  name: "With reactions only",
+  render: () => (
+    <DocsSuggestionCard {...cardHandlers} suggestion={replaceSuggestionWithReactions} active />
+  ),
 };

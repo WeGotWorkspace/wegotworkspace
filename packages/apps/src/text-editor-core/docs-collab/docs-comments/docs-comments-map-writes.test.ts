@@ -8,6 +8,11 @@ import {
 } from "./docs-comments-map-writes";
 
 describe("docs-comments-map-writes", () => {
+  it("normalizes authors with missing display names", () => {
+    const message = createCommentMessage("Note", { id: "u-1", name: null as unknown as string });
+    expect(message?.author.name).toBe("u-1");
+  });
+
   it("toggles reactions for the current user", () => {
     const ydoc = new Y.Doc();
     getDocsCommentsMap(ydoc).set("t-1", {

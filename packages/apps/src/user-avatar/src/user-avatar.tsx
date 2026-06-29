@@ -6,7 +6,7 @@ import "@/user-avatar/src/user-avatar.css";
 export type UserAvatarSize = "sm" | "md" | "lg" | "xl";
 
 export type UserAvatarProps = {
-  displayName: string;
+  displayName: string | null | undefined;
   /** Shown under the display name (e.g. email, handle). Ignored when `compact` is true. */
   subtitle?: ReactNode;
   /** When set, show profile photo; falls back to initials on load error or when omitted. */
@@ -19,8 +19,10 @@ export type UserAvatarProps = {
   className?: string;
 };
 
-function initialsFromDisplayName(displayName: string) {
-  return displayName
+export function initialsFromDisplayName(displayName: string | null | undefined): string {
+  const trimmed = displayName?.trim();
+  if (!trimmed) return "";
+  return trimmed
     .split(/\s+/)
     .map((part) => part[0]?.toUpperCase() ?? "")
     .slice(0, 2)
@@ -37,7 +39,8 @@ export function UserAvatar({
   className,
 }: UserAvatarProps) {
   const [imageFailed, setImageFailed] = useState(false);
-  const initials = initialsFromDisplayName(displayName) || "?";
+  const resolvedName = displayName?.trim() || "Unknown";
+  const initials = initialsFromDisplayName(resolvedName) || "?";
   const showImage = Boolean(imageSrc) && !imageFailed;
 
   useEffect(() => {
@@ -68,13 +71,13 @@ export function UserAvatar({
     <button
       type="button"
       onClick={onClick}
-      aria-label={`${displayName} avatar`}
+      aria-label={`${resolvedName} avatar`}
       className="user-avatar__mark"
     >
       {markContent}
     </button>
   ) : (
-    <div className="user-avatar__mark" role="img" aria-label={`${displayName} avatar`}>
+    <div className="user-avatar__mark" role="img" aria-label={`${resolvedName} avatar`}>
       {markContent}
     </div>
   );
@@ -90,7 +93,7 @@ export function UserAvatar({
               subtitle != null && subtitle !== "" && "user-avatar__name--emphasized",
             )}
           >
-            {displayName}
+            {resolvedName}
           </div>
           {subtitle != null && subtitle !== "" ? (
             <div className="user-avatar__subtitle">{subtitle}</div>

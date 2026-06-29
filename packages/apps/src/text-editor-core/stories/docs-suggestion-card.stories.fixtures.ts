@@ -1,4 +1,4 @@
-import type { DocsTrackChangeGroup } from "@/text-editor-core/src/text-editor-track-changes";
+import type { DocsSuggestionWithThread } from "@/text-editor-core/docs-collab/docs-suggestions-types";
 import { trackChangesAuthorIdFromName } from "@/text-editor-core/src/text-editor-track-changes";
 import type { TrackedChangeInfo } from "tiptap-track-changes";
 
@@ -17,7 +17,7 @@ function buildSuggestion(
   parts: TrackedChangeInfo[],
   anchorText: string,
   summary: string,
-): DocsTrackChangeGroup {
+): DocsSuggestionWithThread {
   const primary = parts[0]!;
   const from = Math.min(...parts.map((part) => part.from));
   const to = Math.max(...parts.map((part) => part.to));
@@ -32,6 +32,7 @@ function buildSuggestion(
     anchorText,
     summary,
     parts,
+    messages: [],
   };
 }
 
@@ -116,3 +117,34 @@ export const formatChangeSuggestion = buildSuggestion(
   "…update the headline before review",
   "Change formatting: italic → bold",
 );
+
+const replyAuthorSam = { id: "u-sam", name: "Sam Lee" };
+const replyAuthorAlex = { id: "u-alex", name: "Alex Example" };
+
+export const insertSuggestionWithThread = {
+  ...insertSuggestion,
+  messages: [
+    {
+      id: "reply-1",
+      body: "Can we clarify this before Friday?",
+      createdAt: "2026-06-01T09:10:00.000Z",
+      author: replyAuthorSam,
+    },
+    {
+      id: "reply-2",
+      body: "Added during the last review pass.",
+      createdAt: "2026-06-01T09:15:00.000Z",
+      author: replyAuthorAlex,
+    },
+  ],
+  reactions: [
+    { emoji: "👍", userIds: ["u-alex", "u-sam"] },
+    { emoji: "💡", userIds: ["u-sam"] },
+  ],
+};
+
+export const replaceSuggestionWithReactions = {
+  ...replaceSuggestion,
+  messages: [],
+  reactions: [{ emoji: "👀", userIds: ["u-alex"] }],
+};

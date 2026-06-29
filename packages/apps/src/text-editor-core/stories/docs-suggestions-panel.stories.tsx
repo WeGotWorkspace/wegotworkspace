@@ -1,21 +1,28 @@
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { docsLabels } from "@/docs-core/src/docs-labels";
-import type { DocsTrackChangeGroup } from "@/text-editor-core/src/text-editor-track-changes";
+import type { DocsSuggestionWithThread } from "@/text-editor-core/docs-collab/docs-suggestions-types";
 import { DocsSuggestionsPanel } from "@/text-editor-core/docs-collab/docs-suggestions";
 
 import "@/text-editor-core/docs-collab/docs-suggestions-sidebar.css";
 
-import { insertSuggestion, replaceSuggestion } from "./docs-suggestion-card.stories.fixtures";
+import {
+  insertSuggestion,
+  insertSuggestionWithThread,
+  replaceSuggestion,
+} from "./docs-suggestion-card.stories.fixtures";
 
 const noop = () => {};
 
 const panelHandlers = {
   onCloseMobile: noop,
   labels: docsLabels,
+  currentUserId: "u-alex",
   onSelectSuggestion: noop,
   onAcceptSuggestion: noop,
   onRejectSuggestion: noop,
+  onAddReply: noop,
+  onToggleReaction: noop,
   onAcceptAll: noop,
   onRejectAll: noop,
 };
@@ -61,7 +68,7 @@ export const Empty: Story = {
 
 function InteractivePanelDemo() {
   const [activeChangeId, setActiveChangeId] = useState<string | null>("change-replace-1");
-  const [suggestions, setSuggestions] = useState<DocsTrackChangeGroup[]>([
+  const [suggestions, setSuggestions] = useState<DocsSuggestionWithThread[]>([
     replaceSuggestion,
     insertSuggestion,
   ]);
@@ -86,4 +93,15 @@ function InteractivePanelDemo() {
 
 export const Interactive: Story = {
   render: () => <InteractivePanelDemo />,
+};
+
+export const WithThreadData: Story = {
+  name: "With replies and reactions",
+  render: () => (
+    <DocsSuggestionsPanel
+      {...panelHandlers}
+      suggestions={[insertSuggestionWithThread, replaceSuggestion]}
+      activeChangeId="change-insert-1"
+    />
+  ),
 };

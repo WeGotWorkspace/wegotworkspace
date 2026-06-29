@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import type { Editor } from "@tiptap/react";
 import { Code2, ListChecks, MessageSquare, Printer } from "lucide-react";
 import { LoadingSpinner } from "@/loading-spinner/src/loading-spinner";
@@ -204,8 +204,6 @@ function DocsCollabWorkspaceInner({
   const { online } = useConnectivity();
   const commentsLayout = useDocsCommentsLayout();
   const useCommentsDrawer = commentsLayout === "drawer";
-  const composeSuppressedRef = useRef(false);
-  const [draftComposeVisible, setDraftComposeVisible] = useState(false);
   const showPendingSyncIndicator = pendingSync && (!online || failedSync);
   const pendingSyncLabel = failedSync ? labels.pendingSyncFailed : labels.pendingSync;
 
@@ -213,15 +211,14 @@ function DocsCollabWorkspaceInner({
     ydoc: collabSession?.ydoc ?? null,
     editor,
     currentUser: {
-      id: session.user.username,
-      name: session.user.displayName,
+      id: session.user.username ?? session.user.displayName,
+      name: session.user.displayName?.trim() || session.user.username || "User",
     },
-    commentsVisible: commentsOpen || draftComposeVisible,
+    commentsVisible: commentsOpen,
   });
 
   const {
     draftThread,
-    canAddComment,
     selectionQualifiesForComment,
     openThreads,
     activeThreadId,
@@ -246,47 +243,15 @@ function DocsCollabWorkspaceInner({
     rejectSuggestion,
     acceptAll,
     rejectAll,
-  } = useDocsSuggestions(editor);
-
-  useEffect(() => {
-    if (draftThread) {
-      setDraftComposeVisible(true);
-      return;
-    }
-    if (!commentsOpen) {
-      setDraftComposeVisible(false);
-    }
-  }, [commentsOpen, draftThread]);
-
-  useEffect(() => {
-    if (viewSource || !collabSession || draftThread || commentsOpen) return;
-    if (!selectionQualifiesForComment || composeSuppressedRef.current) return;
-    setDraftComposeVisible(true);
-  }, [collabSession, commentsOpen, draftThread, selectionQualifiesForComment, viewSource]);
-
-  useEffect(() => {
-    if (viewSource || !collabSession || draftThread) return;
-
-    if (commentsOpen) {
-      if (!canAddComment) return;
-      createThreadFromSelection();
-      return;
-    }
-
-    if (!draftComposeVisible || !selectionQualifiesForComment || composeSuppressedRef.current) {
-      return;
-    }
-    createThreadFromSelection();
-  }, [
-    canAddComment,
-    collabSession,
-    commentsOpen,
-    createThreadFromSelection,
-    draftComposeVisible,
-    draftThread,
-    selectionQualifiesForComment,
-    viewSource,
-  ]);
+    addReply: addSuggestionReply,
+    toggleReaction: toggleSuggestionReaction,
+  } = useDocsSuggestions(editor, {
+    ydoc: collabSession?.ydoc ?? null,
+    currentUser: {
+      id: session.user.username ?? session.user.displayName,
+      name: session.user.displayName?.trim() || session.user.username || "User",
+    },
+  });
 
   useEffect(() => {
     if (viewSource) return;
@@ -309,8 +274,6 @@ function DocsCollabWorkspaceInner({
   }, [commentsLayout, suggestions.length, viewSource]);
 
   const handleCommentsClose = useCallback(() => {
-    composeSuppressedRef.current = true;
-    setDraftComposeVisible(false);
     cancelDraft();
     clearActiveThread();
     setCommentsOpen(false);
@@ -326,12 +289,30 @@ function DocsCollabWorkspaceInner({
   const handleCommentActivated = useCallback(
     (commentId: string, clickPos: number) => {
       if (viewSource) return;
-      composeSuppressedRef.current = false;
       setCommentsOpen(true);
       activateThreadFromMark(commentId, clickPos);
     },
     [activateThreadFromMark, viewSource],
   );
+
+  const handleAddCommentFromSelection = useCallback(() => {
+    if (viewSource || !collabSession) return;
+    setCommentsOpen(true);
+    if (draftThread) {
+      selectThread(draftThread.id);
+      return;
+    }
+    if (selectionQualifiesForComment) {
+      createThreadFromSelection();
+    }
+  }, [
+    collabSession,
+    createThreadFromSelection,
+    draftThread,
+    selectThread,
+    selectionQualifiesForComment,
+    viewSource,
+  ]);
 
   const handleToggleComments = useCallback(() => {
     if (viewSource) return;
@@ -339,7 +320,6 @@ function DocsCollabWorkspaceInner({
       handleCommentsClose();
       return;
     }
-    composeSuppressedRef.current = false;
     setCommentsOpen(true);
   }, [commentsOpen, handleCommentsClose, viewSource]);
 
@@ -458,22 +438,28 @@ function DocsCollabWorkspaceInner({
           visible={suggestionsOpen}
           labels={labels}
           suggestions={suggestions}
+          currentUserId={session.user.username}
           activeChangeId={activeChangeId}
           onSelectSuggestion={selectSuggestion}
           onAcceptSuggestion={acceptSuggestion}
           onRejectSuggestion={rejectSuggestion}
+          onAddReply={addSuggestionReply}
+          onToggleReaction={toggleSuggestionReaction}
         />
       ) : null,
     [
       acceptSuggestion,
       activeChangeId,
+      addSuggestionReply,
       collabSession,
       editor,
       labels,
       rejectSuggestion,
       selectSuggestion,
+      session.user.username,
       suggestions,
       suggestionsOpen,
+      toggleSuggestionReaction,
       useCommentsDrawer,
     ],
   );
@@ -492,10 +478,13 @@ function DocsCollabWorkspaceInner({
             onCloseMobile={handleSuggestionsClose}
             labels={labels}
             suggestions={suggestions}
+            currentUserId={session.user.username}
             activeChangeId={activeChangeId}
             onSelectSuggestion={selectSuggestion}
             onAcceptSuggestion={acceptSuggestion}
             onRejectSuggestion={rejectSuggestion}
+            onAddReply={addSuggestionReply}
+            onToggleReaction={toggleSuggestionReaction}
             onAcceptAll={acceptAll}
             onRejectAll={rejectAll}
           />
@@ -505,14 +494,17 @@ function DocsCollabWorkspaceInner({
       acceptAll,
       acceptSuggestion,
       activeChangeId,
+      addSuggestionReply,
       collabSession,
       handleSuggestionsClose,
       labels,
       rejectAll,
       rejectSuggestion,
       selectSuggestion,
+      session.user.username,
       suggestions,
       suggestionsOpen,
+      toggleSuggestionReaction,
       useCommentsDrawer,
     ],
   );
@@ -736,6 +728,10 @@ function DocsCollabWorkspaceInner({
                   onEditorReady={handleEditorReady}
                   onCommentActivated={handleCommentActivated}
                   onSuggestionActivated={handleSuggestionActivated}
+                  onAddCommentFromSelection={handleAddCommentFromSelection}
+                  canAddCommentFromSelection={selectionQualifiesForComment}
+                  commentsDisabled={viewSource}
+                  commentControlLabels={labels}
                   commentsOverlay={commentsOverlay}
                   suggestionsOverlay={suggestionsOverlay}
                 />

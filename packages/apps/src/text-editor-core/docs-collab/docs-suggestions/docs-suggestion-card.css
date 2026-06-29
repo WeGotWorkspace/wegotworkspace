@@ -2,6 +2,7 @@
 @import "../docs-collab-card/docs-collab-card.css";
 
 .docs-suggestion-card {
+  @apply flex flex-col;
   --docs-collab-card-accent: var(--text-editor-suggestion, oklch(0.85 0.15 145));
   --docs-collab-card-hover-border: color-mix(
     in oklab,
@@ -100,4 +101,45 @@
     var(--text-editor-track-deletion, oklch(0.88 0.12 25)) 85%,
     transparent
   );
+}
+
+.docs-suggestion-card__reactions {
+  @apply mt-2.5;
+}
+
+.docs-suggestion-card__replies {
+  @apply mt-3 space-y-2.5 border-t pt-3;
+  border-color: color-mix(in oklab, var(--color-ink) 8%, transparent);
+}
+
+.docs-suggestion-card__composer {
+  @apply sticky bottom-0 z-[1] mt-3 flex items-center gap-2 rounded-lg border px-3 py-1;
+  border-color: var(--docs-border, color-mix(in oklab, var(--color-ink) 10%, transparent));
+  background-color: color-mix(
+    in oklab,
+    var(--docs-surface, var(--color-cream, #ffffff)) 92%,
+    transparent
+  );
+}
+
+.docs-suggestion-card__composer-input {
+  @apply min-w-0 flex-1 border-0 bg-transparent text-sm outline-none;
+  color: var(--docs-text, var(--color-ink));
+}
+
+.docs-suggestion-card__composer-input::placeholder {
+  color: var(--docs-muted, color-mix(in oklab, var(--color-ink) 55%, transparent));
+}
+
+.docs-suggestion-card__composer-post {
+  @apply shrink-0 text-sm font-medium transition-opacity;
+  color: var(--docs-suggestion-accent-strong);
+}
+
+.docs-suggestion-card__composer-post:disabled {
+  @apply cursor-not-allowed opacity-40;
+}
+
+.docs-suggestion-card__composer-post:not(:disabled):hover {
+  opacity: 0.85;
 }

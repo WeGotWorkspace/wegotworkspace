@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import type { Editor } from "@tiptap/react";
 import type { DocsUILabels } from "@/docs-core/src/docs-labels";
-import type { DocsTrackChangeGroup } from "@/text-editor-core/src/text-editor-track-changes";
 import { escapeTrackChangeIdForSelector } from "@/text-editor-core/src/text-editor-track-changes";
+import type { DocsSuggestionWithThread } from "../docs-suggestions-types";
 import { useDocsCollabFloatingLayerLayout } from "../docs-collab-card";
 import { DocsSuggestionCard } from "./docs-suggestion-card";
 import "./docs-suggestions-floating-layer.css";
@@ -11,11 +11,14 @@ export type DocsSuggestionsFloatingLayerProps = {
   editor: Editor | null;
   visible: boolean;
   labels: DocsUILabels;
-  suggestions: DocsTrackChangeGroup[];
+  suggestions: DocsSuggestionWithThread[];
+  currentUserId: string;
   activeChangeId: string | null;
   onSelectSuggestion: (changeId: string) => void;
   onAcceptSuggestion: (changeId: string) => void;
   onRejectSuggestion: (changeId: string) => void;
+  onAddReply: (changeId: string, body: string) => void;
+  onToggleReaction: (changeId: string, emoji: string) => void;
 };
 
 const SCROLL_ANCHOR_VIEWPORT_OFFSET_FRACTION = 1 / 3;
@@ -25,10 +28,13 @@ export function DocsSuggestionsFloatingLayer({
   visible,
   labels,
   suggestions,
+  currentUserId,
   activeChangeId,
   onSelectSuggestion,
   onAcceptSuggestion,
   onRejectSuggestion,
+  onAddReply,
+  onToggleReaction,
 }: DocsSuggestionsFloatingLayerProps) {
   const { layerRef, containerLayout } = useDocsCollabFloatingLayerLayout({ editor, visible });
 
@@ -96,10 +102,13 @@ export function DocsSuggestionsFloatingLayer({
               <DocsSuggestionCard
                 suggestion={suggestion}
                 labels={labels}
+                currentUserId={currentUserId}
                 active={isActive}
                 onSelect={() => onSelectSuggestion(suggestion.changeId)}
                 onAccept={() => onAcceptSuggestion(suggestion.changeId)}
                 onReject={() => onRejectSuggestion(suggestion.changeId)}
+                onAddReply={(body) => onAddReply(suggestion.changeId, body)}
+                onToggleReaction={(emoji) => onToggleReaction(suggestion.changeId, emoji)}
               />
             </div>
           );

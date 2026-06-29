@@ -132,7 +132,7 @@ export function getDocsTrackChangeGroups(editor: Editor | null): DocsTrackChange
     const to = Math.max(...parts.map((part) => part.to));
     groups.push({
       changeId,
-      authorName: primary.authorName,
+      authorName: primary.authorName?.trim() || "Unknown",
       authorColor: primary.authorColor,
       timestamp: primary.timestamp,
       from,

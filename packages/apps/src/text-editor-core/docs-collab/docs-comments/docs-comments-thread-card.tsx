@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, Smile, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Check, Trash2 } from "lucide-react";
 import type { DocsUILabels } from "@/docs-core/src/docs-labels";
-import { Popover, PopoverContent, PopoverTrigger } from "@/ui/popover";
-import { DOCS_COMMENT_REACTION_EMOJIS, type DocsCommentThread } from "../docs-comments-types";
+import type { DocsCommentThread } from "../docs-comments-types";
 import {
   DocsCollabCardHeader,
   DocsCollabCardShell,
   DocsCollabMessageReply,
+  DocsCollabReactions,
   useDocsCollabCardExit,
 } from "../docs-collab-card";
 import "./docs-comments-thread-card.css";
@@ -23,21 +23,6 @@ export type DocsCommentsThreadCardProps = {
   onDelete: () => void;
   onCancelDraft?: () => void;
 };
-
-function reactionCount(reactions: DocsCommentThread["reactions"], emoji: string): number {
-  return reactions?.find((reaction) => reaction.emoji === emoji)?.userIds.length ?? 0;
-}
-
-function userReacted(
-  reactions: DocsCommentThread["reactions"],
-  emoji: string,
-  userId: string,
-): boolean {
-  return (
-    reactions?.some((reaction) => reaction.emoji === emoji && reaction.userIds.includes(userId)) ??
-    false
-  );
-}
 
 const COMMENT_EXIT_ANIMATION = "docs-comments-thread-card-evaporate";
 
@@ -63,14 +48,6 @@ export function DocsCommentsThreadCard({
   const replies = thread.messages.slice(1);
   const trimmedComposerText = composerText.trim();
   const canPost = trimmedComposerText.length > 0;
-
-  const visibleReactions = useMemo(
-    () =>
-      thread.reactions
-        ?.filter((reaction) => reaction.userIds.length > 0)
-        .map((reaction) => reaction.emoji) ?? [],
-    [thread.reactions],
-  );
 
   useEffect(() => {
     if (!active) return;
@@ -160,64 +137,12 @@ export function DocsCommentsThreadCard({
       {firstMessage ? <p className="docs-comments-thread-card__body">{firstMessage.body}</p> : null}
 
       {!isDraft ? (
-        <div className="docs-comments-thread-card__reactions" role="group" aria-label="Reactions">
-          {visibleReactions.map((emoji) => {
-            const count = reactionCount(thread.reactions, emoji);
-            const reacted = userReacted(thread.reactions, emoji, currentUserId);
-            return (
-              <button
-                key={emoji}
-                type="button"
-                className="docs-comments-thread-card__reaction"
-                data-reacted={reacted ? "true" : "false"}
-                aria-pressed={reacted}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onToggleReaction(emoji);
-                }}
-              >
-                <span className="docs-comments-thread-card__reaction-emoji" aria-hidden>
-                  {emoji}
-                </span>
-                <span className="docs-comments-thread-card__reaction-count">{count}</span>
-              </button>
-            );
-          })}
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                className="docs-comments-thread-card__reaction docs-comments-thread-card__reaction--add"
-                aria-label="Add reaction"
-                onClick={(event) => event.stopPropagation()}
-              >
-                <Smile className="docs-comments-thread-card__reaction-add-icon" aria-hidden />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent
-              align="start"
-              side="top"
-              className="docs-comments-thread-card__reaction-picker"
-            >
-              <div className="docs-comments-thread-card__reaction-picker-grid">
-                {DOCS_COMMENT_REACTION_EMOJIS.map((emoji) => (
-                  <button
-                    key={emoji}
-                    type="button"
-                    className="docs-comments-thread-card__reaction-picker-item"
-                    aria-pressed={userReacted(thread.reactions, emoji, currentUserId)}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onToggleReaction(emoji);
-                    }}
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
-            </PopoverContent>
-          </Popover>
-        </div>
+        <DocsCollabReactions
+          className="docs-comments-thread-card__reactions"
+          reactions={thread.reactions}
+          currentUserId={currentUserId}
+          onToggleReaction={onToggleReaction}
+        />
       ) : null}
 
       {replies.length > 0 ? (

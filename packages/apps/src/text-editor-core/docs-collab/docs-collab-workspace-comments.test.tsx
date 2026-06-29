@@ -1,5 +1,5 @@
 import { act, renderHook } from "@testing-library/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { describe, expect, it } from "vitest";
@@ -20,77 +20,45 @@ function createEditor(content = "<p>Hello world</p>") {
   return editor;
 }
 
-type DrawerDraftComposeOptions = {
+type ExplicitDraftComposeOptions = {
   ydoc: Y.Doc;
   editor: Editor;
   initialCommentsOpen?: boolean;
-  composeSuppressed?: boolean;
 };
 
-/** Mirrors draft compose orchestration in docs-collab-workspace.tsx */
-function useDraftCompose({
+/** Mirrors explicit comment compose orchestration in docs-collab-workspace.tsx */
+function useExplicitDraftCompose({
   ydoc,
   editor,
   initialCommentsOpen = false,
-  composeSuppressed = false,
-}: DrawerDraftComposeOptions) {
+}: ExplicitDraftComposeOptions) {
   const [commentsOpen, setCommentsOpen] = useState(initialCommentsOpen);
-  const [draftComposeVisible, setDraftComposeVisible] = useState(false);
-  const composeSuppressedRef = useRef(composeSuppressed);
-  composeSuppressedRef.current = composeSuppressed;
 
   const comments = useDocsComments({
     ydoc,
     editor,
     currentUser: { id: "u-1", name: "Alex" },
-    commentsVisible: commentsOpen || draftComposeVisible,
+    commentsVisible: commentsOpen,
   });
 
   const {
     draftThread,
-    canAddComment,
     selectionQualifiesForComment,
     openThreads,
     createThreadFromSelection,
+    selectThread,
   } = comments;
 
-  useEffect(() => {
+  const addCommentFromSelection = useCallback(() => {
+    setCommentsOpen(true);
     if (draftThread) {
-      setDraftComposeVisible(true);
+      selectThread(draftThread.id);
       return;
     }
-    if (!commentsOpen) {
-      setDraftComposeVisible(false);
-    }
-  }, [commentsOpen, draftThread]);
-
-  useEffect(() => {
-    if (draftThread || commentsOpen) return;
-    if (!selectionQualifiesForComment || composeSuppressedRef.current) return;
-    setDraftComposeVisible(true);
-  }, [commentsOpen, draftThread, selectionQualifiesForComment]);
-
-  useEffect(() => {
-    if (draftThread) return;
-
-    if (commentsOpen) {
-      if (!canAddComment) return;
+    if (selectionQualifiesForComment) {
       createThreadFromSelection();
-      return;
     }
-
-    if (!draftComposeVisible || !selectionQualifiesForComment || composeSuppressedRef.current) {
-      return;
-    }
-    createThreadFromSelection();
-  }, [
-    canAddComment,
-    commentsOpen,
-    createThreadFromSelection,
-    draftComposeVisible,
-    draftThread,
-    selectionQualifiesForComment,
-  ]);
+  }, [createThreadFromSelection, draftThread, selectThread, selectionQualifiesForComment]);
 
   useEffect(() => {
     if (shouldAutoOpenCommentsForDraft(draftThread)) {
@@ -105,8 +73,9 @@ function useDraftCompose({
 
   return {
     commentsOpen,
-    draftComposeVisible,
     draftThread,
+    selectionQualifiesForComment,
+    addCommentFromSelection,
   };
 }
 
@@ -237,38 +206,42 @@ describe("docs-collab-workspace source/comments exclusivity", () => {
 });
 
 describe("docs-collab-workspace draft compose", () => {
-  it("creates a draft and opens comments when panel starts closed (drawer tier)", () => {
+  it("does not create a draft when text is selected without clicking Comment", () => {
     const ydoc = new Y.Doc();
     const editor = createEditor();
 
     const { result } = renderHook(() =>
-      useDraftCompose({
+      useExplicitDraftCompose({
         ydoc,
         editor,
         initialCommentsOpen: false,
       }),
     );
 
-    expect(result.current.draftThread).not.toBeNull();
-    expect(result.current.commentsOpen).toBe(true);
-    expect(result.current.draftComposeVisible).toBe(true);
+    expect(result.current.selectionQualifiesForComment).toBe(true);
+    expect(result.current.draftThread).toBeNull();
+    expect(result.current.commentsOpen).toBe(false);
 
     act(() => {
       editor.destroy();
     });
   });
 
-  it("creates a draft and opens comments on margin tier when panel starts closed", () => {
+  it("creates a draft and opens comments when Comment is clicked (drawer tier)", () => {
     const ydoc = new Y.Doc();
     const editor = createEditor();
 
     const { result } = renderHook(() =>
-      useDraftCompose({
+      useExplicitDraftCompose({
         ydoc,
         editor,
         initialCommentsOpen: false,
       }),
     );
+
+    act(() => {
+      result.current.addCommentFromSelection();
+    });
 
     expect(result.current.draftThread).not.toBeNull();
     expect(result.current.commentsOpen).toBe(true);
@@ -278,20 +251,31 @@ describe("docs-collab-workspace draft compose", () => {
     });
   });
 
-  it("keeps floating layer visible while a draft exists before comments open", () => {
+  it("opens comments and focuses an existing draft when Comment is clicked again", () => {
     const ydoc = new Y.Doc();
     const editor = createEditor();
 
     const { result } = renderHook(() =>
-      useDraftCompose({
+      useExplicitDraftCompose({
         ydoc,
         editor,
         initialCommentsOpen: false,
       }),
     );
 
-    expect(result.current.draftThread).not.toBeNull();
-    expect(result.current.commentsOpen || result.current.draftThread != null).toBe(true);
+    act(() => {
+      result.current.addCommentFromSelection();
+    });
+
+    const draftId = result.current.draftThread?.id;
+    expect(draftId).toBeTruthy();
+
+    act(() => {
+      result.current.addCommentFromSelection();
+    });
+
+    expect(result.current.draftThread?.id).toBe(draftId);
+    expect(result.current.commentsOpen).toBe(true);
 
     act(() => {
       editor.destroy();
