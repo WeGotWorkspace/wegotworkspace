@@ -185,6 +185,10 @@ export function DocsHomeWorkspace({
             onRename={actions.onRename}
             onMove={actions.onMove}
             onTrash={actions.onTrash}
+            operations={operations}
+            batchStar={actions.batchStar}
+            requestMoveSelected={actions.requestMoveSelected}
+            requestDeleteSelected={actions.requestDeleteSelected}
           />
         }
       />

@@ -154,4 +154,42 @@ describe("useDocsHomeActions", () => {
     );
     await waitFor(() => expect(reload).toHaveBeenCalled());
   });
+
+  it("batch-stars all selected files", async () => {
+    const operations = createMockOperations();
+    const { result } = renderActions(operations);
+    await waitFor(() => expect(operations.listStars).toHaveBeenCalled());
+
+    act(() => result.current.batchStar(FILES.map((file) => file.id)));
+
+    expect(operations.setStar).toHaveBeenCalledTimes(2);
+    expect(operations.setStar).toHaveBeenCalledWith({ path: "/users/alice/A.md", starred: true });
+    expect(operations.setStar).toHaveBeenCalledWith({ path: "/users/alice/B.md", starred: true });
+    expect(result.current.starred["search:file:users/alice/A.md"]).toBe(true);
+    expect(result.current.starred["search:file:users/alice/B.md"]).toBe(true);
+  });
+
+  it("moves all selected files and refreshes once", async () => {
+    const operations = createMockOperations();
+    const reload = vi.fn();
+    const { result } = renderActions(operations, reload);
+
+    act(() => result.current.requestMoveSelected(FILES.map((file) => file.id)));
+    act(() => result.current.confirmMove("My Drive/Projects"));
+
+    await waitFor(() => expect(operations.renameItem).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
+  });
+
+  it("trashes all selected files and refreshes once", async () => {
+    const operations = createMockOperations();
+    const reload = vi.fn();
+    const { result } = renderActions(operations, reload);
+
+    act(() => result.current.requestDeleteSelected(FILES.map((file) => file.id)));
+    act(() => result.current.confirmTrash());
+
+    await waitFor(() => expect(operations.renameItem).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
+  });
 });

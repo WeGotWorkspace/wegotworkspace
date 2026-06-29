@@ -59,7 +59,7 @@ export function DocsHomeModals({
 
   const groupPaths = useMemo(() => groupRoots.map((root) => `Groups/${root}`), [groupRoots]);
   const groupRootNames = useMemo(() => new Set(groupRoots), [groupRoots]);
-  const moveTarget = moveState ? actions.fileById(moveState.id) : null;
+  const moveTarget = moveState ? actions.fileById(moveState.ids[0]!) : null;
   const canSubmitRename = renameName.trim().length > 0;
 
   return (
@@ -93,7 +93,11 @@ export function DocsHomeModals({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Move to Trash?</AlertDialogTitle>
-            <AlertDialogDescription>This will move 1 file to Trash.</AlertDialogDescription>
+            <AlertDialogDescription>
+              {deleteState && deleteState.ids.length === 1
+                ? "This will move 1 file to Trash."
+                : `This will move ${deleteState?.ids.length ?? 0} files to Trash.`}
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -107,7 +111,7 @@ export function DocsHomeModals({
         labels={driveLabels}
         files={files}
         groupPaths={groupPaths}
-        moveIds={moveState ? [moveState.id] : []}
+        moveIds={moveState?.ids ?? []}
         view={{ type: "folder", path: "My Drive" }}
         singleItemParent={moveTarget?.parent}
         operations={operations}

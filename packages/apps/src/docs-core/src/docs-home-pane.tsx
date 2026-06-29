@@ -11,6 +11,8 @@ import { useWorkspaceListKeyboardShortcuts } from "@/hooks/use-workspace-list-ke
 import { DriveGridView, DriveListView } from "@/drive-core/src/drive-browser";
 import type { DriveFile } from "@/drive-core/src/drive-models";
 import { driveLabels } from "@/drive-core/src/drive-labels";
+import { useDriveSelectionBar } from "@/drive-core/src/use-drive-selection-bar";
+import type { DriveAPIOperations } from "@/drive-core/src/drive-types";
 import type { DocsUILabels } from "@/docs-core/src/docs-labels";
 
 const noop = () => {};
@@ -39,6 +41,10 @@ export type DocsHomePaneProps = {
   onRename?: (file: DriveFile) => void;
   onMove?: (file: DriveFile) => void;
   onTrash?: (file: DriveFile) => void;
+  operations?: DriveAPIOperations;
+  batchStar?: (ids: string[]) => void;
+  requestMoveSelected?: (ids: string[]) => void;
+  requestDeleteSelected?: (ids: string[]) => void;
 };
 
 export function DocsHomePane({
@@ -62,6 +68,10 @@ export function DocsHomePane({
   onRename,
   onMove,
   onTrash,
+  operations,
+  batchStar,
+  requestMoveSelected,
+  requestDeleteSelected,
 }: DocsHomePaneProps) {
   const filesById = useMemo(() => {
     const map = new Map<string, DriveFile>();
@@ -82,6 +92,7 @@ export function DocsHomePane({
     selectionMode,
     handleSelect: listHandleSelect,
     enterSelectionFor,
+    exitSelection,
     isItemDragging,
     itemDragHandlers,
     navigateListByKeyboard,
@@ -122,11 +133,29 @@ export function DocsHomePane({
   );
 
   const requestDeleteSelection = useCallback(() => {
+    if (selectedIds.length > 0 && requestDeleteSelected) {
+      requestDeleteSelected(selectedIds);
+      return;
+    }
     if (!onTrash) return;
-    const id = selectedIds[0] ?? activeId;
+    const id = activeId;
     const target = id ? filesById.get(id) : undefined;
     if (target) onTrash(target);
-  }, [activeId, filesById, onTrash, selectedIds]);
+  }, [activeId, filesById, onTrash, requestDeleteSelected, selectedIds]);
+
+  const { selectionBar } = useDriveSelectionBar({
+    labels: driveLabels,
+    files,
+    selectedIds,
+    selectionMode,
+    activeId,
+    inTrashView: false,
+    operations,
+    exitSelection,
+    batchStar: () => batchStar?.(selectedIds),
+    requestDeleteSelected: () => requestDeleteSelected?.(selectedIds),
+    requestMoveSelected: () => requestMoveSelected?.(selectedIds),
+  });
 
   useWorkspaceListKeyboardShortcuts({
     searchInputRef,
@@ -217,6 +246,7 @@ export function DocsHomePane({
             ) : null}
           </>
         )}
+        {selectionBar}
       </div>
     </section>
   );
