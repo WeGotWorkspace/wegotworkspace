@@ -17,14 +17,6 @@
 .docs-comments-thread-card:hover:not([data-active="true"]) {
   opacity: 0.96;
   border-color: color-mix(in oklab, var(--docs-accent, #3b82f6) 16%, transparent);
-  background-color: color-mix(
-    in oklab,
-    var(--docs-accent, #3b82f6) 5%,
-    var(--docs-surface, var(--color-cream, #ffffff))
-  );
-  box-shadow:
-    0 1px 2px color-mix(in oklab, var(--color-ink) 6%, transparent),
-    0 4px 12px color-mix(in oklab, var(--color-ink) 5%, transparent);
 }
 
 .docs-comments-thread-card[data-active="true"] {

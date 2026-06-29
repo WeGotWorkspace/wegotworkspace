@@ -11,6 +11,7 @@ import type { DocsUILabels } from "@/docs-core/src/docs-labels";
 import { UserAvatar } from "@/user-avatar/src/user-avatar";
 import type { DocsTrackChangeGroup } from "@/text-editor-core/src/text-editor-track-changes";
 import { formatRelativeTimestamp } from "../docs-comments/docs-comments-utils";
+import { SuggestionDiffBody } from "./docs-suggestions-utils";
 import "./docs-suggestion-card.css";
 
 export type DocsSuggestionCardProps = {
@@ -141,15 +142,7 @@ export function DocsSuggestionCard({
         </div>
       </div>
 
-      {suggestion.anchorText ? (
-        <blockquote className="docs-suggestion-card__quote">
-          <span aria-hidden>&ldquo;</span>
-          {suggestion.anchorText}
-          <span aria-hidden>&rdquo;</span>
-        </blockquote>
-      ) : null}
-
-      <p className="docs-suggestion-card__body">{suggestion.summary}</p>
+      <SuggestionDiffBody parts={suggestion.parts} ariaLabel={suggestion.summary} />
     </article>
   );
 }

@@ -184,11 +184,6 @@
   background-color: color-mix(in oklab, var(--docs-accent) 24%, transparent);
 }
 
-.docs-workspace__mode-toggle {
-  @apply inline-flex items-center gap-0.5 rounded-md p-0.5;
-  background-color: color-mix(in oklab, var(--docs-muted) 12%, transparent);
-}
-
 .docs-workspace__header-actions .docs-workspace__comments-toggle {
   @apply relative;
 }

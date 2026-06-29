@@ -24,6 +24,7 @@ import { getTrackChangeIdFromTarget } from "@/text-editor-core/src/text-editor-t
 import { TextEditorSheet } from "@/text-editor-core/src/text-editor-sheet";
 import { TextEditorSource } from "@/text-editor-core/src/text-editor-source";
 import { useTextEditorSourceSync } from "@/text-editor-core/src/use-text-editor-source-sync";
+import { DocsCollabSuggestControls } from "./docs-collab-suggest-controls";
 
 import "@/text-editor-core/src/text-editor.css";
 
@@ -164,6 +165,7 @@ export function DocsCollabEditor({
       groups={[...formatBarConfig.groups]}
       showPrint={formatBarConfig.showPrint}
       className={formatBarConfig.className}
+      trailing={viewSource ? undefined : <DocsCollabSuggestControls editor={editor} />}
     />
   ) : null;
 

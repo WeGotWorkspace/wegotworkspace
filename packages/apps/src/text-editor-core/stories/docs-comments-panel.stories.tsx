@@ -4,57 +4,18 @@ import { docsLabels } from "@/docs-core/src/docs-labels";
 import type { DocsCommentThread } from "@/text-editor-core/docs-collab/docs-comments-types";
 import {
   DocsCommentsPanel,
-  DocsCommentsReply,
   DocsCommentsSidebar,
-  DocsCommentsThreadCard,
 } from "@/text-editor-core/docs-collab/docs-comments";
 
 import "@/text-editor-core/docs-collab/docs-comments-sidebar.css";
 
+import {
+  draftThread,
+  sampleThread,
+  threadWithReplies,
+} from "./docs-comments-thread-card.stories.fixtures";
+
 const noop = () => {};
-
-const sampleThread: DocsCommentThread = {
-  id: "thread-1",
-  anchorText: "launch checklist",
-  anchorFrom: 1,
-  createdAt: "2026-06-01T09:00:00.000Z",
-  createdBy: { id: "u-1", name: "Alex Example" },
-  resolved: false,
-  messages: [
-    {
-      id: "thread-1-m",
-      body: "Can we tighten the acceptance criteria before Friday?",
-      createdAt: "2026-06-01T09:05:00.000Z",
-      author: { id: "u-1", name: "Alex Example" },
-    },
-  ],
-  reactions: [{ emoji: "👍", userIds: ["u-2"] }],
-};
-
-const threadWithReplies: DocsCommentThread = {
-  ...sampleThread,
-  id: "thread-2",
-  messages: [
-    sampleThread.messages[0],
-    {
-      id: "thread-2-r1",
-      body: "Yes — I'll add the QA pass to the doc.",
-      createdAt: "2026-06-01T10:15:00.000Z",
-      author: { id: "u-2", name: "Sam Lee" },
-    },
-  ],
-};
-
-const draftThread: DocsCommentThread = {
-  id: "draft-1",
-  anchorText: "selected phrase",
-  anchorFrom: 1,
-  anchorTo: 16,
-  createdAt: "2026-06-01T11:00:00.000Z",
-  createdBy: { id: "u-1", name: "Alex Example" },
-  resolved: false,
-  messages: [],
-};
 
 const panelHandlers = {
   onCloseMobile: noop,
@@ -74,7 +35,8 @@ const meta = {
     layout: "fullscreen",
     docs: {
       description: {
-        component: "Mobile drawer and sidebar panel listing comment threads.",
+        component:
+          "Mobile drawer and sidebar panel listing comment threads. Isolated thread card variants live under Docs comments/Thread card.",
       },
     },
   },
@@ -121,53 +83,6 @@ export const SidebarAlias: Story = {
   name: "Sidebar (deprecated alias)",
   render: () => (
     <DocsCommentsSidebar {...panelHandlers} threads={[sampleThread]} activeThreadId="thread-1" />
-  ),
-};
-
-export const ThreadCardActive: Story = {
-  name: "Thread card / active",
-  render: () => (
-    <div className="max-w-sm p-4">
-      <DocsCommentsThreadCard
-        thread={threadWithReplies}
-        labels={docsLabels}
-        currentUserId="u-1"
-        active
-        onSelect={noop}
-        onAddReply={noop}
-        onToggleReaction={noop}
-        onResolve={noop}
-        onDelete={noop}
-      />
-    </div>
-  ),
-};
-
-export const ThreadCardDraft: Story = {
-  name: "Thread card / draft",
-  render: () => (
-    <div className="max-w-sm p-4">
-      <DocsCommentsThreadCard
-        thread={draftThread}
-        labels={docsLabels}
-        currentUserId="u-1"
-        active
-        onSelect={noop}
-        onAddReply={noop}
-        onToggleReaction={noop}
-        onResolve={noop}
-        onDelete={noop}
-        onCancelDraft={noop}
-      />
-    </div>
-  ),
-};
-
-export const Reply: Story = {
-  render: () => (
-    <div className="max-w-sm p-4">
-      <DocsCommentsReply message={threadWithReplies.messages[1]!} />
-    </div>
   ),
 };
 

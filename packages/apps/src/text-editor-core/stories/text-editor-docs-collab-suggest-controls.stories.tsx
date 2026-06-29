@@ -1,6 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEditor } from "@tiptap/react";
 import { DocsCollabSuggestControls } from "@/text-editor-core/docs-collab/docs-collab-suggest-controls";
+import {
+  TextEditorFormatBar,
+  TEXT_EDITOR_FORMAT_BAR_FULL,
+} from "@/text-editor-core/src/text-editor-format-bar";
 import { createCollaborativeTextEditorExtensions } from "@/text-editor-core/src/text-editor-extensions";
 import { TextEditorSheet } from "@/text-editor-core/src/text-editor-sheet";
 import { useMockDocsCollabEditorSession } from "@/text-editor-core/stories/text-editor-collab-stories.harness";
@@ -30,10 +34,15 @@ function SuggestControlsHarness() {
   return (
     <div className="text-editor flex min-h-[min(640px,90dvh)] w-full flex-col p-6">
       <p className="mb-3 text-sm text-muted-foreground">
-        Toggle <strong>Suggest</strong> to track edits, then review and accept or reject proposals
-        in the suggestions sidebar.
+        Choose <strong>Suggest</strong> from the format bar dropdown to track edits, then review and
+        accept or reject proposals in the suggestions sidebar.
       </p>
-      <DocsCollabSuggestControls editor={editor} />
+      <TextEditorFormatBar
+        editor={editor}
+        groups={TEXT_EDITOR_FORMAT_BAR_FULL}
+        showPrint={false}
+        trailing={<DocsCollabSuggestControls editor={editor} />}
+      />
       <TextEditorSheet editor={editor} variant="sheet" fill className="min-h-0 flex-1" />
     </div>
   );
@@ -47,7 +56,7 @@ const meta = {
     docs: {
       description: {
         component:
-          "Suggest-mode toolbar (edit/suggest toggle) backed by MIT `tiptap-track-changes`. Accept/reject live in the suggestions sidebar.",
+          "Edit/suggest mode dropdown for the format bar, backed by MIT `tiptap-track-changes`. Accept/reject live in the suggestions sidebar.",
       },
     },
   },

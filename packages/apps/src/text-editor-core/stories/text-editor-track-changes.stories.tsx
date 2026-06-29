@@ -10,8 +10,8 @@ function SuggestModeHarness() {
   return (
     <div className="docs-workspace flex min-h-[min(900px,90dvh)] flex-col p-6">
       <p className="mb-3 text-sm text-muted-foreground">
-        Switch to <strong>Suggest</strong>, edit the document, then accept or reject proposals from
-        the suggestions sidebar.
+        Switch to <strong>Suggest</strong> from the format bar dropdown, edit the document, then
+        accept or reject proposals from the suggestions sidebar.
       </p>
       <DocsCollabEditor
         ydoc={session.ydoc}
@@ -34,7 +34,7 @@ const meta = {
     docs: {
       description: {
         component:
-          "Offline Yjs-backed Docs editor with MIT `tiptap-track-changes` — edit/suggest toggle in the header and suggestion cards in the sidebar.",
+          "Offline Yjs-backed Docs editor with MIT `tiptap-track-changes` — edit/suggest dropdown in the format bar and suggestion cards in the sidebar.",
       },
     },
   },

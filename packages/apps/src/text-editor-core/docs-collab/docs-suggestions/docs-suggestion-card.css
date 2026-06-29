@@ -3,6 +3,11 @@
 .docs-suggestion-card {
   @apply cursor-pointer rounded-xl border p-4 shadow-sm transition-[box-shadow,border-color,background-color,opacity] duration-200;
   --docs-suggestion-accent: var(--text-editor-suggestion, oklch(0.85 0.15 145));
+  --docs-suggestion-accent-strong: color-mix(
+    in oklab,
+    var(--docs-suggestion-accent) 38%,
+    oklch(0.42 0.13 145)
+  );
   border-color: var(--docs-border, color-mix(in oklab, var(--color-ink) 12%, transparent));
   background-color: var(--docs-surface, var(--color-cream, #ffffff));
   box-shadow:
@@ -17,11 +22,6 @@
 .docs-suggestion-card:hover:not([data-active="true"]) {
   opacity: 0.96;
   border-color: color-mix(in oklab, var(--docs-suggestion-accent) 28%, transparent);
-  background-color: color-mix(
-    in oklab,
-    var(--docs-suggestion-accent) 8%,
-    var(--docs-surface, var(--color-cream, #ffffff))
-  );
 }
 
 .docs-suggestion-card[data-active="true"] {
@@ -82,13 +82,14 @@
 
 .docs-suggestion-card__accept {
   @apply inline-flex h-7 items-center gap-1 rounded-full border px-2.5 text-xs font-medium transition-colors;
-  border-color: color-mix(in oklab, var(--docs-suggestion-accent) 35%, transparent);
-  color: color-mix(in oklab, var(--docs-suggestion-accent) 88%, var(--color-ink));
-  background-color: color-mix(in oklab, var(--docs-suggestion-accent) 10%, transparent);
+  border-color: color-mix(in oklab, var(--docs-suggestion-accent) 55%, oklch(0.52 0.15 145));
+  color: var(--docs-suggestion-accent-strong);
+  background-color: color-mix(in oklab, var(--docs-suggestion-accent) 16%, transparent);
 }
 
 .docs-suggestion-card__accept:hover {
-  background-color: color-mix(in oklab, var(--docs-suggestion-accent) 18%, transparent);
+  border-color: color-mix(in oklab, var(--docs-suggestion-accent) 70%, oklch(0.48 0.14 145));
+  background-color: color-mix(in oklab, var(--docs-suggestion-accent) 26%, transparent);
 }
 
 .docs-suggestion-card__accept-icon {
@@ -110,12 +111,49 @@
   @apply size-3.5;
 }
 
-.docs-suggestion-card__quote {
-  @apply m-0 mt-3 border-l-2 pl-3 text-xs leading-relaxed;
-  border-color: color-mix(in oklab, var(--docs-suggestion-accent) 35%, transparent);
+.docs-suggestion-card__diff-block {
+  @apply mt-3 flex flex-col gap-1;
+}
+
+.docs-suggestion-card__diff-block > .tag {
+  align-self: flex-start;
+  width: fit-content;
+}
+
+.docs-suggestion-card__diff {
+  @apply m-0 text-sm leading-relaxed;
+}
+
+.docs-suggestion-card__diff--format {
+  color: var(--docs-text, var(--color-ink));
+}
+
+.docs-suggestion-card__diff-arrow {
   color: var(--docs-muted, color-mix(in oklab, var(--color-ink) 55%, transparent));
 }
 
-.docs-suggestion-card__body {
-  @apply m-0 mt-3 text-sm leading-relaxed;
+.docs-suggestion-card__insertion {
+  background: color-mix(
+    in oklab,
+    var(--text-editor-track-insertion, oklch(0.88 0.12 145)) 55%,
+    transparent
+  );
+  border-bottom: 2px solid
+    color-mix(in oklab, var(--text-editor-track-insertion, oklch(0.88 0.12 145)) 80%, transparent);
+  text-decoration: none;
+}
+
+.docs-suggestion-card__deletion {
+  background: color-mix(
+    in oklab,
+    var(--text-editor-track-deletion, oklch(0.88 0.12 25)) 45%,
+    transparent
+  );
+  color: color-mix(in oklab, var(--docs-text, var(--color-ink)) 55%, transparent);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(
+    in oklab,
+    var(--text-editor-track-deletion, oklch(0.88 0.12 25)) 85%,
+    transparent
+  );
 }
